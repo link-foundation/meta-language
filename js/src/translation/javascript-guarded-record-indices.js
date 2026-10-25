@@ -4,10 +4,23 @@ import {FLOAT,BOOL,STRING,option,sameType} from './types.js';
 import {coerce} from './check.js';
 import {unsupported} from './diagnostics.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
-import {readJavaScriptOwnPropertyGuardArm,acceptJavaScriptOwnPropertyGuardBindings,acceptJavaScriptGuardedRecordIndex,readJavaScriptGuardedRecordProjectionPositions} from './javascript-own-property-rules.js';
+import {readJavaScriptOwnPropertyGuardArm,acceptJavaScriptOwnPropertyGuardBindings,acceptJavaScriptGuardedRecordIndex,readJavaScriptGuardedRecordProjectionPositions,readJavaScriptOwnKeyCallbackPosition,readJavaScriptOwnKeyCallbackReceiverPosition,acceptJavaScriptOwnKeyCallbackSource,acceptJavaScriptOwnKeyCallbackBinding} from './javascript-own-property-rules.js';
 const facts=Symbol('actual own-property branch binders');
+const callbackOrigin=Symbol('actual own-key callback origin');
 const local=node=>node?.k==='name'&&node.path.length===1?node.path[0]:null;
 export function forgetJavaScriptOwnPropertyGuard(env,name){const previous=env.get(facts);if(previous)env.set(facts,previous.filter(row=>row.object!==name&&row.key!==name));}
+export function createJavaScriptOwnKeyCallbackEnvironment(receiver,callback,operation,env){
+ const position=readJavaScriptOwnKeyCallbackPosition(operation),receiverPosition=readJavaScriptOwnKeyCallbackReceiverPosition(operation);if(position<0||receiverPosition<0)return env;
+ const args=receiver?.k==='math'?receiver.args:[],object=local(args[0]?.value),owner=env.get(object);
+ if(!acceptJavaScriptOwnKeyCallbackSource(receiver?.k??'',receiver?.op??'',args.length,args.some(item=>item.spread),object!==null&&owner!==undefined,owner?.kind??'',owner?.open===true,callback?.k??''))return env;
+ const selected=new Map(env);selected.set(callbackOrigin,{callback,object,position,receiverPosition});return selected;
+}
+export function installJavaScriptOwnKeyCallbackBindings(node,parameters,env){
+ const origin=env.get(callbackOrigin);if(!origin||origin.callback!==node)return;
+ const parameter=parameters[origin.position];
+ if(!acceptJavaScriptOwnKeyCallbackBinding(parameters.some(parameter=>parameter.name===origin.object),parameters.length>origin.receiverPosition,parameter?.type?.kind??''))return;
+ env.set(facts,[...(env.get(facts)??[]),{object:origin.object,key:parameter.name}]);
+}
 export function readJavaScriptOwnPropertyBranchEnvironments(condition,env){
  const negated=condition.k==='unary'&&condition.op==='not',guard=negated?condition.arg:condition;
  const arm=readJavaScriptOwnPropertyGuardArm(guard.k,guard.op??'',negated);

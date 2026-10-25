@@ -8,7 +8,97 @@ use crate::translation::javascript_own_property_rules as rules;
 use crate::translation::surface::{BinaryOp, UnaryOp};
 use crate::translation::types::option;
 
+/// An actual borrowed source node is identified, never dereferenced through
+/// this pointer. The context lives only during its synchronous checker call.
+#[derive(Clone, Debug)]
+pub(super) struct OwnKeyCallbackOrigin {
+    callback: *const SExpr,
+    object: String,
+    position: usize,
+    receiver_position: usize,
+}
+
 impl Checker {
+    pub(super) fn own_key_callback_environment(
+        &self,
+        receiver: &SExpr,
+        callback: &SExpr,
+        operation: &str,
+        env: &Env,
+    ) -> Env {
+        let mut selected = env.clone();
+        if self.language != Language::JavaScript || self.checked_projection {
+            return selected;
+        }
+        let Some(position) = crate::translation::frontend_rules::ml_array::number_index(
+            rules::read_java_script_own_key_callback_position(operation),
+        ) else {
+            return selected;
+        };
+        let Some(receiver_position) = crate::translation::frontend_rules::ml_array::number_index(
+            rules::read_java_script_own_key_callback_receiver_position(operation),
+        ) else {
+            return selected;
+        };
+        let SNode::Math { op, args, .. } = &receiver.node else {
+            return selected;
+        };
+        let object = args.first().and_then(|argument| env.local(&argument.value));
+        let owner = object.and_then(|name| env.vars.get(name));
+        let count = serde_json::Number::from(args.len())
+            .as_f64()
+            .expect("actual source operand count is a Number");
+        if !rules::accept_java_script_own_key_callback_source(
+            "math",
+            op,
+            count,
+            args.iter().any(|argument| argument.spread),
+            object.is_some(),
+            owner.map_or("", Type::kind),
+            matches!(owner, Some(Type::Record { open: true, .. })),
+            callback.node.kind(),
+        ) {
+            return selected;
+        }
+        selected.own_key_callback = Some(OwnKeyCallbackOrigin {
+            callback: std::ptr::from_ref(callback),
+            object: object
+                .expect("admitted actual own-key receiver binder")
+                .to_owned(),
+            position,
+            receiver_position,
+        });
+        selected
+    }
+    pub(super) fn install_own_key_callback_bindings(
+        node: &SExpr,
+        parameters: &[crate::translation::ir::LambdaParam],
+        env: &mut Env,
+    ) {
+        let Some(origin) = env.own_key_callback.as_ref() else {
+            return;
+        };
+        if !std::ptr::eq(origin.callback, std::ptr::from_ref(node)) {
+            return;
+        }
+        let parameter = parameters.get(origin.position);
+        if !rules::accept_java_script_own_key_callback_binding(
+            parameters
+                .iter()
+                .any(|parameter| parameter.name == origin.object),
+            parameters.len() > origin.receiver_position,
+            parameter.map_or("", |parameter| parameter.ty.kind()),
+        ) {
+            return;
+        }
+        env.own_properties.push((
+            origin.object.clone(),
+            parameter
+                .expect("admitted actual String callback binder")
+                .name
+                .clone(),
+        ));
+    }
     pub(super) fn own_property_branch_environments(
         &self,
         condition: &SExpr,

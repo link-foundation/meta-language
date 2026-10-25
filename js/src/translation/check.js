@@ -8,7 +8,7 @@ import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScript
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
-import {forgetJavaScriptOwnPropertyGuard,readJavaScriptOwnPropertyBranchEnvironments,checkJavaScriptGuardedRecordIndex} from './javascript-guarded-record-indices.js';
+import {forgetJavaScriptOwnPropertyGuard,readJavaScriptOwnPropertyBranchEnvironments,checkJavaScriptGuardedRecordIndex,createJavaScriptOwnKeyCallbackEnvironment,installJavaScriptOwnKeyCallbackBindings} from './javascript-guarded-record-indices.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
@@ -723,7 +723,8 @@ class Checker {
         else if (selection.form === 1) result = { k: 'stringPoints', object, type: array(selection.element) };
         else result = { k: 'collectionItems', object, op: selection.form === 2 ? 'values' : 'entries', type: array(selection.element) };
         if (!node.args[1]) return result;
-        const callback = this.expr(node.args[1], env, path, { kind: 'function', params: [result.type.element, FLOAT], ret: readArrayFromExpectedElement(expected).element });
+        const callbackEnv=this.language==='JavaScript'&&!this.checkedProjection?createJavaScriptOwnKeyCallbackEnvironment(node.args[0],node.args[1],'map',env):env;
+        const callback = this.expr(node.args[1], callbackEnv, path, { kind: 'function', params: [result.type.element, FLOAT], ret: readArrayFromExpectedElement(expected).element });
         return { k: 'method', object: result, op: 'map', args: [callback], type: array(callback.type.ret) };
       }
       case 'forOfIterable': {
@@ -748,13 +749,16 @@ class Checker {
           bindLocal(inner, param.name, type);
           return { ...param, type };
         });
+        installJavaScriptOwnKeyCallbackBindings(node,params,inner);
         const result = callable.declaredRet ? this.resolveType(callable.ret, path, node.span) : callable.ret;
         let body = this.expr(node.body, inner, path, result);
         if (result) body = coerce(body, result, this.language, node.span);
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
-      case 'method':
-        return (this.checkedProjection ? null : checkJavaScriptSourcePropertyCall(this,node,env,path,expected))??this.method(node, env, path, expected);
+      case 'method': {
+        const callbackEnv=this.language==='JavaScript'&&!this.checkedProjection?createJavaScriptOwnKeyCallbackEnvironment(node.object,node.args[0],node.op,env):env;
+        return (this.checkedProjection ? null : checkJavaScriptSourcePropertyCall(this,node,callbackEnv,path,expected))??this.method(node, callbackEnv, path, expected);
+      }
       case 'booleanValue':
         return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
       case 'numberValue':

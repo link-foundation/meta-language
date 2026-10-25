@@ -363,6 +363,7 @@ struct Env {
     known: HashMap<String, Fact>,
     immutable_products: HashMap<String, bool>,
     own_properties: Vec<(String, String)>,
+    own_key_callback: Option<guarded_record_indices::OwnKeyCallbackOrigin>,
 }
 
 impl Env {

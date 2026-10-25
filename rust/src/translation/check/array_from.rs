@@ -112,8 +112,14 @@ impl Checker {
         } else {
             None
         };
-        let callback =
-            self.expr_with_callable_expectation(mapper, env, path, &params, ret.as_ref())?;
+        let callback_env = self.own_key_callback_environment(&args[0], mapper, "map", env);
+        let callback = self.expr_with_callable_expectation(
+            mapper,
+            &callback_env,
+            path,
+            &params,
+            ret.as_ref(),
+        )?;
         let Type::Function { ret, .. } = &callback.ty else {
             return Err(type_error("Array.from mapper has no function result", span));
         };

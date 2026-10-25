@@ -410,6 +410,11 @@ impl Checker {
             SNode::StringMap { .. } => self.string_map(node, env, path),
             SNode::CopySlice { object } => self.copy_slice((object, expected), env, path, span),
             SNode::Method { object, op, args } => {
+                let callback_env = args
+                    .first()
+                    .and_then(Option::as_ref)
+                    .map(|callback| self.own_key_callback_environment(object, callback, op, env));
+                let env = callback_env.as_ref().unwrap_or(env);
                 if !self.checked_projection
                     && let Some(value) =
                         self.source_property_call((object, expected), op, args, env, path, span)?

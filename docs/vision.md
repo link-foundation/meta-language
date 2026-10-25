@@ -1356,8 +1356,21 @@ source facets or replace runtime conditions. The resulting ordinary typed IR
 retains the guard and selected source operation through both codecs and four
 emissions. Unchecked dynamic reads retain their inherited-property obligation;
 heterogeneous value unions, mutable key cells, broader control-flow/alias proofs
-and exotic property protocols remain requirements. Twenty future source values,
-seven exact refusals and scope invalidation controls are drafted without execution.
+and exotic property protocols remain requirements.
+
+The immediate actual `Object.keys(localRecord)` producer can also supply this
+membership fact to its inline callback's actual element binder. The complete
+existing array callback role definitions determine that binder, including the
+second `reduce` parameter; `Array.from` mappers use their existing mapper role.
+Both checkers identify the original callback node, install the fact only after
+its parameters bind, and reject owner shadowing or exposure of the live key
+array. A receiver parameter could replace later keys and therefore supplies no
+membership guarantee. Saved key arrays, key aliases and indirect callbacks need
+their own origin/alias interpretation. This context is private checker state;
+it disappears into the same ordinary guarded lookup IR. Complete source rules,
+including the callback role dependency, generate the native decisions. Thirty-six
+future source values, twelve exact refusals and scope/node/role invalidation
+controls are drafted without execution.
 The own-membership distinction follows [Object.hasOwn](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.hasown).
 
 The own-entry read draft extends the same actual argument capture and own-field

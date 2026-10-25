@@ -268,6 +268,7 @@ impl Checker {
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
                         own_properties: Vec::new(),
+                        own_key_callback: None,
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
                     let body = self.coerce(body, &ret, item.span)?;
@@ -309,6 +310,7 @@ impl Checker {
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
                         own_properties: Vec::new(),
+                        own_key_callback: None,
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;
                     // `theorem t : ∀ n, P n` and `theorem t (n) : P n` state the same

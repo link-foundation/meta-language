@@ -21,6 +21,9 @@ test('actual formal context and default initializer boundaries remain explicit',
  }
  assert.equal(acceptJavaScriptArrayFormalContext('unknown',false,0),false);
  for(const source of ['value=[1,2])','callback=()=>[1,2])','value="[first]")']){const tokens=tokenize(source,'JavaScript').tokens;assert.equal(findJavaScriptArrayFormalPattern(tokens.map(token=>token.kind),tokens.map(token=>token.value),0),-1);}
+ const opaque=tokenize('value=`opaque`,[first])','JavaScript').tokens;
+ const selected=findJavaScriptArrayFormalPattern(opaque.map(token=>token.kind),opaque.map(token=>token.value),0);
+ assert.equal(opaque[selected].value,'[');assert.equal(opaque[selected].start,15);
  const tokens=tokenize('[first,,...rest],scale)','JavaScript').tokens;
  const plan=planJavaScriptArrayFormalParameters(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
  assert.ok(plan[0]>0);assert.equal(plan[1],2);assert.equal(plan[2],2);

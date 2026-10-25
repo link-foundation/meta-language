@@ -7,9 +7,10 @@ export function findJavaScriptArrayFormalPattern(kinds,values,start){
  if(kinds.length!==values.length||start<0||start%1!==0||start>=kinds.length)return -1;
  let depth=0,binding=true;
  for(let index=start;index<kinds.length;index+=1){
-  const kind=readRequiredTextFact(kinds,index),value=readRequiredTextFact(values,index);
+  const kind=readRequiredTextFact(kinds,index);
   if(kind==='eof')return -1;
   if(kind!=='punct'){if(depth===0)binding=false;continue;}
+  const value=readRequiredTextFact(values,index);
   if(depth===0&&value===')')return -1;
   if(depth===0&&binding&&value==='[')return index;
   if(value==='('||value==='['||value==='{'){depth+=1;binding=false;}

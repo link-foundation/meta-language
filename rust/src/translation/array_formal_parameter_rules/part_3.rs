@@ -228,25 +228,24 @@ pub fn source_ml_source1_temporary_find_java_script_array_formal_pattern_loop4(
         return if index < (kinds.len() as f64) {
             {
                 let kind = self::read_required_text_fact(kinds, index);
-                {
-                    let value = self::read_required_text_fact(values, index);
-                    if kind == (self::ml_string::Text::from_units(vec![101, 111, 102])) {
-                        self::MlSource1TemporaryFindJavaScriptArrayFormalPatternLoop4Result::MlSource1TemporaryFindJavaScriptArrayFormalPatternLoop4Return(-1f64)
-                    } else {
-                        if kind != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))
+                if kind == (self::ml_string::Text::from_units(vec![101, 111, 102])) {
+                    self::MlSource1TemporaryFindJavaScriptArrayFormalPatternLoop4Result::MlSource1TemporaryFindJavaScriptArrayFormalPatternLoop4Return(-1f64)
+                } else {
+                    if kind != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) {
                         {
+                            let binding_3 = if depth == 0f64 { { false } } else { binding };
                             {
-                                let binding_3 = if depth == 0f64 { { false } } else { binding };
+                                let index_2 = index + 1f64;
                                 {
-                                    let index_2 = index + 1f64;
-                                    {
-                                        (binding, index) = (binding_3, index_2);
-                                        continue;
-                                    }
+                                    (binding, index) = (binding_3, index_2);
+                                    continue;
                                 }
                             }
                         }
+                    }
+                    {
                         {
+                            let value = self::read_required_text_fact(values, index);
                             if (depth == 0f64)
                                 && (value == (self::ml_string::Text::from_units(vec![41])))
                             {

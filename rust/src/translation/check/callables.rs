@@ -291,6 +291,7 @@ impl Checker {
                         rocq_type: parameter.rocq_type.clone(),
                     });
                 }
+                Self::install_own_key_callback_bindings(node, &parameters, &mut inner);
                 let selected = facts
                     .value(plan[0])
                     .filter(|value| !value.is_null())
