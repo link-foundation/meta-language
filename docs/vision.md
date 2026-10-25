@@ -3922,6 +3922,22 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Ordinary flat Rust module publication now derives interfaces from the complete
+checked source owners, including private dependencies. Public constants export
+their actual values; callable constants retain constant signatures. Public
+function signatures retain their actual parameters and results. Restricted
+visibility stays private, raw and Unicode names retain their normalized source
+identity, and generated export bindings avoid every emitted identifier. Imported
+callable constants enter the existing computed-application path, retaining local
+shadows, extra-argument effects and the distinction between a constant read and
+a zero-input source call. Checked graph projections keep their own read form.
+Twenty future publication controls and eight consumer controls, including two
+effect traces, retain complete predecessors at 21af9724, native products, both
+codecs and four emissions. They remain unexecuted. Original native provider ABI
+bridges, imported Rust namespace composition, complete module interfaces,
+constant evaluation and every earlier translation requirement remain mandatory;
+these value interfaces do not establish those broader contracts.
+
 Rust source constants now retain an actual constant declaration kind during
 source resolution. Their values remain distinct from free function items even
 when an expected type is callable. A shared construction captures the existing

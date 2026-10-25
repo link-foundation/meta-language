@@ -1,3 +1,4 @@
+import {requireCallableConstantApplicationCapture} from './rust-module-value-rules.js';
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
 import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
 import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
@@ -311,7 +312,7 @@ class Inference {
     for (const external of externals) {
       this.signatures.set(`${ROOT}.${external.name}`, external.k === 'fn'
         ? { params: external.params.map((param) => this.declared(param.type)), defaults: external.params.map(() => false), optionalParams: external.params.map(() => false), ret: this.declared(external.ret) }
-        : { params: [], defaults: [], optionalParams: [], ret: this.declared(external.type) });
+        : { params: [], defaults: [], optionalParams: [], constantValue:true, ret: this.declared(external.type) });
     }
     for (const { path, fn } of functions) {
       const ret = this.fresh();
@@ -881,7 +882,9 @@ class Inference {
       }
       case 'app': {
         const local = node.fn.k === 'name' && node.fn.path.length === 1 ? env.get(node.fn.path[0]) : null;
-        if (requireCallableNamedInference(node.fn.k, node.fn.path?.length ?? 0, Boolean(local))) return this.call(node.fn.path, node.args, env, node.span);
+        const signature=node.fn.k==='name'&&!local?this.signature(node.fn.path):null;
+        const constant=requireCallableConstantApplicationCapture(node.fn.k,Boolean(local),signature?.constantValue===true?'const':'',signature?this.resolve(signature.ret).kind:'');
+        if (requireCallableNamedInference(node.fn.k, node.fn.path?.length ?? 0, Boolean(local))&&!constant) return this.call(node.fn.path, node.args, env, node.span);
         const fn = local ?? this.expr(node.fn, env);
         let args = node.args.map((arg) => this.expr(arg, env));
         const resolved = this.resolve(fn);

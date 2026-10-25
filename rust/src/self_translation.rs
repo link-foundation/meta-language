@@ -62,7 +62,7 @@ use typescript_erasure::requires_type_script_erasure;
 pub use typescript_erasure::{ErasedTypeScript, Erasure, erase_type_script};
 pub use typescript_portable_typing::project_type_script_typing;
 
-/// The signature of an exported item of a JavaScript or TypeScript module.
+/// The checked signature of an exported source-module item.
 ///
 /// It binds the name a module that imports it uses: a function's parameters
 /// and result, or a constant's type and whether a literal gives its value.
@@ -271,14 +271,13 @@ pub fn self_translate_with(
         .map(|(translation, _)| translation)
 }
 
-/// The signatures of the exported items of the JavaScript or TypeScript
-/// module `source` that translate into Rust, in source order, for the
-/// `imports` of a module that imports them.
+/// Checked exported source interfaces in declaration order, for dependent
+/// modules. Rust interfaces require semantic translation and check every body.
 ///
 /// # Errors
 ///
-/// A [`SelfTranslationError`] for an unknown or a Rust language or a source
-/// its links do not reproduce.
+/// A [`SelfTranslationError`] for an unsupported source interpretation, failed
+/// body or source its links do not reproduce.
 pub fn self_translation_signatures(
     source: &str,
     language: &str,

@@ -156,11 +156,26 @@ impl Inference {
             [name] => env.get(name).cloned(),
             _ => None,
         };
+        let signature = if local.is_none() && matches!(head.node, SNode::Name { .. }) {
+            self.signature(path)
+        } else {
+            None
+        };
+        let value_kind =
+            signature
+                .as_ref()
+                .map_or("", |signature| match self.resolve(&signature.ret) {
+                    Term::Function { .. } => "function",
+                    Term::Known(ref ty) => ty.kind(),
+                    _ => "",
+                });
+        let constant = crate::translation::rust_module_value_rules::require_callable_constant_application_capture(head.node.kind(),local.is_some(),if signature.as_ref().is_some_and(|signature|signature.constant_value){"const"}else{""},value_kind);
         if rules::require_callable_named_inference(
             head.node.kind(),
             super::super::callables::number(path.len()),
             local.is_some(),
-        ) {
+        ) && !constant
+        {
             return self.call(path, arguments, env, place);
         }
         let function = match local {

@@ -1,3 +1,4 @@
+import {captureCallableConstantApplicationHead} from './callable-constants.js';
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
 import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
 import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
@@ -641,7 +642,7 @@ class Checker {
       }
       case 'dotCtor':
       case 'app':
-        return this.application(node.k === 'app' ? node.fn : node, node.args ?? [], env, path, expected, node.span);
+        return this.application(node.k === 'app' ? captureCallableConstantApplicationHead(this,node.fn,env,path,node.span) : node, node.args ?? [], env, path, expected, node.span);
       case 'field': {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);

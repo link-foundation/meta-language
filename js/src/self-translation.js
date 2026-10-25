@@ -1,3 +1,4 @@
+import {acceptRustValueModuleItem,readRustValueModuleOwnerKind,readRustPublicConstantNamePosition,planRustModuleValueExportBindings,renderRustModuleValueExport} from './translation/rust-module-value-rules.js';
 // Translates meta-language's own modules between JavaScript, TypeScript and
 // Rust through meta-language links. The source is parsed losslessly with its
 // native grammar; a translation into the same language writes the links back
@@ -31,7 +32,7 @@ import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArray
 import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
 import {unsupported} from './translation/diagnostics.js';
 import { readSemanticSourceRole, planSemanticSourceGroups, readRustPublicSignatureNamePosition,
-  acceptRustSemanticModuleItem, renderRustSemanticModuleExport,
+  renderRustSemanticModuleExport,
   selectSelfTranslationModuleReferences, refineSelfTranslationModuleReferences } from './translation/semantic-input-rules.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
@@ -132,8 +133,8 @@ export function selfTranslateWithDiagnostics(source, sourceLanguage, targetLangu
 }
 
 /**
- * The signatures of the exported items of the JavaScript or TypeScript module
- * `source` that translate into Rust, in source order, for
+ * The signatures of the exported items of the JavaScript, TypeScript or
+ * independently interpreted Rust module `source`, in source order, for
  * {@link selfTranslate}'s `options.imports` of a module that imports them:
  * `{ k: 'fn', name, params: [{ name, type }], ret }` for a function and
  * `{ k: 'const', name, type, literal }` for a constant, where `literal` tells
@@ -160,8 +161,8 @@ function readIndependentRustModuleSignatures(source, options) {
   // successful source parsing alone cannot publish an import signature.
   emitJavaScript(program);
   const bytes = Buffer.from(source, 'utf8'), parsed = parseProgrammingLanguage(source, 'Rust');
-  const names = readRustPublicNames(bytes, parsed);
-  return declaredSignatures(program, null).filter(signature => names.has(signature.name));
+  const names = readRustPublicBindings(bytes, parsed);
+  return readRustModuleValueSignatures(program,names);
 }
 
 function readIndependentRustProgram(source) {
@@ -174,44 +175,55 @@ function readIndependentRustProgram(source) {
   return checkProgram(surface);
 }
 
-function readRustPublicNames(bytes, parsed) {
+function readRustPublicBindings(bytes, parsed) {
   if (!parsed?.tree || parsed.tree.flags.hasError || parsed.tree.flags.isError || parsed.tree.flags.isMissing) {
     throw unsupported('independent Rust signature concrete syntax', 'the complete source needs a clean concrete grammar interpretation');
   }
-  const names = new Set();
+  const names = new Map();
   for (const item of topLevelItems(bytes, parsed)) {
-    if (item.term !== 'function_item') continue;
+    const kind=readRustValueModuleOwnerKind(item.term);if(!kind)continue;
     const { tokens } = tokenize(item.text, 'Rust');
-    const position = readRustPublicSignatureNamePosition(tokens.map(token => token.kind), tokens.map(token => token.value));
-    if (position >= 0) names.add(tokens[position].value);
+    const position = (kind==='const'?readRustPublicConstantNamePosition:readRustPublicSignatureNamePosition)(tokens.map(token => token.kind), tokens.map(token => token.value));
+    if (position >= 0) names.set(tokens[position].value,kind);
   }
   return names;
 }
 
+function readRustModuleValueSignatures(program,bindings){
+ const signatures=[];
+ for(const entry of program.declarations.values()){
+  const kind=bindings.get(entry.name);if(!kind||entry.k!=='fn'||entry.modulePath.length)continue;
+  signatures.push(kind==='const'?{k:'const',name:entry.name,type:entry.ret,literal:entry.body.k==='lit'}:{k:'fn',name:entry.name,params:entry.params.map(({name,type})=>({name,type})),ret:entry.ret});
+ }
+ if(signatures.length!==bindings.size)throw unsupported('independent Rust module interface','every public source value needs its actual checked signature');
+ return signatures;
+}
 function readIndependentRustModulePublication(source, bytes, parsed, items) {
-  if (!items.length || items.some(item => !acceptRustSemanticModuleItem(item.term, item.comment,
+  if (!items.length || items.some(item => !acceptRustValueModuleItem(item.term, item.comment,
     readSemanticSourceRole(item.comment, item.text)))) return null;
-  const names = readRustPublicNames(bytes, parsed), program = readIndependentRustProgram(source);
+  const names = readRustPublicBindings(bytes, parsed), program = readIndependentRustProgram(source);
   const owners = new Set();
-  for (const node of parsed.tree.children.filter(node => node.term === 'function_item')) {
+  for (const node of parsed.tree.children.filter(node => readRustValueModuleOwnerKind(node.term)!=='')) {
     const declarations = node.children.filter(child => child.field === 'name');
     if (declarations.length !== 1) return null;
     const span = declarations[0].span.byteRange;
-    const name = bytes.subarray(span.start, span.end).toString('utf8');
+    const raw = bytes.subarray(span.start, span.end).toString('utf8'),tokens=tokenize(raw,'Rust').tokens;
+    if(tokens.length!==2||tokens[0].kind!=='identifier')return null;const name=tokens[0].value;
     if (owners.has(name)) return null;
     owners.add(name);
   }
   if ((program.main?.effects.length ?? 0) !== 0
     || owners.size !== program.declarations.size + (owners.has('main') ? 1 : 0)
     || [...program.declarations.values()].some(entry => entry.k !== 'fn' || entry.modulePath.length !== 0 || !owners.has(entry.name))) return null;
-  const emitted = emitJavaScript(program), exports = [];
-  for (const name of names) {
+  const emitted = emitJavaScript(program), exports = [],bindings=planRustModuleValueExportBindings([...names.values()],tokenize(emitted.text,'JavaScript').tokens.filter(token=>token.kind==='identifier').map(token=>token.value));
+  for (const [name,kind] of names) {
     const mappings = emitted.mappings.filter(mapping => mapping.kind === 'function' && mapping.source === name);
     if (mappings.length !== 1) throw unsupported('independent Rust module visibility', 'every public source function needs one actual target mapping');
-    exports.push(renderRustSemanticModuleExport(name, mappings[0].target));
+    if(kind==='const')exports.push(renderRustModuleValueExport(name,mappings[0].target,bindings[exports.length]));
+    else exports.push(renderRustSemanticModuleExport(name, mappings[0].target));
   }
   return { program, emitted: { ...emitted, definitions: [...emitted.definitions, ...exports] },
-    signatures: declaredSignatures(program, null).filter(signature => names.has(signature.name)) };
+    signatures: readRustModuleValueSignatures(program,names) };
 }
 
 function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '', semanticTranslation = false } = {}, signaturesOnly = false) {

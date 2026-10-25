@@ -159,6 +159,7 @@ struct RecordTerm {
 
 #[derive(Clone)]
 struct Signature {
+    constant_value: bool,
     params: Vec<Term>,
     defaults: Vec<bool>,
     optional_params: Vec<bool>,

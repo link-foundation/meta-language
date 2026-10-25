@@ -17,6 +17,10 @@ impl Inference {
         for external in &program.externals {
             let (params, ret) = external.signature();
             let signature = Signature {
+                constant_value: matches!(
+                    external,
+                    crate::translation::surface::External::Constant { .. }
+                ),
                 defaults: vec![false; params.len()],
                 optional_params: vec![false; params.len()],
                 invocation_defaults: vec![false; params.len()],
@@ -50,6 +54,7 @@ impl Inference {
             self.signatures.insert(
                 path.join("."),
                 Signature {
+                    constant_value: false,
                     params,
                     defaults,
                     optional_params: function.params.iter().map(|param| param.optional).collect(),

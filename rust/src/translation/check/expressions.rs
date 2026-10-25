@@ -180,7 +180,18 @@ impl Checker {
             | SNode::CellRead { .. }
             | SNode::CellWrite { .. } => self.callable_expression(node, env, path, context),
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
-            SNode::App { func, args } => self.application(func, args, env, path, expected, span),
+            SNode::App { func, args } => {
+                let head =
+                    self.capture_callable_constant_application_head(func, env, path, span)?;
+                self.application(
+                    head.as_ref().unwrap_or(func.as_ref()),
+                    args,
+                    env,
+                    path,
+                    expected,
+                    span,
+                )
+            }
             SNode::Field { field, object } => {
                 self.record_source_field(object, field, env, path, expected, span)
             }

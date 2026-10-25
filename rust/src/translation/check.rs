@@ -38,6 +38,7 @@ mod arrays;
 mod big_integer_conversions;
 mod binding_defaults;
 mod boolean_conversion;
+mod callable_constants;
 mod callables;
 mod collection_access;
 mod collections;

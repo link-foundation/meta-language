@@ -1,9 +1,8 @@
 //! Native item views over the automatically translated shared grouping plan.
 use super::{Group, GroupKind, Item, line_break, source_lines};
 use crate::translation::semantic_input_rules::{
-    accept_rust_semantic_module_item, plan_semantic_source_groups,
-    read_rust_public_signature_name_position, read_semantic_source_role,
-    render_rust_semantic_module_export,
+    plan_semantic_source_groups, read_rust_public_signature_name_position,
+    read_semantic_source_role, render_rust_semantic_module_export,
 };
 
 pub(super) fn read_independent_rust_module_signatures(
@@ -15,11 +14,8 @@ pub(super) fn read_independent_rust_module_signatures(
     }
     let program = read_independent_rust_program(source)?;
     crate::translation::emit_javascript::emit_javascript(&program).map_err(failure)?;
-    let names = read_rust_public_names(source)?;
-    Ok(super::binding::declared_signatures(&program, false)
-        .into_iter()
-        .filter(|signature| names.contains(signature.name()))
-        .collect())
+    let names = read_rust_public_bindings(source)?;
+    read_rust_module_value_signatures(&program, &names)
 }
 
 fn failure(
@@ -47,9 +43,9 @@ fn read_independent_rust_program(
     check_program(&surface).map_err(failure)
 }
 
-fn read_rust_public_names(
+fn read_rust_public_bindings(
     source: &str,
-) -> Result<std::collections::HashSet<String>, super::SelfTranslationError> {
+) -> Result<std::collections::BTreeMap<String, String>, super::SelfTranslationError> {
     use crate::translation::{
         Language,
         lexer::{TokenKind, tokenize},
@@ -58,9 +54,12 @@ fn read_rust_public_names(
     if !network.verify_full_match(None).is_clean() {
         return Err(super::SelfTranslationError { message: "independent Rust signature concrete syntax: the complete source needs a clean concrete grammar interpretation".to_owned() });
     }
-    let mut names = std::collections::HashSet::new();
+    let mut names = std::collections::BTreeMap::new();
     for item in super::top_level_items(source, "Rust") {
-        if item.term != "function_item" {
+        let kind = crate::translation::rust_module_value_rules::read_rust_value_module_owner_kind(
+            &item.term,
+        );
+        if kind.is_empty() {
             continue;
         }
         let lexed = tokenize(item.text, Language::Rust).map_err(failure)?;
@@ -81,14 +80,66 @@ fn read_rust_public_names(
             .iter()
             .map(|token| token.value.clone())
             .collect();
-        let position = read_rust_public_signature_name_position(&kinds, &values);
+        let position = if kind == "const" {
+            crate::translation::rust_module_value_rules::read_rust_public_constant_name_position(
+                &kinds, &values,
+            )
+        } else {
+            read_rust_public_signature_name_position(&kinds, &values)
+        };
         if position >= 0.0 {
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             let position = position as usize;
-            names.insert(values[position].clone());
+            names.insert(values[position].clone(), kind);
         }
     }
     Ok(names)
+}
+
+fn read_rust_module_value_signatures(
+    program: &crate::translation::ir::Program,
+    bindings: &std::collections::BTreeMap<String, String>,
+) -> Result<Vec<super::SelfTranslationSignature>, super::SelfTranslationError> {
+    use crate::translation::{
+        ir::{Decl, Node},
+        surface::{External, ExternalParam},
+    };
+    let mut signatures = Vec::new();
+    for entry in &program.declarations {
+        let Decl::Fn(function) = entry else {
+            continue;
+        };
+        let Some(kind) = bindings.get(&function.name) else {
+            continue;
+        };
+        if !function.module_path.is_empty() {
+            continue;
+        }
+        signatures.push(if kind == "const" {
+            External::Constant {
+                name: function.name.clone(),
+                ty: function.ret.clone(),
+                literal: matches!(function.body.node, Node::Lit { .. }),
+            }
+        } else {
+            External::Function {
+                name: function.name.clone(),
+                params: function
+                    .params
+                    .iter()
+                    .map(|param| ExternalParam {
+                        name: param.name.clone(),
+                        ty: param.ty.clone(),
+                    })
+                    .collect(),
+                ret: function.ret.clone(),
+            }
+        });
+    }
+    if signatures.len() != bindings.len() {
+        return Err(super::SelfTranslationError {message:"independent Rust module interface: every public source value needs its actual checked signature".to_owned()});
+    }
+    Ok(signatures)
 }
 
 pub(super) fn read_independent_rust_module_publication(
@@ -104,7 +155,7 @@ pub(super) fn read_independent_rust_module_publication(
     use crate::translation::{emit_javascript::emit_javascript, ir::Decl};
     if items.is_empty()
         || items.iter().any(|item| {
-            !accept_rust_semantic_module_item(
+            !crate::translation::rust_module_value_rules::accept_rust_value_module_item(
                 &item.term,
                 item.comment,
                 read_semantic_source_role(item.comment, item.text),
@@ -113,15 +164,14 @@ pub(super) fn read_independent_rust_module_publication(
     {
         return Ok(None);
     }
-    let names = read_rust_public_names(source)?;
+    let names = read_rust_public_bindings(source)?;
     let program = read_independent_rust_program(source)?;
     let tree = crate::native_grammar_parser::parse_native("native-rust", source);
     let mut owners = std::collections::HashSet::new();
-    for (node, _) in tree
-        .children
-        .iter()
-        .filter(|(node, _)| node.term == "function_item")
-    {
+    for (node, _) in tree.children.iter().filter(|(node, _)| {
+        !crate::translation::rust_module_value_rules::read_rust_value_module_owner_kind(&node.term)
+            .is_empty()
+    }) {
         let declarations: Vec<_> = node
             .children
             .iter()
@@ -134,7 +184,14 @@ pub(super) fn read_independent_rust_module_publication(
         let Some(name) = source.get(name.start..name.end) else {
             return Ok(None);
         };
-        if !owners.insert(name.to_owned()) {
+        let lexed = crate::translation::lexer::tokenize(name, crate::translation::Language::Rust)
+            .map_err(failure)?;
+        if lexed.tokens.len() != 2
+            || lexed.tokens[0].kind != crate::translation::lexer::TokenKind::Identifier
+        {
+            return Ok(None);
+        }
+        if !owners.insert(lexed.tokens[0].value.clone()) {
             return Ok(None);
         }
     }
@@ -151,15 +208,38 @@ pub(super) fn read_independent_rust_module_publication(
         return Ok(None);
     }
     let mut emitted = emit_javascript(&program).map_err(failure)?;
+    let reserved = crate::translation::lexer::tokenize(
+        &emitted.text,
+        crate::translation::Language::JavaScript,
+    )
+    .map_err(failure)?
+    .tokens
+    .into_iter()
+    .filter(|token| token.kind == crate::translation::lexer::TokenKind::Identifier)
+    .map(|token| token.value)
+    .collect::<Vec<_>>();
+    let kinds = program
+        .declarations
+        .iter()
+        .filter_map(|entry| match entry {
+            Decl::Fn(function) => names.get(&function.name).cloned(),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    let bindings =
+        crate::translation::rust_module_value_rules::plan_rust_module_value_export_bindings(
+            &kinds, &reserved,
+        );
+    let mut export_position = 0usize;
     // Emit aliases in actual source declaration order, independently of native
     // hash iteration order. Private declarations remain private target helpers.
     for entry in &program.declarations {
         let Decl::Fn(function) = entry else {
             continue;
         };
-        if !names.contains(&function.name) {
+        let Some(kind) = names.get(&function.name) else {
             continue;
-        }
+        };
         let mappings: Vec<_> = emitted
             .mappings
             .iter()
@@ -169,15 +249,20 @@ pub(super) fn read_independent_rust_module_publication(
             return Err(super::SelfTranslationError { message:
             "independent Rust module visibility: every public source function needs one actual target mapping".to_owned() });
         }
-        emitted.definitions.push(render_rust_semantic_module_export(
-            &function.name,
-            &mappings[0].target,
-        ));
+        let code = if kind == "const" {
+            let binding = &bindings[export_position];
+            crate::translation::rust_module_value_rules::render_rust_module_value_export(
+                &function.name,
+                &mappings[0].target,
+                binding,
+            )
+        } else {
+            render_rust_semantic_module_export(&function.name, &mappings[0].target)
+        };
+        emitted.definitions.push(code);
+        export_position += 1;
     }
-    let signatures = super::binding::declared_signatures(&program, false)
-        .into_iter()
-        .filter(|signature| names.contains(signature.name()))
-        .collect();
+    let signatures = read_rust_module_value_signatures(&program, &names)?;
     Ok(Some((emitted, signatures)))
 }
 
