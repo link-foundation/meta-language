@@ -6,6 +6,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "array-classification-program.lino" => {
             Some(include_str!("../data/array-classification-program.lino"))
         }
+        "array-formal-parameter-program.lino" => {
+            Some(include_str!("../data/array-formal-parameter-program.lino"))
+        }
         "array-state-method-program.lino" => {
             Some(include_str!("../data/array-state-method-program.lino"))
         }

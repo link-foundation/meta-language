@@ -109,6 +109,7 @@ class Inference {
     this.enumerations=[];
     this.collections = new Map();
     this.iterables = [];
+    this.arrayFormalIterables=[];
     this.indices = [];
     this.cells = new Map();
     this.arithmetic = [];
@@ -407,6 +408,16 @@ class Inference {
         this.coalesces.splice(this.coalesces.indexOf(constraint), 1);
         progress = true;
       }
+      for(const constraint of [...this.arrayFormalIterables]){
+        const object=this.resolve(constraint.object),form=readJavaScriptArrayFormalInferenceForm(object.kind);
+        if(form==='wait')continue;
+        if(form==='identity')this.unify(constraint.result,constraint.object,constraint.where);
+        else if(form==='iterate'){
+          const selection=readArrayFromIterableType(object);if(!selection)throw typeError('an array formal parameter needs a represented iterable',constraint.where);
+          this.unify(constraint.result,{kind:'array',element:selection.element},constraint.where);
+        }else throw typeError('an array formal parameter needs a represented iterable',constraint.where);
+        this.arrayFormalIterables.splice(this.arrayFormalIterables.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.iterables]) {
         const object = this.resolve(constraint.object);
         const element = readArrayFromIterableType(object)?.element;
@@ -559,6 +570,7 @@ class Inference {
         this.unify(...readOptionalCoalescingConstraints(coalesced.left, this.resolve(coalesced.left), coalesced.right, true), coalesced.where);
         progress = true;
       }
+      if(!progress&&this.arrayFormalIterables.length){const iterable=this.arrayFormalIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
       if (!progress && this.iterables.length) {
         const iterable = this.iterables.find((constraint) => this.resolve(constraint.object).kind === 'var');
         if (iterable) {
@@ -998,6 +1010,11 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptArrayFormalIterableOperation()){
+          if(node.args.length!==1||node.args[0].spread)throw typeError('an array formal iterator needs one actual operand',node.span);
+          const object=this.expr(node.args[0].value,env),result=this.fresh();
+          this.arrayFormalIterables.push({object,result,where:node.span});return result;
+        }
         if(readJavaScriptEnumerationForm(node.op)==='keys'){for(const argument of node.args)this.expr(argument.value,env);return {kind:'array',element:STRING};}
         if(readJavaScriptEnumerationForm(node.op)==='values'){
           const values=node.args.map(argument=>this.expr(argument.value,env)),element=this.fresh();
@@ -1442,3 +1459,4 @@ function describe(type) {
 }
 
 import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
+import {readJavaScriptArrayFormalIterableOperation,readJavaScriptArrayFormalInferenceForm} from './array-formal-parameter-rules.js';

@@ -11,7 +11,9 @@ import { planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, r
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
 import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
-import {readJavaScriptRecordClosureParameters,readNamedJavaScriptRecordParameterBody} from './javascript-record-parameters.js';
+import {readJavaScriptRecordClosureParameters} from './javascript-record-parameters.js';
+import {readJavaScriptArrayFormalParameters,readJavaScriptOrdinaryPatternParameterBody} from './array-formal-parameters.js';
+import {readJavaScriptRecordClosureContext} from './record-closure-parameter-rules.js';
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
 
 export function readClosure(parser, method = false) {
@@ -22,7 +24,7 @@ export function readClosure(parser, method = false) {
   if (prefixError === 'named function expression') throw unsupported(prefixError, 'the function name needs a recursive local binding', c.peek());
   if (prefixError === 'generator function') throw unsupported(prefixError, 'generators require a suspended execution state', c.peek());
   let records=null;
-  const tokens=c.eat('(')?((records=readJavaScriptRecordClosureParameters(parser,method,expression))?[]:parser.parameters('closure')):[c.identifier('closure parameter')];
+  const tokens=c.eat('(')?((records=readJavaScriptArrayFormalParameters(parser,readJavaScriptRecordClosureContext(method,expression),null,false)??readJavaScriptRecordClosureParameters(parser,method,expression))?[]:parser.parameters('closure')):[c.identifier('closure parameter')];
   if (!expression) c.expect('=>', 'closure');
   const names = records?records.parameters.map(parameter=>parameter.name):tokens.map((token) => token.value);
   const parameterError = readCallableClosureParameterError(names, records?names.map(()=>false):tokens.map(token => Boolean(token.defaultValue)));
@@ -42,7 +44,7 @@ export function readClosure(parser, method = false) {
   parser.inAsync = false;
   try {
     const readBody=()=>c.is('{')?parser.blockStatements():[{s:'return',expr:parser.expr(),span:start}];
-    const statements=records?readNamedJavaScriptRecordParameterBody(parser,records,readBody):readBody();
+    const statements=records?readJavaScriptOrdinaryPatternParameterBody(parser,records,readBody):readBody();
     const where = { start: start.start, end: c.peek().start };
     const { assignedCaptures, captures } = readCallableStatementCaptures(statements, names, outer.locals);
     if (assignedCaptures.length && !parser.referenceSemantics) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);

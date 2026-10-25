@@ -2729,3 +2729,4 @@ export function createSourceDefinitionProgramLinks(identifier:string,options?:So
 export function createSourceDefinitionFormalFunctionLinks(identifier:string,declaration:string|LinkId,options?:SourceDefinitionCatalogLimits): ReturnType<typeof encodeFormalFunctionDefinition>;
 export function runSourceDefinitionCommand(args:string[]): {exitCode:number;stdout:string|Uint8Array;stderr:string};
 export function createJavaScriptRecordCallableParameterProgramLinks(): TypedProgramLinks;
+export function createJavaScriptArrayFormalParameterProgramLinks():TypedProgramLinks;

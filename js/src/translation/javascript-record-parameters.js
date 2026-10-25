@@ -103,6 +103,11 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
 }
 
 export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody) {
+  return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.bindings.map(binding=>({s:readJavaScriptRecordParameterBindingStatement(written.has(binding.name)),name:binding.name,
+    value:{k:'field',object:{k:'name',path:[binding.parameter],span:binding.parameterSpan},field:binding.property,span:binding.span},span:binding.bindingSpan})));
+}
+
+export function readJavaScriptPatternParameterBody(parser,syntax,readBody,constructPrefix){
   const names = new Set(syntax.sourceNames);
   // A non-simple formal list cannot acquire a same-scope let/const binding.
   // Reuse actual declaration discovery; nested lexical shadows stay separate.
@@ -138,8 +143,6 @@ export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody)
   // same-spelled nested shadow can conservatively allocate an unused local
   // cell; the ordinary lexical lowerer still owns the actual assignment.
   const written=new Set(parser.lexicalReads.slice(before).filter(read=>read.assignment&&names.has(read.name)).map(read=>read.name));
-  const prefix = syntax.bindings.map(binding => ({ s: readJavaScriptRecordParameterBindingStatement(written.has(binding.name)), name: binding.name,
-    value: { k: 'field', object: { k: 'name', path: [binding.parameter], span: binding.parameterSpan },
-      field: binding.property, span: binding.span }, span: binding.bindingSpan }));
+  const prefix=constructPrefix(written);
   return [...prefix, ...statements];
 }

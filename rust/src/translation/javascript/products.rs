@@ -459,6 +459,11 @@ impl<'a> Facts<'a> {
             });
         let potential = matches!(ty, Some(Type::Tuple { .. }));
         let id = self.fact(ty, Some(node));
+        if let SNode::Math{op,args,..}=&node.node
+            && op==&crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string()
+            && args.len()==1&&!args[0].spread {
+            let value=self.expression(&args[0].value,env,context);self.edge(id,value,potential);return id;
+        }
         match &node.node {
             SNode::Tuple {
                 items,

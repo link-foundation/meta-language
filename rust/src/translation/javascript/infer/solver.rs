@@ -159,6 +159,7 @@ impl Inference {
             progress |= self.solve_methods()?;
             progress |= self.solve_includes(false)?;
             progress |= self.solve_optional()?;
+            progress |= self.solve_array_formal_iterables()?;
             progress |= self.solve_iterables()?;
             progress |= self.solve_product_indices()?;
             progress |= self.solve_array_binding_defaults()?;
@@ -191,8 +192,9 @@ impl Inference {
             }
             if !progress {
                 let unknown = self
-                    .iterables
+                    .array_formal_iterables
                     .iter()
+                    .chain(self.iterables.iter())
                     .find(|constraint| matches!(self.resolve(&constraint.object), Term::Var(_)));
                 if let Some(iterable) = unknown {
                     let object = iterable.object.clone();

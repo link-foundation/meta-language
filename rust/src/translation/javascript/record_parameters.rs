@@ -19,6 +19,21 @@ pub(super) struct RecordParameters {
     pub(super) parameters: Vec<SParam>,
     source_names: Vec<String>,
     bindings: Vec<RecordBinding>,
+    array_entries: Option<Vec<super::array_formal_parameters::ArrayFormalEntry>>,
+}
+impl RecordParameters {
+    pub(super) fn from_array_formals(
+        parameters: Vec<SParam>,
+        source_names: Vec<String>,
+        entries: Vec<super::array_formal_parameters::ArrayFormalEntry>,
+    ) -> Self {
+        Self {
+            parameters,
+            source_names,
+            bindings: Vec::new(),
+            array_entries: Some(entries),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -46,7 +61,7 @@ fn reserved_names() -> &'static [Text] {
     })
 }
 
-const fn token_kind(token: &Token) -> &'static str {
+pub(super) const fn token_kind(token: &Token) -> &'static str {
     match token.kind {
         TokenKind::Punct => "punct",
         TokenKind::Identifier => "identifier",
@@ -406,6 +421,7 @@ impl JavaScriptParser {
             parameters: Vec::new(),
             source_names: Vec::new(),
             bindings: Vec::new(),
+            array_entries: None,
         };
         while plan.at < values.len() {
             let form = plan.position()?;
@@ -531,42 +547,46 @@ impl JavaScriptParser {
             .filter(|name| names.contains(*name))
             .cloned()
             .collect::<HashSet<_>>();
-        let mut prefix = syntax
-            .bindings
-            .iter()
-            .map(|binding| {
-                let value = SExpr::new(
-                    SNode::Field {
-                        object: Box::new(SExpr::new(
-                            SNode::Name {
-                                path: vec![binding.parameter.clone()],
-                            },
-                            Some(binding.parameter_span),
-                        )),
-                        field: binding.property.clone(),
-                    },
-                    Some(binding.span),
-                );
-                if rules::read_java_script_record_parameter_binding_statement(
-                    written.contains(&binding.name),
-                )
-                .to_string()
-                    == "let"
-                {
-                    Stmt::Let {
-                        name: binding.name.clone(),
-                        value,
-                        span: binding.binding_span,
+        let mut prefix = if let Some(entries) = &syntax.array_entries {
+            super::array_formal_parameters::binding_statements(entries, &written)
+        } else {
+            syntax
+                .bindings
+                .iter()
+                .map(|binding| {
+                    let value = SExpr::new(
+                        SNode::Field {
+                            object: Box::new(SExpr::new(
+                                SNode::Name {
+                                    path: vec![binding.parameter.clone()],
+                                },
+                                Some(binding.parameter_span),
+                            )),
+                            field: binding.property.clone(),
+                        },
+                        Some(binding.span),
+                    );
+                    if rules::read_java_script_record_parameter_binding_statement(
+                        written.contains(&binding.name),
+                    )
+                    .to_string()
+                        == "let"
+                    {
+                        Stmt::Let {
+                            name: binding.name.clone(),
+                            value,
+                            span: binding.binding_span,
+                        }
+                    } else {
+                        Stmt::Const {
+                            name: binding.name.clone(),
+                            value,
+                            span: binding.binding_span,
+                        }
                     }
-                } else {
-                    Stmt::Const {
-                        name: binding.name.clone(),
-                        value,
-                        span: binding.binding_span,
-                    }
-                }
-            })
-            .collect::<Vec<_>>();
+                })
+                .collect::<Vec<_>>()
+        };
         prefix.extend(statements);
         Ok(prefix)
     }

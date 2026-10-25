@@ -250,6 +250,8 @@ impl Language {
 pub(crate) mod array_binding_program;
 pub(crate) mod javascript_comparison_program;
 
+pub mod array_formal_parameter_program;
+pub mod array_formal_parameter_rules;
 pub(crate) mod javascript_string_range_program;
 pub(crate) mod javascript_string_range_rules;
 pub(crate) mod optional_value_program;

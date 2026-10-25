@@ -139,3 +139,4 @@ export {createRustFormattingProgramLinks} from './rust-formatting-program.js';
 export {sourceDefinitionCatalog,sourceDefinitionEntry,createSourceDefinitionProgramLinks,createSourceDefinitionFormalFunctionLinks} from './source-definition-catalog.js';
 export {runSourceDefinitionCommand} from './source-definition-cli.js';
 export {createJavaScriptRecordCallableParameterProgramLinks} from './record-callable-parameter-program.js';
+export {createJavaScriptArrayFormalParameterProgramLinks} from './array-formal-parameter-program.js';

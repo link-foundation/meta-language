@@ -29,6 +29,7 @@ use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, array};
 use super::{Language, Span};
 
 mod array_bindings;
+mod array_formal_parameters;
 mod array_methods;
 mod callables;
 mod console;

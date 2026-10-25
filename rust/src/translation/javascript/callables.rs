@@ -243,7 +243,13 @@ impl JavaScriptParser {
         }
         let mut records = None;
         let tokens = if self.cursor.eat("(").is_some() {
-            records = self.read_record_closure_parameters(method, expression)?;
+            let context=crate::translation::record_closure_parameter_rules::read_java_script_record_closure_context(method,expression).to_string();
+            let arrays = self.read_array_formal_parameters(&context, None, false)?;
+            records = if arrays.is_some() {
+                arrays
+            } else {
+                self.read_record_closure_parameters(method, expression)?
+            };
             if records.is_some() {
                 Vec::new()
             } else {

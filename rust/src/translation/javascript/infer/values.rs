@@ -161,6 +161,11 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if op==&crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string(){
+                    if args.len()!=1||args[0].spread{return Err(type_error("an array formal iterator needs one actual operand",expr.span));}
+                    let object=self.expr(&args[0].value,env)?;let result=self.fresh(false);
+                    self.array_formal_iterables.push(IterableOf{object,mapper:None,result:result.clone(),place:expr.span});return Ok(result);
+                }
                 if crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op)=="values"{return self.enumeration_values_term(args,env,expr.span);}
                 if crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op)=="keys" {for argument in args {self.expr(&argument.value,env)?;}return Ok(Term::Array(Box::new(Term::Known(STRING))));}
                 if op==&crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(){return self.optional_chain_term(args,env,expr.span);}

@@ -44,7 +44,9 @@ import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from '
 import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 import { validateJavaScriptProducts } from './javascript-products.js';
-import { readNamedJavaScriptRecordParameters, readNamedJavaScriptRecordParameterBody,readJavaScriptRecordConstantParameters,readJavaScriptRecordNamespaceParameters } from './javascript-record-parameters.js';
+import { readNamedJavaScriptRecordParameters,readJavaScriptRecordConstantParameters,readJavaScriptRecordNamespaceParameters } from './javascript-record-parameters.js';
+import {readJavaScriptArrayFormalParameters,readJavaScriptOrdinaryPatternParameterBody} from './array-formal-parameters.js';
+import {readJavaScriptRecordConstantContext} from './record-callable-parameter-rules.js';
 import { acceptJavaScriptStandardBuiltinOwner } from './javascript-record-parameter-rules.js';
 import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
@@ -570,9 +572,10 @@ class JavaScriptParser {
     const c = this.cursor;
     const doc = this.jsdocFor(docToken);
     c.expect('(', nameToken.value);
-    const records = namedRecordParameters ? readNamedJavaScriptRecordParameters(this, doc, isAsync) : namespaceRecordParameters?readJavaScriptRecordNamespaceParameters(this,doc,isAsync):null;
+    const arrays=namedRecordParameters||namespaceRecordParameters?readJavaScriptArrayFormalParameters(this,namedRecordParameters?'ordinary named function declaration':'ordinary namespace object method',doc,isAsync):null;
+    const records = arrays??(namedRecordParameters ? readNamedJavaScriptRecordParameters(this, doc, isAsync) : namespaceRecordParameters?readJavaScriptRecordNamespaceParameters(this,doc,isAsync):null);
     const tokens = records ? [] : this.parameters(nameToken.value);
-    const body = () => records ? readNamedJavaScriptRecordParameterBody(this, records, () => this.blockStatements()) : this.blockStatements();
+    const body = () => records ? readJavaScriptOrdinaryPatternParameterBody(this, records, () => this.blockStatements()) : this.blockStatements();
     return this.functionBody(docToken, nameToken, doc, tokens, body, isAsync, records?.parameters ?? null);
   }
 
@@ -600,12 +603,12 @@ class JavaScriptParser {
       }
       if (c.isKind('identifier')) c.next();
       c.expect('(', nameToken.value);
-      const records=readJavaScriptRecordConstantParameters(this,doc,isAsync,true);
+      const records=readJavaScriptArrayFormalParameters(this,readJavaScriptRecordConstantContext(true),doc,isAsync)??readJavaScriptRecordConstantParameters(this,doc,isAsync,true);
       const tokens = records?[]:this.parameters(nameToken.value);
-      fn = this.functionBody(start, nameToken, doc, tokens, () => records?readNamedJavaScriptRecordParameterBody(this,records,()=>this.blockStatements()):this.blockStatements(), isAsync,records?.parameters??null);
+      fn = this.functionBody(start, nameToken, doc, tokens, () => records?readJavaScriptOrdinaryPatternParameterBody(this,records,()=>this.blockStatements()):this.blockStatements(), isAsync,records?.parameters??null);
     } else {
       let tokens,records=null;
-      if (c.eat('(')) {records=readJavaScriptRecordConstantParameters(this,doc,isAsync,false);tokens=records?[]:this.parameters(nameToken.value);}
+      if (c.eat('(')) {records=readJavaScriptArrayFormalParameters(this,readJavaScriptRecordConstantContext(false),doc,isAsync)??readJavaScriptRecordConstantParameters(this,doc,isAsync,false);tokens=records?[]:this.parameters(nameToken.value);}
       else tokens = [c.identifier('parameter')];
       c.expect('=>', nameToken.value);
       const readBody=() => {
@@ -614,7 +617,7 @@ class JavaScriptParser {
         const expr = isAsync ? this.awaited(() => this.expr()) : this.expr();
         return [{ s: 'return', expr, span: span(token, c.peek()) }];
       };
-      fn = this.functionBody(start, nameToken, doc, tokens,()=>records?readNamedJavaScriptRecordParameterBody(this,records,readBody):readBody(), isAsync,records?.parameters??null);
+      fn = this.functionBody(start, nameToken, doc, tokens,()=>records?readJavaScriptOrdinaryPatternParameterBody(this,records,readBody):readBody(), isAsync,records?.parameters??null);
     }
     c.eat(';');
     return fn;

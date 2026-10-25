@@ -271,7 +271,18 @@ impl JavaScriptParser {
     ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
-        let records = if named_record_parameters {
+        let arrays = self.read_array_formal_parameters(
+            if named_record_parameters {
+                "ordinary named function declaration"
+            } else {
+                "ordinary namespace object method"
+            },
+            doc.as_ref(),
+            is_async,
+        )?;
+        let records = if arrays.is_some() {
+            arrays
+        } else if named_record_parameters {
             self.read_named_record_parameters(doc.as_ref(), is_async)?
         } else {
             self.read_record_namespace_parameters(doc.as_ref(), is_async)?
@@ -327,7 +338,13 @@ impl JavaScriptParser {
                 self.cursor.advance();
             }
             self.cursor.expect("(", Some(&name_token.value))?;
-            let records = self.read_record_constant_parameters(doc.as_ref(), is_async, true)?;
+            let context=crate::translation::record_callable_parameter_rules::read_java_script_record_constant_context(true).to_string();
+            let arrays = self.read_array_formal_parameters(&context, doc.as_ref(), is_async)?;
+            let records = if arrays.is_some() {
+                arrays
+            } else {
+                self.read_record_constant_parameters(doc.as_ref(), is_async, true)?
+            };
             let tokens = if records.is_some() {
                 Vec::new()
             } else {
@@ -340,7 +357,13 @@ impl JavaScriptParser {
         } else {
             let mut records = None;
             let tokens = if self.cursor.eat("(").is_some() {
-                records = self.read_record_constant_parameters(doc.as_ref(), is_async, false)?;
+                let context=crate::translation::record_callable_parameter_rules::read_java_script_record_constant_context(false).to_string();
+                let arrays = self.read_array_formal_parameters(&context, doc.as_ref(), is_async)?;
+                records = if arrays.is_some() {
+                    arrays
+                } else {
+                    self.read_record_constant_parameters(doc.as_ref(), is_async, false)?
+                };
                 if records.is_some() {
                     Vec::new()
                 } else {

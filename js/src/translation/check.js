@@ -55,7 +55,7 @@ import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
 import { readJavaScriptArrayClassificationPlan } from './array-classification-rules.js';
-import { readArrayIterableForm, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
+import { selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
 import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArrayCallbackParameterRole,
@@ -726,13 +726,7 @@ class Checker {
       }
       case 'forOfIterable': {
         const object = this.expr(node.object, env, path, undefined);
-        const form = readArrayIterableForm(object.type.kind, object.type.reference === true);
-        if (form === 'array') return object;
-        if (form === 'string') return { k: 'stringPoints', object, type: array(STRING) };
-        if (form === 'mutable') throw unsupported('mutable collection iteration', 'live collection iteration needs ordered entries and tombstones rather than a snapshot', node.span);
-        if (form === 'set') return { k: 'collectionItems', object, op: 'values', type: array(object.type.element) };
-        if (form === 'map') return { k: 'collectionItems', object, op: 'entries', type: array({ kind: 'tuple', elements: [object.type.key, object.type.value] }) };
-        throw unsupported('for-of iterator', 'this value needs an operational iterator representation', node.span);
+        return checkJavaScriptIterableValue(object,node.span);
       }
       case 'arrayIsArray': {
         const value = this.expr(node.arg, env, path, undefined);
@@ -1283,6 +1277,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op===readJavaScriptArrayFormalIterableOperation())return checkJavaScriptArrayFormalIterable(this,node,env,path);
     const enumeration=checkJavaScriptObjectEnumeration(this,node,env,path,expected);
     if(enumeration)return enumeration;
     const order=checkRecordOrderOperation(this,node,env,path,expected);
@@ -2455,3 +2450,5 @@ function decreasesOn(expr, fn, index, name, subterms) {
 }
 
 import {createArrayRelativeElementTemplateExpression} from './array-relative-element-template.js';
+import {checkJavaScriptIterableValue,checkJavaScriptArrayFormalIterable} from './array-formal-iterables.js';
+import {readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';

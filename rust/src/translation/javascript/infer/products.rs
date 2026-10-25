@@ -137,6 +137,46 @@ impl Inference {
         Ok(progress)
     }
 
+    pub(super) fn solve_array_formal_iterables(&mut self) -> Result<bool> {
+        let mut progress = false;
+        let mut waiting = Vec::new();
+        for constraint in std::mem::take(&mut self.array_formal_iterables) {
+            let object = self.resolve(&constraint.object);
+            let form=crate::translation::array_formal_parameter_rules::read_java_script_array_formal_inference_form(&crate::translation::array_formal_parameter_rules::ml_string::Text::from_text(super::optional_values::kind(&object))).to_string();
+            match form.as_str() {
+                "wait" => {
+                    waiting.push(constraint);
+                    continue;
+                }
+                "identity" => {
+                    self.unify(&constraint.result, &constraint.object, constraint.place)?
+                }
+                "iterate" => {
+                    let element = self.array_from_iterable_element(&object).ok_or_else(|| {
+                        type_error(
+                            "an array formal parameter needs a represented iterable",
+                            constraint.place,
+                        )
+                    })?;
+                    self.unify(
+                        &constraint.result,
+                        &Term::Array(Box::new(element)),
+                        constraint.place,
+                    )?;
+                }
+                _ => {
+                    return Err(type_error(
+                        "an array formal parameter needs a represented iterable",
+                        constraint.place,
+                    ));
+                }
+            }
+            progress = true;
+        }
+        self.array_formal_iterables = waiting;
+        Ok(progress)
+    }
+
     pub(super) fn product_condition(&mut self, term: &Term, place: Option<Span>) {
         self.conditions.push((term.clone(), place));
     }

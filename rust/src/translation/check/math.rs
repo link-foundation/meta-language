@@ -21,6 +21,7 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op==crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string(){return self.array_formal_iterable(args,span,env,path);}
         if crate::translation::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(op)>0.0{return self.record_order_operation(op,args,env,path,span);}
         if op == "testJavaScriptOwnedProperty" {
             return self.javascript_own_property(args, span, env, path);

@@ -1285,6 +1285,8 @@ This prevents syntax rejected by the source language, including duplicate
 lexical declarations, from acquiring an invented translated interpretation.
 The construction record names the supported explicit Node range and parser
 phase; generated artifacts do not vary with the machine's version string.
+The compiler subprocess receives exact UTF16LE code units, preserving isolated
+units rather than replacing them during a UTF8 stdin conversion.
 This is a source-generation parser phase, not product/fixture execution.
 
 Ordinary required flat record parameters now have distinct authored context
@@ -1306,6 +1308,27 @@ syntax/value controls, following the [ECMAScript formal parameter grammar](https
 and [ordinary methods](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-method-definitions).
 Their original named-only operation assertions and every unrelated refusal
 remain intact. These are code and future-control drafts without executions.
+
+The ordinary array-formal draft has a separate actual token/context plan for
+named functions, nested closures, constant functions and namespace methods.
+It preserves distinct source BoundNames, elisions, final named rest and actual
+argument order. Private logical arguments retain complete pattern-origin spans
+without fabricating source Token records. Each pattern selects its represented
+iterator once before its ordered entry bindings. Dense array positions retain
+undefined when absent; string iterators produce Unicode points while preserving
+isolated code units. Rest reuses the existing fresh shallow array operation.
+Binding writes affect local cells independently of the original array slots.
+An internal source wrapper selects the existing array/string/immutable collection
+operations and positional tuple value model, then disappears before typed
+archive encoding. It introduces no Core constructor or source-facet exemption.
+Existing tuple ownership/caller proofs remain binding, with exact source-term
+identity through inference. The complete syntax/domain/inference and original
+iterable decisions are source-generated and available through the shared catalog.
+Defaults, nested/mixed object patterns, arbitrary or live iterators, descriptors,
+missing tuple positions, heterogeneous tuple rest and complete async/generator
+semantics remain implementation obligations. Twenty future values and seven
+refusals cover complete source/definition graphs, both codecs, four emissions
+and native products; none has executed.
 The opt-in `closed binary floating point function` model gives closed Rust and
 JavaScript functions a declared common abstract value interpretation. It guards
 flat function declarations with binary64 and Boolean parameters and results,

@@ -116,6 +116,7 @@ include = [
     # BEGIN generated literal source asset closure
     "src/data/array-binding-program.lino",
     "src/data/array-classification-program.lino",
+    "src/data/array-formal-parameter-program.lino",
     "src/data/array-state-method-program.lino",
     "src/data/big-integer-bitwise-program.lino",
     "src/data/big-integer-conversion-program.lino",

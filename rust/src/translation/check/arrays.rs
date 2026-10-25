@@ -48,6 +48,9 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
+        Self::for_of_iterable_value(object, span)
+    }
+    pub(super) fn for_of_iterable_value(object: Expr, span: Option<Span>) -> Result<Expr> {
         let form = crate::translation::array_value_rules::read_array_iterable_form(
             object.ty.kind(),
             object.ty.is_reference(),
@@ -98,6 +101,28 @@ impl Checker {
                 "this value needs an operational iterator representation",
                 span,
             )),
+        }
+    }
+
+    pub(super) fn array_formal_iterable(
+        &mut self,
+        args: &[SArrayItem],
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
+        if self.language != Language::JavaScript || args.len() != 1 || args[0].spread {
+            return Err(type_error(
+                "an array formal iterator needs one actual operand",
+                span,
+            ));
+        }
+        let object = self.expr(&args[0].value, env, path, None, false)?;
+        let form=crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_form(&crate::translation::array_formal_parameter_rules::ml_string::Text::from_text(object.ty.kind()),object.ty.is_reference()).to_string();
+        if form == "tuple" {
+            Ok(object)
+        } else {
+            Self::for_of_iterable_value(object, span)
         }
     }
 

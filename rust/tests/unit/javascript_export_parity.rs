@@ -323,6 +323,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ),
     ("createGrammarParser", "compile_feature_grammar", "function"),
     (
+        "createJavaScriptArrayFormalParameterProgramLinks",
+        "create_java_script_array_formal_parameter_program_links",
+        "function",
+    ),
+    (
         "createJavaScriptRecordCallableParameterProgramLinks",
         "create_java_script_record_callable_parameter_program_links",
         "function",
