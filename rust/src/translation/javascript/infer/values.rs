@@ -164,6 +164,7 @@ impl Inference {
                 if op==&crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(){
                     return self.record_formal_default_term(args,env,expr.span);
                 }
+                if op==&crate::translation::object_rest_rules::read_java_script_object_rest_operation().to_string(){return self.object_rest_term(args,env,expr.span);}
                 if op==&crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string(){
                     if args.len()!=1||args[0].spread{return Err(type_error("an array formal iterator needs one actual operand",expr.span));}
                     let object=self.expr(&args[0].value,env)?;let result=self.fresh(false);

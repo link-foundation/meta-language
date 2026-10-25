@@ -3028,6 +3028,35 @@ pub fn rebase_java_script_record_property_order(target: &[Vec<f64>], source: &[V
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn copy_java_script_record_property_order(target: &[Vec<f64>], source: &[Vec<f64>], order: &[f64]) -> Vec<f64> {
+    if (!(self::accept_java_script_record_order_names(target)) || !(self::accept_java_script_record_property_order(source, order))) {
+        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![105, 110, 118, 97, 108, 105, 100, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100, 32, 111, 114, 100, 101, 114])).0, message_present: true }).raise()
+    } else {
+        {
+            let index = 0f64;
+            {
+                let source_ml_source1_s18 = self::source_ml_temporary_copy_java_script_record_property_order_loop36(target, source, index);
+                match source_ml_source1_s18.clone() {
+                    self::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Result::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Done => {
+                        {
+                            let result = Vec::<f64>::new();
+                            {
+                                let index_2 = 0f64;
+                                {
+                                    let result_2 = self::source_ml_temporary_copy_java_script_record_property_order_loop37(target, source, order, result, index_2);
+                                    result_2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_record_order_key_error(names: &[Vec<f64>], order: &[f64]) -> self::ml_string::Text {
     if self::accept_java_script_record_property_order(names, order) {
         self::ml_string::Text::from_units(vec![])
@@ -3049,7 +3078,7 @@ pub fn read_java_script_record_property_keys(names: &[Vec<f64>], order: &[f64]) 
                 {
                     let index = 0f64;
                     {
-                        let result_2 = self::source_ml_temporary_read_java_script_record_property_keys_loop36(names, order, result, index);
+                        let result_2 = self::source_ml_temporary_read_java_script_record_property_keys_loop38(names, order, result, index);
                         result_2
                     }
                 }
@@ -3068,7 +3097,7 @@ pub fn read_java_script_record_property_key_texts(names: &[Vec<f64>], order: &[f
             {
                 let index = 0f64;
                 {
-                    let result_2 = self::source_ml_temporary_read_java_script_record_property_key_texts_loop37(&(rows), result, index);
+                    let result_2 = self::source_ml_temporary_read_java_script_record_property_key_texts_loop39(&(rows), result, index);
                     result_2
                 }
             }
@@ -3084,7 +3113,7 @@ pub fn read_java_script_record_property_index(names: &[Vec<f64>], key: &self::ml
         {
             let index = 0f64;
             {
-                let units_2 = self::source_ml_temporary_read_java_script_record_property_index_loop39(key, units, index);
+                let units_2 = self::source_ml_temporary_read_java_script_record_property_index_loop41(key, units, index);
                 self::read_record_field_position(names, &(units_2))
             }
         }
@@ -3102,7 +3131,7 @@ pub fn create_java_script_dense_property_key_texts(length: f64) -> Vec<self::ml_
             {
                 let index = 0f64;
                 {
-                    let result_2 = self::source_ml_temporary_create_java_script_dense_property_key_texts_loop40(length, result, index);
+                    let result_2 = self::source_ml_temporary_create_java_script_dense_property_key_texts_loop42(length, result, index);
                     result_2
                 }
             }
@@ -3118,7 +3147,7 @@ pub fn create_java_script_string_own_property_values(text: &self::ml_string::Tex
         {
             let index = 0f64;
             {
-                let result_2 = self::source_ml_temporary_create_java_script_string_own_property_values_loop41(text, result, index);
+                let result_2 = self::source_ml_temporary_create_java_script_string_own_property_values_loop43(text, result, index);
                 result_2
             }
         }
@@ -3200,23 +3229,23 @@ pub fn source_ml_temporary_accept_record_field_name_loop3(name: &[f64], mut inde
             {
                 let unit = self::ml_array::optional_at(name, self::ml_array::number_index(index));
                 if ((!(match unit.clone() { Some(ml_present) => self::ml_math::is_integer(ml_present), None => false }) || {
-                    let source_ml_source1_comparison_operand18 = unit.clone();
+                    let source_ml_source1_comparison_operand19 = unit.clone();
                     {
-                        let source_ml_source1_comparison_operand19 = 0f64;
-                        if match (source_ml_source1_comparison_operand18.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
-                            ((f64::NAN) < source_ml_source1_comparison_operand19)
+                        let source_ml_source1_comparison_operand20 = 0f64;
+                        if match (source_ml_source1_comparison_operand19.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                            ((f64::NAN) < source_ml_source1_comparison_operand20)
                         } else {
-                            ((source_ml_source1_comparison_operand18.clone().expect("a proven present value")) < source_ml_source1_comparison_operand19)
+                            ((source_ml_source1_comparison_operand19.clone().expect("a proven present value")) < source_ml_source1_comparison_operand20)
                         }
                     }
                 }) || {
-                    let source_ml_source1_comparison_operand20 = unit.clone();
+                    let source_ml_source1_comparison_operand21 = unit.clone();
                     {
-                        let source_ml_source1_comparison_operand21 = 65535f64;
-                        if match (source_ml_source1_comparison_operand20.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
-                            ((f64::NAN) > source_ml_source1_comparison_operand21)
+                        let source_ml_source1_comparison_operand22 = 65535f64;
+                        if match (source_ml_source1_comparison_operand21.clone(), None::<f64>) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false } {
+                            ((f64::NAN) > source_ml_source1_comparison_operand22)
                         } else {
-                            ((source_ml_source1_comparison_operand20.clone().expect("a proven present value")) > source_ml_source1_comparison_operand21)
+                            ((source_ml_source1_comparison_operand21.clone().expect("a proven present value")) > source_ml_source1_comparison_operand22)
                         }
                     }
                 }) {
@@ -3799,8 +3828,8 @@ pub fn source_ml_temporary_read_record_type_owner_presence_loop17(texts: &[self:
                 {
                     let kind = self::record_type_fact_kind(texts, starts, counts, labels, targets, node);
                     {
-                        let source_ml_source1_s22 = self::source_ml_temporary_read_record_type_owner_presence_loop18(texts, numbers, starts, counts, labels, targets, bindings, node, kind.clone());
-                        match source_ml_source1_s22.clone() {
+                        let source_ml_source1_s23 = self::source_ml_temporary_read_record_type_owner_presence_loop18(texts, numbers, starts, counts, labels, targets, bindings, node, kind.clone());
+                        match source_ml_source1_s23.clone() {
                             self::MlTemporaryReadRecordTypeOwnerPresenceLoop18Result::MlTemporaryReadRecordTypeOwnerPresenceLoop18Done(node_2, kind_2) => {
                                 if (node_2 == owner) {
                                     self::MlTemporaryReadRecordTypeOwnerPresenceLoop17Result::MlTemporaryReadRecordTypeOwnerPresenceLoop17Return(true)
@@ -4059,8 +4088,8 @@ pub fn source_ml_temporary_accept_java_script_record_order_permutation_loop24(mu
                     {
                         let previous = 0f64;
                         {
-                            let source_ml_source1_s23 = self::source_ml_temporary_accept_java_script_record_order_permutation_loop25(order, index, value, previous);
-                            match source_ml_source1_s23.clone() {
+                            let source_ml_source1_s24 = self::source_ml_temporary_accept_java_script_record_order_permutation_loop25(order, index, value, previous);
+                            match source_ml_source1_s24.clone() {
                                 self::MlTemporaryAcceptJavaScriptRecordOrderPermutationLoop25Result::MlTemporaryAcceptJavaScriptRecordOrderPermutationLoop25Done => {
                                     {
                                         let index_2 = (index + 1f64);
@@ -4124,12 +4153,12 @@ pub fn source_ml_temporary_create_java_script_record_property_order_loop26(names
                             let position_2 = self::source_ml_temporary_create_java_script_record_property_order_loop27(names, &(numeric), key, position);
                             {
                                 let numeric_2 = {
-                                    let source_ml_source1_concat_value24 = self::ml_array::slice(&numeric, 0f64, position_2);
+                                    let source_ml_source1_concat_value25 = self::ml_array::slice(&numeric, 0f64, position_2);
                                     {
-                                        let source_ml_source1_concat_value25 = vec![field];
+                                        let source_ml_source1_concat_value26 = vec![field];
                                         {
-                                            let source_ml_source1_concat_value26 = self::ml_array::slice(&numeric, position_2, f64::INFINITY);
-                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value24), source_ml_source1_concat_value25), source_ml_source1_concat_value26)
+                                            let source_ml_source1_concat_value27 = self::ml_array::slice(&numeric, position_2, f64::INFINITY);
+                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value25), source_ml_source1_concat_value26), source_ml_source1_concat_value27)
                                         }
                                     }
                                 };
@@ -4161,10 +4190,10 @@ pub fn source_ml_temporary_create_java_script_record_property_order_loop28(names
                 if ((self::read_java_script_literal_property_index(&(self::read_java_script_record_order_name(names, field)))) < (0f64)) {
                     {
                         let result_2 = {
-                            let source_ml_source1_concat_value27 = result;
+                            let source_ml_source1_concat_value28 = result;
                             {
-                                let source_ml_source1_concat_value28 = vec![field];
-                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value27), source_ml_source1_concat_value28)
+                                let source_ml_source1_concat_value29 = vec![field];
+                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value28), source_ml_source1_concat_value29)
                             }
                         };
                         {
@@ -4244,10 +4273,10 @@ pub fn source_ml_temporary_read_java_script_record_order_merge_error_loop31(name
                     if !(self::ml_array::includes(&insertion, &field, 0f64, false, |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()))) {
                         {
                             let insertion_2 = {
-                                let source_ml_source1_concat_value29 = insertion;
+                                let source_ml_source1_concat_value30 = insertion;
                                 {
-                                    let source_ml_source1_concat_value30 = vec![field];
-                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value29), source_ml_source1_concat_value30)
+                                    let source_ml_source1_concat_value31 = vec![field];
+                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value30), source_ml_source1_concat_value31)
                                 }
                             };
                             {
@@ -4285,8 +4314,8 @@ pub fn source_ml_temporary_read_java_script_record_order_merge_error_loop30(name
                 {
                     let index = 0f64;
                     {
-                        let source_ml_source1_s31 = self::source_ml_temporary_read_java_script_record_order_merge_error_loop31(names, insertion, &(values), index);
-                        match source_ml_source1_s31.clone() {
+                        let source_ml_source1_s32 = self::source_ml_temporary_read_java_script_record_order_merge_error_loop31(names, insertion, &(values), index);
+                        match source_ml_source1_s32.clone() {
                             self::MlTemporaryReadJavaScriptRecordOrderMergeErrorLoop31Result::MlTemporaryReadJavaScriptRecordOrderMergeErrorLoop31Done(insertion_2) => {
                                 {
                                     let chunk_2 = (chunk + 1f64);
@@ -4319,10 +4348,10 @@ pub fn source_ml_temporary_merge_java_script_record_property_order_loop33(mut in
                 if !(self::ml_array::includes(&insertion, &field, 0f64, false, |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()))) {
                     {
                         let insertion_2 = {
-                            let source_ml_source1_concat_value32 = insertion;
+                            let source_ml_source1_concat_value33 = insertion;
                             {
-                                let source_ml_source1_concat_value33 = vec![field];
-                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value32), source_ml_source1_concat_value33)
+                                let source_ml_source1_concat_value34 = vec![field];
+                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value33), source_ml_source1_concat_value34)
                             }
                         };
                         {
@@ -4415,10 +4444,10 @@ pub fn source_ml_temporary_rebase_java_script_record_property_order_loop35(targe
                     let field = self::read_record_field_position(target, &(name));
                     {
                         let result_2 = {
-                            let source_ml_source1_concat_value34 = result;
+                            let source_ml_source1_concat_value35 = result;
                             {
-                                let source_ml_source1_concat_value35 = vec![field];
-                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value34), source_ml_source1_concat_value35)
+                                let source_ml_source1_concat_value36 = vec![field];
+                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value35), source_ml_source1_concat_value36)
                             }
                         };
                         {
@@ -4439,15 +4468,82 @@ pub fn source_ml_temporary_rebase_java_script_record_property_order_loop35(targe
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_record_property_keys_loop36(names: &[Vec<f64>], order: &[f64], mut result: Vec<Vec<f64>>, mut index: f64) -> Vec<Vec<f64>> {
+pub fn source_ml_temporary_copy_java_script_record_property_order_loop37(target: &[Vec<f64>], source: &[Vec<f64>], order: &[f64], mut result: Vec<f64>, mut index: f64) -> Vec<f64> {
+    loop {
+        return if (index < ((order.len() as f64))) {
+            {
+                let field = self::read_record_field_position(target, &(self::read_java_script_record_order_name(source, self::read_java_script_record_order_position(order, index))));
+                if (field >= (0f64)) {
+                    {
+                        let result_2 = {
+                            let source_ml_source1_concat_value37 = result;
+                            {
+                                let source_ml_source1_concat_value38 = vec![field];
+                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value37), source_ml_source1_concat_value38)
+                            }
+                        };
+                        {
+                            let index_2 = (index + 1f64);
+                            {
+                                (result, index) = (result_2, index_2);
+                                continue;
+                            }
+                        }
+                    }
+                } else {
+                    {
+                        let index_3 = (index + 1f64);
+                        {
+                            index = index_3;
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            result
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Result {
+    MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Done,
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_copy_java_script_record_property_order_loop36(target: &[Vec<f64>], source: &[Vec<f64>], mut index: f64) -> self::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Result {
+    loop {
+        return if (index < ((target.len() as f64))) {
+            if ((self::read_record_field_position(source, &(self::read_java_script_record_order_name(target, index)))) < (0f64)) {
+                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![97, 110, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101, 115, 116, 32, 116, 97, 114, 103, 101, 116, 32, 109, 117, 115, 116, 32, 98, 101, 32, 97, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 115, 111, 117, 114, 99, 101, 32, 115, 117, 98, 115, 101, 116])).0, message_present: true }).raise()
+            } else {
+                {
+                    let index_2 = (index + 1f64);
+                    {
+                        index = index_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Result::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_record_property_keys_loop38(names: &[Vec<f64>], order: &[f64], mut result: Vec<Vec<f64>>, mut index: f64) -> Vec<Vec<f64>> {
     loop {
         return if (index < ((order.len() as f64))) {
             {
                 let result_2 = {
-                    let source_ml_source1_concat_value36 = result;
+                    let source_ml_source1_concat_value39 = result;
                     {
-                        let source_ml_source1_concat_value37 = vec![self::read_java_script_record_order_name(names, self::read_java_script_record_order_position(order, index))];
-                        self::ml_array::append(self::ml_array::append(Vec::<Vec<f64>>::new(), source_ml_source1_concat_value36), source_ml_source1_concat_value37)
+                        let source_ml_source1_concat_value40 = vec![self::read_java_script_record_order_name(names, self::read_java_script_record_order_position(order, index))];
+                        self::ml_array::append(self::ml_array::append(Vec::<Vec<f64>>::new(), source_ml_source1_concat_value39), source_ml_source1_concat_value40)
                     }
                 };
                 {
@@ -4466,13 +4562,13 @@ pub fn source_ml_temporary_read_java_script_record_property_keys_loop36(names: &
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop38(units: &[f64], mut key: self::ml_string::Text, mut at: f64) -> self::ml_string::Text {
+pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop40(units: &[f64], mut key: self::ml_string::Text, mut at: f64) -> self::ml_string::Text {
     loop {
         return if (at < ((units.len() as f64))) {
             {
                 let key_2 = key.concat(&{
-                    let source_ml_source1_character_argument38 = self::read_java_script_record_order_position(units, at);
-                    self::ml_string::Text::from_units(self::ml_utf16_text::character_units_utf16_text(&vec![source_ml_source1_character_argument38]).into_iter().map(|ml_unit| ml_unit as u16).collect())
+                    let source_ml_source1_character_argument41 = self::read_java_script_record_order_position(units, at);
+                    self::ml_string::Text::from_units(self::ml_utf16_text::character_units_utf16_text(&vec![source_ml_source1_character_argument41]).into_iter().map(|ml_unit| ml_unit as u16).collect())
                 });
                 {
                     let at_2 = (at + 1f64);
@@ -4490,7 +4586,7 @@ pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop38(uni
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop37(rows: &[Vec<f64>], mut result: Vec<self::ml_string::Text>, mut index: f64) -> Vec<self::ml_string::Text> {
+pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop39(rows: &[Vec<f64>], mut result: Vec<self::ml_string::Text>, mut index: f64) -> Vec<self::ml_string::Text> {
     loop {
         return if (index < ((rows.len() as f64))) {
             {
@@ -4500,13 +4596,13 @@ pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop37(row
                     {
                         let at = 0f64;
                         {
-                            let key_2 = self::source_ml_temporary_read_java_script_record_property_key_texts_loop38(&(units), key.clone(), at);
+                            let key_2 = self::source_ml_temporary_read_java_script_record_property_key_texts_loop40(&(units), key.clone(), at);
                             {
                                 let result_2 = {
-                                    let source_ml_source1_concat_value39 = result;
+                                    let source_ml_source1_concat_value42 = result;
                                     {
-                                        let source_ml_source1_concat_value40 = vec![key_2.clone()];
-                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value39), source_ml_source1_concat_value40)
+                                        let source_ml_source1_concat_value43 = vec![key_2.clone()];
+                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value42), source_ml_source1_concat_value43)
                                     }
                                 };
                                 {
@@ -4529,17 +4625,17 @@ pub fn source_ml_temporary_read_java_script_record_property_key_texts_loop37(row
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_record_property_index_loop39(key: &self::ml_string::Text, mut units: Vec<f64>, mut index: f64) -> Vec<f64> {
+pub fn source_ml_temporary_read_java_script_record_property_index_loop41(key: &self::ml_string::Text, mut units: Vec<f64>, mut index: f64) -> Vec<f64> {
     loop {
         return if (index < (key.length())) {
             {
                 let units_2 = {
-                    let source_ml_source1_concat_value50 = units;
+                    let source_ml_source1_concat_value53 = units;
                     {
-                        let source_ml_source1_concat_value51 = vec![{
-                            let source_ml_source1_string_unit_operand41 = key.clone();
+                        let source_ml_source1_concat_value54 = vec![{
+                            let source_ml_source1_string_unit_operand44 = key.clone();
                             {
-                                let source_ml_source1_string_unit_operand42 = index;
+                                let source_ml_source1_string_unit_operand45 = index;
                                 (std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 { {
                                     let index_2 = if position.is_nan() {
                                         0f64
@@ -4550,32 +4646,32 @@ pub fn source_ml_temporary_read_java_script_record_property_index_loop39(key: &s
                                         f64::NAN
                                     } else {
                                         ({
-                                            let source_ml_source1_string_unit_operand48 = {
-                                                let source_ml_source1_string_range_operand43 = text.clone();
+                                            let source_ml_source1_string_unit_operand51 = {
+                                                let source_ml_source1_string_range_operand46 = text.clone();
                                                 {
-                                                    let source_ml_source1_string_range_operand44 = index_2;
+                                                    let source_ml_source1_string_range_operand47 = index_2;
                                                     {
-                                                        let source_ml_source1_string_range_operand45 = (index_2 + 1f64);
+                                                        let source_ml_source1_string_range_operand48 = (index_2 + 1f64);
                                                         {
-                                                            let source_ml_source1_string_range_position46 = source_ml_source1_string_range_operand44;
+                                                            let source_ml_source1_string_range_position49 = source_ml_source1_string_range_operand47;
                                                             {
-                                                                let source_ml_source1_string_range_position47 = source_ml_source1_string_range_operand45;
-                                                                source_ml_source1_string_range_operand43.slice(source_ml_source1_string_range_position46, source_ml_source1_string_range_position47)
+                                                                let source_ml_source1_string_range_position50 = source_ml_source1_string_range_operand48;
+                                                                source_ml_source1_string_range_operand46.slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50)
                                                             }
                                                         }
                                                     }
                                                 }
                                             };
                                             {
-                                                let source_ml_source1_string_unit_operand49 = 0f64;
-                                                source_ml_source1_string_unit_operand48.code_point_at(source_ml_source1_string_unit_operand49)
+                                                let source_ml_source1_string_unit_operand52 = 0f64;
+                                                source_ml_source1_string_unit_operand51.code_point_at(source_ml_source1_string_unit_operand52)
                                             }
                                         }).clone().unwrap_or_else(|| f64::NAN)
                                     }
-                                } }))(source_ml_source1_string_unit_operand41.clone(), source_ml_source1_string_unit_operand42)
+                                } }))(source_ml_source1_string_unit_operand44.clone(), source_ml_source1_string_unit_operand45)
                             }
                         }];
-                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value50), source_ml_source1_concat_value51)
+                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value53), source_ml_source1_concat_value54)
                     }
                 };
                 {
@@ -4594,18 +4690,18 @@ pub fn source_ml_temporary_read_java_script_record_property_index_loop39(key: &s
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_create_java_script_dense_property_key_texts_loop40(mut length: f64, mut result: Vec<self::ml_string::Text>, mut index: f64) -> Vec<self::ml_string::Text> {
+pub fn source_ml_temporary_create_java_script_dense_property_key_texts_loop42(mut length: f64, mut result: Vec<self::ml_string::Text>, mut index: f64) -> Vec<self::ml_string::Text> {
     loop {
         return if (index < length) {
             {
                 let result_2 = {
-                    let source_ml_source1_concat_value53 = result;
+                    let source_ml_source1_concat_value56 = result;
                     {
-                        let source_ml_source1_concat_value54 = vec![{
-                            let source_ml_source1_string_argument52 = index;
-                            self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument52))
+                        let source_ml_source1_concat_value57 = vec![{
+                            let source_ml_source1_string_argument55 = index;
+                            self::ml_string::Text::from_text(&self::ml_number::js_number(source_ml_source1_string_argument55))
                         }];
-                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value53), source_ml_source1_concat_value54)
+                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value56), source_ml_source1_concat_value57)
                     }
                 };
                 {
@@ -4624,17 +4720,17 @@ pub fn source_ml_temporary_create_java_script_dense_property_key_texts_loop40(mu
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_create_java_script_string_own_property_values_loop41(text: &self::ml_string::Text, mut result: Vec<self::ml_string::Text>, mut index: f64) -> Vec<self::ml_string::Text> {
+pub fn source_ml_temporary_create_java_script_string_own_property_values_loop43(text: &self::ml_string::Text, mut result: Vec<self::ml_string::Text>, mut index: f64) -> Vec<self::ml_string::Text> {
     loop {
         return if (index < (text.length())) {
             {
                 let result_2 = {
-                    let source_ml_source1_concat_value62 = result;
+                    let source_ml_source1_concat_value65 = result;
                     {
-                        let source_ml_source1_concat_value63 = vec![{
-                            let source_ml_source1_string_unit_operand55 = text.clone();
+                        let source_ml_source1_concat_value66 = vec![{
+                            let source_ml_source1_string_unit_operand58 = text.clone();
                             {
-                                let source_ml_source1_string_unit_operand56 = index;
+                                let source_ml_source1_string_unit_operand59 = index;
                                 (std::rc::Rc::new(move |text_2: self::ml_string::Text, position: f64| -> self::ml_string::Text { {
                                     let index_2 = if position.is_nan() {
                                         0f64
@@ -4645,26 +4741,26 @@ pub fn source_ml_temporary_create_java_script_string_own_property_values_loop41(
                                         self::ml_string::Text::from_units(vec![])
                                     } else {
                                         {
-                                            let source_ml_source1_string_range_operand57 = text_2.clone();
+                                            let source_ml_source1_string_range_operand60 = text_2.clone();
                                             {
-                                                let source_ml_source1_string_range_operand58 = index_2;
+                                                let source_ml_source1_string_range_operand61 = index_2;
                                                 {
-                                                    let source_ml_source1_string_range_operand59 = (index_2 + 1f64);
+                                                    let source_ml_source1_string_range_operand62 = (index_2 + 1f64);
                                                     {
-                                                        let source_ml_source1_string_range_position60 = source_ml_source1_string_range_operand58;
+                                                        let source_ml_source1_string_range_position63 = source_ml_source1_string_range_operand61;
                                                         {
-                                                            let source_ml_source1_string_range_position61 = source_ml_source1_string_range_operand59;
-                                                            source_ml_source1_string_range_operand57.slice(source_ml_source1_string_range_position60, source_ml_source1_string_range_position61)
+                                                            let source_ml_source1_string_range_position64 = source_ml_source1_string_range_operand62;
+                                                            source_ml_source1_string_range_operand60.slice(source_ml_source1_string_range_position63, source_ml_source1_string_range_position64)
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                } }))(source_ml_source1_string_unit_operand55.clone(), source_ml_source1_string_unit_operand56)
+                                } }))(source_ml_source1_string_unit_operand58.clone(), source_ml_source1_string_unit_operand59)
                             }
                         }];
-                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value62), source_ml_source1_concat_value63)
+                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value65), source_ml_source1_concat_value66)
                     }
                 };
                 {

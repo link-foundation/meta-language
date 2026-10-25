@@ -5,10 +5,16 @@ use serde_json::Value;
 use std::borrow::Cow;
 fn selected(value: &Value) -> bool {
     if value["k"] == "math"
-        && !super::javascript_enumeration_rules::read_java_script_enumeration_form(
+        && (!super::javascript_enumeration_rules::read_java_script_enumeration_form(
             value["op"].as_str().unwrap_or_default(),
         )
         .is_empty()
+            || value["op"].as_str()
+                == Some(
+                    super::object_rest_rules::read_java_script_object_rest_operation()
+                        .to_string()
+                        .as_str(),
+                ))
     {
         return true;
     }

@@ -73,16 +73,25 @@ function acceptJavaScriptRecordParameterBoundName(kind, name, names, reserved, o
 
 /** Complete actual flat object-pattern syntax shared by formal and lexical
  * binding contexts. Profile 0 preserves historical BoundNames, 1 admits
- * ordinary required names, 2 adds exact original initializer intervals.
+ * ordinary required names, 2 adds exact original initializer intervals;
+ * 3 additionally represents final lexical rest by its actual spread/name
+ * positions and -2,-2 initializer markers. Older profiles stay exact.
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @param {string[]} previous @param {number} profile
  * @returns {number[]} */
 export function planJavaScriptObjectPatternBindings(kinds,values,start,reserved,previous,profile){
- if(kinds.length!==values.length||!Number.isInteger(start)||start<0||start>=kinds.length||profile<0||profile>2||!Number.isInteger(profile))return [-1,start];
+ if(kinds.length!==values.length||!Number.isInteger(start)||start<0||start>=kinds.length||profile<0||profile>3||!Number.isInteger(profile))return [-1,start];
  if(readRequiredTextFact(kinds,start)!=='punct'||readRequiredTextFact(values,start)!=='{')return [-1,start];
  let at=start+1;let names=previous.slice(),pairs=[];
  while(at<kinds.length&&!(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='}')){
-  if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='...')return [-6,at];
+  if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='...'){
+   if(profile!==3)return [-6,at];
+   const spread=at,binding=at+1;if(binding>=kinds.length)return [-1,binding];
+   const name=readRequiredTextFact(values,binding);
+   if(!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds,binding),name,names,reserved,true))return [-8,binding];
+   at=binding+1;if(at>=kinds.length||readRequiredTextFact(kinds,at)!=='punct'||readRequiredTextFact(values,at)!=='}')return [-6,at];
+   pairs=pairs.concat([spread,binding,-2,-2]);break;
+  }
   if(readRequiredTextFact(kinds,at)!=='identifier')return [-7,at];
   const property=at;at+=1;if(at>=kinds.length)return [-1,at];let binding=property;
   if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)===':'){
@@ -94,15 +103,15 @@ export function planJavaScriptObjectPatternBindings(kinds,values,start,reserved,
   if(!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds,binding),name,names,reserved,profile>0))return [-8,binding];
   names=names.concat([name]);if(at>=kinds.length)return [-1,at];let first=-1,last=-1;
   if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='='){
-   if(profile!==2)return [-2,at];first=at+1;last=findJavaScriptPatternDefaultExpressionEnd(kinds,values,first,'}');if(last<0)return [-1,first];at=last;
+   if(profile<2)return [-2,at];first=at+1;last=findJavaScriptPatternDefaultExpressionEnd(kinds,values,first,'}');if(last<0)return [-1,first];at=last;
   }
-  pairs=pairs.concat(profile===2?[property,binding,first,last]:[property,binding]);
+  pairs=pairs.concat(profile>=2?[property,binding,first,last]:[property,binding]);
   if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)===','){at+=1;continue;}
   if(!(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='}'))return [-1,at];
  }
  if(pairs.length===0)return [-4,start];
  if(at>=kinds.length||!(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='}'))return [-1,at];
- return [at+1,pairs.length/(profile===2?4:2)].concat(pairs);
+ return [at+1,pairs.length/(profile>=2?4:2)].concat(pairs);
 }
 /** @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @param {boolean} ordinary @param {boolean} defaults @returns {number[]} */

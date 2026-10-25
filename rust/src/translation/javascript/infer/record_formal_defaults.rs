@@ -70,7 +70,7 @@ impl Inference {
                     &constraint.result,
                     &Term::Option {
                         element: Box::new(Term::Known(Type::Unit)),
-                        absence: "undefined".to_owned(),
+                        absence: super::Rc::new(super::RefCell::new("undefined".to_owned())),
                     },
                     constraint.place,
                 )?;

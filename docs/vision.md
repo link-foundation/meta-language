@@ -3943,7 +3943,7 @@ with their hashes at `51140898`. The
 and [keyed binding initialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-keyedbindinginitialization)
 define the correction. Thirty-three future values and eight refusals declare
 original Node, translated JavaScript/native Rust, both codecs and all four
-emissions under explicit language/runtime ranges. None executed. Rest, nested,
+emissions under explicit language/runtime ranges. None executed. Formal rest, nested,
 computed and string-key patterns, inherited/getter/proxy protocols and full
 initialization environments remain obligations.
 
@@ -3956,6 +3956,29 @@ check remains, followed by complete type checking. The source decision and its
 entire native implementation are generated together. Four future independent
 source products and direct body/refusal controls are drafted, without execution.
 Forward unavailable helper summaries remain an obligation.
+
+Final lexical object-rest bindings have a separate source profile. Older
+required/default-only planners retain their exact rest refusals. The new plan
+retains actual spread/local token positions, excludes the original property
+names rather than their local aliases, and requires the rest binding to be
+final without an initializer or trailing comma. Both inference engines wait
+for the complete closed record shape, then transport shared selected field
+positions and their independent types. The checked copy projects the actual
+runtime property order into its complete remaining layout. It allocates one
+fresh outer record through the existing reference model while preserving
+shallow field references. Empty copies and repeated exclusions retain their
+ordinary meanings. No new checked constructor is introduced.
+
+This follows [RestBindingInitialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-restbindinginitialization).
+Twenty future original/emitted/native source products cover values, runtime
+order, mutable bindings, fresh identity, shallow sharing, effects and the exact
+former rest-refusal input. The entire preceding fixture, writer and assertions
+at `62160f11` remain in hashed Links history. Five syntax/domain refusals retain
+the incomplete boundaries; both codecs, all four emissions and explicit runtime
+ranges remain required. None executed. Full Symbol/getter/proxy/inherited and
+primitive ToObject behavior, recursive/computed/string-key patterns and formal
+rest remain separate code obligations. These source drafts establish neither
+language completeness nor runtime parity.
 
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:

@@ -21,6 +21,12 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op
+            == crate::translation::object_rest_rules::read_java_script_object_rest_operation()
+                .to_string()
+        {
+            return self.object_rest(args, span, env, path);
+        }
         if op==crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(){
             return self.record_formal_default(args,span,env,path);
         }

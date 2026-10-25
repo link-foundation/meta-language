@@ -917,20 +917,3 @@ pub fn rebase_java_script_record_property_order(
         }
     }
 }
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_record_order_key_error(
-    names: &[Vec<f64>],
-    order: &[f64],
-) -> self::ml_string::Text {
-    if self::accept_java_script_record_property_order(names, order) {
-        self::ml_string::Text::from_units(vec![])
-    } else {
-        self::ml_string::Text::from_units(vec![
-            105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101,
-            99, 111, 114, 100, 32, 112, 114, 111, 112, 101, 114, 116, 121, 32, 111, 114, 100, 101,
-            114,
-        ])
-    }
-}

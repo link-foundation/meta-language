@@ -106,6 +106,7 @@ class Inference {
     this.coalesces = [];
     this.arrayBindingDefaults = [];
     this.recordFormalFields=[];
+    this.objectRestFields=[];
     this.recordSpreads = [];
     this.enumerations=[];
     this.collections = new Map();
@@ -393,6 +394,13 @@ class Inference {
         else this.fields.push(constraint);
         this.recordFormalFields.splice(this.recordFormalFields.indexOf(constraint),1);progress=true;
       }
+      for(const constraint of [...this.objectRestFields]){
+        const owner=this.resolve(constraint.object),form=readJavaScriptObjectRestOwnerForm(owner.kind,owner.open===true);
+        if(form==='wait')continue;
+        if(form!=='copy')throw unsupported('object rest receiver','every actual enumerable own field and its source order must be represented',constraint.where);
+        this.unify(constraint.result,{kind:'record',fields:selectJavaScriptObjectRestActualFields(owner.fields,constraint.excluded),open:false},constraint.where);
+        this.objectRestFields.splice(this.objectRestFields.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.fields]) {
         if (this.fieldStep(constraint)) {
           this.fields.splice(this.fields.indexOf(constraint), 1);
@@ -625,6 +633,7 @@ class Inference {
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
     if(this.recordFormalFields.length)throw typeError('record formal default needs a known represented field domain',this.recordFormalFields[0].where);
+    if(this.objectRestFields.length)throw typeError('object rest needs a known complete own-field domain',this.objectRestFields[0].where);
     if (this.arrayBindingDefaults.length) throw typeError('array binding default needs a known array element type', this.arrayBindingDefaults[0].where);
     if(this.enumerations.length)throw typeError('object value enumeration needs its actual complete value domain',this.enumerations[0].where);
   }
@@ -1029,6 +1038,10 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptObjectRestOperation()){
+          const operands=readJavaScriptObjectRestOperands(node),object=this.expr(operands.object,env),result=this.fresh();
+          this.objectRestFields.push({object,excluded:operands.excluded,result,where:node.span});return result;
+        }
         if(node.op===readJavaScriptRecordFormalDefaultOperation()){
           const operands=readJavaScriptRecordFormalDefaultOperands(node),object=this.expr(operands.value.object,env),value=this.fresh(),fallback=this.expr(operands.fallback,env),result=this.fresh();
           this.recordFormalFields.push({object,field:operands.value.field,result:value,where:node.span});
@@ -1487,3 +1500,5 @@ import {readJavaScriptArrayFormalIterableOperation,readJavaScriptArrayFormalInfe
 
 import {readJavaScriptRecordFormalDefaultOperation,readJavaScriptRecordFormalDefaultFieldForm} from './javascript-record-parameter-rules.js';
 import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';
+import {readJavaScriptObjectRestOperation,readJavaScriptObjectRestOwnerForm} from './object-rest-rules.js';
+import {readJavaScriptObjectRestOperands,selectJavaScriptObjectRestActualFields} from './object-rest.js';

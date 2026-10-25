@@ -28,7 +28,7 @@ impl JavaScriptParser {
             0.0,
             super::record_parameters::reserved_names(),
             &[],
-            2.0,
+            3.0,
         );
         if plan[0] < 0.0 {
             return Vec::new();
@@ -63,7 +63,7 @@ impl JavaScriptParser {
             0.0,
             reserved,
             &[],
-            2.0,
+            3.0,
         );
         if plan[0] == -4.0 {
             self.cursor.index = start + tokens.len();
@@ -156,11 +156,48 @@ impl JavaScriptParser {
             .iter()
             .map(|token| token.value.clone())
             .collect::<Vec<_>>();
+        let mut excluded = Vec::<Token>::new();
         for index in 0..count {
             let at = 2 + index * 4;
             let property = &tokens[number_index(plan[at]).expect("actual property position")];
             let local = &bindings[index];
             let place = Span::new(property.start, local.end);
+            if plan[at + 2] == -2.0 {
+                let keys = excluded
+                    .iter()
+                    .map(|token| {
+                        SArrayItem::new(
+                            SExpr::new(
+                                SNode::Str {
+                                    value: token.value.clone(),
+                                },
+                                Some(token.span()),
+                            ),
+                            false,
+                        )
+                    })
+                    .collect();
+                let read = SExpr::new(SNode::Math {
+                    op: crate::translation::object_rest_rules::read_java_script_object_rest_operation().to_string(),
+                    name: String::new(),
+                    args: vec![SArrayItem::new(object.clone(), false), SArrayItem::new(SExpr::new(SNode::Array { items: keys, element: None }, Some(place)), false)],
+                }, Some(place));
+                statements.push(if statement == "let" {
+                    Stmt::Let {
+                        name: local.value.clone(),
+                        value: read,
+                        span: whole,
+                    }
+                } else {
+                    Stmt::Const {
+                        name: local.value.clone(),
+                        value: read,
+                        span: whole,
+                    }
+                });
+                continue;
+            }
+            excluded.push(property.clone());
             let fallback = if let Some(first) = number_index(plan[at + 2]) {
                 Some(self.read_formal_initializer(
                     &tokens,

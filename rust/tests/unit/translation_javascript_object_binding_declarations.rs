@@ -1,7 +1,7 @@
 //! Deferred complete source products; native execution belongs to CI.
 use super::translation_rust_records::assert_nominal_translation_product;
 
-fn require_supported_rust_version() {
+pub(super) fn require_supported_rust_version() {
     let output = std::process::Command::new("rustc")
         .arg("--version")
         .output()

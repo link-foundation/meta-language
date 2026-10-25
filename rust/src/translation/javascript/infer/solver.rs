@@ -161,6 +161,7 @@ impl Inference {
             progress |= self.solve_optional()?;
             progress |= self.solve_array_formal_iterables()?;
             progress |= self.solve_record_formal_fields()?;
+            progress |= self.solve_object_rest_fields()?;
             progress |= self.solve_iterables()?;
             progress |= self.solve_product_indices()?;
             progress |= self.solve_array_binding_defaults()?;
@@ -249,6 +250,12 @@ impl Inference {
         if let Some(constraint) = self.record_formal_fields.first() {
             return Err(super::type_error(
                 "record formal default needs a known represented field domain",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.object_rest_fields.first() {
+            return Err(super::type_error(
+                "object rest needs a known complete own-field domain",
                 constraint.place,
             ));
         }

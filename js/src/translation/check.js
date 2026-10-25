@@ -1285,6 +1285,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op===readJavaScriptObjectRestOperation())return checkJavaScriptObjectRest(this,node,env,path);
     if(node.op===readJavaScriptRecordFormalDefaultOperation())return checkJavaScriptRecordFormalDefault(this,node,env,path);
     if(node.op===readJavaScriptArrayFormalIterableOperation())return checkJavaScriptArrayFormalIterable(this,node,env,path);
     const enumeration=checkJavaScriptObjectEnumeration(this,node,env,path,expected);
@@ -2464,4 +2465,6 @@ import {checkJavaScriptIterableValue,checkJavaScriptArrayFormalIterable} from '.
 import {readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';
 
 import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
+import {readJavaScriptObjectRestOperation} from './object-rest-rules.js';
+import {checkJavaScriptObjectRest} from './object-rest.js';
 import {checkJavaScriptRecordFormalDefault} from './record-formal-defaults.js';

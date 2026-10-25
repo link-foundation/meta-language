@@ -1,20 +1,87 @@
 // Generated from complete js/src/translation/javascript-record-order-rules.js. Do not edit by hand.
+use super::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Result;
+use super::accept_java_script_record_order_names;
+use super::accept_java_script_record_property_order;
 use super::accept_record_field_name;
 use super::compare_record_field_names;
 use super::ml_array;
 use super::ml_math;
 use super::ml_source_exception;
 use super::ml_string;
-use super::read_java_script_record_order_key_error;
 use super::read_record_field_position;
 use super::read_required_number_fact;
 use super::read_required_record_name;
-use super::read_required_text_fact;
-use super::source_ml_temporary_create_java_script_dense_property_key_texts_loop40;
-use super::source_ml_temporary_create_java_script_string_own_property_values_loop41;
-use super::source_ml_temporary_read_java_script_record_property_index_loop39;
-use super::source_ml_temporary_read_java_script_record_property_key_texts_loop37;
-use super::source_ml_temporary_read_java_script_record_property_keys_loop36;
+use super::source_ml_temporary_copy_java_script_record_property_order_loop36;
+use super::source_ml_temporary_copy_java_script_record_property_order_loop37;
+use super::source_ml_temporary_create_java_script_dense_property_key_texts_loop42;
+use super::source_ml_temporary_create_java_script_string_own_property_values_loop43;
+use super::source_ml_temporary_read_java_script_record_property_index_loop41;
+use super::source_ml_temporary_read_java_script_record_property_key_texts_loop39;
+use super::source_ml_temporary_read_java_script_record_property_keys_loop38;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn copy_java_script_record_property_order(
+    target: &[Vec<f64>],
+    source: &[Vec<f64>],
+    order: &[f64],
+) -> Vec<f64> {
+    if !(self::accept_java_script_record_order_names(target))
+        || !(self::accept_java_script_record_property_order(source, order))
+    {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("TypeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 111, 98, 106, 101, 99, 116, 32, 114, 101,
+                115, 116, 32, 115, 111, 117, 114, 99, 101, 32, 102, 105, 101, 108, 100, 32, 111,
+                114, 100, 101, 114,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
+        {
+            let index = 0f64;
+            {
+                let source_ml_source1_s18 =
+                    self::source_ml_temporary_copy_java_script_record_property_order_loop36(
+                        target, source, index,
+                    );
+                match source_ml_source1_s18 {
+                    self::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Result::MlTemporaryCopyJavaScriptRecordPropertyOrderLoop36Done => {
+                        {
+                            let result = Vec::<f64>::new();
+                            {
+                                let index_2 = 0f64;
+                                {
+                                    self::source_ml_temporary_copy_java_script_record_property_order_loop37(target, source, order, result, index_2)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_record_order_key_error(
+    names: &[Vec<f64>],
+    order: &[f64],
+) -> self::ml_string::Text {
+    if self::accept_java_script_record_property_order(names, order) {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        self::ml_string::Text::from_units(vec![
+            105, 110, 118, 97, 108, 105, 100, 32, 111, 114, 100, 101, 114, 101, 100, 32, 114, 101,
+            99, 111, 114, 100, 32, 112, 114, 111, 112, 101, 114, 116, 121, 32, 111, 114, 100, 101,
+            114,
+        ])
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -27,7 +94,7 @@ pub fn read_java_script_record_property_keys(names: &[Vec<f64>], order: &[f64]) 
                 {
                     let index = 0f64;
                     {
-                        self::source_ml_temporary_read_java_script_record_property_keys_loop36(
+                        self::source_ml_temporary_read_java_script_record_property_keys_loop38(
                             names, order, result, index,
                         )
                     }
@@ -57,7 +124,7 @@ pub fn read_java_script_record_property_key_texts(
             {
                 let index = 0f64;
                 {
-                    self::source_ml_temporary_read_java_script_record_property_key_texts_loop37(
+                    self::source_ml_temporary_read_java_script_record_property_key_texts_loop39(
                         &(rows),
                         result,
                         index,
@@ -80,7 +147,7 @@ pub fn read_java_script_record_property_index(
             let index = 0f64;
             {
                 let units_2 =
-                    self::source_ml_temporary_read_java_script_record_property_index_loop39(
+                    self::source_ml_temporary_read_java_script_record_property_index_loop41(
                         key, units, index,
                     );
                 self::read_record_field_position(names, &(units_2))
@@ -111,7 +178,7 @@ pub fn create_java_script_dense_property_key_texts(length: f64) -> Vec<self::ml_
             {
                 let index = 0f64;
                 {
-                    self::source_ml_temporary_create_java_script_dense_property_key_texts_loop40(
+                    self::source_ml_temporary_create_java_script_dense_property_key_texts_loop42(
                         length, result, index,
                     )
                 }
@@ -130,7 +197,7 @@ pub fn create_java_script_string_own_property_values(
         {
             let index = 0f64;
             {
-                self::source_ml_temporary_create_java_script_string_own_property_values_loop41(
+                self::source_ml_temporary_create_java_script_string_own_property_values_loop43(
                     text, result, index,
                 )
             }
@@ -239,37 +306,37 @@ pub fn source_ml_temporary_accept_record_field_name_loop3(
             {
                 let unit = self::ml_array::optional_at(name, self::ml_array::number_index(index));
                 if (!((unit).is_some_and(self::ml_math::is_integer)) || {
-                    let source_ml_source1_comparison_operand18 = unit;
+                    let source_ml_source1_comparison_operand19 = unit;
                     {
-                        let source_ml_source1_comparison_operand19 = 0f64;
-                        if match (source_ml_source1_comparison_operand18.clone(), None::<f64>) {
+                        let source_ml_source1_comparison_operand20 = 0f64;
+                        if match (source_ml_source1_comparison_operand19.clone(), None::<f64>) {
                             (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                             (None, None) => true,
                             _ => false,
                         } {
-                            (f64::NAN) < source_ml_source1_comparison_operand19
+                            (f64::NAN) < source_ml_source1_comparison_operand20
                         } else {
-                            (source_ml_source1_comparison_operand18
+                            (source_ml_source1_comparison_operand19
                                 .clone()
                                 .expect("a proven present value"))
-                                < source_ml_source1_comparison_operand19
+                                < source_ml_source1_comparison_operand20
                         }
                     }
                 }) || {
-                    let source_ml_source1_comparison_operand20 = unit;
+                    let source_ml_source1_comparison_operand21 = unit;
                     {
-                        let source_ml_source1_comparison_operand21 = 65_535f64;
-                        if match (source_ml_source1_comparison_operand20.clone(), None::<f64>) {
+                        let source_ml_source1_comparison_operand22 = 65_535f64;
+                        if match (source_ml_source1_comparison_operand21.clone(), None::<f64>) {
                             (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                             (None, None) => true,
                             _ => false,
                         } {
-                            (f64::NAN) > source_ml_source1_comparison_operand21
+                            (f64::NAN) > source_ml_source1_comparison_operand22
                         } else {
-                            (source_ml_source1_comparison_operand20
+                            (source_ml_source1_comparison_operand21
                                 .clone()
                                 .expect("a proven present value"))
-                                > source_ml_source1_comparison_operand21
+                                > source_ml_source1_comparison_operand22
                         }
                     }
                 } {
@@ -830,67 +897,4 @@ pub fn source_ml_temporary_read_record_field_insertion_order_loop12(
 pub enum MlTemporaryRecordTypeFactFieldLoop15Result {
     MlTemporaryRecordTypeFactFieldLoop15Done,
     MlTemporaryRecordTypeFactFieldLoop15Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_record_type_fact_field_loop15(
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    name: &self::ml_string::Text,
-    mut end: f64,
-    mut edge: f64,
-) -> self::MlTemporaryRecordTypeFactFieldLoop15Result {
-    loop {
-        return if edge < end {
-            if (self::read_required_text_fact(labels, edge)) == (*name) {
-                self::MlTemporaryRecordTypeFactFieldLoop15Result::MlTemporaryRecordTypeFactFieldLoop15Return(self::read_required_number_fact(targets, edge))
-            } else {
-                {
-                    let edge_2 = edge + 1f64;
-                    {
-                        edge = edge_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryRecordTypeFactFieldLoop15Result::MlTemporaryRecordTypeFactFieldLoop15Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_record_type_fact_elements_loop16(
-    targets: &[f64],
-    mut values: Vec<f64>,
-    mut end: f64,
-    mut edge: f64,
-) -> Vec<f64> {
-    loop {
-        if edge < end {
-            {
-                let values_2 = {
-                    let (ml_append_right, ml_append_left) =
-                        (vec![self::read_required_number_fact(targets, edge)], values);
-                    self::ml_array::append(ml_append_left, ml_append_right)
-                };
-                {
-                    let edge_2 = edge + 1f64;
-                    {
-                        (values, edge) = (values_2, edge_2);
-                        continue;
-                    }
-                }
-            }
-        }
-        return { values };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadRecordTypeOwnerPresenceLoop17Result {
-    MlTemporaryReadRecordTypeOwnerPresenceLoop17Done,
-    MlTemporaryReadRecordTypeOwnerPresenceLoop17Return(bool),
 }

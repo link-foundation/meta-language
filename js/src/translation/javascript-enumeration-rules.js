@@ -27,7 +27,7 @@ export function readJavaScriptRecordOrderKernelArity(operation){
  if(operation===readJavaScriptObjectEntryPairingOperation())return 2;
  if(operation==='reorderJavaScriptRecordPropertyValues')return 2;
  if(operation==='createJavaScriptRecordPropertyOrder'||operation==='mergeJavaScriptRecordPropertyOrder'||operation==='readJavaScriptRecordPropertyKeys'||operation==='acceptJavaScriptRecordPropertyOrder'||operation==='readJavaScriptRecordPropertyKeyTexts')return 2;
- if(operation==='rebaseJavaScriptRecordPropertyOrder')return 3;
+ if(operation==='rebaseJavaScriptRecordPropertyOrder'||operation==='copyJavaScriptRecordPropertyOrder')return 3;
  return operation==='createJavaScriptDensePropertyKeyTexts'||operation==='createJavaScriptStringOwnPropertyValues'?1:0;
 }
 /** @param {string} operation @param {number} index @returns {string} */
@@ -39,7 +39,7 @@ export function readJavaScriptRecordOrderKernelParameter(operation,index){
  if(operation==='reorderJavaScriptRecordPropertyValues')return index===0?'values':'positions';
  if(operation==='createJavaScriptDensePropertyKeyTexts')return 'number';
  if(operation==='createJavaScriptStringOwnPropertyValues')return 'text';
- if(index===0||operation==='mergeJavaScriptRecordPropertyOrder'||operation==='rebaseJavaScriptRecordPropertyOrder'&&index===1)return 'name rows';
+ if(index===0||operation==='mergeJavaScriptRecordPropertyOrder'||(operation==='rebaseJavaScriptRecordPropertyOrder'||operation==='copyJavaScriptRecordPropertyOrder')&&index===1)return 'name rows';
  return 'positions';
 }
 /** @param {string} operation @returns {string} */

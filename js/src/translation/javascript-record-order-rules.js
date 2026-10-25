@@ -113,6 +113,17 @@ export function rebaseJavaScriptRecordPropertyOrder(target,source,order){
  }
  return result;
 }
+/** A rest copy retains the original source order after excluding fields.
+ * Target is the complete canonical subset, never an invented field layout.
+ * @param {number[][]} target @param {number[][]} source @param {number[]} order
+ * @returns {number[]} */
+export function copyJavaScriptRecordPropertyOrder(target,source,order){
+ if(!acceptJavaScriptRecordOrderNames(target)||!acceptJavaScriptRecordPropertyOrder(source,order))throw new TypeError('invalid object rest source field order');
+ for(let index=0;index<target.length;index+=1)if(readRecordFieldPosition(source,readJavaScriptRecordOrderName(target,index))<0)throw new TypeError('an object rest target must be a complete source subset');
+ let result=[];
+ for(let index=0;index<order.length;index+=1){const field=readRecordFieldPosition(target,readJavaScriptRecordOrderName(source,readJavaScriptRecordOrderPosition(order,index)));if(field>=0)result=result.concat([field]);}
+ return result;
+}
 /** @param {number[][]} names @param {number[]} order @returns {string} */
 export function readJavaScriptRecordOrderKeyError(names,order){return acceptJavaScriptRecordPropertyOrder(names,order)?'':'invalid ordered record property order';}
 /** @param {number[][]} names @param {number[]} order @returns {number[][]} */

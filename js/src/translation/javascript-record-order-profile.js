@@ -1,12 +1,13 @@
 // Select a whole source program, never infer a dynamic order from its type.
 import {readJavaScriptEnumerationForm} from './javascript-enumeration-rules.js';
+import {readJavaScriptObjectRestOperation} from './object-rest-rules.js';
 import {unsupported} from './diagnostics.js';
 export function prepareJavaScriptRecordOrderProfile(surface){
  if(surface.language!=='JavaScript')return {surface,selected:false};
  const seen=new Set();let selected=false;
  function scan(value){
   if(!value||typeof value!=='object'||seen.has(value))return;seen.add(value);
-  if(value.k==='math'&&readJavaScriptEnumerationForm(value.op??''))selected=true;
+  if(value.k==='math'&&(readJavaScriptEnumerationForm(value.op??'')||value.op===readJavaScriptObjectRestOperation()))selected=true;
   for(const [key,child]of Object.entries(value))if(key!=='span'&&!key.startsWith('source'))scan(child);
  }
  scan(surface.items);scan(surface.main);

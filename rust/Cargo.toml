@@ -143,6 +143,7 @@ include = [
     "src/data/module-binding-program.lino",
     "src/data/number-bitwise-program.lino",
     "src/data/object-entry-pair-program.lino",
+    "src/data/object-rest-program.lino",
     "src/data/optional-value-program.lino",
     "src/data/owned-array-reader-domain-program.lino",
     "src/data/record-callable-parameter-program.lino",

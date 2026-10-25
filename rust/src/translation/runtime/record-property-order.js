@@ -1498,6 +1498,26 @@ function rebaseJavaScriptRecordPropertyOrder(target, source, order) {
   }
 }
 
+function copyJavaScriptRecordPropertyOrder(target, source, order) {
+  if ((!acceptJavaScriptRecordOrderNames(target) || !acceptJavaScriptRecordPropertyOrder(source, order))) {
+    return ((ml_message,ml_present)=>{throw new TypeError(ml_present?ml_message:undefined);})("invalid object rest source field order",true);
+  } else {
+    const index = 0;
+    const source_ml_source1_s18 = source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36(target, source, index);
+    switch (source_ml_source1_s18.$) {
+      case "ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_done": {
+        const result = [];
+        const index_2 = 0;
+        const result_2 = source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop37(target, source, order, result, index_2);
+        return result_2;
+      }
+      default: {
+        throw new TypeError(`unexpected constructor ${source_ml_source1_s18.$}`);
+      }
+    }
+  }
+}
+
 function readJavaScriptRecordOrderKeyError(names, order) {
   if (acceptJavaScriptRecordPropertyOrder(names, order)) {
     return "";
@@ -1513,7 +1533,7 @@ function readJavaScriptRecordPropertyKeys(names, order) {
   } else {
     const result = [];
     const index = 0;
-    const result_2 = source_ml_temporary_readJavaScriptRecordPropertyKeys_loop36(names, order, result, index);
+    const result_2 = source_ml_temporary_readJavaScriptRecordPropertyKeys_loop38(names, order, result, index);
     return result_2;
   }
 }
@@ -1522,14 +1542,14 @@ function readJavaScriptRecordPropertyKeyTexts(names, order) {
   const rows = readJavaScriptRecordPropertyKeys(names, order);
   const result = [];
   const index = 0;
-  const result_2 = source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37(rows, result, index);
+  const result_2 = source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop39(rows, result, index);
   return result_2;
 }
 
 function readJavaScriptRecordPropertyIndex(names, key) {
   const units = [];
   const index = 0;
-  const units_2 = source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39(key, units, index);
+  const units_2 = source_ml_temporary_readJavaScriptRecordPropertyIndex_loop41(key, units, index);
   return readRecordFieldPosition(names, units_2);
 }
 
@@ -1539,7 +1559,7 @@ function createJavaScriptDensePropertyKeyTexts(length) {
   } else {
     const result = [];
     const index = 0;
-    const result_2 = source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40(length, result, index);
+    const result_2 = source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop42(length, result, index);
     return result_2;
   }
 }
@@ -1547,7 +1567,7 @@ function createJavaScriptDensePropertyKeyTexts(length) {
 function createJavaScriptStringOwnPropertyValues(text) {
   const result = [];
   const index = 0;
-  const result_2 = source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41(text, result, index);
+  const result_2 = source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop43(text, result, index);
   return result_2;
 }
 
@@ -1593,20 +1613,20 @@ function source_ml_temporary_acceptRecordFieldName_loop3(name, index) {
     if ((index < name.length)) {
       const unit = (name)[index];
       if (((!Number.isInteger(unit) || (() => {
-        const source_ml_source1_comparison_operand18 = unit;
-        const source_ml_source1_comparison_operand19 = 0;
-        if ((source_ml_source1_comparison_operand18 === undefined)) {
-          return (NaN < source_ml_source1_comparison_operand19);
+        const source_ml_source1_comparison_operand19 = unit;
+        const source_ml_source1_comparison_operand20 = 0;
+        if ((source_ml_source1_comparison_operand19 === undefined)) {
+          return (NaN < source_ml_source1_comparison_operand20);
         } else {
-          return (source_ml_source1_comparison_operand18 < source_ml_source1_comparison_operand19);
+          return (source_ml_source1_comparison_operand19 < source_ml_source1_comparison_operand20);
         }
       })()) || (() => {
-        const source_ml_source1_comparison_operand20 = unit;
-        const source_ml_source1_comparison_operand21 = 65535;
-        if ((source_ml_source1_comparison_operand20 === undefined)) {
-          return (NaN > source_ml_source1_comparison_operand21);
+        const source_ml_source1_comparison_operand21 = unit;
+        const source_ml_source1_comparison_operand22 = 65535;
+        if ((source_ml_source1_comparison_operand21 === undefined)) {
+          return (NaN > source_ml_source1_comparison_operand22);
         } else {
-          return (source_ml_source1_comparison_operand20 > source_ml_source1_comparison_operand21);
+          return (source_ml_source1_comparison_operand21 > source_ml_source1_comparison_operand22);
         }
       })())) {
         return ({ $: "ml_temporary_acceptRecordFieldName_loop3_return", ["ml_temporary_result3"]: false });
@@ -1932,11 +1952,11 @@ function source_ml_temporary_readRecordTypeOwnerPresence_loop17(texts, numbers, 
     if ((position < pending.length)) {
       const node = readRequiredNumberFact(pending, position);
       const kind = recordTypeFactKind(texts, starts, counts, labels, targets, node);
-      const source_ml_source1_s22 = source_ml_temporary_readRecordTypeOwnerPresence_loop18(texts, numbers, starts, counts, labels, targets, bindings, node, kind);
-      switch (source_ml_source1_s22.$) {
+      const source_ml_source1_s23 = source_ml_temporary_readRecordTypeOwnerPresence_loop18(texts, numbers, starts, counts, labels, targets, bindings, node, kind);
+      switch (source_ml_source1_s23.$) {
         case "ml_temporary_readRecordTypeOwnerPresence_loop18_done": {
-          const node_2 = source_ml_source1_s22["node"];
-          const kind_2 = source_ml_source1_s22["kind"];
+          const node_2 = source_ml_source1_s23["node"];
+          const kind_2 = source_ml_source1_s23["kind"];
           if ((node_2 === owner)) {
             return ({ $: "ml_temporary_readRecordTypeOwnerPresence_loop17_return", ["ml_temporary_result17"]: true });
           } else {
@@ -1999,7 +2019,7 @@ function source_ml_temporary_readRecordTypeOwnerPresence_loop17(texts, numbers, 
           }
         }
         default: {
-          throw new TypeError(`unexpected constructor ${source_ml_source1_s22.$}`);
+          throw new TypeError(`unexpected constructor ${source_ml_source1_s23.$}`);
         }
       }
     } else {
@@ -2071,19 +2091,19 @@ function source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24(count
         return ({ $: "ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_return", ["ml_temporary_result24"]: false });
       } else {
         const previous = 0;
-        const source_ml_source1_s23 = source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25(order, index, value, previous);
-        switch (source_ml_source1_s23.$) {
+        const source_ml_source1_s24 = source_ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25(order, index, value, previous);
+        switch (source_ml_source1_s24.$) {
           case "ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_done": {
             const index_2 = (index + 1);
             [count, order, index] = [count, order, index_2];
             continue;
           }
           case "ml_temporary_acceptJavaScriptRecordOrderPermutation_loop25_return": {
-            const source_ml_temporary_result25 = source_ml_source1_s23["ml_temporary_result25"];
+            const source_ml_temporary_result25 = source_ml_source1_s24["ml_temporary_result25"];
             return ({ $: "ml_temporary_acceptJavaScriptRecordOrderPermutation_loop24_return", ["ml_temporary_result24"]: source_ml_temporary_result25 });
           }
           default: {
-            throw new TypeError(`unexpected constructor ${source_ml_source1_s23.$}`);
+            throw new TypeError(`unexpected constructor ${source_ml_source1_s24.$}`);
           }
         }
       }
@@ -2117,10 +2137,10 @@ function source_ml_temporary_createJavaScriptRecordPropertyOrder_loop26(names, n
         const position = 0;
         const position_2 = source_ml_temporary_createJavaScriptRecordPropertyOrder_loop27(names, numeric, key, position);
         const numeric_2 = (() => {
-          const source_ml_source1_concat_value24 = (numeric).slice(0, position_2);
-          const source_ml_source1_concat_value25 = [field];
-          const source_ml_source1_concat_value26 = (numeric).slice(position_2, Infinity);
-          return [...[...[...[], ...source_ml_source1_concat_value24], ...source_ml_source1_concat_value25], ...source_ml_source1_concat_value26];
+          const source_ml_source1_concat_value25 = (numeric).slice(0, position_2);
+          const source_ml_source1_concat_value26 = [field];
+          const source_ml_source1_concat_value27 = (numeric).slice(position_2, Infinity);
+          return [...[...[...[], ...source_ml_source1_concat_value25], ...source_ml_source1_concat_value26], ...source_ml_source1_concat_value27];
         })();
         const field_3 = (field + 1);
         [names, numeric, field] = [names, numeric_2, field_3];
@@ -2138,9 +2158,9 @@ function source_ml_temporary_createJavaScriptRecordPropertyOrder_loop28(names, i
       const field = readJavaScriptRecordOrderPosition(insertion, index);
       if ((readJavaScriptLiteralPropertyIndex(readJavaScriptRecordOrderName(names, field)) < 0)) {
         const result_2 = (() => {
-          const source_ml_source1_concat_value27 = result;
-          const source_ml_source1_concat_value28 = [field];
-          return [...[...[], ...source_ml_source1_concat_value27], ...source_ml_source1_concat_value28];
+          const source_ml_source1_concat_value28 = result;
+          const source_ml_source1_concat_value29 = [field];
+          return [...[...[], ...source_ml_source1_concat_value28], ...source_ml_source1_concat_value29];
         })();
         const index_2 = (index + 1);
         [names, insertion, result, index] = [names, insertion, result_2, index_2];
@@ -2181,9 +2201,9 @@ function source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31(names, i
       } else {
         if (!(insertion).includes(field, 0)) {
           const insertion_2 = (() => {
-            const source_ml_source1_concat_value29 = insertion;
-            const source_ml_source1_concat_value30 = [field];
-            return [...[...[], ...source_ml_source1_concat_value29], ...source_ml_source1_concat_value30];
+            const source_ml_source1_concat_value30 = insertion;
+            const source_ml_source1_concat_value31 = [field];
+            return [...[...[], ...source_ml_source1_concat_value30], ...source_ml_source1_concat_value31];
           })();
           const index_2 = (index + 1);
           [names, insertion, values, index] = [names, insertion_2, values, index_2];
@@ -2205,20 +2225,20 @@ function source_ml_temporary_readJavaScriptRecordOrderMergeError_loop30(names, c
     if ((chunk < chunks.length)) {
       const values = readJavaScriptRecordOrderName(chunks, chunk);
       const index = 0;
-      const source_ml_source1_s31 = source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31(names, insertion, values, index);
-      switch (source_ml_source1_s31.$) {
+      const source_ml_source1_s32 = source_ml_temporary_readJavaScriptRecordOrderMergeError_loop31(names, insertion, values, index);
+      switch (source_ml_source1_s32.$) {
         case "ml_temporary_readJavaScriptRecordOrderMergeError_loop31_done": {
-          const insertion_2 = source_ml_source1_s31["insertion"];
+          const insertion_2 = source_ml_source1_s32["insertion"];
           const chunk_2 = (chunk + 1);
           [names, chunks, insertion, chunk] = [names, chunks, insertion_2, chunk_2];
           continue;
         }
         case "ml_temporary_readJavaScriptRecordOrderMergeError_loop31_return": {
-          const source_ml_temporary_result31 = source_ml_source1_s31["ml_temporary_result31"];
+          const source_ml_temporary_result31 = source_ml_source1_s32["ml_temporary_result31"];
           return ({ $: "ml_temporary_readJavaScriptRecordOrderMergeError_loop30_return", ["ml_temporary_result30"]: source_ml_temporary_result31 });
         }
         default: {
-          throw new TypeError(`unexpected constructor ${source_ml_source1_s31.$}`);
+          throw new TypeError(`unexpected constructor ${source_ml_source1_s32.$}`);
         }
       }
     } else {
@@ -2233,9 +2253,9 @@ function source_ml_temporary_mergeJavaScriptRecordPropertyOrder_loop33(insertion
       const field = readJavaScriptRecordOrderPosition(values, index);
       if (!(insertion).includes(field, 0)) {
         const insertion_2 = (() => {
-          const source_ml_source1_concat_value32 = insertion;
-          const source_ml_source1_concat_value33 = [field];
-          return [...[...[], ...source_ml_source1_concat_value32], ...source_ml_source1_concat_value33];
+          const source_ml_source1_concat_value33 = insertion;
+          const source_ml_source1_concat_value34 = [field];
+          return [...[...[], ...source_ml_source1_concat_value33], ...source_ml_source1_concat_value34];
         })();
         const index_2 = (index + 1);
         [insertion, values, index] = [insertion_2, values, index_2];
@@ -2288,9 +2308,9 @@ function source_ml_temporary_rebaseJavaScriptRecordPropertyOrder_loop35(target, 
       const name = readJavaScriptRecordOrderName(source, readJavaScriptRecordOrderPosition(order, index));
       const field = readRecordFieldPosition(target, name);
       const result_2 = (() => {
-        const source_ml_source1_concat_value34 = result;
-        const source_ml_source1_concat_value35 = [field];
-        return [...[...[], ...source_ml_source1_concat_value34], ...source_ml_source1_concat_value35];
+        const source_ml_source1_concat_value35 = result;
+        const source_ml_source1_concat_value36 = [field];
+        return [...[...[], ...source_ml_source1_concat_value35], ...source_ml_source1_concat_value36];
       })();
       const index_2 = (index + 1);
       [target, source, order, result, index] = [target, source, order, result_2, index_2];
@@ -2301,13 +2321,53 @@ function source_ml_temporary_rebaseJavaScriptRecordPropertyOrder_loop35(target, 
   }
 }
 
-function source_ml_temporary_readJavaScriptRecordPropertyKeys_loop36(names, order, result, index) {
+function source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop37(target, source, order, result, index) {
+  for (;;) {
+    if ((index < order.length)) {
+      const field = readRecordFieldPosition(target, readJavaScriptRecordOrderName(source, readJavaScriptRecordOrderPosition(order, index)));
+      if ((field >= 0)) {
+        const result_2 = (() => {
+          const source_ml_source1_concat_value37 = result;
+          const source_ml_source1_concat_value38 = [field];
+          return [...[...[], ...source_ml_source1_concat_value37], ...source_ml_source1_concat_value38];
+        })();
+        const index_2 = (index + 1);
+        [target, source, order, result, index] = [target, source, order, result_2, index_2];
+        continue;
+      } else {
+        const index_3 = (index + 1);
+        [target, source, order, result, index] = [target, source, order, result, index_3];
+        continue;
+      }
+    } else {
+      return result;
+    }
+  }
+}
+
+function source_ml_temporary_copyJavaScriptRecordPropertyOrder_loop36(target, source, index) {
+  for (;;) {
+    if ((index < target.length)) {
+      if ((readRecordFieldPosition(source, readJavaScriptRecordOrderName(target, index)) < 0)) {
+        return ((ml_message,ml_present)=>{throw new TypeError(ml_present?ml_message:undefined);})("an object rest target must be a complete source subset",true);
+      } else {
+        const index_2 = (index + 1);
+        [target, source, index] = [target, source, index_2];
+        continue;
+      }
+    } else {
+      return ({ $: "ml_temporary_copyJavaScriptRecordPropertyOrder_loop36_done" });
+    }
+  }
+}
+
+function source_ml_temporary_readJavaScriptRecordPropertyKeys_loop38(names, order, result, index) {
   for (;;) {
     if ((index < order.length)) {
       const result_2 = (() => {
-        const source_ml_source1_concat_value36 = result;
-        const source_ml_source1_concat_value37 = [readJavaScriptRecordOrderName(names, readJavaScriptRecordOrderPosition(order, index))];
-        return [...[...[], ...source_ml_source1_concat_value36], ...source_ml_source1_concat_value37];
+        const source_ml_source1_concat_value39 = result;
+        const source_ml_source1_concat_value40 = [readJavaScriptRecordOrderName(names, readJavaScriptRecordOrderPosition(order, index))];
+        return [...[...[], ...source_ml_source1_concat_value39], ...source_ml_source1_concat_value40];
       })();
       const index_2 = (index + 1);
       [names, order, result, index] = [names, order, result_2, index_2];
@@ -2318,12 +2378,12 @@ function source_ml_temporary_readJavaScriptRecordPropertyKeys_loop36(names, orde
   }
 }
 
-function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38(units, key, at) {
+function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop40(units, key, at) {
   for (;;) {
     if ((at < units.length)) {
       const key_2 = (key + (() => {
-        const source_ml_source1_character_argument38 = readJavaScriptRecordOrderPosition(units, at);
-        return ml_utf16_text.characterUnits([(+(source_ml_source1_character_argument38))]).map(ml_unit=>String.fromCharCode(ml_unit)).join("");
+        const source_ml_source1_character_argument41 = readJavaScriptRecordOrderPosition(units, at);
+        return ml_utf16_text.characterUnits([(+(source_ml_source1_character_argument41))]).map(ml_unit=>String.fromCharCode(ml_unit)).join("");
       })());
       const at_2 = (at + 1);
       [units, key, at] = [units, key_2, at_2];
@@ -2334,17 +2394,17 @@ function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38(units, 
   }
 }
 
-function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37(rows, result, index) {
+function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop39(rows, result, index) {
   for (;;) {
     if ((index < rows.length)) {
       const units = readJavaScriptRecordOrderName(rows, index);
       const key = "";
       const at = 0;
-      const key_2 = source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38(units, key, at);
+      const key_2 = source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop40(units, key, at);
       const result_2 = (() => {
-        const source_ml_source1_concat_value39 = result;
-        const source_ml_source1_concat_value40 = [key_2];
-        return [...[...[], ...source_ml_source1_concat_value39], ...source_ml_source1_concat_value40];
+        const source_ml_source1_concat_value42 = result;
+        const source_ml_source1_concat_value43 = [key_2];
+        return [...[...[], ...source_ml_source1_concat_value42], ...source_ml_source1_concat_value43];
       })();
       const index_2 = (index + 1);
       [rows, result, index] = [rows, result_2, index_2];
@@ -2355,35 +2415,35 @@ function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37(rows, r
   }
 }
 
-function source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39(key, units, index) {
+function source_ml_temporary_readJavaScriptRecordPropertyIndex_loop41(key, units, index) {
   for (;;) {
     if ((index < key.length)) {
       const units_2 = (() => {
-        const source_ml_source1_concat_value50 = units;
-        const source_ml_source1_concat_value51 = [(() => {
-          const source_ml_source1_string_unit_operand41 = key;
-          const source_ml_source1_string_unit_operand42 = index;
+        const source_ml_source1_concat_value53 = units;
+        const source_ml_source1_concat_value54 = [(() => {
+          const source_ml_source1_string_unit_operand44 = key;
+          const source_ml_source1_string_unit_operand45 = index;
           return (((text, position) => (() => {
             const index_2 = (Number.isNaN(position) ? 0 : Math.trunc(position));
             if (((index_2 < 0) || (index_2 >= text.length))) {
               return NaN;
             } else {
               return ((() => {
-                const source_ml_source1_string_unit_operand48 = (() => {
-                  const source_ml_source1_string_range_operand43 = text;
-                  const source_ml_source1_string_range_operand44 = index_2;
-                  const source_ml_source1_string_range_operand45 = (index_2 + 1);
-                  const source_ml_source1_string_range_position46 = (+(source_ml_source1_string_range_operand44));
-                  const source_ml_source1_string_range_position47 = (+(source_ml_source1_string_range_operand45));
-                  return (source_ml_source1_string_range_operand43).slice(source_ml_source1_string_range_position46, source_ml_source1_string_range_position47);
+                const source_ml_source1_string_unit_operand51 = (() => {
+                  const source_ml_source1_string_range_operand46 = text;
+                  const source_ml_source1_string_range_operand47 = index_2;
+                  const source_ml_source1_string_range_operand48 = (index_2 + 1);
+                  const source_ml_source1_string_range_position49 = (+(source_ml_source1_string_range_operand47));
+                  const source_ml_source1_string_range_position50 = (+(source_ml_source1_string_range_operand48));
+                  return (source_ml_source1_string_range_operand46).slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50);
                 })();
-                const source_ml_source1_string_unit_operand49 = 0;
-                return (source_ml_source1_string_unit_operand48).codePointAt((+(source_ml_source1_string_unit_operand49)));
+                const source_ml_source1_string_unit_operand52 = 0;
+                return (source_ml_source1_string_unit_operand51).codePointAt((+(source_ml_source1_string_unit_operand52)));
               })() ?? NaN);
             }
-          })()))(source_ml_source1_string_unit_operand41, (+(source_ml_source1_string_unit_operand42)));
+          })()))(source_ml_source1_string_unit_operand44, (+(source_ml_source1_string_unit_operand45)));
         })()];
-        return [...[...[], ...source_ml_source1_concat_value50], ...source_ml_source1_concat_value51];
+        return [...[...[], ...source_ml_source1_concat_value53], ...source_ml_source1_concat_value54];
       })();
       const index_2 = (index + 1);
       [key, units, index] = [key, units_2, index_2];
@@ -2394,16 +2454,16 @@ function source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39(key, units
   }
 }
 
-function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40(length, result, index) {
+function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop42(length, result, index) {
   for (;;) {
     if ((index < length)) {
       const result_2 = (() => {
-        const source_ml_source1_concat_value53 = result;
-        const source_ml_source1_concat_value54 = [(() => {
-          const source_ml_source1_string_argument52 = index;
-          return String(source_ml_source1_string_argument52);
+        const source_ml_source1_concat_value56 = result;
+        const source_ml_source1_concat_value57 = [(() => {
+          const source_ml_source1_string_argument55 = index;
+          return String(source_ml_source1_string_argument55);
         })()];
-        return [...[...[], ...source_ml_source1_concat_value53], ...source_ml_source1_concat_value54];
+        return [...[...[], ...source_ml_source1_concat_value56], ...source_ml_source1_concat_value57];
       })();
       const index_2 = (index + 1);
       [length, result, index] = [length, result_2, index_2];
@@ -2414,29 +2474,29 @@ function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40(length
   }
 }
 
-function source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41(text, result, index) {
+function source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop43(text, result, index) {
   for (;;) {
     if ((index < text.length)) {
       const result_2 = (() => {
-        const source_ml_source1_concat_value62 = result;
-        const source_ml_source1_concat_value63 = [(() => {
-          const source_ml_source1_string_unit_operand55 = text;
-          const source_ml_source1_string_unit_operand56 = index;
+        const source_ml_source1_concat_value65 = result;
+        const source_ml_source1_concat_value66 = [(() => {
+          const source_ml_source1_string_unit_operand58 = text;
+          const source_ml_source1_string_unit_operand59 = index;
           return (((text_2, position) => (() => {
             const index_2 = (Number.isNaN(position) ? 0 : Math.trunc(position));
             if (((index_2 < 0) || (index_2 >= text_2.length))) {
               return "";
             } else {
-              const source_ml_source1_string_range_operand57 = text_2;
-              const source_ml_source1_string_range_operand58 = index_2;
-              const source_ml_source1_string_range_operand59 = (index_2 + 1);
-              const source_ml_source1_string_range_position60 = (+(source_ml_source1_string_range_operand58));
-              const source_ml_source1_string_range_position61 = (+(source_ml_source1_string_range_operand59));
-              return (source_ml_source1_string_range_operand57).slice(source_ml_source1_string_range_position60, source_ml_source1_string_range_position61);
+              const source_ml_source1_string_range_operand60 = text_2;
+              const source_ml_source1_string_range_operand61 = index_2;
+              const source_ml_source1_string_range_operand62 = (index_2 + 1);
+              const source_ml_source1_string_range_position63 = (+(source_ml_source1_string_range_operand61));
+              const source_ml_source1_string_range_position64 = (+(source_ml_source1_string_range_operand62));
+              return (source_ml_source1_string_range_operand60).slice(source_ml_source1_string_range_position63, source_ml_source1_string_range_position64);
             }
-          })()))(source_ml_source1_string_unit_operand55, (+(source_ml_source1_string_unit_operand56)));
+          })()))(source_ml_source1_string_unit_operand58, (+(source_ml_source1_string_unit_operand59)));
         })()];
-        return [...[...[], ...source_ml_source1_concat_value62], ...source_ml_source1_concat_value63];
+        return [...[...[], ...source_ml_source1_concat_value65], ...source_ml_source1_concat_value66];
       })();
       const index_2 = (index + 1);
       [text, result, index] = [text, result_2, index_2];

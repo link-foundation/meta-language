@@ -80,7 +80,7 @@ pub fn plan_java_script_object_pattern_bindings(
         || (start < 0f64))
         || (start >= (kinds.len() as f64)))
         || (profile < 0f64))
-        || (profile > 2f64))
+        || (profile > 3f64))
         || !(self::ml_math::is_integer(profile)))
         || (((self::read_required_text_fact(kinds, start))
             != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
@@ -105,7 +105,7 @@ pub fn plan_java_script_object_pattern_bindings(
                                             vec![-1f64, at_2]
                                         } else {
                                             {
-                                                let source_ml_source2_concat_value88 = vec![(at_2 + 1f64), ((pairs_2.len() as f64) / if profile == 2f64 {
+                                                let source_ml_source2_concat_value88 = vec![(at_2 + 1f64), ((pairs_2.len() as f64) / if profile >= 2f64 {
                                                     4f64
                                                 } else {
                                                     2f64

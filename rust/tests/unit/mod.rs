@@ -390,3 +390,5 @@ mod translation_javascript_guarded_record_indices;
 mod translation_javascript_record_formal_defaults;
 
 mod translation_javascript_object_binding_declarations;
+
+mod translation_javascript_object_rest;

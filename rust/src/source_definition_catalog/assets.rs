@@ -92,6 +92,7 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "object-entry-pair-program.lino" => {
             Some(include_str!("../data/object-entry-pair-program.lino"))
         }
+        "object-rest-program.lino" => Some(include_str!("../data/object-rest-program.lino")),
         "optional-value-program.lino" => Some(include_str!("../data/optional-value-program.lino")),
         "owned-array-reader-domain-program.lino" => Some(include_str!(
             "../data/owned-array-reader-domain-program.lino"

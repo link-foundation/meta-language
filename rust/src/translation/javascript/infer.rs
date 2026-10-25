@@ -22,6 +22,7 @@ mod fields;
 mod methods;
 mod numbers;
 mod numeric_intrinsics;
+mod object_rest;
 mod optional_calls;
 mod optional_chains;
 mod optional_values;
@@ -246,6 +247,7 @@ struct Inference {
     coalesces: Vec<Coalescing>,
     array_binding_defaults: Vec<array_bindings::DefaultBinding>,
     record_formal_fields: Vec<record_formal_defaults::FieldRead>,
+    object_rest_fields: Vec<object_rest::RestFields>,
     joins: Vec<Join>,
     results: Vec<FunctionResult>,
     calls: Vec<CallArguments>,
@@ -299,6 +301,7 @@ impl Inference {
             coalesces: Vec::new(),
             array_binding_defaults: Vec::new(),
             record_formal_fields: Vec::new(),
+            object_rest_fields: Vec::new(),
             joins: Vec::new(),
             results: Vec::new(),
             calls: Vec::new(),

@@ -1,5 +1,5 @@
 // Generated from complete js/src/translation/javascript-record-order-rules.js. Do not edit by hand.
-use super::MlTemporaryReadRecordTypeOwnerPresenceLoop17Result;
+use super::MlTemporaryRecordTypeFactFieldLoop15Result;
 use super::accept_record_field_name;
 use super::compare_record_field_names;
 use super::ml_array;
@@ -9,9 +9,73 @@ use super::read_java_script_literal_property_index;
 use super::read_java_script_record_order_name;
 use super::read_java_script_record_order_position;
 use super::read_required_number_fact;
+use super::read_required_text_fact;
 use super::record_type_fact_elements;
 use super::record_type_fact_field;
 use super::record_type_fact_kind;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_record_type_fact_field_loop15(
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    name: &self::ml_string::Text,
+    mut end: f64,
+    mut edge: f64,
+) -> self::MlTemporaryRecordTypeFactFieldLoop15Result {
+    loop {
+        return if edge < end {
+            if (self::read_required_text_fact(labels, edge)) == (*name) {
+                self::MlTemporaryRecordTypeFactFieldLoop15Result::MlTemporaryRecordTypeFactFieldLoop15Return(self::read_required_number_fact(targets, edge))
+            } else {
+                {
+                    let edge_2 = edge + 1f64;
+                    {
+                        edge = edge_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryRecordTypeFactFieldLoop15Result::MlTemporaryRecordTypeFactFieldLoop15Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_record_type_fact_elements_loop16(
+    targets: &[f64],
+    mut values: Vec<f64>,
+    mut end: f64,
+    mut edge: f64,
+) -> Vec<f64> {
+    loop {
+        if edge < end {
+            {
+                let values_2 = {
+                    let (ml_append_right, ml_append_left) =
+                        (vec![self::read_required_number_fact(targets, edge)], values);
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let edge_2 = edge + 1f64;
+                    {
+                        (values, edge) = (values_2, edge_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { values };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadRecordTypeOwnerPresenceLoop17Result {
+    MlTemporaryReadRecordTypeOwnerPresenceLoop17Done,
+    MlTemporaryReadRecordTypeOwnerPresenceLoop17Return(bool),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -220,12 +284,12 @@ pub fn source_ml_temporary_read_record_type_owner_presence_loop17(
                     let kind =
                         self::record_type_fact_kind(texts, starts, counts, labels, targets, node);
                     {
-                        let source_ml_source1_s22 =
+                        let source_ml_source1_s23 =
                             self::source_ml_temporary_read_record_type_owner_presence_loop18(
                                 texts, numbers, starts, counts, labels, targets, bindings, node,
                                 kind,
                             );
-                        match source_ml_source1_s22 {
+                        match source_ml_source1_s23 {
                             self::MlTemporaryReadRecordTypeOwnerPresenceLoop18Result::MlTemporaryReadRecordTypeOwnerPresenceLoop18Done(node_2, kind_2) => {
                                 if node_2 == owner {
                                     self::MlTemporaryReadRecordTypeOwnerPresenceLoop17Result::MlTemporaryReadRecordTypeOwnerPresenceLoop17Return(true)
@@ -513,8 +577,8 @@ pub fn source_ml_temporary_accept_java_script_record_order_permutation_loop24(
                     {
                         let previous = 0f64;
                         {
-                            let source_ml_source1_s23 = self::source_ml_temporary_accept_java_script_record_order_permutation_loop25(order, index, value, previous);
-                            match source_ml_source1_s23 {
+                            let source_ml_source1_s24 = self::source_ml_temporary_accept_java_script_record_order_permutation_loop25(order, index, value, previous);
+                            match source_ml_source1_s24 {
                                 self::MlTemporaryAcceptJavaScriptRecordOrderPermutationLoop25Result::MlTemporaryAcceptJavaScriptRecordOrderPermutationLoop25Done => {
                                     {
                                         let index_2 = index + 1f64;
@@ -596,12 +660,12 @@ pub fn source_ml_temporary_create_java_script_record_property_order_loop26(
                             let position_2 = self::source_ml_temporary_create_java_script_record_property_order_loop27(names, &(numeric), key, position);
                             {
                                 let numeric_2 = {
-                                    let source_ml_source1_concat_value24 =
+                                    let source_ml_source1_concat_value25 =
                                         self::ml_array::slice(&numeric, 0f64, position_2);
                                     {
-                                        let source_ml_source1_concat_value25 = vec![field];
+                                        let source_ml_source1_concat_value26 = vec![field];
                                         {
-                                            let source_ml_source1_concat_value26 =
+                                            let source_ml_source1_concat_value27 =
                                                 self::ml_array::slice(
                                                     &numeric,
                                                     position_2,
@@ -611,11 +675,11 @@ pub fn source_ml_temporary_create_java_script_record_property_order_loop26(
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<f64>::new(),
-                                                        source_ml_source1_concat_value24,
+                                                        source_ml_source1_concat_value25,
                                                     ),
-                                                    source_ml_source1_concat_value25,
+                                                    source_ml_source1_concat_value26,
                                                 ),
-                                                source_ml_source1_concat_value26,
+                                                source_ml_source1_concat_value27,
                                             )
                                         }
                                     }
@@ -655,15 +719,15 @@ pub fn source_ml_temporary_create_java_script_record_property_order_loop28(
                 {
                     {
                         let result_2 = {
-                            let source_ml_source1_concat_value27 = result;
+                            let source_ml_source1_concat_value28 = result;
                             {
-                                let source_ml_source1_concat_value28 = vec![field];
+                                let source_ml_source1_concat_value29 = vec![field];
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<f64>::new(),
-                                        source_ml_source1_concat_value27,
+                                        source_ml_source1_concat_value28,
                                     ),
-                                    source_ml_source1_concat_value28,
+                                    source_ml_source1_concat_value29,
                                 )
                             }
                         };
@@ -765,15 +829,15 @@ pub fn source_ml_temporary_read_java_script_record_order_merge_error_loop31(
                     )) {
                         {
                             let insertion_2 = {
-                                let source_ml_source1_concat_value29 = insertion;
+                                let source_ml_source1_concat_value30 = insertion;
                                 {
-                                    let source_ml_source1_concat_value30 = vec![field];
+                                    let source_ml_source1_concat_value31 = vec![field];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<f64>::new(),
-                                            source_ml_source1_concat_value29,
+                                            source_ml_source1_concat_value30,
                                         ),
-                                        source_ml_source1_concat_value30,
+                                        source_ml_source1_concat_value31,
                                     )
                                 }
                             };
@@ -818,8 +882,8 @@ pub fn source_ml_temporary_read_java_script_record_order_merge_error_loop30(
                 {
                     let index = 0f64;
                     {
-                        let source_ml_source1_s31 = self::source_ml_temporary_read_java_script_record_order_merge_error_loop31(names, insertion, &(values), index);
-                        match source_ml_source1_s31 {
+                        let source_ml_source1_s32 = self::source_ml_temporary_read_java_script_record_order_merge_error_loop31(names, insertion, &(values), index);
+                        match source_ml_source1_s32 {
                             self::MlTemporaryReadJavaScriptRecordOrderMergeErrorLoop31Result::MlTemporaryReadJavaScriptRecordOrderMergeErrorLoop31Done(insertion_2) => {
                                 {
                                     let chunk_2 = chunk + 1f64;
@@ -839,61 +903,5 @@ pub fn source_ml_temporary_read_java_script_record_order_merge_error_loop30(
         } else {
             self::MlTemporaryReadJavaScriptRecordOrderMergeErrorLoop30Result::MlTemporaryReadJavaScriptRecordOrderMergeErrorLoop30Done(insertion)
         };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_merge_java_script_record_property_order_loop33(
-    mut insertion: Vec<f64>,
-    values: &[f64],
-    mut index: f64,
-) -> Vec<f64> {
-    loop {
-        if index < (values.len() as f64) {
-            {
-                let field = self::read_java_script_record_order_position(values, index);
-                if !(self::ml_array::includes(
-                    &insertion,
-                    &field,
-                    0f64,
-                    false,
-                    |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
-                )) {
-                    {
-                        let insertion_2 = {
-                            let source_ml_source1_concat_value32 = insertion;
-                            {
-                                let source_ml_source1_concat_value33 = vec![field];
-                                self::ml_array::append(
-                                    self::ml_array::append(
-                                        Vec::<f64>::new(),
-                                        source_ml_source1_concat_value32,
-                                    ),
-                                    source_ml_source1_concat_value33,
-                                )
-                            }
-                        };
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                (insertion, index) = (insertion_2, index_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-                {
-                    {
-                        let index_3 = index + 1f64;
-                        {
-                            index = index_3;
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { insertion };
     }
 }
