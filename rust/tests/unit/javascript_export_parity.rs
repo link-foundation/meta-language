@@ -338,6 +338,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createSourceDefinitionFormalFunctionLinks",
+        "create_source_definition_formal_function_links",
+        "function",
+    ),
+    (
+        "createSourceDefinitionProgramLinks",
+        "create_source_definition_program_links",
+        "function",
+    ),
+    (
         "createTypedProgramLinks",
         "create_typed_program_links",
         "function",
@@ -715,6 +725,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("runGrammarCommand", "run_grammar_command", "function"),
+    (
+        "runSourceDefinitionCommand",
+        "run_source_definition_command",
+        "function",
+    ),
     ("scriptLanguage", "script_language", "function"),
     ("selfTranslate", "self_translate", "function"),
     (
@@ -736,6 +751,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("sniffLanguage", "sniff_language", "function"),
+    (
+        "sourceDefinitionCatalog",
+        "source_definition_catalog",
+        "function",
+    ),
+    (
+        "sourceDefinitionEntry",
+        "source_definition_entry",
+        "function",
+    ),
     ("sourceMeanings", "source_meanings_in", "function"),
     ("sourceTextPredicateHost", "SourceTextPredicateHost", "type"),
     ("splitGrammarSource", "split_grammar_source", "function"),

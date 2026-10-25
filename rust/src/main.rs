@@ -29,6 +29,13 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Discover and export complete typed source definitions; run definition help.
+    #[command(disable_help_flag = true)]
+    Definition {
+        /// Source definition operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Prepare, extend and parse dynamic language archives; run language help.
     #[command(disable_help_flag = true)]
     Language {
@@ -248,6 +255,14 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::Definition { args } => {
+            let output = meta_language::run_source_definition_command(&args);
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
         Command::Language { args } => {
             let output = meta_language::run_dynamic_language_command(
                 &args,

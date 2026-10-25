@@ -1231,6 +1231,24 @@ do not enter this function-specific meaning. The default function-definition
 model retains public names, source language, types and executable operators as
 meaning premises. Captured externals, non-flat declarations and broader
 equivalence require separate proofs.
+
+The complete qualified source-program catalog inventories every existing
+`*-program.lino` definition asset, with its exact paired package bytes, SHA256
+and original local typed root. A qualified selector plus artifact digest names
+that preserved definition revision; it never proves equal meaning or authorizes
+concept deduplication. The automatically constructed catalog and native literal
+asset table reuse the complete original graphs without copying their bodies
+into per-entry factories. Loading authenticates one selected asset within
+explicit byte/node/depth bounds and statically rechecks its actual typed root;
+it does not eagerly load every source program. Returned metadata and graphs have
+independent ownership. The library can then select an actual owned function and
+its complete recursive dependencies through the existing formal-definition
+model, retaining every unsupported context and proof obligation. The
+`definition list`, `definition program` and `definition function` commands expose
+these same operations and complete text/binary archives. No source-language
+alias, spelling match, digest equality or catalog entry alone merges concepts.
+The catalog, command transport and deferred controls are code drafts, not
+execution evidence or full formal coverage of every concept.
 The opt-in `closed binary floating point function` model gives closed Rust and
 JavaScript functions a declared common abstract value interpretation. It guards
 flat function declarations with binary64 and Boolean parameters and results,

@@ -135,3 +135,5 @@ export {createUnicodeCaseProgramLinks} from './unicode-case-program.js';
 export {createRustUnitValueProgramLinks} from './rust-unit-value-program.js';
 
 export {createRustFormattingProgramLinks} from './rust-formatting-program.js';
+export {sourceDefinitionCatalog,sourceDefinitionEntry,createSourceDefinitionProgramLinks,createSourceDefinitionFormalFunctionLinks} from './source-definition-catalog.js';
+export {runSourceDefinitionCommand} from './source-definition-cli.js';

@@ -90,6 +90,16 @@ mod shared_numeric_function_model;
 mod shared_numeric_function_rules;
 pub mod snapshots;
 pub mod source;
+mod source_definition_catalog;
+mod source_definition_catalog_rules;
+mod source_definition_cli;
+pub use source_definition_catalog::{
+    SourceDefinitionCatalogLimits, SourceDefinitionEntry,
+    create_source_definition_formal_function_links, create_source_definition_program_links,
+    create_source_definition_program_links_with_limits, source_definition_catalog,
+    source_definition_entry,
+};
+pub use source_definition_cli::run_source_definition_command;
 mod source_generation;
 pub mod sql_adapter;
 pub mod storage;

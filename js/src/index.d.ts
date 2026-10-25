@@ -2718,3 +2718,11 @@ export function createUnicodeCaseProgramLinks(): TypedProgramLinks;
 export function createRustUnitValueProgramLinks(): TypedProgramLinks;
 
 export function createRustFormattingProgramLinks(): TypedProgramLinks;
+/** One complete artifact identity; a digest does not prove equal meaning. */
+export interface SourceDefinitionEntry { identifier:string; asset:string; bytes:number; sha256:string; root:string; definitionIdentity:string }
+export interface SourceDefinitionCatalogLimits { byteLimit?:number; nodeLimit?:number; depthLimit?:number }
+export function sourceDefinitionCatalog(): SourceDefinitionEntry[];
+export function sourceDefinitionEntry(identifier:string): SourceDefinitionEntry|undefined;
+export function createSourceDefinitionProgramLinks(identifier:string,options?:SourceDefinitionCatalogLimits): {network:LinkNetwork;root:LinkId};
+export function createSourceDefinitionFormalFunctionLinks(identifier:string,declaration:string|LinkId,options?:SourceDefinitionCatalogLimits): ReturnType<typeof encodeFormalFunctionDefinition>;
+export function runSourceDefinitionCommand(args:string[]): {exitCode:number;stdout:string|Uint8Array;stderr:string};
