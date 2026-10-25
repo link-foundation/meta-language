@@ -81,6 +81,7 @@ impl RustParser {
         self.cursor.expect(";", Some("let"))?;
         let range = span(&start, self.cursor.peek());
         if let ProductBindingPattern::Name(token) = pattern {
+            self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;
             self.origins
                 .bind(&token.value, &value, path, source_type.as_ref())?;
             return Ok(vec![Binding {
@@ -281,6 +282,7 @@ impl RustParser {
                 self.lower_nominal_binding(pattern, value, path, bindings, None)?;
             }
             ProductBindingPattern::Name(token) => {
+                self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;
                 self.origins.bind(&token.value, &value, path, None)?;
                 bindings.push(Binding {
                     name: token.value.clone(),

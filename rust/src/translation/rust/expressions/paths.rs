@@ -147,7 +147,7 @@ impl RustParser {
             }
             let node = SExpr::new(
                 SNode::Name {
-                    path: record_path.unwrap_or_else(|| self.resolve(&segments, path)),
+                    path: record_path.unwrap_or_else(|| self.source_value_path(&segments, path)),
                 },
                 span(token, token),
             );
@@ -174,6 +174,10 @@ impl RustParser {
             if let Some(call) = self.read_copy_closure_call(&function, &args, path, range)? {
                 return Ok(call);
             }
+            return Err(type_error(crate::translation::rust_source_constant_rules::read_rust_source_callable_value_error(self.origins.scope[&segments[0]].ty.as_ref().map_or("",Type::kind),"local value"),range));
+        }
+        if let Some(call) = self.source_constant_call(&segments, &args, path, range)? {
+            return Ok(call);
         }
         if let Some(record_path) = record_path {
             self.origins.call(&record_path, &args, path, range)?;
@@ -277,9 +281,15 @@ impl RustParser {
                 range,
             ));
         }
-        let callee = self.resolve(&segments, path);
+        let callee = self.source_value_path(&segments, path);
         self.origins.call(&callee, &args, path, range)?;
-        if args.is_empty() {
+        if crate::translation::rust_source_constant_rules::read_rust_source_call_form(
+            self.ordinary_completion_context(),
+            serde_json::Number::from(args.len())
+                .as_f64()
+                .expect("actual argument count"),
+        ) == "name"
+        {
             return Ok(SExpr::new(SNode::Name { path: callee }, range));
         }
         Ok(SExpr::new(

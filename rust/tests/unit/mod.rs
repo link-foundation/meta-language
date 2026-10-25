@@ -440,3 +440,5 @@ mod translation_rust_contextual_closures;
 mod translation_rust_contextual_calls;
 
 mod translation_rust_pointer_results;
+
+mod translation_rust_source_constants;

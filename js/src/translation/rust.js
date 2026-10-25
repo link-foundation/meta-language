@@ -1,3 +1,5 @@
+import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
+import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
@@ -648,6 +650,7 @@ class RustParser {
         const mutable = Boolean(c.eat('mut'));
         if (c.is('self') || c.is('&')) throw unsupported('method', 'methods are outside the Rust frontend; declare a free function', span(paramToken, paramToken));
         const paramName = c.identifier('parameter').value;
+        requireRustNonconstantBinding(this,paramName,path,span(paramToken,paramToken));
         c.expect(':', 'parameter');
         const typeToken = c.peek();
         params.push({ name: paramName, type: this.type(), span: span(paramToken, c.peek()) });
@@ -727,9 +730,9 @@ class RustParser {
     const ret = this.type();
     const sourceResult = this.origins.type;
     if (ret.kind === 'array') throw unsupported('Rust array constant', 'vector allocation and slice constants require a separate constant evaluation model', span(start, c.peek()));
-    this.origins.declaration(name, path, { k: 'fn', parameters: [], result: sourceResult });
+    this.origins.declaration(name, path, { k: 'const', result: sourceResult });
     c.expect('=', 'const');
-    const body = this.expr(path);
+    const body = readRustExpectedCopyClosure(this,path,sourceResult);
     this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
     c.expect(';', 'const');
     return { k: 'fn', name, params: [], ret, body, span: span(start, c.peek()) };
@@ -844,6 +847,7 @@ class RustParser {
         return;
       }
       if (binding.k === 'name') {
+        requireRustNonconstantBinding(this,binding.name,path,binding.span);
         if (names.has(binding.name)) throw unsupported('duplicate tuple binding', 'each name occurs only once in a destructuring pattern', binding.span);
         names.add(binding.name);
       }
@@ -1483,12 +1487,13 @@ class RustParser {
       const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
       if(sharedConstruction)return sharedConstruction;
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
-      if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??this.resolve(segments, path), span: span(token, token) },path);
+      if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??readRustSourceValueName(this,segments,path), span: span(token, token) },path);
       c.next();
       const args = readRustContextualCallArguments(this,{k:'name',path:segments,span:span(token,token)},path);
       c.expect(')', 'call');
       const range = span(token, c.peek());
-      if(segments.length===1&&this.origins.scope.has(segments[0])){const closureCall=readRustCopyClosureCall(this,{k:'name',path:segments,span:span(token,token)},args,path,range);if(closureCall)return closureCall;}
+      if(segments.length===1&&this.origins.scope.has(segments[0])){const closureCall=readRustCopyClosureCall(this,{k:'name',path:segments,span:span(token,token)},args,path,range);if(closureCall)return closureCall;throw typeError(readRustSourceCallableValueError(this.origins.scope.get(segments[0]).type?.kind??'','local value'),range);}
+      const constantCall=readRustSourceConstantCall(this,segments,args,path,range);if(constantCall)return constantCall;
       if(recordValuePath){
         this.origins.call(recordValuePath,args,path,range);
         return args.length?{k:'app',fn:{k:'name',path:recordValuePath,span:span(token,token)},args,span:range}:{k:'name',path:recordValuePath,span:range};
@@ -1523,9 +1528,10 @@ class RustParser {
         throw unsupported(`${name}`, 'outside the portable core', range);
       }
       if (['std', 'core', 'alloc'].includes(segments[0])) throw unsupported(name, 'the standard library is outside the portable core', range);
-      this.origins.call(this.resolve(segments, path), args, path, range);
-      if (!args.length) return { k: 'name', path: this.resolve(segments, path), span: range };
-      return { k: 'app', fn: { k: 'name', path: this.resolve(segments, path), span: span(token, token) }, args, span: range };
+      const callee=readRustSourceValueName(this,segments,path);
+      this.origins.call(callee, args, path, range);
+      if (readRustSourceCallForm(this.ordinaryCompletionContext(),args.length)==='name') return { k: 'name', path: callee, span: range };
+      return { k: 'app', fn: { k: 'name', path: callee, span: span(token, token) }, args, span: range };
     }
     throw this.fail('expected an expression');
   }
@@ -1656,6 +1662,8 @@ class RustParser {
     }
     if (token.kind !== 'identifier') throw unsupported('pattern', `${describe(token)} is outside the portable pattern language`, span(token, token));
     const segments = this.pathSegments('pattern');
+    const constantPatternError=readRustSourceConstantPatternError(this.origins.lookup(readRustSourceValueName(this,segments,path),path)?.k??'');if(constantPatternError)throw unsupported('Rust constant pattern',constantPatternError,span(token,c.peek()));
+
     if (c.eat('@')) {
       if (segments.length !== 1) throw this.fail('expected a binding before @', token);
       const inner = this.pattern(path, aliases);

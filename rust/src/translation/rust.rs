@@ -61,6 +61,7 @@ mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
 mod shared_array_handles;
+mod source_constants;
 mod source_origins;
 mod string_byte_lengths;
 pub(crate) mod type_namespaces;

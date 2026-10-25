@@ -180,6 +180,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             "../data/rust-shared-array-handle-program.lino"
         )),
         "rust-shift-program.lino" => Some(include_str!("../data/rust-shift-program.lino")),
+        "rust-source-constant-program.lino" => {
+            Some(include_str!("../data/rust-source-constant-program.lino"))
+        }
         "rust-string-byte-length-program.lino" => {
             Some(include_str!("../data/rust-string-byte-length-program.lino"))
         }

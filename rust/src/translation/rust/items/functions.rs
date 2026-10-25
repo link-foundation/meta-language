@@ -92,6 +92,7 @@ impl RustParser {
                 ));
             }
             let param_name = self.cursor.identifier(Some("parameter"))?.value;
+            self.require_nonconstant_binding(&param_name, path, Some(param_token.span()))?;
             self.cursor.expect(":", Some("parameter"))?;
             let type_token = self.peek();
             let ty = self.parse_type()?;

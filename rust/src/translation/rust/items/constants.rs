@@ -1,6 +1,6 @@
 //! Existing constant-item adapter, separated to bound the item module.
 use super::super::SFn;
-use super::{Options, Result, RustParser, SourceDeclaration, Type, span, unsupported};
+use super::{Result, RustParser, SourceDeclaration, Type, span, unsupported};
 
 impl RustParser {
     /// `const N: T = e;` is a function without parameters.
@@ -21,13 +21,12 @@ impl RustParser {
         self.origins.declaration(
             &name,
             path,
-            SourceDeclaration::Function {
-                parameters: Vec::new(),
+            SourceDeclaration::Constant {
                 result: source_result.clone(),
             },
         )?;
         self.cursor.expect("=", Some("const"))?;
-        let body = self.expr(path, Options::default())?;
+        let body = self.read_expected_copy_closure(path, Some(&source_result))?;
         self.origins
             .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
         self.cursor.expect(";", Some("const"))?;

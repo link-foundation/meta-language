@@ -1,3 +1,4 @@
+import {readRustSourceConstantValue,readRustSourceValueName} from './rust-source-constants.js';
 // Real Rust signatures and declaration owners into existing callable types.
 import {unsupported} from './diagnostics.js';
 import {UNIT} from './types.js';
@@ -11,7 +12,7 @@ export function readRustFunctionPointerType(parser){
 }
 export function readRustFunctionReference(parser,segments,path,span){
  if(segments.length===1&&parser.origins.scope.has(segments[0])){const origin=parser.origins.scope.get(segments[0]);return origin.type?.kind==='function'?parser.origins.mark({k:'name',path:segments,span},origin):null;}
- const entry=parser.origins.lookup(parser.resolve(segments,path),path);if(entry?.k!=='fn')return null;
+ const entry=parser.origins.lookup(readRustSourceValueName(parser,segments,path),path);if(entry?.k==='const')return readRustSourceConstantValue(parser,entry,path,span);if(entry?.k!=='fn')return null;
  const reason=readRustFunctionPointerTypeError(parser.ordinaryCompletionContext(),entry.parameters.map(origin=>parser.origins.immutableProduct(origin)),parser.origins.immutableProduct(entry.result));if(reason)throw unsupported('Rust function reference',reason,span);
  const type={kind:'function',params:entry.parameters.map(origin=>origin.type),ret:entry.result.type};
  return parser.origins.mark({k:'functionValue',path:['crate',...entry.fullName.split('.')],span},{...parser.origins.typeOrigin(type,path),copyEvidence:true});

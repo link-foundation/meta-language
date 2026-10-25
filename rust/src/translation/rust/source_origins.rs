@@ -174,6 +174,9 @@ pub(super) enum SourceDeclaration {
         parameters: Vec<SourceOrigin>,
         result: SourceOrigin,
     },
+    Constant {
+        result: SourceOrigin,
+    },
 }
 
 pub(super) struct SourceLookup {
@@ -366,6 +369,7 @@ impl SourceOrigins {
                     parameters.iter_mut().for_each(&mut resolve_origin);
                     resolve_origin(result);
                 }
+                SourceDeclaration::Constant { result } => resolve_origin(result),
                 SourceDeclaration::Constructor { fields, result, .. } => {
                     fields.iter_mut().for_each(&mut resolve_origin);
                     resolve_origin(result);
@@ -517,6 +521,7 @@ impl SourceOrigins {
                     });
                     return result;
                 }
+                SourceDeclaration::Constant { result } => return result,
                 SourceDeclaration::Constructor { result, .. } => return result,
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module

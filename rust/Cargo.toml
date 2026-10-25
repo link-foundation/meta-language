@@ -179,6 +179,7 @@ include = [
     "src/data/rust-record-program.lino",
     "src/data/rust-shared-array-handle-program.lino",
     "src/data/rust-shift-program.lino",
+    "src/data/rust-source-constant-program.lino",
     "src/data/rust-string-byte-length-controls.lino",
     "src/data/rust-string-byte-length-program.lino",
     "src/data/rust-unit-value-program.lino",

@@ -52,7 +52,9 @@ impl RustParser {
         let mut parameters = None;
         if let SNode::Name { path: names } = &callee.node
             && !(names.len() == 1 && self.origins.scope.contains_key(&names[0]))
-            && let Some(entry) = self.origins.lookup(&self.resolve(names, path), path)
+            && let Some(entry) = self
+                .origins
+                .lookup(&self.source_value_path(names, path), path)
             && let SourceDeclaration::Function {
                 parameters: actual, ..
             } = entry.declaration
@@ -165,6 +167,7 @@ impl RustParser {
                     ));
                 }
                 let name = self.cursor.identifier(Some("closure parameter"))?.value;
+                self.require_nonconstant_binding(&name, path, Some(token.span()))?;
                 let (ty, origin) = if self.cursor.eat(":").is_some() {
                     let ty = self.parse_type()?;
                     (ty, self.origins.current_type.clone())

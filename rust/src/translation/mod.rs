@@ -173,6 +173,7 @@ pub(crate) mod rust_shared_array_handle_rules;
 pub(crate) mod rust_shift_program;
 pub(crate) mod rust_shift_rules;
 pub(crate) mod rust_shifts;
+pub(crate) mod rust_source_constant_rules;
 pub(crate) mod rust_string_byte_length_rules;
 mod rust_string_byte_lengths;
 pub(crate) mod scalar_assignment_program;

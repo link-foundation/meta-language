@@ -406,6 +406,19 @@ impl RustParser {
             ));
         }
         let segments = self.path_segments("pattern")?;
+        if self
+            .origins
+            .lookup(&self.source_value_path(&segments, path), path)
+            .is_some_and(|entry| {
+                matches!(
+                    entry.declaration,
+                    super::super::SourceDeclaration::Constant { .. }
+                )
+            })
+        {
+            return Err(unsupported("Rust constant pattern",crate::translation::rust_source_constant_rules::read_rust_source_constant_pattern_error("const"),span(&token,self.cursor.peek())));
+        }
+
         if self.cursor.eat("@").is_some() {
             if segments.len() != 1 {
                 return Err(Self::fail("expected a binding before @", &token));

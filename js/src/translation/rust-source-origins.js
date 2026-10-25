@@ -87,7 +87,7 @@ export class RustSourceOrigins {
 
   resolveTypes(resolve) {
     for (const entry of this.catalog.values()) {
-      const origins = entry.k === 'fn' ? [...entry.parameters, entry.result]
+      const origins = entry.k === 'fn' ? [...entry.parameters, entry.result] : entry.k === 'const' ? [entry.result]
         : entry.k === 'ctor' ? [...entry.fields, entry.result] : [];
       for (const origin of origins) {
         if (origin.type?.kind === 'named') origin.type = { ...origin.type, path: resolve(origin.type.path, origin.path) };
@@ -154,6 +154,7 @@ export class RustSourceOrigins {
     }
     if (node.k === 'name' || (node.k === 'app' && node.fn.k === 'name')) {
       const entry = this.lookup(node.k === 'name' ? node.path : node.fn.path, path);
+      if (entry?.k === 'const') return clone(entry.result);
       if (entry?.k === 'fn') return { ...clone(entry.result), freshArrayValue: Boolean(entry.result.freshArrayValue && this.freshCalls.has(`${node.span?.start}:${node.span?.end}`)) };
       if (entry?.k === 'ctor') return clone(entry.result);
       if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)

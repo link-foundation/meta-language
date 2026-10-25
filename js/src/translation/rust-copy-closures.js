@@ -1,3 +1,4 @@
+import {requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 // Actual source types/scopes into the existing shared callable representation.
 import {unsupported} from './diagnostics.js';
 import {readCallableStatementCaptures} from './callable-source.js';
@@ -25,7 +26,7 @@ export function readRustCopyPointerResultBlock(parser,path,expected){
 }
 export function readRustContextualCallArguments(parser,callee,path){
  let parameters=null;
- if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(parser.resolve(callee.path,path),path);if(entry?.k==='fn')parameters=entry.parameters;}
+ if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn')parameters=entry.parameters;}
  if(parameters===null){const origin=parser.origins.origin(callee,path);parameters=origin.type?.kind==='function'?origin.type.params.map(type=>({...parser.origins.typeOrigin(type,path),...(type.kind==='function'?{copyEvidence:true}:{})})):[];}
  const args=[],c=parser.cursor;
  while(!c.is(')')){args.push(readRustExpectedCopyClosure(parser,path,parameters[args.length]));if(!c.eat(','))break;}
@@ -33,7 +34,7 @@ export function readRustContextualCallArguments(parser,callee,path){
 }
 export function readRustCopyClosure(parser,path,expected=null){
  const c=parser.cursor,start=c.peek(),parameters=[],origins=[];c.eat('move');
- if(!c.eat('||')){c.expect('|','closure');while(!c.is('|')){const token=c.peek();if(c.is('mut')||c.is('ref')||c.is('&')||c.is('_'))throw unsupported('Rust closure parameter','a closure needs a named direct immutable typed parameter',token);const name=c.identifier('closure parameter').value;let type,origin;if(c.eat(':')){type=parser.type();origin=parser.origins.type;}else{type=expected?.type?.params[parameters.length];if(!type){c.expect(':','closure parameter');throw parser.fail('a closure parameter needs its source type');}origin=parser.origins.typeOrigin(type,path);}parameters.push({name,type,span:{start:token.start,end:c.peek(-1).end}});origins.push(origin);if(!c.eat(','))break;}c.expect('|','closure');}
+ if(!c.eat('||')){c.expect('|','closure');while(!c.is('|')){const token=c.peek();if(c.is('mut')||c.is('ref')||c.is('&')||c.is('_'))throw unsupported('Rust closure parameter','a closure needs a named direct immutable typed parameter',token);const name=c.identifier('closure parameter').value;requireRustNonconstantBinding(parser,name,path,token);let type,origin;if(c.eat(':')){type=parser.type();origin=parser.origins.type;}else{type=expected?.type?.params[parameters.length];if(!type){c.expect(':','closure parameter');throw parser.fail('a closure parameter needs its source type');}origin=parser.origins.typeOrigin(type,path);}parameters.push({name,type,span:{start:token.start,end:c.peek(-1).end}});origins.push(origin);if(!c.eat(','))break;}c.expect('|','closure');}
  const written=Boolean(c.eat('->'));let ret=written?parser.type():expected?.type?.ret??null,resultOrigin=written?parser.origins.type:ret?parser.origins.typeOrigin(ret,path):null;
  if(written){const reason=readRustCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>parser.origins.immutableProduct(origin)),written,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
  const outer=parser.origins.enter();parameters.forEach((parameter,index)=>parser.origins.scope.set(parameter.name,origins[index]));

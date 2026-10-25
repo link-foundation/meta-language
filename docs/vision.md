@@ -3922,6 +3922,28 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Rust source constants now retain an actual constant declaration kind during
+source resolution. Their values remain distinct from free function items even
+when an expected type is callable. A shared construction captures the existing
+checked zero-input value read once before using it; actual function-pointer
+constant values then use the ordinary checked Apply path. Callback argument
+contexts come from the constant value's real pointer signature. Source-qualified
+owners, imports, raw identifiers and local value shadows remain explicit.
+Scalar constants cannot be called as their internal lowering functions.
+Unqualified ordinary module values belong to their actual current module; parent
+items require explicit paths or imports. Local values retain their own scope.
+Zero-argument source calls remain actual applications when a pointer result is
+expected; they cannot be reinterpreted as function-item references.
+Unrepresented constant patterns report a gap instead of becoming binders,
+consistent with the [Rust constant-pattern contract](https://doc.rust-lang.org/reference/patterns.html#constant-patterns).
+Forty-one future values, invalid-call and pattern controls, complete source
+predecessors, both codecs, four emissions and native products remain unexecuted.
+This restores the source value distinction in the preceding constant lowering;
+it does not supply complete [compile-time evaluation](https://doc.rust-lang.org/reference/const_eval.html).
+Cycles, constant overflow/error diagnostics, full contexts, value/type-correct
+constant patterns, promotions, statics and associated/generic constants remain
+obligations alongside complete grammar and translation support.
+
 Direct terminal Rust function-pointer result blocks now reuse the actual
 function or explicitly typed closure result as their missing annotation
 context. Tail expressions and terminal returns remain distinct from discarded

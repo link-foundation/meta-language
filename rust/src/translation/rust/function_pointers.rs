@@ -71,9 +71,17 @@ impl RustParser {
             self.origins.mark(&node, origin);
             return Ok(Some(node));
         }
-        let Some(entry) = self.origins.lookup(&self.resolve(segments, path), path) else {
+        let Some(entry) = self.origins.lookup(&self.source_value_path(segments, path), path) else {
             return Ok(None);
         };
+        if let SourceDeclaration::Constant { result } = &entry.declaration {
+            return Ok(Some(self.source_constant_value(
+                &entry.full_name,
+                result,
+                path,
+                span,
+            )));
+        }
         let SourceDeclaration::Function { parameters, result } = entry.declaration else {
             return Ok(None);
         };
