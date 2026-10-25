@@ -1,10 +1,35 @@
 //! Original types, scopes and expressions into the existing callable nodes.
 use super::{Result, RustParser, SExpr, SNode, SParam, SourceOrigin, Span, Type, unsupported};
+use crate::translation::rust_contextual_closure_rules as contextual;
 use crate::translation::rust_copy_closure_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 
 impl RustParser {
+    pub(super) fn read_expected_copy_closure(
+        &mut self,
+        path: &[String],
+        expected: Option<&SourceOrigin>,
+    ) -> Result<SExpr> {
+        if contextual::accept_rust_contextual_copy_closure(
+            expected
+                .and_then(|origin| origin.ty.as_ref())
+                .map_or("", Type::kind),
+            expected.is_some_and(SourceOrigin::direct_copy_value),
+            &self.cursor.peek().value,
+        ) {
+            self.read_copy_closure_with_expected(path, expected)
+        } else {
+            self.expr(path, super::Options::default())
+        }
+    }
     pub(super) fn read_copy_closure(&mut self, path: &[String]) -> Result<SExpr> {
+        self.read_copy_closure_with_expected(path, None)
+    }
+    fn read_copy_closure_with_expected(
+        &mut self,
+        path: &[String],
+        expected: Option<&SourceOrigin>,
+    ) -> Result<SExpr> {
         let start = self.peek();
         self.cursor.eat("move");
         let mut params = Vec::new();
@@ -24,9 +49,23 @@ impl RustParser {
                     ));
                 }
                 let name = self.cursor.identifier(Some("closure parameter"))?.value;
-                self.cursor.expect(":", Some("closure parameter"))?;
-                let ty = self.parse_type()?;
-                origins.push(self.origins.current_type.clone());
+                let (ty, origin) = if self.cursor.eat(":").is_some() {
+                    let ty = self.parse_type()?;
+                    (ty, self.origins.current_type.clone())
+                } else if let Some(Type::Function { params, .. }) =
+                    expected.and_then(|origin| origin.ty.as_ref())
+                {
+                    let Some(ty) = params.get(origins.len()).cloned() else {
+                        self.cursor.expect(":", Some("closure parameter"))?;
+                        unreachable!("missing actual source type");
+                    };
+                    let origin = SourceOrigin::with_type(ty.clone(), path, Vec::new());
+                    (ty, origin)
+                } else {
+                    self.cursor.expect(":", Some("closure parameter"))?;
+                    unreachable!("missing actual source type");
+                };
+                origins.push(origin);
                 params.push(SParam {
                     name,
                     optional: false,
@@ -46,15 +85,20 @@ impl RustParser {
             self.cursor.expect("|", Some("closure"))?;
         }
         let written = self.cursor.eat("->").is_some();
-        if !written {
-            return Err(unsupported(
-                "Rust Copy closure",
-                "the closure result requires its actual explicit type",
-                Some(start.span()),
-            ));
-        }
-        let ret = self.parse_type()?;
-        let result_origin = self.origins.current_type.clone();
+        let mut ret = if written {
+            Some(self.parse_type()?)
+        } else {
+            expected.and_then(|origin| match origin.ty.as_ref() {
+                Some(Type::Function { ret, .. }) => Some(ret.as_ref().clone()),
+                _ => None,
+            })
+        };
+        let mut result_origin = if written {
+            Some(self.origins.current_type.clone())
+        } else {
+            ret.as_ref()
+                .map(|ret| SourceOrigin::with_type(ret.clone(), path, Vec::new()))
+        };
         let names = params
             .iter()
             .map(|param| param.name.clone())
@@ -63,13 +107,19 @@ impl RustParser {
             .iter()
             .map(SourceOrigin::direct_copy_value)
             .collect::<Vec<_>>();
-        let reason = rules::read_rust_copy_closure_header_error(
-            self.ordinary_completion_context(),
-            &names,
-            &copies,
-            written,
-            result_origin.direct_copy_value(),
-        );
+        let reason = if written {
+            rules::read_rust_copy_closure_header_error(
+                self.ordinary_completion_context(),
+                &names,
+                &copies,
+                written,
+                result_origin
+                    .as_ref()
+                    .is_some_and(SourceOrigin::direct_copy_value),
+            )
+        } else {
+            String::new()
+        };
         if !reason.is_empty() {
             return Err(unsupported("Rust Copy closure", reason, Some(start.span())));
         }
@@ -78,17 +128,48 @@ impl RustParser {
             self.origins.scope.insert(parameter.name.clone(), origin);
         }
         let read: Result<SExpr> = (|| {
-            let body = if self.ordinary_completion_selected() {
-                self.ordinary_function_completion(path, &ret, &result_origin)?
+            let body = if written || self.cursor.is("{") {
+                if let (Some(ret), Some(origin)) = (&ret, &result_origin)
+                    && self.ordinary_completion_selected()
+                {
+                    self.ordinary_function_completion(path, ret, origin)?
+                } else {
+                    self.block_with_context(path, true)?
+                }
             } else {
-                self.block_with_context(path, true)?
+                self.expr(path, super::Options::default())?
             };
-            self.origins
-                .argument(&self.origins.origin(&body, path), &result_origin, body.span)?;
+            if ret.is_none() {
+                let origin = self.origins.origin(&body, path);
+                ret = origin.ty.clone();
+                result_origin = Some(origin);
+            }
+            if !written {
+                let reason = contextual::read_rust_contextual_copy_closure_header_error(
+                    self.ordinary_completion_context(),
+                    &names,
+                    &copies,
+                    ret.is_some(),
+                    result_origin
+                        .as_ref()
+                        .is_some_and(SourceOrigin::direct_copy_value),
+                );
+                if !reason.is_empty() {
+                    return Err(unsupported("Rust Copy closure", reason, Some(start.span())));
+                }
+            }
+            self.origins.argument(
+                &self.origins.origin(&body, path),
+                result_origin
+                    .as_ref()
+                    .expect("actual resolved source result"),
+                body.span,
+            )?;
             Ok(body)
         })();
         self.origins.scope = outer.clone();
         let body = read?;
+        let ret = ret.expect("actual resolved source result");
         let statements = serde_json::json!([{"s":"return", "expr":&body}]);
         let facts = create_surface_reference_facts(&statements);
         let plan = crate::translation::callable_source_rules::plan_callable_statement_captures(

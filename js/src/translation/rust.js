@@ -25,7 +25,7 @@ import { createRustFloatPredicateExpression, createRustFloatOperationExpression,
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
-import {readRustCopyClosure,readRustCopyClosureCall} from './rust-copy-closures.js';
+import {readRustCopyClosure,readRustCopyClosureCall,readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
 import {acceptRustExactArrayLength} from './rust-array-length-rules.js';
 import {readRustStringByteLength} from './rust-string-byte-lengths.js';
@@ -849,7 +849,7 @@ class RustParser {
     const sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
     const initializerStart=c.index;
-    const value = this.expr(path);
+    const value = readRustExpectedCopyClosure(this,path,sourceType);
     let fallback=null;
     if(c.is('else')){
       const tokens=c.tokens.slice(initializerStart,c.index),reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));

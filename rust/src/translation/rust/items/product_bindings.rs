@@ -1,8 +1,8 @@
 //! Irrefutable positional bindings lower to ordinary ordered value bindings.
 
 use super::super::{
-    Binding, Options, ProductBindingPattern, Result, RustParser, SExpr, SNode, SourceOrigin, Span,
-    Type, UNIT, span, type_error, unsupported,
+    Binding, ProductBindingPattern, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Type,
+    UNIT, span, type_error, unsupported,
 };
 
 impl RustParser {
@@ -36,7 +36,7 @@ impl RustParser {
             ));
         }
         let initializer_start = self.cursor.index;
-        let value = self.expr(path, Options::default())?;
+        let value = self.read_expected_copy_closure(path, source_type.as_ref())?;
         if self.cursor.is("else") {
             let tokens = &self.cursor.tokens[initializer_start..self.cursor.index];
             let kinds = tokens

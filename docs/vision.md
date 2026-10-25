@@ -3922,6 +3922,23 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Ordinary Rust Copy closure annotations may additionally come from an actual
+direct function pointer initializer type. Written annotations retain their own
+checked constraints; missing parameters retain their original positions and
+missing results use the actual declared result. Without a pointer context, an
+already concrete proven Copy body may supply its missing result annotation.
+Expression bodies are admitted when the source omits its result annotation;
+written results still require blocks, as specified by the
+[Rust closure reference](https://doc.rust-lang.org/reference/expressions/closure-expr.html).
+Capture selection, anonymous identities and noncapturing pointer coercion retain
+their existing independent checks. Thirty-six future values, retained refusal
+inputs and complete predecessors cover scalar domains, ordinary completions,
+Unit, captures, both codecs, four emissions and original/native products. They
+remain unexecuted. General inference from later uses, contextual callback
+arguments and returns, parenthesized contexts, traits, async and complete
+ownership remain obligations. A result without a concrete source domain keeps
+its preceding explicit-type diagnostic; no invented default type is assigned.
+
 Ordinary standard Rust scalar `str`/`String` byte lengths have a distinct
 checked operation with the existing unsigned 64-bit usize domain. They preserve
 UTF-8 byte counts rather than JavaScript UTF-16 units or grapheme counts. Actual
