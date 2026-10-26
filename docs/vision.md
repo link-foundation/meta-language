@@ -687,6 +687,25 @@ work. This value interpretation does not assert allocation identity, complete
 native ABI fidelity or full own-source translation. Original/native products,
 independent function types and codec/target controls remain deferred drafts.
 
+The separately selected `retained string predicate Rust function interface 1`
+adds complete Unicode scalar string prefix, suffix and substring tests to that
+textual interface. Its shared JavaScript definition admits only a Boolean
+result, two actual String operands and the existing starts/ends/includes
+operations. Both complete operands remain in the checked scalar graph, with
+the original expression fields, reference headers, source owners, lifetime
+binders, call ordering, static-borrow restriction and resource budgets. The
+existing common operations supply all four target emissions; the native
+adapter receives the same automatically generated admission rules. Earlier
+interface models retain their predicate refusals. These meanings follow the
+standard [string predicates](https://doc.rust-lang.org/std/primitive.str.html#method.contains).
+Independent original/generated/native values, exact function types, Unicode
+and empty-pattern cases, text/binary reload, source-free edits and reimport of
+the actual emitted textual predicates are deferred controls. Unknown raw
+fields must reach the Links decoder before a native host DTO can discard them.
+No character or closure patterns, normalization, locale behavior, arbitrary
+transformations, UTF-16 offsets, borrowed outputs, general ABI or ownership
+completion follows from this draft.
+
 Ordinary source parsing also recognizes scope-checked qualified standard
 `Clone::clone` and `ToOwned::to_owned` calls. Relative and leading-`::` standard
 paths select shared source rules only in an unambiguous standard namespace.

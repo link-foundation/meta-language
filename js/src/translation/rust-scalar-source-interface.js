@@ -1,6 +1,7 @@
 // Thin owned-IR projection; decisions and every interface syntax operation are
 // shared translated definitions. This never edits or reparses source strings.
 import {unsupported} from './diagnostics.js';
+import {acceptRustStringPredicateInterfaceModel,acceptRustStringPredicateExpression,acceptRustStringPredicateExpressionField,acceptRustStringPredicateOperands} from './rust-string-predicate-interface-rules.js';
 import {acceptRustTextualSourceInterfaceModel,readRustTextualSourceType,acceptRustTextualSourceOperation,acceptRustTextualSourceBinary,renderRustTextualSourceInput,renderRustTextualSourceSliceArgument} from './rust-textual-source-interface-rules.js';
 import {acceptRustScalarMathematicalInterfaceModel,acceptRustScalarMathematicalExpression,acceptRustScalarMathematicalExpressionField,acceptRustScalarMathematicalOperation} from './rust-scalar-mathematical-interface-rules.js';
 import {typeKey} from './types.js';
@@ -22,7 +23,7 @@ function valueType(type,strings=false){
 function sourceType(position,strings=false){const value=valueType(position.type,strings);return value==='String'?readRustTextualSourceType(position.owner.kind,position.owner.path.join('::'),position.owner.arguments.length):readRustScalarSourceType(value,position.owner.kind,position.owner.path[0]??'',position.owner.path.length,position.owner.arguments.length);}
 /** Validate the whole owned call graph before any target interface changes. */
 export function readRustScalarSourceInterface(program,model){
- const strings=acceptRustTextualSourceInterfaceModel(model),mathematical=strings||acceptRustScalarMathematicalInterfaceModel(model);
+ const predicates=acceptRustStringPredicateInterfaceModel(model),strings=predicates||acceptRustTextualSourceInterfaceModel(model),mathematical=strings||acceptRustScalarMathematicalInterfaceModel(model);
  if(!acceptRustScalarSourceInterfaceModel(model)&&!mathematical)fail('select retained scalar Rust function interface 1');
  checkRustPrimitiveOwnerProof(program);validateRustTypeNamespace(program);
  const forbidden=Boolean(program.imports?.length||program.externals?.length||program.main?.effects?.length||program.main?.sequentialAsync||program.main?.sourceRuntimeWorker||program.referenceSemantics||program.utf16Strings||program.outputThreaded||program.abortsThreaded||program.sourceRuntimeShell||program.sourcePureUnitCalls);
@@ -45,8 +46,11 @@ export function readRustScalarSourceInterface(program,model){
   if(visited.has(node))continue;visited.add(node);visits+=1;
   if(!acceptRustScalarSourceBudget(visits))fail('the closed scalar call graph exceeds its expression budget');
   valueType(node.type,strings);
-  if(!(mathematical?acceptRustScalarMathematicalExpression(node.k):acceptRustScalarSourceExpression(node.k))||Object.keys(node).some(field=>!(mathematical?acceptRustScalarMathematicalExpressionField(node.k,field):acceptRustScalarSourceExpressionField(node.k,field))))fail('the expression requires an additional source interface interpretation');
-  if(node.k==='math'){
+  if(!(predicates?acceptRustStringPredicateExpression(node.k):mathematical?acceptRustScalarMathematicalExpression(node.k):acceptRustScalarSourceExpression(node.k))||Object.keys(node).some(field=>!(predicates?acceptRustStringPredicateExpressionField(node.k,field):mathematical?acceptRustScalarMathematicalExpressionField(node.k,field):acceptRustScalarSourceExpressionField(node.k,field))))fail('the expression requires an additional source interface interpretation');
+  if(node.k==='stringTest'){
+   if(!acceptRustStringPredicateOperands(node.op,node.type.kind,node.string?.type?.kind??'',node.search?.type?.kind??''))fail('string predicates need their actual operation, Boolean result and complete String operands');
+   enqueue([node.string,node.search]);
+  }else if(node.k==='math'){
    if(!Array.isArray(node.args)||!(strings?acceptRustTextualSourceOperation(node.op,node.args.length,node.type.kind):acceptRustScalarMathematicalOperation(node.op,node.args.length,node.type.kind)))fail('the mathematical operation needs its admitted scalar result and complete operands');
    enqueue(node.args);
   }

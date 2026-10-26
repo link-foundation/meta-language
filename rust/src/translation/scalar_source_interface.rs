@@ -14,6 +14,10 @@ use super::rust_scalar_source_interface_rules::{
     read_rust_scalar_source_type, read_rust_scalar_value_type,
     render_rust_scalar_source_conversion,
 };
+use super::rust_string_predicate_interface_rules::{
+    accept_rust_string_predicate_expression, accept_rust_string_predicate_interface_model,
+    accept_rust_string_predicate_operands,
+};
 use super::rust_textual_source_interface_rules::{
     accept_rust_textual_source_binary, accept_rust_textual_source_interface_model,
     accept_rust_textual_source_operation, read_rust_textual_source_type,
@@ -71,7 +75,8 @@ pub fn read_rust_scalar_source_interface(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
-    let strings = accept_rust_textual_source_interface_model(model);
+    let predicates = accept_rust_string_predicate_interface_model(model);
+    let strings = predicates || accept_rust_textual_source_interface_model(model);
     let mathematical = strings || accept_rust_scalar_mathematical_interface_model(model);
     if !accept_rust_scalar_source_interface_model(model) && !mathematical {
         return Err(fail("select retained scalar Rust function interface 1"));
@@ -218,7 +223,9 @@ pub fn read_rust_scalar_source_interface(
         value_type(&node.ty, strings)?;
         // Native variants exhaustively represent these fields. Linked decoding
         // checks raw field inventories before constructing this IR.
-        if !(if mathematical {
+        if !(if predicates {
+            accept_rust_string_predicate_expression(node.kind())
+        } else if mathematical {
             accept_rust_scalar_mathematical_expression(node.kind())
         } else {
             accept_rust_scalar_source_expression(node.kind())
@@ -228,6 +235,18 @@ pub fn read_rust_scalar_source_interface(
             ));
         }
         match &node.node {
+            Node::StringTest { op, string, search } => {
+                if !accept_rust_string_predicate_operands(
+                    op,
+                    node.ty.kind(),
+                    string.ty.kind(),
+                    search.ty.kind(),
+                ) {
+                    return Err(fail(
+                        "string predicates need their actual operation, Boolean result and complete String operands",
+                    ));
+                }
+            }
             Node::Math { op, args } => {
                 if !(if strings {
                     accept_rust_textual_source_operation(op, count(args.len()), node.ty.kind())

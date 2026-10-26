@@ -486,3 +486,5 @@ mod translation_rust_textual_source_interface;
 mod translation_rust_standard_owned_calls;
 
 mod translation_rust_standard_string_views;
+
+mod translation_rust_string_predicate_interface;

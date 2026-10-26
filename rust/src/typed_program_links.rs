@@ -759,7 +759,8 @@ pub fn emit_typed_program_links_with_options(
         .map_err(|failure| error(failure.to_string()))?;
         if !crate::translation::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(model)
             && !crate::translation::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model)
-            && !crate::translation::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model) {
+            && !crate::translation::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+            && !crate::translation::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model) {
             crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network, root)
                 .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
         }
