@@ -313,4 +313,5 @@ pub(crate) mod rust_scalar_vector_copy_rules;
 pub(crate) mod scalar_vector_copy;
 
 pub(crate) mod rust_data_type_field_signature_rules;
+pub(crate) mod rust_scalar_mathematical_interface_rules;
 pub mod source_data_field_signatures;

@@ -1,6 +1,7 @@
 // Thin owned-IR projection; decisions and every interface syntax operation are
 // shared translated definitions. This never edits or reparses source strings.
 import {unsupported} from './diagnostics.js';
+import {acceptRustScalarMathematicalInterfaceModel,acceptRustScalarMathematicalExpression,acceptRustScalarMathematicalExpressionField,acceptRustScalarMathematicalOperation} from './rust-scalar-mathematical-interface-rules.js';
 import {typeKey} from './types.js';
 import {checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
@@ -20,7 +21,8 @@ function valueType(type){
 function sourceType(position){return readRustScalarSourceType(valueType(position.type),position.owner.kind,position.owner.path[0]??'',position.owner.path.length,position.owner.arguments.length);}
 /** Validate the whole owned call graph before any target interface changes. */
 export function readRustScalarSourceInterface(program,model){
- if(!acceptRustScalarSourceInterfaceModel(model))fail('select retained scalar Rust function interface 1');
+ const mathematical=acceptRustScalarMathematicalInterfaceModel(model);
+ if(!acceptRustScalarSourceInterfaceModel(model)&&!mathematical)fail('select retained scalar Rust function interface 1');
  checkRustPrimitiveOwnerProof(program);validateRustTypeNamespace(program);
  const forbidden=Boolean(program.imports?.length||program.externals?.length||program.main?.effects?.length||program.main?.sequentialAsync||program.main?.sourceRuntimeWorker||program.referenceSemantics||program.utf16Strings||program.outputThreaded||program.abortsThreaded||program.sourceRuntimeShell||program.sourcePureUnitCalls);
  if(!acceptRustScalarSourceContext(program.sourceLanguage,forbidden))fail('only closed synchronous Rust scalar modules without imports or runtime effects are admitted');
@@ -42,8 +44,12 @@ export function readRustScalarSourceInterface(program,model){
   if(visited.has(node))continue;visited.add(node);visits+=1;
   if(!acceptRustScalarSourceBudget(visits))fail('the closed scalar call graph exceeds its expression budget');
   valueType(node.type);
-  if(!acceptRustScalarSourceExpression(node.k)||Object.keys(node).some(field=>!acceptRustScalarSourceExpressionField(node.k,field)))fail('the expression requires an additional source interface interpretation');
-  if(node.k==='call'){
+  if(!(mathematical?acceptRustScalarMathematicalExpression(node.k):acceptRustScalarSourceExpression(node.k))||Object.keys(node).some(field=>!(mathematical?acceptRustScalarMathematicalExpressionField(node.k,field):acceptRustScalarSourceExpressionField(node.k,field))))fail('the expression requires an additional source interface interpretation');
+  if(node.k==='math'){
+   if(!Array.isArray(node.args)||!acceptRustScalarMathematicalOperation(node.op,node.args.length,node.type.kind))fail('the mathematical operation needs its admitted scalar result and complete operands');
+   enqueue(node.args);
+  }
+  else if(node.k==='call'){
    const target=program.declarations.get(node.fn),signature=headers.get(node.fn);
    const argumentTypes=Boolean(target&&Array.isArray(node.args)&&node.args.length===target.params.length&&node.args.every((argument,index)=>typeKey(argument.type)===typeKey(target.params[index].type)));
    const staticBorrow=signature?.parameters.some(position=>position.lifetimes.includes('static'))??false;

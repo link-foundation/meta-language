@@ -2,6 +2,10 @@
 use super::diagnostics::{Result, unsupported};
 use super::emit_rust::indent;
 use super::ir::{Decl, Node, Param, Program};
+use super::rust_scalar_mathematical_interface_rules::{
+    accept_rust_scalar_mathematical_expression, accept_rust_scalar_mathematical_interface_model,
+    accept_rust_scalar_mathematical_operation,
+};
 use super::rust_scalar_source_interface_rules::{
     accept_rust_scalar_source_budget, accept_rust_scalar_source_call,
     accept_rust_scalar_source_context, accept_rust_scalar_source_declaration,
@@ -51,7 +55,8 @@ pub fn read_rust_scalar_source_interface(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
-    if !accept_rust_scalar_source_interface_model(model) {
+    let mathematical = accept_rust_scalar_mathematical_interface_model(model);
+    if !accept_rust_scalar_source_interface_model(model) && !mathematical {
         return Err(fail("select retained scalar Rust function interface 1"));
     }
     super::source_primitive_owners::validate_source_primitive_owners(program)?;
@@ -196,12 +201,24 @@ pub fn read_rust_scalar_source_interface(
         value_type(&node.ty)?;
         // Native variants exhaustively represent these fields. Linked decoding
         // checks raw field inventories before constructing this IR.
-        if !accept_rust_scalar_source_expression(node.kind()) {
+        if !(if mathematical {
+            accept_rust_scalar_mathematical_expression(node.kind())
+        } else {
+            accept_rust_scalar_source_expression(node.kind())
+        }) {
             return Err(fail(
                 "the expression requires an additional source interface interpretation",
             ));
         }
         match &node.node {
+            Node::Math { op, args } => {
+                if !accept_rust_scalar_mathematical_operation(op, count(args.len()), node.ty.kind())
+                {
+                    return Err(fail(
+                        "the mathematical operation needs its admitted scalar result and complete operands",
+                    ));
+                }
+            }
             Node::Call { func, args } => {
                 let target = match program.declaration(func) {
                     Some(Decl::Fn(target)) => Some(target),

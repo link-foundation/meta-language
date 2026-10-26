@@ -652,6 +652,22 @@ foreign ABI layout nor complete public visibility, source syntax identity,
 primitive source typing or full own-codebase translation. Complete original
 sources and typed function assignments are future independent native controls;
 no execution evidence follows from the source draft or its retained history.
+
+The independent `retained mathematical Rust function interface 1` model reuses
+those complete scalar headers, conversions and closed-call obligations while
+admitting checked primitive Rust bit operations and binary64 absolute value,
+floor, ceiling, truncation and predicates. Every mathematical operand remains
+inside the same scalar graph and resource budget. Actual operand typing and
+integer/Boolean/IEEE interpretations stay with the existing core checker and
+emitters; shared automatically translated rules select the admitted operations,
+arity and result kinds. Ordered argument materialization, immutable borrowed
+inputs, pointer-sized boundaries, module and recursive calls retain their full
+earlier checks. The earlier interface still refuses mathematical expressions.
+Other mathematics, approximate transcendental parity, random effects, aggregate
+or callable interfaces, checked-shift optional results, source loops, borrowed
+outputs and additional qualifiers remain separate obligations. Complete original
+programs, independent native function types, both generated native products,
+both codecs and four-target controls are authored, unexecuted definitions.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

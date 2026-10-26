@@ -65,6 +65,14 @@ For a source project, set `retainSourceTypeOwners: true` in its options. The
 `source-project` CLI also reads this property from its Links inventory options;
 the result retains the semantic facets and every original concrete graph.
 
+For admitted closed scalar modules, Rust emission can select
+`rustSourceHeaderEmissionModel: 'retained mathematical Rust function interface 1'`.
+It combines retained primitive endpoint types and immutable input references
+with checked primitive bit operations and binary64 absolute value, floor,
+ceiling, truncation and predicates. The earlier scalar interface keeps its own
+domain. Both packages use automatically translated selection definitions;
+independent original/generated native controls remain deferred.
+
 `selfTranslateWithDiagnostics` and Rust `self_translate_with_diagnostics` retain
 actual compiler diagnostics beside the unchanged source owners. JavaScript's
 `referenceSemantics: true` and Rust's `reference_semantics: true` select shared

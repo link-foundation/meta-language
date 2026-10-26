@@ -650,7 +650,7 @@ fn emit_rust_context_owned(
     if let Some(model) = options.source_header_model {
         if super::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(
             model,
-        ) {
+        ) || super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model) {
             let headers =
                 super::scalar_source_interface::read_rust_scalar_source_interface(program, model)?;
             emitter.source_headers = headers.clone();
@@ -660,6 +660,12 @@ fn emit_rust_context_owned(
                 &super::rust_scalar_source_interface_rules::read_rust_scalar_source_encoding(),
                 &super::rust_scalar_source_interface_rules::read_rust_scalar_source_statement(),
             );
+            if super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_scalar_mathematical_interface_rules::read_rust_scalar_mathematical_encoding(),
+                    &super::rust_scalar_mathematical_interface_rules::read_rust_scalar_mathematical_statement(),
+                );
+            }
         } else if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(
             model,
         ) {
