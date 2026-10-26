@@ -652,7 +652,8 @@ fn emit_rust_context_owned(
             model,
         ) || super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model)
             || super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
-            || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model) {
+            || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+            || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model) {
             let headers =
                 super::scalar_source_interface::read_rust_scalar_source_interface(program, model)?;
             emitter.source_headers = headers.clone();
@@ -669,16 +670,24 @@ fn emit_rust_context_owned(
                 );
             }
             if super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
-                || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model) {
+                || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+                || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model) {
                 emitter.state.encode(
                     &super::rust_textual_source_interface_rules::read_rust_textual_source_encoding(),
                     &super::rust_textual_source_interface_rules::read_rust_textual_source_statement(),
                 );
             }
-            if super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model) {
+            if super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+                || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model) {
                 emitter.state.encode(
                     &super::rust_string_predicate_interface_rules::read_rust_string_predicate_encoding(),
                     &super::rust_string_predicate_interface_rules::read_rust_string_predicate_statement(),
+                );
+            }
+            if super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_constructed_string_interface_rules::read_rust_constructed_string_encoding(),
+                    &super::rust_constructed_string_interface_rules::read_rust_constructed_string_statement(),
                 );
             }
         } else if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(

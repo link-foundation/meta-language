@@ -706,6 +706,25 @@ No character or closure patterns, normalization, locale behavior, arbitrary
 transformations, UTF-16 offsets, borrowed outputs, general ABI or ownership
 completion follows from this draft.
 
+The additional `retained constructed Rust string function interface 1` admits
+complete scalar String concatenation within that same checked interface graph.
+Its shared rules require the operation's fixed implicit String domain, or an
+explicit matching String domain, a String result and two complete String
+operands. Other binary operations keep their required domain records. The
+existing formatter supplies string-valued fields, literal braces,
+named and repeated positional fields, with each actual explicit argument
+captured once before field assembly. Existing calls, predicate operations,
+source owners, lifetimes, byte measures and graph budgets retain their checks.
+Both adapters reuse the automatically translated decisions and the existing
+four-target concatenation operation. Native product controls compare actual
+returned strings directly, avoiding any dependence on Rust Debug escaping.
+Both codecs and independent values/types are required after reparsing the
+actual emitted formatting definitions. Earlier models retain concatenation
+refusals. General Display conversions, formatting traits/specifiers, arbitrary
+macros, borrowed results, string ordering, allocation identity and full
+ownership or source-language completeness remain required work. All these
+controls are unexecuted source drafts.
+
 Ordinary source parsing also recognizes scope-checked qualified standard
 `Clone::clone` and `ToOwned::to_owned` calls. Relative and leading-`::` standard
 paths select shared source rules only in an unambiguous standard namespace.

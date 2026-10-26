@@ -2,6 +2,10 @@
 use super::diagnostics::{Result, unsupported};
 use super::emit_rust::indent;
 use super::ir::{Decl, Node, Param, Program};
+use super::rust_constructed_string_interface_rules::{
+    accept_rust_constructed_string_binary, accept_rust_constructed_string_concatenation,
+    accept_rust_constructed_string_interface_model,
+};
 use super::rust_scalar_mathematical_interface_rules::{
     accept_rust_scalar_mathematical_expression, accept_rust_scalar_mathematical_interface_model,
     accept_rust_scalar_mathematical_operation,
@@ -75,7 +79,8 @@ pub fn read_rust_scalar_source_interface(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
-    let predicates = accept_rust_string_predicate_interface_model(model);
+    let constructed = accept_rust_constructed_string_interface_model(model);
+    let predicates = constructed || accept_rust_string_predicate_interface_model(model);
     let strings = predicates || accept_rust_textual_source_interface_model(model);
     let mathematical = strings || accept_rust_scalar_mathematical_interface_model(model);
     if !accept_rust_scalar_source_interface_model(model) && !mathematical {
@@ -292,12 +297,39 @@ pub fn read_rust_scalar_source_interface(
                     ));
                 }
             }
+            Node::Binary {
+                op,
+                domain,
+                left,
+                right,
+                ..
+            } if constructed && op.name() == "concat" => {
+                if let Some(domain) = domain {
+                    value_type(domain, strings)?;
+                }
+                if !accept_rust_constructed_string_concatenation(
+                    domain.as_ref().map_or("implicit string", Type::kind),
+                    node.ty.kind(),
+                    left.ty.kind(),
+                    right.ty.kind(),
+                ) {
+                    return Err(fail(
+                        "string concatenation needs its complete scalar String domain, result and operands",
+                    ));
+                }
+            }
             Node::Binary { op, domain, .. } => {
                 let domain = domain.as_ref().ok_or_else(|| {
                     fail("every interface and expression needs an actual scalar value type")
                 })?;
                 value_type(domain, strings)?;
-                if strings && !accept_rust_textual_source_binary(domain.kind(), op.name()) {
+                if strings
+                    && !(if constructed {
+                        accept_rust_constructed_string_binary(domain.kind(), op.name())
+                    } else {
+                        accept_rust_textual_source_binary(domain.kind(), op.name())
+                    })
+                {
                     return Err(fail(
                         "string ordering needs its own source interface interpretation",
                     ));

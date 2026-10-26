@@ -1,6 +1,7 @@
 // Thin owned-IR projection; decisions and every interface syntax operation are
 // shared translated definitions. This never edits or reparses source strings.
 import {unsupported} from './diagnostics.js';
+import {acceptRustConstructedStringInterfaceModel,acceptRustConstructedStringBinary,acceptRustConstructedStringConcatenation} from './rust-constructed-string-interface-rules.js';
 import {acceptRustStringPredicateInterfaceModel,acceptRustStringPredicateExpression,acceptRustStringPredicateExpressionField,acceptRustStringPredicateOperands} from './rust-string-predicate-interface-rules.js';
 import {acceptRustTextualSourceInterfaceModel,readRustTextualSourceType,acceptRustTextualSourceOperation,acceptRustTextualSourceBinary,renderRustTextualSourceInput,renderRustTextualSourceSliceArgument} from './rust-textual-source-interface-rules.js';
 import {acceptRustScalarMathematicalInterfaceModel,acceptRustScalarMathematicalExpression,acceptRustScalarMathematicalExpressionField,acceptRustScalarMathematicalOperation} from './rust-scalar-mathematical-interface-rules.js';
@@ -23,7 +24,7 @@ function valueType(type,strings=false){
 function sourceType(position,strings=false){const value=valueType(position.type,strings);return value==='String'?readRustTextualSourceType(position.owner.kind,position.owner.path.join('::'),position.owner.arguments.length):readRustScalarSourceType(value,position.owner.kind,position.owner.path[0]??'',position.owner.path.length,position.owner.arguments.length);}
 /** Validate the whole owned call graph before any target interface changes. */
 export function readRustScalarSourceInterface(program,model){
- const predicates=acceptRustStringPredicateInterfaceModel(model),strings=predicates||acceptRustTextualSourceInterfaceModel(model),mathematical=strings||acceptRustScalarMathematicalInterfaceModel(model);
+ const constructed=acceptRustConstructedStringInterfaceModel(model),predicates=constructed||acceptRustStringPredicateInterfaceModel(model),strings=predicates||acceptRustTextualSourceInterfaceModel(model),mathematical=strings||acceptRustScalarMathematicalInterfaceModel(model);
  if(!acceptRustScalarSourceInterfaceModel(model)&&!mathematical)fail('select retained scalar Rust function interface 1');
  checkRustPrimitiveOwnerProof(program);validateRustTypeNamespace(program);
  const forbidden=Boolean(program.imports?.length||program.externals?.length||program.main?.effects?.length||program.main?.sequentialAsync||program.main?.sourceRuntimeWorker||program.referenceSemantics||program.utf16Strings||program.outputThreaded||program.abortsThreaded||program.sourceRuntimeShell||program.sourcePureUnitCalls);
@@ -64,7 +65,13 @@ export function readRustScalarSourceInterface(program,model){
   else if(node.k==='if')enqueue([node.cond,node.then,node.else]);
   else if(node.k==='unary')enqueue([node.arg]);
   else if(node.k==='cast'){valueType(node.from);valueType(node.to);enqueue([node.arg]);}
-  else if(node.k==='binary'){valueType(node.domain,strings);if(strings&&!acceptRustTextualSourceBinary(node.domain.kind,node.op))fail('string ordering needs its own source interface interpretation');enqueue([node.left,node.right]);}
+  else if(node.k==='binary'){
+   if(constructed&&node.op==='concat'){
+    const explicit=Object.hasOwn(node,'domain');if(explicit)valueType(node.domain,strings);
+    if(!acceptRustConstructedStringConcatenation(explicit?node.domain.kind:'implicit string',node.type.kind,node.left?.type?.kind??'',node.right?.type?.kind??''))fail('string concatenation needs its complete scalar String domain, result and operands');
+   }else{valueType(node.domain,strings);if(strings&&!(constructed?acceptRustConstructedStringBinary(node.domain.kind,node.op):acceptRustTextualSourceBinary(node.domain.kind,node.op)))fail('string ordering needs its own source interface interpretation');}
+   enqueue([node.left,node.right]);
+  }
  }
  return headers;
 }

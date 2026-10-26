@@ -7,7 +7,7 @@ use meta_language::translation::ir::{Decl, FnDecl, Program};
 use meta_language::{
     BinaryLinksOptions, LinkId, LinkNetwork, TypedProgramLinksEmissionOptions,
     create_rust_source_owner_program_links, decode_link_network_binary, decode_typed_program_links,
-    emit_typed_program_links_with_options, encode_link_network_binary, encode_typed_program_links,
+    emit_typed_program_links, emit_typed_program_links_with_options, encode_link_network_binary,
 };
 use serde_json::Value;
 use std::{fs, process::Command};
