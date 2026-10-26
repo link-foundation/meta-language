@@ -454,3 +454,5 @@ mod source_project_archive;
 mod translation_rust_function_qualifiers;
 
 mod translation_rust_type_aliases;
+
+mod translation_rust_fresh_vector_arguments;

@@ -506,7 +506,18 @@ General range values, iterators, custom comparison owners and unsupported
 ownership layers require separate interpretations.
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
-Existing default-profile refusals remain available. The independently selected
+Existing default-profile result refusals remain available. The ordinary
+source call interpretation additionally admits fresh scalar `vec!`
+arguments. Actual macro source intervals supply constructor evidence, separate
+from the explicit result profile and local binding evidence. Scoped body tails,
+all returning conditional/match rows and diverging branches form a recursive
+consumption proof. Actual parameter element typing remains with the existing
+checker. Named moves, borrowed values, non-scalar element parameters and
+unproved associated constructors retain explicit refusals. Shared inspectable
+JavaScript definitions generate the native decisions and Links source; full
+original-Rust, codec, four-emitter and decision controls remain unexecuted drafts.
+General vector ownership and remaining source call forms remain required.
+The independently selected
 `closed guarded function returns 1` profile admits direct function returns and
 closed conditional guards with proved direct value ownership. Shared completion
 decisions lower them into the existing conditional, binding and abort model,

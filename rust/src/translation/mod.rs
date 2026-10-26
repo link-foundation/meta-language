@@ -161,6 +161,7 @@ pub(crate) mod rust_declaration_header_rules;
 pub(crate) mod rust_diagnostic_attribute_rules;
 pub(crate) mod rust_formatting_program;
 pub(crate) mod rust_formatting_rules;
+pub(crate) mod rust_fresh_vector_argument_rules;
 pub(crate) mod rust_function_pointer_rules;
 pub(crate) mod rust_function_qualifier_rules;
 pub(crate) mod rust_inherent_program;

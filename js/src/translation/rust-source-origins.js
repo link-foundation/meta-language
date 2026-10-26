@@ -11,6 +11,7 @@ import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion, acceptRustFr
 import {ownedLocalPair} from './rust-owned-local-state.js';
 import {readRustCopyClosureJoinError} from './rust-copy-closure-rules.js';
 import {readRustFunctionPointerCoercionError} from './rust-function-pointer-rules.js';
+import {readRustFreshVectorArgumentForm,acceptRustFreshOwnedVectorArgument} from './rust-fresh-vector-argument-rules.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -22,6 +23,7 @@ export class RustSourceOrigins {
     this.sharedArrayHandleSourceModel=sharedArrayHandleSourceModel;
     this.arrayResultModel = arrayResultModel;
     this.freshCalls = new Set();
+    this.freshVectorConstructors = new Set();
     this.collecting = catalog === null;
     this.catalog = catalog ?? new Map();
     this.scope = new Map();
@@ -221,6 +223,23 @@ export class RustSourceOrigins {
     return acceptRustFreshArrayResultTail(node.k, Boolean(this.origin(node, path).freshArrayValue), children);
   }
 
+  // Independent of the explicit array-result profile and its binding evidence.
+  // Source intervals survive the parser's block and completion reconstruction.
+  markVectorConstructor(node,origin) {
+    this.freshVectorConstructors.add(`${node.span?.start}:${node.span?.end}`);
+    return this.mark(node,origin);
+  }
+
+  freshVectorArgument(node,path) {
+    const origin=this.origin(node,path);
+    const form=readRustFreshVectorArgumentForm(node.k,origin.diverging===true,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`));
+    if(form==='diverging'||form==='constructor')return true;
+    if(form==='body')return this.freshVectorArgument(node.body,path);
+    if(form==='alternatives')return this.freshVectorArgument(node.then,path)&&this.freshVectorArgument(node.else,path);
+    if(form==='rows')return node.rows.length>0&&node.rows.every(row=>this.freshVectorArgument(row.body,path));
+    return false;
+  }
+
   wrap(node, path, layer) {
     const origin = this.origin(node, path);
     origin.wrappers.unshift(layer);
@@ -285,14 +304,16 @@ export class RustSourceOrigins {
 
   // Keep Box ownership contracts until source admission has checked a call;
   // ordinary value type unification remains exclusively in the checker.
-  call(segments, args, path, span) {
+  call(segments, args, path, span,ordinary=false) {
     this.freshCalls.add(`${span?.start}:${span?.end}`);
     if (this.collecting) return;
     const entry = this.lookup(segments, path);
     const expected = entry?.k === 'fn' ? entry.parameters : entry?.k === 'ctor' ? entry.fields : null;
     if (!expected || args.length !== expected.length) return;
     for (let index = 0; index < args.length; index += 1) {
-      if (expected[index].arraySourceModel === 'owned vector' && expected[index].wrappers.length === 0) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
+      const parameter=expected[index];
+      if (parameter.arraySourceModel === 'owned vector' && parameter.wrappers.length === 0
+        && !acceptRustFreshOwnedVectorArgument(ordinary,parameter.arraySourceModel,parameter.wrappers.length,parameter.type?.kind==='array'?parameter.type.element.kind:'',this.freshVectorArgument(args[index],path))) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
       // Immutable reference coercions may dereference Box behind a reference;
       // an owned Box never coerces into its owned inner value.
       this.argument(this.origin(args[index], path), expected[index], span);

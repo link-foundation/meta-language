@@ -1542,7 +1542,7 @@ class RustParser {
       }
       if (['std', 'core', 'alloc'].includes(segments[0])) throw unsupported(name, 'the standard library is outside the portable core', range);
       const callee=readRustSourceValueName(this,segments,path);
-      this.origins.call(callee, args, path, range);
+      this.origins.call(callee, args, path, range,this.ordinaryCompletionContext());
       if (readRustSourceCallForm(this.ordinaryCompletionContext(),args.length)==='name') return { k: 'name', path: callee, span: range };
       return { k: 'app', fn: { k: 'name', path: callee, span: span(token, token) }, args, span: range };
     }
@@ -1560,7 +1560,7 @@ class RustParser {
           if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false))) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', range);
         }
         const element = args.length ? this.origins.origin(args[0], path).type : null;
-        return noteRustSharedArrayLiteral(this,this.origins.mark({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true }),path);
+        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true }),path);
       }
       case 'format': {
         const formatted=this.format(args,token,path);

@@ -290,7 +290,9 @@ impl RustParser {
             ));
         }
         let callee = self.source_value_path(&segments, path);
-        self.origins.call(&callee, &args, path, range)?;
+        let ordinary = self.ordinary_completion_context();
+        self.origins
+            .call_with_fresh_vector_arguments(&callee, &args, path, range, ordinary)?;
         if crate::translation::rust_source_constant_rules::read_rust_source_call_form(
             self.ordinary_completion_context(),
             serde_json::Number::from(args.len())

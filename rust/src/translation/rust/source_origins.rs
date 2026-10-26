@@ -17,6 +17,9 @@ use super::indirection_rules::{
 };
 use super::product_rules::{accept_rust_immutable_product_type, accept_rust_product_origin};
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
+use crate::translation::rust_fresh_vector_argument_rules::{
+    accept_rust_fresh_owned_vector_argument, read_rust_fresh_vector_argument_form,
+};
 
 mod patterns;
 mod type_owners;
@@ -189,6 +192,7 @@ pub(super) struct SourceOrigins {
     pub(super) array_result_model: String,
     pub(super) owned_local_values: bool,
     fresh_calls: HashSet<Span>,
+    fresh_vector_constructors: HashSet<Span>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
@@ -209,6 +213,7 @@ impl SourceOrigins {
             array_result_model: model.to_owned(),
             owned_local_values: false,
             fresh_calls: HashSet::new(),
+            fresh_vector_constructors: HashSet::new(),
             collecting: catalog.is_none(),
             catalog: catalog.unwrap_or_default(),
             unit_clone_facts: HashMap::new(),
@@ -779,6 +784,49 @@ impl SourceOrigins {
         )
     }
 
+    pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, origin: SourceOrigin) {
+        if let Some(span) = node.span {
+            self.fresh_vector_constructors.insert(span);
+        }
+        self.mark(node, origin);
+    }
+
+    fn fresh_vector_argument(&self, node: &SExpr, path: &[String]) -> bool {
+        let origin = self.origin(node, path);
+        let form = read_rust_fresh_vector_argument_form(
+            node.node.kind(),
+            origin.diverging,
+            origin.array_source_model.unwrap_or(""),
+            serde_json::Number::from(origin.wrappers.len())
+                .as_f64()
+                .expect("actual wrapper count"),
+            node.span
+                .is_some_and(|span| self.fresh_vector_constructors.contains(&span)),
+        );
+        match (form.as_str(), &node.node) {
+            ("diverging" | "constructor", _) => true,
+            ("body", SNode::Let { body, .. } | SNode::Print { body, .. }) => {
+                self.fresh_vector_argument(body, path)
+            }
+            (
+                "alternatives",
+                SNode::If {
+                    then, otherwise, ..
+                },
+            ) => {
+                self.fresh_vector_argument(then, path)
+                    && self.fresh_vector_argument(otherwise, path)
+            }
+            ("rows", SNode::Match { rows, .. }) => {
+                !rows.is_empty()
+                    && rows
+                        .iter()
+                        .all(|row| self.fresh_vector_argument(&row.body, path))
+            }
+            _ => false,
+        }
+    }
+
     pub(super) fn certify_array_result(&mut self, name: &str, path: &[String], span: Option<Span>) {
         if self.collecting {
             let full_name = path
@@ -990,6 +1038,17 @@ impl SourceOrigins {
         path: &[String],
         span: Option<Span>,
     ) -> Result<()> {
+        self.call_with_fresh_vector_arguments(segments, args, path, span, false)
+    }
+
+    pub(super) fn call_with_fresh_vector_arguments(
+        &mut self,
+        segments: &[String],
+        args: &[SExpr],
+        path: &[String],
+        span: Option<Span>,
+        ordinary: bool,
+    ) -> Result<()> {
         if let Some(span) = span {
             self.fresh_calls.insert(span);
         }
@@ -1007,7 +1066,20 @@ impl SourceOrigins {
         // References can coerce through Box; owned Box cannot become its owned
         // inner value until the source explicitly dereferences it.
         for (argument, expected) in args.iter().zip(&expected) {
-            if expected.array_source_model == Some("owned vector") && expected.wrappers.is_empty() {
+            let element = match expected.ty.as_ref() {
+                Some(Type::Array { element, .. }) => element.kind(),
+                _ => "",
+            };
+            if expected.array_source_model == Some("owned vector")
+                && expected.wrappers.is_empty()
+                && !accept_rust_fresh_owned_vector_argument(
+                    ordinary,
+                    "owned vector",
+                    0.0,
+                    element,
+                    self.fresh_vector_argument(argument, path),
+                )
+            {
                 return Err(unsupported(
                     "owned vector argument",
                     "passing a vector by value needs an explicit consumption proof",
