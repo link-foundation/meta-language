@@ -3,6 +3,9 @@
 //! wrapper decisions are translated from the shared JavaScript policy.
 use super::diagnostics::{Result, type_error};
 use super::rust::indirection_rules::accept_rust_source_lifetime_binding;
+use super::rust_source_owner_retention_rules::{
+    accept_rust_retained_function_owner, accept_rust_retained_source_signature_model,
+};
 use super::source_signature_rules::{
     accept_rust_source_signature_model, accept_rust_source_signature_owner_kind,
     accept_rust_source_signature_primitive, accept_rust_source_signature_wrapper,
@@ -57,20 +60,64 @@ fn fail(message: &str) -> super::diagnostics::TranslationError {
     type_error(message, None)
 }
 
-fn validate_owner(owner: &SourceOwner, ty: &Type, depth: usize, visits: &mut usize) -> Result<()> {
+fn validate_owner(
+    owner: &SourceOwner,
+    ty: &Type,
+    depth: usize,
+    visits: &mut usize,
+    model: &str,
+) -> Result<()> {
     *visits += 1;
     if *visits > 100_000 || depth > 256 {
         return Err(fail(
             "an owned Rust source signature exceeds its resource limit",
         ));
     }
-    if !accept_rust_source_signature_owner_kind(&owner.kind)
+    if matches!(ty, Type::Function { .. }) && !accept_rust_retained_source_signature_model(model) {
+        return Err(fail(
+            "an owned Rust source type has an unsupported value type",
+        ));
+    }
+    if !(accept_rust_source_signature_owner_kind(&owner.kind)
+        || accept_rust_retained_source_signature_model(model) && owner.kind == "function")
         || owner.path.iter().any(String::is_empty)
     {
         return Err(fail("an owned Rust source type has an invalid owner"));
     }
     let path = owner.path.join("::");
     match owner.kind.as_str() {
+        "function" => {
+            let Type::Function { params, ret } = ty else {
+                return Err(fail(
+                    "an owned Rust source function differs from its value type",
+                ));
+            };
+            let number = |value: usize| {
+                serde_json::Number::from(value)
+                    .as_f64()
+                    .expect("actual signature cardinality")
+            };
+            if !accept_rust_retained_function_owner(
+                model,
+                &owner.kind,
+                ty.kind(),
+                number(owner.path.len()),
+                number(owner.arguments.len()),
+                number(params.len()),
+                false,
+            ) {
+                return Err(fail(
+                    "an owned Rust source function differs from its value type",
+                ));
+            }
+            for (child, actual) in owner
+                .arguments
+                .iter()
+                .zip(params.iter().chain(std::iter::once(ret.as_ref())))
+            {
+                validate_owner(child, actual, depth + 1, visits, model)?;
+            }
+        }
         "primitive" => {
             let (bits, signed) = match ty {
                 Type::Fixed { bits, signed } => (bits.to_string(), *signed),
@@ -114,7 +161,7 @@ fn validate_owner(owner: &SourceOwner, ty: &Type, depth: usize, visits: &mut usi
                 ));
             }
             for (child, element) in owner.arguments.iter().zip(elements) {
-                validate_owner(child, element, depth + 1, visits)?;
+                validate_owner(child, element, depth + 1, visits, model)?;
             }
         }
         "slice" | "library" if owner.kind == "slice" || path == "std::vec::Vec" => {
@@ -128,13 +175,13 @@ fn validate_owner(owner: &SourceOwner, ty: &Type, depth: usize, visits: &mut usi
                     "an owned Rust source array differs from its value type",
                 ));
             }
-            validate_owner(&owner.arguments[0], element, depth + 1, visits)?;
+            validate_owner(&owner.arguments[0], element, depth + 1, visits, model)?;
         }
         "library" if path == "std::boxed::Box" || path == "alloc::boxed::Box" => {
             if owner.arguments.len() != 1 {
                 return Err(fail("an owned Rust source box has invalid arguments"));
             }
-            validate_owner(&owner.arguments[0], ty, depth + 1, visits)?;
+            validate_owner(&owner.arguments[0], ty, depth + 1, visits, model)?;
         }
         "library" if path == "std::string::String" => {
             if !owner.arguments.is_empty() || *ty != Type::String {
@@ -159,7 +206,8 @@ pub fn validate_source_signature(
     language: &str,
 ) -> Result<()> {
     if signature.model.is_empty()
-        || !accept_rust_source_signature_model(&signature.model)
+        || !(accept_rust_source_signature_model(&signature.model)
+            || accept_rust_retained_source_signature_model(&signature.model))
         || signature.language != "Rust"
         || language != "Rust"
     {
@@ -211,7 +259,13 @@ pub fn validate_source_signature(
                 "an owned Rust source type has inconsistent wrapper or lifetime facts",
             ));
         }
-        validate_owner(&position.owner, &position.ty, 0, &mut visits)?;
+        validate_owner(
+            &position.owner,
+            &position.ty,
+            0,
+            &mut visits,
+            &signature.model,
+        )?;
         let mut boxed = 0;
         let mut leaf = &position.owner;
         while leaf.kind == "library"

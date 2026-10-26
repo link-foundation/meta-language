@@ -200,7 +200,13 @@ pub(super) fn assert_nominal_translation_product(
         }
     }
     let surface = if source_language == Language::Rust {
-        parse_rust(expected["source"].as_str().unwrap())
+        if expected["retainSourceTypeOwners"] == true {
+            meta_language::translation::rust::parse_rust_with_source_type_owners(
+                expected["source"].as_str().unwrap(),
+            )
+        } else {
+            parse_rust(expected["source"].as_str().unwrap())
+        }
     } else {
         meta_language::translation::javascript::parse_javascript(
             expected["source"].as_str().unwrap(),

@@ -44,6 +44,19 @@ aliases. Project directory metadata remains available and does not disable this
 source-module path. Effectful entry points and other unsupported source items
 keep their explicit gaps.
 
+`createRustSourceOwnerProgramLinks(source)` retains actual Rust type owners in
+typed Links under source signature version two. Both packages expose this
+factory. The independent semantic whole-module Rust path uses the same parser.
+Primitive pointer-sized names, transparent aliases, nominal and receiver owners,
+direct function-pointer interfaces and implicit Unit results remain inspectable
+through both graph codecs. The earlier signature model keeps its strict scope.
+Native public ABI reconstruction, additional qualifiers and partial-item owner
+composition remain separate requirements.
+
+For a source project, set `retainSourceTypeOwners: true` in its options. The
+`source-project` CLI also reads this property from its Links inventory options;
+the result retains the semantic facets and every original concrete graph.
+
 `selfTranslateWithDiagnostics` and Rust `self_translate_with_diagnostics` retain
 actual compiler diagnostics beside the unchanged source owners. JavaScript's
 `referenceSemantics: true` and Rust's `reference_semantics: true` select shared

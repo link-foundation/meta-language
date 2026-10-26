@@ -47,6 +47,15 @@ impl RustParser {
         children: Vec<SourceOwner>,
         ty: &Type,
     ) -> SourceOwner {
+        if head[0] == "fn"
+            && let Type::Function { params, .. } = ty
+        {
+            let mut arguments = children;
+            if arguments.len() == params.len() {
+                arguments.push(owner("unit", Vec::new(), Vec::new()));
+            }
+            return owner("function", Vec::new(), arguments);
+        }
         if head[0] == "&" {
             if head.iter().any(|part| part == "[") {
                 return owner("slice", Vec::new(), children);
@@ -65,6 +74,18 @@ impl RustParser {
                     .next()
                     .expect("a grouped type has a parsed child"),
             };
+        }
+        if let Type::Named { path, .. } = ty
+            && let Some(actual) = self
+                .origins
+                .lookup_type_owner(path, &self.origins.current_type.path)
+            && matches!(actual.declaration, super::super::SourceDeclaration::Data)
+        {
+            return owner(
+                "declaration",
+                actual.full_name.split('.').map(str::to_owned).collect(),
+                children,
+            );
         }
         self.named_source_type_owner(head, children)
     }
@@ -203,7 +224,8 @@ impl RustParser {
         lifetime_bindings: Vec<String>,
         scalar_loop: bool,
     ) -> Result<Option<SourceSignature>> {
-        if self.source_signature_model.is_empty() && !scalar_loop {
+        if self.source_signature_model.is_empty() && !scalar_loop && !self.retain_source_type_owners
+        {
             return Ok(None);
         }
         let position = |origin: &SourceOrigin| -> Result<SourceTypeSignature> {
@@ -227,10 +249,10 @@ impl RustParser {
             })
         };
         Ok(Some(SourceSignature {
-            model: if self.source_signature_model.is_empty() {
-                "Rust source function signature 1".into()
+            model: if scalar_loop && self.source_signature_model.is_empty() {
+                "Rust source function signature 1".to_owned()
             } else {
-                self.source_signature_model.clone()
+                crate::translation::rust_source_owner_retention_rules::select_rust_retained_source_signature_model(&self.source_signature_model,self.retain_source_type_owners)
             },
             language: "Rust".to_owned(),
             parameters: parameters.iter().map(position).collect::<Result<_>>()?,

@@ -563,6 +563,22 @@ bounded batch. Original source products, codecs and every shared decision remain
 deferred. These constraints do not implement every primitive distinction,
 unconstrained numeric inference, arbitrary coercion, trait resolution or complete
 Rust source type checking.
+`createRustSourceOwnerProgramLinks` and its native counterpart retain complete
+ordinary function type-owner facets in the existing typed Links graph. The
+orthogonal source-owner mode keeps ordinary body admission while selecting
+`Rust source function signature 2`. It adds recursively owned direct function
+interfaces, including an implicit Unit result; model one retains its original
+function-type refusal. Primitive, alias, nominal, Self/receiver, pointer interface,
+wrapper and lifetime facts remain attached through text/binary reload. Equal
+64-bit value representations do not erase distinct source type meaning from
+formal comparison. The independent whole-module semantic Rust path uses this
+same retained-header parser. Source-project inventories can select
+`retainSourceTypeOwners: true`, including through existing Links CLI options;
+every original concrete graph remains available. Runtime shells, shared-handle
+composition, all partial-item semantic paths, native public ABI reconstruction,
+const and other missing qualifiers, full inference and generic/trait resolution
+still require their own implementations. Retained type facts are not evidence
+of those capabilities or of successful execution.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

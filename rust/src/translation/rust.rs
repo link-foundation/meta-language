@@ -133,7 +133,8 @@ pub use source_profiles::{
     parse_rust_with_pure_unit_call_model, parse_rust_with_runtime_shell_model,
     parse_rust_with_scalar_loop_model, parse_rust_with_shared_array_handle_source_model,
     parse_rust_with_source_models, parse_rust_with_source_profiles,
-    parse_rust_with_source_signature_model, parse_rust_with_type_namespace_model,
+    parse_rust_with_source_signature_model, parse_rust_with_source_type_owners,
+    parse_rust_with_type_namespace_model,
 };
 
 /// Read explicit owned String local state and its exact source interface.
@@ -176,6 +177,7 @@ pub fn parse_rust_with_const_function_model(
 
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
+    retain_source_type_owners: bool,
     shared_array_handle_source: &'a str,
     const_function: &'a str,
     array_result: &'a str,
@@ -205,6 +207,7 @@ fn parse_rust_with_selected_profiles(
         type_namespace: type_namespace_model,
         pure_unit_call: pure_unit_call_model,
         local_value_state: local_value_state_model,
+        retain_source_type_owners: _,
     } = profiles;
     if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_interpretation(
         shared_array_handle_source_model,
@@ -465,6 +468,7 @@ struct Binding {
 }
 
 struct RustParser {
+    retain_source_type_owners: bool,
     source_type_aliases: type_aliases::SourceTypeAliases,
     header_discovery: bool,
     shared_array_handle_source_model: String,
@@ -544,6 +548,7 @@ impl RustParser {
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         Self {
+            retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),
             header_discovery: false,
             shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),

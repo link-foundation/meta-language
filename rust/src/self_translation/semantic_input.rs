@@ -29,14 +29,15 @@ fn failure(
 fn read_independent_rust_program(
     source: &str,
 ) -> Result<crate::translation::ir::Program, super::SelfTranslationError> {
-    use crate::translation::{check::check_program, rust::parse_rust};
-    let surface = match parse_rust(source) {
+    use crate::translation::{check::check_program, rust::parse_rust_with_source_type_owners};
+    let surface = match parse_rust_with_source_type_owners(source) {
         Ok(surface) => surface,
         Err(error)
             if error.kind == crate::translation::diagnostics::ErrorKind::Syntax
                 && error.reason == "a Rust program needs fn main" =>
         {
-            parse_rust(&format!("{source}\nfn main() {{}}\n")).map_err(failure)?
+            parse_rust_with_source_type_owners(&format!("{source}\nfn main() {{}}\n"))
+                .map_err(failure)?
         }
         Err(error) => return Err(failure(error)),
     };

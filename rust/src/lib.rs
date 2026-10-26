@@ -389,7 +389,9 @@ pub use project_data::{
 };
 pub use project_translation::{draft_project_translation, project_translation_draft_to_links};
 mod rust_project_source_rules;
+mod rust_source_owner_program;
 mod rust_source_project;
+pub use rust_source_owner_program::create_rust_source_owner_program_links;
 mod rust_source_project_cli;
 mod source_project_archive;
 mod source_project_archive_rules;

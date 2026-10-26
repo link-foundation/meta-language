@@ -967,6 +967,31 @@ export function acceptLinkAllocationCapacity(
   exhausted: boolean, count: number,
 ): boolean;
 export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
+/** Complete ordinary Rust headers retained under source signature version two. */
+export function createRustSourceOwnerProgramLinks(source: string): TypedProgramLinks;
+export interface RustSourceProjectSource { path:string; source:string }
+export interface RustSourceProjectOptions {
+  library?:boolean; retainSourceTypeOwners?:boolean; provenance?:unknown;
+  fileLimit?:number; byteLimit?:number; tokenLimit?:number; depthLimit?:number;
+  expansionLimit?:number; outputUnitLimit?:number; nodeLimit?:number;
+  referenceLimit?:number;
+}
+export interface RustSourceProjectMapping {
+  path:string; start:number; end:number; startUnit:number; endUnit:number;
+  module:string; provider:string;
+}
+export interface RustSourceProjectComposition {
+  schemaVersion:1; model:'complete Rust source module composition 1';
+  entry:string; source:string;
+  files:(RustSourceProjectSource & {sourceBytes:number;sourceSha256:string})[];
+  modules:RustSourceProjectMapping[];
+  mappings:(RustSourceProjectMapping & {kind:string;outputStart:number;outputEnd:number})[];
+  unusedSources:string[];
+}
+export function composeRustSourceProject(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):RustSourceProjectComposition;
+export function parseRustSourceProject(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):{composition:RustSourceProjectComposition;surface:unknown;entryNormalization:string};
+export function createRustSourceProjectProgramLinks(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):TypedProgramLinks;
+export function readRustSourceProjectConcreteGraphs(network:LinkNetwork,root:LinkIdValue,options?:RustSourceProjectOptions):{path:string;source:string;network:LinkNetwork}[];
 export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
 export function createReferenceMethodProgramLinks(): TypedProgramLinks;
 export function createRecordFieldWriteProgramLinks(): TypedProgramLinks;

@@ -299,6 +299,12 @@ impl RustParser {
                     Vec::new()
                 },
             );
+            self.origins.current_type.source_owner =
+                Some(crate::translation::source_signatures::SourceOwner {
+                    kind: "declaration".to_owned(),
+                    path: owner.path.clone(),
+                    arguments: Vec::new(),
+                });
             if borrowed {
                 self.origins.current_type.source_lifetimes = vec![lifetime];
             }

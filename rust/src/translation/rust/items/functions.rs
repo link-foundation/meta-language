@@ -127,6 +127,13 @@ impl RustParser {
             self.origins.typed(Type::Unit, path, Vec::new())
         };
         let mut source_result = self.origins.current_type.clone();
+        if !explicit_result {
+            source_result.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "unit".to_owned(),
+                path: Vec::new(),
+                arguments: Vec::new(),
+            });
+        }
         if !self.shared_array_handle_source_model.is_empty()
             && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
         {

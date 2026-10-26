@@ -34,6 +34,19 @@ pub fn parse_rust_with_runtime_shell_model(source: &str, model: &str) -> Result<
 pub fn parse_rust(source: &str) -> Result<SProgram> {
     parse_rust_with_array_result_model(source, "")
 }
+/// Read ordinary Rust while retaining its actual type owners as linked facets.
+///
+/// # Errors
+/// Refuses invalid source, unsupported constructs and unrepresentable owners.
+pub fn parse_rust_with_source_type_owners(source: &str) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
+}
 
 /// Read Rust under an explicit versioned scalar vector result admission model.
 ///

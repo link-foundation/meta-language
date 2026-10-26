@@ -26,7 +26,7 @@ import { requiresReferenceSemantics } from './translation/reference-analysis.js'
 import { tokenize } from './translation/lexer.js';
 import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure.js';
 import { projectTypeScriptTyping } from './typescript-portable-typing.js';
-import { parseRust } from './translation/rust.js';
+import { parseRust,parseRustWithSourceTypeOwners } from './translation/rust.js';
 import {readRustSharedArrayHandleModule} from './translation/rust-shared-array-handle-modules.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './translation/rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
@@ -167,10 +167,10 @@ function readIndependentRustModuleSignatures(source, options) {
 
 function readIndependentRustProgram(source) {
   let surface;
-  try { surface = parseRust(source); }
+  try { surface = parseRustWithSourceTypeOwners(source); }
   catch (error) {
     if (!(error instanceof TranslationError) || error.kind !== 'syntax' || error.reason !== 'a Rust program needs fn main') throw error;
-    surface = parseRust(`${source}\nfn main() {}\n`);
+    surface = parseRustWithSourceTypeOwners(`${source}\nfn main() {}\n`);
   }
   return checkProgram(surface);
 }

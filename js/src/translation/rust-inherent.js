@@ -79,6 +79,7 @@ export function readRustInherentReceiver(parser,name,path,index){
  }else{
   type={kind:'named',path:['crate',...parser.inherentOwner.path]};
   parser.origins.typed(type,parser.inherentOwner.modulePath,borrowed?['reference']:[]);
+  parser.origins.type.sourceOwner={kind:'declaration',path:[...parser.inherentOwner.path],arguments:[]};
   if(borrowed)parser.origins.type.sourceLifetimes=[lifetime];
  }
  const origin=parser.origins.type;

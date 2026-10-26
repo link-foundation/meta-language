@@ -260,7 +260,19 @@ pub fn parse_rust_source_project(
 ) -> Result<(Value, SProgram, String), String> {
     let composition = compose_rust_source_project(inputs, entry, options)?;
     let source = composition["source"].as_str().unwrap();
-    let (surface, normalization) = match parse_rust(source) {
+    let retain = match options.get("retainSourceTypeOwners") {
+        None => false,
+        Some(Value::Bool(value)) => *value,
+        _ => return Err("Rust source project: retainSourceTypeOwners must be Boolean".to_owned()),
+    };
+    let parse = |source: &str| {
+        if retain {
+            crate::translation::rust::parse_rust_with_source_type_owners(source)
+        } else {
+            parse_rust(source)
+        }
+    };
+    let (surface, normalization) = match parse(source) {
         Ok(surface) => (surface, "none"),
         Err(error)
             if options["library"].as_bool() == Some(true)
@@ -268,8 +280,7 @@ pub fn parse_rust_source_project(
                 && error.reason == "a Rust program needs fn main" =>
         {
             (
-                parse_rust(&format!("{source}\nfn main(){{}}\n"))
-                    .map_err(|error| error.to_string())?,
+                parse(&format!("{source}\nfn main(){{}}\n")).map_err(|error| error.to_string())?,
                 "empty frontend entry for a source library",
             )
         }

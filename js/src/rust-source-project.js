@@ -48,9 +48,11 @@ export function composeRustSourceProject(inputs,entry,options={}){
  */
 export function parseRustSourceProject(inputs,entry,options={}){
  const composition=composeRustSourceProject(inputs,entry,options);let source=composition.source,entryNormalization='none',surface;
- try{surface=parseRust(source);}catch(error){
+ if(options.retainSourceTypeOwners!==undefined&&typeof options.retainSourceTypeOwners!=='boolean')fail('retainSourceTypeOwners must be Boolean');
+ const sourceOptions={retainSourceTypeOwners:options.retainSourceTypeOwners===true};
+ try{surface=parseRust(source,sourceOptions);}catch(error){
   if(options.library===true&&error.kind==='syntax'&&error.reason==='a Rust program needs fn main'){
-   source+='\nfn main(){}\n';entryNormalization='empty frontend entry for a source library';surface=parseRust(source);
+   source+='\nfn main(){}\n';entryNormalization='empty frontend entry for a source library';surface=parseRust(source,sourceOptions);
   }else throw error;
  }
  return {composition,surface,entryNormalization};
