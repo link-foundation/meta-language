@@ -209,58 +209,15 @@ pub fn source_ml_temporary_read_rust_type_alias_declaration_plan_loop2(
     }
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_read_rust_type_alias_lookup_keys_loop5(
-    names: &[String],
-    start: &[String],
-    mut absolute: bool,
-    mut result: Vec<String>,
-    mut depth: f64,
-) -> Vec<String> {
-    loop {
-        return if depth >= 0f64 {
-            {
-                let result_2 = {
-                    let (ml_append_right, ml_append_left) = (
-                        vec![
-                            (self::ml_array::append(
-                                self::ml_array::slice(start, 0f64, depth),
-                                names.to_vec(),
-                            ))
-                            .join((String::from(".")).as_str()),
-                        ],
-                        result,
-                    );
-                    self::ml_array::append(ml_append_left, ml_append_right)
-                };
-                if absolute {
-                    result_2
-                } else {
-                    {
-                        let depth_2 = depth - 1f64;
-                        {
-                            (result, depth) = (result_2, depth_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            result
-        };
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryReadRustTypeAliasLookupKeysJoin4 {
-    MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(Vec<String>, Vec<String>, bool),
+    MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(Vec<String>, Vec<String>),
     MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(Vec<String>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_rust_type_alias_lookup_keys_loop6(
+pub fn source_ml_temporary_read_rust_type_alias_lookup_keys_loop5(
     names: &[String],
     mut count: f64,
 ) -> f64 {
@@ -278,5 +235,31 @@ pub fn source_ml_temporary_read_rust_type_alias_lookup_keys_loop6(
             }
         }
         return { count };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6(
+    mut result: Vec<f64>,
+    mut length: f64,
+) -> Vec<f64> {
+    loop {
+        if length > 0f64 {
+            {
+                let result_2 = {
+                    let (ml_append_right, ml_append_left) = (vec![length], result);
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let length_2 = length - 1f64;
+                    {
+                        (result, length) = (result_2, length_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
     }
 }

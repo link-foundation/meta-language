@@ -2,7 +2,7 @@ import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceV
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
 import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRustConstPredicateProof} from './rust-function-qualifier-rules.js';
-import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases} from './rust-type-aliases.js';
+import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases,resolveRustTypeAliasPath,requireRustTypeAliasValueConstructor} from './rust-type-aliases.js';
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
@@ -190,6 +190,7 @@ class RustParser {
 
   file() {
     initializeRustTypeAliases(this);
+    if(!this.headerDiscovery)finishRustTypeAliases(this);
     const root = { items: [], main: null };
     this.innerAttributes();
     this.items(root, root.items, [], () => this.cursor.atEnd());
@@ -1497,6 +1498,7 @@ class RustParser {
       }
       const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
       if(sharedConstruction)return sharedConstruction;
+      requireRustTypeAliasValueConstructor(this,segments,path,{start:token.start,end:c.tokens[c.index-1].end});
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
       if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??readRustSourceValueName(this,segments,path), span: span(token, token) },path);
       c.next();
@@ -1682,7 +1684,7 @@ class RustParser {
       return inner;
     }
     if (c.is('{')) return readRustRecordPattern(this,segments,path,aliases,token);
-    const resolved = readRustRecordValuePath(this,segments,path,c.is('('))??this.resolve(segments, path);
+    const resolved = readRustRecordValuePath(this,segments,path,c.is('('))??this.resolve(resolveRustTypeAliasPath(this,segments,path,'associated value'), path);
     if (c.eat('(')) {
       const args = [];
       let rest=null;

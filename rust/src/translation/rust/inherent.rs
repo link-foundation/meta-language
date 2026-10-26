@@ -74,6 +74,7 @@ impl RustParser {
             ));
         }
         let segments = self.path_segments("implementation owner")?;
+        let segments = self.resolve_type_alias_path(&segments, path, "implementation owner");
         if self.cursor.is("<") || self.cursor.is("for") || self.cursor.is("where") {
             return Err(unsupported(
                 "generic or trait Rust implementation",

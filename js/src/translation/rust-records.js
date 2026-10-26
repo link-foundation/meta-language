@@ -1,6 +1,7 @@
 // Token and source-origin transport. Shared plans decide field order/bindings;
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
+import{resolveRustTypeAliasPath}from'./rust-type-aliases.js';
 import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -21,6 +22,7 @@ function nominal(parser,segments,path){
  return found?parser.namedRecords.get(found.fullName):null;
 }
 function braceOwner(parser,segments,path){
+ segments=resolveRustTypeAliasPath(parser,segments,path,'braced record');
  const record=nominal(parser,segments,path);
  if(record)return record;
  const found=parser.origins.lookup(parser.resolve(segments,path),path,['ctor']);
@@ -150,6 +152,7 @@ function readRecordUpdate(parser,record,entries,base,path,where){
 }
 
 export function readRustRecordValuePath(parser,segments,path,called){
+ segments=resolveRustTypeAliasPath(parser,segments,path,'associated value');
  if(segments.length===1&&parser.origins.scope.has(segments[0]))return null;
  const record=nominal(parser,segments,path);
  return record&&(called?record.syntax==='tuple':record.syntax==='unit')?['crate',...record.constructor.split('.')]:null;

@@ -1,8 +1,8 @@
 // Generated from complete js/src/translation/rust-type-alias-rules.js. Do not edit by hand.
 use super::MlTemporaryReadRustTypeAliasLookupKeysJoin4;
+use super::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6;
 use super::source_ml_temporary_read_rust_type_alias_declaration_plan_loop2;
 use super::source_ml_temporary_read_rust_type_alias_lookup_keys_loop5;
-use super::source_ml_temporary_read_rust_type_alias_lookup_keys_loop6;
 
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
@@ -427,93 +427,77 @@ pub fn read_rust_type_alias_lookup_keys(segments: &[String], context: &[String])
         {
             let start = context.to_vec();
             {
-                let absolute = false;
+                let source_ml_source1_s3 = if ((self::ml_array::optional_at(
+                    &names,
+                    self::ml_array::number_index(0f64),
+                ))
+                .unwrap_or_else(|| String::new()))
+                    == "crate"
                 {
-                    let source_ml_source1_s3 = if ((self::ml_array::optional_at(
-                        &names,
-                        self::ml_array::number_index(0f64),
-                    ))
-                    .unwrap_or_else(|| String::new()))
-                        == "crate"
                     {
+                        let names_2 = self::ml_array::slice(&names, 1f64, f64::INFINITY);
                         {
-                            let names_2 = self::ml_array::slice(&names, 1f64, f64::INFINITY);
-                            {
-                                let start_2 = Vec::<String>::new();
-                                {
-                                    let absolute_2 = true;
-                                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_2, start_2, absolute_2)
-                                }
-                            }
+                            let start_2 = Vec::<String>::new();
+                            self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_2, start_2)
                         }
-                    } else if ((self::ml_array::optional_at(
-                        &names,
-                        self::ml_array::number_index(0f64),
-                    ))
-                    .unwrap_or_else(|| String::new()))
-                        == "self"
+                    }
+                } else if ((self::ml_array::optional_at(
+                    &names,
+                    self::ml_array::number_index(0f64),
+                ))
+                .unwrap_or_else(|| String::new()))
+                    == "self"
+                {
                     {
-                        {
-                            let names_3 = self::ml_array::slice(&names, 1f64, f64::INFINITY);
-                            {
-                                let absolute_3 = true;
-                                self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_3, start, absolute_3)
-                            }
-                        }
-                    } else if ((self::ml_array::optional_at(
-                        &names,
-                        self::ml_array::number_index(0f64),
-                    ))
-                    .unwrap_or_else(|| String::new()))
-                        == "super"
+                        let names_3 = self::ml_array::slice(&names, 1f64, f64::INFINITY);
+                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_3, start)
+                    }
+                } else if ((self::ml_array::optional_at(
+                    &names,
+                    self::ml_array::number_index(0f64),
+                ))
+                .unwrap_or_else(|| String::new()))
+                    == "super"
+                {
                     {
+                        let count = 0f64;
                         {
-                            let count = 0f64;
-                            {
-                                let count_2 = self::source_ml_temporary_read_rust_type_alias_lookup_keys_loop6(&(names), count);
-                                if count_2 > (start.len() as f64) {
-                                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(Vec::<String>::new())
-                                } else {
-                                    {
-                                        let names_4 =
-                                            self::ml_array::slice(&names, count_2, f64::INFINITY);
-                                        {
-                                            let start_3 = self::ml_array::slice(
-                                                &start,
-                                                0f64,
-                                                ((start.len() as f64) - count_2),
-                                            );
-                                            {
-                                                let absolute_4 = true;
-                                                self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_4, start_3, absolute_4)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names, start, absolute)
-                    };
-                    match source_ml_source1_s3 {
-                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_5, start_4, absolute_5) => {
-                            if (names_5.len() as f64) == 0f64 {
-                                Vec::<String>::new()
+                            let count_2 =
+                                self::source_ml_temporary_read_rust_type_alias_lookup_keys_loop5(
+                                    &(names),
+                                    count,
+                                );
+                            if count_2 > (start.len() as f64) {
+                                self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(Vec::<String>::new())
                             } else {
                                 {
-                                    let result = Vec::<String>::new();
+                                    let names_4 =
+                                        self::ml_array::slice(&names, count_2, f64::INFINITY);
                                     {
-                                        let depth = start_4.len() as f64;
-                                        {
-                                            self::source_ml_temporary_read_rust_type_alias_lookup_keys_loop5(&(names_5), &(start_4), absolute_5, result, depth)
-                                        }
+                                        let start_3 = self::ml_array::slice(
+                                            &start,
+                                            0f64,
+                                            ((start.len() as f64) - count_2),
+                                        );
+                                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_4, start_3)
                                     }
                                 }
                             }
                         }
-                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(source_ml_temporary_result5) => {
-                            source_ml_temporary_result5
+                    }
+                } else {
+                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names, start)
+                };
+                match source_ml_source1_s3 {
+                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_5, start_4) => {
+                        if (names_5.len() as f64) == 0f64 {
+                            Vec::<String>::new()
+                        } else {
+                            vec![({ let (ml_append_right, ml_append_left) = (names_5, start_4); self::ml_array::append(ml_append_left, ml_append_right) }).join((String::from(".")).as_str())]
                         }
+                    }
+                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(source_ml_temporary_result4) => {
+                        source_ml_temporary_result4
                     }
                 }
             }
@@ -544,6 +528,62 @@ pub fn read_rust_type_alias_expansion_error(
 pub fn read_rust_type_alias_clone_error(current: f64, needed: f64) -> String {
     if needed > (262_144f64 - current) {
         String::from("source type alias materialization limit exceeded")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_type_alias_access_prefix_lengths(count: f64, bare: bool) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let length = if bare { count } else { count - 1f64 };
+            {
+                self::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6(
+                    result, length,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_type_alias_nominal_access(
+    kind: &str,
+    wrappers: f64,
+    suffix: f64,
+    role: &str,
+    syntax: &str,
+) -> bool {
+    ((kind == "named") && (wrappers == 0f64))
+        && (((suffix > 0f64) || (role == "implementation owner"))
+            || ((role == "braced record") && (syntax == "named")))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_type_alias_namespace_disposition(alias: bool, owner: &str) -> String {
+    if alias {
+        String::from("alias")
+    } else if ((owner == "data") || (owner == "module")) || (owner == "externalCrate") {
+        String::from("block")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_type_alias_value_constructor_error(
+    local: bool,
+    value: bool,
+    alias: bool,
+) -> String {
+    if (!local && !value) && alias {
+        String::from("a source type alias has no independent value constructor")
     } else {
         String::new()
     }

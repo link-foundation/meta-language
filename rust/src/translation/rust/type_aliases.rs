@@ -18,6 +18,7 @@ pub(super) struct SourceTypeAliases {
     stack: HashSet<String>,
     expansions: usize,
     nodes: usize,
+    checked: bool,
 }
 fn children(ty: &Type) -> Vec<&Type> {
     match ty {
@@ -98,9 +99,24 @@ impl RustParser {
         Ok(())
     }
     fn alias_data_owner(&self, segments: &[String], path: &[String]) -> Option<String> {
-        rules::read_rust_type_alias_lookup_keys(segments, path)
-            .into_iter()
-            .find(|key| matches!(self.origins.catalog.get(key), Some(SourceDeclaration::Data)))
+        for key in rules::read_rust_type_alias_lookup_keys(segments, path) {
+            let kind = self.alias_namespace_kind(&key);
+            if kind == "data" {
+                return Some(key);
+            }
+            if rules::read_rust_type_alias_namespace_disposition(false, kind) == "block" {
+                return None;
+            }
+        }
+        None
+    }
+    fn alias_namespace_kind(&self, key: &str) -> &'static str {
+        match self.origins.catalog.get(key) {
+            Some(SourceDeclaration::Data) => "data",
+            Some(SourceDeclaration::Module) => "module",
+            Some(SourceDeclaration::ExternalCrate) => "externalCrate",
+            _ => "",
+        }
     }
     fn qualify_alias_type(&self, ty: &Type, path: &[String]) -> Type {
         match ty {
@@ -270,6 +286,13 @@ impl RustParser {
                 self.origins.current_type = origin;
                 return Ok(Some(ty));
             }
+            if rules::read_rust_type_alias_namespace_disposition(
+                false,
+                self.alias_namespace_kind(&key),
+            ) == "block"
+            {
+                return Ok(None);
+            }
         }
         Ok(None)
     }
@@ -295,7 +318,7 @@ impl RustParser {
         Ok(())
     }
     pub(super) fn finish_type_aliases(&mut self) -> Result<()> {
-        if !self.ordinary_completion_context() {
+        if !self.ordinary_completion_context() || self.source_type_aliases.checked {
             return Ok(());
         }
         self.source_type_aliases.cache.clear();
@@ -334,6 +357,100 @@ impl RustParser {
                 }
             }
         }
+        self.source_type_aliases.checked = true;
         Ok(())
+    }
+    pub(super) fn resolve_type_alias_path(
+        &self,
+        names: &[String],
+        path: &[String],
+        role: &str,
+    ) -> Vec<String> {
+        if !self.ordinary_completion_context() || self.source_type_aliases.declarations.is_empty() {
+            return names.to_vec();
+        }
+        for prefix in rules::read_rust_type_alias_access_prefix_lengths(
+            names.len() as f64,
+            role != "associated value",
+        ) {
+            let prefix = prefix as usize;
+            let resolved = self.resolve(&names[..prefix], path);
+            for key in rules::read_rust_type_alias_lookup_keys(&resolved, &self.module_path) {
+                let disposition = rules::read_rust_type_alias_namespace_disposition(
+                    self.source_type_aliases.declarations.contains_key(&key),
+                    self.alias_namespace_kind(&key),
+                );
+                if disposition == "block" {
+                    return names.to_vec();
+                }
+                if disposition != "alias" {
+                    continue;
+                }
+                let Some(origin) = self.source_type_aliases.cache.get(&key) else {
+                    return names.to_vec();
+                };
+                let Some(Type::Named { path: target, .. }) = origin.ty.as_ref() else {
+                    return names.to_vec();
+                };
+                let resolved = self.resolve(target, &origin.path);
+                let Some(owner) = self.alias_data_owner(&resolved, &origin.path) else {
+                    return names.to_vec();
+                };
+                let syntax = self
+                    .named_records
+                    .get(&owner)
+                    .map_or("", |record| record.syntax);
+                if !rules::accept_rust_type_alias_nominal_access(
+                    "named",
+                    origin.wrappers.len() as f64,
+                    (names.len() - prefix) as f64,
+                    role,
+                    syntax,
+                ) {
+                    return names.to_vec();
+                }
+                return std::iter::once("crate".to_owned())
+                    .chain(owner.split('.').map(str::to_owned))
+                    .chain(names[prefix..].iter().cloned())
+                    .collect();
+            }
+        }
+        names.to_vec()
+    }
+    pub(super) fn require_type_alias_value_constructor(
+        &self,
+        names: &[String],
+        path: &[String],
+        span: Option<super::Span>,
+    ) -> Result<()> {
+        if !self.ordinary_completion_context() || self.source_type_aliases.declarations.is_empty() {
+            return Ok(());
+        }
+        let resolved = self.resolve(names, path);
+        let local = names.len() == 1 && self.origins.scope.contains_key(&names[0]);
+        let keys = rules::read_rust_type_alias_lookup_keys(&resolved, &self.module_path);
+        let value = keys.iter().any(|key| {
+            matches!(
+                self.origins.catalog.get(key),
+                Some(
+                    SourceDeclaration::Function { .. }
+                        | SourceDeclaration::Constant { .. }
+                        | SourceDeclaration::Constructor { .. }
+                )
+            )
+        });
+        let alias = keys
+            .iter()
+            .any(|key| self.source_type_aliases.declarations.contains_key(key));
+        let message = rules::read_rust_type_alias_value_constructor_error(local, value, alias);
+        if message.is_empty() {
+            Ok(())
+        } else {
+            Err(unsupported(
+                "Rust type alias value constructor",
+                message,
+                span,
+            ))
+        }
     }
 }

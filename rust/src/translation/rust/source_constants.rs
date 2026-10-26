@@ -9,7 +9,8 @@ impl RustParser {
         if names.len() == 1 && self.origins.scope.contains_key(&names[0]) {
             return names.to_vec();
         }
-        let resolved = self.resolve(names, path);
+        let names = self.resolve_type_alias_path(names, path, "associated value");
+        let resolved = self.resolve(&names, path);
         if self.ordinary_completion_context() {
             rules::read_rust_source_value_path(&self.module_path, &resolved)
         } else {

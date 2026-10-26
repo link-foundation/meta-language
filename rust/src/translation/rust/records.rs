@@ -19,7 +19,7 @@ pub(super) struct NamedRecord {
     owner: String,
     constructor: String,
     names: Vec<String>,
-    syntax: &'static str,
+    pub(super) syntax: &'static str,
     update: bool,
 }
 
@@ -61,6 +61,8 @@ impl RustParser {
     }
 
     fn record_brace_owner(&self, segments: &[String], path: &[String]) -> Option<NamedRecord> {
+        let resolved = self.resolve_type_alias_path(segments, path, "braced record");
+        let segments = resolved.as_slice();
         if let Some(record) = self.record_owner(segments, path) {
             return Some(record);
         }
@@ -479,6 +481,8 @@ impl RustParser {
         path: &[String],
         called: bool,
     ) -> Option<Vec<String>> {
+        let resolved = self.resolve_type_alias_path(segments, path, "associated value");
+        let segments = resolved.as_slice();
         if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {
             return None;
         }

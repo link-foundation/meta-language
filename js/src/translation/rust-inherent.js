@@ -2,6 +2,7 @@
 import{unsupported}from'./diagnostics.js';
 import{prepareRustRecordMethodNamespace}from'./rust-records.js';
 import{acceptRustConstFunctionPrefix,acceptRustAssociatedConstantItem}from'./rust-function-qualifier-rules.js';
+import{resolveRustTypeAliasPath}from'./rust-type-aliases.js';
 import{acceptRustSourceLifetimeReference}from'./rust-indirection-rules.js';
 import{acceptRustInherentSourceProfiles,readRustInherentReceiverLayerMode,planRustInherentReceiverLayers,acceptRustInherentOwnerModule,readRustInherentParentPath}from'./rust-inherent-rules.js';
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -19,7 +20,7 @@ export function readRustInherentItem(parser,path){
   parser.constFunctionModel,parser.sharedArrayHandleSourceModel];
  if(!acceptRustInherentSourceProfiles(models))throw unsupported('Rust inherent profile composition','closed source models need an explicit method composition proof',span(start,c.peek()));
  if(c.is('<'))throw unsupported('generic Rust implementation','type parameters require their complete trait and ownership interpretation',span(start,c.peek()));
- const segments=parser.pathSegments('implementation owner');
+ const segments=resolveRustTypeAliasPath(parser,parser.pathSegments('implementation owner'),path,'implementation owner');
  if(c.is('<')||c.is('for')||c.is('where'))throw unsupported('generic or trait Rust implementation','traits and predicates need their complete dispatch interpretation',span(start,c.peek()));
  const found=parser.origins.lookup(parser.resolve(segments,path),path,['data']);
  const resolved=parser.resolve(segments,path);

@@ -1,5 +1,6 @@
 // Actual source declaration owners into the existing checked value construction.
 import {typeError,unsupported} from './diagnostics.js';
+import {resolveRustTypeAliasPath} from './rust-type-aliases.js';
 import {planRustSourceConstantValue,readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceValuePath} from './rust-source-constant-rules.js';
 import {readRustCopyClosureCall} from './rust-copy-closures.js';
 export function readRustSourceConstantValue(parser,entry,path,span){
@@ -21,5 +22,5 @@ export function requireRustNonconstantBinding(parser,name,path,span){
 
 export function readRustSourceValueName(parser,segments,path){
  if(segments.length===1&&parser.origins.scope.has(segments[0]))return segments;
- const resolved=parser.resolve(segments,path);return parser.ordinaryCompletionContext()?readRustSourceValuePath(parser.modulePath,resolved):resolved;
+ const resolved=parser.resolve(resolveRustTypeAliasPath(parser,segments,path,'associated value'),path);return parser.ordinaryCompletionContext()?readRustSourceValuePath(parser.modulePath,resolved):resolved;
 }

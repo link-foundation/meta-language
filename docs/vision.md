@@ -3997,6 +3997,20 @@ local and associated aliases, all constructor/inherent paths through aliases,
 complete namespace/privacy rules and arbitrary lifetimes remain obligations.
 The source draft and all new controls remain unexecuted.
 
+Direct nominal aliases also reach the actual datatype's named-record syntax,
+enum variants, patterns, associated functions, constants and receivers. Inherent
+implementations through an alias keep the underlying datatype owner. Checked
+namespace views are prepared before bodies; original constructor evaluation and
+ownership stay with the existing frontend. Type items do not acquire independent
+tuple/unit value constructors, and value bindings retain their separate
+namespace. Alias lookup observes actual module boundaries: outer items require
+explicit paths, as specified by [Rust item scopes](https://doc.rust-lang.org/reference/names/scopes.html#item-scopes).
+Preceding complete source definitions remain separate historical inputs.
+Wrapper/primitive/generic access, remaining record forms, local/associated type
+aliases, complete import namespace rules and every broader obligation remain
+required. Deferred products include the actual shipped planning source compiled
+in CI against independent JavaScript/native lexers; no local control has run.
+
 The ordinary frontend checks the composed source. Library mode explicitly
 records an empty frontend entry only when the source has no main. The checked
 program archive also retains each complete original CST as a source-qualified

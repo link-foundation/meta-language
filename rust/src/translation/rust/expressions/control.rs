@@ -436,7 +436,12 @@ impl RustParser {
         }
         let resolved = self
             .record_value_path(&segments, path, self.cursor.is("("))
-            .unwrap_or_else(|| self.resolve(&segments, path));
+            .unwrap_or_else(|| {
+                self.resolve(
+                    &self.resolve_type_alias_path(&segments, path, "associated value"),
+                    path,
+                )
+            });
         if self.cursor.eat("(").is_some() {
             let mut args = Vec::new();
             let mut rest = None;

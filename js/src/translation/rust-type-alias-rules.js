@@ -49,22 +49,20 @@ export function readRustTypeAliasDeclarationPlan(kinds,values){
  }
  return result;
 }
-/** The same ordinary lexical lookup order for complete source alias owners.
- * Imports have already been resolved by the actual frontend namespace.
+/** Actual module scopes; parent items require an explicit path. Imports have
+ * already been resolved by the actual frontend namespace.
  * @param {string[]} segments @param {string[]} context @returns {string[]} */
 export function readRustTypeAliasLookupKeys(segments,context){
- let names=segments,start=context,absolute=false;
- if((names[0]??'')==='crate'){names=names.slice(1);start=[];absolute=true;}
- else if((names[0]??'')==='self'){names=names.slice(1);absolute=true;}
+ let names=segments,start=context;
+ if((names[0]??'')==='crate'){names=names.slice(1);start=[];}
+ else if((names[0]??'')==='self'){names=names.slice(1);}
  else if((names[0]??'')==='super'){
   let count=0;while((names[count]??'')==='super')count+=1;
   if(count>start.length)return [];
-  names=names.slice(count);start=start.slice(0,start.length-count);absolute=true;
+  names=names.slice(count);start=start.slice(0,start.length-count);
  }
  if(names.length===0)return [];
- const result=[];
- for(let depth=start.length;depth>=0;depth-=1){result.push([...start.slice(0,depth),...names].join('.'));if(absolute)break;}
- return result;
+ return [[...start,...names].join('.')];
 }
 /** @param {number} depth @param {number} expansions @param {boolean} recursive @returns {string} */
 export function readRustTypeAliasExpansionError(depth,expansions,recursive){
@@ -74,3 +72,22 @@ export function readRustTypeAliasExpansionError(depth,expansions,recursive){
  * the alias source is not permission to allocate an exponential type tree.
  * @param {number} current @param {number} needed @returns {string} */
 export function readRustTypeAliasCloneError(current,needed){return needed>262144-current?'source type alias materialization limit exceeded':'';}
+/** Longest actual type prefix first; bare aliases are not value constructors.
+ * @param {number} count @param {boolean} bare @returns {number[]} */
+export function readRustTypeAliasAccessPrefixLengths(count,bare){
+ const result=[];for(let length=bare?count:count-1;length>0;length-=1)result.push(length);return result;
+}
+/** Transparent direct nominal aliases inherit existing datatype items. Bare
+ * braced records and implementation owners use the type namespace; bare tuple
+ * and unit value constructors retain their original Rust restriction.
+ * @param {string} kind @param {number} wrappers @param {number} suffix
+ * @param {string} role @param {string} syntax @returns {boolean} */
+export function acceptRustTypeAliasNominalAccess(kind,wrappers,suffix,role,syntax){
+ return kind==='named'&&wrappers===0&&(suffix>0||role==='implementation owner'||role==='braced record'&&syntax==='named');
+}
+/** Type declarations block outer types; functions and constants have their
+ * own value namespace and cannot shadow a type alias.
+ * @param {boolean} alias @param {string} owner @returns {string} */
+export function readRustTypeAliasNamespaceDisposition(alias,owner){return alias?'alias':owner==='data'||owner==='module'||owner==='externalCrate'?'block':'';}
+/** @param {boolean} local @param {boolean} value @param {boolean} alias @returns {string} */
+export function readRustTypeAliasValueConstructorError(local,value,alias){return !local&&!value&&alias?'a source type alias has no independent value constructor':'';}

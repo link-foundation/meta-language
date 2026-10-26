@@ -20,6 +20,9 @@ mod types;
 impl RustParser {
     pub(super) fn file(&mut self) -> Result<SProgram> {
         self.initialize_type_aliases()?;
+        if !self.header_discovery {
+            self.finish_type_aliases()?;
+        }
         self.inner_attributes()?;
         let mut items = self.items(&[], ItemsEnd::File)?;
         self.finish_type_aliases()?;

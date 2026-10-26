@@ -139,6 +139,14 @@ impl RustParser {
             return self.record_construction(&segments, path, token);
         }
         let record_path = self.record_value_path(&segments, path, c.is("("));
+        self.require_type_alias_value_constructor(
+            &segments,
+            path,
+            Some(Span {
+                start: token.start,
+                end: self.cursor.tokens[self.cursor.index - 1].end,
+            }),
+        )?;
         if !c.is("(") {
             if let Some(reference) =
                 self.read_function_reference(&segments, path, span(token, token))?
