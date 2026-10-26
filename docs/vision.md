@@ -725,6 +725,22 @@ macros, borrowed results, string ordering, allocation identity and full
 ownership or source-language completeness remain required work. All these
 controls are unexecuted source drafts.
 
+Ordinary Rust source addition has an additional standard String value draft.
+An actual owned standard String on the left and one immutable standard str or
+String reference on the right project to the existing complete concatenation
+operation. Shared JavaScript decisions check actual source owners, kinds,
+models, reference layers and proven immutable facts; those decisions generate
+the native rules and Links definition. The right String remains borrowed, and
+each intermediate result keeps its actual standard owned String origin.
+Declaration collection stays provisional until actual bodies are re-read.
+Selected const, local-state, type-namespace and scalar-loop profiles keep their
+separate interpretations. This value projection follows
+[String addition](https://doc.rust-lang.org/std/string/struct.String.html#impl-Add%3C%26str%3E-for-String);
+it does not prove complete source move/loan validity, allocator identity,
+custom trait dispatch or additional reference coercions. Original and both
+generated products, source-free reload, four emissions and retained constructed
+interfaces have unexecuted controls. Full own-codebase support remains required.
+
 Ordinary source parsing also recognizes scope-checked qualified standard
 `Clone::clone` and `ToOwned::to_owned` calls. Relative and leading-`::` standard
 paths select shared source rules only in an unambiguous standard namespace.

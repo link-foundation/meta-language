@@ -1,6 +1,7 @@
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
 import {readRustStandardStringView} from './rust-standard-string-views.js';
+import {readRustStringAddition} from './rust-string-addition.js';
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
@@ -1189,7 +1190,8 @@ class RustParser {
       if (options.statement && (left.block===true||['if', 'match', 'block'].includes(left.k))) return left;
       this.cursor.next();
       const right = this.multiplicative(path, {});
-      left = this.scalarLoopArithmetic({ k: 'binary', op: ADDITIVE[token.value], left, right, span: joined(left, right, token) }, path);
+      const addition={k:'binary',op:ADDITIVE[token.value],left,right,span:joined(left,right,token)};
+      left = readRustStringAddition(this,addition,path)??this.scalarLoopArithmetic(addition,path);
       this.origins.pointerIntegerExpression(left,path);
     }
   }

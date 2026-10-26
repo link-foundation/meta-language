@@ -7,6 +7,7 @@ mod read_only_queries;
 mod scalar_vector_copy;
 mod standard_owned_calls;
 pub(super) mod standard_string_views;
+mod string_addition;
 mod usize_index_expressions;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
@@ -170,7 +171,10 @@ impl RustParser {
             }
             self.cursor.advance();
             let right = self.multiplicative(path, Options::default())?;
-            left = binary(op, left, right, &token);
+            let addition = binary(op, left, right, &token);
+            left = self
+                .read_string_addition(&addition, path)?
+                .unwrap_or(addition);
             self.origins.pointer_integer_expression(&left, path)?;
             self.scalar_loop_arithmetic(&left, path);
         }
