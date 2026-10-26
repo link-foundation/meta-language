@@ -1,7 +1,7 @@
 import {readRequiredTextFact} from './fact-column-rules.js';
 /** Actual ordinary source owners only; carried input is still a refusal.
  * @param {string} term @param {boolean} comment @param {number} role @returns {boolean} */
-export function acceptRustValueModuleItem(term,comment,role){return role!==3&&(comment||term==='function_item'||term==='const_item'||term==='attribute_item'||term==='inner_attribute_item');}
+export function acceptRustValueModuleItem(term,comment,role){return role!==3&&(comment||term==='function_item'||term==='const_item'||term==='type_item'||term==='attribute_item'||term==='inner_attribute_item');}
 /** @param {string} term @returns {string} */
 export function readRustValueModuleOwnerKind(term){return term==='const_item'?'const':term==='function_item'?'fn':'';}
 /** Full original header, including ordered attributes and actual visibility.

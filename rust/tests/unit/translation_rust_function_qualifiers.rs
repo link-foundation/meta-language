@@ -26,8 +26,10 @@ fn ordinary_const_functions_and_associated_values_keep_original_products() {
 
 #[test]
 fn ordinary_const_publication_keeps_actual_signatures_and_values() {
-    let output =
-        run(Command::new("node").arg("../experiments/rust-records/const-publications.mjs"));
+    assert_rust_publication_products("../experiments/rust-records/const-publications.mjs");
+}
+pub(super) fn assert_rust_publication_products(producer: &str) {
+    let output = run(Command::new("node").arg(producer));
     assert!(output.ok, "{}", output.stderr);
     let product = read_structured_data_lino(&output.stdout).unwrap();
     let directory = TemporaryDirectory::new("ordinary-const-publications");

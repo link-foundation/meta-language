@@ -44,6 +44,8 @@ add('a Rust module path need not have an rs file extension','#[path="parts/sourc
 add('ordinary attributes and restricted visibility retain their attachment','#[doc="actual path [ ]"]#[path="alternate.rs"]pub(crate) mod values;'+show('values::read()'),{'src/alternate.rs':read});
 add('two source modules may load one file under separate owners','#[path="shared.rs"]mod first;#[path="shared.rs"]mod second;'+show('first::read()+second::read()-7'),{'src/shared.rs':read});
 add('generated partition layout remains source-composable','#[path="rules/part_1.rs"]mod part_1;use self::part_1::read;'+show('read()'),{'src/rules/part_1.rs':read});
+add('a complete source module retains its transparent alias definitions','mod values;'+show('values::read()'),{'src/values.rs':'pub type Number=i64;pub fn read()->Number{7}'});
+add('an imported source alias retains its provider CST','mod values;use self::values::Number;fn read(value:Number)->Number{value+1}'+show('read(6)'),{'src/values.rs':'pub type Number=i64;'});
 const refusals=[];
 function refuse(name,inputs,message,options={}){refusals.push({name,entry:'src/main.rs',inputs,options,message});}
 const files=(main,other={})=>[{path:'src/main.rs',source:main},...Object.entries(other).map(([path,source])=>({path,source}))];

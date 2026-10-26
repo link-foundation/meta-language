@@ -3981,6 +3981,22 @@ const-capable emitted provider interface. Generic, trait, async, unsafe, privacy
 and complete source construct coverage remain required. The added source draft
 and deferred controls establish no execution evidence or overall completion.
 
+Ordinary nongeneric module type aliases now unfold through the existing checked
+Rust source type and ownership interpretation. Complete declaration discovery
+precedes use; definition contexts retain their actual imports and nominal
+owners, including forward references. Eager reconstruction checks unused aliases
+before a public runtime interface can be published. Cycles, missing owners,
+namespace conflicts, elided item reference lifetimes and expansion budgets stay
+explicit. Source offsets survive the frontend's reference-token splitting.
+Bounded node accounting precedes copies so a compact doubling definition cannot
+authorize exponential materialization. Alias names and complete definitions stay
+in original CST archives; runtime exports retain only actual source values.
+Transparent typing follows the [Rust type-alias contract](https://doc.rust-lang.org/reference/items/type-aliases.html)
+and supplies no cross-language equivalence certificate. Generic, constrained,
+local and associated aliases, all constructor/inherent paths through aliases,
+complete namespace/privacy rules and arbitrary lifetimes remain obligations.
+The source draft and all new controls remain unexecuted.
+
 The ordinary frontend checks the composed source. Library mode explicitly
 records an empty frontend entry only when the source has no main. The checked
 program archive also retains each complete original CST as a source-qualified

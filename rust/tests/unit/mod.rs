@@ -452,3 +452,5 @@ mod rust_source_project;
 mod source_project_archive;
 
 mod translation_rust_function_qualifiers;
+
+mod translation_rust_type_aliases;

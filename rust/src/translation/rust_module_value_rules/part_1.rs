@@ -345,7 +345,8 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
 #[must_use]
 pub fn accept_rust_value_module_item(term: &str, comment: bool, role: f64) -> bool {
     (role != 3f64)
-        && ((((comment || (term == "function_item")) || (term == "const_item"))
+        && (((((comment || (term == "function_item")) || (term == "const_item"))
+            || (term == "type_item"))
             || (term == "attribute_item"))
             || (term == "inner_attribute_item"))
 }

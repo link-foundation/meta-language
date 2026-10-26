@@ -2,6 +2,7 @@ import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceV
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
 import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRustConstPredicateProof} from './rust-function-qualifier-rules.js';
+import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases} from './rust-type-aliases.js';
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
@@ -188,9 +189,11 @@ class RustParser {
   }
 
   file() {
+    initializeRustTypeAliases(this);
     const root = { items: [], main: null };
     this.innerAttributes();
     this.items(root, root.items, [], () => this.cursor.atEnd());
+    finishRustTypeAliases(this);
     if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
     if(this.localValueStateModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceLocalState')||RUST_OWNED_LOCAL_STATE_POLICY.reservedOwners.includes(item.name))||root.main?.effects.length))throw unsupported('Rust owned local state','only flat functions with an empty main and unshadowed standard owners are admitted');
     if(this.constFunctionModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceConstFunction'))||root.main?.effects.length))throw unsupported('Rust const function source','only closed flat const predicates and an empty ordinary main are admitted');
@@ -320,6 +323,9 @@ class RustParser {
       if (c.is('struct')) {
         items.push(readRustRecordItem(this,path));
         continue;
+      }
+      if(c.is('type')&&this.ordinaryCompletionContext()){
+        readRustTypeAliasItem(this,path);continue;
       }
       if (c.is('impl')) {
         items.push(readRustInherentItem(this,path));
@@ -550,6 +556,8 @@ class RustParser {
     const segments = this.pathSegments('type');
     const name = segments.join('::');
     const resolved = this.resolve(segments, this.modulePath);
+    const typeAlias=readRustTypeAliasValue(this,segments);
+    if(typeAlias)return typeAlias;
     const sharedHandle=readRustSharedArrayHandleType(this,segments,token);
     if(sharedHandle)return sharedHandle;
     const emptyOption=readRustEmptyOptionResult(this,segments,token);

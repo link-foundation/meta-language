@@ -19,8 +19,10 @@ mod types;
 
 impl RustParser {
     pub(super) fn file(&mut self) -> Result<SProgram> {
+        self.initialize_type_aliases()?;
         self.inner_attributes()?;
         let mut items = self.items(&[], ItemsEnd::File)?;
+        self.finish_type_aliases()?;
         self.install_ordinary_completion_declarations(&mut items)?;
         let main = self.main.take();
         if !self.shared_array_handle_source_model.is_empty() {
@@ -133,6 +135,10 @@ impl RustParser {
             self.empty_option_item_guard(path, &start)?;
             self.require_unit_clone_attached_enum(&derivations, &start)?;
             self.require_type_namespace_without_externals(&start)?;
+            if self.cursor.is("type") && self.ordinary_completion_context() {
+                self.read_type_alias_item(path)?;
+                continue;
+            }
             let c = &mut self.cursor;
             if c.is("mod") {
                 c.advance();

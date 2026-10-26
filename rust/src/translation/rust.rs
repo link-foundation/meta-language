@@ -64,6 +64,7 @@ mod shared_array_handles;
 mod source_constants;
 mod source_origins;
 mod string_byte_lengths;
+mod type_aliases;
 pub(crate) mod type_namespaces;
 
 use source_origins::{SourceDeclaration, SourceOrigin, SourceOrigins};
@@ -464,6 +465,7 @@ struct Binding {
 }
 
 struct RustParser {
+    source_type_aliases: type_aliases::SourceTypeAliases,
     header_discovery: bool,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
@@ -542,6 +544,7 @@ impl RustParser {
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         Self {
+            source_type_aliases: type_aliases::SourceTypeAliases::default(),
             header_discovery: false,
             shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),
             shared_array_state: shared_array_handles::SharedArrayState::default(),

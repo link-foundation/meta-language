@@ -141,6 +141,9 @@ impl RustParser {
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
+        if let Some(alias) = self.read_type_alias_value(&segments)? {
+            return Ok(alias);
+        }
         if let Some(handle) = self.shared_array_type(&segments, &token)? {
             return Ok(handle);
         }

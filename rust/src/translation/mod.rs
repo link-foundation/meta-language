@@ -179,6 +179,7 @@ pub(crate) mod rust_shifts;
 pub(crate) mod rust_source_constant_rules;
 pub(crate) mod rust_string_byte_length_rules;
 mod rust_string_byte_lengths;
+pub(crate) mod rust_type_alias_rules;
 pub(crate) mod scalar_assignment_program;
 pub(crate) mod scalar_assignment_rules;
 pub(crate) mod scalar_closure_default_rules;
