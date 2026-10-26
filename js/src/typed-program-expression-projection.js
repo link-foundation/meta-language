@@ -1,3 +1,4 @@
+import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
@@ -43,6 +44,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked record expression has an unrecognized projection field');
   if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
     && !acceptProgramExpressionOperation(value.k, value.op) && !acceptLinkedNumberBitwiseOperation(value.k,value.op)
+    && !acceptLinkedStringArrayCopySort(value.k,value.op,value.object?.type?.kind??'',value.object?.type?.element?.kind??'',value.object?.type?.reference===true,value.args?.length??-1)
     && !acceptLinkedReferenceMethodOperation(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
     && !acceptLinkedRecordFieldWrite(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
     && !acceptLinkedBigIntegerBitwiseOperation(value.k, value.op)

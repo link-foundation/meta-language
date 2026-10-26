@@ -1,3 +1,4 @@
+import {renderStringArrayCopySort,requireStringArrayCopySortUnits} from './string-array-sort-rules.js';
 import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
 import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
@@ -788,6 +789,7 @@ class RustEmitter {
     this.usesRecordPropertyOrder=false;
     this.usesOptional = false;
     const needsUnits = (node) => {
+      if(requireStringArrayCopySortUnits(node?.k??'',node?.op??''))return true;
       if(acceptLinkedJavaScriptStringConstruction(node?.k??'',node?.op??'')&&readJavaScriptStringConstructionForm(node.op)==='characters')return true;
       if (!node || typeof node !== 'object') return false;
       if (requireStringOrderUnits(node.k ?? '', node.op ?? '')||acceptLinkedJavaScriptStringUnitConstruction(node.k??'',node.op??'')) return true;
@@ -1215,6 +1217,7 @@ class RustEmitter {
   }
 
   method(e) {
+    if(e.op==='toSorted')return renderStringArrayCopySort('Rust',this.expr(e.object),this.utf16Strings);
     const order=emitOrderedRecordOrderRead(this,e,'Rust');if(order!==null)return order;
     if (e.object.k === 'referenceRead' && e.object.reference.type.reference && readArrayCallbackResultForm(e.op)) {
       const callback = e.args[0];

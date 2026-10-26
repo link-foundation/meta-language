@@ -80,6 +80,10 @@ impl Checker {
         {
             return Ok(value);
         }
+        if operation == "toSorted" {
+            return self
+                .primitive_method_on_checked_receiver(object, operation, args, env, path, span);
+        }
         if crate::translation::array_state_method_rules::accept_linked_array_state_method(
             "method",
             operation,
@@ -126,6 +130,35 @@ impl Checker {
     ) -> Result<Expr> {
         if operation == "readJavaScriptRecordPropertyOrder" {
             return Self::ordered_record_order_read(object, operation, args.len(), span);
+        }
+        if operation == "toSorted"
+            && let Type::Array { element, reference } = &object.ty
+        {
+            if !crate::translation::string_array_sort_rules::accept_linked_string_array_copy_sort(
+                "method",
+                operation,
+                "array",
+                element.kind(),
+                *reference,
+                serde_json::Number::from(args.len())
+                    .as_f64()
+                    .expect("actual argument count"),
+            ) {
+                return Err(unsupported(
+                    "array copying sort",
+                    "the default copying sort needs an immutable dense primitive string array and no comparator or extra arguments",
+                    span,
+                ));
+            }
+            let result_type = object.ty.clone();
+            return Ok(Expr::new(
+                Node::Method {
+                    object: Box::new(object),
+                    op: operation.to_owned(),
+                    args: Vec::new(),
+                },
+                result_type,
+            ));
         }
         if matches!(object.ty, Type::Record { .. }) {
             return self

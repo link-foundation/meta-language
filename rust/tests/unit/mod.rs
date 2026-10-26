@@ -456,3 +456,7 @@ mod translation_rust_function_qualifiers;
 mod translation_rust_type_aliases;
 
 mod translation_rust_fresh_vector_arguments;
+
+mod grammar_composition_batch;
+
+mod translation_string_array_copy_sort;

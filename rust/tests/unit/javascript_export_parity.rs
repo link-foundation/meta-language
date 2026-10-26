@@ -321,6 +321,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "create_global_concept_space_parser",
         "function",
     ),
+    (
+        "createGrammarCompositionBatchLinks",
+        "create_grammar_composition_batch_links",
+        "function",
+    ),
     ("createGrammarParser", "compile_feature_grammar", "function"),
     (
         "createJavaScriptArrayFormalParameterProgramLinks",
@@ -645,6 +650,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "readGlobalConceptSpaceLinks",
         "read_global_concept_space_links",
+        "function",
+    ),
+    (
+        "readGrammarCompositionBatchLinks",
+        "read_grammar_composition_batch_links",
         "function",
     ),
     (

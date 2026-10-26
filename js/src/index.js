@@ -60,6 +60,7 @@ export * from './query.js';
 export * from './query-algebra.js';
 export * from './query-plan.js';
 export * from './regions.js';
+export * from './grammar-composition-batch.js';
 export * from './self-translation.js';
 export { draftProjectTranslation, projectTranslationDraftToLinks } from './project-translation.js';
 export { composeRustSourceProject, parseRustSourceProject, createRustSourceProjectProgramLinks, readRustSourceProjectConcreteGraphs } from './rust-source-project.js';

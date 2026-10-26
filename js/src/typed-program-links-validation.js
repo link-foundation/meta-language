@@ -1,3 +1,4 @@
+import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
@@ -163,6 +164,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         ['tuple', 'tupleIndex'].includes(node.k) ? 'a linked tuple expression has an unrecognized projection field'
           : 'a linked expression contains an unrecognized semantic field');
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op) && !acceptLinkedNumberBitwiseOperation(node.k,node.op)
+    && !acceptLinkedStringArrayCopySort(node.k,node.op,node.object?.type?.kind??'',node.object?.type?.element?.kind??'',node.object?.type?.reference===true,node.args?.length??-1)
       && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedBigIntegerBitwiseOperation(node.k, node.op)
@@ -388,6 +390,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if(node.k==='method'&&node.op==='readJavaScriptRecordPropertyOrder'){
       if(!acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object.type?.kind??'',node.object.type?.ordered===true,node.object.type?.reference===true)||!Array.isArray(node.args)||node.args.length)throw new TypeError('own-field order projection needs one actual owned ordered record');
       same(node.type,{kind:'array',element:{kind:'float'}},'record order projection type');
+    }
+    if(node.k==='method'&&node.op==='toSorted'){
+      if(!acceptLinkedStringArrayCopySort(node.k,node.op,node.object.type.kind,node.object.type.element?.kind??'',node.object.type.reference===true,node.args.length))throw new TypeError('copying sort needs its exact primitive string array domain');
+      same(node.type,node.object.type,'copying sort result type');
     }
     if (node.k === 'optionalPredicate') {
       if (node.arg.type?.kind !== 'option') throw new TypeError('a linked optional predicate requires an optional value');

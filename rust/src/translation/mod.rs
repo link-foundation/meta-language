@@ -295,3 +295,5 @@ pub(crate) mod rust_unit_value_rules;
 pub(crate) mod lexical_declaration_rules;
 
 pub(crate) mod object_entry_pair_rules;
+
+pub(crate) mod string_array_sort_rules;

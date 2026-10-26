@@ -183,6 +183,16 @@ impl JavaScriptEmitter<'_> {
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
             Node::Method { object, op, args } => {
+                if op == "toSorted" {
+                    let receiver = self.expr(object)?;
+                    return Ok(
+                        crate::translation::string_array_sort_rules::render_string_array_copy_sort(
+                            "JavaScript",
+                            &receiver,
+                            false,
+                        ),
+                    );
+                }
                 if op == "readJavaScriptRecordPropertyOrder" {
                     let rendered = self.expr(object)?;
                     return crate::translation::ordered_record_values::order_read(

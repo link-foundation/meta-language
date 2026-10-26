@@ -149,6 +149,13 @@ fn validate_type_record(
             .get(kind)
             .is_some()
             && !accept_program_expression_operation(kind, value["op"].as_str().unwrap_or_default())
+            && !crate::translation::string_array_sort_rules::accept_linked_string_array_copy_sort(
+                kind, value["op"].as_str().unwrap_or_default(),
+                value["object"]["type"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["element"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["reference"].as_bool()==Some(true),
+                value["args"].as_array().map_or(-1.0, |args|serde_json::Number::from(args.len()).as_f64().expect("actual argument count")),
+            )
             && !crate::translation::number_bitwise_rules::accept_linked_number_bitwise_operation(
                 kind,
                 value["op"].as_str().unwrap_or_default(),
@@ -196,6 +203,12 @@ fn validate_type_record(
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",
+            ));
+        }
+        if kind == "method" && value["op"] == "toSorted" && value["type"] != value["object"]["type"]
+        {
+            return Err(error(
+                "copying sort result type differs from its actual receiver",
             ));
         }
         if value["k"] == "lit"

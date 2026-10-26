@@ -5367,6 +5367,37 @@ runtime parity require CI verification.
 This opt-in hook does not establish complete Markdown or other priority-language
 coverage, and does not resolve scanner or imported semantic obligations.
 
+The source-qualified composition batch draft binds ordered requests to exact
+existing normal rules across one complete archived grammar inventory. A shared
+sorted directory validates source/rule ownership, collisions and explicit text
+and count bounds without a host/child language-pair table. The existing decorator
+engine alone materializes each validated any/all template. The batch retains
+four separate Links entries: the complete original discovery graph, the complete
+composed discovery graph, ordered source-qualified requests and the actual typed
+binding-decision definition. Reload eagerly reconstructs both inventories,
+rederives compositions from the original context and compares the full current
+graph, registrations, allocator history and selected decision definition.
+Unselected grammars remain in the current common concept space. Original proof
+contexts remain in their complete predecessor entry; changed definitions obtain
+no correspondence merely from matching names. Existing source-view profiles and
+parse budgets remain exact. The finite source controls return to an earlier
+grammar through three source planes, with both text and binary reconstruction.
+They are unexecuted drafts over explicit control grammars and establish neither
+full catalog grammars nor new scanner, inference or equivalence capabilities.
+
+The copying-sort draft adds dense immutable primitive-string `toSorted()` with
+no comparator or extra arguments. It preserves the input, creates an independent
+ordered result, and uses exact UTF-16 lexical order including isolated surrogates.
+Both checkers and editable Links reload enforce the same operand/result domain;
+JavaScript and Rust emitters use their stable standard sorting operations with
+explicit unit comparison. This operation also supplies the composition batch's
+shared sorted directories. The model follows
+[ECMAScript copying sort](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.tosorted)
+and [Rust stable comparison sorting](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_by).
+Independent primitive-source, complete graph/codec and native controls remain
+unexecuted. General mutating sort, comparator effects, sparse/shared arrays,
+non-string coercions and Lean/Rocq UTF-16 ordering remain required work.
+
 Grammar work runs in bulk through the automated pipeline: import, merging and
 transformation of every catalog language in one batch, adjustments recorded as
 data-driven rules, never hand edits of generated grammars. Tree-sitter is only

@@ -18,9 +18,10 @@ fn fresh_scalar_vector_arguments_keep_complete_original_products() {
 
 #[test]
 fn every_declared_freshness_decision_uses_the_actual_shipped_rules() {
-    let fixture = meta_language::read_structured_data_lino(include_str!(
-        "../../../parity/fixtures/rust-fresh-vector-arguments.lino"
-    ))
+    let fixture = meta_language::project_data::read_project_data_file(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../parity/fixtures/rust-fresh-vector-arguments.lino"),
+    )
     .unwrap();
     for row in fixture["forms"].as_array().unwrap() {
         assert_eq!(

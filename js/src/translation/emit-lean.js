@@ -543,6 +543,7 @@ class LeanEmitter {
         return renderOptionalArrayRead('Lean', e.index.type.kind, value, index);
       }
       case 'method':
+        if(e.op==='toSorted')throw unsupported('array copying sort','this target needs an explicit UTF-16 string ordering interpretation',e.span);
         return this.method(e, depth);
       case 'stringPoints':
         return renderStringPointIteration('Lean', false, this.expr(e.object, depth));

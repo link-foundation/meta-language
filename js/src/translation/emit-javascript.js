@@ -1,3 +1,4 @@
+import {renderStringArrayCopySort} from './string-array-sort-rules.js';
 import {RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE} from './record-property-order-javascript-runtime.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
@@ -499,6 +500,7 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if(e.op==='toSorted')return renderStringArrayCopySort('JavaScript',this.expr(e.object),false);
         if(e.op==='readJavaScriptRecordPropertyOrder')return emitOrderedRecordOrderRead(this,e,'JavaScript');
         if (acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
           const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));

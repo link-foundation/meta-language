@@ -718,6 +718,13 @@ impl LeanEmitter<'_> {
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
             Node::Method { object, op, args } => {
+                if op == "toSorted" {
+                    return Err(unsupported(
+                        "array copying sort",
+                        "this target needs an explicit UTF-16 string ordering interpretation",
+                        e.span,
+                    ));
+                }
                 if op == "readJavaScriptRecordPropertyOrder" {
                     let rendered = self.expr(object, depth)?;
                     return crate::translation::ordered_record_values::order_read(

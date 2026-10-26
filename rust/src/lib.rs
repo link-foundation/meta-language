@@ -27,6 +27,12 @@ mod global_concept_identity_rules;
 mod global_concept_rules;
 mod global_concept_space;
 pub mod grammar;
+mod grammar_composition_batch;
+mod grammar_composition_batch_rules;
+pub use grammar_composition_batch::{
+    GrammarCompositionBatch, GrammarCompositionPolicy, create_grammar_composition_batch_links,
+    read_grammar_composition_batch_links,
+};
 mod grammar_concepts;
 mod grammar_inference;
 mod grammar_inference_refinement_rules;

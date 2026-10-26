@@ -782,6 +782,7 @@ class RocqEmitter {
         return renderOptionalArrayRead('Rocq', e.index.type.kind, this.expr(e.array), index);
       }
       case 'method':
+        if(e.op==='toSorted')throw unsupported('array copying sort','this target needs an explicit UTF-16 string ordering interpretation',e.span);
         return this.method(e);
       case 'stringPoints':
         throw unsupported('string iteration', 'this target needs a Unicode code-point iterator over its UTF-8 string encoding', e.span);

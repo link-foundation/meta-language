@@ -1,3 +1,4 @@
+import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
 import {captureCallableConstantApplicationHead} from './callable-constants.js';
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
 import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
@@ -1161,6 +1162,10 @@ class Checker {
 
   method(node, env, path, expected, preparedReceiver) {
     const receiver = preparedReceiver??this.expr(node.object, env, path, undefined);
+    if(node.op==='toSorted'&&receiver.type.kind==='array'){
+      if(!acceptLinkedStringArrayCopySort('method',node.op,receiver.type.kind,receiver.type.element.kind,receiver.type.reference===true,node.args.length))throw unsupported('array copying sort','the default copying sort needs an immutable dense primitive string array and no comparator or extra arguments',node.span);
+      return {k:'method',object:receiver,op:node.op,args:[],type:receiver.type,span:node.span};
+    }
     const nullable=this.checkedProjection?null:checkJavaScriptNullishAccess(this,node,receiver,env,path,expected);
     if(nullable)return nullable;
     const recordWrite = checkRecordFieldWrite(this, node, receiver, env, path);
