@@ -12,6 +12,8 @@ import {ownedLocalPair} from './rust-owned-local-state.js';
 import {readRustCopyClosureJoinError} from './rust-copy-closure-rules.js';
 import {readRustFunctionPointerCoercionError} from './rust-function-pointer-rules.js';
 import {readRustFreshVectorArgumentForm,acceptRustFreshOwnedVectorArgument} from './rust-fresh-vector-argument-rules.js';
+import {acceptRustKnownFreshVectorCall} from './rust-fresh-vector-result-rules.js';
+import {acceptRustScalarArrayIndexElement} from './rust-array-index-rules.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -40,7 +42,7 @@ export class RustSourceOrigins {
 
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
-    this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector' }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
+    this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector',arrayElementCopyEvidence:acceptRustScalarArrayIndexElement(type.element.kind) }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
     return type;
   }
 
@@ -196,7 +198,7 @@ export class RustSourceOrigins {
     if (!returning.length) return { ...value(), diverging: true };
     const first = returning[0];
     for(const origin of returning){const error=readRustCopyClosureJoinError(Boolean(first.copyClosureSpan),Boolean(origin.copyClosureSpan),first.copyClosureSpan?.start===origin.copyClosureSpan?.start&&first.copyClosureSpan?.end===origin.copyClosureSpan?.end);if(error)throw unsupported('Rust closure source join',error);}
-    if (returning.every(origin => this.same(origin, first))) return { ...clone(first), freshArrayValue: returning.every(origin => origin.freshArrayValue) };
+    if (returning.every(origin => this.same(origin, first))) return { ...clone(first), freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
     if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array' };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
@@ -230,13 +232,14 @@ export class RustSourceOrigins {
     return this.mark(node,origin);
   }
 
-  freshVectorArgument(node,path) {
+  freshVectorArgument(node,path,allowCalls=true) {
     const origin=this.origin(node,path);
+    if(allowCalls&&acceptRustKnownFreshVectorCall(node.k,origin.arraySourceModel??'',origin.wrappers.length,Boolean(origin.freshArrayValue)))return true;
     const form=readRustFreshVectorArgumentForm(node.k,origin.diverging===true,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`));
     if(form==='diverging'||form==='constructor')return true;
-    if(form==='body')return this.freshVectorArgument(node.body,path);
-    if(form==='alternatives')return this.freshVectorArgument(node.then,path)&&this.freshVectorArgument(node.else,path);
-    if(form==='rows')return node.rows.length>0&&node.rows.every(row=>this.freshVectorArgument(row.body,path));
+    if(form==='body')return this.freshVectorArgument(node.body,path,allowCalls);
+    if(form==='alternatives')return this.freshVectorArgument(node.then,path,allowCalls)&&this.freshVectorArgument(node.else,path,allowCalls);
+    if(form==='rows')return node.rows.length>0&&node.rows.every(row=>this.freshVectorArgument(row.body,path,allowCalls));
     return false;
   }
 
@@ -312,11 +315,13 @@ export class RustSourceOrigins {
     if (!expected || args.length !== expected.length) return;
     for (let index = 0; index < args.length; index += 1) {
       const parameter=expected[index];
+      const fresh=parameter.arraySourceModel==='owned vector'&&parameter.wrappers.length===0&&acceptRustFreshOwnedVectorArgument(ordinary,parameter.arraySourceModel,parameter.wrappers.length,parameter.type?.kind==='array'?parameter.type.element.kind:'',this.freshVectorArgument(args[index],path));
       if (parameter.arraySourceModel === 'owned vector' && parameter.wrappers.length === 0
-        && !acceptRustFreshOwnedVectorArgument(ordinary,parameter.arraySourceModel,parameter.wrappers.length,parameter.type?.kind==='array'?parameter.type.element.kind:'',this.freshVectorArgument(args[index],path))) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
+        && !fresh) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
       // Immutable reference coercions may dereference Box behind a reference;
       // an owned Box never coerces into its owned inner value.
-      this.argument(this.origin(args[index], path), expected[index], span);
+      const actual=this.origin(args[index],path);
+      this.argument(fresh?{...actual,proven:true,uncertain:false,wrappers:[],arraySourceModel:'owned vector'}:actual, expected[index], span);
     }
   }
 

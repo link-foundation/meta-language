@@ -1,5 +1,6 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
+mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
 mod read_only_queries;
@@ -191,6 +192,7 @@ impl RustParser {
             self.refuse_callable_observation(&value, path, span(&token, self.cursor.peek()))?;
             let parenthesized_type = self.cursor.is("(");
             let to = self.parse_type()?;
+            let target_owner = self.origins.current_type.source_owner.clone();
             if !self.origins.collecting && !self.origins.current_type.wrappers.is_empty() {
                 return Err(unsupported(
                     "source cast",
@@ -209,6 +211,11 @@ impl RustParser {
                 },
                 range,
             );
+            let mut origin = self.origins.origin(&value, path);
+            if origin.proven {
+                origin.source_owner = target_owner;
+                self.origins.mark(&value, origin);
+            }
         }
         Ok(value)
     }
@@ -582,6 +589,10 @@ impl RustParser {
                 ));
             }
             if self.cursor.is("[") {
+                if self.ordinary_completion_context() {
+                    value = self.scalar_array_index(value, path)?;
+                    continue;
+                }
                 return Err(unsupported(
                     "indexing",
                     "collections are outside the portable core",
@@ -786,6 +797,15 @@ impl RustParser {
             if token.suffix == "f64" {
                 self.origins
                     .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
+            }
+            if token.suffix == "usize" {
+                let mut origin = self.origins.origin(&result, path);
+                origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                    kind: "primitive".to_owned(),
+                    path: vec!["usize".to_owned()],
+                    arguments: Vec::new(),
+                });
+                self.origins.mark(&result, origin);
             }
             return Ok(result);
         }

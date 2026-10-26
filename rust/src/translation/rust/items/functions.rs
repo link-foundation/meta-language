@@ -8,6 +8,7 @@ use super::super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::super::{
     Result, RustParser, SFn, SParam, SourceDeclaration, TokenKind, Type, span, unsupported,
 };
+use crate::translation::rust_fresh_vector_result_rules::accept_rust_ordinary_fresh_vector_result;
 
 impl RustParser {
     pub(in super::super) fn function(&mut self, path: &[String]) -> Result<SFn> {
@@ -196,6 +197,15 @@ impl RustParser {
                     && source_result.wrappers.is_empty(),
                 true,
             )
+            && !accept_rust_ordinary_fresh_vector_result(
+                self.ordinary_completion_context(),
+                source_result.array_source_model.unwrap_or(""),
+                serde_json::Number::from(source_result.wrappers.len())
+                    .as_f64()
+                    .expect("actual result wrapper count"),
+                element.kind(),
+                true,
+            )
         {
             return Err(unsupported(
                 "Rust array result",
@@ -321,6 +331,14 @@ impl RustParser {
                 source_result.array_source_model == Some("owned vector")
                     && source_result.wrappers.is_empty(),
                 self.origins.fresh_array_result(&body, path),
+            ) && !accept_rust_ordinary_fresh_vector_result(
+                self.ordinary_completion_context(),
+                source_result.array_source_model.unwrap_or(""),
+                serde_json::Number::from(source_result.wrappers.len())
+                    .as_f64()
+                    .expect("actual result wrapper count"),
+                element.kind(),
+                self.origins.fresh_vector_argument(&body, path, false),
             ) {
                 return Err(unsupported(
                     "fresh Rust array result",

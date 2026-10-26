@@ -154,6 +154,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "resource-description-address-program.lino" => Some(include_str!(
             "../data/resource-description-address-program.lino"
         )),
+        "rust-array-index-program.lino" => {
+            Some(include_str!("../data/rust-array-index-program.lino"))
+        }
         "rust-array-length-program.lino" => {
             Some(include_str!("../data/rust-array-length-program.lino"))
         }
@@ -174,6 +177,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "rust-fresh-vector-argument-program.lino" => Some(include_str!(
             "../data/rust-fresh-vector-argument-program.lino"
+        )),
+        "rust-fresh-vector-result-program.lino" => Some(include_str!(
+            "../data/rust-fresh-vector-result-program.lino"
         )),
         "rust-function-pointer-program.lino" => {
             Some(include_str!("../data/rust-function-pointer-program.lino"))

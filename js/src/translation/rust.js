@@ -58,6 +58,8 @@ import { RustSourceOrigins } from './rust-source-origins.js';
 import { acceptRustSourceBoxOwner, acceptRustSourceLifetimeBinding, acceptRustSourceLifetimeReference, acceptRustSourceLifetimeResult } from './rust-indirection-rules.js';
 import { acceptRustProductOrigin, acceptRustTupleIndexSpelling } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement, acceptRustSourceArrayResultModel, acceptRustSourceArrayResult } from './rust-array-rules.js';
+import {acceptRustOrdinaryFreshVectorResult} from './rust-fresh-vector-result-rules.js';
+import {readRustScalarArrayIndex} from './rust-array-index.js';
 import { acceptRustUnwrittenScalarParameter } from './rust-scalar-parameter-rules.js';
 import { readRustScalarParameterBody } from './rust-scalar-parameters.js';
 import { acceptRustScalarLoopModel, readRustScalarLoop } from './rust-scalar-loops.js';
@@ -692,7 +694,8 @@ class RustParser {
           }
         }
       }
-      if (ret.kind === 'array' && !isRustSharedArrayHandleOrigin(this,sourceResult) && !acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, true)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
+      if (ret.kind === 'array' && !isRustSharedArrayHandleOrigin(this,sourceResult) && !acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, true)
+        && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,true)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
@@ -712,7 +715,8 @@ class RustParser {
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
       const body = emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
-        if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
+        if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))
+          && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,this.origins.freshVectorArgument(body,path,false))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
         this.origins.mark(body, sourceResult);
       }
@@ -1184,9 +1188,12 @@ class RustParser {
       refuseRustCallableObservation(this,value,path,span(token,this.cursor.peek()));
       const parenthesizedType = this.cursor.is('(');
       const to = this.type();
+      const targetOwner=this.origins.type.sourceOwner;
       if (!this.origins.collecting && this.origins.type.wrappers.length) throw unsupported('source cast', 'numeric casts require a direct source and target value type', span(token, this.cursor.peek()));
       this.requireCastFollowingToken(parenthesizedType);
       value = { k: 'cast', arg: value, to, flavor: 'exact', span: joined(value, { span: span(token, this.cursor.peek()) }, token) };
+      const resultOrigin=this.origins.origin(value,path);
+      if(resultOrigin.proven)this.origins.mark(value,{...resultOrigin,sourceOwner:targetOwner});
     }
     return value;
   }
@@ -1264,6 +1271,7 @@ class RustParser {
         continue;
       }
       if (c.is('?')) throw unsupported('? operator', 'Result and Option are outside the portable core', span(token, token));
+      if(c.is('[')&&this.ordinaryCompletionContext()){value=readRustScalarArrayIndex(this,value,path);continue;}
       if (c.is('[')) throw unsupported('indexing', 'collections are outside the portable core', span(token, token));
       return value;
     }
@@ -1410,6 +1418,7 @@ class RustParser {
         node.type = type;
       } else if (token.floating) node.type = FLOAT;
       if (token.suffix === 'f64') this.origins.mark(node, { ...this.origins.origin(node, path), floatSourceModel: 'binary64 scalar' });
+      if(token.suffix==='usize')this.origins.mark(node,{...this.origins.origin(node,path),sourceOwner:{kind:'primitive',path:['usize'],arguments:[]}});
       return node;
     }
     if (token.kind === 'string') {
@@ -1560,7 +1569,7 @@ class RustParser {
           if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false))) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', range);
         }
         const element = args.length ? this.origins.origin(args[0], path).type : null;
-        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true }),path);
+        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
       }
       case 'format': {
         const formatted=this.format(args,token,path);

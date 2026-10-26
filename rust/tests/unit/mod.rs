@@ -460,3 +460,7 @@ mod translation_rust_fresh_vector_arguments;
 mod grammar_composition_batch;
 
 mod translation_string_array_copy_sort;
+
+mod translation_rust_fresh_vector_results;
+
+mod translation_rust_array_indices;

@@ -54,6 +54,10 @@ impl RustParser {
                     )
                 });
                 origin.array_source_model = Some("owned vector");
+                origin.array_element_copy_evidence = !args.is_empty()
+                    && args
+                        .iter()
+                        .all(|argument| self.origins.origin(argument, path).direct_copy_value());
                 let result = SExpr::new(
                     SNode::Array {
                         items: args

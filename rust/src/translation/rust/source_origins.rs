@@ -17,9 +17,11 @@ use super::indirection_rules::{
 };
 use super::product_rules::{accept_rust_immutable_product_type, accept_rust_product_origin};
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
+use crate::translation::rust_array_index_rules::accept_rust_scalar_array_index_element;
 use crate::translation::rust_fresh_vector_argument_rules::{
     accept_rust_fresh_owned_vector_argument, read_rust_fresh_vector_argument_form,
 };
+use crate::translation::rust_fresh_vector_result_rules::accept_rust_known_fresh_vector_call;
 
 mod patterns;
 mod type_owners;
@@ -39,6 +41,8 @@ pub(super) struct SourceOrigin {
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
     pub(super) array_source_model: Option<&'static str>,
+    /// Element Copy facts are independent of vector ownership or freshness.
+    pub(super) array_element_copy_evidence: bool,
     /// Constructor or actual call source evidence; cleared on local binding.
     pub(super) fresh_array_value: Option<Span>,
     pub(super) copy_closure_identity: Option<Span>,
@@ -64,6 +68,7 @@ impl SourceOrigin {
             fields: None,
             text_source_model: None,
             array_source_model: None,
+            array_element_copy_evidence: false,
             source_lifetimes: Vec::new(),
             source_owner: None,
             primitive_owner_position: None,
@@ -90,6 +95,7 @@ impl SourceOrigin {
         let copy_evidence = accept_rust_immutable_product_type(ty.kind(), children_accepted, false);
         let text_source_model = (ty == super::STRING).then_some("owned string");
         let array_source_model = matches!(ty, Type::Array { .. }).then_some("owned vector");
+        let array_element_copy_evidence = matches!(&ty, Type::Array { element, .. } if accept_rust_scalar_array_index_element(element.kind()));
         Self {
             float_source_model: (ty == super::FLOAT).then_some("binary64 scalar"),
             ty: Some(ty),
@@ -102,6 +108,7 @@ impl SourceOrigin {
             fields,
             text_source_model,
             array_source_model,
+            array_element_copy_evidence,
             source_lifetimes: Vec::new(),
             source_owner: None,
             primitive_owner_position: None,
@@ -655,6 +662,9 @@ impl SourceOrigins {
             .all(|origin| self.same_origin(origin, first))
         {
             return SourceOrigin {
+                array_element_copy_evidence: returning
+                    .iter()
+                    .all(|origin| origin.array_element_copy_evidence),
                 fresh_array_value: if returning
                     .iter()
                     .all(|origin| origin.fresh_array_value.is_some())
@@ -791,8 +801,25 @@ impl SourceOrigins {
         self.mark(node, origin);
     }
 
-    fn fresh_vector_argument(&self, node: &SExpr, path: &[String]) -> bool {
+    pub(super) fn fresh_vector_argument(
+        &self,
+        node: &SExpr,
+        path: &[String],
+        allow_calls: bool,
+    ) -> bool {
         let origin = self.origin(node, path);
+        if allow_calls
+            && accept_rust_known_fresh_vector_call(
+                node.node.kind(),
+                origin.array_source_model.unwrap_or(""),
+                serde_json::Number::from(origin.wrappers.len())
+                    .as_f64()
+                    .expect("actual wrapper count"),
+                origin.fresh_array_value.is_some(),
+            )
+        {
+            return true;
+        }
         let form = read_rust_fresh_vector_argument_form(
             node.node.kind(),
             origin.diverging,
@@ -806,7 +833,7 @@ impl SourceOrigins {
         match (form.as_str(), &node.node) {
             ("diverging" | "constructor", _) => true,
             ("body", SNode::Let { body, .. } | SNode::Print { body, .. }) => {
-                self.fresh_vector_argument(body, path)
+                self.fresh_vector_argument(body, path, allow_calls)
             }
             (
                 "alternatives",
@@ -814,14 +841,14 @@ impl SourceOrigins {
                     then, otherwise, ..
                 },
             ) => {
-                self.fresh_vector_argument(then, path)
-                    && self.fresh_vector_argument(otherwise, path)
+                self.fresh_vector_argument(then, path, allow_calls)
+                    && self.fresh_vector_argument(otherwise, path, allow_calls)
             }
             ("rows", SNode::Match { rows, .. }) => {
                 !rows.is_empty()
                     && rows
                         .iter()
-                        .all(|row| self.fresh_vector_argument(&row.body, path))
+                        .all(|row| self.fresh_vector_argument(&row.body, path, allow_calls))
             }
             _ => false,
         }
@@ -1070,15 +1097,18 @@ impl SourceOrigins {
                 Some(Type::Array { element, .. }) => element.kind(),
                 _ => "",
             };
-            if expected.array_source_model == Some("owned vector")
+            let fresh = expected.array_source_model == Some("owned vector")
                 && expected.wrappers.is_empty()
-                && !accept_rust_fresh_owned_vector_argument(
+                && accept_rust_fresh_owned_vector_argument(
                     ordinary,
                     "owned vector",
                     0.0,
                     element,
-                    self.fresh_vector_argument(argument, path),
-                )
+                    self.fresh_vector_argument(argument, path, true),
+                );
+            if expected.array_source_model == Some("owned vector")
+                && expected.wrappers.is_empty()
+                && !fresh
             {
                 return Err(unsupported(
                     "owned vector argument",
@@ -1086,7 +1116,14 @@ impl SourceOrigins {
                     span,
                 ));
             }
-            self.argument(&self.origin(argument, path), expected, span)?;
+            let mut actual = self.origin(argument, path);
+            if fresh {
+                actual.proven = true;
+                actual.uncertain = false;
+                actual.wrappers.clear();
+                actual.array_source_model = Some("owned vector");
+            }
+            self.argument(&actual, expected, span)?;
         }
         Ok(())
     }

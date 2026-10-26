@@ -10,6 +10,7 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { LinkNetwork } from '../src/network.js';
 import { createTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement, acceptRustSourceArrayCoercion } from '../src/translation/rust-array-rules.js';
+import {assertRustFreshVectorResultCorrection} from './support/rust-fresh-vector-result-corrections.js';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/rust-array-source.lino', import.meta.url));
 function observed(source, name, inputs) {
@@ -34,12 +35,15 @@ test('selected array policies reparse actual emitted Rust and reload through sou
   }
 });
 test('array source ownership, unsupported borrowing and generic boundaries retain precise refusals', () => {
-  for (const entry of fixture.invalid) assert.throws(() => checkProgram(parseRust(entry.source)), error => {
+  for (const entry of fixture.invalid) {
+   if(['array-return','unconverted-source-length','other-length-conversion','source-indexing'].includes(entry.id))assertRustFreshVectorResultCorrection(entry);
+   else assert.throws(() => checkProgram(parseRust(entry.source)), error => {
     assert.equal(error.kind, entry.kind, entry.id);
     assert.equal(error.reason, entry.reason, entry.id);
     assert.deepEqual(error.span ?? null, entry.span, entry.id);
     return true;
-  });
+   });
+  }
 });
 test('standard vector construction and borrowing preserve read-only observations', () => {
   for (const initializer of ['vec![1f64,2f64]', 'Vec::<f64>::new()']) {

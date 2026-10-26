@@ -506,7 +506,36 @@ General range values, iterators, custom comparison owners and unsupported
 ownership layers require separate interpretations.
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
-Existing default-profile result refusals remain available. The ordinary
+Earlier default-profile result refusals remain authenticated as historical
+inputs. Ordinary source functions now admit fresh owned scalar vector results
+with constructor tails, scoped bodies, complete conditional/match alternatives
+and diverging branches. Known actual calls to these checked result declarations
+can supply fresh arguments; local names clear that evidence. Result bodies do
+not infer interprocedural freshness from declarations alone. Named moves,
+returned call chains, partial-return carriers and borrowed outlives remain
+separate proofs. The unchanged earlier vector-return input, two exact length
+inputs and scalar indexing input have explicit positive corrections retaining every
+old diagnostic, source byte and complete predecessor context. Active Node and
+Rust version/pointer-width ranges bound the paired controls, including each
+original caller, text/binary reload and four-target emission. The preserved
+older fixture is a historical document; its corrected current view executes
+positive assertions rather than presenting those old throw expectations as
+present behavior. The independent explicit result profile keeps its original
+premises and refusal inputs. These are code drafts with no execution evidence.
+Ordinary vector and immutable-slice indexing uses shared source admission rules,
+automatically translated to native Rust. The actual standard receiver, immutable
+dereference layers and direct scalar Copy element facts remain explicit; these
+facts do not make a vector itself Copy or certify a move. Source `usize` owners
+remain distinct from equal-width `u64`. Unsuffixed integer indices are checked
+directly in the unsigned 64-bit domain before exact conversion to the existing
+arbitrary-precision index operation. Actual usize literals, parameters, declared
+results and cast targets retain their source owner. Bounds checks remain active;
+the draft never marks a source read proven in bounds. Every original source,
+decision, full native product, codec and four-target control is deferred.
+General index traits, fixed arrays, subslices, mutable element places, non-Copy
+moves, unproved arithmetic, aliases and exact platform panic payloads remain
+required independent interpretations.
+The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate
 from the explicit result profile and local binding evidence. Scoped body tails,
