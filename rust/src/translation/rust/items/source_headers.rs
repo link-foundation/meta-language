@@ -165,6 +165,8 @@ impl RustParser {
                 path: vec!["f64".to_owned()],
                 arguments: Vec::new(),
             }
+        } else if let Some(owner) = self.origins.current_type.expanded_source_owner.clone() {
+            owner
         } else {
             self.source_type_owner(&head, children, &ty)
         };

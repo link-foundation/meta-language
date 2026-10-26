@@ -50,6 +50,8 @@ pub(super) struct SourceOrigin {
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
+    /// Checked transparent alias owner, before retaining the source spelling.
+    pub(super) expanded_source_owner: Option<super::super::source_signatures::SourceOwner>,
     pub(super) primitive_owner_position: Option<serde_json::Value>,
     pub(super) namespace_spelling: Vec<String>,
 }
@@ -71,6 +73,7 @@ impl SourceOrigin {
             array_element_copy_evidence: false,
             source_lifetimes: Vec::new(),
             source_owner: None,
+            expanded_source_owner: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
@@ -111,6 +114,7 @@ impl SourceOrigin {
             array_element_copy_evidence,
             source_lifetimes: Vec::new(),
             source_owner: None,
+            expanded_source_owner: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,

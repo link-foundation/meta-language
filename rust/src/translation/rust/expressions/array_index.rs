@@ -16,7 +16,6 @@ impl RustParser {
             close.end,
         ));
         let receiver = self.origins.origin(&object, path);
-        let argument = self.origins.origin(&index, path);
         let element = match receiver.ty.as_ref() {
             Some(Type::Array { element, .. }) => Some(element.as_ref()),
             _ => None,
@@ -35,38 +34,11 @@ impl RustParser {
         if !error.is_empty() {
             return Err(unsupported("Rust scalar array index", &error, range));
         }
-        let owner = argument
-            .source_owner
-            .as_ref()
-            .filter(|owner| owner.kind == "primitive")
-            .map_or_else(String::new, |owner| owner.path.join("::"));
-        let (bits, signed) = match argument.ty.as_ref() {
-            Some(Type::Fixed { bits, signed }) => (f64::from(*bits), *signed),
-            _ => (0.0, false),
-        };
-        let literal = matches!(
-            &index.node,
-            SNode::Num {
-                ty: None,
-                negative: false,
-                ..
-            }
-        );
-        let error = read_rust_scalar_array_index_operand_error(
-            literal,
-            argument.ty.as_ref().map_or("", Type::kind),
-            bits,
-            signed,
-            &owner,
-            serde_json::Number::from(argument.wrappers.len())
-                .as_f64()
-                .expect("actual source wrapper count"),
-            argument.proven,
-        );
-        if !error.is_empty() {
+        let expression_error = self.usize_index_expression(&index, path)?;
+        if !expression_error.is_empty() {
             return Err(unsupported(
                 "Rust scalar array index",
-                &error,
+                &read_rust_scalar_array_index_operand_error(false, "", 0.0, false, "", 0.0, false),
                 index.span.or(range),
             ));
         }
@@ -80,7 +52,7 @@ impl RustParser {
                             bits: 64,
                             signed: false,
                         },
-                        from: literal.then_some(Type::Fixed {
+                        from: Some(Type::Fixed {
                             bits: 64,
                             signed: false,
                         }),

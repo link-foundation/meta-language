@@ -4,6 +4,7 @@ mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
 mod read_only_queries;
+mod usize_index_expressions;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
 use super::cast_syntax_rules::{accept_rust_cast_following_token, read_rust_cast_syntax_message};
@@ -700,8 +701,13 @@ impl RustParser {
                 },
                 range,
             );
-            self.origins
-                .mark(&result, SourceOrigin::with_type(ty, path, Vec::new()));
+            let mut result_origin = SourceOrigin::with_type(ty, path, Vec::new());
+            result_origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["usize".to_owned()],
+                arguments: Vec::new(),
+            });
+            self.origins.mark(&result, result_origin);
             return Ok(result);
         }
         let length = SExpr::new(

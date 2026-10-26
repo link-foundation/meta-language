@@ -532,9 +532,21 @@ arbitrary-precision index operation. Actual usize literals, parameters, declared
 results and cast targets retain their source owner. Bounds checks remain active;
 the draft never marks a source read proven in bounds. Every original source,
 decision, full native product, codec and four-target control is deferred.
+The separate contextual usize interpretation checks the complete actual source
+expression, including numeric arithmetic and all conditional/match alternatives.
+An explicit ancestry table has one root and earlier parents, at most 4096 nodes
+and depth 128. Every atom needs actual usize owner evidence or an unsuffixed
+integer constrained by the index context. Exact array lengths supply that owner;
+fully checked transparent nongeneric aliases preserve the underlying owner while
+retaining their source spelling. Every operand is checked in the existing exact
+unsigned 64-bit arithmetic domain before index conversion. Append-only decisions
+bound storage and visit at most 8386560 child-directory pairs; no unrepresented
+shared array write supplies a proof. Complete originals authenticate the preceding
+atomic interpreter. Its unchanged `0+0` refusal input now receives explicit
+positive assertions and joins the complete original Rust product matrix.
 General index traits, fixed arrays, subslices, mutable element places, non-Copy
-moves, unproved arithmetic, aliases and exact platform panic payloads remain
-required independent interpretations.
+moves, general local inference, full primitive source-type checking, generic
+aliases and exact platform panic payloads remain required interpretations.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

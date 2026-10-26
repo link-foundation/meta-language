@@ -483,7 +483,7 @@ class RustParser {
       if(this.sharedArrayHandleSourceModel&&this.origins.type.wrappers.length)throw unsupported('Rust shared array handle source','borrowed or boxed source type wrappers need an independent composition proof',span(this.cursor.tokens[Math.max(0,this.cursor.index-1)],this.cursor.peek()));
       const position=readRustStandardPrimitivePosition(this,head)??(['&','('].includes(head[0])&&primitiveChildren.length===1?primitiveChildren[0]:null);
       this.origins.type.primitiveOwnerPosition=position;
-      const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:readRustSourceTypeOwner(this, head, children, result);
+      const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:this.origins.type.expandedSourceOwner??readRustSourceTypeOwner(this, head, children, result);
       this.origins.type.sourceOwner = owner;
       this.origins.type.namespaceSpelling = !['&', '('].includes(head[0]) ? [...head]
         : namespaceChildren.length === 1 && !head.includes('[') ? [...namespaceChildren[0]]
@@ -1349,7 +1349,7 @@ class RustParser {
       if (!origin.proven || origin.type?.kind !== 'array' || !origin.arraySourceModel) throw unsupported('Rust array read', 'read-only length needs a proven vector or immutable slice source', range);
       if(acceptRustExactArrayLength(method.value,this.cursor.is('as')&&this.cursor.is('f64',1),this.ordinaryCompletionContext())){
         const type=rustFixedType('usize'),value={k:'cast',arg:{k:'length',object:receiver,integer:true,span:range},to:type,flavor:'exact',span:range};
-        return this.origins.mark(value,this.origins.typeOrigin(type,path));
+        return this.origins.mark(value,{...this.origins.typeOrigin(type,path),sourceOwner:{kind:'primitive',path:['usize'],arguments:[]}});
       }
       const length = { k: 'length', object: receiver, integer: false, span: range };
       let node = length;

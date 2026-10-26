@@ -47,7 +47,7 @@ export function readRustTypeAliasValue(parser,segments){
  const resolved=parser.resolve(segments,parser.modulePath);
  for(const key of readRustTypeAliasLookupKeys(resolved,parser.modulePath)){
   const row=parser.sourceTypeAliases.get(key);if(!row){if(readRustTypeAliasNamespaceDisposition(false,parser.origins.catalog.get(key)?.k??'')==='block')return null;continue;}
-  const origin=expandAlias(parser,row);parser.origins.type=origin;return origin.type;
+  const origin=expandAlias(parser,row);origin.expandedSourceOwner=structuredClone(origin.sourceOwner);parser.origins.type=origin;return origin.type;
  }
  return null;
 }

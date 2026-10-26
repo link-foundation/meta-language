@@ -281,7 +281,8 @@ impl RustParser {
         let resolved = self.resolve(segments, &self.module_path);
         for key in rules::read_rust_type_alias_lookup_keys(&resolved, &self.module_path) {
             if let Some(row) = self.source_type_aliases.declarations.get(&key).cloned() {
-                let origin = self.expand_type_alias(&row)?;
+                let mut origin = self.expand_type_alias(&row)?;
+                origin.expanded_source_owner = origin.source_owner.clone();
                 let ty = origin.ty.clone().unwrap();
                 self.origins.current_type = origin;
                 return Ok(Some(ty));
