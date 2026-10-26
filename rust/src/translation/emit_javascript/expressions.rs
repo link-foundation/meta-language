@@ -11,6 +11,16 @@ use super::{
 
 impl JavaScriptEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                e,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.expr(copy)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("JavaScript",&value));
+        }
         if e.ty.is_float() {
             self.uses_float = true;
         }

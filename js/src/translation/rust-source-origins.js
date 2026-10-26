@@ -14,6 +14,7 @@ import {readRustFunctionPointerCoercionError} from './rust-function-pointer-rule
 import {readRustFreshVectorArgumentForm,acceptRustFreshOwnedVectorArgument} from './rust-fresh-vector-argument-rules.js';
 import {acceptRustKnownFreshVectorCall} from './rust-fresh-vector-result-rules.js';
 import {acceptRustFreshVectorResultCall} from './rust-fresh-vector-call-result-rules.js';
+import {acceptRustScalarVectorCopyOccurrence} from './rust-scalar-vector-copy-rules.js';
 import {acceptRustScalarArrayIndexElement} from './rust-array-index-rules.js';
 import {readRustPointerIntegerOwnerError,readRustPointerIntegerOwnerJoinError,selectRustPointerIntegerResultOwner} from './rust-pointer-integer-owner-rules.js';
 import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
@@ -245,6 +246,7 @@ export class RustSourceOrigins {
 
   freshVectorArgument(node,path,allowCalls=true) {
     const origin=this.origin(node,path);
+    if(acceptRustScalarVectorCopyOccurrence(node.k,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`)))return true;
     if(allowCalls&&acceptRustKnownFreshVectorCall(node.k,origin.arraySourceModel??'',origin.wrappers.length,Boolean(origin.freshArrayValue)))return true;
     const form=readRustFreshVectorArgumentForm(node.k,origin.diverging===true,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`));
     if(form==='diverging'||form==='constructor')return true;

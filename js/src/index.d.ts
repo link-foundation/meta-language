@@ -906,7 +906,7 @@ export interface CheckedTypedProgram {
 }
 export interface TypedProgramLinksEmission {
   readonly code: string;
-  readonly language: 'JavaScript' | 'Rust';
+  readonly language: 'JavaScript' | 'Rust' | 'Lean' | 'Rocq';
   readonly mappings: readonly TranslationMapping[];
   readonly assumptions: readonly TranslationAssumption[];
   readonly encodings: readonly TranslationEncoding[];

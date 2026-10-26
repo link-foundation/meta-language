@@ -10,6 +10,16 @@ use crate::translation::rust_record_rules::render_rust_constructor_fields;
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                expr,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.borrow(copy)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("Rust",&value));
+        }
         if let Some(projection) = self.reference_array_projection(expr)? {
             return Ok(projection);
         }

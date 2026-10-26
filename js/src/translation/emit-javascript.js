@@ -1,3 +1,5 @@
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {renderStringArrayCopySort} from './string-array-sort-rules.js';
 import {RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE} from './record-property-order-javascript-runtime.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
@@ -478,6 +480,8 @@ class JavaScriptEmitter {
   }
 
   expr(e) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('JavaScript',this.expr(copy));}
     if (e.type?.kind === 'float') this.usesFloat = true;
     switch (e.k) {
       case 'lit':

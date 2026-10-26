@@ -1121,3 +1121,14 @@ same-input correction for the earlier call-tail refusal retains all original
 metadata, with stronger allocation, value, codec and original-native controls.
 Native scalar-interface controls compile each generated library as a crate root,
 batching all cases per product so actual absolute crate paths keep their meaning.
+
+Standard scalar vector-copy source operations reuse the existing full-slice core
+operation. Author their selection and all target renderings with
+`draft-rust-scalar-vector-copy-rules.mjs --draft`. The recorded source occurrence
+is an allocation producer, while local bindings clear freshness. Checked operand
+adapters project complete actual scalar types and exact default bounds into the
+shared selection; they do not add replacement native semantics. Rust uses a
+fully qualified standard clone on one borrowed receiver, JavaScript creates a
+new dense array and proof targets retain immutable list values. Selection stays
+separate from other source languages and general slice ranges. Future original,
+IEEE/allocation, source-free and complete-decision controls remain deferred.

@@ -474,3 +474,5 @@ mod translation_rust_source_owner_retention;
 mod translation_rust_scalar_source_interface;
 
 mod translation_rust_fresh_vector_call_results;
+
+mod translation_rust_scalar_vector_copies;

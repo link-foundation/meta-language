@@ -926,6 +926,7 @@ impl SourceOrigins {
         allow_calls: bool,
     ) -> bool {
         let origin = self.origin(node, path);
+        if crate::translation::rust_scalar_vector_copy_rules::accept_rust_scalar_vector_copy_occurrence(node.kind(),origin.array_source_model.unwrap_or(""),u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY,f64::from),node.span.is_some_and(|span|self.fresh_vector_constructors.contains(&span))){return true;}
         if allow_calls
             && accept_rust_known_fresh_vector_call(
                 node.node.kind(),

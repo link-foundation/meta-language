@@ -1,6 +1,7 @@
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
+import {readRustScalarVectorCopy} from './rust-scalar-vector-copy.js';
 import {acceptRustFreshVectorResultDeclaration} from './rust-fresh-vector-call-result-rules.js';
 import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRustConstPredicateProof} from './rust-function-qualifier-rules.js';
 import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases,resolveRustTypeAliasPath,requireRustTypeAliasValueConstructor} from './rust-type-aliases.js';
@@ -1341,6 +1342,8 @@ class RustParser {
     const expect = (count) => {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
+    const vectorCopy=readRustScalarVectorCopy(this,receiver,method,args,range,path);
+    if(vectorCopy)return vectorCopy;
     const floatOperation = acceptRustFloatOperationMethod(method.value);
     if (floatOperation || acceptRustFloatPredicateMethod(method.value)) {
       expect(0);

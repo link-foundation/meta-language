@@ -1,3 +1,5 @@
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {renderStringArrayCopySort,requireStringArrayCopySortUnits} from './string-array-sort-rules.js';
 import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
@@ -1288,6 +1290,8 @@ class RustEmitter {
   }
 
   expr(e) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Rust',this.borrow(copy));}
     const projection = emitReferenceArrayProjection(this, e);
     if (projection !== null) return projection;
     if (e.k === 'method' && acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {

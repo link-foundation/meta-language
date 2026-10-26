@@ -307,3 +307,7 @@ pub(crate) mod rust_scalar_source_interface_rules;
 pub(crate) mod scalar_source_interface;
 
 pub(crate) mod rust_fresh_vector_call_result_rules;
+
+pub(crate) mod rust_scalar_vector_copy_rules;
+
+pub(crate) mod scalar_vector_copy;

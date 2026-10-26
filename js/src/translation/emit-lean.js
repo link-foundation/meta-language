@@ -1,3 +1,5 @@
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
 import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
@@ -448,6 +450,8 @@ class LeanEmitter {
   }
 
   expr(e, depth) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Lean',this.expr(copy,depth));}
     const units=readFormalUnitStringExpression(this,e,depth);
     if(units!==null)return units;
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);

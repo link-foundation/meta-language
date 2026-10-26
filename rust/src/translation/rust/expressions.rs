@@ -4,6 +4,7 @@ mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
 mod read_only_queries;
+mod scalar_vector_copy;
 mod usize_index_expressions;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
@@ -454,6 +455,16 @@ impl RustParser {
                     &method.value,
                     span(&token, self.cursor.peek()),
                 )?;
+                if let Some(copy) = self.read_scalar_vector_copy(
+                    &value,
+                    &method,
+                    args.len(),
+                    span(&token, self.cursor.peek()),
+                    path,
+                ) {
+                    value = copy;
+                    continue;
+                }
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
                 if let Some(copy) = self.read_owned_local_copy(

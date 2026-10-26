@@ -534,6 +534,24 @@ older fixture is a historical document; its corrected current view executes
 positive assertions rather than presenting those old throw expectations as
 present behavior. The independent explicit result profile keeps its original
 premises and refusal inputs. These are code drafts with no execution evidence.
+Ordinary standard scalar vector copies use actual source receiver and direct
+Copy-element facts. Direct owned `clone` and `to_owned`, and `to_vec` through
+known immutable vector/slice reference layers, lower to the existing complete
+full-slice operation. At most 256 immutable layers are admitted. A recorded
+actual copy occurrence can produce a fresh result or argument; binding its value
+to a name clears that production evidence. Reference-clone overloads, boxes,
+non-Copy elements, arbitrary traits, allocators and complete ownership remain
+separate interpretations. Full Rust scalar-copy values have shared source-derived
+selection and rendering across all four emitters. Rust invokes the actual
+standard `Clone` operation on one borrowed receiver without floating-point
+length coordinates. JavaScript creates an independent dense scalar array;
+Lean and Rocq retain the immutable list value. This does not extend arbitrary
+slice ranges or erase another language's independent slice interpretation.
+Future controls compare complete original/native products and exact special
+floating-point values, independent results, retained input values, every declared
+decision and both source-free codecs. The exact earlier borrowed-slice clone
+input and its refusal metadata remain unchanged. No new execution evidence or
+completed ownership/aggregate-ABI claim follows from this source draft.
 Ordinary vector and immutable-slice indexing uses shared source admission rules,
 automatically translated to native Rust. The actual standard receiver, immutable
 dereference layers and direct scalar Copy element facts remain explicit; these
