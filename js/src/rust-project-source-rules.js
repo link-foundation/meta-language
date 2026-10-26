@@ -42,7 +42,7 @@ export function readRustProjectModulePlan(kinds,values){
   if(kind==='punct'&&(value==='{'||value==='['||value==='(')){
    if(value==='['&&position>0&&(readRequiredTextFact(values,position-1)==='#'||position>1&&readRequiredTextFact(values,position-1)==='!'&&readRequiredTextFact(values,position-2)==='#')){
     const attribute=position+1<values.length?readRequiredTextFact(values,position+1):'';
-    if(attribute==='cfg'||attribute==='cfg_attr'||attribute==='path'||attribute==='macro_use')throw new TypeError('Rust project module attributes need an explicit configuration interpretation');
+    if(attribute==='cfg'||attribute==='cfg_attr'||attribute==='macro_use')throw new TypeError('Rust project module attributes need an explicit configuration interpretation');
    }
    position=groupEnd(kinds,values,position);continue;
   }
@@ -55,7 +55,102 @@ export function readRustProjectModulePlan(kinds,values){
 export function acceptRustProjectSourcePath(path){
  if(!path||path.startsWith('/')||path.includes('\\')||path.includes('\0')||path.includes(':'))return false;
  for(const part of path.split('/'))if(!part||part==='.'||part==='..')return false;
- return path.endsWith('.rs');
+ return true;
+}
+/** Three Number facts per module: literal token, attribute start and after.
+ * Only actual outer attributes attached to an actual planned module count.
+ * Function bodies and macro inputs cannot invent a path interpretation.
+ * @param {string[]} kinds @param {string[]} values @param {number[]} plan
+ * @returns {number[]} */
+export function readRustProjectModulePathAttributes(kinds,values,plan){
+ let selected=[];
+ let position=0;
+ while(position<values.length){
+  const kind=readRequiredTextFact(kinds,position),value=readRequiredTextFact(values,position);
+  if(kind==='punct'&&value==='#'&&position+1<values.length){
+   const inner=readRequiredTextFact(values,position+1)==='!',open=position+(inner?2:1);
+   if(open>=values.length||readRequiredTextFact(kinds,open)!=='punct'||readRequiredTextFact(values,open)!=='['){position+=1;continue;}
+   const after=groupEnd(kinds,values,open);
+   if(open+1<values.length&&readRequiredTextFact(values,open+1)==='path'){
+    if(inner||after!==open+5||readRequiredTextFact(values,open+2)!=='='||readRequiredTextFact(kinds,open+3)!=='string')throw new TypeError('Rust project path attribute needs an outer literal module path');
+    let owner=after;
+    while(owner+1<values.length&&readRequiredTextFact(values,owner)==='#'&&readRequiredTextFact(values,owner+1)==='[')owner=groupEnd(kinds,values,owner+1);
+    if(owner<values.length&&readRequiredTextFact(values,owner)==='pub'){
+     owner+=1;if(owner<values.length&&readRequiredTextFact(values,owner)==='(')owner=groupEnd(kinds,values,owner);
+    }
+    if(owner<values.length&&readRequiredTextFact(values,owner)==='unsafe')owner+=1;
+    let record=-1;for(let at=0;at<plan.length;at+=5)if(readRequiredNumberFact(plan,at)===owner)record=at/5;
+    if(record<0)throw new TypeError('Rust project path attribute needs its actual module owner');
+    if(selected.length>0&&readRequiredNumberFact(selected,selected.length-4)===record)throw new TypeError('duplicate Rust project module path attributes');
+    selected=[...selected,record,open+3,position,after];
+   }
+   position=after;continue;
+  }
+  if(kind==='punct'&&(value==='{'||value==='['||value==='(')){
+   let inline=false;
+   if(value==='{')for(let at=0;at<plan.length;at+=5)if(readRequiredNumberFact(plan,at+2)===position)inline=true;
+   position=inline?position+1:groupEnd(kinds,values,position);continue;
+  }
+  position+=1;
+ }
+ const attributes=[];let selectedAt=0;
+ for(let record=0;record*5<plan.length;record+=1){
+  if(selectedAt<selected.length&&readRequiredNumberFact(selected,selectedAt)===record){attributes.push(readRequiredNumberFact(selected,selectedAt+1),readRequiredNumberFact(selected,selectedAt+2),readRequiredNumberFact(selected,selectedAt+3));selectedAt+=4;}
+  else attributes.push(-1,-1,-1);
+ }
+ return attributes;
+}
+/** Normalize only within the complete supplied inventory. Parent components
+ * are meaningful Rust paths; escaping the project or selecting host-specific
+ * absolute/drive/backslash paths has no interpretation in this profile.
+ * @param {string} directory @param {string} path @returns {string} */
+export function resolveRustProjectLiteralPath(directory,path){
+ if(path.startsWith('/')||path.includes('\\')||path.includes('\0')||path.includes(':'))throw new TypeError('nonportable Rust project literal path');
+ let result=directory?directory.split('/'):[];
+ for(const part of path.split('/')){
+  if(part===''||part==='.')continue;
+  if(part==='..'){if(result.length===0)throw new TypeError('Rust project literal path escapes supplied inventory');result=result.slice(0,-1);}
+  else result=[...result,part];
+ }
+ return result.join('/');
+}
+/** Return directory and outstanding ordinary-file stem. A path-loaded source
+ * is root-like even when its physical filename is not mod.rs.
+ * @param {string} directory @param {string} relative @param {number[]} plan
+ * @param {number[]} attributes @param {string[]} values @param {number} record
+ * @returns {string[]} */
+function moduleSourceContext(directory,relative,plan,attributes,values,record){
+ let parent=readRequiredNumberFact(plan,record*5+4),ancestors=[];
+ while(parent>=0){ancestors=[parent,...ancestors];parent=readRequiredNumberFact(plan,parent*5+4);}
+ let current=directory,pending=relative;
+ for(const ancestor of ancestors){
+  const literal=readRequiredNumberFact(attributes,ancestor*3);
+  if(literal>=0)current=resolveRustProjectLiteralPath(current,readRequiredTextFact(values,literal));
+  else current=[current,pending,readRequiredTextFact(values,readRequiredNumberFact(plan,ancestor*5+1))].filter(part=>part!=='').join('/');
+  pending='';
+ }
+ return [current,pending];
+}
+/** Preserve every ordinary source interval; a resolved outer path attribute
+ * becomes an explicit zero-output interpretation interval, never lost input.
+ * @param {string} source @param {string} path
+ * @param {number} from @param {number} to @param {string} owner
+ * @param {number[]} plan @param {number[]} attributes @param {string[]} values
+ * @param {number[]} starts @param {number[]} ends @returns {string[]} */
+function readSourceIntervals(source,path,from,to,owner,plan,attributes,values,starts,ends){
+ let offset=from;const events=[];
+ // Modules follow source order, including nested inline declarations.
+ for(let record=0;record*3<attributes.length;record+=1){
+  const literal=readRequiredNumberFact(attributes,record*3);if(literal<0)continue;
+  const first=readRequiredNumberFact(starts,readRequiredNumberFact(attributes,record*3+1)),last=readRequiredNumberFact(ends,readRequiredNumberFact(attributes,record*3+2)-1);
+  if(first<from||first>=to)continue;
+  if(first<offset||last>to)throw new TypeError('overlapping Rust project interpreted attribute interval');
+  events.push('source',path,String(offset),String(first),source.slice(offset,first),owner,'');
+  const ancestors=moduleAncestors(plan,values,record),name=readRequiredTextFact(values,readRequiredNumberFact(plan,record*5+1));
+  events.push('interpreted attribute',path,String(first),String(last),'',owner+'::'+[...ancestors,name].join('::'),readRequiredTextFact(values,literal));
+  offset=last;
+ }
+ events.push('source',path,String(offset),String(to),source.slice(offset,to),owner,'');return events;
 }
 /** Root files and mod.rs use their parent directory; an ordinary module file
  * owns a same-named directory for its submodules.
@@ -94,47 +189,56 @@ export function expandRustProjectSourceEvents(paths,sources,kinds,values,starts,
  if(paths.length!==sources.length||paths.length!==kinds.length||paths.length!==values.length||paths.length!==starts.length||paths.length!==ends.length)throw new TypeError('unaligned Rust project source inventory');
  if(!Number.isSafeInteger(depthLimit)||depthLimit<1||!Number.isSafeInteger(expansionLimit)||expansionLimit<1||!Number.isSafeInteger(outputUnitLimit)||outputUnitLimit<1)throw new RangeError('invalid Rust project resource limit');
  const unique=new Set(paths);if(unique.size!==paths.length)throw new TypeError('duplicate Rust project source path');
- const plans=[];
+ const plans=[],pathAttributes=[];
  for(let file=0;file<paths.length;file+=1){
   if(!acceptRustProjectSourcePath(readRequiredTextFact(paths,file)))throw new TypeError('invalid Rust project source path');
   const types=textColumn(kinds,file),tokens=textColumn(values,file),first=numberColumn(starts,file),last=numberColumn(ends,file);
   if(types.length!==first.length||types.length!==last.length)throw new TypeError('unaligned Rust project token ranges');
-  plans.push(readRustProjectModulePlan(types,tokens));
+  const plan=readRustProjectModulePlan(types,tokens);plans.push(plan);pathAttributes.push(readRustProjectModulePathAttributes(types,tokens,plan));
  }
  const root=paths.indexOf(entry);if(root<0)throw new TypeError('missing Rust project entry source');
  // Each continuation holds file, next module record, retained offset, depth.
- let frames=[root,0,0,0],directories=[readRustProjectModuleDirectory(entry,true)],owners=['crate'];
+ let frames=[root,0,0,0],directories=[readRustProjectModuleDirectory(entry,true)],relativeDirectories=[''],owners=['crate'];
  const events=[];let expansions=0,outputUnits=0;
  while(frames.length){
   const at=frames.length-4,file=readRequiredNumberFact(frames,at),next=readRequiredNumberFact(frames,at+1),offset=readRequiredNumberFact(frames,at+2),depth=readRequiredNumberFact(frames,at+3);
   frames=frames.slice(0,at);
-  const directory=readRequiredTextFact(directories,directories.length-1),owner=readRequiredTextFact(owners,owners.length-1);directories.pop();owners.pop();
-  const source=readRequiredTextFact(sources,file),path=readRequiredTextFact(paths,file),plan=numberColumn(plans,file),tokens=textColumn(values,file),first=numberColumn(starts,file),last=numberColumn(ends,file);
+  const directory=readRequiredTextFact(directories,directories.length-1),relative=readRequiredTextFact(relativeDirectories,relativeDirectories.length-1),owner=readRequiredTextFact(owners,owners.length-1);directories.pop();relativeDirectories.pop();owners.pop();
+  const source=readRequiredTextFact(sources,file),path=readRequiredTextFact(paths,file),plan=numberColumn(plans,file),attributes=numberColumn(pathAttributes,file),tokens=textColumn(values,file),first=numberColumn(starts,file),last=numberColumn(ends,file);
   if(next===0&&offset===0)events.push('file',path,'0',String(source.length),'',owner,'');
   if(next*5>=plan.length){
-   if(outputUnits+source.length-offset>outputUnitLimit)throw new RangeError('Rust project composed source unit limit exceeded');
-   events.push('source',path,String(offset),String(source.length),source.slice(offset),owner,'');outputUnits+=source.length-offset;
+   const intervals=readSourceIntervals(source,path,offset,source.length,owner,plan,attributes,tokens,first,last);
+   for(let part=4;part<intervals.length;part+=7)outputUnits+=readRequiredTextFact(intervals,part).length;
+   for(const part of intervals)events.push(part);
+   if(outputUnits>outputUnitLimit)throw new RangeError('Rust project composed source unit limit exceeded');
    if(depth>0){if(outputUnits+2>outputUnitLimit)throw new RangeError('Rust project composed source unit limit exceeded');events.push('boundary',path,String(source.length),String(source.length),'\n}',owner,'');outputUnits+=2;}
    continue;
   }
   const keyword=readRequiredNumberFact(plan,next*5),name=readRequiredTextFact(tokens,readRequiredNumberFact(plan,next*5+1)),delimiter=readRequiredNumberFact(plan,next*5+2),ancestors=moduleAncestors(plan,tokens,next);
   const qualified=owner+'::'+(ancestors.length?ancestors.join('::')+'::':'')+name;
   if(depth+ancestors.length+1>depthLimit)throw new RangeError('Rust project module expansion limit exceeded');
-  const moduleDirectory=[directory,...ancestors].filter(part=>part!=='').join('/');
-  const external=readRequiredTextFact(tokens,delimiter)===';',provider=external?selectRustProjectModuleSource(moduleDirectory,name,paths):path;
+  const context=moduleSourceContext(directory,relative,plan,attributes,tokens,next),literal=readRequiredNumberFact(attributes,next*3);
+  const moduleDirectory=context.filter(part=>part!=='').join('/');
+  const external=readRequiredTextFact(tokens,delimiter)===';',provider=external?(literal>=0?resolveRustProjectLiteralPath(readRequiredTextFact(context,0),readRequiredTextFact(tokens,literal)):selectRustProjectModuleSource(moduleDirectory,name,paths)):path;
+  if(external&&!paths.includes(provider))throw new TypeError('missing explicit Rust project module file: '+provider);
   events.push('module',path,String(readRequiredNumberFact(first,keyword)),String(readRequiredNumberFact(last,readRequiredNumberFact(plan,next*5+3)-1)),'',qualified,provider);
-  if(!external){frames.push(file,next+1,offset,depth);directories.push(directory);owners.push(owner);continue;}
+  if(!external){frames.push(file,next+1,offset,depth);directories.push(directory);relativeDirectories.push(relative);owners.push(owner);continue;}
   expansions+=1;if(expansions>expansionLimit)throw new RangeError('Rust project module expansion limit exceeded');
   const beginning=readRequiredNumberFact(first,delimiter),after=readRequiredNumberFact(last,delimiter);
   if(beginning<offset||after<beginning||after>source.length)throw new TypeError('invalid Rust project module source range');
-  if(outputUnits+beginning-offset+2>outputUnitLimit)throw new RangeError('Rust project composed source unit limit exceeded');
-  events.push('source',path,String(offset),String(beginning),source.slice(offset,beginning),owner,'');
-  events.push('boundary',path,String(beginning),String(after),'{\n',qualified,provider);outputUnits+=beginning-offset+2;
+  const intervals=readSourceIntervals(source,path,offset,beginning,owner,plan,attributes,tokens,first,last);
+  outputUnits+=2;
+  for(let part=4;part<intervals.length;part+=7)outputUnits+=readRequiredTextFact(intervals,part).length;
+  for(const part of intervals)events.push(part);
+  if(outputUnits>outputUnitLimit)throw new RangeError('Rust project composed source unit limit exceeded');
+  events.push('boundary',path,String(beginning),String(after),'{\n',qualified,provider);
   const child=paths.indexOf(provider);
   if(child===file)throw new TypeError('cyclic Rust project module file: '+provider);
   for(let active=0;active<frames.length;active+=4)if(readRequiredNumberFact(frames,active)===child)throw new TypeError('cyclic Rust project module file: '+provider);
-  frames.push(file,next+1,after,depth);directories.push(directory);owners.push(owner);
-  frames.push(child,0,0,depth+ancestors.length+1);directories.push(readRustProjectModuleDirectory(provider,false));owners.push(qualified);
+  frames.push(file,next+1,after,depth);directories.push(directory);relativeDirectories.push(relative);owners.push(owner);
+  frames.push(child,0,0,depth+ancestors.length+1);directories.push(readRustProjectModuleDirectory(provider,true));
+  const filename=readRequiredTextFact(provider.split('/'),provider.split('/').length-1);
+  relativeDirectories.push(literal>=0||filename==='mod.rs'?'':filename.slice(0,-3));owners.push(qualified);
  }
  return events;
 }

@@ -98,12 +98,25 @@ impl RustParser {
                     ),
                 ));
             }
-            if !self.const_function_model.is_empty()
-                && self.cursor.is("const")
-                && self.cursor.is_at("fn", 1)
-            {
+            if crate::translation::rust_function_qualifier_rules::accept_rust_const_function_prefix(
+                self.ordinary_completion_context(),
+                !self.const_function_model.is_empty(),
+                self.cursor.is("const"),
+                self.cursor.is_at("fn", 1),
+            ) {
                 let const_keyword_index = self.cursor.index;
                 self.const_function_keyword = Some(self.cursor.advance());
+                if !crate::translation::rust_function_qualifier_rules::accept_rust_const_function_location(
+                    path.len() as f64,
+                    self.inherent_owner.is_some(),
+                    &self.cursor.peek_at(1).value,
+                ) {
+                    return Err(unsupported(
+                        "Rust const function entry",
+                        "a qualified executable main requires its own entry interpretation",
+                        span(self.const_function_keyword.as_ref().unwrap(), self.cursor.peek_at(1)),
+                    ));
+                }
                 let mut function = self.function(path)?;
                 if !diagnostic_attributes.is_empty() {
                     function.source_diagnostic_attributes =

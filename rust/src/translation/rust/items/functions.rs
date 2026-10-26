@@ -304,7 +304,7 @@ impl RustParser {
         } else {
             self.closed_function_completion(path)?
         };
-        let source_const_function = const_keyword.as_ref().map(|keyword| {
+        let source_const_function = const_keyword.as_ref().filter(|_| crate::translation::rust_function_qualifier_rules::require_rust_const_predicate_proof(true, !self.const_function_model.is_empty())).map(|keyword| {
             Box::new(self.create_const_function_proof(
                 &name,
                 keyword,

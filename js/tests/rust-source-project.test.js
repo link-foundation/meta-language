@@ -20,6 +20,14 @@ for(const row of fixture.cases)test('complete original Rust source project: '+ro
  const sourceBytes=Buffer.from(composition.source);let position=0;
  for(const mapping of composition.mappings){assert.equal(mapping.outputStart,position);position=mapping.outputEnd;if(mapping.kind==='source'){const source=Buffer.from(row.inputs.find(file=>file.path===mapping.path).source);assert.deepEqual(sourceBytes.subarray(mapping.outputStart,mapping.outputEnd),source.subarray(mapping.start,mapping.end));}}
  assert.equal(position,sourceBytes.length);
+ for(const mapping of composition.mappings.filter(row=>row.kind==='interpreted attribute')){
+  assert.equal(mapping.outputStart,mapping.outputEnd);
+  const original=row.inputs.find(file=>file.path===mapping.path).source;
+  const text=Buffer.from(original).subarray(mapping.start,mapping.end).toString('utf8');
+  assert.ok(text.startsWith('#[')&&text.endsWith(']'));assert.match(text,/path\s*=/u);
+  assert.equal(original.slice(mapping.startUnit,mapping.endUnit),text);
+  assert.ok(composition.modules.some(module=>module.module===mapping.module));
+ }
  for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
   const originals=readRustSourceProjectConcreteGraphs(network,packet.root);assert.deepEqual(originals.map(({path,source})=>({path,source})),[...row.inputs].sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0));
   for(const original of originals){assert.ok(original.network.verifyFullMatch().isClean());assert.equal(original.network.reconstructText(),original.source);}

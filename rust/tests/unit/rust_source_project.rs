@@ -43,6 +43,32 @@ fn complete_source_projects_keep_original_files_executable_meanings_and_graph_is
         let options = &row["options"];
         let composition = compose_rust_source_project(inputs, entry, options).unwrap();
         assert_eq!(composition, row["composition"], "{}", row["name"]);
+        for mapping in composition["mappings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|mapping| mapping["kind"] == "interpreted attribute")
+        {
+            assert_eq!(mapping["outputStart"], mapping["outputEnd"]);
+            let file = inputs
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|file| file["path"] == mapping["path"])
+                .unwrap();
+            let original = file["source"].as_str().unwrap();
+            let text = &original[mapping["start"].as_u64().unwrap() as usize
+                ..mapping["end"].as_u64().unwrap() as usize];
+            assert!(text.starts_with("#[") && text.ends_with(']'));
+            assert!(text.contains("path"));
+            assert!(
+                composition["modules"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|module| module["module"] == mapping["module"])
+            );
+        }
         let packet = create_rust_source_project_program_links(inputs, entry, options).unwrap();
         let node_graph = LinkNetwork::from_lino(row["links"].as_str().unwrap()).unwrap();
         let node_root = LinkId::from_u64(row["root"].as_u64().unwrap());

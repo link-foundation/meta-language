@@ -175,6 +175,7 @@ include = [
     "src/data/rust-declaration-header-program.lino",
     "src/data/rust-formatting-program.lino",
     "src/data/rust-function-pointer-program.lino",
+    "src/data/rust-function-qualifier-program.lino",
     "src/data/rust-inherent-program.lino",
     "src/data/rust-module-value-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",

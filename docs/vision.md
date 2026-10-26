@@ -3952,12 +3952,34 @@ all those requirements remain mandatory.
 Supplied Rust source projects now have a composition draft shared by both
 packages. The complete lexical module plan skips unrelated bodies and macro
 token trees, preserves actual inline parents and resolves the ordinary `.rs`
-and `mod.rs` layouts. Missing or ambiguous files, recursive file expansion,
-uninterpreted configuration/path attributes and exceeded budgets refuse. The
+and `mod.rs` layouts. Literal outer module paths now resolve within the supplied
+inventory, including inline directories and root-like ownership for path-loaded
+files. The shared definition tracks the outstanding ordinary-file stem
+separately from the physical directory. Parent components may stay within the
+inventory; portable source identities never select absolute host paths.
+Interpreted attributes retain explicit zero-output source intervals and their
+complete original CSTs. Arbitrary supplied filenames remain Rust source when
+selected by an actual module path. These decisions follow the
+[Rust 1.90 module resolver](https://github.com/rust-lang/rust/blob/1.90.0/compiler/rustc_expand/src/module.rs).
+Missing or ambiguous files, recursive file expansion, uninterpreted
+configuration, inner/duplicate path attributes and exceeded budgets refuse. The
 original headers and bodies remain exact; replacing a module semicolon with
 explicit braces records every synthetic boundary and both UTF16 and UTF8 source
 coordinates. Module inner attributes retain their actual source attachment.
 This follows the [Rust module contract](https://doc.rust-lang.org/reference/items/modules.html).
+
+Ordinary admitted `const fn` declarations and inherent methods now enter the
+existing runtime function interpretation. Associated constants use their actual
+datatype namespace, source value origin and existing constant-read construction;
+callable constants remain values applied through their real signatures. Closed
+const-predicate proofs still require their independently selected complete model.
+Runtime admission never creates those proofs. Complete source snapshots retain
+the original qualifiers, attributes and concrete definitions. This follows the
+[runtime behavior of const functions](https://doc.rust-lang.org/reference/const_eval.html#const-functions);
+it does not supply full const-context validation, compile-time evaluation or a
+const-capable emitted provider interface. Generic, trait, async, unsafe, privacy
+and complete source construct coverage remain required. The added source draft
+and deferred controls establish no execution evidence or overall completion.
 
 The ordinary frontend checks the composed source. Library mode explicitly
 records an empty frontend entry only when the source has no main. The checked

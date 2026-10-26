@@ -450,3 +450,5 @@ mod translation_abrupt_results;
 mod rust_source_project;
 
 mod source_project_archive;
+
+mod translation_rust_function_qualifiers;

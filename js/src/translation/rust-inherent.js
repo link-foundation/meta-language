@@ -1,6 +1,7 @@
 // Tokens and source origins are transported into ordinary module/function terms.
 import{unsupported}from'./diagnostics.js';
 import{prepareRustRecordMethodNamespace}from'./rust-records.js';
+import{acceptRustConstFunctionPrefix,acceptRustAssociatedConstantItem}from'./rust-function-qualifier-rules.js';
 import{acceptRustSourceLifetimeReference}from'./rust-indirection-rules.js';
 import{acceptRustInherentSourceProfiles,readRustInherentReceiverLayerMode,planRustInherentReceiverLayers,acceptRustInherentOwnerModule,readRustInherentParentPath}from'./rust-inherent-rules.js';
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -33,9 +34,18 @@ export function readRustInherentItem(parser,path){
   parser.innerAttributes();
   while(!c.is('}')){
    parser.modulePath=[...path];parser.attributes();parser.visibility();
+   if(acceptRustAssociatedConstantItem(parser.ordinaryCompletionContext(),c.is('const'),c.is('fn',1))){
+    prepareRustRecordMethodNamespace(parser,owner,c.peek(1).value,span(c.peek(),c.peek(1)));
+    const constant=parser.constItem(owner);items.push(constant);
+    // Mode zero reserves the associated value namespace; it never supplies a
+    // receiver method interpretation. Callable values still use const origins.
+    parser.inherentMethods.set([...owner,constant.name].join('.'),{owner:owner.join('.'),mode:0});
+    continue;
+   }
+   const constant=acceptRustConstFunctionPrefix(parser.ordinaryCompletionContext(),false,c.is('const'),c.is('fn',1))?c.next():null;
    if(!c.is('fn'))throw unsupported('Rust associated item','associated constants, types, macros and modified functions need their own source interpretation',span(c.peek(),c.peek()));
    prepareRustRecordMethodNamespace(parser,owner,c.peek(1).value,span(c.peek(),c.peek(1)));
-   const fn=parser.fn(owner);items.push(fn);
+   const fn=parser.fn(owner,constant);items.push(fn);
    const mode=fn.params[0]?.name==='self'?parser.inherentMethods.get([...owner,fn.name].join('.'))?.mode??0:0;
    if(!mode)parser.inherentMethods.set([...owner,fn.name].join('.'),{owner:owner.join('.'),mode:0});
   }

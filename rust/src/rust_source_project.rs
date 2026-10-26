@@ -141,6 +141,7 @@ pub fn compose_rust_source_project(
                         }
                         TokenKind::Identifier => "identifier",
                         TokenKind::Punct => "punct",
+                        TokenKind::String => "string",
                         TokenKind::Eof => "eof",
                         _ => "atom",
                     })

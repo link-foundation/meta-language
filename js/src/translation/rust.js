@@ -1,6 +1,7 @@
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
+import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRustConstPredicateProof} from './rust-function-qualifier-rules.js';
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
@@ -276,9 +277,10 @@ class RustParser {
       if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
       if(this.constFunctionModel&&!(c.is('const')&&c.is('fn',1)||!path.length&&c.is('fn')&&c.is('main',1)))throw unsupported('Rust const function context','only actual const predicate declarations and the ordinary main are admitted',span(start,c.peek()));
       if(diagnosticAttributes.length&&!(c.is('const')&&c.is('fn',1)))throw unsupported('Rust const diagnostic attribute attachment','the supported diagnostic prefix must belong to an actual const function',span(c.tokens[firstAttributeIndex],c.peek()));
-      if(this.constFunctionModel&&c.is('const')&&c.is('fn',1)){
+      if(acceptRustConstFunctionPrefix(this.ordinaryCompletionContext(),Boolean(this.constFunctionModel),c.is('const'),c.is('fn',1))){
         const constKeywordIndex=c.index;
         const keyword=c.next();
+        if(!acceptRustConstFunctionLocation(path.length,Boolean(this.inherentOwner),c.peek(1).value))throw unsupported('Rust const function entry','a qualified executable main requires its own entry interpretation',span(keyword,c.peek(1)));
         const declaration=this.fn(path,keyword);
         if(diagnosticAttributes.length)declaration.sourceDiagnosticAttributes=createRustDiagnosticAttributeFacet(this.source,c.tokens,firstAttributeIndex,constKeywordIndex,declaration,path);
         items.push(declaration);
@@ -708,7 +710,7 @@ class RustParser {
       this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
       this.origins.scope = previous;
       return { k: 'fn', name, params, ret, body, span: emptyOptionBody?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()),
-        ...(constKeyword?{sourceConstFunction:createRustConstFunctionProof(name,constKeyword,functionKeyword,constHeaderEnd,c.tokens[c.index-1].end,this.constFunctionModel)}:{}),
+        ...(requireRustConstPredicateProof(Boolean(constKeyword),Boolean(this.constFunctionModel))?{sourceConstFunction:createRustConstFunctionProof(name,constKeyword,functionKeyword,constHeaderEnd,c.tokens[c.index-1].end,this.constFunctionModel)}:{}),
         ...(emptyOptionBody?{sourceEmptyOption:createRustEmptyOptionProof(this,name,sourceResult.emptyOptionResult,emptyOptionBody.construction)}:{}),
         ...(this.typeNamespaceModel ? {sourceTypeNamespace: createRustTypeNamespaceProof(sourceParams, sourceResult)} : {}),
         ...(this.localValueStateModel?{sourceSignature:signature,sourceLocalState:lowered.proof}:{}),

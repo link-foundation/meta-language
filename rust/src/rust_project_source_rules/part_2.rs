@@ -5,8 +5,10 @@ use super::ml;
 use super::ml_array;
 use super::source_ml_temporary_accept_rust_project_source_path_loop6;
 use super::source_ml_temporary_group_end_loop1;
-use super::source_ml_temporary_module_ancestors_loop7;
+use super::source_ml_temporary_read_rust_project_module_path_attributes_loop7;
+use super::source_ml_temporary_read_rust_project_module_path_attributes_loop11;
 use super::source_ml_temporary_read_rust_project_module_plan_loop2;
+use super::source_ml_temporary_resolve_rust_project_literal_path_loop13;
 
 /// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
 pub mod ml_string {
@@ -686,7 +688,7 @@ pub fn accept_rust_project_source_path(path: &self::ml_string::Text) -> bool {
                         );
                     match source_ml_source1_s6 {
                         self::MlTemporaryAcceptRustProjectSourcePathLoop6Result::MlTemporaryAcceptRustProjectSourcePathLoop6Done => {
-                            path.ends_with(&self::ml_string::Text::from_units(vec![46, 114, 115]))
+                            true
                         }
                         self::MlTemporaryAcceptRustProjectSourcePathLoop6Result::MlTemporaryAcceptRustProjectSourcePathLoop6Return(source_ml_temporary_result6) => {
                             source_ml_temporary_result6
@@ -700,180 +702,29 @@ pub fn accept_rust_project_source_path(path: &self::ml_string::Text) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_project_module_directory(
-    path: &self::ml_string::Text,
-    root: bool,
-) -> self::ml_string::Text {
+pub fn read_rust_project_module_path_attributes(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    plan: &[f64],
+) -> Vec<f64> {
     {
-        let parts = {
-            let source_ml_source1_string_unit_operand7 = path.clone();
-            {
-                let source_ml_source1_string_unit_operand8 =
-                    self::ml_string::Text::from_units(vec![47]);
-                {
-                    let source_ml_source1_string_split_limit9 = 4_294_967_295f64;
-                    {
-                        let source_ml_source1_string_split_separator10 =
-                            source_ml_source1_string_unit_operand8;
-                        (|ml_text: &self::ml_string::Text,
-                          ml_separator: Option<&self::ml_string::Text>,
-                          ml_limit: f64| {
-                            self::ml_utf16_text::split_utf16_text(
-                                &(ml_text
-                                    .0
-                                    .iter()
-                                    .map(|ml_unit| f64::from(*ml_unit))
-                                    .collect::<Vec<f64>>()),
-                                &(ml_separator
-                                    .map(|ml_value| {
-                                        ml_value
-                                            .0
-                                            .iter()
-                                            .map(|ml_unit| f64::from(*ml_unit))
-                                            .collect::<Vec<f64>>()
-                                    })
-                                    .unwrap_or_default()),
-                                ml_limit,
-                                ml_separator.is_none(),
-                            )
-                            .into_iter()
-                            .map(|ml_units| {
-                                self::ml_string::Text::from_units(
-                                    ml_units.into_iter().map(|ml_unit| ml_unit as u16).collect(),
-                                )
-                            })
-                            .collect::<Vec<_>>()
-                        })(
-                            &(source_ml_source1_string_unit_operand7),
-                            Some(&source_ml_source1_string_split_separator10),
-                            source_ml_source1_string_split_limit9,
-                        )
-                    }
-                }
-            }
-        };
+        let selected = Vec::<f64>::new();
         {
-            let file = self::read_required_text_fact(&(parts), ((parts.len() as f64) - 1f64));
+            let position = 0f64;
             {
-                let parent = self::ml_array::slice(&parts, 0f64, -1f64);
-                self::ml_string::join(
-                    &{
-                        let (ml_append_right, ml_append_left) = (
-                            if !root
-                                && (file
-                                    != (self::ml_string::Text::from_units(vec![
-                                        109, 111, 100, 46, 114, 115,
-                                    ])))
+                let selected_2 =
+                    self::source_ml_temporary_read_rust_project_module_path_attributes_loop7(
+                        kinds, values, plan, selected, position,
+                    );
+                {
+                    let attributes = Vec::<f64>::new();
+                    {
+                        let selected_at = 0f64;
+                        {
+                            let record = 0f64;
                             {
-                                vec![{
-                                    let source_ml_source1_string_range_operand11 = file.clone();
-                                    {
-                                        let source_ml_source1_string_range_operand12 = 0f64;
-                                        {
-                                            let source_ml_source1_string_range_operand13 = -3f64;
-                                            {
-                                                let source_ml_source1_string_range_position14 =
-                                                    source_ml_source1_string_range_operand12;
-                                                {
-                                                    let source_ml_source1_string_range_position15 =
-                                                        source_ml_source1_string_range_operand13;
-                                                    source_ml_source1_string_range_operand11.slice(
-                                                        source_ml_source1_string_range_position14,
-                                                        source_ml_source1_string_range_position15,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }]
-                            } else {
-                                Vec::<self::ml_string::Text>::new()
-                            },
-                            parent,
-                        );
-                        self::ml_array::append(ml_append_left, ml_append_right)
-                    },
-                    &self::ml_string::Text::from_units(vec![47]),
-                )
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn select_rust_project_module_source(
-    directory: &self::ml_string::Text,
-    name: &self::ml_string::Text,
-    available: &[self::ml_string::Text],
-) -> self::ml_string::Text {
-    {
-        let prefix = if directory.0.is_empty() {
-            self::ml_string::Text::from_units(vec![])
-        } else {
-            directory.concat(&self::ml_string::Text::from_units(vec![47]))
-        };
-        {
-            let first = (prefix.concat(name))
-                .concat(&self::ml_string::Text::from_units(vec![46, 114, 115]));
-            {
-                let second =
-                    (prefix.concat(name)).concat(&self::ml_string::Text::from_units(vec![
-                        47, 109, 111, 100, 46, 114, 115,
-                    ]));
-                {
-                    let found_first =
-                        self::ml_array::includes(available, &first.clone(), 0f64, false, |a, b| {
-                            a == b
-                        });
-                    {
-                        let found_second = self::ml_array::includes(
-                            available,
-                            &second.clone(),
-                            0f64,
-                            false,
-                            |a, b| a == b,
-                        );
-                        if found_first && found_second {
-                            (self::ml_source_exception::SourceException {
-                                class_name: String::from("TypeError"),
-                                message_units: ((((self::ml_string::Text::from_units(vec![
-                                    97, 109, 98, 105, 103, 117, 111, 117, 115, 32, 82, 117, 115,
-                                    116, 32, 112, 114, 111, 106, 101, 99, 116, 32, 109, 111, 100,
-                                    117, 108, 101, 32, 102, 105, 108, 101, 115, 58, 32,
-                                ]))
-                                .concat(&first))
-                                .concat(&self::ml_string::Text::from_units(vec![
-                                    32, 97, 110, 100, 32,
-                                ])))
-                                .concat(&second))
-                                .0,
-                                message_present: true,
-                            })
-                            .raise()
-                        } else if ((found_first) || (found_second)) {
-                            if found_first {
-                                first.clone()
-                            } else {
-                                second.clone()
+                                self::source_ml_temporary_read_rust_project_module_path_attributes_loop11(plan, &(selected_2), attributes, selected_at, record)
                             }
-                        } else {
-                            (self::ml_source_exception::SourceException {
-                                class_name: String::from("TypeError"),
-                                message_units: ((((self::ml_string::Text::from_units(vec![
-                                    109, 105, 115, 115, 105, 110, 103, 32, 82, 117, 115, 116, 32,
-                                    112, 114, 111, 106, 101, 99, 116, 32, 109, 111, 100, 117, 108,
-                                    101, 32, 102, 105, 108, 101, 58, 32,
-                                ]))
-                                .concat(&first))
-                                .concat(&self::ml_string::Text::from_units(vec![
-                                    32, 111, 114, 32,
-                                ])))
-                                .concat(&second))
-                                .0,
-                                message_present: true,
-                            })
-                            .raise()
                         }
                     }
                 }
@@ -884,16 +735,149 @@ pub fn select_rust_project_module_source(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn module_ancestors(
-    plan: &[f64],
-    values: &[self::ml_string::Text],
-    record: f64,
-) -> Vec<self::ml_string::Text> {
+pub fn resolve_rust_project_literal_path(
+    directory: &self::ml_string::Text,
+    path: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((path.starts_with(&self::ml_string::Text::from_units(vec![47]))
+        || path.contains(&self::ml_string::Text::from_units(vec![92])))
+        || path.contains(&self::ml_string::Text::from_units(vec![0])))
+        || path.contains(&self::ml_string::Text::from_units(vec![58]))
     {
-        let parent = self::read_required_number_fact(plan, ((record * 5f64) + 4f64));
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("TypeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                110, 111, 110, 112, 111, 114, 116, 97, 98, 108, 101, 32, 82, 117, 115, 116, 32,
+                112, 114, 111, 106, 101, 99, 116, 32, 108, 105, 116, 101, 114, 97, 108, 32, 112,
+                97, 116, 104,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
         {
-            let ordered = Vec::<self::ml_string::Text>::new();
-            { self::source_ml_temporary_module_ancestors_loop7(plan, values, parent, ordered) }
+            let result = if directory.0.is_empty() {
+                Vec::<self::ml_string::Text>::new()
+            } else {
+                {
+                    let source_ml_source1_string_unit_operand7 = directory.clone();
+                    {
+                        let source_ml_source1_string_unit_operand8 =
+                            self::ml_string::Text::from_units(vec![47]);
+                        {
+                            let source_ml_source1_string_split_limit9 = 4_294_967_295f64;
+                            {
+                                let source_ml_source1_string_split_separator10 =
+                                    source_ml_source1_string_unit_operand8;
+                                (|ml_text: &self::ml_string::Text,
+                                  ml_separator: Option<&self::ml_string::Text>,
+                                  ml_limit: f64| {
+                                    self::ml_utf16_text::split_utf16_text(
+                                        &(ml_text
+                                            .0
+                                            .iter()
+                                            .map(|ml_unit| f64::from(*ml_unit))
+                                            .collect::<Vec<f64>>()),
+                                        &(ml_separator
+                                            .map(|ml_value| {
+                                                ml_value
+                                                    .0
+                                                    .iter()
+                                                    .map(|ml_unit| f64::from(*ml_unit))
+                                                    .collect::<Vec<f64>>()
+                                            })
+                                            .unwrap_or_default()),
+                                        ml_limit,
+                                        ml_separator.is_none(),
+                                    )
+                                    .into_iter()
+                                    .map(|ml_units| {
+                                        self::ml_string::Text::from_units(
+                                            ml_units
+                                                .into_iter()
+                                                .map(|ml_unit| ml_unit as u16)
+                                                .collect(),
+                                        )
+                                    })
+                                    .collect::<Vec<_>>()
+                                })(
+                                    &(source_ml_source1_string_unit_operand7),
+                                    Some(&source_ml_source1_string_split_separator10),
+                                    source_ml_source1_string_split_limit9,
+                                )
+                            }
+                        }
+                    }
+                }
+            };
+            {
+                let source_ml_temporary_values12 = {
+                    let source_ml_source1_string_unit_operand11 = path.clone();
+                    {
+                        let source_ml_source1_string_unit_operand12 =
+                            self::ml_string::Text::from_units(vec![47]);
+                        {
+                            let source_ml_source1_string_split_limit13 = 4_294_967_295f64;
+                            {
+                                let source_ml_source1_string_split_separator14 =
+                                    source_ml_source1_string_unit_operand12;
+                                (|ml_text: &self::ml_string::Text,
+                                  ml_separator: Option<&self::ml_string::Text>,
+                                  ml_limit: f64| {
+                                    self::ml_utf16_text::split_utf16_text(
+                                        &(ml_text
+                                            .0
+                                            .iter()
+                                            .map(|ml_unit| f64::from(*ml_unit))
+                                            .collect::<Vec<f64>>()),
+                                        &(ml_separator
+                                            .map(|ml_value| {
+                                                ml_value
+                                                    .0
+                                                    .iter()
+                                                    .map(|ml_unit| f64::from(*ml_unit))
+                                                    .collect::<Vec<f64>>()
+                                            })
+                                            .unwrap_or_default()),
+                                        ml_limit,
+                                        ml_separator.is_none(),
+                                    )
+                                    .into_iter()
+                                    .map(|ml_units| {
+                                        self::ml_string::Text::from_units(
+                                            ml_units
+                                                .into_iter()
+                                                .map(|ml_unit| ml_unit as u16)
+                                                .collect(),
+                                        )
+                                    })
+                                    .collect::<Vec<_>>()
+                                })(
+                                    &(source_ml_source1_string_unit_operand11),
+                                    Some(&source_ml_source1_string_split_separator14),
+                                    source_ml_source1_string_split_limit13,
+                                )
+                            }
+                        }
+                    }
+                };
+                {
+                    let source_ml_temporary_index12 = self::ml::Big::from_i128(0);
+                    {
+                        let result_2 =
+                            self::source_ml_temporary_resolve_rust_project_literal_path_loop13(
+                                result,
+                                &(source_ml_temporary_values12),
+                                source_ml_temporary_index12,
+                            );
+                        self::ml_string::join(
+                            &result_2,
+                            &self::ml_string::Text::from_units(vec![47]),
+                        )
+                    }
+                }
+            }
         }
     }
 }

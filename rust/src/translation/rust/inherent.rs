@@ -136,6 +136,31 @@ impl RustParser {
                 self.module_path = path.to_vec();
                 self.attributes(None)?;
                 self.visibility()?;
+                if crate::translation::rust_function_qualifier_rules::accept_rust_associated_constant_item(
+                    self.ordinary_completion_context(),
+                    self.cursor.is("const"),
+                    self.cursor.is_at("fn", 1),
+                ) {
+                    let name = self.cursor.peek_at(1).value.clone();
+                    self.prepare_record_method_namespace(
+                        &owner, &name, span(self.cursor.peek(), self.cursor.peek_at(1)),
+                    )?;
+                    let constant = self.const_item(&owner)?;
+                    self.inherent_methods.insert(
+                        owner.iter().chain(std::iter::once(&constant.name)).cloned().collect::<Vec<_>>().join("."),
+                        InherentMethod { owner: owner.join("."), mode: 0.0, receiver: Vec::new() },
+                    );
+                    items.push(SItem::Fn(constant));
+                    continue;
+                }
+                if crate::translation::rust_function_qualifier_rules::accept_rust_const_function_prefix(
+                    self.ordinary_completion_context(),
+                    false,
+                    self.cursor.is("const"),
+                    self.cursor.is_at("fn", 1),
+                ) {
+                    self.const_function_keyword = Some(self.cursor.advance());
+                }
                 if !self.cursor.is("fn") {
                     return Err(unsupported(
                         "Rust associated item",
