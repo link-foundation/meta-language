@@ -58,7 +58,7 @@ impl<'p> RustEmitter<'p> {
                 .to_owned(),
             String::new(),
         ];
-        let preludes: Vec<String> = self
+        let mut preludes: Vec<String> = self
             .preludes
             .iter()
             .map(|prelude| match prelude {
@@ -86,6 +86,9 @@ impl<'p> RustEmitter<'p> {
                 }
             })
             .collect();
+        if self.scalar_source_interface {
+            preludes.insert(0, crate::translation::rust_scalar_source_interface_rules::read_rust_scalar_source_target_guard());
+        }
         for prelude in &preludes {
             lines.push(prelude.clone());
             lines.push(String::new());
@@ -352,6 +355,9 @@ impl<'p> RustEmitter<'p> {
                     Some(crate::translation::ir::Scope::new(&snake, &reserved));
                 let rendered = self.expr(&body);
                 self.borrowed_call_scope = None;
+                if self.scalar_source_interface {
+                    return crate::translation::scalar_source_interface::render_rust_scalar_source_header(&signature, &params, &name, &rendered?);
+                }
                 return Ok(crate::translation::source_header_emission::render_rust_source_header_emission_with_reference(
                     &signature, &params, &name, &rendered?,
                     crate::translation::borrowed_call_interface_rules::render_rust_borrowed_call_header_reference,

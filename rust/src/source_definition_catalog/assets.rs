@@ -201,6 +201,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             Some(include_str!("../data/rust-project-source-program.lino"))
         }
         "rust-record-program.lino" => Some(include_str!("../data/rust-record-program.lino")),
+        "rust-scalar-source-interface-program.lino" => Some(include_str!(
+            "../data/rust-scalar-source-interface-program.lino"
+        )),
         "rust-shared-array-handle-program.lino" => Some(include_str!(
             "../data/rust-shared-array-handle-program.lino"
         )),

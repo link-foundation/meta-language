@@ -648,7 +648,21 @@ fn emit_rust_context_owned(
         emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
     }
     if let Some(model) = options.source_header_model {
-        if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {
+        if super::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(
+            model,
+        ) {
+            let headers =
+                super::scalar_source_interface::read_rust_scalar_source_interface(program, model)?;
+            emitter.source_headers = headers.clone();
+            emitter.borrowed_call_targets = Some(headers);
+            emitter.scalar_source_interface = true;
+            emitter.state.encode(
+                &super::rust_scalar_source_interface_rules::read_rust_scalar_source_encoding(),
+                &super::rust_scalar_source_interface_rules::read_rust_scalar_source_statement(),
+            );
+        } else if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(
+            model,
+        ) {
             let interface =
                 super::borrowed_call_interface::read_rust_borrowed_call_interface(program, model)?;
             emitter.source_headers = interface.headers;
@@ -710,6 +724,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         source_headers: BTreeMap::new(),
         borrowed_call_targets: None,
         borrowed_call_scope: None,
+        scalar_source_interface: false,
         utf16_strings: false,
         standard_array: false,
         array_final_uses: BTreeSet::new(),
@@ -888,6 +903,8 @@ struct RustEmitter<'p> {
     borrowed_call_targets: Option<BTreeMap<String, super::source_signatures::SourceSignature>>,
     /// Per-function hygienic names, reserved against every argument and binder.
     borrowed_call_scope: Option<Scope<'p>>,
+    /// Explicit retained scalar header and whole call-graph interpretation.
+    scalar_source_interface: bool,
     /// Internal self-translation representation; actual Text values are guarded.
     utf16_strings: bool,
     /// The JavaScript source selected optional reads or standard array methods.

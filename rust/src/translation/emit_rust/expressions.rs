@@ -231,21 +231,24 @@ impl RustEmitter<'_> {
                 for argument in args {
                     values.push(self.expr(argument)?);
                 }
+                let argument_name = if self.scalar_source_interface {
+                    crate::translation::rust_scalar_source_interface_rules::read_rust_scalar_source_argument_name()
+                } else {
+                    crate::translation::borrowed_call_interface::borrowed_call_policy()["argumentName"].as_str().unwrap().to_owned()
+                };
                 let names = values
                     .iter()
                     .map(|_| {
                         self.borrowed_call_scope
                             .as_mut()
                             .expect("a direct call owns its hygienic function scope")
-                            .fresh(
-                                crate::translation::borrowed_call_interface::borrowed_call_policy()
-                                    ["argumentName"]
-                                    .as_str()
-                                    .unwrap(),
-                            )
+                            .fresh(&argument_name)
                     })
                     .collect::<Vec<_>>();
                 let head = format!("crate::{}", self.state.reference(func, "::"));
+                if self.scalar_source_interface {
+                    return crate::translation::scalar_source_interface::render_rust_scalar_source_call(&signature, &head, &values, &names);
+                }
                 Ok(
                     crate::translation::borrowed_call_interface::render_rust_borrowed_call(
                         &signature, &head, &values, &names,

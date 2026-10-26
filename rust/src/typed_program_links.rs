@@ -757,8 +757,10 @@ pub fn emit_typed_program_links_with_options(
             model,
         )
         .map_err(|failure| error(failure.to_string()))?;
-        crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network, root)
-            .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+        if !crate::translation::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(model) {
+            crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network, root)
+                .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+        }
     }
     if matches!(
         target.to_ascii_lowercase().as_str(),

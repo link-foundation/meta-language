@@ -1096,3 +1096,16 @@ All selections are source-generated native code and editable Links exposed by
 createJavaScriptOptionalCallProgramLinks/create_java_script_optional_call_program_links.
 Property this references and uninterrupted optional chains retain their full
 requirements. Future independent controls remain unexecuted.
+
+For retained scalar Rust source interfaces, author the normative declarations in
+`js/src/translation/rust-scalar-source-interface-rules.js` and run
+`js/scripts/draft-rust-scalar-source-interface-rules.mjs --draft` under the
+resource wrapper. This translates the complete source into the native rules and
+paired typed Links asset. Host adapters traverse checked declarations, signatures
+and calls; they reuse the existing shared header and borrow syntax. The explicit
+emission selection and its architectural boundaries are defined in
+[the vision](vision.md), not by inferred native type spelling. Fixture/inventory
+authors write complete originals and predecessor records without executing them.
+The future product experiment and native test compile all independent source type
+obligations and both generated libraries together in CI. No local Rust compilation
+or behavioral execution is part of this authoring phase.

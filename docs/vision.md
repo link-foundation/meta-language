@@ -579,6 +579,31 @@ composition, all partial-item semantic paths, native public ABI reconstruction,
 const and other missing qualifiers, full inference and generic/trait resolution
 still require their own implementations. Retained type facts are not evidence
 of those capabilities or of successful execution.
+
+The explicit `retained scalar Rust function interface 1` emission model
+reconstructs canonical native scalar endpoint types from these actual
+version-two owners. It retains Boolean, binary64, Unit, fixed integer and
+pointer-sized primitive meanings, plus immutable-reference input layers and
+their represented lifetime binders. Closed owned functions may call each other
+across modules and recursively inside scalar expressions. Every actual call
+target and ordered argument type is checked before changing any interface.
+Borrowed inputs are copied into core scalar values; ordered hygienic temporaries
+convert arguments into the target's source types before recreating references.
+Returned source values convert back into core values at the call boundary.
+Only the pointer-sized scalar representation needs an extra numeric conversion;
+the emitted library refuses other pointer widths with a compile-time guard.
+The actual checked scalar graph has at most 100000 queued expression references,
+including repeated edges; distinct nodes are checked once.
+Automatically translated shared decisions and syntax supply both runtimes;
+native adapters project owned IR instead of duplicating the algorithm.
+Existing portable, leaf-header and borrowed-call profiles retain independent
+contracts. Non-scalar headers, borrowed results, static copied call borrows,
+imports, generated functions, runtime effects, source-loop facets and additional
+qualifiers require their own compositions. This mode establishes neither stable
+foreign ABI layout nor complete public visibility, source syntax identity,
+primitive source typing or full own-codebase translation. Complete original
+sources and typed function assignments are future independent native controls;
+no execution evidence follows from the source draft or its retained history.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

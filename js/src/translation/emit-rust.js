@@ -80,6 +80,8 @@ import { acceptTupleCopyType, renderTupleProjection, renderTupleValue } from './
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { readRustSourceHeaderEmission, renderRustSourceHeaderEmission } from './rust-source-header-emission.js';
 import { RUST_BORROWED_CALL_INTERFACE_POLICY, readRustBorrowedCallInterface, renderRustBorrowedCall } from './rust-borrowed-call-interface.js';
+import {readRustScalarSourceInterface,renderRustScalarSourceHeader,renderRustScalarSourceCall} from './rust-scalar-source-interface.js';
+import {acceptRustScalarSourceInterfaceModel,readRustScalarSourceArgumentName,readRustScalarSourceTargetGuard,readRustScalarSourceEncoding,readRustScalarSourceStatement} from './rust-scalar-source-interface-rules.js';
 import { acceptRustBorrowedCallInterfaceModel, renderRustBorrowedCallHeaderReference } from './rust-borrowed-call-interface-rules.js';
 
 const KEYWORDS = new Set([
@@ -689,7 +691,9 @@ export function emitRust(program, options = {}) {
   checkRustOwnedLocalStateProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell){if(options.sourceHeaderModel!==undefined)refuseRustRuntimeShellComposition('target header changes require an independent runtime composition proof');return emitRustRuntimeShell(program,runtimeShell);}
-  const borrowedCalls = acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
+  const scalarInterface = acceptRustScalarSourceInterfaceModel(options.sourceHeaderModel);
+  const scalarHeaders = scalarInterface ? readRustScalarSourceInterface(program, options.sourceHeaderModel) : null;
+  const borrowedCalls = scalarHeaders ? {headers:scalarHeaders,targets:scalarHeaders} : acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
   const sourceHeaders = borrowedCalls?.headers ?? (options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel));
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data',
@@ -702,7 +706,8 @@ export function emitRust(program, options = {}) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true).file();
+  if(scalarInterface)state.encode(readRustScalarSourceEncoding(),readRustScalarSourceStatement());
+  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true, scalarInterface).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
@@ -759,12 +764,13 @@ export function emitRustConstants(program) {
 }
 
 class RustEmitter {
-  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false) {
+  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false, scalarSourceInterface = false) {
     this.program = program;
     this.namedConstructorFields = program.sourceLanguage === 'Rust' && [...program.declarations.values()].some(entry=>entry.k==='data'&&entry.ctors.some(ctor=>acceptRustNamedConstructorFields(program.sourceLanguage,ctor.fields.map(field=>field.name??''))));
     this.state = state;
     this.definitionOwnership = recordDefinitionOwnership ? { schemaVersion: 1, blocks: [], externalTargets: [] } : null;
     this.sourceHeaders = sourceHeaders;
+    this.scalarSourceInterface = scalarSourceInterface;
     this.borrowedCallTargets = borrowedCallTargets;
     // Historical low-level profiles keep copies; ordinary source and Links
     // translation explicitly select final binding consumption.
@@ -820,6 +826,7 @@ class RustEmitter {
       `// Translated from ${this.program.sourceLanguage} by meta-language: portable core, Rust target.`,
       '#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]',
       '',
+      ...(this.scalarSourceInterface ? [readRustScalarSourceTargetGuard(), ''] : []),
       ...(this.usesBig ? [PRELUDE, ''] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),
       ...(this.usesMath ? [MATH_PRELUDE, ''] : []),
@@ -838,6 +845,7 @@ class RustEmitter {
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
     const preludes = [
+      ...(this.scalarSourceInterface ? [readRustScalarSourceTargetGuard()] : []),
       ...(this.usesBig ? [PRELUDE] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE] : []),
       ...(this.usesMath ? [MATH_PRELUDE] : []),
@@ -1015,6 +1023,7 @@ class RustEmitter {
         this.borrowedCallScope = new Scope(snake, reserved);
         const text = this.expr(body);
         this.borrowedCallScope = null;
+        if(this.scalarSourceInterface)return renderRustScalarSourceHeader(sourceHeader,params,name,text,indent);
         return renderRustSourceHeaderEmission(sourceHeader, params, name, text, indent, renderRustBorrowedCallHeaderReference);
       }
       return renderRustSourceHeaderEmission(sourceHeader, params, name, this.expr(body), indent);
@@ -1327,7 +1336,8 @@ class RustEmitter {
         if (this.borrowedCallTargets) {
           const signature = this.borrowedCallTargets.get(e.fn);
           const values = e.args.map(argument => this.expr(argument));
-          const names = values.map(() => this.borrowedCallScope.fresh(RUST_BORROWED_CALL_INTERFACE_POLICY.argumentName));
+          const names = values.map(() => this.borrowedCallScope.fresh(this.scalarSourceInterface ? readRustScalarSourceArgumentName() : RUST_BORROWED_CALL_INTERFACE_POLICY.argumentName));
+          if(this.scalarSourceInterface)return renderRustScalarSourceCall(signature,`crate::${this.state.ref(e.fn, '::')}`,values,names,indent);
           return renderRustBorrowedCall(signature, `crate::${this.state.ref(e.fn, '::')}`, values, names, indent);
         }
         if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));

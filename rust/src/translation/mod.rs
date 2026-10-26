@@ -302,3 +302,6 @@ pub(crate) mod lexical_declaration_rules;
 pub(crate) mod object_entry_pair_rules;
 
 pub(crate) mod string_array_sort_rules;
+
+pub(crate) mod rust_scalar_source_interface_rules;
+pub(crate) mod scalar_source_interface;
