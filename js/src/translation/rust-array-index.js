@@ -3,6 +3,7 @@ import {unsupported} from './diagnostics.js';
 import {rustFixedType} from './types.js';
 import {readRustScalarArrayIndexReceiverError,readRustScalarArrayIndexOperandError} from './rust-array-index-rules.js';
 import {readRustUsizeIndexExpression} from './rust-usize-index-expressions.js';
+import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
 export function readRustScalarArrayIndex(parser,object,path){
  const open=parser.cursor.next(),index=parser.expr(path),close=parser.cursor.expect(']','array index');
  const span={start:object.span?.start??open.start,end:close.end},receiver=parser.origins.origin(object,path);
@@ -16,5 +17,6 @@ export function readRustScalarArrayIndex(parser,object,path){
  const position={k:'cast',arg:{k:'cast',arg:index,to:rustFixedType('usize'),from:rustFixedType('usize'),flavor:'exact',span:index.span},to:{kind:'nat'},flavor:'exact',span:index.span};
  const result={k:'index',object,index:position,span};
  const origin=element?parser.origins.typeOrigin(element,path):{type:null,path:[...path],wrappers:[],fields:null,textSourceModel:null,copyEvidence:true,proven:true,diverging:false,uncertain:false};
- return parser.origins.mark(result,origin);
+ const owner=readRustPointerIntegerContractOwner(receiver.sourceOwner,receiver.integerSourceOwnerConstraint??'');
+ return parser.origins.mark(result,owner?{...origin,sourceOwner:{kind:'primitive',path:[owner],arguments:[]}}:origin);
 }

@@ -25,6 +25,29 @@ impl RustParser {
         let range = span(token, self.cursor.peek());
         match token.value.as_str() {
             "vec" => {
+                let argument_origins = args
+                    .iter()
+                    .map(|argument| self.origins.origin(argument, path))
+                    .collect::<Vec<_>>();
+                let owners = argument_origins
+                    .iter()
+                    .map(SourceOrigin::pointer_integer_owner)
+                    .collect::<Vec<_>>();
+                let owner_error = if argument_origins
+                    .iter()
+                    .any(|origin| origin.integer_source_owner_conflict)
+                {
+                    crate::translation::rust_pointer_integer_owner_rules::read_rust_pointer_integer_owner_error("usize","u64")
+                } else {
+                    crate::translation::rust_pointer_integer_owner_rules::read_rust_pointer_integer_owner_join_error(&owners)
+                };
+                if !owner_error.is_empty() {
+                    return Err(unsupported(
+                        "Rust integer source owner",
+                        &owner_error,
+                        range,
+                    ));
+                }
                 for argument in &args {
                     let origin = self.origins.origin(argument, path);
                     if !origin.wrappers.is_empty()
@@ -54,6 +77,19 @@ impl RustParser {
                     )
                 });
                 origin.array_source_model = Some("owned vector");
+                let owner=crate::translation::rust_pointer_integer_owner_rules::select_rust_pointer_integer_result_owner(&owners);
+                if !owner.is_empty() {
+                    origin.source_owner =
+                        Some(crate::translation::source_signatures::SourceOwner {
+                            kind: "library".to_owned(),
+                            path: vec!["std".to_owned(), "vec".to_owned(), "Vec".to_owned()],
+                            arguments: vec![crate::translation::source_signatures::SourceOwner {
+                                kind: "primitive".to_owned(),
+                                path: vec![owner],
+                                arguments: Vec::new(),
+                            }],
+                        });
+                }
                 origin.array_element_copy_evidence = !args.is_empty()
                     && args
                         .iter()

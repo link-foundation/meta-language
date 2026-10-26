@@ -547,6 +547,22 @@ positive assertions and joins the complete original Rust product matrix.
 General index traits, fixed arrays, subslices, mutable element places, non-Copy
 moves, general local inference, full primitive source-type checking, generic
 aliases and exact platform panic payloads remain required interpretations.
+Within the explicit 64-bit profile, actual `usize`/`u64` and `isize`/`i64`
+source owners stay distinct even when their lowered bit widths coincide.
+Shared automatically translated rules check source arguments, typed bindings,
+results, arithmetic, comparisons, branch joins and known vector elements.
+Actual signed negation, literal suffixes, primitive constants and cast targets
+retain their owners. Known arithmetic/branch constraints can propagate to local
+indices and element reads. Projection crosses only the actual standard vector,
+Box and slice owners, with a bounded source-owner traversal. Fresh result
+certification checks element constraints before replacing tail provenance.
+Explicit casts retain their own exact-conversion profile; general Rust numeric
+cast saturation/wrapping remains separate. Future independent Rust compilation
+requires a primary type-error span in every unchanged invalid source, in one
+bounded batch. Original source products, codecs and every shared decision remain
+deferred. These constraints do not implement every primitive distinction,
+unconstrained numeric inference, arbitrary coercion, trait resolution or complete
+Rust source type checking.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

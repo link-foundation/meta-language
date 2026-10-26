@@ -94,6 +94,7 @@ impl RustParser {
             self.cursor.advance();
             let element_token = self.peek();
             let element = self.parse_type()?;
+            let element_owner = self.origins.current_type.source_owner.clone();
             self.array_element(token, &element_token)?;
             self.cursor.expect(">", Some("Vec constructor"))?;
             self.cursor.expect("::", Some("Vec constructor"))?;
@@ -107,17 +108,21 @@ impl RustParser {
                 },
                 span(token, self.cursor.peek()),
             );
-            self.origins.mark(
-                &result,
-                SourceOrigin::with_type(
-                    Type::Array {
-                        element: Box::new(element),
-                        reference: false,
-                    },
-                    path,
-                    Vec::new(),
-                ),
+            let mut origin = SourceOrigin::with_type(
+                Type::Array {
+                    element: Box::new(element),
+                    reference: false,
+                },
+                path,
+                Vec::new(),
             );
+            origin.source_owner =
+                element_owner.map(|owner| crate::translation::source_signatures::SourceOwner {
+                    kind: "library".to_owned(),
+                    path: vec!["std".to_owned(), "vec".to_owned(), "Vec".to_owned()],
+                    arguments: vec![owner],
+                });
+            self.origins.mark(&result, origin);
             return Ok(result);
         }
         if let Some(shared) = self.shared_array_constructor(&segments, token, path)? {

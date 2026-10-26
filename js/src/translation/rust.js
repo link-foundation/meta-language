@@ -60,6 +60,8 @@ import { acceptRustProductOrigin, acceptRustTupleIndexSpelling } from './rust-pr
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayElement, acceptRustSourceArrayResultModel, acceptRustSourceArrayResult } from './rust-array-rules.js';
 import {acceptRustOrdinaryFreshVectorResult} from './rust-fresh-vector-result-rules.js';
 import {readRustScalarArrayIndex} from './rust-array-index.js';
+import {readRustPointerIntegerOwnerError,readRustPointerIntegerOwnerJoinError,selectRustPointerIntegerResultOwner} from './rust-pointer-integer-owner-rules.js';
+import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
 import { acceptRustUnwrittenScalarParameter } from './rust-scalar-parameter-rules.js';
 import { readRustScalarParameterBody } from './rust-scalar-parameters.js';
 import { acceptRustScalarLoopModel, readRustScalarLoop } from './rust-scalar-loops.js';
@@ -717,6 +719,7 @@ class RustParser {
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))
           && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,this.origins.freshVectorArgument(body,path,false))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
+        this.origins.pointerIntegerArgument(this.origins.origin(body,path),sourceResult,body.span);
         sourceResult.freshArrayValue = true;
         this.origins.mark(body, sourceResult);
       }
@@ -1096,6 +1099,7 @@ class RustParser {
       const token = this.cursor.next();
       const right = this.and(path, {});
       left = { k: 'binary', op: 'or', left, right, span: joined(left, right, token) };
+      this.origins.pointerIntegerExpression(left,path);
     }
     return left;
   }
@@ -1106,6 +1110,7 @@ class RustParser {
       const token = this.cursor.next();
       const right = this.comparison(path, {});
       left = { k: 'binary', op: 'and', left, right, span: joined(left, right, token) };
+      this.origins.pointerIntegerExpression(left,path);
     }
     return left;
   }
@@ -1126,7 +1131,7 @@ class RustParser {
       refuseRustCallableObservation(this,left,path,joined(left,right,token));refuseRustCallableObservation(this,right,path,joined(left,right,token));
       const after = c.peek();
       if (after.kind === 'punct' && COMPARISON[after.value]) throw this.fail('comparison operators cannot be chained', after);
-      return { k: 'binary', op: COMPARISON[token.value], left, right, span: joined(left, right, token) };
+      return this.origins.pointerIntegerExpression({ k: 'binary', op: COMPARISON[token.value], left, right, span: joined(left, right, token) },path);
     }
     return left;
   }
@@ -1165,6 +1170,7 @@ class RustParser {
       this.cursor.next();
       const right = this.multiplicative(path, {});
       left = this.scalarLoopArithmetic({ k: 'binary', op: ADDITIVE[token.value], left, right, span: joined(left, right, token) }, path);
+      this.origins.pointerIntegerExpression(left,path);
     }
   }
 
@@ -1177,6 +1183,7 @@ class RustParser {
       this.cursor.next();
       const right = this.cast(path, {});
       left = this.scalarLoopArithmetic({ k: 'binary', op: MULTIPLICATIVE[token.value], left, right, span: joined(left, right, token) }, path);
+      this.origins.pointerIntegerExpression(left,path);
     }
   }
 
@@ -1215,7 +1222,7 @@ class RustParser {
       const arg = this.unary(path, {});
       const result = { k: 'unary', op: 'neg', arg, span: span(token, c.peek()) };
       const origin = this.origins.origin(arg, path);
-      return this.acceptFloatReceiverOrigin(origin, 0) ? this.origins.mark(result, origin) : result;
+      return this.acceptFloatReceiverOrigin(origin, 0)||origin.proven&&origin.type?.kind==='fixed'&&origin.type.signed&&origin.wrappers.length===0 ? this.origins.mark(result, origin) : result;
     }
     if (c.eat('!')) {
       const arg = this.unary(path, {});
@@ -1418,7 +1425,7 @@ class RustParser {
         node.type = type;
       } else if (token.floating) node.type = FLOAT;
       if (token.suffix === 'f64') this.origins.mark(node, { ...this.origins.origin(node, path), floatSourceModel: 'binary64 scalar' });
-      if(token.suffix==='usize')this.origins.mark(node,{...this.origins.origin(node,path),sourceOwner:{kind:'primitive',path:['usize'],arguments:[]}});
+      if(token.suffix&&node.type?.kind==='fixed')this.origins.mark(node,{...this.origins.origin(node,path),sourceOwner:{kind:'primitive',path:[token.suffix],arguments:[]}});
       return node;
     }
     if (token.kind === 'string') {
@@ -1496,10 +1503,11 @@ class RustParser {
         c.next(); c.next();
         const elementToken = c.peek();
         const element = this.type();
+        const elementOwner=this.origins.type.sourceOwner;
         this.arrayElement(token, elementToken);
         c.expect('>', 'Vec constructor'); c.expect('::', 'Vec constructor'); c.expect('new', 'Vec constructor');
         c.expect('(', 'Vec constructor'); c.expect(')', 'Vec constructor');
-        return this.origins.mark({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element), path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
+        return this.origins.mark({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element),sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
       }
       if (c.is('::') && c.is('<', 1)) throw unsupported('turbofish', 'generic functions are outside the portable core', span(token, c.peek()));
       if (c.is('{') && (/^[A-Z]/u.test(segments.at(-1)) || this.hasRecordConstructions) && !options.noStruct) {
@@ -1564,12 +1572,17 @@ class RustParser {
     const range = span(token, this.cursor.peek());
     switch (token.value) {
       case 'vec': {
+        const argumentOrigins=args.map(value=>this.origins.origin(value,path));
+        const owners=argumentOrigins.map(origin=>readRustPointerIntegerContractOwner(origin.sourceOwner,origin.integerSourceOwnerConstraint??''));
+        const ownerError=argumentOrigins.some(origin=>origin.integerSourceOwnerConflict)?readRustPointerIntegerOwnerError('usize','u64'):readRustPointerIntegerOwnerJoinError(owners);
+        if(ownerError)throw unsupported('Rust integer source owner',ownerError,range);
         for (const arg of args) {
           const origin = this.origins.origin(arg, path);
           if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false))) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', range);
         }
         const element = args.length ? this.origins.origin(args[0], path).type : null;
-        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
+        const owner=selectRustPointerIntegerResultOwner(owners);
+        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, sourceOwner:owner?{kind:'library',path:['std','vec','Vec'],arguments:[{kind:'primitive',path:[owner],arguments:[]}]}:null,path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
       }
       case 'format': {
         const formatted=this.format(args,token,path);

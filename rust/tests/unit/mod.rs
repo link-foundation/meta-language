@@ -466,3 +466,5 @@ mod translation_rust_fresh_vector_results;
 mod translation_rust_array_indices;
 
 mod translation_rust_usize_index_expressions;
+
+mod translation_rust_pointer_integer_owners;

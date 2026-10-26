@@ -22,6 +22,10 @@ use crate::translation::rust_fresh_vector_argument_rules::{
     accept_rust_fresh_owned_vector_argument, read_rust_fresh_vector_argument_form,
 };
 use crate::translation::rust_fresh_vector_result_rules::accept_rust_known_fresh_vector_call;
+use crate::translation::rust_pointer_integer_owner_rules::{
+    accept_rust_pointer_integer_owner_child, read_rust_pointer_integer_owner_error,
+    read_rust_pointer_integer_owner_join_error, select_rust_pointer_integer_result_owner,
+};
 
 mod patterns;
 mod type_owners;
@@ -52,6 +56,8 @@ pub(super) struct SourceOrigin {
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
     /// Checked transparent alias owner, before retaining the source spelling.
     pub(super) expanded_source_owner: Option<super::super::source_signatures::SourceOwner>,
+    pub(super) integer_source_owner_conflict: bool,
+    pub(super) integer_source_owner_constraint: Option<String>,
     pub(super) primitive_owner_position: Option<serde_json::Value>,
     pub(super) namespace_spelling: Vec<String>,
 }
@@ -74,6 +80,8 @@ impl SourceOrigin {
             source_lifetimes: Vec::new(),
             source_owner: None,
             expanded_source_owner: None,
+            integer_source_owner_conflict: false,
+            integer_source_owner_constraint: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
@@ -115,6 +123,8 @@ impl SourceOrigin {
             source_lifetimes: Vec::new(),
             source_owner: None,
             expanded_source_owner: None,
+            integer_source_owner_conflict: false,
+            integer_source_owner_constraint: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
@@ -127,6 +137,37 @@ impl SourceOrigin {
         Self {
             proven: true,
             ..Self::unknown()
+        }
+    }
+    pub(super) fn pointer_integer_owner(&self) -> String {
+        let mut owner = self.source_owner.as_ref();
+        for _ in 0..128 {
+            let Some(current) = owner else {
+                return self
+                    .integer_source_owner_constraint
+                    .clone()
+                    .unwrap_or_default();
+            };
+            if current.kind == "primitive" {
+                return current.path.join("::");
+            }
+            if !accept_rust_pointer_integer_owner_child(
+                &current.kind,
+                &current.path.join("::"),
+                serde_json::Number::from(current.arguments.len())
+                    .as_f64()
+                    .expect("actual source owner argument count"),
+            ) {
+                return String::new();
+            }
+            owner = current.arguments.first();
+        }
+        String::new()
+    }
+    fn integer_conflict() -> Self {
+        Self {
+            integer_source_owner_conflict: true,
+            ..Self::uncertain()
         }
     }
 
@@ -550,7 +591,13 @@ impl SourceOrigins {
             && super::rust_fixed_type(&names[0]).is_some()
             && ["MIN", "MAX"].contains(&names[1].as_str())
         {
-            return SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
+            let mut origin = SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
+            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec![names[0].clone()],
+                arguments: Vec::new(),
+            });
+            return origin;
         }
         if let SNode::If {
             then, otherwise, ..
@@ -593,6 +640,12 @@ impl SourceOrigins {
                     .iter()
                     .map(|operand| self.origin(operand, path))
                     .collect();
+                if operands
+                    .iter()
+                    .any(|operand| operand.integer_source_owner_conflict)
+                {
+                    return SourceOrigin::integer_conflict();
+                }
                 if operands.iter().any(|operand| !operand.proven) {
                     let uncertain = operands.iter().any(|operand| {
                         operand.uncertain
@@ -631,11 +684,35 @@ impl SourceOrigins {
                     }
                     return SourceOrigin::text_value();
                 }
+                let owners = operands
+                    .iter()
+                    .map(SourceOrigin::pointer_integer_owner)
+                    .collect::<Vec<_>>();
+                if (form == "primitive-operation" || form == "comparison")
+                    && !read_rust_pointer_integer_owner_join_error(&owners).is_empty()
+                {
+                    return SourceOrigin::integer_conflict();
+                }
+                let owner = if form == "primitive-operation" {
+                    select_rust_pointer_integer_result_owner(&owners)
+                } else {
+                    String::new()
+                };
                 let ty = match &node.node {
                     SNode::Cast { to, .. } => Some(to.clone()),
                     _ if form == "comparison" || form == "boolean-operation" => Some(super::BOOL),
                     _ if operation == "concat" => Some(super::STRING),
-                    _ => None,
+                    _ => {
+                        if owner.is_empty() {
+                            None
+                        } else {
+                            operands
+                                .iter()
+                                .zip(&owners)
+                                .find(|(_, candidate)| *candidate == &owner)
+                                .and_then(|(origin, _)| origin.ty.clone())
+                        }
+                    }
                 };
                 let copy_evidence = form != "primitive-operation"
                     || (operation != "concat"
@@ -644,6 +721,13 @@ impl SourceOrigins {
                             .all(|operand| operand.copy_evidence.is_some()));
                 SourceOrigin {
                     ty,
+                    source_owner: (!owner.is_empty()).then(|| {
+                        crate::translation::source_signatures::SourceOwner {
+                            kind: "primitive".to_owned(),
+                            path: vec![owner],
+                            arguments: Vec::new(),
+                        }
+                    }),
                     copy_evidence: copy_evidence.then_some(()),
                     text_source_model: (operation == "concat").then_some("owned string"),
                     ..SourceOrigin::value()
@@ -661,11 +745,25 @@ impl SourceOrigins {
                 ..SourceOrigin::value()
             };
         };
+        let owners = returning
+            .iter()
+            .map(|origin| origin.pointer_integer_owner())
+            .collect::<Vec<_>>();
+        if returning
+            .iter()
+            .any(|origin| origin.integer_source_owner_conflict)
+            || !read_rust_pointer_integer_owner_join_error(&owners).is_empty()
+        {
+            return SourceOrigin::integer_conflict();
+        }
         if returning
             .iter()
             .all(|origin| self.same_origin(origin, first))
         {
             return SourceOrigin {
+                integer_source_owner_constraint: Some(select_rust_pointer_integer_result_owner(
+                    &owners,
+                )),
                 array_element_copy_evidence: returning
                     .iter()
                     .all(|origin| origin.array_element_copy_evidence),
@@ -686,6 +784,9 @@ impl SourceOrigins {
         {
             return SourceOrigin {
                 array_source_model: Some("unproved array"),
+                integer_source_owner_constraint: Some(select_rust_pointer_integer_result_owner(
+                    &owners,
+                )),
                 ..SourceOrigin::uncertain()
             };
         }
@@ -722,6 +823,7 @@ impl SourceOrigins {
                 .all(|origin| origin.text_source_model == first.text_source_model)
                 .then_some(first.text_source_model)
                 .flatten();
+            let integer_owner = select_rust_pointer_integer_result_owner(&owners);
             return SourceOrigin {
                 wrappers: first.wrappers.clone(),
                 copy_evidence: returning
@@ -729,7 +831,11 @@ impl SourceOrigins {
                     .all(|origin| origin.copy_evidence.is_some())
                     .then_some(()),
                 fields,
-                ty: text_source_model.map(|_| super::STRING),
+                ty: text_source_model
+                    .map(|_| super::STRING)
+                    .or_else(|| super::rust_fixed_type(&integer_owner)),
+                integer_source_owner_constraint: (!integer_owner.is_empty())
+                    .then_some(integer_owner),
                 text_source_model,
                 ..SourceOrigin::value()
             };
@@ -917,6 +1023,7 @@ impl SourceOrigins {
         declared: Option<&SourceOrigin>,
     ) -> Result<()> {
         let actual = self.origin(node, path);
+        self.pointer_integer_argument(&actual, &SourceOrigin::value(), node.span)?;
         if self.shared_array_handles && !self.collecting && matches!(actual.ty, Some(Type::Array {..}))
             && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(
                 actual.array_source_model.unwrap_or(""), actual.array_source_model.unwrap_or(""),
@@ -952,6 +1059,39 @@ impl SourceOrigins {
         Ok(())
     }
 
+    pub(super) fn pointer_integer_argument(
+        &self,
+        actual: &SourceOrigin,
+        expected: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        if self.collecting || actual.diverging {
+            return Ok(());
+        }
+        let error = if actual.integer_source_owner_conflict {
+            read_rust_pointer_integer_owner_error("usize", "u64")
+        } else {
+            read_rust_pointer_integer_owner_error(
+                &actual.pointer_integer_owner(),
+                &expected.pointer_integer_owner(),
+            )
+        };
+        if error.is_empty() {
+            Ok(())
+        } else {
+            Err(unsupported("Rust integer source owner", &error, span))
+        }
+    }
+    pub(super) fn pointer_integer_expression(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+    ) -> Result<()> {
+        let origin = self.origin(node, path);
+        self.pointer_integer_argument(&origin, &SourceOrigin::value(), node.span)?;
+        self.mark(node, origin);
+        Ok(())
+    }
     pub(super) fn argument(
         &self,
         actual: &SourceOrigin,
@@ -964,6 +1104,7 @@ impl SourceOrigins {
         if actual.diverging {
             return Ok(());
         }
+        self.pointer_integer_argument(actual, expected, span)?;
         let pointer_error = crate::translation::rust_function_pointer_rules::read_rust_function_pointer_coercion_error(
             matches!(expected.ty, Some(Type::Function { .. })) && expected.copy_evidence.is_some(),
             actual.ty.as_ref().map_or("", Type::kind), actual.copy_closure_identity.is_some(),

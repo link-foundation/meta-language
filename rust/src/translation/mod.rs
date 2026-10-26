@@ -153,6 +153,7 @@ pub(crate) mod runtime_shell_rules;
 pub mod rust;
 pub(crate) mod rust_array_length_rules;
 pub(crate) mod rust_array_index_rules;
+pub(crate) mod rust_pointer_integer_owner_rules;
 pub(crate) mod rust_usize_index_expression_rules;
 pub(crate) mod rust_byte_string_rules;
 pub(crate) mod rust_character_rules;

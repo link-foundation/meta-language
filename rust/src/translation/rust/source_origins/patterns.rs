@@ -28,6 +28,7 @@ impl SourceOrigins {
         result: &mut HashMap<String, SourceOrigin>,
         source_span: Option<Span>,
     ) -> Result<()> {
+        self.pointer_integer_argument(origin, &SourceOrigin::value(), source_span)?;
         let mut origin = origin.clone();
         let references = if matches!(pattern.node, SPatternNode::Wild) && pattern.span.is_none() {
             self.wildcard_references.pop_front().unwrap_or_default()

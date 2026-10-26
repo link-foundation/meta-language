@@ -75,13 +75,21 @@ impl RustParser {
             },
             range,
         );
-        let origin = element.map_or_else(
+        let mut origin = element.map_or_else(
             || SourceOrigin {
                 copy_evidence: Some(()),
                 ..SourceOrigin::value()
             },
             |element| SourceOrigin::with_type(element.clone(), path, Vec::new()),
         );
+        let owner = receiver.pointer_integer_owner();
+        if !owner.is_empty() {
+            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec![owner],
+                arguments: Vec::new(),
+            });
+        }
         self.origins.mark(&result, origin);
         Ok(result)
     }

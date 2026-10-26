@@ -29,6 +29,7 @@ impl RustParser {
             let token = self.cursor.advance();
             let right = self.and(path, Options::default())?;
             left = binary(BinaryOp::Or, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
         }
         Ok(left)
     }
@@ -39,6 +40,7 @@ impl RustParser {
             let token = self.cursor.advance();
             let right = self.comparison(path, Options::default())?;
             left = binary(BinaryOp::And, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
         }
         Ok(left)
     }
@@ -83,7 +85,9 @@ impl RustParser {
             if after.kind == TokenKind::Punct && comparison_op(&after.value).is_some() {
                 return Err(Self::fail("comparison operators cannot be chained", after));
             }
-            return Ok(binary(op, left, right, &token));
+            let result = binary(op, left, right, &token);
+            self.origins.pointer_integer_expression(&result, path)?;
+            return Ok(result);
         }
         Ok(left)
     }
@@ -164,6 +168,7 @@ impl RustParser {
             self.cursor.advance();
             let right = self.multiplicative(path, Options::default())?;
             left = binary(op, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
             self.scalar_loop_arithmetic(&left, path);
         }
     }
@@ -181,6 +186,7 @@ impl RustParser {
             self.cursor.advance();
             let right = self.cast(path, Options::default())?;
             left = binary(op, left, right, &token);
+            self.origins.pointer_integer_expression(&left, path)?;
             self.scalar_loop_arithmetic(&left, path);
         }
     }
@@ -246,7 +252,12 @@ impl RustParser {
                     },
                     span(&token, self.cursor.peek()),
                 );
-                if op == UnaryOp::Neg && self.accept_float_receiver_origin(&origin, 0) {
+                if op == UnaryOp::Neg
+                    && (self.accept_float_receiver_origin(&origin, 0)
+                        || origin.proven
+                            && matches!(origin.ty, Some(Type::Fixed { signed: true, .. }))
+                            && origin.wrappers.is_empty())
+                {
                     self.origins.mark(&result, origin);
                 }
                 return Ok(result);
@@ -804,11 +815,11 @@ impl RustParser {
                 self.origins
                     .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
             }
-            if token.suffix == "usize" {
+            if !token.suffix.is_empty() && rust_fixed_type(&token.suffix).is_some() {
                 let mut origin = self.origins.origin(&result, path);
                 origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
                     kind: "primitive".to_owned(),
-                    path: vec!["usize".to_owned()],
+                    path: vec![token.suffix.clone()],
                     arguments: Vec::new(),
                 });
                 self.origins.mark(&result, origin);

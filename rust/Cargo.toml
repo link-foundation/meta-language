@@ -182,6 +182,7 @@ include = [
     "src/data/rust-function-qualifier-program.lino",
     "src/data/rust-inherent-program.lino",
     "src/data/rust-module-value-program.lino",
+    "src/data/rust-pointer-integer-owner-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",
     "src/data/rust-project-source-program.lino",
     "src/data/rust-record-program.lino",

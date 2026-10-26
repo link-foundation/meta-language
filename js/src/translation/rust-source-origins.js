@@ -14,6 +14,8 @@ import {readRustFunctionPointerCoercionError} from './rust-function-pointer-rule
 import {readRustFreshVectorArgumentForm,acceptRustFreshOwnedVectorArgument} from './rust-fresh-vector-argument-rules.js';
 import {acceptRustKnownFreshVectorCall} from './rust-fresh-vector-result-rules.js';
 import {acceptRustScalarArrayIndexElement} from './rust-array-index-rules.js';
+import {readRustPointerIntegerOwnerError,readRustPointerIntegerOwnerJoinError,selectRustPointerIntegerResultOwner} from './rust-pointer-integer-owner-rules.js';
+import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -162,7 +164,7 @@ export class RustSourceOrigins {
       if (entry?.k === 'fn') return { ...clone(entry.result), freshArrayValue: Boolean(entry.result.freshArrayValue && this.freshCalls.has(`${node.span?.start}:${node.span?.end}`)) };
       if (entry?.k === 'ctor') return clone(entry.result);
       if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)
-        && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return value(true, rustFixedType(node.path[0]));
+        && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return {...value(true, rustFixedType(node.path[0])),sourceOwner:{kind:'primitive',path:[node.path[0]],arguments:[]}};
     }
     if (node.k === 'if') {
       return this.join([this.origin(node.then, path), this.origin(node.else, path)]);
@@ -177,6 +179,7 @@ export class RustSourceOrigins {
     }
     if (['numeric-cast', 'primitive-operation', 'comparison', 'boolean-operation'].includes(form)) {
       const operands = (node.arg ? [node.arg] : [node.left, node.right]).map(operand => this.origin(operand, path));
+      if(operands.some(operand=>operand.integerSourceOwnerConflict))return {...unknown(true),integerSourceOwnerConflict:true};
       if (!this.collecting) {
         if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain || operand.wrappers.length));
         if (form === 'comparison' && JSON.stringify(operands[0].wrappers) !== JSON.stringify(operands[1].wrappers)) {
@@ -188,7 +191,11 @@ export class RustSourceOrigins {
         if (['numeric-cast', 'boolean-operation'].includes(form) && operands.some(operand => operand.wrappers.length > 0)) return unknown(true);
       }
       const copyEvidence = form !== 'primitive-operation' || (node.op !== 'concat' && operands.every(operand => operand.copyEvidence));
-      return value(copyEvidence, node.to ?? (['comparison', 'boolean-operation'].includes(form) ? { kind: 'bool' } : node.op === 'concat' ? { kind: 'string' } : null));
+      const owners=operands.map(operand=>readRustPointerIntegerContractOwner(operand.sourceOwner,operand.integerSourceOwnerConstraint??''));
+      if(['primitive-operation','comparison'].includes(form)&&readRustPointerIntegerOwnerJoinError(owners))return {...unknown(true),integerSourceOwnerConflict:true};
+      const owner=form==='primitive-operation'?selectRustPointerIntegerResultOwner(owners):'';
+      const result=value(copyEvidence,node.to??(['comparison','boolean-operation'].includes(form)?{kind:'bool'}:node.op==='concat'?{kind:'string'}:owner?operands.find((_,index)=>owners[index]===owner)?.type??null:null));
+      return owner?{...result,sourceOwner:{kind:'primitive',path:[owner],arguments:[]}}:result;
     }
     return unknown();
   }
@@ -196,15 +203,18 @@ export class RustSourceOrigins {
   join(origins) {
     const returning = origins.filter(origin => !origin.diverging);
     if (!returning.length) return { ...value(), diverging: true };
+    const owners=returning.map(origin=>readRustPointerIntegerContractOwner(origin.sourceOwner,origin.integerSourceOwnerConstraint??''));
+    if(returning.some(origin=>origin.integerSourceOwnerConflict)||readRustPointerIntegerOwnerJoinError(owners))return {...unknown(true),integerSourceOwnerConflict:true};
     const first = returning[0];
     for(const origin of returning){const error=readRustCopyClosureJoinError(Boolean(first.copyClosureSpan),Boolean(origin.copyClosureSpan),first.copyClosureSpan?.start===origin.copyClosureSpan?.start&&first.copyClosureSpan?.end===origin.copyClosureSpan?.end);if(error)throw unsupported('Rust closure source join',error);}
-    if (returning.every(origin => this.same(origin, first))) return { ...clone(first), freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
-    if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array' };
+    if (returning.every(origin => this.same(origin, first))) return { ...clone(first), integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners),freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
+    if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array',integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners) };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
         ? first.fields.map((_, index) => this.join(returning.map(origin => origin.fields[index]))) : null;
       const textSourceModel = returning.every(origin => origin.textSourceModel === first.textSourceModel) ? first.textSourceModel : null;
-      return { ...value(returning.every(origin => origin.copyEvidence), textSourceModel ? { kind: 'string' } : null), wrappers: [...first.wrappers], fields, textSourceModel };
+      const integerSourceOwnerConstraint=selectRustPointerIntegerResultOwner(owners);
+      return { ...value(returning.every(origin => origin.copyEvidence), textSourceModel ? { kind: 'string' } : integerSourceOwnerConstraint?rustFixedType(integerSourceOwnerConstraint):null), wrappers: [...first.wrappers], fields, textSourceModel,integerSourceOwnerConstraint };
     }
     return unknown(returning.some(origin => origin.uncertain || origin.wrappers.length > 0));
   }
@@ -261,6 +271,7 @@ export class RustSourceOrigins {
 
   bind(name, node, path, declared = null) {
     const actual = this.origin(node, path);
+    this.pointerIntegerArgument(actual,value(),node.span);
     if(this.sharedArrayHandleSourceModel&&!this.collecting&&actual.type?.kind==='array'&&!acceptRustSharedArrayHandleTransfer(actual.arraySourceModel,actual.arraySourceModel,actual.wrappers.length,actual.wrappers.length))throw unsupported('Rust shared array handle source','a binding requires an actual owned shared handle, not its vector payload',node.span);
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
     if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
@@ -268,9 +279,20 @@ export class RustSourceOrigins {
     this.scope.set(name, { ...clone(declared ?? actual), ...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue: false });
   }
 
+  pointerIntegerArgument(actualOrigin,expectedOrigin,span){
+    if(this.collecting||actualOrigin.diverging)return;
+    const actualOwner=readRustPointerIntegerContractOwner(actualOrigin.sourceOwner,actualOrigin.integerSourceOwnerConstraint??'');
+    const expectedOwner=readRustPointerIntegerContractOwner(expectedOrigin.sourceOwner,expectedOrigin.integerSourceOwnerConstraint??'');
+    const ownerError=readRustPointerIntegerOwnerError(actualOrigin.integerSourceOwnerConflict?'usize':actualOwner,actualOrigin.integerSourceOwnerConflict?'u64':expectedOwner);if(ownerError)throw unsupported('Rust integer source owner',ownerError,span);
+  }
+  pointerIntegerExpression(node,path){
+    const origin=this.origin(node,path);this.pointerIntegerArgument(origin,value(),node.span);
+    return this.mark(node,origin);
+  }
   argument(actualOrigin, expectedOrigin, span) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    this.pointerIntegerArgument(actualOrigin,expectedOrigin,span);
     const pointerError=readRustFunctionPointerCoercionError(expectedOrigin.type?.kind==='function'&&expectedOrigin.copyEvidence===true,actualOrigin.type?.kind??'',Boolean(actualOrigin.copyClosureSpan),actualOrigin.copyClosureCaptureCount??-1,actualOrigin.proven);if(pointerError)throw unsupported('Rust function pointer coercion',pointerError,span);
     if(this.sharedArrayHandleSourceModel&&(actualOrigin.type?.kind==='array'||expectedOrigin.type?.kind==='array')&&!acceptRustSharedArrayHandleTransfer(actualOrigin.arraySourceModel,expectedOrigin.arraySourceModel,actualOrigin.wrappers.length,expectedOrigin.wrappers.length))throw unsupported('Rust shared array handle source','call and return ownership must preserve actual shared handles without borrowed payload coercion',span);
     if (!actualOrigin.proven && !actualOrigin.uncertain && !actualOrigin.wrappers.length && !expectedOrigin.wrappers.length) return;
@@ -331,6 +353,7 @@ export class RustSourceOrigins {
   }
 
   pattern(pattern, origin, path, result = new Map(), sourceSpan = pattern.span) {
+    this.pointerIntegerArgument(origin,value(),sourceSpan);
     origin = clone(origin);
     for (let count = this.patternReferences.get(pattern) ?? 0; count > 0; count -= 1) {
       if (origin.wrappers[0] !== 'reference') {

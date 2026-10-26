@@ -31,11 +31,7 @@ impl RustParser {
             let position = serde_json::Number::from(kinds.len())
                 .as_f64()
                 .expect("bounded source position");
-            let owner = origin
-                .source_owner
-                .as_ref()
-                .filter(|owner| owner.kind == "primitive")
-                .map_or_else(String::new, |owner| owner.path.join("::"));
+            let owner = origin.pointer_integer_owner();
             let (bits, signed) = match origin.ty.as_ref() {
                 Some(Type::Fixed { bits, signed }) => (f64::from(*bits), *signed),
                 _ => (0.0, false),

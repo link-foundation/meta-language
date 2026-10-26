@@ -347,6 +347,11 @@ impl RustParser {
                 ));
             }
             source_result.fresh_array_value = body.span;
+            self.origins.pointer_integer_argument(
+                &self.origins.origin(&body, path),
+                &source_result,
+                body.span,
+            )?;
             self.origins.certify_array_result(&name, path, body.span);
             self.origins.mark(&body, source_result.clone());
         }
