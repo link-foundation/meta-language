@@ -512,8 +512,20 @@ with constructor tails, scoped bodies, complete conditional/match alternatives
 and diverging branches. Known actual calls to these checked result declarations
 can supply fresh arguments; local names clear that evidence. Result bodies do
 not infer interprocedural freshness from declarations alone. Named moves,
-returned call chains, partial-return carriers and borrowed outlives remain
-separate proofs. The unchanged earlier vector-return input, two exact length
+partial-return carriers and borrowed outlives remain separate proofs.
+Closed ordinary scalar vector declarations now carry a source result contract.
+Every complete source body must discharge that contract with constructors,
+owned declaration calls or existing diverging tails before a valid program is
+returned. In a finite returning evaluation, forwarded results eventually reach
+a constructor; recursive cycles alone introduce no returning allocation.
+Header inventory therefore supports forward, reverse, recursive, mutually
+recursive, module and inherent calls without treating provisional contracts as
+execution evidence. Actual source call occurrences and direct scalar Copy
+element facts are required. Local bindings clear call freshness; named moves
+and returned parameters remain separate consumption proofs. The existing
+explicit result profile retains its constructor-only domain. The complete
+preceding call-tail refusal remains as a historical input with stronger
+same-input value, allocation, codec and original-native controls. The unchanged earlier vector-return input, two exact length
 inputs and scalar indexing input have explicit positive corrections retaining every
 old diagnostic, source byte and complete predecessor context. Active Node and
 Rust version/pointer-width ranges bound the paired controls, including each

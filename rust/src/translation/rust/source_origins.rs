@@ -49,6 +49,8 @@ pub(super) struct SourceOrigin {
     pub(super) array_element_copy_evidence: bool,
     /// Constructor or actual call source evidence; cleared on local binding.
     pub(super) fresh_array_value: Option<Span>,
+    /// Closed source result postcondition; all declaration bodies must discharge it.
+    pub(super) fresh_vector_result_contract: bool,
     pub(super) copy_closure_identity: Option<Span>,
     pub(super) copy_closure_capture_count: Option<usize>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
@@ -85,6 +87,7 @@ impl SourceOrigin {
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            fresh_vector_result_contract: false,
             copy_closure_identity: None,
             copy_closure_capture_count: None,
         }
@@ -128,6 +131,7 @@ impl SourceOrigin {
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            fresh_vector_result_contract: false,
             copy_closure_identity: None,
             copy_closure_capture_count: None,
         }
@@ -574,7 +578,11 @@ impl SourceOrigins {
             match entry.declaration {
                 SourceDeclaration::Function { mut result, .. } => {
                     result.fresh_array_value = node.span.filter(|span| {
-                        result.fresh_array_value.is_some() && self.fresh_calls.contains(span)
+                        crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_call(
+                            node.kind(), result.array_source_model.unwrap_or(""),
+                            u32::try_from(result.wrappers.len()).map_or(f64::INFINITY, f64::from),
+                            result.fresh_array_value.is_some(), result.fresh_vector_result_contract, self.fresh_calls.contains(span),
+                        )
                     });
                     return result;
                 }
@@ -1055,6 +1063,7 @@ impl SourceOrigins {
         }
         let mut binding = declared.cloned().unwrap_or(actual);
         binding.fresh_array_value = None;
+        binding.fresh_vector_result_contract = false;
         self.scope.insert(name.to_owned(), binding);
         Ok(())
     }

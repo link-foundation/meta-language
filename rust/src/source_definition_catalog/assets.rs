@@ -178,6 +178,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-fresh-vector-argument-program.lino" => Some(include_str!(
             "../data/rust-fresh-vector-argument-program.lino"
         )),
+        "rust-fresh-vector-call-result-program.lino" => Some(include_str!(
+            "../data/rust-fresh-vector-call-result-program.lino"
+        )),
         "rust-fresh-vector-result-program.lino" => Some(include_str!(
             "../data/rust-fresh-vector-result-program.lino"
         )),

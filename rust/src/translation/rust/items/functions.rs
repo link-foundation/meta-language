@@ -233,6 +233,12 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        source_result.fresh_vector_result_contract = crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_declaration(
+            self.ordinary_completion_context(), source_result.array_source_model.unwrap_or(""),
+            u32::try_from(source_result.wrappers.len()).map_or(f64::INFINITY, f64::from),
+            if let Type::Array { element, .. } = &ret { element.kind() } else { "" },
+            source_result.array_element_copy_evidence,
+        );
         self.origins.declaration(
             &name,
             path,
@@ -345,7 +351,7 @@ impl RustParser {
                     .as_f64()
                     .expect("actual result wrapper count"),
                 element.kind(),
-                self.origins.fresh_vector_argument(&body, path, false),
+                self.origins.fresh_vector_argument(&body, path, true),
             ) {
                 return Err(unsupported(
                     "fresh Rust array result",

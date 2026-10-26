@@ -1109,3 +1109,15 @@ authors write complete originals and predecessor records without executing them.
 The future product experiment and native test compile all independent source type
 obligations and both generated libraries together in CI. No local Rust compilation
 or behavioral execution is part of this authoring phase.
+
+Fresh scalar vector forwarding uses the same complete source-header inventory
+and body-validation passes. The shared result-contract rules are authored with
+`draft-rust-fresh-vector-call-result-rules.mjs --draft`; native code is generated
+from their complete JavaScript dependency closure. Declared contracts permit
+ordered source parsing, while every body must discharge its returning tails
+before the complete valid program is exposed. Local binding never inherits call
+freshness. These are admission premises, not recorded execution evidence. The
+same-input correction for the earlier call-tail refusal retains all original
+metadata, with stronger allocation, value, codec and original-native controls.
+Native scalar-interface controls compile each generated library as a crate root,
+batching all cases per product so actual absolute crate paths keep their meaning.

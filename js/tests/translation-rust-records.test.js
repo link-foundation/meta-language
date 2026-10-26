@@ -4,6 +4,7 @@ import test from'node:test';
 import{runInNewContext}from'node:vm';
 import{readProjectData}from'../scripts/project-data.mjs';
 import{parseRust}from'../src/translation/rust.js';
+import {assertRustFreshVectorCallResultCorrection} from './support/rust-fresh-vector-call-result-corrections.js';
 import{tokenize,TokenCursor}from'../src/translation/lexer.js';
 import{checkProgram}from'../src/translation/check.js';
 import{emitJavaScript}from'../src/translation/emit-javascript.js';
@@ -11,7 +12,7 @@ import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-l
 import{LinkNetwork}from'../src/network.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
 const[major,minor]=process.versions.node.split('.').map(Number);
-for(const filename of['rust-statement-values','rust-completion-carriers','rust-ordinary-returns','rust-terminal-returns','rust-unit-values','rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match','rust-pattern-conditions','rust-conditional-chains','rust-match-guards','rust-let-else','rust-let-else-completions','rust-copy-closures','rust-source-owner-retention','rust-pointer-integer-owners','rust-usize-index-expressions','rust-array-indices','rust-fresh-vector-results','rust-fresh-vector-arguments','rust-type-aliases','rust-function-qualifiers','rust-module-values','rust-source-constants','rust-pointer-results','rust-contextual-calls','rust-contextual-closures','rust-string-byte-lengths','rust-array-lengths','rust-function-pointers','unicode-rust-identifiers','rust-unicode-lifetimes']){
+for(const filename of['rust-statement-values','rust-completion-carriers','rust-ordinary-returns','rust-terminal-returns','rust-unit-values','rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match','rust-pattern-conditions','rust-conditional-chains','rust-match-guards','rust-let-else','rust-let-else-completions','rust-copy-closures','rust-fresh-vector-call-results','rust-source-owner-retention','rust-pointer-integer-owners','rust-usize-index-expressions','rust-array-indices','rust-fresh-vector-results','rust-fresh-vector-arguments','rust-type-aliases','rust-function-qualifiers','rust-module-values','rust-source-constants','rust-pointer-results','rust-contextual-calls','rust-contextual-closures','rust-string-byte-lengths','rust-array-lengths','rust-function-pointers','unicode-rust-identifiers','rust-unicode-lifetimes']){
 const fixture=readProjectData(new URL('../../parity/fixtures/'+filename+'.lino',import.meta.url));
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':filename==='rust-record-layout'?'Rust named constructor layout retains complete paired controls':filename==='rust-raw-identifiers'?'Rust raw identifiers retain complete paired controls':'Rust irrefutable nominal bindings retain complete paired controls',()=>{
@@ -46,7 +47,7 @@ for(const row of fixture.originalRefusals??[])test('same original completion inp
   for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);
  }
 });
-for(const row of fixture.refusals)test('nominal record refusal: '+row.name,()=>assert.throws(()=>checkProgram(parseRust(row.source)),error=>error.kind===row.kind&&error.reason===row.reason));
+for(const row of fixture.refusals)test('nominal record refusal: '+row.name,()=>{if(filename==='rust-fresh-vector-results'&&row.name==='unchecked interprocedural result tail')assertRustFreshVectorCallResultCorrection(row);else assert.throws(()=>checkProgram(parseRust(row.source)),error=>error.kind===row.kind&&error.reason===row.reason);});
 for(const row of fixture.lexicalCases??[])test('raw identifier token source: '+row.source,()=>{
  const tokens=tokenize(row.source,'Rust').tokens;
  assert.equal(tokens.length,row.tokens.length+1);

@@ -90,51 +90,68 @@ fn complete_source_products_keep_independent_scalar_function_types_and_observati
             emit_typed_program_links_with_options(network, root, "Rust", &options(&data)).unwrap();
         assert_eq!(emission_value(&actual), emission_value(&expected));
     }
-    let mut source = format!(
-        "mod original {{\n{}\n}}\nmod javascript {{\n{}\n}}\nmod native {{\n{}\n{}\n}}\n",
-        data["source"].as_str().unwrap(),
-        javascript["nativeLibrary"].as_str().unwrap(),
+    let native_library = format!(
+        "{}\n{}",
         selected.preludes.join("\n"),
         selected.definitions.join("\n")
     );
-    let mut observations = String::from("#[test]fn retained_scalar_observations(){\n");
-    for (index, row) in data["cases"].as_array().unwrap().iter().enumerate() {
-        assert_eq!(javascript["observations"][index]["value"], row["expected"]);
-        assert_eq!(
-            javascript["observations"][index]["unit"].as_bool().unwrap(),
-            row["resultType"] == "()"
-        );
-        for product in ["original", "javascript", "native"] {
-            let prefix = format!("{product}::{}", row["module"].as_str().unwrap());
-            for check in row["checks"].as_array().unwrap() {
-                source.push_str(&check.as_str().unwrap().replace("CASE", &prefix));
-                source.push('\n');
-            }
-            observations.push_str(&format!(
-                "assert_eq!(format!(\"{{:?}}\",{prefix}::result()),{:?});\n",
-                row["expected"].as_str().unwrap()
-            ));
-        }
-    }
-    observations.push_str("}\n");
-    source.push_str(&observations);
     let directory = TemporaryDirectory::new("retained-scalar-source-interface");
-    let input = directory.0.join("witness.rs");
-    let binary = directory
-        .0
-        .join(format!("witness{}", std::env::consts::EXE_SUFFIX));
-    fs::write(&input, source).unwrap();
-    let mut command = Command::new("rustc");
-    command.args(["--edition", "2024", "--test"]);
-    #[cfg(windows)]
-    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
-        command.arg("-C").arg(format!("linker={linker}"));
+    // Each product is a crate root: its actual absolute crate paths must keep
+    // their meaning. Batch all cases per product instead of nesting the code.
+    for (product, library) in [
+        ("javascript", javascript["nativeLibrary"].as_str().unwrap()),
+        ("native", native_library.as_str()),
+    ] {
+        let mut source = format!(
+            "{library}\nmod original {{\n{}\n}}\n",
+            data["source"].as_str().unwrap()
+        );
+        let mut observations = String::from("#[test]fn retained_scalar_observations(){\n");
+        for (index, row) in data["cases"].as_array().unwrap().iter().enumerate() {
+            assert_eq!(javascript["observations"][index]["value"], row["expected"]);
+            assert_eq!(
+                javascript["observations"][index]["unit"].as_bool().unwrap(),
+                row["resultType"] == "()"
+            );
+            let module = row["module"].as_str().unwrap();
+            for prefix in [format!("original::{module}"), module.to_owned()] {
+                for check in row["checks"].as_array().unwrap() {
+                    source.push_str(&check.as_str().unwrap().replace("CASE", &prefix));
+                    source.push('\n');
+                }
+                observations.push_str(&format!(
+                    "assert_eq!(format!(\"{{:?}}\",{prefix}::result()),{:?});\n",
+                    row["expected"].as_str().unwrap()
+                ));
+            }
+        }
+        observations.push_str("}\n");
+        source.push_str(&observations);
+        let input = directory.0.join(format!("{product}.rs"));
+        let binary = directory
+            .0
+            .join(format!("{product}{}", std::env::consts::EXE_SUFFIX));
+        fs::write(&input, source).unwrap();
+        let mut command = Command::new("rustc");
+        command.args(["--edition", "2024", "--test"]);
+        #[cfg(windows)]
+        if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+            command.arg("-C").arg(format!("linker={linker}"));
+        }
+        let compiled = run(command.arg(&input).arg("-o").arg(&binary));
+        assert!(
+            compiled.ok,
+            "{product}\n{}\n{}",
+            compiled.stdout, compiled.stderr
+        );
+        let observed = run(Command::new(&binary).args(["--exact", "retained_scalar_observations"]));
+        assert!(
+            observed.ok,
+            "{product}\n{}\n{}",
+            observed.stdout, observed.stderr
+        );
+        assert!(observed.stdout.contains("1 passed"));
     }
-    let compiled = run(command.arg(&input).arg("-o").arg(&binary));
-    assert!(compiled.ok, "{}\n{}", compiled.stdout, compiled.stderr);
-    let observed = run(Command::new(&binary).args(["--exact", "retained_scalar_observations"]));
-    assert!(observed.ok, "{}\n{}", observed.stdout, observed.stderr);
-    assert!(observed.stdout.contains("1 passed"));
 }
 #[test]
 fn every_declared_generated_scalar_decision_keeps_its_explicit_domain() {

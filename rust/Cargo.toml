@@ -177,6 +177,7 @@ include = [
     "src/data/rust-declaration-header-program.lino",
     "src/data/rust-formatting-program.lino",
     "src/data/rust-fresh-vector-argument-program.lino",
+    "src/data/rust-fresh-vector-call-result-program.lino",
     "src/data/rust-fresh-vector-result-program.lino",
     "src/data/rust-function-pointer-program.lino",
     "src/data/rust-function-qualifier-program.lino",

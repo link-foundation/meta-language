@@ -13,6 +13,7 @@ import {readRustCopyClosureJoinError} from './rust-copy-closure-rules.js';
 import {readRustFunctionPointerCoercionError} from './rust-function-pointer-rules.js';
 import {readRustFreshVectorArgumentForm,acceptRustFreshOwnedVectorArgument} from './rust-fresh-vector-argument-rules.js';
 import {acceptRustKnownFreshVectorCall} from './rust-fresh-vector-result-rules.js';
+import {acceptRustFreshVectorResultCall} from './rust-fresh-vector-call-result-rules.js';
 import {acceptRustScalarArrayIndexElement} from './rust-array-index-rules.js';
 import {readRustPointerIntegerOwnerError,readRustPointerIntegerOwnerJoinError,selectRustPointerIntegerResultOwner} from './rust-pointer-integer-owner-rules.js';
 import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
@@ -161,7 +162,7 @@ export class RustSourceOrigins {
     if (node.k === 'name' || (node.k === 'app' && node.fn.k === 'name')) {
       const entry = this.lookup(node.k === 'name' ? node.path : node.fn.path, path);
       if (entry?.k === 'const') return clone(entry.result);
-      if (entry?.k === 'fn') return { ...clone(entry.result), freshArrayValue: Boolean(entry.result.freshArrayValue && this.freshCalls.has(`${node.span?.start}:${node.span?.end}`)) };
+      if (entry?.k === 'fn') return { ...clone(entry.result), freshArrayValue: acceptRustFreshVectorResultCall(node.k,entry.result.arraySourceModel??'',entry.result.wrappers.length,Boolean(entry.result.freshArrayValue),entry.result.freshVectorResultContract===true,this.freshCalls.has(`${node.span?.start}:${node.span?.end}`)) };
       if (entry?.k === 'ctor') return clone(entry.result);
       if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)
         && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return {...value(true, rustFixedType(node.path[0])),sourceOwner:{kind:'primitive',path:[node.path[0]],arguments:[]}};
@@ -276,7 +277,7 @@ export class RustSourceOrigins {
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
     if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
-    this.scope.set(name, { ...clone(declared ?? actual), ...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue: false });
+    this.scope.set(name, { ...clone(declared ?? actual), ...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue: false, freshVectorResultContract:false });
   }
 
   pointerIntegerArgument(actualOrigin,expectedOrigin,span){

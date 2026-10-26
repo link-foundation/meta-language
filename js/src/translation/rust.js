@@ -1,6 +1,7 @@
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
+import {acceptRustFreshVectorResultDeclaration} from './rust-fresh-vector-call-result-rules.js';
 import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRustConstPredicateProof} from './rust-function-qualifier-rules.js';
 import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases,resolveRustTypeAliasPath,requireRustTypeAliasValueConstructor} from './rust-type-aliases.js';
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
@@ -709,6 +710,7 @@ class RustParser {
       if (ret.kind === 'array' && !isRustSharedArrayHandleOrigin(this,sourceResult) && !acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, true)
         && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,true)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
+      sourceResult.freshVectorResultContract=acceptRustFreshVectorResultDeclaration(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.kind==='array'?ret.element.kind:'',sourceResult.arrayElementCopyEvidence===true);
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
       // This private declaration inventory is discarded; no body semantics are inferred here.
@@ -728,7 +730,7 @@ class RustParser {
       const body = emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))
-          && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,this.origins.freshVectorArgument(body,path,false))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
+          && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,this.origins.freshVectorArgument(body,path,true))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         this.origins.pointerIntegerArgument(this.origins.origin(body,path),sourceResult,body.span);
         sourceResult.freshArrayValue = true;
         this.origins.mark(body, sourceResult);

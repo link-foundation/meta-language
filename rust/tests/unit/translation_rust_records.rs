@@ -426,6 +426,12 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, format!("{product_label}\n"));
     for row in expected["refusals"].as_array().unwrap() {
+        if producer_path == "../experiments/rust-records/fresh-vector-results.mjs"
+            && row["name"] == "unchecked interprocedural result tail"
+        {
+            super::translation_rust_fresh_vector_call_results::assert_original_forwarded_result_case(row);
+            continue;
+        }
         if expected["sourceSyntaxOracle"] == Value::Bool(true) {
             assert_eq!(source_language, Language::JavaScript);
             assert_eq!(row["kind"], "syntax");
