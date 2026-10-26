@@ -50,16 +50,20 @@ impl RustParser {
         callee: &SExpr,
     ) -> Result<Vec<SExpr>> {
         let mut parameters = None;
+        let mut result = None;
         if let SNode::Name { path: names } = &callee.node
             && !(names.len() == 1 && self.origins.scope.contains_key(&names[0]))
             && let Some(entry) = self
                 .origins
                 .lookup(&self.source_value_path(names, path), path)
             && let SourceDeclaration::Function {
-                parameters: actual, ..
+                parameters: actual,
+                result: actual_result,
+                ..
             } = entry.declaration
         {
             parameters = Some(actual);
+            result = Some(actual_result);
         }
         let parameters = parameters.unwrap_or_else(|| match self.origins.origin(callee, path).ty {
             Some(Type::Function { params, .. }) => params
@@ -77,7 +81,11 @@ impl RustParser {
         });
         let mut args = Vec::new();
         while !self.cursor.is(")") {
-            args.push(self.read_expected_copy_closure(path, parameters.get(args.len()))?);
+            args.push(self.read_standard_string_view_argument(
+                path,
+                parameters.get(args.len()),
+                result.as_ref(),
+            )?);
             if self.cursor.eat(",").is_none() {
                 break;
             }

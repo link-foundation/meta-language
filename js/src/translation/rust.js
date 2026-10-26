@@ -1,5 +1,6 @@
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
+import {readRustStandardStringView} from './rust-standard-string-views.js';
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
@@ -166,6 +167,7 @@ class RustParser {
     this.modulePath = [];
     this.crateDeclarations = new Set();
     this.origins = new RustSourceOrigins(catalog, arrayResultModel,localValueStateModel,sharedArrayHandleSourceModel);
+    this.standardStringBorrowContext={enabled:false,layers:0,sites:[]};
     this.sharedArrayHandleSourceModel=sharedArrayHandleSourceModel;
     createRustSharedArrayHandleState(this,sharedArrayHandleSourceModel);
     this.localValueStateModel=localValueStateModel;
@@ -1435,6 +1437,7 @@ class RustParser {
 
   primary(path, options) {
     const standardOwnedCall=readRustStandardOwnedCall(this,path);if(standardOwnedCall)return standardOwnedCall;
+    const standardStringView=readRustStandardStringView(this,path);if(standardStringView)return standardStringView;
     const c = this.cursor;
     const token = c.peek();
     if (token.kind === 'number') {

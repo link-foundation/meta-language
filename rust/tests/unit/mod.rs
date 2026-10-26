@@ -484,3 +484,5 @@ mod translation_rust_scalar_mathematical_interface;
 mod translation_rust_textual_source_interface;
 
 mod translation_rust_standard_owned_calls;
+
+mod translation_rust_standard_string_views;

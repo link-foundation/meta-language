@@ -1,4 +1,5 @@
 import {requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
+import {beginRustStandardStringViewArgument,endRustStandardStringViewArgument,checkRustStandardStringViewArgument} from './rust-standard-string-views.js';
 // Actual source types/scopes into the existing shared callable representation.
 import {unsupported} from './diagnostics.js';
 import {readCallableStatementCaptures} from './callable-source.js';
@@ -25,11 +26,11 @@ export function readRustCopyPointerResultBlock(parser,path,expected){
  c.expect('}','function pointer result');parser.origins.argument(parser.origins.origin(value,path),expected,value.span);return value;
 }
 export function readRustContextualCallArguments(parser,callee,path){
- let parameters=null;
- if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn')parameters=entry.parameters;}
+ let parameters=null,result=null;
+ if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn'){parameters=entry.parameters;result=entry.result;}}
  if(parameters===null){const origin=parser.origins.origin(callee,path);parameters=origin.type?.kind==='function'?origin.type.params.map(type=>({...parser.origins.typeOrigin(type,path),...(type.kind==='function'?{copyEvidence:true}:{})})):[];}
  const args=[],c=parser.cursor;
- while(!c.is(')')){args.push(readRustExpectedCopyClosure(parser,path,parameters[args.length]));if(!c.eat(','))break;}
+ while(!c.is(')')){const frame=beginRustStandardStringViewArgument(parser,path,parameters[args.length],result);let value;try{value=readRustExpectedCopyClosure(parser,path,parameters[args.length]);}finally{endRustStandardStringViewArgument(parser,frame);}args.push(checkRustStandardStringViewArgument(parser,frame,value,path));if(!c.eat(','))break;}
  return args;
 }
 export function readRustCopyClosure(parser,path,expected=null){

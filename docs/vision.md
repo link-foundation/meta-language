@@ -696,11 +696,34 @@ copy projection. Real standard vector-copy occurrences retain their fresh owned
 result/argument evidence. The declaration collection pass keeps a provisional
 call only until every actual body can be re-read against complete source facts.
 User-owned `std` namespaces retain ordinary resolution. No general trait/UFCS
-dispatch, standard function values, qualified `String::as_str` borrowed-result
+dispatch, standard function values, general borrowed-result
 flow, deep String/nested vector ownership, all namespace contexts or full emitted
 runtime parsing follows from this draft. A portable single-copy definition has
 deferred emit/reparse controls under the existing core value meaning basis;
 that comparison is not a certificate of complete Rust source ABI equivalence.
+
+The additional `immediate standard Rust string views 1` source interpretation
+admits the actual qualified `String::as_str` call only as a complete argument of
+a checked named function. Its input must have nonstatic immutable `str`
+references, and its result must be an actual owned standard String or a known
+primitive scalar. The original standard String receiver has exactly one
+immutable reference. Each argument owns a bounded context, restored even when
+parsing fails; parentheses and extra reference layers retain the complete
+original view span and the exact expected source depth. A derived expression
+cannot inherit permission merely because it contains a view. Shared JavaScript
+decisions generate the native source and editable Links definition. These
+constraints preserve the limited immediate borrow meaning described by
+[String::as_str](https://doc.rust-lang.org/std/string/struct.String.html#method.as_str)
+and [temporary scopes](https://doc.rust-lang.org/reference/destructors.html#temporary-scopes).
+Complete retained textual definitions have deferred emitted-source reparse,
+independent value and native function-type controls in both packages. They
+retain actual emitted ToOwned/as_str source rather than restoring an original
+body. Additional value copies do not prove graph isomorphism. Stored/escaping
+views, static consumers, borrowed/aggregate/callable results, unknown/dynamic
+consumers, general loans, moves and ownership remain required implementation
+work. No behavioral control, native compilation or parity execution has run
+for this draft.
+
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

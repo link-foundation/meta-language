@@ -196,6 +196,7 @@ include = [
     "src/data/rust-source-constant-program.lino",
     "src/data/rust-source-owner-retention-program.lino",
     "src/data/rust-standard-owned-call-program.lino",
+    "src/data/rust-standard-string-view-program.lino",
     "src/data/rust-string-byte-length-controls.lino",
     "src/data/rust-string-byte-length-program.lino",
     "src/data/rust-textual-source-interface-program.lino",

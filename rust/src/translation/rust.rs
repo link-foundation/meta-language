@@ -484,6 +484,7 @@ struct RustParser {
     crate_declarations: HashSet<String>,
     main: Option<SMain>,
     origins: SourceOrigins,
+    standard_string_borrow: expressions::standard_string_views::StandardStringBorrowContext,
     completion_model: String,
     source_signature_model: String,
     scalar_loop_model: String,
@@ -563,6 +564,7 @@ impl RustParser {
             crate_declarations: HashSet::new(),
             main: None,
             origins,
+            standard_string_borrow: Default::default(),
             completion_model: profiles.completion.to_owned(),
             source_signature_model: if profiles.source_signature.is_empty()
                 && (!profiles.type_namespace.is_empty()

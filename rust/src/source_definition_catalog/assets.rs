@@ -229,6 +229,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-standard-owned-call-program.lino" => Some(include_str!(
             "../data/rust-standard-owned-call-program.lino"
         )),
+        "rust-standard-string-view-program.lino" => Some(include_str!(
+            "../data/rust-standard-string-view-program.lino"
+        )),
         "rust-string-byte-length-program.lino" => {
             Some(include_str!("../data/rust-string-byte-length-program.lino"))
         }
