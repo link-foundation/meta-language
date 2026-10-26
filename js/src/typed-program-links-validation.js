@@ -15,6 +15,7 @@ import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructio
 import { acceptLinkedRustPrimitiveBitwiseOperation, readRustPrimitiveBitwiseArity, acceptRustPrimitiveBitwiseType } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
+import {acceptRustStringByteLengthOperation,readRustStringByteLengthArgumentError} from './translation/rust-string-byte-length-rules.js';
 import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
 import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
@@ -183,7 +184,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object?.type?.kind??'',node.object?.type?.ordered===true,node.object?.type?.reference===true)
       && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
       && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
-      && !acceptLinkedRustCheckedShift(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
+      && !acceptLinkedRustCheckedShift(node.k,node.op)
+      && !acceptRustStringByteLengthOperation(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.k === 'none') {
@@ -328,7 +330,11 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'math') {
       const rustArity = readRustPrimitiveBitwiseArity(node.op);
-      if(node.op==='reorderJavaScriptRecordPropertyValues'){
+      if(acceptRustStringByteLengthOperation(node.k,node.op)){
+        if(!Array.isArray(node.args))throw new TypeError('a byte count needs one actual String operand');
+        const reason=readRustStringByteLengthArgumentError(program.sourceLanguage,program.utf16Strings===true,node.args.length,false,node.args[0]?.type?.kind??'');if(reason)throw new TypeError(reason);
+        same(node.args[0].type,{kind:'string'},'Rust byte count operand type');same(node.type,{kind:'fixed',bits:64,signed:false},'Rust byte count result type');
+      }else if(node.op==='reorderJavaScriptRecordPropertyValues'){
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[0].type.kind!=='array'||node.args[0].type.reference===true)throw new TypeError('record value ordering needs its actual owned value array');
         same(node.args[1].type,{kind:'array',element:{kind:'float'}},'record value ordering positions');
         same(node.type,node.args[0].type,'record value ordering result');

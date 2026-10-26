@@ -480,3 +480,5 @@ mod translation_rust_scalar_vector_copies;
 mod translation_rust_data_type_field_signatures;
 
 mod translation_rust_scalar_mathematical_interface;
+
+mod translation_rust_textual_source_interface;

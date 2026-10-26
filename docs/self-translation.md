@@ -73,6 +73,15 @@ ceiling, truncation and predicates. The earlier scalar interface keeps its own
 domain. Both packages use automatically translated selection definitions;
 independent original/generated native controls remain deferred.
 
+The separate `retained textual Rust function interface 1` emission selection
+adds standard owned `String` endpoints and immutable `String`/`str` inputs.
+It preserves actual reference layers, creates owned core values from borrowed
+inputs and recreates string borrows from complete call-argument slots. Owned
+results, exact UTF-8 byte counts and equality compose with the scalar graph.
+General string transformations, ordering, borrowed outputs and allocation or
+pointer observations remain outside this interpretation. Its controls are
+authored for later execution.
+
 `selfTranslateWithDiagnostics` and Rust `self_translate_with_diagnostics` retain
 actual compiler diagnostics beside the unchanged source owners. JavaScript's
 `referenceSemantics: true` and Rust's `reference_semantics: true` select shared

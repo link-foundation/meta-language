@@ -14,6 +14,11 @@ use super::rust_scalar_source_interface_rules::{
     read_rust_scalar_source_type, read_rust_scalar_value_type,
     render_rust_scalar_source_conversion,
 };
+use super::rust_textual_source_interface_rules::{
+    accept_rust_textual_source_binary, accept_rust_textual_source_interface_model,
+    accept_rust_textual_source_operation, read_rust_textual_source_type,
+    render_rust_textual_source_input, render_rust_textual_source_slice_argument,
+};
 use super::source_signatures::{SourceSignature, SourceTypeSignature, validate_source_signature};
 use super::types::Type;
 use std::collections::{BTreeMap, BTreeSet};
@@ -26,7 +31,10 @@ fn count(length: usize) -> f64 {
     u32::try_from(length).map_or(f64::INFINITY, f64::from)
 }
 
-fn value_type(ty: &Type) -> Result<String> {
+fn value_type(ty: &Type, strings: bool) -> Result<String> {
+    if strings && matches!(ty, Type::String) {
+        return Ok("String".to_owned());
+    }
     let (bits, signed) = match ty {
         Type::Fixed { bits, signed } => (f64::from(*bits), *signed),
         _ => (0.0, false),
@@ -40,9 +48,17 @@ fn value_type(ty: &Type) -> Result<String> {
     Ok(name)
 }
 
-fn source_type(position: &SourceTypeSignature) -> Result<String> {
+fn source_type(position: &SourceTypeSignature, strings: bool) -> Result<String> {
+    let value = value_type(&position.ty, strings)?;
+    if value == "String" {
+        return Ok(read_rust_textual_source_type(
+            &position.owner.kind,
+            &position.owner.path.join("::"),
+            count(position.owner.arguments.len()),
+        ));
+    }
     Ok(read_rust_scalar_source_type(
-        &value_type(&position.ty)?,
+        &value,
         &position.owner.kind,
         position.owner.path.first().map_or("", String::as_str),
         count(position.owner.path.len()),
@@ -55,7 +71,8 @@ pub fn read_rust_scalar_source_interface(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
-    let mathematical = accept_rust_scalar_mathematical_interface_model(model);
+    let strings = accept_rust_textual_source_interface_model(model);
+    let mathematical = strings || accept_rust_scalar_mathematical_interface_model(model);
     if !accept_rust_scalar_source_interface_model(model) && !mathematical {
         return Err(fail("select retained scalar Rust function interface 1"));
     }
@@ -165,7 +182,7 @@ pub fn read_rust_scalar_source_interface(
         {
             if !accept_rust_scalar_source_position(
                 &signature.model,
-                &source_type(position)?,
+                &source_type(position, strings)?,
                 position
                     .wrappers
                     .iter()
@@ -198,7 +215,7 @@ pub fn read_rust_scalar_source_interface(
                 "the closed scalar call graph exceeds its expression budget",
             ));
         }
-        value_type(&node.ty)?;
+        value_type(&node.ty, strings)?;
         // Native variants exhaustively represent these fields. Linked decoding
         // checks raw field inventories before constructing this IR.
         if !(if mathematical {
@@ -212,8 +229,11 @@ pub fn read_rust_scalar_source_interface(
         }
         match &node.node {
             Node::Math { op, args } => {
-                if !accept_rust_scalar_mathematical_operation(op, count(args.len()), node.ty.kind())
-                {
+                if !(if strings {
+                    accept_rust_textual_source_operation(op, count(args.len()), node.ty.kind())
+                } else {
+                    accept_rust_scalar_mathematical_operation(op, count(args.len()), node.ty.kind())
+                }) {
                     return Err(fail(
                         "the mathematical operation needs its admitted scalar result and complete operands",
                     ));
@@ -253,14 +273,20 @@ pub fn read_rust_scalar_source_interface(
                     ));
                 }
             }
-            Node::Binary { domain, .. } => {
-                value_type(domain.as_ref().ok_or_else(|| {
+            Node::Binary { op, domain, .. } => {
+                let domain = domain.as_ref().ok_or_else(|| {
                     fail("every interface and expression needs an actual scalar value type")
-                })?)?;
+                })?;
+                value_type(domain, strings)?;
+                if strings && !accept_rust_textual_source_binary(domain.kind(), op.name()) {
+                    return Err(fail(
+                        "string ordering needs its own source interface interpretation",
+                    ));
+                }
             }
             Node::Cast { from, to, .. } => {
-                value_type(from)?;
-                value_type(to)?;
+                value_type(from, false)?;
+                value_type(to, false)?;
             }
             _ => {}
         }
@@ -291,7 +317,7 @@ pub fn render_rust_scalar_source_header(
     let mut copies = Vec::new();
     let mut parameters = Vec::new();
     for (parameter, position) in params.iter().zip(&signature.parameters) {
-        let source = source_type(position)?;
+        let source = source_type(position, true)?;
         let mut ty = source.clone();
         let mut value = parameter.name.clone();
         for layer in (0..position.wrappers.len()).rev() {
@@ -302,13 +328,17 @@ pub fn render_rust_scalar_source_header(
             );
             value = render_rust_source_header_dereference(&value);
         }
-        let converted = render_rust_scalar_source_conversion(&value, &source, false);
+        let converted = if matches!(position.ty, Type::String) && !position.wrappers.is_empty() {
+            render_rust_textual_source_input(&value)
+        } else {
+            render_rust_scalar_source_conversion(&value, &source, false)
+        };
         if !position.wrappers.is_empty() || converted != value {
             copies.push(render_rust_source_header_copy(&parameter.name, &converted));
         }
         parameters.push(render_rust_source_header_parameter(&parameter.name, &ty));
     }
-    let result = source_type(&signature.result)?;
+    let result = source_type(&signature.result, true)?;
     copies.push(render_rust_scalar_source_conversion(body, &result, true));
     Ok(render_rust_source_header_function(
         name,
@@ -341,17 +371,22 @@ pub fn render_rust_scalar_source_call(
     for ((value, name), position) in values.iter().zip(names).zip(&signature.parameters) {
         bindings.push(render_rust_source_header_copy(
             name,
-            &render_rust_scalar_source_conversion(value, &source_type(position)?, true),
+            &render_rust_scalar_source_conversion(value, &source_type(position, true)?, true),
         ));
-        let mut argument = name.clone();
-        for _ in &position.wrappers {
+        let slice = source_type(position, true)? == "str";
+        let mut argument = if slice {
+            render_rust_textual_source_slice_argument(name)
+        } else {
+            name.clone()
+        };
+        for _ in position.wrappers.iter().skip(usize::from(slice)) {
             argument = render_rust_borrowed_call_reference(&argument);
         }
         arguments.push(argument);
     }
     bindings.push(render_rust_scalar_source_conversion(
         &render_rust_borrowed_call_invocation(head, &arguments.join(", ")),
-        &source_type(&signature.result)?,
+        &source_type(&signature.result, true)?,
         false,
     ));
     Ok(render_rust_borrowed_call_block(&indent(

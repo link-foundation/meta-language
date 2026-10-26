@@ -668,6 +668,24 @@ or callable interfaces, checked-shift optional results, source loops, borrowed
 outputs and additional qualifiers remain separate obligations. Complete original
 programs, independent native function types, both generated native products,
 both codecs and four-target controls are authored, unexecuted definitions.
+
+The independent `retained textual Rust function interface 1` model adds actual
+standard owned `String` endpoints and immutable `String`/`str` inputs to the
+same checked scalar call graph. Every original reference layer and lifetime
+remains in its header. Borrowed string referents are copied into the owned core
+Unicode value through the actual standard `ToOwned` operation. Calls materialize
+each complete argument once, then recreate `str` borrows through standard
+`String::as_str`, or recreate the represented `String` reference layers. Owned
+string results, exact UTF-8 byte lengths, string equality, scalar expressions
+and admitted mathematical operations compose under their existing meanings.
+The source-free boundary checks byte-count language, representation, complete
+arity and unsigned 64-bit result type in both packages. Earlier source interfaces
+retain their string refusals. General string transformations and ordering,
+borrowed outputs, pointer/capacity/allocation observations, arbitrary ownership,
+mutation, custom string traits and aggregate interfaces remain separate required
+work. This value interpretation does not assert allocation identity, complete
+native ABI fidelity or full own-source translation. Original/native products,
+independent function types and codec/target controls remain deferred drafts.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate

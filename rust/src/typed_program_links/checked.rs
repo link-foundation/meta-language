@@ -72,12 +72,13 @@ fn validate_type_records(
     value: &Value,
     data_names: &HashSet<&str>,
     source_language: &str,
+    utf16_strings: bool,
 ) -> Result<()> {
     // Preserve the original depth-first order and every per-record check while
     // transporting traversal frames on the heap rather than the native stack.
     let mut pending = vec![value];
     while let Some(value) = pending.pop() {
-        validate_type_record(value, data_names, source_language)?;
+        validate_type_record(value, data_names, source_language, utf16_strings)?;
         if let Some(fields) = value.as_object() {
             pending.extend(fields.values().rev());
         } else if let Some(values) = value.as_array() {
@@ -91,6 +92,7 @@ fn validate_type_record(
     value: &Value,
     data_names: &HashSet<&str>,
     source_language: &str,
+    utf16_strings: bool,
 ) -> Result<()> {
     if let Some(fields) = value.as_object() {
         if value["k"] == "binary"
@@ -132,6 +134,12 @@ fn validate_type_record(
             if !refusal.is_empty() {
                 return Err(error(refusal));
             }
+        }
+        if crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation(kind, value["op"].as_str().unwrap_or_default()) {
+            let args=value["args"].as_array().ok_or_else(||error("a byte count needs one actual String operand"))?;
+            let refusal=crate::translation::rust_string_byte_length_rules::read_rust_string_byte_length_argument_error(source_language,utf16_strings,serde_json::Number::from(args.len()).as_f64().expect("actual byte-count arity"),false,args.first().and_then(|value|value["type"]["kind"].as_str()).unwrap_or_default());
+            if !refusal.is_empty(){return Err(error(refusal));}
+            if value["type"]!=serde_json::json!({"kind":"fixed","bits":64,"signed":false}){return Err(error("the linked program has inconsistent Rust byte count result type"));}
         }
         if kind == "toString" {
             let argument_kind = value["arg"]["type"]["kind"].as_str().unwrap_or_default();
@@ -333,6 +341,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         &serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?,
         &data_names,
         program.source_language.as_str(),
+        program.utf16_strings.unwrap_or(false),
     )?;
     if program.schema_version != 1 {
         return Err(error("the linked value is not a checked typed program"));

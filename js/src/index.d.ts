@@ -915,7 +915,7 @@ export interface TypedProgramLinksEmission {
 /** Selects supported emission models from validated owned program facts. */
 export interface TypedProgramLinksEmissionOptions {
   /** Preserves selected immutable-reference Rust headers and closed call interfaces. */
-  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1' | 'retained scalar Rust function interface 1' | 'retained mathematical Rust function interface 1';
+  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1' | 'retained scalar Rust function interface 1' | 'retained mathematical Rust function interface 1' | 'retained textual Rust function interface 1';
   /** Allocates JavaScript aliases from actual checked local binding owners. */
   readonly javaScriptScopedBindingEmissionModel?: 'owned JavaScript scoped bindings 1';
 }
