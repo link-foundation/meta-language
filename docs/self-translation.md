@@ -82,6 +82,14 @@ General string transformations, ordering, borrowed outputs and allocation or
 pointer observations remain outside this interpretation. Its controls are
 authored for later execution.
 
+The ordinary Rust frontend draft reads qualified standard `Clone::clone` and
+`ToOwned::to_owned` calls on proven primitive Copy values, String/str and direct
+scalar vectors/slices. Both relative and leading-`::` spellings retain actual
+namespace checks. This covers owned-copy calls used by generated Rust while
+preserving user-owned `std` namespaces. General trait dispatch, qualified
+`String::as_str` borrow flow and complete generated-runtime parsing still require
+implementation. Single-definition emit/reparse controls remain unexecuted.
+
 `selfTranslateWithDiagnostics` and Rust `self_translate_with_diagnostics` retain
 actual compiler diagnostics beside the unchanged source owners. JavaScript's
 `referenceSemantics: true` and Rust's `reference_semantics: true` select shared

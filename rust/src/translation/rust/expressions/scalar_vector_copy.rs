@@ -1,5 +1,5 @@
 //! Thin owned source projection into the shared primitive vector-copy rules.
-use super::{RustParser, SExpr, SNode, Span, Token, Type};
+use super::{RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type};
 use crate::translation::rust_scalar_vector_copy_rules::{
     accept_rust_scalar_vector_copy_owner, accept_rust_scalar_vector_copy_query,
     accept_rust_scalar_vector_copy_receiver, read_rust_scalar_vector_copy_operation,
@@ -38,6 +38,17 @@ impl RustParser {
         ) {
             return None;
         }
+        Some(self.build_scalar_vector_copy(receiver, origin, range, path))
+    }
+
+    /// Project an admitted source copy without reinterpreting its trait call.
+    pub(super) fn build_scalar_vector_copy(
+        &mut self,
+        receiver: &SExpr,
+        origin: SourceOrigin,
+        range: Option<Span>,
+        path: &[String],
+    ) -> SExpr {
         let owner = origin
             .source_owner
             .as_ref()
@@ -74,6 +85,6 @@ impl RustParser {
         copied.fresh_array_value = range;
         copied.fresh_vector_result_contract = false;
         self.origins.mark_vector_constructor(&result, copied);
-        Some(result)
+        result
     }
 }

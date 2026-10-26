@@ -5,6 +5,7 @@ mod ascii_text_predicates;
 pub(super) mod control;
 mod read_only_queries;
 mod scalar_vector_copy;
+mod standard_owned_calls;
 mod usize_index_expressions;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
@@ -796,6 +797,9 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value) = self.read_standard_owned_call(path)? {
+            return Ok(value);
+        }
         let token = self.peek();
         if token.kind == TokenKind::Number {
             self.cursor.advance();

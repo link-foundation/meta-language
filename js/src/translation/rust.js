@@ -1,4 +1,5 @@
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
+import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
@@ -1433,6 +1434,7 @@ class RustParser {
   }
 
   primary(path, options) {
+    const standardOwnedCall=readRustStandardOwnedCall(this,path);if(standardOwnedCall)return standardOwnedCall;
     const c = this.cursor;
     const token = c.peek();
     if (token.kind === 'number') {

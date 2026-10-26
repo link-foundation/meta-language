@@ -686,6 +686,21 @@ mutation, custom string traits and aggregate interfaces remain separate required
 work. This value interpretation does not assert allocation identity, complete
 native ABI fidelity or full own-source translation. Original/native products,
 independent function types and codec/target controls remain deferred drafts.
+
+Ordinary source parsing also recognizes scope-checked qualified standard
+`Clone::clone` and `ToOwned::to_owned` calls. Relative and leading-`::` standard
+paths select shared source rules only in an unambiguous standard namespace.
+Actual primitive Copy, String/str and direct scalar vector/slice facts check one
+immutable receiver reference before lowering to the existing value or complete
+copy projection. Real standard vector-copy occurrences retain their fresh owned
+result/argument evidence. The declaration collection pass keeps a provisional
+call only until every actual body can be re-read against complete source facts.
+User-owned `std` namespaces retain ordinary resolution. No general trait/UFCS
+dispatch, standard function values, qualified `String::as_str` borrowed-result
+flow, deep String/nested vector ownership, all namespace contexts or full emitted
+runtime parsing follows from this draft. A portable single-copy definition has
+deferred emit/reparse controls under the existing core value meaning basis;
+that comparison is not a certificate of complete Rust source ABI equivalence.
 The ordinary
 source call interpretation additionally admits fresh scalar `vec!`
 arguments. Actual macro source intervals supply constructor evidence, separate
