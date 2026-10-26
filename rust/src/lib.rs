@@ -385,6 +385,8 @@ pub use project_translation::{draft_project_translation, project_translation_dra
 mod rust_project_source_rules;
 mod rust_source_project;
 mod rust_source_project_cli;
+mod source_project_archive;
+mod source_project_archive_rules;
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
     QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
@@ -441,6 +443,10 @@ pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use shared_numeric_function_links::encode_shared_numeric_function_definition;
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};
 pub use source::{ByteRange, Point, SourceSpan};
+pub use source_project_archive::{
+    SourceProjectArchiveSource, SourceProjectArchiveView, create_source_project_archive,
+    extend_source_project_archive, read_source_project_archive,
+};
 pub use sql_adapter::{
     SQL_DIALECT_PROFILES, SqlAdapterError, SqlAdapterErrorKind, SqlDialectProfile,
     SqlRelationMapping, SqlSchemaRegistry, lower_sql, lower_sql_cst,

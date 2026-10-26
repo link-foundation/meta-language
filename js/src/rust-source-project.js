@@ -5,7 +5,7 @@ import {parseRust} from './translation/rust.js';
 import {checkProgram} from './translation/check.js';
 import {encodeTypedProgramLinks} from './typed-program-links.js';
 import {LinkNetwork} from './network.js';
-import {LinkMetadata,LinkType} from './primitives.js';
+import {createSourceProjectArchive,readSourceProjectArchive} from './source-project-archive.js';
 import {compareProjectTranslationIdentifiers} from './project-translation-rules.js';
 import {expandRustProjectSourceEvents} from './rust-project-source-rules.js';
 
@@ -63,18 +63,11 @@ export function parseRustSourceProject(inputs,entry,options={}){
 export function createRustSourceProjectProgramLinks(inputs,entry,options={}){
  const {composition,surface,entryNormalization}=parseRustSourceProject(inputs,entry,options),program=checkProgram(surface);
  const packet=encodeTypedProgramLinks(program,{provenance:{sourceProject:composition,entryNormalization,userProvenance:options.provenance??null}}),nodeLimit=limit(options,'nodeLimit',1000000);
- for(const file of composition.files){
-  const concrete=LinkNetwork.parse(file.source,'Rust');if(!concrete.verifyFullMatch().isClean())fail('unclean original concrete syntax: '+file.path);
-  const links=concrete.links();if(packet.network.links().length+links.length+9>nodeLimit)fail('concrete graph node limit exceeded');
-  const ids=new Map();for(const link of links)ids.set(link.id().asU64(),packet.network.insertLink([],link.metadata().clone()));
-  for(const link of links)packet.network.link(ids.get(link.id().asU64())).setReferences(link.references().map(reference=>{const target=ids.get(reference.asU64());if(!target)fail('dangling original concrete reference');return target;}));
-  const inventory=packet.network.insertLink(links.map(link=>ids.get(link.id().asU64())),LinkMetadata.new().withLinkType(LinkType.Semantic).withLanguage('Rust source project').withTerm('complete original source concrete graph').withDefinition(file.path));
-  packet.network.insertFieldRelation(packet.root,'source concrete graph',inventory);
-  const registered=packet.network.insertLink([...concrete._terms.values()].map(id=>ids.get(id.asU64())).sort((a,b)=>a.asU64()-b.asU64()),LinkMetadata.new().withLinkType(LinkType.Semantic).withLanguage('Rust source project').withTerm('registered original concrete points'));
-  packet.network.insertFieldRelation(inventory,'registered concrete points',registered);
-  const digest=packet.network.insertLink([],LinkMetadata.new().withLinkType(LinkType.Semantic).withLanguage('Rust source project').withTerm('original source sha256').withDefinition(file.sourceSha256));
-  packet.network.insertFieldRelation(inventory,'original source digest',digest);
- }
+ const archive=createSourceProjectArchive(composition.files.map(file=>({path:file.path,source:file.source,language:'Rust'})),{...options,requireClean:true,projection:'ConcreteSyntax'}),links=archive.network.links();
+ if(packet.network.links().length+links.length+2>nodeLimit)fail('concrete graph node limit exceeded');
+ const ids=new Map();for(const link of links)ids.set(link.id().asU64(),packet.network.insertLink([],link.metadata().clone()));
+ for(const link of links)packet.network.link(ids.get(link.id().asU64())).setReferences(link.references().map(reference=>{const target=ids.get(reference.asU64());if(!target)fail('dangling original concrete reference');return target;}));
+ packet.network.insertFieldRelation(packet.root,'source project concrete archive',ids.get(archive.root.asU64()));
  return packet;
 }
 
@@ -83,7 +76,10 @@ export function createRustSourceProjectProgramLinks(inputs,entry,options={}){
  */
 export function readRustSourceProjectConcreteGraphs(network,root,options={}){
  if(!network.link(root)||network.links().length>limit(options,'nodeLimit',1000000))fail('invalid source graph root or node limit');
- const fields=network.fieldRelations(),seen=new Set(),results=[];
+ const fields=network.fieldRelations(),seen=new Set(),results=[],current=fields.filter(field=>field.parent.asU64()===root.asU64()&&field.label==='source project concrete archive');
+ if(current.length){if(current.length!==1||fields.some(field=>field.parent.asU64()===root.asU64()&&field.label==='source concrete graph'))fail('ambiguous source concrete archive');
+  return readSourceProjectArchive(network,current[0].child,{...options,projection:'ConcreteSyntax'}).sources.map(file=>{if(file.language!=='Rust'||!file.network.verifyFullMatch().isClean())fail('changed original concrete source');return {path:file.path,source:file.source,network:file.network};});}
+ // The complete preceding Links layout remains readable under its own roles.
  for(const field of fields.filter(field=>field.parent.asU64()===root.asU64()&&field.label==='source concrete graph')){
   const inventory=network.link(field.child),path=inventory?.metadata().definition;
   if(inventory?.metadata().term!=='complete original source concrete graph'||inventory.metadata().language!=='Rust source project'||typeof path!=='string'||seen.has(path))fail('invalid source concrete inventory');seen.add(path);

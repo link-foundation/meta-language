@@ -448,3 +448,5 @@ mod translation_rust_module_values;
 mod translation_abrupt_results;
 
 mod rust_source_project;
+
+mod source_project_archive;

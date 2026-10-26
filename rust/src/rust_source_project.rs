@@ -7,10 +7,7 @@ use crate::translation::{
     rust::parse_rust,
     surface::SProgram,
 };
-use crate::{
-    LinkMetadata, LinkNetwork, LinkType, ParseConfiguration, TypedProgramLinks,
-    encode_typed_program_links_with_provenance,
-};
+use crate::{LinkNetwork, LinkType, TypedProgramLinks, encode_typed_program_links_with_provenance};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -297,101 +294,55 @@ pub fn create_rust_source_project_program_links(
     )
     .map_err(|error| error.to_string())?;
     let node_limit = limit(options, "nodeLimit", 1000000)?;
-    for file in composition["files"].as_array().unwrap() {
-        let concrete = LinkNetwork::parse(
-            file["source"].as_str().unwrap(),
-            "Rust",
-            ParseConfiguration::default(),
-        );
-        if !concrete.verify_full_match(None).is_clean() {
-            return Err(format!(
-                "Rust source project: unclean original concrete syntax: {}",
-                file["path"].as_str().unwrap()
-            ));
-        }
-        let links = concrete.links().collect::<Vec<_>>();
-        if packet
-            .network
-            .links()
-            .count()
-            .saturating_add(links.len())
-            .saturating_add(9)
-            > node_limit
-        {
-            return Err("Rust source project: concrete graph node limit exceeded".to_owned());
-        }
-        let mut ids = BTreeMap::new();
-        for link in &links {
-            ids.insert(
-                link.id(),
-                packet.network.insert_link([], link.metadata().clone()),
-            );
-        }
-        for link in &links {
-            let references = link
-                .references()
-                .iter()
-                .map(|reference| {
-                    ids.get(reference).copied().ok_or_else(|| {
-                        "Rust source project: dangling original concrete reference".to_owned()
-                    })
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-            packet.network.set_references(ids[&link.id()], &references);
-        }
-        let members = links.iter().map(|link| ids[&link.id()]).collect::<Vec<_>>();
-        let inventory = insert_container(
-            &mut packet.network,
-            &members,
-            LinkMetadata::new()
-                .with_link_type(LinkType::Semantic)
-                .with_language("Rust source project")
-                .with_term("complete original source concrete graph")
-                .with_definition(file["path"].as_str().unwrap()),
-        );
-        packet
-            .network
-            .insert_field(packet.root, "source concrete graph", inventory);
-        let mut registered = concrete
-            .terms
-            .values()
-            .map(|id| ids[id])
-            .collect::<Vec<_>>();
-        registered.sort_unstable();
-        let registered = insert_container(
-            &mut packet.network,
-            &registered,
-            LinkMetadata::new()
-                .with_link_type(LinkType::Semantic)
-                .with_language("Rust source project")
-                .with_term("registered original concrete points"),
-        );
-        packet
-            .network
-            .insert_field(inventory, "registered concrete points", registered);
-        let digest = packet.network.insert_link(
-            [],
-            LinkMetadata::new()
-                .with_link_type(LinkType::Semantic)
-                .with_language("Rust source project")
-                .with_term("original source sha256")
-                .with_definition(file["sourceSha256"].as_str().unwrap()),
-        );
-        packet
-            .network
-            .insert_field(inventory, "original source digest", digest);
+    let inputs = composition["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|file| json!({"path":file["path"],"source":file["source"],"language":"Rust"}))
+        .collect::<Vec<_>>();
+    let mut configuration = options.clone();
+    let fields = configuration
+        .as_object_mut()
+        .ok_or_else(|| "Rust source project: expected a resource options record".to_owned())?;
+    fields.insert("requireClean".to_owned(), json!(true));
+    fields.insert("projection".to_owned(), json!("ConcreteSyntax"));
+    let archive = crate::create_source_project_archive(&json!(inputs), &configuration)?;
+    let links = archive.network.links().collect::<Vec<_>>();
+    if packet
+        .network
+        .links()
+        .count()
+        .saturating_add(links.len())
+        .saturating_add(2)
+        > node_limit
+    {
+        return Err("Rust source project: concrete graph node limit exceeded".to_owned());
     }
+    let mut ids = BTreeMap::new();
+    for link in &links {
+        ids.insert(
+            link.id(),
+            packet.network.insert_link([], link.metadata().clone()),
+        );
+    }
+    for link in &links {
+        let references = link
+            .references()
+            .iter()
+            .map(|id| {
+                ids.get(id).copied().ok_or_else(|| {
+                    "Rust source project: dangling original concrete reference".to_owned()
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        packet.network.set_references(ids[&link.id()], &references);
+    }
+    packet.network.insert_field(
+        packet.root,
+        "source project concrete archive",
+        ids[&archive.root],
+    );
     Ok(packet)
-}
-
-fn insert_container(
-    network: &mut LinkNetwork,
-    references: &[crate::LinkId],
-    metadata: LinkMetadata,
-) -> crate::LinkId {
-    let id = network.insert_link([], metadata);
-    network.set_references(id, references);
-    id
 }
 
 /// A source-qualified complete concrete graph reconstructed from its links.
@@ -436,6 +387,32 @@ pub fn read_rust_source_project_concrete_graphs(
     {
         return Err("Rust source project: invalid source graph root or node limit".to_owned());
     }
+    let current = fields(network, root, "source project concrete archive");
+    if !current.is_empty() {
+        if current.len() != 1 || !fields(network, root, "source concrete graph").is_empty() {
+            return Err("Rust source project: ambiguous source concrete archive".to_owned());
+        }
+        let mut configuration = options.clone();
+        configuration
+            .as_object_mut()
+            .ok_or_else(|| "Rust source project: expected a resource options record".to_owned())?
+            .insert("projection".to_owned(), json!("ConcreteSyntax"));
+        return crate::read_source_project_archive(network, current[0], &configuration)?
+            .sources
+            .into_iter()
+            .map(|file| {
+                if file.language != "Rust" || !file.network.verify_full_match(None).is_clean() {
+                    return Err("Rust source project: changed original concrete source".to_owned());
+                }
+                Ok(RustSourceProjectConcreteGraph {
+                    path: file.path,
+                    source: file.source,
+                    network: (*file.network).clone(),
+                })
+            })
+            .collect();
+    }
+    // Retain the complete preceding layout under its original reader roles.
     let mut seen = std::collections::BTreeSet::new();
     let mut results = Vec::new();
     for id in fields(network, root, "source concrete graph") {

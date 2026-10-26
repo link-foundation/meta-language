@@ -194,6 +194,7 @@ include = [
     "src/data/source-definition-catalog.lino",
     "src/data/source-exception-program.lino",
     "src/data/source-identifier-program.lino",
+    "src/data/source-project-archive-program.lino",
     "src/data/string-construction-program.lino",
     "src/data/string-number-program.lino",
     "src/data/unicode-case-emission-program.lino",

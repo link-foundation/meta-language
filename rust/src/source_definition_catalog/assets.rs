@@ -214,6 +214,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "source-identifier-program.lino" => {
             Some(include_str!("../data/source-identifier-program.lino"))
         }
+        "source-project-archive-program.lino" => {
+            Some(include_str!("../data/source-project-archive-program.lino"))
+        }
         "string-construction-program.lino" => {
             Some(include_str!("../data/string-construction-program.lino"))
         }

@@ -3922,6 +3922,33 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+The source-project snapshot draft reuses the existing complete graph archive
+for registered source languages. It stores every original concrete node,
+field, token, trivia, span, recovery flag and disconnected graph member, plus
+the original term directory, selected syntax state and allocator state. Explicit
+source roots reference every original outer Syntax root, including separately
+attached views. A source directory binds paths, selected languages and original
+byte digests. Equal names or source bytes establish no concept equivalence.
+
+Concrete syntax remains the default. Selecting an abstract view retains the
+complete original concrete graph and resolves view references against it.
+Reload invokes neither a parser nor current-catalog dispatch. Append extension
+reuses every preceding complete graph and refuses replacement of an existing
+source identity. New sources parse under their declared current definitions;
+old graph definitions and cached state remain exact. Rust semantic project
+packets now reuse this storage; their preceding concrete layout keeps its own
+reader and complete historical source context.
+
+Six future projects cover the priority source languages, JSON, empty trees,
+Unicode paths and escapes, recovery nodes and language aliases. Two append
+controls retain deliberately selected syntax and allocator gaps that reparsing
+cannot recreate. Eight refusals, complete binary state comparisons, native
+products, three root-selection controls and full predecessors at 4f946613 remain
+unexecuted. A snapshot preserves its selected parser graph. It does not establish
+complete native grammar coverage, production parser independence, every concept's
+formal meaning, exact-ID parser integration or complete source translation;
+all those requirements remain mandatory.
+
 Supplied Rust source projects now have a composition draft shared by both
 packages. The complete lexical module plan skips unrelated bodies and macro
 token trees, preserves actual inline parents and resolves the ordinary `.rs`
