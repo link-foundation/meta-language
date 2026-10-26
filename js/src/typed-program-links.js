@@ -112,6 +112,7 @@ function bindingTargets(program) {
       for (const position of [...entry.sourceSignature.parameters, entry.sourceSignature.result]) walkType(position.type);
     }
     for (const constructor of entry.ctors ?? []) for (const field of constructor.fields) walkType(field.type);
+    for(const constructor of entry.sourceFieldSignatures?.ctors??[])for(const field of constructor.fields)walkType(field.type);
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     walk(entry.body ?? entry.value, environment);
   }

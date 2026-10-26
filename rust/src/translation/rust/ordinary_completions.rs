@@ -560,6 +560,7 @@ impl RustParser {
             generated: true,
             span: None,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
             ctors: vec![
                 SCtor {
                     name: "FunctionResult".to_owned(),

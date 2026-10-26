@@ -197,6 +197,11 @@ impl RustParser {
             .declaration(&name, path, SourceDeclaration::Data)?;
         let mut result_path = vec!["crate".to_owned()];
         result_path.extend(owner_path.clone());
+        let source_field_signatures = self.capture_data_field_signatures(
+            &name,
+            path,
+            std::iter::once((constructor_name.as_str(), origins.as_slice())),
+        )?;
         self.origins.declaration(
             &constructor_name,
             &owner_path,
@@ -222,6 +227,7 @@ impl RustParser {
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_unit_clone_derivation: None,
+            source_field_signatures,
         })
     }
 

@@ -1,3 +1,4 @@
+import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
@@ -442,6 +443,7 @@ class RustParser {
     if (c.is('<')) throw unsupported('generic enum', 'type parameters are outside the portable core', span(start, c.peek()));
     c.expect('{', 'enum');
     const ctors = [];
+    const fieldGroups=[];
     const owner = [...path, name].join('.');
     this.origins.declaration(name, path, { k: 'data' });
     while (!c.is('}')) {
@@ -464,11 +466,13 @@ class RustParser {
         throw unsupported('explicit discriminant', 'discriminant values are outside the portable core', span(variant, c.peek()));
       }
       ctors.push({ name: variant.value, fields });
+      fieldGroups.push(sourceFields);
       this.origins.declaration(variant.value, [...path, name], { k: 'ctor', owner, fields: sourceFields, result: { wrappers: [], type: { kind: 'named', path: ['crate', ...path, name] }, path: [] } });
       if (!c.eat(',')) break;
     }
     c.expect('}', 'enum');
     const declaration={ k: 'data', name, ctors, span: span(start, c.peek()) };
+    retainRustDataTypeFieldSignatures(this,declaration,path,fieldGroups);
     const proof=this.typeNamespaceModel?captureRustUnitCloneDerivation(derivations,declaration,path):null;
     if(proof)declaration.sourceUnitCloneDerivation=proof;
     this.origins.declaration(name,path,{k:'data',unitFields:ctors.every(constructor=>constructor.fields.length===0),...(proof?{sourceUnitCloneDerivation:proof}:{})});

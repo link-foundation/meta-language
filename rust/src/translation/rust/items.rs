@@ -428,6 +428,7 @@ impl RustParser {
         }
         self.cursor.expect("{", Some("enum"))?;
         let mut ctors = Vec::new();
+        let mut field_groups = Vec::new();
         let owner = path
             .iter()
             .chain(std::iter::once(&name))
@@ -472,6 +473,9 @@ impl RustParser {
             constructor_path.push(name.clone());
             let mut type_path = vec!["crate".to_owned()];
             type_path.extend(constructor_path.iter().cloned());
+            if self.retain_source_type_owners {
+                field_groups.push((variant.value.clone(), source_fields.clone()));
+            }
             self.origins.declaration(
                 &variant.value,
                 &constructor_path,
@@ -497,12 +501,20 @@ impl RustParser {
             }
         }
         self.cursor.expect("}", Some("enum"))?;
+        let source_field_signatures = self.capture_data_field_signatures(
+            &name,
+            path,
+            field_groups
+                .iter()
+                .map(|(name, fields)| (name.as_str(), fields.as_slice())),
+        )?;
         let mut declaration = SData {
             name,
             ctors,
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_unit_clone_derivation: None,
+            source_field_signatures,
         };
         if !self.type_namespace_model.is_empty() {
             let proof =
@@ -969,3 +981,5 @@ impl RustParser {
         Ok(args)
     }
 }
+
+mod data_field_signatures;

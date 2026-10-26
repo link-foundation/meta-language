@@ -1,3 +1,4 @@
+import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureContainers,checkRustDataTypeFieldSignatureProgramContainers} from './rust-data-type-field-signatures.js';
 import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
 import {captureCallableConstantApplicationHead} from './callable-constants.js';
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
@@ -182,6 +183,7 @@ export function checkProgram(surface) { return checkSurfaceProgram(surface, fals
 export function checkProjectedProgram(surface) { return checkSurfaceProgram(surface, true); }
 
 function checkSurfaceProgram(surface, checkedProjection) {
+  checkRustDataTypeFieldSignatureProgramContainers(surface);
   const orderProfile=prepareJavaScriptRecordOrderProfile(surface);
   surface=orderProfile.surface;
   const sourceProofSelected=checkRustConstFunctionContainers(surface);
@@ -322,6 +324,7 @@ class Checker {
           type: this.resolveType(field.type, itemPath, item.span),
         })),
       }));
+      if('sourceFieldSignatures' in item){checkRustDataTypeFieldSignatureContainers(item);entry.sourceFieldSignatures=checkRustDataTypeFieldSignatures(item.sourceFieldSignatures,entry.ctors,this.language,entry.fullName,value=>this.resolveType(value,itemPath,item.span));}
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k !== 'fn') return;

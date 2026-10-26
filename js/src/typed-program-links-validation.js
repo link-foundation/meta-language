@@ -22,6 +22,7 @@ import {checkRustPureUnitCalls} from './translation/rust-pure-unit-calls.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
 import {checkRustEmptyOptionProof} from './translation/rust-empty-options.js';
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
+import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureProgramContainers} from './translation/rust-data-type-field-signatures.js';
 import {validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes} from './translation/rust-type-namespace.js';
 import {checkRustUnitCloneDerivations} from './translation/rust-unit-clone.js';
 import {validateSourceSpans} from './source-spans.js';
@@ -45,6 +46,7 @@ const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'ou
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
 export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
+  checkRustDataTypeFieldSignatureProgramContainers(program);
   checkRustConstFunctionContainers(program);
   checkRustRuntimeShell(program);
   checkRustTypeNamespaceRecordShapes(program);
@@ -148,6 +150,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
           if (!field || typeof field.name !== 'string' || !field.name || fields.has(field.name)) throw new TypeError('a linked constructor has malformed or duplicate fields');
           fields.add(field.name); type(field.type);
         }
+      }
+      if (Object.hasOwn(entry,'sourceFieldSignatures')) {
+        checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,program.sourceLanguage,name);
+        for(const constructor of entry.sourceFieldSignatures.ctors)for(const field of constructor.fields)type(field.type);
       }
     }
   }

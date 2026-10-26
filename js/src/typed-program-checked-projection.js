@@ -4,6 +4,7 @@ import {acceptProgramStringRepresentationFlag} from './translation/program-strin
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
 import {checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
+import {checkRustDataTypeFieldSignatureProgramContainers} from './translation/rust-data-type-field-signatures.js';
 import { checkProjectedProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
@@ -11,6 +12,7 @@ import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } f
 import { readProgramDeclarationTypeProjectionField, readProgramExpressionProjection, readProgramNeutralFieldDefault, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
+  checkRustDataTypeFieldSignatureProgramContainers(program);
   if(checkRustConstFunctionContainers(program))wholeProgram=true;
   if(checkRustRuntimeShell(program))return program;
   const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
@@ -71,6 +73,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
         fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type) })),
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
+      ...(entry.sourceFieldSignatures!==undefined?{sourceFieldSignatures:entry.sourceFieldSignatures}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
     const annotation = readProgramDeclarationTypeProjectionField(entry.k, 'annotation');

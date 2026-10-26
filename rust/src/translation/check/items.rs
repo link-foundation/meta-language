@@ -76,6 +76,7 @@ impl Checker {
                     span,
                     generated: data.generated,
                     output: false,
+                    source_field_signatures: None,
                     source_unit_clone_derivation: data
                         .source_unit_clone_derivation
                         .as_deref()
@@ -188,8 +189,22 @@ impl Checker {
                     fields,
                 });
             }
+            let source_fields = if let Some(signature) = item.source_field_signatures.as_deref() {
+                Some(Box::new(
+                    crate::translation::source_data_field_signatures::check(
+                        signature,
+                        &ctors,
+                        self.language.as_str(),
+                        &full(path, &item.name),
+                        |ty| self.resolve_type(Some(ty), path, item.span),
+                    )?,
+                ))
+            } else {
+                None
+            };
             if let Some(Decl::Data(entry)) = self.decls.get_mut(&full(path, &item.name)) {
                 entry.ctors = ctors;
+                entry.source_field_signatures = source_fields;
             }
         }
         for (item, path) in &flat {

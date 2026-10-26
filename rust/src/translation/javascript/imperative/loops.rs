@@ -149,6 +149,7 @@ impl Lowering {
                 span: Some(place),
                 generated: true,
                 source_unit_clone_derivation: None,
+                source_field_signatures: None,
             }));
             let call = Rc::clone(&call);
             let site: Site = Box::new(move |_| {

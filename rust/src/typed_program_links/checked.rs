@@ -284,6 +284,21 @@ fn validate_type_record(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    // A selected runtime interpretation cannot hide owned datatype facets.
+    for declaration in &program.declarations {
+        if let Decl::Data(data) = declaration
+            && let Some(signature) = data.source_field_signatures.as_deref()
+        {
+            crate::translation::source_data_field_signatures::check(
+                signature,
+                &data.ctors,
+                program.source_language.as_str(),
+                &data.full_name,
+                |ty| Ok(ty.clone()),
+            )
+            .map_err(|failure| error(failure.to_string()))?;
+        }
+    }
     crate::translation::source_const_functions::validate_const_functions(program)
         .map_err(|failure| error(failure.to_string()))?;
     if crate::translation::runtime_shell::validate_program(program)

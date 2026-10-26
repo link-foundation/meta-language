@@ -496,6 +496,7 @@ impl<'a> LeanParser<'a> {
             span: Some(self.span_to_next(&start)),
             generated: false,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         })
     }
 

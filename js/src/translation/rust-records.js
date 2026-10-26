@@ -2,6 +2,7 @@
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
 import{resolveRustTypeAliasPath}from'./rust-type-aliases.js';
+import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -60,7 +61,7 @@ export function readRustRecordItem(parser,path){
  parser.origins.declaration(name,path,{k:'data',unitFields:fields.length===0});
  parser.origins.declaration(constructorName,[...path,name],{k:'ctor',owner:fullName,fields:origins,
   result:{wrappers:[],type:{kind:'named',path:['crate',...path,name]},path:[]}});
- return{k:'data',name,ctors:[{name:constructorName,fields}],span:span(start,c.peek())};
+ return retainRustDataTypeFieldSignatures(parser,{k:'data',name,ctors:[{name:constructorName,fields}],span:span(start,c.peek())},path,[origins]);
 }
 
 export function prepareRustRecordMethodNamespace(parser,owner,method,where){

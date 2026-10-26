@@ -351,6 +351,7 @@ impl Threader<'_> {
                 generated: true,
                 output: true,
                 source_unit_clone_derivation: None,
+                source_field_signatures: None,
             },
         ));
         name

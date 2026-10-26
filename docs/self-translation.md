@@ -53,6 +53,14 @@ through both graph codecs. The earlier signature model keeps its strict scope.
 Native public ABI reconstruction, additional qualifiers and partial-item owner
 composition remain separate requirements.
 
+The retained mode also records each datatype's ordered constructors and complete
+field type owners under `Rust data type field signatures 1`. Recursive nominal
+references point to their actual datatype declarations. Both codecs and checked
+projection preserve this data, so source type distinctions inside aggregates
+remain available to formal meaning comparison. This is a source-definition
+facet; full native aggregate interfaces and additional datatype contexts remain
+required work. Its newly authored controls have not been executed.
+
 For a source project, set `retainSourceTypeOwners: true` in its options. The
 `source-project` CLI also reads this property from its Links inventory options;
 the result retains the semantic facets and every original concrete graph.

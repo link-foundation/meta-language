@@ -577,6 +577,15 @@ pub struct SData {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_unit_clone_derivation: Option<Box<serde_json::Value>>,
+    /// Complete original field-type owners, selected independently of body lowering.
+    #[serde(
+        default,
+        rename = "sourceFieldSignatures",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_data_field_signatures::read_present"
+    )]
+    pub source_field_signatures:
+        Option<Box<crate::translation::source_data_field_signatures::RustDataTypeFieldSignatures>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

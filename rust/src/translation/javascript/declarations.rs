@@ -83,6 +83,7 @@ impl JavaScriptParser {
                     span: None,
                     generated: false,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 });
                 items.push(SItem::Data(SData {
                     name,
@@ -90,6 +91,7 @@ impl JavaScriptParser {
                     span: Some(range),
                     generated: false,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 }));
             }
         }

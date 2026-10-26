@@ -840,6 +840,7 @@ impl Lowering {
             span: Some(place),
             generated: true,
             source_unit_clone_derivation: None,
+            source_field_signatures: None,
         }));
         let scrutinee = self.compound(statement, &inner, scope)?;
         Ok(node(

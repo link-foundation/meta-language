@@ -610,6 +610,24 @@ const and other missing qualifiers, full inference and generic/trait resolution
 still require their own implementations. Retained type facts are not evidence
 of those capabilities or of successful execution.
 
+The same opt-in source-owner mode retains `Rust data type field signatures 1`
+on each actual datatype declaration. It records the fully qualified datatype,
+every constructor in order, and every original field type, recursive owner,
+pointer layer and represented lifetime. Validation resolves those positions
+against the complete actual constructor layout using source type model two;
+missing, inconsistent, malformed or unrepresented positions refuse. Recursive
+nominal fields reference the actual owned datatype links instead of unfolding
+their definitions infinitely. Source-free validation, checked projection and
+text/binary reload preserve this facet. Equal portable field layouts and equal
+function headers therefore cannot erase distinct field meanings such as
+`usize`/`u64`, `isize`/`i64` or boxed/direct nominal positions from complete formal
+definitions. Plain parsing retains its independent omission behavior. This
+records admitted field types; it establishes neither Rust aggregate ABI/layout
+reconstruction, generic or named-lifetime datatype contexts, arbitrary traits,
+ownership/coercions, callable-field target encodings nor semantic equivalence.
+All future original-source, codec, target and meaning controls remain deferred
+until the complete requirements draft.
+
 The explicit `retained scalar Rust function interface 1` emission model
 reconstructs canonical native scalar endpoint types from these actual
 version-two owners. It retains Boolean, binary64, Unit, fixed integer and

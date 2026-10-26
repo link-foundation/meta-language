@@ -64,6 +64,14 @@ pub struct DataDecl {
     /// Optional actual field-free Rust Clone derivation owned by this datatype.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_unit_clone_derivation: Option<serde_json::Value>,
+    /// Recursively owned original field type positions for every constructor.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_data_field_signatures::read_present"
+    )]
+    pub source_field_signatures:
+        Option<Box<crate::translation::source_data_field_signatures::RustDataTypeFieldSignatures>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
