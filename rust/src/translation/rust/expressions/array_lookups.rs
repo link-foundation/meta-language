@@ -6,6 +6,7 @@ use super::{
 use crate::translation::rust_array_lookup_rules as rules;
 use crate::translation::source_signatures::SourceOwner;
 use std::collections::HashMap;
+mod source_owners;
 fn count(value: usize) -> f64 {
     u32::try_from(value).map_or(f64::INFINITY, f64::from)
 }
@@ -70,6 +71,7 @@ struct LookupInput<'a> {
     path: &'a [String],
     consumer: Token,
     copied: bool,
+    cloned: bool,
     defaults: Vec<SExpr>,
 }
 struct LookupFacts {
@@ -79,6 +81,7 @@ struct LookupFacts {
     owner: String,
     result_type: Type,
     result_origin: SourceOrigin,
+    element_owner: Option<SourceOwner>,
 }
 fn selected_lookup(object: SExpr, index: SExpr, range: Option<Span>) -> SExpr {
     SExpr::new(
@@ -194,11 +197,18 @@ impl RustParser {
             ));
         }
         let mut consumer = self.cursor.advance();
-        let copied = consumer.value == "copied";
+        let cloned = consumer.value == "cloned";
+        let copied = consumer.value == "copied" || cloned;
         if copied {
             self.cursor.expect("(", Some("copied lookup"))?;
             self.cursor.expect(")", Some("copied lookup"))?;
-            self.cursor.expect(".", Some("copied lookup consumer"))?;
+            if self.cursor.eat(".").is_none() || self.peek().kind != super::TokenKind::Identifier {
+                return Err(unsupported(
+                    "Rust array lookup Option",
+                    "an immediate standard presence or copied-value consumer is required",
+                    range,
+                ));
+            }
             consumer = self.cursor.identifier(Some("copied lookup consumer"))?;
         }
         let consumer_arity = rules::read_rust_array_lookup_consumer_arity(&consumer.value, copied);
@@ -248,6 +258,7 @@ impl RustParser {
             path,
             consumer,
             copied,
+            cloned,
             defaults,
         };
         let facts = self.array_lookup_facts(&input)?;
@@ -262,16 +273,27 @@ impl RustParser {
             path,
             consumer,
             copied,
+            cloned,
             defaults,
         } = input;
         let range = *range;
         let copied = *copied;
+        let cloned = *cloned;
         let arity = count(args.len());
         let source = self.origins.origin(receiver, path);
         let element = match &source.ty {
             Some(Type::Array { element, .. }) => Some(element.as_ref().clone()),
             _ => None,
         };
+        let element_owner = source_owners::element_owner(
+            source
+                .expanded_source_owner
+                .as_ref()
+                .or(source.source_owner.as_ref()),
+        )
+        .cloned();
+        let (clone_error, string_clone) =
+            source_owners::clone_facts(element.as_ref(), element_owner.as_ref(), cloned);
         let error = rules::read_rust_array_lookup_receiver_error(
             source.ty.as_ref().map_or("", Type::kind),
             element.as_ref().map_or("", Type::kind),
@@ -282,10 +304,13 @@ impl RustParser {
                 .iter()
                 .all(|layer| layer == "reference" || layer == "box"),
             source.array_element_copy_evidence,
-            copied,
+            copied && !string_clone,
         );
         if !error.is_empty() {
             return Err(unsupported("Rust array lookup receiver", &error, range));
+        }
+        if !clone_error.is_empty() {
+            return Err(unsupported("Rust array lookup clone", &clone_error, range));
         }
         if arity > 0.0 && !self.usize_index_expression(&args[0], path)?.is_empty() {
             return Err(unsupported(
@@ -302,16 +327,8 @@ impl RustParser {
                 range,
             ));
         }
-        let owner = if let Some(expanded) = &source.expanded_source_owner {
-            SourceOrigin {
-                source_owner: Some(expanded.clone()),
-                ..SourceOrigin::unknown()
-            }
-            .pointer_integer_owner()
-        } else {
-            source.pointer_integer_owner()
-        };
-        if !presence {
+        let owner = source_owners::scalar_owner(&source);
+        if !presence && !cloned {
             let actual = element.as_ref().expect("complete copied element");
             let (bits, signed) = match actual {
                 Type::Fixed { bits, signed } => (bits.to_string(), *signed),
@@ -332,7 +349,10 @@ impl RustParser {
         } else {
             element.clone().expect("complete copied element")
         };
-        let result_origin = lookup_result_origin(&result_type, &owner, presence, path);
+        let mut result_origin = lookup_result_origin(&result_type, &owner, presence, path);
+        if !presence && string_clone {
+            result_origin.source_owner = element_owner.clone();
+        }
         if let Some(default) = defaults.first() {
             self.origins.argument(
                 &self.origins.origin(default, path),
@@ -347,6 +367,7 @@ impl RustParser {
             owner,
             result_type,
             result_origin,
+            element_owner,
         })
     }
     fn project_array_lookup(
@@ -373,6 +394,7 @@ impl RustParser {
             owner,
             result_type,
             result_origin,
+            element_owner,
         } = facts;
         let usize_type = rust_fixed_type("usize").expect("the existing exact usize source profile");
         let mut captures = vec![(self.fresh_product_binding(), source.ty, (*receiver).clone())];
@@ -418,10 +440,21 @@ impl RustParser {
                 "selected".to_owned(),
                 selected_lookup(local(0), index, range),
             );
+            let default_term = rules::read_rust_array_lookup_default_term(
+                result_type.kind(),
+                result_type == super::super::STRING && element_owner.is_some(),
+            );
             let fallback = if !defaults.is_empty() {
                 local(captures.len() - 1)
-            } else if result_type == Type::Unit {
+            } else if default_term == "unit" {
                 SExpr::new(SNode::Unit, range)
+            } else if default_term == "empty string" {
+                SExpr::new(
+                    SNode::Str {
+                        value: String::new(),
+                    },
+                    range,
+                )
             } else {
                 self.project_primitive_default(&owner, path, range)?
             };

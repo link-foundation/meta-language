@@ -825,6 +825,43 @@ pub fn read_rust_array_lookup_element_owner_error(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_array_lookup_cloned_element_error(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner_kind: &str,
+    owner: &str,
+    children: f64,
+) -> String {
+    if ((((kind == "string") && (owner_kind == "library")) && (owner == "std::string::String"))
+        && (children == 0f64))
+        || ((kind == "unit")
+            || (((owner_kind == "primitive") && (children == 0f64))
+                && ((self::read_rust_array_lookup_element_owner_error(kind, bits, signed, owner))
+                    .is_empty())))
+    {
+        String::new()
+    } else {
+        String::from(
+            "a cloned element needs its complete standard scalar or owned String source meaning",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_default_term(kind: &str, standard_string: bool) -> String {
+    if kind == "unit" {
+        String::from("unit")
+    } else if (kind == "string") && standard_string {
+        String::from("empty string")
+    } else {
+        String::from("primitive default")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_rust_array_lookup_condition(method: &str) -> Vec<String> {
     if method == "get" {
         vec![
@@ -855,25 +892,6 @@ pub fn plan_rust_array_lookup_index(method: &str) -> Vec<String> {
             String::from("length"),
             String::from("one"),
             String::from("sub"),
-        ]
-    } else {
-        Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_array_lookup_consumer(consumer: &str) -> Vec<String> {
-    if consumer == "is_some" {
-        vec![String::from("condition")]
-    } else if consumer == "is_none" {
-        vec![String::from("condition"), String::from("not")]
-    } else if (consumer == "unwrap_or") || (consumer == "unwrap_or_default") {
-        vec![
-            String::from("condition"),
-            String::from("selected"),
-            String::from("fallback"),
-            String::from("if"),
         ]
     } else {
         Vec::<String>::new()

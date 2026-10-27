@@ -16,6 +16,17 @@ export function readRustArrayLookupReceiverError(kind,element,model,proven,immut
 /** @param {string} kind @param {string} bits @param {boolean} signed
  * @param {string} owner @returns {string} */
 export function readRustArrayLookupElementOwnerError(kind,bits,signed,owner){return kind==='unit'||acceptRustPrimitiveFromSource(kind,bits,signed,'primitive',owner,0,true,0)?'':'a copied element needs its complete standard scalar source owner';}
+/** Standard String uses the existing immutable owned string value encoding;
+ * arbitrary Clone implementations can carry observable user effects.
+ * @param {string} kind @param {string} bits @param {boolean} signed
+ * @param {string} ownerKind @param {string} owner @param {number} children
+ * @returns {string} */
+export function readRustArrayLookupClonedElementError(kind,bits,signed,ownerKind,owner,children){
+ if(kind==='string'&&ownerKind==='library'&&owner==='std::string::String'&&children===0)return '';
+ return kind==='unit'||ownerKind==='primitive'&&children===0&&readRustArrayLookupElementOwnerError(kind,bits,signed,owner)===''?'':'a cloned element needs its complete standard scalar or owned String source meaning';
+}
+/** @param {string} kind @param {boolean} standardString @returns {string} */
+export function readRustArrayLookupDefaultTerm(kind,standardString){return kind==='unit'?'unit':kind==='string'&&standardString?'empty string':'primitive default';}
 /** Lazy branch plans keep invalid reads and empty-last subtraction unreachable.
  * @param {string} method @returns {string[]} */
 export function planRustArrayLookupCondition(method){return method==='get'?['index','length','lt']:method==='first'||method==='last'?['length','zero','gt']:[];}

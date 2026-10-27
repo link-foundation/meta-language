@@ -4996,6 +4996,21 @@ distinctions. Escaping Options/references, ranges, arbitrary mappers, mutable
 lookups, custom indexing, complete ownership and whole-project semantics remain
 required; these controls supply no executed observations.
 
+The lookup draft also admits cloned values for the supported scalar domains and
+actual standard owned Strings. Shared source-owner rules govern that choice;
+bounded projections cross only registered standard containers and retain each
+complete terminal owner. The existing owned string value encoding supplies the
+selected value; the original vector remains available. Shared default terms
+retain empty owned strings separately from borrowed str and primitive defaults.
+The preceding copied-String refusal remains intact. Full scalar predecessors,
+Unicode text, UTF8 measurements, signed-zero choices, eager operand traces and
+original/canonical signatures have deferred controls. Flat fixture directories
+retain every deep owner edge without increasing the data codec's depth budget.
+Custom Clone effects, capacity/pointer/allocation observations, mutable aliases,
+complete borrow/drop behavior and escaping Options remain separate obligations.
+Neither this value encoding nor source history establishes semantic equivalence
+between unrelated owner definitions or executed verification.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains
