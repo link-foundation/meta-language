@@ -335,6 +335,7 @@ impl RustParser {
             .read_standard_primitive_position(&full, path)?
             .is_some();
         let standard_selection = !self.primitive_selection_import_role(&full, path).is_empty();
+        let standard_associated = self.primitive_associated_import(&full, path);
         let c = &mut self.cursor;
         if !self.primitive_owner_model.is_empty() && !standard_primitive {
             return Err(unsupported(
@@ -349,6 +350,7 @@ impl RustParser {
             && !standard_string
             && !standard_primitive
             && !standard_selection
+            && !standard_associated
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -384,6 +386,7 @@ impl RustParser {
             || standard_string
             || standard_primitive
             || standard_selection
+            || standard_associated
         {
             full
         } else {

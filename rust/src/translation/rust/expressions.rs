@@ -3,6 +3,7 @@
 mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
+mod primitive_associated_calls;
 mod primitive_selections;
 mod read_only_queries;
 mod scalar_vector_copy;
@@ -874,6 +875,9 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_associated_call(path)? {
+            return Ok(value);
+        }
         if let Some(value) = self.read_primitive_selection_call(path)? {
             return Ok(value);
         }

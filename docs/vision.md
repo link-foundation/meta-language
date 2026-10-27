@@ -606,6 +606,30 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Primitive associated-call syntax reuses the same fourteen shared min/max,
+signed-property, saturating and wrapping method interpretations. Bare primitive
+paths, std/core primitive reexports, absolute external-crate paths and actual
+module-local primitive import aliases retain their distinct source resolution.
+Lexically shadowed roots cannot acquire standard meanings. Only untyped actual
+integer literal receivers receive the explicitly selected primitive context;
+every other receiver must independently retain that exact source owner, width,
+sign and direct value interpretation. Existing argument checks still apply.
+Hosts transport paths, tokens and types into the existing shared method
+projectors; they introduce no replacement arithmetic or general trait resolver.
+The path and primitive-namespace rules follow the Rust
+[Reference](https://doc.rust-lang.org/reference/paths.html) and
+[standard library](https://doc.rust-lang.org/std/primitive/index.html).
+
+Five hundred eighty complete original sources declare independent boundary
+values across all fixed/pointer owners and Boolean ordering, qualified and
+absolute paths, local aliases, contextual signed minima, borrowed text
+measurements, and complete operand output traces. Deferred controls retain
+source owners, explicit function types, original and both generated native
+products, both Links transports and all four emissions. These are code/data
+drafts, without executed observations. Associated callable values, generic or
+custom traits, reference/mutation methods, the remaining standard library and
+complete own-codebase translation remain obligations.
+
 Direct fixed integers now have wrapping_add/sub/neg source drafts, with
 wrapping_abs for signed types. Shared conditional plans reconstruct modular
 results using only representable intermediate arithmetic, including signed

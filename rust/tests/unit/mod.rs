@@ -508,3 +508,5 @@ mod translation_rust_saturating_integer;
 mod translation_rust_saturating_multiplication;
 
 mod translation_rust_wrapping_integer;
+
+mod translation_rust_primitive_associated_call;
