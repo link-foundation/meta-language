@@ -1,0 +1,449 @@
+//! Original tokens/types and generic shared source-plan term transport only.
+use super::{
+    BOOL, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Token,
+    Type, UnaryOp, rust_fixed_type, type_error, unsupported,
+};
+use crate::translation::rust_array_lookup_rules as rules;
+use crate::translation::source_signatures::SourceOwner;
+use std::collections::HashMap;
+fn count(value: usize) -> f64 {
+    u32::try_from(value).map_or(f64::INFINITY, f64::from)
+}
+fn pop(stack: &mut Vec<SExpr>, span: Option<Span>) -> Result<SExpr> {
+    stack
+        .pop()
+        .ok_or_else(|| type_error("an array lookup source plan lost an earlier term", span))
+}
+fn project(plan: &[String], values: &HashMap<String, SExpr>, span: Option<Span>) -> Result<SExpr> {
+    let mut stack = Vec::new();
+    for term in plan {
+        if let Some(value) = values.get(term) {
+            stack.push(value.clone());
+            continue;
+        }
+        let node = match term.as_str() {
+            "lt" | "gt" | "sub" => {
+                let right = pop(&mut stack, span)?;
+                let left = pop(&mut stack, span)?;
+                SNode::Binary {
+                    op: match term.as_str() {
+                        "lt" => BinaryOp::Lt,
+                        "gt" => BinaryOp::Gt,
+                        _ => BinaryOp::Sub,
+                    },
+                    left: Box::new(left),
+                    right: Box::new(right),
+                    rounding: None,
+                }
+            }
+            "not" => SNode::Unary {
+                op: UnaryOp::Not,
+                arg: Box::new(pop(&mut stack, span)?),
+            },
+            "if" => {
+                let otherwise = pop(&mut stack, span)?;
+                let then = pop(&mut stack, span)?;
+                let cond = pop(&mut stack, span)?;
+                SNode::If {
+                    cond: Box::new(cond),
+                    then: Box::new(then),
+                    otherwise: Box::new(otherwise),
+                }
+            }
+            _ => return Err(type_error("unknown array lookup source term", span)),
+        };
+        stack.push(SExpr::new(node, span));
+    }
+    if stack.len() != 1 {
+        return Err(type_error(
+            "an array lookup source plan needs one complete result",
+            span,
+        ));
+    }
+    pop(&mut stack, span)
+}
+struct LookupInput<'a> {
+    receiver: &'a SExpr,
+    method: &'a Token,
+    args: &'a [SExpr],
+    range: Option<Span>,
+    path: &'a [String],
+    consumer: Token,
+    copied: bool,
+    defaults: Vec<SExpr>,
+}
+struct LookupFacts {
+    source: SourceOrigin,
+    element: Option<Type>,
+    presence: bool,
+    owner: String,
+    result_type: Type,
+    result_origin: SourceOrigin,
+}
+fn selected_lookup(object: SExpr, index: SExpr, range: Option<Span>) -> SExpr {
+    SExpr::new(
+        SNode::Index {
+            object: Box::new(object),
+            index: Box::new(SExpr::new(
+                SNode::Cast {
+                    arg: Box::new(index),
+                    to: Type::Nat,
+                    from: None,
+                    flavor: Flavor::Exact,
+                },
+                range,
+            )),
+            optional: None,
+            proven_in_bounds: None,
+        },
+        range,
+    )
+}
+fn lookup_result_origin(
+    result_type: &Type,
+    owner: &str,
+    presence: bool,
+    path: &[String],
+) -> SourceOrigin {
+    let mut result_origin = SourceOrigin::with_type(result_type.clone(), path, Vec::new());
+    result_origin.source_owner = Some(SourceOwner {
+        kind: if *result_type == Type::Unit {
+            "unit"
+        } else {
+            "primitive"
+        }
+        .to_owned(),
+        path: if *result_type == Type::Unit {
+            Vec::new()
+        } else {
+            vec![if presence {
+                "bool".to_owned()
+            } else {
+                owner.to_owned()
+            }]
+        },
+        arguments: Vec::new(),
+    });
+    result_origin
+}
+fn lookup_dimensions(
+    object: SExpr,
+    usize_type: &Type,
+    range: Option<Span>,
+) -> HashMap<String, SExpr> {
+    let length = SExpr::new(
+        SNode::Cast {
+            arg: Box::new(SExpr::new(
+                SNode::Length {
+                    object: Box::new(object),
+                    integer: true,
+                },
+                range,
+            )),
+            to: usize_type.clone(),
+            from: None,
+            flavor: Flavor::Exact,
+        },
+        range,
+    );
+    let number = |value: &str| {
+        SExpr::new(
+            SNode::Num {
+                value: value.to_owned(),
+                ty: Some(usize_type.clone()),
+                negative: false,
+                unit: false,
+            },
+            range,
+        )
+    };
+    HashMap::from([
+        ("length".to_owned(), length),
+        ("zero".to_owned(), number("0")),
+        ("one".to_owned(), number("1")),
+    ])
+}
+impl RustParser {
+    pub(super) fn read_array_lookup(
+        &mut self,
+        receiver: &SExpr,
+        method: &Token,
+        args: &[SExpr],
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<Option<SExpr>> {
+        let arity =
+            rules::read_rust_array_lookup_arity(&method.value, self.ordinary_completion_context());
+        if arity < 0.0 {
+            return Ok(None);
+        }
+        if count(args.len()) != arity {
+            return Err(type_error(
+                format!(
+                    "{} needs {arity} actual array lookup arguments",
+                    method.value
+                ),
+                range,
+            ));
+        }
+        if self.cursor.eat(".").is_none() || self.peek().kind != super::TokenKind::Identifier {
+            return Err(unsupported(
+                "Rust array lookup Option",
+                "an immediate standard presence or copied-value consumer is required",
+                range,
+            ));
+        }
+        let mut consumer = self.cursor.advance();
+        let copied = consumer.value == "copied";
+        if copied {
+            self.cursor.expect("(", Some("copied lookup"))?;
+            self.cursor.expect(")", Some("copied lookup"))?;
+            self.cursor.expect(".", Some("copied lookup consumer"))?;
+            consumer = self.cursor.identifier(Some("copied lookup consumer"))?;
+        }
+        let consumer_arity = rules::read_rust_array_lookup_consumer_arity(&consumer.value, copied);
+        if consumer_arity < 0.0 {
+            return Err(unsupported(
+                "Rust array lookup Option",
+                "an immediate standard presence or copied-value consumer is required",
+                range,
+            ));
+        }
+        self.cursor.expect("(", Some("array lookup consumer"))?;
+        let mut defaults = Vec::new();
+        if consumer_arity > 0.0 {
+            defaults.push(self.expr(path, Options::default())?);
+            self.cursor.eat(",");
+        }
+        let close = self.cursor.expect(")", Some("array lookup consumer"))?;
+        let range = Some(Span::new(
+            receiver
+                .span
+                .or(range)
+                .map_or(method.start, |span| span.start),
+            close.end,
+        ));
+        if self.origins.collecting {
+            return Ok(Some(SExpr::new(
+                SNode::App {
+                    func: Box::new(SExpr::new(
+                        SNode::Name {
+                            path: vec![method.value.clone()],
+                        },
+                        range,
+                    )),
+                    args: std::iter::once(receiver.clone())
+                        .chain(args.iter().cloned())
+                        .chain(defaults)
+                        .collect(),
+                },
+                range,
+            )));
+        }
+        let input = LookupInput {
+            receiver,
+            method,
+            args,
+            range,
+            path,
+            consumer,
+            copied,
+            defaults,
+        };
+        let facts = self.array_lookup_facts(&input)?;
+        self.project_array_lookup(&input, facts).map(Some)
+    }
+    fn array_lookup_facts(&self, input: &LookupInput<'_>) -> Result<LookupFacts> {
+        let LookupInput {
+            receiver,
+            method: _,
+            args,
+            range,
+            path,
+            consumer,
+            copied,
+            defaults,
+        } = input;
+        let range = *range;
+        let copied = *copied;
+        let arity = count(args.len());
+        let source = self.origins.origin(receiver, path);
+        let element = match &source.ty {
+            Some(Type::Array { element, .. }) => Some(element.as_ref().clone()),
+            _ => None,
+        };
+        let error = rules::read_rust_array_lookup_receiver_error(
+            source.ty.as_ref().map_or("", Type::kind),
+            element.as_ref().map_or("", Type::kind),
+            source.array_source_model.unwrap_or(""),
+            source.proven,
+            source
+                .wrappers
+                .iter()
+                .all(|layer| layer == "reference" || layer == "box"),
+            source.array_element_copy_evidence,
+            copied,
+        );
+        if !error.is_empty() {
+            return Err(unsupported("Rust array lookup receiver", &error, range));
+        }
+        if arity > 0.0 && !self.usize_index_expression(&args[0], path)?.is_empty() {
+            return Err(unsupported(
+                "Rust array lookup index",
+                "the actual index needs its complete direct usize source meaning",
+                args[0].span.or(range),
+            ));
+        }
+        let presence = rules::accept_rust_array_lookup_presence_consumer(&consumer.value);
+        if !presence && element.is_none() {
+            return Err(unsupported(
+                "Rust array lookup result",
+                "a copied value needs its complete actual scalar element type",
+                range,
+            ));
+        }
+        let owner = if let Some(expanded) = &source.expanded_source_owner {
+            SourceOrigin {
+                source_owner: Some(expanded.clone()),
+                ..SourceOrigin::unknown()
+            }
+            .pointer_integer_owner()
+        } else {
+            source.pointer_integer_owner()
+        };
+        if !presence {
+            let actual = element.as_ref().expect("complete copied element");
+            let (bits, signed) = match actual {
+                Type::Fixed { bits, signed } => (bits.to_string(), *signed),
+                _ => (String::new(), false),
+            };
+            let error = rules::read_rust_array_lookup_element_owner_error(
+                actual.kind(),
+                &bits,
+                signed,
+                &owner,
+            );
+            if !error.is_empty() {
+                return Err(unsupported("Rust array lookup result", &error, range));
+            }
+        }
+        let result_type = if presence {
+            BOOL
+        } else {
+            element.clone().expect("complete copied element")
+        };
+        let result_origin = lookup_result_origin(&result_type, &owner, presence, path);
+        if let Some(default) = defaults.first() {
+            self.origins.argument(
+                &self.origins.origin(default, path),
+                &result_origin,
+                default.span.or(range),
+            )?;
+        }
+        Ok(LookupFacts {
+            source,
+            element,
+            presence,
+            owner,
+            result_type,
+            result_origin,
+        })
+    }
+    fn project_array_lookup(
+        &mut self,
+        input: &LookupInput<'_>,
+        facts: LookupFacts,
+    ) -> Result<SExpr> {
+        let LookupInput {
+            receiver,
+            method,
+            args,
+            range,
+            path,
+            consumer,
+            defaults,
+            ..
+        } = input;
+        let range = *range;
+        let arity = count(args.len());
+        let LookupFacts {
+            source,
+            element,
+            presence,
+            owner,
+            result_type,
+            result_origin,
+        } = facts;
+        let usize_type = rust_fixed_type("usize").expect("the existing exact usize source profile");
+        let mut captures = vec![(self.fresh_product_binding(), source.ty, (*receiver).clone())];
+        if arity > 0.0 {
+            captures.push((
+                self.fresh_product_binding(),
+                Some(usize_type.clone()),
+                args[0].clone(),
+            ));
+        }
+        if let Some(default) = defaults.first() {
+            captures.push((
+                self.fresh_product_binding(),
+                element.clone(),
+                default.clone(),
+            ));
+        }
+        let local = |index: usize| {
+            SExpr::new(
+                SNode::Name {
+                    path: vec![captures[index].0.clone()],
+                },
+                captures[index].2.span.or(range),
+            )
+        };
+        let mut values = lookup_dimensions(local(0), &usize_type, range);
+        if arity > 0.0 {
+            values.insert("index".to_owned(), local(1));
+        }
+        let condition = project(
+            &rules::plan_rust_array_lookup_condition(&method.value),
+            &values,
+            range,
+        )?;
+        values.insert("condition".to_owned(), condition);
+        if !presence {
+            let index = project(
+                &rules::plan_rust_array_lookup_index(&method.value),
+                &values,
+                range,
+            )?;
+            values.insert(
+                "selected".to_owned(),
+                selected_lookup(local(0), index, range),
+            );
+            let fallback = if !defaults.is_empty() {
+                local(captures.len() - 1)
+            } else if result_type == Type::Unit {
+                SExpr::new(SNode::Unit, range)
+            } else {
+                self.project_primitive_default(&owner, path, range)?
+            };
+            values.insert("fallback".to_owned(), fallback);
+        }
+        let mut body = project(
+            &rules::plan_rust_array_lookup_consumer(&consumer.value),
+            &values,
+            range,
+        )?;
+        for (name, ty, value) in captures.into_iter().rev() {
+            body = SExpr::new(
+                SNode::Let {
+                    name,
+                    ty: ty.map(Into::into),
+                    value: Box::new(value),
+                    body: Box::new(body),
+                },
+                range,
+            );
+        }
+        self.origins.mark(&body, result_origin);
+        Ok(body)
+    }
+}

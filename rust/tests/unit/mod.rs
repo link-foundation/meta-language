@@ -544,3 +544,5 @@ mod callable_profile_products;
 mod translation_rust_primitive_function_value;
 
 mod translation_rust_contextual_from_function_value;
+
+mod translation_rust_array_lookup;

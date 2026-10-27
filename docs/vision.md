@@ -4982,6 +4982,20 @@ input; its full fixture and generation recipe remain authenticated history.
 Later-call inference, general traits, Into/TryInto and complete project coverage
 remain obligations, without tests or execution evidence from this draft.
 
+Immediate standard vector/slice get, first and last lookups have shared lazy
+source plans. Exact usize indices and unsigned lengths govern presence; empty
+last subtraction and absent element reads remain inside the selected success
+branch. Presence checks retain non-Copy elements without moving them. Copied
+scalar unwrap_or and unwrap_or_default results retain complete primitive owners,
+including pointer widths, positive floating zero and Unit. Receiver, index and
+eager fallback expressions run once in original order. Both runtime adapters
+only transport original source facts and existing AST operations. Deferred
+original/generated products retain independent values, traces, source contracts,
+both codecs, all targets and valid-but-unsupported versus invalid-source
+distinctions. Escaping Options/references, ranges, arbitrary mappers, mutable
+lookups, custom indexing, complete ownership and whole-project semantics remain
+required; these controls supply no executed observations.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains

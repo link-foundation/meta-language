@@ -1,6 +1,7 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
 mod array_index;
+mod array_lookups;
 mod ascii_text_predicates;
 mod checked_integer;
 pub(super) mod control;
@@ -481,6 +482,16 @@ impl RustParser {
                     path,
                 ) {
                     value = copy;
+                    continue;
+                }
+                if let Some(lookup) = self.read_array_lookup(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = lookup;
                     continue;
                 }
                 if let Some(selected) = self.read_primitive_selection(

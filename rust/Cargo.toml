@@ -170,6 +170,7 @@ include = [
     "src/data/resource-description-address-program.lino",
     "src/data/rust-array-index-program.lino",
     "src/data/rust-array-length-program.lino",
+    "src/data/rust-array-lookup-program.lino",
     "src/data/rust-byte-string-program.lino",
     "src/data/rust-callable-owner-program.lino",
     "src/data/rust-checked-integer-program.lino",
