@@ -193,6 +193,7 @@ include = [
     "src/data/rust-project-source-program.lino",
     "src/data/rust-record-program.lino",
     "src/data/rust-saturating-integer-program.lino",
+    "src/data/rust-saturating-multiplication-program.lino",
     "src/data/rust-scalar-mathematical-interface-program.lino",
     "src/data/rust-scalar-source-interface-program.lino",
     "src/data/rust-scalar-vector-copy-program.lino",

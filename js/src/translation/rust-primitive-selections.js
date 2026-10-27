@@ -1,3 +1,4 @@
+import {acceptRustSaturatingMultiplicationMethod,acceptRustSaturatingMultiplicationReceiver,planRustSaturatingMultiplication} from './rust-saturating-multiplication-rules.js';
 import {readRustSaturatingIntegerArity,acceptRustSaturatingIntegerReceiver,readRustSaturatingIntegerBoundMagnitude,acceptRustSaturatingIntegerBoundNegative,planRustSaturatingInteger} from './rust-saturating-integer-rules.js';
 import {acceptRustSignedIntegerPropertyMethod,acceptRustSignedIntegerPropertyReceiver,planRustSignedIntegerProperty,readRustSignedIntegerPropertyResult} from './rust-signed-integer-property-rules.js';
 // Actual source values/origins and existing conditional AST projection only.
@@ -77,7 +78,7 @@ function projectRustPrimitiveIntegerPlan(parser,receiver,args,plan,value,range,p
    const magnitude=readRustSaturatingIntegerBoundMagnitude(term,Number(value.bits),value.signed);
    if(!magnitude)throw new TypeError('the shared primitive source plan lost its exact bound');
    const node=literal(magnitude);stack.push(acceptRustSaturatingIntegerBoundNegative(term,value.signed)?{k:'unary',op:'neg',arg:node,span:range}:node);
-  }else if(['lt','gt','eq','add','sub'].includes(term)){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
+  }else if(['lt','gt','eq','add','sub','mul','div'].includes(term)){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
   else if(term==='neg')stack.push({k:'unary',op:'neg',arg:pop(),span:range});
   else if(term==='if'){const otherwise=pop(),then=pop(),cond=pop();stack.push({k:'if',cond,then,else:otherwise,span:range});}
   else throw new TypeError('unknown shared primitive source plan term');
@@ -98,5 +99,17 @@ export function readRustSaturatingInteger(parser,receiver,method,args,range,path
   if(!acceptRustPrimitiveSelectionArgument(value.kind,value.bits,value.signed,value.owner.path.join('::'),right.kind,right.bits,right.signed,right.owner?.path.join('::')??'',right.origin.wrappers.length,right.origin.proven===true,admitted(right),Boolean(literal)))throw unsupported('Rust saturating integer arithmetic','the argument must retain the actual receiver type and primitive source owner',range);
  }
  const result=projectRustPrimitiveIntegerPlan(parser,receiver,args,planRustSaturatingInteger(method.value,value.signed),value,range,path);
+ return parser.origins.mark(result,{...value.origin,path:[...path],sourceOwner:value.owner});
+}
+
+export function readRustSaturatingMultiplication(parser,receiver,method,args,range,path){
+ if(!acceptRustSaturatingMultiplicationMethod(method.value,parser.ordinaryCompletionContext()))return null;
+ if(args.length!==1)throw new TranslationError('type',`saturating_mul expects 1 arguments but got ${args.length}`,range);
+ if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
+ const value=facts(receiver,parser,path),right=facts(args[0],parser,path);
+ if(!acceptRustSaturatingMultiplicationReceiver(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust saturating multiplication','a proven direct standard fixed integer receiver is required',range);
+ const literal=args[0].k==='num'&&!args[0].type||args[0].k==='unary'&&args[0].op==='neg'&&args[0].arg.k==='num'&&!args[0].arg.type;
+ if(!acceptRustPrimitiveSelectionArgument(value.kind,value.bits,value.signed,value.owner.path.join('::'),right.kind,right.bits,right.signed,right.owner?.path.join('::')??'',right.origin.wrappers.length,right.origin.proven===true,admitted(right),Boolean(literal)))throw unsupported('Rust saturating multiplication','the argument must retain the actual receiver type and primitive source owner',range);
+ const result=projectRustPrimitiveIntegerPlan(parser,receiver,args,planRustSaturatingMultiplication(value.signed),value,range,path);
  return parser.origins.mark(result,{...value.origin,path:[...path],sourceOwner:value.owner});
 }

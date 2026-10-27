@@ -502,6 +502,16 @@ impl RustParser {
                     value = saturated;
                     continue;
                 }
+                if let Some(product) = self.read_saturating_multiplication(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = product;
+                    continue;
+                }
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
                 if let Some(copy) = self.read_owned_local_copy(

@@ -585,6 +585,27 @@ no behavior evidence. Other saturating/checked/wrapping operations, borrowed or
 mutable receiver profiles, build-dependent ordinary overflow and complete
 own-codebase translation remain obligations.
 
+Saturating multiplication has an independent shared source plan over the same
+exact integer domain. Both operands are captured before any threshold decision.
+Zero guards dominate division; signed thresholds divide MIN only by a positive
+value and MAX by the appropriate nonzero value. Every sign quadrant uses Rust's
+truncation toward zero before deciding whether the product is representable.
+The actual multiply appears only in a safe conditional branch. Source adapters
+reuse the generic AST projector with existing division/multiplication nodes;
+there is no native replacement algorithm. The preceding four-operation
+saturation definition and its unknown-multiplication controls stay unchanged.
+This follows the [standard multiplication operation](https://doc.rust-lang.org/std/primitive.i128.html#method.saturating_mul).
+
+Four hundred fifty-three original source programs retain all widths/signs,
+zero and minimum/maximum pairs, the exact safe and first overflowing thresholds
+in every sign quadrant, contextual factors, operand calls and text byte lengths.
+Independent fixture math authors expected numeric literals without invoking a
+project operation. Complete original and both generated native products retain
+independent function types, exact values and output traces. Every method,
+receiver and refusal, both Links transports and all target emissions remain
+deferred controls. Neither these source drafts nor the retained preceding
+definition establish runtime observations or broader arithmetic coverage.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Earlier default-profile result refusals remain authenticated as historical

@@ -483,13 +483,15 @@ impl RustParser {
                         },
                     );
                 }
-                "lt" | "gt" | "eq" | "add" | "sub" => {
+                "lt" | "gt" | "eq" | "add" | "sub" | "mul" | "div" => {
                     let op = match term.as_str() {
                         "lt" => BinaryOp::Lt,
                         "gt" => BinaryOp::Gt,
                         "eq" => BinaryOp::Eq,
                         "add" => BinaryOp::Add,
                         "sub" => BinaryOp::Sub,
+                        "mul" => BinaryOp::Mul,
+                        "div" => BinaryOp::Div,
                         _ => return Err(property_plan_error(range)),
                     };
                     let right = property_pop(&mut stack, range)?;
@@ -640,6 +642,103 @@ impl RustParser {
             receiver,
             args,
             &saturating::plan_rust_saturating_integer(&method.value, value.signed),
+            &value,
+            range,
+            path,
+        )?;
+        let mut origin = value.origin;
+        origin.path = path.to_vec();
+        origin.source_owner = value.owner;
+        self.origins.mark(&result, origin);
+        Ok(Some(result))
+    }
+}
+
+impl RustParser {
+    pub(super) fn read_saturating_multiplication(
+        &mut self,
+        receiver: &SExpr,
+        method: &Token,
+        args: &[SExpr],
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<Option<SExpr>> {
+        use crate::translation::rust_saturating_multiplication_rules as multiplication;
+        if !multiplication::accept_rust_saturating_multiplication_method(
+            &method.value,
+            self.ordinary_completion_context(),
+        ) {
+            return Ok(None);
+        }
+        if args.len() != 1 {
+            return Err(type_error(
+                format!("saturating_mul expects 1 arguments but got {}", args.len()),
+                range,
+            ));
+        }
+        if self.origins.collecting {
+            return Ok(Some(SExpr::new(
+                SNode::App {
+                    func: Box::new(SExpr::new(
+                        SNode::Name {
+                            path: vec![method.value.clone()],
+                        },
+                        range,
+                    )),
+                    args: std::iter::once(receiver.clone())
+                        .chain(args.iter().cloned())
+                        .collect(),
+                },
+                range,
+            )));
+        }
+        let value = self.primitive_selection_facts(receiver, path);
+        let right = self.primitive_selection_facts(&args[0], path);
+        if !multiplication::accept_rust_saturating_multiplication_receiver(
+            &value.kind,
+            &value.bits,
+            value.signed,
+            value.owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+            &value.path(),
+            value
+                .owner
+                .as_ref()
+                .map_or(-1.0, |owner| count(owner.arguments.len())),
+            value.origin.proven,
+            count(value.origin.wrappers.len()),
+        ) {
+            return Err(unsupported(
+                "Rust saturating multiplication",
+                "a proven direct standard fixed integer receiver is required",
+                range,
+            ));
+        }
+        let literal = matches!(&args[0].node, SNode::Num { ty: None, .. })
+            || matches!(&args[0].node,SNode::Unary{op:UnaryOp::Neg,arg}if matches!(&arg.node,SNode::Num{ty:None,..}));
+        if !rules::accept_rust_primitive_selection_argument(
+            &value.kind,
+            &value.bits,
+            value.signed,
+            &value.path(),
+            &right.kind,
+            &right.bits,
+            right.signed,
+            &right.path(),
+            count(right.origin.wrappers.len()),
+            right.origin.proven,
+            right.admitted(),
+            literal,
+        ) {
+            return Err(unsupported(
+                "Rust saturating multiplication",
+                "the argument must retain the actual receiver type and primitive source owner",
+                range,
+            ));
+        }
+        let result = self.project_primitive_integer_plan(
+            receiver,
+            args,
+            &multiplication::plan_rust_saturating_multiplication(value.signed),
             &value,
             range,
             path,

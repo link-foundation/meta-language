@@ -504,3 +504,5 @@ mod translation_rust_selection_imports;
 mod translation_rust_signed_integer_property;
 
 mod translation_rust_saturating_integer;
+
+mod translation_rust_saturating_multiplication;
