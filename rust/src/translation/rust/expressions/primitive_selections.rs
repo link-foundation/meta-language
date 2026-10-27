@@ -375,22 +375,64 @@ impl RustParser {
                 range,
             ));
         }
-        let name = self.fresh_product_binding();
-        let Some(ty) = value.origin.ty.clone() else {
-            return Err(property_plan_error(range));
-        };
+        let result = self.project_primitive_integer_plan(
+            receiver,
+            &[],
+            &properties::plan_rust_signed_integer_property(&method.value),
+            &value,
+            range,
+            path,
+        )?;
         let mut origin = value.origin;
         origin.path = path.to_vec();
         origin.source_owner = value.owner;
+        if properties::read_rust_signed_integer_property_result(&method.value) != "receiver" {
+            origin = SourceOrigin::with_type(super::BOOL, path, Vec::new());
+            origin.source_owner = Some(SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["bool".to_owned()],
+                arguments: Vec::new(),
+            });
+        }
+        self.origins.mark(&result, origin);
+        Ok(Some(result))
+    }
+}
+
+impl RustParser {
+    fn project_primitive_integer_plan(
+        &mut self,
+        receiver: &SExpr,
+        args: &[SExpr],
+        plan: &[String],
+        value: &Facts,
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<SExpr> {
+        use crate::translation::rust_saturating_integer_rules as saturating;
+        let Some(ty) = value.origin.ty.clone() else {
+            return Err(property_plan_error(range));
+        };
+        let mut origin = value.origin.clone();
+        origin.path = path.to_vec();
+        origin.source_owner = value.owner.clone();
+        let captures = std::iter::once(receiver)
+            .chain(args.iter())
+            .map(|input| (self.fresh_product_binding(), input.clone()))
+            .collect::<Vec<_>>();
         let mut stack = Vec::new();
-        for term in properties::plan_rust_signed_integer_property(&method.value) {
+        for term in plan {
             match term.as_str() {
-                "operand" => {
+                "operand" | "right" => {
+                    let index = usize::from(term == "right");
+                    let Some((name, input)) = captures.get(index) else {
+                        return Err(property_plan_error(range));
+                    };
                     let node = SExpr::new(
                         SNode::Name {
                             path: vec![name.clone()],
                         },
-                        receiver.span.or(range),
+                        input.span.or(range),
                     );
                     self.origins.mark(&node, origin.clone());
                     stack.push(node);
@@ -405,19 +447,69 @@ impl RustParser {
                     },
                     range,
                 )),
-                "lt" | "gt" => {
+                "minimum" | "maximum" => {
+                    let Type::Fixed { bits, signed } = &ty else {
+                        return Err(property_plan_error(range));
+                    };
+                    let magnitude = saturating::read_rust_saturating_integer_bound_magnitude(
+                        term,
+                        f64::from(*bits),
+                        *signed,
+                    );
+                    if magnitude.is_empty() {
+                        return Err(property_plan_error(range));
+                    }
+                    let node = SExpr::new(
+                        SNode::Num {
+                            value: magnitude,
+                            ty: Some(ty.clone()),
+                            negative: false,
+                            unit: false,
+                        },
+                        range,
+                    );
+                    stack.push(
+                        if saturating::accept_rust_saturating_integer_bound_negative(term, *signed)
+                        {
+                            SExpr::new(
+                                SNode::Unary {
+                                    op: UnaryOp::Neg,
+                                    arg: Box::new(node),
+                                },
+                                range,
+                            )
+                        } else {
+                            node
+                        },
+                    );
+                }
+                "lt" | "gt" | "eq" | "add" | "sub" => {
+                    let op = match term.as_str() {
+                        "lt" => BinaryOp::Lt,
+                        "gt" => BinaryOp::Gt,
+                        "eq" => BinaryOp::Eq,
+                        "add" => BinaryOp::Add,
+                        "sub" => BinaryOp::Sub,
+                        _ => return Err(property_plan_error(range)),
+                    };
                     let right = property_pop(&mut stack, range)?;
                     let left = property_pop(&mut stack, range)?;
                     stack.push(SExpr::new(
                         SNode::Binary {
-                            op: if term == "lt" {
-                                BinaryOp::Lt
-                            } else {
-                                BinaryOp::Gt
-                            },
+                            op,
                             left: Box::new(left),
                             right: Box::new(right),
                             rounding: None,
+                        },
+                        range,
+                    ));
+                }
+                "neg" => {
+                    let arg = property_pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::Unary {
+                            op: UnaryOp::Neg,
+                            arg: Box::new(arg),
                         },
                         range,
                     ));
@@ -441,24 +533,120 @@ impl RustParser {
         if stack.len() != 1 {
             return Err(property_plan_error(range));
         }
-        let body = property_pop(&mut stack, range)?;
-        let result = SExpr::new(
-            SNode::Let {
-                name,
-                ty: Some(ty.into()),
-                value: Box::new(receiver.clone()),
-                body: Box::new(body),
-            },
-            range,
-        );
-        if properties::read_rust_signed_integer_property_result(&method.value) != "receiver" {
-            origin = SourceOrigin::with_type(super::BOOL, path, Vec::new());
-            origin.source_owner = Some(SourceOwner {
-                kind: "primitive".to_owned(),
-                path: vec!["bool".to_owned()],
-                arguments: Vec::new(),
-            });
+        let mut body = property_pop(&mut stack, range)?;
+        for (name, input) in captures.into_iter().rev() {
+            body = SExpr::new(
+                SNode::Let {
+                    name,
+                    ty: Some(ty.clone().into()),
+                    value: Box::new(input),
+                    body: Box::new(body),
+                },
+                range,
+            );
         }
+        Ok(body)
+    }
+    pub(super) fn read_saturating_integer(
+        &mut self,
+        receiver: &SExpr,
+        method: &Token,
+        args: &[SExpr],
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<Option<SExpr>> {
+        use crate::translation::rust_saturating_integer_rules as saturating;
+        let arity = saturating::read_rust_saturating_integer_arity(
+            &method.value,
+            self.ordinary_completion_context(),
+        );
+        if arity < 0.0 {
+            return Ok(None);
+        }
+        if count(args.len()) != arity {
+            return Err(type_error(
+                format!(
+                    "{} expects {} arguments but got {}",
+                    method.value,
+                    arity,
+                    args.len()
+                ),
+                range,
+            ));
+        }
+        if self.origins.collecting {
+            return Ok(Some(SExpr::new(
+                SNode::App {
+                    func: Box::new(SExpr::new(
+                        SNode::Name {
+                            path: vec![method.value.clone()],
+                        },
+                        range,
+                    )),
+                    args: std::iter::once(receiver.clone())
+                        .chain(args.iter().cloned())
+                        .collect(),
+                },
+                range,
+            )));
+        }
+        let value = self.primitive_selection_facts(receiver, path);
+        if !saturating::accept_rust_saturating_integer_receiver(
+            &method.value,
+            &value.kind,
+            &value.bits,
+            value.signed,
+            value.owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+            &value.path(),
+            value
+                .owner
+                .as_ref()
+                .map_or(-1.0, |owner| count(owner.arguments.len())),
+            value.origin.proven,
+            count(value.origin.wrappers.len()),
+        ) {
+            return Err(unsupported(
+                "Rust saturating integer arithmetic",
+                "a proven direct standard fixed integer receiver with the actual signed operation is required",
+                range,
+            ));
+        }
+        if arity == 1.0 {
+            let right = self.primitive_selection_facts(&args[0], path);
+            let literal = matches!(&args[0].node, SNode::Num { ty: None, .. })
+                || matches!(&args[0].node,SNode::Unary{op:UnaryOp::Neg,arg}if matches!(&arg.node,SNode::Num{ty:None,..}));
+            if !rules::accept_rust_primitive_selection_argument(
+                &value.kind,
+                &value.bits,
+                value.signed,
+                &value.path(),
+                &right.kind,
+                &right.bits,
+                right.signed,
+                &right.path(),
+                count(right.origin.wrappers.len()),
+                right.origin.proven,
+                right.admitted(),
+                literal,
+            ) {
+                return Err(unsupported(
+                    "Rust saturating integer arithmetic",
+                    "the argument must retain the actual receiver type and primitive source owner",
+                    range,
+                ));
+            }
+        }
+        let result = self.project_primitive_integer_plan(
+            receiver,
+            args,
+            &saturating::plan_rust_saturating_integer(&method.value, value.signed),
+            &value,
+            range,
+            path,
+        )?;
+        let mut origin = value.origin;
+        origin.path = path.to_vec();
+        origin.source_owner = value.owner;
         self.origins.mark(&result, origin);
         Ok(Some(result))
     }

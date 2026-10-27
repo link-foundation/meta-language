@@ -1,3 +1,4 @@
+import {readRustSaturatingIntegerArity,acceptRustSaturatingIntegerReceiver,readRustSaturatingIntegerBoundMagnitude,acceptRustSaturatingIntegerBoundNegative,planRustSaturatingInteger} from './rust-saturating-integer-rules.js';
 import {acceptRustSignedIntegerPropertyMethod,acceptRustSignedIntegerPropertyReceiver,planRustSignedIntegerProperty,readRustSignedIntegerPropertyResult} from './rust-signed-integer-property-rules.js';
 // Actual source values/origins and existing conditional AST projection only.
 import {TranslationError,unsupported} from './diagnostics.js';
@@ -53,19 +54,49 @@ export function readRustSignedIntegerProperty(parser,receiver,method,args,range,
  if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver],span:range};
  const value=facts(receiver,parser,path);
  if(!acceptRustSignedIntegerPropertyReceiver(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust signed integer property','a proven direct standard signed integer receiver is required',range);
- const name=parser.freshProductBinding(),origin={...value.origin,path:[...path],sourceOwner:value.owner},stack=[];
- const literal=one=>({k:'num',value:one?'1':'0',type:value.origin.type,span:range});
- const pop=()=>{if(!stack.length)throw new TypeError('the shared signed integer property plan lost an actual operand');return stack.pop();};
- for(const term of planRustSignedIntegerProperty(method.value)){
-  if(term==='operand')stack.push(parser.origins.mark({k:'name',path:[name],span:receiver.span??range},origin));
-  else if(term==='zero'||term==='positive unit')stack.push(literal(term==='positive unit'));
-  else if(term==='negative unit')stack.push({k:'unary',op:'neg',arg:literal(true),span:range});
-  else if(term==='lt'||term==='gt'){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
-  else if(term==='if'){const otherwise=pop(),then=pop(),cond=pop();stack.push({k:'if',cond,then,else:otherwise,span:range});}
-  else throw new TypeError('unknown shared signed integer property source term');
- }
- if(stack.length!==1)throw new TypeError('the shared signed integer property plan needs one complete source result');
- const result={k:'let',name,type:value.origin.type,value:receiver,body:stack[0],span:range};
+ const origin={...value.origin,path:[...path],sourceOwner:value.owner};
+ const result=projectRustPrimitiveIntegerPlan(parser,receiver,[],planRustSignedIntegerProperty(method.value),value,range,path);
  const resultOrigin=readRustSignedIntegerPropertyResult(method.value)==='receiver'?origin:{...parser.origins.typeOrigin({kind:'bool'},path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}};
  return parser.origins.mark(result,resultOrigin);
+}
+
+/** Generic source-term projection shared by exact primitive integer plans. */
+function projectRustPrimitiveIntegerPlan(parser,receiver,args,plan,value,range,path){
+ const origin={...value.origin,path:[...path],sourceOwner:value.owner},stack=[];
+ const captures=[receiver,...args].map(input=>({name:parser.freshProductBinding(),value:input}));
+ const literal=magnitude=>({k:'num',value:magnitude,type:value.origin.type,span:range});
+ const pop=()=>{if(!stack.length)throw new TypeError('the shared primitive source plan lost an actual operand');return stack.pop();};
+ for(const term of plan){
+  if(term==='operand'||term==='right'){
+   const binding=captures[term==='operand'?0:1];
+   if(!binding)throw new TypeError('the shared primitive source plan lost an actual capture');
+   stack.push(parser.origins.mark({k:'name',path:[binding.name],span:binding.value.span??range},origin));
+  }else if(term==='zero'||term==='positive unit')stack.push(literal(term==='zero'?'0':'1'));
+  else if(term==='negative unit')stack.push({k:'unary',op:'neg',arg:literal('1'),span:range});
+  else if(term==='minimum'||term==='maximum'){
+   const magnitude=readRustSaturatingIntegerBoundMagnitude(term,Number(value.bits),value.signed);
+   if(!magnitude)throw new TypeError('the shared primitive source plan lost its exact bound');
+   const node=literal(magnitude);stack.push(acceptRustSaturatingIntegerBoundNegative(term,value.signed)?{k:'unary',op:'neg',arg:node,span:range}:node);
+  }else if(['lt','gt','eq','add','sub'].includes(term)){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
+  else if(term==='neg')stack.push({k:'unary',op:'neg',arg:pop(),span:range});
+  else if(term==='if'){const otherwise=pop(),then=pop(),cond=pop();stack.push({k:'if',cond,then,else:otherwise,span:range});}
+  else throw new TypeError('unknown shared primitive source plan term');
+ }
+ if(stack.length!==1)throw new TypeError('the shared primitive source plan needs one complete result');
+ let body=stack[0];for(let at=captures.length-1;at>=0;at-=1){const binding=captures[at];body={k:'let',name:binding.name,type:value.origin.type,value:binding.value,body,span:range};}
+ return body;
+}
+export function readRustSaturatingInteger(parser,receiver,method,args,range,path){
+ const arity=readRustSaturatingIntegerArity(method.value,parser.ordinaryCompletionContext());
+ if(arity<0)return null;
+ if(args.length!==arity)throw new TranslationError('type',`${method.value} expects ${arity} arguments but got ${args.length}`,range);
+ if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
+ const value=facts(receiver,parser,path);
+ if(!acceptRustSaturatingIntegerReceiver(method.value,value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust saturating integer arithmetic','a proven direct standard fixed integer receiver with the actual signed operation is required',range);
+ if(arity===1){
+  const right=facts(args[0],parser,path),literal=args[0].k==='num'&&!args[0].type||args[0].k==='unary'&&args[0].op==='neg'&&args[0].arg.k==='num'&&!args[0].arg.type;
+  if(!acceptRustPrimitiveSelectionArgument(value.kind,value.bits,value.signed,value.owner.path.join('::'),right.kind,right.bits,right.signed,right.owner?.path.join('::')??'',right.origin.wrappers.length,right.origin.proven===true,admitted(right),Boolean(literal)))throw unsupported('Rust saturating integer arithmetic','the argument must retain the actual receiver type and primitive source owner',range);
+ }
+ const result=projectRustPrimitiveIntegerPlan(parser,receiver,args,planRustSaturatingInteger(method.value,value.signed),value,range,path);
+ return parser.origins.mark(result,{...value.origin,path:[...path],sourceOwner:value.owner});
 }

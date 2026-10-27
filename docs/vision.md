@@ -559,6 +559,32 @@ transports and all target emissions remain deferred. No product or compiler
 executed. Floating-point sign/NaN/signed-zero behavior, borrowed receivers,
 custom methods and abs/build-overflow behavior remain separate obligations.
 
+Ordinary direct fixed integers now have source drafts for saturating_add and
+saturating_sub; signed integers additionally support saturating_neg and
+saturating_abs. Their shared postfix plans place conditional guards before
+potentially overflowing arithmetic. Signed minima saturate to the exact maximum
+for unary negation/absolute value. Every actual operand evaluates once in source
+order before any plan occurrence reads its captured value. Actual widths,
+signedness and usize/u64 or isize/i64 owners remain separate premises. Exact
+decimal bound magnitudes reuse the existing power-of-two definitions and shared
+digit operations; full integer bounds never pass through binary64. These rules
+follow the [signed](https://doc.rust-lang.org/std/primitive.i128.html#method.saturating_add)
+and [unsigned](https://doc.rust-lang.org/std/primitive.u128.html#method.saturating_add)
+standard operations.
+
+The source adapters share one generic AST-plan projector with the preceding
+signed properties. Four hundred sixty-eight original boundary-matrix programs
+and five integration programs retain independent mathematical expected values,
+actual receiver/argument calls, contextual counters and borrowed text byte
+lengths. Complete original and both generated native products retain independent
+types, exact results and output traces. Every arity, receiver, bound magnitude,
+bound sign and source refusal, both Links transports and all emissions remain
+deferred controls. The fixture author computes numeric constants independently
+without invoking a project operation or executing a fixture. This draft supplies
+no behavior evidence. Other saturating/checked/wrapping operations, borrowed or
+mutable receiver profiles, build-dependent ordinary overflow and complete
+own-codebase translation remain obligations.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Earlier default-profile result refusals remain authenticated as historical

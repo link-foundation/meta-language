@@ -502,3 +502,5 @@ mod translation_rust_primitive_selection;
 mod translation_rust_selection_imports;
 
 mod translation_rust_signed_integer_property;
+
+mod translation_rust_saturating_integer;
