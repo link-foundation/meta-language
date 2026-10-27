@@ -190,6 +190,7 @@ include = [
     "src/data/rust-pointer-integer-owner-program.lino",
     "src/data/rust-primitive-associated-call-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",
+    "src/data/rust-primitive-inherent-copy-program.lino",
     "src/data/rust-primitive-selection-program.lino",
     "src/data/rust-project-source-program.lino",
     "src/data/rust-record-program.lino",

@@ -606,6 +606,29 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Immutable reference chains to actual standard Copy integer primitives now have
+a source draft for the twelve existing inherent sign, saturation and wrapping
+methods. A shared admission rule excludes Ord selection, mutable/custom
+indirection, unproven source owners and non-Copy values. Hosts project only the
+admitted receiver facts to the direct Copy value consumed by the existing plan;
+the original input signature retains every reference and lifetime layer. The
+operation result is owned. Other arguments keep their original checks, and
+explicit associated calls receive no implicit argument dereference. This narrow
+rule follows Rust's [method receiver lookup](https://doc.rust-lang.org/reference/expressions/method-call-expr.html);
+it does not implement arbitrary trait or ownership resolution.
+
+Six hundred fifty-two complete original sources declare independent values,
+source signatures at reference depths one, two and four, exact fixed/pointer
+owners, temporary receiver calls and complete output traces. Four preceding
+borrowed-integer refusal inputs are retained verbatim as positive type/value
+coverage, with their old complete fixtures archived and the correction basis
+recorded. Direct receiver-rule negative premises remain unchanged. Immutable
+predecessor saturation data remains byte-identical in its explicit history
+location; its original digest guard is retained. All product/codec/emission
+controls are deferred, without behavior evidence. Ord reference results,
+mutable loans, custom wrappers, Box ownership and the full source language
+remain obligations.
+
 Primitive associated-call syntax reuses the same fourteen shared min/max,
 signed-property, saturating and wrapping method interpretations. Bare primitive
 paths, std/core primitive reexports, absolute external-crate paths and actual

@@ -142,6 +142,23 @@ impl RustParser {
             signed,
         }
     }
+    fn primitive_inherent_copy_facts(&self, node: &SExpr, path: &[String], method: &str) -> Facts {
+        let mut value = self.primitive_selection_facts(node, path);
+        if crate::translation::rust_primitive_inherent_copy_rules::accept_rust_primitive_inherent_copy(
+            method, &value.kind, &value.bits, value.signed,
+            value.owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+            &value.path(),
+            value.owner.as_ref().map_or(-1.0, |owner| count(owner.arguments.len())),
+            value.origin.proven, count(value.origin.wrappers.len()),
+            value.origin.wrappers.iter().all(|layer| layer == "reference"),
+            value.origin.copy_evidence.is_some(),
+        ) {
+            value.origin.wrappers.clear();
+            value.origin.source_lifetimes.clear();
+            value.origin.copy_evidence = Some(());
+        }
+        value
+    }
     pub(super) fn read_primitive_selection(
         &mut self,
         receiver: &SExpr,
@@ -355,7 +372,7 @@ impl RustParser {
                 range,
             )));
         }
-        let value = self.primitive_selection_facts(receiver, path);
+        let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         if !properties::accept_rust_signed_integer_property_receiver(
             &value.kind,
             &value.bits,
@@ -592,7 +609,7 @@ impl RustParser {
                 range,
             )));
         }
-        let value = self.primitive_selection_facts(receiver, path);
+        let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         if !saturating::accept_rust_saturating_integer_receiver(
             &method.value,
             &value.kind,
@@ -692,7 +709,7 @@ impl RustParser {
                 range,
             )));
         }
-        let value = self.primitive_selection_facts(receiver, path);
+        let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         let right = self.primitive_selection_facts(&args[0], path);
         if !multiplication::accept_rust_saturating_multiplication_receiver(
             &value.kind,
@@ -795,7 +812,7 @@ impl RustParser {
                 range,
             )));
         }
-        let value = self.primitive_selection_facts(receiver, path);
+        let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         if !wrapping::accept_rust_wrapping_integer_receiver(
             &method.value,
             &value.kind,

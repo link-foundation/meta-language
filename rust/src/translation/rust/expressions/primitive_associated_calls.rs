@@ -1,6 +1,6 @@
 //! Actual path, literal, type and origin projection into shared method rules.
 use super::{
-    Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span, TokenKind, Type, UnaryOp,
+    Result, RustParser, SExpr, SNode, SourceOrigin, Span, TokenKind, Type, UnaryOp,
     rust_fixed_type, type_error, unsupported,
 };
 use crate::translation::rust_primitive_associated_call_rules as rules;

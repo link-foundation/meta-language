@@ -1,3 +1,4 @@
+import {acceptRustPrimitiveInherentCopy} from './rust-primitive-inherent-copy-rules.js';
 import {readRustWrappingIntegerArity,acceptRustWrappingIntegerReceiver,planRustWrappingInteger} from './rust-wrapping-integer-rules.js';
 import {acceptRustSaturatingMultiplicationMethod,acceptRustSaturatingMultiplicationReceiver,planRustSaturatingMultiplication} from './rust-saturating-multiplication-rules.js';
 import {readRustSaturatingIntegerArity,acceptRustSaturatingIntegerReceiver,readRustSaturatingIntegerBoundMagnitude,acceptRustSaturatingIntegerBoundNegative,planRustSaturatingInteger} from './rust-saturating-integer-rules.js';
@@ -10,6 +11,11 @@ function facts(node,parser,path){
  const owner=origin.sourceOwner??(node.k==='bool'?{kind:'primitive',path:['bool'],arguments:[]}:null);
  const type=origin.type;
  return {origin,owner,kind:type?.kind??'',bits:String(type?.bits??''),signed:type?.signed===true};
+}
+function inherentFacts(node,parser,path,method){
+ const value=facts(node,parser,path),origin=value.origin;
+ if(acceptRustPrimitiveInherentCopy(method,value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,origin.proven===true,origin.wrappers.length,origin.wrappers.every(layer=>layer==='reference'),origin.copyEvidence===true))return {...value,origin:{...origin,wrappers:[],sourceLifetimes:[],copyEvidence:true}};
+ return value;
 }
 function admitted(value){return acceptRustPrimitiveSelectionReceiver(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length);}
 export function readRustPrimitiveSelectionImport(parser,segments,path){
@@ -54,7 +60,7 @@ export function readRustSignedIntegerProperty(parser,receiver,method,args,range,
  if(!acceptRustSignedIntegerPropertyMethod(method.value,parser.ordinaryCompletionContext()))return null;
  if(args.length!==0)throw new TranslationError('type',`${method.value} expects 0 arguments but got ${args.length}`,range);
  if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver],span:range};
- const value=facts(receiver,parser,path);
+ const value=inherentFacts(receiver,parser,path,method.value);
  if(!acceptRustSignedIntegerPropertyReceiver(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust signed integer property','a proven direct standard signed integer receiver is required',range);
  const origin={...value.origin,path:[...path],sourceOwner:value.owner};
  const result=projectRustPrimitiveIntegerPlan(parser,receiver,[],planRustSignedIntegerProperty(method.value),value,range,path);
@@ -93,7 +99,7 @@ export function readRustSaturatingInteger(parser,receiver,method,args,range,path
  if(arity<0)return null;
  if(args.length!==arity)throw new TranslationError('type',`${method.value} expects ${arity} arguments but got ${args.length}`,range);
  if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
- const value=facts(receiver,parser,path);
+ const value=inherentFacts(receiver,parser,path,method.value);
  if(!acceptRustSaturatingIntegerReceiver(method.value,value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust saturating integer arithmetic','a proven direct standard fixed integer receiver with the actual signed operation is required',range);
  if(arity===1){
   const right=facts(args[0],parser,path),literal=args[0].k==='num'&&!args[0].type||args[0].k==='unary'&&args[0].op==='neg'&&args[0].arg.k==='num'&&!args[0].arg.type;
@@ -107,7 +113,7 @@ export function readRustSaturatingMultiplication(parser,receiver,method,args,ran
  if(!acceptRustSaturatingMultiplicationMethod(method.value,parser.ordinaryCompletionContext()))return null;
  if(args.length!==1)throw new TranslationError('type',`saturating_mul expects 1 arguments but got ${args.length}`,range);
  if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
- const value=facts(receiver,parser,path),right=facts(args[0],parser,path);
+ const value=inherentFacts(receiver,parser,path,method.value),right=facts(args[0],parser,path);
  if(!acceptRustSaturatingMultiplicationReceiver(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust saturating multiplication','a proven direct standard fixed integer receiver is required',range);
  const literal=args[0].k==='num'&&!args[0].type||args[0].k==='unary'&&args[0].op==='neg'&&args[0].arg.k==='num'&&!args[0].arg.type;
  if(!acceptRustPrimitiveSelectionArgument(value.kind,value.bits,value.signed,value.owner.path.join('::'),right.kind,right.bits,right.signed,right.owner?.path.join('::')??'',right.origin.wrappers.length,right.origin.proven===true,admitted(right),Boolean(literal)))throw unsupported('Rust saturating multiplication','the argument must retain the actual receiver type and primitive source owner',range);
@@ -120,7 +126,7 @@ export function readRustWrappingInteger(parser,receiver,method,args,range,path){
  if(arity<0)return null;
  if(args.length!==arity)throw new TranslationError('type',`${method.value} expects ${arity} arguments but got ${args.length}`,range);
  if(parser.origins.collecting)return {k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
- const value=facts(receiver,parser,path);
+ const value=inherentFacts(receiver,parser,path,method.value);
  if(!acceptRustWrappingIntegerReceiver(method.value,value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length))throw unsupported('Rust wrapping integer arithmetic','a proven direct standard fixed integer receiver with the actual signed operation is required',range);
  if(arity===1){
   const right=facts(args[0],parser,path),literal=args[0].k==='num'&&!args[0].type||args[0].k==='unary'&&args[0].op==='neg'&&args[0].arg.k==='num'&&!args[0].arg.type;
