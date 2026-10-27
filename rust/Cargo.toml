@@ -137,6 +137,7 @@ include = [
     "src/data/javascript-class-source-program.lino",
     "src/data/javascript-comparison-program.lino",
     "src/data/javascript-data-field-program.lino",
+    "src/data/javascript-descriptor-conversion-program.lino",
     "src/data/javascript-literal-property-program.lino",
     "src/data/javascript-nullish-field-program.lino",
     "src/data/javascript-optional-call-program.lino",

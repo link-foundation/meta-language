@@ -8,7 +8,7 @@ export const heapFixture=readProjectData(new URL('../../parity/fixtures/javascri
 export {assertVersions};
 export function decodeHeap(heap){return {...heap,objects:heap.objects.map(object=>({...object,identity:BigInt(object.identity),prototype:decodeValue(object.prototype),properties:object.properties.map(property=>({...property,key:decodeValue(property.key),descriptor:decodeDescriptor(property.descriptor)}))})),symbols:heap.symbols.map(BigInt)};}
 export function encodeHeap(heap){return {...heap,objects:heap.objects.map(object=>({...object,identity:String(object.identity),prototype:encodeValue(object.prototype),properties:object.properties.map(property=>({...property,key:encodeValue(property.key),descriptor:encodeDescriptor(property.descriptor)}))})),symbols:heap.symbols.map(String)};}
-function hostContext(heap){
+export function createOrdinaryHostContext(heap,onCall){
  const objects=new Map(),symbols=new Map(),reverse=new Map(),calls=[];
  const materialize=value=>{switch(value.$){case 'undefined':return undefined;case 'null':return null;case 'boolean':case 'number':case 'integer':return value.value;
   case 'text':{let output='';for(let at=0;at<value.units.length;at+=4096)output+=String.fromCharCode(...value.units.slice(at,at+4096));return output;}
@@ -24,7 +24,7 @@ function hostContext(heap){
   // A nonconstructible method has configurable own name/length and no implicit
   // prototype/arguments/caller properties. Remove those two configurable fields
   // before comparing the complete explicitly represented ordinary own storage.
-  const value=object.callable?({invoke(...arguments_){calls.push({callee:{$:'object',identity:BigInt(identity),callable:true},receiver:semantic(this),arguments:arguments_.map(semantic)});return 41;}}).invoke:Object.create(null);
+  const value=object.callable?({invoke(...arguments_){const call={callee:{$:'object',identity:BigInt(identity),callable:true},receiver:semantic(this),arguments:arguments_.map(semantic)};calls.push(call);return onCall?onCall(call):41;}}).invoke:Object.create(null);
   if(object.callable){assert.equal(Reflect.deleteProperty(value,'name'),true);assert.equal(Reflect.deleteProperty(value,'length'),true);}
   objects.set(identity,value);reverse.set(value,identity);return value;};
  for(const object of heap.objects)addObject(object);
@@ -35,7 +35,7 @@ function hostContext(heap){
  for(const object of heap.objects)if(!object.extensible)Object.preventExtensions(objects.get(String(object.identity)));
  return {objects,symbols,calls,materialize,semantic,descriptor,addObject,addSymbol};
 }
-function assertSnapshot(heap,context){
+export function assertOrdinaryHostSnapshot(heap,context){
  assert.equal(heap.objects.length,context.objects.size);assert.equal(heap.symbols.length,context.symbols.size);
  for(const object of heap.objects){const host=context.objects.get(String(object.identity));assert.ok(host);assert.equal(Object.isExtensible(host),object.extensible);assert.equal(typeof host==='function',object.callable);assert.ok(Object.is(Object.getPrototypeOf(host),context.materialize(object.prototype)));
   const order=readJavaScriptOrdinaryOwnKeys(heap,object.identity);assert.equal(order.error,'');assert.deepEqual(Reflect.ownKeys(host),order.keys.map(context.materialize));
@@ -46,7 +46,7 @@ function assertSnapshot(heap,context){
 export function observeHeapCase(row){
  const heap=decodeHeap(row.heap),identity=BigInt(row.identity),key=decodeValue(row.key),value=decodeValue(row.value),receiver=decodeValue(row.receiver),prototype=decodeValue(row.prototype),descriptor=decodeDescriptor(row.descriptor);
  assert.equal(readJavaScriptOrdinaryHeapError(heap),'',row.name);
- const context=hostContext(heap),host=context.objects.get(String(identity));let actual,hostSuccess;
+ const context=createOrdinaryHostContext(heap),host=context.objects.get(String(identity));let actual,hostSuccess;
  switch(row.operation){
   case 'get':{actual=planJavaScriptOrdinaryGet(heap,identity,key,receiver);const result=Reflect.get(host,context.materialize(key),context.materialize(receiver));if(actual.action==='value')assert.ok(Object.is(result,context.materialize(actual.value)));break;}
   case 'set':actual=planJavaScriptOrdinarySet(heap,identity,key,value,receiver);hostSuccess=Reflect.set(host,context.materialize(key),context.materialize(value),context.materialize(receiver));break;
@@ -71,7 +71,7 @@ export function observeHeapCase(row){
   const observed=context.calls[0];assert.deepEqual({callee:encodeValue(observed.callee),receiver:encodeValue(observed.receiver),arguments:observed.arguments.map(encodeValue)},expected);
   if(row.operation==='set')assert.equal(hostSuccess,true,'the independent setter completed normally');
  }else{assert.equal(context.calls.length,0);if(hostSuccess!==undefined)assert.equal(actual.success,hostSuccess,row.name);}
- const resultHeap=actual.heap??heap;assert.equal(readJavaScriptOrdinaryHeapError(resultHeap),'');assertSnapshot(resultHeap,context);
+ const resultHeap=actual.heap??heap;assert.equal(readJavaScriptOrdinaryHeapError(resultHeap),'');assertOrdinaryHostSnapshot(resultHeap,context);
  // No-write/rejected operations retain every original encoded Number bit,
  // absent descriptor payload and insertion position, not just SameValue.
  if(actual.success===false||actual.action==='call')assert.deepEqual(encodeHeap(resultHeap),row.heap);

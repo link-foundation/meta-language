@@ -9133,6 +9133,63 @@ operation, fixture, native product or test has executed. This removes specific
 source-visible copies by construction; overall heap allocation, complexity,
 runtime parity and complete translation remain unverified obligations.
 
+### Resumable ordinary descriptor conversion draft
+
+ToPropertyDescriptor reads enumerable, configurable, value, writable, get and
+set in the specified order. The pinned field names, positions and kinds are
+Links data. Source generation reads that definition and derives its exact UTF16
+key units automatically; a different field profile refuses instead of silently
+changing the algorithm. The operation follows
+[ToPropertyDescriptor](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-topropertydescriptor).
+
+An ordinary descriptor source can inherit fields or compute them with getters.
+The source-defined conversion returns explicit pending calls and resumes with
+the actual completion and latest supplied global heap. Earlier getter effects
+therefore affect later HasProperty/Get operations, including changed prototypes.
+Already captured fields keep their values. Get/set callable checks happen
+immediately after their own Get, while mixed data/accessor-kind rejection waits
+until all required field reads finish. ToBoolean covers all represented ordinary
+primitive/reference domains, retaining exact integers and UTF16 text. Host
+HTMLDDA and other exotic behavior keep their separate required domain.
+
+Nominal continuation states retain receiver, ordered field ordinal, accumulated
+descriptor and pending marker. The source checks the processed prefix, actual
+identity/callability context and ordinal, including invalid negative zero,
+nonfinite/fractional values and a pending final field. A pending Get cannot be
+stepped again; resumption requires a pending state. Normal completions continue
+the conversion and abrupt values remain exact. The producing call and actual
+completion still belong to the evaluator; accepting a structurally valid state
+is not an execution certificate. This protocol does not execute calls or prove
+that arbitrary caller-constructed continuations came from an earlier run.
+
+TypeError outcomes are intrinsic-error obligations with a reason, rather than
+substitute host Error objects. The evaluator must create the actual Error in
+the correct realm, preserve implementation/version-sensitive observable fields,
+and propagate it through source control flow. Complete evaluator execution,
+Error allocation, frontend Object.defineProperty integration, proxies/exotics
+and general dynamic-language coverage remain required work.
+
+Native model I/O adapters are generated from actual checked declarations,
+constructor layouts and emitted target mappings. A separately qualified Links
+wire rule preserves binary64 value bits; integers use exact decimal strings,
+and semantic text retains its unit arrays. The transport supports the selected
+JavaScript tuple-constructor model, canonical immutable records and well-formed
+schema strings. It implements no descriptor/heap semantics. Changed owners,
+ambiguous keys, unregistered encodings and unsupported layouts refuse. A fast
+authoring path reparses and types actual normative source, verifies unchanged
+complete native source/mappings, and rewrites only model I/O/fixtures/manifests.
+It does not replay an archived program or infer completion from metadata.
+
+Deferred controls retain complete intermediate states/calls/completions and
+compare literal post-call heaps against actual ordinary getter effects. They
+cover inherited fields, value/prototype mutation, getter order, early callable
+errors, late mixed-kind errors, abrupt values, exact Boolean conversion and
+malformed continuations. Every prior ordinary-heap input/assertion remains,
+along with exact preceding oracle source. Native controls compare all modeled
+fields and source codecs/targets remain required. No converter, callback,
+fixture, test, emitted product or native compiler has executed. Complete
+translation and all earlier requirements remain obligations.
+
 Ordered record storage contains a Number position vector even when its named
 fields contain only strings. Target trait derivation and numeric dependence
 must account for that actual representation. This does not make the record a

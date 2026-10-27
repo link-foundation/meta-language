@@ -71,6 +71,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-data-field-program.lino" => {
             Some(include_str!("../data/javascript-data-field-program.lino"))
         }
+        "javascript-descriptor-conversion-program.lino" => Some(include_str!(
+            "../data/javascript-descriptor-conversion-program.lino"
+        )),
         "javascript-identifier-program.lino" => {
             Some(include_str!("../data/javascript-identifier-program.lino"))
         }
