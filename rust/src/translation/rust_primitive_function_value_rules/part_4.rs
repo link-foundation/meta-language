@@ -364,6 +364,38 @@ pub fn read_rust_primitive_function_value_result_owner(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_rust_primitive_from_function_source(
+    target: &self::ml_string::Text,
+    parameters: f64,
+    kind: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
+    signed: bool,
+    owner_kind: &self::ml_string::Text,
+    source: &self::ml_string::Text,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> self::ml_string::Text {
+    if ((parameters == 1f64)
+        && self::accept_rust_primitive_from_source(
+            kind, bits, signed, owner_kind, source, children, proven, layers,
+        ))
+        && ((self::plan_rust_primitive_from(target, source))
+            != (self::ml_string::Text::from_units(vec![])))
+    {
+        source.clone()
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_temporary_plan_rust_integer_bits_loop3(
     mut plan: Vec<f64>,
     bindings: &[f64],

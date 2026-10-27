@@ -107,6 +107,9 @@ impl RustParser {
         path: &[String],
         expected: Option<&SourceOrigin>,
     ) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_function_value(path, expected)? {
+            return Ok(value);
+        }
         let role = ["|", "||", "move"]
             .into_iter()
             .find(|value| self.cursor.is(value))

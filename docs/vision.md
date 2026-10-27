@@ -4967,6 +4967,21 @@ Generic From function values, escaping Option/Result signatures, exact source
 callable ABI, generated runtime reimport and full source translation remain
 obligations. This is a source draft without executed observations.
 
+Expected function-pointer signatures now also select generic primitive From
+function values. The actual expected parameter's complete primitive source
+origin selects an existing standard conversion relation; the explicit associated
+destination keeps its own result domain and is checked independently against
+the expected result. Typed bindings, named/computed callback positions and direct
+returned-pointer contexts reuse the same source construction. Missing contexts,
+borrowed/nonprimitive inputs and unimplemented standard relations refuse.
+Every original conversion implementation and its input evaluation remain shared.
+Deferred controls retain the complete source/destination matrix, independent
+boundary values, recursive source contracts and original/generated native
+products. The corrected preceding callable refusal remains a complete positive
+input; its full fixture and generation recipe remain authenticated history.
+Later-call inference, general traits, Into/TryInto and complete project coverage
+remain obligations, without tests or execution evidence from this draft.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains

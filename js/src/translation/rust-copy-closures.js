@@ -1,4 +1,5 @@
 import {requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
+import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
 import {beginRustStandardStringViewArgument,endRustStandardStringViewArgument,checkRustStandardStringViewArgument} from './rust-standard-string-views.js';
 // Actual source types/scopes into the existing shared callable representation.
 import {unsupported} from './diagnostics.js';
@@ -7,6 +8,7 @@ import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js
 import {readRustCopyClosureHeaderError,readRustCopyClosureCaptureError,acceptRustCopyClosureInvocation} from './rust-copy-closure-rules.js';
 import {acceptRustContextualCopyClosure,readRustContextualCopyClosureHeaderError,findRustContextualClosureParenthesisCount,acceptRustContextualCopyPointerResultBlock} from './rust-contextual-closure-rules.js';
 export function readRustExpectedCopyClosure(parser,path,expected){
+ const primitive=readRustPrimitiveFunctionValue(parser,path,expected);if(primitive)return primitive;
  const c=parser.cursor,kind=expected?.type?.kind??'',copy=parser.origins.immutableProduct(expected),role=['|','||','move'].find(value=>c.is(value))??'';
  if(acceptRustContextualCopyClosure(kind,copy,role))return readRustCopyClosure(parser,path,expected);
  if(kind==='function'&&copy&&c.is('(')){

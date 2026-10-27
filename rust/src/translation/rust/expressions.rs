@@ -925,7 +925,7 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        if let Some(value) = self.read_primitive_function_value(path)? {
+        if let Some(value) = self.read_primitive_function_value(path, None)? {
             return Ok(value);
         }
         if let Some(value) = self.read_primitive_default(path)? {
