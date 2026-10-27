@@ -301,6 +301,419 @@ pub fn accept_rust_primitive_selection_argument(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_checked_integer_arity(method: &str, ordinary: bool) -> f64 {
+    if ordinary {
+        if self::ml_array::includes(
+            &vec![
+                String::from("checked_add"),
+                String::from("checked_sub"),
+                String::from("checked_mul"),
+                String::from("checked_div"),
+                String::from("checked_rem"),
+            ],
+            &method.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        ) {
+            1f64
+        } else if self::ml_array::includes(
+            &vec![String::from("checked_neg"), String::from("checked_abs")],
+            &method.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        ) {
+            0f64
+        } else {
+            -1f64
+        }
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_checked_integer_receiver(
+    method: &str,
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((((self::read_rust_checked_integer_arity(method, true)) >= 0f64) && (kind == "fixed"))
+        && ((method != "checked_abs") || signed))
+        && self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
+    if (consumer == "is_some") || (consumer == "is_none") {
+        0f64
+    } else if consumer == "unwrap_or" {
+        1f64
+    } else if consumer == "map_or" {
+        2f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<String> {
+    if method == "checked_neg" {
+        if signed {
+            vec![
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("ne"),
+            ]
+        } else {
+            vec![
+                String::from("operand"),
+                String::from("zero"),
+                String::from("eq"),
+            ]
+        }
+    } else if method == "checked_abs" {
+        if signed {
+            vec![
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("ne"),
+            ]
+        } else {
+            Vec::<String>::new()
+        }
+    } else if method == "checked_add" {
+        if signed {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("gt"),
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("sub"),
+                String::from("le"),
+                String::from("right"),
+                String::from("zero"),
+                String::from("lt"),
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("right"),
+                String::from("sub"),
+                String::from("ge"),
+                String::from("true"),
+                String::from("if"),
+                String::from("if"),
+            ]
+        } else {
+            vec![
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("sub"),
+                String::from("le"),
+            ]
+        }
+    } else if method == "checked_sub" {
+        if signed {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("lt"),
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("add"),
+                String::from("le"),
+                String::from("right"),
+                String::from("zero"),
+                String::from("gt"),
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("right"),
+                String::from("add"),
+                String::from("ge"),
+                String::from("true"),
+                String::from("if"),
+                String::from("if"),
+            ]
+        } else {
+            vec![
+                String::from("operand"),
+                String::from("right"),
+                String::from("ge"),
+            ]
+        }
+    } else if method == "checked_mul" {
+        {
+            let positive_positive = vec![
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("div"),
+                String::from("le"),
+            ];
+            if signed {
+                {
+                    let positive_negative = vec![
+                        String::from("right"),
+                        String::from("minimum"),
+                        String::from("operand"),
+                        String::from("div"),
+                        String::from("ge"),
+                    ];
+                    {
+                        let negative_positive = vec![
+                            String::from("operand"),
+                            String::from("minimum"),
+                            String::from("right"),
+                            String::from("div"),
+                            String::from("ge"),
+                        ];
+                        {
+                            let negative_negative = vec![
+                                String::from("operand"),
+                                String::from("maximum"),
+                                String::from("right"),
+                                String::from("div"),
+                                String::from("ge"),
+                            ];
+                            {
+                                let signs = {
+                                    let source_ml_concat_value4 = vec![
+                                        String::from("operand"),
+                                        String::from("zero"),
+                                        String::from("gt"),
+                                        String::from("right"),
+                                        String::from("zero"),
+                                        String::from("gt"),
+                                    ];
+                                    {
+                                        let source_ml_concat_value5 = positive_positive;
+                                        {
+                                            let source_ml_concat_value6 = positive_negative;
+                                            {
+                                                let source_ml_concat_value7 = vec![
+                                                    String::from("if"),
+                                                    String::from("right"),
+                                                    String::from("zero"),
+                                                    String::from("gt"),
+                                                ];
+                                                {
+                                                    let source_ml_concat_value8 = negative_positive;
+                                                    {
+                                                        let source_ml_concat_value9 =
+                                                            negative_negative;
+                                                        {
+                                                            let source_ml_concat_value10 = vec![
+                                                                String::from("if"),
+                                                                String::from("if"),
+                                                            ];
+                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<String>::new(), source_ml_concat_value4), source_ml_concat_value5), source_ml_concat_value6), source_ml_concat_value7), source_ml_concat_value8), source_ml_concat_value9), source_ml_concat_value10)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                };
+                                {
+                                    let source_ml_concat_value11 = vec![
+                                        String::from("operand"),
+                                        String::from("zero"),
+                                        String::from("eq"),
+                                        String::from("true"),
+                                        String::from("right"),
+                                        String::from("zero"),
+                                        String::from("eq"),
+                                        String::from("true"),
+                                    ];
+                                    {
+                                        let source_ml_concat_value12 = signs;
+                                        {
+                                            let source_ml_concat_value13 =
+                                                vec![String::from("if"), String::from("if")];
+                                            self::ml_array::append(
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<String>::new(),
+                                                        source_ml_concat_value11,
+                                                    ),
+                                                    source_ml_concat_value12,
+                                                ),
+                                                source_ml_concat_value13,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                {
+                    let source_ml_concat_value1 = vec![
+                        String::from("operand"),
+                        String::from("zero"),
+                        String::from("eq"),
+                        String::from("true"),
+                        String::from("right"),
+                        String::from("zero"),
+                        String::from("eq"),
+                        String::from("true"),
+                    ];
+                    {
+                        let source_ml_concat_value2 = positive_positive;
+                        {
+                            let source_ml_concat_value3 =
+                                vec![String::from("if"), String::from("if")];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<String>::new(),
+                                        source_ml_concat_value1,
+                                    ),
+                                    source_ml_concat_value2,
+                                ),
+                                source_ml_concat_value3,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    } else if (method == "checked_div") || (method == "checked_rem") {
+        if signed {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("eq"),
+                String::from("false"),
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("eq"),
+                String::from("right"),
+                String::from("negative unit"),
+                String::from("ne"),
+                String::from("true"),
+                String::from("if"),
+                String::from("if"),
+            ]
+        } else {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("ne"),
+            ]
+        }
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_success(method: &str, signed: bool) -> Vec<String> {
+    if method == "checked_neg" {
+        if signed {
+            vec![String::from("operand"), String::from("neg")]
+        } else {
+            vec![String::from("zero")]
+        }
+    } else if method == "checked_abs" {
+        if signed {
+            vec![
+                String::from("operand"),
+                String::from("zero"),
+                String::from("lt"),
+                String::from("operand"),
+                String::from("neg"),
+                String::from("operand"),
+                String::from("if"),
+            ]
+        } else {
+            Vec::<String>::new()
+        }
+    } else {
+        {
+            let operation = if method == "checked_add" {
+                String::from("add")
+            } else if method == "checked_sub" {
+                String::from("sub")
+            } else if method == "checked_mul" {
+                String::from("mul")
+            } else if method == "checked_div" {
+                String::from("div")
+            } else if method == "checked_rem" {
+                String::from("rem")
+            } else {
+                String::new()
+            };
+            if operation.is_empty() {
+                Vec::<String>::new()
+            } else {
+                vec![String::from("operand"), String::from("right"), operation]
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
+    if consumer == "is_some" {
+        vec![String::from("condition")]
+    } else if consumer == "is_none" {
+        vec![String::from("condition"), String::from("not")]
+    } else if (consumer == "unwrap_or") || (consumer == "map_or") {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("fallback"),
+            String::from("if"),
+        ]
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_result_owner(
+    consumer: &str,
+    receiver: &str,
+    mapper: &str,
+) -> String {
+    if (consumer == "is_some") || (consumer == "is_none") {
+        String::from("bool")
+    } else if consumer == "unwrap_or" {
+        receiver.to_owned()
+    } else if consumer == "map_or" {
+        mapper.to_owned()
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_primitive_associated_owner(
     segments: &[String],
     ordinary: bool,
@@ -321,41 +734,47 @@ pub fn read_rust_primitive_associated_owner(
                 } else {
                     if (((segments.len() as f64) == 4f64)
                         && ({
-                            let source_ml_comparison_operand1 = self::ml_array::optional_at(
+                            let source_ml_comparison_operand14 = self::ml_array::optional_at(
                                 segments,
                                 self::ml_array::number_index(0f64),
                             );
                             {
-                                let source_ml_comparison_operand2 = String::from("std");
-                                match (source_ml_comparison_operand1, source_ml_comparison_operand2)
-                                {
+                                let source_ml_comparison_operand15 = String::from("std");
+                                match (
+                                    source_ml_comparison_operand14,
+                                    source_ml_comparison_operand15,
+                                ) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
                                 }
                             }
                         } || {
-                            let source_ml_comparison_operand3 = self::ml_array::optional_at(
+                            let source_ml_comparison_operand16 = self::ml_array::optional_at(
                                 segments,
                                 self::ml_array::number_index(0f64),
                             );
                             {
-                                let source_ml_comparison_operand4 = String::from("core");
-                                match (source_ml_comparison_operand3, source_ml_comparison_operand4)
-                                {
+                                let source_ml_comparison_operand17 = String::from("core");
+                                match (
+                                    source_ml_comparison_operand16,
+                                    source_ml_comparison_operand17,
+                                ) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
                                 }
                             }
                         }))
                         && {
-                            let source_ml_comparison_operand5 = self::ml_array::optional_at(
+                            let source_ml_comparison_operand18 = self::ml_array::optional_at(
                                 segments,
                                 self::ml_array::number_index(1f64),
                             );
                             {
-                                let source_ml_comparison_operand6 = String::from("primitive");
-                                match (source_ml_comparison_operand5, source_ml_comparison_operand6)
-                                {
+                                let source_ml_comparison_operand19 = String::from("primitive");
+                                match (
+                                    source_ml_comparison_operand18,
+                                    source_ml_comparison_operand19,
+                                ) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
                                 }
@@ -400,152 +819,5 @@ pub fn read_rust_primitive_associated_owner(
                 }
             }
         }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_associated_arity(owner: &str, method: &str) -> f64 {
-    if (self::ml_array::includes(
-        &vec![
-            String::from("bool"),
-            String::from("i8"),
-            String::from("u8"),
-            String::from("i16"),
-            String::from("u16"),
-            String::from("i32"),
-            String::from("u32"),
-            String::from("i64"),
-            String::from("u64"),
-            String::from("i128"),
-            String::from("u128"),
-            String::from("isize"),
-            String::from("usize"),
-        ],
-        &owner.to_owned(),
-        0f64,
-        false,
-        |a, b| a == b,
-    )) {
-        if (method == "min") || (method == "max") {
-            2f64
-        } else if owner == "bool" {
-            -1f64
-        } else if self::ml_array::includes(
-            &vec![
-                String::from("saturating_add"),
-                String::from("saturating_sub"),
-                String::from("saturating_mul"),
-                String::from("wrapping_add"),
-                String::from("wrapping_sub"),
-            ],
-            &method.to_owned(),
-            0f64,
-            false,
-            |a, b| a == b,
-        ) {
-            2f64
-        } else if method == "wrapping_neg" {
-            1f64
-        } else if (owner.starts_with("i")) {
-            if self::ml_array::includes(
-                &vec![
-                    String::from("is_negative"),
-                    String::from("is_positive"),
-                    String::from("signum"),
-                    String::from("saturating_neg"),
-                    String::from("saturating_abs"),
-                    String::from("wrapping_abs"),
-                ],
-                &method.to_owned(),
-                0f64,
-                false,
-                |a, b| a == b,
-            ) {
-                1f64
-            } else {
-                -1f64
-            }
-        } else {
-            -1f64
-        }
-    } else {
-        -1f64
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_primitive_associated_literal(expected: &str, form: &str, typed: bool) -> bool {
-    (((!(expected).is_empty()) && (expected != "bool")) && !typed)
-        && ((form == "numeral") || (form == "negative numeral"))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn accept_rust_primitive_associated_receiver(
-    expected: &str,
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner: &str,
-    path: &str,
-    children: f64,
-    proven: bool,
-    layers: f64,
-) -> bool {
-    (expected == path)
-        && self::accept_rust_primitive_selection_receiver(
-            kind, bits, signed, owner, path, children, proven, layers,
-        )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_integer_constant_owner(
-    segments: &[String],
-    ordinary: bool,
-    shadowed: bool,
-    absolute: bool,
-) -> String {
-    {
-        let owner =
-            self::read_rust_primitive_associated_owner(segments, ordinary, shadowed, absolute);
-        if owner == "bool" {
-            String::new()
-        } else {
-            owner
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_integer_constant_term(name: &str) -> String {
-    if name == "MIN" {
-        String::from("minimum")
-    } else if name == "MAX" {
-        String::from("maximum")
-    } else if name == "BITS" {
-        String::from("width")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_integer_constant_result_owner(owner: &str, term: &str) -> String {
-    if term == "width" {
-        String::from("u32")
-    } else if (term == "minimum") || (term == "maximum") {
-        owner.to_owned()
-    } else {
-        String::new()
     }
 }

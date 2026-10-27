@@ -2,6 +2,7 @@
 
 mod array_index;
 mod ascii_text_predicates;
+mod checked_integer;
 pub(super) mod control;
 mod integer_float_plan;
 mod primitive_associated_calls;
@@ -515,6 +516,16 @@ impl RustParser {
                     path,
                 )? {
                     value = product;
+                    continue;
+                }
+                if let Some(checked) = self.read_checked_integer(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = checked;
                     continue;
                 }
                 if let Some(wrapped) = self.read_wrapping_integer(

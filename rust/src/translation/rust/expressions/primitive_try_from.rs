@@ -8,30 +8,30 @@ use crate::translation::{
     rust_primitive_try_from_rules as rules, rust_saturating_integer_rules as bounds,
     source_signatures::SourceOwner,
 };
-struct Head {
-    start: Token,
-    absolute: bool,
-    offset: usize,
-    resolved: Vec<String>,
-    shadowed: bool,
+pub(super) struct Head {
+    pub(super) start: Token,
+    pub(super) absolute: bool,
+    pub(super) offset: usize,
+    pub(super) resolved: Vec<String>,
+    pub(super) shadowed: bool,
 }
-struct Facts {
-    origin: SourceOrigin,
-    kind: String,
-    bits: String,
-    signed: bool,
-    owner: Option<SourceOwner>,
+pub(super) struct Facts {
+    pub(super) origin: SourceOrigin,
+    pub(super) kind: String,
+    pub(super) bits: String,
+    pub(super) signed: bool,
+    pub(super) owner: Option<SourceOwner>,
 }
 fn count(value: usize) -> f64 {
     u32::try_from(value).map_or(f64::INFINITY, f64::from)
 }
 impl Facts {
-    fn path(&self) -> String {
+    pub(super) fn path(&self) -> String {
         self.owner
             .as_ref()
             .map_or_else(String::new, |owner| owner.path.join("::"))
     }
-    fn admitted(&self) -> bool {
+    pub(super) fn admitted(&self) -> bool {
         from_rules::accept_rust_primitive_from_source(
             &self.kind,
             &self.bits,
@@ -46,7 +46,7 @@ impl Facts {
         )
     }
 }
-fn origin(ty: Type, owner: &str, path: &[String]) -> SourceOrigin {
+pub(super) fn origin(ty: Type, owner: &str, path: &[String]) -> SourceOrigin {
     let mut value = SourceOrigin::with_type(ty, path, Vec::new());
     value.source_owner = Some(SourceOwner {
         kind: "primitive".to_owned(),
@@ -55,7 +55,7 @@ fn origin(ty: Type, owner: &str, path: &[String]) -> SourceOrigin {
     });
     value
 }
-fn facts(parser: &RustParser, node: &SExpr, path: &[String]) -> Facts {
+pub(super) fn facts(parser: &RustParser, node: &SExpr, path: &[String]) -> Facts {
     let origin = parser.origins.origin(node, path);
     let owner = origin.source_owner.clone().or_else(|| {
         (origin.ty == Some(FLOAT) && origin.float_source_model == Some("binary64 scalar")).then(
@@ -87,7 +87,7 @@ fn pop(stack: &mut Vec<SExpr>, range: Option<Span>) -> Result<SExpr> {
     })
 }
 impl RustParser {
-    fn primitive_try_head(&self, path: &[String]) -> Option<Head> {
+    pub(super) fn primitive_try_head(&self, path: &[String]) -> Option<Head> {
         let start = self.peek();
         let absolute = self.cursor.is("::");
         let mut offset = usize::from(absolute);

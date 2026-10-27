@@ -632,6 +632,34 @@ Private error payloads cannot escape this elimination scope. General Result
 values, error observation/formatting, arbitrary or lazy mappers, other source
 domains, generic traits and complete own-codebase translation remain obligations.
 
+Standard checked integer arithmetic has a shared source draft for checked_add,
+checked_sub, checked_mul, checked_div, checked_rem, checked_neg and signed
+checked_abs. Twelve fixed/pointer owners retain their exact ranges. Lazy
+conditional source terms guard every threshold and every successful arithmetic
+operation, including zero divisors and signed MIN with negative one. Unsigned
+checked_neg succeeds only at zero. No wider host integer or native replacement
+algorithm supplies the operation. Immediate Option is_some/is_none, eager
+unwrap_or and map_or through admitted standard primitive From function items
+reuse these complete guards. Original operands and eager defaults are captured
+once in source order, including successful operations. Immutable Copy receiver
+adjustment and exact qualified/aliased associated calls preserve actual owners;
+explicit associated arguments retain their original direct-value obligations.
+
+Four thousand one hundred forty-six complete original programs retain
+independent BigInt interval expectations across seven operations, all owners,
+boundaries, zero divisors, signed overflow, consumers, exact mapper values,
+source types and output traces. Both runtimes, both Links transports, all four
+emissions, actual original/native products and every admission/refusal remain
+deferred controls. The previous complete associated-call fixture remains an
+exact hashed archive: its checked_add arity input is retained with the actual
+receiver-plus-operand expectation and version-bounded correction rationale.
+General Option values, arbitrary/lazy mappers, other checked operations and
+complete own-codebase translation remain obligations. This follows the
+[standard signed integer operations](https://doc.rust-lang.org/std/primitive.i64.html),
+[unsigned checked negation](https://doc.rust-lang.org/std/primitive.u64.html#method.checked_neg)
+and [Option consumers](https://doc.rust-lang.org/std/option/enum.Option.html).
+These are unexecuted code drafts, without behavioral or compilation evidence.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not

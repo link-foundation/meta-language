@@ -1,3 +1,4 @@
+import {readRustCheckedInteger} from './rust-checked-integer.js';
 import {readRustPrimitiveTryFrom,readRustPrimitiveTryFromImport} from './rust-primitive-try-from.js';
 import {readRustPrimitiveIntegerConstant} from './rust-primitive-integer-constants.js';
 import {readRustPrimitiveAssociatedCall,readRustPrimitiveAssociatedImport} from './rust-primitive-associated-calls.js';
@@ -1402,6 +1403,8 @@ class RustParser {
     if(saturated)return saturated;
     const saturatedProduct=readRustSaturatingMultiplication(this,receiver,method,args,range,path);
     if(saturatedProduct)return saturatedProduct;
+    const checked=readRustCheckedInteger(this,receiver,method,args,range,path);
+    if(checked)return checked;
     const wrapped=readRustWrappingInteger(this,receiver,method,args,range,path);
     if(wrapped)return wrapped;
     const floatOperation = acceptRustFloatOperationMethod(method.value);

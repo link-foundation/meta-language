@@ -125,6 +125,13 @@ impl RustParser {
             ));
         }
         if self.origins.collecting {
+            let mut token = start.clone();
+            token.value = method.clone();
+            if let Some(checked) =
+                self.read_checked_integer(&values[0], &token, &values[1..], range, path)?
+            {
+                return Ok(Some(checked));
+            }
             return Ok(Some(SExpr::new(
                 SNode::App {
                     func: Box::new(SExpr::new(SNode::Name { path: resolved }, range)),
@@ -231,6 +238,9 @@ impl RustParser {
         }
         if let Some(value) = self.read_wrapping_integer(&receiver, &token, &values, range, path)? {
             return Ok(Some(value));
+        }
+        if let Some(checked) = self.read_checked_integer(&receiver, &token, &values, range, path)? {
+            return Ok(Some(checked));
         }
         Err(type_error(
             "the registered primitive associated call lost its shared method interpretation",

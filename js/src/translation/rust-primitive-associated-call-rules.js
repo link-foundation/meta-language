@@ -1,3 +1,4 @@
+import {readRustCheckedIntegerArity} from './rust-checked-integer-rules.js';
 import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-rules.js';
 /** Resolve only actual primitive paths; lexical resolution stays in the host.
  * @param {string[]} segments @param {boolean} ordinary
@@ -16,6 +17,8 @@ export function readRustPrimitiveAssociatedArity(owner,method){
  if(!['bool','i8','u8','i16','u16','i32','u32','i64','u64','i128','u128','isize','usize'].includes(owner))return -1;
  if(method==='min'||method==='max')return 2;
  if(owner==='bool')return -1;
+ const checked=readRustCheckedIntegerArity(method,true);
+ if(checked>=0&&(method!=='checked_abs'||owner.startsWith('i')))return checked+1;
  if(['saturating_add','saturating_sub','saturating_mul','wrapping_add','wrapping_sub'].includes(method))return 2;
  if(method==='wrapping_neg')return 1;
  if(!owner.startsWith('i'))return -1;

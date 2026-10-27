@@ -155,6 +155,7 @@ pub(crate) mod rust_array_index_rules;
 pub(crate) mod rust_array_length_rules;
 pub(crate) mod rust_byte_string_rules;
 pub(crate) mod rust_character_rules;
+mod rust_checked_integer_rules;
 mod rust_const_branch_rules;
 pub(crate) mod rust_contextual_closure_rules;
 pub(crate) mod rust_copy_closure_rules;
