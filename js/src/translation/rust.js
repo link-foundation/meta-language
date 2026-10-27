@@ -1,3 +1,4 @@
+import {readRustFormattingArgumentNameError,planRustNamedFormattingValue} from './rust-named-formatting-rules.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
 import {readRustStandardStringView} from './rust-standard-string-views.js';
@@ -10,7 +11,7 @@ import {readRustScalarVectorCopy} from './rust-scalar-vector-copy.js';
 import {acceptRustFreshVectorResultDeclaration} from './rust-fresh-vector-call-result-rules.js';
 import {acceptRustConstFunctionPrefix,acceptRustConstFunctionLocation,requireRustConstPredicateProof} from './rust-function-qualifier-rules.js';
 import {initializeRustTypeAliases,readRustTypeAliasValue,readRustTypeAliasItem,finishRustTypeAliases,resolveRustTypeAliasPath,requireRustTypeAliasValueConstructor} from './rust-type-aliases.js';
-import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
+import {planRustFormattingValue,planRustFormattingFieldTerms,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
 import {readRustOrdinaryFunctionCompletion,installRustOrdinaryCompletionDeclarations} from './rust-ordinary-completions.js';
@@ -1030,11 +1031,12 @@ class RustParser {
   mainMacro(path=[]) {
     const c = this.cursor;
     const token = c.next();
-    const args = this.macroArguments(token, path);
+    const parsed = token.value==='println'?this.formattingArguments(token,path):{args:this.macroArguments(token,path),names:null};
+    const args=parsed.args;
     switch (token.value) {
       case 'println':
         if (!args.length) return { k: 'print', expr: { k: 'str', value: '' }, style: 'rust', span: span(token, c.peek()) };
-        return { k: 'print', expr: this.format(args, token,path), style: 'rust', span: span(token, c.peek()) };
+        return { k: 'print', expr: this.format(args, token,path,parsed.names), style: 'rust', span: span(token, c.peek()) };
       case 'assert':
         if (args.length !== 1) throw unsupported('assert! message', 'custom assertion messages are not kept', span(token, c.peek()));
         return { k: 'assert', prop: propOf(args[0]), span: span(token, c.peek()) };
@@ -1062,16 +1064,47 @@ class RustParser {
     return args;
   }
 
+  /** Formatting macros alone admit identifier = expression operands. */
+  formattingArguments(token,path){
+    const c=this.cursor,close={'(':')','[':']','{':'}'}[c.peek().value];
+    if(!close)throw this.fail(`expected ( after ${token.value}!`);
+    c.next();const args=[],names=[];
+    while(!c.is(close)){
+      let name='';
+      if(c.peek().kind==='identifier'&&c.is('=',1)){
+        const source=c.next();c.next();
+        if(args.length===0)throw new TranslationError('syntax','the format string must be the first positional argument',span(source,source));
+        if(source.value==='_'||!acceptRustSourceIdentifierName(source.value))throw new TranslationError('syntax','invalid named format argument',span(source,source));
+        name=source.value;
+      }
+      args.push(this.expr(path));if(args.length>1)names.push(name);
+      if(!c.eat(','))break;
+    }
+    c.expect(close,`${token.value}!`);
+    const error=names.some(name=>name!=='')?readRustFormattingArgumentNameError(names):'';
+    if(error)throw new TranslationError('syntax',error,span(token,c.peek()));
+    return {args,names};
+  }
+
   /**
    * `format!("{} and {name}", a)`: `{}` takes the next argument, `{name}` a
    * variable in scope, `{{`/`}}` are braces; every value is rendered with
    * Display, which for integers is its decimal text.
    */
-  format(args, token, path=this.modulePath) {
+  format(args, token, path=this.modulePath,argumentNames=null) {
     const [template,...values]=args;
     if(template?.k!=='str')throw unsupported(`${token.value}!`,'the format string must be a literal',span(token,token));
     const units=Array.from({length:template.value.length},(_,index)=>template.value.charCodeAt(index));
-    const plan=planRustFormattingValue(units,values.length);
+    let plan;
+    if(argumentNames!==null&&argumentNames.some(name=>name!=='')){
+      const terms=planRustFormattingFieldTerms(units,values.length),fields=[];
+      if(terms[0]===0)for(let at=1;at<terms.length;at+=3)if(terms[at]===2){
+        const sourceName=template.value.slice(terms[at+1],terms[at+2]);
+        if(sourceName==='_'||!acceptRustSourceIdentifierName(sourceName))throw unsupported(`format argument {${sourceName}}`,'outside the portable core',template.span);
+        fields.push(normalizeRustSourceIdentifier(sourceName,template.span));
+      }
+      plan=planRustNamedFormattingValue(terms,argumentNames,fields);
+    }else plan=planRustFormattingValue(units,values.length);
     if(plan[0]!==0){
       const spec=template.value.slice(plan[1],plan[2]);
       if(plan[0]===-1)throw new TranslationError('syntax','unmatched } in format string',template.span);
@@ -1597,7 +1630,8 @@ class RustParser {
 
   expressionMacro(token, path) {
     if (token.value === 'matches') return readRustLiteralMatch(this, token, path);
-    const args = this.macroArguments(token, path);
+    const parsed = token.value==='format'?this.formattingArguments(token,path):{args:this.macroArguments(token,path),names:null};
+    const args=parsed.args;
     const range = span(token, this.cursor.peek());
     switch (token.value) {
       case 'vec': {
@@ -1614,7 +1648,7 @@ class RustParser {
         return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, sourceOwner:owner?{kind:'library',path:['std','vec','Vec'],arguments:[{kind:'primitive',path:[owner],arguments:[]}]}:null,path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
       }
       case 'format': {
-        const formatted=this.format(args,token,path);
+        const formatted=this.format(args,token,path,parsed.names);
         return this.origins.mark({...formatted,span:range},this.origins.origin(formatted,path));
       }
       case 'panic':

@@ -1,7 +1,10 @@
 // Generated from complete js/src/translation/rust-formatting-rules.js. Do not edit by hand.
-use super::MlTemporaryPlanRustFormattingValueLoop3Result;
-use super::source_ml_temporary_plan_rust_formatting_value_loop3;
-use super::source_ml_temporary_plan_rust_formatting_value_loop4;
+use super::MlTemporaryPlanRustFormattingFieldTermsLoop3Result;
+use super::MlTemporaryReadRustFormattingUnusedPositionLoop11Result;
+use super::source_ml_temporary_plan_rust_formatting_field_terms_loop3;
+use super::source_ml_temporary_plan_rust_formatting_field_terms_loop4;
+use super::source_ml_temporary_plan_rust_formatting_value_loop10;
+use super::source_ml_temporary_read_rust_formatting_unused_position_loop11;
 
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
@@ -282,7 +285,7 @@ pub fn sort_rust_formatting_positions(values: &[f64]) -> Vec<f64> {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn plan_rust_formatting_value(units: &[f64], count: f64) -> Vec<f64> {
+pub fn plan_rust_formatting_field_terms(units: &[f64], count: f64) -> Vec<f64> {
     if !(self::ml_math::is_safe_integer(count)) || (count < 0f64) {
         vec![-8f64, 0f64, 0f64]
     } else {
@@ -290,66 +293,39 @@ pub fn plan_rust_formatting_value(units: &[f64], count: f64) -> Vec<f64> {
             let index = 0f64;
             {
                 let source_ml_source1_s1 =
-                    self::source_ml_temporary_plan_rust_formatting_value_loop3(units, index);
+                    self::source_ml_temporary_plan_rust_formatting_field_terms_loop3(units, index);
                 match source_ml_source1_s1 {
-                    self::MlTemporaryPlanRustFormattingValueLoop3Result::MlTemporaryPlanRustFormattingValueLoop3Done => {
+                    self::MlTemporaryPlanRustFormattingFieldTermsLoop3Result::MlTemporaryPlanRustFormattingFieldTermsLoop3Done => {
                         {
                             let plan = vec![0f64];
                             {
-                                let used = Vec::<f64>::new();
+                                let at = 0f64;
                                 {
-                                    let at = 0f64;
+                                    let text_start = 0f64;
                                     {
-                                        let text_start = 0f64;
+                                        let next = 0f64;
                                         {
-                                            let next = 0f64;
-                                            {
-                                                let source_ml_source1_s2 = self::source_ml_temporary_plan_rust_formatting_value_loop4(units, count, plan, used, at, text_start, next);
-                                                match source_ml_source1_s2 {
-                                                    self::MlTemporaryPlanRustFormattingValueLoop4Result::MlTemporaryPlanRustFormattingValueLoop4Done(plan_2, used_2, text_start_2) => {
-                                                        {
-                                                            let plan_6 = if (text_start_2 < (units.len() as f64)) || ((plan_2.len() as f64) == 1f64) {
-                                                                {
-                                                                    let plan_3 = { let (ml_append_right, ml_append_left) = (vec![0f64], plan_2); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                    {
-                                                                        let plan_4 = { let (ml_append_right, ml_append_left) = (vec![text_start_2], plan_3); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                        {
-                                                                            { let (ml_append_right, ml_append_left) = (vec![(units.len() as f64)], plan_4); self::ml_array::append(ml_append_left, ml_append_right) }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            } else {
-                                                                plan_2
-                                                            };
+                                            let source_ml_source1_s2 = self::source_ml_temporary_plan_rust_formatting_field_terms_loop4(units, count, plan, at, text_start, next);
+                                            match source_ml_source1_s2 {
+                                                self::MlTemporaryPlanRustFormattingFieldTermsLoop4Result::MlTemporaryPlanRustFormattingFieldTermsLoop4Done(plan_2, text_start_2) => {
+                                                    {
+                                                        if (text_start_2 < (units.len() as f64)) || ((plan_2.len() as f64) == 1f64) {
                                                             {
-                                                                let ordered = self::sort_rust_formatting_positions(&(used_2));
+                                                                let plan_3 = { let (ml_append_right, ml_append_left) = (vec![0f64], plan_2); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                 {
-                                                                    let expected = 0f64;
+                                                                    let plan_4 = { let (ml_append_right, ml_append_left) = (vec![text_start_2], plan_3); self::ml_array::append(ml_append_left, ml_append_right) };
                                                                     {
-                                                                        let index_2 = 0f64;
-                                                                        {
-                                                                            let source_ml_source1_s3 = self::source_ml_temporary_plan_rust_formatting_value_loop5(&(ordered), expected, index_2);
-                                                                            match source_ml_source1_s3 {
-                                                                                self::MlTemporaryPlanRustFormattingValueLoop5Result::MlTemporaryPlanRustFormattingValueLoop5Done(expected_2) => {
-                                                                                    if expected_2 < count {
-                                                                                        vec![-7f64, expected_2, (expected_2 + 1f64)]
-                                                                                    } else {
-                                                                                        plan_6
-                                                                                    }
-                                                                                }
-                                                                                self::MlTemporaryPlanRustFormattingValueLoop5Result::MlTemporaryPlanRustFormattingValueLoop5Return(source_ml_temporary_result5) => {
-                                                                                    source_ml_temporary_result5
-                                                                                }
-                                                                            }
-                                                                        }
+                                                                        { let (ml_append_right, ml_append_left) = (vec![(units.len() as f64)], plan_4); self::ml_array::append(ml_append_left, ml_append_right) }
                                                                     }
                                                                 }
                                                             }
+                                                        } else {
+                                                            plan_2
                                                         }
                                                     }
-                                                    self::MlTemporaryPlanRustFormattingValueLoop4Result::MlTemporaryPlanRustFormattingValueLoop4Return(source_ml_temporary_result5_2) => {
-                                                        source_ml_temporary_result5_2
-                                                    }
+                                                }
+                                                self::MlTemporaryPlanRustFormattingFieldTermsLoop4Result::MlTemporaryPlanRustFormattingFieldTermsLoop4Return(source_ml_temporary_result4) => {
+                                                    source_ml_temporary_result4
                                                 }
                                             }
                                         }
@@ -358,8 +334,81 @@ pub fn plan_rust_formatting_value(units: &[f64], count: f64) -> Vec<f64> {
                             }
                         }
                     }
-                    self::MlTemporaryPlanRustFormattingValueLoop3Result::MlTemporaryPlanRustFormattingValueLoop3Return(source_ml_temporary_result10) => {
-                        source_ml_temporary_result10
+                    self::MlTemporaryPlanRustFormattingFieldTermsLoop3Result::MlTemporaryPlanRustFormattingFieldTermsLoop3Return(source_ml_temporary_result9) => {
+                        source_ml_temporary_result9
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_formatting_value(units: &[f64], count: f64) -> Vec<f64> {
+    {
+        let plan = self::plan_rust_formatting_field_terms(units, count);
+        if {
+            let source_ml_source1_comparison_operand3 =
+                self::ml_array::optional_at(&plan, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source1_comparison_operand4 = 0f64;
+                !(match (
+                    source_ml_source1_comparison_operand3,
+                    source_ml_source1_comparison_operand4,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                })
+            }
+        } {
+            plan
+        } else {
+            {
+                let used = Vec::<f64>::new();
+                {
+                    let at = 1f64;
+                    {
+                        let used_2 = self::source_ml_temporary_plan_rust_formatting_value_loop10(
+                            &(plan),
+                            used,
+                            at,
+                        );
+                        self::read_rust_formatting_unused_position(&(used_2), count, &(plan))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_formatting_unused_position(used: &[f64], count: f64, plan: &[f64]) -> Vec<f64> {
+    {
+        let ordered = self::sort_rust_formatting_positions(used);
+        {
+            let expected = 0f64;
+            {
+                let index = 0f64;
+                {
+                    let source_ml_source1_s5 =
+                        self::source_ml_temporary_read_rust_formatting_unused_position_loop11(
+                            &(ordered),
+                            expected,
+                            index,
+                        );
+                    match source_ml_source1_s5 {
+                        self::MlTemporaryReadRustFormattingUnusedPositionLoop11Result::MlTemporaryReadRustFormattingUnusedPositionLoop11Done(expected_2) => {
+                            if expected_2 < count {
+                                vec![-7f64, expected_2, (expected_2 + 1f64)]
+                            } else {
+                                plan.to_vec()
+                            }
+                        }
+                        self::MlTemporaryReadRustFormattingUnusedPositionLoop11Result::MlTemporaryReadRustFormattingUnusedPositionLoop11Return(source_ml_temporary_result11) => {
+                            source_ml_temporary_result11
+                        }
                     }
                 }
             }
@@ -507,62 +556,17 @@ pub fn source_ml_temporary_sort_rust_formatting_positions_loop2(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustFormattingValueLoop5Result {
-    MlTemporaryPlanRustFormattingValueLoop5Done(f64),
-    MlTemporaryPlanRustFormattingValueLoop5Return(Vec<f64>),
+pub enum MlTemporaryPlanRustFormattingFieldTermsLoop4Result {
+    MlTemporaryPlanRustFormattingFieldTermsLoop4Done(Vec<f64>, f64),
+    MlTemporaryPlanRustFormattingFieldTermsLoop4Return(Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_plan_rust_formatting_value_loop5(
-    ordered: &[f64],
-    mut expected: f64,
-    mut index: f64,
-) -> self::MlTemporaryPlanRustFormattingValueLoop5Result {
-    loop {
-        return if index < (ordered.len() as f64) {
-            if {
-                let source_ml_source1_comparison_operand4 =
-                    self::ml_array::optional_at(ordered, self::ml_array::number_index(index));
-                {
-                    let source_ml_source1_comparison_operand5 = expected;
-                    !(match (
-                        source_ml_source1_comparison_operand4,
-                        source_ml_source1_comparison_operand5,
-                    ) {
-                        (Some(ml_left), ml_right) => ml_left == ml_right,
-                        _ => false,
-                    })
-                }
-            } {
-                self::MlTemporaryPlanRustFormattingValueLoop5Result::MlTemporaryPlanRustFormattingValueLoop5Return(vec![-7f64, expected, (expected + 1f64)])
-            } else {
-                {
-                    let expected_2 = expected + 1f64;
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            (expected, index) = (expected_2, index_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryPlanRustFormattingValueLoop5Result::MlTemporaryPlanRustFormattingValueLoop5Done(expected)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustFormattingValueLoop4Result {
-    MlTemporaryPlanRustFormattingValueLoop4Done(Vec<f64>, Vec<f64>, f64),
-    MlTemporaryPlanRustFormattingValueLoop4Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_plan_rust_formatting_value_loop6(units: &[f64], mut end: f64) -> f64 {
+pub fn source_ml_temporary_plan_rust_formatting_field_terms_loop5(
+    units: &[f64],
+    mut end: f64,
+) -> f64 {
     loop {
         return if (end < (units.len() as f64)) && {
             let source_ml_source1_comparison_operand6 =
@@ -593,7 +597,7 @@ pub fn source_ml_temporary_plan_rust_formatting_value_loop6(units: &[f64], mut e
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_plan_rust_formatting_value_loop8(
+pub fn source_ml_temporary_plan_rust_formatting_field_terms_loop7(
     units: &[f64],
     mut at: f64,
     mut last: f64,
@@ -618,26 +622,26 @@ pub fn source_ml_temporary_plan_rust_formatting_value_loop8(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustFormattingValueJoin9 {
-    MlTemporaryPlanRustFormattingValueJoin9Next(Vec<f64>, Vec<f64>, f64),
-    MlTemporaryPlanRustFormattingValueJoin9Return(Vec<f64>),
+pub enum MlTemporaryPlanRustFormattingFieldTermsJoin8 {
+    MlTemporaryPlanRustFormattingFieldTermsJoin8Next(Vec<f64>, f64),
+    MlTemporaryPlanRustFormattingFieldTermsJoin8Return(Vec<f64>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustFormattingValueLoop10Result {
-    MlTemporaryPlanRustFormattingValueLoop10Done(bool, f64),
+pub enum MlTemporaryPlanRustFormattingFieldTermsLoop9Result {
+    MlTemporaryPlanRustFormattingFieldTermsLoop9Done(bool, f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_plan_rust_formatting_value_loop10(
+pub fn source_ml_temporary_plan_rust_formatting_field_terms_loop9(
     units: &[f64],
     mut count: f64,
     mut last: f64,
     mut numeric: bool,
     mut position: f64,
     mut index: f64,
-) -> self::MlTemporaryPlanRustFormattingValueLoop10Result {
+) -> self::MlTemporaryPlanRustFormattingFieldTermsLoop9Result {
     loop {
         return if index < last {
             {
@@ -648,7 +652,7 @@ pub fn source_ml_temporary_plan_rust_formatting_value_loop10(
                 if (digit < 0f64) || (digit > 9f64) {
                     {
                         let numeric_2 = false;
-                        self::MlTemporaryPlanRustFormattingValueLoop10Result::MlTemporaryPlanRustFormattingValueLoop10Done(numeric_2, position)
+                        self::MlTemporaryPlanRustFormattingFieldTermsLoop9Result::MlTemporaryPlanRustFormattingFieldTermsLoop9Done(numeric_2, position)
                     }
                 } else {
                     {
@@ -665,25 +669,25 @@ pub fn source_ml_temporary_plan_rust_formatting_value_loop10(
                 }
             }
         } else {
-            self::MlTemporaryPlanRustFormattingValueLoop10Result::MlTemporaryPlanRustFormattingValueLoop10Done(numeric, position)
+            self::MlTemporaryPlanRustFormattingFieldTermsLoop9Result::MlTemporaryPlanRustFormattingFieldTermsLoop9Done(numeric, position)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustFormattingValueLoop7Result {
-    MlTemporaryPlanRustFormattingValueLoop7Done,
-    MlTemporaryPlanRustFormattingValueLoop7Return(Vec<f64>),
+pub enum MlTemporaryPlanRustFormattingFieldTermsLoop6Result {
+    MlTemporaryPlanRustFormattingFieldTermsLoop6Done,
+    MlTemporaryPlanRustFormattingFieldTermsLoop6Return(Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_plan_rust_formatting_value_loop7(
+pub fn source_ml_temporary_plan_rust_formatting_field_terms_loop6(
     units: &[f64],
     mut at: f64,
     mut end: f64,
     mut index: f64,
-) -> self::MlTemporaryPlanRustFormattingValueLoop7Result {
+) -> self::MlTemporaryPlanRustFormattingFieldTermsLoop6Result {
     loop {
         return if index < end {
             if {
@@ -700,7 +704,7 @@ pub fn source_ml_temporary_plan_rust_formatting_value_loop7(
                     }
                 }
             } {
-                self::MlTemporaryPlanRustFormattingValueLoop7Result::MlTemporaryPlanRustFormattingValueLoop7Return(vec![-3f64, (at + 1f64), end])
+                self::MlTemporaryPlanRustFormattingFieldTermsLoop6Result::MlTemporaryPlanRustFormattingFieldTermsLoop6Return(vec![-3f64, (at + 1f64), end])
             } else {
                 {
                     let index_2 = index + 1f64;
@@ -711,7 +715,7 @@ pub fn source_ml_temporary_plan_rust_formatting_value_loop7(
                 }
             }
         } else {
-            self::MlTemporaryPlanRustFormattingValueLoop7Result::MlTemporaryPlanRustFormattingValueLoop7Done
+            self::MlTemporaryPlanRustFormattingFieldTermsLoop6Result::MlTemporaryPlanRustFormattingFieldTermsLoop6Done
         };
     }
 }

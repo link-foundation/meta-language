@@ -7765,9 +7765,29 @@ composed module, with invocation facades and trace markers. Future controls
 compare original Rust, translated JavaScript and native Rust complete traces,
 actual source ASTs, both program/definition codecs and all four emissions.
 Native compilers run only in CI and enforce explicit version ranges. No such
-control executed during the complete draft. Full format specs, explicit named
-argument assignments, custom Display/borrow effects, complete macro namespaces
+control executed during the complete draft. Full format specs,
+custom Display/borrow effects, complete macro namespaces
 and every earlier source/architecture requirement remain required.
+
+Explicit named operands now have an additional source draft for format! and
+println!. Actual identifier = expression operands retain their original source
+order; normalized names resolve shared grammar terms to their actual operand
+positions before any Display conversion. An explicit name overrides a lexical
+capture, while unprovided names retain their existing lexical lookup. Indexed
+fields keep their original positions and do not advance the implicit cursor.
+Repeated fields reuse the same captured argument. Duplicate names, positional
+arguments following named arguments, unused operands and unsupported specifiers
+remain observable errors. Names use the existing Unicode source normalization
+and raw-identifier projection. The original positional-only planner and unused
+position diagnosis remain available without the new named-profile bounds.
+
+Both adapters delegate resolution and argument-sequence admission to complete
+automatically translated definitions. The named profile permits at most one
+hundred thousand operands/terms and one million name-comparison steps; exhaustion
+refuses. Thirteen complete source programs, original native function types,
+output traces, independent plan/refusal controls, both Links transports and
+both generated native products remain deferred. These source drafts establish
+no runtime observations, equivalence proof or complete macro/format coverage.
 
 
 ### Ordinary guarded Rust function completions draft

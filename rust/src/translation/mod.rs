@@ -170,6 +170,7 @@ pub(crate) mod rust_inherent_program;
 pub(crate) mod rust_inherent_rules;
 pub(crate) mod rust_literal_match_rules;
 pub(crate) mod rust_module_value_rules;
+pub(crate) mod rust_named_formatting_rules;
 pub(crate) mod rust_pointer_integer_owner_rules;
 pub(crate) mod rust_primitive_bitwise;
 pub(crate) mod rust_primitive_bitwise_program;
@@ -312,13 +313,13 @@ pub(crate) mod rust_scalar_vector_copy_rules;
 
 pub(crate) mod scalar_vector_copy;
 
+pub(crate) mod rust_constructed_string_interface_rules;
 pub(crate) mod rust_data_type_field_signature_rules;
+pub(crate) mod rust_displayed_string_interface_rules;
 pub(crate) mod rust_scalar_mathematical_interface_rules;
 pub(crate) mod rust_standard_owned_call_rules;
 pub(crate) mod rust_standard_string_view_rules;
-pub(crate) mod rust_string_predicate_interface_rules;
-pub(crate) mod rust_constructed_string_interface_rules;
-pub(crate) mod rust_displayed_string_interface_rules;
 pub(crate) mod rust_string_addition_rules;
+pub(crate) mod rust_string_predicate_interface_rules;
 pub(crate) mod rust_textual_source_interface_rules;
 pub mod source_data_field_signatures;

@@ -887,7 +887,12 @@ impl RustParser {
     }
     fn main_macro_with_path(&mut self, path: &[String]) -> Result<SEffect> {
         let token = self.cursor.advance();
-        let mut args = self.macro_arguments(&token, path)?;
+        let (mut args, argument_names) = if token.value == "println" {
+            let (args, names) = self.formatting_arguments(&token, path)?;
+            (args, Some(names))
+        } else {
+            (self.macro_arguments(&token, path)?, None)
+        };
         match token.value.as_str() {
             "println" => {
                 for value in args.iter().skip(1) {
@@ -901,7 +906,7 @@ impl RustParser {
                         None,
                     )
                 } else {
-                    self.format(args, &token, path)?
+                    self.format(args, &token, path, argument_names)?
                 };
                 Ok(SEffect::Print {
                     expr,

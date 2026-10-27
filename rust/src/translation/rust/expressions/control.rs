@@ -21,7 +21,12 @@ impl RustParser {
         if token.value == "matches" {
             return self.literal_match(token, path);
         }
-        let args = self.macro_arguments(token, path)?;
+        let (args, argument_names) = if token.value == "format" {
+            let (args, names) = self.formatting_arguments(token, path)?;
+            (args, Some(names))
+        } else {
+            (self.macro_arguments(token, path)?, None)
+        };
         let range = span(token, self.cursor.peek());
         match token.value.as_str() {
             "vec" => {
@@ -109,7 +114,7 @@ impl RustParser {
                 Ok(result)
             }
             "format" => {
-                let mut formatted = self.format(args, token, path)?;
+                let mut formatted = self.format(args, token, path, argument_names)?;
                 let origin = self.origins.origin(&formatted, path);
                 formatted.span = range;
                 self.origins.mark(&formatted, origin);

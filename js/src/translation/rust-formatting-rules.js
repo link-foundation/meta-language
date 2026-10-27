@@ -39,10 +39,10 @@ function sortRustFormattingPositions(values){
  * -5 missing implicit,-6 missing explicit,-7 unused operand,-8 malformed facts.
  * Explicit positions never advance the independent implicit cursor.
  * @param {number[]} units @param {number} count @returns {number[]} */
-export function planRustFormattingValue(units,count){
+export function planRustFormattingFieldTerms(units,count){
  if(!Number.isSafeInteger(count)||count<0)return [-8,0,0];
  for(let index=0;index<units.length;index+=1){const unit=units[index]?? -1;if(!Number.isSafeInteger(unit)||unit<0||unit>65535)return [-8,index,index+1];}
- const plan=[0],used=[];
+ const plan=[0];
  let at=0,textStart=0,next=0;
  while(at<units.length){
   const unit=units[at]??0,following=units[at+1]?? -1;
@@ -59,7 +59,7 @@ export function planRustFormattingValue(units,count){
   let last=end;while(last>at+1&&acceptRustFormattingWhitespace(units[last-1]??0))last-=1;
   if(last===at+1){
    if(next>=count)return [-5,at+1,last];
-   plan.push(1);plan.push(next);plan.push(0);used.push(next);next+=1;
+   plan.push(1);plan.push(next);plan.push(0);next+=1;
   }else{
    let numeric=true,position=0;
    for(let index=at+1;index<last;index+=1){const digit=(units[index]??0)-48;
@@ -67,12 +67,29 @@ export function planRustFormattingValue(units,count){
    }
    if(numeric){
     if(position>=count)return [-6,at+1,last];
-    plan.push(1);plan.push(position);plan.push(0);used.push(position);
+    plan.push(1);plan.push(position);plan.push(0);
    }else{plan.push(2);plan.push(at+1);plan.push(last);}
   }
   at=end+1;textStart=at;
  }
  if(textStart<units.length||plan.length===1){plan.push(0);plan.push(textStart);plan.push(units.length);}
+ return plan;
+}
+
+/** Preserve the original complete positional/captured-variable interpretation.
+ * @param {number[]} units @param {number} count @returns {number[]} */
+export function planRustFormattingValue(units,count){
+ const plan=planRustFormattingFieldTerms(units,count);
+ if(plan[0]!==0)return plan;
+ const used=[];
+ for(let at=1;at<plan.length;at+=3)if(plan[at]===1)used.push(plan[at+1]?? -1);
+ return readRustFormattingUnusedPosition(used,count,plan);
+}
+
+/** Shared occurrence-set diagnosis, retaining every actual repeated operand.
+ * @param {number[]} used @param {number} count @param {number[]} plan
+ * @returns {number[]} */
+export function readRustFormattingUnusedPosition(used,count,plan){
  const ordered=sortRustFormattingPositions(used);
  let expected=0;
  for(let index=0;index<ordered.length;index+=1){

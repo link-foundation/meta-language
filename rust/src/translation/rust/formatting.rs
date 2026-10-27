@@ -1,10 +1,11 @@
 //! Actual source terms transported through the generated formatting plan.
 use super::{
-    BinaryOp, Result, RustParser, SExpr, SNode, STRING, ShowStyle, SourceOrigin, Span, Token,
-    TranslationError, span, unsupported,
+    BinaryOp, Options, Result, RustParser, SExpr, SNode, STRING, ShowStyle, SourceOrigin, Span,
+    Token, TokenKind, TranslationError, span, unsupported,
 };
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::rust_formatting_rules as rules;
+use crate::translation::rust_named_formatting_rules as named_rules;
 
 fn malformed(place: Option<Span>) -> TranslationError {
     unsupported(
@@ -21,11 +22,80 @@ fn text_slice(units: &[u16], first: f64, last: f64, place: Option<Span>) -> Resu
 }
 
 impl RustParser {
+    /// Only formatting macros accept identifier = expression operands.
+    pub(super) fn formatting_arguments(
+        &mut self,
+        token: &Token,
+        path: &[String],
+    ) -> Result<(Vec<SExpr>, Vec<String>)> {
+        let close = match self.cursor.peek().value.as_str() {
+            "(" => ")",
+            "[" => "]",
+            "{" => "}",
+            _ => {
+                return Err(Self::fail(
+                    &format!("expected ( after {}!", token.value),
+                    self.cursor.peek(),
+                ));
+            }
+        };
+        self.cursor.advance();
+        let mut args = Vec::new();
+        let mut names = Vec::new();
+        while !self.cursor.is(close) {
+            let name = if self.cursor.peek().kind == TokenKind::Identifier
+                && self.cursor.is_at("=", 1)
+            {
+                let source = self.cursor.advance();
+                self.cursor.advance();
+                if args.is_empty() {
+                    return Err(TranslationError::syntax(
+                        "the format string must be the first positional argument",
+                        span(&source, &source),
+                    ));
+                }
+                if source.value == "_"
+                    || !crate::translation::lexer::accept_rust_source_identifier_name(&source.value)
+                {
+                    return Err(TranslationError::syntax(
+                        "invalid named format argument",
+                        span(&source, &source),
+                    ));
+                }
+                source.value
+            } else {
+                String::new()
+            };
+            args.push(self.expr(path, Options::default())?);
+            if args.len() > 1 {
+                names.push(name);
+            }
+            if self.cursor.eat(",").is_none() {
+                break;
+            }
+        }
+        self.cursor
+            .expect(close, Some(&format!("{}!", token.value)))?;
+        let error = if names.iter().any(|name| !name.is_empty()) {
+            named_rules::read_rust_formatting_argument_name_error(&names)
+        } else {
+            String::new()
+        };
+        if !error.is_empty() {
+            return Err(TranslationError::syntax(
+                error,
+                span(token, self.cursor.peek()),
+            ));
+        }
+        Ok((args, names))
+    }
+
     pub(super) fn format(
         &mut self,
         args: Vec<SExpr>,
         token: &Token,
         path: &[String],
+        argument_names: Option<Vec<String>>,
     ) -> Result<SExpr> {
         let mut args = args.into_iter();
         let Some(SExpr {
@@ -48,7 +118,37 @@ impl RustParser {
             .collect::<Vec<_>>();
         #[allow(clippy::cast_precision_loss)]
         let count = values.len() as f64;
-        let plan = rules::plan_rust_formatting_value(&columns, count);
+        let plan = if let Some(names) =
+            argument_names.filter(|names| names.iter().any(|name| !name.is_empty()))
+        {
+            let terms = rules::plan_rust_formatting_field_terms(&columns, count);
+            let mut fields = Vec::new();
+            if terms.first() == Some(&0.0) {
+                for instruction in terms[1..].as_chunks::<3>().0 {
+                    if instruction[0] == 2.0 {
+                        let source_name =
+                            text_slice(&units, instruction[1], instruction[2], template_span)?;
+                        if source_name == "_"
+                            || !crate::translation::lexer::accept_rust_source_identifier_name(
+                                &source_name,
+                            )
+                        {
+                            return Err(unsupported(
+                                &format!("format argument {{{source_name}}}"),
+                                "outside the portable core",
+                                template_span,
+                            ));
+                        }
+                        fields.push(crate::translation::lexer::normalize_unicode_text(
+                            &source_name,
+                        )?);
+                    }
+                }
+            }
+            named_rules::plan_rust_named_formatting_value(&terms, &names, &fields)
+        } else {
+            rules::plan_rust_formatting_value(&columns, count)
+        };
         let Some(code) = plan.first().copied() else {
             return Err(malformed(template_span));
         };
