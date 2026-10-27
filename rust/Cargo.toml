@@ -197,6 +197,7 @@ include = [
     "src/data/rust-scalar-vector-copy-program.lino",
     "src/data/rust-shared-array-handle-program.lino",
     "src/data/rust-shift-program.lino",
+    "src/data/rust-signed-integer-property-program.lino",
     "src/data/rust-source-constant-program.lino",
     "src/data/rust-source-owner-retention-program.lino",
     "src/data/rust-standard-owned-call-program.lino",

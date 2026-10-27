@@ -482,6 +482,16 @@ impl RustParser {
                     value = selected;
                     continue;
                 }
+                if let Some(property) = self.read_signed_integer_property(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = property;
+                    continue;
+                }
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
                 if let Some(copy) = self.read_owned_local_copy(

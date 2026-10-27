@@ -232,6 +232,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             "../data/rust-shared-array-handle-program.lino"
         )),
         "rust-shift-program.lino" => Some(include_str!("../data/rust-shift-program.lino")),
+        "rust-signed-integer-property-program.lino" => Some(include_str!(
+            "../data/rust-signed-integer-property-program.lino"
+        )),
         "rust-source-constant-program.lino" => {
             Some(include_str!("../data/rust-source-constant-program.lino"))
         }

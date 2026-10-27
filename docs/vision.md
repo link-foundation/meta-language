@@ -541,6 +541,24 @@ values, both generated products, both Links transports and all target emissions
 remain deferred controls. This source draft supplies neither general standard
 imports/reexports, glob imports, function values nor a new trait interpretation.
 
+Direct standard signed integers now have source drafts for is_negative,
+is_positive and signum. Shared postfix plans express the complete result using
+existing typed constants, comparisons and conditional nodes. Every plan operand
+refers to one captured receiver; even the signed minimum requires no absolute
+value or overflowing negation. Predicates return a standard Boolean; signum
+retains the original signed width and pointer-sized source owner. Both source
+adapters project the same generated plan into the existing AST algebra. These
+rules follow the standard [signed integer methods](https://doc.rust-lang.org/std/primitive.i128.html#method.signum).
+
+Ninety-five complete source programs retain all signed widths and exact
+minimum/maximum/negative/zero/positive controls, chained properties, Boolean
+selection, pointer owners and actual receiver calls. Complete original and
+both generated native products retain independent signatures, values and output
+traces. Method, receiver, plan/result and unsupported-domain controls, both Links
+transports and all target emissions remain deferred. No product or compiler
+executed. Floating-point sign/NaN/signed-zero behavior, borrowed receivers,
+custom methods and abs/build-overflow behavior remain separate obligations.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Earlier default-profile result refusals remain authenticated as historical

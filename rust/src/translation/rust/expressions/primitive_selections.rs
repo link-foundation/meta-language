@@ -293,3 +293,173 @@ impl RustParser {
         Ok(Some(result))
     }
 }
+
+fn property_plan_error(range: Option<Span>) -> super::TranslationError {
+    unsupported(
+        "Rust signed integer property source plan",
+        "the generated terms must retain one complete source result",
+        range,
+    )
+}
+fn property_pop(stack: &mut Vec<SExpr>, range: Option<Span>) -> Result<SExpr> {
+    stack.pop().ok_or_else(|| property_plan_error(range))
+}
+fn property_literal(ty: &Type, one: bool, range: Option<Span>) -> SExpr {
+    SExpr::new(
+        SNode::Num {
+            value: if one { "1" } else { "0" }.to_owned(),
+            ty: Some(ty.clone()),
+            negative: false,
+            unit: false,
+        },
+        range,
+    )
+}
+impl RustParser {
+    pub(super) fn read_signed_integer_property(
+        &mut self,
+        receiver: &SExpr,
+        method: &Token,
+        args: &[SExpr],
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<Option<SExpr>> {
+        use crate::translation::rust_signed_integer_property_rules as properties;
+        if !properties::accept_rust_signed_integer_property_method(
+            &method.value,
+            self.ordinary_completion_context(),
+        ) {
+            return Ok(None);
+        }
+        if !args.is_empty() {
+            return Err(type_error(
+                format!(
+                    "{} expects 0 arguments but got {}",
+                    method.value,
+                    args.len()
+                ),
+                range,
+            ));
+        }
+        if self.origins.collecting {
+            return Ok(Some(SExpr::new(
+                SNode::App {
+                    func: Box::new(SExpr::new(
+                        SNode::Name {
+                            path: vec![method.value.clone()],
+                        },
+                        range,
+                    )),
+                    args: vec![receiver.clone()],
+                },
+                range,
+            )));
+        }
+        let value = self.primitive_selection_facts(receiver, path);
+        if !properties::accept_rust_signed_integer_property_receiver(
+            &value.kind,
+            &value.bits,
+            value.signed,
+            value.owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+            &value.path(),
+            value
+                .owner
+                .as_ref()
+                .map_or(-1.0, |owner| count(owner.arguments.len())),
+            value.origin.proven,
+            count(value.origin.wrappers.len()),
+        ) {
+            return Err(unsupported(
+                "Rust signed integer property",
+                "a proven direct standard signed integer receiver is required",
+                range,
+            ));
+        }
+        let name = self.fresh_product_binding();
+        let Some(ty) = value.origin.ty.clone() else {
+            return Err(property_plan_error(range));
+        };
+        let mut origin = value.origin;
+        origin.path = path.to_vec();
+        origin.source_owner = value.owner;
+        let mut stack = Vec::new();
+        for term in properties::plan_rust_signed_integer_property(&method.value) {
+            match term.as_str() {
+                "operand" => {
+                    let node = SExpr::new(
+                        SNode::Name {
+                            path: vec![name.clone()],
+                        },
+                        receiver.span.or(range),
+                    );
+                    self.origins.mark(&node, origin.clone());
+                    stack.push(node);
+                }
+                "zero" | "positive unit" => {
+                    stack.push(property_literal(&ty, term == "positive unit", range))
+                }
+                "negative unit" => stack.push(SExpr::new(
+                    SNode::Unary {
+                        op: UnaryOp::Neg,
+                        arg: Box::new(property_literal(&ty, true, range)),
+                    },
+                    range,
+                )),
+                "lt" | "gt" => {
+                    let right = property_pop(&mut stack, range)?;
+                    let left = property_pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::Binary {
+                            op: if term == "lt" {
+                                BinaryOp::Lt
+                            } else {
+                                BinaryOp::Gt
+                            },
+                            left: Box::new(left),
+                            right: Box::new(right),
+                            rounding: None,
+                        },
+                        range,
+                    ));
+                }
+                "if" => {
+                    let otherwise = property_pop(&mut stack, range)?;
+                    let then = property_pop(&mut stack, range)?;
+                    let cond = property_pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::If {
+                            cond: Box::new(cond),
+                            then: Box::new(then),
+                            otherwise: Box::new(otherwise),
+                        },
+                        range,
+                    ));
+                }
+                _ => return Err(property_plan_error(range)),
+            }
+        }
+        if stack.len() != 1 {
+            return Err(property_plan_error(range));
+        }
+        let body = property_pop(&mut stack, range)?;
+        let result = SExpr::new(
+            SNode::Let {
+                name,
+                ty: Some(ty.into()),
+                value: Box::new(receiver.clone()),
+                body: Box::new(body),
+            },
+            range,
+        );
+        if properties::read_rust_signed_integer_property_result(&method.value) != "receiver" {
+            origin = SourceOrigin::with_type(super::BOOL, path, Vec::new());
+            origin.source_owner = Some(SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["bool".to_owned()],
+                arguments: Vec::new(),
+            });
+        }
+        self.origins.mark(&result, origin);
+        Ok(Some(result))
+    }
+}
