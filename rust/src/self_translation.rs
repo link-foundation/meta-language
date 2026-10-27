@@ -33,6 +33,7 @@ mod binding;
 mod emission;
 mod publication;
 use publication::{carry, comment_fits, record_translated_definitions, source_line};
+mod javascript_classes;
 mod reference_context;
 pub mod representation;
 mod representation_rules;
@@ -364,6 +365,16 @@ fn translate_module_diagnostic(
             &options.rust_shared_array_handle_source_model,
         )?)
     };
+    if whole_publication.is_none()
+        && options.semantic_translation
+        && from == "JavaScript"
+        && family(to) == "Rust"
+        && options.module_directory.is_empty()
+        && options.imports.is_empty()
+        && !options.utf16_strings
+    {
+        whole_publication = javascript_classes::read(source).ok().flatten();
+    }
     if whole_publication.is_none()
         && options.semantic_translation
         && from == "Rust"

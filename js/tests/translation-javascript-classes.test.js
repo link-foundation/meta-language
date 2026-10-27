@@ -1,0 +1,54 @@
+// Deferred controls. Do not import this module during the all-requirements draft.
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {runInNewContext} from 'node:vm';
+import {readProjectData} from '../scripts/project-data.mjs';
+import {parseJavaScript} from '../src/translation/javascript.js';
+import {checkProgram} from '../src/translation/check.js';
+import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {emitRust} from '../src/translation/emit-rust.js';
+import {selfTranslate} from '../src/self-translation.js';
+import {encodeTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
+import {LinkNetwork} from '../src/network.js';
+import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import {lowerJavaScriptClosedClassSource,acceptJavaScriptClosedClassSourceSize} from '../src/translation/javascript-class-source-rules.js';
+import {tokenize} from '../src/translation/lexer.js';
+const fixture=readProjectData(new URL('../../parity/fixtures/javascript-closed-classes.lino',import.meta.url));
+const [major,minor]=process.versions.node.split('.').map(Number);
+assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
+const execute=(source,entry='compute')=>String(runInNewContext('"use strict";\n'+source.replace(/^export /gmu,'')+'\n'+entry+'();',{}, {timeout:1000}));
+for(const row of fixture.cases)test(row.name,()=>{
+  assert.equal(execute(row.source),row.value,'independent original JavaScript');
+  const surface=parseJavaScript(row.source),program=checkProgram(surface),output=emitJavaScript(program),native=emitRust(program),packet=encodeTypedProgramLinks(program);
+  const name=output.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+  assert.equal(execute(output.text,name),row.value);
+  const pending=[surface];while(pending.length){const node=pending.pop();if(!node||typeof node!=='object')continue;
+    if(node.span){assert.ok(node.span.start>=0);assert.ok(node.span.end<=row.source.length);assert.ok(node.span.start<=node.span.end);}
+    for(const [key,value]of Object.entries(node))if(key!=='span'&&value&&typeof value==='object')pending.push(value);
+  }
+  for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
+    const restored=decodeTypedProgramLinks(network,packet.root);
+    assert.deepEqual(emitRust(restored),native);
+    assert.equal(execute(emitJavaScript(restored).text,name),row.value);
+    // Formal targets must eventually retain shared state too; unsupported
+    // targets remain visible failures, never silently skipped coverage.
+    for(const target of ['JavaScript','Rust','Lean','Rocq'])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),emitTypedProgramLinks(packet.network,packet.root,target));
+  }
+  const translated=selfTranslate(row.source,'JavaScript','Rust',{semanticTranslation:true});
+  assert.ok(translated.items.every(item=>['translated','comment','provenance'].includes(item.status)),'the whole actual class scope must translate');
+  assert.ok(translated.code.includes('fn compute('));
+});
+for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>checkProgram(parseJavaScript(row.source)),error=>error.kind===row.kind));
+for(const row of fixture.malformed)test(row.name,()=>assert.throws(()=>parseJavaScript(row.source)));
+test('closed class source budgets stay explicit at every boundary',()=>{
+  for(const [units,tokens,expected]of [[0,0,true],[131072,8192,true],[131073,8192,false],[131072,8193,false],[-1,0,false],[0,-1,false],[0.5,1,false],[1,0.5,false]])assert.equal(acceptJavaScriptClosedClassSourceSize(units,tokens),expected);
+});
+test('mismatched actual token columns cannot produce a provisional class source',()=>{
+  const source='class Empty {}',tokens=tokenize(source,'JavaScript').tokens;
+  const plan=lowerJavaScriptClosedClassSource(source,tokens.map(token=>token.value),[],tokens.map(token=>token.start),tokens.map(token=>token.end),'ml_');
+  assert.equal(plan.changed,false);assert.equal(plan.text,source);assert.notEqual(plan.error,'');assert.deepEqual(plan.intervals,[]);
+});
+test('unproved external class consumers retain a precise composition obligation',()=>{
+  for(const context of [{referenceSemantics:false},{moduleDirectory:[]},{literalBindings:new Map([['outer',{k:'num',value:'1'}]])},{moduleBindingNames:['outer']},{moduleScopeKnown:false}])
+    assert.throws(()=>parseJavaScript(fixture.cases[0].source,context),error=>error.kind==='unsupported'&&error.reason.startsWith('JavaScript closed class context:'));
+});

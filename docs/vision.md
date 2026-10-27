@@ -3598,6 +3598,36 @@ unrelated functions beside an untranslated class is not class translation.
 Full JavaScript/Rust project translation remains the first working baseline;
 the rest of the language and ontology contract remains binding.
 
+The closed ordinary JavaScript class draft lowers complete local base-class
+scopes through one shared source transformation, automatically emitted to Rust
+and editable typed Links. Constructor argument effects and an initial ordered
+own-field assignment prefix precede the constructor remainder. Instances use
+shared records with distinct private class identities; installed callables retain
+their actual receiver through aliases, field writes and calls between methods.
+Original JSDoc signatures remain on the corresponding source declarations.
+Generated source intervals conservatively retain each complete original class;
+they do not invent exact point locations for synthesized syntax. The original
+concrete source and translation provenance remain available. Semantic module
+translation publishes the complete closed scope together, retaining every
+ordinary source item and no provisional external class signature.
+
+This profile admits fixed identifier parameters and semicolon-terminated initial
+field assignments whose values cannot read or expose the unallocated instance.
+It refuses inheritance, field declaration syntax, private members, accessors,
+static initialization, constructor return overrides, reflective own-property or
+prototype observations, detached/replaced methods, returned `this`, class value
+escape and unproved external consumers. Literal contents never serve as syntax
+delimiters or identifier owners. Checked receiver facts also refuse method
+detachment through destructuring and computed property lookup; spelling alone
+cannot authorize a class operation. Source, token, nesting and class-count budgets
+refuse explicitly. Strong receiver-capture cycles retain a target lifecycle
+obligation; arbitrary long-running workloads cannot claim collection/resource
+parity from this encoding. Complete descriptors, prototypes, recursive class
+interfaces, cross-module classes and the full own-codebase baseline remain
+binding requirements. Deferred original-source, frontend, codec, formal-target
+and generated native product controls establish no execution evidence yet.
+The relevant source semantics are the [ECMAScript 2025 class definitions](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions).
+
 Number bitwise conjunction, disjunction, exclusive disjunction, complement and
 the three shifts use qualified shared operations with complete checked
 JavaScript definitions. Their ordinary typed Links program contains the

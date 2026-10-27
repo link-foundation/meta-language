@@ -32,6 +32,7 @@ mod array_bindings;
 mod array_formal_parameters;
 mod array_methods;
 mod callables;
+mod classes;
 mod console;
 mod constructed_guarded_array_writes;
 mod declarations;
@@ -157,6 +158,18 @@ pub fn parse_javascript_with_scalar_loop_model(source: &str, model: &str) -> Res
         ));
     }
     let tokens = tokenize(source, Language::JavaScript)?;
+    if let Some(classes) = classes::read(source, &tokens.tokens, &ModuleContext::default())? {
+        let result = (|| {
+            let lowered = tokenize(&classes.text, Language::JavaScript)?;
+            let mut parser =
+                JavaScriptParser::new(&classes.text, lowered.tokens, &lowered.comments);
+            parser.reference_state.enabled = true;
+            parser.reference_state.forced = true;
+            model.clone_into(&mut parser.scalar_loop_model);
+            parser.file()
+        })();
+        return classes::project(result, &classes);
+    }
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
     model.clone_into(&mut parser.scalar_loop_model);
     parser.file()
@@ -246,6 +259,19 @@ pub(crate) fn parse_javascript_bound_in_with_module_representation(
         ));
     }
     let tokens = tokenize(source, Language::JavaScript)?;
+    if let Some(classes) = classes::read(source, &tokens.tokens, context)? {
+        classes::require_bindings(source, literal_bindings.len(), module_scope)?;
+        let result = (|| {
+            let lowered = tokenize(&classes.text, Language::JavaScript)?;
+            let mut parser =
+                JavaScriptParser::new(&classes.text, lowered.tokens, &lowered.comments);
+            parser.reference_state.enabled = true;
+            parser.reference_state.forced = true;
+            parser.readonly_constants.module = readonly_module_constants;
+            parser.file()
+        })();
+        return classes::project(result, &classes);
+    }
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
     if reference_semantics {
         parser.reference_state.enabled = true;

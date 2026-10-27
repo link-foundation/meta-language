@@ -550,3 +550,5 @@ mod translation_rust_array_lookup;
 mod translation_rust_array_cloned_lookup;
 
 mod translation_rust_byte_ascii;
+
+mod translation_javascript_classes;

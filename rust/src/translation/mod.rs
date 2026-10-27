@@ -68,6 +68,7 @@ pub(crate) mod inert_module_binding_rules;
 pub(crate) mod intrinsic_initializer_rules;
 pub mod ir;
 pub mod javascript;
+pub(crate) mod javascript_class_source_rules;
 pub(crate) mod javascript_comparison_rules;
 pub(crate) mod javascript_enumeration_rules;
 pub(crate) mod javascript_identifier_program;

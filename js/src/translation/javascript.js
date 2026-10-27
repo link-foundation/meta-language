@@ -5,6 +5,7 @@ import {readJavaScriptArrayClassificationBuiltinOperation} from './array-classif
 import {readJavaScriptOwnPropertyBuiltinOperation} from './javascript-own-property-rules.js';
 import {readJavaScriptEnumerationBuiltinOperation} from './javascript-enumeration-rules.js';
 import {readJavaScriptBooleanBuiltinOperation} from './optional-value-rules.js';
+import {readJavaScriptClosedClassSource,projectJavaScriptClosedClassOrigins,projectJavaScriptClosedClassError,validateJavaScriptClosedClassUses} from './javascript-classes.js';
 // JavaScript frontend for the portable core. It reads the subset of modern
 // JavaScript the core can represent faithfully: Number and BigInt arithmetic,
 // strings and booleans; top-level functions and object-literal namespaces of methods
@@ -117,6 +118,11 @@ const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: '
 export function parseJavaScript(source, context = {}) {
   if (!acceptRustScalarLoopModel(context.scalarLoopModel ?? '')) throw unsupported('JavaScript scalar loop model', 'the selected model is not registered');
   const { tokens, comments } = tokenize(source, 'JavaScript');
+  const classes=readJavaScriptClosedClassSource(source,tokens,context);
+  if(classes){
+    try{return projectJavaScriptClosedClassOrigins(validateJavaScriptClosedClassUses(parseJavaScript(classes.text,{...context,referenceSemantics:true}),classes),classes);}
+    catch(error){return projectJavaScriptClosedClassError(error,classes);}
+  }
   return new JavaScriptParser(source, tokens, comments, context).file();
 }
 

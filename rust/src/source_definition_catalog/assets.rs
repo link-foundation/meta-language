@@ -62,6 +62,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "inert-module-binding-program.lino" => {
             Some(include_str!("../data/inert-module-binding-program.lino"))
         }
+        "javascript-class-source-program.lino" => {
+            Some(include_str!("../data/javascript-class-source-program.lino"))
+        }
         "javascript-comparison-program.lino" => {
             Some(include_str!("../data/javascript-comparison-program.lino"))
         }

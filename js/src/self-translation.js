@@ -256,6 +256,18 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
   let wholePublication = rustSharedArrayHandleSourceModel ? readRustSharedArrayHandleModule(text, rustSharedArrayHandleSourceModel) : null;
+  if(!wholePublication&&semanticTranslation&&from==='JavaScript'&&family(to)==='Rust'
+    &&!moduleDirectory.length&&!Object.keys(imports).length&&!utf16Strings){
+    const tokens=tokenize(text,'JavaScript').tokens;
+    if(tokens.some((token,index)=>token.kind==='identifier'&&token.value==='class'
+      &&!['.','?.'].includes(tokens[index-1]?.value)
+      &&(tokens[index+1]?.kind==='identifier'||tokens[index+1]?.value==='{'))){
+      try{
+        const program=checkProgram(parseJavaScript(text));
+        if(program.main.effects.length===0)wholePublication={program,emitted:emitRust(program,{arrayConsumption:true}),signatures:[]};
+      }catch(error){if(!(error instanceof TranslationError))throw error;}
+    }
+  }
   if (!wholePublication && semanticTranslation && from === 'Rust' && family(to) === 'JavaScript'
     && !Object.keys(imports).length && !utf16Strings && !referenceSemantics) {
     try { wholePublication = readIndependentRustModulePublication(text, bytes, parsed, items); }
@@ -297,10 +309,12 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
       } catch (error) { if (!(error instanceof TranslationError)) throw error; }
     }
   }
-  const { outs, scans, moduleScopeKnown, ownerCounts } = family(to) === 'Rust'
+  const { outs, scans, moduleScopeKnown, ownerCounts } = wholePublication
+    ?{outs:groups.map(group=>translateGroup(group,from,to,set,{retainDiagnostics,wholePublication})),scans:[],moduleScopeKnown:true,ownerCounts:new Map()}
+    :family(to) === 'Rust'
     ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
     : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, wholePublication })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
-  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics }, scans);
+  const results = wholePublication?groups.map((group,index)=>({group,out:outs[index]})):translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics }, scans);
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   // An isolated item proof does not certify its actual mutable module binding.
   // Public/importable signatures need the same complete scope and unique owner
