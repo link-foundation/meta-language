@@ -266,7 +266,8 @@ impl RustParser {
             return Ok(result);
         }
         let fixed = rust_fixed_type(&segments[0]);
-        if segments.len() == 2
+        if !self.ordinary_completion_context()
+            && segments.len() == 2
             && segments[1] == "from"
             && let Some(to) = fixed.clone()
         {

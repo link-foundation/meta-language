@@ -26,6 +26,13 @@ impl RustParser {
             false,
         )
         .is_empty()
+            || !crate::translation::rust_primitive_from_rules::read_rust_primitive_from_owner(
+                &qualified,
+                self.ordinary_completion_context(),
+                shadowed,
+                false,
+            )
+            .is_empty()
     }
     pub(super) fn read_primitive_associated_call(
         &mut self,
@@ -43,6 +50,9 @@ impl RustParser {
             }
             offset += 1;
         }
+        if segments.len() < 2 {
+            return Ok(None);
+        }
         let resolved = if absolute {
             segments.clone()
         } else {
@@ -55,14 +65,31 @@ impl RustParser {
                 || self.origins.scope.contains_key(&root)
                 || self.origins.lookup(&[target.clone()], path).is_some()
                 || self.origins.scope.contains_key(&target));
-        let owner = rules::read_rust_primitive_associated_owner(
-            &resolved,
-            self.ordinary_completion_context(),
-            shadowed,
-            absolute,
-        );
         let method = resolved.last().cloned().unwrap_or_default();
-        let arity = rules::read_rust_primitive_associated_arity(&owner, &method);
+        let owner = if method == "from" {
+            crate::translation::rust_primitive_from_rules::read_rust_primitive_from_owner(
+                &resolved,
+                self.ordinary_completion_context(),
+                shadowed,
+                absolute,
+            )
+        } else {
+            rules::read_rust_primitive_associated_owner(
+                &resolved,
+                self.ordinary_completion_context(),
+                shadowed,
+                absolute,
+            )
+        };
+        let conversion =
+            crate::translation::rust_primitive_from_rules::accept_rust_primitive_from_method(
+                &owner, &method,
+            );
+        let arity = if conversion {
+            1.0
+        } else {
+            rules::read_rust_primitive_associated_arity(&owner, &method)
+        };
         if arity < 0.0 {
             return Ok(None);
         }
@@ -104,6 +131,11 @@ impl RustParser {
             )));
         }
         let mut receiver = values.remove(0);
+        if conversion {
+            return self
+                .project_primitive_from(receiver, &owner, range, path)
+                .map(Some);
+        }
         let (form, typed) = match &receiver.node {
             SNode::Num { ty, .. } => ("numeral", ty.is_some()),
             SNode::Unary {

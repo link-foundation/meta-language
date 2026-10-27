@@ -606,6 +606,34 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Primitive From calls now have a shared exact conversion draft. The supported
+primitive pair domain includes reflexive Boolean/integer/binary64 conversions,
+Boolean-to-integer conversions, declared lossless integer widening, portable
+pointer destinations and exact integer-to-binary64 implementations. Matching
+machine widths alone do not establish a trait implementation. Bare, qualified,
+absolute and local alias calls retain actual standard source/destination owners.
+Unconstrained integer literal arguments use the ordinary i32 fallback; floating
+literal syntax retains f64. Explicit argument references receive no method
+receiver adjustment. Shared plans select existing identity, Boolean conditional
+or exact cast terms, with one actual argument capture and an owned result.
+The supported relation follows the standard library's
+[numeric conversion definitions](https://doc.rust-lang.org/src/core/convert/num.rs.html)
+and [reflexive From implementation](https://doc.rust-lang.org/std/convert/trait.From.html).
+
+Two hundred forty-three complete original sources declare independent exact
+boundary values, full source function types, five path forms, aliases, ordinary
+literal defaults, pointer-owner composition, argument traces and observable
+negative-zero preservation. An independent mathematical domain calculation,
+using the portable minimum pointer width, authors all 196 primitive pair
+controls. Deferred native controls require each unavailable pair to have its
+own primary standard-library trait diagnostic; a failed batch alone cannot
+discharge another pair. Original and both generated positive products retain
+independent types, values, codecs and all four emissions. None executed.
+Generic conversion inference, f32, characters, custom traits/owners, borrowed
+arguments and full own-codebase translation remain obligations. The preceding
+nonordinary source interpretations remain explicit; ordinary calls cannot fall
+back to an unchecked numeric cast after owner admission refuses.
+
 Immutable reference chains to actual standard Copy integer primitives now have
 a source draft for the twelve existing inherent sign, saturation and wrapping
 methods. A shared admission rule excludes Ord selection, mutable/custom

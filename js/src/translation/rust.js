@@ -1627,7 +1627,7 @@ class RustParser {
         });
         return expression;
       }
-      if (segments.length === 2 && segments[1] === 'from' && rustFixedType(segments[0])) {
+      if (!this.ordinaryCompletionContext() && segments.length === 2 && segments[1] === 'from' && rustFixedType(segments[0])) {
         if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), name)) throw unsupported('Rust type namespace body constructor', `${name} requires a separate actual owner and argument proof`, range);
         if (args.length !== 1) throw new TranslationError('type', `${name} expects 1 argument`, range);
         return { k: 'cast', arg: args[0], to: rustFixedType(segments[0]), flavor: 'exact', span: range };

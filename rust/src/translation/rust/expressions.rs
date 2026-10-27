@@ -4,6 +4,7 @@ mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
 mod primitive_associated_calls;
+mod primitive_from;
 mod primitive_selections;
 mod read_only_queries;
 mod scalar_vector_copy;

@@ -512,3 +512,5 @@ mod translation_rust_wrapping_integer;
 mod translation_rust_primitive_associated_call;
 
 mod translation_rust_primitive_inherent_copy;
+
+mod translation_rust_primitive_from;
