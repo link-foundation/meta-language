@@ -581,11 +581,7 @@ pub fn plan_java_script_ordinary_set(
                                                             }
                                                         }, identity_2.clone());
                                                     {
-                                                        let object = self::ml_array::optional_at(&match heap.clone() {
-                                                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value661, _) => {
-                                                                    source_ml_source1_data_property_value661
-                                                                }
-                                                            }, self::ml_array::number_index(index));
+                                                        let object = self::ml_array::optional_at((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value661, _) => source_ml_source1_data_property_value661.as_slice() }), self::ml_array::number_index(index));
                                                         if match (object.clone(), None::<()>) {
                                                             (Some(_ml_left), Some(_ml_right)) => {
                                                                 false
@@ -814,12 +810,12 @@ pub fn read_java_script_ordinary_own_keys(
                 );
                 {
                     let object = self::ml_array::optional_at(
-                        &match heap.clone() {
+                        (match &heap {
                             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                 source_ml_source1_data_property_value698,
                                 _,
-                            ) => source_ml_source1_data_property_value698,
-                        },
+                            ) => source_ml_source1_data_property_value698.as_slice(),
+                        }),
                         self::ml_array::number_index(index),
                     );
                     if match (object.clone(), None::<()>) {

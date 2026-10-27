@@ -6,6 +6,8 @@ use meta_language::translation::{
     javascript::parse_javascript,
 };
 use std::{fs, process::Command};
+#[path = "../../src/translation/nominal_array_loan_rules.rs"]
+mod loan_rules;
 #[path = "../../src/translation/javascript_data_field_rules.rs"]
 mod rules;
 
@@ -31,6 +33,24 @@ fn datatype_fields_keep_complete_source_and_both_native_products() {
         ]));
     assert!(producer.ok, "{}", producer.stderr);
     let observations = read_structured_data_lino(&producer.stdout).unwrap();
+    for row in observations["loanCases"].as_array().unwrap() {
+        assert_eq!(
+            loan_rules::accept_nominal_array_projection_loan(
+                row["result"].as_str().unwrap(),
+                row["reference"].as_bool().unwrap(),
+                row["receiver"].as_str().unwrap(),
+                row["constructors"].as_f64().unwrap(),
+                row["cases"].as_f64().unwrap(),
+                row["owner"].as_bool().unwrap(),
+                row["fields"].as_f64().unwrap(),
+                row["bindings"].as_f64().unwrap(),
+                row["slot"].as_f64().unwrap(),
+                row["matches"].as_f64().unwrap(),
+                row["direct"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
     for row in observations["ownerFallbackCases"].as_array().unwrap() {
         assert_eq!(
             rules::accept_java_script_data_field_owner_fallback(

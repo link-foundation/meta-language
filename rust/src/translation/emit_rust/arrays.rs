@@ -1,6 +1,6 @@
 //! JavaScript arrays, which the portable core never mutates, are Rust `Vec`s.
 
-use super::{Expr, Node, Prelude, Result, RustEmitter};
+use super::{Expr, Node, Prelude, Result, RustEmitter, Type};
 
 // Generated from the JavaScript emitter; source adaptations are performed by
 // its normal pipeline before a runtime string reaches either host adapter.
@@ -146,6 +146,15 @@ impl RustEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                if let Some(loan) = self.nominal_array_projection_loan(array)? {
+                    if e.ty.is_float() {
+                        return Ok(format!("({loan}.len() as f64)"));
+                    }
+                    if matches!(e.ty, Type::Int | Type::Nat) {
+                        self.preludes.insert(Prelude::Big);
+                        return Ok(format!("crate::ml::Big::from_u128({loan}.len() as u128)"));
+                    }
+                }
                 let (bits, signed) = match &e.ty {
                     super::Type::Fixed { bits, signed } => (*bits, *signed),
                     _ => (0, false),

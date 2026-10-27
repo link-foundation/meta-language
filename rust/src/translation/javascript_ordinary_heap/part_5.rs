@@ -49,12 +49,12 @@ pub fn prevent_java_script_ordinary_extensions(
                 );
                 {
                     let object = self::ml_array::optional_at(
-                        &match heap.clone() {
+                        (match &heap {
                             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                 source_ml_source1_data_property_value439,
                                 _,
-                            ) => source_ml_source1_data_property_value439,
-                        },
+                            ) => source_ml_source1_data_property_value439.as_slice(),
+                        }),
                         self::ml_array::number_index(index),
                     );
                     if match (object.clone(), None::<()>) {
@@ -339,12 +339,12 @@ pub fn set_java_script_ordinary_prototype(
                         );
                         {
                             let object = self::ml_array::optional_at(
-                                &match heap.clone() {
+                                (match &heap {
                                     self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                         source_ml_source1_data_property_value482,
                                         _,
-                                    ) => source_ml_source1_data_property_value482,
-                                },
+                                    ) => source_ml_source1_data_property_value482.as_slice(),
+                                }),
                                 self::ml_array::number_index(index),
                             );
                             if match (object.clone(), None::<()>) {

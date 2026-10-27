@@ -92,12 +92,14 @@ pub fn read_java_script_ordinary_value_error(
                             } else {
                                 {
                                     let object = self::ml_array::optional_at(
-                                        &match heap.clone() {
+                                        (match &heap {
                                             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                                 source_ml_source1_data_property_value196,
                                                 _,
-                                            ) => source_ml_source1_data_property_value196,
-                                        },
+                                            ) => {
+                                                source_ml_source1_data_property_value196.as_slice()
+                                            }
+                                        }),
                                         self::ml_array::number_index(at),
                                     );
                                     if !(match (object.clone(), None::<()>) {
@@ -216,18 +218,18 @@ pub fn find_java_script_ordinary_property(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_ordinary_heap_error(heap: self::JavaScriptOrdinaryHeap) -> String {
-    if (((match heap.clone() {
+    if (((match &heap {
         self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value219, _) => {
-            source_ml_source1_data_property_value219
+            source_ml_source1_data_property_value219.as_slice()
         }
     })
     .len() as f64)
         > 4096f64)
-        || (((match heap.clone() {
+        || (((match &heap {
             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                 _,
                 source_ml_source1_data_property_value221,
-            ) => source_ml_source1_data_property_value221,
+            ) => source_ml_source1_data_property_value221.as_slice(),
         })
         .len() as f64)
             > 16_384f64)

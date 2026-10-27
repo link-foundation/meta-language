@@ -349,3 +349,4 @@ pub(crate) mod rust_textual_source_interface_rules;
 pub mod source_data_field_signatures;
 
 pub(crate) mod javascript_ordinary_heap;
+pub(crate) mod nominal_array_loan_rules;

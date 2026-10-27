@@ -57,6 +57,7 @@ import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
 import { emitRustCheckedShift } from './rust-shifts.js';
 import { acceptRustNamedConstructorFields, renderRustConstructorFields, renderRustDataFieldEncoding } from './rust-record-rules.js';
+import {emitNominalArrayProjectionLoan} from './nominal-array-loans.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -1187,6 +1188,7 @@ class RustEmitter {
 
   /** An expression whose value is only read: variables are borrowed, not cloned. */
   borrow(e) {
+    const loan=emitNominalArrayProjectionLoan(this,e);if(loan!==null)return loan;
     if (e.type?.kind === 'float') return this.expr(e);
     return e.k === 'var' ? `&${e.name}` : `&${this.expr(e)}`;
   }
@@ -1541,6 +1543,10 @@ class RustEmitter {
         return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
       }
       case 'length':
+        {const loan=emitNominalArrayProjectionLoan(this,e.array);if(loan!==null){
+          if(e.type.kind==='float')return '('+loan+'.len() as f64)';
+          if(e.type.kind==='int'||e.type.kind==='nat'){this.usesBig=true;return 'crate::ml::Big::from_u128('+loan+'.len() as u128)';}
+        }}
         if(acceptRustExactArrayLengthResult(e.k,e.type.kind,e.type.bits??0,e.type.signed===true,e.array.type.kind))return renderRustExactArrayLength('Rust',this.receiver(e.array));
         if (e.array.type.kind === 'string') return this.utf16Strings ? renderPrimitiveStringRepresentation(true, 'length', this.receiver(e.array), '', '') : renderStringLengthExpression('Rust', this.receiver(e.array));
         if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;

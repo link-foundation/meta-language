@@ -37,6 +37,7 @@ mod declarations;
 mod expressions;
 mod externals;
 mod math;
+mod nominal_array_loans;
 mod number_conversions;
 mod number_prelude;
 mod optional_values;

@@ -40,11 +40,11 @@ pub fn insert_java_script_ordinary_object(
                     }
                 }
             }
-        } else if ((match heap.clone() {
+        } else if ((match &heap {
             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                 source_ml_source1_data_property_value714,
                 _,
-            ) => source_ml_source1_data_property_value714,
+            ) => source_ml_source1_data_property_value714.as_slice(),
         })
         .len() as f64)
             >= 4096f64
@@ -185,20 +185,12 @@ pub fn insert_java_script_ordinary_object(
                                         );
                                         {
                                             let objects = {
-                                                let source_ml_source1_concat_value749 = self::ml_array::slice(&match heap.clone() {
-                                                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value746, _) => {
-                                                                    source_ml_source1_data_property_value746
-                                                                }
-                                                            }, 0f64, at_2);
+                                                let source_ml_source1_concat_value749 = self::ml_array::slice((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value746, _) => source_ml_source1_data_property_value746.as_slice() }), 0f64, at_2);
                                                 {
                                                     let source_ml_source1_concat_value750 =
                                                         vec![object];
                                                     {
-                                                        let source_ml_source1_concat_value751 = self::ml_array::slice(&match heap.clone() {
-                                                                        self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value748, _) => {
-                                                                            source_ml_source1_data_property_value748
-                                                                        }
-                                                                    }, at_2, f64::INFINITY);
+                                                        let source_ml_source1_concat_value751 = self::ml_array::slice((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value748, _) => source_ml_source1_data_property_value748.as_slice() }), at_2, f64::INFINITY);
                                                         self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::JavaScriptOrdinaryObject>::new(), source_ml_source1_concat_value749), source_ml_source1_concat_value750), source_ml_source1_concat_value751)
                                                     }
                                                 }
@@ -257,11 +249,11 @@ pub fn register_java_script_ordinary_symbol(
                     }
                 }
             }
-        } else if ((match heap.clone() {
+        } else if ((match &heap {
             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                 _,
                 source_ml_source1_data_property_value760,
-            ) => source_ml_source1_data_property_value760,
+            ) => source_ml_source1_data_property_value760.as_slice(),
         })
         .len() as f64)
             >= 16_384f64
@@ -336,12 +328,14 @@ pub fn register_java_script_ordinary_symbol(
                             {
                                 let symbols = {
                                     let source_ml_source1_concat_value775 = self::ml_array::slice(
-                                        &match heap.clone() {
+                                        (match &heap {
                                             self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                                 _,
                                                 source_ml_source1_data_property_value772,
-                                            ) => source_ml_source1_data_property_value772,
-                                        },
+                                            ) => {
+                                                source_ml_source1_data_property_value772.as_slice()
+                                            }
+                                        }),
                                         0f64,
                                         at_2,
                                     );
@@ -349,11 +343,7 @@ pub fn register_java_script_ordinary_symbol(
                                         let source_ml_source1_concat_value776 =
                                             vec![identity.clone()];
                                         {
-                                            let source_ml_source1_concat_value777 = self::ml_array::slice(&match heap.clone() {
-                                                        self::JavaScriptOrdinaryHeap::OrdinaryHeap(_, source_ml_source1_data_property_value774) => {
-                                                            source_ml_source1_data_property_value774
-                                                        }
-                                                    }, at_2, f64::INFINITY);
+                                            let source_ml_source1_concat_value777 = self::ml_array::slice((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(_, source_ml_source1_data_property_value774) => source_ml_source1_data_property_value774.as_slice() }), at_2, f64::INFINITY);
                                             self::ml_array::append(
                                                 self::ml_array::append(
                                                     self::ml_array::append(

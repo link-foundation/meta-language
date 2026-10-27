@@ -155,6 +155,7 @@ include = [
     "src/data/missing-argument-program.lino",
     "src/data/module-binding-program.lino",
     "src/data/named-default-callable-program.lino",
+    "src/data/nominal-array-loan-program.lino",
     "src/data/number-bitwise-program.lino",
     "src/data/object-entry-pair-program.lino",
     "src/data/object-rest-program.lino",

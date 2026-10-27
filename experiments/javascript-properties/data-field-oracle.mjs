@@ -15,4 +15,5 @@ const rows=fixture.cases.map(row=>{
  const surface=parseJavaScript(row.source),program=checkProgram(surface);
  return {...row,surface,javascript:emitJavaScript(program),native:emitRust(program)};
 });
-process.stdout.write(structuredDataToLino({rows,refusals:fixture.refusals,plans:fixture.plans,ownerFallbackCases:fixture.ownerFallbackCases}));
+const loanCases=readProjectData(new URL('../../parity/fixtures/nominal-array-loans.lino',import.meta.url)).cases;
+process.stdout.write(structuredDataToLino({rows,refusals:fixture.refusals,plans:fixture.plans,ownerFallbackCases:fixture.ownerFallbackCases,loanCases}));

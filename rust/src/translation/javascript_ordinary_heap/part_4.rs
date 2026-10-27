@@ -167,12 +167,12 @@ pub fn define_java_script_ordinary_property(
                             );
                             {
                                 let object = self::ml_array::optional_at(
-                                    &match heap.clone() {
+                                    (match &heap {
                                         self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                             source_ml_source1_data_property_value330,
                                             _,
-                                        ) => source_ml_source1_data_property_value330,
-                                    },
+                                        ) => source_ml_source1_data_property_value330.as_slice(),
+                                    }),
                                     self::ml_array::number_index(index),
                                 );
                                 if match (object.clone(), None::<()>) {
@@ -574,12 +574,12 @@ pub fn delete_java_script_ordinary_property(
                             );
                             {
                                 let object = self::ml_array::optional_at(
-                                    &match heap.clone() {
+                                    (match &heap {
                                         self::JavaScriptOrdinaryHeap::OrdinaryHeap(
                                             source_ml_source1_data_property_value398,
                                             _,
-                                        ) => source_ml_source1_data_property_value398,
-                                    },
+                                        ) => source_ml_source1_data_property_value398.as_slice(),
+                                    }),
                                     self::ml_array::number_index(index),
                                 );
                                 if match (object.clone(), None::<()>) {

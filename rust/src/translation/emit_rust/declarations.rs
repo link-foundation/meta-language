@@ -721,6 +721,9 @@ impl<'p> RustEmitter<'p> {
 
     /// An expression whose value is only read: variables are borrowed, not cloned.
     pub(super) fn borrow(&mut self, expr: &Expr) -> Result<String> {
+        if let Some(loan) = self.nominal_array_projection_loan(expr)? {
+            return Ok(loan);
+        }
         if expr.ty.is_float() {
             return self.expr(expr);
         }

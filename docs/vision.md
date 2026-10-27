@@ -9104,6 +9104,35 @@ oracle, product, code test or native compiler has executed. Continue full
 requirements drafting before CI/CD repair; none of these drafts certifies a
 whole-language or whole-project result.
 
+### Immutable nominal array field loans draft
+
+Rust emission may borrow a direct immutable array field from the sole
+constructor of a checked nominal value for a read-only operation. The shared
+selection requires the actual declaration owner, complete single-constructor
+and single-case directories, matching field/binding coordinates and a direct
+case-result binder. The receiver must be an existing variable, and the selected
+array must have no shared mutable-reference facet. Effectful receivers,
+computed case bodies, optional/multiple constructors and conflicting owners
+retain the complete ordinary emission.
+
+Both emitter adapters transport checked facts into the same source-generated
+decision. The ordinary constructor renderer keeps the source's actual tuple or
+named layout. A borrowed Rust match selects a slice without moving or cloning
+the containing nominal value. Array length/index/optional-index reads can use
+that slice; owned-value operations retain their original ownership behavior.
+Native text adapters use the actual constructor renderer's UTF16 transport.
+This target representation change neither merges concepts nor changes their
+qualified definitions.
+
+The complete preceding emitter sources and native heap generation recipe stay
+as immutable Links records. Deferred controls retain every earlier source and
+add a complete single-constructor program, independent field/owner/receiver
+boundaries, both native products, all codecs and all four targets. Actual heap
+sources are regenerated mechanically; generated files are not edited. No
+operation, fixture, native product or test has executed. This removes specific
+source-visible copies by construction; overall heap allocation, complexity,
+runtime parity and complete translation remain unverified obligations.
+
 Ordered record storage contains a Number position vector even when its named
 fields contain only strings. Target trait derivation and numeric dependence
 must account for that actual representation. This does not make the record a

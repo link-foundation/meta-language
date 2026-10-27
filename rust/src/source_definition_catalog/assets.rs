@@ -126,6 +126,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "named-default-callable-program.lino" => {
             Some(include_str!("../data/named-default-callable-program.lino"))
         }
+        "nominal-array-loan-program.lino" => {
+            Some(include_str!("../data/nominal-array-loan-program.lino"))
+        }
         "number-bitwise-program.lino" => Some(include_str!("../data/number-bitwise-program.lino")),
         "object-entry-pair-program.lino" => {
             Some(include_str!("../data/object-entry-pair-program.lino"))
