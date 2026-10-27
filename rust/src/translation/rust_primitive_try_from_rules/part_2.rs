@@ -7,7 +7,17 @@ use super::read_rust_checked_integer_arity;
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_rust_checked_integer_success(method: &str, signed: bool) -> Vec<String> {
-    if method == "checked_neg" {
+    if (method == "checked_shl") || (method == "checked_shr") {
+        vec![
+            String::from("operand"),
+            String::from("right"),
+            if method == "checked_shl" {
+                String::from("shift left")
+            } else {
+                String::from("shift right")
+            },
+        ]
+    } else if method == "checked_neg" {
         if signed {
             vec![String::from("operand"), String::from("neg")]
         } else {

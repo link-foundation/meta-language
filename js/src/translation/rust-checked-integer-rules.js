@@ -2,7 +2,7 @@ import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-r
 /** @param {string} method @param {boolean} ordinary @returns {number} */
 export function readRustCheckedIntegerArity(method,ordinary){
  if(!ordinary)return -1;
- return ['checked_add','checked_sub','checked_mul','checked_div','checked_rem'].includes(method)?1:['checked_neg','checked_abs'].includes(method)?0:-1;
+ return ['checked_add','checked_sub','checked_mul','checked_div','checked_rem','checked_shl','checked_shr'].includes(method)?1:['checked_neg','checked_abs'].includes(method)?0:-1;
 }
 /** @param {string} method @param {string} kind @param {string} bits
  * @param {boolean} signed @param {string} owner @param {string} path
@@ -11,10 +11,18 @@ export function readRustCheckedIntegerArity(method,ordinary){
 export function acceptRustCheckedIntegerReceiver(method,kind,bits,signed,owner,path,children,proven,layers){return readRustCheckedIntegerArity(method,true)>=0&&kind==='fixed'&&(method!=='checked_abs'||signed)&&acceptRustPrimitiveSelectionReceiver(kind,bits,signed,owner,path,children,proven,layers);}
 /** @param {string} consumer @returns {number} */
 export function readRustCheckedIntegerConsumerArity(consumer){return consumer==='is_some'||consumer==='is_none'||consumer==='unwrap_or_default'?0:consumer==='unwrap_or'?1:consumer==='map_or'?2:-1;}
+/** Actual standard checked shift counts are u32, independently of Self.
+ * @param {string} method @param {string} receiver @returns {string} */
+export function readRustCheckedIntegerArgumentOwner(method,receiver){return method==='checked_shl'||method==='checked_shr'?'u32':receiver;}
+/** @param {string} method @returns {string} */
+export function readRustCheckedIntegerArgumentReason(method){return method==='checked_shl'||method==='checked_shr'?'the actual shift count must retain standard u32 ownership':'the actual argument must retain the receiver type and source owner';}
+/** @param {string} term @returns {string} */
+export function readRustCheckedIntegerShiftOperation(term){return term==='shift left'?'shiftRustPrimitiveBitsLeft':term==='shift right'?'shiftRustPrimitiveBitsRight':'';}
 /** Guard ASTs retain lazy conditional boundaries around each threshold division
  * and every potentially overflowing threshold. No larger integer is required.
  * @param {string} method @param {boolean} signed @returns {string[]} */
 export function planRustCheckedIntegerCondition(method,signed){
+ if(method==='checked_shl'||method==='checked_shr')return ['right','width','lt'];
  if(method==='checked_neg')return signed?['operand','minimum','ne']:['operand','zero','eq'];
  if(method==='checked_abs')return signed?['operand','minimum','ne']:[];
  if(method==='checked_add')return signed?[
@@ -40,6 +48,7 @@ export function planRustCheckedIntegerCondition(method,signed){
 /** Successful arithmetic appears only within its complete condition's branch.
  * @param {string} method @param {boolean} signed @returns {string[]} */
 export function planRustCheckedIntegerSuccess(method,signed){
+ if(method==='checked_shl'||method==='checked_shr')return ['operand','right',method==='checked_shl'?'shift left':'shift right'];
  if(method==='checked_neg')return signed?['operand','neg']:['zero'];
  if(method==='checked_abs')return signed?['operand','zero','lt','operand','neg','operand','if']:[];
  const operation=method==='checked_add'?'add':method==='checked_sub'?'sub':method==='checked_mul'?'mul':method==='checked_div'?'div':method==='checked_rem'?'rem':'';

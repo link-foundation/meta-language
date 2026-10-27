@@ -710,6 +710,27 @@ and [bit reversal](https://doc.rust-lang.org/std/primitive.i128.html#method.reve
 Other bit operations, shifts/rotations, complete integer APIs and full codebase
 translation remain obligations; authoring establishes no runtime evidence.
 
+Standard checked_shl/checked_shr now reuse the complete existing source shift
+semantics under shared count guards. Their actual argument owner is standard
+u32, independently of the receiver width or pointer identity. Actual captures
+therefore retain separate receiver and count types. The guard checks count
+against the receiver bit width; valid left shifts may discard high value bits,
+and signed right shifts retain arithmetic sign extension. Immediate is_some,
+is_none, unwrap_or, unwrap_or_default and admitted standard From map_or reuse
+the existing Option elimination. No out-of-range shift branch is evaluated;
+actual operands and eager defaults retain one source-order capture.
+
+1,995 complete original programs author independent fixed-width expectations
+for all twelve owners, zero/last-valid/width/larger/maximum u32 counts, signed
+limits, all five consumers, qualified aliases, immutable receivers, exact types
+and full eager effects. Shared count-owner/diagnostic/operation/guard controls,
+both runtimes/codecs, four emissions and original/generated native products
+remain deferred. This follows the standard
+[checked left shift](https://doc.rust-lang.org/std/primitive.i128.html#method.checked_shl)
+and [checked right shift](https://doc.rust-lang.org/std/primitive.u128.html#method.checked_shr).
+Other shift/rotation methods and full codebase translation remain obligations;
+these source drafts establish no execution or parity evidence.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not

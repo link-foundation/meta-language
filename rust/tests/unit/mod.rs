@@ -528,3 +528,5 @@ mod translation_rust_checked_integer;
 mod translation_rust_primitive_default;
 
 mod translation_rust_integer_bit;
+
+mod translation_rust_checked_shift;

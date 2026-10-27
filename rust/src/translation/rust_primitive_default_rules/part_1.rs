@@ -540,6 +540,8 @@ pub fn read_rust_checked_integer_arity(method: &str, ordinary: bool) -> f64 {
                 String::from("checked_mul"),
                 String::from("checked_div"),
                 String::from("checked_rem"),
+                String::from("checked_shl"),
+                String::from("checked_shr"),
             ],
             &method.to_owned(),
             0f64,
@@ -604,8 +606,46 @@ pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_checked_integer_argument_owner(method: &str, receiver: &str) -> String {
+    if (method == "checked_shl") || (method == "checked_shr") {
+        String::from("u32")
+    } else {
+        receiver.to_owned()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_argument_reason(method: &str) -> String {
+    if (method == "checked_shl") || (method == "checked_shr") {
+        String::from("the actual shift count must retain standard u32 ownership")
+    } else {
+        String::from("the actual argument must retain the receiver type and source owner")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_shift_operation(term: &str) -> String {
+    if term == "shift left" {
+        String::from("shiftRustPrimitiveBitsLeft")
+    } else if term == "shift right" {
+        String::from("shiftRustPrimitiveBitsRight")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<String> {
-    if method == "checked_neg" {
+    if (method == "checked_shl") || (method == "checked_shr") {
+        vec![
+            String::from("right"),
+            String::from("width"),
+            String::from("lt"),
+        ]
+    } else if method == "checked_neg" {
         if signed {
             vec![
                 String::from("operand"),

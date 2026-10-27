@@ -63,6 +63,33 @@ impl Terms {
                     })?,
                 ),
                 "zero" | "default" => stack.push(number("0".to_owned())),
+                "width" => stack.push(SExpr::new(
+                    SNode::Num {
+                        value: self.bits.to_string(),
+                        ty: Some(Type::Fixed {
+                            bits: 32,
+                            signed: false,
+                        }),
+                        negative: false,
+                        unit: false,
+                    },
+                    range,
+                )),
+                "shift left" | "shift right" => {
+                    let right = pop(&mut stack, range)?;
+                    let left = pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::Math {
+                            op: rules::read_rust_checked_integer_shift_operation(term),
+                            name: "Rust primitive shift".to_owned(),
+                            args: vec![
+                                super::SArrayItem::new(left, false),
+                                super::SArrayItem::new(right, false),
+                            ],
+                        },
+                        range,
+                    ));
+                }
                 "negative unit" => stack.push(SExpr::new(
                     SNode::Unary {
                         op: UnaryOp::Neg,
@@ -296,13 +323,26 @@ impl RustParser {
                 range,
             ));
         }
+        let argument_owner = rules::read_rust_checked_integer_argument_owner(&method.value, &owner);
+        let argument_type = rust_fixed_type(&argument_owner)
+            .ok_or_else(|| type_error("the checked argument lost its source type", range))?;
+        let Type::Fixed {
+            bits: argument_bits,
+            signed: argument_signed,
+        } = &argument_type
+        else {
+            return Err(type_error(
+                "the checked argument needs its actual fixed type",
+                range,
+            ));
+        };
         if arity > 0.0 {
             let right = facts(self, &args[0], path);
             if !arguments::accept_rust_primitive_selection_argument(
-                &source.kind,
-                &source.bits,
-                source.signed,
-                &owner,
+                argument_type.kind(),
+                &argument_bits.to_string(),
+                *argument_signed,
+                &argument_owner,
                 &right.kind,
                 &right.bits,
                 right.signed,
@@ -314,7 +354,7 @@ impl RustParser {
             ) {
                 return Err(unsupported(
                     "Rust checked integer argument",
-                    "the actual argument must retain the receiver type and source owner",
+                    &rules::read_rust_checked_integer_argument_reason(&method.value),
                     range,
                 ));
             }
@@ -349,7 +389,12 @@ impl RustParser {
         };
         let mut captures = Vec::new();
         let mut locals = Vec::new();
-        for value in std::iter::once(receiver).chain(args) {
+        for (index, value) in std::iter::once(receiver).chain(args).enumerate() {
+            let (actual_type, actual_owner) = if index == 0 {
+                (&ty, owner.as_str())
+            } else {
+                (&argument_type, argument_owner.as_str())
+            };
             let name = self.fresh_product_binding();
             let local = SExpr::new(
                 SNode::Name {
@@ -357,9 +402,10 @@ impl RustParser {
                 },
                 value.span.or(range),
             );
-            self.origins.mark(&local, origin(ty.clone(), &owner, path));
+            self.origins
+                .mark(&local, origin(actual_type.clone(), actual_owner, path));
             locals.push(local);
-            captures.push((name, ty.clone(), value.clone()));
+            captures.push((name, actual_type.clone(), value.clone()));
         }
         let mut terms = Terms {
             operand: locals[0].clone(),
