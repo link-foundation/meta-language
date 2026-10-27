@@ -1,28 +1,30 @@
 // Generated from complete js/src/translation/javascript-class-source-rules.js. Do not edit by hand.
 use super::MlTemporaryFindJavaScriptClassGroupEndLoop1Result;
-use super::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7;
-use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Result;
+use super::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result;
+use super::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8;
 use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result;
-use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result;
-use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop21Result;
+use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result;
+use super::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result;
 use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Result;
+use super::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop23Result;
 use super::MlTemporaryReadJavaScriptClosedClassParameterPositionsLoop2Result;
-use super::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop18Result;
-use super::MlTemporaryRenderJavaScriptClosedClassRangeLoop13Result;
+use super::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop19Result;
+use super::MlTemporaryRenderJavaScriptClosedClassRangeLoop14Result;
 use super::ml;
 use super::ml_array;
 use super::source_ml_temporary_find_java_script_class_group_end_loop1;
-use super::source_ml_temporary_read_java_script_closed_class_directory_loop5;
+use super::source_ml_temporary_find_java_script_closed_class_initialization_start_loop5;
 use super::source_ml_temporary_read_java_script_closed_class_directory_loop6;
-use super::source_ml_temporary_read_java_script_closed_class_directory_loop8;
-use super::source_ml_temporary_read_java_script_closed_class_methods_loop14;
-use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop21;
+use super::source_ml_temporary_read_java_script_closed_class_directory_loop7;
+use super::source_ml_temporary_read_java_script_closed_class_directory_loop9;
+use super::source_ml_temporary_read_java_script_closed_class_methods_loop15;
 use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop22;
+use super::source_ml_temporary_read_java_script_closed_class_observation_error_loop23;
 use super::source_ml_temporary_read_java_script_closed_class_parameter_positions_loop2;
-use super::source_ml_temporary_read_java_script_closed_class_static_calls_loop16;
-use super::source_ml_temporary_read_java_script_closed_class_static_target_loop18;
+use super::source_ml_temporary_read_java_script_closed_class_static_calls_loop17;
+use super::source_ml_temporary_read_java_script_closed_class_static_target_loop19;
 use super::source_ml_temporary_render_java_script_closed_class_parameter_arguments_loop4;
-use super::source_ml_temporary_render_java_script_closed_class_range_loop13;
+use super::source_ml_temporary_render_java_script_closed_class_range_loop14;
 
 /// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
 pub mod ml_string {
@@ -449,6 +451,32 @@ pub fn render_java_script_closed_class_parameter_arguments(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn find_java_script_closed_class_initialization_start(
+    values: &[self::ml_string::Text],
+    first: f64,
+    last: f64,
+) -> f64 {
+    {
+        let depth = 0f64;
+        {
+            let at = first;
+            {
+                let source_ml_source1_s3 = self::source_ml_temporary_find_java_script_closed_class_initialization_start_loop5(values, first, last, depth, at);
+                match source_ml_source1_s3 {
+                    self::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Done => {
+                        last
+                    }
+                    self::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Return(source_ml_temporary_result5) => {
+                        source_ml_temporary_result5
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_closed_class_directory(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
@@ -484,50 +512,57 @@ pub fn read_java_script_closed_class_directory(
                                 {
                                     let at = first + 3f64;
                                     {
-                                        let source_ml_source1_s3 = self::source_ml_temporary_read_java_script_closed_class_directory_loop5(values, kinds, end, constructor, methods, names, at);
-                                        match source_ml_source1_s3 {
-                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Done(constructor_2, methods_2, names_2) => {
+                                        let source_ml_source1_s4 = self::source_ml_temporary_read_java_script_closed_class_directory_loop6(values, kinds, end, constructor, methods, names, at);
+                                        match source_ml_source1_s4 {
+                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Done(constructor_2, methods_2, names_2) => {
                                                 {
                                                     let body_start = (self::ml_array::optional_at(&constructor_2, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64);
                                                     {
                                                         let body_end = (self::ml_array::optional_at(&constructor_2, self::ml_array::number_index(4f64))).unwrap_or_else(|| -1f64);
                                                         {
-                                                            let cursor = body_start + 1f64;
+                                                            let initialization = if body_start < 0f64 {
+                                                                -1f64
+                                                            } else {
+                                                                self::find_java_script_closed_class_initialization_start(values, (body_start + 1f64), body_end)
+                                                            };
                                                             {
-                                                                let source_ml_source1_s4 = self::source_ml_temporary_read_java_script_closed_class_directory_loop6(values, kinds, fields, &(names_2), body_start, body_end, cursor);
-                                                                match source_ml_source1_s4 {
-                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Done(fields_2) => {
-                                                                        {
-                                                                            let source_ml_source1_s6 = if body_start >= 0f64 {
-                                                                                {
-                                                                                    let at_2 = body_start + 1f64;
+                                                                let cursor = initialization;
+                                                                {
+                                                                    let source_ml_source1_s5 = self::source_ml_temporary_read_java_script_closed_class_directory_loop7(values, kinds, fields, &(names_2), body_start, body_end, cursor);
+                                                                    match source_ml_source1_s5 {
+                                                                        self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Done(fields_2) => {
+                                                                            {
+                                                                                let source_ml_source1_s7 = if body_start >= 0f64 {
                                                                                     {
-                                                                                        let source_ml_source1_s7 = self::source_ml_temporary_read_java_script_closed_class_directory_loop8(values, body_end, at_2);
-                                                                                        match source_ml_source1_s7 {
-                                                                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Done => {
-                                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Next
-                                                                                            }
-                                                                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Return(source_ml_temporary_result8) => {
-                                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Return(source_ml_temporary_result8)
+                                                                                        let at_2 = body_start + 1f64;
+                                                                                        {
+                                                                                            let source_ml_source1_s8 = self::source_ml_temporary_read_java_script_closed_class_directory_loop9(values, body_end, at_2);
+                                                                                            match source_ml_source1_s8 {
+                                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Done => {
+                                                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Next
+                                                                                                }
+                                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Return(source_ml_temporary_result9) => {
+                                                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Return(source_ml_temporary_result9)
+                                                                                                }
                                                                                             }
                                                                                         }
                                                                                     }
-                                                                                }
-                                                                            } else {
-                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Next
-                                                                            };
-                                                                            match source_ml_source1_s6 {
-                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Next => {
-                                                                                    self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(vec![first, end], constructor_2), vec![((fields_2.len() as f64) / 3f64)]), fields_2), methods_2)
-                                                                                }
-                                                                                self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7::MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Return(source_ml_temporary_result7) => {
-                                                                                    source_ml_temporary_result7
+                                                                                } else {
+                                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Next
+                                                                                };
+                                                                                match source_ml_source1_s7 {
+                                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Next => {
+                                                                                        self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(vec![first, end], constructor_2), vec![((fields_2.len() as f64) / 3f64), initialization]), fields_2), methods_2)
+                                                                                    }
+                                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8::MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Return(source_ml_temporary_result8) => {
+                                                                                        source_ml_temporary_result8
+                                                                                    }
                                                                                 }
                                                                             }
                                                                         }
-                                                                    }
-                                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(source_ml_temporary_result8_2) => {
-                                                                        source_ml_temporary_result8_2
+                                                                        self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Return(source_ml_temporary_result9_2) => {
+                                                                            source_ml_temporary_result9_2
+                                                                        }
                                                                     }
                                                                 }
                                                             }
@@ -535,8 +570,8 @@ pub fn read_java_script_closed_class_directory(
                                                     }
                                                 }
                                             }
-                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Return(source_ml_temporary_result11) => {
-                                                source_ml_temporary_result11
+                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(source_ml_temporary_result12) => {
+                                                source_ml_temporary_result12
                                             }
                                         }
                                     }
@@ -674,8 +709,8 @@ pub fn render_java_script_closed_class_range(
                 {
                     let at = first;
                     {
-                        let source_ml_source1_s8 =
-                            self::source_ml_temporary_render_java_script_closed_class_range_loop13(
+                        let source_ml_source1_s9 =
+                            self::source_ml_temporary_render_java_script_closed_class_range_loop14(
                                 source,
                                 values,
                                 starts,
@@ -688,19 +723,19 @@ pub fn render_java_script_closed_class_range(
                                 previous,
                                 at,
                             );
-                        match source_ml_source1_s8 {
-                            self::MlTemporaryRenderJavaScriptClosedClassRangeLoop13Result::MlTemporaryRenderJavaScriptClosedClassRangeLoop13Done(result_2, previous_2) => {
+                        match source_ml_source1_s9 {
+                            self::MlTemporaryRenderJavaScriptClosedClassRangeLoop14Result::MlTemporaryRenderJavaScriptClosedClassRangeLoop14Done(result_2, previous_2) => {
                                 result_2.concat(&{
-                                    let source_ml_source1_string_range_operand9 = source.clone();
+                                    let source_ml_source1_string_range_operand10 = source.clone();
                                     {
-                                        let source_ml_source1_string_range_operand10 = previous_2;
+                                        let source_ml_source1_string_range_operand11 = previous_2;
                                         {
-                                            let source_ml_source1_string_range_operand11 = (self::ml_array::optional_at(ends, self::ml_array::number_index(last - 1f64))).unwrap_or_else(|| previous_2);
+                                            let source_ml_source1_string_range_operand12 = (self::ml_array::optional_at(ends, self::ml_array::number_index(last - 1f64))).unwrap_or_else(|| previous_2);
                                             {
-                                                let source_ml_source1_string_range_position12 = source_ml_source1_string_range_operand10;
+                                                let source_ml_source1_string_range_position13 = source_ml_source1_string_range_operand11;
                                                 {
-                                                    let source_ml_source1_string_range_position13 = source_ml_source1_string_range_operand11;
-                                                    source_ml_source1_string_range_operand9.slice(source_ml_source1_string_range_position12, source_ml_source1_string_range_position13)
+                                                    let source_ml_source1_string_range_position14 = source_ml_source1_string_range_operand12;
+                                                    source_ml_source1_string_range_operand10.slice(source_ml_source1_string_range_position13, source_ml_source1_string_range_position14)
                                                 }
                                             }
                                         }
@@ -724,14 +759,14 @@ pub fn read_java_script_closed_class_methods(
     {
         let result = Vec::<self::ml_string::Text>::new();
         {
-            let first = 8f64
+            let first = 9f64
                 + (3f64
                     * (self::ml_array::optional_at(directory, self::ml_array::number_index(7f64)))
                         .unwrap_or_else(|| 0f64));
             {
                 let at = first;
                 {
-                    self::source_ml_temporary_read_java_script_closed_class_methods_loop14(
+                    self::source_ml_temporary_read_java_script_closed_class_methods_loop15(
                         values, directory, result, at,
                     )
                 }
@@ -752,17 +787,17 @@ pub fn read_java_script_closed_class_static_calls(
         {
             let ordinal = 0f64;
             {
-                let source_ml_temporary_values15 = directory.to_vec();
+                let source_ml_temporary_values16 = directory.to_vec();
                 {
-                    let source_ml_temporary_index15 = self::ml::Big::from_i128(0);
+                    let source_ml_temporary_index16 = self::ml::Big::from_i128(0);
                     {
-                        self::source_ml_temporary_read_java_script_closed_class_static_calls_loop16(
+                        self::source_ml_temporary_read_java_script_closed_class_static_calls_loop17(
                             values,
                             prefix,
                             result,
                             ordinal,
-                            &(source_ml_temporary_values15),
-                            source_ml_temporary_index15,
+                            &(source_ml_temporary_values16),
+                            source_ml_temporary_index16,
                         )
                     }
                 }
@@ -817,13 +852,13 @@ pub fn read_java_script_closed_class_static_target(
                 {
                     let index = 0f64;
                     {
-                        let source_ml_source1_s14 = self::source_ml_temporary_read_java_script_closed_class_static_target_loop18(calls, &(key), index);
-                        match source_ml_source1_s14 {
-                            self::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop18Result::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop18Done => {
+                        let source_ml_source1_s15 = self::source_ml_temporary_read_java_script_closed_class_static_target_loop19(calls, &(key), index);
+                        match source_ml_source1_s15 {
+                            self::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop19Result::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop19Done => {
                                 self::ml_string::Text::from_units(vec![])
                             }
-                            self::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop18Result::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop18Return(source_ml_temporary_result18) => {
-                                source_ml_temporary_result18.clone()
+                            self::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop19Result::MlTemporaryReadJavaScriptClosedClassStaticTargetLoop19Return(source_ml_temporary_result19) => {
+                                source_ml_temporary_result19.clone()
                             }
                         }
                     }
@@ -846,30 +881,30 @@ pub fn read_java_script_closed_class_observation_error(
         {
             let methods = Vec::<self::ml_string::Text>::new();
             {
-                let source_ml_temporary_values19 = directory.to_vec();
+                let source_ml_temporary_values20 = directory.to_vec();
                 {
-                    let source_ml_temporary_index19 = self::ml::Big::from_i128(0);
+                    let source_ml_temporary_index20 = self::ml::Big::from_i128(0);
                     {
-                        let source_ml_source1_s15 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop21(values, names, methods, &(source_ml_temporary_values19), source_ml_temporary_index19);
-                        match source_ml_source1_s15 {
-                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop21Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop21Done(names_2, methods_2) => {
+                        let source_ml_source1_s16 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop22(values, names, methods, &(source_ml_temporary_values20), source_ml_temporary_index20);
+                        match source_ml_source1_s16 {
+                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Done(names_2, methods_2) => {
                                 {
                                     let at = 0f64;
                                     {
-                                        let source_ml_source1_s16 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop22(values, kinds, directory, static_calls, &(names_2), &(methods_2), at);
-                                        match source_ml_source1_s16 {
-                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Done => {
+                                        let source_ml_source1_s17 = self::source_ml_temporary_read_java_script_closed_class_observation_error_loop23(values, kinds, directory, static_calls, &(names_2), &(methods_2), at);
+                                        match source_ml_source1_s17 {
+                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop23Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop23Done => {
                                                 -1f64
                                             }
-                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Return(source_ml_temporary_result22) => {
-                                                source_ml_temporary_result22
+                                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop23Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop23Return(source_ml_temporary_result23) => {
+                                                source_ml_temporary_result23
                                             }
                                         }
                                     }
                                 }
                             }
-                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop21Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop21Return(source_ml_temporary_result24) => {
-                                source_ml_temporary_result24
+                            self::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Result::MlTemporaryReadJavaScriptClosedClassObservationErrorLoop22Return(source_ml_temporary_result25) => {
+                                source_ml_temporary_result25
                             }
                         }
                     }

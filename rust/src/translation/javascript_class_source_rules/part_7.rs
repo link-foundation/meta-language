@@ -1,5 +1,5 @@
 // Generated from complete js/src/translation/javascript-class-source-rules.js. Do not edit by hand.
-use super::MlTemporaryLowerJavaScriptClosedClassSourceLoop36Result;
+use super::MlTemporaryLowerJavaScriptClosedClassSourceLoop37Result;
 use super::ml_array;
 use super::ml_math;
 use super::ml_string;
@@ -12,7 +12,7 @@ use super::read_java_script_closed_class_directory;
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop36(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop37(
     source: &self::ml_string::Text,
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
@@ -22,7 +22,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop36(
     mut error: f64,
     mut error_at: f64,
     mut at: f64,
-) -> self::MlTemporaryLowerJavaScriptClosedClassSourceLoop36Result {
+) -> self::MlTemporaryLowerJavaScriptClosedClassSourceLoop37Result {
     loop {
         return if at < (values.len() as f64) {
             {
@@ -68,30 +68,30 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop36(
                                     |a, b| a == b,
                                 ))))
                         && (({
-                            let source_ml_source1_string_range_operand160 = source.clone();
+                            let source_ml_source1_string_range_operand161 = source.clone();
                             {
-                                let source_ml_source1_string_range_operand161 =
+                                let source_ml_source1_string_range_operand162 =
                                     (self::ml_array::optional_at(
                                         starts,
                                         self::ml_array::number_index(at),
                                     ))
                                     .unwrap_or_else(|| 0f64);
                                 {
-                                    let source_ml_source1_string_range_operand162 =
+                                    let source_ml_source1_string_range_operand163 =
                                         (self::ml_array::optional_at(
                                             ends,
                                             self::ml_array::number_index(at),
                                         ))
                                         .unwrap_or_else(|| 0f64);
                                     {
-                                        let source_ml_source1_string_range_position163 =
-                                            source_ml_source1_string_range_operand161;
+                                        let source_ml_source1_string_range_position164 =
+                                            source_ml_source1_string_range_operand162;
                                         {
-                                            let source_ml_source1_string_range_position164 =
-                                                source_ml_source1_string_range_operand162;
-                                            source_ml_source1_string_range_operand160.slice(
-                                                source_ml_source1_string_range_position163,
+                                            let source_ml_source1_string_range_position165 =
+                                                source_ml_source1_string_range_operand163;
+                                            source_ml_source1_string_range_operand161.slice(
                                                 source_ml_source1_string_range_position164,
+                                                source_ml_source1_string_range_position165,
                                             )
                                         }
                                     }
@@ -103,7 +103,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop36(
                             let error_2 = -9f64;
                             {
                                 let error_at_2 = at;
-                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop36Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop36Done(error_2, error_at_2)
+                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop37Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop37Done(error_2, error_at_2)
                             }
                         }
                     } else {
@@ -118,14 +118,14 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop36(
                 }
             }
         } else {
-            self::MlTemporaryLowerJavaScriptClosedClassSourceLoop36Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop36Done(error, error_at)
+            self::MlTemporaryLowerJavaScriptClosedClassSourceLoop37Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop37Done(error, error_at)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result {
-    MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(
+pub enum MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result {
+    MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(
         Vec<Vec<f64>>,
         Vec<self::ml_string::Text>,
         f64,
@@ -135,7 +135,7 @@ pub enum MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop37(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop38(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
     mut end: f64,
@@ -173,7 +173,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop37(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
+pub fn source_ml_temporary_lower_java_script_closed_class_source_loop32(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
     mut directory: Vec<Vec<f64>>,
@@ -183,7 +183,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
     mut error: f64,
     mut error_at: f64,
     mut at: f64,
-) -> self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result {
+) -> self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result {
     loop {
         return if (at < (values.len() as f64)) && (error == 0f64) {
             {
@@ -227,7 +227,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                             let error_2 = -8f64;
                             {
                                 let error_at_2 = at;
-                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(directory, names, error_2, error_at_2)
+                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(directory, names, error_2, error_at_2)
                             }
                         }
                     } else if (depth != 0f64) || declarations_finished {
@@ -235,7 +235,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                             let error_3 = -7f64;
                             {
                                 let error_at_3 = at;
-                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(directory, names, error_3, error_at_3)
+                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(directory, names, error_3, error_at_3)
                             }
                         }
                     } else {
@@ -261,7 +261,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                                             self::ml_array::number_index(1f64),
                                         ))
                                         .unwrap_or_else(|| at);
-                                        self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(directory, names, error_4, error_at_4)
+                                        self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(directory, names, error_4, error_at_4)
                                     }
                                 }
                             } else {
@@ -282,38 +282,38 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                                             let error_5 = -7f64;
                                             {
                                                 let error_at_5 = at + 1f64;
-                                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(directory, names, error_5, error_at_5)
+                                                self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(directory, names, error_5, error_at_5)
                                             }
                                         }
                                     } else {
                                         {
                                             let names_2 = {
-                                                let source_ml_source1_concat_value165 = names;
+                                                let source_ml_source1_concat_value166 = names;
                                                 {
-                                                    let source_ml_source1_concat_value166 =
+                                                    let source_ml_source1_concat_value167 =
                                                         vec![name.clone()];
                                                     self::ml_array::append(
                                                         self::ml_array::append(
                                                             Vec::<self::ml_string::Text>::new(),
-                                                            source_ml_source1_concat_value165,
+                                                            source_ml_source1_concat_value166,
                                                         ),
-                                                        source_ml_source1_concat_value166,
+                                                        source_ml_source1_concat_value167,
                                                     )
                                                 }
                                             };
                                             {
                                                 let directory_2 = {
-                                                    let source_ml_source1_concat_value167 =
+                                                    let source_ml_source1_concat_value168 =
                                                         directory;
                                                     {
-                                                        let source_ml_source1_concat_value168 =
+                                                        let source_ml_source1_concat_value169 =
                                                             vec![row.clone()];
                                                         self::ml_array::append(
                                                             self::ml_array::append(
                                                                 Vec::<Vec<f64>>::new(),
-                                                                source_ml_source1_concat_value167,
+                                                                source_ml_source1_concat_value168,
                                                             ),
-                                                            source_ml_source1_concat_value168,
+                                                            source_ml_source1_concat_value169,
                                                         )
                                                     }
                                                 };
@@ -346,7 +346,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                     {
                         let end = at;
                         {
-                            let end_2 = self::source_ml_temporary_lower_java_script_closed_class_source_loop37(values, kinds, end);
+                            let end_2 = self::source_ml_temporary_lower_java_script_closed_class_source_loop38(values, kinds, end);
                             if (self::ml_array::includes(
                                 &vec![
                                     self::ml_string::Text::from_units(vec![
@@ -389,7 +389,7 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                                     let error_6 = -7f64;
                                     {
                                         let error_at_6 = at;
-                                        self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(directory, names, error_6, error_at_6)
+                                        self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(directory, names, error_6, error_at_6)
                                     }
                                 }
                             }
@@ -448,26 +448,26 @@ pub fn source_ml_temporary_lower_java_script_closed_class_source_loop31(
                 }
             }
         } else {
-            self::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop31Done(directory, names, error, error_at)
+            self::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Result::MlTemporaryLowerJavaScriptClosedClassSourceLoop32Done(directory, names, error, error_at)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryProjectJavaScriptClassSourceIntervalLoop38Result {
-    MlTemporaryProjectJavaScriptClassSourceIntervalLoop38Done(f64, f64),
+pub enum MlTemporaryProjectJavaScriptClassSourceIntervalLoop39Result {
+    MlTemporaryProjectJavaScriptClassSourceIntervalLoop39Done(f64, f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_project_java_script_class_source_interval_loop38(
+pub fn source_ml_temporary_project_java_script_class_source_interval_loop39(
     intervals: &[f64],
     mut first: f64,
     mut last: f64,
     mut low: f64,
     mut high: f64,
     mut at: f64,
-) -> self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop38Result {
+) -> self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop39Result {
     loop {
         if at < (intervals.len() as f64) {
             {
@@ -526,7 +526,7 @@ pub fn source_ml_temporary_project_java_script_class_source_interval_loop38(
             }
         }
         return {
-            self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop38Result::MlTemporaryProjectJavaScriptClassSourceIntervalLoop38Done(low, high)
+            self::MlTemporaryProjectJavaScriptClassSourceIntervalLoop39Result::MlTemporaryProjectJavaScriptClassSourceIntervalLoop39Done(low, high)
         };
     }
 }

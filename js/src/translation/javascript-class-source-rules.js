@@ -73,8 +73,30 @@ export function renderJavaScriptClosedClassParameterArguments(source, values, st
   return result.join(', ');
 }
 
+/** A non-instance constructor prologue may validate inputs and bind locals.
+ * Only a complete top-level assignment boundary can begin initial fields.
+ * A nested/earlier receiver use preserves the old whole-body route; it never
+ * hoists a conditional field creation or splits an incomplete statement.
+ * @param {string[]} values @param {number} first @param {number} last
+ * @returns {number} */
+export function findJavaScriptClosedClassInitializationStart(values, first, last) {
+  let depth = 0;
+  for (let at = first; at < last; at += 1) {
+    const value = values[at] ?? '';
+    const previous = values[at - 1] ?? '';
+    if (value === 'this' && previous !== '.' && previous !== '?.') {
+      const boundary = at === first || previous === ';' || previous === '}';
+      return depth === 0 && boundary && (values[at + 1] ?? '') === '.'
+        && (values[at + 3] ?? '') === '=' ? at : first;
+    }
+    if (value === '(' || value === '[' || value === '{') depth += 1;
+    if (value === ')' || value === ']' || value === '}') depth -= 1;
+  }
+  return last;
+}
+
 /** A directory row is [class token, end, constructor name/parameters/body,
- * field count, then field-name/value-start/value-end triples, then method
+ * field count, initialization start, then field-name/value-start/value-end triples, then method
  * name/parameter-open/parameter-close/body-open/body-close quintuples].
  * A static member stores -(name token + 1); its actual token coordinate is
  * retained without changing any constructor/field/member interval.
@@ -114,7 +136,8 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
   }
   const bodyStart = constructor[3] ?? -1;
   const bodyEnd = constructor[4] ?? -1;
-  let cursor = bodyStart + 1;
+  const initialization = bodyStart < 0 ? -1 : findJavaScriptClosedClassInitializationStart(values, bodyStart + 1, bodyEnd);
+  let cursor = initialization;
   while (bodyStart >= 0 && cursor < bodyEnd && (values[cursor] ?? '') === 'this'
     && (values[cursor + 1] ?? '') === '.' && (kinds[cursor + 2] ?? '') === 'identifier'
     && (values[cursor + 3] ?? '') === '=') {
@@ -143,7 +166,7 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
   }
   if (bodyStart >= 0) for (let at = bodyStart + 1; at < bodyEnd; at += 1)
     if ((values[at] ?? '') === 'return') return [-6, at];
-  return [first, end, ...constructor, fields.length / 3, ...fields, ...methods];
+  return [first, end, ...constructor, fields.length / 3, initialization, ...fields, ...methods];
 }
 
 /** @param {number} code @returns {string} */
@@ -189,7 +212,7 @@ export function renderJavaScriptClosedClassRange(source, values, starts, ends, f
 /** @param {string[]} values @param {number[]} directory @returns {string[]} */
 export function readJavaScriptClosedClassMethods(values, directory) {
   let result = [];
-  const first = 8 + 3 * (directory[7] ?? 0);
+  const first = 9 + 3 * (directory[7] ?? 0);
   for (let at = first; at < directory.length; at += 5) if ((directory[at] ?? -1) >= 0) result = result.concat([values[directory[at] ?? 0] ?? '']);
   return result;
 }
@@ -201,7 +224,7 @@ export function readJavaScriptClosedClassStaticCalls(values, directory, prefix) 
   let ordinal = 0;
   for (const row of directory) {
     const name = values[(row[0] ?? 0) + 1] ?? '';
-    for (let at = 8 + 3 * (row[7] ?? 0); at < row.length; at += 5) {
+    for (let at = 9 + 3 * (row[7] ?? 0); at < row.length; at += 5) {
       const position = row[at] ?? 0;
       if (position < 0) result = result.concat([name + '.' + (values[-position - 1] ?? ''),
         prefix + 'class_static_' + String(ordinal) + '_' + String(at)]);
@@ -233,7 +256,7 @@ export function readJavaScriptClosedClassObservationError(values, kinds, directo
   for (const row of directory) {
     names = names.concat([values[(row[0] ?? 0) + 1] ?? '']);
     methods = methods.concat(readJavaScriptClosedClassMethods(values, row));
-    for (let at = 8 + 3 * (row[7] ?? 0); at < row.length; at += 5) if ((row[at] ?? 0) < 0) {
+    for (let at = 9 + 3 * (row[7] ?? 0); at < row.length; at += 5) if ((row[at] ?? 0) < 0) {
       for (let inner = (row[at + 3] ?? 0) + 1; inner < (row[at + 4] ?? 0); inner += 1)
         if ((values[inner] ?? '') === 'this' && (values[inner - 1] ?? '') !== '.' && (values[inner - 1] ?? '') !== '?.') return inner;
     }
@@ -266,13 +289,13 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
   const receiver = prefix + 'class_receiver_' + String(ordinal);
   const brand = prefix + 'class_identity_' + String(ordinal);
   const fieldCount = row[7] ?? 0;
-  const methods = 8 + fieldCount * 3;
+  const methods = 9 + fieldCount * 3;
   const parameterFirst = (row[3] ?? -1) + 1;
   const parameterLast = row[4] ?? -1;
   const parameters = parameterLast < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends, parameterFirst, parameterLast, '', classNames, staticCalls);
   let stubs = '';
   let fields = brand + ': (void 0)';
-  for (let at = 8; at < methods; at += 3) {
+  for (let at = 9; at < methods; at += 3) {
     const field = values[row[at] ?? 0] ?? '';
     const value = renderJavaScriptClosedClassRange(source, values, starts, ends, row[at + 1] ?? 0, row[at + 2] ?? 0, '', classNames, staticCalls);
     fields += ', ' + field + ': (' + value + ')';
@@ -303,11 +326,14 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
   }
   const constructorBody = row[5] ?? -1;
   const constructorEnd = row[6] ?? -1;
+  const initialization = row[8] ?? -1;
+  const prologue = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
+    constructorBody + 1, initialization, '', classNames, staticCalls);
   const remainder = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
-    fieldCount === 0 ? constructorBody + 1 : (row[methods - 1] ?? 0) + 1, constructorEnd, receiver, classNames, staticCalls);
+    fieldCount === 0 ? initialization : (row[methods - 1] ?? 0) + 1, constructorEnd, receiver, classNames, staticCalls);
   const constructorName = row[2] ?? -1;
   const documentation = constructorName < 0 ? '' : source.slice(ends[constructorName - 1] ?? 0, starts[constructorName] ?? 0);
-  return stubs + '\n' + documentation + '\nfunction ' + name + '(' + parameters + ') {\nconst ' + receiver + ' = { ' + fields + ' };\n'
+  return stubs + '\n' + documentation + '\nfunction ' + name + '(' + parameters + ') {\n' + prologue + '\nconst ' + receiver + ' = { ' + fields + ' };\n'
     + assignments + remainder + '\nreturn ' + receiver + ';\n}\n';
 }
 

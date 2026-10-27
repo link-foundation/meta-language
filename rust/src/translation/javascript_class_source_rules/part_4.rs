@@ -28,22 +28,22 @@ pub fn source_ml_temporary_read_java_script_closed_class_parameter_positions_loo
                 } else {
                     {
                         let result_2 = {
-                            let source_ml_source1_concat_value79 = result;
+                            let source_ml_source1_concat_value80 = result;
                             {
-                                let source_ml_source1_concat_value80 = vec![at];
+                                let source_ml_source1_concat_value81 = vec![at];
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<f64>::new(),
-                                        source_ml_source1_concat_value79,
+                                        source_ml_source1_concat_value80,
                                     ),
-                                    source_ml_source1_concat_value80,
+                                    source_ml_source1_concat_value81,
                                 )
                             }
                         };
                         {
                             let at_2 = at + 1f64;
                             {
-                                let source_ml_source1_s81 = if ((self::ml_array::optional_at(
+                                let source_ml_source1_s82 = if ((self::ml_array::optional_at(
                                     values,
                                     self::ml_array::number_index(at_2),
                                 ))
@@ -197,7 +197,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_parameter_positions_loo
                                 } else {
                                     self::MlTemporaryReadJavaScriptClosedClassParameterPositionsJoin3::MlTemporaryReadJavaScriptClosedClassParameterPositionsJoin3Next(at_2)
                                 };
-                                match source_ml_source1_s81 {
+                                match source_ml_source1_s82 {
                                 self::MlTemporaryReadJavaScriptClosedClassParameterPositionsJoin3::MlTemporaryReadJavaScriptClosedClassParameterPositionsJoin3Next(at_8) => {
                                     if at_8 < close {
                                         {
@@ -251,33 +251,33 @@ pub fn source_ml_temporary_render_java_script_closed_class_parameter_arguments_l
         if at < close {
             {
                 let result_2 = {
-                    let source_ml_source1_concat_value87 = result;
+                    let source_ml_source1_concat_value88 = result;
                     {
-                        let source_ml_source1_concat_value88 = vec![{
-                            let source_ml_source1_string_range_operand82 = source.clone();
+                        let source_ml_source1_concat_value89 = vec![{
+                            let source_ml_source1_string_range_operand83 = source.clone();
                             {
-                                let source_ml_source1_string_range_operand83 =
+                                let source_ml_source1_string_range_operand84 =
                                     (self::ml_array::optional_at(
                                         starts,
                                         self::ml_array::number_index(at),
                                     ))
                                     .unwrap_or_else(|| 0f64);
                                 {
-                                    let source_ml_source1_string_range_operand84 =
+                                    let source_ml_source1_string_range_operand85 =
                                         (self::ml_array::optional_at(
                                             ends,
                                             self::ml_array::number_index(at),
                                         ))
                                         .unwrap_or_else(|| 0f64);
                                     {
-                                        let source_ml_source1_string_range_position85 =
-                                            source_ml_source1_string_range_operand83;
+                                        let source_ml_source1_string_range_position86 =
+                                            source_ml_source1_string_range_operand84;
                                         {
-                                            let source_ml_source1_string_range_position86 =
-                                                source_ml_source1_string_range_operand84;
-                                            source_ml_source1_string_range_operand82.slice(
-                                                source_ml_source1_string_range_position85,
+                                            let source_ml_source1_string_range_position87 =
+                                                source_ml_source1_string_range_operand85;
+                                            source_ml_source1_string_range_operand83.slice(
                                                 source_ml_source1_string_range_position86,
+                                                source_ml_source1_string_range_position87,
                                             )
                                         }
                                     }
@@ -287,9 +287,9 @@ pub fn source_ml_temporary_render_java_script_closed_class_parameter_arguments_l
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<self::ml_string::Text>::new(),
-                                source_ml_source1_concat_value87,
+                                source_ml_source1_concat_value88,
                             ),
-                            source_ml_source1_concat_value88,
+                            source_ml_source1_concat_value89,
                         )
                     }
                 };
@@ -352,31 +352,117 @@ pub fn source_ml_temporary_render_java_script_closed_class_parameter_arguments_l
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryJoin7 {
-    MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Next,
-    MlTemporaryReadJavaScriptClosedClassDirectoryJoin7Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result {
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Done,
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Return(Vec<f64>),
+pub enum MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result {
+    MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Done,
+    MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_closed_class_directory_loop8(
+pub fn source_ml_temporary_find_java_script_closed_class_initialization_start_loop5(
+    values: &[self::ml_string::Text],
+    mut first: f64,
+    mut last: f64,
+    mut depth: f64,
+    mut at: f64,
+) -> self::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result {
+    loop {
+        return if at < last {
+            {
+                let value = (self::ml_array::optional_at(values, self::ml_array::number_index(at)))
+                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]));
+                {
+                    let previous = (self::ml_array::optional_at(
+                        values,
+                        self::ml_array::number_index(at - 1f64),
+                    ))
+                    .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]));
+                    if ((value == (self::ml_string::Text::from_units(vec![116, 104, 105, 115])))
+                        && (previous != (self::ml_string::Text::from_units(vec![46]))))
+                        && (previous != (self::ml_string::Text::from_units(vec![63, 46])))
+                    {
+                        {
+                            let boundary = (((at).partial_cmp(&(first))
+                                == Some(std::cmp::Ordering::Equal))
+                                || (previous == (self::ml_string::Text::from_units(vec![59]))))
+                                || (previous == (self::ml_string::Text::from_units(vec![125])));
+                            self::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Return(if (((depth == 0f64) && boundary) && (((self::ml_array::optional_at(values, self::ml_array::number_index(at + 1f64))).unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))) == (self::ml_string::Text::from_units(vec![46])))) && (((self::ml_array::optional_at(values, self::ml_array::number_index(at + 3f64))).unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))) == (self::ml_string::Text::from_units(vec![61]))) {
+                                at
+                            } else {
+                                first
+                            })
+                        }
+                    } else {
+                        {
+                            let depth_3 = if ((value
+                                == (self::ml_string::Text::from_units(vec![40])))
+                                || (value == (self::ml_string::Text::from_units(vec![91]))))
+                                || (value == (self::ml_string::Text::from_units(vec![123])))
+                            {
+                                { depth + 1f64 }
+                            } else {
+                                depth
+                            };
+                            if ((value == (self::ml_string::Text::from_units(vec![41])))
+                                || (value == (self::ml_string::Text::from_units(vec![93]))))
+                                || (value == (self::ml_string::Text::from_units(vec![125])))
+                            {
+                                {
+                                    let depth_4 = depth_3 - 1f64;
+                                    {
+                                        let at_2 = at + 1f64;
+                                        {
+                                            (depth, at) = (depth_4, at_2);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            {
+                                {
+                                    let at_3 = at + 1f64;
+                                    {
+                                        (depth, at) = (depth_3, at_3);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Result::MlTemporaryFindJavaScriptClosedClassInitializationStartLoop5Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryJoin8 {
+    MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Next,
+    MlTemporaryReadJavaScriptClosedClassDirectoryJoin8Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result {
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Done,
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Return(Vec<f64>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_closed_class_directory_loop9(
     values: &[self::ml_string::Text],
     mut body_end: f64,
     mut at: f64,
-) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result {
+) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result {
     loop {
         return if at < body_end {
             if ((self::ml_array::optional_at(values, self::ml_array::number_index(at)))
                 .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
                 == (self::ml_string::Text::from_units(vec![114, 101, 116, 117, 114, 110]))
             {
-                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Return(vec![-6f64, at])
+                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Return(vec![-6f64, at])
             } else {
                 {
                     let at_2 = at + 1f64;
@@ -387,36 +473,36 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop8(
                 }
             }
         } else {
-            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop8Done
+            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result {
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Done(Vec<f64>),
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result {
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done(f64),
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(Vec<f64>),
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result {
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Done(Vec<f64>),
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Return(Vec<f64>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result {
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done,
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done(f64),
     MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result {
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Done,
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Return(Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_closed_class_directory_loop11(
+pub fn source_ml_temporary_read_java_script_closed_class_directory_loop12(
     values: &[self::ml_string::Text],
     mut group: f64,
     mut inner: f64,
-) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result {
+) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result {
     loop {
         return if inner < group {
             if ((((self::ml_array::optional_at(values, self::ml_array::number_index(inner)))
@@ -435,7 +521,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop11(
                 .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
                     != (self::ml_string::Text::from_units(vec![63, 46])))
             {
-                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(vec![-5f64, inner])
+                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Return(vec![-5f64, inner])
             } else {
                 {
                     let inner_2 = inner + 1f64;
@@ -446,18 +532,18 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop11(
                 }
             }
         } else {
-            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done
+            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
+pub fn source_ml_temporary_read_java_script_closed_class_directory_loop11(
     values: &[self::ml_string::Text],
     mut body_end: f64,
     mut finish: f64,
-) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result {
+) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result {
     loop {
         return if finish < body_end {
             {
@@ -465,9 +551,9 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
                     (self::ml_array::optional_at(values, self::ml_array::number_index(finish)))
                         .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]));
                 if value == (self::ml_string::Text::from_units(vec![59])) {
-                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done(finish)
+                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done(finish)
                 } else if value == (self::ml_string::Text::from_units(vec![44])) {
-                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(vec![-5f64, finish])
+                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(vec![-5f64, finish])
                 } else if ((value == (self::ml_string::Text::from_units(vec![116, 104, 105, 115])))
                     && (((self::ml_array::optional_at(
                         values,
@@ -482,7 +568,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
                     .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
                         != (self::ml_string::Text::from_units(vec![63, 46])))
                 {
-                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(vec![-5f64, finish])
+                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(vec![-5f64, finish])
                 } else if ((value == (self::ml_string::Text::from_units(vec![40])))
                     || (value == (self::ml_string::Text::from_units(vec![91]))))
                     || (value == (self::ml_string::Text::from_units(vec![123])))
@@ -490,14 +576,14 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
                     {
                         let group = self::find_java_script_class_group_end(values, finish);
                         if (group < 0f64) || (group >= body_end) {
-                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(vec![-5f64, finish])
+                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(vec![-5f64, finish])
                         } else {
                             {
                                 let inner = finish + 1f64;
                                 {
-                                    let source_ml_source1_s89 = self::source_ml_temporary_read_java_script_closed_class_directory_loop11(values, group, inner);
-                                    match source_ml_source1_s89 {
-                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done => {
+                                    let source_ml_source1_s90 = self::source_ml_temporary_read_java_script_closed_class_directory_loop12(values, group, inner);
+                                    match source_ml_source1_s90 {
+                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Done => {
                                                         {
                                                             let finish_2 = group;
                                                             {
@@ -509,8 +595,8 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
                                                             }
                                                         }
                                                     }
-                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(source_ml_temporary_result11) => {
-                                                        self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(source_ml_temporary_result11)
+                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop12Return(source_ml_temporary_result12) => {
+                                                        self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(source_ml_temporary_result12)
                                                     }
                                                 }
                                 }
@@ -528,26 +614,26 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
                 }
             }
         } else {
-            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done(finish)
+            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done(finish)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result {
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Done,
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Return(Vec<f64>),
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result {
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done,
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_closed_class_directory_loop9(
+pub fn source_ml_temporary_read_java_script_closed_class_directory_loop10(
     values: &[self::ml_string::Text],
     fields: &[f64],
     mut cursor: f64,
     name: &self::ml_string::Text,
     mut previous: f64,
-) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result {
+) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result {
     loop {
         return if previous < (fields.len() as f64) {
             if ((self::ml_array::optional_at(
@@ -560,7 +646,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop9(
             .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])))
                 == (*name)
             {
-                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Return(vec![-4f64, (cursor + 2f64)])
+                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(vec![-4f64, (cursor + 2f64)])
             } else {
                 {
                     let previous_2 = previous + 3f64;
@@ -571,14 +657,14 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop9(
                 }
             }
         } else {
-            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Done
+            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_java_script_closed_class_directory_loop6(
+pub fn source_ml_temporary_read_java_script_closed_class_directory_loop7(
     values: &[self::ml_string::Text],
     kinds: &[self::ml_string::Text],
     mut fields: Vec<f64>,
@@ -586,7 +672,7 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop6(
     mut body_start: f64,
     mut body_end: f64,
     mut cursor: f64,
-) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result {
+) -> self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result {
     loop {
         return if (((((body_start >= 0f64) && (cursor < body_end))
             && (((self::ml_array::optional_at(values, self::ml_array::number_index(cursor)))
@@ -631,31 +717,31 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop6(
                         |a, b| a == b,
                     )
                 {
-                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(vec![-4f64, (cursor + 2f64)])
+                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Return(vec![-4f64, (cursor + 2f64)])
                 } else {
                     {
                         let previous = 0f64;
                         {
-                            let source_ml_source1_s90 = self::source_ml_temporary_read_java_script_closed_class_directory_loop9(values, &(fields), cursor, &(name), previous);
-                            match source_ml_source1_s90 {
-                                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Done => {
+                            let source_ml_source1_s91 = self::source_ml_temporary_read_java_script_closed_class_directory_loop10(values, &(fields), cursor, &(name), previous);
+                            match source_ml_source1_s91 {
+                                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done => {
                                     {
                                         let start = cursor + 4f64;
                                         {
                                             let finish = start;
                                             {
-                                                let source_ml_source1_s91 = self::source_ml_temporary_read_java_script_closed_class_directory_loop10(values, body_end, finish);
-                                                match source_ml_source1_s91 {
-                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Done(finish_2) => {
+                                                let source_ml_source1_s92 = self::source_ml_temporary_read_java_script_closed_class_directory_loop11(values, body_end, finish);
+                                                match source_ml_source1_s92 {
+                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Done(finish_2) => {
                                                         if (finish_2 == start) || (finish_2 >= body_end) {
-                                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(vec![-5f64, start])
+                                                            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Return(vec![-5f64, start])
                                                         } else {
                                                             {
                                                                 let fields_2 = {
-                                                                    let source_ml_source1_concat_value92 = fields;
+                                                                    let source_ml_source1_concat_value93 = fields;
                                                                     {
-                                                                        let source_ml_source1_concat_value93 = vec![(cursor + 2f64), start, finish_2];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value92), source_ml_source1_concat_value93)
+                                                                        let source_ml_source1_concat_value94 = vec![(cursor + 2f64), start, finish_2];
+                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value93), source_ml_source1_concat_value94)
                                                                     }
                                                                 };
                                                                 {
@@ -668,16 +754,16 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop6(
                                                             }
                                                         }
                                                     }
-                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(source_ml_temporary_result10) => {
-                                                        self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(source_ml_temporary_result10)
+                                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop11Return(source_ml_temporary_result11) => {
+                                                        self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Return(source_ml_temporary_result11)
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop9Return(source_ml_temporary_result11) => {
-                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(source_ml_temporary_result11)
+                                self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop10Return(source_ml_temporary_result12) => {
+                                    self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Return(source_ml_temporary_result12)
                                 }
                             }
                         }
@@ -685,22 +771,22 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop6(
                 }
             }
         } else {
-            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Done(fields)
+            self::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Result::MlTemporaryReadJavaScriptClosedClassDirectoryLoop7Done(fields)
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Result {
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Done(
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Result {
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Done(
         Vec<f64>,
         Vec<f64>,
         Vec<self::ml_string::Text>,
     ),
-    MlTemporaryReadJavaScriptClosedClassDirectoryLoop5Return(Vec<f64>),
+    MlTemporaryReadJavaScriptClosedClassDirectoryLoop6Return(Vec<f64>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptClosedClassDirectoryJoin12 {
-    MlTemporaryReadJavaScriptClosedClassDirectoryJoin12Next(Vec<f64>, Vec<f64>),
+pub enum MlTemporaryReadJavaScriptClosedClassDirectoryJoin13 {
+    MlTemporaryReadJavaScriptClosedClassDirectoryJoin13Next(Vec<f64>, Vec<f64>),
 }

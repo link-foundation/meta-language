@@ -8,3 +8,7 @@ remain deferred until the complete requirements draft is finished.
 Extend the draft with literal constructor/method defaults and direct static
 factories. Preserve fresh empty aggregate defaults, static member ownership,
 argument order and complete preceding source/fixture graphs as Links data.
+
+Draft receiver-free constructor guards and local preparation before initial
+fields. Preserve constructor exception class, exact UTF-16 message units and
+message presence through the existing shared exception representation.

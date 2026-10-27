@@ -42,6 +42,20 @@ for(const row of fixture.cases)test(row.name,()=>{
 });
 for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>checkProgram(parseJavaScript(row.source)),error=>error.kind===row.kind));
 for(const row of fixture.malformed)test(row.name,()=>assert.throws(()=>parseJavaScript(row.source)));
+for(const row of fixture.errors)test(row.name,()=>{
+  const observe=source=>{
+    try{runInNewContext('"use strict";\n'+source.replace(/^export /gmu,'')+'\ncompute();',{}, {timeout:1000});assert.fail('the original constructor must throw');}
+    catch(error){return {errorClass:error.name,messageUnits:Array.from({length:error.message.length},(_,index)=>error.message.charCodeAt(index)),messagePresent:Object.hasOwn(error,'message')};}
+  };
+  const expected={errorClass:row.errorClass,messageUnits:row.messageUnits,messagePresent:row.messagePresent};
+  assert.deepEqual(observe(row.source),expected);
+  const program=checkProgram(parseJavaScript(row.source)),packet=encodeTypedProgramLinks(program);
+  for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
+    const restored=decodeTypedProgramLinks(network,packet.root);
+    assert.deepEqual(observe(emitJavaScript(restored).text),expected);
+    for(const target of ['JavaScript','Rust','Lean','Rocq'])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),emitTypedProgramLinks(packet.network,packet.root,target));
+  }
+});
 test('closed class source budgets stay explicit at every boundary',()=>{
   for(const [units,tokens,expected]of [[0,0,true],[131072,8192,true],[131073,8192,false],[131072,8193,false],[-1,0,false],[0,-1,false],[0.5,1,false],[1,0.5,false]])assert.equal(acceptJavaScriptClosedClassSourceSize(units,tokens),expected);
 });
@@ -55,7 +69,8 @@ test('unproved external class consumers retain a precise composition obligation'
     assert.throws(()=>parseJavaScript(fixture.cases[0].source,context),error=>error.kind==='unsupported'&&error.reason.startsWith('JavaScript closed class context:'));
 });
 test('every complete preceding source graph native recipe and fixture stays exact',()=>{
-  assert.equal(fixture.predecessors.length,3);
+  assert.equal(fixture.predecessors.filter(prior=>prior.revision==='eae050126c3df59af868552f7d1c764d968c5550').length,3);
+  assert.equal(fixture.predecessors.length,6);
   for(const prior of fixture.predecessors){
     assert.match(prior.revision,/^[a-f0-9]{40}$/u);
     const bytes=readFileSync(new URL('../../'+prior.retained,import.meta.url));

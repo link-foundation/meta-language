@@ -3613,6 +3613,12 @@ ordinary source item and no provisional external class signature.
 
 This profile admits fixed identifier parameters, literal defaults and semicolon-terminated initial
 field assignments whose values cannot read or expose the unallocated instance.
+A constructor may first validate inputs and prepare locals in a receiver-free
+prologue. Only a complete top-level assignment boundary starts initial fields;
+nested or earlier receiver use preserves the whole-body path, so conditional
+field creation and incomplete statements are never hoisted. Prologue exceptions
+retain their actual class, UTF-16 message units and own-message presence through
+the existing shared source-exception operation.
 Defaults retain their complete original source and execute through the existing
 parameter environment at invocation; fresh empty aggregate defaults stay distinct
 between calls. Dependent, effectful and instance-reading default expressions need

@@ -92,6 +92,24 @@ fn closed_javascript_classes_keep_both_frontends_and_generated_products() {
             "number" => format!("assert_eq!({name}(),{expected}f64);"),
             "boolean" => format!("assert_eq!({name}(),{expected});"),
             "string" => format!("assert_eq!({name}().to_string(),{:?});", expected),
+            "error" => {
+                let class = row["error"]["errorClass"].as_str().unwrap();
+                let units = row["error"]["messageUnits"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|value| format!("{}u16", value.as_u64().unwrap()))
+                    .collect::<Vec<_>>();
+                let units = if units.is_empty() {
+                    "Vec::<u16>::new()".to_owned()
+                } else {
+                    format!("vec![{}]", units.join(","))
+                };
+                let present = row["error"]["messagePresent"].as_bool().unwrap();
+                format!(
+                    "std::panic::set_hook(Box::new(|_|{{}}));let panic=std::panic::catch_unwind(std::panic::AssertUnwindSafe(||{{let _={name}();}})).expect_err(\"the original constructor throws\");let actual=panic.downcast_ref::<(String,Vec<u16>,bool)>().expect(\"the complete source exception payload\");assert_eq!(actual,&({class:?}.to_owned(),{units},{present}));"
+                )
+            }
             other => panic!("uncovered independent class result {other}"),
         };
         let directory = TemporaryDirectory::new(&format!("closed-class-{index}"));
@@ -141,6 +159,9 @@ fn closed_javascript_classes_keep_both_frontends_and_generated_products() {
             let observed = run(&mut Command::new(binary));
             assert!(observed.ok, "{}", observed.stderr);
             assert_eq!(observed.stdout, "class passed\n");
+            if row["resultType"] == "error" {
+                assert_eq!(observed.stderr, "");
+            }
         }
     }
 }

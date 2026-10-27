@@ -3,7 +3,7 @@
 import {writeProjectData} from './project-data.mjs';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {writeFileSync,readFileSync,existsSync} from 'node:fs';
+import {writeFileSync,readFileSync,existsSync,lstatSync} from 'node:fs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const cases=[];
 function add(name,classSource,body,value,resultType='number',helpers=''){
@@ -50,6 +50,12 @@ add('static calls keep their original argument evaluation order','class StaticAr
 add('methods keep module function owners despite constructor parameter shadowing','class ConstructorScope { constructor(readModuleValue){this.value=readModuleValue;} read(){return readModuleValue();} }','const object=new ConstructorScope(7);return object.read();',31,'number','function readModuleValue(){return 31;}');
 add('method defaults keep module globals despite constructor parameter shadowing','class DefaultScope { constructor(Infinity){this.value=Infinity;} read(value=Infinity){return value>this.value;} }','const object=new DefaultScope(2);return object.read();',true,'boolean');
 add('constructor locals cannot capture a method module binding','class LocalScope { constructor(initial){this.value=initial;const readLocalModuleValue=initial+1;this.value=readLocalModuleValue;} read(){return readLocalModuleValue();} }','const object=new LocalScope(7);return object.read();',31,'number','function readLocalModuleValue(){return 31;}');
+add('constructor guards precede initial public fields','class GuardedInput { constructor(value){if(value<0){throw new RangeError("negative");}this.value=value;} read(){return this.value;} }','return new GuardedInput(8).read();',8);
+add('constructor preparation locals retain their original scope','class PreparedInput { constructor(value){const prepared=value+2;this.value=prepared;} read(){return this.value;} }','return new PreparedInput(8).read();',10);
+add('mutable constructor preparation runs once before initial fields','class MutablePreparation { constructor(value){let prepared=value;prepared+=3;this.value=prepared;} read(){return this.value;} }','return new MutablePreparation(8).read();',11);
+add('constructor helper effects retain their original field values','class PreparedHelper { constructor(value){const prepared=prepareConstructorValue(value);this.value=prepared;} read(){return this.value;} }','return new PreparedHelper(8).read();',12,'number','function prepareConstructorValue(value){return value+4;}');
+add('all statements of a receiver-free constructor stay in order','class ReceiverFree { constructor(value){if(value<0){throw new RangeError("negative");}const prepared=value+1;} read(){return 9;} }','return new ReceiverFree(8).read();',9);
+add('constructor guards and method calls keep one initialized instance','class GuardedRemainder { constructor(value){if(value<0){throw new RangeError("negative");}this.value=value;this.increment();} increment(){this.value+=1;return this.value;} read(){return this.value;} }','return new GuardedRemainder(8).read();',9);
 const counter='class Refusal { constructor(value){this.value=value;} read(){return this.value;} }\n';
 const refusals=[
  ['a constructor cannot be called as an ordinary function',counter+'function compute(){return Refusal(1).read();}'],
@@ -93,6 +99,11 @@ const malformed=[
  {name:'an escaped class keyword cannot become a valid declaration',source:'cl\\u0061ss Broken {} function compute(){return 1;}'},
  {name:'an escaped construction keyword cannot become an ordinary call',source:'class Broken {} function compute(){return n\\u0065w Broken();}'},
 ];
+const errors=[
+ {name:'a failing constructor guard retains RangeError and every message unit',source:'class RangeGuard { constructor(value){if(value<0){throw new RangeError("negative");}this.value=value;} } function compute(){return new RangeGuard(-1).value;}',errorClass:'RangeError',messageUnits:[110,101,103,97,116,105,118,101],messagePresent:true,resultType:'error'},
+ {name:'a failing constructor guard retains absent message ownership',source:'class NoMessageGuard { constructor(value){if(value<0){throw TypeError();}this.value=value;} } function compute(){return new NoMessageGuard(-1).value;}',errorClass:'TypeError',messageUnits:[],messagePresent:false,resultType:'error'},
+ {name:'constructor errors retain isolated UTF16 units without scalar replacement',source:'class SurrogateGuard { constructor(value){if(value<0){throw Error("\\ud800");}this.value=value;} } function compute(){return new SurrogateGuard(-1).value;}',errorClass:'Error',messageUnits:[55296],messagePresent:true,resultType:'error'},
+];
 const source=cases.map(row=>row.classSource).join('\n')+'\n'+cases.map(row=>row.helpers+'\nfunction '+row.entry+'(){'+row.body+'}').join('\n');
 const history=['js/src/translation/javascript.js','js/src/self-translation.js','rust/src/translation/javascript.rs','rust/src/self_translation.rs','rust/src/translation/mod.rs'].map(path=>{
   const revision='1c270d56bcea41203f1beac768cd78a9185fb19b',bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});
@@ -105,12 +116,18 @@ const predecessors=[['js/src/data/javascript-class-source-program.lino','javascr
   // Exact original Links bytes: no graph decoder, migration, fixture replay or
   // generated-source replacement is involved in preserving the predecessor.
   const target=new URL('../../'+output,import.meta.url);
-  if(existsSync(target)){if(!readFileSync(target).equals(bytes))throw new TypeError('the complete retained class predecessor changed: '+output);}
+  if(existsSync(target)){if(!lstatSync(target).isFile()||lstatSync(target).isSymbolicLink()||!readFileSync(target).equals(bytes))throw new TypeError('the complete retained class predecessor changed: '+output);}
   else writeFileSync(target,bytes,{flag:'wx'});
   return{path,revision:predecessorRevision,retained:output,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
 });
-writeProjectData(new URL('../../parity/fixtures/javascript-closed-classes.lino',import.meta.url),{schemaVersion:1,source,cases,refusals,malformed,history,predecessors,
+for(const [path,name]of [['js/src/data/javascript-class-source-program.lino','javascript-class-source-literal-static-program.lino'],['parity/self-translation/javascript-class-source-rules-native.lino','javascript-class-source-literal-static-native.lino'],['parity/fixtures/javascript-closed-classes.lino','javascript-closed-classes-literal-static.lino']]){
+ const revision='90d79ea6',bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:16*1024*1024}),retained='parity/fixtures/history/'+name,target=new URL('../../'+retained,import.meta.url);
+ if(existsSync(target)){if(!lstatSync(target).isFile()||lstatSync(target).isSymbolicLink()||!readFileSync(target).equals(bytes))throw new TypeError('the complete retained class predecessor changed: '+retained);}
+ else writeFileSync(target,bytes,{flag:'wx'});
+ predecessors.push({path,revision:execFileSync('git',['rev-parse',revision],{encoding:'utf8'}).trim(),retained,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+}
+writeProjectData(new URL('../../parity/fixtures/javascript-closed-classes.lino',import.meta.url),{schemaVersion:1,source,cases,errors,refusals,malformed,history,predecessors,
  versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
- assertions:['ordinaryNewCallsPreserveConstructorArgumentsAndFieldInitializationOrder','sharedInstanceAliasesPreserveExternalAndMethodFieldWrites','methodCallsRetainTheirActualReceiverAndArgumentEvaluationOrder','freshInstancesAndEmptyClassesRetainDistinctReferenceIdentity','allOriginalDocumentationSignaturesAndSourceIntervalsRemainRepresented','literalContentsNeverBecomeGrammarDelimitersOrIdentifierOwners','bothFrontendsAndBothCodecsPreserveTheCompleteCheckedSource','originalJavaScriptAndBothGeneratedNativeProductsRetainEveryDeclaredValue','reflectivePrototypeDetachedMethodAndExternalInterfaceGapsRefuse','literalDefaultsRemainInInvocationScopesAndAllocateFreshAggregates','staticFactoryCallsPreserveActualClassMemberOwners','constructorBindingsCannotCaptureMethodModuleBindings','initialQualifiedSourceDefinitionsAndRecipesRemainExact','allRootSourceAndExpandedOutputBudgetsRemainExplicit'],
+ assertions:['ordinaryNewCallsPreserveConstructorArgumentsAndFieldInitializationOrder','sharedInstanceAliasesPreserveExternalAndMethodFieldWrites','methodCallsRetainTheirActualReceiverAndArgumentEvaluationOrder','freshInstancesAndEmptyClassesRetainDistinctReferenceIdentity','allOriginalDocumentationSignaturesAndSourceIntervalsRemainRepresented','literalContentsNeverBecomeGrammarDelimitersOrIdentifierOwners','bothFrontendsAndBothCodecsPreserveTheCompleteCheckedSource','originalJavaScriptAndBothGeneratedNativeProductsRetainEveryDeclaredValue','reflectivePrototypeDetachedMethodAndExternalInterfaceGapsRefuse','literalDefaultsRemainInInvocationScopesAndAllocateFreshAggregates','staticFactoryCallsPreserveActualClassMemberOwners','constructorBindingsCannotCaptureMethodModuleBindings','initialQualifiedSourceDefinitionsAndRecipesRemainExact','allRootSourceAndExpandedOutputBudgetsRemainExplicit','constructorProloguesKeepCompleteStatementBoundariesAndLocalScopes','constructorExceptionsPreserveClassUnitsAndMessagePresence'],
  boundary:'Unexecuted source/data draft. Ordinary closed base classes use shared own-field records and installed receiver-capturing callables. Literal parameter defaults retain their original source and call-time initialization, including fresh empty aggregate defaults. Direct receiver-independent static methods/factories preserve actual member owners and argument evaluation order. Dependent/effectful/instance-reading defaults, patterns, inheritance, public field declaration syntax, private fields, accessors, static state/this and method escape, instance method escape/replacement, this as a returned value, constructor replacement, arbitrary module consumers, full object/prototype descriptors, target cycle collection and complete own-codebase translation remain obligations. Strong shared receiver cycles require the target lifecycle model before arbitrary long-running workloads can claim resource parity. No normalizer/fixture/product/oracle/test/compiler was executed by this author.'});
 process.stdout.write('Authored '+cases.length+' closed class source programs and '+refusals.length+' refusal controls.\n');
