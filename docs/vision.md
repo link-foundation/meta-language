@@ -9237,3 +9237,32 @@ frontend/emission parity and text/binary source codecs across all four targets.
 No control or product has executed. This corrects specific source-visible
 interfaces; it does not establish whole-language or whole-project translation.
 General module/trait/FFI composition and all earlier requirements remain work.
+
+### Resumable JavaScript primitive conversion draft
+
+ToPrimitive follows its actual well-known Symbol method and preferred-type
+hint; ordinary fallback checks valueOf/toString in the specified hint order.
+The [ECMAScript conversion definitions](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-toprimitive)
+govern missing/noncallable methods, object results and abrupt completion.
+Each Get and Call is distinct. Getters and methods can change the global heap
+before subsequent lookup; captured call targets retain their actual identity.
+Primitive payloads retain Number bits, arbitrary integers, Symbol identities
+and complete UTF16 text, including isolated surrogates.
+
+Nominal continuations distinguish ready Gets, pending getters and pending
+method calls. Invalid phases/hints/context or repeated pending steps refuse.
+Resumption receives the actual completion and latest heap. A structurally valid
+state does not certify execution. The caller must provide the authoritative
+well-known Symbol from the global registry; membership alone does not prove
+its intrinsic role. Error outcomes remain actual realm/allocation obligations.
+The executor, intrinsic registry, exotic internal methods and source frontend
+integration remain required work.
+
+Qualified Links data defines spellings; their ordered UTF16 units are generated
+automatically. Rust semantics and model I/O derive from the actual checked
+JavaScript source. Deferred controls use original built-in coercions, compare
+every getter/method call and post-call heap, and retain complete native traces,
+codecs and all four emission targets. Original heap controls keep their default
+behavior, with an explicit optional intrinsic-Symbol transport for the new
+controls. Their complete preceding source remains immutable Links data. No
+coercion, callback, test, emitted product or native compiler has executed.

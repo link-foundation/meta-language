@@ -8,8 +8,10 @@ export const heapFixture=readProjectData(new URL('../../parity/fixtures/javascri
 export {assertVersions};
 export function decodeHeap(heap){return {...heap,objects:heap.objects.map(object=>({...object,identity:BigInt(object.identity),prototype:decodeValue(object.prototype),properties:object.properties.map(property=>({...property,key:decodeValue(property.key),descriptor:decodeDescriptor(property.descriptor)}))})),symbols:heap.symbols.map(BigInt)};}
 export function encodeHeap(heap){return {...heap,objects:heap.objects.map(object=>({...object,identity:String(object.identity),prototype:encodeValue(object.prototype),properties:object.properties.map(property=>({...property,key:encodeValue(property.key),descriptor:encodeDescriptor(property.descriptor)}))})),symbols:heap.symbols.map(String)};}
-export function createOrdinaryHostContext(heap,onCall){
+export function createOrdinaryHostContext(heap,onCall,intrinsicSymbols=new Map()){
  const objects=new Map(),symbols=new Map(),reverse=new Map(),calls=[];
+ for(const [identity,symbol]of intrinsicSymbols){assert.ok(heap.symbols.some(value=>String(value)===identity));assert.equal(typeof symbol,'symbol');}
+ assert.equal(new Set(intrinsicSymbols.values()).size,intrinsicSymbols.size,'intrinsic Symbol identities must remain distinct');
  const materialize=value=>{switch(value.$){case 'undefined':return undefined;case 'null':return null;case 'boolean':case 'number':case 'integer':return value.value;
   case 'text':{let output='';for(let at=0;at<value.units.length;at+=4096)output+=String.fromCharCode(...value.units.slice(at,at+4096));return output;}
   case 'object':assert.ok(objects.has(String(value.identity)));return objects.get(String(value.identity));
@@ -28,7 +30,7 @@ export function createOrdinaryHostContext(heap,onCall){
   if(object.callable){assert.equal(Reflect.deleteProperty(value,'name'),true);assert.equal(Reflect.deleteProperty(value,'length'),true);}
   objects.set(identity,value);reverse.set(value,identity);return value;};
  for(const object of heap.objects)addObject(object);
- const addSymbol=identity=>{const symbol=Symbol(String(identity));symbols.set(String(identity),symbol);reverse.set(symbol,String(identity));};
+ const addSymbol=identity=>{const symbol=intrinsicSymbols.get(String(identity))??Symbol(String(identity));symbols.set(String(identity),symbol);reverse.set(symbol,String(identity));};
  for(const identity of heap.symbols)addSymbol(identity);
  const descriptor=value=>{const result={};for(const [field,key]of [['configurable','configurable'],['enumerable','enumerable'],['value','value'],['writable','writable'],['getter','get'],['setter','set']])if(value[field+'Present'])result[key]=['value','getter','setter'].includes(field)?materialize(value[field]):value[field];return result;};
  for(const object of heap.objects){const host=objects.get(String(object.identity));assert.equal(Reflect.setPrototypeOf(host,materialize(object.prototype)),true);for(const property of object.properties)Object.defineProperty(host,materialize(property.key),descriptor(property.descriptor));}
