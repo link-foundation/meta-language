@@ -530,6 +530,17 @@ Borrowed Ord results, generic/custom trait resolution, floating-point NaN/zero
 semantics, clamp/panic behavior and unsupported literal receiver origins remain
 separate obligations.
 
+Explicit standard min/max imports now reuse that same selection definition.
+Ordinary use declarations record only an actually admitted standard comparison
+owner in the existing module-local alias map. Calls resolve the actual alias
+before shared role admission; local source bindings prevent interception.
+Grouped, renamed, raw-keyword and Unicode aliases retain their source identities.
+An alias in one module cannot change an independently declared function in
+another. Six complete original programs, independent native types and exact
+values, both generated products, both Links transports and all target emissions
+remain deferred controls. This source draft supplies neither general standard
+imports/reexports, glob imports, function values nor a new trait interpretation.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Earlier default-profile result refusals remain authenticated as historical

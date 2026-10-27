@@ -498,3 +498,5 @@ mod translation_rust_displayed_string_interface;
 mod translation_rust_named_formatting;
 
 mod translation_rust_primitive_selection;
+
+mod translation_rust_selection_imports;

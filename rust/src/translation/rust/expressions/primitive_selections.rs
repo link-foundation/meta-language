@@ -38,13 +38,37 @@ impl Facts {
     }
 }
 impl RustParser {
+    pub(in super::super) fn primitive_selection_import_role(
+        &self,
+        segments: &[String],
+        path: &[String],
+    ) -> String {
+        let shadowed = self.origins.lookup(&["std".to_owned()], path).is_some()
+            || self.origins.scope.contains_key("std")
+            || self
+                .aliases
+                .values()
+                .any(|aliases| aliases.contains_key("std"));
+        rules::read_rust_primitive_selection_call_role(
+            &segments.join("::"),
+            self.ordinary_completion_context(),
+            shadowed,
+        )
+    }
     pub(super) fn read_primitive_selection_call(
         &mut self,
         path: &[String],
     ) -> Result<Option<SExpr>> {
         let start = self.peek();
         let mut offset = usize::from(self.cursor.is("::"));
-        if self.cursor.peek_at(offset).value != "std" {
+        let first = self.cursor.peek_at(offset);
+        let aliases = self.aliases.get(&path.join("."));
+        if first.kind != TokenKind::Identifier
+            || self.cursor.is("::") && first.value != "std"
+            || first.value != "std"
+                && !aliases.is_some_and(|aliases| aliases.contains_key(&first.value))
+            || self.origins.scope.contains_key(&first.value)
+        {
             return Ok(None);
         }
         let mut segments = Vec::new();
@@ -56,17 +80,7 @@ impl RustParser {
             }
             offset += 1;
         }
-        let shadowed = self.origins.lookup(&["std".to_owned()], path).is_some()
-            || self.origins.scope.contains_key("std")
-            || self
-                .aliases
-                .values()
-                .any(|aliases| aliases.contains_key("std"));
-        let role = rules::read_rust_primitive_selection_call_role(
-            &segments.join("::"),
-            self.ordinary_completion_context(),
-            shadowed,
-        );
+        let role = self.primitive_selection_import_role(&self.resolve(&segments, path), path);
         if role.is_empty() {
             return Ok(None);
         }

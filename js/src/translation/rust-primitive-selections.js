@@ -8,12 +8,16 @@ function facts(node,parser,path){
  return {origin,owner,kind:type?.kind??'',bits:String(type?.bits??''),signed:type?.signed===true};
 }
 function admitted(value){return acceptRustPrimitiveSelectionReceiver(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length);}
+export function readRustPrimitiveSelectionImport(parser,segments,path){
+ const shadowed=Boolean(parser.origins.lookup(['std'],path)||parser.origins.scope.has('std')||[...parser.aliases.values()].some(aliases=>aliases.has('std')));
+ return readRustPrimitiveSelectionCallRole(segments.join('::'),parser.ordinaryCompletionContext(),shadowed);
+}
 export function readRustPrimitiveSelectionCall(parser,path){
  const c=parser.cursor,start=c.peek();let offset=c.is('::')?1:0;
- if(c.peek(offset).value!=='std')return null;
+ const first=c.peek(offset),aliases=parser.aliases.get(path.join('.'));
+ if(first.kind!=='identifier'||c.is('::')&&first.value!=='std'||first.value!=='std'&&!aliases?.has(first.value)||parser.origins.scope.has(first.value))return null;
  const segments=[];while(c.peek(offset).kind==='identifier'&&segments.length<16){segments.push(c.peek(offset).value);offset+=1;if(!c.is('::',offset))break;offset+=1;}
- const shadowed=Boolean(parser.origins.lookup(['std'],path)||parser.origins.scope.has('std')||[...parser.aliases.values()].some(aliases=>aliases.has('std')));
- const role=readRustPrimitiveSelectionCallRole(segments.join('::'),parser.ordinaryCompletionContext(),shadowed);
+ const role=readRustPrimitiveSelectionImport(parser,parser.resolve(segments,path),path);
  if(!role)return null;
  if(!c.is('(',offset))throw unsupported('Rust primitive selection call','a standard comparison function value needs its own callable interpretation',{start:start.start,end:c.peek(offset).end});
  for(let index=0;index<=offset;index+=1)c.next();

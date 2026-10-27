@@ -1,4 +1,4 @@
-import {readRustPrimitiveSelection,readRustPrimitiveSelectionCall} from './rust-primitive-selections.js';
+import {readRustPrimitiveSelection,readRustPrimitiveSelectionCall,readRustPrimitiveSelectionImport} from './rust-primitive-selections.js';
 import {readRustFormattingArgumentNameError,planRustNamedFormattingValue} from './rust-named-formatting-rules.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
@@ -418,8 +418,9 @@ class RustParser {
       const standardVector = full.length > 1 && acceptRustSourceArrayOwner(full.join('::'), false);
       const standardString = acceptRustReadOnlyQueryOwner('string empty', 'library', full.join('::'));
       const standardPrimitive=Boolean(readRustStandardPrimitivePosition(this,full,path));
+      const standardSelection=Boolean(readRustPrimitiveSelectionImport(this,full,path));
       if(this.primitiveOwnerModel&&!standardPrimitive)throw unsupported('Rust primitive owner import','only the two actual standard primitive reexports can be imported',span(start,c.peek()));
-      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive) {
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive&&!standardSelection) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
       if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
@@ -429,7 +430,7 @@ class RustParser {
         if(!acceptRustPrimitiveOwnerImportName(alias)||this.primitiveImportNames.has(alias))throw unsupported('Rust primitive owner alias','each import needs one distinct ASCII identifier outside the standard crate namespace',span(start,c.peek()));
         this.primitiveImportNames.add(alias);
       }
-      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive ? full : absolute(full, path, span(start, c.peek())));
+      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive||standardSelection ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
