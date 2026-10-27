@@ -3611,8 +3611,20 @@ concrete source and translation provenance remain available. Semantic module
 translation publishes the complete closed scope together, retaining every
 ordinary source item and no provisional external class signature.
 
-This profile admits fixed identifier parameters and semicolon-terminated initial
+This profile admits fixed identifier parameters, literal defaults and semicolon-terminated initial
 field assignments whose values cannot read or expose the unallocated instance.
+Defaults retain their complete original source and execute through the existing
+parameter environment at invocation; fresh empty aggregate defaults stay distinct
+between calls. Dependent, effectful and instance-reading default expressions need
+their full initialization scope. Separate module-scoped method environment
+factories capture only the explicit receiver, so constructor parameters and
+locals cannot shadow a method's original free bindings or default expressions.
+Direct receiver-independent static methods and
+factories retain distinct static/instance owners and ordinary argument order.
+Static constructor-object reads, detached factories, constructability, mutable
+static state and reflective interfaces remain separate obligations. The complete
+initial source graph, native generation recipe and fixtures remain exact Links
+predecessors; admitting this new domain establishes no equivalence certificate.
 It refuses inheritance, field declaration syntax, private members, accessors,
 static initialization, constructor return overrides, reflective own-property or
 prototype observations, detached/replaced methods, returned `this`, class value

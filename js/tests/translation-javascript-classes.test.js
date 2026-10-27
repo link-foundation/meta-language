@@ -13,6 +13,8 @@ import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {lowerJavaScriptClosedClassSource,acceptJavaScriptClosedClassSourceSize} from '../src/translation/javascript-class-source-rules.js';
 import {tokenize} from '../src/translation/lexer.js';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 const fixture=readProjectData(new URL('../../parity/fixtures/javascript-closed-classes.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
@@ -51,4 +53,13 @@ test('mismatched actual token columns cannot produce a provisional class source'
 test('unproved external class consumers retain a precise composition obligation',()=>{
   for(const context of [{referenceSemantics:false},{moduleDirectory:[]},{literalBindings:new Map([['outer',{k:'num',value:'1'}]])},{moduleBindingNames:['outer']},{moduleScopeKnown:false}])
     assert.throws(()=>parseJavaScript(fixture.cases[0].source,context),error=>error.kind==='unsupported'&&error.reason.startsWith('JavaScript closed class context:'));
+});
+test('every complete preceding source graph native recipe and fixture stays exact',()=>{
+  assert.equal(fixture.predecessors.length,3);
+  for(const prior of fixture.predecessors){
+    assert.match(prior.revision,/^[a-f0-9]{40}$/u);
+    const bytes=readFileSync(new URL('../../'+prior.retained,import.meta.url));
+    assert.equal(bytes.length,prior.bytes);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'),prior.sha256);
+  }
 });
