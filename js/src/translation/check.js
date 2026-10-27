@@ -9,6 +9,7 @@ import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-or
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
+import {checkJavaScriptDataField} from './javascript-data-fields.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {forgetJavaScriptOwnPropertyGuard,readJavaScriptOwnPropertyBranchEnvironments,checkJavaScriptGuardedRecordIndex,createJavaScriptOwnKeyCallbackEnvironment,installJavaScriptOwnKeyCallbackBindings} from './javascript-guarded-record-indices.js';
@@ -652,7 +653,7 @@ class Checker {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
-        return checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span);
+        return checkJavaScriptDataField(this,value,node.field,node.span)??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span);
       }
       case 'length': {
         const object = this.expr(node.object, env, path, undefined);

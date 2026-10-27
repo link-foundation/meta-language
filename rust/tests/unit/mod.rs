@@ -552,3 +552,7 @@ mod translation_rust_array_cloned_lookup;
 mod translation_rust_byte_ascii;
 
 mod translation_javascript_classes;
+
+mod translation_javascript_data_fields;
+
+mod translation_javascript_property_descriptors;

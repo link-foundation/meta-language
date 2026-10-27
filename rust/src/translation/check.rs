@@ -52,6 +52,7 @@ mod expressions;
 mod externals;
 mod items;
 mod javascript_concatenation;
+mod javascript_data_fields;
 mod javascript_indexed_properties;
 mod javascript_nullish_fields;
 mod javascript_object_enumeration;

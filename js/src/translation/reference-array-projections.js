@@ -10,6 +10,9 @@ function acceptsIndex(expression) {
   return acceptReferenceArrayProjectionIndex(expression.k, expression.type.kind, children.map(acceptsIndex));
 }
 export function emitReferenceArrayProjection(emitter, expression) {
+  // Numeric layout indices on record/tuple projections are not expression
+  // operands. Mirror the native typed-node selection before reading them.
+  if(!['length','index','optionalIndex'].includes(expression.k))return null;
   const array = expression.array, reference = array?.reference;
   const operation = readReferenceArrayProjection(expression.k, array?.k ?? '', reference?.type.kind ?? '',
     reference?.type.reference === true, expression.type.kind, acceptsIndex(expression.index));

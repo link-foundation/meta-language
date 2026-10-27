@@ -399,6 +399,9 @@ impl Checker {
         {
             return Ok(field);
         }
+        if let Some(field) = self.javascript_data_field(&value, field, span)? {
+            return Ok(field);
+        }
         if let Some(absent) = self.javascript_absent_record_property(&value, field, expected, span)
         {
             return Ok(absent);

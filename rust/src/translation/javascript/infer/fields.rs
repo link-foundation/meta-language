@@ -1,5 +1,5 @@
 //! Actual field constraints moved intact from the common inference host.
-use super::{FLOAT, FieldOf, Inference, Result, Term, Type};
+use super::{FLOAT, FieldOf, Inference, Result, STRING, Term, Type};
 
 impl Inference {
     pub(super) fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
@@ -85,6 +85,54 @@ impl Inference {
                 return self.field_step(constraint);
             }
         };
+        let constructors = self
+            .data
+            .iter()
+            .find(|(data, _)| *data == name)
+            .map(|(_, ctors)| ctors);
+        let positions = constructors
+            .map(|ctors| {
+                ctors
+                    .iter()
+                    .map(|ctor| {
+                        ctor.fields
+                            .iter()
+                            .position(|field| {
+                                field.name.as_deref() == Some(constraint.field.as_str())
+                            })
+                            .map_or(-1.0, |index| {
+                                f64::from(u32::try_from(index).expect(
+                                    "actual source field coordinates fit the bounded directory",
+                                ))
+                            })
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        let projection_form=crate::translation::javascript_data_field_rules::read_java_script_data_field_inference_form(
+            &constraint.field,&positions);
+        if projection_form == "tag" {
+            self.unify(&constraint.result, &Term::Known(STRING), constraint.place)?;
+            return Ok(true);
+        }
+        if projection_form == "absent" {
+            self.unify(
+                &constraint.result,
+                &Term::Option {
+                    element: Box::new(Term::Known(Type::Unit)),
+                    absence: std::rc::Rc::new(std::cell::RefCell::new("undefined".to_owned())),
+                },
+                constraint.place,
+            )?;
+            return Ok(true);
+        }
+        if projection_form == "refuse" {
+            return Err(crate::translation::diagnostics::unsupported(
+                "datatype property",
+                "a datatype property needs its complete bounded constructor directory",
+                constraint.place,
+            ));
+        }
         let declared = self
             .data
             .iter()
@@ -99,6 +147,25 @@ impl Inference {
             });
         if let Some((ctor, index)) = declared {
             let term = self.field(&name, &ctor, index);
+            let term = if projection_form == "optional" {
+                match self.resolve(&term) {
+                    Term::Option { element, absence } => Term::Option {
+                        element,
+                        absence: std::rc::Rc::new(std::cell::RefCell::new(
+                            crate::translation::structured_type_rules::merge_optional_absence(
+                                &absence.borrow(),
+                                "undefined",
+                            ),
+                        )),
+                    },
+                    other => Term::Option {
+                        element: Box::new(other),
+                        absence: std::rc::Rc::new(std::cell::RefCell::new("undefined".to_owned())),
+                    },
+                }
+            } else {
+                term
+            };
             self.unify(&constraint.result, &term, constraint.place)?;
         }
         Ok(true)

@@ -1,4 +1,5 @@
 import {requireCallableConstantApplicationCapture} from './rust-module-value-rules.js';
+import {readJavaScriptDataFieldInferenceForm} from './javascript-data-field-rules.js';
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
 import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
 import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
@@ -776,8 +777,14 @@ class Inference {
       this.unify(object, { kind: 'data', name: owners[0][0] }, where);
       return this.fieldStep({ object, field, result, where });
     }
-    const declared = (this.data.get(type.name) ?? []).flatMap((ctor) => ctor.fields).find((candidate) => candidate.name === field);
-    if (declared) this.unify(result, this.field(declared), where);
+    const constructors=this.data.get(type.name)??[],positions=constructors.map(ctor=>ctor.fields.findIndex(candidate=>candidate.name===field));
+    const projectionForm=readJavaScriptDataFieldInferenceForm(field,positions);
+    if(projectionForm==='tag'){this.unify(result,STRING,where);return true;}
+    if(projectionForm==='absent'){this.unify(result,option(UNIT,'undefined'),where);return true;}
+    if(projectionForm==='refuse')throw unsupported('datatype property','a datatype property needs its complete bounded constructor directory',where);
+    const declared=constructors.flatMap(ctor=>ctor.fields).find(candidate=>candidate.name===field);
+    if(declared){const term=this.field(declared),resolved=this.resolve(term);this.unify(result,projectionForm==='optional'
+      ?resolved.kind==='option'?{kind:'option',element:resolved.element,absence:mergeOptionalAbsence(resolved.absence,'undefined')}:{kind:'option',element:term,absence:'undefined'}:term,where);}
     return true;
   }
 

@@ -8990,6 +8990,52 @@ source inference retains actual value-owner constraints until they resolve.
 The behavior follows
 [Object.values](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.values).
 
+### Normalized semantic values and ordinary descriptor transitions draft
+
+JavaScript semantic operands have one explicit tagged definition: undefined,
+null, Boolean, Number, arbitrary precision integer, ordered UTF16 units, Symbol
+identity and Object identity. References use positive unsigned64 global link
+identities in one checked context. Intrinsic callability comes from that same
+object model; it is not inferred from property names or host callbacks. This
+value encoding does not certify equality between separate identity contexts or
+between concepts with different source definitions.
+
+Ordinary property descriptors retain each attribute's presence separately from
+its payload. Source-defined transitions validate present values and callable
+accessors, complete new descriptors, preserve nonconfigurable restrictions and
+distinguish data/accessor conversion. SameValue retains NaN equivalence, signed
+zero distinction, exact integers, text units and reference identities. These
+operations follow [SameValue](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-samevalue)
+and [ValidateAndApplyPropertyDescriptor](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-validateandapplypropertydescriptor).
+
+The result names rejection, preservation, creation, conversion or update and
+lists the actual attributes to write. Preservation and rejection write nothing.
+Partial updates do not rewrite absent fields. This matters when a current NaN
+and a proposed NaN have different payload bits but satisfy SameValue. The
+frontend/heap must apply only those writes and retain the complete original
+storage of unlisted fields. Descriptor-object conversion, accessor execution,
+proxy traps, exotic objects, prototype traversal, lifecycle/garbage collection
+and complete source integration remain separate required operations; this
+kernel does not claim their implementation.
+
+Actual tagged datatypes may project a common own field only from their complete
+constructor directory and actual resolved checker type identities. Missing own
+fields retain undefined. Different nominal types require a complete union
+representation; inherited fields require the prototype operation. Both
+frontend adapters construct the same ordinary exhaustive match/optional IR
+from shared source decisions. Inference records presence without inventing
+type-equivalence facts before solving actual types. Array projection adapters
+distinguish typed index expressions from numeric record layout coordinates.
+
+The source, native products and typed Links are generated together. Deferred
+controls retain complete descriptor attributes, no-write payload bits, global
+IDs beyond 2^53, BigInts, UTF16 surrogates, text resource boundaries and original
+tagged-field source expressions after loop lifting. Earlier checker/inference
+source bytes remain in qualified immutable Links records. No represented
+operation, fixture, product or native compiler has executed. These drafts do
+not establish whole-language coverage or runtime parity. All broad translation,
+grammar, shared-concept and earlier requirements remain binding.
+
 Ordered record storage contains a Number position vector even when its named
 fields contain only strings. Target trait derivation and numeric dependence
 must account for that actual representation. This does not make the record a
