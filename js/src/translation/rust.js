@@ -2,6 +2,7 @@ import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatur
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
 import {readRustStandardStringView} from './rust-standard-string-views.js';
 import {readRustStringAddition} from './rust-string-addition.js';
+import {acceptRustStandardStringOwnedMethodResult} from './rust-standard-owned-call-rules.js';
 import {readRustSourceConstantCall,requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustSourceCallableValueError,readRustSourceConstantPatternError,readRustSourceCallForm} from './rust-source-constant-rules.js';
 import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
@@ -1415,8 +1416,10 @@ class RustParser {
           return this.origins.mark({...receiver,span:{start:receiver.span?.start??range.start,end:range.end}},{...origin,localValueCopy:true});
         }
         if (origin.arraySourceModel) throw unsupported('Rust array clone', 'array cloning needs a separate source allocation and ownership proof', range);
+        const ownedText=acceptRustStandardStringOwnedMethodResult(method.value,origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true,origin.wrappers.every(layer=>layer==='reference'),origin.sourceOwner?.kind??'',origin.sourceOwner?.path.join('::')??'',origin.sourceOwner?.arguments.length??-1);
         if (origin.wrappers[0] === 'reference') origin.wrappers.shift();
         if (method.value === 'to_owned' && origin.type?.kind === 'string') origin.textSourceModel = 'owned string';
+        if(ownedText){origin.sourceOwner={kind:'library',path:['std','string','String'],arguments:[]};origin.sourceLifetimes=[];origin.copyEvidence=false;}
         return this.origins.mark(receiver, origin);
       }
       case 'as_str':

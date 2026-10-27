@@ -575,6 +575,17 @@ impl RustParser {
                 {
                     self.origins.direct(argument, path, argument.span)?;
                 }
+                let owned_text = crate::translation::rust_standard_owned_call_rules::accept_rust_standard_string_owned_method_result(
+                    &method_name,
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    origin.text_source_model.unwrap_or(""),
+                    u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY, f64::from),
+                    origin.proven,
+                    origin.wrappers.iter().all(|layer| layer == "reference"),
+                    origin.source_owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+                    &origin.source_owner.as_ref().map_or_else(String::new, |owner| owner.path.join("::")),
+                    origin.source_owner.as_ref().map_or(-1.0, |owner| u32::try_from(owner.arguments.len()).map_or(f64::INFINITY, f64::from)),
+                );
                 if ["clone", "to_owned"].contains(&method_name)
                     && origin
                         .wrappers
@@ -585,6 +596,16 @@ impl RustParser {
                 }
                 if method_name == "to_owned" && origin.ty == Some(STRING) {
                     origin.text_source_model = Some("owned string");
+                }
+                if owned_text {
+                    origin.source_owner =
+                        Some(crate::translation::source_signatures::SourceOwner {
+                            kind: "library".to_owned(),
+                            path: vec!["std".to_owned(), "string".to_owned(), "String".to_owned()],
+                            arguments: Vec::new(),
+                        });
+                    origin.source_lifetimes.clear();
+                    origin.copy_evidence = None;
                 }
                 if method_name == "as_str" {
                     if origin.array_source_model.is_some() {

@@ -492,3 +492,5 @@ mod translation_rust_string_predicate_interface;
 mod translation_rust_constructed_string_interface;
 
 mod translation_rust_string_addition;
+
+mod translation_rust_displayed_string_interface;

@@ -683,4 +683,9 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Continue drafting exactly the full issue, pull-request and conversation scope in implementation code. Do not run code tests, validation, behavioral comparisons or fixture oracles until every requirement has an implementation draft. Preserve all fixtures, assertions and later verification obligations. A registry entry, carried source, stub or unexecuted test declaration is insufficient implementation drafting, and drafting is distinct from verified delivery.',
       ['everyRequirementHasImplementationDraft', 'codeExecutionForTestingDeferredUntilWholeDraft', 'allLaterVerificationRetained', 'stubsAndDeclarationsDoNotReplaceBehavior']],
   ], true),
+  ...rows('draftWithoutTestsOrCompilationRequest', 'parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-DRAFT-WITHOUT-COMPILATION', 'continue actual implementation drafting without local compilation',
+      'Continue bulk drafting all inherited requirements in implementation code while any requirement remains undrafted. A handoff preserves remaining work and does not replace continuing that work. Execute no local code tests or build compilation during this drafting phase; retain every required later compilation, behavioral verification, fixture, assertion and CI gate. Source-only code generation remains drafting, with no original/generated program execution or executable build artifact presented as verification.',
+      ['remainingHandoffWorkContinuesInImplementationCode', 'noLocalBuildCompilationDuringDrafting', 'noCodeTestsBeforeFullDraft', 'allLaterCompilationAndVerificationRetained']],
+  ], true),
 ]);

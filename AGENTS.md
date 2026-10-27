@@ -47,7 +47,8 @@ Applies to all contributors; setup: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Local checks and resources
 
-Current task phase: draft every requirement before tests or validation gates.
+Current task phase: draft every requirement before local tests, build compilation
+or validation gates.
 Source generation may parse, type-check and format; defer behavioral execution.
 Commits/pushes are authorized; defer CI feedback until the full code draft.
 

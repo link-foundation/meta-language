@@ -27,6 +27,13 @@ const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 // rewrites an earlier live source, capture, timestamp or ledger mapping.
 export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
   {
+    id: 'continue-bulk-draft-without-tests-or-compilation-2026-10-27',
+    key: 'draftWithoutTestsOrCompilationRequest',
+    title: 'Continue bulk implementation drafting without tests or compilation',
+    role: 'The user explicitly reiterates that remaining handoff work requires continued code drafting, with no code-test execution or local compilation during this phase; retain all inherited implementation and later verification obligations.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'I195-WORKFLOW-DRAFT-WITHOUT-COMPILATION'],
+  },
+  {
     id: 'full-requirements-drafting-until-finished-2026-10-25',
     key: 'fullRequirementsDraftUntilFinishedRequest',
     title: 'Continue every implementation draft until the entire requirement scope is drafted',

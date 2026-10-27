@@ -6,6 +6,10 @@ use super::rust_constructed_string_interface_rules::{
     accept_rust_constructed_string_binary, accept_rust_constructed_string_concatenation,
     accept_rust_constructed_string_interface_model,
 };
+use super::rust_displayed_string_interface_rules::{
+    accept_rust_displayed_string_expression, accept_rust_displayed_string_interface_model,
+    accept_rust_primitive_display_operand,
+};
 use super::rust_scalar_mathematical_interface_rules::{
     accept_rust_scalar_mathematical_expression, accept_rust_scalar_mathematical_interface_model,
     accept_rust_scalar_mathematical_operation,
@@ -79,7 +83,8 @@ pub fn read_rust_scalar_source_interface(
     program: &Program,
     model: &str,
 ) -> Result<BTreeMap<String, SourceSignature>> {
-    let constructed = accept_rust_constructed_string_interface_model(model);
+    let displayed = accept_rust_displayed_string_interface_model(model);
+    let constructed = displayed || accept_rust_constructed_string_interface_model(model);
     let predicates = constructed || accept_rust_string_predicate_interface_model(model);
     let strings = predicates || accept_rust_textual_source_interface_model(model);
     let mathematical = strings || accept_rust_scalar_mathematical_interface_model(model);
@@ -228,7 +233,9 @@ pub fn read_rust_scalar_source_interface(
         value_type(&node.ty, strings)?;
         // Native variants exhaustively represent these fields. Linked decoding
         // checks raw field inventories before constructing this IR.
-        if !(if predicates {
+        if !(if displayed {
+            accept_rust_displayed_string_expression(node.kind())
+        } else if predicates {
             accept_rust_string_predicate_expression(node.kind())
         } else if mathematical {
             accept_rust_scalar_mathematical_expression(node.kind())
@@ -240,6 +247,13 @@ pub fn read_rust_scalar_source_interface(
             ));
         }
         match &node.node {
+            Node::ToString { arg, console } => {
+                if !accept_rust_primitive_display_operand(arg.ty.kind(), node.ty.kind(), *console) {
+                    return Err(fail(
+                        "primitive Display needs an exact fixed-width integer or Boolean operand and the ordinary String result",
+                    ));
+                }
+            }
             Node::StringTest { op, string, search } => {
                 if !accept_rust_string_predicate_operands(
                     op,

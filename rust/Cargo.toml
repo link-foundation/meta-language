@@ -177,6 +177,7 @@ include = [
     "src/data/rust-data-type-field-signature-program.lino",
     "src/data/rust-declaration-header-controls.lino",
     "src/data/rust-declaration-header-program.lino",
+    "src/data/rust-displayed-string-interface-program.lino",
     "src/data/rust-formatting-program.lino",
     "src/data/rust-fresh-vector-argument-program.lino",
     "src/data/rust-fresh-vector-call-result-program.lino",

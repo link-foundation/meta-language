@@ -11,6 +11,8 @@ import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
+  draftWithoutTestsOrCompilationRequest:
+    'parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt',
   fullRequirementsDraftUntilFinishedRequest:
     'parity/sources/full-requirements-drafting-until-finished-2026-10-25.txt',
   completeDraftBeforeCiFeedbackRequest:

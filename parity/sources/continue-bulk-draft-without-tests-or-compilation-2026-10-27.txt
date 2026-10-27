@@ -1,0 +1,1 @@
+`The full requirements draft remains unfinished; remaining work is recorded in the handoff.` that means we must continue to bulk draft it without any tests execution or compilation.

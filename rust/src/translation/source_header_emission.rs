@@ -71,6 +71,7 @@ pub fn validate_rust_source_header_emission_model(model: &str) -> Result<()> {
         && !super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
         && !super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
         && !super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+        && !super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model)
     {
         return Err(unsupported(
             "Rust source header emission model",

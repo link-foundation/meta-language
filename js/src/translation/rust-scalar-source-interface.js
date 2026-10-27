@@ -1,6 +1,7 @@
 // Thin owned-IR projection; decisions and every interface syntax operation are
 // shared translated definitions. This never edits or reparses source strings.
 import {unsupported} from './diagnostics.js';
+import {acceptRustDisplayedStringInterfaceModel,acceptRustDisplayedStringExpression,acceptRustDisplayedStringExpressionField,acceptRustPrimitiveDisplayOperand} from './rust-displayed-string-interface-rules.js';
 import {acceptRustConstructedStringInterfaceModel,acceptRustConstructedStringBinary,acceptRustConstructedStringConcatenation} from './rust-constructed-string-interface-rules.js';
 import {acceptRustStringPredicateInterfaceModel,acceptRustStringPredicateExpression,acceptRustStringPredicateExpressionField,acceptRustStringPredicateOperands} from './rust-string-predicate-interface-rules.js';
 import {acceptRustTextualSourceInterfaceModel,readRustTextualSourceType,acceptRustTextualSourceOperation,acceptRustTextualSourceBinary,renderRustTextualSourceInput,renderRustTextualSourceSliceArgument} from './rust-textual-source-interface-rules.js';
@@ -24,7 +25,7 @@ function valueType(type,strings=false){
 function sourceType(position,strings=false){const value=valueType(position.type,strings);return value==='String'?readRustTextualSourceType(position.owner.kind,position.owner.path.join('::'),position.owner.arguments.length):readRustScalarSourceType(value,position.owner.kind,position.owner.path[0]??'',position.owner.path.length,position.owner.arguments.length);}
 /** Validate the whole owned call graph before any target interface changes. */
 export function readRustScalarSourceInterface(program,model){
- const constructed=acceptRustConstructedStringInterfaceModel(model),predicates=constructed||acceptRustStringPredicateInterfaceModel(model),strings=predicates||acceptRustTextualSourceInterfaceModel(model),mathematical=strings||acceptRustScalarMathematicalInterfaceModel(model);
+ const displayed=acceptRustDisplayedStringInterfaceModel(model),constructed=displayed||acceptRustConstructedStringInterfaceModel(model),predicates=constructed||acceptRustStringPredicateInterfaceModel(model),strings=predicates||acceptRustTextualSourceInterfaceModel(model),mathematical=strings||acceptRustScalarMathematicalInterfaceModel(model);
  if(!acceptRustScalarSourceInterfaceModel(model)&&!mathematical)fail('select retained scalar Rust function interface 1');
  checkRustPrimitiveOwnerProof(program);validateRustTypeNamespace(program);
  const forbidden=Boolean(program.imports?.length||program.externals?.length||program.main?.effects?.length||program.main?.sequentialAsync||program.main?.sourceRuntimeWorker||program.referenceSemantics||program.utf16Strings||program.outputThreaded||program.abortsThreaded||program.sourceRuntimeShell||program.sourcePureUnitCalls);
@@ -47,8 +48,12 @@ export function readRustScalarSourceInterface(program,model){
   if(visited.has(node))continue;visited.add(node);visits+=1;
   if(!acceptRustScalarSourceBudget(visits))fail('the closed scalar call graph exceeds its expression budget');
   valueType(node.type,strings);
-  if(!(predicates?acceptRustStringPredicateExpression(node.k):mathematical?acceptRustScalarMathematicalExpression(node.k):acceptRustScalarSourceExpression(node.k))||Object.keys(node).some(field=>!(predicates?acceptRustStringPredicateExpressionField(node.k,field):mathematical?acceptRustScalarMathematicalExpressionField(node.k,field):acceptRustScalarSourceExpressionField(node.k,field))))fail('the expression requires an additional source interface interpretation');
-  if(node.k==='stringTest'){
+  if(!(displayed?acceptRustDisplayedStringExpression(node.k):predicates?acceptRustStringPredicateExpression(node.k):mathematical?acceptRustScalarMathematicalExpression(node.k):acceptRustScalarSourceExpression(node.k))||Object.keys(node).some(field=>!(displayed?acceptRustDisplayedStringExpressionField(node.k,field):predicates?acceptRustStringPredicateExpressionField(node.k,field):mathematical?acceptRustScalarMathematicalExpressionField(node.k,field):acceptRustScalarSourceExpressionField(node.k,field))))fail('the expression requires an additional source interface interpretation');
+  if(node.k==='toString'){
+   const console=Object.hasOwn(node,'console')&&node.console!==false;
+   if(!acceptRustPrimitiveDisplayOperand(node.arg?.type?.kind??'',node.type.kind,console))fail('primitive Display needs an exact fixed-width integer or Boolean operand and the ordinary String result');
+   enqueue([node.arg]);
+  }else if(node.k==='stringTest'){
    if(!acceptRustStringPredicateOperands(node.op,node.type.kind,node.string?.type?.kind??'',node.search?.type?.kind??''))fail('string predicates need their actual operation, Boolean result and complete String operands');
    enqueue([node.string,node.search]);
   }else if(node.k==='math'){

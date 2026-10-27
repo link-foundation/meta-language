@@ -725,6 +725,32 @@ macros, borrowed results, string ordering, allocation identity and full
 ownership or source-language completeness remain required work. All these
 controls are unexecuted source drafts.
 
+The independent `retained displayed Rust string function interface 1` adds
+ordinary fixed-width integer and Boolean Display to the same complete string
+graph. The actual operand remains a checked fixed-width value or Boolean, the
+result is String, and console representations refuse. Every operand is visited
+under the existing graph budget. Source width, signedness, primitive owner,
+reference layers, lifetime binders, ordered captures and checked calls remain
+explicit. The existing primitive conversion and concatenation definitions supply
+all four targets; no handwritten native display algorithm is introduced.
+These meanings follow the standard [Display contract](https://doc.rust-lang.org/std/fmt/trait.Display.html)
+and [formatting syntax](https://doc.rust-lang.org/std/fmt/index.html).
+Earlier interface models retain the identical original Boolean refusal input.
+Independent minimum/maximum/zero values, complete original/generated products,
+native function types, both codecs and actual emitted-definition reparse are
+deferred controls. Floating-point and unbounded-integer formatting, custom
+traits, radix/precision/locale specifiers, borrowed outputs, general ownership
+and full own-codebase support remain requirements.
+
+Actual standard String clone/ToOwned results and one borrowed str ToOwned
+result retain a standard owned String source owner, no borrowed lifetime and
+no Copy evidence. Shared source rules select only the real standard owner and
+supported zero/one-reference cases before adapters update those facts. This
+corrects stale str ownership in emitted-literal reimport without changing the
+existing value operation or claiming a complete reference-method resolver.
+Multiple-reference results, custom owners and the remaining borrow/move domain
+retain their separate obligations.
+
 Ordinary Rust source addition has an additional standard String value draft.
 An actual owned standard String on the left and one immutable standard str or
 String reference on the right project to the existing complete concatenation
@@ -4637,6 +4663,12 @@ The latest full-draft continuation is preserved verbatim in
 [`full-requirements-drafting-until-finished-2026-10-25.txt`](../parity/sources/full-requirements-drafting-until-finished-2026-10-25.txt).
 It reinforces the existing critical full-scope rows and changes no requirement,
 fixture, runtime, assertion or later verification obligation.
+The [October 27 continuation](../parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt)
+explicitly requires continued implementation drafting while work remains in the
+handoff, without local tests or build compilation. Source-only code generation
+writes the draft; it executes no represented source program and produces no
+executable build artifact. Every later compilation and verification obligation
+remains binding, and recorded handoff work does not replace continuing it.
 
 Conditional Rust pattern chains now have a shared source plan over actual
 ordered operands. Pattern scopes extend into later conditions and the selected

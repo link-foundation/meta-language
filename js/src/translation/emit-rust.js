@@ -4,6 +4,7 @@ import {acceptRustScalarMathematicalInterfaceModel,readRustScalarMathematicalEnc
 import {acceptRustTextualSourceInterfaceModel,readRustTextualSourceEncoding,readRustTextualSourceStatement} from './rust-textual-source-interface-rules.js';
 import {acceptRustStringPredicateInterfaceModel,readRustStringPredicateEncoding,readRustStringPredicateStatement} from './rust-string-predicate-interface-rules.js';
 import {acceptRustConstructedStringInterfaceModel,readRustConstructedStringEncoding,readRustConstructedStringStatement} from './rust-constructed-string-interface-rules.js';
+import {acceptRustDisplayedStringInterfaceModel,readRustDisplayedStringEncoding,readRustDisplayedStringStatement} from './rust-displayed-string-interface-rules.js';
 import {renderStringArrayCopySort,requireStringArrayCopySortUnits} from './string-array-sort-rules.js';
 import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
@@ -697,7 +698,8 @@ export function emitRust(program, options = {}) {
   checkRustOwnedLocalStateProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell){if(options.sourceHeaderModel!==undefined)refuseRustRuntimeShellComposition('target header changes require an independent runtime composition proof');return emitRustRuntimeShell(program,runtimeShell);}
-  const constructedInterface = acceptRustConstructedStringInterfaceModel(options.sourceHeaderModel);
+  const displayedInterface = acceptRustDisplayedStringInterfaceModel(options.sourceHeaderModel);
+  const constructedInterface = displayedInterface || acceptRustConstructedStringInterfaceModel(options.sourceHeaderModel);
   const predicateInterface = constructedInterface || acceptRustStringPredicateInterfaceModel(options.sourceHeaderModel);
   const textualInterface = predicateInterface || acceptRustTextualSourceInterfaceModel(options.sourceHeaderModel);
   const mathematicalInterface = acceptRustScalarMathematicalInterfaceModel(options.sourceHeaderModel);
@@ -721,6 +723,7 @@ export function emitRust(program, options = {}) {
   if(textualInterface)state.encode(readRustTextualSourceEncoding(),readRustTextualSourceStatement());
   if(predicateInterface)state.encode(readRustStringPredicateEncoding(),readRustStringPredicateStatement());
   if(constructedInterface)state.encode(readRustConstructedStringEncoding(),readRustConstructedStringStatement());
+  if(displayedInterface)state.encode(readRustDisplayedStringEncoding(),readRustDisplayedStringStatement());
   return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true, scalarInterface).file();
 }
 
