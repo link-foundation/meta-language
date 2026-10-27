@@ -9,10 +9,9 @@ fn count(value: usize) -> f64 {
     u32::try_from(value).map_or(f64::INFINITY, f64::from)
 }
 impl RustParser {
-    pub(super) fn project_primitive_from(
+    pub(super) fn prepare_primitive_from_argument(
         &mut self,
         mut receiver: SExpr,
-        target: &str,
         range: Option<Span>,
         path: &[String],
     ) -> Result<SExpr> {
@@ -65,6 +64,16 @@ impl RustParser {
             });
             self.origins.mark(&receiver, origin);
         }
+        Ok(receiver)
+    }
+    pub(super) fn project_primitive_from(
+        &mut self,
+        receiver: SExpr,
+        target: &str,
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<SExpr> {
+        let receiver = self.prepare_primitive_from_argument(receiver, range, path)?;
         let origin = self.origins.origin(&receiver, path);
         let owner = origin.source_owner.clone().or_else(|| {
             let primitive = match (&receiver.node, &origin.ty) {

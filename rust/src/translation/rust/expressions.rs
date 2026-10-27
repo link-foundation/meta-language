@@ -8,6 +8,7 @@ mod primitive_associated_calls;
 mod primitive_from;
 mod primitive_integer_constants;
 mod primitive_selections;
+mod primitive_try_from;
 mod read_only_queries;
 mod scalar_vector_copy;
 mod standard_owned_calls;
@@ -878,6 +879,9 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_try_from(path)? {
+            return Ok(value);
+        }
         if let Some(value) = self.read_primitive_integer_constant(path)? {
             return Ok(value);
         }

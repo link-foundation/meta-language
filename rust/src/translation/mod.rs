@@ -182,6 +182,7 @@ mod rust_primitive_from_rules;
 mod rust_primitive_inherent_copy_rules;
 mod rust_primitive_integer_constant_rules;
 mod rust_primitive_selection_rules;
+mod rust_primitive_try_from_rules;
 pub(crate) mod rust_record_program;
 pub(crate) mod rust_record_rules;
 pub(crate) mod rust_saturating_integer_rules;

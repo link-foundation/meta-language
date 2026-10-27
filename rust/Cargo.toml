@@ -196,6 +196,7 @@ include = [
     "src/data/rust-primitive-inherent-copy-program.lino",
     "src/data/rust-primitive-integer-constant-program.lino",
     "src/data/rust-primitive-selection-program.lino",
+    "src/data/rust-primitive-try-from-program.lino",
     "src/data/rust-project-source-program.lino",
     "src/data/rust-record-program.lino",
     "src/data/rust-saturating-integer-program.lino",

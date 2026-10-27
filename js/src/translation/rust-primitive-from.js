@@ -3,10 +3,14 @@ import {projectRustIntegerFloatPlan} from './rust-integer-float-plan.js';
 import {unsupported} from './diagnostics.js';
 import {rustFixedType,BOOL,FLOAT} from './types.js';
 import {readRustPrimitiveFromLiteralOwner,acceptRustPrimitiveFromSource,planRustPrimitiveFrom} from './rust-primitive-from-rules.js';
-export function projectRustPrimitiveFrom(parser,receiver,target,range,path){
+export function prepareRustPrimitiveFromArgument(parser,receiver,path){
  const negative=receiver.k==='unary'&&receiver.op==='neg'&&receiver.arg.k==='num',number=negative?receiver.arg:receiver;
  const literalOwner=readRustPrimitiveFromLiteralOwner(negative?'negative numeral':receiver.k==='num'?'numeral':'',Boolean(number.type),number.type?.kind??'');
  if(literalOwner){const type=literalOwner==='f64'?FLOAT:rustFixedType(literalOwner),literal={...number,type};receiver=negative?{...receiver,arg:literal}:literal;parser.origins.mark(receiver,{...parser.origins.typeOrigin(type,path),sourceOwner:{kind:'primitive',path:[literalOwner],arguments:[]}});}
+ return receiver;
+}
+export function projectRustPrimitiveFrom(parser,receiver,target,range,path){
+ receiver=prepareRustPrimitiveFromArgument(parser,receiver,path);
  const origin=parser.origins.origin(receiver,path),type=origin.type,owner=origin.sourceOwner??(receiver.k==='bool'?{kind:'primitive',path:['bool'],arguments:[]}:receiver.k==='num'&&type?.kind==='float'?{kind:'primitive',path:['f64'],arguments:[]}:null);
  if(!acceptRustPrimitiveFromSource(type?.kind??'',String(type?.bits??''),type?.signed===true,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,origin.wrappers.length))throw unsupported('Rust primitive From','the actual argument must retain a proven direct standard primitive source type',range);
  const plan=planRustPrimitiveFrom(target,owner.path.join('::'));

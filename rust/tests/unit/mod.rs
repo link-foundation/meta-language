@@ -520,3 +520,5 @@ mod translation_rust_primitive_integer_constant;
 mod translation_rust_integer_float_plan;
 
 mod translation_rust_primitive_expression;
+
+mod translation_rust_primitive_try_from;

@@ -606,6 +606,32 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Standard integer TryFrom calls now have a scoped immediate Result-consumer
+source draft. All fixed/pointer integer pairs retain input-representable lower
+and upper tests, followed by is_ok/is_err, an eager unwrap_or default, or map_or
+with an actual admitted primitive From function item. Successful casts stay
+behind their complete range condition. Inputs and defaults are captured once
+in original order, including successful conversions whose eager default still
+runs. Mapper qualification, aliases, target/default source owners, ordinary
+literal defaults and explicit std/core TryFrom imports remain checked. Shared
+plans select existing comparison/Boolean/conditional/cast terms and reuse the
+existing From definitions, including exact binary64 decomposition. Native
+hosts only project actual syntax, types and those shared terms.
+
+Seven hundred thirty complete original sources declare independent interval
+expectations for every integer pair, boundary predicates/defaults, standard
+mappers, complete types, aliases/imports and output traces. The repository
+counter pattern `u32::try_from(value).map_or(f64::INFINITY, f64::from)` retains
+its endpoint and observable overflow classification in deferred controls.
+Every guard/consumer/source/import/result premise, malformed/refused source,
+original and both generated native product, codec and four-language emission
+remains unexecuted. This follows the standard
+[TryFrom](https://doc.rust-lang.org/std/convert/trait.TryFrom.html) and
+[Result consumers](https://doc.rust-lang.org/std/result/enum.Result.html).
+Private error payloads cannot escape this elimination scope. General Result
+values, error observation/formatting, arbitrary or lazy mappers, other source
+domains, generic traits and complete own-codebase translation remain obligations.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not
