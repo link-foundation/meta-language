@@ -6,6 +6,7 @@ mod checked_integer;
 pub(super) mod control;
 mod integer_bits;
 mod integer_float_plan;
+mod integer_magnitudes;
 mod primitive_associated_calls;
 mod primitive_default;
 mod primitive_from;
@@ -519,6 +520,16 @@ impl RustParser {
                     path,
                 )? {
                     value = product;
+                    continue;
+                }
+                if let Some(magnitude) = self.read_integer_magnitudes(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = magnitude;
                     continue;
                 }
                 if let Some(bits) = self.read_integer_bits(

@@ -1,3 +1,4 @@
+import {readRustIntegerMagnitudeArity} from './rust-integer-magnitude-rules.js';
 import {acceptRustWrappingShiftMethod} from './rust-wrapping-shift-rules.js';
 import {acceptRustIntegerBitMethod} from './rust-integer-bit-rules.js';
 import {readRustCheckedIntegerArity} from './rust-checked-integer-rules.js';
@@ -19,6 +20,8 @@ export function readRustPrimitiveAssociatedArity(owner,method){
  if(!['bool','i8','u8','i16','u16','i32','u32','i64','u64','i128','u128','isize','usize'].includes(owner))return -1;
  if(method==='min'||method==='max')return 2;
  if(owner==='bool')return -1;
+ const magnitude=readRustIntegerMagnitudeArity(method,true);
+ if(magnitude>=0&&(method!=='unsigned_abs'||owner.startsWith('i')))return magnitude+1;
  if(acceptRustWrappingShiftMethod(method))return 2;
  if(acceptRustIntegerBitMethod(method))return 1;
  const checked=readRustCheckedIntegerArity(method,true);

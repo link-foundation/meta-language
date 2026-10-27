@@ -752,6 +752,27 @@ and [rotations](https://doc.rust-lang.org/std/primitive.u128.html#method.rotate_
 Other integer APIs and full own-codebase translation remain obligations; source
 authoring supplies no runtime observation or parity claim.
 
+Signed unsigned_abs and signed/unsigned abs_diff now have shared guarded source
+plans with their complete unsigned result domains. Negative magnitude adds one
+before signed negation, casts the resulting nonnegative value, then adds one in
+the unsigned domain. A signed minimum is never negated. Absolute difference
+orders the original source values and computes the selected unsigned modular
+difference through representable guarded arithmetic. The complete MIN-to-MAX
+distance therefore fits the matching unsigned width without a larger host
+integer. isize results retain usize identity; other actual widths retain their
+matching uN owner. Original operands are captured once, and exact associated
+aliases/immutable Copy receivers retain their source signatures.
+
+927 complete original programs author independent mathematical magnitudes,
+every boundary pair, signed minima, the complete u128 result range, pointer
+owners, aliases, following operations, call capture and printed effects. Both
+runtimes/codecs, four emissions, original plus both generated native products
+and every arity/source/result/plan/refusal premise remain deferred. These follow
+[unsigned absolute value](https://doc.rust-lang.org/std/primitive.i128.html#method.unsigned_abs)
+and [absolute difference](https://doc.rust-lang.org/std/primitive.i128.html#method.abs_diff).
+Other integer APIs and full codebase translation remain obligations. Neither
+source authoring nor retained controls establish execution or equivalence.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not

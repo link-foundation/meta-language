@@ -1,3 +1,4 @@
+import {readRustIntegerMagnitudes} from './rust-integer-magnitudes.js';
 import {readRustWrappingShifts} from './rust-wrapping-shifts.js';
 import {readRustIntegerBits} from './rust-integer-bits.js';
 import {readRustPrimitiveDefault,readRustPrimitiveDefaultImport} from './rust-primitive-default.js';
@@ -1407,6 +1408,8 @@ class RustParser {
     if(saturated)return saturated;
     const saturatedProduct=readRustSaturatingMultiplication(this,receiver,method,args,range,path);
     if(saturatedProduct)return saturatedProduct;
+    const magnitude=readRustIntegerMagnitudes(this,receiver,method,args,range,path);
+    if(magnitude)return magnitude;
     const bitQuery=readRustIntegerBits(this,receiver,method,args,range,path);
     if(bitQuery)return bitQuery;
     const wrappingShift=readRustWrappingShifts(this,receiver,method,args,range,path);

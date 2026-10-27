@@ -209,6 +209,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-integer-float-plan-program.lino" => {
             Some(include_str!("../data/rust-integer-float-plan-program.lino"))
         }
+        "rust-integer-magnitude-program.lino" => {
+            Some(include_str!("../data/rust-integer-magnitude-program.lino"))
+        }
         "rust-module-value-program.lino" => {
             Some(include_str!("../data/rust-module-value-program.lino"))
         }

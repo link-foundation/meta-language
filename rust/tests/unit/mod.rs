@@ -532,3 +532,5 @@ mod translation_rust_integer_bit;
 mod translation_rust_checked_shift;
 
 mod translation_rust_wrapping_shift;
+
+mod translation_rust_integer_magnitude;

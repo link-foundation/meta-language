@@ -1,9 +1,4 @@
 // Generated from complete js/src/translation/rust-primitive-inherent-copy-rules.js. Do not edit by hand.
-use super::MlTemporaryPlanRustIntegerBitsJoin2;
-use super::MlTemporaryPlanRustIntegerBitsLoop1Result;
-use super::source_ml_temporary_plan_rust_integer_bits_loop1;
-use super::source_ml_temporary_plan_rust_integer_bits_loop3;
-
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     #[must_use]
@@ -121,71 +116,447 @@ pub mod ml_array {
     }
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_source_signature_model(model: &str) -> bool {
-    ((model).is_empty()) || (model == "Rust source function signature 1")
+/// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
+pub mod ml_string {
+    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct Text(pub Vec<u16>);
+
+    impl std::fmt::Display for Text {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.0))
+        }
+    }
+
+    impl Text {
+        #[must_use]
+        pub fn from_text(text: &str) -> Self {
+            Self(text.encode_utf16().collect())
+        }
+        #[must_use]
+        pub const fn from_units(units: Vec<u16>) -> Self {
+            Self(units)
+        }
+        #[must_use]
+        pub const fn length(&self) -> f64 {
+            self.0.len() as f64
+        }
+        #[must_use]
+        pub fn concat(&self, other: &Self) -> Self {
+            let mut units = self.0.clone();
+            units.extend_from_slice(&other.0);
+            Self(units)
+        }
+        #[must_use]
+        pub fn starts_with(&self, search: &Self) -> bool {
+            self.0.starts_with(&search.0)
+        }
+        #[must_use]
+        pub fn ends_with(&self, search: &Self) -> bool {
+            self.0.ends_with(&search.0)
+        }
+        #[must_use]
+        pub fn contains(&self, search: &Self) -> bool {
+            self.index_of(search, 0.0) >= 0.0
+        }
+        #[must_use]
+        pub fn slice(&self, start: f64, end: f64) -> Self {
+            let first = relative(start, self.0.len());
+            let last = relative(end, self.0.len());
+            Self(self.0[first..last.max(first)].to_vec())
+        }
+        #[must_use]
+        pub fn index_of(&self, search: &Self, position: f64) -> f64 {
+            let start = absolute(position, self.0.len());
+            if search.0.is_empty() {
+                return start as f64;
+            }
+            if search.0.len() > self.0.len() {
+                return -1.0;
+            }
+            (start..=self.0.len() - search.0.len())
+                .find(|&index| self.0[index..].starts_with(&search.0))
+                .map_or(-1.0, |index| index as f64)
+        }
+        #[must_use]
+        pub fn last_index_of(&self, search: &Self, position: f64) -> f64 {
+            let position = if position.is_nan() {
+                f64::INFINITY
+            } else {
+                position
+            };
+            let start = absolute(position, self.0.len());
+            if search.0.is_empty() {
+                return start as f64;
+            }
+            if search.0.len() > self.0.len() {
+                return -1.0;
+            }
+            (0..=start.min(self.0.len() - search.0.len()))
+                .rev()
+                .find(|&index| self.0[index..].starts_with(&search.0))
+                .map_or(-1.0, |index| index as f64)
+        }
+        #[must_use]
+        pub fn split(&self, separator: Option<&Self>, limit: f64) -> Vec<Self> {
+            let maximum = uint32(limit) as usize;
+            if maximum == 0 {
+                return Vec::new();
+            }
+            let Some(separator) = separator else {
+                return vec![self.clone()];
+            };
+            if separator.0.is_empty() {
+                return self
+                    .0
+                    .iter()
+                    .take(maximum)
+                    .map(|&unit| Self(vec![unit]))
+                    .collect();
+            }
+            let mut out = Vec::new();
+            let mut start = 0;
+            loop {
+                let index = self.index_of(separator, start as f64);
+                if index < 0.0 {
+                    break;
+                }
+                out.push(Self(self.0[start..index as usize].to_vec()));
+                if out.len() == maximum {
+                    return out;
+                }
+                start = index as usize + separator.0.len();
+            }
+            out.push(Self(self.0[start..].to_vec()));
+            out
+        }
+        #[must_use]
+        pub fn code_point_at(&self, position: f64) -> Option<f64> {
+            let index = integer(position);
+            if index < 0.0 || index >= self.0.len() as f64 {
+                return None;
+            }
+            let index = index as usize;
+            let first = self.0[index];
+            if (0xd800..=0xdbff).contains(&first)
+                && let Some(&second) = self.0.get(index + 1)
+                && (0xdc00..=0xdfff).contains(&second)
+            {
+                return Some(f64::from(
+                    (u32::from(first) - 0xd800) * 1024 + u32::from(second) - 0xdc00 + 0x10000,
+                ));
+            }
+            Some(f64::from(first))
+        }
+        #[must_use]
+        pub fn code_points(&self) -> Vec<Self> {
+            let mut out = Vec::new();
+            let mut index = 0;
+            while index < self.0.len() {
+                let first = self.0[index];
+                let width = if (0xd800..=0xdbff).contains(&first)
+                    && self
+                        .0
+                        .get(index + 1)
+                        .is_some_and(|second| (0xdc00..=0xdfff).contains(second))
+                {
+                    2
+                } else {
+                    1
+                };
+                out.push(Self(self.0[index..index + width].to_vec()));
+                index += width;
+            }
+            out
+        }
+        #[must_use]
+        pub fn repeat(&self, count: f64) -> Self {
+            let count = integer(count);
+            assert!(
+                count >= 0.0 && count.is_finite(),
+                "Invalid count value: {count}"
+            );
+            if self.0.is_empty() {
+                return Self(Vec::new());
+            }
+            let size = count * self.0.len() as f64;
+            assert!(size <= 536_870_888.0, "Invalid string length");
+            Self(self.0.repeat(count as usize))
+        }
+        #[must_use]
+        pub fn pad(&self, length: f64, fill: &Self, start: bool) -> Self {
+            let length = integer(length).max(0.0);
+            if length <= self.0.len() as f64 || fill.0.is_empty() {
+                return self.clone();
+            }
+            assert!(length <= 536_870_888.0, "Invalid string length");
+            let count = length as usize - self.0.len();
+            let padding: Vec<u16> = fill.0.iter().copied().cycle().take(count).collect();
+            let pad = Self(padding);
+            if start {
+                pad.concat(self)
+            } else {
+                self.concat(&pad)
+            }
+        }
+        #[must_use]
+        pub fn replace(&self, search: &Self, replacement: &Self, all: bool) -> Self {
+            let mut out = Vec::new();
+            let mut start = 0;
+            let mut from = 0;
+            loop {
+                let index = self.index_of(search, from as f64);
+                if index < 0.0 {
+                    break;
+                }
+                let index = index as usize;
+                out.extend_from_slice(&self.0[start..index]);
+                substitute(&mut out, &self.0, &search.0, &replacement.0, index);
+                start = index + search.0.len();
+                if !all || (search.0.is_empty() && index == self.0.len()) {
+                    break;
+                }
+                from = start + usize::from(search.0.is_empty());
+            }
+            out.extend_from_slice(&self.0[start..]);
+            Self(out)
+        }
+        #[must_use]
+        pub fn trim(&self, start: bool, end: bool, rust: bool) -> Self {
+            let whitespace = |unit: u16| {
+                char::from_u32(u32::from(unit)).is_some_and(|c| {
+                    if rust {
+                        c.is_whitespace()
+                    } else {
+                        (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}'
+                    }
+                })
+            };
+            let mut first = 0;
+            let mut last = self.0.len();
+            if start {
+                while first < last && whitespace(self.0[first]) {
+                    first += 1;
+                }
+            }
+            if end {
+                while last > first && whitespace(self.0[last - 1]) {
+                    last -= 1;
+                }
+            }
+            Self(self.0[first..last].to_vec())
+        }
+        #[must_use]
+        pub fn map_case(&self, upper: bool) -> Self {
+            let mut out = Vec::new();
+            let mut run = String::new();
+            let flush = |run: &mut String, out: &mut Vec<u16>| {
+                let mapped = if upper {
+                    run.to_uppercase()
+                } else {
+                    run.to_lowercase()
+                };
+                out.extend(mapped.encode_utf16());
+                run.clear();
+            };
+            for scalar in char::decode_utf16(self.0.iter().copied()) {
+                match scalar {
+                    Ok(c) => run.push(c),
+                    Err(error) => {
+                        flush(&mut run, &mut out);
+                        out.push(error.unpaired_surrogate());
+                    }
+                }
+            }
+            flush(&mut run, &mut out);
+            Self(out)
+        }
+    }
+    #[must_use]
+    pub fn join(values: &[Text], separator: &Text) -> Text {
+        let mut units = Vec::new();
+        for (index, value) in values.iter().enumerate() {
+            if index != 0 {
+                units.extend_from_slice(&separator.0);
+            }
+            units.extend_from_slice(&value.0);
+        }
+        Text(units)
+    }
+    #[must_use]
+    pub const fn integer(value: f64) -> f64 {
+        if value.is_nan() { 0.0 } else { value.trunc() }
+    }
+    #[must_use]
+    pub const fn absolute(value: f64, length: usize) -> usize {
+        integer(value).max(0.0).min(length as f64) as usize
+    }
+    #[must_use]
+    pub fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 {
+            (length as f64 + value).max(0.0) as usize
+        } else {
+            value.min(length as f64) as usize
+        }
+    }
+    fn uint32(value: f64) -> u32 {
+        if !value.is_finite() || value == 0.0 {
+            0
+        } else {
+            value.trunc().rem_euclid(4_294_967_296.0) as u32
+        }
+    }
+    fn substitute(
+        out: &mut Vec<u16>,
+        text: &[u16],
+        search: &[u16],
+        replacement: &[u16],
+        position: usize,
+    ) {
+        let mut index = 0;
+        while index < replacement.len() {
+            if replacement[index] == 36 && index + 1 < replacement.len() {
+                match replacement[index + 1] {
+                    36 => {
+                        out.push(36);
+                        index += 2;
+                        continue;
+                    }
+                    38 => {
+                        out.extend_from_slice(search);
+                        index += 2;
+                        continue;
+                    }
+                    96 => {
+                        out.extend_from_slice(&text[..position]);
+                        index += 2;
+                        continue;
+                    }
+                    39 => {
+                        out.extend_from_slice(&text[position + search.len()..]);
+                        index += 2;
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+            out.push(replacement[index]);
+            index += 1;
+        }
+    }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_wrapper(wrapper: &str) -> bool {
-    (wrapper == "reference") || (wrapper == "box")
+pub fn accept_rust_source_signature_model(model: &self::ml_string::Text) -> bool {
+    ((*model) == (self::ml_string::Text::from_units(vec![])))
+        || ((*model)
+            == (self::ml_string::Text::from_units(vec![
+                82, 117, 115, 116, 32, 115, 111, 117, 114, 99, 101, 32, 102, 117, 110, 99, 116,
+                105, 111, 110, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 32, 49,
+            ])))
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_owner_kind(kind: &str) -> bool {
-    (((((kind == "primitive") || (kind == "declaration")) || (kind == "library"))
-        || (kind == "tuple"))
-        || (kind == "unit"))
-        || (kind == "slice")
+pub fn accept_rust_source_signature_wrapper(wrapper: &self::ml_string::Text) -> bool {
+    ((*wrapper)
+        == (self::ml_string::Text::from_units(vec![114, 101, 102, 101, 114, 101, 110, 99, 101])))
+        || ((*wrapper) == (self::ml_string::Text::from_units(vec![98, 111, 120])))
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_catalog_owner(kind: &str) -> bool {
-    (((kind == "data") || (kind == "module")) || (kind == "externalCrate")) || (kind == "ctor")
+pub fn accept_rust_source_signature_owner_kind(kind: &self::ml_string::Text) -> bool {
+    ((((((*kind)
+        == (self::ml_string::Text::from_units(vec![
+            112, 114, 105, 109, 105, 116, 105, 118, 101,
+        ])))
+        || ((*kind)
+            == (self::ml_string::Text::from_units(vec![
+                100, 101, 99, 108, 97, 114, 97, 116, 105, 111, 110,
+            ]))))
+        || ((*kind)
+            == (self::ml_string::Text::from_units(vec![108, 105, 98, 114, 97, 114, 121]))))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![116, 117, 112, 108, 101]))))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![117, 110, 105, 116]))))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![115, 108, 105, 99, 101])))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_catalog_owner(kind: &self::ml_string::Text) -> bool {
+    ((((*kind) == (self::ml_string::Text::from_units(vec![100, 97, 116, 97])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![109, 111, 100, 117, 108, 101]))))
+        || ((*kind)
+            == (self::ml_string::Text::from_units(vec![
+                101, 120, 116, 101, 114, 110, 97, 108, 67, 114, 97, 116, 101,
+            ]))))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![99, 116, 111, 114])))
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_rust_source_signature_primitive(
-    kind: &str,
-    path: &str,
-    bits: &str,
+    kind: &self::ml_string::Text,
+    path: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
     signed: bool,
 ) -> bool {
-    if path == "f64" {
-        kind == "float"
-    } else if path == "bool" {
-        kind == "bool"
-    } else if path == "str" {
-        kind == "string"
-    } else if path == "i8" {
-        ((kind == "fixed") && (bits == "8")) && (signed == (true))
-    } else if path == "u8" {
-        ((kind == "fixed") && (bits == "8")) && (signed == (false))
-    } else if path == "i16" {
-        ((kind == "fixed") && (bits == "16")) && (signed == (true))
-    } else if path == "u16" {
-        ((kind == "fixed") && (bits == "16")) && (signed == (false))
-    } else if path == "i32" {
-        ((kind == "fixed") && (bits == "32")) && (signed == (true))
-    } else if path == "u32" {
-        ((kind == "fixed") && (bits == "32")) && (signed == (false))
-    } else if path == "i64" {
-        ((kind == "fixed") && (bits == "64")) && (signed == (true))
-    } else if path == "u64" {
-        ((kind == "fixed") && (bits == "64")) && (signed == (false))
-    } else if path == "i128" {
-        ((kind == "fixed") && (bits == "128")) && (signed == (true))
-    } else if path == "u128" {
-        ((kind == "fixed") && (bits == "128")) && (signed == (false))
-    } else if path == "usize" {
-        ((kind == "fixed") && (bits == "64")) && (signed == (false))
-    } else if path == "isize" {
-        ((kind == "fixed") && (bits == "64")) && (signed == (true))
+    if (*path) == (self::ml_string::Text::from_units(vec![102, 54, 52])) {
+        (*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116]))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])) {
+        (*kind) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![115, 116, 114])) {
+        (*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 56])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![56]))))
+            && (signed == (true))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 56])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![56]))))
+            && (signed == (false))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 49, 54])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 54]))))
+            && (signed == (true))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 49, 54])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 54]))))
+            && (signed == (false))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 51, 50])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![51, 50]))))
+            && (signed == (true))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 51, 50])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![51, 50]))))
+            && (signed == (false))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 54, 52])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
+            && (signed == (true))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 54, 52])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
+            && (signed == (false))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 49, 50, 56])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 50, 56]))))
+            && (signed == (true))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 49, 50, 56])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 50, 56]))))
+            && (signed == (false))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
+            && (signed == (false))
+    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101])) {
+        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
+            && (signed == (true))
     } else {
         false
     }
@@ -194,54 +565,68 @@ pub fn accept_rust_source_signature_primitive(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_primitive_selection_call_role(
-    path: &str,
+    path: &self::ml_string::Text,
     ordinary: bool,
     shadowed: bool,
-) -> String {
+) -> self::ml_string::Text {
     if ordinary && !shadowed {
-        if path == "std::cmp::min" {
-            String::from("min")
-        } else if path == "std::cmp::max" {
-            String::from("max")
+        if (*path)
+            == (self::ml_string::Text::from_units(vec![
+                115, 116, 100, 58, 58, 99, 109, 112, 58, 58, 109, 105, 110,
+            ]))
+        {
+            self::ml_string::Text::from_units(vec![109, 105, 110])
+        } else if (*path)
+            == (self::ml_string::Text::from_units(vec![
+                115, 116, 100, 58, 58, 99, 109, 112, 58, 58, 109, 97, 120,
+            ]))
+        {
+            self::ml_string::Text::from_units(vec![109, 97, 120])
         } else {
-            String::new()
+            self::ml_string::Text::from_units(vec![])
         }
     } else {
-        String::new()
+        self::ml_string::Text::from_units(vec![])
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_primitive_selection_comparison(method: &str, ordinary: bool) -> String {
+pub fn read_rust_primitive_selection_comparison(
+    method: &self::ml_string::Text,
+    ordinary: bool,
+) -> self::ml_string::Text {
     if ordinary {
-        if method == "min" {
-            String::from("le")
-        } else if method == "max" {
-            String::from("gt")
+        if (*method) == (self::ml_string::Text::from_units(vec![109, 105, 110])) {
+            self::ml_string::Text::from_units(vec![108, 101])
+        } else if (*method) == (self::ml_string::Text::from_units(vec![109, 97, 120])) {
+            self::ml_string::Text::from_units(vec![103, 116])
         } else {
-            String::new()
+            self::ml_string::Text::from_units(vec![])
         }
     } else {
-        String::new()
+        self::ml_string::Text::from_units(vec![])
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_primitive_selection_condition(method: &str, kind: &str) -> String {
-    if kind == "bool" {
-        if method == "min" {
-            String::from("not")
-        } else if method == "max" {
-            String::from("identity")
+pub fn read_rust_primitive_selection_condition(
+    method: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if (*kind) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])) {
+        if (*method) == (self::ml_string::Text::from_units(vec![109, 105, 110])) {
+            self::ml_string::Text::from_units(vec![110, 111, 116])
+        } else if (*method) == (self::ml_string::Text::from_units(vec![109, 97, 120])) {
+            self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])
         } else {
-            String::new()
+            self::ml_string::Text::from_units(vec![])
         }
-    } else if kind == "fixed" {
+    } else if (*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])) {
         self::read_rust_primitive_selection_comparison(method, true)
     } else {
-        String::new()
+        self::ml_string::Text::from_units(vec![])
     }
 }
 
@@ -253,16 +638,22 @@ pub fn read_rust_primitive_selection_condition(method: &str, kind: &str) -> Stri
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn accept_rust_primitive_selection_receiver(
-    kind: &str,
-    bits: &str,
+    kind: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
     signed: bool,
-    owner: &str,
-    path: &str,
+    owner: &self::ml_string::Text,
+    path: &self::ml_string::Text,
     children: f64,
     proven: bool,
     layers: f64,
 ) -> bool {
-    ((((((kind == "fixed") || (kind == "bool")) && (owner == "primitive")) && (children == 0f64))
+    (((((((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))))
+        && ((*owner)
+            == (self::ml_string::Text::from_units(vec![
+                112, 114, 105, 109, 105, 116, 105, 118, 101,
+            ]))))
+        && (children == 0f64))
         && proven)
         && (layers == 0f64))
         && self::accept_rust_source_signature_primitive(kind, path, bits, signed)
@@ -276,28 +667,30 @@ pub fn accept_rust_primitive_selection_receiver(
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn accept_rust_primitive_selection_argument(
-    expected: &str,
-    bits: &str,
+    expected: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
     signed: bool,
-    owner: &str,
-    actual: &str,
-    actual_bits: &str,
+    owner: &self::ml_string::Text,
+    actual: &self::ml_string::Text,
+    actual_bits: &self::ml_string::Text,
     actual_signed: bool,
-    actual_owner: &str,
+    actual_owner: &self::ml_string::Text,
     layers: f64,
     proven: bool,
     known: bool,
     literal: bool,
 ) -> bool {
     if layers == 0f64 {
-        if ((literal && (expected == "fixed")) && ((actual).is_empty()))
-            && ((actual_owner).is_empty())
+        if ((literal
+            && ((*expected) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
+            && ((*actual) == (self::ml_string::Text::from_units(vec![]))))
+            && ((*actual_owner) == (self::ml_string::Text::from_units(vec![])))
         {
             true
         } else {
-            ((((known && proven) && (expected == actual)) && (bits == actual_bits))
+            ((((known && proven) && ((*expected) == (*actual))) && ((*bits) == (*actual_bits)))
                 && (signed == actual_signed))
-                && (owner == actual_owner)
+                && ((*owner) == (*actual_owner))
         }
     } else {
         false
@@ -306,426 +699,18 @@ pub fn accept_rust_primitive_selection_argument(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_wrapping_shift_method(method: &str) -> bool {
-    self::ml_array::includes(
-        &vec![
-            String::from("wrapping_shl"),
-            String::from("wrapping_shr"),
-            String::from("rotate_left"),
-            String::from("rotate_right"),
-        ],
-        &method.to_owned(),
-        0f64,
-        false,
-        |a, b| a == b,
-    )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn accept_rust_wrapping_shift_receiver(
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner: &str,
-    path: &str,
-    children: f64,
-    proven: bool,
-    layers: f64,
-) -> bool {
-    (kind == "fixed")
-        && self::accept_rust_primitive_selection_receiver(
-            kind, bits, signed, owner, path, children, proven, layers,
-        )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_wrapping_shift_operation(term: &str) -> String {
-    if term == "shift left" {
-        String::from("shiftRustPrimitiveBitsLeft")
-    } else if term == "shift right" {
-        String::from("shiftRustPrimitiveBitsRight")
-    } else if term == "bits or" {
-        String::from("disjoinRustPrimitiveBits")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_wrapping_shift(method: &str) -> Vec<String> {
-    if (self::accept_rust_wrapping_shift_method(method)) {
-        {
-            let count = vec![
-                String::from("count"),
-                String::from("width"),
-                String::from("rem"),
-            ];
-            if (method == "wrapping_shl") || (method == "wrapping_shr") {
-                {
-                    let source_ml_source1_concat_value1 = vec![String::from("operand")];
-                    {
-                        let source_ml_source1_concat_value2 = count;
-                        {
-                            let source_ml_source1_concat_value3 =
-                                vec![if method == "wrapping_shl" {
-                                    String::from("shift left")
-                                } else {
-                                    String::from("shift right")
-                                }];
-                            self::ml_array::append(
-                                self::ml_array::append(
-                                    self::ml_array::append(
-                                        Vec::<String>::new(),
-                                        source_ml_source1_concat_value1,
-                                    ),
-                                    source_ml_source1_concat_value2,
-                                ),
-                                source_ml_source1_concat_value3,
-                            )
-                        }
-                    }
-                }
-            } else {
-                {
-                    let inverse = {
-                        let source_ml_source1_concat_value4 = vec![String::from("width")];
-                        {
-                            let source_ml_source1_concat_value5 = count.clone();
-                            {
-                                let source_ml_source1_concat_value6 = vec![
-                                    String::from("sub"),
-                                    String::from("width"),
-                                    String::from("rem"),
-                                ];
-                                self::ml_array::append(
-                                    self::ml_array::append(
-                                        self::ml_array::append(
-                                            Vec::<String>::new(),
-                                            source_ml_source1_concat_value4,
-                                        ),
-                                        source_ml_source1_concat_value5,
-                                    ),
-                                    source_ml_source1_concat_value6,
-                                )
-                            }
-                        }
-                    };
-                    {
-                        let source_ml_source1_concat_value7 =
-                            vec![String::from("unsigned operand")];
-                        {
-                            let source_ml_source1_concat_value8 = count;
-                            {
-                                let source_ml_source1_concat_value9 = vec![
-                                    if method == "rotate_left" {
-                                        String::from("shift left")
-                                    } else {
-                                        String::from("shift right")
-                                    },
-                                    String::from("unsigned operand"),
-                                ];
-                                {
-                                    let source_ml_source1_concat_value10 = inverse;
-                                    {
-                                        let source_ml_source1_concat_value11 = vec![
-                                            if method == "rotate_left" {
-                                                String::from("shift right")
-                                            } else {
-                                                String::from("shift left")
-                                            },
-                                            String::from("bits or"),
-                                            String::from("source cast"),
-                                        ];
-                                        self::ml_array::append(
-                                            self::ml_array::append(
-                                                self::ml_array::append(
-                                                    self::ml_array::append(
-                                                        self::ml_array::append(
-                                                            Vec::<String>::new(),
-                                                            source_ml_source1_concat_value7,
-                                                        ),
-                                                        source_ml_source1_concat_value8,
-                                                    ),
-                                                    source_ml_source1_concat_value9,
-                                                ),
-                                                source_ml_source1_concat_value10,
-                                            ),
-                                            source_ml_source1_concat_value11,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_integer_bit_method(method: &str) -> bool {
-    self::ml_array::includes(
-        &vec![
-            String::from("count_ones"),
-            String::from("count_zeros"),
-            String::from("leading_ones"),
-            String::from("leading_zeros"),
-            String::from("trailing_ones"),
-            String::from("trailing_zeros"),
-            String::from("reverse_bits"),
-        ],
-        &method.to_owned(),
-        0f64,
-        false,
-        |a, b| a == b,
-    )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn accept_rust_integer_bit_receiver(
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner: &str,
-    path: &str,
-    children: f64,
-    proven: bool,
-    layers: f64,
-) -> bool {
-    (kind == "fixed")
-        && self::accept_rust_primitive_selection_receiver(
-            kind, bits, signed, owner, path, children, proven, layers,
-        )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_integer_bit_result_owner(method: &str, receiver: &str) -> String {
-    if (self::accept_rust_integer_bit_method(method)) {
-        if method == "reverse_bits" {
-            receiver.to_owned()
-        } else {
-            String::from("u32")
-        }
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_integer_bit_plan_operation(code: f64) -> String {
-    if code == 0f64 {
-        String::from("unsigned input")
-    } else if code == 1f64 {
-        String::from("fixed zero")
-    } else if code == 2f64 {
-        String::from("fixed one")
-    } else if code == 3f64 {
-        String::from("fixed two")
-    } else if code == 4f64 {
-        String::from("count zero")
-    } else if code == 5f64 {
-        String::from("count one")
-    } else if code == 6f64 {
-        String::from("false")
-    } else if code == 7f64 {
-        String::from("true")
-    } else if code == 8f64 {
-        String::from("fixed reference")
-    } else if code == 9f64 {
-        String::from("count reference")
-    } else if code == 10f64 {
-        String::from("boolean reference")
-    } else if code == 11f64 {
-        String::from("equal")
-    } else if code == 12f64 {
-        String::from("remainder")
-    } else if code == 13f64 {
-        String::from("division")
-    } else if code == 14f64 {
-        String::from("count addition")
-    } else if code == 15f64 {
-        String::from("fixed addition")
-    } else if code == 16f64 {
-        String::from("fixed multiplication")
-    } else if code == 17f64 {
-        String::from("conditional")
-    } else if code == 18f64 {
-        String::from("binding")
-    } else if code == 19f64 {
-        String::from("source cast")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_integer_bits(method: &str, bits: f64) -> Vec<f64> {
-    if !(self::accept_rust_integer_bit_method(method))
-        || !(self::ml_array::includes(
-            &vec![8f64, 16f64, 32f64, 64f64, 128f64],
-            &bits,
-            0f64,
-            false,
-            |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
-        ))
-    {
-        Vec::<f64>::new()
-    } else {
-        {
-            let reverse = method == "reverse_bits";
-            {
-                let trailing = (method == "trailing_zeros") || (method == "trailing_ones");
-                {
-                    let leading = (method == "leading_zeros") || (method == "leading_ones");
-                    {
-                        let ones = method.ends_with("ones");
-                        {
-                            let plan = vec![
-                                0f64, 0f64, 0f64, 0f64, 0f64, 1f64, 0f64, 0f64, 0f64, 0f64, 2f64,
-                                0f64, 0f64, 0f64, 0f64, 3f64, 0f64, 0f64, 0f64, 0f64, 4f64, 0f64,
-                                0f64, 0f64, 0f64, 5f64, 0f64, 0f64, 0f64, 0f64, 6f64, 0f64, 0f64,
-                                0f64, 0f64, 7f64, 0f64, 0f64, 0f64, 0f64,
-                            ];
-                            {
-                                let bindings = vec![
-                                    0f64,
-                                    0f64,
-                                    1f64,
-                                    if reverse { 1f64 } else { 4f64 },
-                                    2f64,
-                                    7f64,
-                                ];
-                                {
-                                    let current = 0f64;
-                                    {
-                                        let count = 1f64;
-                                        {
-                                            let active = 2f64;
-                                            {
-                                                let index = 8f64;
-                                                {
-                                                    let bit = 0f64;
-                                                    {
-                                                        let source_ml_source1_s12 = self::source_ml_temporary_plan_rust_integer_bits_loop1(bits, reverse, trailing, leading, ones, plan, bindings, current, count, active, index, bit);
-                                                        match source_ml_source1_s12 {
-                                                            self::MlTemporaryPlanRustIntegerBitsLoop1Result::MlTemporaryPlanRustIntegerBitsLoop1Done(plan_2, bindings_2, count_2, index_2) => {
-                                                                {
-                                                                    let plan_3 = {
-                                                                        let source_ml_source1_concat_value13 = plan_2;
-                                                                        {
-                                                                            let source_ml_source1_concat_value14 = vec![if reverse {
-                                                                                8f64
-                                                                            } else {
-                                                                                9f64
-                                                                            }, count_2, 0f64, 0f64, 0f64];
-                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value13), source_ml_source1_concat_value14)
-                                                                        }
-                                                                    };
-                                                                    {
-                                                                        let body = index_2;
-                                                                        {
-                                                                            let index_3 = index_2 + 1f64;
-                                                                            {
-                                                                                let source_ml_source1_s17 = if reverse {
-                                                                                    {
-                                                                                        let plan_4 = {
-                                                                                            let source_ml_source1_concat_value18 = plan_3;
-                                                                                            {
-                                                                                                let source_ml_source1_concat_value19 = vec![19f64, body, 0f64, 0f64, 0f64];
-                                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value18), source_ml_source1_concat_value19)
-                                                                                            }
-                                                                                        };
-                                                                                        {
-                                                                                            let body_2 = index_3;
-                                                                                            {
-                                                                                                let index_4 = index_3 + 1f64;
-                                                                                                self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_4, index_4, body_2)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                } else {
-                                                                                    self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_3, index_3, body)
-                                                                                };
-                                                                                match source_ml_source1_s17 {
-                                                                                    self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_5, index_5, body_3) => {
-                                                                                        {
-                                                                                            let at = (bindings_2.len() as f64) - 2f64;
-                                                                                            {
-                                                                                                self::source_ml_temporary_plan_rust_integer_bits_loop3(plan_5, &(bindings_2), index_5, body_3, at)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_arity(method: &str, ordinary: bool) -> f64 {
+pub fn read_rust_integer_magnitude_arity(method: &self::ml_string::Text, ordinary: bool) -> f64 {
     if ordinary {
-        if self::ml_array::includes(
-            &vec![
-                String::from("checked_add"),
-                String::from("checked_sub"),
-                String::from("checked_mul"),
-                String::from("checked_div"),
-                String::from("checked_rem"),
-                String::from("checked_shl"),
-                String::from("checked_shr"),
-            ],
-            &method.to_owned(),
-            0f64,
-            false,
-            |a, b| a == b,
-        ) {
-            1f64
-        } else if self::ml_array::includes(
-            &vec![String::from("checked_neg"), String::from("checked_abs")],
-            &method.to_owned(),
-            0f64,
-            false,
-            |a, b| a == b,
-        ) {
+        if (*method)
+            == (self::ml_string::Text::from_units(vec![
+                117, 110, 115, 105, 103, 110, 101, 100, 95, 97, 98, 115,
+            ]))
+        {
             0f64
+        } else if (*method)
+            == (self::ml_string::Text::from_units(vec![97, 98, 115, 95, 100, 105, 102, 102]))
+        {
+            1f64
         } else {
             -1f64
         }
@@ -741,19 +726,24 @@ pub fn read_rust_checked_integer_arity(method: &str, ordinary: bool) -> f64 {
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn accept_rust_checked_integer_receiver(
-    method: &str,
-    kind: &str,
-    bits: &str,
+pub fn accept_rust_integer_magnitude_receiver(
+    method: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
     signed: bool,
-    owner: &str,
-    path: &str,
+    owner: &self::ml_string::Text,
+    path: &self::ml_string::Text,
     children: f64,
     proven: bool,
     layers: f64,
 ) -> bool {
-    ((((self::read_rust_checked_integer_arity(method, true)) >= 0f64) && (kind == "fixed"))
-        && ((method != "checked_abs") || signed))
+    ((((self::read_rust_integer_magnitude_arity(method, true)) >= 0f64)
+        && (((*method)
+            != (self::ml_string::Text::from_units(vec![
+                117, 110, 115, 105, 103, 110, 101, 100, 95, 97, 98, 115,
+            ])))
+            || signed))
+        && ((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
         && self::accept_rust_primitive_selection_receiver(
             kind, bits, signed, owner, path, children, proven, layers,
         )
@@ -761,46 +751,57 @@ pub fn accept_rust_checked_integer_receiver(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
-    if ((consumer == "is_some") || (consumer == "is_none")) || (consumer == "unwrap_or_default") {
-        0f64
-    } else if consumer == "unwrap_or" {
-        1f64
-    } else if consumer == "map_or" {
-        2f64
+pub fn read_rust_integer_magnitude_result_owner(
+    receiver: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if (*receiver) == (self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101])) {
+        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])
+    } else if self::ml_array::includes(
+        &vec![
+            self::ml_string::Text::from_units(vec![105, 56]),
+            self::ml_string::Text::from_units(vec![105, 49, 54]),
+            self::ml_string::Text::from_units(vec![105, 51, 50]),
+            self::ml_string::Text::from_units(vec![105, 54, 52]),
+            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+        ],
+        receiver,
+        0f64,
+        false,
+        |a, b| a == b,
+    ) {
+        (self::ml_string::Text::from_units(vec![117])).concat(&{
+            let source_ml_source1_string_range_operand1 = receiver.clone();
+            {
+                let source_ml_source1_string_range_operand2 = 1f64;
+                {
+                    let source_ml_source1_string_range_position3 =
+                        source_ml_source1_string_range_operand2;
+                    {
+                        let source_ml_source1_string_range_position4 = f64::INFINITY;
+                        source_ml_source1_string_range_operand1.slice(
+                            source_ml_source1_string_range_position3,
+                            source_ml_source1_string_range_position4,
+                        )
+                    }
+                }
+            }
+        })
+    } else if self::ml_array::includes(
+        &vec![
+            self::ml_string::Text::from_units(vec![117, 56]),
+            self::ml_string::Text::from_units(vec![117, 49, 54]),
+            self::ml_string::Text::from_units(vec![117, 51, 50]),
+            self::ml_string::Text::from_units(vec![117, 54, 52]),
+            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+            self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
+        ],
+        receiver,
+        0f64,
+        false,
+        |a, b| a == b,
+    ) {
+        receiver.clone()
     } else {
-        -1f64
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_argument_owner(method: &str, receiver: &str) -> String {
-    if (method == "checked_shl") || (method == "checked_shr") {
-        String::from("u32")
-    } else {
-        receiver.to_owned()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_argument_reason(method: &str) -> String {
-    if (method == "checked_shl") || (method == "checked_shr") {
-        String::from("the actual shift count must retain standard u32 ownership")
-    } else {
-        String::from("the actual argument must retain the receiver type and source owner")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_shift_operation(term: &str) -> String {
-    if term == "shift left" {
-        String::from("shiftRustPrimitiveBitsLeft")
-    } else if term == "shift right" {
-        String::from("shiftRustPrimitiveBitsRight")
-    } else {
-        String::new()
+        self::ml_string::Text::from_units(vec![])
     }
 }

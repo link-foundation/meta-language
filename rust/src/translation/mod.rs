@@ -171,6 +171,7 @@ pub(crate) mod rust_inherent_program;
 pub(crate) mod rust_inherent_rules;
 mod rust_integer_bit_rules;
 mod rust_integer_float_plan_rules;
+mod rust_integer_magnitude_rules;
 pub(crate) mod rust_literal_match_rules;
 pub(crate) mod rust_module_value_rules;
 pub(crate) mod rust_named_formatting_rules;

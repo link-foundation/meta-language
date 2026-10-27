@@ -22,3 +22,6 @@ pub use part_2::*;
 #[path = "rust_primitive_inherent_copy_rules/part_3.rs"]
 mod part_3;
 pub use part_3::*;
+#[path = "rust_primitive_inherent_copy_rules/part_4.rs"]
+mod part_4;
+pub use part_4::*;
