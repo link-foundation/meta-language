@@ -750,3 +750,109 @@ impl RustParser {
         Ok(Some(result))
     }
 }
+
+impl RustParser {
+    pub(super) fn read_wrapping_integer(
+        &mut self,
+        receiver: &SExpr,
+        method: &Token,
+        args: &[SExpr],
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<Option<SExpr>> {
+        use crate::translation::rust_wrapping_integer_rules as wrapping;
+        let arity = wrapping::read_rust_wrapping_integer_arity(
+            &method.value,
+            self.ordinary_completion_context(),
+        );
+        if arity < 0.0 {
+            return Ok(None);
+        }
+        if count(args.len()) != arity {
+            return Err(type_error(
+                format!(
+                    "{} expects {} arguments but got {}",
+                    method.value,
+                    arity,
+                    args.len()
+                ),
+                range,
+            ));
+        }
+        if self.origins.collecting {
+            return Ok(Some(SExpr::new(
+                SNode::App {
+                    func: Box::new(SExpr::new(
+                        SNode::Name {
+                            path: vec![method.value.clone()],
+                        },
+                        range,
+                    )),
+                    args: std::iter::once(receiver.clone())
+                        .chain(args.iter().cloned())
+                        .collect(),
+                },
+                range,
+            )));
+        }
+        let value = self.primitive_selection_facts(receiver, path);
+        if !wrapping::accept_rust_wrapping_integer_receiver(
+            &method.value,
+            &value.kind,
+            &value.bits,
+            value.signed,
+            value.owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+            &value.path(),
+            value
+                .owner
+                .as_ref()
+                .map_or(-1.0, |owner| count(owner.arguments.len())),
+            value.origin.proven,
+            count(value.origin.wrappers.len()),
+        ) {
+            return Err(unsupported(
+                "Rust wrapping integer arithmetic",
+                "a proven direct standard fixed integer receiver with the actual signed operation is required",
+                range,
+            ));
+        }
+        if arity == 1.0 {
+            let right = self.primitive_selection_facts(&args[0], path);
+            let literal = matches!(&args[0].node, SNode::Num { ty: None, .. })
+                || matches!(&args[0].node,SNode::Unary{op:UnaryOp::Neg,arg}if matches!(&arg.node,SNode::Num{ty:None,..}));
+            if !rules::accept_rust_primitive_selection_argument(
+                &value.kind,
+                &value.bits,
+                value.signed,
+                &value.path(),
+                &right.kind,
+                &right.bits,
+                right.signed,
+                &right.path(),
+                count(right.origin.wrappers.len()),
+                right.origin.proven,
+                right.admitted(),
+                literal,
+            ) {
+                return Err(unsupported(
+                    "Rust wrapping integer arithmetic",
+                    "the argument must retain the actual receiver type and primitive source owner",
+                    range,
+                ));
+            }
+        }
+        let result = self.project_primitive_integer_plan(
+            receiver,
+            args,
+            &wrapping::plan_rust_wrapping_integer(&method.value, value.signed),
+            &value,
+            range,
+            path,
+        )?;
+        let mut origin = value.origin;
+        origin.path = path.to_vec();
+        origin.source_owner = value.owner;
+        self.origins.mark(&result, origin);
+        Ok(Some(result))
+    }
+}

@@ -606,6 +606,28 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Direct fixed integers now have wrapping_add/sub/neg source drafts, with
+wrapping_abs for signed types. Shared conditional plans reconstruct modular
+results using only representable intermediate arithmetic, including signed
+minimum negation/absolute value and unsigned nonzero negation. The actual
+operands are captured once in source order. Exact source widths, signedness,
+primitive owners and pointer-sized distinctions remain checked premises.
+Both source adapters reuse the existing generic AST-plan projection and bound
+definitions. These plans follow the standard
+[signed](https://doc.rust-lang.org/std/primitive.i128.html#method.wrapping_add)
+and [unsigned](https://doc.rust-lang.org/std/primitive.u128.html#method.wrapping_neg)
+modular operations rather than ordinary build-dependent overflow.
+
+Four hundred ninety-one complete original programs retain every boundary pair
+and sign, unary zero/minimum/maximum behavior, contextual counters, actual
+operand calls and exact borrowed text byte lengths. Independent fixture modulo
+math authors expected numeric constants without invoking a project operation.
+Original and both generated native products retain independent types, complete
+values and traces. Arity/receiver/source-refusal controls, both Links transports
+and all target emissions remain deferred. These source drafts supply no runtime
+observations; other wrapping/checked operations, reference/mutation profiles,
+custom methods and full own-codebase translation remain requirements.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Earlier default-profile result refusals remain authenticated as historical

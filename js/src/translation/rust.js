@@ -1,4 +1,4 @@
-import {readRustPrimitiveSelection,readRustPrimitiveSelectionCall,readRustPrimitiveSelectionImport,readRustSignedIntegerProperty,readRustSaturatingInteger,readRustSaturatingMultiplication} from './rust-primitive-selections.js';
+import {readRustPrimitiveSelection,readRustPrimitiveSelectionCall,readRustPrimitiveSelectionImport,readRustSignedIntegerProperty,readRustSaturatingInteger,readRustSaturatingMultiplication,readRustWrappingInteger} from './rust-primitive-selections.js';
 import {readRustFormattingArgumentNameError,planRustNamedFormattingValue} from './rust-named-formatting-rules.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
@@ -1397,6 +1397,8 @@ class RustParser {
     if(saturated)return saturated;
     const saturatedProduct=readRustSaturatingMultiplication(this,receiver,method,args,range,path);
     if(saturatedProduct)return saturatedProduct;
+    const wrapped=readRustWrappingInteger(this,receiver,method,args,range,path);
+    if(wrapped)return wrapped;
     const floatOperation = acceptRustFloatOperationMethod(method.value);
     if (floatOperation || acceptRustFloatPredicateMethod(method.value)) {
       expect(0);

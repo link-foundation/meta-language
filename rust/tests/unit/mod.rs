@@ -506,3 +506,5 @@ mod translation_rust_signed_integer_property;
 mod translation_rust_saturating_integer;
 
 mod translation_rust_saturating_multiplication;
+
+mod translation_rust_wrapping_integer;

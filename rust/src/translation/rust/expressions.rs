@@ -512,6 +512,16 @@ impl RustParser {
                     value = product;
                     continue;
                 }
+                if let Some(wrapped) = self.read_wrapping_integer(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = wrapped;
+                    continue;
+                }
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
                 if let Some(copy) = self.read_owned_local_copy(
