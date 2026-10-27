@@ -3,6 +3,7 @@
 mod array_index;
 mod array_lookups;
 mod ascii_text_predicates;
+mod byte_ascii;
 mod checked_integer;
 pub(super) mod control;
 mod integer_bits;
@@ -492,6 +493,16 @@ impl RustParser {
                     path,
                 )? {
                     value = lookup;
+                    continue;
+                }
+                if let Some(ascii) = self.read_byte_ascii(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = ascii;
                     continue;
                 }
                 if let Some(selected) = self.read_primitive_selection(

@@ -1,5 +1,6 @@
 import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
 import {readRustArrayLookup} from './rust-array-lookups.js';
+import {readRustByteAscii} from './rust-byte-ascii.js';
 import {readRustIntegerMagnitudes} from './rust-integer-magnitudes.js';
 import {readRustWrappingShifts} from './rust-wrapping-shifts.js';
 import {readRustIntegerBits} from './rust-integer-bits.js';
@@ -1403,6 +1404,7 @@ class RustParser {
     const vectorCopy=readRustScalarVectorCopy(this,receiver,method,args,range,path);
     const arrayLookup=readRustArrayLookup(this,receiver,method,args,range,path);
     if(arrayLookup)return arrayLookup;
+    const byteAscii=readRustByteAscii(this,receiver,method,args,range,path);if(byteAscii)return byteAscii;
     if(vectorCopy)return vectorCopy;
     const selection=readRustPrimitiveSelection(this,receiver,method,args,range,path);
     if(selection)return selection;

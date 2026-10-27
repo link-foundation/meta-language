@@ -5011,6 +5011,18 @@ complete borrow/drop behavior and escaping Options remain separate obligations.
 Neither this value encoding nor source history establishes semantic equivalence
 between unrelated owner definitions or executed verification.
 
+Eleven stable u8 ASCII method predicates have complete shared source plans over
+the actual byte domain. Typed aliases, immutable reference/Box layers and byte
+literals retain their standard primitive owner. Each receiver is captured once;
+result values retain the actual Boolean owner. Classification distinguishes
+every range boundary and non-ASCII byte, including the exclusion of vertical
+tab from Rust's [ASCII whitespace](https://doc.rust-lang.org/std/primitive.u8.html#method.is_ascii_whitespace).
+495 complete deferred source programs retain independent regular-language
+expectations, native source oracles, both codecs and four targets. String/char
+ASCII APIs, nightly octal predicates, explicit borrowed associated signatures,
+mutable transformations and full project coverage remain obligations. Source
+generation and these declarations establish no executed verification.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains
@@ -6765,6 +6777,13 @@ behind an unchanged index and distinct copied roots. Decoder and memory limits
 remain unchanged.
 
 ## Resource limits
+
+Source integration can stage every generated Rust module part directly from its
+complete Links generation recipe with `js/scripts/stage-source-library-files.mjs`.
+The helper bounds recipe size and file count, requires actual regular project
+paths and exact recorded source bytes, and preserves unrelated staged changes.
+Edited/stale outputs and symlink/path escapes refuse. This source-membership
+review supplies no behavior, compilation or semantic-equivalence evidence.
 
 Grammar test files run exactly once across six required JavaScript cells. Their
 commands, assertions, fail-fast setting and fifteen-minute deadline remain exact.

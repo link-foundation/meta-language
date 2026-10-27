@@ -154,6 +154,7 @@ pub mod rust;
 pub(crate) mod rust_array_index_rules;
 pub(crate) mod rust_array_length_rules;
 pub(crate) mod rust_array_lookup_rules;
+pub(crate) mod rust_byte_ascii_rules;
 pub(crate) mod rust_byte_string_rules;
 mod rust_callable_owner_rules;
 pub(crate) mod rust_character_rules;

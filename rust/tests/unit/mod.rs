@@ -548,3 +548,5 @@ mod translation_rust_contextual_from_function_value;
 mod translation_rust_array_lookup;
 
 mod translation_rust_array_cloned_lookup;
+
+mod translation_rust_byte_ascii;
