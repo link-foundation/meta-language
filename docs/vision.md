@@ -9266,3 +9266,23 @@ codecs and all four emission targets. Original heap controls keep their default
 behavior, with an explicit optional intrinsic-Symbol transport for the new
 controls. Their complete preceding source remains immutable Links data. No
 coercion, callback, test, emitted product or native compiler has executed.
+
+### Composed property key conversion draft
+
+ToPropertyKey composes the existing primitive conversion with a string hint.
+Completed Symbols and semantic text retain their exact identity/units; other
+primitives use the existing source String operation and translated formatter.
+The shared runtime retains Number formatting boundaries and arbitrary integer
+digits. The [conversion definition](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-topropertykey)
+remains its normative source.
+
+The source adapter preserves every pending state, call operand and abrupt
+completion, with separate key-result constructors. Step/resume reject a
+continuation with another hint. Native semantics and all transport derive from
+the actual composed source. Deferred controls combine original computed-key
+syntax, independent literal keys, complete primitive call/effect expectations,
+all native transitions and source codecs/targets. Number exponent boundaries,
+infinities, signed zero, BigInt digits, Symbols and isolated UTF16 units remain
+explicit inputs. No operation or control has executed. This semantic component
+does not finish computed-key frontend integration, full dynamic evaluator or
+any earlier requirement.

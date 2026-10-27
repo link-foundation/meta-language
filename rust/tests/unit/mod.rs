@@ -564,3 +564,5 @@ mod translation_javascript_descriptor_conversion;
 mod translation_rust_source_render_interfaces;
 
 mod translation_javascript_primitive_conversion;
+
+mod translation_javascript_property_key_conversion;
