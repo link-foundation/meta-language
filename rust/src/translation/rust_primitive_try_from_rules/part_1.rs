@@ -116,447 +116,219 @@ pub mod ml_array {
     }
 }
 
-/// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
-pub mod ml_string {
-    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-    pub struct Text(pub Vec<u16>);
-
-    impl std::fmt::Display for Text {
-        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            out.write_str(&String::from_utf16_lossy(&self.0))
-        }
-    }
-
-    impl Text {
-        #[must_use]
-        pub fn from_text(text: &str) -> Self {
-            Self(text.encode_utf16().collect())
-        }
-        #[must_use]
-        pub const fn from_units(units: Vec<u16>) -> Self {
-            Self(units)
-        }
-        #[must_use]
-        pub const fn length(&self) -> f64 {
-            self.0.len() as f64
-        }
-        #[must_use]
-        pub fn concat(&self, other: &Self) -> Self {
-            let mut units = self.0.clone();
-            units.extend_from_slice(&other.0);
-            Self(units)
-        }
-        #[must_use]
-        pub fn starts_with(&self, search: &Self) -> bool {
-            self.0.starts_with(&search.0)
-        }
-        #[must_use]
-        pub fn ends_with(&self, search: &Self) -> bool {
-            self.0.ends_with(&search.0)
-        }
-        #[must_use]
-        pub fn contains(&self, search: &Self) -> bool {
-            self.index_of(search, 0.0) >= 0.0
-        }
-        #[must_use]
-        pub fn slice(&self, start: f64, end: f64) -> Self {
-            let first = relative(start, self.0.len());
-            let last = relative(end, self.0.len());
-            Self(self.0[first..last.max(first)].to_vec())
-        }
-        #[must_use]
-        pub fn index_of(&self, search: &Self, position: f64) -> f64 {
-            let start = absolute(position, self.0.len());
-            if search.0.is_empty() {
-                return start as f64;
-            }
-            if search.0.len() > self.0.len() {
-                return -1.0;
-            }
-            (start..=self.0.len() - search.0.len())
-                .find(|&index| self.0[index..].starts_with(&search.0))
-                .map_or(-1.0, |index| index as f64)
-        }
-        #[must_use]
-        pub fn last_index_of(&self, search: &Self, position: f64) -> f64 {
-            let position = if position.is_nan() {
-                f64::INFINITY
-            } else {
-                position
-            };
-            let start = absolute(position, self.0.len());
-            if search.0.is_empty() {
-                return start as f64;
-            }
-            if search.0.len() > self.0.len() {
-                return -1.0;
-            }
-            (0..=start.min(self.0.len() - search.0.len()))
-                .rev()
-                .find(|&index| self.0[index..].starts_with(&search.0))
-                .map_or(-1.0, |index| index as f64)
-        }
-        #[must_use]
-        pub fn split(&self, separator: Option<&Self>, limit: f64) -> Vec<Self> {
-            let maximum = uint32(limit) as usize;
-            if maximum == 0 {
-                return Vec::new();
-            }
-            let Some(separator) = separator else {
-                return vec![self.clone()];
-            };
-            if separator.0.is_empty() {
-                return self
-                    .0
-                    .iter()
-                    .take(maximum)
-                    .map(|&unit| Self(vec![unit]))
-                    .collect();
-            }
-            let mut out = Vec::new();
-            let mut start = 0;
-            loop {
-                let index = self.index_of(separator, start as f64);
-                if index < 0.0 {
-                    break;
-                }
-                out.push(Self(self.0[start..index as usize].to_vec()));
-                if out.len() == maximum {
-                    return out;
-                }
-                start = index as usize + separator.0.len();
-            }
-            out.push(Self(self.0[start..].to_vec()));
-            out
-        }
-        #[must_use]
-        pub fn code_point_at(&self, position: f64) -> Option<f64> {
-            let index = integer(position);
-            if index < 0.0 || index >= self.0.len() as f64 {
-                return None;
-            }
-            let index = index as usize;
-            let first = self.0[index];
-            if (0xd800..=0xdbff).contains(&first)
-                && let Some(&second) = self.0.get(index + 1)
-                && (0xdc00..=0xdfff).contains(&second)
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_owner_path(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    if !ordinary || shadowed {
+        String::new()
+    } else {
+        {
+            let owner = String::new();
             {
-                return Some(f64::from(
-                    (u32::from(first) - 0xd800) * 1024 + u32::from(second) - 0xdc00 + 0x10000,
-                ));
-            }
-            Some(f64::from(first))
-        }
-        #[must_use]
-        pub fn code_points(&self) -> Vec<Self> {
-            let mut out = Vec::new();
-            let mut index = 0;
-            while index < self.0.len() {
-                let first = self.0[index];
-                let width = if (0xd800..=0xdbff).contains(&first)
-                    && self
-                        .0
-                        .get(index + 1)
-                        .is_some_and(|second| (0xdc00..=0xdfff).contains(second))
-                {
-                    2
+                let owner_4 = if ((segments.len() as f64) == 2f64) && !absolute {
+                    {
+                        (self::ml_array::optional_at(segments, self::ml_array::number_index(0f64)))
+                            .unwrap_or_else(|| String::new())
+                    }
                 } else {
-                    1
-                };
-                out.push(Self(self.0[index..index + width].to_vec()));
-                index += width;
-            }
-            out
-        }
-        #[must_use]
-        pub fn repeat(&self, count: f64) -> Self {
-            let count = integer(count);
-            assert!(
-                count >= 0.0 && count.is_finite(),
-                "Invalid count value: {count}"
-            );
-            if self.0.is_empty() {
-                return Self(Vec::new());
-            }
-            let size = count * self.0.len() as f64;
-            assert!(size <= 536_870_888.0, "Invalid string length");
-            Self(self.0.repeat(count as usize))
-        }
-        #[must_use]
-        pub fn pad(&self, length: f64, fill: &Self, start: bool) -> Self {
-            let length = integer(length).max(0.0);
-            if length <= self.0.len() as f64 || fill.0.is_empty() {
-                return self.clone();
-            }
-            assert!(length <= 536_870_888.0, "Invalid string length");
-            let count = length as usize - self.0.len();
-            let padding: Vec<u16> = fill.0.iter().copied().cycle().take(count).collect();
-            let pad = Self(padding);
-            if start {
-                pad.concat(self)
-            } else {
-                self.concat(&pad)
-            }
-        }
-        #[must_use]
-        pub fn replace(&self, search: &Self, replacement: &Self, all: bool) -> Self {
-            let mut out = Vec::new();
-            let mut start = 0;
-            let mut from = 0;
-            loop {
-                let index = self.index_of(search, from as f64);
-                if index < 0.0 {
-                    break;
-                }
-                let index = index as usize;
-                out.extend_from_slice(&self.0[start..index]);
-                substitute(&mut out, &self.0, &search.0, &replacement.0, index);
-                start = index + search.0.len();
-                if !all || (search.0.is_empty() && index == self.0.len()) {
-                    break;
-                }
-                from = start + usize::from(search.0.is_empty());
-            }
-            out.extend_from_slice(&self.0[start..]);
-            Self(out)
-        }
-        #[must_use]
-        pub fn trim(&self, start: bool, end: bool, rust: bool) -> Self {
-            let whitespace = |unit: u16| {
-                char::from_u32(u32::from(unit)).is_some_and(|c| {
-                    if rust {
-                        c.is_whitespace()
+                    if (((segments.len() as f64) == 4f64)
+                        && ({
+                            let source_ml_comparison_operand1 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(0f64),
+                            );
+                            {
+                                let source_ml_comparison_operand2 = String::from("std");
+                                match (source_ml_comparison_operand1, source_ml_comparison_operand2)
+                                {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        } || {
+                            let source_ml_comparison_operand3 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(0f64),
+                            );
+                            {
+                                let source_ml_comparison_operand4 = String::from("core");
+                                match (source_ml_comparison_operand3, source_ml_comparison_operand4)
+                                {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }))
+                        && {
+                            let source_ml_comparison_operand5 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(1f64),
+                            );
+                            {
+                                let source_ml_comparison_operand6 = String::from("primitive");
+                                match (source_ml_comparison_operand5, source_ml_comparison_operand6)
+                                {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }
+                    {
+                        {
+                            (self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(2f64),
+                            ))
+                            .unwrap_or_else(|| String::new())
+                        }
                     } else {
-                        (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}'
+                        owner
                     }
-                })
-            };
-            let mut first = 0;
-            let mut last = self.0.len();
-            if start {
-                while first < last && whitespace(self.0[first]) {
-                    first += 1;
-                }
-            }
-            if end {
-                while last > first && whitespace(self.0[last - 1]) {
-                    last -= 1;
-                }
-            }
-            Self(self.0[first..last].to_vec())
-        }
-        #[must_use]
-        pub fn map_case(&self, upper: bool) -> Self {
-            let mut out = Vec::new();
-            let mut run = String::new();
-            let flush = |run: &mut String, out: &mut Vec<u16>| {
-                let mapped = if upper {
-                    run.to_uppercase()
-                } else {
-                    run.to_lowercase()
                 };
-                out.extend(mapped.encode_utf16());
-                run.clear();
-            };
-            for scalar in char::decode_utf16(self.0.iter().copied()) {
-                match scalar {
-                    Ok(c) => run.push(c),
-                    Err(error) => {
-                        flush(&mut run, &mut out);
-                        out.push(error.unpaired_surrogate());
-                    }
+                if self::ml_array::includes(
+                    &vec![
+                        String::from("bool"),
+                        String::from("i8"),
+                        String::from("u8"),
+                        String::from("i16"),
+                        String::from("u16"),
+                        String::from("i32"),
+                        String::from("u32"),
+                        String::from("i64"),
+                        String::from("u64"),
+                        String::from("i128"),
+                        String::from("u128"),
+                        String::from("isize"),
+                        String::from("usize"),
+                    ],
+                    &owner_4.clone(),
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                ) {
+                    owner_4.clone()
+                } else {
+                    String::new()
                 }
             }
-            flush(&mut run, &mut out);
-            Self(out)
         }
     }
-    #[must_use]
-    pub fn join(values: &[Text], separator: &Text) -> Text {
-        let mut units = Vec::new();
-        for (index, value) in values.iter().enumerate() {
-            if index != 0 {
-                units.extend_from_slice(&separator.0);
-            }
-            units.extend_from_slice(&value.0);
-        }
-        Text(units)
-    }
-    #[must_use]
-    pub const fn integer(value: f64) -> f64 {
-        if value.is_nan() { 0.0 } else { value.trunc() }
-    }
-    #[must_use]
-    pub const fn absolute(value: f64, length: usize) -> usize {
-        integer(value).max(0.0).min(length as f64) as usize
-    }
-    #[must_use]
-    pub fn relative(value: f64, length: usize) -> usize {
-        let value = integer(value);
-        if value < 0.0 {
-            (length as f64 + value).max(0.0) as usize
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_integer_constant_owner(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    {
+        let owner = self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute);
+        if owner == "bool" {
+            String::new()
         } else {
-            value.min(length as f64) as usize
-        }
-    }
-    fn uint32(value: f64) -> u32 {
-        if !value.is_finite() || value == 0.0 {
-            0
-        } else {
-            value.trunc().rem_euclid(4_294_967_296.0) as u32
-        }
-    }
-    fn substitute(
-        out: &mut Vec<u16>,
-        text: &[u16],
-        search: &[u16],
-        replacement: &[u16],
-        position: usize,
-    ) {
-        let mut index = 0;
-        while index < replacement.len() {
-            if replacement[index] == 36 && index + 1 < replacement.len() {
-                match replacement[index + 1] {
-                    36 => {
-                        out.push(36);
-                        index += 2;
-                        continue;
-                    }
-                    38 => {
-                        out.extend_from_slice(search);
-                        index += 2;
-                        continue;
-                    }
-                    96 => {
-                        out.extend_from_slice(&text[..position]);
-                        index += 2;
-                        continue;
-                    }
-                    39 => {
-                        out.extend_from_slice(&text[position + search.len()..]);
-                        index += 2;
-                        continue;
-                    }
-                    _ => {}
-                }
-            }
-            out.push(replacement[index]);
-            index += 1;
+            owner
         }
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_model(model: &self::ml_string::Text) -> bool {
-    ((*model) == (self::ml_string::Text::from_units(vec![])))
-        || ((*model)
-            == (self::ml_string::Text::from_units(vec![
-                82, 117, 115, 116, 32, 115, 111, 117, 114, 99, 101, 32, 102, 117, 110, 99, 116,
-                105, 111, 110, 32, 115, 105, 103, 110, 97, 116, 117, 114, 101, 32, 49,
-            ])))
+pub fn read_rust_primitive_integer_constant_term(name: &str) -> String {
+    if name == "MIN" {
+        String::from("minimum")
+    } else if name == "MAX" {
+        String::from("maximum")
+    } else if name == "BITS" {
+        String::from("width")
+    } else {
+        String::new()
+    }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_wrapper(wrapper: &self::ml_string::Text) -> bool {
-    ((*wrapper)
-        == (self::ml_string::Text::from_units(vec![114, 101, 102, 101, 114, 101, 110, 99, 101])))
-        || ((*wrapper) == (self::ml_string::Text::from_units(vec![98, 111, 120])))
+pub fn read_rust_primitive_integer_constant_result_owner(owner: &str, term: &str) -> String {
+    if term == "width" {
+        String::from("u32")
+    } else if (term == "minimum") || (term == "maximum") {
+        owner.to_owned()
+    } else {
+        String::new()
+    }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_owner_kind(kind: &self::ml_string::Text) -> bool {
-    ((((((*kind)
-        == (self::ml_string::Text::from_units(vec![
-            112, 114, 105, 109, 105, 116, 105, 118, 101,
-        ])))
-        || ((*kind)
-            == (self::ml_string::Text::from_units(vec![
-                100, 101, 99, 108, 97, 114, 97, 116, 105, 111, 110,
-            ]))))
-        || ((*kind)
-            == (self::ml_string::Text::from_units(vec![108, 105, 98, 114, 97, 114, 121]))))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![116, 117, 112, 108, 101]))))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![117, 110, 105, 116]))))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![115, 108, 105, 99, 101])))
+pub fn accept_rust_source_signature_model(model: &str) -> bool {
+    ((model).is_empty()) || (model == "Rust source function signature 1")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_source_signature_catalog_owner(kind: &self::ml_string::Text) -> bool {
-    ((((*kind) == (self::ml_string::Text::from_units(vec![100, 97, 116, 97])))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![109, 111, 100, 117, 108, 101]))))
-        || ((*kind)
-            == (self::ml_string::Text::from_units(vec![
-                101, 120, 116, 101, 114, 110, 97, 108, 67, 114, 97, 116, 101,
-            ]))))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![99, 116, 111, 114])))
+pub fn accept_rust_source_signature_wrapper(wrapper: &str) -> bool {
+    (wrapper == "reference") || (wrapper == "box")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_owner_kind(kind: &str) -> bool {
+    (((((kind == "primitive") || (kind == "declaration")) || (kind == "library"))
+        || (kind == "tuple"))
+        || (kind == "unit"))
+        || (kind == "slice")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_catalog_owner(kind: &str) -> bool {
+    (((kind == "data") || (kind == "module")) || (kind == "externalCrate")) || (kind == "ctor")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_rust_source_signature_primitive(
-    kind: &self::ml_string::Text,
-    path: &self::ml_string::Text,
-    bits: &self::ml_string::Text,
+    kind: &str,
+    path: &str,
+    bits: &str,
     signed: bool,
 ) -> bool {
-    if (*path) == (self::ml_string::Text::from_units(vec![102, 54, 52])) {
-        (*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116]))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])) {
-        (*kind) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![115, 116, 114])) {
-        (*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 56])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![56]))))
-            && (signed == (true))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 56])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![56]))))
-            && (signed == (false))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 49, 54])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 54]))))
-            && (signed == (true))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 49, 54])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 54]))))
-            && (signed == (false))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 51, 50])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![51, 50]))))
-            && (signed == (true))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 51, 50])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![51, 50]))))
-            && (signed == (false))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 54, 52])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
-            && (signed == (true))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 54, 52])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
-            && (signed == (false))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 49, 50, 56])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 50, 56]))))
-            && (signed == (true))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 49, 50, 56])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![49, 50, 56]))))
-            && (signed == (false))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
-            && (signed == (false))
-    } else if (*path) == (self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101])) {
-        (((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-            && ((*bits) == (self::ml_string::Text::from_units(vec![54, 52]))))
-            && (signed == (true))
+    if path == "f64" {
+        kind == "float"
+    } else if path == "bool" {
+        kind == "bool"
+    } else if path == "str" {
+        kind == "string"
+    } else if path == "i8" {
+        ((kind == "fixed") && (bits == "8")) && (signed == (true))
+    } else if path == "u8" {
+        ((kind == "fixed") && (bits == "8")) && (signed == (false))
+    } else if path == "i16" {
+        ((kind == "fixed") && (bits == "16")) && (signed == (true))
+    } else if path == "u16" {
+        ((kind == "fixed") && (bits == "16")) && (signed == (false))
+    } else if path == "i32" {
+        ((kind == "fixed") && (bits == "32")) && (signed == (true))
+    } else if path == "u32" {
+        ((kind == "fixed") && (bits == "32")) && (signed == (false))
+    } else if path == "i64" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (true))
+    } else if path == "u64" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (false))
+    } else if path == "i128" {
+        ((kind == "fixed") && (bits == "128")) && (signed == (true))
+    } else if path == "u128" {
+        ((kind == "fixed") && (bits == "128")) && (signed == (false))
+    } else if path == "usize" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (false))
+    } else if path == "isize" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (true))
     } else {
         false
     }
@@ -565,68 +337,54 @@ pub fn accept_rust_source_signature_primitive(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_primitive_selection_call_role(
-    path: &self::ml_string::Text,
+    path: &str,
     ordinary: bool,
     shadowed: bool,
-) -> self::ml_string::Text {
+) -> String {
     if ordinary && !shadowed {
-        if (*path)
-            == (self::ml_string::Text::from_units(vec![
-                115, 116, 100, 58, 58, 99, 109, 112, 58, 58, 109, 105, 110,
-            ]))
-        {
-            self::ml_string::Text::from_units(vec![109, 105, 110])
-        } else if (*path)
-            == (self::ml_string::Text::from_units(vec![
-                115, 116, 100, 58, 58, 99, 109, 112, 58, 58, 109, 97, 120,
-            ]))
-        {
-            self::ml_string::Text::from_units(vec![109, 97, 120])
+        if path == "std::cmp::min" {
+            String::from("min")
+        } else if path == "std::cmp::max" {
+            String::from("max")
         } else {
-            self::ml_string::Text::from_units(vec![])
+            String::new()
         }
     } else {
-        self::ml_string::Text::from_units(vec![])
+        String::new()
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_primitive_selection_comparison(
-    method: &self::ml_string::Text,
-    ordinary: bool,
-) -> self::ml_string::Text {
+pub fn read_rust_primitive_selection_comparison(method: &str, ordinary: bool) -> String {
     if ordinary {
-        if (*method) == (self::ml_string::Text::from_units(vec![109, 105, 110])) {
-            self::ml_string::Text::from_units(vec![108, 101])
-        } else if (*method) == (self::ml_string::Text::from_units(vec![109, 97, 120])) {
-            self::ml_string::Text::from_units(vec![103, 116])
+        if method == "min" {
+            String::from("le")
+        } else if method == "max" {
+            String::from("gt")
         } else {
-            self::ml_string::Text::from_units(vec![])
+            String::new()
         }
     } else {
-        self::ml_string::Text::from_units(vec![])
+        String::new()
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_primitive_selection_condition(
-    method: &self::ml_string::Text,
-    kind: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if (*kind) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])) {
-        if (*method) == (self::ml_string::Text::from_units(vec![109, 105, 110])) {
-            self::ml_string::Text::from_units(vec![110, 111, 116])
-        } else if (*method) == (self::ml_string::Text::from_units(vec![109, 97, 120])) {
-            self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])
+pub fn read_rust_primitive_selection_condition(method: &str, kind: &str) -> String {
+    if kind == "bool" {
+        if method == "min" {
+            String::from("not")
+        } else if method == "max" {
+            String::from("identity")
         } else {
-            self::ml_string::Text::from_units(vec![])
+            String::new()
         }
-    } else if (*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])) {
+    } else if kind == "fixed" {
         self::read_rust_primitive_selection_comparison(method, true)
     } else {
-        self::ml_string::Text::from_units(vec![])
+        String::new()
     }
 }
 
@@ -638,22 +396,16 @@ pub fn read_rust_primitive_selection_condition(
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn accept_rust_primitive_selection_receiver(
-    kind: &self::ml_string::Text,
-    bits: &self::ml_string::Text,
+    kind: &str,
+    bits: &str,
     signed: bool,
-    owner: &self::ml_string::Text,
-    path: &self::ml_string::Text,
+    owner: &str,
+    path: &str,
     children: f64,
     proven: bool,
     layers: f64,
 ) -> bool {
-    (((((((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100])))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))))
-        && ((*owner)
-            == (self::ml_string::Text::from_units(vec![
-                112, 114, 105, 109, 105, 116, 105, 118, 101,
-            ]))))
-        && (children == 0f64))
+    ((((((kind == "fixed") || (kind == "bool")) && (owner == "primitive")) && (children == 0f64))
         && proven)
         && (layers == 0f64))
         && self::accept_rust_source_signature_primitive(kind, path, bits, signed)
@@ -667,30 +419,28 @@ pub fn accept_rust_primitive_selection_receiver(
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
 pub fn accept_rust_primitive_selection_argument(
-    expected: &self::ml_string::Text,
-    bits: &self::ml_string::Text,
+    expected: &str,
+    bits: &str,
     signed: bool,
-    owner: &self::ml_string::Text,
-    actual: &self::ml_string::Text,
-    actual_bits: &self::ml_string::Text,
+    owner: &str,
+    actual: &str,
+    actual_bits: &str,
     actual_signed: bool,
-    actual_owner: &self::ml_string::Text,
+    actual_owner: &str,
     layers: f64,
     proven: bool,
     known: bool,
     literal: bool,
 ) -> bool {
     if layers == 0f64 {
-        if ((literal
-            && ((*expected) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
-            && ((*actual) == (self::ml_string::Text::from_units(vec![]))))
-            && ((*actual_owner) == (self::ml_string::Text::from_units(vec![])))
+        if ((literal && (expected == "fixed")) && ((actual).is_empty()))
+            && ((actual_owner).is_empty())
         {
             true
         } else {
-            ((((known && proven) && ((*expected) == (*actual))) && ((*bits) == (*actual_bits)))
+            ((((known && proven) && (expected == actual)) && (bits == actual_bits))
                 && (signed == actual_signed))
-                && ((*owner) == (*actual_owner))
+                && (owner == actual_owner)
         }
     } else {
         false
@@ -699,23 +449,126 @@ pub fn accept_rust_primitive_selection_argument(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_integer_magnitude_arity(method: &self::ml_string::Text, ordinary: bool) -> f64 {
-    if ordinary {
-        if (*method)
-            == (self::ml_string::Text::from_units(vec![
-                117, 110, 115, 105, 103, 110, 101, 100, 95, 97, 98, 115,
-            ]))
+pub fn accept_rust_primitive_from_method(owner: &str, method: &str) -> bool {
+    (method == "from")
+        && self::ml_array::includes(
+            &vec![
+                String::from("bool"),
+                String::from("i8"),
+                String::from("u8"),
+                String::from("i16"),
+                String::from("u16"),
+                String::from("i32"),
+                String::from("u32"),
+                String::from("i64"),
+                String::from("u64"),
+                String::from("i128"),
+                String::from("u128"),
+                String::from("isize"),
+                String::from("usize"),
+                String::from("f64"),
+            ],
+            &owner.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_from_owner(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    if !ordinary || shadowed {
+        String::new()
+    } else if ((((segments.len() as f64) == 2f64) && !absolute) && {
+        let source_ml_comparison_operand7 =
+            self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
         {
-            0f64
-        } else if (*method)
-            == (self::ml_string::Text::from_units(vec![97, 98, 115, 95, 100, 105, 102, 102]))
-        {
-            1f64
-        } else {
-            -1f64
+            let source_ml_comparison_operand8 = String::from("f64");
+            match (source_ml_comparison_operand7, source_ml_comparison_operand8) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            }
         }
+    }) || (((((segments.len() as f64) == 4f64)
+        && ({
+            let source_ml_comparison_operand9 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+            {
+                let source_ml_comparison_operand10 = String::from("std");
+                match (
+                    source_ml_comparison_operand9,
+                    source_ml_comparison_operand10,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        } || {
+            let source_ml_comparison_operand11 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+            {
+                let source_ml_comparison_operand12 = String::from("core");
+                match (
+                    source_ml_comparison_operand11,
+                    source_ml_comparison_operand12,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        }))
+        && {
+            let source_ml_comparison_operand13 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(1f64));
+            {
+                let source_ml_comparison_operand14 = String::from("primitive");
+                match (
+                    source_ml_comparison_operand13,
+                    source_ml_comparison_operand14,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
+        && {
+            let source_ml_comparison_operand15 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(2f64));
+            {
+                let source_ml_comparison_operand16 = String::from("f64");
+                match (
+                    source_ml_comparison_operand15,
+                    source_ml_comparison_operand16,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
+    {
+        String::from("f64")
     } else {
-        -1f64
+        self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_from_literal_owner(form: &str, typed: bool, kind: &str) -> String {
+    if (form != "numeral") && (form != "negative numeral") {
+        String::new()
+    } else if kind == "float" {
+        String::from("f64")
+    } else if typed {
+        String::new()
+    } else {
+        String::from("i32")
     }
 }
 
@@ -726,82 +579,249 @@ pub fn read_rust_integer_magnitude_arity(method: &self::ml_string::Text, ordinar
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
-pub fn accept_rust_integer_magnitude_receiver(
-    method: &self::ml_string::Text,
-    kind: &self::ml_string::Text,
-    bits: &self::ml_string::Text,
+pub fn accept_rust_primitive_from_source(
+    kind: &str,
+    bits: &str,
     signed: bool,
-    owner: &self::ml_string::Text,
-    path: &self::ml_string::Text,
+    owner: &str,
+    path: &str,
     children: f64,
     proven: bool,
     layers: f64,
 ) -> bool {
-    ((((self::read_rust_integer_magnitude_arity(method, true)) >= 0f64)
-        && (((*method)
-            != (self::ml_string::Text::from_units(vec![
-                117, 110, 115, 105, 103, 110, 101, 100, 95, 97, 98, 115,
-            ])))
-            || signed))
-        && ((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
-        && self::accept_rust_primitive_selection_receiver(
+    ((((((((kind == "float") && ((bits).is_empty())) && !signed) && (owner == "primitive"))
+        && (path == "f64"))
+        && (children == 0f64))
+        && proven)
+        && (layers == 0f64))
+        || self::accept_rust_primitive_selection_receiver(
             kind, bits, signed, owner, path, children, proven, layers,
         )
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_integer_magnitude_result_owner(
-    receiver: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if (*receiver) == (self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101])) {
-        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])
-    } else if self::ml_array::includes(
-        &vec![
-            self::ml_string::Text::from_units(vec![105, 56]),
-            self::ml_string::Text::from_units(vec![105, 49, 54]),
-            self::ml_string::Text::from_units(vec![105, 51, 50]),
-            self::ml_string::Text::from_units(vec![105, 54, 52]),
-            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
-        ],
-        receiver,
-        0f64,
-        false,
-        |a, b| a == b,
-    ) {
-        (self::ml_string::Text::from_units(vec![117])).concat(&{
-            let source_ml_source1_string_range_operand1 = receiver.clone();
-            {
-                let source_ml_source1_string_range_operand2 = 1f64;
-                {
-                    let source_ml_source1_string_range_position3 =
-                        source_ml_source1_string_range_operand2;
-                    {
-                        let source_ml_source1_string_range_position4 = f64::INFINITY;
-                        source_ml_source1_string_range_operand1.slice(
-                            source_ml_source1_string_range_position3,
-                            source_ml_source1_string_range_position4,
-                        )
-                    }
-                }
-            }
-        })
-    } else if self::ml_array::includes(
-        &vec![
-            self::ml_string::Text::from_units(vec![117, 56]),
-            self::ml_string::Text::from_units(vec![117, 49, 54]),
-            self::ml_string::Text::from_units(vec![117, 51, 50]),
-            self::ml_string::Text::from_units(vec![117, 54, 52]),
-            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
-            self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
-        ],
-        receiver,
-        0f64,
-        false,
-        |a, b| a == b,
-    ) {
-        receiver.clone()
+pub fn plan_rust_primitive_from(target: &str, source: &str) -> String {
+    if !(self::accept_rust_primitive_from_method(target, "from"))
+        || !(self::accept_rust_primitive_from_method(source, "from"))
+    {
+        String::new()
+    } else if target == source {
+        String::from("identity")
+    } else if ((source == "bool") && (target != "bool")) && (target != "f64") {
+        String::from("boolean integer")
+    } else if (target == "f64")
+        && self::ml_array::includes(
+            &vec![
+                String::from("i8"),
+                String::from("i16"),
+                String::from("i32"),
+                String::from("u8"),
+                String::from("u16"),
+                String::from("u32"),
+            ],
+            &source.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        )
+    {
+        String::from("floating exact")
     } else {
-        self::ml_string::Text::from_units(vec![])
+        {
+            let admitted = ((((((((source == "u8")
+                && self::ml_array::includes(
+                    &vec![
+                        String::from("u16"),
+                        String::from("u32"),
+                        String::from("u64"),
+                        String::from("u128"),
+                        String::from("usize"),
+                        String::from("i16"),
+                        String::from("i32"),
+                        String::from("i64"),
+                        String::from("i128"),
+                        String::from("isize"),
+                    ],
+                    &target.to_owned(),
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                ))
+                || ((source == "u16")
+                    && self::ml_array::includes(
+                        &vec![
+                            String::from("u32"),
+                            String::from("u64"),
+                            String::from("u128"),
+                            String::from("usize"),
+                            String::from("i32"),
+                            String::from("i64"),
+                            String::from("i128"),
+                        ],
+                        &target.to_owned(),
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || ((source == "u32")
+                    && self::ml_array::includes(
+                        &vec![
+                            String::from("u64"),
+                            String::from("u128"),
+                            String::from("i64"),
+                            String::from("i128"),
+                        ],
+                        &target.to_owned(),
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || ((source == "u64")
+                    && self::ml_array::includes(
+                        &vec![String::from("u128"), String::from("i128")],
+                        &target.to_owned(),
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || ((source == "i8")
+                    && self::ml_array::includes(
+                        &vec![
+                            String::from("i16"),
+                            String::from("i32"),
+                            String::from("i64"),
+                            String::from("i128"),
+                            String::from("isize"),
+                        ],
+                        &target.to_owned(),
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || ((source == "i16")
+                    && self::ml_array::includes(
+                        &vec![
+                            String::from("i32"),
+                            String::from("i64"),
+                            String::from("i128"),
+                            String::from("isize"),
+                        ],
+                        &target.to_owned(),
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || ((source == "i32")
+                    && self::ml_array::includes(
+                        &vec![String::from("i64"), String::from("i128")],
+                        &target.to_owned(),
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || ((source == "i64") && (target == "i128"));
+            if admitted {
+                String::from("integer exact")
+            } else {
+                String::new()
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_owner(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    self::read_rust_primitive_integer_constant_owner(segments, ordinary, shadowed, absolute)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_primitive_try_from_import(path: &str, ordinary: bool, shadowed: bool) -> bool {
+    (ordinary && !shadowed)
+        && ((path == "std::convert::TryFrom") || (path == "core::convert::TryFrom"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_try_from_source(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((kind == "fixed") && self::accept_rust_primitive_from_method(path, "from"))
+        && self::accept_rust_primitive_from_source(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_consumer_arity(method: &str) -> f64 {
+    if ((method == "is_ok") || (method == "is_err")) || (method == "unwrap_or_default") {
+        0f64
+    } else if method == "unwrap_or" {
+        1f64
+    } else if method == "map_or" {
+        2f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_guards(
+    source_bits: f64,
+    source_signed: bool,
+    target_bits: f64,
+    target_signed: bool,
+) -> f64 {
+    if !(self::ml_array::includes(
+        &vec![8f64, 16f64, 32f64, 64f64, 128f64],
+        &source_bits,
+        0f64,
+        false,
+        |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
+    )) || !(self::ml_array::includes(
+        &vec![8f64, 16f64, 32f64, 64f64, 128f64],
+        &target_bits,
+        0f64,
+        false,
+        |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
+    )) {
+        -1f64
+    } else {
+        {
+            let lower = source_signed && (!target_signed || (source_bits > target_bits));
+            {
+                let upper = if target_signed {
+                    if source_signed {
+                        source_bits > target_bits
+                    } else {
+                        source_bits >= target_bits
+                    }
+                } else {
+                    source_bits > target_bits
+                };
+                (if lower { 1f64 } else { 0f64 } + if upper { 2f64 } else { 0f64 })
+            }
+        }
     }
 }

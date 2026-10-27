@@ -448,6 +448,121 @@ pub mod ml_string {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_primitive_owner_path(
+    segments: &[self::ml_string::Text],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> self::ml_string::Text {
+    if !ordinary || shadowed {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        {
+            let owner = self::ml_string::Text::from_units(vec![]);
+            {
+                let owner_4 = if ((segments.len() as f64) == 2f64) && !absolute {
+                    {
+                        (self::ml_array::optional_at(segments, self::ml_array::number_index(0f64)))
+                            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))
+                    }
+                } else {
+                    if (((segments.len() as f64) == 4f64)
+                        && ({
+                            let source_ml_source1_comparison_operand1 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(0f64),
+                            );
+                            {
+                                let source_ml_source1_comparison_operand2 =
+                                    self::ml_string::Text::from_units(vec![115, 116, 100]);
+                                match (
+                                    source_ml_source1_comparison_operand1,
+                                    source_ml_source1_comparison_operand2,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        } || {
+                            let source_ml_source1_comparison_operand3 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(0f64),
+                            );
+                            {
+                                let source_ml_source1_comparison_operand4 =
+                                    self::ml_string::Text::from_units(vec![99, 111, 114, 101]);
+                                match (
+                                    source_ml_source1_comparison_operand3,
+                                    source_ml_source1_comparison_operand4,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }))
+                        && {
+                            let source_ml_source1_comparison_operand5 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(1f64),
+                            );
+                            {
+                                let source_ml_source1_comparison_operand6 =
+                                    self::ml_string::Text::from_units(vec![
+                                        112, 114, 105, 109, 105, 116, 105, 118, 101,
+                                    ]);
+                                match (
+                                    source_ml_source1_comparison_operand5,
+                                    source_ml_source1_comparison_operand6,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }
+                    {
+                        {
+                            (self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(2f64),
+                            ))
+                            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))
+                        }
+                    } else {
+                        owner
+                    }
+                };
+                if self::ml_array::includes(
+                    &vec![
+                        self::ml_string::Text::from_units(vec![98, 111, 111, 108]),
+                        self::ml_string::Text::from_units(vec![105, 56]),
+                        self::ml_string::Text::from_units(vec![117, 56]),
+                        self::ml_string::Text::from_units(vec![105, 49, 54]),
+                        self::ml_string::Text::from_units(vec![117, 49, 54]),
+                        self::ml_string::Text::from_units(vec![105, 51, 50]),
+                        self::ml_string::Text::from_units(vec![117, 51, 50]),
+                        self::ml_string::Text::from_units(vec![105, 54, 52]),
+                        self::ml_string::Text::from_units(vec![117, 54, 52]),
+                        self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                        self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+                        self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
+                        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
+                    ],
+                    &owner_4.clone(),
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                ) {
+                    owner_4.clone()
+                } else {
+                    self::ml_string::Text::from_units(vec![])
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_source_signature_model(model: &self::ml_string::Text) -> bool {
     ((*model) == (self::ml_string::Text::from_units(vec![])))
         || ((*model)
@@ -747,61 +862,4 @@ pub fn accept_rust_integer_magnitude_receiver(
         && self::accept_rust_primitive_selection_receiver(
             kind, bits, signed, owner, path, children, proven, layers,
         )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_integer_magnitude_result_owner(
-    receiver: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if (*receiver) == (self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101])) {
-        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])
-    } else if self::ml_array::includes(
-        &vec![
-            self::ml_string::Text::from_units(vec![105, 56]),
-            self::ml_string::Text::from_units(vec![105, 49, 54]),
-            self::ml_string::Text::from_units(vec![105, 51, 50]),
-            self::ml_string::Text::from_units(vec![105, 54, 52]),
-            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
-        ],
-        receiver,
-        0f64,
-        false,
-        |a, b| a == b,
-    ) {
-        (self::ml_string::Text::from_units(vec![117])).concat(&{
-            let source_ml_source1_string_range_operand1 = receiver.clone();
-            {
-                let source_ml_source1_string_range_operand2 = 1f64;
-                {
-                    let source_ml_source1_string_range_position3 =
-                        source_ml_source1_string_range_operand2;
-                    {
-                        let source_ml_source1_string_range_position4 = f64::INFINITY;
-                        source_ml_source1_string_range_operand1.slice(
-                            source_ml_source1_string_range_position3,
-                            source_ml_source1_string_range_position4,
-                        )
-                    }
-                }
-            }
-        })
-    } else if self::ml_array::includes(
-        &vec![
-            self::ml_string::Text::from_units(vec![117, 56]),
-            self::ml_string::Text::from_units(vec![117, 49, 54]),
-            self::ml_string::Text::from_units(vec![117, 51, 50]),
-            self::ml_string::Text::from_units(vec![117, 54, 52]),
-            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
-            self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
-        ],
-        receiver,
-        0f64,
-        false,
-        |a, b| a == b,
-    ) {
-        receiver.clone()
-    } else {
-        self::ml_string::Text::from_units(vec![])
-    }
 }

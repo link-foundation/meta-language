@@ -1,4 +1,4 @@
-import {readRustPrimitiveAssociatedOwner} from './rust-primitive-associated-call-rules.js';
+import {readRustPrimitiveOwnerPath} from './rust-primitive-owner-path-rules.js';
 import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-rules.js';
 /** @param {string} owner @param {string} method @returns {boolean} */
 export function acceptRustPrimitiveFromMethod(owner,method){return method==='from'&&['bool','i8','u8','i16','u16','i32','u32','i64','u64','i128','u128','isize','usize','f64'].includes(owner);}
@@ -7,7 +7,7 @@ export function acceptRustPrimitiveFromMethod(owner,method){return method==='fro
 export function readRustPrimitiveFromOwner(segments,ordinary,shadowed,absolute){
  if(!ordinary||shadowed)return '';
  if(segments.length===2&&!absolute&&segments[0]==='f64'||segments.length===4&&(segments[0]==='std'||segments[0]==='core')&&segments[1]==='primitive'&&segments[2]==='f64')return 'f64';
- return readRustPrimitiveAssociatedOwner(segments,ordinary,shadowed,absolute);
+ return readRustPrimitiveOwnerPath(segments,ordinary,shadowed,absolute);
 }
 /** Unconstrained integer syntax uses Rust's ordinary i32 fallback, never the
  * conversion destination as an invented argument context.

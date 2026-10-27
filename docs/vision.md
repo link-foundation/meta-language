@@ -6724,6 +6724,28 @@ uses the complete authoring path. Default --draft still reads every graph;
 reader. No scoped/cached check mode is accepted. Complete preceding tool source
 and independent cache/fallback/gate controls remain retained and deferred.
 
+Primitive owner-path resolution is a separate shared source module from method
+registration and arithmetic plans. Associated calls delegate to that exact
+path domain; From and integer constants import it directly, with From retaining
+its separate explicit binary64 extension. This keeps unrelated operation
+implementations out of conversion/constant/expression/default source libraries.
+The factoring draft retains seven complete original generation recipes before
+emission. An obsolete generated native part is removed only when its path is
+absent from the new recipe and its complete checkout bytes equal the recorded
+original recipe and committed source. Its full old source remains reconstructible
+from the retained recipe; unknown edits refuse removal. Receipts record paths,
+original hashes and byte counts without claiming behavioral equivalence.
+
+Five JavaScript typed-definition graphs shrink from 12,145,773 to 3,766,359
+bytes; the Rust twins carry the same source change. These are source artifact
+sizes, not runtime performance measurements. 548 exhaustive path-domain controls
+retain ordinary/shadow/absolute/qualification premises, all primitive owners,
+malformed paths and From's separate f64 scope. 190 complete retained programs
+cover all preceding integer-constant sources plus explicit Boolean/binary64
+defaults. Both runtimes/codecs, four emissions, original/native products and
+predecessor reconstruction remain deferred controls. This source factoring
+establishes no concept-meaning identity or executed runtime evidence.
+
 Live cleanup fixtures use the existing JavaScript runtime at their original
 fixture and tool paths, with the same lifetime and retention/removal assertions.
 Hard links avoid duplicating its binary; only a cross-device failure permits a

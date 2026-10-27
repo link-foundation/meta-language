@@ -9,6 +9,63 @@ use super::source_ml_temporary_plan_rust_integer_bits_loop3;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_integer_magnitude_result_owner(
+    receiver: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if (*receiver) == (self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101])) {
+        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101])
+    } else if self::ml_array::includes(
+        &vec![
+            self::ml_string::Text::from_units(vec![105, 56]),
+            self::ml_string::Text::from_units(vec![105, 49, 54]),
+            self::ml_string::Text::from_units(vec![105, 51, 50]),
+            self::ml_string::Text::from_units(vec![105, 54, 52]),
+            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+        ],
+        receiver,
+        0f64,
+        false,
+        |a, b| a == b,
+    ) {
+        (self::ml_string::Text::from_units(vec![117])).concat(&{
+            let source_ml_source1_string_range_operand7 = receiver.clone();
+            {
+                let source_ml_source1_string_range_operand8 = 1f64;
+                {
+                    let source_ml_source1_string_range_position9 =
+                        source_ml_source1_string_range_operand8;
+                    {
+                        let source_ml_source1_string_range_position10 = f64::INFINITY;
+                        source_ml_source1_string_range_operand7.slice(
+                            source_ml_source1_string_range_position9,
+                            source_ml_source1_string_range_position10,
+                        )
+                    }
+                }
+            }
+        })
+    } else if self::ml_array::includes(
+        &vec![
+            self::ml_string::Text::from_units(vec![117, 56]),
+            self::ml_string::Text::from_units(vec![117, 49, 54]),
+            self::ml_string::Text::from_units(vec![117, 51, 50]),
+            self::ml_string::Text::from_units(vec![117, 54, 52]),
+            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+            self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
+        ],
+        receiver,
+        0f64,
+        false,
+        |a, b| a == b,
+    ) {
+        receiver.clone()
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_rust_integer_magnitude(method: &self::ml_string::Text) -> Vec<self::ml_string::Text> {
     if (*method)
         == (self::ml_string::Text::from_units(vec![
@@ -119,7 +176,7 @@ pub fn plan_rust_integer_magnitude(method: &self::ml_string::Text) -> Vec<self::
                         self::ml_string::Text::from_units(vec![105, 102]),
                     ];
                     {
-                        let source_ml_source1_concat_value5 = vec![
+                        let source_ml_source1_concat_value11 = vec![
                             self::ml_string::Text::from_units(vec![
                                 111, 112, 101, 114, 97, 110, 100,
                             ]),
@@ -127,24 +184,24 @@ pub fn plan_rust_integer_magnitude(method: &self::ml_string::Text) -> Vec<self::
                             self::ml_string::Text::from_units(vec![103, 101]),
                         ];
                         {
-                            let source_ml_source1_concat_value6 = forward;
+                            let source_ml_source1_concat_value12 = forward;
                             {
-                                let source_ml_source1_concat_value7 = backward;
+                                let source_ml_source1_concat_value13 = backward;
                                 {
-                                    let source_ml_source1_concat_value8 =
+                                    let source_ml_source1_concat_value14 =
                                         vec![self::ml_string::Text::from_units(vec![105, 102])];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             self::ml_array::append(
                                                 self::ml_array::append(
                                                     Vec::<self::ml_string::Text>::new(),
-                                                    source_ml_source1_concat_value5,
+                                                    source_ml_source1_concat_value11,
                                                 ),
-                                                source_ml_source1_concat_value6,
+                                                source_ml_source1_concat_value12,
                                             ),
-                                            source_ml_source1_concat_value7,
+                                            source_ml_source1_concat_value13,
                                         ),
-                                        source_ml_source1_concat_value8,
+                                        source_ml_source1_concat_value14,
                                     )
                                 }
                             }
@@ -256,14 +313,14 @@ pub fn plan_rust_wrapping_shift(method: &self::ml_string::Text) -> Vec<self::ml_
                     ])))
             {
                 {
-                    let source_ml_source1_concat_value9 =
+                    let source_ml_source1_concat_value15 =
                         vec![self::ml_string::Text::from_units(vec![
                             111, 112, 101, 114, 97, 110, 100,
                         ])];
                     {
-                        let source_ml_source1_concat_value10 = count;
+                        let source_ml_source1_concat_value16 = count;
                         {
-                            let source_ml_source1_concat_value11 = vec![if (*method)
+                            let source_ml_source1_concat_value17 = vec![if (*method)
                                 == (self::ml_string::Text::from_units(vec![
                                     119, 114, 97, 112, 112, 105, 110, 103, 95, 115, 104, 108,
                                 ])) {
@@ -279,11 +336,11 @@ pub fn plan_rust_wrapping_shift(method: &self::ml_string::Text) -> Vec<self::ml_
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<self::ml_string::Text>::new(),
-                                        source_ml_source1_concat_value9,
+                                        source_ml_source1_concat_value15,
                                     ),
-                                    source_ml_source1_concat_value10,
+                                    source_ml_source1_concat_value16,
                                 ),
-                                source_ml_source1_concat_value11,
+                                source_ml_source1_concat_value17,
                             )
                         }
                     }
@@ -291,13 +348,13 @@ pub fn plan_rust_wrapping_shift(method: &self::ml_string::Text) -> Vec<self::ml_
             } else {
                 {
                     let inverse = {
-                        let source_ml_source1_concat_value12 = vec![
+                        let source_ml_source1_concat_value18 = vec![
                             self::ml_string::Text::from_units(vec![119, 105, 100, 116, 104]),
                         ];
                         {
-                            let source_ml_source1_concat_value13 = count.clone();
+                            let source_ml_source1_concat_value19 = count.clone();
                             {
-                                let source_ml_source1_concat_value14 = vec![
+                                let source_ml_source1_concat_value20 = vec![
                                     self::ml_string::Text::from_units(vec![115, 117, 98]),
                                     self::ml_string::Text::from_units(vec![
                                         119, 105, 100, 116, 104,
@@ -308,25 +365,25 @@ pub fn plan_rust_wrapping_shift(method: &self::ml_string::Text) -> Vec<self::ml_
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<self::ml_string::Text>::new(),
-                                            source_ml_source1_concat_value12,
+                                            source_ml_source1_concat_value18,
                                         ),
-                                        source_ml_source1_concat_value13,
+                                        source_ml_source1_concat_value19,
                                     ),
-                                    source_ml_source1_concat_value14,
+                                    source_ml_source1_concat_value20,
                                 )
                             }
                         }
                     };
                     {
-                        let source_ml_source1_concat_value15 =
+                        let source_ml_source1_concat_value21 =
                             vec![self::ml_string::Text::from_units(vec![
                                 117, 110, 115, 105, 103, 110, 101, 100, 32, 111, 112, 101, 114, 97,
                                 110, 100,
                             ])];
                         {
-                            let source_ml_source1_concat_value16 = count;
+                            let source_ml_source1_concat_value22 = count;
                             {
-                                let source_ml_source1_concat_value17 = vec![
+                                let source_ml_source1_concat_value23 = vec![
                                     if (*method)
                                         == (self::ml_string::Text::from_units(vec![
                                             114, 111, 116, 97, 116, 101, 95, 108, 101, 102, 116,
@@ -346,9 +403,9 @@ pub fn plan_rust_wrapping_shift(method: &self::ml_string::Text) -> Vec<self::ml_
                                     ]),
                                 ];
                                 {
-                                    let source_ml_source1_concat_value18 = inverse;
+                                    let source_ml_source1_concat_value24 = inverse;
                                     {
-                                        let source_ml_source1_concat_value19 = vec![
+                                        let source_ml_source1_concat_value25 = vec![
                                             if (*method)
                                                 == (self::ml_string::Text::from_units(vec![
                                                     114, 111, 116, 97, 116, 101, 95, 108, 101, 102,
@@ -377,15 +434,15 @@ pub fn plan_rust_wrapping_shift(method: &self::ml_string::Text) -> Vec<self::ml_
                                                     self::ml_array::append(
                                                         self::ml_array::append(
                                                             Vec::<self::ml_string::Text>::new(),
-                                                            source_ml_source1_concat_value15,
+                                                            source_ml_source1_concat_value21,
                                                         ),
-                                                        source_ml_source1_concat_value16,
+                                                        source_ml_source1_concat_value22,
                                                     ),
-                                                    source_ml_source1_concat_value17,
+                                                    source_ml_source1_concat_value23,
                                                 ),
-                                                source_ml_source1_concat_value18,
+                                                source_ml_source1_concat_value24,
                                             ),
-                                            source_ml_source1_concat_value19,
+                                            source_ml_source1_concat_value25,
                                         )
                                     }
                                 }
@@ -607,19 +664,19 @@ pub fn plan_rust_integer_bits(method: &self::ml_string::Text, bits: f64) -> Vec<
                                                 {
                                                     let bit = 0f64;
                                                     {
-                                                        let source_ml_source1_s20 = self::source_ml_temporary_plan_rust_integer_bits_loop1(bits, reverse, trailing, leading, ones, plan, bindings, current, count, active, index, bit);
-                                                        match source_ml_source1_s20 {
+                                                        let source_ml_source1_s26 = self::source_ml_temporary_plan_rust_integer_bits_loop1(bits, reverse, trailing, leading, ones, plan, bindings, current, count, active, index, bit);
+                                                        match source_ml_source1_s26 {
                                                             self::MlTemporaryPlanRustIntegerBitsLoop1Result::MlTemporaryPlanRustIntegerBitsLoop1Done(plan_2, bindings_2, count_2, index_2) => {
                                                                 {
                                                                     let plan_3 = {
-                                                                        let source_ml_source1_concat_value21 = plan_2;
+                                                                        let source_ml_source1_concat_value27 = plan_2;
                                                                         {
-                                                                            let source_ml_source1_concat_value22 = vec![if reverse {
+                                                                            let source_ml_source1_concat_value28 = vec![if reverse {
                                                                                 8f64
                                                                             } else {
                                                                                 9f64
                                                                             }, count_2, 0f64, 0f64, 0f64];
-                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value21), source_ml_source1_concat_value22)
+                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value27), source_ml_source1_concat_value28)
                                                                         }
                                                                     };
                                                                     {
@@ -627,13 +684,13 @@ pub fn plan_rust_integer_bits(method: &self::ml_string::Text, bits: f64) -> Vec<
                                                                         {
                                                                             let index_3 = index_2 + 1f64;
                                                                             {
-                                                                                let source_ml_source1_s25 = if reverse {
+                                                                                let source_ml_source1_s31 = if reverse {
                                                                                     {
                                                                                         let plan_4 = {
-                                                                                            let source_ml_source1_concat_value26 = plan_3;
+                                                                                            let source_ml_source1_concat_value32 = plan_3;
                                                                                             {
-                                                                                                let source_ml_source1_concat_value27 = vec![19f64, body, 0f64, 0f64, 0f64];
-                                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value26), source_ml_source1_concat_value27)
+                                                                                                let source_ml_source1_concat_value33 = vec![19f64, body, 0f64, 0f64, 0f64];
+                                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value32), source_ml_source1_concat_value33)
                                                                                             }
                                                                                         };
                                                                                         {
@@ -647,7 +704,7 @@ pub fn plan_rust_integer_bits(method: &self::ml_string::Text, bits: f64) -> Vec<
                                                                                 } else {
                                                                                     self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_3, index_3, body)
                                                                                 };
-                                                                                match source_ml_source1_s25 {
+                                                                                match source_ml_source1_s31 {
                                                                                     self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_5, index_5, body_3) => {
                                                                                         {
                                                                                             let at = (bindings_2.len() as f64) - 2f64;
@@ -837,33 +894,5 @@ pub fn read_rust_checked_integer_argument_reason(
             114, 101, 99, 101, 105, 118, 101, 114, 32, 116, 121, 112, 101, 32, 97, 110, 100, 32,
             115, 111, 117, 114, 99, 101, 32, 111, 119, 110, 101, 114,
         ])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_shift_operation(
-    term: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if (*term)
-        == (self::ml_string::Text::from_units(vec![
-            115, 104, 105, 102, 116, 32, 108, 101, 102, 116,
-        ]))
-    {
-        self::ml_string::Text::from_units(vec![
-            115, 104, 105, 102, 116, 82, 117, 115, 116, 80, 114, 105, 109, 105, 116, 105, 118, 101,
-            66, 105, 116, 115, 76, 101, 102, 116,
-        ])
-    } else if (*term)
-        == (self::ml_string::Text::from_units(vec![
-            115, 104, 105, 102, 116, 32, 114, 105, 103, 104, 116,
-        ]))
-    {
-        self::ml_string::Text::from_units(vec![
-            115, 104, 105, 102, 116, 82, 117, 115, 116, 80, 114, 105, 109, 105, 116, 105, 118, 101,
-            66, 105, 116, 115, 82, 105, 103, 104, 116,
-        ])
-    } else {
-        self::ml_string::Text::from_units(vec![])
     }
 }

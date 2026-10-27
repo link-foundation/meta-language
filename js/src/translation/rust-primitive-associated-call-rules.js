@@ -1,3 +1,4 @@
+import {readRustPrimitiveOwnerPath} from './rust-primitive-owner-path-rules.js';
 import {readRustIntegerMagnitudeArity} from './rust-integer-magnitude-rules.js';
 import {acceptRustWrappingShiftMethod} from './rust-wrapping-shift-rules.js';
 import {acceptRustIntegerBitMethod} from './rust-integer-bit-rules.js';
@@ -6,13 +7,8 @@ import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-r
 /** Resolve only actual primitive paths; lexical resolution stays in the host.
  * @param {string[]} segments @param {boolean} ordinary
  * @param {boolean} shadowed @param {boolean} absolute @returns {string} */
-export function readRustPrimitiveAssociatedOwner(segments,ordinary,shadowed,absolute){
- if(!ordinary||shadowed)return '';
- let owner='';
- if(segments.length===2&&!absolute)owner=segments[0]??'';
- else if(segments.length===4&&(segments[0]==='std'||segments[0]==='core')&&segments[1]==='primitive')owner=segments[2]??'';
- return ['bool','i8','u8','i16','u16','i32','u32','i64','u64','i128','u128','isize','usize'].includes(owner)?owner:'';
-}
+export function readRustPrimitiveAssociatedOwner(segments,ordinary,shadowed,absolute){return readRustPrimitiveOwnerPath(segments,ordinary,shadowed,absolute);}
+
 /** Full call arity includes the explicit receiver. The existing method rule
  * remains responsible for its exact source interpretation.
  * @param {string} owner @param {string} method @returns {number} */

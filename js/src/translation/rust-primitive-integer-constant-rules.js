@@ -1,8 +1,8 @@
-import {readRustPrimitiveAssociatedOwner} from './rust-primitive-associated-call-rules.js';
+import {readRustPrimitiveOwnerPath} from './rust-primitive-owner-path-rules.js';
 /** @param {string[]} segments @param {boolean} ordinary @param {boolean} shadowed
  * @param {boolean} absolute @returns {string} */
 export function readRustPrimitiveIntegerConstantOwner(segments,ordinary,shadowed,absolute){
- const owner=readRustPrimitiveAssociatedOwner(segments,ordinary,shadowed,absolute);
+ const owner=readRustPrimitiveOwnerPath(segments,ordinary,shadowed,absolute);
  return owner==='bool'?'':owner;
 }
 /** @param {string} name @returns {string} */

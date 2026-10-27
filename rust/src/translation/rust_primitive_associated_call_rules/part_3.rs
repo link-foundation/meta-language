@@ -6,6 +6,35 @@ use super::ml_array;
 use super::ml_string;
 use super::read_rust_checked_integer_arity;
 use super::read_rust_integer_magnitude_arity;
+use super::read_rust_primitive_owner_path;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_shift_operation(
+    term: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if (*term)
+        == (self::ml_string::Text::from_units(vec![
+            115, 104, 105, 102, 116, 32, 108, 101, 102, 116,
+        ]))
+    {
+        self::ml_string::Text::from_units(vec![
+            115, 104, 105, 102, 116, 82, 117, 115, 116, 80, 114, 105, 109, 105, 116, 105, 118, 101,
+            66, 105, 116, 115, 76, 101, 102, 116,
+        ])
+    } else if (*term)
+        == (self::ml_string::Text::from_units(vec![
+            115, 104, 105, 102, 116, 32, 114, 105, 103, 104, 116,
+        ]))
+    {
+        self::ml_string::Text::from_units(vec![
+            115, 104, 105, 102, 116, 82, 117, 115, 116, 80, 114, 105, 109, 105, 116, 105, 118, 101,
+            66, 105, 116, 115, 82, 105, 103, 104, 116,
+        ])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -177,7 +206,7 @@ pub fn plan_rust_checked_integer_condition(
                             ];
                             {
                                 let signs = {
-                                    let source_ml_source1_concat_value31 = vec![
+                                    let source_ml_source1_concat_value37 = vec![
                                         self::ml_string::Text::from_units(vec![
                                             111, 112, 101, 114, 97, 110, 100,
                                         ]),
@@ -190,12 +219,12 @@ pub fn plan_rust_checked_integer_condition(
                                         self::ml_string::Text::from_units(vec![103, 116]),
                                     ];
                                     {
-                                        let source_ml_source1_concat_value32 = positive_positive;
+                                        let source_ml_source1_concat_value38 = positive_positive;
                                         {
-                                            let source_ml_source1_concat_value33 =
+                                            let source_ml_source1_concat_value39 =
                                                 positive_negative;
                                             {
-                                                let source_ml_source1_concat_value34 = vec![
+                                                let source_ml_source1_concat_value40 = vec![
                                                     self::ml_string::Text::from_units(vec![
                                                         105, 102,
                                                     ]),
@@ -210,13 +239,13 @@ pub fn plan_rust_checked_integer_condition(
                                                     ]),
                                                 ];
                                                 {
-                                                    let source_ml_source1_concat_value35 =
+                                                    let source_ml_source1_concat_value41 =
                                                         negative_positive;
                                                     {
-                                                        let source_ml_source1_concat_value36 =
+                                                        let source_ml_source1_concat_value42 =
                                                             negative_negative;
                                                         {
-                                                            let source_ml_source1_concat_value37 = vec![
+                                                            let source_ml_source1_concat_value43 = vec![
                                                                 self::ml_string::Text::from_units(
                                                                     vec![105, 102],
                                                                 ),
@@ -224,7 +253,7 @@ pub fn plan_rust_checked_integer_condition(
                                                                     vec![105, 102],
                                                                 ),
                                                             ];
-                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value31), source_ml_source1_concat_value32), source_ml_source1_concat_value33), source_ml_source1_concat_value34), source_ml_source1_concat_value35), source_ml_source1_concat_value36), source_ml_source1_concat_value37)
+                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value37), source_ml_source1_concat_value38), source_ml_source1_concat_value39), source_ml_source1_concat_value40), source_ml_source1_concat_value41), source_ml_source1_concat_value42), source_ml_source1_concat_value43)
                                                         }
                                                     }
                                                 }
@@ -233,7 +262,7 @@ pub fn plan_rust_checked_integer_condition(
                                     }
                                 };
                                 {
-                                    let source_ml_source1_concat_value38 = vec![
+                                    let source_ml_source1_concat_value44 = vec![
                                         self::ml_string::Text::from_units(vec![
                                             111, 112, 101, 114, 97, 110, 100,
                                         ]),
@@ -248,9 +277,9 @@ pub fn plan_rust_checked_integer_condition(
                                         self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
                                     ];
                                     {
-                                        let source_ml_source1_concat_value39 = signs;
+                                        let source_ml_source1_concat_value45 = signs;
                                         {
-                                            let source_ml_source1_concat_value40 = vec![
+                                            let source_ml_source1_concat_value46 = vec![
                                                 self::ml_string::Text::from_units(vec![105, 102]),
                                                 self::ml_string::Text::from_units(vec![105, 102]),
                                             ];
@@ -258,11 +287,11 @@ pub fn plan_rust_checked_integer_condition(
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<self::ml_string::Text>::new(),
-                                                        source_ml_source1_concat_value38,
+                                                        source_ml_source1_concat_value44,
                                                     ),
-                                                    source_ml_source1_concat_value39,
+                                                    source_ml_source1_concat_value45,
                                                 ),
-                                                source_ml_source1_concat_value40,
+                                                source_ml_source1_concat_value46,
                                             )
                                         }
                                     }
@@ -273,7 +302,7 @@ pub fn plan_rust_checked_integer_condition(
                 }
             } else {
                 {
-                    let source_ml_source1_concat_value28 = vec![
+                    let source_ml_source1_concat_value34 = vec![
                         self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
                         self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
                         self::ml_string::Text::from_units(vec![101, 113]),
@@ -284,9 +313,9 @@ pub fn plan_rust_checked_integer_condition(
                         self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
                     ];
                     {
-                        let source_ml_source1_concat_value29 = positive_positive;
+                        let source_ml_source1_concat_value35 = positive_positive;
                         {
-                            let source_ml_source1_concat_value30 = vec![
+                            let source_ml_source1_concat_value36 = vec![
                                 self::ml_string::Text::from_units(vec![105, 102]),
                                 self::ml_string::Text::from_units(vec![105, 102]),
                             ];
@@ -294,11 +323,11 @@ pub fn plan_rust_checked_integer_condition(
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<self::ml_string::Text>::new(),
-                                        source_ml_source1_concat_value28,
+                                        source_ml_source1_concat_value34,
                                     ),
-                                    source_ml_source1_concat_value29,
+                                    source_ml_source1_concat_value35,
                                 ),
-                                source_ml_source1_concat_value30,
+                                source_ml_source1_concat_value36,
                             )
                         }
                     }
@@ -531,114 +560,7 @@ pub fn read_rust_primitive_associated_owner(
     shadowed: bool,
     absolute: bool,
 ) -> self::ml_string::Text {
-    if !ordinary || shadowed {
-        self::ml_string::Text::from_units(vec![])
-    } else {
-        {
-            let owner = self::ml_string::Text::from_units(vec![]);
-            {
-                let owner_4 = if ((segments.len() as f64) == 2f64) && !absolute {
-                    {
-                        (self::ml_array::optional_at(segments, self::ml_array::number_index(0f64)))
-                            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))
-                    }
-                } else {
-                    if (((segments.len() as f64) == 4f64)
-                        && ({
-                            let source_ml_source1_comparison_operand41 =
-                                self::ml_array::optional_at(
-                                    segments,
-                                    self::ml_array::number_index(0f64),
-                                );
-                            {
-                                let source_ml_source1_comparison_operand42 =
-                                    self::ml_string::Text::from_units(vec![115, 116, 100]);
-                                match (
-                                    source_ml_source1_comparison_operand41,
-                                    source_ml_source1_comparison_operand42,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                }
-                            }
-                        } || {
-                            let source_ml_source1_comparison_operand43 =
-                                self::ml_array::optional_at(
-                                    segments,
-                                    self::ml_array::number_index(0f64),
-                                );
-                            {
-                                let source_ml_source1_comparison_operand44 =
-                                    self::ml_string::Text::from_units(vec![99, 111, 114, 101]);
-                                match (
-                                    source_ml_source1_comparison_operand43,
-                                    source_ml_source1_comparison_operand44,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                }
-                            }
-                        }))
-                        && {
-                            let source_ml_source1_comparison_operand45 =
-                                self::ml_array::optional_at(
-                                    segments,
-                                    self::ml_array::number_index(1f64),
-                                );
-                            {
-                                let source_ml_source1_comparison_operand46 =
-                                    self::ml_string::Text::from_units(vec![
-                                        112, 114, 105, 109, 105, 116, 105, 118, 101,
-                                    ]);
-                                match (
-                                    source_ml_source1_comparison_operand45,
-                                    source_ml_source1_comparison_operand46,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                }
-                            }
-                        }
-                    {
-                        {
-                            (self::ml_array::optional_at(
-                                segments,
-                                self::ml_array::number_index(2f64),
-                            ))
-                            .unwrap_or_else(|| self::ml_string::Text::from_units(vec![]))
-                        }
-                    } else {
-                        owner
-                    }
-                };
-                if self::ml_array::includes(
-                    &vec![
-                        self::ml_string::Text::from_units(vec![98, 111, 111, 108]),
-                        self::ml_string::Text::from_units(vec![105, 56]),
-                        self::ml_string::Text::from_units(vec![117, 56]),
-                        self::ml_string::Text::from_units(vec![105, 49, 54]),
-                        self::ml_string::Text::from_units(vec![117, 49, 54]),
-                        self::ml_string::Text::from_units(vec![105, 51, 50]),
-                        self::ml_string::Text::from_units(vec![117, 51, 50]),
-                        self::ml_string::Text::from_units(vec![105, 54, 52]),
-                        self::ml_string::Text::from_units(vec![117, 54, 52]),
-                        self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
-                        self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
-                        self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
-                        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
-                    ],
-                    &owner_4.clone(),
-                    0f64,
-                    false,
-                    |a, b| a == b,
-                ) {
-                    owner_4.clone()
-                } else {
-                    self::ml_string::Text::from_units(vec![])
-                }
-            }
-        }
-    }
+    self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
 }
 
 /// Execute the checked shared source algorithm.
