@@ -169,6 +169,7 @@ pub(crate) mod rust_function_pointer_rules;
 pub(crate) mod rust_function_qualifier_rules;
 pub(crate) mod rust_inherent_program;
 pub(crate) mod rust_inherent_rules;
+mod rust_integer_bit_rules;
 mod rust_integer_float_plan_rules;
 pub(crate) mod rust_literal_match_rules;
 pub(crate) mod rust_module_value_rules;

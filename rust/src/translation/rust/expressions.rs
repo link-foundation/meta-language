@@ -4,6 +4,7 @@ mod array_index;
 mod ascii_text_predicates;
 mod checked_integer;
 pub(super) mod control;
+mod integer_bits;
 mod integer_float_plan;
 mod primitive_associated_calls;
 mod primitive_default;
@@ -517,6 +518,16 @@ impl RustParser {
                     path,
                 )? {
                     value = product;
+                    continue;
+                }
+                if let Some(bits) = self.read_integer_bits(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = bits;
                     continue;
                 }
                 if let Some(checked) = self.read_checked_integer(

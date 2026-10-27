@@ -242,6 +242,9 @@ impl RustParser {
         if let Some(checked) = self.read_checked_integer(&receiver, &token, &values, range, path)? {
             return Ok(Some(checked));
         }
+        if let Some(value) = self.read_integer_bits(&receiver, &token, &values, range, path)? {
+            return Ok(Some(value));
+        }
         Err(type_error(
             "the registered primitive associated call lost its shared method interpretation",
             range,

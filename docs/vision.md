@@ -684,6 +684,32 @@ Contextual Default::default, derived/custom defaults, char/f32/aggregate/string/
 container defaults and general Option/Result values remain obligations. No
 source draft or authoring receipt establishes behavioral execution or parity.
 
+Standard integer bit queries now have shared finite source recurrences for
+count_ones/count_zeros, leading_ones/leading_zeros, trailing_ones/trailing_zeros
+and reverse_bits across all twelve supported fixed/pointer owners. Existing
+wrapping cast definitions expose the exact unsigned bit pattern and restore the
+original signed result after reversal. Positive-two quotient/remainder, bounded
+u32 counters, Boolean conditions and width-bounded reversal prefixes supply the
+entire operation. A represented integer never passes through binary64. Every
+input and recurrence state has an actual source binding. Both hosts project
+shared five-cell source terms into existing typed ASTs; no native bit algorithm
+or target-specific replacement semantics supplies missing behavior.
+
+All six counts retain actual u32 ownership; reversal retains the original
+primitive owner, including isize/usize identity. Exact associated calls, module
+aliases and immutable Copy receiver adjustment retain their original premises.
+The shared plan budget is 16,384 numeric source cells and 513 binding slots;
+coordinates retain the existing finite integral metadata reader. 1,096 complete
+original programs author independent fixed-width bit-string expectations for
+zeros, ones, limits, alternating/middle patterns, signed complements, reversal,
+source types, call capture and printed effects. Both runtimes, both codecs,
+four emissions, original/generated native products, all plan/premise controls
+and malformed/refused inputs remain unexecuted. These follow the standard
+[integer bit queries](https://doc.rust-lang.org/std/primitive.i128.html#method.count_ones)
+and [bit reversal](https://doc.rust-lang.org/std/primitive.i128.html#method.reverse_bits).
+Other bit operations, shifts/rotations, complete integer APIs and full codebase
+translation remain obligations; authoring establishes no runtime evidence.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not

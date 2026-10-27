@@ -1,4 +1,9 @@
 // Generated from complete js/src/translation/rust-primitive-default-rules.js. Do not edit by hand.
+use super::MlTemporaryPlanRustIntegerBitsJoin2;
+use super::MlTemporaryPlanRustIntegerBitsLoop1Result;
+use super::source_ml_temporary_plan_rust_integer_bits_loop1;
+use super::source_ml_temporary_plan_rust_integer_bits_loop3;
+
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     #[must_use]
@@ -301,6 +306,231 @@ pub fn accept_rust_primitive_selection_argument(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_integer_bit_method(method: &str) -> bool {
+    self::ml_array::includes(
+        &vec![
+            String::from("count_ones"),
+            String::from("count_zeros"),
+            String::from("leading_ones"),
+            String::from("leading_zeros"),
+            String::from("trailing_ones"),
+            String::from("trailing_zeros"),
+            String::from("reverse_bits"),
+        ],
+        &method.to_owned(),
+        0f64,
+        false,
+        |a, b| a == b,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_integer_bit_receiver(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    (kind == "fixed")
+        && self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_integer_bit_result_owner(method: &str, receiver: &str) -> String {
+    if (self::accept_rust_integer_bit_method(method)) {
+        if method == "reverse_bits" {
+            receiver.to_owned()
+        } else {
+            String::from("u32")
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_integer_bit_plan_operation(code: f64) -> String {
+    if code == 0f64 {
+        String::from("unsigned input")
+    } else if code == 1f64 {
+        String::from("fixed zero")
+    } else if code == 2f64 {
+        String::from("fixed one")
+    } else if code == 3f64 {
+        String::from("fixed two")
+    } else if code == 4f64 {
+        String::from("count zero")
+    } else if code == 5f64 {
+        String::from("count one")
+    } else if code == 6f64 {
+        String::from("false")
+    } else if code == 7f64 {
+        String::from("true")
+    } else if code == 8f64 {
+        String::from("fixed reference")
+    } else if code == 9f64 {
+        String::from("count reference")
+    } else if code == 10f64 {
+        String::from("boolean reference")
+    } else if code == 11f64 {
+        String::from("equal")
+    } else if code == 12f64 {
+        String::from("remainder")
+    } else if code == 13f64 {
+        String::from("division")
+    } else if code == 14f64 {
+        String::from("count addition")
+    } else if code == 15f64 {
+        String::from("fixed addition")
+    } else if code == 16f64 {
+        String::from("fixed multiplication")
+    } else if code == 17f64 {
+        String::from("conditional")
+    } else if code == 18f64 {
+        String::from("binding")
+    } else if code == 19f64 {
+        String::from("source cast")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_integer_bits(method: &str, bits: f64) -> Vec<f64> {
+    if !(self::accept_rust_integer_bit_method(method))
+        || !(self::ml_array::includes(
+            &vec![8f64, 16f64, 32f64, 64f64, 128f64],
+            &bits,
+            0f64,
+            false,
+            |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
+        ))
+    {
+        Vec::<f64>::new()
+    } else {
+        {
+            let reverse = method == "reverse_bits";
+            {
+                let trailing = (method == "trailing_zeros") || (method == "trailing_ones");
+                {
+                    let leading = (method == "leading_zeros") || (method == "leading_ones");
+                    {
+                        let ones = method.ends_with("ones");
+                        {
+                            let plan = vec![
+                                0f64, 0f64, 0f64, 0f64, 0f64, 1f64, 0f64, 0f64, 0f64, 0f64, 2f64,
+                                0f64, 0f64, 0f64, 0f64, 3f64, 0f64, 0f64, 0f64, 0f64, 4f64, 0f64,
+                                0f64, 0f64, 0f64, 5f64, 0f64, 0f64, 0f64, 0f64, 6f64, 0f64, 0f64,
+                                0f64, 0f64, 7f64, 0f64, 0f64, 0f64, 0f64,
+                            ];
+                            {
+                                let bindings = vec![
+                                    0f64,
+                                    0f64,
+                                    1f64,
+                                    if reverse { 1f64 } else { 4f64 },
+                                    2f64,
+                                    7f64,
+                                ];
+                                {
+                                    let current = 0f64;
+                                    {
+                                        let count = 1f64;
+                                        {
+                                            let active = 2f64;
+                                            {
+                                                let index = 8f64;
+                                                {
+                                                    let bit = 0f64;
+                                                    {
+                                                        let source_ml_source1_s1 = self::source_ml_temporary_plan_rust_integer_bits_loop1(bits, reverse, trailing, leading, ones, plan, bindings, current, count, active, index, bit);
+                                                        match source_ml_source1_s1 {
+                                                            self::MlTemporaryPlanRustIntegerBitsLoop1Result::MlTemporaryPlanRustIntegerBitsLoop1Done(plan_2, bindings_2, count_2, index_2) => {
+                                                                {
+                                                                    let plan_3 = {
+                                                                        let source_ml_source1_concat_value2 = plan_2;
+                                                                        {
+                                                                            let source_ml_source1_concat_value3 = vec![if reverse {
+                                                                                8f64
+                                                                            } else {
+                                                                                9f64
+                                                                            }, count_2, 0f64, 0f64, 0f64];
+                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value2), source_ml_source1_concat_value3)
+                                                                        }
+                                                                    };
+                                                                    {
+                                                                        let body = index_2;
+                                                                        {
+                                                                            let index_3 = index_2 + 1f64;
+                                                                            {
+                                                                                let source_ml_source1_s6 = if reverse {
+                                                                                    {
+                                                                                        let plan_4 = {
+                                                                                            let source_ml_source1_concat_value7 = plan_3;
+                                                                                            {
+                                                                                                let source_ml_source1_concat_value8 = vec![19f64, body, 0f64, 0f64, 0f64];
+                                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value7), source_ml_source1_concat_value8)
+                                                                                            }
+                                                                                        };
+                                                                                        {
+                                                                                            let body_2 = index_3;
+                                                                                            {
+                                                                                                let index_4 = index_3 + 1f64;
+                                                                                                self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_4, index_4, body_2)
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                } else {
+                                                                                    self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_3, index_3, body)
+                                                                                };
+                                                                                match source_ml_source1_s6 {
+                                                                                    self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_5, index_5, body_3) => {
+                                                                                        {
+                                                                                            let at = (bindings_2.len() as f64) - 2f64;
+                                                                                            {
+                                                                                                self::source_ml_temporary_plan_rust_integer_bits_loop3(plan_5, &(bindings_2), index_5, body_3, at)
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_checked_integer_arity(method: &str, ordinary: bool) -> f64 {
     if ordinary {
         if self::ml_array::includes(
@@ -497,7 +727,7 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                             ];
                             {
                                 let signs = {
-                                    let source_ml_concat_value4 = vec![
+                                    let source_ml_source1_concat_value12 = vec![
                                         String::from("operand"),
                                         String::from("zero"),
                                         String::from("gt"),
@@ -506,27 +736,29 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                                         String::from("gt"),
                                     ];
                                     {
-                                        let source_ml_concat_value5 = positive_positive;
+                                        let source_ml_source1_concat_value13 = positive_positive;
                                         {
-                                            let source_ml_concat_value6 = positive_negative;
+                                            let source_ml_source1_concat_value14 =
+                                                positive_negative;
                                             {
-                                                let source_ml_concat_value7 = vec![
+                                                let source_ml_source1_concat_value15 = vec![
                                                     String::from("if"),
                                                     String::from("right"),
                                                     String::from("zero"),
                                                     String::from("gt"),
                                                 ];
                                                 {
-                                                    let source_ml_concat_value8 = negative_positive;
+                                                    let source_ml_source1_concat_value16 =
+                                                        negative_positive;
                                                     {
-                                                        let source_ml_concat_value9 =
+                                                        let source_ml_source1_concat_value17 =
                                                             negative_negative;
                                                         {
-                                                            let source_ml_concat_value10 = vec![
+                                                            let source_ml_source1_concat_value18 = vec![
                                                                 String::from("if"),
                                                                 String::from("if"),
                                                             ];
-                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<String>::new(), source_ml_concat_value4), source_ml_concat_value5), source_ml_concat_value6), source_ml_concat_value7), source_ml_concat_value8), source_ml_concat_value9), source_ml_concat_value10)
+                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value12), source_ml_source1_concat_value13), source_ml_source1_concat_value14), source_ml_source1_concat_value15), source_ml_source1_concat_value16), source_ml_source1_concat_value17), source_ml_source1_concat_value18)
                                                         }
                                                     }
                                                 }
@@ -535,7 +767,7 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                                     }
                                 };
                                 {
-                                    let source_ml_concat_value11 = vec![
+                                    let source_ml_source1_concat_value19 = vec![
                                         String::from("operand"),
                                         String::from("zero"),
                                         String::from("eq"),
@@ -546,19 +778,19 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                                         String::from("true"),
                                     ];
                                     {
-                                        let source_ml_concat_value12 = signs;
+                                        let source_ml_source1_concat_value20 = signs;
                                         {
-                                            let source_ml_concat_value13 =
+                                            let source_ml_source1_concat_value21 =
                                                 vec![String::from("if"), String::from("if")];
                                             self::ml_array::append(
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<String>::new(),
-                                                        source_ml_concat_value11,
+                                                        source_ml_source1_concat_value19,
                                                     ),
-                                                    source_ml_concat_value12,
+                                                    source_ml_source1_concat_value20,
                                                 ),
-                                                source_ml_concat_value13,
+                                                source_ml_source1_concat_value21,
                                             )
                                         }
                                     }
@@ -569,7 +801,7 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                 }
             } else {
                 {
-                    let source_ml_concat_value1 = vec![
+                    let source_ml_source1_concat_value9 = vec![
                         String::from("operand"),
                         String::from("zero"),
                         String::from("eq"),
@@ -580,19 +812,19 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                         String::from("true"),
                     ];
                     {
-                        let source_ml_concat_value2 = positive_positive;
+                        let source_ml_source1_concat_value10 = positive_positive;
                         {
-                            let source_ml_concat_value3 =
+                            let source_ml_source1_concat_value11 =
                                 vec![String::from("if"), String::from("if")];
                             self::ml_array::append(
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<String>::new(),
-                                        source_ml_concat_value1,
+                                        source_ml_source1_concat_value9,
                                     ),
-                                    source_ml_concat_value2,
+                                    source_ml_source1_concat_value10,
                                 ),
-                                source_ml_concat_value3,
+                                source_ml_source1_concat_value11,
                             )
                         }
                     }
@@ -625,206 +857,5 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
         }
     } else {
         Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_success(method: &str, signed: bool) -> Vec<String> {
-    if method == "checked_neg" {
-        if signed {
-            vec![String::from("operand"), String::from("neg")]
-        } else {
-            vec![String::from("zero")]
-        }
-    } else if method == "checked_abs" {
-        if signed {
-            vec![
-                String::from("operand"),
-                String::from("zero"),
-                String::from("lt"),
-                String::from("operand"),
-                String::from("neg"),
-                String::from("operand"),
-                String::from("if"),
-            ]
-        } else {
-            Vec::<String>::new()
-        }
-    } else {
-        {
-            let operation = if method == "checked_add" {
-                String::from("add")
-            } else if method == "checked_sub" {
-                String::from("sub")
-            } else if method == "checked_mul" {
-                String::from("mul")
-            } else if method == "checked_div" {
-                String::from("div")
-            } else if method == "checked_rem" {
-                String::from("rem")
-            } else {
-                String::new()
-            };
-            if operation.is_empty() {
-                Vec::<String>::new()
-            } else {
-                vec![String::from("operand"), String::from("right"), operation]
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
-    if consumer == "is_some" {
-        vec![String::from("condition")]
-    } else if consumer == "is_none" {
-        vec![String::from("condition"), String::from("not")]
-    } else if consumer == "unwrap_or_default" {
-        vec![
-            String::from("condition"),
-            String::from("success"),
-            String::from("default"),
-            String::from("if"),
-        ]
-    } else if (consumer == "unwrap_or") || (consumer == "map_or") {
-        vec![
-            String::from("condition"),
-            String::from("success"),
-            String::from("fallback"),
-            String::from("if"),
-        ]
-    } else {
-        Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_result_owner(
-    consumer: &str,
-    receiver: &str,
-    mapper: &str,
-) -> String {
-    if (consumer == "is_some") || (consumer == "is_none") {
-        String::from("bool")
-    } else if (consumer == "unwrap_or") || (consumer == "unwrap_or_default") {
-        receiver.to_owned()
-    } else if consumer == "map_or" {
-        mapper.to_owned()
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_associated_owner(
-    segments: &[String],
-    ordinary: bool,
-    shadowed: bool,
-    absolute: bool,
-) -> String {
-    if !ordinary || shadowed {
-        String::new()
-    } else {
-        {
-            let owner = String::new();
-            {
-                let owner_4 = if ((segments.len() as f64) == 2f64) && !absolute {
-                    {
-                        (self::ml_array::optional_at(segments, self::ml_array::number_index(0f64)))
-                            .unwrap_or_else(|| String::new())
-                    }
-                } else {
-                    if (((segments.len() as f64) == 4f64)
-                        && ({
-                            let source_ml_comparison_operand14 = self::ml_array::optional_at(
-                                segments,
-                                self::ml_array::number_index(0f64),
-                            );
-                            {
-                                let source_ml_comparison_operand15 = String::from("std");
-                                match (
-                                    source_ml_comparison_operand14,
-                                    source_ml_comparison_operand15,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                }
-                            }
-                        } || {
-                            let source_ml_comparison_operand16 = self::ml_array::optional_at(
-                                segments,
-                                self::ml_array::number_index(0f64),
-                            );
-                            {
-                                let source_ml_comparison_operand17 = String::from("core");
-                                match (
-                                    source_ml_comparison_operand16,
-                                    source_ml_comparison_operand17,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                }
-                            }
-                        }))
-                        && {
-                            let source_ml_comparison_operand18 = self::ml_array::optional_at(
-                                segments,
-                                self::ml_array::number_index(1f64),
-                            );
-                            {
-                                let source_ml_comparison_operand19 = String::from("primitive");
-                                match (
-                                    source_ml_comparison_operand18,
-                                    source_ml_comparison_operand19,
-                                ) {
-                                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                                    _ => false,
-                                }
-                            }
-                        }
-                    {
-                        {
-                            (self::ml_array::optional_at(
-                                segments,
-                                self::ml_array::number_index(2f64),
-                            ))
-                            .unwrap_or_else(|| String::new())
-                        }
-                    } else {
-                        owner
-                    }
-                };
-                if self::ml_array::includes(
-                    &vec![
-                        String::from("bool"),
-                        String::from("i8"),
-                        String::from("u8"),
-                        String::from("i16"),
-                        String::from("u16"),
-                        String::from("i32"),
-                        String::from("u32"),
-                        String::from("i64"),
-                        String::from("u64"),
-                        String::from("i128"),
-                        String::from("u128"),
-                        String::from("isize"),
-                        String::from("usize"),
-                    ],
-                    &owner_4.clone(),
-                    0f64,
-                    false,
-                    |a, b| a == b,
-                ) {
-                    owner_4.clone()
-                } else {
-                    String::new()
-                }
-            }
-        }
     }
 }

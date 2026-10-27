@@ -1,3 +1,4 @@
+import {readRustIntegerBits} from './rust-integer-bits.js';
 import {readRustPrimitiveDefault,readRustPrimitiveDefaultImport} from './rust-primitive-default.js';
 import {readRustCheckedInteger} from './rust-checked-integer.js';
 import {readRustPrimitiveTryFrom,readRustPrimitiveTryFromImport} from './rust-primitive-try-from.js';
@@ -1405,6 +1406,8 @@ class RustParser {
     if(saturated)return saturated;
     const saturatedProduct=readRustSaturatingMultiplication(this,receiver,method,args,range,path);
     if(saturatedProduct)return saturatedProduct;
+    const bitQuery=readRustIntegerBits(this,receiver,method,args,range,path);
+    if(bitQuery)return bitQuery;
     const checked=readRustCheckedInteger(this,receiver,method,args,range,path);
     if(checked)return checked;
     const wrapped=readRustWrappingInteger(this,receiver,method,args,range,path);

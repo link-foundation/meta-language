@@ -1,3 +1,4 @@
+import {readRustIntegerBits} from './rust-integer-bits.js';
 import {readRustCheckedInteger} from './rust-checked-integer.js';
 import {acceptRustPrimitiveFromMethod,readRustPrimitiveFromOwner} from './rust-primitive-from-rules.js';
 import {projectRustPrimitiveFrom} from './rust-primitive-from.js';
@@ -34,6 +35,6 @@ export function readRustPrimitiveAssociatedCall(parser,path){
  const origin=parser.origins.origin(receiver,path),actual=origin.sourceOwner??(receiver.k==='bool'?{kind:'primitive',path:['bool'],arguments:[]}:null),type=origin.type;
  if(!acceptRustPrimitiveAssociatedReceiver(owner,type?.kind??'',String(type?.bits??''),type?.signed===true,actual?.kind??'',actual?.path.join('::')??'',actual?.arguments.length??-1,origin.proven===true,origin.wrappers.length))throw unsupported('Rust primitive associated call','the explicit receiver must retain the selected standard primitive type and source owner',range);
  const token={...start,value:method},args=values.slice(1);
- for(const read of [readRustPrimitiveSelection,readRustSignedIntegerProperty,readRustSaturatingInteger,readRustSaturatingMultiplication,readRustWrappingInteger,readRustCheckedInteger]){const value=read(parser,receiver,token,args,range,path);if(value)return value;}
+ for(const read of [readRustPrimitiveSelection,readRustSignedIntegerProperty,readRustSaturatingInteger,readRustSaturatingMultiplication,readRustWrappingInteger,readRustCheckedInteger,readRustIntegerBits]){const value=read(parser,receiver,token,args,range,path);if(value)return value;}
  throw new TypeError('the registered primitive associated call lost its shared method interpretation');
 }

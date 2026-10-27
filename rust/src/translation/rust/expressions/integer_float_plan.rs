@@ -9,7 +9,7 @@ struct PlanTerm {
     node: SExpr,
     ty: Type,
 }
-fn coordinate(value: f64, limit: usize, range: Option<Span>) -> Result<usize> {
+pub(super) fn coordinate(value: f64, limit: usize, range: Option<Span>) -> Result<usize> {
     if !value.is_finite() || value < 0.0 || value.fract() != 0.0 || value > 4096.0 {
         return Err(type_error(
             "invalid shared integer floating source coordinate",

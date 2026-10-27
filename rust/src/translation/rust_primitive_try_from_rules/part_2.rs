@@ -1,8 +1,213 @@
 // Generated from complete js/src/translation/rust-primitive-try-from-rules.js. Do not edit by hand.
+use super::accept_rust_integer_bit_method;
 use super::accept_rust_primitive_selection_receiver;
 use super::ml_array;
 use super::read_rust_checked_integer_arity;
-use super::read_rust_primitive_associated_owner;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_success(method: &str, signed: bool) -> Vec<String> {
+    if method == "checked_neg" {
+        if signed {
+            vec![String::from("operand"), String::from("neg")]
+        } else {
+            vec![String::from("zero")]
+        }
+    } else if method == "checked_abs" {
+        if signed {
+            vec![
+                String::from("operand"),
+                String::from("zero"),
+                String::from("lt"),
+                String::from("operand"),
+                String::from("neg"),
+                String::from("operand"),
+                String::from("if"),
+            ]
+        } else {
+            Vec::<String>::new()
+        }
+    } else {
+        {
+            let operation = if method == "checked_add" {
+                String::from("add")
+            } else if method == "checked_sub" {
+                String::from("sub")
+            } else if method == "checked_mul" {
+                String::from("mul")
+            } else if method == "checked_div" {
+                String::from("div")
+            } else if method == "checked_rem" {
+                String::from("rem")
+            } else {
+                String::new()
+            };
+            if operation.is_empty() {
+                Vec::<String>::new()
+            } else {
+                vec![String::from("operand"), String::from("right"), operation]
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
+    if consumer == "is_some" {
+        vec![String::from("condition")]
+    } else if consumer == "is_none" {
+        vec![String::from("condition"), String::from("not")]
+    } else if consumer == "unwrap_or_default" {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("default"),
+            String::from("if"),
+        ]
+    } else if (consumer == "unwrap_or") || (consumer == "map_or") {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("fallback"),
+            String::from("if"),
+        ]
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_result_owner(
+    consumer: &str,
+    receiver: &str,
+    mapper: &str,
+) -> String {
+    if (consumer == "is_some") || (consumer == "is_none") {
+        String::from("bool")
+    } else if (consumer == "unwrap_or") || (consumer == "unwrap_or_default") {
+        receiver.to_owned()
+    } else if consumer == "map_or" {
+        mapper.to_owned()
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_associated_owner(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    if !ordinary || shadowed {
+        String::new()
+    } else {
+        {
+            let owner = String::new();
+            {
+                let owner_4 = if ((segments.len() as f64) == 2f64) && !absolute {
+                    {
+                        (self::ml_array::optional_at(segments, self::ml_array::number_index(0f64)))
+                            .unwrap_or_else(|| String::new())
+                    }
+                } else {
+                    if (((segments.len() as f64) == 4f64)
+                        && ({
+                            let source_ml_source1_comparison_operand22 =
+                                self::ml_array::optional_at(
+                                    segments,
+                                    self::ml_array::number_index(0f64),
+                                );
+                            {
+                                let source_ml_source1_comparison_operand23 = String::from("std");
+                                match (
+                                    source_ml_source1_comparison_operand22,
+                                    source_ml_source1_comparison_operand23,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        } || {
+                            let source_ml_source1_comparison_operand24 =
+                                self::ml_array::optional_at(
+                                    segments,
+                                    self::ml_array::number_index(0f64),
+                                );
+                            {
+                                let source_ml_source1_comparison_operand25 = String::from("core");
+                                match (
+                                    source_ml_source1_comparison_operand24,
+                                    source_ml_source1_comparison_operand25,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }))
+                        && {
+                            let source_ml_source1_comparison_operand26 =
+                                self::ml_array::optional_at(
+                                    segments,
+                                    self::ml_array::number_index(1f64),
+                                );
+                            {
+                                let source_ml_source1_comparison_operand27 =
+                                    String::from("primitive");
+                                match (
+                                    source_ml_source1_comparison_operand26,
+                                    source_ml_source1_comparison_operand27,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }
+                    {
+                        {
+                            (self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(2f64),
+                            ))
+                            .unwrap_or_else(|| String::new())
+                        }
+                    } else {
+                        owner
+                    }
+                };
+                if self::ml_array::includes(
+                    &vec![
+                        String::from("bool"),
+                        String::from("i8"),
+                        String::from("u8"),
+                        String::from("i16"),
+                        String::from("u16"),
+                        String::from("i32"),
+                        String::from("u32"),
+                        String::from("i64"),
+                        String::from("u64"),
+                        String::from("i128"),
+                        String::from("u128"),
+                        String::from("isize"),
+                        String::from("usize"),
+                    ],
+                    &owner_4.clone(),
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                ) {
+                    owner_4.clone()
+                } else {
+                    String::new()
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -32,6 +237,8 @@ pub fn read_rust_primitive_associated_arity(owner: &str, method: &str) -> f64 {
             2f64
         } else if owner == "bool" {
             -1f64
+        } else if self::accept_rust_integer_bit_method(method) {
+            1f64
         } else {
             {
                 let checked = self::read_rust_checked_integer_arity(method, true);
@@ -197,13 +404,13 @@ pub fn read_rust_primitive_from_owner(
     if !ordinary || shadowed {
         String::new()
     } else if ((((segments.len() as f64) == 2f64) && !absolute) && {
-        let source_ml_comparison_operand20 =
+        let source_ml_source1_comparison_operand28 =
             self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
         {
-            let source_ml_comparison_operand21 = String::from("f64");
+            let source_ml_source1_comparison_operand29 = String::from("f64");
             match (
-                source_ml_comparison_operand20,
-                source_ml_comparison_operand21,
+                source_ml_source1_comparison_operand28,
+                source_ml_source1_comparison_operand29,
             ) {
                 (Some(ml_left), ml_right) => ml_left == ml_right,
                 _ => false,
@@ -211,26 +418,26 @@ pub fn read_rust_primitive_from_owner(
         }
     }) || (((((segments.len() as f64) == 4f64)
         && ({
-            let source_ml_comparison_operand22 =
+            let source_ml_source1_comparison_operand30 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
             {
-                let source_ml_comparison_operand23 = String::from("std");
+                let source_ml_source1_comparison_operand31 = String::from("std");
                 match (
-                    source_ml_comparison_operand22,
-                    source_ml_comparison_operand23,
+                    source_ml_source1_comparison_operand30,
+                    source_ml_source1_comparison_operand31,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 }
             }
         } || {
-            let source_ml_comparison_operand24 =
+            let source_ml_source1_comparison_operand32 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
             {
-                let source_ml_comparison_operand25 = String::from("core");
+                let source_ml_source1_comparison_operand33 = String::from("core");
                 match (
-                    source_ml_comparison_operand24,
-                    source_ml_comparison_operand25,
+                    source_ml_source1_comparison_operand32,
+                    source_ml_source1_comparison_operand33,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -238,13 +445,13 @@ pub fn read_rust_primitive_from_owner(
             }
         }))
         && {
-            let source_ml_comparison_operand26 =
+            let source_ml_source1_comparison_operand34 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(1f64));
             {
-                let source_ml_comparison_operand27 = String::from("primitive");
+                let source_ml_source1_comparison_operand35 = String::from("primitive");
                 match (
-                    source_ml_comparison_operand26,
-                    source_ml_comparison_operand27,
+                    source_ml_source1_comparison_operand34,
+                    source_ml_source1_comparison_operand35,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -252,13 +459,13 @@ pub fn read_rust_primitive_from_owner(
             }
         })
         && {
-            let source_ml_comparison_operand28 =
+            let source_ml_source1_comparison_operand36 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(2f64));
             {
-                let source_ml_comparison_operand29 = String::from("f64");
+                let source_ml_source1_comparison_operand37 = String::from("f64");
                 match (
-                    source_ml_comparison_operand28,
-                    source_ml_comparison_operand29,
+                    source_ml_source1_comparison_operand36,
+                    source_ml_source1_comparison_operand37,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -575,20 +782,21 @@ pub fn plan_rust_primitive_try_from_consumer(method: &str, guards: f64) -> Vec<S
                         upper
                     } else {
                         {
-                            let source_ml_concat_value30 = lower;
+                            let source_ml_source1_concat_value38 = lower;
                             {
-                                let source_ml_concat_value31 = upper;
+                                let source_ml_source1_concat_value39 = upper;
                                 {
-                                    let source_ml_concat_value32 = vec![String::from("and")];
+                                    let source_ml_source1_concat_value40 =
+                                        vec![String::from("and")];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             self::ml_array::append(
                                                 Vec::<String>::new(),
-                                                source_ml_concat_value30,
+                                                source_ml_source1_concat_value38,
                                             ),
-                                            source_ml_concat_value31,
+                                            source_ml_source1_concat_value39,
                                         ),
-                                        source_ml_concat_value32,
+                                        source_ml_source1_concat_value40,
                                     )
                                 }
                             }
@@ -598,23 +806,23 @@ pub fn plan_rust_primitive_try_from_consumer(method: &str, guards: f64) -> Vec<S
                         condition
                     } else if method == "is_err" {
                         {
-                            let source_ml_concat_value33 = condition;
+                            let source_ml_source1_concat_value41 = condition;
                             {
-                                let source_ml_concat_value34 = vec![String::from("not")];
+                                let source_ml_source1_concat_value42 = vec![String::from("not")];
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<String>::new(),
-                                        source_ml_concat_value33,
+                                        source_ml_source1_concat_value41,
                                     ),
-                                    source_ml_concat_value34,
+                                    source_ml_source1_concat_value42,
                                 )
                             }
                         }
                     } else {
                         {
-                            let source_ml_concat_value35 = condition;
+                            let source_ml_source1_concat_value43 = condition;
                             {
-                                let source_ml_concat_value36 = vec![
+                                let source_ml_source1_concat_value44 = vec![
                                     String::from("success"),
                                     if method == "unwrap_or_default" {
                                         String::from("default")
@@ -626,9 +834,9 @@ pub fn plan_rust_primitive_try_from_consumer(method: &str, guards: f64) -> Vec<S
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<String>::new(),
-                                        source_ml_concat_value35,
+                                        source_ml_source1_concat_value43,
                                     ),
-                                    source_ml_concat_value36,
+                                    source_ml_source1_concat_value44,
                                 )
                             }
                         }
