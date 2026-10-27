@@ -504,6 +504,32 @@ NaN, infinities and signed zero retain the primitive comparison behavior.
 Five shared source cases and eighteen exact refusals cover both runtimes.
 General range values, iterators, custom comparison owners and unsupported
 ownership layers require separate interpretations.
+
+Direct standard fixed integers and Booleans now have an ordinary source draft
+for min/max methods and qualified std::cmp::min/max calls. A declared
+or aliased std namespace keeps its separate source interpretation. Function
+values retain their callable obligation. Shared decisions require the actual
+owner, width, sign, proven direct receiver and independently matching operand.
+Unsuffixed integer syntax receives the actual receiver's type context; full
+checking still rejects invalid literals. Pointer-sized and fixed-width owners
+remain distinct even when their representations coincide. Every receiver and
+argument evaluates once in source order before existing conditional operations
+select the result. Integer minimum keeps the first equal value; maximum keeps
+the second. Boolean selection uses existing Boolean conditions in false-before-
+true order. These choices follow [Ord](https://doc.rust-lang.org/std/cmp/trait.Ord.html).
+
+Complete shared definitions generate Rust source and typed Links. Native hosts
+transport actual source facts and build the existing AST forms, without a
+second primitive selection algorithm. Sixty-nine original programs retain
+all fixed widths and boundary values, Boolean truth tables, contextual literals,
+calls, recursive selection, independently specified native function types,
+complete output traces and both generated products. Every shared premise and
+actual source refusal remains a deferred control, together with both Links
+transports and all target emissions. This establishes no runtime evidence.
+Borrowed Ord results, generic/custom trait resolution, floating-point NaN/zero
+semantics, clamp/panic behavior and unsupported literal receiver origins remain
+separate obligations.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
 Earlier default-profile result refusals remain authenticated as historical

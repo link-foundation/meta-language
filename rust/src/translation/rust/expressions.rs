@@ -3,6 +3,7 @@
 mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
+mod primitive_selections;
 mod read_only_queries;
 mod scalar_vector_copy;
 mod standard_owned_calls;
@@ -471,6 +472,16 @@ impl RustParser {
                     value = copy;
                     continue;
                 }
+                if let Some(selected) = self.read_primitive_selection(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = selected;
+                    continue;
+                }
                 let mut origin = self.origins.origin(&value, path);
                 let method_name = method.value.as_str();
                 if let Some(copy) = self.read_owned_local_copy(
@@ -823,6 +834,9 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_selection_call(path)? {
+            return Ok(value);
+        }
         if let Some(value) = self.read_standard_owned_call(path)? {
             return Ok(value);
         }

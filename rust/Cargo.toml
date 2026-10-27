@@ -189,6 +189,7 @@ include = [
     "src/data/rust-named-formatting-program.lino",
     "src/data/rust-pointer-integer-owner-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",
+    "src/data/rust-primitive-selection-program.lino",
     "src/data/rust-project-source-program.lino",
     "src/data/rust-record-program.lino",
     "src/data/rust-scalar-mathematical-interface-program.lino",

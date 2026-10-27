@@ -1,3 +1,4 @@
+import {readRustPrimitiveSelection,readRustPrimitiveSelectionCall} from './rust-primitive-selections.js';
 import {readRustFormattingArgumentNameError,planRustNamedFormattingValue} from './rust-named-formatting-rules.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustStandardOwnedCall} from './rust-standard-owned-calls.js';
@@ -1387,6 +1388,8 @@ class RustParser {
     };
     const vectorCopy=readRustScalarVectorCopy(this,receiver,method,args,range,path);
     if(vectorCopy)return vectorCopy;
+    const selection=readRustPrimitiveSelection(this,receiver,method,args,range,path);
+    if(selection)return selection;
     const floatOperation = acceptRustFloatOperationMethod(method.value);
     if (floatOperation || acceptRustFloatPredicateMethod(method.value)) {
       expect(0);
@@ -1474,6 +1477,7 @@ class RustParser {
   }
 
   primary(path, options) {
+    const standardSelection=readRustPrimitiveSelectionCall(this,path);if(standardSelection)return standardSelection;
     const standardOwnedCall=readRustStandardOwnedCall(this,path);if(standardOwnedCall)return standardOwnedCall;
     const standardStringView=readRustStandardStringView(this,path);if(standardStringView)return standardStringView;
     const c = this.cursor;

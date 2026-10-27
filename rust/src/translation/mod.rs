@@ -175,6 +175,7 @@ pub(crate) mod rust_pointer_integer_owner_rules;
 pub(crate) mod rust_primitive_bitwise;
 pub(crate) mod rust_primitive_bitwise_program;
 pub(crate) mod rust_primitive_bitwise_rules;
+pub(crate) mod rust_primitive_selection_rules;
 pub(crate) mod rust_record_program;
 pub(crate) mod rust_record_rules;
 pub(crate) mod rust_shared_array_handle_rules;
