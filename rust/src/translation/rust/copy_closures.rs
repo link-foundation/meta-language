@@ -65,19 +65,28 @@ impl RustParser {
             parameters = Some(actual);
             result = Some(actual_result);
         }
-        let parameters = parameters.unwrap_or_else(|| match self.origins.origin(callee, path).ty {
-            Some(Type::Function { params, .. }) => params
-                .into_iter()
-                .map(|ty| {
-                    let function = matches!(ty, Type::Function { .. });
-                    let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
-                    if function {
-                        origin.copy_evidence = Some(());
-                    }
-                    origin
-                })
-                .collect(),
-            _ => Vec::new(),
+        let parameters = parameters.unwrap_or_else(|| {
+            let origin = self.origins.origin(callee, path);
+            if result.is_none() {
+                result = origin.callable_result.as_deref().cloned();
+            }
+            if let Some(parameters) = origin.callable_parameters {
+                return parameters;
+            }
+            match origin.ty {
+                Some(Type::Function { params, .. }) => params
+                    .into_iter()
+                    .map(|ty| {
+                        let function = matches!(ty, Type::Function { .. });
+                        let mut value = SourceOrigin::with_type(ty, path, Vec::new());
+                        if function {
+                            value.copy_evidence = Some(());
+                        }
+                        value
+                    })
+                    .collect(),
+                _ => Vec::new(),
+            }
         });
         let mut args = Vec::new();
         while !self.cursor.is(")") {
@@ -186,7 +195,11 @@ impl RustParser {
                         self.cursor.expect(":", Some("closure parameter"))?;
                         unreachable!("missing actual source type");
                     };
-                    let origin = SourceOrigin::with_type(ty.clone(), path, Vec::new());
+                    let origin = expected
+                        .and_then(|origin| origin.callable_parameters.as_ref())
+                        .and_then(|parameters| parameters.get(origins.len()))
+                        .cloned()
+                        .unwrap_or_else(|| SourceOrigin::with_type(ty.clone(), path, Vec::new()));
                     (ty, origin)
                 } else {
                     self.cursor.expect(":", Some("closure parameter"))?;
@@ -223,8 +236,12 @@ impl RustParser {
         let mut result_origin = if written {
             Some(self.origins.current_type.clone())
         } else {
-            ret.as_ref()
-                .map(|ret| SourceOrigin::with_type(ret.clone(), path, Vec::new()))
+            ret.as_ref().map(|ret| {
+                expected
+                    .and_then(|origin| origin.callable_result.as_deref())
+                    .cloned()
+                    .unwrap_or_else(|| SourceOrigin::with_type(ret.clone(), path, Vec::new()))
+            })
         };
         let names = params
             .iter()
@@ -251,7 +268,7 @@ impl RustParser {
             return Err(unsupported("Rust Copy closure", reason, Some(start.span())));
         }
         let outer = self.origins.enter(None);
-        for (parameter, origin) in params.iter().zip(origins) {
+        for (parameter, origin) in params.iter().zip(origins.iter().cloned()) {
             self.origins.scope.insert(parameter.name.clone(), origin);
         }
         let read: Result<SExpr> = (|| {
@@ -362,6 +379,8 @@ impl RustParser {
         let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
         origin.copy_closure_identity = span;
         origin.copy_closure_capture_count = Some(capture_count);
+        origin.callable_parameters = Some(origins);
+        origin.callable_result = result_origin.map(Box::new);
         self.origins.mark(&node, origin);
         Ok(node)
     }
@@ -377,16 +396,33 @@ impl RustParser {
         if !rules::accept_rust_copy_closure_invocation(origin.ty.as_ref().map_or("", Type::kind)) {
             return Ok(None);
         }
-        let Some(Type::Function { params, ret }) = origin.ty else {
+        let Some(Type::Function { params, ret }) = origin.ty.clone() else {
             unreachable!("actual callable source type");
         };
         for (index, arg) in args.iter().enumerate() {
             if let Some(parameter @ Type::Function { .. }) = params.get(index) {
-                let mut expected = SourceOrigin::with_type(parameter.clone(), path, Vec::new());
+                let mut expected = origin
+                    .callable_parameters
+                    .as_ref()
+                    .and_then(|parameters| parameters.get(index))
+                    .cloned()
+                    .unwrap_or_else(|| {
+                        SourceOrigin::with_type(parameter.clone(), path, Vec::new())
+                    });
                 expected.copy_evidence = Some(());
                 self.origins.argument(
                     &self.origins.origin(arg, path),
                     &expected,
+                    arg.span.or(span),
+                )?;
+            } else if let Some(expected) = origin
+                .callable_parameters
+                .as_ref()
+                .and_then(|parameters| parameters.get(index))
+            {
+                self.origins.argument(
+                    &self.origins.origin(arg, path),
+                    expected,
                     arg.span.or(span),
                 )?;
             } else {
@@ -401,7 +437,11 @@ impl RustParser {
             span,
         );
         let pointer = matches!(*ret, Type::Function { .. });
-        let mut result = SourceOrigin::with_type(*ret, path, Vec::new());
+        let mut result = origin
+            .callable_result
+            .as_deref()
+            .cloned()
+            .unwrap_or_else(|| SourceOrigin::with_type(*ret, path, Vec::new()));
         if pointer {
             result.copy_evidence = Some(());
         }

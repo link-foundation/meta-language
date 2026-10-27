@@ -10,12 +10,14 @@ impl RustParser {
         self.cursor.expect("(", Some("function pointer"))?;
         let mut params = Vec::new();
         let mut copies = Vec::new();
+        let mut parameter_origins = Vec::new();
         while !self.cursor.is(")") {
             if self.cursor.is_kind(TokenKind::Identifier) && self.cursor.is_at(":", 1) {
                 self.cursor.advance();
                 self.cursor.advance();
             }
             params.push(self.parse_type()?);
+            parameter_origins.push(self.origins.current_type.clone());
             copies.push(self.origins.current_type.direct_copy_value());
             if self.cursor.eat(",").is_none() {
                 break;
@@ -40,6 +42,7 @@ impl RustParser {
                 Some(start.span()),
             ));
         }
+        let result_origin = self.origins.current_type.clone();
         let ty = Type::Function {
             params,
             ret: Box::new(ret),
@@ -47,6 +50,8 @@ impl RustParser {
         self.origins
             .typed(ty.clone(), &self.module_path.clone(), Vec::new());
         self.origins.current_type.copy_evidence = Some(());
+        self.origins.current_type.callable_parameters = Some(parameter_origins);
+        self.origins.current_type.callable_result = Some(Box::new(result_origin));
         Ok(ty)
     }
 
@@ -71,7 +76,10 @@ impl RustParser {
             self.origins.mark(&node, origin);
             return Ok(Some(node));
         }
-        let Some(entry) = self.origins.lookup(&self.source_value_path(segments, path), path) else {
+        let Some(entry) = self
+            .origins
+            .lookup(&self.source_value_path(segments, path), path)
+        else {
             return Ok(None);
         };
         if let SourceDeclaration::Constant { result } = &entry.declaration {
@@ -102,13 +110,15 @@ impl RustParser {
                 .iter()
                 .map(|origin| origin.ty.clone().expect("actual pointer parameter type"))
                 .collect(),
-            ret: Box::new(result.ty.expect("actual pointer result type")),
+            ret: Box::new(result.ty.clone().expect("actual pointer result type")),
         };
         let mut full = vec!["crate".to_owned()];
         full.extend(entry.full_name.split('.').map(str::to_owned));
         let node = SExpr::new(SNode::FunctionValue { path: full }, span);
         let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
         origin.copy_evidence = Some(());
+        origin.callable_parameters = Some(parameters);
+        origin.callable_result = Some(Box::new(result));
         self.origins.mark(&node, origin);
         Ok(Some(node))
     }

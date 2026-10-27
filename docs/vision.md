@@ -4926,6 +4926,27 @@ pattern parameters, owned/mutable/reference captures and results, escaping
 lifetimes, trait coercions, generated Rc wrappers, async and complete ownership
 and drop behavior remain obligations.
 
+Recursive callable source contracts now retain each actual parameter and result
+origin through pointers, Copy closures, returned callables, immutable tuples and
+module type aliases. Bounded structural projections carry original source owner
+atoms into shared checks. Pointer-sized/fixed-width collisions cannot disappear
+inside a signature or a join; missing facts and exhausted projections refuse.
+These are typing checks, not certificates that function bodies have equal meaning.
+Actual Boolean, binary64 and byte-character literals supply their own source
+owners; ordinary characters retain their separate unsupported domain.
+
+379 complete future programs retain independent source types, recursive source
+owner trees, values, traces and invalid source contracts. Canonical Rust emission
+uses the existing Rc/dyn Fn value encoding and canonical 64-bit pointer integer
+types. Independent assertions check both that emitted interface and every
+original source interface. The initial 376-program unexecuted draft remains
+complete hashed Links history: its incorrect selection of the scalar-only source
+interface model is corrected without removing inputs or original assertions.
+That existing scalar model still rejects function domains. Exact source callable
+ABI emission, generated wrapper reimport, all broader ownership and whole-source
+translation obligations remain required. Neither these controls nor the
+represented source programs have executed.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains

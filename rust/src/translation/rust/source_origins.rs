@@ -27,6 +27,7 @@ use crate::translation::rust_pointer_integer_owner_rules::{
     read_rust_pointer_integer_owner_join_error, select_rust_pointer_integer_result_owner,
 };
 
+mod callable_owners;
 mod patterns;
 mod primitive_expressions;
 mod type_owners;
@@ -54,6 +55,9 @@ pub(super) struct SourceOrigin {
     pub(super) fresh_vector_result_contract: bool,
     pub(super) copy_closure_identity: Option<Span>,
     pub(super) copy_closure_capture_count: Option<usize>,
+    pub(super) callable_parameters: Option<Vec<Self>>,
+    pub(super) callable_result: Option<Box<Self>>,
+    pub(super) callable_source_owner_error: Option<String>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
@@ -91,6 +95,9 @@ impl SourceOrigin {
             fresh_vector_result_contract: false,
             copy_closure_identity: None,
             copy_closure_capture_count: None,
+            callable_parameters: None,
+            callable_result: None,
+            callable_source_owner_error: None,
         }
     }
 
@@ -135,6 +142,9 @@ impl SourceOrigin {
             fresh_vector_result_contract: false,
             copy_closure_identity: None,
             copy_closure_capture_count: None,
+            callable_parameters: None,
+            callable_result: None,
+            callable_source_owner_error: None,
         }
     }
 
@@ -510,6 +520,10 @@ impl SourceOrigins {
 
     /// Compare retained source types by their existing declaration identities.
     pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_callable_owner_rules::accept_rust_callable_owner_descriptors_equal(&callable_owners::descriptor(left),&callable_owners::descriptor(right)){return false;}
+        self.compare_origin_structure(left, right)
+    }
+    fn compare_origin_structure(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
         if left.proven != right.proven
             || left.diverging != right.diverging
             || left.uncertain != right.uncertain
@@ -528,8 +542,31 @@ impl SourceOrigins {
                     || !left
                         .iter()
                         .zip(right)
-                        .all(|(left, right)| self.same_origin(left, right))
+                        .all(|(left, right)| self.compare_origin_structure(left, right))
                 {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
+        }
+        match (&left.callable_parameters, &right.callable_parameters) {
+            (Some(left), Some(right)) => {
+                if left.len() != right.len()
+                    || !left
+                        .iter()
+                        .zip(right)
+                        .all(|(left, right)| self.compare_origin_structure(left, right))
+                {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
+        }
+        match (&left.callable_result, &right.callable_result) {
+            (Some(left), Some(right)) => {
+                if !self.compare_origin_structure(left, right) {
                     return false;
                 }
             }
@@ -794,6 +831,29 @@ impl SourceOrigins {
                 ..SourceOrigin::value()
             };
         };
+        if let Some(error) = returning
+            .iter()
+            .find_map(|origin| origin.callable_source_owner_error.clone())
+        {
+            return SourceOrigin {
+                callable_source_owner_error: Some(error),
+                ..SourceOrigin::uncertain()
+            };
+        }
+        let callable_rows = returning
+            .iter()
+            .flat_map(|origin| callable_owners::descriptor(origin))
+            .collect::<Vec<_>>();
+        let callable_error =
+            crate::translation::rust_callable_owner_rules::read_rust_callable_owner_join_error(
+                &callable_rows,
+            );
+        if !callable_error.is_empty() {
+            return SourceOrigin {
+                callable_source_owner_error: Some(callable_error),
+                ..SourceOrigin::uncertain()
+            };
+        }
         let owners = returning
             .iter()
             .map(|origin| origin.pointer_integer_owner())
@@ -1119,6 +1179,9 @@ impl SourceOrigins {
         if self.collecting || actual.diverging {
             return Ok(());
         }
+        if let Some(error) = &actual.callable_source_owner_error {
+            return Err(unsupported("Rust callable source owner", error, span));
+        }
         let error = if actual.integer_source_owner_conflict {
             read_rust_pointer_integer_owner_error("usize", "u64")
         } else {
@@ -1156,6 +1219,18 @@ impl SourceOrigins {
             return Ok(());
         }
         self.pointer_integer_argument(actual, expected, span)?;
+        let callable_error =
+            crate::translation::rust_callable_owner_rules::read_rust_callable_owner_error(
+                &callable_owners::descriptor(actual),
+                &callable_owners::descriptor(expected),
+            );
+        if !callable_error.is_empty() {
+            return Err(unsupported(
+                "Rust callable source owner",
+                &callable_error,
+                span,
+            ));
+        }
         let pointer_error = crate::translation::rust_function_pointer_rules::read_rust_function_pointer_coercion_error(
             matches!(expected.ty, Some(Type::Function { .. })) && expected.copy_evidence.is_some(),
             actual.ty.as_ref().map_or("", Type::kind), actual.copy_closure_identity.is_some(),

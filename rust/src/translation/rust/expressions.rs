@@ -971,9 +971,9 @@ impl RustParser {
                 },
                 span(&token, &token),
             );
-            if token.suffix == "f64" {
+            if token.suffix == "f64" || (token.suffix.is_empty() && token.floating) {
                 self.origins
-                    .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
+                    .mark(&result, primitive_try_from::origin(FLOAT, "f64", path));
             }
             if !token.suffix.is_empty() && rust_fixed_type(&token.suffix).is_some() {
                 let mut origin = self.origins.origin(&result, path);
@@ -1018,7 +1018,8 @@ impl RustParser {
                 )
             })?;
             self.cursor.advance();
-            return Ok(SExpr::new(
+            let origin = primitive_try_from::origin(ty.clone(), &character_type, path);
+            let result = SExpr::new(
                 SNode::Num {
                     value: token.value.clone(),
                     ty: Some(ty),
@@ -1026,7 +1027,9 @@ impl RustParser {
                     unit: false,
                 },
                 span(&token, &token),
-            ));
+            );
+            self.origins.mark(&result, origin);
+            return Ok(result);
         }
         let c = &self.cursor;
         if token.kind == TokenKind::ByteString {
@@ -1095,12 +1098,15 @@ impl RustParser {
         }
         if c.is("true") || c.is("false") {
             self.cursor.advance();
-            return Ok(SExpr::new(
+            let result = SExpr::new(
                 SNode::Bool {
                     value: token.value == "true",
                 },
                 span(&token, &token),
-            ));
+            );
+            self.origins
+                .mark(&result, primitive_try_from::origin(BOOL, "bool", path));
+            return Ok(result);
         }
         if ["unsafe", "loop", "while", "for", "return", "break"]
             .iter()

@@ -1,3 +1,5 @@
+import {projectRustCallableOwnerDescriptor} from './rust-callable-owner-origins.js';
+import {readRustCallableOwnerError,readRustCallableOwnerJoinError,acceptRustCallableOwnerDescriptorsEqual} from './rust-callable-owner-rules.js';
 import {selectRustPrimitiveExpressionOrigin} from './rust-primitive-expression-origins.js';
 import {acceptRustPrimitiveBooleanResult} from './rust-primitive-expression-rules.js';
 // Source indirection evidence for the Rust value projection. The existing
@@ -23,7 +25,7 @@ import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
-const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
+const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null,callableParameters:origin.callableParameters?.map(clone)??null,callableResult:clone(origin.callableResult)??null });
 
 export class RustSourceOrigins {
   constructor(catalog = null, arrayResultModel = '',localValueStateModel='',sharedArrayHandleSourceModel='') {
@@ -39,6 +41,8 @@ export class RustSourceOrigins {
     this.patternReferences = new WeakMap();
     this.type = unknown();
   }
+
+  copy(origin){return clone(origin);}
 
   enter(scope = this.scope) {
     const previous = this.scope;
@@ -125,8 +129,15 @@ export class RustSourceOrigins {
   }
 
   same(left, right) {
+    if(!acceptRustCallableOwnerDescriptorsEqual(projectRustCallableOwnerDescriptor(left),projectRustCallableOwnerDescriptor(right)))return false;
+    return this.compareStructure(left,right);
+  }
+
+  compareStructure(left,right){
     if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || (left.floatSourceModel ?? null) !== (right.floatSourceModel ?? null) || left.textSourceModel !== right.textSourceModel || left.arraySourceModel !== right.arraySourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
-    if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.same(field, right.fields[index]))))) return false;
+    if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.compareStructure(field, right.fields[index]))))) return false;
+    if(Boolean(left.callableParameters)!==Boolean(right.callableParameters)||left.callableParameters&&(left.callableParameters.length!==right.callableParameters.length||left.callableParameters.some((parameter,index)=>!this.compareStructure(parameter,right.callableParameters[index]))))return false;
+    if(Boolean(left.callableResult)!==Boolean(right.callableResult)||left.callableResult&&!this.compareStructure(left.callableResult,right.callableResult))return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
       const leftOwner = this.lookup(left.type.path, left.path);
       const rightOwner = this.lookup(right.type.path, right.path);
@@ -213,6 +224,8 @@ export class RustSourceOrigins {
     if (!returning.length) return { ...value(), diverging: true };
     const owners=returning.map(origin=>readRustPointerIntegerContractOwner(origin.sourceOwner,origin.integerSourceOwnerConstraint??''));
     if(returning.some(origin=>origin.integerSourceOwnerConflict)||readRustPointerIntegerOwnerJoinError(owners))return {...unknown(true),integerSourceOwnerConflict:true};
+    const inheritedCallableError=returning.find(origin=>origin.callableSourceOwnerError)?.callableSourceOwnerError;if(inheritedCallableError)return {...unknown(true),callableSourceOwnerError:inheritedCallableError};
+    const callableError=readRustCallableOwnerJoinError(returning.flatMap(projectRustCallableOwnerDescriptor));if(callableError)return {...unknown(true),callableSourceOwnerError:callableError};
     const first = returning[0];
     for(const origin of returning){const error=readRustCopyClosureJoinError(Boolean(first.copyClosureSpan),Boolean(origin.copyClosureSpan),first.copyClosureSpan?.start===origin.copyClosureSpan?.start&&first.copyClosureSpan?.end===origin.copyClosureSpan?.end);if(error)throw unsupported('Rust closure source join',error);}
     if (returning.every(origin => this.same(origin, first))) return { ...clone(first), integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners),freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
@@ -290,6 +303,7 @@ export class RustSourceOrigins {
 
   pointerIntegerArgument(actualOrigin,expectedOrigin,span){
     if(this.collecting||actualOrigin.diverging)return;
+    if(actualOrigin.callableSourceOwnerError)throw unsupported('Rust callable source owner',actualOrigin.callableSourceOwnerError,span);
     const actualOwner=readRustPointerIntegerContractOwner(actualOrigin.sourceOwner,actualOrigin.integerSourceOwnerConstraint??'');
     const expectedOwner=readRustPointerIntegerContractOwner(expectedOrigin.sourceOwner,expectedOrigin.integerSourceOwnerConstraint??'');
     const ownerError=readRustPointerIntegerOwnerError(actualOrigin.integerSourceOwnerConflict?'usize':actualOwner,actualOrigin.integerSourceOwnerConflict?'u64':expectedOwner);if(ownerError)throw unsupported('Rust integer source owner',ownerError,span);
@@ -302,6 +316,7 @@ export class RustSourceOrigins {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
     this.pointerIntegerArgument(actualOrigin,expectedOrigin,span);
+    const callableError=readRustCallableOwnerError(projectRustCallableOwnerDescriptor(actualOrigin),projectRustCallableOwnerDescriptor(expectedOrigin));if(callableError)throw unsupported('Rust callable source owner',callableError,span);
     const pointerError=readRustFunctionPointerCoercionError(expectedOrigin.type?.kind==='function'&&expectedOrigin.copyEvidence===true,actualOrigin.type?.kind??'',Boolean(actualOrigin.copyClosureSpan),actualOrigin.copyClosureCaptureCount??-1,actualOrigin.proven);if(pointerError)throw unsupported('Rust function pointer coercion',pointerError,span);
     if(this.sharedArrayHandleSourceModel&&(actualOrigin.type?.kind==='array'||expectedOrigin.type?.kind==='array')&&!acceptRustSharedArrayHandleTransfer(actualOrigin.arraySourceModel,expectedOrigin.arraySourceModel,actualOrigin.wrappers.length,expectedOrigin.wrappers.length))throw unsupported('Rust shared array handle source','call and return ownership must preserve actual shared handles without borrowed payload coercion',span);
     if (!actualOrigin.proven && !actualOrigin.uncertain && !actualOrigin.wrappers.length && !expectedOrigin.wrappers.length) return;

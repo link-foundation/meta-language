@@ -536,3 +536,5 @@ mod translation_rust_wrapping_shift;
 mod translation_rust_integer_magnitude;
 
 mod translation_rust_primitive_owner_path;
+
+mod translation_rust_callable_owner;

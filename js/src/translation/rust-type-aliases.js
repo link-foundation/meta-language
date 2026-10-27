@@ -24,10 +24,10 @@ function sourceDataOwner(parser,segments,path){for(const key of readRustTypeAlia
 function typeChildren(type){return type.kind==='array'?[type.element]:type.kind==='tuple'?type.elements:type.kind==='function'?[...type.params,type.ret]:[];}
 function copyOrigin(parser,origin,row){
  const origins=[origin],types=[];let nodes=0;
- for(let at=0;at<origins.length;at+=1){const value=origins[at];nodes+=1;if(value.type)types.push(value.type);origins.push(...(value.fields??[]));const message=readRustTypeAliasCloneError(parser.sourceTypeAliasNodes,nodes);if(message)fail(parser,message,row);}
+ for(let at=0;at<origins.length;at+=1){const value=origins[at];nodes+=1;if(value.type)types.push(value.type);origins.push(...(value.fields??[]),...(value.callableParameters??[]));if(value.callableResult)origins.push(value.callableResult);const message=readRustTypeAliasCloneError(parser.sourceTypeAliasNodes,nodes);if(message)fail(parser,message,row);}
  for(let at=0;at<types.length;at+=1){nodes+=1;types.push(...typeChildren(types[at]));const message=readRustTypeAliasCloneError(parser.sourceTypeAliasNodes,nodes);if(message)fail(parser,message,row);}
  parser.sourceTypeAliasNodes+=nodes;
- const copy=value=>{const {type,fields,...rest}=value;return {...structuredClone(rest),type:type?qualifyType(parser,type,value.path):null,fields:fields?.map(copy)??null};};
+ const copy=value=>{const {type,fields,callableParameters,callableResult,...rest}=value;return {...structuredClone(rest),type:type?qualifyType(parser,type,value.path):null,fields:fields?.map(copy)??null,callableParameters:callableParameters?.map(copy)??null,callableResult:callableResult?copy(callableResult):null};};
  return copy(origin);
 }
 function expandAlias(parser,row){

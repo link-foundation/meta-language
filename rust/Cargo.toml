@@ -171,6 +171,7 @@ include = [
     "src/data/rust-array-index-program.lino",
     "src/data/rust-array-length-program.lino",
     "src/data/rust-byte-string-program.lino",
+    "src/data/rust-callable-owner-program.lino",
     "src/data/rust-checked-integer-program.lino",
     "src/data/rust-constructed-string-interface-program.lino",
     "src/data/rust-contextual-closure-program.lino",

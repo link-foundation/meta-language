@@ -166,6 +166,16 @@ impl RustParser {
                 .map(|origin| self.qualify_alias_origin(origin))
                 .collect()
         });
+        result.callable_parameters = origin.callable_parameters.as_ref().map(|parameters| {
+            parameters
+                .iter()
+                .map(|origin| self.qualify_alias_origin(origin))
+                .collect()
+        });
+        result.callable_result = origin
+            .callable_result
+            .as_deref()
+            .map(|origin| Box::new(self.qualify_alias_origin(origin)));
         result
     }
     fn measure_alias_origin(&self, origin: &SourceOrigin, row: &AliasDeclaration) -> Result<usize> {
@@ -182,6 +192,12 @@ impl RustParser {
             }
             if let Some(fields) = &origin.fields {
                 origins.extend(fields);
+            }
+            if let Some(parameters) = &origin.callable_parameters {
+                origins.extend(parameters);
+            }
+            if let Some(result) = &origin.callable_result {
+                origins.push(result.as_ref());
             }
             let message = rules::read_rust_type_alias_clone_error(
                 self.source_type_aliases.nodes as f64,
