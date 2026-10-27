@@ -6383,6 +6383,19 @@ define these compiler options.
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
 
+Optional source-catalog authoring can reuse an authored root coordinate after
+every complete current asset digest and byte count matches its snapshot entry.
+The actual asset name, qualified identifier and root shape must also match.
+The incremental command is `npm run draft:source-definition-catalog:incremental`
+in js. Both package twins are still read and compared, regular-file and source
+size bounds remain, and changed graphs use the original streaming metadata
+reader. Cached root coordinates establish neither graph validation nor concept
+equivalence. The author cache reads Links snapshots up to four MiB and otherwise
+uses the complete authoring path. Default --draft still reads every graph;
+--check always ignores cache entries and retains the original whole-network
+reader. No scoped/cached check mode is accepted. Complete preceding tool source
+and independent cache/fallback/gate controls remain retained and deferred.
+
 Live cleanup fixtures use the existing JavaScript runtime at their original
 fixture and tool paths, with the same lifetime and retention/removal assertions.
 Hard links avoid duplicating its binary; only a cross-device failure permits a

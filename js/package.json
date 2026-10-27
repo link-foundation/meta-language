@@ -59,6 +59,7 @@
     "draft:rust-package-assets": "node scripts/rust-package-source-assets.mjs --draft",
     "check:rust-package-assets": "node scripts/rust-package-source-assets.mjs --check",
     "draft:source-definition-catalog": "node scripts/draft-source-definition-catalog.mjs --draft",
+    "draft:source-definition-catalog:incremental": "node scripts/draft-source-definition-catalog.mjs --draft --reuse-roots",
     "check:source-definition-catalog": "node scripts/draft-source-definition-catalog.mjs --check"
   },
   "keywords": [
