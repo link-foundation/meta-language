@@ -48,6 +48,9 @@ impl RustParser {
             if !self.cursor.is_at("::", offset) {
                 break;
             }
+            if self.cursor.peek_at(offset + 1).kind != TokenKind::Identifier {
+                return Ok(None);
+            }
             offset += 1;
         }
         if segments.len() < 2 {

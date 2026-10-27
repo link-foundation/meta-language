@@ -514,3 +514,5 @@ mod translation_rust_primitive_associated_call;
 mod translation_rust_primitive_inherent_copy;
 
 mod translation_rust_primitive_from;
+
+mod translation_rust_primitive_integer_constant;

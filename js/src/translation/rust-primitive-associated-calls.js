@@ -12,7 +12,7 @@ export function readRustPrimitiveAssociatedImport(parser,segments,path){
 export function readRustPrimitiveAssociatedCall(parser,path){
  const c=parser.cursor,start=c.peek(),absolute=c.is('::');let offset=absolute?1:0;
  const segments=[];
- while(c.peek(offset).kind==='identifier'&&segments.length<16){segments.push(c.peek(offset).value);offset+=1;if(!c.is('::',offset))break;offset+=1;}
+ while(c.peek(offset).kind==='identifier'&&segments.length<16){segments.push(c.peek(offset).value);offset+=1;if(!c.is('::',offset))break;if(c.peek(offset+1).kind!=='identifier')return null;offset+=1;}
  if(segments.length<2)return null;
  const resolved=absolute?segments:parser.resolve(segments,path),root=segments[0]??'',target=resolved[0]??'';
  const shadowed=!absolute&&Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.origins.lookup([target],path)||parser.origins.scope.has(target));

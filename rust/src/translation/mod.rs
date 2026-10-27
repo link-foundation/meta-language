@@ -178,6 +178,7 @@ pub(crate) mod rust_primitive_bitwise_program;
 pub(crate) mod rust_primitive_bitwise_rules;
 mod rust_primitive_from_rules;
 mod rust_primitive_inherent_copy_rules;
+mod rust_primitive_integer_constant_rules;
 mod rust_primitive_selection_rules;
 pub(crate) mod rust_record_program;
 pub(crate) mod rust_record_rules;

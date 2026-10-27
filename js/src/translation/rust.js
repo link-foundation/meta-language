@@ -1,3 +1,4 @@
+import {readRustPrimitiveIntegerConstant} from './rust-primitive-integer-constants.js';
 import {readRustPrimitiveAssociatedCall,readRustPrimitiveAssociatedImport} from './rust-primitive-associated-calls.js';
 import {readRustPrimitiveSelection,readRustPrimitiveSelectionCall,readRustPrimitiveSelectionImport,readRustSignedIntegerProperty,readRustSaturatingInteger,readRustSaturatingMultiplication,readRustWrappingInteger} from './rust-primitive-selections.js';
 import {readRustFormattingArgumentNameError,planRustNamedFormattingValue} from './rust-named-formatting-rules.js';
@@ -1488,6 +1489,7 @@ class RustParser {
   }
 
   primary(path, options) {
+    const primitiveConstant=readRustPrimitiveIntegerConstant(this,path);if(primitiveConstant)return primitiveConstant;
     const primitiveAssociated=readRustPrimitiveAssociatedCall(this,path);if(primitiveAssociated)return primitiveAssociated;
     const standardSelection=readRustPrimitiveSelectionCall(this,path);if(standardSelection)return standardSelection;
     const standardOwnedCall=readRustStandardOwnedCall(this,path);if(standardOwnedCall)return standardOwnedCall;

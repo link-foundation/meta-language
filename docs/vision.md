@@ -606,6 +606,26 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Integer associated constants now have a source draft for MIN, MAX and BITS
+on every fixed/pointer integer owner. Bare, std/core, absolute and actual local
+alias paths retain exact namespace resolution. Existing shared bound definitions
+supply complete integer magnitudes; no binary64 rounding chooses a limit.
+BITS retains its standard u32 result owner, independently of the primitive it
+describes. Source readers preserve each path separator and refuse call syntax
+for a constant. Native hosts only project actual source paths, types and
+shared bound terms into the existing AST. The constant domains follow Rust's
+[integer limits](https://doc.rust-lang.org/std/primitive.i128.html#associatedconstant.MIN)
+and [width result type](https://doc.rust-lang.org/std/primitive.usize.html#associatedconstant.BITS).
+
+One hundred eighty-eight complete original sources declare independent exact
+limits and widths, five path forms, aliases, owned pointer results, arithmetic
+and conversion composition, complete native types and output traces. Expected
+limits use independent power-of-two data authoring. Deferred controls preserve
+both Links transports, four emissions, original and both generated native
+products, every owner/term/result premise, constant-call refusals and malformed
+paths. No behavior evidence is claimed. Floating/generic constants, arbitrary
+type aliases and other pointer-width profiles remain obligations.
+
 Primitive From calls now have a shared exact conversion draft. The supported
 primitive pair domain includes reflexive Boolean/integer/binary64 conversions,
 Boolean-to-integer conversions, declared lossless integer widening, portable
