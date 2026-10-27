@@ -178,6 +178,7 @@ pub(crate) mod rust_primitive_associated_call_rules;
 pub(crate) mod rust_primitive_bitwise;
 pub(crate) mod rust_primitive_bitwise_program;
 pub(crate) mod rust_primitive_bitwise_rules;
+mod rust_primitive_default_rules;
 mod rust_primitive_expression_rules;
 mod rust_primitive_from_rules;
 mod rust_primitive_inherent_copy_rules;

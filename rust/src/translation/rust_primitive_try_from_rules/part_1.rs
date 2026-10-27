@@ -361,7 +361,7 @@ pub fn accept_rust_checked_integer_receiver(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
-    if (consumer == "is_some") || (consumer == "is_none") {
+    if ((consumer == "is_some") || (consumer == "is_none")) || (consumer == "unwrap_or_default") {
         0f64
     } else if consumer == "unwrap_or" {
         1f64
@@ -682,6 +682,13 @@ pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
         vec![String::from("condition")]
     } else if consumer == "is_none" {
         vec![String::from("condition"), String::from("not")]
+    } else if consumer == "unwrap_or_default" {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("default"),
+            String::from("if"),
+        ]
     } else if (consumer == "unwrap_or") || (consumer == "map_or") {
         vec![
             String::from("condition"),
@@ -703,7 +710,7 @@ pub fn read_rust_checked_integer_result_owner(
 ) -> String {
     if (consumer == "is_some") || (consumer == "is_none") {
         String::from("bool")
-    } else if consumer == "unwrap_or" {
+    } else if (consumer == "unwrap_or") || (consumer == "unwrap_or_default") {
         receiver.to_owned()
     } else if consumer == "map_or" {
         mapper.to_owned()

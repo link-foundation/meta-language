@@ -1,0 +1,315 @@
+#[path = "../../src/translation/rust_checked_integer_rules.rs"]
+mod checked_rules;
+#[path = "../../src/translation/rust_primitive_default_rules.rs"]
+mod default_rules;
+#[path = "../../src/translation/rust_primitive_try_from_rules.rs"]
+mod try_rules;
+// Deferred complete original/JavaScript/native products with independent types.
+use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use meta_language::translation::emit_rust::{RustEmissionOptions, emit_rust_with_options};
+use meta_language::translation::ir::{Decl, FnDecl, Program};
+use meta_language::{
+    BinaryLinksOptions, LinkId, LinkNetwork, TypedProgramLinksEmissionOptions,
+    create_rust_source_owner_program_links, decode_link_network_binary, decode_typed_program_links,
+    emit_typed_program_links, emit_typed_program_links_with_options, encode_link_network_binary,
+};
+use serde_json::Value;
+use std::{fs, process::Command};
+
+fn fixture() -> Value {
+    super::translation_string_array_copy_sort::require_rust_profile();
+    assert!(
+        cfg!(target_pointer_width = "64"),
+        "uncovered source pointer width"
+    );
+    meta_language::project_data::read_project_data_file(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../parity/fixtures/rust-primitive-default.lino"),
+    )
+    .unwrap()
+}
+fn function<'a>(program: &'a Program, name: &str) -> &'a FnDecl {
+    let Some(Decl::Fn(function)) = program.declaration(name) else {
+        panic!("actual retained function required")
+    };
+    function
+}
+fn emission_value(value: &meta_language::TypedProgramLinksEmission) -> Value {
+    serde_json::json!({"code":value.code,"language":value.language.as_str(),"mappings":value.mappings,"assumptions":value.assumptions,"encodings":value.encodings,"theorems":value.theorems})
+}
+fn options(data: &Value) -> TypedProgramLinksEmissionOptions {
+    TypedProgramLinksEmissionOptions {
+        rust_source_header_emission_model: Some(data["model"].as_str().unwrap().to_owned()),
+        ..TypedProgramLinksEmissionOptions::default()
+    }
+}
+
+fn views(packet: &meta_language::TypedProgramLinks) -> Vec<LinkNetwork> {
+    vec![
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ]
+}
+#[test]
+fn complete_source_products_keep_independent_scalar_function_types_and_observations() {
+    let data = fixture();
+    let produced = run(Command::new("node")
+        .arg("../experiments/rust-records/primitive-default.mjs")
+        .current_dir(env!("CARGO_MANIFEST_DIR")));
+    assert!(produced.ok, "{}\n{}", produced.stdout, produced.stderr);
+    let javascript = meta_language::read_structured_data_lino(&produced.stdout).unwrap();
+    let packet = create_rust_source_owner_program_links(data["source"].as_str().unwrap()).unwrap();
+    let program = decode_typed_program_links(&packet.network, packet.root).unwrap();
+    let selected = emit_rust_with_options(
+        &program,
+        RustEmissionOptions {
+            source_header_model: data["model"].as_str(),
+        },
+    )
+    .unwrap();
+    let expected = emit_typed_program_links_with_options(
+        &packet.network,
+        packet.root,
+        "Rust",
+        &options(&data),
+    )
+    .unwrap();
+    assert_eq!(emission_value(&expected), javascript["emission"]);
+    let shared = LinkNetwork::from_lino(javascript["links"].as_str().unwrap()).unwrap();
+    let shared_root = LinkId::from_u64(javascript["root"].as_u64().unwrap());
+    for (network, root) in std::iter::once((&shared, shared_root))
+        .chain(views(&packet).iter().map(|network| (network, packet.root)))
+    {
+        let restored = decode_typed_program_links(network, root).unwrap();
+        for entry in &program.declarations {
+            assert_eq!(
+                function(&restored, entry.full_name()).source_signature,
+                function(&program, entry.full_name()).source_signature
+            );
+        }
+        let actual =
+            emit_typed_program_links_with_options(network, root, "Rust", &options(&data)).unwrap();
+        assert_eq!(emission_value(&actual), emission_value(&expected));
+    }
+    let native_library = format!(
+        "{}\n{}",
+        selected.preludes.join("\n"),
+        selected.definitions.join("\n")
+    );
+    assert_native_products(&data, &javascript, &native_library);
+    assert_printed_products(&data, &javascript);
+}
+
+fn assert_native_products(data: &Value, javascript: &Value, native_library: &str) {
+    let directory = TemporaryDirectory::new("primitive-default");
+    // Each product is a crate root: its actual absolute crate paths must keep
+    // their meaning. Batch all cases per product instead of nesting the code.
+    for (product, library) in [
+        ("javascript", javascript["nativeLibrary"].as_str().unwrap()),
+        ("native", native_library),
+    ] {
+        let mut source = format!(
+            "{library}\nmod original {{\n{}\n}}\n",
+            data["source"].as_str().unwrap()
+        );
+        let mut observations = String::from("#[test]fn retained_scalar_observations(){\n");
+        for (index, row) in data["cases"].as_array().unwrap().iter().enumerate() {
+            assert_eq!(javascript["observations"][index]["value"], row["expected"]);
+            assert_eq!(
+                javascript["observations"][index]["unit"].as_bool().unwrap(),
+                row["resultType"] == "()"
+            );
+            let module = row["module"].as_str().unwrap();
+            for prefix in [format!("original::{module}"), module.to_owned()] {
+                for check in row["checks"].as_array().unwrap() {
+                    source.push_str(&check.as_str().unwrap().replace("CASE", &prefix));
+                    source.push('\n');
+                }
+                observations.push_str(&format!(
+                    "assert_eq!({prefix}::result().to_string(),{:?});\n",
+                    row["expected"].as_str().unwrap()
+                ));
+            }
+        }
+        observations.push_str("}\n");
+        source.push_str(&observations);
+        let input = directory.0.join(format!("{product}.rs"));
+        let binary = directory
+            .0
+            .join(format!("{product}{}", std::env::consts::EXE_SUFFIX));
+        fs::write(&input, source).unwrap();
+        let mut command = Command::new("rustc");
+        command.args(["--edition", "2024", "--test"]);
+        #[cfg(windows)]
+        if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+            command.arg("-C").arg(format!("linker={linker}"));
+        }
+        let compiled = run(command.arg(&input).arg("-o").arg(&binary));
+        assert!(
+            compiled.ok,
+            "{product}\n{}\n{}",
+            compiled.stdout, compiled.stderr
+        );
+        let observed = run(Command::new(&binary).args(["--exact", "retained_scalar_observations"]));
+        assert!(
+            observed.ok,
+            "{product}\n{}\n{}",
+            observed.stdout, observed.stderr
+        );
+        assert!(observed.stdout.contains("1 passed"));
+    }
+}
+
+fn assert_printed_products(data: &Value, javascript: &Value) {
+    let directory = TemporaryDirectory::new("primitive-default-output");
+    for (index, row) in data["printedSources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .enumerate()
+    {
+        let packet =
+            create_rust_source_owner_program_links(row["source"].as_str().unwrap()).unwrap();
+        let native = emit_typed_program_links(&packet.network, packet.root, "Rust").unwrap();
+        let expected = &javascript["printedProducts"][index];
+        assert_eq!(expected["lines"], row["lines"]);
+        assert_eq!(emission_value(&native), expected["native"]);
+        let lines = row["lines"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|line| line.as_str().unwrap())
+            .collect::<Vec<_>>();
+        for (product, source) in [
+            ("original", row["source"].as_str().unwrap()),
+            ("javascript", expected["native"]["code"].as_str().unwrap()),
+            ("native", native.code.as_str()),
+        ] {
+            let input = directory.0.join(format!("{index}-{product}.rs"));
+            let binary = directory
+                .0
+                .join(format!("{index}-{product}{}", std::env::consts::EXE_SUFFIX));
+            fs::write(&input, source).unwrap();
+            let mut command = Command::new("rustc");
+            command.args(["--edition", "2024"]);
+            #[cfg(windows)]
+            if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+                command.arg("-C").arg(format!("linker={linker}"));
+            }
+            let compiled = run(command.arg(&input).arg("-o").arg(&binary));
+            assert!(
+                compiled.ok,
+                "{product}: {}\n{}",
+                compiled.stdout, compiled.stderr
+            );
+            let observed = run(&mut Command::new(&binary));
+            assert!(
+                observed.ok,
+                "{product}: {}\n{}",
+                observed.stdout, observed.stderr
+            );
+            assert_eq!(observed.stdout.lines().collect::<Vec<_>>(), lines);
+        }
+    }
+}
+
+#[test]
+fn every_primitive_default_owner_term_import_consumer_and_refusal_premise_stays_explicit() {
+    let data = fixture();
+    for row in data["ownerControls"].as_array().unwrap() {
+        let segments = row["segments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap().to_owned())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            default_rules::read_rust_primitive_default_owner(
+                &segments,
+                row["ordinary"].as_bool().unwrap(),
+                row["shadowed"].as_bool().unwrap(),
+                row["absolute"].as_bool().unwrap()
+            ),
+            row["expected"].as_str().unwrap()
+        );
+    }
+    for row in data["terms"].as_array().unwrap() {
+        assert_eq!(
+            default_rules::read_rust_primitive_default_term(row["owner"].as_str().unwrap()),
+            row["expected"].as_str().unwrap()
+        );
+    }
+    for row in data["imports"].as_array().unwrap() {
+        assert_eq!(
+            default_rules::accept_rust_primitive_default_import(
+                row["path"].as_str().unwrap(),
+                row["ordinary"].as_bool().unwrap(),
+                row["shadowed"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+    let row = &data["checkedConsumer"];
+    assert_eq!(
+        checked_rules::read_rust_checked_integer_consumer_arity(row["consumer"].as_str().unwrap()),
+        row["arity"].as_f64().unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(checked_rules::plan_rust_checked_integer_consumer(
+            row["consumer"].as_str().unwrap()
+        ))
+        .unwrap(),
+        row["plan"]
+    );
+    assert_eq!(
+        checked_rules::read_rust_checked_integer_result_owner(
+            row["consumer"].as_str().unwrap(),
+            row["receiver"].as_str().unwrap(),
+            row["mapper"].as_str().unwrap()
+        ),
+        row["owner"].as_str().unwrap()
+    );
+    for row in data["tryConsumers"].as_array().unwrap() {
+        assert_eq!(
+            try_rules::read_rust_primitive_try_from_consumer_arity(row["method"].as_str().unwrap()),
+            row["arity"].as_f64().unwrap()
+        );
+        assert_eq!(
+            serde_json::to_value(try_rules::plan_rust_primitive_try_from_consumer(
+                row["method"].as_str().unwrap(),
+                row["guards"].as_f64().unwrap()
+            ))
+            .unwrap(),
+            row["plan"]
+        );
+        assert_eq!(
+            try_rules::read_rust_primitive_try_from_result_owner(
+                row["method"].as_str().unwrap(),
+                row["target"].as_str().unwrap(),
+                row["mapper"].as_str().unwrap()
+            ),
+            row["owner"].as_str().unwrap()
+        );
+    }
+    for row in data["refusals"].as_array().unwrap() {
+        let error =
+            create_rust_source_owner_program_links(row["source"].as_str().unwrap()).unwrap_err();
+        assert!(
+            error.message.contains(row["reason"].as_str().unwrap()),
+            "{}: {}",
+            row["name"],
+            error.message
+        );
+    }
+    for row in data["malformed"].as_array().unwrap() {
+        assert!(
+            create_rust_source_owner_program_links(row["source"].as_str().unwrap()).is_err(),
+            "{}",
+            row["name"]
+        );
+    }
+}

@@ -47,6 +47,7 @@ export function readRustPrimitiveTryFrom(parser,path){
   else if(term==='minimum'||term==='maximum'){const magnitude=readRustSaturatingIntegerBoundMagnitude(term,target.bits,target.signed),number={k:'num',value:magnitude,type:source.type,span:range};stack.push(acceptRustSaturatingIntegerBoundNegative(term,target.signed)?{k:'unary',op:'neg',arg:number,span:range}:number);}
   else if(term==='true')stack.push({k:'bool',value:true,span:range});
   else if(term==='success')stack.push(converted);
+  else if(term==='default')stack.push({k:'num',value:'0',type:target,span:range});
   else if(term==='fallback')stack.push(local(captures[1],{...parser.origins.typeOrigin(resultType,path),sourceOwner:{kind:'primitive',path:[resultOwner],arguments:[]}}));
   else if(['ge','le','and'].includes(term)){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
   else if(term==='not')stack.push({k:'unary',op:'not',arg:pop(),span:range});

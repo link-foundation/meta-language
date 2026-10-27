@@ -35,7 +35,7 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
  const number=value=>({k:'num',value,type:source.type,span:range});
  function project(plan,values={}){const stack=[],pop=()=>{if(!stack.length)throw new TypeError('the checked source plan lost an earlier term');return stack.pop();};for(const term of plan){
   if(term==='operand'||term==='right')stack.push(local(captures[term==='operand'?0:1],owned(source.type,owner)));
-  else if(term==='zero')stack.push(number('0'));
+  else if(term==='zero'||term==='default')stack.push(number('0'));
   else if(term==='negative unit')stack.push({k:'unary',op:'neg',arg:number('1'),span:range});
   else if(term==='minimum'||term==='maximum'){const value=number(readRustSaturatingIntegerBoundMagnitude(term,source.type.bits,source.signed));stack.push(acceptRustSaturatingIntegerBoundNegative(term,source.signed)?{k:'unary',op:'neg',arg:value,span:range}:value);}
   else if(term==='true'||term==='false')stack.push({k:'bool',value:term==='true',span:range});

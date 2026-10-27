@@ -6,6 +6,7 @@ mod checked_integer;
 pub(super) mod control;
 mod integer_float_plan;
 mod primitive_associated_calls;
+mod primitive_default;
 mod primitive_from;
 mod primitive_integer_constants;
 mod primitive_selections;
@@ -592,7 +593,7 @@ impl RustParser {
                     } else {
                         value = super::float_predicates::expression(method_name, &value, range)?;
                         self.origins
-                            .mark(&value, SourceOrigin::with_type(BOOL, path, Vec::new()));
+                            .mark(&value, primitive_try_from::origin(BOOL, "bool", path));
                     }
                     continue;
                 }
@@ -890,6 +891,9 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_default(path)? {
+            return Ok(value);
+        }
         if let Some(value) = self.read_primitive_try_from(path)? {
             return Ok(value);
         }

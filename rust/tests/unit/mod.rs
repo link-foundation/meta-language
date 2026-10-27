@@ -524,3 +524,5 @@ mod translation_rust_primitive_expression;
 mod translation_rust_primitive_try_from;
 
 mod translation_rust_checked_integer;
+
+mod translation_rust_primitive_default;

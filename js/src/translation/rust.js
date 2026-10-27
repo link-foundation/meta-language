@@ -1,3 +1,4 @@
+import {readRustPrimitiveDefault,readRustPrimitiveDefaultImport} from './rust-primitive-default.js';
 import {readRustCheckedInteger} from './rust-checked-integer.js';
 import {readRustPrimitiveTryFrom,readRustPrimitiveTryFromImport} from './rust-primitive-try-from.js';
 import {readRustPrimitiveIntegerConstant} from './rust-primitive-integer-constants.js';
@@ -425,8 +426,9 @@ class RustParser {
       const standardSelection=Boolean(readRustPrimitiveSelectionImport(this,full,path));
       const standardAssociated=readRustPrimitiveAssociatedImport(this,full,path);
       const standardTryFrom=readRustPrimitiveTryFromImport(this,full,path);
+      const standardDefault=readRustPrimitiveDefaultImport(this,full,path);
       if(this.primitiveOwnerModel&&!standardPrimitive)throw unsupported('Rust primitive owner import','only the two actual standard primitive reexports can be imported',span(start,c.peek()));
-      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive&&!standardSelection&&!standardAssociated&&!standardTryFrom) {
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive&&!standardSelection&&!standardAssociated&&!standardTryFrom&&!standardDefault) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
       if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
@@ -436,7 +438,7 @@ class RustParser {
         if(!acceptRustPrimitiveOwnerImportName(alias)||this.primitiveImportNames.has(alias))throw unsupported('Rust primitive owner alias','each import needs one distinct ASCII identifier outside the standard crate namespace',span(start,c.peek()));
         this.primitiveImportNames.add(alias);
       }
-      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive||standardSelection||standardAssociated||standardTryFrom ? full : absolute(full, path, span(start, c.peek())));
+      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive||standardSelection||standardAssociated||standardTryFrom||standardDefault ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
@@ -1419,7 +1421,7 @@ class RustParser {
       // The operation result retains the admitted primitive owner's evidence;
       // a generic inferred FLOAT never establishes a source receiver proof.
       return this.origins.mark(expression, floatOperation ? { ...origin, type: FLOAT }
-        : this.origins.typeOrigin(BOOL, this.modulePath));
+        : {...this.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}});
     }
     const mapOperation = readStringMapOperation('Rust', method.value);
     if (method.value === 'is_empty') {
@@ -1494,6 +1496,7 @@ class RustParser {
   }
 
   primary(path, options) {
+    const primitiveDefault=readRustPrimitiveDefault(this,path);if(primitiveDefault)return primitiveDefault;
     const falliblePrimitive=readRustPrimitiveTryFrom(this,path);if(falliblePrimitive)return falliblePrimitive;
     const primitiveConstant=readRustPrimitiveIntegerConstant(this,path);if(primitiveConstant)return primitiveConstant;
     const primitiveAssociated=readRustPrimitiveAssociatedCall(this,path);if(primitiveAssociated)return primitiveAssociated;

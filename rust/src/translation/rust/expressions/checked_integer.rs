@@ -62,7 +62,7 @@ impl Terms {
                         )
                     })?,
                 ),
-                "zero" => stack.push(number("0".to_owned())),
+                "zero" | "default" => stack.push(number("0".to_owned())),
                 "negative unit" => stack.push(SExpr::new(
                     SNode::Unary {
                         op: UnaryOp::Neg,

@@ -10,7 +10,7 @@ export function readRustCheckedIntegerArity(method,ordinary){
  * @returns {boolean} */
 export function acceptRustCheckedIntegerReceiver(method,kind,bits,signed,owner,path,children,proven,layers){return readRustCheckedIntegerArity(method,true)>=0&&kind==='fixed'&&(method!=='checked_abs'||signed)&&acceptRustPrimitiveSelectionReceiver(kind,bits,signed,owner,path,children,proven,layers);}
 /** @param {string} consumer @returns {number} */
-export function readRustCheckedIntegerConsumerArity(consumer){return consumer==='is_some'||consumer==='is_none'?0:consumer==='unwrap_or'?1:consumer==='map_or'?2:-1;}
+export function readRustCheckedIntegerConsumerArity(consumer){return consumer==='is_some'||consumer==='is_none'||consumer==='unwrap_or_default'?0:consumer==='unwrap_or'?1:consumer==='map_or'?2:-1;}
 /** Guard ASTs retain lazy conditional boundaries around each threshold division
  * and every potentially overflowing threshold. No larger integer is required.
  * @param {string} method @param {boolean} signed @returns {string[]} */
@@ -46,6 +46,6 @@ export function planRustCheckedIntegerSuccess(method,signed){
  return operation?['operand','right',operation]:[];
 }
 /** @param {string} consumer @returns {string[]} */
-export function planRustCheckedIntegerConsumer(consumer){return consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='unwrap_or'||consumer==='map_or'?['condition','success','fallback','if']:[];}
+export function planRustCheckedIntegerConsumer(consumer){return consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='unwrap_or_default'?['condition','success','default','if']:consumer==='unwrap_or'||consumer==='map_or'?['condition','success','fallback','if']:[];}
 /** @param {string} consumer @param {string} receiver @param {string} mapper @returns {string} */
-export function readRustCheckedIntegerResultOwner(consumer,receiver,mapper){return consumer==='is_some'||consumer==='is_none'?'bool':consumer==='unwrap_or'?receiver:consumer==='map_or'?mapper:'';}
+export function readRustCheckedIntegerResultOwner(consumer,receiver,mapper){return consumer==='is_some'||consumer==='is_none'?'bool':consumer==='unwrap_or'||consumer==='unwrap_or_default'?receiver:consumer==='map_or'?mapper:'';}

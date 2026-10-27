@@ -660,6 +660,30 @@ complete own-codebase translation remain obligations. This follows the
 and [Option consumers](https://doc.rust-lang.org/std/option/enum.Option.html).
 These are unexecuted code drafts, without behavioral or compilation evidence.
 
+Supported scalar Default calls now have shared source definitions for fourteen
+primitive owners: false, exact integer zero and positive binary64 zero. Bare,
+std/core-qualified, absolute and module-local primitive aliases preserve actual
+owners; explicit standard Default trait imports are recognized with namespace
+and trait-shadowing premises. The actual primitive Default function has zero
+arguments. Integer TryFrom and checked arithmetic now admit immediate
+unwrap_or_default through shared conditional plans. Only the selected failed
+branch contributes zero; original operands still evaluate once, without an
+invented eager default call. Previously guarded binary64 predicates retain
+the actual owned standard Boolean result for downstream From, comparison and
+Display, after the original receiver proof has passed.
+
+Nine hundred forty-five complete original sources retain independent defaults,
+positive-zero observation, all integer conversion pairs, checked success and
+failure boundaries, original operand effects, full types and predicate-result
+composition. Both runtime parsers, original and both generated native products,
+both codecs, four emissions and every namespace/consumer/refusal control remain
+deferred. This follows [standard Default](https://doc.rust-lang.org/std/default/trait.Default.html),
+[Option defaults](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_default)
+and [Result defaults](https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap_or_default).
+Contextual Default::default, derived/custom defaults, char/f32/aggregate/string/
+container defaults and general Option/Result values remain obligations. No
+source draft or authoring receipt establishes behavioral execution or parity.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not

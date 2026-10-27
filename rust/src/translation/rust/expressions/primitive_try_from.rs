@@ -466,6 +466,15 @@ impl RustParser {
                 }
                 "true" => stack.push(SExpr::new(SNode::Bool { value: true }, range)),
                 "success" => stack.push(converted.clone()),
+                "default" => stack.push(SExpr::new(
+                    SNode::Num {
+                        value: "0".to_owned(),
+                        ty: Some(target.clone()),
+                        negative: false,
+                        unit: false,
+                    },
+                    range,
+                )),
                 "fallback" => stack.push(fallback.clone().ok_or_else(|| {
                     type_error(
                         "the shared primitive Result plan lost its actual default",

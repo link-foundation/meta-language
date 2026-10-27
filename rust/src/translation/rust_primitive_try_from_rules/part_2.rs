@@ -488,7 +488,7 @@ pub fn accept_rust_primitive_try_from_source(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_primitive_try_from_consumer_arity(method: &str) -> f64 {
-    if (method == "is_ok") || (method == "is_err") {
+    if ((method == "is_ok") || (method == "is_err")) || (method == "unwrap_or_default") {
         0f64
     } else if method == "unwrap_or" {
         1f64
@@ -616,7 +616,11 @@ pub fn plan_rust_primitive_try_from_consumer(method: &str, guards: f64) -> Vec<S
                             {
                                 let source_ml_concat_value36 = vec![
                                     String::from("success"),
-                                    String::from("fallback"),
+                                    if method == "unwrap_or_default" {
+                                        String::from("default")
+                                    } else {
+                                        String::from("fallback")
+                                    },
                                     String::from("if"),
                                 ];
                                 self::ml_array::append(
@@ -644,7 +648,7 @@ pub fn read_rust_primitive_try_from_result_owner(
 ) -> String {
     if (method == "is_ok") || (method == "is_err") {
         String::from("bool")
-    } else if method == "unwrap_or" {
+    } else if (method == "unwrap_or") || (method == "unwrap_or_default") {
         target.to_owned()
     } else if method == "map_or" {
         mapper.to_owned()
