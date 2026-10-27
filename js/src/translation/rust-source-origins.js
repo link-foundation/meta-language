@@ -1,3 +1,5 @@
+import {selectRustPrimitiveExpressionOrigin} from './rust-primitive-expression-origins.js';
+import {acceptRustPrimitiveBooleanResult} from './rust-primitive-expression-rules.js';
 // Source indirection evidence for the Rust value projection. The existing
 // parser collects declarations before validating bodies, retaining its own
 // type, path and pattern records rather than inferring a second typed program.
@@ -177,7 +179,7 @@ export class RustSourceOrigins {
     if (form === 'derived-value') {
       const operands = [node.arg ?? node.object, ...(node.search ? [node.search] : [])].map(operand => this.origin(operand, path));
       if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain));
-      return value(node.k === 'stringTest', node.k === 'stringTest' ? { kind: 'bool' } : { kind: 'string' });
+      return node.k==='stringTest'?{...value(true,{kind:'bool'}),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}}:value(false,{kind:'string'});
     }
     if (['numeric-cast', 'primitive-operation', 'comparison', 'boolean-operation'].includes(form)) {
       const operands = (node.arg ? [node.arg] : [node.left, node.right]).map(operand => this.origin(operand, path));
@@ -196,7 +198,11 @@ export class RustSourceOrigins {
       const owners=operands.map(operand=>readRustPointerIntegerContractOwner(operand.sourceOwner,operand.integerSourceOwnerConstraint??''));
       if(['primitive-operation','comparison'].includes(form)&&readRustPointerIntegerOwnerJoinError(owners))return {...unknown(true),integerSourceOwnerConflict:true};
       const owner=form==='primitive-operation'?selectRustPointerIntegerResultOwner(owners):'';
-      const result=value(copyEvidence,node.to??(['comparison','boolean-operation'].includes(form)?{kind:'bool'}:node.op==='concat'?{kind:'string'}:owner?operands.find((_,index)=>owners[index]===owner)?.type??null:null));
+      const primitive=form==='primitive-operation'?selectRustPrimitiveExpressionOrigin(node,operands):null;
+      const boolean=acceptRustPrimitiveBooleanResult(form,node.op??'',operands.length===1&&operands[0].type?.kind==='bool'&&operands[0].proven&&operands[0].wrappers.length===0);
+      const result=value(copyEvidence,node.to??(boolean?{kind:'bool'}:node.op==='concat'?{kind:'string'}:primitive?.type??(owner?operands.find((_,index)=>owners[index]===owner)?.type??null:null)));
+      if(boolean)return {...result,sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}};
+      if(primitive)return {...result,sourceOwner:primitive.sourceOwner,floatSourceModel:primitive.type.kind==='float'?'binary64 scalar':null};
       return owner?{...result,sourceOwner:{kind:'primitive',path:[owner],arguments:[]}}:result;
     }
     return unknown();

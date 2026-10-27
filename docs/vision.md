@@ -606,6 +606,28 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+Primitive expression source facts now close under the existing standard numeric
+arithmetic operations when actual direct primitive owners agree, or literal
+syntax receives a compatible known peer's context. Integer syntax does not
+become floating syntax, negative integer literals do not gain unsigned context,
+and pointer/source identities remain distinct. Shared decisions select an
+actual operand's complete source type and owner; the existing checked operator
+semantics and indirection/conflict guards remain authoritative. Comparison,
+Boolean and proven standard text-predicate results retain the owned primitive
+Boolean identity. Existing guarded binary64 constants retain their already
+proved primitive owner, and arithmetic retains its binary64 source model.
+
+One hundred eighty-five complete original sources declare independent values
+for all fixed/pointer owners, contextual literals, arithmetic/method composition,
+Boolean consumers, binary64 predicates and classifications, borrowed text,
+constant/From composition, full types and operand traces. Independent future
+compiler controls retain every invalid mixed owner/width/literal input. Shared
+origin/context/selection/result premises, original and both generated native
+products, both codecs and four emissions remain deferred. This is a source
+metadata draft, without observations or a new arithmetic implementation.
+General traits, custom aliases/reference arithmetic, build-mode overflow,
+float sign/payload semantics and full source translation remain obligations.
+
 The six standard exact integer-to-binary64 From domains now have a complete
 shared source-term decomposition draft. Signed remainders select the sign of
 each power-of-two contribution; quotient steps divide only by positive two.

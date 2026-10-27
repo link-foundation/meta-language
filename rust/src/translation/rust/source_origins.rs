@@ -28,6 +28,7 @@ use crate::translation::rust_pointer_integer_owner_rules::{
 };
 
 mod patterns;
+mod primitive_expressions;
 mod type_owners;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -688,7 +689,16 @@ impl SourceOrigins {
                 }
                 if form == "derived-value" {
                     if matches!(node.node, SNode::StringTest { .. }) {
-                        return SourceOrigin::scalar_copy_value(Some(super::BOOL));
+                        return SourceOrigin {
+                            source_owner: Some(
+                                crate::translation::source_signatures::SourceOwner {
+                                    kind: "primitive".to_owned(),
+                                    path: vec!["bool".to_owned()],
+                                    arguments: Vec::new(),
+                                },
+                            ),
+                            ..SourceOrigin::scalar_copy_value(Some(super::BOOL))
+                        };
                     }
                     return SourceOrigin::text_value();
                 }
@@ -706,12 +716,26 @@ impl SourceOrigins {
                 } else {
                     String::new()
                 };
+                let primitive = if form == "primitive-operation" {
+                    primitive_expressions::select_primitive_expression_origin(
+                        operation, &nodes, &operands,
+                    )
+                } else {
+                    None
+                };
+                let boolean = crate::translation::rust_primitive_expression_rules::accept_rust_primitive_boolean_result(
+                    &form, operation,
+                    operands.len() == 1 && operands[0].ty == Some(super::BOOL)
+                        && operands[0].proven && operands[0].wrappers.is_empty(),
+                );
                 let ty = match &node.node {
                     SNode::Cast { to, .. } => Some(to.clone()),
-                    _ if form == "comparison" || form == "boolean-operation" => Some(super::BOOL),
+                    _ if boolean => Some(super::BOOL),
                     _ if operation == "concat" => Some(super::STRING),
                     _ => {
-                        if owner.is_empty() {
+                        if let Some(value) = &primitive {
+                            value.ty.clone()
+                        } else if owner.is_empty() {
                             None
                         } else {
                             operands
@@ -729,13 +753,30 @@ impl SourceOrigins {
                             .all(|operand| operand.copy_evidence.is_some()));
                 SourceOrigin {
                     ty,
-                    source_owner: (!owner.is_empty()).then(|| {
-                        crate::translation::source_signatures::SourceOwner {
+                    float_source_model: primitive
+                        .as_ref()
+                        .filter(|origin| origin.ty == Some(Type::Float))
+                        .map(|_| "binary64 scalar"),
+                    source_owner: if boolean {
+                        Some(crate::translation::source_signatures::SourceOwner {
                             kind: "primitive".to_owned(),
-                            path: vec![owner],
+                            path: vec!["bool".to_owned()],
                             arguments: Vec::new(),
-                        }
-                    }),
+                        })
+                    } else {
+                        primitive
+                            .as_ref()
+                            .and_then(|origin| origin.source_owner.clone())
+                            .or_else(|| {
+                                (!owner.is_empty()).then(|| {
+                                    crate::translation::source_signatures::SourceOwner {
+                                        kind: "primitive".to_owned(),
+                                        path: vec![owner],
+                                        arguments: Vec::new(),
+                                    }
+                                })
+                            })
+                    },
                     copy_evidence: copy_evidence.then_some(()),
                     text_source_model: (operation == "concat").then_some("owned string"),
                     ..SourceOrigin::value()

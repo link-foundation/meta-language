@@ -74,8 +74,13 @@ impl RustParser {
                 ));
             }
             let result = super::float_predicates::constant_expression(&segments[1], range)?;
-            self.origins
-                .mark(&result, SourceOrigin::with_type(FLOAT, path, Vec::new()));
+            let mut origin = SourceOrigin::with_type(FLOAT, path, Vec::new());
+            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec!["f64".to_owned()],
+                arguments: Vec::new(),
+            });
+            self.origins.mark(&result, origin);
             return Ok(result);
         }
         if self.cursor.is("::")

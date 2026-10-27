@@ -1575,7 +1575,7 @@ class RustParser {
         const owner = this.resolve(['f64'], path);
         const shadowed = Boolean(this.origins.lookup(['f64'], path) || this.origins.lookup(owner, path));
         if (!acceptRustFloatConstantOwner(owner.join('::'), shadowed) || c.is('(')) throw unsupported('Rust binary64 constant', 'associated constants require the exact unshadowed primitive f64 owner and value syntax', range);
-        return this.origins.mark(createRustFloatConstantExpression(segments[1], range), this.origins.typeOrigin(FLOAT, path));
+        return this.origins.mark(createRustFloatConstantExpression(segments[1], range), {...this.origins.typeOrigin(FLOAT, path),sourceOwner:{kind:'primitive',path:['f64'],arguments:[]}});
       }
       if (c.is('::') && c.is('<', 1) && (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false))) {
         refuseRustSharedArrayBareVector(this,span(token,c.peek()));
