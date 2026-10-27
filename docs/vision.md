@@ -731,6 +731,27 @@ and [checked right shift](https://doc.rust-lang.org/std/primitive.u128.html#meth
 Other shift/rotation methods and full codebase translation remain obligations;
 these source drafts establish no execution or parity evidence.
 
+Standard wrapping_shl/wrapping_shr and rotate_left/rotate_right now have shared
+source plans for every supported integer owner. Actual counts retain standard
+u32 identity and are reduced modulo the receiver width. Rotations use unsigned
+bit patterns and restore the original signed/pointer owner after combining the
+two disjoint shifted parts. Both normalized counts are below the actual width,
+including zero. Existing complete shift, bitwise and wrapping-cast definitions
+supply target behavior; hosts only project those terms and capture each actual
+operand once in original order. Signed wrapping right shifts preserve arithmetic
+sign extension. No handwritten native replacement algorithm is introduced.
+
+2,139 complete original programs author independent integer formulas for all
+four methods, twelve owners, zero/width/last-valid/larger/maximum u32 counts,
+signed patterns, qualification, aliases, immutable receivers, inverse rotations,
+source types and printed effects. Both runtimes, both codecs, four emissions,
+original plus both generated native products and every source/operation/plan/
+refusal premise remain unexecuted. These follow standard
+[wrapping shifts](https://doc.rust-lang.org/std/primitive.i128.html#method.wrapping_shl)
+and [rotations](https://doc.rust-lang.org/std/primitive.u128.html#method.rotate_left).
+Other integer APIs and full own-codebase translation remain obligations; source
+authoring supplies no runtime observation or parity claim.
+
 Primitive expression source facts now close under the existing standard numeric
 arithmetic operations when actual direct primitive owners agree, or literal
 syntax receives a compatible known peer's context. Integer syntax does not

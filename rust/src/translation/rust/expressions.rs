@@ -18,6 +18,7 @@ mod standard_owned_calls;
 pub(super) mod standard_string_views;
 mod string_addition;
 mod usize_index_expressions;
+mod wrapping_shifts;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};
 use super::cast_syntax_rules::{accept_rust_cast_following_token, read_rust_cast_syntax_message};
@@ -528,6 +529,16 @@ impl RustParser {
                     path,
                 )? {
                     value = bits;
+                    continue;
+                }
+                if let Some(shifted) = self.read_wrapping_shifts(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = shifted;
                     continue;
                 }
                 if let Some(checked) = self.read_checked_integer(

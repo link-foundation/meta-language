@@ -1,3 +1,4 @@
+import {acceptRustWrappingShiftMethod} from './rust-wrapping-shift-rules.js';
 import {acceptRustIntegerBitMethod} from './rust-integer-bit-rules.js';
 import {readRustCheckedIntegerArity} from './rust-checked-integer-rules.js';
 import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-rules.js';
@@ -18,6 +19,7 @@ export function readRustPrimitiveAssociatedArity(owner,method){
  if(!['bool','i8','u8','i16','u16','i32','u32','i64','u64','i128','u128','isize','usize'].includes(owner))return -1;
  if(method==='min'||method==='max')return 2;
  if(owner==='bool')return -1;
+ if(acceptRustWrappingShiftMethod(method))return 2;
  if(acceptRustIntegerBitMethod(method))return 1;
  const checked=readRustCheckedIntegerArity(method,true);
  if(checked>=0&&(method!=='checked_abs'||owner.startsWith('i')))return checked+1;

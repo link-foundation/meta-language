@@ -306,6 +306,175 @@ pub fn accept_rust_primitive_selection_argument(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_wrapping_shift_method(method: &str) -> bool {
+    self::ml_array::includes(
+        &vec![
+            String::from("wrapping_shl"),
+            String::from("wrapping_shr"),
+            String::from("rotate_left"),
+            String::from("rotate_right"),
+        ],
+        &method.to_owned(),
+        0f64,
+        false,
+        |a, b| a == b,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_wrapping_shift_receiver(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    (kind == "fixed")
+        && self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_wrapping_shift_operation(term: &str) -> String {
+    if term == "shift left" {
+        String::from("shiftRustPrimitiveBitsLeft")
+    } else if term == "shift right" {
+        String::from("shiftRustPrimitiveBitsRight")
+    } else if term == "bits or" {
+        String::from("disjoinRustPrimitiveBits")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_wrapping_shift(method: &str) -> Vec<String> {
+    if (self::accept_rust_wrapping_shift_method(method)) {
+        {
+            let count = vec![
+                String::from("count"),
+                String::from("width"),
+                String::from("rem"),
+            ];
+            if (method == "wrapping_shl") || (method == "wrapping_shr") {
+                {
+                    let source_ml_source1_concat_value1 = vec![String::from("operand")];
+                    {
+                        let source_ml_source1_concat_value2 = count;
+                        {
+                            let source_ml_source1_concat_value3 =
+                                vec![if method == "wrapping_shl" {
+                                    String::from("shift left")
+                                } else {
+                                    String::from("shift right")
+                                }];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<String>::new(),
+                                        source_ml_source1_concat_value1,
+                                    ),
+                                    source_ml_source1_concat_value2,
+                                ),
+                                source_ml_source1_concat_value3,
+                            )
+                        }
+                    }
+                }
+            } else {
+                {
+                    let inverse = {
+                        let source_ml_source1_concat_value4 = vec![String::from("width")];
+                        {
+                            let source_ml_source1_concat_value5 = count.clone();
+                            {
+                                let source_ml_source1_concat_value6 = vec![
+                                    String::from("sub"),
+                                    String::from("width"),
+                                    String::from("rem"),
+                                ];
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<String>::new(),
+                                            source_ml_source1_concat_value4,
+                                        ),
+                                        source_ml_source1_concat_value5,
+                                    ),
+                                    source_ml_source1_concat_value6,
+                                )
+                            }
+                        }
+                    };
+                    {
+                        let source_ml_source1_concat_value7 =
+                            vec![String::from("unsigned operand")];
+                        {
+                            let source_ml_source1_concat_value8 = count;
+                            {
+                                let source_ml_source1_concat_value9 = vec![
+                                    if method == "rotate_left" {
+                                        String::from("shift left")
+                                    } else {
+                                        String::from("shift right")
+                                    },
+                                    String::from("unsigned operand"),
+                                ];
+                                {
+                                    let source_ml_source1_concat_value10 = inverse;
+                                    {
+                                        let source_ml_source1_concat_value11 = vec![
+                                            if method == "rotate_left" {
+                                                String::from("shift right")
+                                            } else {
+                                                String::from("shift left")
+                                            },
+                                            String::from("bits or"),
+                                            String::from("source cast"),
+                                        ];
+                                        self::ml_array::append(
+                                            self::ml_array::append(
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        self::ml_array::append(
+                                                            Vec::<String>::new(),
+                                                            source_ml_source1_concat_value7,
+                                                        ),
+                                                        source_ml_source1_concat_value8,
+                                                    ),
+                                                    source_ml_source1_concat_value9,
+                                                ),
+                                                source_ml_source1_concat_value10,
+                                            ),
+                                            source_ml_source1_concat_value11,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_integer_bit_method(method: &str) -> bool {
     self::ml_array::includes(
         &vec![
@@ -458,19 +627,19 @@ pub fn plan_rust_integer_bits(method: &str, bits: f64) -> Vec<f64> {
                                                 {
                                                     let bit = 0f64;
                                                     {
-                                                        let source_ml_source1_s1 = self::source_ml_temporary_plan_rust_integer_bits_loop1(bits, reverse, trailing, leading, ones, plan, bindings, current, count, active, index, bit);
-                                                        match source_ml_source1_s1 {
+                                                        let source_ml_source1_s12 = self::source_ml_temporary_plan_rust_integer_bits_loop1(bits, reverse, trailing, leading, ones, plan, bindings, current, count, active, index, bit);
+                                                        match source_ml_source1_s12 {
                                                             self::MlTemporaryPlanRustIntegerBitsLoop1Result::MlTemporaryPlanRustIntegerBitsLoop1Done(plan_2, bindings_2, count_2, index_2) => {
                                                                 {
                                                                     let plan_3 = {
-                                                                        let source_ml_source1_concat_value2 = plan_2;
+                                                                        let source_ml_source1_concat_value13 = plan_2;
                                                                         {
-                                                                            let source_ml_source1_concat_value3 = vec![if reverse {
+                                                                            let source_ml_source1_concat_value14 = vec![if reverse {
                                                                                 8f64
                                                                             } else {
                                                                                 9f64
                                                                             }, count_2, 0f64, 0f64, 0f64];
-                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value2), source_ml_source1_concat_value3)
+                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value13), source_ml_source1_concat_value14)
                                                                         }
                                                                     };
                                                                     {
@@ -478,13 +647,13 @@ pub fn plan_rust_integer_bits(method: &str, bits: f64) -> Vec<f64> {
                                                                         {
                                                                             let index_3 = index_2 + 1f64;
                                                                             {
-                                                                                let source_ml_source1_s6 = if reverse {
+                                                                                let source_ml_source1_s17 = if reverse {
                                                                                     {
                                                                                         let plan_4 = {
-                                                                                            let source_ml_source1_concat_value7 = plan_3;
+                                                                                            let source_ml_source1_concat_value18 = plan_3;
                                                                                             {
-                                                                                                let source_ml_source1_concat_value8 = vec![19f64, body, 0f64, 0f64, 0f64];
-                                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value7), source_ml_source1_concat_value8)
+                                                                                                let source_ml_source1_concat_value19 = vec![19f64, body, 0f64, 0f64, 0f64];
+                                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source1_concat_value18), source_ml_source1_concat_value19)
                                                                                             }
                                                                                         };
                                                                                         {
@@ -498,7 +667,7 @@ pub fn plan_rust_integer_bits(method: &str, bits: f64) -> Vec<f64> {
                                                                                 } else {
                                                                                     self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_3, index_3, body)
                                                                                 };
-                                                                                match source_ml_source1_s6 {
+                                                                                match source_ml_source1_s17 {
                                                                                     self::MlTemporaryPlanRustIntegerBitsJoin2::MlTemporaryPlanRustIntegerBitsJoin2Next(plan_5, index_5, body_3) => {
                                                                                         {
                                                                                             let at = (bindings_2.len() as f64) - 2f64;
@@ -633,269 +802,5 @@ pub fn read_rust_checked_integer_shift_operation(term: &str) -> String {
         String::from("shiftRustPrimitiveBitsRight")
     } else {
         String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<String> {
-    if (method == "checked_shl") || (method == "checked_shr") {
-        vec![
-            String::from("right"),
-            String::from("width"),
-            String::from("lt"),
-        ]
-    } else if method == "checked_neg" {
-        if signed {
-            vec![
-                String::from("operand"),
-                String::from("minimum"),
-                String::from("ne"),
-            ]
-        } else {
-            vec![
-                String::from("operand"),
-                String::from("zero"),
-                String::from("eq"),
-            ]
-        }
-    } else if method == "checked_abs" {
-        if signed {
-            vec![
-                String::from("operand"),
-                String::from("minimum"),
-                String::from("ne"),
-            ]
-        } else {
-            Vec::<String>::new()
-        }
-    } else if method == "checked_add" {
-        if signed {
-            vec![
-                String::from("right"),
-                String::from("zero"),
-                String::from("gt"),
-                String::from("operand"),
-                String::from("maximum"),
-                String::from("right"),
-                String::from("sub"),
-                String::from("le"),
-                String::from("right"),
-                String::from("zero"),
-                String::from("lt"),
-                String::from("operand"),
-                String::from("minimum"),
-                String::from("right"),
-                String::from("sub"),
-                String::from("ge"),
-                String::from("true"),
-                String::from("if"),
-                String::from("if"),
-            ]
-        } else {
-            vec![
-                String::from("operand"),
-                String::from("maximum"),
-                String::from("right"),
-                String::from("sub"),
-                String::from("le"),
-            ]
-        }
-    } else if method == "checked_sub" {
-        if signed {
-            vec![
-                String::from("right"),
-                String::from("zero"),
-                String::from("lt"),
-                String::from("operand"),
-                String::from("maximum"),
-                String::from("right"),
-                String::from("add"),
-                String::from("le"),
-                String::from("right"),
-                String::from("zero"),
-                String::from("gt"),
-                String::from("operand"),
-                String::from("minimum"),
-                String::from("right"),
-                String::from("add"),
-                String::from("ge"),
-                String::from("true"),
-                String::from("if"),
-                String::from("if"),
-            ]
-        } else {
-            vec![
-                String::from("operand"),
-                String::from("right"),
-                String::from("ge"),
-            ]
-        }
-    } else if method == "checked_mul" {
-        {
-            let positive_positive = vec![
-                String::from("operand"),
-                String::from("maximum"),
-                String::from("right"),
-                String::from("div"),
-                String::from("le"),
-            ];
-            if signed {
-                {
-                    let positive_negative = vec![
-                        String::from("right"),
-                        String::from("minimum"),
-                        String::from("operand"),
-                        String::from("div"),
-                        String::from("ge"),
-                    ];
-                    {
-                        let negative_positive = vec![
-                            String::from("operand"),
-                            String::from("minimum"),
-                            String::from("right"),
-                            String::from("div"),
-                            String::from("ge"),
-                        ];
-                        {
-                            let negative_negative = vec![
-                                String::from("operand"),
-                                String::from("maximum"),
-                                String::from("right"),
-                                String::from("div"),
-                                String::from("ge"),
-                            ];
-                            {
-                                let signs = {
-                                    let source_ml_source1_concat_value12 = vec![
-                                        String::from("operand"),
-                                        String::from("zero"),
-                                        String::from("gt"),
-                                        String::from("right"),
-                                        String::from("zero"),
-                                        String::from("gt"),
-                                    ];
-                                    {
-                                        let source_ml_source1_concat_value13 = positive_positive;
-                                        {
-                                            let source_ml_source1_concat_value14 =
-                                                positive_negative;
-                                            {
-                                                let source_ml_source1_concat_value15 = vec![
-                                                    String::from("if"),
-                                                    String::from("right"),
-                                                    String::from("zero"),
-                                                    String::from("gt"),
-                                                ];
-                                                {
-                                                    let source_ml_source1_concat_value16 =
-                                                        negative_positive;
-                                                    {
-                                                        let source_ml_source1_concat_value17 =
-                                                            negative_negative;
-                                                        {
-                                                            let source_ml_source1_concat_value18 = vec![
-                                                                String::from("if"),
-                                                                String::from("if"),
-                                                            ];
-                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value12), source_ml_source1_concat_value13), source_ml_source1_concat_value14), source_ml_source1_concat_value15), source_ml_source1_concat_value16), source_ml_source1_concat_value17), source_ml_source1_concat_value18)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                };
-                                {
-                                    let source_ml_source1_concat_value19 = vec![
-                                        String::from("operand"),
-                                        String::from("zero"),
-                                        String::from("eq"),
-                                        String::from("true"),
-                                        String::from("right"),
-                                        String::from("zero"),
-                                        String::from("eq"),
-                                        String::from("true"),
-                                    ];
-                                    {
-                                        let source_ml_source1_concat_value20 = signs;
-                                        {
-                                            let source_ml_source1_concat_value21 =
-                                                vec![String::from("if"), String::from("if")];
-                                            self::ml_array::append(
-                                                self::ml_array::append(
-                                                    self::ml_array::append(
-                                                        Vec::<String>::new(),
-                                                        source_ml_source1_concat_value19,
-                                                    ),
-                                                    source_ml_source1_concat_value20,
-                                                ),
-                                                source_ml_source1_concat_value21,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                {
-                    let source_ml_source1_concat_value9 = vec![
-                        String::from("operand"),
-                        String::from("zero"),
-                        String::from("eq"),
-                        String::from("true"),
-                        String::from("right"),
-                        String::from("zero"),
-                        String::from("eq"),
-                        String::from("true"),
-                    ];
-                    {
-                        let source_ml_source1_concat_value10 = positive_positive;
-                        {
-                            let source_ml_source1_concat_value11 =
-                                vec![String::from("if"), String::from("if")];
-                            self::ml_array::append(
-                                self::ml_array::append(
-                                    self::ml_array::append(
-                                        Vec::<String>::new(),
-                                        source_ml_source1_concat_value9,
-                                    ),
-                                    source_ml_source1_concat_value10,
-                                ),
-                                source_ml_source1_concat_value11,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    } else if (method == "checked_div") || (method == "checked_rem") {
-        if signed {
-            vec![
-                String::from("right"),
-                String::from("zero"),
-                String::from("eq"),
-                String::from("false"),
-                String::from("operand"),
-                String::from("minimum"),
-                String::from("eq"),
-                String::from("right"),
-                String::from("negative unit"),
-                String::from("ne"),
-                String::from("true"),
-                String::from("if"),
-                String::from("if"),
-            ]
-        } else {
-            vec![
-                String::from("right"),
-                String::from("zero"),
-                String::from("ne"),
-            ]
-        }
-    } else {
-        Vec::<String>::new()
     }
 }

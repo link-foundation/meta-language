@@ -1,3 +1,4 @@
+import {readRustWrappingShifts} from './rust-wrapping-shifts.js';
 import {readRustIntegerBits} from './rust-integer-bits.js';
 import {readRustPrimitiveDefault,readRustPrimitiveDefaultImport} from './rust-primitive-default.js';
 import {readRustCheckedInteger} from './rust-checked-integer.js';
@@ -1408,6 +1409,8 @@ class RustParser {
     if(saturatedProduct)return saturatedProduct;
     const bitQuery=readRustIntegerBits(this,receiver,method,args,range,path);
     if(bitQuery)return bitQuery;
+    const wrappingShift=readRustWrappingShifts(this,receiver,method,args,range,path);
+    if(wrappingShift)return wrappingShift;
     const checked=readRustCheckedInteger(this,receiver,method,args,range,path);
     if(checked)return checked;
     const wrapped=readRustWrappingInteger(this,receiver,method,args,range,path);

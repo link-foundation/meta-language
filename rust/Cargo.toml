@@ -223,6 +223,7 @@ include = [
     "src/data/rust-unit-value-program.lino",
     "src/data/rust-usize-index-expression-program.lino",
     "src/data/rust-wrapping-integer-program.lino",
+    "src/data/rust-wrapping-shift-program.lino",
     "src/data/scalar-assignment-program.lino",
     "src/data/scalar-closure-default-program.lino",
     "src/data/sequential-parameter-default-program.lino",

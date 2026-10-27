@@ -1,8 +1,273 @@
 // Generated from complete js/src/translation/rust-primitive-from-rules.js. Do not edit by hand.
 use super::accept_rust_integer_bit_method;
 use super::accept_rust_primitive_selection_receiver;
+use super::accept_rust_wrapping_shift_method;
 use super::ml_array;
 use super::read_rust_checked_integer_arity;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<String> {
+    if (method == "checked_shl") || (method == "checked_shr") {
+        vec![
+            String::from("right"),
+            String::from("width"),
+            String::from("lt"),
+        ]
+    } else if method == "checked_neg" {
+        if signed {
+            vec![
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("ne"),
+            ]
+        } else {
+            vec![
+                String::from("operand"),
+                String::from("zero"),
+                String::from("eq"),
+            ]
+        }
+    } else if method == "checked_abs" {
+        if signed {
+            vec![
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("ne"),
+            ]
+        } else {
+            Vec::<String>::new()
+        }
+    } else if method == "checked_add" {
+        if signed {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("gt"),
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("sub"),
+                String::from("le"),
+                String::from("right"),
+                String::from("zero"),
+                String::from("lt"),
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("right"),
+                String::from("sub"),
+                String::from("ge"),
+                String::from("true"),
+                String::from("if"),
+                String::from("if"),
+            ]
+        } else {
+            vec![
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("sub"),
+                String::from("le"),
+            ]
+        }
+    } else if method == "checked_sub" {
+        if signed {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("lt"),
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("add"),
+                String::from("le"),
+                String::from("right"),
+                String::from("zero"),
+                String::from("gt"),
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("right"),
+                String::from("add"),
+                String::from("ge"),
+                String::from("true"),
+                String::from("if"),
+                String::from("if"),
+            ]
+        } else {
+            vec![
+                String::from("operand"),
+                String::from("right"),
+                String::from("ge"),
+            ]
+        }
+    } else if method == "checked_mul" {
+        {
+            let positive_positive = vec![
+                String::from("operand"),
+                String::from("maximum"),
+                String::from("right"),
+                String::from("div"),
+                String::from("le"),
+            ];
+            if signed {
+                {
+                    let positive_negative = vec![
+                        String::from("right"),
+                        String::from("minimum"),
+                        String::from("operand"),
+                        String::from("div"),
+                        String::from("ge"),
+                    ];
+                    {
+                        let negative_positive = vec![
+                            String::from("operand"),
+                            String::from("minimum"),
+                            String::from("right"),
+                            String::from("div"),
+                            String::from("ge"),
+                        ];
+                        {
+                            let negative_negative = vec![
+                                String::from("operand"),
+                                String::from("maximum"),
+                                String::from("right"),
+                                String::from("div"),
+                                String::from("ge"),
+                            ];
+                            {
+                                let signs = {
+                                    let source_ml_source1_concat_value23 = vec![
+                                        String::from("operand"),
+                                        String::from("zero"),
+                                        String::from("gt"),
+                                        String::from("right"),
+                                        String::from("zero"),
+                                        String::from("gt"),
+                                    ];
+                                    {
+                                        let source_ml_source1_concat_value24 = positive_positive;
+                                        {
+                                            let source_ml_source1_concat_value25 =
+                                                positive_negative;
+                                            {
+                                                let source_ml_source1_concat_value26 = vec![
+                                                    String::from("if"),
+                                                    String::from("right"),
+                                                    String::from("zero"),
+                                                    String::from("gt"),
+                                                ];
+                                                {
+                                                    let source_ml_source1_concat_value27 =
+                                                        negative_positive;
+                                                    {
+                                                        let source_ml_source1_concat_value28 =
+                                                            negative_negative;
+                                                        {
+                                                            let source_ml_source1_concat_value29 = vec![
+                                                                String::from("if"),
+                                                                String::from("if"),
+                                                            ];
+                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<String>::new(), source_ml_source1_concat_value23), source_ml_source1_concat_value24), source_ml_source1_concat_value25), source_ml_source1_concat_value26), source_ml_source1_concat_value27), source_ml_source1_concat_value28), source_ml_source1_concat_value29)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                };
+                                {
+                                    let source_ml_source1_concat_value30 = vec![
+                                        String::from("operand"),
+                                        String::from("zero"),
+                                        String::from("eq"),
+                                        String::from("true"),
+                                        String::from("right"),
+                                        String::from("zero"),
+                                        String::from("eq"),
+                                        String::from("true"),
+                                    ];
+                                    {
+                                        let source_ml_source1_concat_value31 = signs;
+                                        {
+                                            let source_ml_source1_concat_value32 =
+                                                vec![String::from("if"), String::from("if")];
+                                            self::ml_array::append(
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<String>::new(),
+                                                        source_ml_source1_concat_value30,
+                                                    ),
+                                                    source_ml_source1_concat_value31,
+                                                ),
+                                                source_ml_source1_concat_value32,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                {
+                    let source_ml_source1_concat_value20 = vec![
+                        String::from("operand"),
+                        String::from("zero"),
+                        String::from("eq"),
+                        String::from("true"),
+                        String::from("right"),
+                        String::from("zero"),
+                        String::from("eq"),
+                        String::from("true"),
+                    ];
+                    {
+                        let source_ml_source1_concat_value21 = positive_positive;
+                        {
+                            let source_ml_source1_concat_value22 =
+                                vec![String::from("if"), String::from("if")];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<String>::new(),
+                                        source_ml_source1_concat_value20,
+                                    ),
+                                    source_ml_source1_concat_value21,
+                                ),
+                                source_ml_source1_concat_value22,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    } else if (method == "checked_div") || (method == "checked_rem") {
+        if signed {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("eq"),
+                String::from("false"),
+                String::from("operand"),
+                String::from("minimum"),
+                String::from("eq"),
+                String::from("right"),
+                String::from("negative unit"),
+                String::from("ne"),
+                String::from("true"),
+                String::from("if"),
+                String::from("if"),
+            ]
+        } else {
+            vec![
+                String::from("right"),
+                String::from("zero"),
+                String::from("ne"),
+            ]
+        }
+    } else {
+        Vec::<String>::new()
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -127,32 +392,32 @@ pub fn read_rust_primitive_associated_owner(
                 } else {
                     if (((segments.len() as f64) == 4f64)
                         && ({
-                            let source_ml_source1_comparison_operand22 =
+                            let source_ml_source1_comparison_operand33 =
                                 self::ml_array::optional_at(
                                     segments,
                                     self::ml_array::number_index(0f64),
                                 );
                             {
-                                let source_ml_source1_comparison_operand23 = String::from("std");
+                                let source_ml_source1_comparison_operand34 = String::from("std");
                                 match (
-                                    source_ml_source1_comparison_operand22,
-                                    source_ml_source1_comparison_operand23,
+                                    source_ml_source1_comparison_operand33,
+                                    source_ml_source1_comparison_operand34,
                                 ) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
                                 }
                             }
                         } || {
-                            let source_ml_source1_comparison_operand24 =
+                            let source_ml_source1_comparison_operand35 =
                                 self::ml_array::optional_at(
                                     segments,
                                     self::ml_array::number_index(0f64),
                                 );
                             {
-                                let source_ml_source1_comparison_operand25 = String::from("core");
+                                let source_ml_source1_comparison_operand36 = String::from("core");
                                 match (
-                                    source_ml_source1_comparison_operand24,
-                                    source_ml_source1_comparison_operand25,
+                                    source_ml_source1_comparison_operand35,
+                                    source_ml_source1_comparison_operand36,
                                 ) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
@@ -160,17 +425,17 @@ pub fn read_rust_primitive_associated_owner(
                             }
                         }))
                         && {
-                            let source_ml_source1_comparison_operand26 =
+                            let source_ml_source1_comparison_operand37 =
                                 self::ml_array::optional_at(
                                     segments,
                                     self::ml_array::number_index(1f64),
                                 );
                             {
-                                let source_ml_source1_comparison_operand27 =
+                                let source_ml_source1_comparison_operand38 =
                                     String::from("primitive");
                                 match (
-                                    source_ml_source1_comparison_operand26,
-                                    source_ml_source1_comparison_operand27,
+                                    source_ml_source1_comparison_operand37,
+                                    source_ml_source1_comparison_operand38,
                                 ) {
                                     (Some(ml_left), ml_right) => ml_left == ml_right,
                                     _ => false,
@@ -247,6 +512,8 @@ pub fn read_rust_primitive_associated_arity(owner: &str, method: &str) -> f64 {
             2f64
         } else if owner == "bool" {
             -1f64
+        } else if self::accept_rust_wrapping_shift_method(method) {
+            2f64
         } else if self::accept_rust_integer_bit_method(method) {
             1f64
         } else {
@@ -369,13 +636,13 @@ pub fn read_rust_primitive_from_owner(
     if !ordinary || shadowed {
         String::new()
     } else if ((((segments.len() as f64) == 2f64) && !absolute) && {
-        let source_ml_source1_comparison_operand28 =
+        let source_ml_source1_comparison_operand39 =
             self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
         {
-            let source_ml_source1_comparison_operand29 = String::from("f64");
+            let source_ml_source1_comparison_operand40 = String::from("f64");
             match (
-                source_ml_source1_comparison_operand28,
-                source_ml_source1_comparison_operand29,
+                source_ml_source1_comparison_operand39,
+                source_ml_source1_comparison_operand40,
             ) {
                 (Some(ml_left), ml_right) => ml_left == ml_right,
                 _ => false,
@@ -383,26 +650,26 @@ pub fn read_rust_primitive_from_owner(
         }
     }) || (((((segments.len() as f64) == 4f64)
         && ({
-            let source_ml_source1_comparison_operand30 =
+            let source_ml_source1_comparison_operand41 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
             {
-                let source_ml_source1_comparison_operand31 = String::from("std");
+                let source_ml_source1_comparison_operand42 = String::from("std");
                 match (
-                    source_ml_source1_comparison_operand30,
-                    source_ml_source1_comparison_operand31,
+                    source_ml_source1_comparison_operand41,
+                    source_ml_source1_comparison_operand42,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
                 }
             }
         } || {
-            let source_ml_source1_comparison_operand32 =
+            let source_ml_source1_comparison_operand43 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
             {
-                let source_ml_source1_comparison_operand33 = String::from("core");
+                let source_ml_source1_comparison_operand44 = String::from("core");
                 match (
-                    source_ml_source1_comparison_operand32,
-                    source_ml_source1_comparison_operand33,
+                    source_ml_source1_comparison_operand43,
+                    source_ml_source1_comparison_operand44,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -410,13 +677,13 @@ pub fn read_rust_primitive_from_owner(
             }
         }))
         && {
-            let source_ml_source1_comparison_operand34 =
+            let source_ml_source1_comparison_operand45 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(1f64));
             {
-                let source_ml_source1_comparison_operand35 = String::from("primitive");
+                let source_ml_source1_comparison_operand46 = String::from("primitive");
                 match (
-                    source_ml_source1_comparison_operand34,
-                    source_ml_source1_comparison_operand35,
+                    source_ml_source1_comparison_operand45,
+                    source_ml_source1_comparison_operand46,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -424,13 +691,13 @@ pub fn read_rust_primitive_from_owner(
             }
         })
         && {
-            let source_ml_source1_comparison_operand36 =
+            let source_ml_source1_comparison_operand47 =
                 self::ml_array::optional_at(segments, self::ml_array::number_index(2f64));
             {
-                let source_ml_source1_comparison_operand37 = String::from("f64");
+                let source_ml_source1_comparison_operand48 = String::from("f64");
                 match (
-                    source_ml_source1_comparison_operand36,
-                    source_ml_source1_comparison_operand37,
+                    source_ml_source1_comparison_operand47,
+                    source_ml_source1_comparison_operand48,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -614,77 +881,4 @@ pub fn plan_rust_primitive_from(target: &str, source: &str) -> String {
             }
         }
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_plan_rust_integer_bits_loop3(
-    mut plan: Vec<f64>,
-    bindings: &[f64],
-    mut index: f64,
-    mut body: f64,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at >= 0f64 {
-            {
-                let plan_2 = {
-                    let source_ml_source1_concat_value38 = plan;
-                    {
-                        let source_ml_source1_concat_value39 = vec![
-                            18f64,
-                            (self::ml_array::optional_at(
-                                bindings,
-                                self::ml_array::number_index(at),
-                            ))
-                            .unwrap_or_else(|| -1f64),
-                            (self::ml_array::optional_at(
-                                bindings,
-                                self::ml_array::number_index(at + 1f64),
-                            ))
-                            .unwrap_or_else(|| -1f64),
-                            body,
-                            0f64,
-                        ];
-                        self::ml_array::append(
-                            self::ml_array::append(
-                                Vec::<f64>::new(),
-                                source_ml_source1_concat_value38,
-                            ),
-                            source_ml_source1_concat_value39,
-                        )
-                    }
-                };
-                {
-                    let body_2 = index;
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            let at_2 = at - 2f64;
-                            {
-                                (plan, index, body, at) = (plan_2, index_2, body_2, at_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { plan };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustIntegerBitsJoin2 {
-    MlTemporaryPlanRustIntegerBitsJoin2Next(Vec<f64>, f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustIntegerBitsLoop1Result {
-    MlTemporaryPlanRustIntegerBitsLoop1Done(Vec<f64>, Vec<f64>, f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustIntegerBitsJoin4 {
-    MlTemporaryPlanRustIntegerBitsJoin4Next(Vec<f64>, f64, f64, f64),
 }
