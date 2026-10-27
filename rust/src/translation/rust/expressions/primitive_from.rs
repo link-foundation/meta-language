@@ -160,7 +160,8 @@ impl RustParser {
                 },
                 range,
             ),
-            "integer exact" | "floating exact" => SExpr::new(
+            "floating exact" => self.project_integer_float_plan(local, &source_type, range)?,
+            "integer exact" => SExpr::new(
                 SNode::Cast {
                     arg: Box::new(local),
                     to: to.clone(),

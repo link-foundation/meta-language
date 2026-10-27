@@ -185,6 +185,7 @@ include = [
     "src/data/rust-function-pointer-program.lino",
     "src/data/rust-function-qualifier-program.lino",
     "src/data/rust-inherent-program.lino",
+    "src/data/rust-integer-float-plan-program.lino",
     "src/data/rust-module-value-program.lino",
     "src/data/rust-named-formatting-program.lino",
     "src/data/rust-pointer-integer-owner-program.lino",

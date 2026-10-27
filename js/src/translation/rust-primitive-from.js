@@ -1,3 +1,4 @@
+import {projectRustIntegerFloatPlan} from './rust-integer-float-plan.js';
 // Actual source facts and existing capture/conditional/cast AST transport only.
 import {unsupported} from './diagnostics.js';
 import {rustFixedType,BOOL,FLOAT} from './types.js';
@@ -11,7 +12,7 @@ export function projectRustPrimitiveFrom(parser,receiver,target,range,path){
  const plan=planRustPrimitiveFrom(target,owner.path.join('::'));
  if(!plan)throw unsupported('Rust primitive From','the selected standard primitive From implementation must exist for the actual source owner',range);
  const to=target==='bool'?BOOL:target==='f64'?FLOAT:rustFixedType(target),name=parser.freshProductBinding(),local=()=>parser.origins.mark({k:'name',path:[name],span:receiver.span??range},origin);
- const body=plan==='identity'?local():plan==='boolean integer'?{k:'if',cond:local(),then:{k:'num',value:'1',type:to,span:range},else:{k:'num',value:'0',type:to,span:range},span:range}:{k:'cast',arg:local(),to,flavor:'exact',span:range};
+ const body=plan==='floating exact'?projectRustIntegerFloatPlan(parser,local(),type,range):plan==='identity'?local():plan==='boolean integer'?{k:'if',cond:local(),then:{k:'num',value:'1',type:to,span:range},else:{k:'num',value:'0',type:to,span:range},span:range}:{k:'cast',arg:local(),to,flavor:'exact',span:range};
  const result={k:'let',name,type,value:receiver,body,span:range};
  return parser.origins.mark(result,{...parser.origins.typeOrigin(to,path),sourceOwner:{kind:'primitive',path:[target],arguments:[]}});
 }

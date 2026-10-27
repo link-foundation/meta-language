@@ -3,6 +3,7 @@
 mod array_index;
 mod ascii_text_predicates;
 pub(super) mod control;
+mod integer_float_plan;
 mod primitive_associated_calls;
 mod primitive_from;
 mod primitive_integer_constants;

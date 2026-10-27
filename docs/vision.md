@@ -606,6 +606,27 @@ receiver and refusal, both Links transports and all target emissions remain
 deferred controls. Neither these source drafts nor the retained preceding
 definition establish runtime observations or broader arithmetic coverage.
 
+The six standard exact integer-to-binary64 From domains now have a complete
+shared source-term decomposition draft. Signed remainders select the sign of
+each power-of-two contribution; quotient steps divide only by positive two.
+No integer minimum is negated. Floating weights and sums remain exact integers
+of magnitude below 2^32. Explicit hygienic bindings evaluate the actual input
+once and retain every intermediate. A closed seventeen-operation source
+vocabulary uses existing literal, reference, comparison, arithmetic, conditional
+and binding ASTs; native code only projects the same shared plan. No unsupported
+fixed-to-float core cast or host numeric conversion substitutes for this rule.
+At width 32 the source plan has 490 terms and 99 bindings, under explicit
+coordinate, binding and plan-size bounds.
+
+Four hundred seventy complete original sources declare independently authored
+boundaries and every admitted bit-power neighbour, positive-zero observation,
+full source types, one actual operand call and complete output traces. Shared
+operation/width controls, original and both generated native products, both
+Links codecs and four emissions remain deferred. The preceding From inputs
+remain intact. Float sign predicates, signed-NaN handling, wider rounding
+domains, other numeric casts and complete own-codebase translation still need
+their source drafts; no executed evidence is claimed here.
+
 Integer associated constants now have a source draft for MIN, MAX and BITS
 on every fixed/pointer integer owner. Bare, std/core, absolute and actual local
 alias paths retain exact namespace resolution. Existing shared bound definitions
@@ -635,7 +656,8 @@ absolute and local alias calls retain actual standard source/destination owners.
 Unconstrained integer literal arguments use the ordinary i32 fallback; floating
 literal syntax retains f64. Explicit argument references receive no method
 receiver adjustment. Shared plans select existing identity, Boolean conditional
-or exact cast terms, with one actual argument capture and an owned result.
+or integer cast terms, with the explicit shared decomposition above for exact
+floating conversion, one actual argument capture and an owned result.
 The supported relation follows the standard library's
 [numeric conversion definitions](https://doc.rust-lang.org/src/core/convert/num.rs.html)
 and [reflexive From implementation](https://doc.rust-lang.org/std/convert/trait.From.html).
