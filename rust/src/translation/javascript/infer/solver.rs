@@ -192,6 +192,9 @@ impl Inference {
                 progress |= self.force_method_owner()?;
             }
             // `.length` of a value nothing else fixes reads an array.
+            if !progress {
+                progress |= self.force_data_field_owner()?;
+            }
             let length = self.fields.iter().find(|constraint| {
                 constraint.field == "length"
                     && matches!(self.resolve(&constraint.object), Term::Var(_))

@@ -556,3 +556,5 @@ mod translation_javascript_classes;
 mod translation_javascript_data_fields;
 
 mod translation_javascript_property_descriptors;
+
+mod translation_javascript_ordinary_heap;

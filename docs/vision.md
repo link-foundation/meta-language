@@ -9036,6 +9036,74 @@ operation, fixture, product or native compiler has executed. These drafts do
 not establish whole-language coverage or runtime parity. All broad translation,
 grammar, shared-concept and earlier requirements remain binding.
 
+### Ordinary global-identity heap and prototype transition draft
+
+Ordinary JavaScript objects, their ordered properties and their complete heap
+are separate nominal definitions in the same inspectable source graph. Their
+types reference those definitions instead of repeatedly expanding structural
+records. The existing structural and semantic source-size limits remain
+unchanged. Each snapshot contains strictly ordered unique unsigned64 Object
+and Symbol directories; the two domains cannot reuse an identity. Reference
+values retain the intrinsic callability belonging to that actual identity.
+Prototype edges target declared Objects or null, and ordinary chains are
+acyclic. Property lists retain creation order, exact text/Symbol keys and
+complete descriptors. Missing references, duplicate keys, conflicting callable
+facts and incomplete descriptors refuse instead of creating substitute objects.
+
+Shared ordinary operations draft Get, SetWithOwnDescriptor, DefineOwnProperty,
+Delete, PreventExtensions, SetPrototypeOf and OwnPropertyKeys. Inherited writable
+data creates or updates the actual receiver's own property; an inherited
+readonly property rejects the write. An existing receiver accessor cannot be
+replaced by assigning through a different object's data property. Getter and
+setter lookup retain their original receiver, including primitive receivers.
+Own keys use ascending numeric indices, then other text in creation order,
+then Symbols in creation order. The operations follow the
+[ordinary object internal methods](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinary-object-internal-methods-and-internal-slots).
+
+Accessor operations return an explicit pending call with callee, receiver and
+arguments. A pending setter call is not a completed success. The evaluator must
+execute the call, retain its exception or normal result, and resume against its
+actual latest shared state. Replacing that result with undefined or resuming
+against the earlier snapshot would change behavior. Strict assignment and
+Reflect.set apply their own rules to a completed false result. Callable-code
+execution, continuation resumption, source frontend integration and lifecycle
+remain required work; the snapshot operations do not establish their support.
+
+Transitions return a new selected state; rejected/no-write transitions retain
+the original state and descriptor payloads. Every source alias must resolve
+through one shared state cell during frontend integration. Object insertion
+and Symbol registration consume externally allocated global link identities;
+they never start a competing identity allocator. Prototype and descriptor
+relationships remain explicit shared data. No correspondence between different
+global contexts or recursive concept definitions is inferred from equal IDs.
+
+The present source domain bounds directory sizes at 4096 Objects and 16384
+Symbols, total properties at16384 and each object's properties at4096. Existing
+UTF16 budgets remain. These are explicit snapshot resource limits, not accepted
+restrictions on the required complete language. Binary identity lookup and
+iterative chain traversal are source-defined; total cost and native clone
+behavior remain unverified. General resource-efficient dynamic heaps, garbage
+collection, proxies, exotic objects and complete language integration remain
+obligations.
+
+Source drafting also defers nominal field-owner fallback until actual callback,
+argument and record constraints settle. A shared field name cannot prematurely
+assign a nominal owner to a declared structural record. Both frontends retain
+tagged constructor refinement when lowering while/for conditions and do-while
+continuations through the existing exhaustive match operation. Earlier source
+bytes and all earlier inputs remain available in qualified Links records.
+Superseded task-generated layouts remain exact Links source archives and their
+original files remain in task-owned temporary storage; they are not shipped as
+unused competing definitions. These archives certify bytes, not equivalence.
+
+Deferred controls compare whole normalized states, ordered keys, every property
+attribute, stored Number bits and pending calls against actual ordinary
+JavaScript objects and the automatically generated Rust operations. Text/binary
+source graphs and all four emitters remain required. No heap operation, fixture,
+oracle, product, code test or native compiler has executed. Continue full
+requirements drafting before CI/CD repair; none of these drafts certifies a
+whole-language or whole-project result.
+
 Ordered record storage contains a Number position vector even when its named
 fields contain only strings. Target trait derivation and numeric dependence
 must account for that actual representation. This does not make the record a

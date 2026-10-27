@@ -31,6 +31,16 @@ fn datatype_fields_keep_complete_source_and_both_native_products() {
         ]));
     assert!(producer.ok, "{}", producer.stderr);
     let observations = read_structured_data_lino(&producer.stdout).unwrap();
+    for row in observations["ownerFallbackCases"].as_array().unwrap() {
+        assert_eq!(
+            rules::accept_java_script_data_field_owner_fallback(
+                row["kind"].as_str().unwrap(),
+                row["owners"].as_f64().unwrap(),
+                row["settled"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
     for row in observations["plans"].as_array().unwrap() {
         let positions = row["positions"]
             .as_array()

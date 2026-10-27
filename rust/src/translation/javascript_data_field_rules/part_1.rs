@@ -687,6 +687,16 @@ pub fn read_java_script_data_field_inference_form(field: &str, positions: &[f64]
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_data_field_owner_fallback(
+    kind: &str,
+    owners: f64,
+    settled: bool,
+) -> bool {
+    (settled && (kind == "var")) && (owners == 1f64)
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryReadJavaScriptDataFieldPlanLoop1Result {
     MlTemporaryReadJavaScriptDataFieldPlanLoop1Done(bool, String),

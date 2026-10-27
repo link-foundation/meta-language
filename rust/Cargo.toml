@@ -141,6 +141,7 @@ include = [
     "src/data/javascript-nullish-field-program.lino",
     "src/data/javascript-optional-call-program.lino",
     "src/data/javascript-optional-chain-program.lino",
+    "src/data/javascript-ordinary-heap-program.lino",
     "src/data/javascript-own-property-program.lino",
     "src/data/javascript-property-call-program.lino",
     "src/data/javascript-property-descriptor-program.lino",

@@ -3,6 +3,10 @@ use super::{FLOAT, FieldOf, Inference, Result, STRING, Term, Type};
 
 impl Inference {
     pub(super) fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
+        self.field_step_with_owner(constraint, false)
+    }
+
+    fn field_step_with_owner(&mut self, constraint: &FieldOf, settled: bool) -> Result<bool> {
         let resolved = self.resolve(&constraint.object);
         let kind = match &resolved {
             Term::Known(ty) => ty.kind(),
@@ -75,14 +79,16 @@ impl Inference {
                     })
                     .map(|(name, _)| name)
                     .collect();
-                if !matches!(other, Term::Var(_)) || owners.len() != 1 {
+                if !crate::translation::javascript_data_field_rules::accept_java_script_data_field_owner_fallback(
+                    if matches!(other,Term::Var(_)){"var"}else{"known"},
+                    f64::from(u32::try_from(owners.len()).expect("actual source declarations fit bounded owner counts")),settled) {
                     return Ok(false);
                 }
                 let owner = Term::Known(Type::Data {
                     name: owners[0].clone(),
                 });
                 self.unify(&constraint.object, &owner, constraint.place)?;
-                return self.field_step(constraint);
+                return self.field_step_with_owner(constraint, settled);
             }
         };
         let constructors = self
@@ -169,5 +175,23 @@ impl Inference {
             self.unify(&constraint.result, &term, constraint.place)?;
         }
         Ok(true)
+    }
+
+    pub(super) fn force_data_field_owner(&mut self) -> Result<bool> {
+        let mut progress = false;
+        let mut waiting = Vec::new();
+        for constraint in std::mem::take(&mut self.fields) {
+            if !progress
+                && matches!(self.resolve(&constraint.object), Term::Var(_))
+                && self.field_step_with_owner(&constraint, true)?
+            {
+                progress = true;
+            } else {
+                waiting.push(constraint);
+            }
+        }
+        waiting.extend(std::mem::take(&mut self.fields));
+        self.fields = waiting;
+        Ok(progress)
     }
 }

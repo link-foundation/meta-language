@@ -1,5 +1,5 @@
 import {requireCallableConstantApplicationCapture} from './rust-module-value-rules.js';
-import {readJavaScriptDataFieldInferenceForm} from './javascript-data-field-rules.js';
+import {readJavaScriptDataFieldInferenceForm,acceptJavaScriptDataFieldOwnerFallback} from './javascript-data-field-rules.js';
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
 import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
 import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
@@ -611,6 +611,10 @@ class Inference {
         if(method&&this.methodStep(method,true)){this.methods.splice(this.methods.indexOf(method),1);progress=true;}
       }
       // `.length` of a value nothing else fixes reads an array.
+      if(!progress){
+        const field=this.fields.find(constraint=>this.resolve(constraint.object).kind==='var'&&this.fieldStep(constraint,true));
+        if(field){this.fields.splice(this.fields.indexOf(field),1);progress=true;}
+      }
       const length = this.fields.find(({ object, field }) => field === 'length' && this.resolve(object).kind === 'var');
       if (!progress && length) {
         this.unify(length.object, { kind: 'array', element: this.fresh() }, length.where);
@@ -745,7 +749,7 @@ class Inference {
     return plan.additional || plan.pairs.some(([value, expected]) => this.additionalAbsence(value, expected));
   }
 
-  fieldStep({ object, field, result, where }) {
+  fieldStep({ object, field, result, where }, settled = false) {
     const type = this.resolve(object);
     const form=readJavaScriptNullishFieldForm(type.kind,type.element?this.resolve(type.element).kind:'');
     if(form==='absent')return true;
@@ -772,10 +776,9 @@ class Inference {
     }
     if (type.kind !== 'data') {
       const owners = [...this.data].filter(([, ctors]) => ctors.some((ctor) => ctor.fields.some((candidate) => candidate.name === field)));
-      if (type.kind !== 'var') return false;
-      if (owners.length !== 1) return false;
+      if (!acceptJavaScriptDataFieldOwnerFallback(type.kind,owners.length,settled)) return false;
       this.unify(object, { kind: 'data', name: owners[0][0] }, where);
-      return this.fieldStep({ object, field, result, where });
+      return this.fieldStep({ object, field, result, where }, settled);
     }
     const constructors=this.data.get(type.name)??[],positions=constructors.map(ctor=>ctor.fields.findIndex(candidate=>candidate.name===field));
     const projectionForm=readJavaScriptDataFieldInferenceForm(field,positions);

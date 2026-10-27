@@ -5,6 +5,14 @@ import {lstatSync,readFileSync,realpathSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {readProjectData} from './project-data.mjs';
 const root=new URL('../../',import.meta.url);
+export function acceptSourceLibraryFilePath(stem,path){
+ if(typeof stem!=='string'||!/^[a-z][a-z0-9_]*$/u.test(stem)||typeof path!=='string')return false;
+ if(path===stem+'.rs')return true;
+ if(!path.startsWith(stem+'/'))return false;
+ const parts=path.slice(stem.length+1).split('/');
+ return parts.length>0&&parts.length<=8&&parts.slice(0,-1).every(part=>/^[a-z][a-z0-9_]*$/u.test(part))
+  &&/^[a-z][a-z0-9_]*\.rs$/u.test(parts.at(-1));
+}
 export function stageSourceLibraryFiles(recipePath,{directory='translation'}={}){
  if(!['translation',''].includes(directory))throw new TypeError('use an explicit supported generated source directory');
  if(typeof recipePath!=='string'||!/^parity\/self-translation\/[a-z][a-z0-9-]*-native\.lino$/u.test(recipePath))throw new TypeError('a complete task-owned native generation recipe is required');
@@ -13,7 +21,7 @@ export function stageSourceLibraryFiles(recipePath,{directory='translation'}={})
  if(data.schemaVersion!==1||!Array.isArray(data.files)||data.files.length===0||data.files.length>128)throw new TypeError('the complete native recipe file directory is required');
  const paths=[],seen=new Set();
  for(const row of data.files){
-  if(typeof row.path!=='string'||!(row.path===stem+'.rs'||new RegExp('^'+stem+'/part_[1-9][0-9]*\\.rs$','u').test(row.path))||seen.has(row.path)||typeof row.source!=='string')throw new TypeError('only distinct actual generated module paths may be staged');
+  if(!acceptSourceLibraryFilePath(stem,row.path)||seen.has(row.path)||typeof row.source!=='string')throw new TypeError('only distinct actual generated module paths may be staged');
   seen.add(row.path);const path='rust/src/'+(directory?directory+'/':'')+row.path,target=new URL(path,root),stat=lstatSync(target);
   if(!stat.isFile()||stat.isSymbolicLink()||realpathSync(target)!==actualRoot+'/'+path)throw new TypeError('a generated source path must remain a regular project-owned file');
   if(!readFileSync(target).equals(Buffer.from(row.source)))throw new TypeError('preserve edited or stale generated source for review: '+path);

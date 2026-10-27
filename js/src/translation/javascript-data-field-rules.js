@@ -39,3 +39,11 @@ export function readJavaScriptDataFieldInferenceForm(field, positions) {
   }
   return !present ? 'absent' : missing ? 'optional' : 'present';
 }
+
+/** A source field spelling must not select a nominal owner before actual call
+ * arguments, collection callbacks and declared structural records have settled.
+ * This retains the previous unique-owner fallback only at quiescence.
+ * @param {string} kind @param {number} owners @param {boolean} settled @returns {boolean} */
+export function acceptJavaScriptDataFieldOwnerFallback(kind, owners, settled) {
+  return settled && kind === 'var' && owners === 1;
+}

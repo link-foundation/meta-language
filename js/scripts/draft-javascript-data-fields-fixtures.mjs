@@ -16,6 +16,12 @@ const refusals=[
  {name:'heterogeneous constructor fields need a complete union value representation',source:'/** @typedef {{ $:"first", amount:number } | { $:"second", amount:string }} Choice */\n/** @param {Choice} value */ function amount(value){return value.amount;}'},
  {name:'inherited datatype properties retain complete prototype requirements',source:prefix+'/** @param {TextChoice} value */ function inherited(value){return value.toString;}'}
 ];
+cases.push(
+ {name:'declared callback record owners settle before nominal field spellings',source:'/** @typedef {{ $:"none" } | { $:"reference", identity:bigint }} Datum */\n/** @typedef {{identity:number,prototype:number}} RecordOwner */\n/** @param {RecordOwner[]} records @returns {number[]} */ function project(records){return records.map(record=>record.identity+record.prototype);} function compute(){return project([{identity:3,prototype:5}])[0]??0;}',value:8},
+ {name:'tagged while conditions retain actual constructor fields',source:'/** @typedef {{ $:"stop" } | { $:"step", identity:number }} Step */\n/** @param {Step} value */ function walk(value){let current=value;let result=0;while(current.$==="step"){result+=current.identity;current={$:"stop"};}return result;} function compute(){return walk({$:"step",identity:9});}',value:9},
+ {name:'tagged for conditions retain the complete continuation',source:'/** @typedef {{ $:"stop" } | { $:"step", identity:number }} Step */\n/** @param {Step} value */ function walk(value){let current=value;let result=0;for(let at=0;current.$==="step";at+=1){result+=current.identity;current={$:"stop"};}return result;} function compute(){return walk({$:"step",identity:7});}',value:7},
+ {name:'tagged do-while continuation preserves termination',source:'/** @typedef {{ $:"stop" } | { $:"step", identity:number }} Step */\n/** @param {Step} value */ function walk(value){let current=value;let count=0;do{count+=1;if(count>=3)current={$:"stop"};}while(current.$==="step");return count;} function compute(){return walk({$:"step",identity:7});}',value:3}
+);
 const plans=[];
 function plan(name,field,positions,types,mode,optional,inference,error='',inherited=false,language='JavaScript'){plans.push({name,language,field,positions,types,inherited,expected:{mode,error,optional},inference});}
 plan('common fields retain exact resolved type keys','value',[0,1],['nominal:A','nominal:A'],'field',false,'present');
@@ -41,4 +47,15 @@ const predecessors=['js/src/translation/check.js','js/src/translation/javascript
  }else writeProjectData(target,record);
  return {path,revision,retained,bytes:record.bytes,sha256:record.sha256};
 });
-writeProjectData(new URL('../../parity/fixtures/javascript-data-fields.lino',import.meta.url),{schemaVersion:1,model:'JavaScript common datatype fields and own absence source projection 1',cases,refusals,plans,predecessors});
+const ownerFallbackCases=[{kind:'var',owners:1,settled:false,expected:false},{kind:'var',owners:1,settled:true,expected:true},
+ {kind:'var',owners:2,settled:true,expected:false},{kind:'record',owners:1,settled:true,expected:false},{kind:'var',owners:0,settled:true,expected:false}];
+const continuationRevision='0b64364aeee2225c2a9c0fb3450cbb15c7e7cf8b';
+const continuationPredecessors=['js/src/translation/javascript-infer.js','js/src/translation/javascript-lower.js','js/src/translation/javascript-data-field-rules.js',
+ 'rust/src/translation/javascript/infer/fields.rs','rust/src/translation/javascript/infer/solver.rs','rust/src/translation/javascript/imperative/loops.rs'].map(path=>{
+ const bytes=execFileSync('git',['show',continuationRevision+':'+path],{maxBuffer:4*1024*1024}),retained='parity/fixtures/history/javascript-heap-before-'+path.replaceAll('/','-')+'.lino',target=new URL('../../'+retained,import.meta.url);
+ const record={path,revision:continuationRevision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
+ if(existsSync(target)){if(!lstatSync(target).isFile()||lstatSync(target).isSymbolicLink())throw new TypeError('retained source must be a regular file');const prior=readProjectData(target);if(Object.keys(prior).length!==Object.keys(record).length||Object.keys(record).some(key=>prior[key]!==record[key]))throw new TypeError('complete retained predecessor source changed: '+retained);}
+ else writeProjectData(target,record);
+ return {path,revision:record.revision,retained,bytes:record.bytes,sha256:record.sha256};
+});
+writeProjectData(new URL('../../parity/fixtures/javascript-data-fields.lino',import.meta.url),{schemaVersion:1,model:'JavaScript common datatype fields and own absence source projection 1',cases,refusals,plans,predecessors,ownerFallbackCases,continuationPredecessors});

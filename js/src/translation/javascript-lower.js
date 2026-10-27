@@ -555,9 +555,11 @@ class Lowering {
     const again = (inner) => (loop.s === 'for' && loop.update.length
       ? this.seq(loop.update, 0, { fall: call, ret: give, brk: finish, cont: finish, ...lives }, inner)
       : call());
-    const test = (inner, then, otherwise) => (loop.cond && !infinite(loop)
-      ? { k: 'if', cond: this.renamed(loop.cond, inner), then, else: otherwise(), span: where }
-      : then);
+    const test = (inner, then, otherwise) => {
+      if(!loop.cond||infinite(loop))return then;
+      const cond=this.renamed(loop.cond,inner),other=otherwise(),tag=this.parser.tagCondition(cond);
+      return tag?this.parser.lowerTagIf(tag,then,other,where):{k:'if',cond,then,else:other,span:where};
+    };
     const lowered = new Lowering(this.parser, this.fn, this.cells);
     lowered.renames = this.renames;
     let fnBody;

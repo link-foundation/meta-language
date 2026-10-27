@@ -15,4 +15,4 @@ const rows=fixture.cases.map(row=>{
  const surface=parseJavaScript(row.source),program=checkProgram(surface);
  return {...row,surface,javascript:emitJavaScript(program),native:emitRust(program)};
 });
-process.stdout.write(structuredDataToLino({rows,refusals:fixture.refusals,plans:fixture.plans}));
+process.stdout.write(structuredDataToLino({rows,refusals:fixture.refusals,plans:fixture.plans,ownerFallbackCases:fixture.ownerFallbackCases}));
