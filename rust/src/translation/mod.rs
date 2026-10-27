@@ -184,6 +184,7 @@ pub(crate) mod rust_primitive_bitwise_rules;
 mod rust_primitive_default_rules;
 mod rust_primitive_expression_rules;
 mod rust_primitive_from_rules;
+pub(crate) mod rust_primitive_function_value_rules;
 mod rust_primitive_inherent_copy_rules;
 mod rust_primitive_integer_constant_rules;
 mod rust_primitive_selection_rules;

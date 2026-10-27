@@ -10,6 +10,7 @@ mod integer_magnitudes;
 mod primitive_associated_calls;
 mod primitive_default;
 mod primitive_from;
+mod primitive_function_values;
 mod primitive_integer_constants;
 mod primitive_selections;
 mod primitive_try_from;
@@ -924,6 +925,9 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_function_value(path)? {
+            return Ok(value);
+        }
         if let Some(value) = self.read_primitive_default(path)? {
             return Ok(value);
         }

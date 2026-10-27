@@ -538,3 +538,7 @@ mod translation_rust_integer_magnitude;
 mod translation_rust_primitive_owner_path;
 
 mod translation_rust_callable_owner;
+
+mod callable_profile_products;
+
+mod translation_rust_primitive_function_value;

@@ -5,7 +5,7 @@ use super::{
 };
 use crate::translation::rust_primitive_default_rules as rules;
 impl RustParser {
-    fn project_primitive_default(
+    pub(super) fn project_primitive_default(
         &mut self,
         owner: &str,
         path: &[String],

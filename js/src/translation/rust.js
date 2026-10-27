@@ -1,3 +1,4 @@
+import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
 import {readRustIntegerMagnitudes} from './rust-integer-magnitudes.js';
 import {readRustWrappingShifts} from './rust-wrapping-shifts.js';
 import {readRustIntegerBits} from './rust-integer-bits.js';
@@ -1505,6 +1506,7 @@ class RustParser {
   }
 
   primary(path, options) {
+    const primitiveFunction=readRustPrimitiveFunctionValue(this,path);if(primitiveFunction)return primitiveFunction;
     const primitiveDefault=readRustPrimitiveDefault(this,path);if(primitiveDefault)return primitiveDefault;
     const falliblePrimitive=readRustPrimitiveTryFrom(this,path);if(falliblePrimitive)return falliblePrimitive;
     const primitiveConstant=readRustPrimitiveIntegerConstant(this,path);if(primitiveConstant)return primitiveConstant;

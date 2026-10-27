@@ -216,42 +216,47 @@ impl RustParser {
         }
         let mut token = start;
         token.value = method;
-        if let Some(value) =
-            self.read_primitive_selection(&receiver, &token, &values, range, path)?
-        {
-            return Ok(Some(value));
+        self.project_primitive_associated_body(&receiver, &token, &values, range, path)
+            .map(Some)
+    }
+    pub(super) fn project_primitive_associated_body(
+        &mut self,
+        receiver: &SExpr,
+        token: &super::Token,
+        values: &[SExpr],
+        range: Option<Span>,
+        path: &[String],
+    ) -> Result<SExpr> {
+        if let Some(value) = self.read_primitive_selection(receiver, token, values, range, path)? {
+            return Ok(value);
         }
         if let Some(value) =
-            self.read_signed_integer_property(&receiver, &token, &values, range, path)?
+            self.read_signed_integer_property(receiver, token, values, range, path)?
         {
-            return Ok(Some(value));
+            return Ok(value);
+        }
+        if let Some(value) = self.read_saturating_integer(receiver, token, values, range, path)? {
+            return Ok(value);
         }
         if let Some(value) =
-            self.read_saturating_integer(&receiver, &token, &values, range, path)?
+            self.read_saturating_multiplication(receiver, token, values, range, path)?
         {
-            return Ok(Some(value));
+            return Ok(value);
         }
-        if let Some(value) =
-            self.read_saturating_multiplication(&receiver, &token, &values, range, path)?
-        {
-            return Ok(Some(value));
+        if let Some(value) = self.read_wrapping_integer(receiver, token, values, range, path)? {
+            return Ok(value);
         }
-        if let Some(value) = self.read_wrapping_integer(&receiver, &token, &values, range, path)? {
-            return Ok(Some(value));
+        if let Some(checked) = self.read_checked_integer(receiver, token, values, range, path)? {
+            return Ok(checked);
         }
-        if let Some(checked) = self.read_checked_integer(&receiver, &token, &values, range, path)? {
-            return Ok(Some(checked));
+        if let Some(value) = self.read_integer_bits(receiver, token, values, range, path)? {
+            return Ok(value);
         }
-        if let Some(value) = self.read_integer_bits(&receiver, &token, &values, range, path)? {
-            return Ok(Some(value));
+        if let Some(value) = self.read_wrapping_shifts(receiver, token, values, range, path)? {
+            return Ok(value);
         }
-        if let Some(value) = self.read_wrapping_shifts(&receiver, &token, &values, range, path)? {
-            return Ok(Some(value));
-        }
-        if let Some(value) =
-            self.read_integer_magnitudes(&receiver, &token, &values, range, path)?
-        {
-            return Ok(Some(value));
+        if let Some(value) = self.read_integer_magnitudes(receiver, token, values, range, path)? {
+            return Ok(value);
         }
         Err(type_error(
             "the registered primitive associated call lost its shared method interpretation",

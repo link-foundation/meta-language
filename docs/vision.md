@@ -4947,6 +4947,26 @@ ABI emission, generated wrapper reimport, all broader ownership and whole-source
 translation obligations remain required. Neither these controls nor the
 represented source programs have executed.
 
+Standard primitive scalar operations also have a function-value source draft.
+Shared signature rules select actual parameter/result owners; the frontend
+projects their existing complete method definitions into the common callable
+representation. Selection, signed properties, saturating/wrapping arithmetic,
+bit queries, shifts/rotations, unsigned magnitudes and scalar defaults therefore
+reuse their original implementations in pointers, callbacks and returned values.
+Shift counts remain u32, bit counts return u32, and pointer-sized identities
+remain distinct. Synthetic binders cannot capture source names or conflate
+parameter origins. Ordinary path resolution and Default-trait ownership remain
+mandatory. This follows the [Rust function-item contract](https://doc.rust-lang.org/reference/types/function-item.html).
+
+The two preceding unsupported function-value inputs remain complete positive
+native-product controls; full original fixtures are hashed history. Every
+unaffected field, input, assertion and version scope stays intact. Shared
+deferred product controls retain original and canonical signatures, recursive
+owner trees, both codecs, four targets, exact values and ordered effects.
+Generic From function values, escaping Option/Result signatures, exact source
+callable ABI, generated runtime reimport and full source translation remain
+obligations. This is a source draft without executed observations.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains
