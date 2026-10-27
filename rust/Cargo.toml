@@ -146,6 +146,7 @@ include = [
     "src/data/javascript-own-property-program.lino",
     "src/data/javascript-primitive-conversion-program.lino",
     "src/data/javascript-property-call-program.lino",
+    "src/data/javascript-property-definition-program.lino",
     "src/data/javascript-property-descriptor-program.lino",
     "src/data/javascript-property-key-conversion-program.lino",
     "src/data/javascript-record-order-program.lino",

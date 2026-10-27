@@ -357,3 +357,5 @@ pub(crate) mod rust_source_render_interfaces;
 pub(crate) mod javascript_primitive_conversion;
 
 pub(crate) mod javascript_property_key_conversion;
+
+pub(crate) mod javascript_property_definition;

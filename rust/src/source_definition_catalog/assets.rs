@@ -101,6 +101,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-property-call-program.lino" => Some(include_str!(
             "../data/javascript-property-call-program.lino"
         )),
+        "javascript-property-definition-program.lino" => Some(include_str!(
+            "../data/javascript-property-definition-program.lino"
+        )),
         "javascript-property-descriptor-program.lino" => Some(include_str!(
             "../data/javascript-property-descriptor-program.lino"
         )),

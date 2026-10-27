@@ -9286,3 +9286,35 @@ infinities, signed zero, BigInt digits, Symbols and isolated UTF16 units remain
 explicit inputs. No operation or control has executed. This semantic component
 does not finish computed-key frontend integration, full dynamic evaluator or
 any earlier requirement.
+
+### Ordinary property definition composition draft
+
+Object.defineProperty composes the source-defined target, key, descriptor and
+ordinary heap operations in their required order. Key effects precede all
+descriptor reads; descriptor effects precede definition against the latest
+target. Success returns that same target with the complete resulting global
+heap and declared storage writes. Specification incompatibility requests an
+actual intrinsic TypeError, while malformed model/resource inputs retain their
+separate invalid result. Earlier callback effects remain in the supplied heap
+even when a later operation throws.
+
+Nominal states retain the actual target and either key-conversion inputs/state
+or the completed key and descriptor-conversion state. Shared call operands and
+exact abrupt values propagate through the composition. The two qualified
+completion algebras use an explicit source-defined constructor/value projection;
+matching names do not establish identity or a global concept proof. Complete
+source composition captures each actual dependency once. No descriptor or key
+algorithm is reimplemented in native code.
+
+Rust semantics and model I/O come from actual checked source. The draft author
+can preserve emitted source style to avoid repeated expensive preparation while
+the full code draft is unfinished. That selection is recorded in its recipe;
+format/lint work remains mandatory, with every existing gate unchanged. It is
+not a claim of source-style correctness, execution or native compilation.
+
+Deferred controls compare original Object.defineProperty, every call/effect,
+complete post-call/result heaps, target identity, readonly no-write behavior,
+rejection precedence and exact abrupt text. Full native traces, source codecs
+and all four targets remain required. The actual evaluator, realms, intrinsic
+authority, exotic targets and source frontend binding remain unfinished along
+with every earlier whole-project and global-concept obligation.
