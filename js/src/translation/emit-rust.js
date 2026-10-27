@@ -56,7 +56,7 @@ import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
 import { emitRustCheckedShift } from './rust-shifts.js';
-import { acceptRustNamedConstructorFields, renderRustConstructorFields, renderRustDataFieldEncoding } from './rust-record-rules.js';
+import { acceptRustNamedConstructorFields, renderRustConstructorFields, renderRustDataFieldEncoding, renderRustFunctionCall } from './rust-record-rules.js';
 import {emitNominalArrayProjectionLoan} from './nominal-array-loans.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
@@ -1362,7 +1362,7 @@ class RustEmitter {
           return renderRustBorrowedCall(signature, `crate::${this.state.ref(e.fn, '::')}`, values, names, indent);
         }
         if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));
-        return `crate::${this.state.ref(e.fn, '::')}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+        return renderRustFunctionCall('crate::'+this.state.ref(e.fn,'::'),e.args.map(arg=>this.expr(arg)));
       case 'functionRef':
         return renderCallableFunctionReference('Rust', `crate::${this.state.ref(e.fn, '::')}`);
       case 'apply':

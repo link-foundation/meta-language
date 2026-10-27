@@ -701,7 +701,7 @@ impl TokenCursor {
         matches!(token.kind, TokenKind::Punct | TokenKind::Identifier)
             && token.value == value
             && (self.language != Language::Rust
-                || super::rust_record_rules::accept_rust_source_keyword_token(
+                || super::rust_source_render_interfaces::accept_rust_source_keyword_token(
                     &token.value,
                     &token.raw,
                 ))

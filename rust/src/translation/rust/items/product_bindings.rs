@@ -54,7 +54,7 @@ impl RustParser {
                 .map(|token| token.value.clone())
                 .collect::<Vec<_>>();
             let reason =
-                crate::translation::rust_record_rules::read_rust_let_else_initializer_error(
+                crate::translation::rust_source_render_interfaces::read_rust_let_else_initializer_error(
                     &kinds, &spellings,
                 );
             if !reason.is_empty() {
@@ -312,11 +312,12 @@ impl RustParser {
                     )
                 };
                 let width = origin.fields.as_ref().map_or(items.len(), Vec::len);
-                let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
-                    count(width),
-                    count(items.len()),
-                    rest.map_or(-1.0, count),
-                );
+                let plan =
+                    crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
+                        count(width),
+                        count(items.len()),
+                        rest.map_or(-1.0, count),
+                    );
                 if !self.origins.collecting && plan.first() != Some(&0.0) {
                     return Err(type_error(
                         "tuple binding has the wrong number of fields",

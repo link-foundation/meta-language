@@ -4,7 +4,7 @@ use super::super::{
     type_error, unsupported,
 };
 use super::NamedRecord;
-use crate::translation::rust_record_rules::{
+use crate::translation::rust_source_render_interfaces::{
     accept_rust_record_update_owner, plan_rust_record_update_fields,
 };
 

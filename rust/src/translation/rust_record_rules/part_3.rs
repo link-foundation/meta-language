@@ -1,5 +1,5 @@
 // Generated from complete js/src/translation/rust-record-rules.js. Do not edit by hand.
-use super::MlPlanRustRecordFieldsLoop2Result;
+use super::MlSource1TemporaryPlanRustRecordFieldsLoop3Result;
 use super::accept_rust_raw_identifier_name;
 use super::ml;
 use super::ml_array;
@@ -9,11 +9,60 @@ use super::render_rust_constructor_field_name;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_rust_record_fields_loop2(
+pub fn source_ml_source1_temporary_plan_rust_record_fields_loop3(
+    declared: &[self::ml_string::Text],
+    supplied: &[self::ml_string::Text],
+    mut result: Vec<f64>,
+    mut index: f64,
+) -> self::MlSource1TemporaryPlanRustRecordFieldsLoop3Result {
+    loop {
+        return if index < (declared.len() as f64) {
+            {
+                let position = self::ml_array::index_of(
+                    supplied,
+                    &(self::ml_array::optional_at(declared, self::ml_array::number_index(index)))
+                        .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])),
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                );
+                if position < 0f64 {
+                    self::MlSource1TemporaryPlanRustRecordFieldsLoop3Result::MlSource1TemporaryPlanRustRecordFieldsLoop3Return(vec![-4f64, index])
+                } else {
+                    {
+                        let result_2 = {
+                            let (ml_append_right, ml_append_left) = (vec![position], result);
+                            self::ml_array::append(ml_append_left, ml_append_right)
+                        };
+                        {
+                            let index_2 = index + 1f64;
+                            {
+                                (result, index) = (result_2, index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryPlanRustRecordFieldsLoop3Result::MlSource1TemporaryPlanRustRecordFieldsLoop3Done(result)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryPlanRustRecordFieldsLoop2Result {
+    MlSource1TemporaryPlanRustRecordFieldsLoop2Done,
+    MlSource1TemporaryPlanRustRecordFieldsLoop2Return(Vec<f64>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_plan_rust_record_fields_loop2(
     declared: &[self::ml_string::Text],
     supplied: &[self::ml_string::Text],
     mut index: f64,
-) -> self::MlPlanRustRecordFieldsLoop2Result {
+) -> self::MlSource1TemporaryPlanRustRecordFieldsLoop2Result {
     loop {
         return if index < (supplied.len() as f64) {
             {
@@ -26,9 +75,7 @@ pub fn ml_plan_rust_record_fields_loop2(
                             a == b
                         })) != index;
                     if ml_library_inequality_1 {
-                        self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Return(
-                            vec![-2f64, index],
-                        )
+                        self::MlSource1TemporaryPlanRustRecordFieldsLoop2Result::MlSource1TemporaryPlanRustRecordFieldsLoop2Return(vec![-2f64, index])
                     } else {
                         if (self::ml_array::includes(
                             declared,
@@ -46,29 +93,29 @@ pub fn ml_plan_rust_record_fields_loop2(
                             }
                         }
                         {
-                            self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Return(vec![-3f64, index])
+                            self::MlSource1TemporaryPlanRustRecordFieldsLoop2Result::MlSource1TemporaryPlanRustRecordFieldsLoop2Return(vec![-3f64, index])
                         }
                     }
                 }
             }
         } else {
-            self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Done
+            self::MlSource1TemporaryPlanRustRecordFieldsLoop2Result::MlSource1TemporaryPlanRustRecordFieldsLoop2Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanRustRecordFieldsLoop1Result {
-    MlPlanRustRecordFieldsLoop1Done,
-    MlPlanRustRecordFieldsLoop1Return(Vec<f64>),
+pub enum MlSource1TemporaryPlanRustRecordFieldsLoop1Result {
+    MlSource1TemporaryPlanRustRecordFieldsLoop1Done,
+    MlSource1TemporaryPlanRustRecordFieldsLoop1Return(Vec<f64>),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_rust_record_fields_loop1(
+pub fn source_ml_source1_temporary_plan_rust_record_fields_loop1(
     declared: &[self::ml_string::Text],
     mut index: f64,
-) -> self::MlPlanRustRecordFieldsLoop1Result {
+) -> self::MlSource1TemporaryPlanRustRecordFieldsLoop1Result {
     loop {
         return if index < (declared.len() as f64) {
             {
@@ -80,9 +127,7 @@ pub fn ml_plan_rust_record_fields_loop1(
                         (self::ml_array::index_of(declared, &name, 0f64, false, |a, b| a == b))
                             != index;
                     if ml_library_inequality_1 {
-                        self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Return(
-                            vec![-1f64, index],
-                        )
+                        self::MlSource1TemporaryPlanRustRecordFieldsLoop1Result::MlSource1TemporaryPlanRustRecordFieldsLoop1Return(vec![-1f64, index])
                     } else {
                         {
                             let index_2 = index + 1f64;
@@ -95,14 +140,14 @@ pub fn ml_plan_rust_record_fields_loop1(
                 }
             }
         } else {
-            self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Done
+            self::MlSource1TemporaryPlanRustRecordFieldsLoop1Result::MlSource1TemporaryPlanRustRecordFieldsLoop1Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_rust_record_pattern_fields_loop4(
+pub fn source_ml_source1_temporary_plan_rust_record_pattern_fields_loop4(
     declared: &[self::ml_string::Text],
     supplied: &[self::ml_string::Text],
     mut result: Vec<f64>,
@@ -143,7 +188,7 @@ pub fn ml_plan_rust_record_pattern_fields_loop4(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_plan_tuple_pattern_fields_loop5(
+pub fn source_ml_source1_temporary_plan_tuple_pattern_fields_loop5(
     mut width: f64,
     mut count: f64,
     mut rest: f64,
@@ -206,28 +251,36 @@ pub fn ml_plan_tuple_pattern_fields_loop5(
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlReadRustLetElseInitializerErrorLoop6Result {
-    MlReadRustLetElseInitializerErrorLoop6Done(f64),
-    MlReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text),
+pub enum MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result {
+    MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Done(f64),
+    MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_rust_let_else_initializer_error_loop6(
+pub fn source_ml_source1_temporary_read_rust_let_else_initializer_error_loop6(
     kinds: &[self::ml_string::Text],
     spellings: &[self::ml_string::Text],
     mut depth: f64,
     mut index: f64,
-) -> self::MlReadRustLetElseInitializerErrorLoop6Result {
+) -> self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result {
     loop {
         return if index < (spellings.len() as f64) {
-            if !(match (
-                self::ml_array::optional_at(kinds, self::ml_array::number_index(index)),
-                self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
-            ) {
-                (Some(ml_left), ml_right) => ml_left == ml_right,
-                _ => false,
-            }) {
+            if {
+                let source_ml_source2_comparison_operand7 =
+                    self::ml_array::optional_at(kinds, self::ml_array::number_index(index));
+                {
+                    let source_ml_source2_comparison_operand8 =
+                        self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]);
+                    !(match (
+                        source_ml_source2_comparison_operand7,
+                        source_ml_source2_comparison_operand8,
+                    ) {
+                        (Some(ml_left), ml_right) => ml_left == ml_right,
+                        _ => false,
+                    })
+                }
+            } {
                 {
                     let index_2 = index + 1f64;
                     {
@@ -235,8 +288,7 @@ pub fn ml_read_rust_let_else_initializer_error_loop6(
                         continue;
                     }
                 }
-            }
-            {
+            } else {
                 {
                     let spelling = (self::ml_array::optional_at(
                         spellings,
@@ -247,7 +299,7 @@ pub fn ml_read_rust_let_else_initializer_error_loop6(
                         && ((spelling == (self::ml_string::Text::from_units(vec![38, 38])))
                             || (spelling == (self::ml_string::Text::from_units(vec![124, 124]))))
                     {
-                        self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text::from_units(vec![97, 32, 108, 97, 122, 121, 32, 66, 111, 111, 108, 101, 97, 110, 32, 105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 109, 117, 115, 116, 32, 98, 101, 32, 112, 97, 114, 101, 110, 116, 104, 101, 115, 105, 122, 101, 100]))
+                        self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text::from_units(vec![97, 32, 108, 97, 122, 121, 32, 66, 111, 111, 108, 101, 97, 110, 32, 105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 109, 117, 115, 116, 32, 98, 101, 32, 112, 97, 114, 101, 110, 116, 104, 101, 115, 105, 122, 101, 100]))
                     } else {
                         if ((spelling == (self::ml_string::Text::from_units(vec![40])))
                             || (spelling == (self::ml_string::Text::from_units(vec![91]))))
@@ -270,7 +322,7 @@ pub fn ml_read_rust_let_else_initializer_error_loop6(
                                 || (spelling == (self::ml_string::Text::from_units(vec![125])))
                             {
                                 if depth == 0f64 {
-                                    self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text::from_units(vec![105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 100, 101, 108, 105, 109, 105, 116, 101, 114, 115, 32, 97, 114, 101, 32, 117, 110, 98, 97, 108, 97, 110, 99, 101, 100]))
+                                    self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text::from_units(vec![105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 100, 101, 108, 105, 109, 105, 116, 101, 114, 115, 32, 97, 114, 101, 32, 117, 110, 98, 97, 108, 97, 110, 99, 101, 100]))
                                 } else {
                                     {
                                         let depth_3 = depth - 1f64;
@@ -279,7 +331,7 @@ pub fn ml_read_rust_let_else_initializer_error_loop6(
                                                 == (self::ml_string::Text::from_units(vec![125]))))
                                             && (index == ((spellings.len() as f64) - 1f64))
                                         {
-                                            self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text::from_units(vec![97, 32, 98, 108, 111, 99, 107, 45, 101, 110, 100, 105, 110, 103, 32, 105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 109, 117, 115, 116, 32, 98, 101, 32, 112, 97, 114, 101, 110, 116, 104, 101, 115, 105, 122, 101, 100]))
+                                            self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Return(self::ml_string::Text::from_units(vec![97, 32, 98, 108, 111, 99, 107, 45, 101, 110, 100, 105, 110, 103, 32, 105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 109, 117, 115, 116, 32, 98, 101, 32, 112, 97, 114, 101, 110, 116, 104, 101, 115, 105, 122, 101, 100]))
                                         } else {
                                             {
                                                 let index_4 = index + 1f64;
@@ -305,14 +357,14 @@ pub fn ml_read_rust_let_else_initializer_error_loop6(
                 }
             }
         } else {
-            self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Done(depth)
+            self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Done(depth)
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_rust_record_binding_names_loop7(
+pub fn source_ml_source1_temporary_read_rust_record_binding_names_loop7(
     reserved: &[self::ml_string::Text],
     mut count: f64,
     mut names: Vec<self::ml_string::Text>,
@@ -358,7 +410,7 @@ pub fn ml_read_rust_record_binding_names_loop7(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_rust_record_constructor_name_loop8(
+pub fn source_ml_source1_temporary_read_rust_record_constructor_name_loop8(
     reserved: &[self::ml_string::Text],
     mut candidate: self::ml_string::Text,
     mut suffix: f64,
@@ -384,37 +436,66 @@ pub fn ml_read_rust_record_constructor_name_loop8(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptRustRawIdentifierNameLoop9Result {
-    MlAcceptRustRawIdentifierNameLoop9Done,
-    MlAcceptRustRawIdentifierNameLoop9Return(bool),
+pub enum MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result {
+    MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Done,
+    MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_rust_raw_identifier_name_loop9(
+pub fn source_ml_source1_temporary_accept_rust_raw_identifier_name_loop9(
     name: &self::ml_string::Text,
     mut index: f64,
-) -> self::MlAcceptRustRawIdentifierNameLoop9Result {
+) -> self::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result {
     loop {
         return if index < (name.length()) {
             {
-                let code =
-                    (std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 {
-                        {
-                            let index_2 = if position.is_nan() {
-                                0f64
-                            } else {
-                                position.trunc()
-                            };
-                            if (index_2 < 0f64) || (index_2 >= (text.length())) {
-                                f64::NAN
-                            } else {
-                                ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                    .clone()
-                                    .unwrap_or_else(|| f64::NAN)
-                            }
-                        }
-                    }))(name.clone(), index);
+                let code = {
+                    let source_ml_source2_string_unit_operand9 = name.clone();
+                    {
+                        let source_ml_source2_string_unit_operand10 = index;
+                        (std::rc::Rc::new(
+                            move |text: self::ml_string::Text, position: f64| -> f64 {
+                                {
+                                    let index_2 = if position.is_nan() {
+                                        0f64
+                                    } else {
+                                        position.trunc()
+                                    };
+                                    if (index_2 < 0f64) || (index_2 >= (text.length())) {
+                                        f64::NAN
+                                    } else {
+                                        ({
+                                    let source_ml_source2_string_unit_operand16 = {
+                                        let source_ml_source2_string_range_operand11 = text.clone();
+                                        {
+                                            let source_ml_source2_string_range_operand12 = index_2;
+                                            {
+                                                let source_ml_source2_string_range_operand13 = index_2 + 1f64;
+                                                {
+                                                    let source_ml_source2_string_range_position14 = source_ml_source2_string_range_operand12;
+                                                    {
+                                                        let source_ml_source2_string_range_position15 = source_ml_source2_string_range_operand13;
+                                                        source_ml_source2_string_range_operand11.slice(source_ml_source2_string_range_position14, source_ml_source2_string_range_position15)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    };
+                                    {
+                                        let source_ml_source2_string_unit_operand17 = 0f64;
+                                        source_ml_source2_string_unit_operand16.code_point_at(source_ml_source2_string_unit_operand17)
+                                    }
+                                }).clone().unwrap_or_else(|| f64::NAN)
+                                    }
+                                }
+                            },
+                        ))(
+                            source_ml_source2_string_unit_operand9,
+                            source_ml_source2_string_unit_operand10,
+                        )
+                    }
+                };
                 if ((((code == 95f64) || ((65f64..=90f64).contains(&code)))
                     || ((97f64..=122f64).contains(&code)))
                     || (((index > 0f64) && (code >= 48f64)) && (code <= 57f64)))
@@ -428,53 +509,60 @@ pub fn ml_accept_rust_raw_identifier_name_loop9(
                     }
                 }
                 {
-                    self::MlAcceptRustRawIdentifierNameLoop9Result::MlAcceptRustRawIdentifierNameLoop9Return(false)
+                    self::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Return(false)
                 }
             }
         } else {
-            self::MlAcceptRustRawIdentifierNameLoop9Result::MlAcceptRustRawIdentifierNameLoop9Done
+            self::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptRustNamedConstructorFieldsLoop11Result {
-    MlAcceptRustNamedConstructorFieldsLoop11Done,
-    MlAcceptRustNamedConstructorFieldsLoop11Return(bool),
+pub enum MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result {
+    MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Done,
+    MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_accept_rust_named_constructor_fields_loop11(
-    ml_values10: &[self::ml_string::Text],
-    mut ml_index10: self::ml::Big,
-) -> self::MlAcceptRustNamedConstructorFieldsLoop11Result {
+pub fn source_ml_source1_temporary_accept_rust_named_constructor_fields_loop11(
+    source_ml_source1_temporary_values10: &[self::ml_string::Text],
+    mut source_ml_source1_temporary_index10: self::ml::Big,
+) -> self::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result {
     loop {
-        return if ml_index10 < (self::ml::Big::from_u128(ml_values10.len() as u128)) {
+        return if source_ml_source1_temporary_index10
+            < (self::ml::Big::from_u128(source_ml_source1_temporary_values10.len() as u128))
+        {
             {
-                let name = self::ml_array::at(ml_values10, ml_index10.to_index());
+                let name = self::ml_array::at(
+                    source_ml_source1_temporary_values10,
+                    source_ml_source1_temporary_index10.to_index(),
+                );
                 if (self::accept_rust_raw_identifier_name(&(name))) {
                     {
-                        let ml_index10_2 = ml_index10.add(&self::ml::Big::from_i128(1));
+                        let source_ml_source1_temporary_index10_2 =
+                            source_ml_source1_temporary_index10.add(&self::ml::Big::from_i128(1));
                         {
-                            ml_index10 = ml_index10_2;
+                            source_ml_source1_temporary_index10 =
+                                source_ml_source1_temporary_index10_2;
                             continue;
                         }
                     }
                 }
                 {
-                    self::MlAcceptRustNamedConstructorFieldsLoop11Result::MlAcceptRustNamedConstructorFieldsLoop11Return(false)
+                    self::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Return(false)
                 }
             }
         } else {
-            self::MlAcceptRustNamedConstructorFieldsLoop11Result::MlAcceptRustNamedConstructorFieldsLoop11Done
+            self::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_render_rust_constructor_fields_loop12(
+pub fn source_ml_source1_temporary_render_rust_constructor_fields_loop12(
     names: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     mut fields: Vec<self::ml_string::Text>,

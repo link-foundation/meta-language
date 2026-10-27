@@ -3,7 +3,7 @@ use super::super::{
     Binding, Result, RustParser, SExpr, SNode, SPattern, SPatternNode, SRow, SourceDeclaration,
     Span, TokenKind, unsupported,
 };
-use crate::translation::rust_record_rules::accept_rust_irrefutable_pattern_node;
+use crate::translation::rust_source_render_interfaces::accept_rust_irrefutable_pattern_node;
 
 impl RustParser {
     pub(in super::super) fn nominal_binding_pattern(&mut self) -> Result<Option<SPattern>> {

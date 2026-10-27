@@ -1,6 +1,6 @@
 //! Preserve the distinct source struct value and associated-item namespaces.
 use super::super::{Result, RustParser, SourceDeclaration, Span, unsupported};
-use crate::translation::rust_record_rules::read_rust_record_constructor_name;
+use crate::translation::rust_source_render_interfaces::read_rust_record_constructor_name;
 
 impl RustParser {
     pub(in super::super) fn prepare_record_method_namespace(

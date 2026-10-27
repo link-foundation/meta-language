@@ -346,11 +346,12 @@ impl Checker {
                             .expect("source tuple width fits the shared array limit"),
                     )
                 };
-                let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
-                    width.map_or(-1.0, count),
-                    count(args.len()),
-                    rest.map_or(-1.0, count),
-                );
+                let plan =
+                    crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
+                        width.map_or(-1.0, count),
+                        count(args.len()),
+                        rest.map_or(-1.0, count),
+                    );
                 if plan.first() != Some(&0.0) {
                     return Err(type_error(
                         "tuple pattern has the wrong type or number of fields",

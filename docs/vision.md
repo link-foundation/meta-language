@@ -9202,3 +9202,38 @@ mutation, UTF16 units, malformed positions and full 100-unit inputs. Full
 heterogeneous and mutable entry domains, callable data fields, general heap
 protocols, unlimited faithful formal recursion and every preceding translation,
 grammar and architecture requirement remain mandatory.
+
+### Type-directed native source rendering interfaces draft
+
+An ordinary function call retains its actual head and ordered arguments even
+when its result is nominal data. Constructor expressions alone use the checked
+declaration's actual named, tuple or unit layout. These are distinct IR nodes;
+the emitter does not infer constructor syntax from a function's return shape.
+Both frontends delegate to the same source-defined render operations. Native
+field names are actual String fields of checked declarations, not optional
+syntax-node fields. This follows Rust's distinct
+[call expressions](https://doc.rust-lang.org/reference/expressions/call-expr.html)
+and [struct expressions](https://doc.rust-lang.org/reference/expressions/struct-expr.html).
+
+Source/schema fragments at the Rust host boundary use Unicode scalar strings.
+The generated normative renderer can retain its UTF16 Text representation.
+Qualified Links definitions select actual checked functions; a source generator
+derives their native mappings, operands and results and emits only I/O adapters.
+String and string-array inputs convert without changing spelling; result
+conversion rejects ill-formed UTF16 rather than substituting characters.
+All actual record-rule operations use the same generated source interface,
+including field plans, name/keyword validation, pattern/update ownership and
+fresh binding names. Number coordinates retain their binary64 representation;
+array results retain their complete order and values. The loan renderer also
+uses this checked interface instead of a lossy display conversion.
+Unsupported signatures, owners or unregistered layouts refuse. These source
+interfaces do not convert arbitrary runtime JavaScript text to scalar strings.
+Rendering decisions stay in translated source, with no replacement Rust rules.
+
+Complete preceding sources and generated artifacts remain immutable Links
+records. Deferred controls retain literal call/constructor spellings, Unicode,
+original named/tuple/unit programs, both generated native products, complete
+frontend/emission parity and text/binary source codecs across all four targets.
+No control or product has executed. This corrects specific source-visible
+interfaces; it does not establish whole-language or whole-project translation.
+General module/trait/FFI composition and all earlier requirements remain work.

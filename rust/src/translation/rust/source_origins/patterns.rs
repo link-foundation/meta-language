@@ -79,11 +79,12 @@ impl SourceOrigins {
                             .expect("source tuple width fits the shared array limit"),
                     )
                 };
-                let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
-                    count(fields.len()),
-                    count(args.len()),
-                    rest.map_or(-1.0, count),
-                );
+                let plan =
+                    crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
+                        count(fields.len()),
+                        count(args.len()),
+                        rest.map_or(-1.0, count),
+                    );
                 let borrowed = !origin.wrappers.is_empty()
                     && origin.wrappers.iter().all(|layer| layer == "reference");
                 for (index, item) in args.iter().enumerate() {

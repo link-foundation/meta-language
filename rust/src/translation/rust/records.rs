@@ -3,7 +3,7 @@ use super::{
     Options, Result, RustParser, SCtor, SData, SExpr, SField, SNode, SPattern, SPatternNode, SRow,
     SourceDeclaration, SourceOrigin, Span, Token, TokenKind, Type, span, type_error, unsupported,
 };
-use crate::translation::rust_record_rules::{
+use crate::translation::rust_source_render_interfaces::{
     accept_rust_record_source_name, plan_rust_record_fields, read_rust_record_binding_names,
     read_rust_record_constructor_name, read_rust_record_field_position,
 };

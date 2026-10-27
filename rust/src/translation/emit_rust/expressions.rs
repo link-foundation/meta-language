@@ -6,7 +6,9 @@ use super::{
     own, rename_main, rounding_text, rust_string, snake, unsupported,
 };
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
-use crate::translation::rust_record_rules::render_rust_constructor_fields;
+use crate::translation::rust_source_render_interfaces::{
+    render_rust_constructor_fields, render_rust_function_call,
+};
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
@@ -302,17 +304,7 @@ impl RustEmitter<'_> {
                 for arg in args {
                     texts.push(self.expr(arg)?);
                 }
-                let fields = declared
-                    .fields
-                    .iter()
-                    .map(|field| field.name.clone().unwrap_or_default())
-                    .collect::<Vec<_>>();
-                Ok(render_rust_constructor_fields(
-                    self.program.source_language.as_str(),
-                    &head,
-                    &fields,
-                    &texts,
-                ))
+                Ok(render_rust_function_call(&head, &texts))
             }
             Node::Ctor {
                 data, ctor, args, ..
@@ -337,7 +329,17 @@ impl RustEmitter<'_> {
                         text
                     });
                 }
-                Ok(format!("{head}({})", texts.join(", ")))
+                let fields = declared
+                    .fields
+                    .iter()
+                    .map(|field| field.name.clone())
+                    .collect::<Vec<_>>();
+                Ok(render_rust_constructor_fields(
+                    self.program.source_language.as_str(),
+                    &head,
+                    &fields,
+                    &texts,
+                ))
             }
             Node::Unary { op, arg, .. } => {
                 if *op == UnaryOp::Not {
@@ -768,7 +770,7 @@ impl RustEmitter<'_> {
                         let fields = declared
                             .fields
                             .iter()
-                            .map(|field| field.name.clone().unwrap_or_default())
+                            .map(|field| field.name.clone())
                             .collect::<Vec<_>>();
                         let text = render_rust_constructor_fields(
                             self.program.source_language.as_str(),

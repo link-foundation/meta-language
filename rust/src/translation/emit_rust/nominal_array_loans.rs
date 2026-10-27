@@ -1,7 +1,6 @@
 //! Actual checked owners and patterns into the shared source loan selection.
 use super::{Expr, Node, Pattern, Result, RustEmitter, Type};
 use crate::translation::nominal_array_loan_rules as rules;
-use crate::translation::rust_record_rules::ml_string::Text;
 
 fn coordinate(value: usize) -> f64 {
     f64::from(
@@ -77,23 +76,24 @@ impl RustEmitter<'_> {
         let names = ctor
             .fields
             .iter()
-            .map(|field| Text::from_text(&field.name))
+            .map(|field| field.name.clone())
             .collect::<Vec<_>>();
         let bindings = binds
             .iter()
-            .map(|binding| Text::from_text(binding.as_deref().unwrap_or("_")))
+            .map(|binding| binding.as_deref().unwrap_or("_").to_owned())
             .collect::<Vec<_>>();
-        let pattern = crate::translation::rust_record_rules::render_rust_constructor_fields(
-            &Text::from_text(self.program.source_language.as_str()),
-            &Text::from_text(&head),
-            &names,
-            &bindings,
-        );
+        let pattern =
+            crate::translation::rust_source_render_interfaces::render_rust_constructor_fields(
+                self.program.source_language.as_str(),
+                &head,
+                &names,
+                &bindings,
+            );
         Ok(Some(rules::render_nominal_array_projection_loan(
             scrutinee
                 .var_name()
                 .expect("the shared rule selects a direct actual variable"),
-            &pattern.to_string(),
+            &pattern,
             binding,
         )))
     }

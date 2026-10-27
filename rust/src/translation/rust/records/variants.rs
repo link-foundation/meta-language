@@ -1,7 +1,7 @@
 //! Named enum fields retain source names and their actual constructor owner.
 use super::super::{Result, RustParser, SField, SourceOrigin, Token, span, type_error};
 use super::NamedRecord;
-use crate::translation::rust_record_rules::plan_rust_record_fields;
+use crate::translation::rust_source_render_interfaces::plan_rust_record_fields;
 
 impl RustParser {
     pub(in super::super) fn named_variant_fields(

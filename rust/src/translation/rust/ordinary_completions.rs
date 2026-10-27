@@ -168,9 +168,10 @@ impl RustParser {
             .iter()
             .map(|token| token.value.clone())
             .collect::<Vec<_>>();
-        let reason = crate::translation::rust_record_rules::read_rust_let_else_initializer_error(
-            &kinds, &spellings,
-        );
+        let reason =
+            crate::translation::rust_source_render_interfaces::read_rust_let_else_initializer_error(
+                &kinds, &spellings,
+            );
         if !reason.is_empty() {
             return Err(unsupported(
                 "Rust let-else initializer",

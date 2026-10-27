@@ -1,6 +1,6 @@
 //! Modules, data, functions, theorem runners and propositions.
 
-use crate::translation::rust_record_rules::{
+use crate::translation::rust_source_render_interfaces::{
     render_rust_constructor_fields, render_rust_data_field_encoding,
 };
 use crate::translation::structured_type_rules::{
@@ -308,7 +308,7 @@ impl<'p> RustEmitter<'p> {
             let names = ctor
                 .fields
                 .iter()
-                .map(|field| field.name.clone().unwrap_or_default())
+                .map(|field| field.name.clone())
                 .collect::<Vec<_>>();
             lines.push(format!(
                 "    {},",
@@ -639,7 +639,7 @@ impl<'p> RustEmitter<'p> {
                     let fields = ctor
                         .fields
                         .iter()
-                        .map(|field| field.name.clone().unwrap_or_default())
+                        .map(|field| field.name.clone())
                         .collect::<Vec<_>>();
                     let mut statement = format!(
                         "values.push({});",

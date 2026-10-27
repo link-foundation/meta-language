@@ -3,7 +3,7 @@ use super::super::{
     Alias, Result, RustParser, SPattern, SPatternNode, SourceDeclaration, Span, Token, TokenKind,
     span, type_error, unsupported,
 };
-use crate::translation::rust_record_rules::plan_rust_record_pattern_fields;
+use crate::translation::rust_source_render_interfaces::plan_rust_record_pattern_fields;
 
 impl RustParser {
     pub(in super::super) fn expand_constructor_rest(
@@ -38,7 +38,7 @@ impl RustParser {
                 u32::try_from(value).expect("source constructor width fits the shared array limit"),
             )
         };
-        let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
+        let plan = crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
             count(fields),
             count(args.len()),
             count(position),

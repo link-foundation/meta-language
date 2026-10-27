@@ -138,6 +138,12 @@ export function renderRustConstructorFields(language, head, names, values) {
   for (let index = 0; index < values.length; index += 1) fields.push(renderRustConstructorFieldName(names[index] ?? '') + ': ' + (values[index] ?? ''));
   return head + ' { ' + fields.join(', ') + ' }';
 }
+/** Ordinary function calls never acquire named constructor fields from the
+ * shape of their return type. Keep the actual ordered argument expressions.
+ * @param {string} head @param {string[]} values @returns {string} */
+export function renderRustFunctionCall(head, values) {
+  return head + '(' + values.join(', ') + ')';
+}
 /** @param {boolean} named @returns {string} */
 export function renderRustDataFieldEncoding(named) {
   return named

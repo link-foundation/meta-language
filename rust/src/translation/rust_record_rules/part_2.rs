@@ -1,21 +1,23 @@
 // Generated from complete js/src/translation/rust-record-rules.js. Do not edit by hand.
-use super::MlAcceptRustNamedConstructorFieldsLoop11Result;
-use super::MlAcceptRustRawIdentifierNameLoop9Result;
-use super::MlPlanRustRecordFieldsLoop1Result;
-use super::MlReadRustLetElseInitializerErrorLoop6Result;
+use super::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result;
+use super::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result;
+use super::MlSource1TemporaryPlanRustRecordFieldsLoop1Result;
+use super::MlSource1TemporaryPlanRustRecordFieldsLoop2Result;
+use super::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result;
 use super::ml;
-use super::ml_accept_rust_named_constructor_fields_loop11;
-use super::ml_accept_rust_raw_identifier_name_loop9;
 use super::ml_array;
 use super::ml_math;
-use super::ml_plan_rust_record_fields_loop1;
-use super::ml_plan_rust_record_fields_loop2;
-use super::ml_plan_rust_record_pattern_fields_loop4;
-use super::ml_plan_tuple_pattern_fields_loop5;
-use super::ml_read_rust_let_else_initializer_error_loop6;
-use super::ml_read_rust_record_binding_names_loop7;
-use super::ml_read_rust_record_constructor_name_loop8;
-use super::ml_render_rust_constructor_fields_loop12;
+use super::source_ml_source1_temporary_accept_rust_named_constructor_fields_loop11;
+use super::source_ml_source1_temporary_accept_rust_raw_identifier_name_loop9;
+use super::source_ml_source1_temporary_plan_rust_record_fields_loop1;
+use super::source_ml_source1_temporary_plan_rust_record_fields_loop2;
+use super::source_ml_source1_temporary_plan_rust_record_fields_loop3;
+use super::source_ml_source1_temporary_plan_rust_record_pattern_fields_loop4;
+use super::source_ml_source1_temporary_plan_tuple_pattern_fields_loop5;
+use super::source_ml_source1_temporary_read_rust_let_else_initializer_error_loop6;
+use super::source_ml_source1_temporary_read_rust_record_binding_names_loop7;
+use super::source_ml_source1_temporary_read_rust_record_constructor_name_loop8;
+use super::source_ml_source1_temporary_render_rust_constructor_fields_loop12;
 
 /// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
 pub mod ml_string {
@@ -356,42 +358,44 @@ pub fn plan_rust_record_fields(
     {
         let index = 0f64;
         {
-            let ml_s1 = self::ml_plan_rust_record_fields_loop1(declared, index);
-            match ml_s1 {
-                self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Done => {
-                    let index_2 = 0f64;
+            let source_ml_source2_s1 =
+                self::source_ml_source1_temporary_plan_rust_record_fields_loop1(declared, index);
+            match source_ml_source2_s1 {
+                self::MlSource1TemporaryPlanRustRecordFieldsLoop1Result::MlSource1TemporaryPlanRustRecordFieldsLoop1Done => {
                     {
-                        let ml_s2 =
-                            self::ml_plan_rust_record_fields_loop2(declared, supplied, index_2);
-                        match ml_s2 {
-                                self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Done => {
+                        let index_2 = 0f64;
+                        {
+                            let source_ml_source2_s2 = self::source_ml_source1_temporary_plan_rust_record_fields_loop2(declared, supplied, index_2);
+                            match source_ml_source2_s2 {
+                                self::MlSource1TemporaryPlanRustRecordFieldsLoop2Result::MlSource1TemporaryPlanRustRecordFieldsLoop2Done => {
                                     {
                                         let result = Vec::<f64>::new();
                                         {
                                             let index_3 = 0f64;
                                             {
-                                                let ml_s3 = self::ml_plan_rust_record_fields_loop3(declared, supplied, result, index_3);
-                                                match ml_s3 {
-                                                    self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Done(result_2) => {
+                                                let source_ml_source2_s3 = self::source_ml_source1_temporary_plan_rust_record_fields_loop3(declared, supplied, result, index_3);
+                                                match source_ml_source2_s3 {
+                                                    self::MlSource1TemporaryPlanRustRecordFieldsLoop3Result::MlSource1TemporaryPlanRustRecordFieldsLoop3Done(result_2) => {
                                                         result_2
                                                     }
-                                                    self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Return(ml_result3) => {
-                                                        ml_result3
+                                                    self::MlSource1TemporaryPlanRustRecordFieldsLoop3Result::MlSource1TemporaryPlanRustRecordFieldsLoop3Return(source_ml_source1_temporary_result3) => {
+                                                        source_ml_source1_temporary_result3
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Return(ml_result3_2) => {
-                                    ml_result3_2
+                                self::MlSource1TemporaryPlanRustRecordFieldsLoop2Result::MlSource1TemporaryPlanRustRecordFieldsLoop2Return(source_ml_source1_temporary_result3_2) => {
+                                    source_ml_source1_temporary_result3_2
                                 }
                             }
+                        }
                     }
                 }
-                self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Return(
-                    ml_result3_3,
-                ) => ml_result3_3,
+                self::MlSource1TemporaryPlanRustRecordFieldsLoop1Result::MlSource1TemporaryPlanRustRecordFieldsLoop1Return(source_ml_source1_temporary_result3_3) => {
+                    source_ml_source1_temporary_result3_3
+                }
             }
         }
     }
@@ -426,7 +430,7 @@ pub fn plan_rust_record_pattern_fields(
                     {
                         let index = 0f64;
                         {
-                            self::ml_plan_rust_record_pattern_fields_loop4(
+                            self::source_ml_source1_temporary_plan_rust_record_pattern_fields_loop4(
                                 declared, supplied, result, index,
                             )
                         }
@@ -499,7 +503,11 @@ pub fn plan_tuple_pattern_fields(width: f64, count: f64, rest: f64) -> Vec<f64> 
             let result = vec![0f64];
             {
                 let index = 0f64;
-                { self::ml_plan_tuple_pattern_fields_loop5(width, count, rest, result, index) }
+                {
+                    self::source_ml_source1_temporary_plan_tuple_pattern_fields_loop5(
+                        width, count, rest, result, index,
+                    )
+                }
             }
         }
     }
@@ -525,19 +533,17 @@ pub fn read_rust_let_else_initializer_error(
                 {
                     let index = 0f64;
                     {
-                        let ml_s4 = self::ml_read_rust_let_else_initializer_error_loop6(
-                            kinds, spellings, depth, index,
-                        );
-                        match ml_s4 {
-                        self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Done(depth_2) => {
+                        let source_ml_source2_s4 = self::source_ml_source1_temporary_read_rust_let_else_initializer_error_loop6(kinds, spellings, depth, index);
+                        match source_ml_source2_s4 {
+                        self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Done(depth_2) => {
                             if depth_2 == 0f64 {
                                 self::ml_string::Text::from_units(vec![])
                             } else {
                                 self::ml_string::Text::from_units(vec![105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 100, 101, 108, 105, 109, 105, 116, 101, 114, 115, 32, 97, 114, 101, 32, 117, 110, 98, 97, 108, 97, 110, 99, 101, 100])
                             }
                         }
-                        self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Return(ml_result6) => {
-                            ml_result6
+                        self::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Result::MlSource1TemporaryReadRustLetElseInitializerErrorLoop6Return(source_ml_source1_temporary_result6) => {
+                            source_ml_source1_temporary_result6
                         }
                     }
                     }
@@ -557,7 +563,11 @@ pub fn read_rust_record_binding_names(
         let names = Vec::<self::ml_string::Text>::new();
         {
             let suffix = 0f64;
-            { self::ml_read_rust_record_binding_names_loop7(reserved, count, names, suffix) }
+            {
+                self::source_ml_source1_temporary_read_rust_record_binding_names_loop7(
+                    reserved, count, names, suffix,
+                )
+            }
         }
     }
 }
@@ -574,7 +584,11 @@ pub fn read_rust_record_constructor_name(
             let candidate = self::ml_string::Text::from_units(vec![86, 97, 108, 117, 101]);
             {
                 let suffix = 2f64;
-                { self::ml_read_rust_record_constructor_name_loop8(reserved, candidate, suffix) }
+                {
+                    self::source_ml_source1_temporary_read_rust_record_constructor_name_loop8(
+                        reserved, candidate, suffix,
+                    )
+                }
             }
         }
     } else {
@@ -707,13 +721,16 @@ pub fn accept_rust_raw_identifier_name(name: &self::ml_string::Text) -> bool {
         {
             let index = 0f64;
             {
-                let ml_s5 = self::ml_accept_rust_raw_identifier_name_loop9(name, index);
-                match ml_s5 {
-                    self::MlAcceptRustRawIdentifierNameLoop9Result::MlAcceptRustRawIdentifierNameLoop9Done => {
+                let source_ml_source2_s5 =
+                    self::source_ml_source1_temporary_accept_rust_raw_identifier_name_loop9(
+                        name, index,
+                    );
+                match source_ml_source2_s5 {
+                    self::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Done => {
                         true
                     }
-                    self::MlAcceptRustRawIdentifierNameLoop9Result::MlAcceptRustRawIdentifierNameLoop9Return(ml_result9) => {
-                        ml_result9
+                    self::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Result::MlSource1TemporaryAcceptRustRawIdentifierNameLoop9Return(source_ml_source1_temporary_result9) => {
+                        source_ml_source1_temporary_result9
                     }
                 }
             }
@@ -767,20 +784,17 @@ pub fn accept_rust_named_constructor_fields(
         false
     } else {
         {
-            let ml_values10 = names.to_vec();
+            let source_ml_source1_temporary_values10 = names.to_vec();
             {
-                let ml_index10 = self::ml::Big::from_i128(0);
+                let source_ml_source1_temporary_index10 = self::ml::Big::from_i128(0);
                 {
-                    let ml_s6 = self::ml_accept_rust_named_constructor_fields_loop11(
-                        &(ml_values10),
-                        ml_index10,
-                    );
-                    match ml_s6 {
-                        self::MlAcceptRustNamedConstructorFieldsLoop11Result::MlAcceptRustNamedConstructorFieldsLoop11Done => {
+                    let source_ml_source2_s6 = self::source_ml_source1_temporary_accept_rust_named_constructor_fields_loop11(&(source_ml_source1_temporary_values10), source_ml_source1_temporary_index10);
+                    match source_ml_source2_s6 {
+                        self::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Done => {
                             true
                         }
-                        self::MlAcceptRustNamedConstructorFieldsLoop11Result::MlAcceptRustNamedConstructorFieldsLoop11Return(ml_result11) => {
-                            ml_result11
+                        self::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Result::MlSource1TemporaryAcceptRustNamedConstructorFieldsLoop11Return(source_ml_source1_temporary_result11) => {
+                            source_ml_source1_temporary_result11
                         }
                     }
                 }
@@ -805,9 +819,10 @@ pub fn render_rust_constructor_fields(
             {
                 let index = 0f64;
                 {
-                    let fields_2 = self::ml_render_rust_constructor_fields_loop12(
-                        names, values, fields, index,
-                    );
+                    let fields_2 =
+                        self::source_ml_source1_temporary_render_rust_constructor_fields_loop12(
+                            names, values, fields, index,
+                        );
                     ((head.concat(&self::ml_string::Text::from_units(vec![32, 123, 32]))).concat(
                         &self::ml_string::join(
                             &fields_2,
@@ -824,6 +839,19 @@ pub fn render_rust_constructor_fields(
         ))
         .concat(&self::ml_string::Text::from_units(vec![41]))
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_rust_function_call(
+    head: &self::ml_string::Text,
+    values: &[self::ml_string::Text],
+) -> self::ml_string::Text {
+    ((head.concat(&self::ml_string::Text::from_units(vec![40]))).concat(&self::ml_string::join(
+        values,
+        &self::ml_string::Text::from_units(vec![44, 32]),
+    )))
+    .concat(&self::ml_string::Text::from_units(vec![41]))
 }
 
 /// Execute the checked shared source algorithm.
@@ -854,58 +882,7 @@ pub fn render_rust_data_field_encoding(named: bool) -> self::ml_string::Text {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanRustRecordFieldsLoop3Result {
-    MlPlanRustRecordFieldsLoop3Done(Vec<f64>),
-    MlPlanRustRecordFieldsLoop3Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_plan_rust_record_fields_loop3(
-    declared: &[self::ml_string::Text],
-    supplied: &[self::ml_string::Text],
-    mut result: Vec<f64>,
-    mut index: f64,
-) -> self::MlPlanRustRecordFieldsLoop3Result {
-    loop {
-        return if index < (declared.len() as f64) {
-            {
-                let position = self::ml_array::index_of(
-                    supplied,
-                    &(self::ml_array::optional_at(declared, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| self::ml_string::Text::from_units(vec![])),
-                    0f64,
-                    false,
-                    |a, b| a == b,
-                );
-                if position < 0f64 {
-                    self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Return(
-                        vec![-4f64, index],
-                    )
-                } else {
-                    {
-                        let result_2 = {
-                            let (ml_append_right, ml_append_left) = (vec![position], result);
-                            self::ml_array::append(ml_append_left, ml_append_right)
-                        };
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                (result, index) = (result_2, index_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Done(result)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanRustRecordFieldsLoop2Result {
-    MlPlanRustRecordFieldsLoop2Done,
-    MlPlanRustRecordFieldsLoop2Return(Vec<f64>),
+pub enum MlSource1TemporaryPlanRustRecordFieldsLoop3Result {
+    MlSource1TemporaryPlanRustRecordFieldsLoop3Done(Vec<f64>),
+    MlSource1TemporaryPlanRustRecordFieldsLoop3Return(Vec<f64>),
 }

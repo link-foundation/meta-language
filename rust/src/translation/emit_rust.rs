@@ -747,12 +747,12 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
                     return false;
                 };
                 data.ctors.iter().any(|ctor| {
-                    super::rust_record_rules::accept_rust_named_constructor_fields(
+                    super::rust_source_render_interfaces::accept_rust_named_constructor_fields(
                         program.source_language.as_str(),
                         &ctor
                             .fields
                             .iter()
-                            .map(|field| field.name.clone().unwrap_or_default())
+                            .map(|field| field.name.clone())
                             .collect::<Vec<_>>(),
                     )
                 })
