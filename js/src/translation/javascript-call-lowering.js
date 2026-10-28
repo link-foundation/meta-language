@@ -156,7 +156,10 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
       if(integerCode>=0&&node.args.every(arg=>arg.type.kind==='int'))return primitive(integerOperations[integerCode],node.args.map(arg=>expression(arg,environment,depth+1)));
       if(numberCode>=0&&node.args.every(arg=>arg.type.kind==='float'))return primitive(numberOperations[numberCode],node.args.map(arg=>expression(arg,environment,depth+1)));
      }
-     if(node.k==='math'&&['coerceJavaScriptNumber','convertJavaScriptNumber'].includes(node.op)&&node.args.length===1&&node.args[0].type.kind==='float')return expression(node.args[0],environment,depth+1);
+     if(node.k==='math'&&['coerceJavaScriptNumber','convertJavaScriptNumber'].includes(node.op)&&node.args.length===1){
+      const value=expression(node.args[0],environment,depth+1);
+      return node.args[0].type.kind==='float'?value:primitive(node.op==='convertJavaScriptNumber'?'convert explicit number':'coerce primitive number',[value]);
+     }
      const numericOperation=node.k==='math'?{trunc:'truncate number',min:'read minimum number',max:'read maximum number'}[node.op]:undefined;
      if(numericOperation&&node.args.every(arg=>arg.type.kind==='float'))return primitive(numericOperation,node.args.map(arg=>expression(arg,environment,depth+1)));
 

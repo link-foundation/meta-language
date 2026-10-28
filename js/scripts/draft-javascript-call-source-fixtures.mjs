@@ -117,6 +117,28 @@ rows.push({name:'optional field skips undefined receivers',source:optionalReadSo
 const optionalFallbackSource='/** @param {{value:number} | null | undefined} holder @param {{value:number}} counter @returns {number} */ export function inspect(holder,counter){return holder?.value??fallback(counter);} /** @param {{value:number}} counter @returns {number} */ function fallback(counter){counter.value+=1;return 7;}';
 rows.push({name:'optional coalescing skips all fallback heap effects for present zero',source:optionalFallbackSource,entry:'inspect',functions:['inspect','fallback'],referenceSemantics:true,arguments:[object('1'),object('2')],objects:[entity('1',[property(data(number(0)))]),entity('2',[property(data(number(0)))])],expected:number(0)},
  {name:'optional coalescing runs the fallback after an absent receiver',source:optionalFallbackSource,entry:'inspect',functions:['inspect','fallback'],referenceSemantics:true,arguments:[nil,object('2')],objects:[entity('2',[property(data(number(0)))])],afterObjects:[entity('2',[property(data(number(1)))])],expected:number(7)});
+const units=value=>text(Array.from({length:value.length},(_,index)=>value.charCodeAt(index)));
+for(const [name,input,expected]of [
+ ['empty numeric text converts to positive zero',text([]),number(0)],
+ ['numeric text accepts the complete ECMAScript whitespace set',text([65279,160,9]),number(0)],
+ ['numeric text retains signed zero',units('-0'),number(-0)],
+ ['numeric hexadecimal ties round once to even',units('0x20000000000001'),number(9007199254740992)],
+ ['numeric decimal ties round once to even',units('9007199254740995'),number(9007199254740996)],
+ ['numeric overflow retains infinity',units('1e309'),number(Infinity)],
+ ['numeric underflow retains negative zero',units('-1e-999'),number(-0)],
+ ['numeric subnormal parsing retains its exact lowest bit',units('5e-324'),{$:'number',bits:'0000000000000001'}],
+ ['numeric text rejects a missing radix digit',units('0x'),number(NaN)],
+ ['numeric text rejects signed radix syntax',units('-0x1'),number(NaN)],
+ ['numeric text retains isolated surrogate invalidity',text([55296]),number(NaN)],
+ ])rows.push({name,source:'/** @param {string} value @returns {number} */ export function inspect(value){return Number(value);}',entry:'inspect',functions:['inspect'],arguments:[input],expected});
+rows.push({name:'explicit Number conversion rounds exact BigInt once',source:'/** @param {bigint} value @returns {number} */ export function inspect(value){return Number(value);}',entry:'inspect',functions:['inspect'],arguments:[integer('9007199254740993')],expected:number(9007199254740992)},
+ {name:'Number converts true without string intermediates',source:'/** @param {boolean} value @returns {number} */ export function inspect(value){return Number(value);}',entry:'inspect',functions:['inspect'],arguments:[{$:'boolean',value:true}],expected:number(1)},
+ {name:'Number optional null retains positive zero',source:'/** @param {number | null | undefined} value @returns {number} */ export function inspect(value){return Number(value);}',entry:'inspect',functions:['inspect'],arguments:[nil],expected:number(0)},
+ {name:'Number optional undefined retains NaN',source:'/** @param {number | null | undefined} value @returns {number} */ export function inspect(value){return Number(value);}',entry:'inspect',functions:['inspect'],arguments:[undef],expected:number(NaN)},
+ {name:'coercing finite predicate converts empty text to zero',source:'/** @param {string} value @returns {boolean} */ export function inspect(value){return isFinite(value);}',entry:'inspect',functions:['inspect'],arguments:[text([])],expected:{$:'boolean',value:true}},
+ {name:'coercing NaN predicate converts invalid text',source:'/** @param {string} value @returns {boolean} */ export function inspect(value){return isNaN(value);}',entry:'inspect',functions:['inspect'],arguments:[units('wrong')],expected:{$:'boolean',value:true}},
+ {name:'implicit BigInt Number conversion requests the actual TypeError realm',source:'/** @param {bigint} value @returns {boolean} */ export function inspect(value){return isFinite(value);}',entry:'inspect',functions:['inspect'],arguments:[integer('1')],expectedOutcome:'allocation',errorClass:'TypeError',errorRealm:'1000',errorReason:'Cannot convert a BigInt value to a number'},
+ {name:'Number conversion evaluates every extra argument heap effect',source:'/** @param {string} value @param {{value:number}} holder @returns {number} */ export function inspect(value,holder){return Number(value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[units('41'),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:number(41)});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

@@ -9539,6 +9539,20 @@ fallback and its heap effects. Deferred original-source cases distinguish each
 absence, present values and mutation order. General optional array/property
 exotics remain required.
 
+Primitive Number conversion in the call executor reuses exact
+StringNumericLiteral parsing and BigInt-to-binary64 rounding definitions.
+Explicit conversion permits BigInt; implicit ToNumber requests a real TypeError
+for BigInt. Symbol conversion requests its actual TypeError. Undefined, null,
+Boolean and Number operands retain their precise primitive results. The checked
+source wrappers preserve optional conversion and all extra argument effects
+before conversion. The selected work profile bounds text conversion at4096
+code units and explicit integer conversion at the integer work profile; quota
+refusal is distinct from a language error. Object conversion requires its
+resumable ToPrimitive protocol and is not approximated by a primitive helper.
+Original source controls retain rounding ties, subnormal bits, invalid text,
+absence values and real realm allocation requests. They remain unexecuted
+during drafting.
+
 ### Ordered typed record shapes draft
 
 A qualified layout profile represents a typed record by a shared ordered shape

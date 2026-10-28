@@ -2,6 +2,7 @@
 // host scalar strings for code units or reimplement native operation bodies.
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive} from './javascript-call-integers.js';
+import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
 import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
 /** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
@@ -16,7 +17,7 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  const integerArity=readJavaScriptCallIntegerArity(operation);
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
- const unary=['truncate number','read text length','trim text','trim text start','trim text end'];
+ const unary=['truncate number','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number'];
  const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
  const ternary=['slice text','find text','find last text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
@@ -82,6 +83,7 @@ export function executeJavaScriptCallTextPair(operation,text,values){
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(operation==='convert explicit number'||operation==='coerce primitive number')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
  if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);
  return operation==='truncate number'||operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units'?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
 }

@@ -69,6 +69,8 @@ for(const [name,operation,values,source,expected]of [
 }
 const oversizedInteger='1'+'0'.repeat(1234);
 add('integer input work quota retains the unadvanced state',heap(),fn('10',4,[constant(1,integer(oversizedInteger)),constant(2,integer(oversizedInteger)),{$:'primitive',destination:3,operation:'compare integers',arguments:[1,2]},ret(3)]),[],"ctx=>{const value=BigInt('1'+'0'.repeat(1234));return value<value?-1:value>value?1:0;}",{kind:'resource',position:2,reason:'integer input exceeds the selected 4096-bit work profile',referenceValue:number(0)});
+add('primitive Symbol Number conversion requests actual realm allocation',heap(),fn('10',3,[constant(1,exoticKey),{$:'primitive',destination:2,operation:'convert explicit number',arguments:[1]},ret(2)]),[],"ctx=>Number(Symbol.toPrimitive)",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Symbol value to a number'});
+add('Number text work quota keeps the original instruction state',heap(),fn('10',3,[constant(1,{$:'text',units:Array(4097).fill(32)}),{$:'primitive',destination:2,operation:'convert explicit number',arguments:[1]},ret(2)]),[],"ctx=>Number(' '.repeat(4097))",{kind:'resource',position:1,reason:'Number text conversion exceeds the selected 4096-unit work profile',referenceValue:number(0)});
 const base=programs[0];
 const invalid=[{name:'unknown source realm',program:{...base.program,realms:[]},reason:'call functions require their actual declared source realm'},
  {name:'out of range register destination',program:{...base.program,functions:[{...base.program.functions[0],instructions:[constant(3,undef),ret(0)]}]},reason:'call instructions require actual in-range register coordinates'},

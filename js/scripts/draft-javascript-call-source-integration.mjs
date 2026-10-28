@@ -6,7 +6,7 @@ const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-librari
 if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-libraries]');
 process.argv.splice(2,process.argv.length-2,'--draft');
 const root=new URL('../../',import.meta.url);
-for(const path of ['js/src/translation/javascript-call-code.js','js/src/translation/javascript-call-primitives.js','js/src/translation/javascript-call-integers.js','js/src/translation/javascript-call-machine.js','js/src/translation/javascript-call-source.js','js/src/translation/javascript-call-lowering.js',
+for(const path of ['js/src/translation/javascript-call-code.js','js/src/translation/javascript-call-primitives.js','js/src/translation/javascript-call-integers.js','js/src/translation/javascript-call-number-conversion.js','js/src/translation/javascript-call-machine.js','js/src/translation/javascript-call-source.js','js/src/translation/javascript-call-lowering.js',
  'js/scripts/draft-javascript-call-source.mjs','js/scripts/draft-javascript-call-source-fixtures.mjs','js/scripts/draft-javascript-call-source-integration.mjs',
  'experiments/javascript-properties/call-source-controls.mjs','experiments/javascript-properties/call-source-oracle.mjs','js/tests/translation-javascript-call-source.test.js']){
  parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);globalThis.gc?.();
