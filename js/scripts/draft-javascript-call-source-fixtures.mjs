@@ -159,7 +159,7 @@ for(const [name,body,input,expected]of [
  ['safe integer predicate accepts its upper boundary','Number.isSafeInteger(value)',number(9007199254740991),{$:'boolean',value:true}],
  ['safe integer predicate rejects the next integer','Number.isSafeInteger(value)',number(9007199254740992),{$:'boolean',value:false}],
  ['safe integer predicate rejects NaN','Number.isSafeInteger(value)',number(NaN),{$:'boolean',value:false}],
- ])rows.push({name,source:'/** @param {number} value */ export function inspect(value){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:[input],expected});
+ ])rows.push({name,source:'/** @param {number} value */ export function inspect(value){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:[input],expected,...(name==='negative square root returns NaN'?{expectedEncoding:'implementation-selected NaN'}:{})});
 rows.push({name:'optional integer predicate rejects null without coercion',source:'/** @param {number | null | undefined} value @returns {boolean} */ export function inspect(value){return Number.isInteger(value);}',entry:'inspect',functions:['inspect'],arguments:[nil],expected:{$:'boolean',value:false}},
  {name:'optional safe integer predicate accepts present zero',source:'/** @param {number | null | undefined} value @returns {boolean} */ export function inspect(value){return Number.isSafeInteger(value);}',entry:'inspect',functions:['inspect'],arguments:[number(0)],expected:{$:'boolean',value:true}},
  {name:'round performs the actual text conversion before rounding',source:'/** @param {string} value @returns {number} */ export function inspect(value){return Math.round(value);}',entry:'inspect',functions:['inspect'],arguments:[units('-0.5')],expected:number(-0)},

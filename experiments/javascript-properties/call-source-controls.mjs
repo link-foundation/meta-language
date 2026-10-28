@@ -1,6 +1,6 @@
 // Deferred actual frontend -> shared compiler -> executor and original source.
 import assert from 'node:assert/strict';
-import {runInNewContext} from 'node:vm';
+import {createContext,runInContext} from 'node:vm';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {parseJavaScript} from '../../js/src/translation/javascript.js';
 import {checkProgram} from '../../js/src/translation/check.js';
@@ -25,16 +25,28 @@ export function observeCallSource(row){
  const finalHeap=current.$==='machineAllocateError'?current.machine.heap:current.heap;
  if(row.expectedOutcome==='allocation'){
   assert.equal(current.$,'machineAllocateError');assert.equal(String(current.realm),row.errorRealm);assert.equal(current.errorClass,row.errorClass);assert.equal(current.reason,row.errorReason);
- }else{assert.equal(current.$,'machineCompleted');assert.deepEqual(encodeJavaScriptSemanticValue(current.value),row.expected);}
+ }else{
+  assert.equal(current.$,'machineCompleted');
+  if(row.expectedEncoding==='implementation-selected NaN'){
+   assert.equal(current.value.$,'number');assert.equal(Number.isNaN(current.value.value),true);
+   assert.equal(Number.isNaN(decodeJavaScriptSemanticValue(row.expected).value),true,'the retained expected Number is still NaN');
+  }else assert.deepEqual(encodeJavaScriptSemanticValue(current.value),row.expected);
+ }
  assert.deepEqual(encodeJavaScriptOrdinaryHeap(finalHeap),encodeJavaScriptOrdinaryHeap(expectedHeap));
- const originals=runInNewContext('(function(){"use strict";'+row.source.replaceAll('export function ','function ')+';return {'+row.functions.join(',')+'};})()');
+ const originalRealm=createContext(),originals=runInContext('(function(){"use strict";'+row.source.replaceAll('export function ','function ')+';return {'+row.functions.join(',')+'};})()',originalRealm);
  let context;context=createOrdinaryHostContext(heap,call=>{
   const owner=actualRegistry.functions.find(fn=>fn.identity===call.callee.identity);assert.ok(owner,'actual source owns every registered property call');
   return Reflect.apply(originals[owner.name],context.materialize(call.receiver),call.arguments.map(context.materialize));
- },new Map([[String(actualRegistry.exoticKey.identity),Symbol.toPrimitive]]));
+ },new Map([[String(actualRegistry.exoticKey.identity),runInContext('Symbol.toPrimitive',originalRealm)]]));
  let result,failure,threw=false;try{result=Reflect.apply(originals[row.entry],undefined,arguments_.map(context.materialize));}catch(error){failure=error;threw=true;}
- if(row.expectedOutcome==='allocation'){assert.equal(threw,true);assert.equal(failure.name,row.errorClass);}
- else{assert.equal(threw,false);assert.deepEqual(encodeJavaScriptSemanticValue(context.semantic(result)),row.expected,'independent original source behavior');}
+ if(row.expectedOutcome==='allocation'){
+  assert.equal(threw,true);assert.equal(failure.name,row.errorClass);
+  assert.equal(Object.getPrototypeOf(failure),runInContext(row.errorClass,originalRealm).prototype,'the actual source realm owns the intrinsic Error instance');
+ }else{
+  assert.equal(threw,false);
+  const observed=encodeJavaScriptSemanticValue(context.semantic(result));
+  assert.deepEqual(observed,row.expectedEncoding==='implementation-selected NaN'?encodeJavaScriptSemanticValue(current.value):row.expected,'independent original source behavior retains every observed Number bit');
+ }
  assertOrdinaryHostSnapshot(expectedHeap,context);
  const registeredCalls=context.calls.map(call=>({callee:encodeJavaScriptSemanticValue(call.callee),receiver:encodeJavaScriptSemanticValue(call.receiver),arguments:call.arguments.map(encodeJavaScriptSemanticValue)}));
  assert.deepEqual(registeredCalls,row.registeredCalls??[],'all independently observed registered property calls');

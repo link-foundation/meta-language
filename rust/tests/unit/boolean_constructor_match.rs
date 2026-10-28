@@ -56,4 +56,104 @@ fn boolean_constructor_match_retains_every_plan_and_refusal() {
             row["name"]
         );
     }
+    for row in data["generalRows"].as_array().unwrap() {
+        let strings = |name: &str| {
+            row[name]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| value.as_str().unwrap().to_owned())
+                .collect::<Vec<_>>()
+        };
+        let classes = row["classes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        let expected = row["expected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            native::plan_closed_constructor_match_sharing(
+                row["owner"].as_str().unwrap(),
+                &strings("declared"),
+                &strings("owners"),
+                &strings("constructors"),
+                &classes
+            ),
+            expected,
+            "{}",
+            row["name"]
+        );
+    }
+    for row in data["bindingRows"].as_array().unwrap() {
+        let strings = |name: &str| {
+            row[name]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| value.as_str().unwrap().to_owned())
+                .collect::<Vec<_>>()
+        };
+        let expected = row["expected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            native::plan_unused_constructor_bindings(&strings("bindings"), &strings("references")),
+            expected,
+            "{}",
+            row["name"]
+        );
+    }
+    for row in data["aliasRows"].as_array().unwrap() {
+        let strings = |name: &str| {
+            row[name]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| value.as_str().unwrap().to_owned())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            native::test_unused_constructor_alias(
+                row["nameOfBinding"].as_str().unwrap(),
+                row["value"].as_str().unwrap(),
+                &strings("available"),
+                &strings("references")
+            ),
+            row["expected"].as_bool().unwrap(),
+            "{}",
+            row["name"]
+        );
+    }
+    for row in data["projectionRows"].as_array().unwrap() {
+        let counts = row["counts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        let expected = row["expected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            native::plan_single_constructor_projections(
+                row["constructors"].as_f64().unwrap(),
+                &counts
+            ),
+            expected,
+            "{}",
+            row["name"]
+        );
+    }
 }

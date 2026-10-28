@@ -545,6 +545,11 @@ pub(super) fn decode_java_script_call_pending(data: &Data) -> native::JavaScript
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
             Box::new(decode_java_script_property_definition_state(&data["state"])),
         ),
+        "waitNumber" => native::JavaScriptCallPending::WaitNumber(
+            data["destination"].as_f64().expect("model Number"),
+            native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
+            Box::new(decode_java_script_number_call_state(&data["state"])),
+        ),
         "waitError" => native::JavaScriptCallPending::WaitError(
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
             native::ml_string::Text::from_text(data["errorClass"].as_str().expect("model text")),
@@ -570,6 +575,9 @@ pub(super) fn encode_java_script_call_pending(value: &native::JavaScriptCallPend
         }
         native::JavaScriptCallPending::WaitDefinition(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"waitDefinition","destination":wire_number(*wire_field_0),"realm":Data::String(wire_field_1.to_string()),"state":encode_java_script_property_definition_state(wire_field_2)})
+        }
+        native::JavaScriptCallPending::WaitNumber(wire_field_0, wire_field_1, wire_field_2) => {
+            json!({"$":"waitNumber","destination":wire_number(*wire_field_0),"realm":Data::String(wire_field_1.to_string()),"state":encode_java_script_number_call_state(wire_field_2)})
         }
         native::JavaScriptCallPending::WaitError(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"waitError","realm":Data::String(wire_field_0.to_string()),"errorClass":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units")),"reason":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units"))})
@@ -705,6 +713,31 @@ pub(super) fn encode_java_script_descriptor_conversion_state(
             wire_field_3,
         ) => {
             json!({"$":"descriptorConversion","receiver":encode_java_script_semantic_value(wire_field_0),"next":wire_number(*wire_field_1),"descriptor":json!({"configurable":Data::Bool(wire_field_2.0),"configurablePresent":Data::Bool(wire_field_2.1),"enumerable":Data::Bool(wire_field_2.2),"enumerablePresent":Data::Bool(wire_field_2.3),"getter":encode_java_script_semantic_value(&wire_field_2.4),"getterPresent":Data::Bool(wire_field_2.5),"setter":encode_java_script_semantic_value(&wire_field_2.6),"setterPresent":Data::Bool(wire_field_2.7),"value":encode_java_script_semantic_value(&wire_field_2.8),"valuePresent":Data::Bool(wire_field_2.9),"writable":Data::Bool(wire_field_2.10),"writablePresent":Data::Bool(wire_field_2.11)}),"pending":Data::Bool(*wire_field_3)})
+        }
+    }
+}
+pub(super) fn decode_java_script_number_call_state(
+    data: &Data,
+) -> native::JavaScriptNumberCallState {
+    match data["$"].as_str().expect("model constructor") {
+        "numberProtocolState" => native::JavaScriptNumberCallState::NumberProtocolState(Box::new(
+            decode_java_script_primitive_conversion_state(&data["state"]),
+        )),
+        "numberPrimitiveValue" => native::JavaScriptNumberCallState::NumberPrimitiveValue(
+            Box::new(decode_java_script_semantic_value(&data["value"])),
+        ),
+        _ => panic!("unregistered actual model constructor"),
+    }
+}
+pub(super) fn encode_java_script_number_call_state(
+    value: &native::JavaScriptNumberCallState,
+) -> Data {
+    match value {
+        native::JavaScriptNumberCallState::NumberProtocolState(wire_field_0) => {
+            json!({"$":"numberProtocolState","state":encode_java_script_primitive_conversion_state(wire_field_0)})
+        }
+        native::JavaScriptNumberCallState::NumberPrimitiveValue(wire_field_0) => {
+            json!({"$":"numberPrimitiveValue","value":encode_java_script_semantic_value(wire_field_0)})
         }
     }
 }

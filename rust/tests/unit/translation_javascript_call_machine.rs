@@ -91,6 +91,19 @@ fn call_machine_keeps_all_original_calls_states_values_and_heaps() {
             ),
             "no partial trace may be treated as a terminal result"
         );
+        if row["expected"].get("convertedValue").is_some() {
+            let native::JavaScriptCallMachineTransition::MachineResourceLimit(machine, _) = &actual
+            else {
+                panic!("a converted work refusal retains its exact resumable machine")
+            };
+            let resumed =
+                native::step_java_script_call_machine(program.clone(), (**machine).clone());
+            assert_eq!(
+                encode_java_script_call_machine_transition(&resumed),
+                *trace.last().unwrap(),
+                "quota retry must not replay any completed native conversion callback"
+            );
+        }
     }
     for row in data["invalid"].as_array().unwrap() {
         let program = decode_java_script_call_program(&row["program"]);
@@ -102,6 +115,23 @@ fn call_machine_keeps_all_original_calls_states_values_and_heaps() {
             native::JavaScriptSemanticValue::Undefined,
             vec![],
         );
+        assert_eq!(
+            encode_java_script_call_machine_transition(&actual),
+            row["result"],
+            "{}",
+            row["name"]
+        );
+    }
+    for row in data["invalidStates"].as_array().unwrap() {
+        let program = decode_java_script_call_program(&row["program"]);
+        let machine = decode_java_script_call_machine(&row["machine"]);
+        assert_eq!(encode_java_script_call_program(&program), row["program"]);
+        assert_eq!(encode_java_script_call_machine(&machine), row["machine"]);
+        assert_eq!(
+            encode_java_script_call_machine(&machine)["heap"],
+            row["heap"]
+        );
+        let actual = native::step_java_script_call_machine(program, machine);
         assert_eq!(
             encode_java_script_call_machine_transition(&actual),
             row["result"],

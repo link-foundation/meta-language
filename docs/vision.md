@@ -9581,6 +9581,52 @@ Deferred controls retain malformed inventories, both Boolean defaults and
 independent original programs with scrutinee heap effects through both codecs,
 alongside every existing executor/native trace control.
 
+The additional closed-source profile applies only to checked JavaScript
+algebraic value models. It may share identical Boolean literals or core aborts
+only with the same result type and exact abort message, retaining every other
+case. It removes unused constructor slots and unused aliases only when the
+initializer is a read of an already bound lexical value; property access,
+allocation, arithmetic and calls remain. Conservative name-use scans retain
+shadowing references. Owner, occurrence path and removed slot/alias records stay
+in the generation receipt. Repeated field projections of a single-constructor
+parameter may bind its used fields once, with fresh, collision-free names;
+reference semantics, shadowed parameters and deferred closures are excluded.
+These are representation optimizations under the explicit value model, not
+permission to deduplicate concepts by labels or change ownership-sensitive
+source behavior. All existing resource, type, ownership and coverage gates stay.
+
+Ordinary Object-to-Number execution additionally composes the existing
+resumable ToPrimitive(number) protocol with exact primitive conversion. Getters
+and methods run as registered source bodies against the latest heap; inherited
+methods retain the original receiver, and ordinary/exotic fallback order stays
+explicit. A two-phase numeric continuation keeps either the actual protocol
+state or its completed primitive. The operation, destination and realm come
+from the suspended source instruction; receiver and well-known Symbol identities
+must match that instruction's context. A completed primitive retained at a quota
+can be retried without replaying conversion effects. Intrinsic errors still
+request actual realm allocation. Frontend/target lowering for arbitrary Object
+conversion, general allocation and the remaining untyped source constructs
+remain required; executor support alone does not establish those source paths.
+
+Deferred original-source controls create actual VM realms corresponding to
+registered realm identities and compare intrinsic Error prototypes with the
+requested realm's constructor. They keep all previous inputs and exact native
+traces. A newly added negative-square-root control distinguishes mathematical
+NaN from its implementation-selected encoding: it requires NaN and compares
+every observed bit with the independent original source and native trace,
+instead of assuming the positive canonical NaN produced by a literal. Other
+exact-bit transport assertions, signed-zero assertions and version bounds stay.
+This correction follows the [Number type definition](https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-ecmascript-language-types-number-type),
+which treats NaN as one language value and distinguishes that from its observed
+buffer representation. These controls remain unexecuted during drafting.
+
+Source construction builds its complete linked model before native emission.
+The receipt hashes the actual paired program asset as well as recording its
+complete original inputs and native outputs. Integration reuse requires all
+of those bytes to match; a native-only emission checkpoint cannot substitute
+for a completed source model. Failed generation receipts and task history stay
+preserved, including source ownership needed to replace obsolete partitions.
+
 ### Ordered typed record shapes draft
 
 A qualified layout profile represents a typed record by a shared ordered shape

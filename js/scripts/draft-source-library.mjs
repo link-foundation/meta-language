@@ -16,10 +16,10 @@ import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { readSourceLibraryClosure, readSourceLibraryDeclarationOwnership } from './read-source-library-closure.mjs';
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {projectSourceLibraryEntryPoints} from './source-library-entry-points.mjs';
-import {shareSourceBooleanConstructorMatches} from './source-boolean-match-sharing.mjs';
+import {shareSourceBooleanConstructorMatches,shareSourceClosedConstructorMatches} from './source-boolean-match-sharing.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', recordShapes='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', recordShapes='' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
@@ -30,10 +30,22 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
   const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,originalProgram) : null;
   if(booleanMatchSharing!==''&&booleanMatchSharing!=='literal Boolean constructor match arms 1')throw new TypeError('unknown source Boolean match sharing selection');
-  const sharedMatches=booleanMatchSharing?shareSourceBooleanConstructorMatches(originalProgram):undefined;
+  if(constructorMatchSharing!==''&&constructorMatchSharing!=='closed constructor match sharing 1'||constructorMatchSharing&&booleanMatchSharing)throw new TypeError('unknown or conflicting constructor match sharing selection');
+  const sharedMatches=constructorMatchSharing?shareSourceClosedConstructorMatches(originalProgram):booleanMatchSharing?shareSourceBooleanConstructorMatches(originalProgram):undefined;
   const program=sharedMatches?.program??originalProgram;
   if(nativeEntryPoints!==''&&nativeEntryPoints!=='source module exports 1')throw new TypeError('unknown native source entry-point selection');
   const nativeSelection=nativeEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};
+  // Construct the complete linked model before costly native emission or any
+  // output mutation. A source-model refusal leaves prior native files intact.
+  let programProjection,programText;
+  if (programAsset !== undefined) {
+    if (!/^[a-z][a-z0-9-]*$/u.test(programAsset)) throw new TypeError('invalid typed source program asset');
+    if(programEntryPoints!==''&&programEntryPoints!=='source module exports 1')throw new TypeError('unknown source program entry-point selection');
+    const selected=programEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};programProjection=selected.projection;
+    const linked=encodeTypedProgramLinks(selected.program,{valueSharing,recordShapes,...(sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{})});
+    programText=linked.network.toLino();
+  }
+  globalThis.gc?.();
   const emitted = emitRust(nativeSelection.program, { arrayConsumption: true });
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   if (!header) throw new TypeError('the source translator omitted its library attributes');
@@ -81,17 +93,9 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     mkdirSync(new URL('.', path), { recursive: true });
     writeFileSync(path, file.source);
   }
-  let programProjection;
   if (programAsset !== undefined) {
-    if (!/^[a-z][a-z0-9-]*$/u.test(programAsset)) throw new TypeError('invalid typed source program asset');
-    // Construct inspectable source IR. The encoder rechecks static typing;
-    // nothing decodes/replays an archive or executes the represented program.
-    if(programEntryPoints!==''&&programEntryPoints!=='source module exports 1')throw new TypeError('unknown source program entry-point selection');
-    const selected=programEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};programProjection=selected.projection;
-    const linked = encodeTypedProgramLinks(selected.program,{valueSharing,recordShapes,...(sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{})});
-    const text = linked.network.toLino();
-    writeFileSync(new URL('js/src/data/' + programAsset + '.lino', root), text);
-    writeFileSync(new URL('rust/src/data/' + programAsset + '.lino', root), text);
+    writeFileSync(new URL('js/src/data/' + programAsset + '.lino', root), programText);
+    writeFileSync(new URL('rust/src/data/' + programAsset + '.lino', root), programText);
   }
   const decorators = new DecoratorSet([{ id: moduleName.replaceAll('_', '-') + '-source-styles',
     level: 'emitter', order: 0, when: [['format', 'Rust']],
@@ -99,11 +103,12 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sharedMatches?{booleanMatchSharing:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sharedMatches?{[constructorMatchSharing?'constructorMatchSharing':'booleanMatchSharing']:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
+    ...(programAsset===undefined?{}:{programAsset:{path:'js/src/data/'+programAsset+'.lino',bytes:Buffer.byteLength(programText),sha256:createHash('sha256').update(programText).digest('hex')}}),
     ...(sourceDeclarationOwners ? {sourceDeclarationOwners} : {}),
-    emitted: { text: emitted.text, definitions: emitted.definitions, preludes: emitted.preludes, mappings: emitted.mappings },
+    emitted: { text: emitted.text, definitions: emitted.definitions, preludes: emitted.preludes, mappings: emitted.mappings, encodings: emitted.encodings??[] },
     files: files.map(file => ({ path: file.path ?? moduleName + '.rs', source: file.source })),
     ...(removedFiles.length?{removedFiles}:{}),
     boundary: 'Complete automatic source generation only. No fixture, behavior comparison, archive replay, product execution or native compilation.',

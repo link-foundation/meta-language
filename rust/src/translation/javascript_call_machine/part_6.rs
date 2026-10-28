@@ -74,6 +74,23 @@ pub enum JavaScriptPropertyDefinitionTransition {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptNumberCallState {
+    NumberProtocolState(Box<self::JavaScriptPrimitiveConversionState>),
+    NumberPrimitiveValue(Box<self::JavaScriptSemanticValue>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptNumberConversionTransition {
+    NumberContinuation(Box<self::JavaScriptPrimitiveConversionState>),
+    NumberCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
+    NumberCompleted(Box<self::JavaScriptSemanticValue>),
+    NumberThrow(Box<self::JavaScriptSemanticValue>),
+    NumberIntrinsicError(self::ml_string::Text, self::ml_string::Text),
+    NumberInvalid(self::ml_string::Text),
+    NumberResourceLimit(Box<self::JavaScriptSemanticValue>, self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallHandler {
     CallHandler(f64, f64),
 }
@@ -86,6 +103,7 @@ pub enum JavaScriptCallPending {
     WaitSet(f64),
     WaitKey(f64, self::ml::Big, Box<self::JavaScriptPrimitiveConversionState>),
     WaitDefinition(f64, self::ml::Big, Box<self::JavaScriptPropertyDefinitionState>),
+    WaitNumber(f64, self::ml::Big, Box<self::JavaScriptNumberCallState>),
     WaitError(self::ml::Big, self::ml_string::Text, self::ml_string::Text),
 }
 
@@ -119,13 +137,13 @@ pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValu
         self::JavaScriptSemanticValue::Null => {
             self::ml_string::Text::from_units(vec![])
         }
-        self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1) => {
+        self::JavaScriptSemanticValue::Boolean(_) => {
             self::ml_string::Text::from_units(vec![])
         }
-        self::JavaScriptSemanticValue::Number(source_ml_source2_f2) => {
+        self::JavaScriptSemanticValue::Number(_) => {
             self::ml_string::Text::from_units(vec![])
         }
-        self::JavaScriptSemanticValue::Integer(source_ml_source2_f3) => {
+        self::JavaScriptSemanticValue::Integer(_) => {
             self::ml_string::Text::from_units(vec![])
         }
         self::JavaScriptSemanticValue::Text(units) => {
@@ -155,7 +173,7 @@ pub fn read_java_script_semantic_value_error(value: self::JavaScriptSemanticValu
                 self::ml_string::Text::from_units(vec![97, 32, 115, 121, 109, 98, 111, 108, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 112, 111, 115, 105, 116, 105, 118, 101, 32, 117, 110, 115, 105, 103, 110, 101, 100, 54, 52, 32, 103, 108, 111, 98, 97, 108, 32, 108, 105, 110, 107, 32, 105, 100, 101, 110, 116, 105, 116, 121])
             }
         }
-        self::JavaScriptSemanticValue::Object(identity_2, source_ml_source2_f4) => {
+        self::JavaScriptSemanticValue::Object(identity_2, _) => {
             if ((identity_2 > (self::ml::Big::from_i128(0))) && (identity_2 <= (self::ml::Big::from_i128(18446744073709551615)))) {
                 self::ml_string::Text::from_units(vec![])
             } else {
@@ -194,43 +212,16 @@ pub fn test_java_script_semantic_same_value(left: self::JavaScriptSemanticValue,
             }
             self::JavaScriptSemanticValue::Boolean(left_value) => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
                     self::JavaScriptSemanticValue::Boolean(value) => {
                         (left_value == value)
                     }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f21) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f22) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f23) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f24) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f25, source_ml_source2_f26) => {
+                    _ => {
                         false
                     }
                 }
             }
             self::JavaScriptSemanticValue::Number(left_value_2) => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f27) => {
-                        false
-                    }
                     self::JavaScriptSemanticValue::Number(value_2) => {
                         if (left_value_2 == value_2) {
                             ((left_value_2 != (0f64)) || (((1f64 / left_value_2)) == ((1f64 / value_2))))
@@ -238,65 +229,23 @@ pub fn test_java_script_semantic_same_value(left: self::JavaScriptSemanticValue,
                             (left_value_2.is_nan() && value_2.is_nan())
                         }
                     }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f28) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f29) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f30) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f31, source_ml_source2_f32) => {
+                    _ => {
                         false
                     }
                 }
             }
             self::JavaScriptSemanticValue::Integer(left_value_3) => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f33) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f34) => {
-                        false
-                    }
                     self::JavaScriptSemanticValue::Integer(value_3) => {
                         (left_value_3 == value_3)
                     }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f35) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f36) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f37, source_ml_source2_f38) => {
+                    _ => {
                         false
                     }
                 }
             }
             self::JavaScriptSemanticValue::Text(left_units) => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f39) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f40) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f41) => {
-                        false
-                    }
                     self::JavaScriptSemanticValue::Text(units) => {
                         {
                             let left_units_2 = left_units;
@@ -323,67 +272,28 @@ pub fn test_java_script_semantic_same_value(left: self::JavaScriptSemanticValue,
                             }
                         }
                     }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f42) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f43, source_ml_source2_f44) => {
+                    _ => {
                         false
                     }
                 }
             }
             self::JavaScriptSemanticValue::Symbol(left_identity) => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f46) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f47) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f48) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f49) => {
-                        false
-                    }
                     self::JavaScriptSemanticValue::Symbol(identity) => {
                         (left_identity == identity)
                     }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f50, source_ml_source2_f51) => {
+                    _ => {
                         false
                     }
                 }
             }
-            self::JavaScriptSemanticValue::Object(left_identity_2, source_ml_source2_f6) => {
+            self::JavaScriptSemanticValue::Object(left_identity_2, _) => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f52) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f53) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f54) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f55) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f56) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(identity_2, source_ml_source2_f57) => {
+                    self::JavaScriptSemanticValue::Object(identity_2, _) => {
                         (left_identity_2 == identity_2)
+                    }
+                    _ => {
+                        false
                     }
                 }
             }
@@ -401,47 +311,14 @@ pub fn test_java_script_semantic_accessor(value: self::JavaScriptSemanticValue) 
             self::JavaScriptSemanticValue::Undefined => {
                 true
             }
-            self::JavaScriptSemanticValue::Null => {
+            self::JavaScriptSemanticValue::Object(_, source_ml_source2_f64) => {
+                {
+                    let callable = source_ml_source2_f64;
+                    callable
+                }
+            }
+            _ => {
                 false
-            }
-            self::JavaScriptSemanticValue::Boolean(source_ml_source2_f58) => {
-                {
-                    let source_ml_source2_f71 = source_ml_source2_f58;
-                    false
-                }
-            }
-            self::JavaScriptSemanticValue::Number(source_ml_source2_f59) => {
-                {
-                    let source_ml_source2_f78 = source_ml_source2_f59;
-                    false
-                }
-            }
-            self::JavaScriptSemanticValue::Integer(source_ml_source2_f60) => {
-                {
-                    let source_ml_source2_f85 = source_ml_source2_f60.clone();
-                    false
-                }
-            }
-            self::JavaScriptSemanticValue::Text(source_ml_source2_f61) => {
-                {
-                    let source_ml_source2_f92 = source_ml_source2_f61;
-                    false
-                }
-            }
-            self::JavaScriptSemanticValue::Symbol(source_ml_source2_f62) => {
-                {
-                    let source_ml_source2_f99 = source_ml_source2_f62.clone();
-                    false
-                }
-            }
-            self::JavaScriptSemanticValue::Object(source_ml_source2_f63, source_ml_source2_f64) => {
-                {
-                    let source_ml_source2_f106 = source_ml_source2_f63.clone();
-                    {
-                        let callable = source_ml_source2_f64;
-                        callable
-                    }
-                }
             }
         }
     }

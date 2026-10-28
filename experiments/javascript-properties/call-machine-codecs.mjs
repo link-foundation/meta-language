@@ -119,6 +119,7 @@ case "waitGet":return {$:"waitGet","destination":scalar(value["destination"],"nu
 case "waitSet":return {$:"waitSet","destination":scalar(value["destination"],"number")};
 case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptPrimitiveConversionState(value["state"])};
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptPropertyDefinitionState(value["state"])};
+case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptNumberCallState(value["state"])};
 case "waitError":return {$:"waitError","realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallPending(value){switch(value.$){
@@ -128,6 +129,7 @@ case "waitGet":return {$:"waitGet","destination":scalar(value["destination"],"nu
 case "waitSet":return {$:"waitSet","destination":scalar(value["destination"],"number")};
 case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptPrimitiveConversionState(value["state"])};
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptPropertyDefinitionState(value["state"])};
+case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptNumberCallState(value["state"])};
 case "waitError":return {$:"waitError","realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptPrimitiveConversionState(value){switch(value.$){
@@ -149,6 +151,14 @@ case "descriptorConversion":return {$:"descriptorConversion","receiver":decodeJa
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptDescriptorConversionState(value){switch(value.$){
 case "descriptorConversion":return {$:"descriptorConversion","receiver":encodeJavaScriptSemanticValue(value["receiver"]),"next":scalar(value["next"],"number"),"descriptor":({"configurable":scalar(value["descriptor"]["configurable"],"boolean"),"configurablePresent":scalar(value["descriptor"]["configurablePresent"],"boolean"),"enumerable":scalar(value["descriptor"]["enumerable"],"boolean"),"enumerablePresent":scalar(value["descriptor"]["enumerablePresent"],"boolean"),"getter":encodeJavaScriptSemanticValue(value["descriptor"]["getter"]),"getterPresent":scalar(value["descriptor"]["getterPresent"],"boolean"),"setter":encodeJavaScriptSemanticValue(value["descriptor"]["setter"]),"setterPresent":scalar(value["descriptor"]["setterPresent"],"boolean"),"value":encodeJavaScriptSemanticValue(value["descriptor"]["value"]),"valuePresent":scalar(value["descriptor"]["valuePresent"],"boolean"),"writable":scalar(value["descriptor"]["writable"],"boolean"),"writablePresent":scalar(value["descriptor"]["writablePresent"],"boolean")}),"pending":scalar(value["pending"],"boolean")};
+default:throw new TypeError("unregistered actual model constructor");}}
+export function decodeJavaScriptNumberCallState(value){switch(value.$){
+case "numberProtocolState":return {$:"numberProtocolState","state":decodeJavaScriptPrimitiveConversionState(value["state"])};
+case "numberPrimitiveValue":return {$:"numberPrimitiveValue","value":decodeJavaScriptSemanticValue(value["value"])};
+default:throw new TypeError("unregistered actual model constructor");}}
+export function encodeJavaScriptNumberCallState(value){switch(value.$){
+case "numberProtocolState":return {$:"numberProtocolState","state":encodeJavaScriptPrimitiveConversionState(value["state"])};
+case "numberPrimitiveValue":return {$:"numberPrimitiveValue","value":encodeJavaScriptSemanticValue(value["value"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptCallMachineTransition(value){switch(value.$){
 case "machineContinue":return {$:"machineContinue","machine":decodeJavaScriptCallMachine(value["machine"])};

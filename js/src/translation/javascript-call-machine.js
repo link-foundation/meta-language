@@ -5,12 +5,15 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
 import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
 import {beginJavaScriptPropertyKeyConversion,stepJavaScriptPropertyKeyConversion,resumeJavaScriptPropertyKeyConversion} from './javascript-property-key-conversion.js';
+import {beginJavaScriptNumberProtocol,stepJavaScriptNumberProtocol,resumeJavaScriptNumberProtocol,finishJavaScriptNumberPrimitive,readJavaScriptNumberProtocolOperationError} from './javascript-number-conversion-protocol.js';
+import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
 
 /** @typedef {{$:'callHandler',target:number,destination:number}} JavaScriptCallHandler */
 /** @typedef {{$:'callIdle'} | {$:'waitCall',destination:number} |
  * {$:'waitGet',destination:number} | {$:'waitSet',destination:number} |
  * {$:'waitKey',destination:number,realm:bigint,state:JavaScriptPrimitiveConversionState} |
  * {$:'waitDefinition',destination:number,realm:bigint,state:JavaScriptPropertyDefinitionState} |
+ * {$:'waitNumber',destination:number,realm:bigint,state:JavaScriptNumberCallState} |
  * {$:'waitError',realm:bigint,errorClass:string,reason:string}} JavaScriptCallPending
  */
 /** @typedef {{$:'callFrame',identity:bigint,position:number,registers:JavaScriptSemanticValue[],
@@ -84,6 +87,32 @@ export function createJavaScriptCallFrame(fn,receiver,arguments_){
   for(let index=0;index<fn.captures.length;index+=1){const value=fn.captures[index]??{$:'undefined'},slot=fn.parameters+1+index;registers=registers.map((entry,position)=>position===slot?value:entry);}
   return {$:'callFrame',identity:fn.identity,position:0,registers,arguments:arguments_,handlers:[],pending:{$:'callIdle'}};
 }
+/** Recover conversion policy from the actual suspended instruction; a state
+ * cannot substitute a different registered operation, destination or realm.
+ * @param {JavaScriptCallFunction} fn @param {JavaScriptCallFrame} frame
+ * @param {number} destination @param {bigint} realm @param {JavaScriptSemanticValue} exoticKey
+ * @param {JavaScriptNumberCallState} state @returns {string} */
+export function readJavaScriptNumberCallSourceOperation(fn,frame,destination,realm,exoticKey,state){
+ if(frame.position===0||fn.realm!==realm)return '';
+ const instruction=fn.instructions[frame.position-1];if(instruction===undefined)return '';
+ switch(instruction.$){
+  case 'primitive':{
+   if(instruction.destination!==destination||instruction.arguments.length!==1)return '';
+   if(readJavaScriptNumberProtocolOperationError(instruction.operation)!=='')return '';
+   const input=frame.registers[instruction.arguments[0]?? -1]??{$:'undefined'};
+   if(input.$!=='object')return '';
+   switch(state.$){
+    case 'numberProtocolState':{
+     if(!testJavaScriptSemanticSameValue(state.state.receiver,input)||!testJavaScriptSemanticSameValue(state.state.exoticKey,exoticKey))return '';
+     break;
+    }
+    case 'numberPrimitiveValue':break;
+   }
+   return instruction.operation;
+  }
+  default:return '';
+ }
+}
 /** Validate resumable machine state, never treat it as an execution certificate.
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {string} */
 export function readJavaScriptCallMachineError(program,machine){
@@ -100,7 +129,7 @@ export function readJavaScriptCallMachineError(program,machine){
     for(const handler of frame.handlers)if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';
     const pending=frame.pending;
     switch(pending.$){
-      case 'waitCall':case 'waitGet':case 'waitSet':case 'waitKey':case 'waitDefinition':
+      case 'waitCall':case 'waitGet':case 'waitSet':case 'waitKey':case 'waitDefinition':case 'waitNumber':
         if(!testJavaScriptCallCoordinate(pending.destination,fn.registers))return 'pending calls retain their actual destination register';
         break;
       case 'callIdle':case 'waitError':break;
@@ -109,11 +138,39 @@ export function readJavaScriptCallMachineError(program,machine){
       case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';break;
       case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';break;
       case 'waitDefinition':if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';break;
+      case 'waitNumber':{
+        if(!program.realms.includes(pending.realm))return 'pending number conversion retains its actual intrinsic realm';
+        const numberState=pending.state;
+        const stateError=readJavaScriptNumberCallStateError(machine.heap,numberState);if(stateError!=='')return stateError;
+        if(readJavaScriptNumberCallSourceOperation(fn,frame,pending.destination,pending.realm,program.exoticKey,numberState)==='')return 'pending number conversion retains its actual source instruction, receiver, Symbol and realm';
+        if(index<machine.frames.length-1){
+          switch(numberState.$){
+            case 'numberPrimitiveValue':return 'a completed numeric primitive cannot have a suspended child call';
+            case 'numberProtocolState':break;
+          }
+        }
+        break;
+      }
       default:break;
     }
     if(index<machine.frames.length-1&&(pending.$==='callIdle'||pending.$==='waitError'))return 'a suspended parent frame retains its actual pending call';
   }
   return '';
+}
+
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptNumberCallState} state @returns {string} */
+export function readJavaScriptNumberCallStateError(heap,state){
+ switch(state.$){
+  case 'numberProtocolState':{
+   if(state.state.hint!=='number')return 'Number conversion retains its actual numeric primitive hint';
+   return readJavaScriptPrimitiveConversionStateError(heap,state.state);
+  }
+  case 'numberPrimitiveValue':{
+   if(readJavaScriptOrdinaryValueError(heap,state.value)!=='')return 'a completed number conversion retains its actual primitive value';
+   if(state.value.$==='object')return 'a completed number conversion retains its actual primitive value';
+   return '';
+  }
+ }
 }
 
 /** @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
@@ -173,6 +230,46 @@ export function acceptJavaScriptCallDefinition(program,machine,destination,realm
     case 'definitionInvalid':return {$:'machineInvalid',heap:machine.heap,reason:transition.reason};
   }
 }
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {number} destination
+ * @param {bigint} realm @param {JavaScriptNumberConversionTransition} transition @returns {JavaScriptCallMachineTransition} */
+export function acceptJavaScriptCallNumber(program,machine,destination,realm,transition){
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual active frame'};
+ switch(transition.$){
+  case 'numberContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitNumber',destination,realm,state:{$:'numberProtocolState',state:transition.state}}})};
+  case 'numberCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitNumber',destination,realm,state:{$:'numberProtocolState',state:transition.state}}}),transition.callee,transition.receiver,transition.arguments);
+  case 'numberCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,transition.value))};
+  case 'numberThrow':return throwJavaScriptCallValue(machine,transition.value);
+  case 'numberIntrinsicError':return requestJavaScriptCallError(machine,realm,transition.errorClass,transition.reason);
+  case 'numberInvalid':return {$:'machineInvalid',heap:machine.heap,reason:transition.reason};
+  case 'numberResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitNumber',destination,realm,state:{$:'numberPrimitiveValue',value:transition.value}}}),reason:transition.reason};
+ }
+}
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {number} destination
+ * @param {bigint} realm @param {JavaScriptNumberCallState} state @returns {JavaScriptCallMachineTransition} */
+export function stepJavaScriptCallNumber(program,machine,destination,realm,state){
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual active frame'};
+ const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual source function'};
+ const operation=readJavaScriptNumberCallSourceOperation(fn,frame,destination,realm,program.exoticKey,state);
+ if(operation==='')return {$:'machineInvalid',heap:machine.heap,reason:'pending number conversion retains its actual source instruction, receiver, Symbol and realm'};
+ switch(state.$){
+  case 'numberProtocolState':return acceptJavaScriptCallNumber(program,machine,destination,realm,stepJavaScriptNumberProtocol(machine.heap,state.state,operation));
+  case 'numberPrimitiveValue':return acceptJavaScriptCallNumber(program,machine,destination,realm,finishJavaScriptNumberPrimitive(operation,state.value));
+ }
+}
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {number} destination
+ * @param {bigint} realm @param {JavaScriptNumberCallState} state @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
+export function resumeJavaScriptCallNumber(program,machine,destination,realm,state,value){
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual active frame'};
+ const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual source function'};
+ const operation=readJavaScriptNumberCallSourceOperation(fn,frame,destination,realm,program.exoticKey,state);
+ if(operation==='')return {$:'machineInvalid',heap:machine.heap,reason:'pending number conversion retains its actual source instruction, receiver, Symbol and realm'};
+ switch(state.$){
+  case 'numberProtocolState':return acceptJavaScriptCallNumber(program,machine,destination,realm,resumeJavaScriptNumberProtocol(machine.heap,state.state,{$:'normalCompletion',value},operation));
+  case 'numberPrimitiveValue':return {$:'machineInvalid',heap:machine.heap,reason:'a completed numeric primitive cannot have a suspended child call'};
+ }
+}
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function returnJavaScriptCallValue(program,machine,value){
   const frames=machine.frames.slice(0,-1),parent=frames[frames.length-1];
@@ -183,6 +280,7 @@ export function returnJavaScriptCallValue(program,machine,value){
     case 'waitSet':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,frames,writeJavaScriptCallRegister(parent,pending.destination,{$:'boolean',value:true}))};
     case 'waitKey':return acceptJavaScriptCallKey(program,current,pending.destination,pending.realm,resumeJavaScriptPropertyKeyConversion(machine.heap,pending.state,{$:'normalCompletion',value}));
     case 'waitDefinition':return acceptJavaScriptCallDefinition(program,current,pending.destination,pending.realm,resumeJavaScriptPropertyDefinition(machine.heap,pending.state,{$:'normalCompletion',value}));
+    case 'waitNumber':return resumeJavaScriptCallNumber(program,current,pending.destination,pending.realm,pending.state,value);
     case 'callIdle':case 'waitError':return {$:'machineInvalid',heap:machine.heap,reason:'a returning call needs its actual suspended parent continuation'};
   }
 }
@@ -222,7 +320,14 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction @returns {JavaScriptCallMachineTransition} */
 export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction){
  if(instruction.$!=='primitive')return {$:'machineInvalid',heap:machine.heap,reason:'a primitive executor requires its actual selected instruction'};
- const result=executeJavaScriptCallPrimitive(instruction.operation,instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}));
+ const arguments_=instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}),input=arguments_[0]??{$:'undefined'};
+ if((instruction.operation==='convert explicit number'||instruction.operation==='coerce primitive number')&&input.$==='object'){
+  const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+  if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a number conversion needs its actual registered source owner'};
+  const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,position:frame.position+1});
+  return acceptJavaScriptCallNumber(program,current,instruction.destination,owner.realm,beginJavaScriptNumberProtocol(machine.heap,input,program.exoticKey,instruction.operation));
+ }
+ const result=executeJavaScriptCallPrimitive(instruction.operation,arguments_);
  switch(result.$){
   case 'primitiveValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,position:frame.position+1},instruction.destination,result.value))};
   case 'primitiveInvalid':return {$:'machineInvalid',heap:machine.heap,reason:result.reason};
@@ -242,9 +347,13 @@ export function stepJavaScriptCallMachine(program,machine){
   const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call step needs its actual active frame'};
   const pending=frame.pending;
-  if(pending.$==='waitKey')return acceptJavaScriptCallKey(program,machine,pending.destination,pending.realm,stepJavaScriptPropertyKeyConversion(machine.heap,pending.state));
-  if(pending.$==='waitDefinition')return acceptJavaScriptCallDefinition(program,machine,pending.destination,pending.realm,stepJavaScriptPropertyDefinition(machine.heap,pending.state));
-  if(pending.$!=='callIdle')return {$:'machineInvalid',heap:machine.heap,reason:'a pending call or allocation needs its actual completion'};
+  switch(pending.$){
+    case 'waitKey':return acceptJavaScriptCallKey(program,machine,pending.destination,pending.realm,stepJavaScriptPropertyKeyConversion(machine.heap,pending.state));
+    case 'waitDefinition':return acceptJavaScriptCallDefinition(program,machine,pending.destination,pending.realm,stepJavaScriptPropertyDefinition(machine.heap,pending.state));
+    case 'waitNumber':return stepJavaScriptCallNumber(program,machine,pending.destination,pending.realm,pending.state);
+    case 'callIdle':break;
+    default:return {$:'machineInvalid',heap:machine.heap,reason:'a pending call or allocation needs its actual completion'};
+  }
   const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call step needs its actual source function'};
   const instruction=fn.instructions[frame.position];
   if(instruction===undefined)return returnJavaScriptCallValue(program,machine,{$:'undefined'});
