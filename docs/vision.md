@@ -9473,3 +9473,11 @@ executing source function's realm when Set rejects the write; malformed model
 input remains a separate outcome. Error allocation is still an external service
 obligation, not a fabricated Error value. Deferred controls retain exact updated
 heaps, right-hand mutation order, setter calls and readonly rejection requests.
+
+The source bridge also composes greater/non-strict Number comparisons and
+Number NaN/finite predicates from existing strict comparisons and branch
+instructions. Both comparison operands are captured in source order before a
+reversed comparison or repeated test. Optional predicates exclude absent values
+without numeric coercion. Checked source wrappers still evaluate unused extra
+arguments. Number power uses the existing qualified operation and instruction;
+other intrinsic operations retain their explicit missing-lowering diagnostics.

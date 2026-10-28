@@ -6,6 +6,7 @@ import {compileJavaScriptCallSource} from './javascript-call-source.js';
 import {unsupported} from './diagnostics.js';
 import {tailLoop} from './ir.js';
 import {readRecordFieldWriteOperator,readRecordFieldWriteName} from './record-write-rules.js';
+import {readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
@@ -70,6 +71,12 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
       const value={$:'sourceStrictEqual',left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
       return node.op==='ne'?{$:'sourceIf',condition:value,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})}:value;
      }
+     if(['gt','le','ge'].includes(node.op)&&node.left.type.kind==='float'&&node.right.type.kind==='float'){
+      const left=nextBinding++,right=nextBinding++,a={$:'sourceBinding',identity:left},b={$:'sourceBinding',identity:right};
+      const comparison={$:'sourceNumberBinary',operator:'lessThan',left:node.op==='le'?a:b,right:node.op==='le'?b:a};
+      const value=node.op==='gt'?comparison:{$:'sourceIf',condition:comparison,yes:constant({$:'boolean',value:true}),no:{$:'sourceStrictEqual',left:a,right:b}};
+      return {$:'sourceLet',identity:left,value:expression(node.left,environment,depth+1),body:{$:'sourceLet',identity:right,value:expression(node.right,environment,depth+1),body:value}};
+     }
      const operation={add:'add',sub:'subtract',mul:'multiply',div:'divide',rem:'remainder',lt:'lessThan',eq:'equal'}[node.op];
      if(!operation||node.left.type.kind!=='float'||node.right.type.kind!=='float')return refuse(node,'this operator requires additional exact source lowering');
      return {$:'sourceNumberBinary',operator:operation,left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
@@ -90,6 +97,16 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'call':{
      const actual=directory.get(node.fn);if(!actual)return refuse(node,'a source call requires its actual supplied callable');
      return {$:'sourceCall',callee:constant({$:'object',identity:actual.identity,callable:true}),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
+    }
+    case 'math':case 'optionalPredicate':{
+     const argument=node.k==='math'?node.args[0]:node.arg;
+     if(node.k==='math'&&readJavaScriptBigIntegerResultOperation(node.op)==='number-power'&&node.args.length===2&&node.args.every(arg=>arg.type.kind==='float'))return {$:'sourceNumberBinary',operator:'power',left:expression(node.args[0],environment,depth+1),right:expression(node.args[1],environment,depth+1)};
+     if(!argument||!['isNaN','isFinite'].includes(node.op)||node.k==='math'&&(node.args.length!==1||argument.type.kind!=='float')||node.k==='optionalPredicate'&&(argument.type.kind!=='option'||argument.type.element.kind!=='float'))return refuse(node,'this intrinsic requires its complete source lowering');
+     const identity=nextBinding++,value={$:'sourceBinding',identity},yes=constant({$:'boolean',value:true}),no=constant({$:'boolean',value:false});
+     const same={$:'sourceStrictEqual',left:value,right:value};
+     let body=node.op==='isNaN'?{$:'sourceIf',condition:same,yes:no,no:yes}:{$:'sourceIf',condition:same,yes:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:'number',value:Infinity})},yes:no,no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:'number',value:-Infinity})},yes:no,no:yes}},no};
+     if(node.k==='optionalPredicate'&&node.op==='isFinite')for(const absence of ['undefined','null'])body={$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:absence})},yes:no,no:body};
+     return {$:'sourceLet',identity,value:expression(argument,environment,depth+1),body};
     }
     case 'method':{
      const operation=readRecordFieldWriteOperator(node.op),field=readRecordFieldWriteName(node.op);
