@@ -824,6 +824,37 @@ pub enum JavaScriptSemanticValue {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallInstruction {
+    Constant(f64, Box<self::JavaScriptSemanticValue>),
+    Copy(f64, f64),
+    Argument(f64, f64),
+    Jump(f64),
+    Branch(f64, f64, f64),
+    Call(f64, f64, f64, Vec<f64>),
+    Return(f64),
+    Throw(f64),
+    PushHandler(f64, f64),
+    PopHandler,
+    NumberBinary(f64, f64, f64, self::ml_string::Text),
+    SameValue(f64, f64, f64),
+    StrictEqual(f64, f64, f64),
+    OrdinaryGet(f64, f64, f64, f64),
+    OrdinarySet(f64, f64, f64, f64, f64),
+    PropertyKey(f64, f64, self::ml::Big),
+    PropertyDefinition(f64, f64, f64, f64, self::ml::Big),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallFunction {
+    CallFunction(self::ml::Big, self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, f64, f64, Vec<self::JavaScriptSemanticValue>, Vec<self::JavaScriptCallInstruction>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallProgram {
+    CallProgram(Vec<self::JavaScriptCallFunction>, Vec<self::ml::Big>, Box<self::JavaScriptSemanticValue>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptOrdinaryProperty {
     OrdinaryProperty(Box<self::JavaScriptSemanticValue>, (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)),
 }
@@ -878,30 +909,4 @@ pub enum JavaScriptPrimitiveConversionTransition {
     PrimitiveThrow(Box<self::JavaScriptSemanticValue>),
     PrimitiveIntrinsicError(self::ml_string::Text, self::ml_string::Text),
     PrimitiveInvalid(self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPropertyKeyConversionTransition {
-    PropertyKeyContinuation(Box<self::JavaScriptPrimitiveConversionState>),
-    PropertyKeyCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
-    PropertyKeyCompleted(Box<self::JavaScriptSemanticValue>),
-    PropertyKeyThrow(Box<self::JavaScriptSemanticValue>),
-    PropertyKeyIntrinsicError(self::ml_string::Text, self::ml_string::Text),
-    PropertyKeyInvalid(self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPropertyDefinitionState {
-    PropertyDefinitionKey(Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptPrimitiveConversionState>),
-    PropertyDefinitionDescriptor(Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptDescriptorConversionState>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPropertyDefinitionTransition {
-    DefinitionContinuation(Box<self::JavaScriptPropertyDefinitionState>),
-    DefinitionCall(Box<self::JavaScriptPropertyDefinitionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
-    DefinitionCompleted(Box<self::JavaScriptOrdinaryHeap>, Box<self::JavaScriptSemanticValue>, Vec<self::ml_string::Text>),
-    DefinitionThrow(Box<self::JavaScriptSemanticValue>),
-    DefinitionIntrinsicError(self::ml_string::Text, self::ml_string::Text),
-    DefinitionInvalid(self::ml_string::Text),
 }

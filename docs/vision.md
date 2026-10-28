@@ -9413,3 +9413,36 @@ JavaScript transport shares the checked declaration/wire layout used by native
 transport, instead of a separately hand-maintained field transpose. Full dynamic
 source compilation and every earlier architecture/grammar obligation remain
 unfinished; source construction is not execution evidence.
+
+### Checked source to registered call code draft
+
+Call instruction/function/value declarations have a shared source owner separate
+from the executor. A source compiler lowers actual lexical-owner references,
+immutable local definitions, primitive constants, conditional blocks, typed
+Number operations, SameValue, strict equality and calls into those instructions. Branches have
+separate blocks and explicit join coordinates; operand order stays source order.
+Receiver register zero and actual parameter coordinates remain distinct from
+source lexical-owner identities. Structural, instruction and register budgets
+produce a refusal with no executable partial output. The complete compiler is
+normative JavaScript and automatically translated to Rust.
+
+The frontend bridge transports rechecked JavaScript core functions into this
+compiler, retaining actual binder occurrences and supplied callable/realm links.
+It never allocates substitute identities or derives identity from source names.
+All functions in a supplied module must lower; one unsupported body refuses the
+whole module. The initial bridge accepts primitive expression functions, local
+definitions, branches, Boolean short circuiting and registered calls. Its typed
+operation profile requires invocation operands satisfying the checked signatures;
+it does not establish general untyped JavaScript argument coercion. Complete
+argument coercion/default binding, mutable captures, data/object allocation,
+properties, handlers, loops, main effects, import services and asynchronous
+source lowering remain required. Existing source operations stay available
+through their preceding translation paths; this additional bridge does not
+replace them or narrow the project's language obligations.
+
+Deferred controls start with original source text, parse/check actual functions,
+compile their complete bodies, run shared instructions and compare independent
+original JavaScript observations. The native controls require exact compiler
+output and every resulting native machine transition. Both graph codecs and all
+four source targets remain required. No represented source or instruction body,
+control or native compiler has executed during drafting.

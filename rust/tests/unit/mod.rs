@@ -574,3 +574,7 @@ mod translation_javascript_nominal_spreads;
 mod translation_javascript_call_machine;
 
 mod typed_program_value_sharing;
+
+mod translation_javascript_call_source;
+
+mod translation_javascript_call_source_machine;

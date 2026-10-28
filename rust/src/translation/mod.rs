@@ -362,3 +362,5 @@ pub(crate) mod javascript_nominal_spread_rules;
 pub(crate) mod javascript_property_definition;
 
 pub(crate) mod javascript_call_machine;
+
+pub(crate) mod javascript_call_source;

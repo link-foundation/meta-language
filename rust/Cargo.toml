@@ -135,6 +135,7 @@ include = [
     "src/data/grammar-inference-refinement-program.lino",
     "src/data/inert-module-binding-program.lino",
     "src/data/javascript-call-machine-program.lino",
+    "src/data/javascript-call-source-program.lino",
     "src/data/javascript-class-source-program.lino",
     "src/data/javascript-comparison-program.lino",
     "src/data/javascript-data-field-program.lino",

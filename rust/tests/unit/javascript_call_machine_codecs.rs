@@ -300,6 +300,11 @@ pub(super) fn decode_java_script_call_instruction(
             data["left"].as_f64().expect("model Number"),
             data["right"].as_f64().expect("model Number"),
         ),
+        "strictEqual" => native::JavaScriptCallInstruction::StrictEqual(
+            data["destination"].as_f64().expect("model Number"),
+            data["left"].as_f64().expect("model Number"),
+            data["right"].as_f64().expect("model Number"),
+        ),
         "ordinaryGet" => native::JavaScriptCallInstruction::OrdinaryGet(
             data["destination"].as_f64().expect("model Number"),
             data["object"].as_f64().expect("model Number"),
@@ -375,6 +380,13 @@ pub(super) fn encode_java_script_call_instruction(
         }
         native::JavaScriptCallInstruction::SameValue(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"sameValue","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2)})
+        }
+        native::JavaScriptCallInstruction::StrictEqual(
+            wire_field_0,
+            wire_field_1,
+            wire_field_2,
+        ) => {
+            json!({"$":"strictEqual","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2)})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,

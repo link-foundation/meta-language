@@ -1,36 +1,10 @@
+import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJavaScriptCallCodeRegisters,testJavaScriptCallStrictEqual} from './javascript-call-code.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySet} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
 import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
 import {beginJavaScriptPropertyKeyConversion,stepJavaScriptPropertyKeyConversion,resumeJavaScriptPropertyKeyConversion} from './javascript-property-key-conversion.js';
 
-/** Registers are coordinates in checked executable Links data, not language
- * property keys. Coercions belong to explicit operations before typed opcodes.
- * @typedef {{$:'constant',destination:number,value:JavaScriptSemanticValue} |
- * {$:'copy',destination:number,source:number} |
- * {$:'argument',destination:number,index:number} |
- * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
- * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
- * {$:'return',source:number} | {$:'throw',source:number} |
- * {$:'pushHandler',destination:number,target:number} | {$:'popHandler'} |
- * {$:'numberBinary',destination:number,left:number,right:number,operator:string} |
- * {$:'sameValue',destination:number,left:number,right:number} |
- * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
- * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
- * {$:'propertyKey',destination:number,input:number,realm:bigint} |
- * {$:'propertyDefinition',destination:number,target:number,key:number,attributes:number,realm:bigint}} JavaScriptCallInstruction
- */
-/** Strict functions bind the actual receiver unchanged. Lexical functions use
- * their captured receiver. Sloppy receiver boxing and arguments objects need
- * their own source lowering, rather than an invented frame convention.
- * @typedef {{$:'callFunction',identity:bigint,realm:bigint,receiverMode:string,
- * lexicalReceiver:JavaScriptSemanticValue,parameters:number,registers:number,
- * captures:JavaScriptSemanticValue[],instructions:JavaScriptCallInstruction[]}} JavaScriptCallFunction
- */
-/** Realm identifiers are supplied by the actual intrinsic registry. Membership
- * checks do not prove authority or allocate a substitute realm/Error object.
- * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue}} JavaScriptCallProgram
- */
 /** @typedef {{$:'callHandler',target:number,destination:number}} JavaScriptCallHandler */
 /** @typedef {{$:'callIdle'} | {$:'waitCall',destination:number} |
  * {$:'waitGet',destination:number} | {$:'waitSet',destination:number} |
@@ -51,29 +25,12 @@ import {beginJavaScriptPropertyKeyConversion,stepJavaScriptPropertyKeyConversion
  */
 
 /** @param {number} value @param {number} limit @returns {boolean} */
-export function testJavaScriptCallCoordinate(value,limit){return Number.isSafeInteger(value)&&value>=0&&value<limit&&(value!==0||1/value>0);}
+export function testJavaScriptCallCoordinate(value,limit){return testJavaScriptCallCodeCoordinate(value,limit);}
 /** @param {JavaScriptCallProgram} program @param {bigint} identity @returns {number} */
-export function findJavaScriptCallFunction(program,identity){
-  let low=0,high=program.functions.length;
-  while(low<high){const middle=Math.floor((low+high)/2),entry=program.functions[middle];if(entry===undefined)return -1;if(entry.identity===identity)return middle;if(entry.identity<identity)low=middle+1;else high=middle;}
-  return -1;
-}
+export function findJavaScriptCallFunction(program,identity){return findJavaScriptCallCodeFunction(program,identity);}
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
-export function readJavaScriptCallRegisters(instruction){
-  switch(instruction.$){
-    case 'constant':case 'argument':case 'pushHandler':return [instruction.destination];
-    case 'copy':return [instruction.destination,instruction.source];
-    case 'jump':case 'popHandler':return [];
-    case 'branch':return [instruction.condition];
-    case 'call':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
-    case 'return':case 'throw':return [instruction.source];
-    case 'numberBinary':case 'sameValue':return [instruction.destination,instruction.left,instruction.right];
-    case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
-    case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
-    case 'propertyKey':return [instruction.destination,instruction.input];
-    case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
-  }
-}
+export function readJavaScriptCallRegisters(instruction){return readJavaScriptCallCodeRegisters(instruction);}
+
 /** Validate actual code/identity facts, without executing any instruction.
  * @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @returns {string} */
 export function readJavaScriptCallProgramError(program,heap){
@@ -287,6 +244,7 @@ export function stepJavaScriptCallMachine(program,machine){
       const arguments_=instruction.arguments.map(index=>registers[index]??{$:'undefined'});
       return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitCall',destination:instruction.destination}}),registers[instruction.callee]??{$:'undefined'},registers[instruction.receiver]??{$:'undefined'},arguments_);
     }
+    case 'strictEqual':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:testJavaScriptCallStrictEqual(registers[instruction.left]??{$:'undefined'},registers[instruction.right]??{$:'undefined'})}))};
     case 'sameValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:testJavaScriptSemanticSameValue(registers[instruction.left]??{$:'undefined'},registers[instruction.right]??{$:'undefined'})}))};
     case 'numberBinary':{
       const left=registers[instruction.left]??{$:'undefined'},right=registers[instruction.right]??{$:'undefined'};
