@@ -9509,3 +9509,12 @@ edits replace value edges. Default packet encoding keeps the preceding format.
 The source author records its explicit selection in each generation recipe.
 Value sharing is a separate selection; layout alone preserves the preceding
 value-alias topology. Source generation explicitly selects both profiles.
+
+Immediately applied checked function bodies can be beta-reduced after capturing
+all actual arguments in source order. Fresh lexical identities preserve each
+parameter and its actual outer immutable bindings, including existing object
+references whose fields can change during argument evaluation. Selection uses
+the complete actual checked body; a name, signature or assumed template meaning
+cannot select a replacement. Escaping function values, mutable lexical cells,
+function-object introspection and unsupported receiver/argument behavior still
+require their own lowering and allocation rather than this pure value profile.

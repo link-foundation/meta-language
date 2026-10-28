@@ -124,6 +124,14 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'recur':return {$:'sourceRecur',arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
     case 'apply':{
+     if(node.fn.k==='lambda'){
+      if(node.fn.params.length!==node.args.length||node.fn.params.some(param=>param.default||param.guard||!acceptType(param.type)))return refuse(node,'immediate checked functions require complete actual parameter binding');
+      const scope=new Map(environment),captures=[];
+      for(const [index,param]of node.fn.params.entries()){const identity=nextBinding++;captures.push({identity,value:expression(node.args[index],environment,depth+1)});scope.set(param.name,identity);}
+      let body=expression(node.fn.body,scope,depth+1);
+      for(const capture of captures.toReversed())body={$:'sourceLet',identity:capture.identity,value:capture.value,body};
+      return body;
+     }
      if(node.fn.k==='recordField'){
       const receiver=expression(node.fn.object,environment,depth+1),identity=nextBinding++,saved={$:'sourceBinding',identity};
       const key=constant({$:'text',units:Array.from({length:node.fn.field.length},(_,index)=>node.fn.field.charCodeAt(index))});
