@@ -827,6 +827,7 @@ pub enum JavaScriptSemanticValue {
 pub enum JavaScriptCallPrimitiveResult {
     PrimitiveValue(Box<self::JavaScriptSemanticValue>),
     PrimitiveInvalid(self::ml_string::Text),
+    PrimitiveError(self::ml_string::Text, self::ml_string::Text),
     PrimitiveResourceLimit(self::ml_string::Text),
 }
 

@@ -9503,6 +9503,31 @@ or a partial successful value. Deferred controls preserve independent original
 source, exact code units and Number bits, invalid operation/arity inputs and
 every preceding control. These drafts do not establish executed parity.
 
+Typed integer primitives reuse the existing exact signed division, repeated
+squaring and infinite two's-complement definitions; Number bit operations reuse
+the existing signed/unsigned32 conversion and masked shift definitions. The
+source bridge connects checked integer arithmetic, comparison and unary
+negation, plus qualified Number/BigInt bit operations. Division/power wrappers
+whose checked core needs intermediate arrays still require array allocation
+lowering; executor support alone does not establish those source paths.
+Division by zero and negative exponents request real RangeError allocation in
+the executing function's realm. They are checked before work quotas, preserving
+their language errors. The selected integer work profile admits4096-bit inputs
+and results, bounds multiplication/exponentiation/growing-shift estimates before
+allocation, and returns an unchanged resource state on refusal. This is an
+explicit execution profile, not a restriction of the integer language domain.
+Complete source dependency composition uses resolved lexical owners to keep
+same-spelled helpers from different modules distinct; original source and
+rename/substitution records remain inspectable in Links data.
+
+The source bridge also retains optional type queries and ordinary optional
+field reads. It captures each receiver once, skips Get for null/undefined,
+and preserves inherited fields and present zero values. Optional flattening
+keeps the JavaScript value representation; coalescing preserves the conditional
+fallback and its heap effects. Deferred original-source cases distinguish each
+absence, present values and mutation order. General optional array/property
+exotics remain required.
+
 ### Ordered typed record shapes draft
 
 A qualified layout profile represents a typed record by a shared ordered shape

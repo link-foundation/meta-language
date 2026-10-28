@@ -55,6 +55,20 @@ for(const [name,operation,values,source,expected]of [
  add(name,heap(),fn('10',destination+1,[...values.map((value,index)=>constant(index+1,value)),{$:'primitive',destination,operation,arguments:values.map((_,index)=>index+1)},ret(destination)]),[],source,{kind:'value',value:expected});
 }
 add('text search work quota retains the unadvanced instruction and actual heap',heap(),fn('10',4,[constant(1,{$:'text',units:Array(16384).fill(65)}),constant(2,{$:'text',units:Array(8192).fill(65)}),{$:'primitive',destination:3,operation:'test text inclusion',arguments:[1,2]},ret(3)]),[],"ctx=>'A'.repeat(16384).includes('A'.repeat(8192))",{kind:'resource',position:2,reason:'primitive text search exceeds its explicit comparison work quota',referenceValue:{$:'boolean',value:true}});
+const integer=value=>({$:'integer',value});
+for(const [name,operation,values,source,expected]of [
+ ['integer division truncates negative values toward zero','divide integers',[integer('-9'),integer('2')],'ctx=>-9n/2n',{kind:'value',value:integer('-4')}],
+ ['integer remainder keeps the dividend sign','read integer remainder',[integer('-9'),integer('2')],'ctx=>-9n%2n',{kind:'value',value:integer('-1')}],
+ ['integer exponentiation uses exact repeated squaring','raise integer power',[integer('-3'),integer('5')],'ctx=>(-3n)**5n',{kind:'value',value:integer('-243')}],
+ ['zero exponent on zero returns one','raise integer power',[integer('0'),integer('0')],'ctx=>0n**0n',{kind:'value',value:integer('1')}],
+ ['zero integer divisor requests the actual executing realm','divide integers',[integer('1'),integer('0')],'ctx=>1n/0n',{kind:'allocation',realm,errorClass:'RangeError',reason:'Division by zero'}],
+ ['negative integer exponent requests the actual executing realm','raise integer power',[integer('2'),integer('-1')],'ctx=>2n**-1n',{kind:'allocation',realm,errorClass:'RangeError',reason:'Exponent must be positive'}],
+ ]){
+ const destination=values.length+1;
+ add(name,heap(),fn('10',destination+1,[...values.map((value,index)=>constant(index+1,value)),{$:'primitive',destination,operation,arguments:values.map((_,index)=>index+1)},ret(destination)]),[],source,expected);
+}
+const oversizedInteger='1'+'0'.repeat(1234);
+add('integer input work quota retains the unadvanced state',heap(),fn('10',4,[constant(1,integer(oversizedInteger)),constant(2,integer(oversizedInteger)),{$:'primitive',destination:3,operation:'compare integers',arguments:[1,2]},ret(3)]),[],"ctx=>{const value=BigInt('1'+'0'.repeat(1234));return value<value?-1:value>value?1:0;}",{kind:'resource',position:2,reason:'integer input exceeds the selected 4096-bit work profile',referenceValue:number(0)});
 const base=programs[0];
 const invalid=[{name:'unknown source realm',program:{...base.program,realms:[]},reason:'call functions require their actual declared source realm'},
  {name:'out of range register destination',program:{...base.program,functions:[{...base.program.functions[0],instructions:[constant(3,undef),ret(0)]}]},reason:'call instructions require actual in-range register coordinates'},

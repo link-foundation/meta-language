@@ -1,10 +1,11 @@
 // Reuse the existing complete UTF16 definitions; adapters never substitute
 // host scalar strings for code units or reimplement native operation bodies.
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
+import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive} from './javascript-call-integers.js';
 import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
 /** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
- * {$:'primitiveInvalid',reason:string} |
+ * {$:'primitiveInvalid',reason:string} | {$:'primitiveError',errorClass:string,reason:string} |
  * {$:'primitiveResourceLimit',reason:string}} JavaScriptCallPrimitiveResult */
 
 /** Operations consume already checked primitive values. Unmodeled coercions,
@@ -12,6 +13,8 @@ import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUt
  * @param {string} operation @param {number} count @returns {string} */
 export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(!Number.isSafeInteger(count)||count<0||count>4096)return 'primitive operands exceed their explicit call register budget';
+ const integerArity=readJavaScriptCallIntegerArity(operation);
+ if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  const unary=['truncate number','read text length','trim text','trim text start','trim text end'];
  const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
@@ -79,5 +82,6 @@ export function executeJavaScriptCallTextPair(operation,text,values){
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);
  return operation==='truncate number'||operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units'?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
 }

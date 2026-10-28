@@ -7,6 +7,8 @@ import {unsupported} from './diagnostics.js';
 import {tailLoop} from './ir.js';
 import {readRecordFieldWriteOperator,readRecordFieldWriteName} from './record-write-rules.js';
 import {readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
+import {readBigIntegerBitwiseOperationCode} from './big-integer-bitwise-rules.js';
+import {readJavaScriptNumberBitwiseOperationCode} from './number-bitwise-rules.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
@@ -59,7 +61,23 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'unit':return undefinedSource();
     case 'none':if(node.absence!=='undefined'&&node.absence!=='null')return refuse(node,'absent literals must retain their exact source absence');return constant({$:node.absence});
     case 'some':return expression(node.value,environment,depth+1);
+    case 'flattenOption':return expression(node.value,environment,depth+1);
+    case 'optionalIndexNumber':return expression(node.arg,environment,depth+1);
     case 'unwrapOption':return expression(node.arg,environment,depth+1);
+    case 'optionalTypeOf':{
+     const identity=nextBinding++,value={$:'sourceBinding',identity},text=word=>constant({$:'text',units:Array.from({length:word.length},(_,index)=>word.charCodeAt(index))});
+     const body={$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:undefinedSource()},yes:text('undefined'),no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:'null'})},yes:text('object'),no:text(node.present)}};
+     return {$:'sourceLet',identity,value:expression(node.arg,environment,depth+1),body};
+    }
+    case 'optionalField':case 'optionalProject':{
+     if(node.object.type.kind!=='option')return refuse(node,'optional projections require their actual checked receiver type');
+     const identity=nextBinding++,value={$:'sourceBinding',identity};let body;
+     if(node.k==='optionalField'&&node.object.type.element.kind==='record')body={$:'sourceGet',object:value,key:constant({$:'text',units:Array.from({length:node.field.length},(_,index)=>node.field.charCodeAt(index))})};
+     else if(node.k==='optionalProject'&&node.object.type.element.kind==='string'&&node.field==='length')body=primitive('read text length',[value]);
+     else return refuse(node,'this optional property requires its complete allocation or property model');
+     for(const absence of ['undefined','null'])body={$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:absence})},yes:undefinedSource(),no:body};
+     return {$:'sourceLet',identity,value:expression(node.object,environment,depth+1),body};
+    }
     case 'coalesce':{
      if(!['undefined','null','both'].includes(node.left.type.absence))return refuse(node,'coalescing requires the actual source absence policy');
      const identity=nextBinding++,value={$:'sourceBinding',identity},fallback=expression(node.right,environment,depth+1);let body=value;
@@ -87,6 +105,15 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'if':return {$:'sourceIf',condition:expression(node.cond,environment,depth+1),yes:expression(node.then,environment,depth+1),no:expression(node.else,environment,depth+1)};
     case 'binary':{
+     if(node.left.type.kind==='int'&&node.right.type.kind==='int'){
+      const operation={add:'add integers',sub:'subtract integers',mul:'multiply integers',div:'divide integers',rem:'read integer remainder'}[node.op];
+      if(operation)return primitive(operation,[expression(node.left,environment,depth+1),expression(node.right,environment,depth+1)]);
+      if(['lt','gt','le','ge'].includes(node.op)){
+       const identity=nextBinding++,value={$:'sourceBinding',identity},zero=constant({$:'number',value:0}),greater=node.op==='gt'||node.op==='ge';
+       const less={$:'sourceNumberBinary',operator:'lessThan',left:greater?zero:value,right:greater?value:zero};
+       return {$:'sourceLet',identity,value:primitive('compare integers',[expression(node.left,environment,depth+1),expression(node.right,environment,depth+1)]),body:node.op==='le'||node.op==='ge'?{$:'sourceIf',condition:less,yes:constant({$:'boolean',value:true}),no:{$:'sourceStrictEqual',left:value,right:zero}}:less};
+      }
+     }
      if(node.op==='concat'&&node.left.type.kind==='string'&&node.right.type.kind==='string')return primitive('concatenate text',[expression(node.left,environment,depth+1),expression(node.right,environment,depth+1)]);
      if(['and','or'].includes(node.op)&&node.left.type.kind==='bool'&&node.right.type.kind==='bool')return {$:'sourceIf',condition:expression(node.left,environment,depth+1),yes:node.op==='and'?expression(node.right,environment,depth+1):constant({$:'boolean',value:true}),no:node.op==='or'?expression(node.right,environment,depth+1):constant({$:'boolean',value:false})};
      if(node.op==='eq'||node.op==='ne'){
@@ -111,6 +138,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'truthy':return {$:'sourceIf',condition:expression(node.arg,environment,depth+1),yes:constant({$:'boolean',value:true}),no:constant({$:'boolean',value:false})};
     case 'unary':{
      const value=expression(node.arg,environment,depth+1);
+     if(node.op==='neg'&&node.arg.type.kind==='int')return primitive('negate integer',[value]);
      if(node.op==='not'&&node.arg.type.kind==='bool')return {$:'sourceIf',condition:value,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})};
      if(node.op==='neg'&&node.arg.type.kind==='float')return {$:'sourceNumberBinary',operator:'multiply',left:constant({$:'number',value:-1}),right:value};
      return refuse(node,'this unary operand requires additional exact source lowering');
@@ -121,6 +149,13 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      return {$:'sourceCall',callee:constant({$:'object',identity:actual.identity,callable:true}),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
     }
     case 'math':case 'optionalPredicate':{
+     if(node.k==='math'){
+      const integerCode=readBigIntegerBitwiseOperationCode(node.op),numberCode=readJavaScriptNumberBitwiseOperationCode(node.op);
+      const integerOperations=['conjoin integer bits','disjoin integer bits','exclude equal integer bits','shift integer bits left','shift integer bits right','','complement integer bits'];
+      const numberOperations=['conjoin number bits','disjoin number bits','exclude equal number bits','shift number bits left','shift number bits right','shift number bits right unsigned','complement number bits'];
+      if(integerCode>=0&&node.args.every(arg=>arg.type.kind==='int'))return primitive(integerOperations[integerCode],node.args.map(arg=>expression(arg,environment,depth+1)));
+      if(numberCode>=0&&node.args.every(arg=>arg.type.kind==='float'))return primitive(numberOperations[numberCode],node.args.map(arg=>expression(arg,environment,depth+1)));
+     }
      if(node.k==='math'&&['coerceJavaScriptNumber','convertJavaScriptNumber'].includes(node.op)&&node.args.length===1&&node.args[0].type.kind==='float')return expression(node.args[0],environment,depth+1);
      const numericOperation=node.k==='math'?{trunc:'truncate number',min:'read minimum number',max:'read maximum number'}[node.op]:undefined;
      if(numericOperation&&node.args.every(arg=>arg.type.kind==='float'))return primitive(numericOperation,node.args.map(arg=>expression(arg,environment,depth+1)));

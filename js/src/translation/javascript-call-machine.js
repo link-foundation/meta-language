@@ -219,14 +219,19 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
   }
 }
 
-/** @param {JavaScriptCallMachine} machine @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction @returns {JavaScriptCallMachineTransition} */
-export function executeJavaScriptCallPrimitiveInstruction(machine,frame,instruction){
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction @returns {JavaScriptCallMachineTransition} */
+export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction){
  if(instruction.$!=='primitive')return {$:'machineInvalid',heap:machine.heap,reason:'a primitive executor requires its actual selected instruction'};
  const result=executeJavaScriptCallPrimitive(instruction.operation,instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}));
  switch(result.$){
   case 'primitiveValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,position:frame.position+1},instruction.destination,result.value))};
   case 'primitiveInvalid':return {$:'machineInvalid',heap:machine.heap,reason:result.reason};
   case 'primitiveResourceLimit':return {$:'machineResourceLimit',machine,reason:result.reason};
+  case 'primitiveError':{
+   const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a primitive failure needs its actual registered source owner'};
+   return requestJavaScriptCallError(replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,position:frame.position+1}),owner.realm,result.errorClass,result.reason);
+  }
  }
 }
 
@@ -275,7 +280,7 @@ export function stepJavaScriptCallMachine(program,machine){
       const value=op==='add'?left.value+right.value:op==='subtract'?left.value-right.value:op==='multiply'?left.value*right.value:op==='divide'?left.value/right.value:op==='remainder'?left.value%right.value:left.value**right.value;
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'number',value}))};
     }
-    case 'primitive':return executeJavaScriptCallPrimitiveInstruction(machine,frame,instruction);
+    case 'primitive':return executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction);
     case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
     case 'propertyKey':return acceptJavaScriptCallKey(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyKeyConversion(machine.heap,registers[instruction.input]??{$:'undefined'},program.exoticKey));
     case 'propertyDefinition':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyDefinition(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.attributes]??{$:'undefined'},program.exoticKey));

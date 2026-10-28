@@ -21,3 +21,30 @@ pub use part_6::*;
 #[path = "javascript_call_source/part_7.rs"]
 mod part_7;
 pub use part_7::*;
+#[path = "javascript_call_source/part_8.rs"]
+mod part_8;
+pub use part_8::*;
+#[path = "javascript_call_source/part_9.rs"]
+mod part_9;
+pub use part_9::*;
+#[path = "javascript_call_source/part_10.rs"]
+mod part_10;
+pub use part_10::*;
+#[path = "javascript_call_source/part_11.rs"]
+mod part_11;
+pub use part_11::*;
+#[path = "javascript_call_source/part_12.rs"]
+mod part_12;
+pub use part_12::*;
+#[path = "javascript_call_source/part_13.rs"]
+mod part_13;
+pub use part_13::*;
+#[path = "javascript_call_source/part_14.rs"]
+mod part_14;
+pub use part_14::*;
+#[path = "javascript_call_source/part_15.rs"]
+mod part_15;
+pub use part_15::*;
+#[path = "javascript_call_source/part_16.rs"]
+mod part_16;
+pub use part_16::*;

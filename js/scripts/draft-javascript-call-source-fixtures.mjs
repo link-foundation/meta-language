@@ -79,6 +79,44 @@ for(const [name,body,args,expected]of [
  ['maximum keeps positive zero','Math.max(left,right)',[number(-0),number(0)],number(0)],
  ['truncation keeps negative fractional zero','Math.trunc(left)',[number(-0.25),number(0)],number(-0)],
  ])rows.push({name,source:'/** @param {number} left @param {number} right */ export function inspect(left,right){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:args,expected});
+const integer=value=>({$:'integer',value});
+for(const [name,body,args,expected]of [
+ ['integer addition retains values beyond unsigned64','left+right',[integer('18446744073709551616'),integer('7')],integer('18446744073709551623')],
+ ['integer subtraction retains negative arbitrary values','left-right',[integer('-18446744073709551616'),integer('7')],integer('-18446744073709551623')],
+ ['integer multiplication keeps exact signs','left*right',[integer('-9007199254740993'),integer('3')],integer('-27021597764222979')],
+ ['integer negation keeps an exact arbitrary value','-left',[integer('-9007199254740993'),integer('0')],integer('9007199254740993')],
+ ['integer ordering never passes through Number','left>right',[integer('9007199254740993'),integer('9007199254740992')],{$:'boolean',value:true}],
+ ['integer nonstrict ordering retains equality','left<=right',[integer('-9007199254740993'),integer('-9007199254740993')],{$:'boolean',value:true}],
+ ['integer conjunction uses infinite signed extension','left&right',[integer('-1'),integer('9007199254740993')],integer('9007199254740993')],
+ ['integer disjunction uses infinite signed extension','left|right',[integer('-8'),integer('3')],integer('-5')],
+ ['integer exclusion uses infinite signed extension','left^right',[integer('-1'),integer('3')],integer('-4')],
+ ['integer complement uses infinite signed extension','~left',[integer('9007199254740993'),integer('0')],integer('-9007199254740994')],
+ ['integer arithmetic shift rounds a negative odd value down','left>>right',[integer('-9'),integer('2')],integer('-3')],
+ ['negative integer left shift count reverses the direction','left<<right',[integer('-9'),integer('-2')],integer('-3')],
+ ['negative integer right shift count reverses the direction','left>>right',[integer('3'),integer('-4')],integer('48')],
+ ])rows.push({name,source:'/** @param {bigint} left @param {bigint} right */ export function inspect(left,right){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:args,expected});
+for(const [name,body,args,expected]of [
+ ['Number conjunction applies signed32 conversion','left&right',[number(4294967295),number(3)],number(3)],
+ ['Number disjunction applies signed32 conversion','left|right',[number(4294967296),number(-1)],number(-1)],
+ ['Number exclusion applies signed32 conversion','left^right',[number(4294967295),number(3)],number(-4)],
+ ['Number complement converts NaN before complementing','~left',[number(NaN),number(0)],number(-1)],
+ ['Number left shift masks its count modulo32','left<<right',[number(1),number(33)],number(2)],
+ ['Number signed shift rounds negative values down','left>>right',[number(-9),number(2)],number(-3)],
+ ['Number unsigned shift retains the full unsigned32 result','left>>>right',[number(-1),number(0)],number(4294967295)],
+ ])rows.push({name,source:'/** @param {number} left @param {number} right */ export function inspect(left,right){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:args,expected});
+const optionalTypeSource='/** @param {number | null | undefined} value @returns {string} */ export function inspect(value){return typeof value;}';
+for(const [name,value,expected]of [
+ ['optional type query retains undefined',undef,text([117,110,100,101,102,105,110,101,100])],
+ ['optional type query retains null as object',nil,text([111,98,106,101,99,116])],
+ ['optional type query retains the present Number',number(-0),text([110,117,109,98,101,114])],
+ ])rows.push({name,source:optionalTypeSource,entry:'inspect',functions:['inspect'],arguments:[value],expected});
+const optionalReadSource='/** @param {{value:number} | null | undefined} holder @returns {number | undefined} */ export function inspect(holder){return holder?.value;}';
+rows.push({name:'optional field skips undefined receivers',source:optionalReadSource,entry:'inspect',functions:['inspect'],arguments:[undef],expected:undef},
+ {name:'optional field skips null receivers',source:optionalReadSource,entry:'inspect',functions:['inspect'],arguments:[nil],expected:undef},
+ {name:'optional field retains inherited ordinary values',source:optionalReadSource,entry:'inspect',functions:['inspect'],arguments:[object('1')],objects:[entity('1',[],object('2')),entity('2',[property(data(number(42)))])],expected:number(42)});
+const optionalFallbackSource='/** @param {{value:number} | null | undefined} holder @param {{value:number}} counter @returns {number} */ export function inspect(holder,counter){return holder?.value??fallback(counter);} /** @param {{value:number}} counter @returns {number} */ function fallback(counter){counter.value+=1;return 7;}';
+rows.push({name:'optional coalescing skips all fallback heap effects for present zero',source:optionalFallbackSource,entry:'inspect',functions:['inspect','fallback'],referenceSemantics:true,arguments:[object('1'),object('2')],objects:[entity('1',[property(data(number(0)))]),entity('2',[property(data(number(0)))])],expected:number(0)},
+ {name:'optional coalescing runs the fallback after an absent receiver',source:optionalFallbackSource,entry:'inspect',functions:['inspect','fallback'],referenceSemantics:true,arguments:[nil,object('2')],objects:[entity('2',[property(data(number(0)))])],afterObjects:[entity('2',[property(data(number(1)))])],expected:number(7)});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},
