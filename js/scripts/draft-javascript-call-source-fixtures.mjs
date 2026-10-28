@@ -165,6 +165,29 @@ rows.push({name:'optional integer predicate rejects null without coercion',sourc
  {name:'round performs the actual text conversion before rounding',source:'/** @param {string} value @returns {number} */ export function inspect(value){return Math.round(value);}',entry:'inspect',functions:['inspect'],arguments:[units('-0.5')],expected:number(-0)},
  {name:'source minimum preserves its empty infinity identity',source:'/** @returns {number} */ export function inspect(){return Math.min();}',entry:'inspect',functions:['inspect'],arguments:[],expected:number(Infinity)},
  {name:'source maximum preserves its empty negative infinity identity',source:'/** @returns {number} */ export function inspect(){return Math.max();}',entry:'inspect',functions:['inspect'],arguments:[],expected:number(-Infinity)});
+// Literal independent text expectations; no conversion program is evaluated.
+for(const [name,input,expected]of [
+ ['Number text erases negative zero',number(-0),'0'],
+ ['Number text uses its NaN spelling',number(NaN),'NaN'],
+ ['Number text retains positive infinity',number(Infinity),'Infinity'],
+ ['Number text retains negative infinity',number(-Infinity),'-Infinity'],
+ ['Number text keeps ordinary shortest decimal',number(0.1),'0.1'],
+ ['Number text uses the positive exponent boundary',number(1e21),'1e+21'],
+ ['Number text keeps the preceding fixed decimal boundary',number(1e20),'100000000000000000000'],
+ ['Number text uses the negative exponent boundary',number(1e-7),'1e-7'],
+ ['Number text keeps the small fixed decimal boundary',number(1e-6),'0.000001'],
+ ['Number text keeps the smallest positive subnormal',number(5e-324),'5e-324'],
+ ['Number text keeps the largest finite scalar',number(1.7976931348623157e308),'1.7976931348623157e+308'],
+ ['Number text keeps the safe integer boundary',number(9007199254740991),'9007199254740991']
+])rows.push({name,source:'/** @param {number} value @returns {string} */ export function inspect(value){return String(value);}',entry:'inspect',functions:['inspect'],arguments:[input],expected:units(expected)});
+rows.push(
+ {name:'integer text has no Number rounding or BigInt suffix',source:'/** @param {bigint} value @returns {string} */ export function inspect(value){return value.toString();}',entry:'inspect',functions:['inspect'],arguments:[integer('-184467440737095516160000000000001')],expected:units('-184467440737095516160000000000001')},
+ {name:'Boolean text uses the true spelling',source:'/** @param {boolean} value @returns {string} */ export function inspect(value){return String(value);}',entry:'inspect',functions:['inspect'],arguments:[{$:'boolean',value:true}],expected:units('true')},
+ {name:'Boolean text uses the false spelling',source:'/** @param {boolean} value @returns {string} */ export function inspect(value){return value.toString();}',entry:'inspect',functions:['inspect'],arguments:[{$:'boolean',value:false}],expected:units('false')},
+ {name:'optional text retains actual undefined',source:'/** @param {number | null | undefined} value @returns {string} */ export function inspect(value){return String(value);}',entry:'inspect',functions:['inspect'],arguments:[{$:'undefined'}],expected:units('undefined')},
+ {name:'optional text retains actual null',source:'/** @param {number | null | undefined} value @returns {string} */ export function inspect(value){return String(value);}',entry:'inspect',functions:['inspect'],arguments:[{$:'null'}],expected:units('null')},
+ {name:'optional text applies Number formatting only to the present value',source:'/** @param {number | null | undefined} value @returns {string} */ export function inspect(value){return String(value);}',entry:'inspect',functions:['inspect'],arguments:[number(-0)],expected:units('0')},
+ {name:'text conversion evaluates its actual operand once',source:'/** @param {{value:number}} holder @returns {string} */ export function inspect(holder){return String(update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=holder.value+1;return holder.value;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(1)))])],expected:units('1')});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

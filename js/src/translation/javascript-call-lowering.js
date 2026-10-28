@@ -64,6 +64,12 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'flattenOption':return expression(node.value,environment,depth+1);
     case 'optionalIndexNumber':return expression(node.arg,environment,depth+1);
     case 'unwrapOption':return expression(node.arg,environment,depth+1);
+    case 'toString':case 'optionalText':{
+     if(node.console===true)return refuse(node,'console text requires its actual console formatting profile');
+     const type=node.arg.type.kind==='option'?node.arg.type.element:node.arg.type;
+     if(!['float','bool','string','int','unit'].includes(type.kind))return refuse(node,'text conversion requires its actual primitive operand semantics');
+     return primitive('convert primitive text',[expression(node.arg,environment,depth+1)]);
+    }
     case 'optionalTypeOf':{
      const identity=nextBinding++,value={$:'sourceBinding',identity},text=word=>constant({$:'text',units:Array.from({length:word.length},(_,index)=>word.charCodeAt(index))});
      const body={$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:undefinedSource()},yes:text('undefined'),no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:'null'})},yes:text('object'),no:text(node.present)}};

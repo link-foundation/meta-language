@@ -9673,3 +9673,15 @@ Catch bodies may perform a proven function-entry recurrence after their handler
 has been removed. Recurrence through an active protected handler refuses until
 explicit unwinding is represented. These source graph forms do not imply full
 JavaScript frontend support for try/catch/finally or an arguments object.
+
+Registered primitive text conversion preserves UTF16 inputs and uses the existing
+Number and arbitrary-integer formatting definitions for scalar values. Source
+lowering connects checked scalar String conversions and optional text conversion
+to that operation, evaluates the operand once, and distinguishes null/undefined
+from present values. Number negative zero prints as `0`; decimal/exponent
+selection remains the existing ECMAScript formatting model. BigInt conversion
+retains the selected4096-bit work bound separately from language semantics.
+Implicit Symbol conversion requests a source-realm TypeError; explicit
+String(Symbol), Symbol descriptions, Object string-hint ToPrimitive and console
+formatting require their own represented behavior. Source names alone do not
+authorize any of these different conversions.
