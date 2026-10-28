@@ -9712,3 +9712,20 @@ abrupt completion. Frontend adapters construct ordinary lexical nodes from the
 same source-generated plan and retain call spans. The selected4096-capture
 resource profile refuses oversized plans; spread iteration still needs its
 complete independent semantics.
+
+Mixed primitive comparison in registered source execution reuses the exact
+Number/BigInt and StringIntegerLiteral/BigInt definitions. Large integers never
+pass through Number rounding. The shared unordered result is kept distinct from
+less/equal/greater, so NaN and invalid integer text cannot satisfy an ordered
+comparison. Checked operand capture preserves original evaluation order even
+when the comparison kernel takes operands in a normalized order. Independent
+4096-bit integer-input and4096-unit text-work profiles retain original machine
+state on resource refusal.
+
+Qualified single-constructor projection sharing also applies to actual lexical
+let owners and actual constructor-field binders. It uses their checked type and
+owning scope, after the value exists, and reads only fields actually projected
+in that scope. No synthetic parameter or signature selects a replacement.
+Reference semantics, shadowed bindings and deferred closures retain their reads.
+The complete original initializer and the existing structural/semantic limits
+remain; the source transformation reduces repeated administrative projections.

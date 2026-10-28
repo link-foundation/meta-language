@@ -22,8 +22,6 @@ use super::MlSource1TemporaryConvertStringNumberRationalLoop48Result;
 use super::MlSource1TemporaryConvertStringNumberRationalLoop49Result;
 use super::MlSource1TemporaryConvertStringNumberRationalLoop52Result;
 use super::MlSource1TemporaryConvertStringNumberRationalLoop53Result;
-use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Result;
-use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop75Result;
 use super::MlSource1TemporaryReadStringNumberBinaryPowerLoop44Result;
 use super::apply_java_script_primitive_conversion_method;
 use super::continue_java_script_primitive_conversion;
@@ -53,9 +51,6 @@ use super::source_ml_source1_temporary_convert_string_number_rational_loop50;
 use super::source_ml_source1_temporary_convert_string_number_rational_loop51;
 use super::source_ml_source1_temporary_convert_string_number_rational_loop52;
 use super::source_ml_source1_temporary_convert_string_number_rational_loop53;
-use super::source_ml_source1_temporary_divide_java_script_big_integer_loop74;
-use super::source_ml_source1_temporary_divide_java_script_big_integer_loop75;
-use super::source_ml_source1_temporary_power_java_script_big_integer_loop76;
 use super::source_ml_source1_temporary_read_string_number_binary_power_loop44;
 use super::source_ml_source1_temporary_read_string_number_binary_power_loop45;
 use super::source_ml_source1_temporary_read_string_number_decimal_power_loop42;
@@ -888,72 +883,5 @@ pub fn convert_java_script_big_integer_number(value: self::ml::Big) -> f64 {
         (-(self::convert_string_number_rational(value.neg(), self::ml::Big::from_i128(1))))
     } else {
         self::convert_string_number_rational(value.clone(), self::ml::Big::from_i128(1))
-    }
-}
-
-pub fn divide_java_script_big_integer(left: self::ml::Big, right: self::ml::Big) -> Vec<self::ml::Big> {
-    if (right == (self::ml::Big::from_i128(0))) {
-        Vec::<self::ml::Big>::new()
-    } else {
-        {
-            let remaining = if (left < (self::ml::Big::from_i128(0))) {
-                left.neg()
-            } else {
-                left.clone()
-            };
-            {
-                let divisor = if (right < (self::ml::Big::from_i128(0))) {
-                    right.neg()
-                } else {
-                    right.clone()
-                };
-                {
-                    let shifted = divisor.clone();
-                    {
-                        let weight = self::ml::Big::from_i128(1);
-                        {
-                            let quotient = self::ml::Big::from_i128(0);
-                            {
-                                let source_ml_source2_s868 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop74(remaining.clone(), shifted.clone(), weight.clone());
-                                match source_ml_source2_s868.clone() {
-                                    self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Done(shifted_2, weight_2) => {
-                                        {
-                                            let source_ml_source2_s869 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop75(remaining.clone(), shifted_2.clone(), weight_2.clone(), quotient.clone());
-                                            match source_ml_source2_s869.clone() {
-                                                self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop75Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop75Done(remaining_2, quotient_2) => {
-                                                    vec![if (((left < (self::ml::Big::from_i128(0)))) != ((right < (self::ml::Big::from_i128(0))))) {
-                                                        quotient_2.neg()
-                                                    } else {
-                                                        quotient_2.clone()
-                                                    }, if (left < (self::ml::Big::from_i128(0))) {
-                                                        remaining_2.neg()
-                                                    } else {
-                                                        remaining_2.clone()
-                                                    }]
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-pub fn power_java_script_big_integer(base: self::ml::Big, exponent: self::ml::Big) -> Vec<self::ml::Big> {
-    if (exponent < (self::ml::Big::from_i128(0))) {
-        Vec::<self::ml::Big>::new()
-    } else {
-        {
-            let result = self::ml::Big::from_i128(1);
-            {
-                let result_2 = self::source_ml_source1_temporary_power_java_script_big_integer_loop76(result.clone(), base.clone(), exponent.clone());
-                vec![result_2.clone()]
-            }
-        }
     }
 }

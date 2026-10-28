@@ -194,6 +194,31 @@ rows.push(
  {name:'String call captures its first property before extra argument effects',source:'/** @param {{value:number}} holder @returns {string} */ export function inspect(holder){return String(holder.value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:units('0')},
  {name:'String call evaluates all extra arguments once in source order',source:'/** @param {{value:number}} holder @returns {string} */ export function inspect(holder){return String(40,first(holder),second(holder));} /** @param {{value:number}} holder @returns {number} */ function first(holder){holder.value=holder.value*10+1;return 0;} /** @param {{value:number}} holder @returns {number} */ function second(holder){holder.value=holder.value*10+2;return 0;}',entry:'inspect',functions:['inspect','first','second'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(12)))])],expected:units('40')},
  {name:'String call preserves abrupt extra argument conversion',source:'/** @param {bigint} value @returns {string} */ export function inspect(value){return String(40,isFinite(value));}',entry:'inspect',functions:['inspect'],arguments:[integer('1')],expectedOutcome:'allocation',errorClass:'TypeError',errorRealm:'1000',errorReason:'Cannot convert a BigInt value to a number'});
+for(const [name,leftType,rightType,left,right,operation,expected]of [
+ ['mixed Number order keeps the integer beyond exact Number range','number','bigint',number(9007199254740992),integer('9007199254740993'),'<',true],
+ ['mixed reversed order keeps the original BigInt owner','bigint','number',integer('9007199254740993'),number(9007199254740992),'>',true],
+ ['mixed negative fraction orders below zero BigInt','number','bigint',number(-0.5),integer('0'),'<',true],
+ ['mixed positive fraction orders above zero BigInt','number','bigint',number(0.5),integer('0'),'>',true],
+ ['mixed loose equality identifies negative zero and zero BigInt','number','bigint',number(-0),integer('0'),'==',true],
+ ['mixed positive infinity orders above a finite BigInt','number','bigint',number(Infinity),integer('9007199254740993'),'>',true],
+ ['mixed negative infinity orders below a finite BigInt','number','bigint',number(-Infinity),integer('-9007199254740993'),'<=',true],
+ ['mixed NaN less-than remains unordered','number','bigint',number(NaN),integer('1'),'<',false],
+ ['mixed NaN less-or-equal remains unordered','number','bigint',number(NaN),integer('1'),'<=',false],
+ ['mixed NaN greater-than remains unordered','number','bigint',number(NaN),integer('1'),'>',false],
+ ['mixed NaN greater-or-equal remains unordered','number','bigint',number(NaN),integer('1'),'>=',false],
+ ['mixed NaN loose equality remains false','number','bigint',number(NaN),integer('1'),'==',false],
+ ['mixed NaN loose inequality remains true','number','bigint',number(NaN),integer('1'),'!=',true],
+ ['mixed decimal text preserves the unrounded integer','string','bigint',units('9007199254740993'),integer('9007199254740993'),'==',true],
+ ['mixed hexadecimal text uses StringIntegerLiteral','string','bigint',units('0x10'),integer('16'),'==',true],
+ ['mixed signed hexadecimal text remains invalid','string','bigint',units('+0x10'),integer('16'),'==',false],
+ ['mixed exponent text does not use Number conversion','string','bigint',units('1e3'),integer('1000'),'==',false],
+ ['mixed invalid integer text remains unordered','string','bigint',units('1e3'),integer('1000'),'<=',false],
+ ['mixed reversed invalid text remains unordered','bigint','string',integer('1000'),units('1e3'),'>=',false],
+ ['mixed whitespace text equals zero BigInt','string','bigint',units('\uFEFF \t\n'),integer('0'),'==',true],
+ ['mixed empty text equals zero BigInt','string','bigint',units(''),integer('0'),'==',true],
+ ['mixed surrogate text is unequal to zero BigInt','string','bigint',{$:'text',units:[55296]},integer('0'),'!=',true]
+])rows.push({name,source:'/** @param {'+leftType+'} left @param {'+rightType+'} right @returns {boolean} */ export function inspect(left,right){return left'+operation+'right;}',entry:'inspect',functions:['inspect'],arguments:[left,right],expected:{$:'boolean',value:expected}});
+rows.push({name:'mixed comparison evaluates both source operands in original order',source:'/** @param {{value:number}} holder @returns {boolean} */ export function inspect(holder){return first(holder)<second(holder);} /** @param {{value:number}} holder @returns {number} */ function first(holder){holder.value=holder.value*10+1;return 0;} /** @param {{value:number}} holder @returns {bigint} */ function second(holder){holder.value=holder.value*10+2;return 1n;}',entry:'inspect',functions:['inspect','first','second'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(12)))])],expected:{$:'boolean',value:true}});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

@@ -1,476 +1,13 @@
 // Generated from complete js/src/translation/javascript-call-machine.js. Do not edit by hand.
+use super::JavaScriptCallPrimitiveResult;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop53Result;
 use super::accept_java_script_whitespace_unit;
+use super::match_utf16_text;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
+use super::read_java_script_numeric_digit_unit;
 use super::read_string_number_digit;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_apply_big_integer_bitwise_operation_loop32(mut count: self::ml::Big, mut value: self::ml::Big, mut factor: self::ml::Big) -> self::ml::Big {
-    loop {
-        return if (count > (self::ml::Big::from_i128(0))) {
-            {
-                let value_3 = if ((self::ml::divide(&count, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)) == (self::ml::Big::from_i128(1))) {
-                    {
-                        let value_2 = value.mul(&factor);
-                        value_2.clone()
-                    }
-                } else {
-                    value.clone()
-                };
-                {
-                    let count_2 = self::ml::divide(&count, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
-                    if (count_2 > (self::ml::Big::from_i128(0))) {
-                        {
-                            let factor_2 = factor.mul(&factor);
-                            {
-                                (count, value, factor) = (count_2.clone(), value_3.clone(), factor_2.clone());
-                                continue;
-                            }
-                        }
-                    } else {
-                        {
-                            (count, value) = (count_2.clone(), value_3.clone());
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            value.clone()
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_apply_big_integer_bitwise_operation_loop33(mut count: self::ml::Big, mut value: self::ml::Big) -> self::ml::Big {
-    loop {
-        return if (((count > (self::ml::Big::from_i128(0))) && (value != (self::ml::Big::from_i128(0)))) && (value != (self::ml::Big::from_i128(-1)))) {
-            {
-                let value_2 = if (value < (self::ml::Big::from_i128(0))) {
-                    self::ml::divide(&value.sub(&self::ml::Big::from_i128(1)), &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false)
-                } else {
-                    self::ml::divide(&value, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false)
-                };
-                {
-                    let count_2 = count.sub(&self::ml::Big::from_i128(1));
-                    {
-                        (count, value) = (count_2.clone(), value_2.clone());
-                        continue;
-                    }
-                }
-            }
-        } else {
-            value.clone()
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryApplyBigIntegerBitwiseOperationJoin31 {
-    MlSource1TemporaryApplyBigIntegerBitwiseOperationJoin31Next(self::ml::Big, bool),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryApplyBigIntegerBitwiseOperationLoop34Result {
-    MlSource1TemporaryApplyBigIntegerBitwiseOperationLoop34Done(self::ml::Big, self::ml::Big),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_apply_big_integer_bitwise_operation_loop34(mut operation: f64, mut negative_left: bool, mut negative_right: bool, mut first: self::ml::Big, mut second: self::ml::Big, mut weight: self::ml::Big, mut result: self::ml::Big) -> self::MlSource1TemporaryApplyBigIntegerBitwiseOperationLoop34Result {
-    loop {
-        return if ((first > (self::ml::Big::from_i128(0))) || (second > (self::ml::Big::from_i128(0)))) {
-            {
-                let a = if negative_left {
-                    (self::ml::Big::from_i128(1)).sub(&self::ml::divide(&first, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true))
-                } else {
-                    self::ml::divide(&first, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)
-                };
-                {
-                    let b = if negative_right {
-                        (self::ml::Big::from_i128(1)).sub(&self::ml::divide(&second, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true))
-                    } else {
-                        self::ml::divide(&second, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)
-                    };
-                    {
-                        let selected = if (operation == (0f64)) {
-                            ((a == (self::ml::Big::from_i128(1))) && (b == (self::ml::Big::from_i128(1))))
-                        } else {
-                            if (operation == (1f64)) {
-                                ((a == (self::ml::Big::from_i128(1))) || (b == (self::ml::Big::from_i128(1))))
-                            } else {
-                                (a != b)
-                            }
-                        };
-                        {
-                            let result_3 = if selected {
-                                {
-                                    let result_2 = result.add(&weight);
-                                    result_2.clone()
-                                }
-                            } else {
-                                result.clone()
-                            };
-                            {
-                                let first_2 = self::ml::divide(&first, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
-                                {
-                                    let second_2 = self::ml::divide(&second, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
-                                    {
-                                        let weight_2 = weight.mul(&self::ml::Big::from_i128(2));
-                                        {
-                                            (first, second, weight, result) = (first_2.clone(), second_2.clone(), weight_2.clone(), result_3.clone());
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryApplyBigIntegerBitwiseOperationLoop34Result::MlSource1TemporaryApplyBigIntegerBitwiseOperationLoop34Done(weight.clone(), result.clone())
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_apply_java_script_number_bitwise_operation_loop36(mut count: f64, mut factor: f64, mut position: f64) -> f64 {
-    loop {
-        return if (position < count) {
-            {
-                let factor_2 = (factor * 2f64);
-                {
-                    let position_2 = (position + 1f64);
-                    {
-                        (factor, position) = (factor_2, position_2);
-                        continue;
-                    }
-                }
-            }
-        } else {
-            factor
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_apply_java_script_number_bitwise_operation_loop37(mut operation: f64, mut first: f64, mut second: f64, mut result: f64, mut weight: f64, mut position: f64) -> f64 {
-    loop {
-        return if (position < (32f64)) {
-            {
-                let first_bit = (first % 2f64);
-                {
-                    let second_bit = (second % 2f64);
-                    {
-                        let result_3 = if (((((operation == (0f64)) && (first_bit == (1f64))) && (second_bit == (1f64))) || ((operation == (1f64)) && ((first_bit == (1f64)) || (second_bit == (1f64))))) || ((operation == (2f64)) && (first_bit != second_bit))) {
-                            {
-                                let result_2 = (result + weight);
-                                result_2
-                            }
-                        } else {
-                            result
-                        };
-                        {
-                            let first_2 = ((first - first_bit) / 2f64);
-                            {
-                                let second_2 = ((second - second_bit) / 2f64);
-                                {
-                                    let weight_2 = (weight * 2f64);
-                                    {
-                                        let position_2 = (position + 1f64);
-                                        {
-                                            (first, second, result, weight, position) = (first_2, second_2, result_3, weight_2, position_2);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            result
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_string_number_decimal_power_loop42(mut exponent: f64, mut value: self::ml::Big, mut base: self::ml::Big) -> self::ml::Big {
-    loop {
-        return if (exponent > (0f64)) {
-            {
-                let value_3 = if (((exponent % 2f64)) == (1f64)) {
-                    {
-                        let value_2 = value.mul(&base);
-                        value_2.clone()
-                    }
-                } else {
-                    value.clone()
-                };
-                {
-                    let exponent_2 = ((exponent / 2f64)).floor();
-                    if (exponent_2 > (0f64)) {
-                        {
-                            let base_2 = base.mul(&base);
-                            {
-                                (exponent, value, base) = (exponent_2, value_3.clone(), base_2.clone());
-                                continue;
-                            }
-                        }
-                    } else {
-                        {
-                            (exponent, value) = (exponent_2, value_3.clone());
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            value.clone()
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_string_number_exact_mantissa_loop43(mut value: self::ml::Big, mut result: f64, mut scale: f64) -> f64 {
-    loop {
-        return if (value > (self::ml::Big::from_i128(0))) {
-            {
-                let result_3 = if ((self::ml::divide(&value, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)) == (self::ml::Big::from_i128(1))) {
-                    {
-                        let result_2 = (result + scale);
-                        result_2
-                    }
-                } else {
-                    result
-                };
-                {
-                    let value_2 = self::ml::divide(&value, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
-                    {
-                        let scale_2 = (scale * 2f64);
-                        {
-                            (value, result, scale) = (value_2.clone(), result_3, scale_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            result
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_string_number_binary_power_loop45(mut exponent: f64, mut result: f64) -> f64 {
-    loop {
-        return if (exponent < (0f64)) {
-            {
-                let result_2 = (result / 2f64);
-                {
-                    let exponent_2 = (exponent + 1f64);
-                    {
-                        (exponent, result) = (exponent_2, result_2);
-                        continue;
-                    }
-                }
-            }
-        } else {
-            result
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadStringNumberBinaryPowerLoop44Result {
-    MlSource1TemporaryReadStringNumberBinaryPowerLoop44Done(f64, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_string_number_binary_power_loop44(mut exponent: f64, mut result: f64) -> self::MlSource1TemporaryReadStringNumberBinaryPowerLoop44Result {
-    loop {
-        return if (exponent > (0f64)) {
-            {
-                let result_2 = (result * 2f64);
-                {
-                    let exponent_2 = (exponent - 1f64);
-                    {
-                        (exponent, result) = (exponent_2, result_2);
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadStringNumberBinaryPowerLoop44Result::MlSource1TemporaryReadStringNumberBinaryPowerLoop44Done(exponent, result)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryConvertStringNumberRationalLoop49Result {
-    MlSource1TemporaryConvertStringNumberRationalLoop49Done(self::ml::Big, self::ml::Big),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_string_number_rational_loop49(mut quotient: self::ml::Big, mut remainder: self::ml::Big, mut scale: self::ml::Big, mut weight: self::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop49Result {
-    loop {
-        return if (weight > (self::ml::Big::from_i128(1))) {
-            {
-                let scale_2 = self::ml::divide(&scale, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
-                {
-                    let weight_2 = self::ml::divide(&weight, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
-                    if (remainder >= scale_2) {
-                        {
-                            let remainder_2 = remainder.sub(&scale_2);
-                            {
-                                let quotient_2 = quotient.add(&weight_2);
-                                {
-                                    (quotient, remainder, scale, weight) = (quotient_2.clone(), remainder_2.clone(), scale_2.clone(), weight_2.clone());
-                                    continue;
-                                }
-                            }
-                        }
-                    } else {
-                        {
-                            (scale, weight) = (scale_2.clone(), weight_2.clone());
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryConvertStringNumberRationalLoop49Result::MlSource1TemporaryConvertStringNumberRationalLoop49Done(quotient.clone(), remainder.clone())
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryConvertStringNumberRationalLoop48Result {
-    MlSource1TemporaryConvertStringNumberRationalLoop48Done(self::ml::Big, self::ml::Big),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_string_number_rational_loop48(mut remainder: self::ml::Big, mut scale: self::ml::Big, mut weight: self::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop48Result {
-    loop {
-        return if (scale <= remainder) {
-            {
-                let scale_2 = scale.mul(&self::ml::Big::from_i128(2));
-                {
-                    let weight_2 = weight.mul(&self::ml::Big::from_i128(2));
-                    {
-                        (scale, weight) = (scale_2.clone(), weight_2.clone());
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryConvertStringNumberRationalLoop48Result::MlSource1TemporaryConvertStringNumberRationalLoop48Done(scale.clone(), weight.clone())
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryConvertStringNumberRationalJoin47 {
-    MlSource1TemporaryConvertStringNumberRationalJoin47Next(self::ml::Big, self::ml::Big),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_string_number_rational_loop50(mut numerator: self::ml::Big, mut shift: f64, mut index: f64) -> self::ml::Big {
-    loop {
-        return if (index < shift) {
-            {
-                let numerator_2 = numerator.mul(&self::ml::Big::from_i128(2));
-                {
-                    let index_2 = (index + 1f64);
-                    {
-                        (numerator, index) = (numerator_2.clone(), index_2);
-                        continue;
-                    }
-                }
-            }
-        } else {
-            numerator.clone()
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_string_number_rational_loop51(mut denominator: self::ml::Big, mut shift: f64, mut index: f64) -> self::ml::Big {
-    loop {
-        return if (index < ((-shift))) {
-            {
-                let denominator_2 = denominator.mul(&self::ml::Big::from_i128(2));
-                {
-                    let index_2 = (index + 1f64);
-                    {
-                        (denominator, index) = (denominator_2.clone(), index_2);
-                        continue;
-                    }
-                }
-            }
-        } else {
-            denominator.clone()
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertStringNumberRationalJoin46 {
-    MlSource1TemporaryConvertStringNumberRationalJoin46Next(f64),
-    MlSource1TemporaryConvertStringNumberRationalJoin46Return(f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertStringNumberRationalLoop52Result {
-    MlSource1TemporaryConvertStringNumberRationalLoop52Done(f64),
-    MlSource1TemporaryConvertStringNumberRationalLoop52Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_string_number_rational_loop52(mut numerator: self::ml::Big, mut exponent: f64, mut scale: self::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop52Result {
-    loop {
-        return if (numerator >= (scale.mul(&self::ml::Big::from_i128(2)))) {
-            {
-                let scale_2 = scale.mul(&self::ml::Big::from_i128(2));
-                {
-                    let exponent_2 = (exponent + 1f64);
-                    if (exponent_2 >= (1024f64)) {
-                        self::MlSource1TemporaryConvertStringNumberRationalLoop52Result::MlSource1TemporaryConvertStringNumberRationalLoop52Return(f64::INFINITY)
-                    } else {
-                        {
-                            (exponent, scale) = (exponent_2, scale_2.clone());
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryConvertStringNumberRationalLoop52Result::MlSource1TemporaryConvertStringNumberRationalLoop52Done(exponent)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertStringNumberRationalLoop53Result {
-    MlSource1TemporaryConvertStringNumberRationalLoop53Done(f64),
-    MlSource1TemporaryConvertStringNumberRationalLoop53Return(f64),
-}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -844,6 +381,148 @@ pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop5
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop68(units: &[f64], mut start: f64, mut end: f64) -> f64 {
+    loop {
+        return if ((start < end) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index(start))).clone().unwrap_or_else(|| (-1f64)))) {
+            {
+                let start_2 = (start + 1f64);
+                {
+                    start = start_2;
+                    continue;
+                }
+            }
+        } else {
+            start
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop69(units: &[f64], mut start: f64, mut end: f64) -> f64 {
+    loop {
+        return if ((end > start) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index((end - 1f64)))).clone().unwrap_or_else(|| (-1f64)))) {
+            {
+                let end_2 = (end - 1f64);
+                {
+                    end = end_2;
+                    continue;
+                }
+            }
+        } else {
+            end
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Result {
+    MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Done(self::ml::Big),
+    MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Return(Vec<self::ml::Big>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop72(units: &[f64], mut end: f64, mut radix: f64, mut base: self::ml::Big, mut digits: Vec<self::ml::Big>, mut value: self::ml::Big, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Result {
+    loop {
+        return if (index < end) {
+            {
+                let digit = self::read_java_script_numeric_digit_unit((self::ml_array::optional_at(units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64)));
+                if ((digit < (0f64)) || (digit >= radix)) {
+                    self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Return(Vec::<self::ml::Big>::new())
+                } else {
+                    {
+                        let value_2 = (value.mul(&base)).add(&(self::ml_array::optional_at(&digits, self::ml_array::number_index(digit))).clone().unwrap_or_else(|| self::ml::Big::from_i128(0)));
+                        {
+                            let index_2 = (index + 1f64);
+                            {
+                                (value, index) = (value_2.clone(), index_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop72Done(value.clone())
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin71 {
+    MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin71Next(f64, f64, self::ml::Big),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin70 {
+    MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin70Next(f64, bool, bool),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Result {
+    MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Done,
+    MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Return(Vec<self::ml::Big>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop67(units: &[f64], mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Result {
+    loop {
+        return if (index < ((units.len() as f64))) {
+            {
+                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
+                if ((!(self::ml_math::is_safe_integer(unit)) || (unit < (0f64))) || (unit > (65535f64))) {
+                    self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Return(Vec::<self::ml::Big>::new())
+                } else {
+                    {
+                        let index_2 = (index + 1f64);
+                        {
+                            index = index_2;
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop67Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_number_big_integer_loop73(mut value: f64, mut integer: self::ml::Big, mut weight: self::ml::Big) -> self::ml::Big {
+    loop {
+        return if (value >= (1f64)) {
+            {
+                let integer_3 = if (((value % 2f64)) == (1f64)) {
+                    {
+                        let integer_2 = integer.add(&weight);
+                        integer_2.clone()
+                    }
+                } else {
+                    integer.clone()
+                };
+                {
+                    let value_2 = ((value / 2f64)).floor();
+                    {
+                        let weight_2 = weight.mul(&self::ml::Big::from_i128(2));
+                        {
+                            (value, integer, weight) = (value_2, integer_3.clone(), weight_2.clone());
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            integer.clone()
+        };
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDivideJavaScriptBigIntegerLoop75Result {
     MlSource1TemporaryDivideJavaScriptBigIntegerLoop75Done(self::ml::Big, self::ml::Big),
@@ -886,4 +565,339 @@ pub fn source_ml_source1_temporary_divide_java_script_big_integer_loop75(mut rem
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Result {
     MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Done(self::ml::Big, self::ml::Big),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_divide_java_script_big_integer_loop74(mut remaining: self::ml::Big, mut shifted: self::ml::Big, mut weight: self::ml::Big) -> self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Result {
+    loop {
+        return if (shifted <= remaining) {
+            {
+                let shifted_2 = shifted.mul(&self::ml::Big::from_i128(2));
+                {
+                    let weight_2 = weight.mul(&self::ml::Big::from_i128(2));
+                    {
+                        (shifted, weight) = (shifted_2.clone(), weight_2.clone());
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop74Done(shifted.clone(), weight.clone())
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_power_java_script_big_integer_loop76(mut result: self::ml::Big, mut weight: self::ml::Big, mut remaining: self::ml::Big) -> self::ml::Big {
+    loop {
+        return if (remaining > (self::ml::Big::from_i128(0))) {
+            {
+                let result_3 = if ((self::ml::divide(&remaining, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)) == (self::ml::Big::from_i128(1))) {
+                    {
+                        let result_2 = result.mul(&weight);
+                        result_2.clone()
+                    }
+                } else {
+                    result.clone()
+                };
+                {
+                    let remaining_2 = self::ml::divide(&remaining, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
+                    if (remaining_2 > (self::ml::Big::from_i128(0))) {
+                        {
+                            let weight_2 = weight.mul(&weight);
+                            {
+                                (result, weight, remaining) = (result_3.clone(), weight_2.clone(), remaining_2.clone());
+                                continue;
+                            }
+                        }
+                    } else {
+                        {
+                            (result, remaining) = (result_3.clone(), remaining_2.clone());
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            result.clone()
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Result {
+    MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Done(f64),
+    MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_read_java_script_call_integer_width_loop88(mut rest: self::ml::Big, mut width: f64) -> self::MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Result {
+    loop {
+        return if (rest > (self::ml::Big::from_i128(0))) {
+            if (width >= (4096f64)) {
+                self::MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Result::MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Return((-1f64))
+            } else {
+                {
+                    let rest_2 = self::ml::divide(&rest, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), false);
+                    {
+                        let width_2 = (width + 1f64);
+                        {
+                            (rest, width) = (rest_2.clone(), width_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Result::MlSource1TemporaryReadJavaScriptCallIntegerWidthLoop88Done(width)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryExecuteJavaScriptCallIntegerPrimitiveJoin90 {
+    MlSource1TemporaryExecuteJavaScriptCallIntegerPrimitiveJoin90Next(self::ml::Big),
+    MlSource1TemporaryExecuteJavaScriptCallIntegerPrimitiveJoin90Return(Box<self::JavaScriptCallPrimitiveResult>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryExecuteJavaScriptCallIntegerPrimitiveJoin89 {
+    MlSource1TemporaryExecuteJavaScriptCallIntegerPrimitiveJoin89Next,
+    MlSource1TemporaryExecuteJavaScriptCallIntegerPrimitiveJoin89Return(Box<self::JavaScriptCallPrimitiveResult>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_slice_utf16_text_loop91(text: &[f64], mut last: f64, mut result: Vec<f64>, mut at: f64) -> Vec<f64> {
+    loop {
+        return if (at < last) {
+            {
+                let result_2 = { let (ml_append_right, ml_append_left) = (vec![(self::ml_array::optional_at(text, self::ml_array::number_index(at))).clone().unwrap_or_else(|| 0f64)], result); self::ml_array::append(ml_append_left, ml_append_right) };
+                {
+                    let at_2 = (at + 1f64);
+                    {
+                        (result, at) = (result_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        } else {
+            result
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryMatchUtf16TextLoop95Result {
+    MlSource1TemporaryMatchUtf16TextLoop95Done,
+    MlSource1TemporaryMatchUtf16TextLoop95Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_match_utf16_text_loop95(text: &[f64], search: &[f64], mut start: f64, mut at: f64) -> self::MlSource1TemporaryMatchUtf16TextLoop95Result {
+    loop {
+        return if (at < ((search.len() as f64))) {
+            if {
+                let source_ml_source2_comparison_operand2481 = self::ml_array::optional_at(text, self::ml_array::number_index((start + at)));
+                {
+                    let source_ml_source2_comparison_operand2482 = self::ml_array::optional_at(search, self::ml_array::number_index(at));
+                    !(match (source_ml_source2_comparison_operand2481.clone(), source_ml_source2_comparison_operand2482.clone()) { (Some(ml_left), Some(ml_right)) => ml_left == ml_right, (None, None) => true, _ => false })
+                }
+            } {
+                self::MlSource1TemporaryMatchUtf16TextLoop95Result::MlSource1TemporaryMatchUtf16TextLoop95Return(false)
+            } else {
+                {
+                    let at_2 = (at + 1f64);
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryMatchUtf16TextLoop95Result::MlSource1TemporaryMatchUtf16TextLoop95Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryIndexUtf16TextLoop96Result {
+    MlSource1TemporaryIndexUtf16TextLoop96Done,
+    MlSource1TemporaryIndexUtf16TextLoop96Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_index_utf16_text_loop96(text: &[f64], search: &[f64], mut at: f64) -> self::MlSource1TemporaryIndexUtf16TextLoop96Result {
+    loop {
+        return if (at <= (((text.len() as f64) - (search.len() as f64)))) {
+            if self::match_utf16_text(text, search, at) {
+                self::MlSource1TemporaryIndexUtf16TextLoop96Result::MlSource1TemporaryIndexUtf16TextLoop96Return(at)
+            } else {
+                {
+                    let at_2 = (at + 1f64);
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryIndexUtf16TextLoop96Result::MlSource1TemporaryIndexUtf16TextLoop96Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryLastIndexUtf16TextLoop97Result {
+    MlSource1TemporaryLastIndexUtf16TextLoop97Done,
+    MlSource1TemporaryLastIndexUtf16TextLoop97Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_last_index_utf16_text_loop97(text: &[f64], search: &[f64], mut at: f64) -> self::MlSource1TemporaryLastIndexUtf16TextLoop97Result {
+    loop {
+        return if (at >= (0f64)) {
+            if self::match_utf16_text(text, search, at) {
+                self::MlSource1TemporaryLastIndexUtf16TextLoop97Result::MlSource1TemporaryLastIndexUtf16TextLoop97Return(at)
+            } else {
+                {
+                    let at_2 = (at - 1f64);
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryLastIndexUtf16TextLoop97Result::MlSource1TemporaryLastIndexUtf16TextLoop97Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryCompareUtf16TextLoop98Result {
+    MlSource1TemporaryCompareUtf16TextLoop98Done,
+    MlSource1TemporaryCompareUtf16TextLoop98Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_compare_utf16_text_loop98(left: &[f64], right: &[f64], mut count: f64, mut at: f64) -> self::MlSource1TemporaryCompareUtf16TextLoop98Result {
+    loop {
+        return if (at < count) {
+            {
+                let a = (self::ml_array::optional_at(left, self::ml_array::number_index(at))).clone().unwrap_or_else(|| 0f64);
+                {
+                    let b = (self::ml_array::optional_at(right, self::ml_array::number_index(at))).clone().unwrap_or_else(|| 0f64);
+                    if (a != b) {
+                        self::MlSource1TemporaryCompareUtf16TextLoop98Result::MlSource1TemporaryCompareUtf16TextLoop98Return(if (a < b) {
+                            (-1f64)
+                        } else {
+                            1f64
+                        })
+                    } else {
+                        {
+                            let at_2 = (at + 1f64);
+                            {
+                                at = at_2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryCompareUtf16TextLoop98Result::MlSource1TemporaryCompareUtf16TextLoop98Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_trim_utf16_text_loop102(text: &[f64], mut first: f64, mut last: f64) -> f64 {
+    loop {
+        return if ((first < last) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(text, self::ml_array::number_index(first))).clone().unwrap_or_else(|| (-1f64)))) {
+            {
+                let first_2 = (first + 1f64);
+                {
+                    first = first_2;
+                    continue;
+                }
+            }
+        } else {
+            first
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_trim_utf16_text_loop103(text: &[f64], mut first: f64, mut last: f64) -> f64 {
+    loop {
+        return if ((last > first) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(text, self::ml_array::number_index((last - 1f64)))).clone().unwrap_or_else(|| (-1f64)))) {
+            {
+                let last_2 = (last - 1f64);
+                {
+                    last = last_2;
+                    continue;
+                }
+            }
+        } else {
+            last
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_character_units_utf16_text_loop104(values: &[f64], mut result: Vec<f64>, mut at: f64) -> Vec<f64> {
+    loop {
+        return if (at < ((values.len() as f64))) {
+            {
+                let value = (self::ml_array::optional_at(values, self::ml_array::number_index(at))).clone().unwrap_or_else(|| 0f64);
+                {
+                    let integer = if value.is_finite() {
+                        value.trunc()
+                    } else {
+                        0f64
+                    };
+                    {
+                        let residue = (integer % 65536f64);
+                        {
+                            let result_2 = { let (ml_append_right, ml_append_left) = (vec![if (residue < (0f64)) {
+                                (residue + 65536f64)
+                            } else {
+                                if (residue == (0f64)) {
+                                    0f64
+                                } else {
+                                    residue
+                                }
+                            }], result); self::ml_array::append(ml_append_left, ml_append_right) };
+                            {
+                                let at_2 = (at + 1f64);
+                                {
+                                    (result, at) = (result_2, at_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            result
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryExecuteJavaScriptCallNumericPrimitiveLoop116Result {
+    MlSource1TemporaryExecuteJavaScriptCallNumericPrimitiveLoop116Done(Vec<f64>),
+    MlSource1TemporaryExecuteJavaScriptCallNumericPrimitiveLoop116Return(Box<self::JavaScriptCallPrimitiveResult>),
 }

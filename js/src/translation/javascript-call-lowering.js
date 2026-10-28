@@ -156,6 +156,8 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'math':case 'optionalPredicate':{
      if(node.k==='math'){
+      const comparison=readJavaScriptBigIntegerResultOperation(node.op);
+      if((comparison==='number-compare'||comparison==='string-compare')&&node.args.length===2&&node.args[1].type.kind==='int'&&node.args[0].type.kind===(comparison==='number-compare'?'float':'string'))return primitive(comparison==='number-compare'?'compare number integer':'compare text integer',node.args.map(arg=>expression(arg,environment,depth+1)));
       const integerCode=readBigIntegerBitwiseOperationCode(node.op),numberCode=readJavaScriptNumberBitwiseOperationCode(node.op);
       const integerOperations=['conjoin integer bits','disjoin integer bits','exclude equal integer bits','shift integer bits left','shift integer bits right','','complement integer bits'];
       const numberOperations=['conjoin number bits','disjoin number bits','exclude equal number bits','shift number bits left','shift number bits right','shift number bits right unsigned','complement number bits'];

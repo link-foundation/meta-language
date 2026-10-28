@@ -4,7 +4,7 @@ import {shareSourceLexicalAliases} from './source-lexical-aliases.mjs';
 import {planBooleanConstructorMatchSharing,planClosedConstructorMatchSharing,planUnusedConstructorBindings,testUnusedConstructorAlias} from '../src/translation/boolean-constructor-match-rules.js';
 import {sameType,typeKey} from '../src/translation/types.js';
 import {readProjectData} from './project-data.mjs';
-import {shareSourceConstructorProjections} from './source-constructor-projections.mjs';
+import {shareSourceConstructorProjections,shareSourceScopedConstructorProjections} from './source-constructor-projections.mjs';
 const root=new URL('../../',import.meta.url);
 export function shareSourceBooleanConstructorMatches(program){
  return shareSourceConstructorMatches(program,false);
@@ -13,7 +13,7 @@ export function shareSourceClosedConstructorMatches(program){return shareSourceC
 function shareSourceConstructorMatches(program,closed){
  if(closed&&program.sourceLanguage!=='JavaScript')throw new TypeError('closed constructor sharing requires the checked JavaScript value model; ownership-sensitive source models need their own proof');
  const rule=readProjectData(new URL('parity/self-translation/source-'+(closed?'closed':'boolean')+'-match-sharing.lino',root));
- if(rule.schemaVersion!==1||rule.model!==(closed?'closed constructor match sharing 1':'literal Boolean constructor match arms 1')||rule.preserveScrutinee!==true||rule.requireCompleteOwner!==true||closed&&(rule.pruneUnusedBindings!==true||rule.pruneUnusedAliases!==true||rule.shareSingleConstructorProjections!==true||rule.shareImmutableLexicalAliases!==true||rule.shareLiteralText!==true||rule.shareLiteralScalar!==true))throw new TypeError('actual qualified constructor match sharing rules are required');
+ if(rule.schemaVersion!==1||rule.model!==(closed?'closed constructor match sharing 1':'literal Boolean constructor match arms 1')||rule.preserveScrutinee!==true||rule.requireCompleteOwner!==true||closed&&(rule.pruneUnusedBindings!==true||rule.pruneUnusedAliases!==true||rule.shareSingleConstructorProjections!==true||rule.shareScopedConstructorProjections!==true||rule.shareImmutableLexicalAliases!==true||rule.shareLiteralText!==true||rule.shareLiteralScalar!==true))throw new TypeError('actual qualified constructor match sharing rules are required');
  const memo=new WeakMap(),active=new WeakSet(),referenceCache=new WeakMap(),proofs=[];let visits=0,referenceVisits=0;
  function references(body){
   if(body&&typeof body==='object'&&referenceCache.has(body))return referenceCache.get(body);
@@ -98,7 +98,7 @@ function shareSourceConstructorMatches(program,closed){
  const declarations=new Map();
  for(const [name,entry]of program.declarations){
   let body=entry.k==='fn'?rewrite(entry.body,['body'],name):entry.body;
-  if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=shareSourceConstructorProjections(program,entry,body,proofs);}
+  if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=shareSourceScopedConstructorProjections(program,entry,body,proofs);body=shareSourceConstructorProjections(program,entry,body,proofs);}
   declarations.set(name,body===entry.body?entry:{...entry,body});
  }
  function items(values){return values.map(item=>{

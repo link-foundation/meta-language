@@ -1,12 +1,12 @@
 // Exact integer and Number bit operations reuse their normative definitions.
 import {applyBigIntegerBitwiseOperation} from './big-integer-bitwise-rules.js';
 import {applyJavaScriptNumberBitwiseOperation} from './number-bitwise-rules.js';
-import {divideJavaScriptBigInteger,powerJavaScriptBigInteger} from './big-integer-conversion-rules.js';
+import {divideJavaScriptBigInteger,powerJavaScriptBigInteger,compareJavaScriptNumberBigInteger,compareJavaScriptStringBigIntegerUnits} from './big-integer-conversion-rules.js';
 
 /** @param {string} operation @returns {number} */
 export function readJavaScriptCallIntegerArity(operation){
  if(operation==='negate integer'||operation==='complement integer bits'||operation==='complement number bits')return 1;
- return ['add integers','subtract integers','multiply integers','divide integers','read integer remainder','raise integer power','compare integers',
+ return ['add integers','subtract integers','multiply integers','divide integers','read integer remainder','raise integer power','compare integers','compare number integer','compare text integer',
  'conjoin integer bits','disjoin integer bits','exclude equal integer bits','shift integer bits left','shift integer bits right',
  'conjoin number bits','disjoin number bits','exclude equal number bits','shift number bits left','shift number bits right','shift number bits right unsigned'].includes(operation)?2:0;
 }
@@ -41,6 +41,7 @@ export function executeJavaScriptCallNumberBits(operation,values){
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallIntegerPrimitive(operation,values){
  if(operation.includes('number bits'))return executeJavaScriptCallNumberBits(operation,values);
+ if(operation==='compare number integer'||operation==='compare text integer')return executeJavaScriptCallMixedIntegerComparison(operation,values);
  const first=values[0]??{$:'undefined'},second=values[1]??{$:'integer',value:0n};
  if(first.$!=='integer')return {$:'primitiveInvalid',reason:'integer operations require actual converted BigInt operands'};
  if(second.$!=='integer')return {$:'primitiveInvalid',reason:'integer operations require actual converted BigInt operands'};
@@ -68,4 +69,23 @@ export function executeJavaScriptCallIntegerPrimitive(operation,values){
  else return {$:'primitiveInvalid',reason:'integer primitives require their actual registered operation'};
  if(readJavaScriptCallIntegerWidth(result)<0)return {$:'primitiveResourceLimit',reason:'integer output exceeds the selected 4096-bit work profile'};
  return {$:'primitiveValue',value:{$:'integer',value:result}};
+}
+
+/** Two is the existing shared unordered result, not Number rounding of an
+ * arbitrary integer. Text uses StringIntegerLiteral, preserving UTF16 units.
+ * @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallMixedIntegerComparison(operation,values){
+ const first=values[0]??{$:'undefined'},second=values[1]??{$:'undefined'};
+ if(second.$!=='integer')return {$:'primitiveInvalid',reason:'mixed integer comparisons require their actual BigInt operand'};
+ if(readJavaScriptCallIntegerWidth(second.value)<0)return {$:'primitiveResourceLimit',reason:'mixed comparison integer exceeds the selected 4096-bit work profile'};
+ if(operation==='compare number integer'){
+  if(first.$!=='number')return {$:'primitiveInvalid',reason:'mixed Number comparison requires its actual Number operand'};
+  return {$:'primitiveValue',value:{$:'number',value:compareJavaScriptNumberBigInteger(first.value,second.value)}};
+ }
+ if(operation==='compare text integer'){
+  if(first.$!=='text')return {$:'primitiveInvalid',reason:'mixed text comparison requires its actual UTF16 operand'};
+  if(first.units.length>4096)return {$:'primitiveResourceLimit',reason:'mixed comparison text exceeds the selected 4096-unit work profile'};
+  return {$:'primitiveValue',value:{$:'number',value:compareJavaScriptStringBigIntegerUnits(first.units,second.value)}};
+ }
+ return {$:'primitiveInvalid',reason:'mixed integer comparison requires its actual registered operation'};
 }
