@@ -43,10 +43,24 @@ add('key getter method and descriptor getter execute through one definition',def
  "ctx=>Object.defineProperty(ctx.objects.get('1'),ctx.objects.get('3'),ctx.objects.get('2'))",{kind:'value',value:object('1'),heap:definitionAfter},
  [{identity:'5',expression:"ctx=>(function(){'use strict';return ctx.objects.get('6');})"},{identity:'6',expression:"ctx=>(function(hint){'use strict';if(hint!=='string')throw new Error('wrong hint');return 'field';})"},{identity:'7',expression:"ctx=>(function(){'use strict';return 2;})"}]);
 add('intrinsic failure requests its actual source realm allocation',heap(),fn('10',4,[constant(1,number(1)),constant(2,undef),invoke(3,1,2),ret(3)]),[],"ctx=>Reflect.apply(1,undefined,[])",{kind:'allocation',realm,errorClass:'TypeError',reason:'the selected callee is not callable'});
+for(const [name,operation,values,source,expected]of [
+ ['primitive minimum keeps negative zero','read minimum number',[number(-0),number(0)],'ctx=>Math.min(-0,0)',number(-0)],
+ ['primitive maximum keeps positive zero','read maximum number',[number(-0),number(0)],'ctx=>Math.max(-0,0)',number(0)],
+ ['empty minimum retains positive infinity','read minimum number',[],'ctx=>Math.min()',number(Infinity)],
+ ['empty maximum retains negative infinity','read maximum number',[],'ctx=>Math.max()',number(-Infinity)],
+ ['text construction uses modulo unsigned code units','construct text units',[number(-1),number(65536),number(NaN)],'ctx=>String.fromCharCode(-1,65536,NaN)',{$:'text',units:[65535,0,0]}],
+ ['primitive code point retains missing position result','read text code point',[text('a'),number(1)],"ctx=>'a'.codePointAt(1)",undef],
+ ]){
+ const destination=values.length+1;
+ add(name,heap(),fn('10',destination+1,[...values.map((value,index)=>constant(index+1,value)),{$:'primitive',destination,operation,arguments:values.map((_,index)=>index+1)},ret(destination)]),[],source,{kind:'value',value:expected});
+}
+add('text search work quota retains the unadvanced instruction and actual heap',heap(),fn('10',4,[constant(1,{$:'text',units:Array(16384).fill(65)}),constant(2,{$:'text',units:Array(8192).fill(65)}),{$:'primitive',destination:3,operation:'test text inclusion',arguments:[1,2]},ret(3)]),[],"ctx=>'A'.repeat(16384).includes('A'.repeat(8192))",{kind:'resource',position:2,reason:'primitive text search exceeds its explicit comparison work quota',referenceValue:{$:'boolean',value:true}});
 const base=programs[0];
 const invalid=[{name:'unknown source realm',program:{...base.program,realms:[]},reason:'call functions require their actual declared source realm'},
  {name:'out of range register destination',program:{...base.program,functions:[{...base.program.functions[0],instructions:[constant(3,undef),ret(0)]}]},reason:'call instructions require actual in-range register coordinates'},
  {name:'invalid branch target',program:{...base.program,functions:[{...base.program.functions[0],instructions:[{$:'jump',target:2}]}]},reason:'call jumps require actual instruction targets'},
- {name:'unsupported sloppy binding cannot be approximated',program:{...base.program,functions:[{...base.program.functions[0],receiverMode:'sloppy'}]},reason:'call code requires explicit strict or lexical receiver binding'}];
+ {name:'unsupported sloppy binding cannot be approximated',program:{...base.program,functions:[{...base.program.functions[0],receiverMode:'sloppy'}]},reason:'call code requires explicit strict or lexical receiver binding'},
+ {name:'primitive operation requires actual registration',program:{...base.program,functions:[{...base.program.functions[0],instructions:[{$:'primitive',destination:1,operation:'unknown operation',arguments:[]},ret(1)]}]},reason:'primitive instructions require their actual registered operation'},
+ {name:'primitive operation preserves required operand count',program:{...base.program,functions:[{...base.program.functions[0],instructions:[{$:'primitive',destination:1,operation:'slice text',arguments:[0,0]},ret(1)]}]},reason:'primitive instructions require every actual operand coordinate'}];
 writeProjectData(new URL('parity/fixtures/javascript-call-machine.lino',root),{schemaVersion:1,model:'ordinary JavaScript registered strict call execution 1',versions:{node:['>=22.15 <23','>=24 <25'],rust:['>=1.90 <1.100; edition 2024']},programs,invalid,invalidHeap:base.heap,
  boundary:'Registered strict/lexical code and ordinary property protocols. Full source lowering, sloppy receiver/arguments-object semantics, allocation authority, exotics and all language coverage remain required. These literal bytecode controls are independent inputs, not claimed automatic translations of their oracle source.'});

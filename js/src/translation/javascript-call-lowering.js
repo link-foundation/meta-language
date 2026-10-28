@@ -37,7 +37,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
   const entry=program.declarations.get(row.name);if(entry?.k!=='fn')refuse(null,'a callable registry entry has no actual checked function declaration');
   directory.set(row.name,row);identities.add(row.identity);
  }
- const constant=value=>({$:'sourceConstant',value}),undefinedSource=()=>constant({$:'undefined'});
+ const constant=value=>({$:'sourceConstant',value}),undefinedSource=()=>constant({$:'undefined'}),primitive=(operation,arguments_)=>({$:'sourcePrimitive',operation,arguments:arguments_});
  const compiled=[],sourceUnits=[];let instructionCount=0;
  for(const [name,entry]of program.declarations){
   if(entry.k!=='fn')refuse(entry,'semantic data declarations need explicit ordinary-object allocation lowering');
@@ -59,6 +59,27 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'unit':return undefinedSource();
     case 'none':if(node.absence!=='undefined'&&node.absence!=='null')return refuse(node,'absent literals must retain their exact source absence');return constant({$:node.absence});
     case 'some':return expression(node.value,environment,depth+1);
+    case 'unwrapOption':return expression(node.arg,environment,depth+1);
+    case 'coalesce':{
+     if(!['undefined','null','both'].includes(node.left.type.absence))return refuse(node,'coalescing requires the actual source absence policy');
+     const identity=nextBinding++,value={$:'sourceBinding',identity},fallback=expression(node.right,environment,depth+1);let body=value;
+     for(const absence of node.left.type.absence==='both'?['undefined','null']:[node.left.type.absence])body={$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:absence})},yes:fallback,no:body};
+     return {$:'sourceLet',identity,value:expression(node.left,environment,depth+1),body};
+    }
+    case 'length':if(node.array.type.kind==='string'&&node.type.kind==='float')return primitive('read text length',[expression(node.array,environment,depth+1)]);return refuse(node,'this length requires the actual array allocation model');
+    case 'stringMap':{
+     const operation={trim:'trim text',trimStart:'trim text start',trimEnd:'trim text end'}[node.op];if(!operation)return refuse(node,'this string mapping requires its complete source definition');
+     return primitive(operation,[expression(node.string,environment,depth+1)]);
+    }
+    case 'stringTest':{
+     const left=expression(node.string,environment,depth+1),right=expression(node.search,environment,depth+1),operation={startsWith:'test text prefix',endsWith:'test text suffix',includes:'test text inclusion'}[node.op];
+     if(operation)return primitive(operation,[left,right]);
+     if(!['unicodeCodeUnitLessThan','unicodeCodeUnitLessThanOrEqual','unicodeCodeUnitGreaterThan','unicodeCodeUnitGreaterThanOrEqual'].includes(node.op))return refuse(node,'this text test requires its complete source operation');
+     const identity=nextBinding++,value={$:'sourceBinding',identity},zero=constant({$:'number',value:0}),greater=node.op==='unicodeCodeUnitGreaterThan'||node.op==='unicodeCodeUnitGreaterThanOrEqual';
+     const less={$:'sourceNumberBinary',operator:'lessThan',left:greater?zero:value,right:greater?value:zero};
+     return {$:'sourceLet',identity,value:primitive('compare text',[left,right]),body:node.op.endsWith('OrEqual')?{$:'sourceIf',condition:less,yes:constant({$:'boolean',value:true}),no:{$:'sourceStrictEqual',left:value,right:zero}}:less};
+    }
+
     case 'var':{const identity=environment.get(node.name);if(identity===undefined)return refuse(node,'a variable use has no actual lexical owner');return {$:'sourceBinding',identity};}
     case 'let':{
      const value=expression(node.value,environment,depth+1),identity=nextBinding++,nested=new Map(environment);nested.set(node.name,identity);
@@ -66,6 +87,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'if':return {$:'sourceIf',condition:expression(node.cond,environment,depth+1),yes:expression(node.then,environment,depth+1),no:expression(node.else,environment,depth+1)};
     case 'binary':{
+     if(node.op==='concat'&&node.left.type.kind==='string'&&node.right.type.kind==='string')return primitive('concatenate text',[expression(node.left,environment,depth+1),expression(node.right,environment,depth+1)]);
      if(['and','or'].includes(node.op)&&node.left.type.kind==='bool'&&node.right.type.kind==='bool')return {$:'sourceIf',condition:expression(node.left,environment,depth+1),yes:node.op==='and'?expression(node.right,environment,depth+1):constant({$:'boolean',value:true}),no:node.op==='or'?expression(node.right,environment,depth+1):constant({$:'boolean',value:false})};
      if(node.op==='eq'||node.op==='ne'){
       const value={$:'sourceStrictEqual',left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
@@ -99,6 +121,10 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      return {$:'sourceCall',callee:constant({$:'object',identity:actual.identity,callable:true}),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
     }
     case 'math':case 'optionalPredicate':{
+     if(node.k==='math'&&['coerceJavaScriptNumber','convertJavaScriptNumber'].includes(node.op)&&node.args.length===1&&node.args[0].type.kind==='float')return expression(node.args[0],environment,depth+1);
+     const numericOperation=node.k==='math'?{trunc:'truncate number',min:'read minimum number',max:'read maximum number'}[node.op]:undefined;
+     if(numericOperation&&node.args.every(arg=>arg.type.kind==='float'))return primitive(numericOperation,node.args.map(arg=>expression(arg,environment,depth+1)));
+
      const argument=node.k==='math'?node.args[0]:node.arg;
      if(node.k==='math'&&readJavaScriptBigIntegerResultOperation(node.op)==='number-power'&&node.args.length===2&&node.args.every(arg=>arg.type.kind==='float'))return {$:'sourceNumberBinary',operator:'power',left:expression(node.args[0],environment,depth+1),right:expression(node.args[1],environment,depth+1)};
      if(!argument||!['isNaN','isFinite'].includes(node.op)||node.k==='math'&&(node.args.length!==1||argument.type.kind!=='float')||node.k==='optionalPredicate'&&(argument.type.kind!=='option'||argument.type.element.kind!=='float'))return refuse(node,'this intrinsic requires its complete source lowering');
@@ -109,6 +135,12 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      return {$:'sourceLet',identity,value:expression(argument,environment,depth+1),body};
     }
     case 'method':{
+     if(node.object.type.kind==='string'){
+      const operation={slice:'slice text',charAt:'read text character',at:'read relative text character',codePointAt:'read text code point',indexOf:'find text',lastIndexOf:'find last text'}[node.op];
+      if(!operation)return refuse(node,'this text method requires its complete source operation');
+      return primitive(operation,[expression(node.object,environment,depth+1),...node.args.map(arg=>expression(arg,environment,depth+1))]);
+     }
+
      const operation=readRecordFieldWriteOperator(node.op),field=readRecordFieldWriteName(node.op);
      if(!operation||node.object.type.kind!=='record'||node.object.type.reference!==true)return refuse(node,'this method requires its actual source operation');
      const identity=nextBinding++,saved={$:'sourceBinding',identity},key=constant({$:'text',units:Array.from({length:field.length},(_,index)=>field.charCodeAt(index))});

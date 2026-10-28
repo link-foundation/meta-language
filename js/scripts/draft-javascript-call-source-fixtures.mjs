@@ -47,6 +47,38 @@ rows.push({name:'greater comparison preserves both operand mutation order',sourc
  {name:'Number predicate evaluates every otherwise unused extra argument',source:'/** @param {number} value @param {{value:number}} holder @returns {boolean} */ export function predicate(value,holder){return Number.isNaN(value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'predicate',functions:['predicate','update'],referenceSemantics:true,arguments:[number(NaN),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:{$:'boolean',value:true}});
 rows.push({name:'actual immediately applied body retains its immutable lexical capture',source:'/** @param {number} value @returns {number} */ export function immediate(value){return ((other)=>other+value)(1);}',entry:'immediate',functions:['immediate'],arguments:[number(40)],expected:number(41)},
  {name:'immediate checked body runs after all argument heap effects',source:'/** @param {{value:number}} holder @returns {number} */ export function immediate(holder){const alias=holder;return ((value)=>alias.value+value)(update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=5;return 2;}',entry:'immediate',functions:['immediate','update'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(5)))])],expected:number(7)});
+const text=units=>({$:'text',units}),sample=text([65,55357,56832,55296]);
+// Original programs and expected code units are literal independent inputs.
+// This author writes them without parsing, checking or executing their bodies.
+for(const [name,body,expected]of [
+ ['UTF16 length counts each surrogate','value.length',number(4)],
+ ['character retains an individual high surrogate','value.charAt(1)',text([55357])],
+ ['code unit retains an individual low surrogate','value.charCodeAt(2)',number(56832)],
+ ['relative character retains an isolated surrogate','value.at(-1)',text([55296])],
+ ['code point combines only an actual surrogate pair','value.codePointAt(1)',number(128512)],
+ ['code point past the end retains undefined','value.codePointAt(4)',undef],
+ ['slice retains partial pairs and positive infinite end','value.slice(-2,Infinity)',text([56832,55296])],
+ ['substring swaps its actual converted bounds','value.substring(2,0)',text([65,55357])],
+ ['substr keeps its independent length semantics','value.substr(1,2)',text([55357,56832])],
+ ['character past the end returns empty text','value.charAt(Infinity)',text([])],
+ ['code unit past the end returns NaN','value.charCodeAt(-1)',number(NaN)],
+ ['relative character before the beginning retains undefined','value.at(-5)',undef],
+ ])rows.push({name,source:'/** @param {string} value */ export function inspect(value){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:[sample],expected});
+for(const [name,body,left,right,expected]of [
+ ['search can match the low half of a surrogate pair','left.indexOf(right,0)',sample,text([56832]),number(2)],
+ ['last search treats NaN as positive infinity','left.lastIndexOf(right,NaN)',sample,text([55357]),number(1)],
+ ['prefix uses its supplied position','left.startsWith(right,1)',sample,text([55357]),{$:'boolean',value:true}],
+ ['suffix uses its supplied end','left.endsWith(right,3)',sample,text([56832]),{$:'boolean',value:true}],
+ ['inclusion uses its supplied position','left.includes(right,2)',sample,text([55357]),{$:'boolean',value:false}],
+ ['text ordering compares unsigned code units','left<right',text([55296]),text([57344]),{$:'boolean',value:true}],
+ ['concatenation retains isolated surrogates and zero','left+right',text([55296]),text([0,56320]),text([55296,0,56320])],
+ ])rows.push({name,source:'/** @param {string} left @param {string} right */ export function inspect(left,right){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:[left,right],expected});
+rows.push({name:'trim removes ECMAScript whitespace while preserving isolated code units',source:'/** @param {string} value */ export function inspect(value){return value.trim();}',entry:'inspect',functions:['inspect'],arguments:[text([65279,32,55296,10])],expected:text([55296])});
+for(const [name,body,args,expected]of [
+ ['minimum keeps negative zero','Math.min(left,right)',[number(-0),number(0)],number(-0)],
+ ['maximum keeps positive zero','Math.max(left,right)',[number(-0),number(0)],number(0)],
+ ['truncation keeps negative fractional zero','Math.trunc(left)',[number(-0.25),number(0)],number(-0)],
+ ])rows.push({name,source:'/** @param {number} left @param {number} right */ export function inspect(left,right){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:args,expected});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

@@ -1,3 +1,4 @@
+import {readJavaScriptCallPrimitiveArityError,executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
 import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJavaScriptCallCodeRegisters,testJavaScriptCallStrictEqual} from './javascript-call-code.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySet} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -58,6 +59,7 @@ export function readJavaScriptCallProgramError(program,heap){
         case 'pushHandler':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call handlers require actual instruction targets';break;
         case 'argument':if(!testJavaScriptCallCoordinate(instruction.index,1048576))return 'call argument reads require exact bounded coordinates';break;
         case 'constant':if(readJavaScriptOrdinaryValueError(heap,instruction.value)!=='')return 'call constants belong to the latest global context';break;
+        case 'primitive':{const error=readJavaScriptCallPrimitiveArityError(instruction.operation,instruction.arguments.length);if(error!=='')return error;break;}
         case 'numberBinary':if(!['add','subtract','multiply','divide','remainder','power','lessThan','equal'].includes(instruction.operator))return 'call number instructions require an actual registered operation';break;
         case 'propertyKey':if(!program.realms.includes(instruction.realm))return 'a property key operation retains its actual intrinsic realm';break;
         case 'propertyDefinition':if(!program.realms.includes(instruction.realm))return 'a property definition retains its actual intrinsic realm';break;
@@ -217,6 +219,17 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
   }
 }
 
+/** @param {JavaScriptCallMachine} machine @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction @returns {JavaScriptCallMachineTransition} */
+export function executeJavaScriptCallPrimitiveInstruction(machine,frame,instruction){
+ if(instruction.$!=='primitive')return {$:'machineInvalid',heap:machine.heap,reason:'a primitive executor requires its actual selected instruction'};
+ const result=executeJavaScriptCallPrimitive(instruction.operation,instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}));
+ switch(result.$){
+  case 'primitiveValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,position:frame.position+1},instruction.destination,result.value))};
+  case 'primitiveInvalid':return {$:'machineInvalid',heap:machine.heap,reason:result.reason};
+  case 'primitiveResourceLimit':return {$:'machineResourceLimit',machine,reason:result.reason};
+ }
+}
+
 /** One instruction/continuation per step. Resource limits are explicit model
  * outcomes; no timeout is passed off as a language-level exception.
  * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @returns {JavaScriptCallMachineTransition} */
@@ -262,6 +275,7 @@ export function stepJavaScriptCallMachine(program,machine){
       const value=op==='add'?left.value+right.value:op==='subtract'?left.value-right.value:op==='multiply'?left.value*right.value:op==='divide'?left.value/right.value:op==='remainder'?left.value%right.value:left.value**right.value;
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'number',value}))};
     }
+    case 'primitive':return executeJavaScriptCallPrimitiveInstruction(machine,frame,instruction);
     case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
     case 'propertyKey':return acceptJavaScriptCallKey(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyKeyConversion(machine.heap,registers[instruction.input]??{$:'undefined'},program.exoticKey));
     case 'propertyDefinition':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyDefinition(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.attributes]??{$:'undefined'},program.exoticKey));

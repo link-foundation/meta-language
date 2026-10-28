@@ -491,6 +491,7 @@ pub enum JavaScriptCallInstruction {
     SameValue(f64, f64, f64),
     StrictEqual(f64, f64, f64),
     RequireWrite(f64),
+    Primitive(f64, String, Vec<f64>),
     OrdinaryGet(f64, f64, f64, f64),
     OrdinarySet(f64, f64, f64, f64, f64),
     PropertyKey(f64, f64, self::ml::Big),
@@ -508,6 +509,13 @@ pub enum JavaScriptCallProgram {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallPrimitiveResult {
+    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
+    PrimitiveInvalid(String),
+    PrimitiveResourceLimit(String),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallSource {
     SourceConstant(Box<self::JavaScriptSemanticValue>),
     SourceBinding(f64),
@@ -516,6 +524,7 @@ pub enum JavaScriptCallSource {
     SourceNumberBinary(String, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceSameValue(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceStrictEqual(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourcePrimitive(String, Vec<self::JavaScriptCallSource>),
     SourceRecur(Vec<self::JavaScriptCallSource>),
     SourceSet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),

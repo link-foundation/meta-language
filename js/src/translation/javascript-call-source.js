@@ -1,4 +1,5 @@
 import {testJavaScriptCallCodeCoordinate,readJavaScriptCallConstantError} from './javascript-call-code.js';
+import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitives.js';
 
 /** Binding identities are supplied from actual checked lexical occurrences.
  * The compiler never derives binding identity from equal source spellings.
@@ -9,6 +10,7 @@ import {testJavaScriptCallCodeCoordinate,readJavaScriptCallConstantError} from '
  * {$:'sourceNumberBinary',operator:string,left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceSameValue',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceStrictEqual',left:JavaScriptCallSource,right:JavaScriptCallSource} |
+ * {$:'sourcePrimitive',operation:string,arguments:JavaScriptCallSource[]} |
  * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
@@ -68,6 +70,13 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    }
    if(source.$==='sourceStrictEqual')return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'strictEqual',destination:result.register,left:left.register,right:right.register})};
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'sameValue',destination:result.register,left:left.register,right:right.register})};
+  }
+  case 'sourcePrimitive':{
+   const error=readJavaScriptCallPrimitiveArityError(source.operation,source.arguments.length);if(error!=='')return refuseJavaScriptCallSource(state,error);
+   let current=state,arguments_=[];
+   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;arguments_.push(value.register);}
+   const result=allocateJavaScriptCallSourceRegister(current);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'primitive',destination:result.register,operation:source.operation,arguments:arguments_})};
   }
   case 'sourceRecur':{
    if(source.arguments.length!==state.parameters)return refuseJavaScriptCallSource(state,'loop updates require every actual parameter operand');

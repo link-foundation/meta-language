@@ -10,6 +10,7 @@ case "sourceIf":return {$:"sourceIf","condition":decodeJavaScriptCallSource(valu
 case "sourceNumberBinary":return {$:"sourceNumberBinary","operator":scalar(value["operator"],"string"),"left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
 case "sourceSameValue":return {$:"sourceSameValue","left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
 case "sourceStrictEqual":return {$:"sourceStrictEqual","left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
+case "sourcePrimitive":return {$:"sourcePrimitive","operation":scalar(value["operation"],"string"),"arguments":value["arguments"].map(value=>decodeJavaScriptCallSource(value))};
 case "sourceRecur":return {$:"sourceRecur","arguments":value["arguments"].map(value=>decodeJavaScriptCallSource(value))};
 case "sourceSet":return {$:"sourceSet","object":decodeJavaScriptCallSource(value["object"]),"key":decodeJavaScriptCallSource(value["key"]),"value":decodeJavaScriptCallSource(value["value"])};
 case "sourceGet":return {$:"sourceGet","object":decodeJavaScriptCallSource(value["object"]),"key":decodeJavaScriptCallSource(value["key"])};
@@ -23,6 +24,7 @@ case "sourceIf":return {$:"sourceIf","condition":encodeJavaScriptCallSource(valu
 case "sourceNumberBinary":return {$:"sourceNumberBinary","operator":scalar(value["operator"],"string"),"left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
 case "sourceSameValue":return {$:"sourceSameValue","left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
 case "sourceStrictEqual":return {$:"sourceStrictEqual","left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
+case "sourcePrimitive":return {$:"sourcePrimitive","operation":scalar(value["operation"],"string"),"arguments":value["arguments"].map(value=>encodeJavaScriptCallSource(value))};
 case "sourceRecur":return {$:"sourceRecur","arguments":value["arguments"].map(value=>encodeJavaScriptCallSource(value))};
 case "sourceSet":return {$:"sourceSet","object":encodeJavaScriptCallSource(value["object"]),"key":encodeJavaScriptCallSource(value["key"]),"value":encodeJavaScriptCallSource(value["value"])};
 case "sourceGet":return {$:"sourceGet","object":encodeJavaScriptCallSource(value["object"]),"key":encodeJavaScriptCallSource(value["key"])};
@@ -69,6 +71,7 @@ case "numberBinary":return {$:"numberBinary","destination":scalar(value["destina
 case "sameValue":return {$:"sameValue","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "strictEqual":return {$:"strictEqual","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "requireWrite":return {$:"requireWrite","success":scalar(value["success"],"number")};
+case "primitive":return {$:"primitive","destination":scalar(value["destination"],"number"),"operation":scalar(value["operation"],"string"),"arguments":value["arguments"].map(value=>scalar(value,"number"))};
 case "ordinaryGet":return {$:"ordinaryGet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "ordinarySet":return {$:"ordinarySet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"value":scalar(value["value"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "propertyKey":return {$:"propertyKey","destination":scalar(value["destination"],"number"),"input":scalar(value["input"],"number"),"realm":scalar(value["realm"],"integer")};
@@ -89,6 +92,7 @@ case "numberBinary":return {$:"numberBinary","destination":scalar(value["destina
 case "sameValue":return {$:"sameValue","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "strictEqual":return {$:"strictEqual","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "requireWrite":return {$:"requireWrite","success":scalar(value["success"],"number")};
+case "primitive":return {$:"primitive","destination":scalar(value["destination"],"number"),"operation":scalar(value["operation"],"string"),"arguments":value["arguments"].map(value=>scalar(value,"number"))};
 case "ordinaryGet":return {$:"ordinaryGet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "ordinarySet":return {$:"ordinarySet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"value":scalar(value["value"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "propertyKey":return {$:"propertyKey","destination":scalar(value["destination"],"number"),"input":scalar(value["input"],"number"),"realm":String(value["realm"])};

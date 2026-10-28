@@ -9482,6 +9482,27 @@ without numeric coercion. Checked source wrappers still evaluate unused extra
 arguments. Number power uses the existing qualified operation and instruction;
 other intrinsic operations retain their explicit missing-lowering diagnostics.
 
+The call compiler and executor also share typed primitive instructions whose
+definitions reuse the existing normative UTF-16 operations. Length, character
+and code-point access, slicing, searches, trimming, concatenation and ordering
+operate on complete unsigned code units, retaining isolated surrogates and
+exact absence results. Checked source substring, substr and character wrappers
+lower their actual bodies and conversions; helper names never substitute for
+those definitions. Number truncation and minimum/maximum preserve their actual
+empty-input, NaN and signed-zero behavior. Source coalescing evaluates its left
+operand once and evaluates the fallback only for its declared absence policy.
+The complete primitive dependency closure is automatically translated with the
+compiler and executor, rather than replaced by handwritten native operations.
+
+Primitive operands must satisfy the checked primitive signatures. General
+dynamic coercions and replacement intrinsics remain required. Text output has
+an explicit 1,048,576-unit budget; search preflights the reused algorithm's
+maximum comparison count against 67,108,864. Exceeding a quota returns a resource
+outcome before the instruction advances; it does not create a language exception
+or a partial successful value. Deferred controls preserve independent original
+source, exact code units and Number bits, invalid operation/arity inputs and
+every preceding control. These drafts do not establish executed parity.
+
 ### Ordered typed record shapes draft
 
 A qualified layout profile represents a typed record by a shared ordered shape

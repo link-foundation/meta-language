@@ -824,6 +824,13 @@ pub enum JavaScriptSemanticValue {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptCallPrimitiveResult {
+    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
+    PrimitiveInvalid(self::ml_string::Text),
+    PrimitiveResourceLimit(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallInstruction {
     Constant(f64, Box<self::JavaScriptSemanticValue>),
     Copy(f64, f64),
@@ -839,6 +846,7 @@ pub enum JavaScriptCallInstruction {
     SameValue(f64, f64, f64),
     StrictEqual(f64, f64, f64),
     RequireWrite(f64),
+    Primitive(f64, self::ml_string::Text, Vec<f64>),
     OrdinaryGet(f64, f64, f64, f64),
     OrdinarySet(f64, f64, f64, f64, f64),
     PropertyKey(f64, f64, self::ml::Big),
@@ -900,14 +908,4 @@ pub enum JavaScriptPrimitiveConversionState {
 pub enum JavaScriptPrimitiveConversionCompletion {
     NormalCompletion(Box<self::JavaScriptSemanticValue>),
     ThrowCompletion(Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPrimitiveConversionTransition {
-    PrimitiveContinuation(Box<self::JavaScriptPrimitiveConversionState>),
-    PrimitiveCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
-    PrimitiveCompleted(Box<self::JavaScriptSemanticValue>),
-    PrimitiveThrow(Box<self::JavaScriptSemanticValue>),
-    PrimitiveIntrinsicError(self::ml_string::Text, self::ml_string::Text),
-    PrimitiveInvalid(self::ml_string::Text),
 }

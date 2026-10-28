@@ -39,6 +39,15 @@ pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptC
             Box::new(decode_java_script_call_source(&data["left"])),
             Box::new(decode_java_script_call_source(&data["right"])),
         ),
+        "sourcePrimitive" => native::JavaScriptCallSource::SourcePrimitive(
+            data["operation"].as_str().expect("model text").to_owned(),
+            data["arguments"]
+                .as_array()
+                .expect("model array")
+                .iter()
+                .map(decode_java_script_call_source)
+                .collect(),
+        ),
         "sourceRecur" => native::JavaScriptCallSource::SourceRecur(
             data["arguments"]
                 .as_array()
@@ -95,6 +104,9 @@ pub(super) fn encode_java_script_call_source(value: &native::JavaScriptCallSourc
         }
         native::JavaScriptCallSource::SourceStrictEqual(wire_field_0, wire_field_1) => {
             json!({"$":"sourceStrictEqual","left":encode_java_script_call_source(wire_field_0),"right":encode_java_script_call_source(wire_field_1)})
+        }
+        native::JavaScriptCallSource::SourcePrimitive(wire_field_0, wire_field_1) => {
+            json!({"$":"sourcePrimitive","operation":Data::String(wire_field_0.to_owned()),"arguments":Data::Array(wire_field_1.iter().map(encode_java_script_call_source).collect())})
         }
         native::JavaScriptCallSource::SourceRecur(wire_field_0) => {
             json!({"$":"sourceRecur","arguments":Data::Array(wire_field_0.iter().map(encode_java_script_call_source).collect())})
@@ -261,6 +273,16 @@ pub(super) fn decode_java_script_call_instruction(
         "requireWrite" => native::JavaScriptCallInstruction::RequireWrite(
             data["success"].as_f64().expect("model Number"),
         ),
+        "primitive" => native::JavaScriptCallInstruction::Primitive(
+            data["destination"].as_f64().expect("model Number"),
+            data["operation"].as_str().expect("model text").to_owned(),
+            data["arguments"]
+                .as_array()
+                .expect("model array")
+                .iter()
+                .map(|wire_value| wire_value.as_f64().expect("model Number"))
+                .collect(),
+        ),
         "ordinaryGet" => native::JavaScriptCallInstruction::OrdinaryGet(
             data["destination"].as_f64().expect("model Number"),
             data["object"].as_f64().expect("model Number"),
@@ -346,6 +368,9 @@ pub(super) fn encode_java_script_call_instruction(
         }
         native::JavaScriptCallInstruction::RequireWrite(wire_field_0) => {
             json!({"$":"requireWrite","success":wire_number(*wire_field_0)})
+        }
+        native::JavaScriptCallInstruction::Primitive(wire_field_0, wire_field_1, wire_field_2) => {
+            json!({"$":"primitive","destination":wire_number(*wire_field_0),"operation":Data::String(wire_field_1.to_owned()),"arguments":Data::Array(wire_field_2.iter().map(|wire_value|wire_number(*wire_value)).collect())})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,

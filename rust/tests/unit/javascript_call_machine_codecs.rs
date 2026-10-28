@@ -308,6 +308,16 @@ pub(super) fn decode_java_script_call_instruction(
         "requireWrite" => native::JavaScriptCallInstruction::RequireWrite(
             data["success"].as_f64().expect("model Number"),
         ),
+        "primitive" => native::JavaScriptCallInstruction::Primitive(
+            data["destination"].as_f64().expect("model Number"),
+            native::ml_string::Text::from_text(data["operation"].as_str().expect("model text")),
+            data["arguments"]
+                .as_array()
+                .expect("model array")
+                .iter()
+                .map(|wire_value| wire_value.as_f64().expect("model Number"))
+                .collect(),
+        ),
         "ordinaryGet" => native::JavaScriptCallInstruction::OrdinaryGet(
             data["destination"].as_f64().expect("model Number"),
             data["object"].as_f64().expect("model Number"),
@@ -393,6 +403,9 @@ pub(super) fn encode_java_script_call_instruction(
         }
         native::JavaScriptCallInstruction::RequireWrite(wire_field_0) => {
             json!({"$":"requireWrite","success":wire_number(*wire_field_0)})
+        }
+        native::JavaScriptCallInstruction::Primitive(wire_field_0, wire_field_1, wire_field_2) => {
+            json!({"$":"primitive","destination":wire_number(*wire_field_0),"operation":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units")),"arguments":Data::Array(wire_field_2.iter().map(|wire_value|wire_number(*wire_value)).collect())})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,
