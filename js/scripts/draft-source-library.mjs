@@ -17,7 +17,7 @@ import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {projectSourceLibraryEntryPoints} from './source-library-entry-points.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', recordShapes='' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
@@ -63,7 +63,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     // nothing decodes/replays an archive or executes the represented program.
     if(programEntryPoints!==''&&programEntryPoints!=='source module exports 1')throw new TypeError('unknown source program entry-point selection');
     const selected=programEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};programProjection=selected.projection;
-    const linked = encodeTypedProgramLinks(selected.program,{valueSharing,...(sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{})});
+    const linked = encodeTypedProgramLinks(selected.program,{valueSharing,recordShapes,...(sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{})});
     const text = linked.network.toLino();
     writeFileSync(new URL('js/src/data/' + programAsset + '.lino', root), text);
     writeFileSync(new URL('rust/src/data/' + programAsset + '.lino', root), text);
@@ -75,7 +75,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(programProjection?{programProjection}:{}), ...(valueSharing?{valueSharing}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(programProjection?{programProjection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     ...(sourceDeclarationOwners ? {sourceDeclarationOwners} : {}),

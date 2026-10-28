@@ -72,7 +72,7 @@ export { eraseTypeScript } from './typescript-erasure.js';
 export function projectTypeScriptTyping(source) {
   return projectTypeScriptTypingDetails(source).code;
 }
-export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
+export { createTypedProgramLinks, encodeTypedProgramLinks, encodeTypedProgramLinksWithValueSharing, encodeTypedProgramLinksWithRecordShapes, decodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 export {createNumberBitwiseProgramLinks} from './number-bitwise-program.js';
 export { createFixedIntegerCastProgramLinks } from './fixed-integer-cast-program.js';
 export { createReferenceMethodProgramLinks } from './reference-method-program.js';

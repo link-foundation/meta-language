@@ -523,8 +523,8 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_type_namespace_model,
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
     emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
-    encode_typed_program_links_with_value_sharing, read_typed_program_binding_identities,
-    typed_program_links_schema,
+    encode_typed_program_links_with_record_shapes, encode_typed_program_links_with_value_sharing,
+    read_typed_program_binding_identities, typed_program_links_schema,
 };
 pub use unsigned_link_identity_program::create_unsigned_link_identity_program_links;
 pub use unsigned_link_network::{

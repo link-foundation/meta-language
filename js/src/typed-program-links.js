@@ -1,6 +1,7 @@
 // The checked semantic program, represented entirely by inspectable links.
 // No source text, source envelope, JSON AST payload or cached emission is stored.
 import { readRuntimeProjectData } from './project-data-loader.js';
+import {readTypedProgramRecordShapeProfile,selectTypedProgramRecordShapes,readTypedProgramRecordShapeFields,compactTypedProgramRecordShapes} from './typed-program-record-shapes.js';
 import { LinkNetwork } from './network.js';
 import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { parseJavaScript } from './translation/javascript.js';
@@ -121,7 +122,8 @@ function bindingTargets(program) {
   return { targets, patternOverrides, typeNodes:seenTypes };
 }
 
-export function encodeTypedProgramLinks(program, { provenance, valueSharing='' } = {}) {
+export function encodeTypedProgramLinks(program, { provenance, valueSharing='', recordShapes='' } = {}) {
+  if(recordShapes!==''){if(recordShapes!==readTypedProgramRecordShapeProfile().model)throw new TypeError('unregistered typed program record shape profile');}
   if(valueSharing!==''&&(valueSharing!==sharingProfile.model||sharingProfile.schemaVersion!==1||sharingProfile.scalarValues!==true||sharingProfile.typeRecords!==true||sharingProfile.sourceSpans!==true||sharingProfile.occurrences!==false))throw new TypeError('unregistered typed program value sharing profile');
   validateLinkedTypedProgram(program);
   recheckLinkedTypedProgram(program);
@@ -179,8 +181,11 @@ export function encodeTypedProgramLinks(program, { provenance, valueSharing='' }
   for (const reference of pending) network.insertFieldRelation(reference.parent, reference.label, encode(reference.target));
   const root = network.insertLink([body], metadata(schema.root, String(schema.schemaVersion)));
   if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', encode(provenance,'',false));
-  return { network, root };
+  return recordShapes?compactTypedProgramRecordShapes(network,root,schema.language,schema.containers.record):{network,root};
 }
+
+export function encodeTypedProgramLinksWithValueSharing(program,provenance,profile){if(typeof profile!=='string'||profile==='')throw new TypeError('unregistered typed program value sharing profile');return encodeTypedProgramLinks(program,{provenance,valueSharing:profile});}
+export function encodeTypedProgramLinksWithRecordShapes(program,provenance,profile){if(typeof profile!=='string'||profile==='')throw new TypeError('unregistered typed program record shape profile');return encodeTypedProgramLinks(program,{provenance,recordShapes:profile});}
 
 function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, depthLimit = 256 } = {}) {
   const rootLink = network.link(root);
@@ -191,6 +196,7 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
     if (!fields.has(key)) fields.set(key, []);
     fields.get(key).push(relation);
   }
+  const recordShapes=selectTypedProgramRecordShapes(network,root,schema.language);
   const objects = new Map();
   const active = new Set();
   const pending = [];
@@ -210,9 +216,10 @@ function decodeTypedProgramLinksContext(network, root, { nodeLimit = 100_000, de
       objects.set(key, value);
       active.add(key);
       if (kind === 'record') {
-        if (link.references().length) throw new TypeError('a program record has positional references');
+        if(link.references().length&&!recordShapes)throw new TypeError('a program record has positional references');
+        const recordFields=link.references().length?readTypedProgramRecordShapeFields(network,link,schema.language,recordShapes,fields):(fields.get(key)??[]);
         const labels = new Set();
-        for (const relation of fields.get(key) ?? []) {
+        for (const relation of recordFields) {
           if (labels.has(relation.label)) throw new TypeError('a program record contains a duplicate field');
           labels.add(relation.label);
           if (acceptProgramReferenceField(relation.label)) pending.push({ owner: value, label: relation.label, target: relation.child });

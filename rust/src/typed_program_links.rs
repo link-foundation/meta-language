@@ -28,6 +28,7 @@ mod codec;
 pub mod program_numeric_metadata;
 pub mod program_numeric_metadata_rules;
 mod projection;
+mod record_shapes;
 pub mod source_span_rules;
 pub mod source_spans;
 
@@ -210,6 +211,26 @@ pub fn encode_typed_program_links_with_value_sharing(
     }
     checked::validate(program)?;
     codec::encode_values(program, provenance)
+}
+/// Encode inspectable ordered record shapes, retaining existing value aliases.
+/// Owning records and lexical binders remain separate occurrences.
+///
+/// # Errors
+/// Refuses unknown layout profiles and every existing semantic/structural defect.
+pub fn encode_typed_program_links_with_record_shapes(
+    program: &Program,
+    provenance: Option<&Value>,
+    profile: &str,
+) -> Result<TypedProgramLinks> {
+    record_shapes::validate_selection(profile)?;
+    checked::validate(program)?;
+    record_shapes::compact(codec::encode(program, provenance)?, profile)
+}
+pub(crate) fn expand_typed_program_record_shapes(
+    network: &LinkNetwork,
+    root: LinkId,
+) -> Result<LinkNetwork> {
+    record_shapes::expand(network, root)
 }
 /// Decode and recheck a graph with the default structural bounds.
 ///

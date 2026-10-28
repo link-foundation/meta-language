@@ -50,6 +50,7 @@ struct Decoder<'a> {
     references: HashMap<LinkId, BTreeMap<String, LinkId>>,
     limits: TypedProgramLinksLimits,
     visited: usize,
+    record_shapes: bool,
 }
 impl Decoder<'_> {
     fn read(&mut self, id: LinkId, depth: usize) -> Result<()> {
@@ -83,12 +84,22 @@ impl Decoder<'_> {
         self.active.insert(id);
         let data = match kind.as_str() {
             "record" => {
-                if !link.references().is_empty() {
+                if !link.references().is_empty() && !self.record_shapes {
                     return Err(error("a program record has positional references"));
                 }
+                let record_fields = if link.references().is_empty() {
+                    self.fields.get(&id).cloned().unwrap_or_default()
+                } else {
+                    super::record_shapes::read_fields(
+                        network,
+                        id,
+                        self.record_shapes,
+                        &self.fields,
+                    )?
+                };
                 let mut fields = BTreeMap::new();
                 let mut labels = BTreeSet::new();
-                for (label, child) in self.fields.get(&id).cloned().unwrap_or_default() {
+                for (label, child) in record_fields {
                     if !labels.insert(label.clone()) {
                         return Err(error("a program record contains a duplicate field"));
                     }
@@ -494,6 +505,7 @@ pub(super) fn decode_with_binding_identities(
                 .push((label.to_owned(), *child));
         }
     }
+    let record_shapes = super::record_shapes::selected(network, root, &fields)?;
     let mut decoder = Decoder {
         network,
         fields,
@@ -502,6 +514,7 @@ pub(super) fn decode_with_binding_identities(
         references: HashMap::new(),
         limits,
         visited: 0,
+        record_shapes,
     };
     let body = link.references()[0];
     decoder.read(body, 0)?;

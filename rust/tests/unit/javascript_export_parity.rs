@@ -482,6 +482,16 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "encode_typed_program_links",
         "function",
     ),
+    (
+        "encodeTypedProgramLinksWithRecordShapes",
+        "encode_typed_program_links_with_record_shapes",
+        "function",
+    ),
+    (
+        "encodeTypedProgramLinksWithValueSharing",
+        "encode_typed_program_links_with_value_sharing",
+        "function",
+    ),
     ("eraseTypeScript", "erase_type_script", "function"),
     ("fourLanguageSupport", "FOUR_LANGUAGE_SUPPORT", "constant"),
     ("freeze", "LinkNetwork::freeze", "method"),

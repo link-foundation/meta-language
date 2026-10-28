@@ -199,6 +199,8 @@ use meta_language::encode_link_network_binary as _;
 use meta_language::encode_shared_numeric_function_definition as _;
 use meta_language::encode_structured_data_links as _;
 use meta_language::encode_typed_program_links as _;
+use meta_language::encode_typed_program_links_with_record_shapes as _;
+use meta_language::encode_typed_program_links_with_value_sharing as _;
 use meta_language::erase_type_script as _;
 use meta_language::global_concept_space_to_links as _;
 use meta_language::grammar_emitter as _;

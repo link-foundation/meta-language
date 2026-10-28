@@ -9481,3 +9481,31 @@ reversed comparison or repeated test. Optional predicates exclude absent values
 without numeric coercion. Checked source wrappers still evaluate unused extra
 arguments. Number power uses the existing qualified operation and instruction;
 other intrinsic operations retain their explicit missing-lowering diagnostics.
+
+### Ordered typed record shapes draft
+
+A qualified layout profile represents a typed record by a shared ordered shape
+link followed by its actual value/reference links. The shape references the
+existing explicit field points in order. Its root selection, shape declarations,
+roles and value coordinates are all inspectable Links. Exact role sequences can
+share storage without merging owning declarations, expression occurrences or
+lexical binders, or asserting cross-language concept equivalence.
+
+The profile is selected while constructing a fresh packet. Existing packets
+retain their representation and identities; text and binary round trips retain
+all identities in the selected layout. Complete source types, spans, ordering,
+binding references and provenance remain present. The decoder requires an exact
+qualified root selection and complete unique field points, refuses mixed direct
+and positional fields, and keeps the preceding node/depth/byte limits. Derived
+role-name projection is additionally bounded to16777216 UTF16 units before
+owned copies, preventing repeated edges from amplifying one stored label. Both
+adapters use structural admission rules generated from normative JavaScript.
+
+Algorithms that explicitly need named field relations receive a lossless view
+with the same owning value and binder identities. Formal meaning selection uses
+that view so storage layout does not become an extra semantic premise or a
+concept-equivalence certificate. Shared shape values are immutable; occurrence
+edits replace value edges. Default packet encoding keeps the preceding format.
+The source author records its explicit selection in each generation recipe.
+Value sharing is a separate selection; layout alone preserves the preceding
+value-alias topology. Source generation explicitly selects both profiles.

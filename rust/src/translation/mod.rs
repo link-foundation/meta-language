@@ -364,3 +364,5 @@ pub(crate) mod javascript_property_definition;
 pub(crate) mod javascript_call_machine;
 
 pub(crate) mod javascript_call_source;
+
+pub(crate) mod typed_record_shape_rules;

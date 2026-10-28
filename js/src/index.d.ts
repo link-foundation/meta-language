@@ -957,8 +957,10 @@ export function createTypedProgramLinks(
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
-  options?: { provenance?: unknown },
+  options?: { provenance?: unknown; valueSharing?: 'exact scalars, types and source spans 1'; recordShapes?: 'ordered typed program record fields 1' },
 ): TypedProgramLinks;
+export function encodeTypedProgramLinksWithValueSharing(program:CheckedTypedProgram,provenance:unknown,profile:string):TypedProgramLinks;
+export function encodeTypedProgramLinksWithRecordShapes(program:CheckedTypedProgram,provenance:unknown,profile:string):TypedProgramLinks;
 export const SOURCE_IDENTIFIER_UNICODE_VERSION: '17.0.0';
 export function normalizeUnicodeText(source: string): string;
 export function acceptLinkAllocationWord(value: number): boolean;
