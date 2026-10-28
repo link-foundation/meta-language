@@ -128,6 +128,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-record-parameter-program.lino" => Some(include_str!(
             "../data/javascript-record-parameter-program.lino"
         )),
+        "javascript-string-argument-program.lino" => Some(include_str!(
+            "../data/javascript-string-argument-program.lino"
+        )),
         "javascript-string-range-program.lino" => {
             Some(include_str!("../data/javascript-string-range-program.lino"))
         }

@@ -9703,3 +9703,12 @@ owners. An immutable lexical alias of an already bound value can be substituted
 at its actual uses when neither endpoint is shadowed and no deferred closure
 intervenes. Effectful initializers remain. Scope/occurrence receipts and complete
 original source remain inspectable; the semantic-work limit stays unchanged.
+
+The actual unshadowed String function also uses a shared argument-coordinate
+plan. String() produces empty text; an explicit undefined operand retains its
+own spelling. Every provided argument is evaluated once, in source order,
+before converting the captured first value. Ignored arguments keep effects and
+abrupt completion. Frontend adapters construct ordinary lexical nodes from the
+same source-generated plan and retain call spans. The selected4096-capture
+resource profile refuses oversized plans; spread iteration still needs its
+complete independent semantics.

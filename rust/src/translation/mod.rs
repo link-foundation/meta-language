@@ -366,3 +366,5 @@ pub(crate) mod javascript_call_machine;
 pub(crate) mod javascript_call_source;
 
 pub(crate) mod typed_record_shape_rules;
+
+pub(crate) mod javascript_string_argument_rules;

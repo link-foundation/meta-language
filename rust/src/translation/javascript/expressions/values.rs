@@ -491,9 +491,60 @@ impl JavaScriptParser {
         {
             return Self::array_method_expression(&array_form, args, None, called);
         }
-        if name == "String" && args.len() == 1 && self.has_standard_builtin_owner(&token) {
-            let arg = args.remove(0);
-            return Ok(node(SNode::ToString { arg: Box::new(arg) }, called));
+        if name == "String" && self.has_standard_builtin_owner(&token) {
+            let plan = crate::translation::javascript_string_argument_rules::plan_java_script_string_arguments(args.len() as f64);
+            if plan.is_empty() {
+                return Err(unsupported(
+                    "String argument budget",
+                    "the actual argument capture exceeds its 4096-slot source profile",
+                    Some(called),
+                ));
+            }
+            if plan[0] == -1.0 {
+                return Ok(node(
+                    SNode::Str {
+                        value: String::new(),
+                    },
+                    called,
+                ));
+            }
+            if args.len() == 1 {
+                return Ok(node(
+                    SNode::ToString {
+                        arg: Box::new(args.remove(0)),
+                    },
+                    called,
+                ));
+            }
+            let names = plan
+                .iter()
+                .map(|_| {
+                    self.generated_count += 1;
+                    format!(
+                        "{}temporary_string_argument{}",
+                        self.generated_prefix, self.generated_count
+                    )
+                })
+                .collect::<Vec<_>>();
+            let mut body = node(
+                SNode::ToString {
+                    arg: Box::new(node(SExpr::name(&names[0]).node, called)),
+                },
+                called,
+            );
+            for index in plan.iter().rev() {
+                let slot = *index as usize;
+                body = node(
+                    SNode::Let {
+                        name: names[slot].clone(),
+                        ty: None,
+                        value: Box::new(args[slot].clone()),
+                        body: Box::new(body),
+                    },
+                    called,
+                );
+            }
+            return Ok(body);
         }
         if name == "Object.freeze" && args.len() == 1 && self.has_standard_builtin_owner(&token) {
             return self.freeze_object_argument(args.remove(0), called);

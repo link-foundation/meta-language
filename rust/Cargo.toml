@@ -155,6 +155,7 @@ include = [
     "src/data/javascript-property-key-conversion-program.lino",
     "src/data/javascript-record-order-program.lino",
     "src/data/javascript-record-parameter-program.lino",
+    "src/data/javascript-string-argument-program.lino",
     "src/data/javascript-string-range-program.lino",
     "src/data/javascript-string-unit-program.lino",
     "src/data/let-else-completion-program.lino",

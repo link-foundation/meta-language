@@ -1,3 +1,4 @@
+import {planJavaScriptStringArguments} from './javascript-string-argument-rules.js';
 import {findJavaScriptLexicalDeclarationConflict} from './lexical-declaration-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {readJavaScriptOptionalCallOperation,acceptJavaScriptOptionalCallHead,requireJavaScriptOptionalCallChain} from './javascript-optional-call-rules.js';
@@ -2573,7 +2574,16 @@ class JavaScriptParser {
       if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
       return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
     }
-    if (name === 'String' && args.length === 1 && standardOwner) return { k: 'toString', arg: args[0], span: called };
+    if(name==='String'&&standardOwner){
+      const plan=planJavaScriptStringArguments(args.length);
+      if(!plan.length)throw unsupported('String argument budget','the actual argument capture exceeds its 4096-slot source profile',called);
+      if(plan[0]===-1)return {k:'str',value:'',span:called};
+      if(args.length===1)return {k:'toString',arg:args[0],span:called};
+      const names=plan.map(()=>this.generatedPrefix+'temporary_string_argument'+(++this.generatedCount));
+      let body={k:'toString',arg:{k:'name',path:[names[0]],span:called},span:called};
+      for(const index of plan.toReversed())body={k:'let',name:names[index],value:args[index],body,span:called};
+      return body;
+    }
     if (name === 'Object.freeze' && args.length === 1 && standardOwner) {
       if (this.functionNames.has('Object') || this.externals.has('Object')) throw unsupported('shadowed Object.freeze', 'immutable products require the actual unshadowed Object.freeze built-in', called);
       const value = args[0];
