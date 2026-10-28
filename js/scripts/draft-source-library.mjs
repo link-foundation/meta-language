@@ -16,9 +16,10 @@ import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { readSourceLibraryClosure, readSourceLibraryDeclarationOwnership } from './read-source-library-closure.mjs';
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {projectSourceLibraryEntryPoints} from './source-library-entry-points.mjs';
+import {shareSourceBooleanConstructorMatches} from './source-boolean-match-sharing.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', recordShapes='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', recordShapes='' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
@@ -26,8 +27,11 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const source = sourceClosure?.source ?? readFileSync(new URL(sourcePath, root), 'utf8');
   const sourceSyntax=parseAuthoredJavaScriptModule(source,sourcePath);
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
-  const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
-  const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,program) : null;
+  const originalProgram = checkProgram(parseJavaScript(source, { referenceSemantics }));
+  const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,originalProgram) : null;
+  if(booleanMatchSharing!==''&&booleanMatchSharing!=='literal Boolean constructor match arms 1')throw new TypeError('unknown source Boolean match sharing selection');
+  const sharedMatches=booleanMatchSharing?shareSourceBooleanConstructorMatches(originalProgram):undefined;
+  const program=sharedMatches?.program??originalProgram;
   if(nativeEntryPoints!==''&&nativeEntryPoints!=='source module exports 1')throw new TypeError('unknown native source entry-point selection');
   const nativeSelection=nativeEntryPoints?projectSourceLibraryEntryPoints(program,sourceClosure,sourcePath):{program};
   const emitted = emitRust(nativeSelection.program, { arrayConsumption: true });
@@ -95,7 +99,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sharedMatches?{booleanMatchSharing:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     ...(sourceDeclarationOwners ? {sourceDeclarationOwners} : {}),

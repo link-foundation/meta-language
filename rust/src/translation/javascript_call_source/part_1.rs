@@ -651,7 +651,7 @@ pub fn read_java_script_call_primitive_arity_error(operation: &str, count: f64) 
                     String::from("")
                 } else {
                     {
-                        let unary = vec![String::from("truncate number"), String::from("read text length"), String::from("trim text"), String::from("trim text start"), String::from("trim text end"), String::from("convert explicit number"), String::from("coerce primitive number")];
+                        let unary = vec![String::from("truncate number"), String::from("read text length"), String::from("trim text"), String::from("trim text start"), String::from("trim text end"), String::from("convert explicit number"), String::from("coerce primitive number"), String::from("read absolute number"), String::from("floor number"), String::from("ceil number"), String::from("round number"), String::from("read number sign"), String::from("read square root"), String::from("test integer number"), String::from("test safe integer number")];
                         {
                             let binary = vec![String::from("read text code point"), String::from("read text character"), String::from("read relative text character"), String::from("concatenate text"), String::from("compare text"), String::from("test text prefix"), String::from("test text suffix"), String::from("test text inclusion")];
                             {

@@ -124,6 +124,7 @@ include = [
     "src/data/big-integer-bitwise-program.lino",
     "src/data/big-integer-conversion-program.lino",
     "src/data/binding-initialization-program.lino",
+    "src/data/boolean-constructor-match-program.lino",
     "src/data/callable-source-program.lino",
     "src/data/collection-access-program.lino",
     "src/data/conditional-chain-program.lino",

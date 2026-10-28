@@ -17,7 +17,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  const integerArity=readJavaScriptCallIntegerArity(operation);
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
- const unary=['truncate number','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number'];
+ const unary=['truncate number','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number',
+ 'read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'];
  const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
  const ternary=['slice text','find text','find last text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
@@ -31,7 +32,16 @@ export function executeJavaScriptCallNumericPrimitive(operation,values){
  if(operation==='read minimum number')return {$:'primitiveValue',value:{$:'number',value:Math.min(...numbers)}};
  if(operation==='read maximum number')return {$:'primitiveValue',value:{$:'number',value:Math.max(...numbers)}};
  if(operation==='construct text units')return {$:'primitiveValue',value:{$:'text',units:characterUnitsUtf16Text(numbers)}};
+ if(['read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation))return executeJavaScriptCallUnaryNumber(operation,numbers[0]??NaN);
  return {$:'primitiveInvalid',reason:'the numeric primitive executor needs its actual registered operation'};
+}
+/** @param {string} operation @param {number} number @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallUnaryNumber(operation,number){
+ if(operation==='test integer number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isInteger(number)}};
+ if(operation==='test safe integer number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isSafeInteger(number)}};
+ if(!['read absolute number','floor number','ceil number','round number','read number sign','read square root'].includes(operation))return {$:'primitiveInvalid',reason:'unary numeric primitives require their actual registered operation'};
+ const result=operation==='read absolute number'?Math.abs(number):operation==='floor number'?Math.floor(number):operation==='ceil number'?Math.ceil(number):operation==='round number'?Math.round(number):operation==='read number sign'?Math.sign(number):Math.sqrt(number);
+ return {$:'primitiveValue',value:{$:'number',value:result}};
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextPrimitive(operation,values){
@@ -62,20 +72,21 @@ export function executeJavaScriptCallTextPosition(operation,text,values){
 export function executeJavaScriptCallTextPair(operation,text,values){
  const second=values[1]??{$:'undefined'},third=values[2]??{$:'undefined'};
  if(second.$!=='text')return {$:'primitiveInvalid',reason:'text search and concatenation require the actual converted UTF16 operand'};
+ const needle=second.units;
  if(operation==='concatenate text'){
-  if(text.length+second.units.length>1048576)return {$:'primitiveResourceLimit',reason:'primitive text output exceeds its explicit UTF16 unit budget'};
-  return {$:'primitiveValue',value:{$:'text',units:text.concat(second.units)}};
+  if(text.length+needle.length>1048576)return {$:'primitiveResourceLimit',reason:'primitive text output exceeds its explicit UTF16 unit budget'};
+  return {$:'primitiveValue',value:{$:'text',units:text.concat(needle)}};
  }
- if(operation==='compare text')return {$:'primitiveValue',value:{$:'number',value:compareUtf16Text(text,second.units)}};
- if(operation==='test text prefix')return {$:'primitiveValue',value:{$:'boolean',value:startsUtf16Text(text,second.units)}};
- if(operation==='test text suffix')return {$:'primitiveValue',value:{$:'boolean',value:endsUtf16Text(text,second.units)}};
+ if(operation==='compare text')return {$:'primitiveValue',value:{$:'number',value:compareUtf16Text(text,needle)}};
+ if(operation==='test text prefix')return {$:'primitiveValue',value:{$:'boolean',value:startsUtf16Text(text,needle)}};
+ if(operation==='test text suffix')return {$:'primitiveValue',value:{$:'boolean',value:endsUtf16Text(text,needle)}};
  // This explicit preflight bounds the existing search algorithm's maximum
  // unit comparisons, separately from input/output and language exceptions.
- if((Math.max(0,text.length-second.units.length)+1)*second.units.length>67108864)return {$:'primitiveResourceLimit',reason:'primitive text search exceeds its explicit comparison work quota'};
- if(operation==='test text inclusion')return {$:'primitiveValue',value:{$:'boolean',value:includesUtf16Text(text,second.units)}};
+ if((Math.max(0,text.length-needle.length)+1)*needle.length>67108864)return {$:'primitiveResourceLimit',reason:'primitive text search exceeds its explicit comparison work quota'};
+ if(operation==='test text inclusion')return {$:'primitiveValue',value:{$:'boolean',value:includesUtf16Text(text,needle)}};
  if(operation==='find text'||operation==='find last text'){
   if(third.$!=='number')return {$:'primitiveInvalid',reason:'text search positions require their actual converted Number operand'};
-  return {$:'primitiveValue',value:{$:'number',value:operation==='find text'?indexUtf16Text(text,second.units,third.value):lastIndexUtf16Text(text,second.units,third.value)}};
+  return {$:'primitiveValue',value:{$:'number',value:operation==='find text'?indexUtf16Text(text,needle,third.value):lastIndexUtf16Text(text,needle,third.value)}};
  }
  return {$:'primitiveInvalid',reason:'the text primitive executor needs its actual registered operation'};
 }
@@ -85,5 +96,5 @@ export function executeJavaScriptCallPrimitive(operation,values){
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
  if(operation==='convert explicit number'||operation==='coerce primitive number')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
  if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);
- return operation==='truncate number'||operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units'?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
+ return ['truncate number','read minimum number','read maximum number','construct text units','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation)?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
 }

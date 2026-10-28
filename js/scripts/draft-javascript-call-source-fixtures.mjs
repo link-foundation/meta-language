@@ -139,6 +139,32 @@ rows.push({name:'explicit Number conversion rounds exact BigInt once',source:'/*
  {name:'coercing NaN predicate converts invalid text',source:'/** @param {string} value @returns {boolean} */ export function inspect(value){return isNaN(value);}',entry:'inspect',functions:['inspect'],arguments:[units('wrong')],expected:{$:'boolean',value:true}},
  {name:'implicit BigInt Number conversion requests the actual TypeError realm',source:'/** @param {bigint} value @returns {boolean} */ export function inspect(value){return isFinite(value);}',entry:'inspect',functions:['inspect'],arguments:[integer('1')],expectedOutcome:'allocation',errorClass:'TypeError',errorRealm:'1000',errorReason:'Cannot convert a BigInt value to a number'},
  {name:'Number conversion evaluates every extra argument heap effect',source:'/** @param {string} value @param {{value:number}} holder @returns {number} */ export function inspect(value,holder){return Number(value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[units('41'),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:number(41)});
+for(const [name,body,input,expected]of [
+ ['absolute value clears a negative zero sign','Math.abs(value)',number(-0),number(0)],
+ ['absolute value retains positive infinity','Math.abs(value)',number(-Infinity),number(Infinity)],
+ ['floor rounds a negative fraction downward','Math.floor(value)',number(-0.25),number(-1)],
+ ['ceiling keeps negative fractional zero','Math.ceil(value)',number(-0.25),number(-0)],
+ ['round keeps the negative halfway zero sign','Math.round(value)',number(-0.5),number(-0)],
+ ['round resolves a positive halfway value upward','Math.round(value)',number(0.5),number(1)],
+ ['round resolves a negative halfway value upward','Math.round(value)',number(-1.5),number(-1)],
+ ['sign retains negative zero','Math.sign(value)',number(-0),number(-0)],
+ ['sign retains NaN','Math.sign(value)',number(NaN),number(NaN)],
+ ['sign maps negative infinity to minus one','Math.sign(value)',number(-Infinity),number(-1)],
+ ['square root retains negative zero','Math.sqrt(value)',number(-0),number(-0)],
+ ['negative square root returns NaN','Math.sqrt(value)',number(-1),number(NaN)],
+ ['infinite square root retains infinity','Math.sqrt(value)',number(Infinity),number(Infinity)],
+ ['integer predicate accepts negative zero','Number.isInteger(value)',number(-0),{$:'boolean',value:true}],
+ ['integer predicate rejects infinity','Number.isInteger(value)',number(Infinity),{$:'boolean',value:false}],
+ ['integer predicate rejects fractions','Number.isInteger(value)',number(1.5),{$:'boolean',value:false}],
+ ['safe integer predicate accepts its upper boundary','Number.isSafeInteger(value)',number(9007199254740991),{$:'boolean',value:true}],
+ ['safe integer predicate rejects the next integer','Number.isSafeInteger(value)',number(9007199254740992),{$:'boolean',value:false}],
+ ['safe integer predicate rejects NaN','Number.isSafeInteger(value)',number(NaN),{$:'boolean',value:false}],
+ ])rows.push({name,source:'/** @param {number} value */ export function inspect(value){return '+body+';}',entry:'inspect',functions:['inspect'],arguments:[input],expected});
+rows.push({name:'optional integer predicate rejects null without coercion',source:'/** @param {number | null | undefined} value @returns {boolean} */ export function inspect(value){return Number.isInteger(value);}',entry:'inspect',functions:['inspect'],arguments:[nil],expected:{$:'boolean',value:false}},
+ {name:'optional safe integer predicate accepts present zero',source:'/** @param {number | null | undefined} value @returns {boolean} */ export function inspect(value){return Number.isSafeInteger(value);}',entry:'inspect',functions:['inspect'],arguments:[number(0)],expected:{$:'boolean',value:true}},
+ {name:'round performs the actual text conversion before rounding',source:'/** @param {string} value @returns {number} */ export function inspect(value){return Math.round(value);}',entry:'inspect',functions:['inspect'],arguments:[units('-0.5')],expected:number(-0)},
+ {name:'source minimum preserves its empty infinity identity',source:'/** @returns {number} */ export function inspect(){return Math.min();}',entry:'inspect',functions:['inspect'],arguments:[],expected:number(Infinity)},
+ {name:'source maximum preserves its empty negative infinity identity',source:'/** @returns {number} */ export function inspect(){return Math.max();}',entry:'inspect',functions:['inspect'],arguments:[],expected:number(-Infinity)});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

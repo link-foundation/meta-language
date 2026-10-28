@@ -25,8 +25,24 @@ use super::source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop
 use super::source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop103;
 use super::source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop104;
 use super::source_ml_source1_temporary_test_java_script_ordinary_symbol_loop97;
-use super::test_complete_java_script_property_descriptor;
 use super::test_java_script_semantic_same_value;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_complete_java_script_property_descriptor(descriptor: (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)) -> bool {
+    if ((!((descriptor.clone()).1) || !((descriptor.clone()).3)) || ((self::read_java_script_property_descriptor_error(descriptor.clone())) != (self::ml_string::Text::from_units(vec![])))) {
+        false
+    } else {
+        {
+            let kind = self::read_java_script_property_descriptor_kind(descriptor.clone());
+            if (kind == (self::ml_string::Text::from_units(vec![100, 97, 116, 97]))) {
+                ((descriptor.clone()).9 && (descriptor.clone()).11)
+            } else {
+                (((kind == (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114]))) && (descriptor.clone()).5) && (descriptor.clone()).7)
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -519,53 +535,17 @@ pub fn read_java_script_ordinary_value_error(heap: self::JavaScriptOrdinaryHeap,
 #[must_use]
 pub fn read_java_script_ordinary_key_error(heap: self::JavaScriptOrdinaryHeap, key: self::JavaScriptSemanticValue) -> self::ml_string::Text {
     if (match key.clone() {
-        self::JavaScriptSemanticValue::Undefined => {
-            true
-        }
-        self::JavaScriptSemanticValue::Null => {
-            true
-        }
-        self::JavaScriptSemanticValue::Boolean(source_ml_source2_f362) => {
-            true
-        }
-        self::JavaScriptSemanticValue::Number(source_ml_source2_f363) => {
-            true
-        }
-        self::JavaScriptSemanticValue::Integer(source_ml_source2_f364) => {
-            true
-        }
         self::JavaScriptSemanticValue::Text(source_ml_source2_f365) => {
             false
         }
-        self::JavaScriptSemanticValue::Symbol(source_ml_source2_f366) => {
-            true
-        }
-        self::JavaScriptSemanticValue::Object(source_ml_source2_f367, source_ml_source2_f368) => {
+        _ => {
             true
         }
     } && match key.clone() {
-        self::JavaScriptSemanticValue::Undefined => {
-            true
-        }
-        self::JavaScriptSemanticValue::Null => {
-            true
-        }
-        self::JavaScriptSemanticValue::Boolean(source_ml_source2_f369) => {
-            true
-        }
-        self::JavaScriptSemanticValue::Number(source_ml_source2_f370) => {
-            true
-        }
-        self::JavaScriptSemanticValue::Integer(source_ml_source2_f371) => {
-            true
-        }
-        self::JavaScriptSemanticValue::Text(source_ml_source2_f372) => {
-            true
-        }
         self::JavaScriptSemanticValue::Symbol(source_ml_source2_f373) => {
             false
         }
-        self::JavaScriptSemanticValue::Object(source_ml_source2_f374, source_ml_source2_f375) => {
+        _ => {
             true
         }
     }) {

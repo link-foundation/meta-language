@@ -9553,6 +9553,34 @@ Original source controls retain rounding ties, subnormal bits, invalid text,
 absence values and real realm allocation requests. They remain unexecuted
 during drafting.
 
+The call primitive profile additionally covers every unary Number operation
+already qualified by the current source frontend: absolute value, floor,
+ceiling, round, sign, square root, and integer/safe-integer predicates. Actual
+normative JavaScript definitions feed automatic native generation, including
+the existing JavaScript halfway-rounding and signed-zero adapters. Optional
+integer predicates exclude absence without conversion. Deferred independent
+originals retain negative-halfway results, negative zero, NaN, infinities,
+safe-integer boundaries, coercing text input and empty extrema. This does not
+claim support for still-unrepresented mathematical intrinsics or executed
+cross-runtime parity.
+
+An explicit source-authoring profile may share repeated literal Boolean arms
+of a closed nominal constructor match. The shared rule requires every actual
+constructor exactly once, the same declared owner throughout and a literal
+Boolean body in every arm. It retains the scrutinee, retains every distinct
+arm in its original order, and appends one wildcard carrying the repeated
+literal. Pattern-bound values cannot affect a literal body. Complete constructor
+coverage makes that default exhaustive for the original datatype; scrutinee
+effects and exceptions still occur once. The receipt retains original patterns,
+literal results, owner, occurrence path and retained indices for each rewrite.
+The finite-inventory rule itself has normative JavaScript, automatically
+translated Rust and an inspectable Links program. This removes repeated
+representation work before encoding/emission; semantic, structural, ownership
+and match-coverage validation retain their existing limits and assertions.
+Deferred controls retain malformed inventories, both Boolean defaults and
+independent original programs with scrutinee heap effects through both codecs,
+alongside every existing executor/native trace control.
+
 ### Ordered typed record shapes draft
 
 A qualified layout profile represents a typed record by a shared ordered shape

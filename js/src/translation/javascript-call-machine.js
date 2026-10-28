@@ -275,9 +275,9 @@ export function stepJavaScriptCallMachine(program,machine){
       const left=registers[instruction.left]??{$:'undefined'},right=registers[instruction.right]??{$:'undefined'};
       if(left.$!=='number')return {$:'machineInvalid',heap:machine.heap,reason:'typed number instructions require two actual Number operands'};
       if(right.$!=='number')return {$:'machineInvalid',heap:machine.heap,reason:'typed number instructions require two actual Number operands'};
-      const op=instruction.operator;
-      if(op==='lessThan'||op==='equal')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:op==='lessThan'?left.value<right.value:left.value===right.value}))};
-      const value=op==='add'?left.value+right.value:op==='subtract'?left.value-right.value:op==='multiply'?left.value*right.value:op==='divide'?left.value/right.value:op==='remainder'?left.value%right.value:left.value**right.value;
+      const op=instruction.operator,first=left.value,second=right.value;
+      if(op==='lessThan'||op==='equal')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:op==='lessThan'?first<second:first===second}))};
+      const value=op==='add'?first+second:op==='subtract'?first-second:op==='multiply'?first*second:op==='divide'?first/second:op==='remainder'?first%second:first**second;
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'number',value}))};
     }
     case 'primitive':return executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction);

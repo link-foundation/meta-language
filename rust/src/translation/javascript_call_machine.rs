@@ -66,6 +66,3 @@ pub use part_21::*;
 #[path = "javascript_call_machine/part_22.rs"]
 mod part_22;
 pub use part_22::*;
-#[path = "javascript_call_machine/part_23.rs"]
-mod part_23;
-pub use part_23::*;

@@ -160,8 +160,13 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
       const value=expression(node.args[0],environment,depth+1);
       return node.args[0].type.kind==='float'?value:primitive(node.op==='convertJavaScriptNumber'?'convert explicit number':'coerce primitive number',[value]);
      }
-     const numericOperation=node.k==='math'?{trunc:'truncate number',min:'read minimum number',max:'read maximum number'}[node.op]:undefined;
+     const numericOperation=node.k==='math'?{trunc:'truncate number',min:'read minimum number',max:'read maximum number',abs:'read absolute number',floor:'floor number',ceil:'ceil number',round:'round number',sign:'read number sign',sqrt:'read square root',isInteger:'test integer number',isSafeInteger:'test safe integer number'}[node.op]:undefined;
      if(numericOperation&&node.args.every(arg=>arg.type.kind==='float'))return primitive(numericOperation,node.args.map(arg=>expression(arg,environment,depth+1)));
+     if(node.k==='optionalPredicate'&&['isInteger','isSafeInteger'].includes(node.op)&&node.arg.type.kind==='option'&&node.arg.type.element.kind==='float'){
+      const identity=nextBinding++,value={$:'sourceBinding',identity};let body=primitive(node.op==='isInteger'?'test integer number':'test safe integer number',[value]);
+      for(const absence of ['undefined','null'])body={$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:absence})},yes:constant({$:'boolean',value:false}),no:body};
+      return {$:'sourceLet',identity,value:expression(node.arg,environment,depth+1),body};
+     }
 
      const argument=node.k==='math'?node.args[0]:node.arg;
      if(node.k==='math'&&readJavaScriptBigIntegerResultOperation(node.op)==='number-power'&&node.args.length===2&&node.args.every(arg=>arg.type.kind==='float'))return {$:'sourceNumberBinary',operator:'power',left:expression(node.args[0],environment,depth+1),right:expression(node.args[1],environment,depth+1)};

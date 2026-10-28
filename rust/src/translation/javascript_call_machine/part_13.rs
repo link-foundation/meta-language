@@ -1,12 +1,15 @@
 // Generated from complete js/src/translation/javascript-call-machine.js. Do not edit by hand.
+use super::JavaScriptDescriptorConversionTransition;
 use super::JavaScriptOrdinaryHeap;
 use super::JavaScriptPrimitiveConversionCompletion;
 use super::JavaScriptPrimitiveConversionState;
 use super::JavaScriptPrimitiveConversionTransition;
+use super::JavaScriptPropertyDefinitionState;
 use super::JavaScriptPropertyDefinitionTransition;
 use super::JavaScriptPropertyKeyConversionTransition;
 use super::JavaScriptSemanticCompletion;
 use super::JavaScriptSemanticValue;
+use super::begin_java_script_descriptor_conversion;
 use super::continue_java_script_primitive_conversion;
 use super::define_java_script_ordinary_property;
 use super::ml_number;
@@ -46,50 +49,14 @@ pub fn apply_java_script_primitive_conversion_method(state: self::JavaScriptPrim
                 self::JavaScriptSemanticValue::Undefined => {
                     true
                 }
-                self::JavaScriptSemanticValue::Null => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1108) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Number(source_ml_source2_f1109) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Integer(source_ml_source2_f1110) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Text(source_ml_source2_f1111) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1112) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Object(source_ml_source2_f1113, source_ml_source2_f1114) => {
+                _ => {
                     false
                 }
             } || match method.clone() {
-                self::JavaScriptSemanticValue::Undefined => {
-                    false
-                }
                 self::JavaScriptSemanticValue::Null => {
                     true
                 }
-                self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1115) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Number(source_ml_source2_f1116) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Integer(source_ml_source2_f1117) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Text(source_ml_source2_f1118) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1119) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Object(source_ml_source2_f1120, source_ml_source2_f1121) => {
+                _ => {
                     false
                 }
             })) {
@@ -487,29 +454,11 @@ pub fn resume_java_script_primitive_conversion(heap: self::JavaScriptOrdinaryHea
                                             self::apply_java_script_primitive_conversion_method(state.clone(), value.clone())
                                         } else {
                                             if match value.clone() {
-                                                self::JavaScriptSemanticValue::Undefined => {
-                                                    true
-                                                }
-                                                self::JavaScriptSemanticValue::Null => {
-                                                    true
-                                                }
-                                                self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1178) => {
-                                                    true
-                                                }
-                                                self::JavaScriptSemanticValue::Number(source_ml_source2_f1179) => {
-                                                    true
-                                                }
-                                                self::JavaScriptSemanticValue::Integer(source_ml_source2_f1180) => {
-                                                    true
-                                                }
-                                                self::JavaScriptSemanticValue::Text(source_ml_source2_f1181) => {
-                                                    true
-                                                }
-                                                self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1182) => {
-                                                    true
-                                                }
                                                 self::JavaScriptSemanticValue::Object(source_ml_source2_f1183, source_ml_source2_f1184) => {
                                                     false
+                                                }
+                                                _ => {
+                                                    true
                                                 }
                                             } {
                                                 self::JavaScriptPrimitiveConversionTransition::PrimitiveCompleted(Box::new(value.clone()))
@@ -606,53 +555,17 @@ pub fn finish_java_script_property_key_conversion(transition: self::JavaScriptPr
         self::JavaScriptPrimitiveConversionTransition::PrimitiveCompleted(value) => {
             let value = *value;
             if (match value.clone() {
-                self::JavaScriptSemanticValue::Undefined => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Null => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1195) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Number(source_ml_source2_f1196) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Integer(source_ml_source2_f1197) => {
-                    false
-                }
                 self::JavaScriptSemanticValue::Text(source_ml_source2_f1198) => {
                     true
                 }
-                self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1199) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Object(source_ml_source2_f1200, source_ml_source2_f1201) => {
+                _ => {
                     false
                 }
             } || match value.clone() {
-                self::JavaScriptSemanticValue::Undefined => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Null => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1202) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Number(source_ml_source2_f1203) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Integer(source_ml_source2_f1204) => {
-                    false
-                }
-                self::JavaScriptSemanticValue::Text(source_ml_source2_f1205) => {
-                    false
-                }
                 self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1206) => {
                     true
                 }
-                self::JavaScriptSemanticValue::Object(source_ml_source2_f1207, source_ml_source2_f1208) => {
+                _ => {
                     false
                 }
             }) {
@@ -912,6 +825,67 @@ pub fn complete_java_script_property_definition(heap: self::JavaScriptOrdinaryHe
                     }
                 }
             }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn continue_java_script_property_descriptor_definition(heap: self::JavaScriptOrdinaryHeap, target: self::JavaScriptSemanticValue, key: self::JavaScriptSemanticValue, transition: self::JavaScriptDescriptorConversionTransition) -> self::JavaScriptPropertyDefinitionTransition {
+    match transition.clone() {
+        self::JavaScriptDescriptorConversionTransition::DescriptorContinuation(state) => {
+            let state = *state;
+            self::JavaScriptPropertyDefinitionTransition::DefinitionContinuation(Box::new(self::JavaScriptPropertyDefinitionState::PropertyDefinitionDescriptor(Box::new(target.clone()), Box::new(key.clone()), Box::new(state.clone()))))
+        }
+        self::JavaScriptDescriptorConversionTransition::DescriptorCall(state_2, callee, receiver, arguments) => {
+            let state_2 = *state_2;
+            let callee = *callee;
+            let receiver = *receiver;
+            self::JavaScriptPropertyDefinitionTransition::DefinitionCall(Box::new(self::JavaScriptPropertyDefinitionState::PropertyDefinitionDescriptor(Box::new(target.clone()), Box::new(key.clone()), Box::new(state_2.clone()))), Box::new(callee.clone()), Box::new(receiver.clone()), arguments)
+        }
+        self::JavaScriptDescriptorConversionTransition::DescriptorCompleted(descriptor) => {
+            self::complete_java_script_property_definition(heap.clone(), target.clone(), key.clone(), descriptor.clone())
+        }
+        self::JavaScriptDescriptorConversionTransition::DescriptorThrow(value) => {
+            let value = *value;
+            self::JavaScriptPropertyDefinitionTransition::DefinitionThrow(Box::new(value.clone()))
+        }
+        self::JavaScriptDescriptorConversionTransition::DescriptorIntrinsicError(error_class, reason) => {
+            self::JavaScriptPropertyDefinitionTransition::DefinitionIntrinsicError(error_class.clone(), reason.clone())
+        }
+        self::JavaScriptDescriptorConversionTransition::DescriptorInvalid(reason_2) => {
+            self::JavaScriptPropertyDefinitionTransition::DefinitionInvalid(reason_2.clone())
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn continue_java_script_property_key_definition(heap: self::JavaScriptOrdinaryHeap, target: self::JavaScriptSemanticValue, attributes: self::JavaScriptSemanticValue, transition: self::JavaScriptPropertyKeyConversionTransition) -> self::JavaScriptPropertyDefinitionTransition {
+    match transition.clone() {
+        self::JavaScriptPropertyKeyConversionTransition::PropertyKeyContinuation(state) => {
+            let state = *state;
+            self::JavaScriptPropertyDefinitionTransition::DefinitionContinuation(Box::new(self::JavaScriptPropertyDefinitionState::PropertyDefinitionKey(Box::new(target.clone()), Box::new(attributes.clone()), Box::new(state.clone()))))
+        }
+        self::JavaScriptPropertyKeyConversionTransition::PropertyKeyCall(state_2, callee, receiver, arguments) => {
+            let state_2 = *state_2;
+            let callee = *callee;
+            let receiver = *receiver;
+            self::JavaScriptPropertyDefinitionTransition::DefinitionCall(Box::new(self::JavaScriptPropertyDefinitionState::PropertyDefinitionKey(Box::new(target.clone()), Box::new(attributes.clone()), Box::new(state_2.clone()))), Box::new(callee.clone()), Box::new(receiver.clone()), arguments)
+        }
+        self::JavaScriptPropertyKeyConversionTransition::PropertyKeyCompleted(key) => {
+            let key = *key;
+            self::continue_java_script_property_descriptor_definition(heap.clone(), target.clone(), key.clone(), self::begin_java_script_descriptor_conversion(heap.clone(), attributes.clone()))
+        }
+        self::JavaScriptPropertyKeyConversionTransition::PropertyKeyThrow(value) => {
+            let value = *value;
+            self::JavaScriptPropertyDefinitionTransition::DefinitionThrow(Box::new(value.clone()))
+        }
+        self::JavaScriptPropertyKeyConversionTransition::PropertyKeyIntrinsicError(error_class, reason) => {
+            self::JavaScriptPropertyDefinitionTransition::DefinitionIntrinsicError(error_class.clone(), reason.clone())
+        }
+        self::JavaScriptPropertyKeyConversionTransition::PropertyKeyInvalid(reason_2) => {
+            self::JavaScriptPropertyDefinitionTransition::DefinitionInvalid(reason_2.clone())
         }
     }
 }

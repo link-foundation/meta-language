@@ -177,53 +177,17 @@ pub fn test_java_script_semantic_same_value(left: self::JavaScriptSemanticValue,
                     self::JavaScriptSemanticValue::Undefined => {
                         true
                     }
-                    self::JavaScriptSemanticValue::Null => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f7) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f8) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f9) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f10) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f11) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f12, source_ml_source2_f13) => {
+                    _ => {
                         false
                     }
                 }
             }
             self::JavaScriptSemanticValue::Null => {
                 match right.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        false
-                    }
                     self::JavaScriptSemanticValue::Null => {
                         true
                     }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f14) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f15) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f16) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f17) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f18) => {
-                        false
-                    }
-                    self::JavaScriptSemanticValue::Object(source_ml_source2_f19, source_ml_source2_f20) => {
+                    _ => {
                         false
                     }
                 }

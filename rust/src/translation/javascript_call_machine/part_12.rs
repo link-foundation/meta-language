@@ -37,29 +37,11 @@ pub fn read_java_script_descriptor_conversion_state_error(heap: self::JavaScript
                     }
                 };
                 match source_ml_source2_s912.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f913) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f914) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f915) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f916) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f917) => {
-                        true
-                    }
                     self::JavaScriptSemanticValue::Object(source_ml_source2_f918, source_ml_source2_f919) => {
                         false
+                    }
+                    _ => {
+                        true
                     }
                 }
             } {
@@ -706,29 +688,11 @@ pub fn read_java_script_primitive_conversion_state_error(heap: self::JavaScriptO
                     }
                 };
                 match source_ml_source2_s1069.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1070) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Number(source_ml_source2_f1071) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Integer(source_ml_source2_f1072) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Text(source_ml_source2_f1073) => {
-                        true
-                    }
-                    self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1074) => {
-                        true
-                    }
                     self::JavaScriptSemanticValue::Object(source_ml_source2_f1075, source_ml_source2_f1076) => {
                         false
+                    }
+                    _ => {
+                        true
                     }
                 }
             } {
@@ -752,28 +716,10 @@ pub fn read_java_script_primitive_conversion_state_error(heap: self::JavaScriptO
                                 }
                             };
                             match source_ml_source2_s1080.clone() {
-                                self::JavaScriptSemanticValue::Undefined => {
-                                    true
-                                }
-                                self::JavaScriptSemanticValue::Null => {
-                                    true
-                                }
-                                self::JavaScriptSemanticValue::Boolean(source_ml_source2_f1081) => {
-                                    true
-                                }
-                                self::JavaScriptSemanticValue::Number(source_ml_source2_f1082) => {
-                                    true
-                                }
-                                self::JavaScriptSemanticValue::Integer(source_ml_source2_f1083) => {
-                                    true
-                                }
-                                self::JavaScriptSemanticValue::Text(source_ml_source2_f1084) => {
-                                    true
-                                }
                                 self::JavaScriptSemanticValue::Symbol(source_ml_source2_f1085) => {
                                     false
                                 }
-                                self::JavaScriptSemanticValue::Object(source_ml_source2_f1086, source_ml_source2_f1087) => {
+                                _ => {
                                     true
                                 }
                             }
