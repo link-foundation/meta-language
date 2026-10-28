@@ -9729,3 +9729,24 @@ in that scope. No synthetic parameter or signature selects a replacement.
 Reference semantics, shadowed bindings and deferred closures retain their reads.
 The complete original initializer and the existing structural/semantic limits
 remain; the source transformation reduces repeated administrative projections.
+
+Source-thrown standard Error, TypeError, RangeError, SyntaxError,
+ReferenceError, URIError and EvalError use explicit allocation requests carrying
+the checked source realm, exact UTF16 message and own-message presence. No-argument
+and undefined messages remain distinct from an explicitly empty message. Pending
+state retains its actual source instruction and prepared operands. An authorized
+allocator creates the actual requested Error and extends the same global heap;
+membership and prototype names alone cannot establish that authority. Resumption
+validates the requested realm and supplied noncallable Object link, then throws
+that value through the existing handler machinery. Cause objects, custom Error
+subclasses, stack behavior and complete frontend try/catch remain required work.
+
+The qualified JavaScript construction profile folds only checked Boolean/text
+literal comparisons and literal Boolean conditions. Boolean identities preserve
+short circuit behavior and every evaluated effectful operand. Short Boolean/text
+literal bindings can be substituted at their actual uses, excluding deferred
+closures and shadowed binders; text propagation is limited to128 UTF16 units to
+avoid expanding large constants. A second bounded rewrite handles exposed literal
+conditions. Numeric comparison, NaN and signed-zero interpretation are excluded
+from this folding. Complete original source and transformation receipts remain;
+the semantic validator and its100000-work limit are unchanged.

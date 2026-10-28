@@ -4,7 +4,7 @@ import {createContext,runInContext} from 'node:vm';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {assertVersions,encodeValue} from './controls.mjs';
 import {createOrdinaryHostContext,assertOrdinaryHostSnapshot} from './heap-controls.mjs';
-import {beginJavaScriptCallMachine,stepJavaScriptCallMachine} from '../../js/src/translation/javascript-call-machine.js';
+import {beginJavaScriptCallMachine,stepJavaScriptCallMachine,resumeJavaScriptCallSourceErrorAllocation} from '../../js/src/translation/javascript-call-machine.js';
 import {decodeJavaScriptCallProgram,encodeJavaScriptCallProgram,decodeJavaScriptOrdinaryHeap,encodeJavaScriptOrdinaryHeap,
  decodeJavaScriptSemanticValue,encodeJavaScriptSemanticValue,decodeJavaScriptCallMachine,encodeJavaScriptCallMachine,encodeJavaScriptCallMachineTransition} from './call-machine-codecs.mjs';
 export {assertVersions};
@@ -45,6 +45,11 @@ export function observeCallMachine(row){
   }else assert.deepEqual(trace.at(-1).machine,trace.at(-2).machine,'resource refusal keeps every actual frame, register, argument, handler and heap');
  }
  else if(expected.kind==='allocation'){assert.equal(current.$,'machineAllocateError');assert.equal(String(current.realm),expected.realm);assert.equal(current.errorClass,expected.errorClass);assert.equal(current.reason,expected.reason);}
+ else if(expected.kind==='sourceAllocation'){
+  assert.equal(current.$,'machineAllocateSourceError');assert.equal(String(current.realm),expected.realm);assert.equal(current.errorClass,expected.errorClass);
+  assert.deepEqual(encodeJavaScriptSemanticValue(current.message),expected.message);assert.equal(current.messagePresent,expected.messagePresent);
+  assert.deepEqual(encodeJavaScriptOrdinaryHeap(current.machine.heap),expected.heap??row.heap);
+ }
  else{assert.equal(current.$,expected.kind==='throw'?'machineThrow':'machineCompleted');assert.deepEqual(encodeJavaScriptSemanticValue(current.value),expected.value);assert.deepEqual(encodeJavaScriptOrdinaryHeap(current.heap),expected.heap??row.heap);}
  const realms=new Map(row.program.realms.map(realm=>[realm,createContext()]));
  const sourceRealm=realms.get(row.program.functions.find(fn=>fn.identity===row.entry).realm);assert.ok(sourceRealm);
@@ -59,9 +64,13 @@ export function observeCallMachine(row){
  let result,failure,threw=false;try{result=runInContext('('+row.source+')',sourceRealm)(context,...arguments_.map(context.materialize));}catch(error){failure=error;threw=true;}
  const observedCalls=context.calls.map(call=>({callee:encodeValue(call.callee),receiver:encodeValue(call.receiver),arguments:call.arguments.map(encodeValue)}));
  assert.deepEqual(calls,observedCalls,'all original invocations retain order, callee, actual receiver and complete arguments');
- if(expected.kind==='allocation'){
+ if(expected.kind==='allocation'||expected.kind==='sourceAllocation'){
   assert.equal(threw,true);assert.equal(failure.name,expected.errorClass);
   assert.equal(Object.getPrototypeOf(failure),runInContext(expected.errorClass,realms.get(expected.realm)).prototype,'the requested actual realm owns the intrinsic Error instance');
+  if(expected.kind==='sourceAllocation'){
+   assert.equal(Object.hasOwn(failure,'message'),expected.messagePresent);
+   assert.deepEqual(encodeValue(context.semantic(failure.message)),expected.messagePresent?expected.message:{$:'text',units:[]},'original Error message units and presence are independent observations');
+  }
   assertOrdinaryHostSnapshot(heap,context);
  }
  else if(expected.kind==='throw'){assert.equal(threw,true);assert.deepEqual(encodeValue(context.semantic(failure)),expected.value);assertOrdinaryHostSnapshot(decodeJavaScriptOrdinaryHeap(expected.heap??row.heap),context);}
@@ -74,4 +83,11 @@ export function observeInvalidCallMachine(row){
  assert.deepEqual(encodeJavaScriptCallProgram(program),row.program);assert.deepEqual(encodeJavaScriptCallMachine(machine),row.machine);assert.deepEqual(encodeJavaScriptOrdinaryHeap(machine.heap),row.heap);
  const actual=stepJavaScriptCallMachine(program,machine);assert.deepEqual(actual,{$:'machineInvalid',heap,reason:row.reason});
  return {...row,result:encodeJavaScriptCallMachineTransition(actual)};
+}
+export function observeSourceErrorResumptionRefusal(row){
+ const program=decodeJavaScriptCallProgram(row.program),machine=decodeJavaScriptCallMachine(row.machine),value=decodeJavaScriptSemanticValue(row.value);
+ assert.deepEqual(encodeJavaScriptCallProgram(program),row.program);assert.deepEqual(encodeJavaScriptCallMachine(machine),row.machine);assert.deepEqual(encodeJavaScriptSemanticValue(value),row.value);
+ const result=resumeJavaScriptCallSourceErrorAllocation(program,machine,BigInt(row.realm),value);
+ assert.deepEqual(result,{$:'machineInvalid',heap:machine.heap,reason:row.reason});
+ return {...row,result:encodeJavaScriptCallMachineTransition(result)};
 }

@@ -139,4 +139,24 @@ fn call_machine_keeps_all_original_calls_states_values_and_heaps() {
             row["name"]
         );
     }
+    for row in data["errorResumptionRefusals"].as_array().unwrap() {
+        let program = decode_java_script_call_program(&row["program"]);
+        let machine = decode_java_script_call_machine(&row["machine"]);
+        let value = decode_java_script_semantic_value(&row["value"]);
+        assert_eq!(encode_java_script_call_program(&program), row["program"]);
+        assert_eq!(encode_java_script_call_machine(&machine), row["machine"]);
+        assert_eq!(encode_java_script_semantic_value(&value), row["value"]);
+        let actual = native::resume_java_script_call_source_error_allocation(
+            program,
+            machine,
+            native::ml::Big::parse(row["realm"].as_str().unwrap()),
+            value,
+        );
+        assert_eq!(
+            encode_java_script_call_machine_transition(&actual),
+            row["result"],
+            "{}",
+            row["name"]
+        );
+    }
 }

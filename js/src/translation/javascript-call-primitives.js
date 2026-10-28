@@ -3,6 +3,7 @@
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
+import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
 /** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
@@ -14,6 +15,7 @@ import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUt
  * @param {string} operation @param {number} count @returns {string} */
 export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(!Number.isSafeInteger(count)||count<0||count>4096)return 'primitive operands exceed their explicit call register budget';
+ if(readJavaScriptSourceExceptionClass(operation)!=='')return count===2?'':'a source Error requires its actual text message and own-message presence';
  const integerArity=readJavaScriptCallIntegerArity(operation);
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
@@ -94,6 +96,7 @@ export function executeJavaScriptCallTextPair(operation,text,values){
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(readJavaScriptSourceExceptionClass(operation)!=='')return {$:'primitiveInvalid',reason:'source Error allocation requires its actual registered realm'};
  if(operation==='convert explicit number'||operation==='coerce primitive number')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert primitive text')return executeJavaScriptCallTextConversion(values[0]??{$:'undefined'});
  if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);

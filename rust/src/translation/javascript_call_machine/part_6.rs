@@ -8,6 +8,7 @@ use super::JavaScriptSemanticValue;
 use super::JavaScriptTextCallState;
 use super::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Result;
 use super::MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Result;
+use super::MlSource1TemporaryLocateJavaScriptOrdinaryPropertyLoop18Result;
 use super::MlSource1TemporaryPlanJavaScriptPropertyDefinitionJoin3;
 use super::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop11Result;
 use super::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop12Result;
@@ -21,6 +22,7 @@ use super::ml_source_exception;
 use super::ml_string;
 use super::source_ml_source1_temporary_find_java_script_ordinary_object_loop5;
 use super::source_ml_source1_temporary_find_java_script_ordinary_property_loop7;
+use super::source_ml_source1_temporary_locate_java_script_ordinary_property_loop18;
 use super::source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop11;
 use super::source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop12;
 use super::source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop13;
@@ -101,6 +103,7 @@ pub enum JavaScriptCallPending {
     WaitDefinition(f64, self::ml::Big, Box<self::JavaScriptPropertyDefinitionState>),
     WaitNumber(f64, self::ml::Big, Box<self::JavaScriptNumberCallState>),
     WaitText(f64, self::ml::Big, Box<self::JavaScriptTextCallState>),
+    WaitSourceError(self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, bool),
     WaitError(self::ml::Big, self::ml_string::Text, self::ml_string::Text),
 }
 
@@ -120,6 +123,7 @@ pub enum JavaScriptCallMachineTransition {
     MachineCompleted(Box<self::JavaScriptOrdinaryHeap>, Box<self::JavaScriptSemanticValue>),
     MachineThrow(Box<self::JavaScriptOrdinaryHeap>, Box<self::JavaScriptSemanticValue>),
     MachineAllocateError(Box<self::JavaScriptCallMachine>, self::ml::Big, self::ml_string::Text, self::ml_string::Text),
+    MachineAllocateSourceError(Box<self::JavaScriptCallMachine>, self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, bool),
     MachineInvalid(Box<self::JavaScriptOrdinaryHeap>, self::ml_string::Text),
     MachineResourceLimit(Box<self::JavaScriptCallMachine>, self::ml_string::Text),
 }
@@ -367,29 +371,20 @@ pub fn test_complete_java_script_property_descriptor(descriptor: (bool, bool, bo
 #[must_use]
 pub fn create_java_script_property_descriptor(kind: &self::ml_string::Text, configurable: bool, enumerable: bool) -> (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool) {
     {
-        let source_ml_source2_field107 = true;
+        let source_ml_source2_field111 = ((*kind) != (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
         {
-            let source_ml_source2_field109 = true;
+            let source_ml_source2_field112 = self::JavaScriptSemanticValue::Undefined;
             {
-                let source_ml_source2_field111 = ((*kind) != (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
+                let source_ml_source2_field113 = ((*kind) != (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
                 {
-                    let source_ml_source2_field112 = self::JavaScriptSemanticValue::Undefined;
+                    let source_ml_source2_field115 = ((*kind) == (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
                     {
-                        let source_ml_source2_field113 = ((*kind) != (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
+                        let source_ml_source2_field116 = self::JavaScriptSemanticValue::Undefined;
                         {
-                            let source_ml_source2_field114 = false;
+                            let source_ml_source2_field117 = ((*kind) == (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
                             {
-                                let source_ml_source2_field115 = ((*kind) == (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
-                                {
-                                    let source_ml_source2_field116 = self::JavaScriptSemanticValue::Undefined;
-                                    {
-                                        let source_ml_source2_field117 = ((*kind) == (self::ml_string::Text::from_units(vec![97, 99, 99, 101, 115, 115, 111, 114])));
-                                        {
-                                            let source_ml_source2_field118 = self::JavaScriptSemanticValue::Undefined;
-                                            (configurable, source_ml_source2_field107, enumerable, source_ml_source2_field109, source_ml_source2_field116.clone(), source_ml_source2_field115, source_ml_source2_field118.clone(), source_ml_source2_field117, source_ml_source2_field112.clone(), source_ml_source2_field111, source_ml_source2_field114, source_ml_source2_field113)
-                                        }
-                                    }
-                                }
+                                let source_ml_source2_field118 = self::JavaScriptSemanticValue::Undefined;
+                                (configurable, true, enumerable, true, source_ml_source2_field116.clone(), source_ml_source2_field115, source_ml_source2_field118.clone(), source_ml_source2_field117, source_ml_source2_field112.clone(), source_ml_source2_field111, false, source_ml_source2_field113)
                             }
                         }
                     }
@@ -403,56 +398,50 @@ pub fn create_java_script_property_descriptor(kind: &self::ml_string::Text, conf
 #[must_use]
 pub fn apply_java_script_property_descriptor_fields(base: (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool), proposed: (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)) -> (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool) {
     {
-        let source_ml_source2_field119 = true;
+        let source_ml_source2_field120 = if (proposed.clone()).1 {
+            (proposed.clone()).0
+        } else {
+            (base.clone()).0
+        };
         {
-            let source_ml_source2_field120 = if (proposed.clone()).1 {
-                (proposed.clone()).0
+            let source_ml_source2_field122 = if (proposed.clone()).3 {
+                (proposed.clone()).2
             } else {
-                (base.clone()).0
+                (base.clone()).2
             };
             {
-                let source_ml_source2_field121 = true;
+                let source_ml_source2_field123 = (base.clone()).9;
                 {
-                    let source_ml_source2_field122 = if (proposed.clone()).3 {
-                        (proposed.clone()).2
+                    let source_ml_source2_field124 = if ((base.clone()).9 && (proposed.clone()).9) {
+                        (proposed.clone()).8
                     } else {
-                        (base.clone()).2
+                        (base.clone()).8
                     };
                     {
-                        let source_ml_source2_field123 = (base.clone()).9;
+                        let source_ml_source2_field125 = (base.clone()).11;
                         {
-                            let source_ml_source2_field124 = if ((base.clone()).9 && (proposed.clone()).9) {
-                                (proposed.clone()).8
+                            let source_ml_source2_field126 = if ((base.clone()).11 && (proposed.clone()).11) {
+                                (proposed.clone()).10
                             } else {
-                                (base.clone()).8
+                                (base.clone()).10
                             };
                             {
-                                let source_ml_source2_field125 = (base.clone()).11;
+                                let source_ml_source2_field127 = (base.clone()).5;
                                 {
-                                    let source_ml_source2_field126 = if ((base.clone()).11 && (proposed.clone()).11) {
-                                        (proposed.clone()).10
+                                    let source_ml_source2_field128 = if ((base.clone()).5 && (proposed.clone()).5) {
+                                        (proposed.clone()).4
                                     } else {
-                                        (base.clone()).10
+                                        (base.clone()).4
                                     };
                                     {
-                                        let source_ml_source2_field127 = (base.clone()).5;
+                                        let source_ml_source2_field129 = (base.clone()).7;
                                         {
-                                            let source_ml_source2_field128 = if ((base.clone()).5 && (proposed.clone()).5) {
-                                                (proposed.clone()).4
+                                            let source_ml_source2_field130 = if ((base.clone()).7 && (proposed.clone()).7) {
+                                                (proposed.clone()).6
                                             } else {
-                                                (base.clone()).4
+                                                (base.clone()).6
                                             };
-                                            {
-                                                let source_ml_source2_field129 = (base.clone()).7;
-                                                {
-                                                    let source_ml_source2_field130 = if ((base.clone()).7 && (proposed.clone()).7) {
-                                                        (proposed.clone()).6
-                                                    } else {
-                                                        (base.clone()).6
-                                                    };
-                                                    (source_ml_source2_field120, source_ml_source2_field119, source_ml_source2_field122, source_ml_source2_field121, source_ml_source2_field128.clone(), source_ml_source2_field127, source_ml_source2_field130.clone(), source_ml_source2_field129, source_ml_source2_field124.clone(), source_ml_source2_field123, source_ml_source2_field126, source_ml_source2_field125)
-                                                }
-                                            }
+                                            (source_ml_source2_field120, true, source_ml_source2_field122, true, source_ml_source2_field128.clone(), source_ml_source2_field127, source_ml_source2_field130.clone(), source_ml_source2_field129, source_ml_source2_field124.clone(), source_ml_source2_field123, source_ml_source2_field126, source_ml_source2_field125)
                                         }
                                     }
                                 }
@@ -911,6 +900,31 @@ pub fn replace_java_script_ordinary_object(heap: self::JavaScriptOrdinaryHeap, r
                     object.clone()
                 } }) }; ml_values1.iter().cloned().enumerate().map(|(ml_index1, ml_value1)| ml_callback1(ml_value1)).collect::<Vec<_>>() };
                 self::JavaScriptOrdinaryHeap::OrdinaryHeap(objects, shared_constructor_field2)
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn locate_java_script_ordinary_property(heap: self::JavaScriptOrdinaryHeap, identity: self::ml::Big, key: self::JavaScriptSemanticValue) -> ((bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool), bool, self::ml::Big) {
+    {
+        let depth = 0f64;
+        {
+            let source_ml_source2_s234 = self::source_ml_source1_temporary_locate_java_script_ordinary_property_loop18(heap.clone(), key.clone(), identity.clone(), depth);
+            match source_ml_source2_s234.clone() {
+                self::MlSource1TemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlSource1TemporaryLocateJavaScriptOrdinaryPropertyLoop18Done => {
+                    {
+                        let source_ml_source2_field236 = self::ml::Big::from_i128(0);
+                        {
+                            let source_ml_source2_field237 = self::create_java_script_property_descriptor(&(self::ml_string::Text::from_units(vec![100, 97, 116, 97])), false, false);
+                            (source_ml_source2_field237.clone(), false, source_ml_source2_field236.clone())
+                        }
+                    }
+                }
+                self::MlSource1TemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlSource1TemporaryLocateJavaScriptOrdinaryPropertyLoop18Return(source_ml_source1_temporary_result18) => {
+                    source_ml_source1_temporary_result18.clone()
+                }
             }
         }
     }

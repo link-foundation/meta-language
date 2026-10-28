@@ -62,3 +62,25 @@ for(const row of fixture.scopedProjectionPrograms)test(row.name,()=>{
   assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),row.expected);
  }
 });
+
+for(const row of fixture.literalConditionPrograms)test(row.name,()=>{
+ assert.equal(runInNewContext(row.source+'\ncompute();'),row.expected);
+ const original=checkProgram(parseJavaScript(row.source,{referenceSemantics:row.referenceSemantics})),shared=shareSourceClosedConstructorMatches(original);
+ assert.equal(shared.proof.proofs.some(proof=>proof.operation==='select checked literal condition'),row.selected);
+ const packet=encodeTypedProgramLinks(shared.program);
+ for(const program of [original,shared.program,...[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))].map(network=>decodeTypedProgramLinks(network,packet.root))]){
+  const javascript=emitJavaScript(program),entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),row.expected);
+ }
+});
+
+for(const [rows,operation,expectedField]of [[fixture.booleanIdentityPrograms,'reduce checked Boolean identity','reduced'],[fixture.literalAliasPrograms,'substitute checked primitive literal','propagated']])for(const row of rows)test(row.name,()=>{
+ assert.equal(runInNewContext(row.source+'\ncompute();'),row.expected);
+ const original=checkProgram(parseJavaScript(row.source,{referenceSemantics:row.referenceSemantics})),shared=shareSourceClosedConstructorMatches(original);
+ assert.equal(shared.proof.proofs.some(proof=>proof.operation===operation),row[expectedField]);
+ const packet=encodeTypedProgramLinks(shared.program);
+ for(const program of [original,shared.program,...[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))].map(network=>decodeTypedProgramLinks(network,packet.root))]){
+  const javascript=emitJavaScript(program),entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
+  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),row.expected);
+ }
+});

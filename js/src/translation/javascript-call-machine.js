@@ -9,6 +9,7 @@ import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resum
 import {beginJavaScriptPropertyKeyConversion,stepJavaScriptPropertyKeyConversion,resumeJavaScriptPropertyKeyConversion} from './javascript-property-key-conversion.js';
 import {readJavaScriptNumberProtocolOperationError} from './javascript-number-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
+import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 
 /** @typedef {{$:'callHandler',target:number,destination:number}} JavaScriptCallHandler */
 /** @typedef {{$:'callIdle'} | {$:'waitCall',destination:number} |
@@ -17,6 +18,7 @@ import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitiv
  * {$:'waitDefinition',destination:number,realm:bigint,state:JavaScriptPropertyDefinitionState} |
  * {$:'waitNumber',destination:number,realm:bigint,state:JavaScriptNumberCallState} |
  * {$:'waitText',destination:number,realm:bigint,state:JavaScriptTextCallState} |
+ * {$:'waitSourceError',realm:bigint,errorClass:string,message:JavaScriptSemanticValue,messagePresent:boolean} |
  * {$:'waitError',realm:bigint,errorClass:string,reason:string}} JavaScriptCallPending
  */
 /** @typedef {{$:'callFrame',identity:bigint,position:number,registers:JavaScriptSemanticValue[],
@@ -27,6 +29,7 @@ import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitiv
  * {$:'machineCompleted',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'machineThrow',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'machineAllocateError',machine:JavaScriptCallMachine,realm:bigint,errorClass:string,reason:string} |
+ * {$:'machineAllocateSourceError',machine:JavaScriptCallMachine,realm:bigint,errorClass:string,message:JavaScriptSemanticValue,messagePresent:boolean} |
  * {$:'machineInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'machineResourceLimit',machine:JavaScriptCallMachine,reason:string}} JavaScriptCallMachineTransition
  */
@@ -161,10 +164,28 @@ export function readJavaScriptCallMachineError(program,machine){
       case 'waitCall':case 'waitGet':case 'waitSet':case 'waitKey':case 'waitDefinition':case 'waitNumber':case 'waitText':
         if(!testJavaScriptCallCoordinate(pending.destination,fn.registers))return 'pending calls retain their actual destination register';
         break;
-      case 'callIdle':case 'waitError':break;
+      case 'callIdle':case 'waitError':case 'waitSourceError':break;
     }
     switch(pending.$){
       case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';break;
+      case 'waitSourceError':{
+        if(!program.realms.includes(pending.realm)||fn.realm!==pending.realm)return 'pending source Error allocation retains its actual source realm';
+        if(pending.message.$!=='text'||readJavaScriptOrdinaryValueError(machine.heap,pending.message)!==''||typeof pending.messagePresent!=='boolean')return 'pending source Error retains exact UTF16 message and Boolean presence';
+        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
+        if(instruction===undefined)return 'pending source Error retains its actual source instruction and arguments';
+        switch(instruction.$){
+          case 'primitive':{
+            if(readJavaScriptSourceExceptionClass(instruction.operation)!==pending.errorClass||pending.errorClass===''||instruction.arguments.length!==2)return 'pending source Error retains its actual source instruction and arguments';
+            const message=frame.registers[instruction.arguments[0]?? -1]??{$:'undefined'},present=frame.registers[instruction.arguments[1]?? -1]??{$:'undefined'};
+            if(!testJavaScriptSemanticSameValue(message,pending.message))return 'pending source Error retains its actual source instruction and arguments';
+            if(present.$!=='boolean')return 'pending source Error retains its actual source instruction and arguments';
+            if(present.value!==pending.messagePresent)return 'pending source Error retains its actual source instruction and arguments';
+            break;
+          }
+          default:return 'pending source Error retains its actual source instruction and arguments';
+        }
+        break;
+      }
       case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';break;
       case 'waitDefinition':if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';break;
       case 'waitNumber':{
@@ -195,7 +216,7 @@ export function readJavaScriptCallMachineError(program,machine){
       }
       default:break;
     }
-    if(index<machine.frames.length-1&&(pending.$==='callIdle'||pending.$==='waitError'))return 'a suspended parent frame retains its actual pending call';
+    if(index<machine.frames.length-1&&(pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'))return 'a suspended parent frame retains its actual pending call';
   }
   return '';
 }
@@ -378,7 +399,7 @@ export function returnJavaScriptCallValue(program,machine,value){
     case 'waitDefinition':return acceptJavaScriptCallDefinition(program,current,pending.destination,pending.realm,resumeJavaScriptPropertyDefinition(machine.heap,pending.state,{$:'normalCompletion',value}));
     case 'waitNumber':return resumeJavaScriptCallNumber(program,current,pending.destination,pending.realm,pending.state,value);
     case 'waitText':return resumeJavaScriptCallText(program,current,pending.destination,pending.realm,pending.state,value);
-    case 'callIdle':case 'waitError':return {$:'machineInvalid',heap:machine.heap,reason:'a returning call needs its actual suspended parent continuation'};
+    case 'callIdle':case 'waitError':case 'waitSourceError':return {$:'machineInvalid',heap:machine.heap,reason:'a returning call needs its actual suspended parent continuation'};
   }
 }
 
@@ -417,7 +438,9 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction @returns {JavaScriptCallMachineTransition} */
 export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction){
  if(instruction.$!=='primitive')return {$:'machineInvalid',heap:machine.heap,reason:'a primitive executor requires its actual selected instruction'};
+ const arity=readJavaScriptCallPrimitiveArityError(instruction.operation,instruction.arguments.length);if(arity!=='')return {$:'machineInvalid',heap:machine.heap,reason:arity};
  const arguments_=instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}),input=arguments_[0]??{$:'undefined'};
+ if(readJavaScriptSourceExceptionClass(instruction.operation)!=='')return requestJavaScriptCallSourceError(program,machine,frame,instruction);
  if((instruction.operation==='convert explicit number'||instruction.operation==='coerce primitive number')&&input.$==='object'){
   const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a number conversion needs its actual registered source owner'};
@@ -524,4 +547,39 @@ export function resumeJavaScriptCallErrorAllocation(program,machine,realm,value)
   if(value.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'an intrinsic Error allocation supplies its actual noncallable Object'};
   if(value.callable)return {$:'machineInvalid',heap:machine.heap,reason:'an intrinsic Error allocation supplies its actual noncallable Object'};
   return throwJavaScriptCallValue(machine,value);
+}
+
+/** A source throw constructs the actual requested standard Error externally.
+ * Text remains UTF16 data; presence distinguishes Error() from Error('').
+ * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction
+ * @returns {JavaScriptCallMachineTransition} */
+export function requestJavaScriptCallSourceError(program,machine,frame,instruction){
+ if(instruction.$!=='primitive')return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction retains its actual primitive instruction'};
+ const errorClass=readJavaScriptSourceExceptionClass(instruction.operation);
+ if(errorClass===''||instruction.arguments.length!==2)return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction retains its actual class and arguments'};
+ const message=frame.registers[instruction.arguments[0]?? -1]??{$:'undefined'},present=frame.registers[instruction.arguments[1]?? -1]??{$:'undefined'};
+ if(message.$!=='text')return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction requires a normalized UTF16 message'};
+ const messageError=readJavaScriptOrdinaryValueError(machine.heap,message);if(messageError!=='')return {$:'machineInvalid',heap:machine.heap,reason:messageError};
+ if(present.$!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction requires actual own-message presence'};
+ if(typeof present.value!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction requires actual own-message presence'};
+ const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction retains its actual registered source owner'};
+ const next={...frame,position:frame.position+1,pending:{$:'waitSourceError',realm:fn.realm,errorClass,message,messagePresent:present.value}};
+ return {$:'machineAllocateSourceError',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,next),realm:fn.realm,errorClass,message,messagePresent:present.value};
+}
+
+/** The authoritative allocator creates the actual Error in the requested realm,
+ * uses undefined when messagePresent is false, and extends the global heap.
+ * Membership/prototype names alone cannot establish allocation authority.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {bigint} realm @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
+export function resumeJavaScriptCallSourceErrorAllocation(program,machine,realm,value){
+ const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'source Error resumption requires its actual active frame'};
+ if(frame.pending.$!=='waitSourceError')return {$:'machineInvalid',heap:machine.heap,reason:'source Error resumption requires its actual pending allocation'};
+ if(frame.pending.realm!==realm)return {$:'machineInvalid',heap:machine.heap,reason:'source Error resumption retains its actual requested realm'};
+ const valueError=readJavaScriptOrdinaryValueError(machine.heap,value);if(valueError!=='')return {$:'machineInvalid',heap:machine.heap,reason:valueError};
+ if(value.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'source Error allocation supplies its actual noncallable Object'};
+ if(value.callable)return {$:'machineInvalid',heap:machine.heap,reason:'source Error allocation supplies its actual noncallable Object'};
+ return throwJavaScriptCallValue(machine,value);
 }

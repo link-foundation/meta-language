@@ -22,9 +22,12 @@ export function observeCallSource(row){
  for(let steps=0;current.$==='machineContinue';steps+=1){assert.ok(steps<4096,'every actual frontend invocation must reach its full terminal observation');current=stepJavaScriptCallMachine(lowered.program,current.machine);trace.push(encodeJavaScriptCallMachineTransition(current));}
  if(row.maximumFrames!==undefined)assert.ok(Math.max(...trace.filter(entry=>entry.$==='machineContinue').map(entry=>entry.machine.frames.length))<=row.maximumFrames,'lifted loops preserve their complete bounded active frame count');
  const expectedHeap=row.afterObjects?{...heap,objects:heap.objects.map(object=>{const replacement=row.afterObjects.find(entry=>BigInt(entry.identity)===object.identity);return replacement?decodeObject(replacement):object;})}:heap;
- const finalHeap=current.$==='machineAllocateError'?current.machine.heap:current.heap;
+ const finalHeap=current.$==='machineAllocateError'||current.$==='machineAllocateSourceError'?current.machine.heap:current.heap;
  if(row.expectedOutcome==='allocation'){
   assert.equal(current.$,'machineAllocateError');assert.equal(String(current.realm),row.errorRealm);assert.equal(current.errorClass,row.errorClass);assert.equal(current.reason,row.errorReason);
+ }else if(row.expectedOutcome==='sourceAllocation'){
+  assert.equal(current.$,'machineAllocateSourceError');assert.equal(String(current.realm),row.errorRealm);assert.equal(current.errorClass,row.errorClass);
+  assert.deepEqual(encodeJavaScriptSemanticValue(current.message),row.errorMessage);assert.equal(current.messagePresent,row.messagePresent);
  }else{
   assert.equal(current.$,'machineCompleted');
   if(row.expectedEncoding==='implementation-selected NaN'){
@@ -39,9 +42,13 @@ export function observeCallSource(row){
   return Reflect.apply(originals[owner.name],context.materialize(call.receiver),call.arguments.map(context.materialize));
  },new Map([[String(actualRegistry.exoticKey.identity),runInContext('Symbol.toPrimitive',originalRealm)]]));
  let result,failure,threw=false;try{result=Reflect.apply(originals[row.entry],undefined,arguments_.map(context.materialize));}catch(error){failure=error;threw=true;}
- if(row.expectedOutcome==='allocation'){
+ if(row.expectedOutcome==='allocation'||row.expectedOutcome==='sourceAllocation'){
   assert.equal(threw,true);assert.equal(failure.name,row.errorClass);
   assert.equal(Object.getPrototypeOf(failure),runInContext(row.errorClass,originalRealm).prototype,'the actual source realm owns the intrinsic Error instance');
+  if(row.expectedOutcome==='sourceAllocation'){
+   assert.equal(Object.hasOwn(failure,'message'),row.messagePresent,'source own-message presence is independently observable');
+   assert.deepEqual(encodeJavaScriptSemanticValue(context.semantic(failure.message)),row.messagePresent?row.errorMessage:{$:'text',units:[]},'source messages retain every original UTF16 unit');
+  }
  }else{
   assert.equal(threw,false);
   const observed=encodeJavaScriptSemanticValue(context.semantic(result));

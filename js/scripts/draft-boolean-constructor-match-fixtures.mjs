@@ -78,4 +78,28 @@ const scopedProjectionPrograms=[
  {name:'scoped reference values keep their existing reads',source:scopedPrefix+'/** @returns {number} */ function compute(){const local=makePair();return local.left+local.right+local.left;}',expected:7,referenceSemantics:true,shared:false},
  {name:'scoped projections remain inside deferred closures',source:scopedPrefix+'/** @returns {number} */ function compute(){const local=makePair();return (()=>local.left+local.right+local.left)();}',expected:7,referenceSemantics:false,shared:false}
 ];
-writeProjectData(new URL('parity/fixtures/boolean-constructor-match.lino',root),{schemaVersion:1,model:'complete finite Boolean constructor match sharing 1',generalModel:'closed constructor match sharing 1',nodeVersionRange:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rustVersionRange:'>=1.90.0 <1.100.0',rows,generalRows,bindingRows,aliasRows,projectionRows,programs,projectionPrograms,textPrograms,lexicalAliasPrograms,scopedProjectionPrograms});
+const literalConditionPrograms=[
+ {name:'a literal true condition keeps its actual selected body',source:'/** @returns {number} */ function compute(){if(true)return 7;return 99;}',expected:7,referenceSemantics:false,selected:true},
+ {name:'a literal false condition keeps its actual alternative',source:'/** @returns {number} */ function compute(){if(false)return 99;return 7;}',expected:7,referenceSemantics:false,selected:true},
+ {name:'checked typeof text comparison has its actual primitive meaning',source:'/** @param {number} value @returns {number} */ function inspect(value){if(typeof value==="number")return 7;return 99;} /** @returns {number} */ function compute(){return inspect(4);}',expected:7,referenceSemantics:false,selected:true},
+ {name:'effectful conditions retain their original invocation',source:'/** @param {{value:number}} holder @returns {boolean} */ function condition(holder){holder.value+=1;return true;} /** @returns {number} */ function compute(){const holder={value:0};if(condition(holder))return holder.value+6;return 99;}',expected:7,referenceSemantics:true,selected:false},
+ {name:'effects before a constant condition remain in place',source:'/** @param {{value:number}} holder @returns {number} */ function effect(holder){holder.value+=1;return 0;} /** @returns {number} */ function compute(){const holder={value:0};const ignored=effect(holder);if(true)return holder.value+6;return 99;}',expected:7,referenceSemantics:true,selected:true},
+ {name:'floating NaN comparison remains outside literal folding',source:'/** @returns {number} */ function compute(){if(NaN!==NaN)return 7;return 99;}',expected:7,referenceSemantics:false,selected:false}
+];
+const booleanIdentityPrograms=[
+ ['false short circuit retains an uncalled effect','false&&effect(holder)',0,true],
+ ['true short circuit retains an uncalled effect','true||effect(holder)',1,true],
+ ['false disjunction retains the right effect','false||effect(holder)',2,true],
+ ['true conjunction retains the right effect','true&&effect(holder)',2,true],
+ ['right true conjunction retains the left effect','effect(holder)&&true',2,true],
+ ['right false disjunction retains the left effect','effect(holder)||false',2,true],
+ ['right false conjunction must still evaluate the left','effect(holder)&&false',1,false],
+ ['right true disjunction must still evaluate the left','effect(holder)||true',2,false]
+].map(([name,expression,expected,reduced])=>({name,source:'/** @param {{value:number}} holder @returns {boolean} */ function effect(holder){holder.value+=1;return true;} /** @returns {number} */ function compute(){const holder={value:0};const output='+expression+';return holder.value+(output?1:0);}',expected,reduced,referenceSemantics:true}));
+const literalAliasPrograms=[
+ {name:'a checked Boolean literal retains its actual branch',source:'/** @returns {number} */ function compute(){const flag=true;if(flag)return 7;return 99;}',expected:7,referenceSemantics:false,propagated:true},
+ {name:'a short checked text literal retains its exact value',source:'/** @returns {number} */ function compute(){const text="root";return text==="root"?7:99;}',expected:7,referenceSemantics:false,propagated:true},
+ {name:'large text constants retain their original binding',source:'/** @returns {number} */ function compute(){const text='+JSON.stringify('a'.repeat(129))+';return text.length;}',expected:129,referenceSemantics:false,propagated:false},
+ {name:'literal captures retain their deferred closure owner',source:'/** @returns {string} */ function compute(){const text="root";return (()=>text)();}',expected:'root',referenceSemantics:false,propagated:false}
+];
+writeProjectData(new URL('parity/fixtures/boolean-constructor-match.lino',root),{schemaVersion:1,model:'complete finite Boolean constructor match sharing 1',generalModel:'closed constructor match sharing 1',nodeVersionRange:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rustVersionRange:'>=1.90.0 <1.100.0',rows,generalRows,bindingRows,aliasRows,projectionRows,programs,projectionPrograms,textPrograms,lexicalAliasPrograms,scopedProjectionPrograms,literalConditionPrograms,booleanIdentityPrograms,literalAliasPrograms});

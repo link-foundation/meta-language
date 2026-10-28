@@ -9,6 +9,7 @@ import {readRecordFieldWriteOperator,readRecordFieldWriteName} from './record-wr
 import {readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
 import {readBigIntegerBitwiseOperationCode} from './big-integer-bitwise-rules.js';
 import {readJavaScriptNumberBitwiseOperationCode} from './number-bitwise-rules.js';
+import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
@@ -156,6 +157,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'math':case 'optionalPredicate':{
      if(node.k==='math'){
+      if(readJavaScriptSourceExceptionClass(node.op)!==''&&node.args.length===2&&node.args[0].type.kind==='string'&&node.args[1].type.kind==='bool')return primitive(node.op,node.args.map(arg=>expression(arg,environment,depth+1)));
       const comparison=readJavaScriptBigIntegerResultOperation(node.op);
       if((comparison==='number-compare'||comparison==='string-compare')&&node.args.length===2&&node.args[1].type.kind==='int'&&node.args[0].type.kind===(comparison==='number-compare'?'float':'string'))return primitive(comparison==='number-compare'?'compare number integer':'compare text integer',node.args.map(arg=>expression(arg,environment,depth+1)));
       const integerCode=readBigIntegerBitwiseOperationCode(node.op),numberCode=readJavaScriptNumberBitwiseOperationCode(node.op);

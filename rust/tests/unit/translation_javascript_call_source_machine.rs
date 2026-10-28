@@ -77,6 +77,21 @@ fn actual_source_compiler_output_preserves_every_native_execution_state() {
                 "{}",
                 row["name"]
             );
+        } else if row["expectedOutcome"] == "sourceAllocation" {
+            assert!(
+                matches!(
+                    actual,
+                    native::JavaScriptCallMachineTransition::MachineAllocateSourceError(
+                        _,
+                        _,
+                        _,
+                        _,
+                        _
+                    )
+                ),
+                "{}",
+                row["name"]
+            );
         } else if row["expected"]["kind"] == "throw" {
             assert!(
                 matches!(

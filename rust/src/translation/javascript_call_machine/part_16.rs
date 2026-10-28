@@ -8,8 +8,6 @@ use super::JavaScriptCallMachineTransition;
 use super::JavaScriptCallPending;
 use super::JavaScriptCallProgram;
 use super::JavaScriptOrdinaryHeap;
-use super::JavaScriptOrdinaryObject;
-use super::JavaScriptOrdinaryProperty;
 use super::JavaScriptSemanticValue;
 use super::MlSource1TemporaryBeginJavaScriptCallMachineLoop155Result;
 use super::accept_java_script_call_definition;
@@ -21,17 +19,15 @@ use super::create_java_script_call_frame;
 use super::execute_java_script_call_primitive_instruction;
 use super::execute_java_script_ordinary_call_property;
 use super::find_java_script_call_function;
-use super::find_java_script_ordinary_object;
 use super::ml;
 use super::ml_array;
 use super::ml_big_integer_conversion;
-use super::ml_math;
-use super::ml_source_exception;
 use super::ml_string;
 use super::push_java_script_call;
 use super::read_java_script_call_machine_error;
 use super::read_java_script_call_program_error;
 use super::read_java_script_ordinary_value_error;
+use super::read_java_script_source_exception_class;
 use super::replace_java_script_call_frame;
 use super::return_java_script_call_value;
 use super::source_ml_source1_temporary_begin_java_script_call_machine_loop155;
@@ -65,17 +61,17 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                 } else {
                                     {
                                         let pending = match frame.clone().expect("a proven present value") {
-                                            self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value2108) => {
-                                                let source_ml_source2_data_property_value2108 = *source_ml_source2_data_property_value2108;
-                                                source_ml_source2_data_property_value2108.clone()
+                                            self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value2130) => {
+                                                let source_ml_source2_data_property_value2130 = *source_ml_source2_data_property_value2130;
+                                                source_ml_source2_data_property_value2130.clone()
                                             }
                                         };
                                         match pending.clone() {
                                             self::JavaScriptCallPending::CallIdle => {
                                                 {
                                                     let fn_ = self::ml_array::optional_at(&shared_constructor_field7, self::ml_array::number_index(self::find_java_script_call_function(program.clone(), match frame.clone().expect("a proven present value") {
-                                                        self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value2116, _, _, _, _, _) => {
-                                                            source_ml_source2_data_property_value2116.clone()
+                                                        self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value2142, _, _, _, _, _) => {
+                                                            source_ml_source2_data_property_value2142.clone()
                                                         }
                                                     })));
                                                     if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -83,12 +79,12 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                     } else {
                                                         {
                                                             let instruction = self::ml_array::optional_at(&match fn_.clone().expect("a proven present value") {
-                                                                self::JavaScriptCallFunction::CallFunction(_, _, _, _, _, _, _, source_ml_source2_data_property_value2118) => {
-                                                                    source_ml_source2_data_property_value2118
+                                                                self::JavaScriptCallFunction::CallFunction(_, _, _, _, _, _, _, source_ml_source2_data_property_value2144) => {
+                                                                    source_ml_source2_data_property_value2144
                                                                 }
                                                             }, self::ml_array::number_index(match frame.clone().expect("a proven present value") {
-                                                                self::JavaScriptCallFrame::CallFrame(_, source_ml_source2_data_property_value2119, _, _, _, _) => {
-                                                                    source_ml_source2_data_property_value2119
+                                                                self::JavaScriptCallFrame::CallFrame(_, source_ml_source2_data_property_value2145, _, _, _, _) => {
+                                                                    source_ml_source2_data_property_value2145
                                                                 }
                                                             }));
                                                             if match (instruction.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -96,29 +92,29 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                             } else {
                                                                 {
                                                                     let next = {
-                                                                        let source_ml_source2_nominal_spread2121 = frame.clone().expect("a proven present value");
-                                                                        match source_ml_source2_nominal_spread2121.clone() {
+                                                                        let source_ml_source2_nominal_spread2147 = frame.clone().expect("a proven present value");
+                                                                        match source_ml_source2_nominal_spread2147.clone() {
                                                                             self::JavaScriptCallFrame::CallFrame(shared_constructor_field1, shared_constructor_field2, shared_constructor_field3, shared_constructor_field4, shared_constructor_field5, shared_constructor_field6) => {
                                                                                 let shared_constructor_field6 = *shared_constructor_field6;
                                                                                 {
-                                                                                    let source_ml_source2_nominal_field2122 = shared_constructor_field1.clone();
+                                                                                    let source_ml_source2_nominal_field2148 = shared_constructor_field1.clone();
                                                                                     {
-                                                                                        let source_ml_source2_nominal_field2124 = shared_constructor_field2;
+                                                                                        let source_ml_source2_nominal_field2150 = shared_constructor_field2;
                                                                                         {
-                                                                                            let source_ml_source2_nominal_field2126 = shared_constructor_field3;
+                                                                                            let source_ml_source2_nominal_field2152 = shared_constructor_field3;
                                                                                             {
-                                                                                                let source_ml_source2_nominal_field2128 = shared_constructor_field4;
+                                                                                                let source_ml_source2_nominal_field2154 = shared_constructor_field4;
                                                                                                 {
-                                                                                                    let source_ml_source2_nominal_field2130 = shared_constructor_field5;
+                                                                                                    let source_ml_source2_nominal_field2156 = shared_constructor_field5;
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_field2132 = shared_constructor_field6.clone();
+                                                                                                        let source_ml_source2_nominal_field2158 = shared_constructor_field6.clone();
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_override2134 = (match frame.clone().expect("a proven present value") {
-                                                                                                                self::JavaScriptCallFrame::CallFrame(_, source_ml_source2_data_property_value2120, _, _, _, _) => {
-                                                                                                                    source_ml_source2_data_property_value2120
+                                                                                                            let source_ml_source2_nominal_override2160 = (match frame.clone().expect("a proven present value") {
+                                                                                                                self::JavaScriptCallFrame::CallFrame(_, source_ml_source2_data_property_value2146, _, _, _, _) => {
+                                                                                                                    source_ml_source2_data_property_value2146
                                                                                                                 }
                                                                                                             } + 1f64);
-                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2122.clone(), source_ml_source2_nominal_override2134, source_ml_source2_nominal_field2126, source_ml_source2_nominal_field2128, source_ml_source2_nominal_field2130, Box::new(source_ml_source2_nominal_field2132.clone()))
+                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2148.clone(), source_ml_source2_nominal_override2160, source_ml_source2_nominal_field2152, source_ml_source2_nominal_field2154, source_ml_source2_nominal_field2156, Box::new(source_ml_source2_nominal_field2158.clone()))
                                                                                                         }
                                                                                                     }
                                                                                                 }
@@ -136,8 +132,8 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                                                 let current = self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10.clone(), next.clone());
                                                                                 {
                                                                                     let registers = match frame.clone().expect("a proven present value") {
-                                                                                        self::JavaScriptCallFrame::CallFrame(_, _, source_ml_source2_data_property_value2137, _, _, _) => {
-                                                                                            source_ml_source2_data_property_value2137
+                                                                                        self::JavaScriptCallFrame::CallFrame(_, _, source_ml_source2_data_property_value2163, _, _, _) => {
+                                                                                            source_ml_source2_data_property_value2163
                                                                                         }
                                                                                     };
                                                                                     match instruction.clone().expect("a proven present value") {
@@ -150,25 +146,25 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                                                         }
                                                                                         self::JavaScriptCallInstruction::Argument(destination_3, index) => {
                                                                                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10, self::write_java_script_call_register(next.clone(), destination_3, (self::ml_array::optional_at(&match frame.clone().expect("a proven present value") {
-                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, source_ml_source2_data_property_value2157, _, _) => {
-                                                                                                    source_ml_source2_data_property_value2157
+                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, source_ml_source2_data_property_value2183, _, _) => {
+                                                                                                    source_ml_source2_data_property_value2183
                                                                                                 }
                                                                                             }, self::ml_array::number_index(index))).clone().unwrap_or_else(|| self::JavaScriptSemanticValue::Undefined)))))
                                                                                         }
                                                                                         self::JavaScriptCallInstruction::Jump(target) => {
                                                                                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10, {
-                                                                                                let source_ml_source2_nominal_field2161 = shared_constructor_field1_2.clone();
+                                                                                                let source_ml_source2_nominal_field2187 = shared_constructor_field1_2.clone();
                                                                                                 {
-                                                                                                    let source_ml_source2_nominal_field2163 = shared_constructor_field2_2;
+                                                                                                    let source_ml_source2_nominal_field2189 = shared_constructor_field2_2;
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_field2165 = shared_constructor_field3_2;
+                                                                                                        let source_ml_source2_nominal_field2191 = shared_constructor_field3_2;
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_field2167 = shared_constructor_field4_2;
+                                                                                                            let source_ml_source2_nominal_field2193 = shared_constructor_field4_2;
                                                                                                             {
-                                                                                                                let source_ml_source2_nominal_field2169 = shared_constructor_field5_2;
+                                                                                                                let source_ml_source2_nominal_field2195 = shared_constructor_field5_2;
                                                                                                                 {
-                                                                                                                    let source_ml_source2_nominal_field2171 = shared_constructor_field6_2.clone();
-                                                                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2161.clone(), target, source_ml_source2_nominal_field2165, source_ml_source2_nominal_field2167, source_ml_source2_nominal_field2169, Box::new(source_ml_source2_nominal_field2171.clone()))
+                                                                                                                    let source_ml_source2_nominal_field2197 = shared_constructor_field6_2.clone();
+                                                                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2187.clone(), target, source_ml_source2_nominal_field2191, source_ml_source2_nominal_field2193, source_ml_source2_nominal_field2195, Box::new(source_ml_source2_nominal_field2197.clone()))
                                                                                                                 }
                                                                                                             }
                                                                                                         }
@@ -178,24 +174,24 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                                                         }
                                                                                         self::JavaScriptCallInstruction::Branch(condition, yes, no) => {
                                                                                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10, {
-                                                                                                let source_ml_source2_nominal_field2177 = shared_constructor_field1_2.clone();
+                                                                                                let source_ml_source2_nominal_field2203 = shared_constructor_field1_2.clone();
                                                                                                 {
-                                                                                                    let source_ml_source2_nominal_field2179 = shared_constructor_field2_2;
+                                                                                                    let source_ml_source2_nominal_field2205 = shared_constructor_field2_2;
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_field2181 = shared_constructor_field3_2;
+                                                                                                        let source_ml_source2_nominal_field2207 = shared_constructor_field3_2;
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_field2183 = shared_constructor_field4_2;
+                                                                                                            let source_ml_source2_nominal_field2209 = shared_constructor_field4_2;
                                                                                                             {
-                                                                                                                let source_ml_source2_nominal_field2185 = shared_constructor_field5_2;
+                                                                                                                let source_ml_source2_nominal_field2211 = shared_constructor_field5_2;
                                                                                                                 {
-                                                                                                                    let source_ml_source2_nominal_field2187 = shared_constructor_field6_2.clone();
+                                                                                                                    let source_ml_source2_nominal_field2213 = shared_constructor_field6_2.clone();
                                                                                                                     {
-                                                                                                                        let source_ml_source2_nominal_override2189 = if self::convert_java_script_semantic_boolean((self::ml_array::optional_at(&registers, self::ml_array::number_index(condition))).clone().unwrap_or_else(|| self::JavaScriptSemanticValue::Undefined)) {
+                                                                                                                        let source_ml_source2_nominal_override2215 = if self::convert_java_script_semantic_boolean((self::ml_array::optional_at(&registers, self::ml_array::number_index(condition))).clone().unwrap_or_else(|| self::JavaScriptSemanticValue::Undefined)) {
                                                                                                                             yes
                                                                                                                         } else {
                                                                                                                             no
                                                                                                                         };
-                                                                                                                        self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2177.clone(), source_ml_source2_nominal_override2189, source_ml_source2_nominal_field2181, source_ml_source2_nominal_field2183, source_ml_source2_nominal_field2185, Box::new(source_ml_source2_nominal_field2187.clone()))
+                                                                                                                        self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2203.clone(), source_ml_source2_nominal_override2215, source_ml_source2_nominal_field2207, source_ml_source2_nominal_field2209, source_ml_source2_nominal_field2211, Box::new(source_ml_source2_nominal_field2213.clone()))
                                                                                                                     }
                                                                                                                 }
                                                                                                             }
@@ -208,20 +204,20 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                                                             {
                                                                                                 let arguments_ = { let ml_values7 = arguments; let ml_callback7 = { let registers = registers.clone(); std::rc::Rc::new(move |index_2: f64| -> self::JavaScriptSemanticValue { (self::ml_array::optional_at(&registers, self::ml_array::number_index(index_2))).clone().unwrap_or_else(|| self::JavaScriptSemanticValue::Undefined) }) }; ml_values7.iter().cloned().enumerate().map(|(ml_index7, ml_value7)| ml_callback7(ml_value7)).collect::<Vec<_>>() };
                                                                                                 self::push_java_script_call(program.clone(), self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10, {
-                                                                                                    let source_ml_source2_nominal_field2193 = shared_constructor_field1_2.clone();
+                                                                                                    let source_ml_source2_nominal_field2219 = shared_constructor_field1_2.clone();
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_field2195 = shared_constructor_field2_2;
+                                                                                                        let source_ml_source2_nominal_field2221 = shared_constructor_field2_2;
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_field2197 = shared_constructor_field3_2;
+                                                                                                            let source_ml_source2_nominal_field2223 = shared_constructor_field3_2;
                                                                                                             {
-                                                                                                                let source_ml_source2_nominal_field2199 = shared_constructor_field4_2;
+                                                                                                                let source_ml_source2_nominal_field2225 = shared_constructor_field4_2;
                                                                                                                 {
-                                                                                                                    let source_ml_source2_nominal_field2201 = shared_constructor_field5_2;
+                                                                                                                    let source_ml_source2_nominal_field2227 = shared_constructor_field5_2;
                                                                                                                     {
-                                                                                                                        let source_ml_source2_nominal_field2203 = shared_constructor_field6_2.clone();
+                                                                                                                        let source_ml_source2_nominal_field2229 = shared_constructor_field6_2.clone();
                                                                                                                         {
-                                                                                                                            let source_ml_source2_nominal_override2205 = self::JavaScriptCallPending::WaitCall(destination_4);
-                                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2193.clone(), source_ml_source2_nominal_field2195, source_ml_source2_nominal_field2197, source_ml_source2_nominal_field2199, source_ml_source2_nominal_field2201, Box::new(source_ml_source2_nominal_override2205.clone()))
+                                                                                                                            let source_ml_source2_nominal_override2231 = self::JavaScriptCallPending::WaitCall(destination_4);
+                                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2219.clone(), source_ml_source2_nominal_field2221, source_ml_source2_nominal_field2223, source_ml_source2_nominal_field2225, source_ml_source2_nominal_field2227, Box::new(source_ml_source2_nominal_override2231.clone()))
                                                                                                                         }
                                                                                                                     }
                                                                                                                 }
@@ -239,37 +235,37 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                                                         }
                                                                                         self::JavaScriptCallInstruction::PushHandler(destination_5, target_2) => {
                                                                                             if ((((match frame.clone().expect("a proven present value") {
-                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2207, _) => {
-                                                                                                    source_ml_source2_data_property_value2207
+                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2233, _) => {
+                                                                                                    source_ml_source2_data_property_value2233
                                                                                                 }
                                                                                             }).len() as f64)) >= (1024f64)) {
                                                                                                 self::JavaScriptCallMachineTransition::MachineResourceLimit(Box::new(machine.clone()), self::ml_string::Text::from_units(vec![104, 97, 110, 100, 108, 101, 114, 32, 115, 116, 111, 114, 97, 103, 101, 32, 101, 120, 99, 101, 101, 100, 115, 32, 116, 104, 101, 32, 115, 101, 108, 101, 99, 116, 101, 100, 32, 101, 120, 101, 99, 117, 116, 105, 111, 110, 32, 114, 101, 115, 111, 117, 114, 99, 101, 32, 98, 117, 100, 103, 101, 116]))
                                                                                             } else {
                                                                                                 self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10, {
-                                                                                                    let source_ml_source2_nominal_field2214 = shared_constructor_field1_2.clone();
+                                                                                                    let source_ml_source2_nominal_field2240 = shared_constructor_field1_2.clone();
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_field2216 = shared_constructor_field2_2;
+                                                                                                        let source_ml_source2_nominal_field2242 = shared_constructor_field2_2;
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_field2218 = shared_constructor_field3_2;
+                                                                                                            let source_ml_source2_nominal_field2244 = shared_constructor_field3_2;
                                                                                                             {
-                                                                                                                let source_ml_source2_nominal_field2220 = shared_constructor_field4_2;
+                                                                                                                let source_ml_source2_nominal_field2246 = shared_constructor_field4_2;
                                                                                                                 {
-                                                                                                                    let source_ml_source2_nominal_field2222 = shared_constructor_field5_2;
+                                                                                                                    let source_ml_source2_nominal_field2248 = shared_constructor_field5_2;
                                                                                                                     {
-                                                                                                                        let source_ml_source2_nominal_field2224 = shared_constructor_field6_2.clone();
+                                                                                                                        let source_ml_source2_nominal_field2250 = shared_constructor_field6_2.clone();
                                                                                                                         {
-                                                                                                                            let source_ml_source2_nominal_override2226 = {
-                                                                                                                                let source_ml_source2_concat_value2211 = match frame.clone().expect("a proven present value") {
-                                                                                                                                    self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2210, _) => {
-                                                                                                                                        source_ml_source2_data_property_value2210
+                                                                                                                            let source_ml_source2_nominal_override2252 = {
+                                                                                                                                let source_ml_source2_concat_value2237 = match frame.clone().expect("a proven present value") {
+                                                                                                                                    self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2236, _) => {
+                                                                                                                                        source_ml_source2_data_property_value2236
                                                                                                                                     }
                                                                                                                                 };
                                                                                                                                 {
-                                                                                                                                    let source_ml_source2_concat_value2212 = vec![self::JavaScriptCallHandler::CallHandler(target_2, destination_5)];
-                                                                                                                                    self::ml_array::append(self::ml_array::append(Vec::<self::JavaScriptCallHandler>::new(), source_ml_source2_concat_value2211), source_ml_source2_concat_value2212)
+                                                                                                                                    let source_ml_source2_concat_value2238 = vec![self::JavaScriptCallHandler::CallHandler(target_2, destination_5)];
+                                                                                                                                    self::ml_array::append(self::ml_array::append(Vec::<self::JavaScriptCallHandler>::new(), source_ml_source2_concat_value2237), source_ml_source2_concat_value2238)
                                                                                                                                 }
                                                                                                                             };
-                                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2214.clone(), source_ml_source2_nominal_field2216, source_ml_source2_nominal_field2218, source_ml_source2_nominal_field2220, source_ml_source2_nominal_override2226, Box::new(source_ml_source2_nominal_field2224.clone()))
+                                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2240.clone(), source_ml_source2_nominal_field2242, source_ml_source2_nominal_field2244, source_ml_source2_nominal_field2246, source_ml_source2_nominal_override2252, Box::new(source_ml_source2_nominal_field2250.clone()))
                                                                                                                         }
                                                                                                                     }
                                                                                                                 }
@@ -281,31 +277,31 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                                                         }
                                                                                         self::JavaScriptCallInstruction::PopHandler => {
                                                                                             if ((((match frame.clone().expect("a proven present value") {
-                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2228, _) => {
-                                                                                                    source_ml_source2_data_property_value2228
+                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2254, _) => {
+                                                                                                    source_ml_source2_data_property_value2254
                                                                                                 }
                                                                                             }).len() as f64)) == (0f64)) {
                                                                                                 self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field9.clone()), self::ml_string::Text::from_units(vec![97, 32, 104, 97, 110, 100, 108, 101, 114, 32, 112, 111, 112, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 97, 99, 116, 105, 118, 101, 32, 104, 97, 110, 100, 108, 101, 114]))
                                                                                             } else {
                                                                                                 self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field9.clone(), shared_constructor_field10, {
-                                                                                                    let source_ml_source2_nominal_field2235 = shared_constructor_field1_2.clone();
+                                                                                                    let source_ml_source2_nominal_field2261 = shared_constructor_field1_2.clone();
                                                                                                     {
-                                                                                                        let source_ml_source2_nominal_field2237 = shared_constructor_field2_2;
+                                                                                                        let source_ml_source2_nominal_field2263 = shared_constructor_field2_2;
                                                                                                         {
-                                                                                                            let source_ml_source2_nominal_field2239 = shared_constructor_field3_2;
+                                                                                                            let source_ml_source2_nominal_field2265 = shared_constructor_field3_2;
                                                                                                             {
-                                                                                                                let source_ml_source2_nominal_field2241 = shared_constructor_field4_2;
+                                                                                                                let source_ml_source2_nominal_field2267 = shared_constructor_field4_2;
                                                                                                                 {
-                                                                                                                    let source_ml_source2_nominal_field2243 = shared_constructor_field5_2;
+                                                                                                                    let source_ml_source2_nominal_field2269 = shared_constructor_field5_2;
                                                                                                                     {
-                                                                                                                        let source_ml_source2_nominal_field2245 = shared_constructor_field6_2.clone();
+                                                                                                                        let source_ml_source2_nominal_field2271 = shared_constructor_field6_2.clone();
                                                                                                                         {
-                                                                                                                            let source_ml_source2_nominal_override2247 = self::ml_array::slice(&match frame.clone().expect("a proven present value") {
-                                                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2233, _) => {
-                                                                                                                                    source_ml_source2_data_property_value2233
+                                                                                                                            let source_ml_source2_nominal_override2273 = self::ml_array::slice(&match frame.clone().expect("a proven present value") {
+                                                                                                                                self::JavaScriptCallFrame::CallFrame(_, _, _, _, source_ml_source2_data_property_value2259, _) => {
+                                                                                                                                    source_ml_source2_data_property_value2259
                                                                                                                                 }
                                                                                                                             }, 0f64, (-1f64));
-                                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2235.clone(), source_ml_source2_nominal_field2237, source_ml_source2_nominal_field2239, source_ml_source2_nominal_field2241, source_ml_source2_nominal_override2247, Box::new(source_ml_source2_nominal_field2245.clone()))
+                                                                                                                            self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2261.clone(), source_ml_source2_nominal_field2263, source_ml_source2_nominal_field2265, source_ml_source2_nominal_field2267, source_ml_source2_nominal_override2273, Box::new(source_ml_source2_nominal_field2271.clone()))
                                                                                                                         }
                                                                                                                     }
                                                                                                                 }
@@ -465,6 +461,9 @@ pub fn step_java_script_call_machine(program: self::JavaScriptCallProgram, machi
                                                 let state_4 = *state_4;
                                                 self::step_java_script_call_text(program.clone(), machine.clone(), destination_14, realm_6.clone(), state_4.clone())
                                             }
+                                            self::JavaScriptCallPending::WaitSourceError(_, _, _, _) => {
+                                                self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field9.clone()), self::ml_string::Text::from_units(vec![97, 32, 112, 101, 110, 100, 105, 110, 103, 32, 99, 97, 108, 108, 32, 111, 114, 32, 97, 108, 108, 111, 99, 97, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 99, 111, 109, 112, 108, 101, 116, 105, 111, 110]))
+                                            }
                                             self::JavaScriptCallPending::WaitError(_, _, _) => {
                                                 self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field9.clone()), self::ml_string::Text::from_units(vec![97, 32, 112, 101, 110, 100, 105, 110, 103, 32, 99, 97, 108, 108, 32, 111, 114, 32, 97, 108, 108, 111, 99, 97, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 99, 111, 109, 112, 108, 101, 116, 105, 111, 110]))
                                             }
@@ -489,7 +488,7 @@ pub fn begin_java_script_call_machine(program: self::JavaScriptCallProgram, heap
             self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(heap.clone()), error.clone())
         } else {
             {
-                let fn_ = self::ml_array::optional_at((match &program { self::JavaScriptCallProgram::CallProgram(source_ml_source2_data_property_value2292, _, _) => source_ml_source2_data_property_value2292.as_slice() }), self::ml_array::number_index(self::find_java_script_call_function(program.clone(), identity.clone())));
+                let fn_ = self::ml_array::optional_at((match &program { self::JavaScriptCallProgram::CallProgram(source_ml_source2_data_property_value2319, _, _) => source_ml_source2_data_property_value2319.as_slice() }), self::ml_array::number_index(self::find_java_script_call_function(program.clone(), identity.clone())));
                 if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
                     self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(heap.clone()), self::ml_string::Text::from_units(vec![116, 104, 101, 32, 101, 110, 116, 114, 121, 32, 99, 97, 108, 108, 97, 98, 108, 101, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 101, 120, 101, 99, 117, 116, 97, 98, 108, 101, 32, 100, 101, 102, 105, 110, 105, 116, 105, 111, 110]))
                 } else {
@@ -504,8 +503,8 @@ pub fn begin_java_script_call_machine(program: self::JavaScriptCallProgram, heap
                                 {
                                     let source_ml_source1_temporary_index154 = self::ml::Big::from_i128(0);
                                     {
-                                        let source_ml_source2_s2293 = self::source_ml_source1_temporary_begin_java_script_call_machine_loop155(heap.clone(), arguments_.clone(), source_ml_source1_temporary_index154.clone());
-                                        match source_ml_source2_s2293.clone() {
+                                        let source_ml_source2_s2320 = self::source_ml_source1_temporary_begin_java_script_call_machine_loop155(heap.clone(), arguments_.clone(), source_ml_source1_temporary_index154.clone());
+                                        match source_ml_source2_s2320.clone() {
                                             self::MlSource1TemporaryBeginJavaScriptCallMachineLoop155Result::MlSource1TemporaryBeginJavaScriptCallMachineLoop155Done => {
                                                 self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::JavaScriptCallMachine::CallMachine(Box::new(heap.clone()), vec![self::create_java_script_call_frame(fn_.clone().expect("a proven present value"), receiver.clone(), arguments_)])))
                                             }
@@ -542,13 +541,13 @@ pub fn resume_java_script_call_error_allocation(program: self::JavaScriptCallPro
                             self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114, 32, 114, 101, 115, 117, 109, 112, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 97, 99, 116, 105, 118, 101, 32, 102, 114, 97, 109, 101]))
                         } else {
                             if {
-                                let source_ml_source2_s2299 = match frame.clone().expect("a proven present value") {
-                                    self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value2318) => {
-                                        let source_ml_source2_data_property_value2318 = *source_ml_source2_data_property_value2318;
-                                        source_ml_source2_data_property_value2318.clone()
+                                let source_ml_source2_s2326 = match frame.clone().expect("a proven present value") {
+                                    self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value2349) => {
+                                        let source_ml_source2_data_property_value2349 = *source_ml_source2_data_property_value2349;
+                                        source_ml_source2_data_property_value2349.clone()
                                     }
                                 };
-                                match source_ml_source2_s2299.clone() {
+                                match source_ml_source2_s2326.clone() {
                                     self::JavaScriptCallPending::WaitError(_, _, _) => {
                                         false
                                     }
@@ -560,10 +559,10 @@ pub fn resume_java_script_call_error_allocation(program: self::JavaScriptCallPro
                                 self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114, 32, 114, 101, 115, 117, 109, 112, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 101, 110, 100, 105, 110, 103, 32, 97, 108, 108, 111, 99, 97, 116, 105, 111, 110]))
                             } else {
                                 if {
-                                    let source_ml_source2_comparison_operand2326 = match match frame.clone().expect("a proven present value") {
-                                        self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value2320) => {
-                                            let source_ml_source2_data_property_value2320 = *source_ml_source2_data_property_value2320;
-                                            source_ml_source2_data_property_value2320.clone()
+                                    let source_ml_source2_comparison_operand2358 = match match frame.clone().expect("a proven present value") {
+                                        self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value2351) => {
+                                            let source_ml_source2_data_property_value2351 = *source_ml_source2_data_property_value2351;
+                                            source_ml_source2_data_property_value2351.clone()
                                         }
                                     } {
                                         self::JavaScriptCallPending::CallIdle => {
@@ -578,23 +577,26 @@ pub fn resume_java_script_call_error_allocation(program: self::JavaScriptCallPro
                                         self::JavaScriptCallPending::WaitSet(_) => {
                                             None::<self::ml::Big>
                                         }
-                                        self::JavaScriptCallPending::WaitKey(_, source_ml_source2_data_property_value2321, _) => {
-                                            Some(source_ml_source2_data_property_value2321.clone())
+                                        self::JavaScriptCallPending::WaitKey(_, source_ml_source2_data_property_value2352, _) => {
+                                            Some(source_ml_source2_data_property_value2352.clone())
                                         }
-                                        self::JavaScriptCallPending::WaitDefinition(_, source_ml_source2_data_property_value2322, _) => {
-                                            Some(source_ml_source2_data_property_value2322.clone())
+                                        self::JavaScriptCallPending::WaitDefinition(_, source_ml_source2_data_property_value2353, _) => {
+                                            Some(source_ml_source2_data_property_value2353.clone())
                                         }
-                                        self::JavaScriptCallPending::WaitNumber(_, source_ml_source2_data_property_value2323, _) => {
-                                            Some(source_ml_source2_data_property_value2323.clone())
+                                        self::JavaScriptCallPending::WaitNumber(_, source_ml_source2_data_property_value2354, _) => {
+                                            Some(source_ml_source2_data_property_value2354.clone())
                                         }
-                                        self::JavaScriptCallPending::WaitText(_, source_ml_source2_data_property_value2324, _) => {
-                                            Some(source_ml_source2_data_property_value2324.clone())
+                                        self::JavaScriptCallPending::WaitText(_, source_ml_source2_data_property_value2355, _) => {
+                                            Some(source_ml_source2_data_property_value2355.clone())
                                         }
-                                        self::JavaScriptCallPending::WaitError(source_ml_source2_data_property_value2325, _, _) => {
-                                            Some(source_ml_source2_data_property_value2325.clone())
+                                        self::JavaScriptCallPending::WaitSourceError(source_ml_source2_data_property_value2356, _, _, _) => {
+                                            Some(source_ml_source2_data_property_value2356.clone())
+                                        }
+                                        self::JavaScriptCallPending::WaitError(source_ml_source2_data_property_value2357, _, _) => {
+                                            Some(source_ml_source2_data_property_value2357.clone())
                                         }
                                     };
-                                    !(match (source_ml_source2_comparison_operand2326.clone(), realm.clone()) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
+                                    !(match (source_ml_source2_comparison_operand2358.clone(), realm.clone()) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false })
                                 } {
                                     self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114, 32, 114, 101, 115, 117, 109, 112, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 113, 117, 101, 115, 116, 101, 100, 32, 114, 101, 97, 108, 109]))
                                 } else {
@@ -645,285 +647,166 @@ pub fn resume_java_script_call_error_allocation(program: self::JavaScriptCallPro
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result {
-    MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Done,
-    MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Return(self::ml_string::Text),
-}
-
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_read_java_script_semantic_value_error_loop1(units: &[f64], mut at: f64) -> self::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result {
-    loop {
-        return if (at < ((units.len() as f64))) {
-            {
-                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64));
-                if ((!(self::ml_math::is_integer(unit)) || (unit < (0f64))) || (unit > (65535f64))) {
-                    self::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Return(self::ml_string::Text::from_units(vec![115, 101, 109, 97, 110, 116, 105, 99, 32, 116, 101, 120, 116, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 111, 114, 100, 101, 114, 101, 100, 32, 85, 84, 70, 49, 54, 32, 99, 111, 100, 101, 32, 117, 110, 105, 116, 115]))
-                } else {
-                    {
-                        let at_2 = (at + 1f64);
-                        {
-                            at = at_2;
-                            continue;
+pub fn request_java_script_call_source_error(program: self::JavaScriptCallProgram, machine: self::JavaScriptCallMachine, frame: self::JavaScriptCallFrame, instruction: self::JavaScriptCallInstruction) -> self::JavaScriptCallMachineTransition {
+    match frame.clone() {
+        self::JavaScriptCallFrame::CallFrame(shared_constructor_field3, shared_constructor_field4, shared_constructor_field5, shared_constructor_field6, shared_constructor_field7, shared_constructor_field8) => {
+            let shared_constructor_field8 = *shared_constructor_field8;
+            match machine.clone() {
+                self::JavaScriptCallMachine::CallMachine(shared_constructor_field1, shared_constructor_field2) => {
+                    let shared_constructor_field1 = *shared_constructor_field1;
+                    match instruction.clone() {
+                        self::JavaScriptCallInstruction::Constant(_, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
                         }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Result::MlSource1TemporaryReadJavaScriptSemanticValueErrorLoop1Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Result {
-    MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Done,
-    MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_test_java_script_semantic_same_value_loop2(left_units: &[f64], right_units: &[f64], mut at: f64) -> self::MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Result {
-    loop {
-        return if (at < ((left_units.len() as f64))) {
-            if (((self::ml_array::optional_at(left_units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64))) != ((self::ml_array::optional_at(right_units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64)))) {
-                self::MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Result::MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Return(false)
-            } else {
-                {
-                    let at_2 = (at + 1f64);
-                    {
-                        at = at_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Result::MlSource1TemporaryTestJavaScriptSemanticSameValueLoop2Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPlanJavaScriptPropertyDefinitionJoin3 {
-    MlSource1TemporaryPlanJavaScriptPropertyDefinitionJoin3Next,
-    MlSource1TemporaryPlanJavaScriptPropertyDefinitionJoin3Return(((bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool), self::ml_string::Text, self::ml_string::Text, Vec<self::ml_string::Text>)),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Result {
-    MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Done,
-    MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_find_java_script_ordinary_object_loop5(mut objects: Vec<self::JavaScriptOrdinaryObject>, mut identity: self::ml::Big, mut low: f64, mut high: f64) -> self::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Result {
-    loop {
-        return if (low < high) {
-            {
-                let middle = (((low + high) / 2f64)).floor();
-                {
-                    let object = self::ml_array::optional_at(&objects, self::ml_array::number_index(middle));
-                    if match (object.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
-                        self::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Result::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Return((-1f64))
-                    } else {
-                        if ((match object.clone().expect("a proven present value") {
-                            self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source2_data_property_value2346, _, _, _, _) => {
-                                source_ml_source2_data_property_value2346.clone()
-                            }
-                        }) == identity) {
-                            self::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Result::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Return(middle)
-                        } else {
-                            if ((match object.clone().expect("a proven present value") {
-                                self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source2_data_property_value2348, _, _, _, _) => {
-                                    source_ml_source2_data_property_value2348.clone()
-                                }
-                            }) < identity) {
-                                {
-                                    let low_2 = (middle + 1f64);
+                        self::JavaScriptCallInstruction::Copy(_, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Argument(_, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Jump(_) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Branch(_, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Call(_, _, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Return(_) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Throw(_) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::PushHandler(_, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::PopHandler => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::NumberBinary(_, _, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::SameValue(_, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::StrictEqual(_, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::RequireWrite(_) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::Primitive(_, operation, arguments) => {
+                            {
+                                let error_class = self::read_java_script_source_exception_class(&(operation));
+                                if ((error_class == (self::ml_string::Text::from_units(vec![]))) || (((arguments.len() as f64)) != (2f64))) {
+                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 99, 108, 97, 115, 115, 32, 97, 110, 100, 32, 97, 114, 103, 117, 109, 101, 110, 116, 115]))
+                                } else {
                                     {
-                                        low = low_2;
-                                        continue;
-                                    }
-                                }
-                            } else {
-                                {
-                                    high = middle;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Result::MlSource1TemporaryFindJavaScriptOrdinaryObjectLoop5Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Result {
-    MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Done,
-    MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_test_java_script_ordinary_symbol_loop6(mut symbols: Vec<self::ml::Big>, mut identity: self::ml::Big, mut low: f64, mut high: f64) -> self::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Result {
-    loop {
-        return if (low < high) {
-            {
-                let middle = (((low + high) / 2f64)).floor();
-                {
-                    let symbol = self::ml_array::optional_at(&symbols, self::ml_array::number_index(middle));
-                    if {
-                        let source_ml_source2_comparison_operand2350 = None::<()>;
-                        match (symbol.clone(), source_ml_source2_comparison_operand2350.clone()) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }
-                    } {
-                        self::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Result::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Return(false)
-                    } else {
-                        if ((symbol.clone().expect("a proven present value")) == identity) {
-                            self::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Result::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Return(true)
-                        } else {
-                            if ((symbol.clone().expect("a proven present value")) < identity) {
-                                {
-                                    let low_2 = (middle + 1f64);
-                                    {
-                                        low = low_2;
-                                        continue;
-                                    }
-                                }
-                            } else {
-                                {
-                                    high = middle;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Result::MlSource1TemporaryTestJavaScriptOrdinarySymbolLoop6Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Result {
-    MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Done,
-    MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_find_java_script_ordinary_property_loop7(mut properties: Vec<self::JavaScriptOrdinaryProperty>, mut key: self::JavaScriptSemanticValue, mut at: f64) -> self::MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Result {
-    loop {
-        return if (at < ((properties.len() as f64))) {
-            {
-                let property = self::ml_array::optional_at(&properties, self::ml_array::number_index(at));
-                if (!(match (property.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false }) && self::test_java_script_semantic_same_value({
-                    let source_ml_source2_nullish_field_receiver2351 = (property.clone(),);
-                    if match (source_ml_source2_nullish_field_receiver2351.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
-                        {
-                            let source_ml_source2_nullish_field_present2352 = ((source_ml_source2_nullish_field_receiver2351.clone()).0).clone().expect("a proven present value");
-                            match source_ml_source2_nullish_field_present2352.clone() {
-                                self::JavaScriptOrdinaryProperty::OrdinaryProperty(source_ml_source2_data_property_value2353, _) => {
-                                    let source_ml_source2_data_property_value2353 = *source_ml_source2_data_property_value2353;
-                                    source_ml_source2_data_property_value2353.clone()
-                                }
-                            }
-                        }
-                    } else {
-                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (self::ml_string::Text::from_units(vec![67, 97, 110, 110, 111, 116, 32, 114, 101, 97, 100, 32, 112, 114, 111, 112, 101, 114, 116, 105, 101, 115, 32, 111, 102, 32, 117, 110, 100, 101, 102, 105, 110, 101, 100, 32, 40, 114, 101, 97, 100, 105, 110, 103, 32, 39, 107, 101, 121, 39, 41])).0, message_present: true }).raise()
-                    }
-                }, key.clone())) {
-                    self::MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Result::MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Return(at)
-                } else {
-                    {
-                        let at_2 = (at + 1f64);
-                        {
-                            at = at_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Result::MlSource1TemporaryFindJavaScriptOrdinaryPropertyLoop7Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop13Result {
-    MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop13Done,
-    MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop13Return(self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result {
-    MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done,
-    MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Return(self::ml_string::Text),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop15(mut heap: self::JavaScriptOrdinaryHeap, mut object: self::JavaScriptOrdinaryObject, mut prototype: self::JavaScriptSemanticValue, mut depth: f64) -> self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result {
-    loop {
-        return match heap.clone() {
-            self::JavaScriptOrdinaryHeap::OrdinaryHeap(shared_constructor_field1, _) => {
-                match prototype.clone() {
-                    self::JavaScriptSemanticValue::Undefined => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Null => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Boolean(_) => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Number(_) => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Integer(_) => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Text(_) => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Symbol(_) => {
-                        self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
-                    }
-                    self::JavaScriptSemanticValue::Object(identity, _) => {
-                        {
-                            let depth_2 = (depth + 1f64);
-                            if ((identity == (match object.clone() {
-                                self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source2_data_property_value2361, _, _, _, _) => {
-                                    source_ml_source2_data_property_value2361.clone()
-                                }
-                            })) || (depth_2 > ((shared_constructor_field1.len() as f64)))) {
-                                self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Return(self::ml_string::Text::from_units(vec![111, 114, 100, 105, 110, 97, 114, 121, 32, 112, 114, 111, 116, 111, 116, 121, 112, 101, 32, 99, 104, 97, 105, 110, 115, 32, 109, 117, 115, 116, 32, 98, 101, 32, 97, 99, 121, 99, 108, 105, 99]))
-                            } else {
-                                {
-                                    let index = self::find_java_script_ordinary_object(shared_constructor_field1.clone(), identity.clone());
-                                    {
-                                        let parent = self::ml_array::optional_at(&shared_constructor_field1, self::ml_array::number_index(index));
-                                        if match (parent.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
-                                            self::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop15Return(self::ml_string::Text::from_units(vec![101, 118, 101, 114, 121, 32, 111, 114, 100, 105, 110, 97, 114, 121, 32, 112, 114, 111, 116, 111, 116, 121, 112, 101, 32, 109, 117, 115, 116, 32, 114, 101, 109, 97, 105, 110, 32, 105, 110, 32, 116, 104, 101, 32, 103, 108, 111, 98, 97, 108, 32, 100, 105, 114, 101, 99, 116, 111, 114, 121]))
-                                        } else {
-                                            {
-                                                let prototype_2 = match parent.clone().expect("a proven present value") {
-                                                    self::JavaScriptOrdinaryObject::OrdinaryObject(_, source_ml_source2_data_property_value2366, _, _, _) => {
-                                                        let source_ml_source2_data_property_value2366 = *source_ml_source2_data_property_value2366;
-                                                        source_ml_source2_data_property_value2366.clone()
+                                        let message = (self::ml_array::optional_at(&shared_constructor_field5, self::ml_array::number_index((self::ml_array::optional_at(&arguments, self::ml_array::number_index(0f64))).clone().unwrap_or_else(|| (-1f64))))).clone().unwrap_or_else(|| self::JavaScriptSemanticValue::Undefined);
+                                        {
+                                            let present = (self::ml_array::optional_at(&shared_constructor_field5, self::ml_array::number_index((self::ml_array::optional_at(&arguments, self::ml_array::number_index(1f64))).clone().unwrap_or_else(|| (-1f64))))).clone().unwrap_or_else(|| self::JavaScriptSemanticValue::Undefined);
+                                            match message.clone() {
+                                                self::JavaScriptSemanticValue::Undefined => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
+                                                }
+                                                self::JavaScriptSemanticValue::Null => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
+                                                }
+                                                self::JavaScriptSemanticValue::Boolean(_) => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
+                                                }
+                                                self::JavaScriptSemanticValue::Number(_) => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
+                                                }
+                                                self::JavaScriptSemanticValue::Integer(_) => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
+                                                }
+                                                self::JavaScriptSemanticValue::Text(_) => {
+                                                    {
+                                                        let message_error = self::read_java_script_ordinary_value_error(shared_constructor_field1.clone(), message.clone());
+                                                        if (message_error != (self::ml_string::Text::from_units(vec![]))) {
+                                                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), message_error.clone())
+                                                        } else {
+                                                            match present.clone() {
+                                                                self::JavaScriptSemanticValue::Undefined => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                                self::JavaScriptSemanticValue::Null => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                                self::JavaScriptSemanticValue::Boolean(value) => {
+                                                                    {
+                                                                        let fn_ = self::ml_array::optional_at((match &program { self::JavaScriptCallProgram::CallProgram(source_ml_source2_data_property_value2464, _, _) => source_ml_source2_data_property_value2464.as_slice() }), self::ml_array::number_index(self::find_java_script_call_function(program.clone(), shared_constructor_field3.clone())));
+                                                                        if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                                                                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 103, 105, 115, 116, 101, 114, 101, 100, 32, 115, 111, 117, 114, 99, 101, 32, 111, 119, 110, 101, 114]))
+                                                                        } else {
+                                                                            {
+                                                                                let next = {
+                                                                                    let source_ml_source2_nominal_field2470 = shared_constructor_field3.clone();
+                                                                                    {
+                                                                                        let source_ml_source2_nominal_field2472 = shared_constructor_field4;
+                                                                                        {
+                                                                                            let source_ml_source2_nominal_field2474 = shared_constructor_field5;
+                                                                                            {
+                                                                                                let source_ml_source2_nominal_field2476 = shared_constructor_field6;
+                                                                                                {
+                                                                                                    let source_ml_source2_nominal_field2478 = shared_constructor_field7;
+                                                                                                    {
+                                                                                                        let source_ml_source2_nominal_field2480 = shared_constructor_field8.clone();
+                                                                                                        {
+                                                                                                            let source_ml_source2_nominal_override2482 = (shared_constructor_field4 + 1f64);
+                                                                                                            {
+                                                                                                                let source_ml_source2_nominal_override2483 = self::JavaScriptCallPending::WaitSourceError(match fn_.clone().expect("a proven present value") {
+                                                                                                                    self::JavaScriptCallFunction::CallFunction(_, source_ml_source2_data_property_value2468, _, _, _, _, _, _) => {
+                                                                                                                        source_ml_source2_data_property_value2468.clone()
+                                                                                                                    }
+                                                                                                                }, error_class.clone(), Box::new(message.clone()), value);
+                                                                                                                self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field2470.clone(), source_ml_source2_nominal_override2482, source_ml_source2_nominal_field2474, source_ml_source2_nominal_field2476, source_ml_source2_nominal_field2478, Box::new(source_ml_source2_nominal_override2483.clone()))
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                };
+                                                                                self::JavaScriptCallMachineTransition::MachineAllocateSourceError(Box::new(self::replace_java_script_call_frame(shared_constructor_field1.clone(), shared_constructor_field2, next.clone())), match fn_.clone().expect("a proven present value") {
+                                                                                    self::JavaScriptCallFunction::CallFunction(_, source_ml_source2_data_property_value2486, _, _, _, _, _, _) => {
+                                                                                        source_ml_source2_data_property_value2486.clone()
+                                                                                    }
+                                                                                }, error_class.clone(), Box::new(message.clone()), value)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                self::JavaScriptSemanticValue::Number(_) => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                                self::JavaScriptSemanticValue::Integer(_) => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                                self::JavaScriptSemanticValue::Text(_) => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                                self::JavaScriptSemanticValue::Symbol(_) => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                                self::JavaScriptSemanticValue::Object(_, _) => {
+                                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 99, 116, 117, 97, 108, 32, 111, 119, 110, 45, 109, 101, 115, 115, 97, 103, 101, 32, 112, 114, 101, 115, 101, 110, 99, 101]))
+                                                                }
+                                                            }
+                                                        }
                                                     }
-                                                };
-                                                {
-                                                    (prototype, depth) = (prototype_2.clone(), depth_2);
-                                                    continue;
+                                                }
+                                                self::JavaScriptSemanticValue::Symbol(_) => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
+                                                }
+                                                self::JavaScriptSemanticValue::Object(_, _) => {
+                                                    self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 97, 32, 110, 111, 114, 109, 97, 108, 105, 122, 101, 100, 32, 85, 84, 70, 49, 54, 32, 109, 101, 115, 115, 97, 103, 101]))
                                                 }
                                             }
                                         }
@@ -931,15 +814,21 @@ pub fn source_ml_source1_temporary_read_java_script_ordinary_heap_error_loop15(m
                                 }
                             }
                         }
+                        self::JavaScriptCallInstruction::OrdinaryGet(_, _, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::OrdinarySet(_, _, _, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::PropertyKey(_, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
+                        self::JavaScriptCallInstruction::PropertyDefinition(_, _, _, _, _) => {
+                            self::JavaScriptCallMachineTransition::MachineInvalid(Box::new(shared_constructor_field1.clone()), self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 32, 69, 114, 114, 111, 114, 32, 99, 111, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110]))
+                        }
                     }
                 }
             }
-        };
+        }
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop14Result {
-    MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop14Done,
-    MlSource1TemporaryReadJavaScriptOrdinaryHeapErrorLoop14Return(self::ml_string::Text),
 }

@@ -13,7 +13,7 @@ export function shareSourceClosedConstructorMatches(program){return shareSourceC
 function shareSourceConstructorMatches(program,closed){
  if(closed&&program.sourceLanguage!=='JavaScript')throw new TypeError('closed constructor sharing requires the checked JavaScript value model; ownership-sensitive source models need their own proof');
  const rule=readProjectData(new URL('parity/self-translation/source-'+(closed?'closed':'boolean')+'-match-sharing.lino',root));
- if(rule.schemaVersion!==1||rule.model!==(closed?'closed constructor match sharing 1':'literal Boolean constructor match arms 1')||rule.preserveScrutinee!==true||rule.requireCompleteOwner!==true||closed&&(rule.pruneUnusedBindings!==true||rule.pruneUnusedAliases!==true||rule.shareSingleConstructorProjections!==true||rule.shareScopedConstructorProjections!==true||rule.shareImmutableLexicalAliases!==true||rule.shareLiteralText!==true||rule.shareLiteralScalar!==true))throw new TypeError('actual qualified constructor match sharing rules are required');
+ if(rule.schemaVersion!==1||rule.model!==(closed?'closed constructor match sharing 1':'literal Boolean constructor match arms 1')||rule.preserveScrutinee!==true||rule.requireCompleteOwner!==true||closed&&(rule.pruneUnusedBindings!==true||rule.pruneUnusedAliases!==true||rule.shareSingleConstructorProjections!==true||rule.shareScopedConstructorProjections!==true||rule.shareImmutableLexicalAliases!==true||rule.shareLiteralText!==true||rule.shareLiteralScalar!==true||rule.foldLiteralConditions!==true||rule.reduceBooleanIdentities!==true||rule.propagateLiteralAliases!==true))throw new TypeError('actual qualified constructor match sharing rules are required');
  const memo=new WeakMap(),active=new WeakSet(),referenceCache=new WeakMap(),proofs=[];let visits=0,referenceVisits=0;
  function references(body){
   if(body&&typeof body==='object'&&referenceCache.has(body))return referenceCache.get(body);
@@ -51,6 +51,32 @@ function shareSourceConstructorMatches(program,closed){
    const next=['type','domain','from','to','span','pattern'].includes(key)?child:rewrite(child,[...path,key],owner,depth+1);changed||=next!==child;return [key,next];
   }));
   let output=changed?result:value;
+  if(closed){
+   const scalar=node=>node?.k==='lit'&&['bool','string'].includes(node.type?.kind)&&typeof node.value===(node.type.kind==='bool'?'boolean':'string')&&Object.keys(node).every(key=>['k','type','value','span'].includes(key));
+   if(output.k==='binary'&&['and','or'].includes(output.op)&&output.type?.kind==='bool'&&output.left?.type?.kind==='bool'&&output.right?.type?.kind==='bool'&&(!output.domain||output.domain.kind==='bool')&&Object.keys(output).every(key=>['k','op','left','right','domain','type','span'].includes(key))){
+    let selected='';
+    if(scalar(output.left))selected=output.op==='and'?(output.left.value?'right':'left'):(output.left.value?'left':'right');
+    else if(scalar(output.right)&&(output.op==='and'&&output.right.value||output.op==='or'&&!output.right.value))selected='left';
+    if(selected){proofs.push({operation:'reduce checked Boolean identity',owner,path,operator:output.op,selected:[...path,selected],preserveEffects:true});output=output[selected];}
+   }
+   let folded;
+   if(output.k==='unary'&&output.op==='not'&&output.type?.kind==='bool'&&scalar(output.arg)&&output.arg.type.kind==='bool'&&Object.keys(output).every(key=>['k','op','arg','type','span'].includes(key)))folded=!output.arg.value;
+   if(['binary','strictEqual'].includes(output.k)&&output.type?.kind==='bool'&&scalar(output.left)&&scalar(output.right)&&output.left.type.kind===output.right.type.kind){
+    const allowed=output.k==='binary'?['k','op','left','right','domain','type','span']:['k','left','right','negate','type','span'];
+    if(Object.keys(output).every(key=>allowed.includes(key))&&(output.k==='strictEqual'||['eq','ne'].includes(output.op))){
+     const equal=output.left.value===output.right.value;folded=output.k==='strictEqual'?(output.negate?!equal:equal):output.op==='ne'?!equal:equal;
+    }
+   }
+   if(folded!==undefined){
+    proofs.push({operation:'fold checked Boolean or text literals',owner,path,original:output,value:folded});
+    output={k:'lit',type:output.type,value:folded,...(output.span?{span:output.span}:{})};
+   }
+   if(output.k==='if'&&scalar(output.cond)&&output.cond.type.kind==='bool'&&Object.keys(output).every(key=>['k','cond','then','else','type','span'].includes(key))){
+    const branch=output.cond.value?'then':'else';
+    proofs.push({operation:'select checked literal condition',owner,path,condition:output.cond,selected:[...path,branch],preserveEffects:true});
+    output=output[branch];
+   }
+  }
   if(closed&&program.sourceLanguage==='JavaScript'&&output.k==='match'&&output.scrutinee?.type?.kind==='data'&&Array.isArray(output.cases)){
    const datatype=program.declarations.get(output.scrutinee.type.name);
    if(datatype?.k==='data'){
@@ -98,7 +124,7 @@ function shareSourceConstructorMatches(program,closed){
  const declarations=new Map();
  for(const [name,entry]of program.declarations){
   let body=entry.k==='fn'?rewrite(entry.body,['body'],name):entry.body;
-  if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=shareSourceScopedConstructorProjections(program,entry,body,proofs);body=shareSourceConstructorProjections(program,entry,body,proofs);}
+  if(closed&&entry.k==='fn'){body=shareSourceLexicalAliases(program,entry,body,proofs);body=rewrite(body,['body'],name);body=shareSourceScopedConstructorProjections(program,entry,body,proofs);body=shareSourceConstructorProjections(program,entry,body,proofs);}
   declarations.set(name,body===entry.body?entry:{...entry,body});
  }
  function items(values){return values.map(item=>{

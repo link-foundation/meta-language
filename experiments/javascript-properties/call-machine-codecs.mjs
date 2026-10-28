@@ -121,6 +121,7 @@ case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"nu
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptPropertyDefinitionState(value["state"])};
 case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptNumberCallState(value["state"])};
 case "waitText":return {$:"waitText","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptTextCallState(value["state"])};
+case "waitSourceError":return {$:"waitSourceError","realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"message":decodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
 case "waitError":return {$:"waitError","realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallPending(value){switch(value.$){
@@ -132,6 +133,7 @@ case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"nu
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptPropertyDefinitionState(value["state"])};
 case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptNumberCallState(value["state"])};
 case "waitText":return {$:"waitText","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptTextCallState(value["state"])};
+case "waitSourceError":return {$:"waitSourceError","realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"message":encodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
 case "waitError":return {$:"waitError","realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptPrimitiveConversionState(value){switch(value.$){
@@ -175,6 +177,7 @@ case "machineContinue":return {$:"machineContinue","machine":decodeJavaScriptCal
 case "machineCompleted":return {$:"machineCompleted","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"value":decodeJavaScriptSemanticValue(value["value"])};
 case "machineThrow":return {$:"machineThrow","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"value":decodeJavaScriptSemanticValue(value["value"])};
 case "machineAllocateError":return {$:"machineAllocateError","machine":decodeJavaScriptCallMachine(value["machine"]),"realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
+case "machineAllocateSourceError":return {$:"machineAllocateSourceError","machine":decodeJavaScriptCallMachine(value["machine"]),"realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"message":decodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
 case "machineInvalid":return {$:"machineInvalid","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"reason":scalar(value["reason"],"string")};
 case "machineResourceLimit":return {$:"machineResourceLimit","machine":decodeJavaScriptCallMachine(value["machine"]),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
@@ -183,6 +186,7 @@ case "machineContinue":return {$:"machineContinue","machine":encodeJavaScriptCal
 case "machineCompleted":return {$:"machineCompleted","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"value":encodeJavaScriptSemanticValue(value["value"])};
 case "machineThrow":return {$:"machineThrow","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"value":encodeJavaScriptSemanticValue(value["value"])};
 case "machineAllocateError":return {$:"machineAllocateError","machine":encodeJavaScriptCallMachine(value["machine"]),"realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
+case "machineAllocateSourceError":return {$:"machineAllocateSourceError","machine":encodeJavaScriptCallMachine(value["machine"]),"realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"message":encodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
 case "machineInvalid":return {$:"machineInvalid","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"reason":scalar(value["reason"],"string")};
 case "machineResourceLimit":return {$:"machineResourceLimit","machine":encodeJavaScriptCallMachine(value["machine"]),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
