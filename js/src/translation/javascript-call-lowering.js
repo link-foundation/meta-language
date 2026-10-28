@@ -10,6 +10,7 @@ import {readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-
 import {readBigIntegerBitwiseOperationCode} from './big-integer-bitwise-rules.js';
 import {readJavaScriptNumberBitwiseOperationCode} from './number-bitwise-rules.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
+import {readCheckedJavaScriptIntegerResult} from './javascript-call-integer-lowering.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
@@ -50,6 +51,8 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
   for(const param of entry.params){const identity=nextBinding++;if(bindings.has(param.name))refuse(entry,'actual parameter owners must be distinct');bindings.set(param.name,identity);parameters.push(identity);}
   function expression(node,environment,depth=0){
    if(!node||depth>128||++visits>65536||!acceptType(node.type))refuse(node,'source expressions exceed the represented value/structural profile');
+   const integerResult=readCheckedJavaScriptIntegerResult(node);
+   if(integerResult)return primitive(integerResult.operation,integerResult.arguments.map(arg=>expression(arg,environment,depth+1)));
    switch(node.k){
     case 'lit':{
      const type=node.type.kind,value=node.value;
@@ -157,6 +160,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'math':case 'optionalPredicate':{
      if(node.k==='math'){
+      if(readJavaScriptBigIntegerResultOperation(node.op)==='boolean'&&node.args.length===1&&node.args[0].type.kind==='bool')return {$:'sourceIf',condition:expression(node.args[0],environment,depth+1),yes:constant({$:'integer',value:1n}),no:constant({$:'integer',value:0n})};
       if(readJavaScriptSourceExceptionClass(node.op)!==''&&node.args.length===2&&node.args[0].type.kind==='string'&&node.args[1].type.kind==='bool')return primitive(node.op,node.args.map(arg=>expression(arg,environment,depth+1)));
       const comparison=readJavaScriptBigIntegerResultOperation(node.op);
       if((comparison==='number-compare'||comparison==='string-compare')&&node.args.length===2&&node.args[1].type.kind==='int'&&node.args[0].type.kind===(comparison==='number-compare'?'float':'string'))return primitive(comparison==='number-compare'?'compare number integer':'compare text integer',node.args.map(arg=>expression(arg,environment,depth+1)));

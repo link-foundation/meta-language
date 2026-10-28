@@ -3,6 +3,7 @@
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
+import {executeJavaScriptCallIntegerConversion} from './javascript-call-integer-conversion.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
@@ -19,7 +20,7 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  const integerArity=readJavaScriptCallIntegerArity(operation);
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
- const unary=['truncate number','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text',
+ const unary=['truncate number','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer',
  'read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'];
  const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
  const ternary=['slice text','find text','find last text'];
@@ -98,6 +99,7 @@ export function executeJavaScriptCallPrimitive(operation,values){
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
  if(readJavaScriptSourceExceptionClass(operation)!=='')return {$:'primitiveInvalid',reason:'source Error allocation requires its actual registered realm'};
  if(operation==='convert explicit number'||operation==='coerce primitive number')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
+ if(operation==='convert explicit integer'||operation==='coerce primitive integer')return executeJavaScriptCallIntegerConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert primitive text')return executeJavaScriptCallTextConversion(values[0]??{$:'undefined'});
  if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);
  return ['truncate number','read minimum number','read maximum number','construct text units','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation)?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);

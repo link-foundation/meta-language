@@ -5,8 +5,6 @@ use super::divide_number_power_bound;
 use super::invert_number_power_interval;
 use super::ml;
 use super::ml_array;
-use super::ml_math;
-use super::ml_string;
 use super::multiply_number_power_interval;
 use super::power_java_script_big_integer;
 use super::read_java_script_numeric_digit_unit;
@@ -811,103 +809,89 @@ pub fn source_ml_source1_temporary_power_java_script_number_loop47(mut exponent:
 }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptSemanticValue {
-    Undefined,
-    Null,
-    Boolean(bool),
-    Number(f64),
-    Integer(self::ml::Big),
-    Text(Vec<f64>),
-    Symbol(self::ml::Big),
-    Object(self::ml::Big, bool),
-}
+pub mod ml_utf16_text {
+#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptOrdinaryProperty {
-    OrdinaryProperty(Box<self::JavaScriptSemanticValue>, (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)),
-}
+/// The Math functions that Rust's f64 methods do not share with JavaScript.
+pub mod ml_math {
+    /// Math.round: the nearest integer, the one towards +Infinity on a tie,
+    /// with the sign of a zero result from the argument.
+    pub fn round(x: f64) -> f64 {
+        if !x.is_finite() || x == 0.0 {
+            return x;
+        }
+        if x > 0.0 && x < 0.5 {
+            return 0.0;
+        }
+        if x < 0.0 && x >= -0.5 {
+            return -0.0;
+        }
+        let floor = x.floor();
+        if x - floor >= 0.5 {
+            floor + 1.0
+        } else {
+            floor
+        }
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptOrdinaryObject {
-    OrdinaryObject(self::ml::Big, Box<self::JavaScriptSemanticValue>, bool, bool, Vec<self::JavaScriptOrdinaryProperty>),
-}
+    /// Math.sign, which keeps -0, 0 and NaN, where f64::signum does not.
+    pub fn sign(x: f64) -> f64 {
+        if x > 0.0 {
+            1.0
+        } else if x < 0.0 {
+            -1.0
+        } else {
+            x
+        }
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptOrdinaryHeap {
-    OrdinaryHeap(Vec<self::JavaScriptOrdinaryObject>, Vec<self::ml::Big>),
-}
+    /// Math.max of two Numbers: NaN when either is, and 0 above -0.
+    pub fn max(a: f64, b: f64) -> f64 {
+        if a > b {
+            a
+        } else if b > a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() {
+                b
+            } else {
+                a
+            }
+        } else {
+            f64::NAN
+        }
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPrimitiveConversionState {
-    PrimitiveConversion(Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, self::ml_string::Text, self::ml_string::Text),
-}
+    /// Math.min of two Numbers: NaN when either is, and -0 below 0.
+    pub fn min(a: f64, b: f64) -> f64 {
+        if a < b {
+            a
+        } else if b < a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() {
+                a
+            } else {
+                b
+            }
+        } else {
+            f64::NAN
+        }
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPrimitiveConversionCompletion {
-    NormalCompletion(Box<self::JavaScriptSemanticValue>),
-    ThrowCompletion(Box<self::JavaScriptSemanticValue>),
-}
+    pub fn max_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPrimitiveConversionTransition {
-    PrimitiveContinuation(Box<self::JavaScriptPrimitiveConversionState>),
-    PrimitiveCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
-    PrimitiveCompleted(Box<self::JavaScriptSemanticValue>),
-    PrimitiveThrow(Box<self::JavaScriptSemanticValue>),
-    PrimitiveIntrinsicError(self::ml_string::Text, self::ml_string::Text),
-    PrimitiveInvalid(self::ml_string::Text),
-}
+    pub fn min_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallPrimitiveResult {
-    PrimitiveValue(Box<self::JavaScriptSemanticValue>),
-    PrimitiveInvalid(self::ml_string::Text),
-    PrimitiveError(self::ml_string::Text, self::ml_string::Text),
-    PrimitiveResourceLimit(self::ml_string::Text),
-}
+    pub fn is_integer(x: f64) -> bool {
+        x.is_finite() && x.trunc() == x
+    }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptScalarConversionTransition {
-    ScalarContinuation(Box<self::JavaScriptPrimitiveConversionState>),
-    ScalarCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
-    ScalarCompleted(Box<self::JavaScriptSemanticValue>),
-    ScalarThrow(Box<self::JavaScriptSemanticValue>),
-    ScalarIntrinsicError(self::ml_string::Text, self::ml_string::Text),
-    ScalarInvalid(self::ml_string::Text),
-    ScalarResourceLimit(Box<self::JavaScriptSemanticValue>, self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptTextCallState {
-    TextProtocolState(Box<self::JavaScriptPrimitiveConversionState>),
-    TextPrimitiveValue(Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallInstruction {
-    Constant(f64, Box<self::JavaScriptSemanticValue>),
-    Copy(f64, f64),
-    Argument(f64, f64),
-    Jump(f64),
-    Branch(f64, f64, f64),
-    Call(f64, f64, f64, Vec<f64>),
-    Return(f64),
-    Throw(f64),
-    PushHandler(f64, f64),
-    PopHandler,
-    NumberBinary(f64, f64, f64, self::ml_string::Text),
-    SameValue(f64, f64, f64),
-    StrictEqual(f64, f64, f64),
-    RequireWrite(f64),
-    Primitive(f64, self::ml_string::Text, Vec<f64>),
-    OrdinaryGet(f64, f64, f64, f64),
-    OrdinarySet(f64, f64, f64, f64, f64),
-    PropertyKey(f64, f64, self::ml::Big),
-    PropertyDefinition(f64, f64, f64, f64, self::ml::Big),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallFunction {
-    CallFunction(self::ml::Big, self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, f64, f64, Vec<self::JavaScriptSemanticValue>, Vec<self::JavaScriptCallInstruction>),
+    pub fn is_safe_integer(x: f64) -> bool {
+        is_integer(x) && x.abs() <= 9007199254740991.0
+    }
 }

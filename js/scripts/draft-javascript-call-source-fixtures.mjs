@@ -232,6 +232,43 @@ for(const [name,source,args,errorClass,message,present]of [
  ['source optional null retains text message presence','/** @param {string | null | undefined} value @returns {number} */ export function inspect(value){throw new Error(value);}',[{$:'null'}],'Error',units('null'),true]
 ])rows.push({name,source,entry:'inspect',functions:['inspect'],arguments:args,expectedOutcome:'sourceAllocation',errorClass,errorRealm:'1000',errorMessage:message,messagePresent:present});
 rows.push({name:'source Error evaluates ignored arguments before message conversion',source:'/** @param {{value:number}} holder @returns {number} */ export function inspect(holder){throw new TypeError(holder.value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expectedOutcome:'sourceAllocation',errorClass:'TypeError',errorRealm:'1000',errorMessage:units('0'),messagePresent:true});
+for(const [name,type,input,expected]of [
+ ['BigInt parses decimal text without Number rounding','string',units('9007199254740993'),integer('9007199254740993')],
+ ['BigInt parses hexadecimal text','string',units('0x10'),integer('16')],
+ ['BigInt parses binary text','string',units('0b101'),integer('5')],
+ ['BigInt parses octal text','string',units('0o17'),integer('15')],
+ ['BigInt maps empty text to zero','string',units(''),integer('0')],
+ ['BigInt trims integer whitespace','string',units(' \t-42\n'),integer('-42')],
+ ['BigInt preserves negative textual zero','string',units('-0'),integer('0')],
+ ['BigInt converts an exact large Number','number',number(9007199254740992),integer('9007199254740992')],
+ ['BigInt converts a negative integral Number','number',number(-42),integer('-42')],
+ ['BigInt converts negative Number zero','number',number(-0),integer('0')],
+ ['BigInt converts Boolean true','boolean',{$:'boolean',value:true},integer('1')],
+ ['BigInt converts Boolean false','boolean',{$:'boolean',value:false},integer('0')],
+ ['BigInt identity retains its existing integer','bigint',integer('-9007199254740993'),integer('-9007199254740993')]
+])rows.push({name,source:'/** @param {'+type+'} value @returns {bigint} */ export function inspect(value){return BigInt(value);}',entry:'inspect',functions:['inspect'],arguments:[input],expected});
+for(const [name,input,message]of [
+ ['BigInt rejects exponent text',units('1e3'),'Cannot convert 1e3 to a BigInt'],
+ ['BigInt rejects a signed hexadecimal prefix',units('+0x10'),'Cannot convert +0x10 to a BigInt'],
+ ['BigInt preserves invalid surrogate text in its SyntaxError',{$:'text',units:[55296]},'Cannot convert \uD800 to a BigInt']
+])rows.push({name,source:'/** @param {string} value @returns {bigint} */ export function inspect(value){return BigInt(value);}',entry:'inspect',functions:['inspect'],arguments:[input],expectedOutcome:'allocation',errorClass:'SyntaxError',errorRealm:'1000',...(message.isWellFormed()?{errorReason:message}:{errorReasonUnits:Array.from({length:message.length},(_,index)=>message.charCodeAt(index))})});
+for(const [name,input,message]of [
+ ['BigInt rejects a fractional Number',number(1.5),'The number 1.5 cannot be converted to a BigInt because it is not an integer'],
+ ['BigInt rejects NaN',number(NaN),'The number NaN cannot be converted to a BigInt because it is not an integer'],
+ ['BigInt rejects infinity',number(Infinity),'The number Infinity cannot be converted to a BigInt because it is not an integer']
+])rows.push({name,source:'/** @param {number} value @returns {bigint} */ export function inspect(value){return BigInt(value);}',entry:'inspect',functions:['inspect'],arguments:[input],expectedOutcome:'allocation',errorClass:'RangeError',errorRealm:'1000',...(message.isWellFormed()?{errorReason:message}:{errorReasonUnits:Array.from({length:message.length},(_,index)=>message.charCodeAt(index))})});
+for(const [name,operation,left,right,expected]of [
+ ['dynamic BigInt division truncates negative quotients','/',integer('-7'),integer('3'),integer('-2')],
+ ['dynamic BigInt remainder retains the dividend sign','%',integer('-7'),integer('3'),integer('-1')],
+ ['BigInt exponentiation retains its exact result','**',integer('2'),integer('64'),integer('18446744073709551616')],
+ ['BigInt zero exponent retains its identity','**',integer('0'),integer('0'),integer('1')]
+])rows.push({name,source:'/** @param {bigint} left @param {bigint} right @returns {bigint} */ export function inspect(left,right){return left'+operation+'right;}',entry:'inspect',functions:['inspect'],arguments:[left,right],expected});
+for(const [name,operation,right,message]of [
+ ['dynamic BigInt division preserves zero-divisor failure','/',integer('0'),'Division by zero'],
+ ['dynamic BigInt remainder preserves zero-divisor failure','%',integer('0'),'Division by zero'],
+ ['BigInt exponentiation preserves negative-exponent failure','**',integer('-1'),'Exponent must be positive']
+])rows.push({name,source:'/** @param {bigint} left @param {bigint} right @returns {bigint} */ export function inspect(left,right){return left'+operation+'right;}',entry:'inspect',functions:['inspect'],arguments:[integer('2'),right],expectedOutcome:'allocation',errorClass:'RangeError',errorRealm:'1000',...(message.isWellFormed()?{errorReason:message}:{errorReasonUnits:Array.from({length:message.length},(_,index)=>message.charCodeAt(index))})});
+rows.push({name:'BigInt conversion captures ignored argument effects before parsing',source:'/** @param {string} value @param {{value:number}} holder @returns {bigint} */ export function inspect(value,holder){return BigInt(value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[units('42'),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:integer('42')});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

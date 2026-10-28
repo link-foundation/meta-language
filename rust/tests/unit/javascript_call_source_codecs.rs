@@ -8,6 +8,40 @@ fn wire_number(value: f64) -> Data {
     }
     Data::Number(value.to_string().parse().expect("finite model Number"))
 }
+fn wire_text_units(value: &Data) -> Vec<u16> {
+    let units = if let Some(text) = value.as_str() {
+        text.encode_utf16().collect::<Vec<u16>>()
+    } else {
+        let object = value.as_object().expect("qualified model text units");
+        assert_eq!(object.len(), 2, "exact model text keys");
+        assert_eq!(
+            object.get("textEncoding").and_then(Data::as_str),
+            Some("UTF16 code units 1"),
+            "model text encoding"
+        );
+        let input = object
+            .get("units")
+            .and_then(Data::as_array)
+            .expect("model text units");
+        assert!(input.len() <= 16777216, "model text unit budget");
+        input
+            .iter()
+            .map(|unit| {
+                u16::try_from(unit.as_u64().expect("model UTF16 unit"))
+                    .expect("model UTF16 unit range")
+            })
+            .collect()
+    };
+    assert!(units.len() <= 16777216, "model text unit budget");
+    units
+}
+fn wire_text(units: &[u16]) -> Data {
+    assert!(units.len() <= 16777216, "model text unit budget");
+    match String::from_utf16(units) {
+        Ok(text) => Data::String(text),
+        Err(_) => json!({"textEncoding":"UTF16 code units 1","units":units}),
+    }
+}
 pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptCallSource {
     match data["$"].as_str().expect("model constructor") {
         "sourceConstant" => native::JavaScriptCallSource::SourceConstant(Box::new(
@@ -39,7 +73,8 @@ pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptC
             Box::new(decode_java_script_call_source(&data["no"])),
         ),
         "sourceNumberBinary" => native::JavaScriptCallSource::SourceNumberBinary(
-            data["operator"].as_str().expect("model text").to_owned(),
+            String::from_utf16(&wire_text_units(&data["operator"]))
+                .expect("model text requires Unicode scalar values in this native profile"),
             Box::new(decode_java_script_call_source(&data["left"])),
             Box::new(decode_java_script_call_source(&data["right"])),
         ),
@@ -52,7 +87,8 @@ pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptC
             Box::new(decode_java_script_call_source(&data["right"])),
         ),
         "sourcePrimitive" => native::JavaScriptCallSource::SourcePrimitive(
-            data["operation"].as_str().expect("model text").to_owned(),
+            String::from_utf16(&wire_text_units(&data["operation"]))
+                .expect("model text requires Unicode scalar values in this native profile"),
             data["arguments"]
                 .as_array()
                 .expect("model array")
@@ -119,7 +155,7 @@ pub(super) fn encode_java_script_call_source(value: &native::JavaScriptCallSourc
             wire_field_1,
             wire_field_2,
         ) => {
-            json!({"$":"sourceNumberBinary","operator":Data::String(wire_field_0.to_owned()),"left":encode_java_script_call_source(wire_field_1),"right":encode_java_script_call_source(wire_field_2)})
+            json!({"$":"sourceNumberBinary","operator":wire_text(&wire_field_0.encode_utf16().collect::<Vec<u16>>()),"left":encode_java_script_call_source(wire_field_1),"right":encode_java_script_call_source(wire_field_2)})
         }
         native::JavaScriptCallSource::SourceSameValue(wire_field_0, wire_field_1) => {
             json!({"$":"sourceSameValue","left":encode_java_script_call_source(wire_field_0),"right":encode_java_script_call_source(wire_field_1)})
@@ -128,7 +164,7 @@ pub(super) fn encode_java_script_call_source(value: &native::JavaScriptCallSourc
             json!({"$":"sourceStrictEqual","left":encode_java_script_call_source(wire_field_0),"right":encode_java_script_call_source(wire_field_1)})
         }
         native::JavaScriptCallSource::SourcePrimitive(wire_field_0, wire_field_1) => {
-            json!({"$":"sourcePrimitive","operation":Data::String(wire_field_0.to_owned()),"arguments":Data::Array(wire_field_1.iter().map(encode_java_script_call_source).collect())})
+            json!({"$":"sourcePrimitive","operation":wire_text(&wire_field_0.encode_utf16().collect::<Vec<u16>>()),"arguments":Data::Array(wire_field_1.iter().map(encode_java_script_call_source).collect())})
         }
         native::JavaScriptCallSource::SourceRecur(wire_field_0) => {
             json!({"$":"sourceRecur","arguments":Data::Array(wire_field_0.iter().map(encode_java_script_call_source).collect())})
@@ -212,7 +248,8 @@ pub(super) fn decode_java_script_call_source_compilation(
                 .map(decode_java_script_call_instruction)
                 .collect(),
             data["registers"].as_f64().expect("model Number"),
-            data["error"].as_str().expect("model text").to_owned(),
+            String::from_utf16(&wire_text_units(&data["error"]))
+                .expect("model text requires Unicode scalar values in this native profile"),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -226,7 +263,7 @@ pub(super) fn encode_java_script_call_source_compilation(
             wire_field_1,
             wire_field_2,
         ) => {
-            json!({"$":"sourceCompiled","instructions":Data::Array(wire_field_0.iter().map(encode_java_script_call_instruction).collect()),"registers":wire_number(*wire_field_1),"error":Data::String(wire_field_2.to_owned())})
+            json!({"$":"sourceCompiled","instructions":Data::Array(wire_field_0.iter().map(encode_java_script_call_instruction).collect()),"registers":wire_number(*wire_field_1),"error":wire_text(&wire_field_2.encode_utf16().collect::<Vec<u16>>())})
         }
     }
 }
@@ -280,7 +317,8 @@ pub(super) fn decode_java_script_call_instruction(
             data["destination"].as_f64().expect("model Number"),
             data["left"].as_f64().expect("model Number"),
             data["right"].as_f64().expect("model Number"),
-            data["operator"].as_str().expect("model text").to_owned(),
+            String::from_utf16(&wire_text_units(&data["operator"]))
+                .expect("model text requires Unicode scalar values in this native profile"),
         ),
         "sameValue" => native::JavaScriptCallInstruction::SameValue(
             data["destination"].as_f64().expect("model Number"),
@@ -297,7 +335,8 @@ pub(super) fn decode_java_script_call_instruction(
         ),
         "primitive" => native::JavaScriptCallInstruction::Primitive(
             data["destination"].as_f64().expect("model Number"),
-            data["operation"].as_str().expect("model text").to_owned(),
+            String::from_utf16(&wire_text_units(&data["operation"]))
+                .expect("model text requires Unicode scalar values in this native profile"),
             data["arguments"]
                 .as_array()
                 .expect("model array")
@@ -376,7 +415,7 @@ pub(super) fn encode_java_script_call_instruction(
             wire_field_2,
             wire_field_3,
         ) => {
-            json!({"$":"numberBinary","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2),"operator":Data::String(wire_field_3.to_owned())})
+            json!({"$":"numberBinary","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2),"operator":wire_text(&wire_field_3.encode_utf16().collect::<Vec<u16>>())})
         }
         native::JavaScriptCallInstruction::SameValue(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"sameValue","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2)})
@@ -392,7 +431,7 @@ pub(super) fn encode_java_script_call_instruction(
             json!({"$":"requireWrite","success":wire_number(*wire_field_0)})
         }
         native::JavaScriptCallInstruction::Primitive(wire_field_0, wire_field_1, wire_field_2) => {
-            json!({"$":"primitive","destination":wire_number(*wire_field_0),"operation":Data::String(wire_field_1.to_owned()),"arguments":Data::Array(wire_field_2.iter().map(|wire_value|wire_number(*wire_value)).collect())})
+            json!({"$":"primitive","destination":wire_number(*wire_field_0),"operation":wire_text(&wire_field_1.encode_utf16().collect::<Vec<u16>>()),"arguments":Data::Array(wire_field_2.iter().map(|wire_value|wire_number(*wire_value)).collect())})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,

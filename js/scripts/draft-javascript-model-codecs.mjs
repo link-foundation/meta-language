@@ -2,18 +2,20 @@
 // Constructors/fields come from actual checked source, never a parallel DTO.
 import {writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {modelTextWirePolicy,encodeModelText,decodeModelText} from './model-text-wire.mjs';
 export function draftJavaScriptModelCodecs({selected,overrides,output}){
  if(!/^experiments\/[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*\.mjs$/u.test(output))throw new TypeError('a JavaScript model adapter needs its explicit owned experimental output');
  const name=value=>value.replaceAll('.','_');
  for(const key of selected.keys())if(!/^[A-Za-z_][A-Za-z_0-9.]*$/u.test(key))throw new TypeError('unregistered JavaScript model function identity');
  let source='// Generated from actual checked declarations. Transport only; never semantics.\n';
+ source+='const modelTextWirePolicy='+JSON.stringify(modelTextWirePolicy)+';\n'+encodeModelText.toString()+'\n'+decodeModelText.toString()+'\n';
  source+='function scalar(value,kind){if(kind==="unit")return undefined;if(kind==="integer"){if(typeof value!=="string")throw new TypeError("model exact integer");return BigInt(value);}if(typeof value!==kind||kind==="number"&&!Number.isFinite(value))throw new TypeError("model "+kind);return value;}\n';
  source+='function fromBits(value){if(typeof value!=="string"||!/^[0-9a-fA-F]{16}$/u.test(value))throw new TypeError("complete model IEEE bits");const view=new DataView(new ArrayBuffer(8));view.setBigUint64(0,BigInt("0x"+value));return view.getFloat64(0);}\n';
  source+='function toBits(value){if(typeof value!=="number")throw new TypeError("model Number");const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0).toString(16).padStart(16,"0");}\n';
  function field(type,value,decode){switch(type.kind){
   case 'bool':return 'scalar('+value+',"boolean")';
   case 'float':return 'scalar('+value+',"number")';
-  case 'string':return 'scalar('+value+',"string")';
+  case 'string':return (decode?'decodeModelText':'encodeModelText')+'('+value+')';
   case 'unit':return decode?'scalar('+value+',"unit")':'null';
   case 'int':case 'nat':return decode?'scalar('+value+',"integer")':'String('+value+')';
   case 'data':return (decode?'decode':'encode')+name(type.name)+'('+value+')';

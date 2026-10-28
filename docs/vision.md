@@ -9750,3 +9750,30 @@ avoid expanding large constants. A second bounded rewrite handles exposed litera
 conditions. Numeric comparison, NaN and signed-zero interpretation are excluded
 from this folding. Complete original source and transformation receipts remain;
 the semantic validator and its100000-work limit are unchanged.
+
+Registered primitive BigInt construction reuses the complete existing
+StringIntegerLiteral parser, exact integral binary64 conversion and Boolean
+conversion definitions. Existing BigInt identity conversion performs no
+arithmetic and retains its full value. Parsing uses the selected4096-unit and
+4096-bit work profiles; invalid input requests the actual SyntaxError or
+RangeError, while resource exhaustion stays distinct. Implicit ToBigInt rejects
+Number even when integral. Object conversion still requires its suspended
+ToPrimitive continuation; primitive support does not claim that requirement.
+
+The frontend-to-call lowering recognizes complete checked integer result-column
+protocols for construction, exponentiation, division and remainder. It checks
+the owning lexical result reference, exact result length/index/fallback,
+operation and operand types, and full error class/message/presence protocol.
+Changed protocols refuse fusion. Actual operands retain their source order and
+single evaluation. This removes administrative transient result arrays without
+substituting a helper based only on its spelling or signature.
+
+Generated model transports retain ordinary Unicode strings in their original
+wire form. Ill-formed UTF16 strings use an explicit, qualified code-unit record
+under `parity/translation/model-text-wire.lino`; this includes implementation
+diagnostic strings, not only semantic text values. Exact units, ordering and
+length remain observable. The transport validates the tag, complete keys, unit
+range and16777216-unit budget. A native scalar-string profile refuses units it
+cannot represent; it never replaces them. Fixture producers convert unpaired
+text expectations to units automatically, preserving the original source inputs
+and comparisons. These code drafts and their controls remain unexecuted.

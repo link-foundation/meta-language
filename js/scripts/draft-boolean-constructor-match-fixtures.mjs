@@ -102,4 +102,5 @@ const literalAliasPrograms=[
  {name:'large text constants retain their original binding',source:'/** @returns {number} */ function compute(){const text='+JSON.stringify('a'.repeat(129))+';return text.length;}',expected:129,referenceSemantics:false,propagated:false},
  {name:'literal captures retain their deferred closure owner',source:'/** @returns {string} */ function compute(){const text="root";return (()=>text)();}',expected:'root',referenceSemantics:false,propagated:false}
 ];
+for(const row of textPrograms){row.expectedUnits=Array.from({length:row.expected.length},(_,index)=>row.expected.charCodeAt(index));delete row.expected;}
 writeProjectData(new URL('parity/fixtures/boolean-constructor-match.lino',root),{schemaVersion:1,model:'complete finite Boolean constructor match sharing 1',generalModel:'closed constructor match sharing 1',nodeVersionRange:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rustVersionRange:'>=1.90.0 <1.100.0',rows,generalRows,bindingRows,aliasRows,projectionRows,programs,projectionPrograms,textPrograms,lexicalAliasPrograms,scopedProjectionPrograms,literalConditionPrograms,booleanIdentityPrograms,literalAliasPrograms});

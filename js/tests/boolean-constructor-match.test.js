@@ -21,13 +21,14 @@ for(const row of fixture.bindingRows)test(row.name,()=>assert.deepEqual(planUnus
 for(const row of fixture.aliasRows)test(row.name,()=>assert.equal(testUnusedConstructorAlias(row.nameOfBinding,row.value,row.available,row.references),row.expected));
 for(const row of fixture.projectionRows)test(row.name,()=>assert.deepEqual(planSingleConstructorProjections(row.constructors,row.counts),row.expected));
 for(const [profile,share]of [['Boolean',shareSourceBooleanConstructorMatches],['closed',shareSourceClosedConstructorMatches]])for(const row of [...fixture.programs,...(profile==='closed'?fixture.textPrograms:[])])test(profile+' '+row.name,()=>{
- assert.equal(runInNewContext(row.source+'\ncompute();'),row.expected);
+ const expected=row.expectedUnits?row.expectedUnits.map(unit=>String.fromCharCode(unit)).join(''):row.expected;
+ assert.equal(runInNewContext(row.source+'\ncompute();'),expected);
  const original=checkProgram(parseJavaScript(row.source,{referenceSemantics:true})),shared=share(original);
  assert.ok(shared.proof.proofs.length>0,'the actual source must exercise a complete-owner match rewrite');
  const packet=encodeTypedProgramLinks(shared.program);
  for(const program of [original,shared.program,...[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))].map(network=>decodeTypedProgramLinks(network,packet.root))]){
   const javascript=emitJavaScript(program),entry=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source==='compute').target;
-  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),row.expected,'all original scrutinee heap effects occur once through both codecs');
+  assert.equal(runInNewContext(javascript.text+'\n'+entry+'();'),expected,'all original scrutinee heap effects occur once through both codecs');
  }
 });
 for(const row of fixture.projectionPrograms)test(row.name,()=>{

@@ -5,6 +5,7 @@ import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 import {writeProjectData} from './project-data.mjs';
 import {createHash} from 'node:crypto';
 import {draftJavaScriptModelCodecs} from './draft-javascript-model-codecs.mjs';
+import {modelTextWirePolicy} from './model-text-wire.mjs';
 export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,receipt,javascriptOutput}){
  const root=new URL('../../',import.meta.url);
  if(program.sourceLanguage!=='JavaScript')throw new TypeError('this separately qualified model transport uses the checked JavaScript tuple-constructor layout');
@@ -38,7 +39,7 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   case 'bool':return value+'.as_bool().expect("model Boolean")';
   case 'float':return value+'.as_f64().expect("model Number")';
   case 'int':case 'nat':return 'native::ml::Big::parse('+value+'.as_str().expect("model exact integer"))';
-  case 'string':return utf16?'native::ml_string::Text::from_text('+value+'.as_str().expect("model text"))':value+'.as_str().expect("model text").to_owned()';
+  case 'string':return utf16?'native::ml_string::Text::from_units(wire_text_units(&'+value+'))':'String::from_utf16(&wire_text_units(&'+value+')).expect("model text requires Unicode scalar values in this native profile")';
   case 'unit':return '()';
   case 'data':return 'decode_'+names.get(type.name)+'('+(borrowed?'':'&')+value+')';
   case 'array':return value+'.as_array().expect("model array").iter().map('+(type.element.kind==='data'?'decode_'+names.get(type.element.name):'|wire_value|'+decode(type.element,'wire_value',true))+').collect()';
@@ -48,13 +49,30 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   case 'bool':return 'Data::Bool('+(borrowed?'*':'')+value+')';
   case 'float':return 'wire_number('+(borrowed?'*':'')+value+')';
   case 'int':case 'nat':return 'Data::String('+value+'.to_string())';
-  case 'string':return utf16?'Data::String(String::from_utf16(&'+value+'.0).expect("schema text must preserve all UTF16 units"))':'Data::String('+value+'.to_owned())';
+  case 'string':return utf16?'wire_text(&'+value+'.0)':'wire_text(&'+value+'.encode_utf16().collect::<Vec<u16>>())';
   case 'unit':return 'Data::Null';
   case 'data':return 'encode_'+names.get(type.name)+'('+(borrowed?'':'&')+value+')';
   case 'array':return 'Data::Array('+value+'.iter().map('+(type.element.kind==='data'?'encode_'+names.get(type.element.name):'|wire_value|'+encode(type.element,'wire_value'))+').collect())';
   case 'record':return 'json!({'+type.fields.map((field,index)=>q(field.name)+':'+encode(field.type,value+'.'+index,false)).join(',')+'})';
   default:throw new TypeError('unknown model wire type');}}
  let source='// Generated from actual checked source declarations and target mappings.\n// Transport only; no source operation semantics are implemented here.\nuse super::native;\nuse serde_json::{Value as Data,json};\nfn wire_number(value:f64)->Data {\n if value.to_bits()==0x8000_0000_0000_0000 {return Data::Number(serde_json::Number::from_f64(value).unwrap());}\n Data::Number(value.to_string().parse().expect("finite model Number"))\n}\n';
+ source+=`fn wire_text_units(value:&Data)->Vec<u16> {
+ let units=if let Some(text)=value.as_str(){text.encode_utf16().collect::<Vec<u16>>()}else{
+ let object=value.as_object().expect("qualified model text units");
+ assert_eq!(object.len(),2,"exact model text keys");
+ assert_eq!(object.get("textEncoding").and_then(Data::as_str),Some(${q(modelTextWirePolicy.tag)}),"model text encoding");
+ let input=object.get("units").and_then(Data::as_array).expect("model text units");
+ assert!(input.len()<=${modelTextWirePolicy.maximumUnits},"model text unit budget");
+ input.iter().map(|unit|u16::try_from(unit.as_u64().expect("model UTF16 unit")).expect("model UTF16 unit range")).collect()
+ };
+ assert!(units.len()<=${modelTextWirePolicy.maximumUnits},"model text unit budget");units
+}
+fn wire_text(units:&[u16])->Data {
+ assert!(units.len()<=${modelTextWirePolicy.maximumUnits},"model text unit budget");
+ match String::from_utf16(units){Ok(text)=>Data::String(text),Err(_)=>json!({"textEncoding":${q(modelTextWirePolicy.tag)},"units":units})}
+}
+`;
+ writeProjectData(new URL('parity/translation/model-text-wire.lino',root),{schemaVersion:1,...modelTextWirePolicy});
  const layout=[];
  for(const [name,declaration]of selected){
   const native='native::'+mapping('data',name),decoded=[],encoded=[];
@@ -77,6 +95,6 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
  }
  source=formatProductRuleSource(source);writeFileSync(new URL(output,root),source);
  const javascript=javascriptOutput===undefined?undefined:draftJavaScriptModelCodecs({selected,overrides,output:javascriptOutput});
- writeProjectData(new URL(receipt,root),{schemaVersion:1,model:'checked native nominal model wire transport 1',roots,wireRules,layout,output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),
+ writeProjectData(new URL(receipt,root),{schemaVersion:1,model:'checked native nominal model wire transport 1',roots,wireRules,textWire:modelTextWirePolicy,layout,output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),
   ...(javascript?{javascript}:{}),boundary:'Actual source type/constructor/target transport only, preserving explicit IEEE-bit overrides. No fixture decoding, modeled operation, behavior comparison, native compilation or execution observation.'});
 }

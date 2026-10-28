@@ -8,6 +8,40 @@ fn wire_number(value: f64) -> Data {
     }
     Data::Number(value.to_string().parse().expect("finite model Number"))
 }
+fn wire_text_units(value: &Data) -> Vec<u16> {
+    let units = if let Some(text) = value.as_str() {
+        text.encode_utf16().collect::<Vec<u16>>()
+    } else {
+        let object = value.as_object().expect("qualified model text units");
+        assert_eq!(object.len(), 2, "exact model text keys");
+        assert_eq!(
+            object.get("textEncoding").and_then(Data::as_str),
+            Some("UTF16 code units 1"),
+            "model text encoding"
+        );
+        let input = object
+            .get("units")
+            .and_then(Data::as_array)
+            .expect("model text units");
+        assert!(input.len() <= 16777216, "model text unit budget");
+        input
+            .iter()
+            .map(|unit| {
+                u16::try_from(unit.as_u64().expect("model UTF16 unit"))
+                    .expect("model UTF16 unit range")
+            })
+            .collect()
+    };
+    assert!(units.len() <= 16777216, "model text unit budget");
+    units
+}
+fn wire_text(units: &[u16]) -> Data {
+    assert!(units.len() <= 16777216, "model text unit budget");
+    match String::from_utf16(units) {
+        Ok(text) => Data::String(text),
+        Err(_) => json!({"textEncoding":"UTF16 code units 1","units":units}),
+    }
+}
 pub(super) fn decode_java_script_ordinary_heap(data: &Data) -> native::JavaScriptOrdinaryHeap {
     match data["$"].as_str().expect("model constructor") {
         "ordinaryHeap" => native::JavaScriptOrdinaryHeap::OrdinaryHeap(
@@ -207,7 +241,7 @@ pub(super) fn decode_java_script_call_function(data: &Data) -> native::JavaScrip
         "callFunction" => native::JavaScriptCallFunction::CallFunction(
             native::ml::Big::parse(data["identity"].as_str().expect("model exact integer")),
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
-            native::ml_string::Text::from_text(data["receiverMode"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["receiverMode"])),
             Box::new(decode_java_script_semantic_value(&data["lexicalReceiver"])),
             data["parameters"].as_f64().expect("model Number"),
             data["registers"].as_f64().expect("model Number"),
@@ -239,7 +273,7 @@ pub(super) fn encode_java_script_call_function(value: &native::JavaScriptCallFun
             wire_field_6,
             wire_field_7,
         ) => {
-            json!({"$":"callFunction","identity":Data::String(wire_field_0.to_string()),"realm":Data::String(wire_field_1.to_string()),"receiverMode":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units")),"lexicalReceiver":encode_java_script_semantic_value(wire_field_3),"parameters":wire_number(*wire_field_4),"registers":wire_number(*wire_field_5),"captures":Data::Array(wire_field_6.iter().map(encode_java_script_semantic_value).collect()),"instructions":Data::Array(wire_field_7.iter().map(encode_java_script_call_instruction).collect())})
+            json!({"$":"callFunction","identity":Data::String(wire_field_0.to_string()),"realm":Data::String(wire_field_1.to_string()),"receiverMode":wire_text(&wire_field_2.0),"lexicalReceiver":encode_java_script_semantic_value(wire_field_3),"parameters":wire_number(*wire_field_4),"registers":wire_number(*wire_field_5),"captures":Data::Array(wire_field_6.iter().map(encode_java_script_semantic_value).collect()),"instructions":Data::Array(wire_field_7.iter().map(encode_java_script_call_instruction).collect())})
         }
     }
 }
@@ -293,7 +327,7 @@ pub(super) fn decode_java_script_call_instruction(
             data["destination"].as_f64().expect("model Number"),
             data["left"].as_f64().expect("model Number"),
             data["right"].as_f64().expect("model Number"),
-            native::ml_string::Text::from_text(data["operator"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["operator"])),
         ),
         "sameValue" => native::JavaScriptCallInstruction::SameValue(
             data["destination"].as_f64().expect("model Number"),
@@ -310,7 +344,7 @@ pub(super) fn decode_java_script_call_instruction(
         ),
         "primitive" => native::JavaScriptCallInstruction::Primitive(
             data["destination"].as_f64().expect("model Number"),
-            native::ml_string::Text::from_text(data["operation"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["operation"])),
             data["arguments"]
                 .as_array()
                 .expect("model array")
@@ -389,7 +423,7 @@ pub(super) fn encode_java_script_call_instruction(
             wire_field_2,
             wire_field_3,
         ) => {
-            json!({"$":"numberBinary","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2),"operator":Data::String(String::from_utf16(&wire_field_3.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"numberBinary","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2),"operator":wire_text(&wire_field_3.0)})
         }
         native::JavaScriptCallInstruction::SameValue(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"sameValue","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2)})
@@ -405,7 +439,7 @@ pub(super) fn encode_java_script_call_instruction(
             json!({"$":"requireWrite","success":wire_number(*wire_field_0)})
         }
         native::JavaScriptCallInstruction::Primitive(wire_field_0, wire_field_1, wire_field_2) => {
-            json!({"$":"primitive","destination":wire_number(*wire_field_0),"operation":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units")),"arguments":Data::Array(wire_field_2.iter().map(|wire_value|wire_number(*wire_value)).collect())})
+            json!({"$":"primitive","destination":wire_number(*wire_field_0),"operation":wire_text(&wire_field_1.0),"arguments":Data::Array(wire_field_2.iter().map(|wire_value|wire_number(*wire_value)).collect())})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,
@@ -557,14 +591,14 @@ pub(super) fn decode_java_script_call_pending(data: &Data) -> native::JavaScript
         ),
         "waitSourceError" => native::JavaScriptCallPending::WaitSourceError(
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
-            native::ml_string::Text::from_text(data["errorClass"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["errorClass"])),
             Box::new(decode_java_script_semantic_value(&data["message"])),
             data["messagePresent"].as_bool().expect("model Boolean"),
         ),
         "waitError" => native::JavaScriptCallPending::WaitError(
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
-            native::ml_string::Text::from_text(data["errorClass"].as_str().expect("model text")),
-            native::ml_string::Text::from_text(data["reason"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["errorClass"])),
+            native::ml_string::Text::from_units(wire_text_units(&data["reason"])),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -599,10 +633,10 @@ pub(super) fn encode_java_script_call_pending(value: &native::JavaScriptCallPend
             wire_field_2,
             wire_field_3,
         ) => {
-            json!({"$":"waitSourceError","realm":Data::String(wire_field_0.to_string()),"errorClass":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units")),"message":encode_java_script_semantic_value(wire_field_2),"messagePresent":Data::Bool(*wire_field_3)})
+            json!({"$":"waitSourceError","realm":Data::String(wire_field_0.to_string()),"errorClass":wire_text(&wire_field_1.0),"message":encode_java_script_semantic_value(wire_field_2),"messagePresent":Data::Bool(*wire_field_3)})
         }
         native::JavaScriptCallPending::WaitError(wire_field_0, wire_field_1, wire_field_2) => {
-            json!({"$":"waitError","realm":Data::String(wire_field_0.to_string()),"errorClass":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units")),"reason":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"waitError","realm":Data::String(wire_field_0.to_string()),"errorClass":wire_text(&wire_field_1.0),"reason":wire_text(&wire_field_2.0)})
         }
     }
 }
@@ -613,8 +647,8 @@ pub(super) fn decode_java_script_primitive_conversion_state(
         "primitiveConversion" => native::JavaScriptPrimitiveConversionState::PrimitiveConversion(
             Box::new(decode_java_script_semantic_value(&data["receiver"])),
             Box::new(decode_java_script_semantic_value(&data["exoticKey"])),
-            native::ml_string::Text::from_text(data["hint"].as_str().expect("model text")),
-            native::ml_string::Text::from_text(data["phase"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["hint"])),
+            native::ml_string::Text::from_units(wire_text_units(&data["phase"])),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -629,7 +663,7 @@ pub(super) fn encode_java_script_primitive_conversion_state(
             wire_field_2,
             wire_field_3,
         ) => {
-            json!({"$":"primitiveConversion","receiver":encode_java_script_semantic_value(wire_field_0),"exoticKey":encode_java_script_semantic_value(wire_field_1),"hint":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units")),"phase":Data::String(String::from_utf16(&wire_field_3.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"primitiveConversion","receiver":encode_java_script_semantic_value(wire_field_0),"exoticKey":encode_java_script_semantic_value(wire_field_1),"hint":wire_text(&wire_field_2.0),"phase":wire_text(&wire_field_3.0)})
         }
     }
 }
@@ -802,27 +836,25 @@ pub(super) fn decode_java_script_call_machine_transition(
         "machineAllocateError" => native::JavaScriptCallMachineTransition::MachineAllocateError(
             Box::new(decode_java_script_call_machine(&data["machine"])),
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
-            native::ml_string::Text::from_text(data["errorClass"].as_str().expect("model text")),
-            native::ml_string::Text::from_text(data["reason"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["errorClass"])),
+            native::ml_string::Text::from_units(wire_text_units(&data["reason"])),
         ),
         "machineAllocateSourceError" => {
             native::JavaScriptCallMachineTransition::MachineAllocateSourceError(
                 Box::new(decode_java_script_call_machine(&data["machine"])),
                 native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
-                native::ml_string::Text::from_text(
-                    data["errorClass"].as_str().expect("model text"),
-                ),
+                native::ml_string::Text::from_units(wire_text_units(&data["errorClass"])),
                 Box::new(decode_java_script_semantic_value(&data["message"])),
                 data["messagePresent"].as_bool().expect("model Boolean"),
             )
         }
         "machineInvalid" => native::JavaScriptCallMachineTransition::MachineInvalid(
             Box::new(decode_java_script_ordinary_heap(&data["heap"])),
-            native::ml_string::Text::from_text(data["reason"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["reason"])),
         ),
         "machineResourceLimit" => native::JavaScriptCallMachineTransition::MachineResourceLimit(
             Box::new(decode_java_script_call_machine(&data["machine"])),
-            native::ml_string::Text::from_text(data["reason"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["reason"])),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -846,7 +878,7 @@ pub(super) fn encode_java_script_call_machine_transition(
             wire_field_2,
             wire_field_3,
         ) => {
-            json!({"$":"machineAllocateError","machine":encode_java_script_call_machine(wire_field_0),"realm":Data::String(wire_field_1.to_string()),"errorClass":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units")),"reason":Data::String(String::from_utf16(&wire_field_3.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"machineAllocateError","machine":encode_java_script_call_machine(wire_field_0),"realm":Data::String(wire_field_1.to_string()),"errorClass":wire_text(&wire_field_2.0),"reason":wire_text(&wire_field_3.0)})
         }
         native::JavaScriptCallMachineTransition::MachineAllocateSourceError(
             wire_field_0,
@@ -855,16 +887,16 @@ pub(super) fn encode_java_script_call_machine_transition(
             wire_field_3,
             wire_field_4,
         ) => {
-            json!({"$":"machineAllocateSourceError","machine":encode_java_script_call_machine(wire_field_0),"realm":Data::String(wire_field_1.to_string()),"errorClass":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units")),"message":encode_java_script_semantic_value(wire_field_3),"messagePresent":Data::Bool(*wire_field_4)})
+            json!({"$":"machineAllocateSourceError","machine":encode_java_script_call_machine(wire_field_0),"realm":Data::String(wire_field_1.to_string()),"errorClass":wire_text(&wire_field_2.0),"message":encode_java_script_semantic_value(wire_field_3),"messagePresent":Data::Bool(*wire_field_4)})
         }
         native::JavaScriptCallMachineTransition::MachineInvalid(wire_field_0, wire_field_1) => {
-            json!({"$":"machineInvalid","heap":encode_java_script_ordinary_heap(wire_field_0),"reason":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"machineInvalid","heap":encode_java_script_ordinary_heap(wire_field_0),"reason":wire_text(&wire_field_1.0)})
         }
         native::JavaScriptCallMachineTransition::MachineResourceLimit(
             wire_field_0,
             wire_field_1,
         ) => {
-            json!({"$":"machineResourceLimit","machine":encode_java_script_call_machine(wire_field_0),"reason":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"machineResourceLimit","machine":encode_java_script_call_machine(wire_field_0),"reason":wire_text(&wire_field_1.0)})
         }
     }
 }

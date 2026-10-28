@@ -1,4 +1,22 @@
 // Generated from actual checked declarations. Transport only; never semantics.
+const modelTextWirePolicy={"model":"lossless model text transport 1","tag":"UTF16 code units 1","maximumUnits":16777216};
+function encodeModelText(value){
+ if(typeof value!=='string')throw new TypeError('model text');
+ if(value.length>modelTextWirePolicy.maximumUnits)throw new RangeError('model text unit budget');
+ if(value.isWellFormed())return value;
+ const units=[];for(let index=0;index<value.length;index+=1)units.push(value.charCodeAt(index));
+ return {textEncoding:modelTextWirePolicy.tag,units};
+}
+function decodeModelText(value){
+ if(typeof value==='string'){
+  if(value.length>modelTextWirePolicy.maximumUnits)throw new RangeError('model text unit budget');
+  return value;
+ }
+ if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||value.textEncoding!==modelTextWirePolicy.tag||!Array.isArray(value.units))throw new TypeError('qualified model text units');
+ if(value.units.length>modelTextWirePolicy.maximumUnits)throw new RangeError('model text unit budget');
+ let text='';for(const unit of value.units){if(!Number.isInteger(unit)||unit<0||unit>65535)throw new TypeError('model UTF16 unit');text+=String.fromCharCode(unit);}
+ return text;
+}
 function scalar(value,kind){if(kind==="unit")return undefined;if(kind==="integer"){if(typeof value!=="string")throw new TypeError("model exact integer");return BigInt(value);}if(typeof value!==kind||kind==="number"&&!Number.isFinite(value))throw new TypeError("model "+kind);return value;}
 function fromBits(value){if(typeof value!=="string"||!/^[0-9a-fA-F]{16}$/u.test(value))throw new TypeError("complete model IEEE bits");const view=new DataView(new ArrayBuffer(8));view.setBigUint64(0,BigInt("0x"+value));return view.getFloat64(0);}
 function toBits(value){if(typeof value!=="number")throw new TypeError("model Number");const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0).toString(16).padStart(16,"0");}
@@ -47,10 +65,10 @@ export function encodeJavaScriptCallProgram(value){switch(value.$){
 case "callProgram":return {$:"callProgram","functions":value["functions"].map(value=>encodeJavaScriptCallFunction(value)),"realms":value["realms"].map(value=>String(value)),"exoticKey":encodeJavaScriptSemanticValue(value["exoticKey"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptCallFunction(value){switch(value.$){
-case "callFunction":return {$:"callFunction","identity":scalar(value["identity"],"integer"),"realm":scalar(value["realm"],"integer"),"receiverMode":scalar(value["receiverMode"],"string"),"lexicalReceiver":decodeJavaScriptSemanticValue(value["lexicalReceiver"]),"parameters":scalar(value["parameters"],"number"),"registers":scalar(value["registers"],"number"),"captures":value["captures"].map(value=>decodeJavaScriptSemanticValue(value)),"instructions":value["instructions"].map(value=>decodeJavaScriptCallInstruction(value))};
+case "callFunction":return {$:"callFunction","identity":scalar(value["identity"],"integer"),"realm":scalar(value["realm"],"integer"),"receiverMode":decodeModelText(value["receiverMode"]),"lexicalReceiver":decodeJavaScriptSemanticValue(value["lexicalReceiver"]),"parameters":scalar(value["parameters"],"number"),"registers":scalar(value["registers"],"number"),"captures":value["captures"].map(value=>decodeJavaScriptSemanticValue(value)),"instructions":value["instructions"].map(value=>decodeJavaScriptCallInstruction(value))};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallFunction(value){switch(value.$){
-case "callFunction":return {$:"callFunction","identity":String(value["identity"]),"realm":String(value["realm"]),"receiverMode":scalar(value["receiverMode"],"string"),"lexicalReceiver":encodeJavaScriptSemanticValue(value["lexicalReceiver"]),"parameters":scalar(value["parameters"],"number"),"registers":scalar(value["registers"],"number"),"captures":value["captures"].map(value=>encodeJavaScriptSemanticValue(value)),"instructions":value["instructions"].map(value=>encodeJavaScriptCallInstruction(value))};
+case "callFunction":return {$:"callFunction","identity":String(value["identity"]),"realm":String(value["realm"]),"receiverMode":encodeModelText(value["receiverMode"]),"lexicalReceiver":encodeJavaScriptSemanticValue(value["lexicalReceiver"]),"parameters":scalar(value["parameters"],"number"),"registers":scalar(value["registers"],"number"),"captures":value["captures"].map(value=>encodeJavaScriptSemanticValue(value)),"instructions":value["instructions"].map(value=>encodeJavaScriptCallInstruction(value))};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptCallInstruction(value){switch(value.$){
 case "constant":return {$:"constant","destination":scalar(value["destination"],"number"),"value":decodeJavaScriptSemanticValue(value["value"])};
@@ -63,11 +81,11 @@ case "return":return {$:"return","source":scalar(value["source"],"number")};
 case "throw":return {$:"throw","source":scalar(value["source"],"number")};
 case "pushHandler":return {$:"pushHandler","destination":scalar(value["destination"],"number"),"target":scalar(value["target"],"number")};
 case "popHandler":return {$:"popHandler"};
-case "numberBinary":return {$:"numberBinary","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number"),"operator":scalar(value["operator"],"string")};
+case "numberBinary":return {$:"numberBinary","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number"),"operator":decodeModelText(value["operator"])};
 case "sameValue":return {$:"sameValue","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "strictEqual":return {$:"strictEqual","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "requireWrite":return {$:"requireWrite","success":scalar(value["success"],"number")};
-case "primitive":return {$:"primitive","destination":scalar(value["destination"],"number"),"operation":scalar(value["operation"],"string"),"arguments":value["arguments"].map(value=>scalar(value,"number"))};
+case "primitive":return {$:"primitive","destination":scalar(value["destination"],"number"),"operation":decodeModelText(value["operation"]),"arguments":value["arguments"].map(value=>scalar(value,"number"))};
 case "ordinaryGet":return {$:"ordinaryGet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "ordinarySet":return {$:"ordinarySet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"value":scalar(value["value"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "propertyKey":return {$:"propertyKey","destination":scalar(value["destination"],"number"),"input":scalar(value["input"],"number"),"realm":scalar(value["realm"],"integer")};
@@ -84,11 +102,11 @@ case "return":return {$:"return","source":scalar(value["source"],"number")};
 case "throw":return {$:"throw","source":scalar(value["source"],"number")};
 case "pushHandler":return {$:"pushHandler","destination":scalar(value["destination"],"number"),"target":scalar(value["target"],"number")};
 case "popHandler":return {$:"popHandler"};
-case "numberBinary":return {$:"numberBinary","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number"),"operator":scalar(value["operator"],"string")};
+case "numberBinary":return {$:"numberBinary","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number"),"operator":encodeModelText(value["operator"])};
 case "sameValue":return {$:"sameValue","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "strictEqual":return {$:"strictEqual","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "requireWrite":return {$:"requireWrite","success":scalar(value["success"],"number")};
-case "primitive":return {$:"primitive","destination":scalar(value["destination"],"number"),"operation":scalar(value["operation"],"string"),"arguments":value["arguments"].map(value=>scalar(value,"number"))};
+case "primitive":return {$:"primitive","destination":scalar(value["destination"],"number"),"operation":encodeModelText(value["operation"]),"arguments":value["arguments"].map(value=>scalar(value,"number"))};
 case "ordinaryGet":return {$:"ordinaryGet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "ordinarySet":return {$:"ordinarySet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"value":scalar(value["value"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "propertyKey":return {$:"propertyKey","destination":scalar(value["destination"],"number"),"input":scalar(value["input"],"number"),"realm":String(value["realm"])};
@@ -121,8 +139,8 @@ case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"nu
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptPropertyDefinitionState(value["state"])};
 case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptNumberCallState(value["state"])};
 case "waitText":return {$:"waitText","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptTextCallState(value["state"])};
-case "waitSourceError":return {$:"waitSourceError","realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"message":decodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
-case "waitError":return {$:"waitError","realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
+case "waitSourceError":return {$:"waitSourceError","realm":scalar(value["realm"],"integer"),"errorClass":decodeModelText(value["errorClass"]),"message":decodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
+case "waitError":return {$:"waitError","realm":scalar(value["realm"],"integer"),"errorClass":decodeModelText(value["errorClass"]),"reason":decodeModelText(value["reason"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallPending(value){switch(value.$){
 case "callIdle":return {$:"callIdle"};
@@ -133,14 +151,14 @@ case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"nu
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptPropertyDefinitionState(value["state"])};
 case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptNumberCallState(value["state"])};
 case "waitText":return {$:"waitText","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptTextCallState(value["state"])};
-case "waitSourceError":return {$:"waitSourceError","realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"message":encodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
-case "waitError":return {$:"waitError","realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
+case "waitSourceError":return {$:"waitSourceError","realm":String(value["realm"]),"errorClass":encodeModelText(value["errorClass"]),"message":encodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
+case "waitError":return {$:"waitError","realm":String(value["realm"]),"errorClass":encodeModelText(value["errorClass"]),"reason":encodeModelText(value["reason"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptPrimitiveConversionState(value){switch(value.$){
-case "primitiveConversion":return {$:"primitiveConversion","receiver":decodeJavaScriptSemanticValue(value["receiver"]),"exoticKey":decodeJavaScriptSemanticValue(value["exoticKey"]),"hint":scalar(value["hint"],"string"),"phase":scalar(value["phase"],"string")};
+case "primitiveConversion":return {$:"primitiveConversion","receiver":decodeJavaScriptSemanticValue(value["receiver"]),"exoticKey":decodeJavaScriptSemanticValue(value["exoticKey"]),"hint":decodeModelText(value["hint"]),"phase":decodeModelText(value["phase"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptPrimitiveConversionState(value){switch(value.$){
-case "primitiveConversion":return {$:"primitiveConversion","receiver":encodeJavaScriptSemanticValue(value["receiver"]),"exoticKey":encodeJavaScriptSemanticValue(value["exoticKey"]),"hint":scalar(value["hint"],"string"),"phase":scalar(value["phase"],"string")};
+case "primitiveConversion":return {$:"primitiveConversion","receiver":encodeJavaScriptSemanticValue(value["receiver"]),"exoticKey":encodeJavaScriptSemanticValue(value["exoticKey"]),"hint":encodeModelText(value["hint"]),"phase":encodeModelText(value["phase"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptPropertyDefinitionState(value){switch(value.$){
 case "propertyDefinitionKey":return {$:"propertyDefinitionKey","target":decodeJavaScriptSemanticValue(value["target"]),"attributes":decodeJavaScriptSemanticValue(value["attributes"]),"conversion":decodeJavaScriptPrimitiveConversionState(value["conversion"])};
@@ -176,17 +194,17 @@ export function decodeJavaScriptCallMachineTransition(value){switch(value.$){
 case "machineContinue":return {$:"machineContinue","machine":decodeJavaScriptCallMachine(value["machine"])};
 case "machineCompleted":return {$:"machineCompleted","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"value":decodeJavaScriptSemanticValue(value["value"])};
 case "machineThrow":return {$:"machineThrow","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"value":decodeJavaScriptSemanticValue(value["value"])};
-case "machineAllocateError":return {$:"machineAllocateError","machine":decodeJavaScriptCallMachine(value["machine"]),"realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
-case "machineAllocateSourceError":return {$:"machineAllocateSourceError","machine":decodeJavaScriptCallMachine(value["machine"]),"realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"message":decodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
-case "machineInvalid":return {$:"machineInvalid","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"reason":scalar(value["reason"],"string")};
-case "machineResourceLimit":return {$:"machineResourceLimit","machine":decodeJavaScriptCallMachine(value["machine"]),"reason":scalar(value["reason"],"string")};
+case "machineAllocateError":return {$:"machineAllocateError","machine":decodeJavaScriptCallMachine(value["machine"]),"realm":scalar(value["realm"],"integer"),"errorClass":decodeModelText(value["errorClass"]),"reason":decodeModelText(value["reason"])};
+case "machineAllocateSourceError":return {$:"machineAllocateSourceError","machine":decodeJavaScriptCallMachine(value["machine"]),"realm":scalar(value["realm"],"integer"),"errorClass":decodeModelText(value["errorClass"]),"message":decodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
+case "machineInvalid":return {$:"machineInvalid","heap":decodeJavaScriptOrdinaryHeap(value["heap"]),"reason":decodeModelText(value["reason"])};
+case "machineResourceLimit":return {$:"machineResourceLimit","machine":decodeJavaScriptCallMachine(value["machine"]),"reason":decodeModelText(value["reason"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallMachineTransition(value){switch(value.$){
 case "machineContinue":return {$:"machineContinue","machine":encodeJavaScriptCallMachine(value["machine"])};
 case "machineCompleted":return {$:"machineCompleted","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"value":encodeJavaScriptSemanticValue(value["value"])};
 case "machineThrow":return {$:"machineThrow","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"value":encodeJavaScriptSemanticValue(value["value"])};
-case "machineAllocateError":return {$:"machineAllocateError","machine":encodeJavaScriptCallMachine(value["machine"]),"realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
-case "machineAllocateSourceError":return {$:"machineAllocateSourceError","machine":encodeJavaScriptCallMachine(value["machine"]),"realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"message":encodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
-case "machineInvalid":return {$:"machineInvalid","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"reason":scalar(value["reason"],"string")};
-case "machineResourceLimit":return {$:"machineResourceLimit","machine":encodeJavaScriptCallMachine(value["machine"]),"reason":scalar(value["reason"],"string")};
+case "machineAllocateError":return {$:"machineAllocateError","machine":encodeJavaScriptCallMachine(value["machine"]),"realm":String(value["realm"]),"errorClass":encodeModelText(value["errorClass"]),"reason":encodeModelText(value["reason"])};
+case "machineAllocateSourceError":return {$:"machineAllocateSourceError","machine":encodeJavaScriptCallMachine(value["machine"]),"realm":String(value["realm"]),"errorClass":encodeModelText(value["errorClass"]),"message":encodeJavaScriptSemanticValue(value["message"]),"messagePresent":scalar(value["messagePresent"],"boolean")};
+case "machineInvalid":return {$:"machineInvalid","heap":encodeJavaScriptOrdinaryHeap(value["heap"]),"reason":encodeModelText(value["reason"])};
+case "machineResourceLimit":return {$:"machineResourceLimit","machine":encodeJavaScriptCallMachine(value["machine"]),"reason":encodeModelText(value["reason"])};
 default:throw new TypeError("unregistered actual model constructor");}}
