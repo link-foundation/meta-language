@@ -7,3 +7,6 @@ source forms remain explicit refusals; controls await the complete draft.
 Extend the draft to ordinary record reads and property calls with their actual
 receiver, plus checked lifted loops with parallel parameter updates and fixed
 frame storage. Native semantics continue to derive from JavaScript source.
+
+Draft strict ordinary field writes with compound evaluation order, setter
+completion and actual realm Error allocation requests for rejected writes.

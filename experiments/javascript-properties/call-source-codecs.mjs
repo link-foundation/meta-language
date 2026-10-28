@@ -11,6 +11,7 @@ case "sourceNumberBinary":return {$:"sourceNumberBinary","operator":scalar(value
 case "sourceSameValue":return {$:"sourceSameValue","left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
 case "sourceStrictEqual":return {$:"sourceStrictEqual","left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
 case "sourceRecur":return {$:"sourceRecur","arguments":value["arguments"].map(value=>decodeJavaScriptCallSource(value))};
+case "sourceSet":return {$:"sourceSet","object":decodeJavaScriptCallSource(value["object"]),"key":decodeJavaScriptCallSource(value["key"]),"value":decodeJavaScriptCallSource(value["value"])};
 case "sourceGet":return {$:"sourceGet","object":decodeJavaScriptCallSource(value["object"]),"key":decodeJavaScriptCallSource(value["key"])};
 case "sourceCall":return {$:"sourceCall","callee":decodeJavaScriptCallSource(value["callee"]),"receiver":decodeJavaScriptCallSource(value["receiver"]),"arguments":value["arguments"].map(value=>decodeJavaScriptCallSource(value))};
 default:throw new TypeError("unregistered actual model constructor");}}
@@ -23,6 +24,7 @@ case "sourceNumberBinary":return {$:"sourceNumberBinary","operator":scalar(value
 case "sourceSameValue":return {$:"sourceSameValue","left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
 case "sourceStrictEqual":return {$:"sourceStrictEqual","left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
 case "sourceRecur":return {$:"sourceRecur","arguments":value["arguments"].map(value=>encodeJavaScriptCallSource(value))};
+case "sourceSet":return {$:"sourceSet","object":encodeJavaScriptCallSource(value["object"]),"key":encodeJavaScriptCallSource(value["key"]),"value":encodeJavaScriptCallSource(value["value"])};
 case "sourceGet":return {$:"sourceGet","object":encodeJavaScriptCallSource(value["object"]),"key":encodeJavaScriptCallSource(value["key"])};
 case "sourceCall":return {$:"sourceCall","callee":encodeJavaScriptCallSource(value["callee"]),"receiver":encodeJavaScriptCallSource(value["receiver"]),"arguments":value["arguments"].map(value=>encodeJavaScriptCallSource(value))};
 default:throw new TypeError("unregistered actual model constructor");}}
@@ -66,6 +68,7 @@ case "popHandler":return {$:"popHandler"};
 case "numberBinary":return {$:"numberBinary","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number"),"operator":scalar(value["operator"],"string")};
 case "sameValue":return {$:"sameValue","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "strictEqual":return {$:"strictEqual","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
+case "requireWrite":return {$:"requireWrite","success":scalar(value["success"],"number")};
 case "ordinaryGet":return {$:"ordinaryGet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "ordinarySet":return {$:"ordinarySet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"value":scalar(value["value"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "propertyKey":return {$:"propertyKey","destination":scalar(value["destination"],"number"),"input":scalar(value["input"],"number"),"realm":scalar(value["realm"],"integer")};
@@ -85,6 +88,7 @@ case "popHandler":return {$:"popHandler"};
 case "numberBinary":return {$:"numberBinary","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number"),"operator":scalar(value["operator"],"string")};
 case "sameValue":return {$:"sameValue","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
 case "strictEqual":return {$:"strictEqual","destination":scalar(value["destination"],"number"),"left":scalar(value["left"],"number"),"right":scalar(value["right"],"number")};
+case "requireWrite":return {$:"requireWrite","success":scalar(value["success"],"number")};
 case "ordinaryGet":return {$:"ordinaryGet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "ordinarySet":return {$:"ordinarySet","destination":scalar(value["destination"],"number"),"object":scalar(value["object"],"number"),"key":scalar(value["key"],"number"),"value":scalar(value["value"],"number"),"receiver":scalar(value["receiver"],"number")};
 case "propertyKey":return {$:"propertyKey","destination":scalar(value["destination"],"number"),"input":scalar(value["input"],"number"),"realm":String(value["realm"])};

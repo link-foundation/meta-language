@@ -490,6 +490,7 @@ pub enum JavaScriptCallInstruction {
     NumberBinary(f64, f64, f64, String),
     SameValue(f64, f64, f64),
     StrictEqual(f64, f64, f64),
+    RequireWrite(f64),
     OrdinaryGet(f64, f64, f64, f64),
     OrdinarySet(f64, f64, f64, f64, f64),
     PropertyKey(f64, f64, self::ml::Big),
@@ -516,6 +517,7 @@ pub enum JavaScriptCallSource {
     SourceSameValue(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceStrictEqual(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceRecur(Vec<self::JavaScriptCallSource>),
+    SourceSet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Vec<self::JavaScriptCallSource>),
 }

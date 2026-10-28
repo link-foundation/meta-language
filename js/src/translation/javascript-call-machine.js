@@ -206,6 +206,13 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
       if(plan.action==='call')return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitSet',destination:instruction.destination}}),plan.callee,plan.receiver,plan.arguments);
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(plan.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:plan.success}))};
     }
+    case 'requireWrite':{
+      const success=registers[instruction.success]??{$:'undefined'},owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+      if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a strict write guard needs its actual registered source owner'};
+      if(success.$!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'a strict write guard requires its actual ordinary Set result'};
+      const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,next);
+      return success.value?{$:'machineContinue',machine:current}:requestJavaScriptCallError(current,owner.realm,'TypeError','the ordinary assignment was rejected');
+    }
     default:return {$:'machineInvalid',heap:machine.heap,reason:'an ordinary property executor needs its actual selected instruction'};
   }
 }
@@ -255,7 +262,7 @@ export function stepJavaScriptCallMachine(program,machine){
       const value=op==='add'?left.value+right.value:op==='subtract'?left.value-right.value:op==='multiply'?left.value*right.value:op==='divide'?left.value/right.value:op==='remainder'?left.value%right.value:left.value**right.value;
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'number',value}))};
     }
-    case 'ordinaryGet':case 'ordinarySet':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
+    case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
     case 'propertyKey':return acceptJavaScriptCallKey(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyKeyConversion(machine.heap,registers[instruction.input]??{$:'undefined'},program.exoticKey));
     case 'propertyDefinition':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyDefinition(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.attributes]??{$:'undefined'},program.exoticKey));
   }

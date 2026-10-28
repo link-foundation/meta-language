@@ -9463,3 +9463,13 @@ keep their separate call-stack behavior. This does not choose a new proof of
 loop eligibility or optimize arbitrary source calls. Deferred own-source
 controls retain scalar accumulation, simultaneous state updates, actual heap
 reads, getters and method receivers, plus every prior primitive input.
+
+Strict ordinary field assignments additionally use the shared Set protocol.
+The source bridge reads compound operands before evaluating the right-hand
+expression, performs the write against the latest heap and discards only the
+statement result required by the checked core. Normal setter returns are
+ignored. An explicit write-result instruction requests a real TypeError in the
+executing source function's realm when Set rejects the write; malformed model
+input remains a separate outcome. Error allocation is still an external service
+obligation, not a fabricated Error value. Deferred controls retain exact updated
+heaps, right-hand mutation order, setter calls and readonly rejection requests.

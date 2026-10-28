@@ -66,13 +66,24 @@ fn actual_source_compiler_output_preserves_every_native_execution_state() {
                 row["name"]
             );
         }
-        assert!(
-            matches!(
-                actual,
-                native::JavaScriptCallMachineTransition::MachineCompleted(_, _)
-            ),
-            "{}",
-            row["name"]
-        );
+        if row["expectedOutcome"] == "allocation" {
+            assert!(
+                matches!(
+                    actual,
+                    native::JavaScriptCallMachineTransition::MachineAllocateError(_, _, _, _)
+                ),
+                "{}",
+                row["name"]
+            );
+        } else {
+            assert!(
+                matches!(
+                    actual,
+                    native::JavaScriptCallMachineTransition::MachineCompleted(_, _)
+                ),
+                "{}",
+                row["name"]
+            );
+        }
     }
 }

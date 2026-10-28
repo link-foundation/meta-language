@@ -5,6 +5,7 @@ import {recheckLinkedTypedProgram} from '../typed-program-checked-projection.js'
 import {compileJavaScriptCallSource} from './javascript-call-source.js';
 import {unsupported} from './diagnostics.js';
 import {tailLoop} from './ir.js';
+import {readRecordFieldWriteOperator,readRecordFieldWriteName} from './record-write-rules.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
@@ -89,6 +90,20 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'call':{
      const actual=directory.get(node.fn);if(!actual)return refuse(node,'a source call requires its actual supplied callable');
      return {$:'sourceCall',callee:constant({$:'object',identity:actual.identity,callable:true}),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
+    }
+    case 'method':{
+     const operation=readRecordFieldWriteOperator(node.op),field=readRecordFieldWriteName(node.op);
+     if(!operation||node.object.type.kind!=='record'||node.object.type.reference!==true)return refuse(node,'this method requires its actual source operation');
+     const identity=nextBinding++,saved={$:'sourceBinding',identity},key=constant({$:'text',units:Array.from({length:field.length},(_,index)=>field.charCodeAt(index))});
+     let value;
+     if(operation==='=')value=expression(node.args[0],environment,depth+1);
+     else{
+      const operator={'+=':'add','-=':'subtract','*=':'multiply','/=':'divide','%=':'remainder','**=':'power','++':'add','--':'subtract'}[operation];
+      if(!operator)return refuse(node,'the exact compound write operator is not represented');
+      value={$:'sourceNumberBinary',operator,left:{$:'sourceGet',object:saved,key},right:operation==='++'||operation==='--'?constant({$:'number',value:1}):expression(node.args[0],environment,depth+1)};
+     }
+     const ignored=nextBinding++;
+     return {$:'sourceLet',identity,value:expression(node.object,environment,depth+1),body:{$:'sourceLet',identity:ignored,value:{$:'sourceSet',object:saved,key,value},body:undefinedSource()}};
     }
     case 'recur':return {$:'sourceRecur',arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
     case 'apply':{

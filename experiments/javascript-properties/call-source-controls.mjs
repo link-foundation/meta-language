@@ -13,21 +13,29 @@ import {createOrdinaryHostContext,assertOrdinaryHostSnapshot} from './heap-contr
 export {assertVersions};
 export const callSourceFixture=readProjectData(new URL('../../parity/fixtures/javascript-call-source.lino',import.meta.url));
 function registry(row,checked){const names=[...row.functions,...[...checked.declarations].filter(([name,entry])=>entry.k==='fn'&&!row.functions.includes(name)).map(([name])=>name)];return {functions:names.map((name,index)=>({name,identity:10n+BigInt(index),realm:1000n})),realms:[1000n],exoticKey:{$:'symbol',identity:18446744073709551615n}};}
+function decodeObject(object){return {...object,identity:BigInt(object.identity),prototype:decodeJavaScriptSemanticValue(object.prototype),properties:object.properties.map(property=>({...property,key:decodeJavaScriptSemanticValue(property.key),descriptor:{...property.descriptor,value:decodeJavaScriptSemanticValue(property.descriptor.value),getter:decodeJavaScriptSemanticValue(property.descriptor.getter),setter:decodeJavaScriptSemanticValue(property.descriptor.setter)}}))};}
 export function observeCallSource(row){
- const checked=checkProgram(parseJavaScript(row.source)),actualRegistry=registry(row,checked),lowered=lowerCheckedJavaScriptCallModule(checked,actualRegistry);
- const heap={$:'ordinaryHeap',objects:[...(row.objects??[]).map(object=>({...object,identity:BigInt(object.identity),prototype:decodeJavaScriptSemanticValue(object.prototype),properties:object.properties.map(property=>({...property,key:decodeJavaScriptSemanticValue(property.key),descriptor:{...property.descriptor,value:decodeJavaScriptSemanticValue(property.descriptor.value),getter:decodeJavaScriptSemanticValue(property.descriptor.getter),setter:decodeJavaScriptSemanticValue(property.descriptor.setter)}}))})),...actualRegistry.functions.map(fn=>({$:'ordinaryObject',identity:fn.identity,prototype:{$:'null'},extensible:true,callable:true,properties:[]}))].sort((left,right)=>left.identity<right.identity?-1:left.identity>right.identity?1:0),symbols:[actualRegistry.exoticKey.identity]};
+ const checked=checkProgram(parseJavaScript(row.source,{referenceSemantics:row.referenceSemantics===true})),actualRegistry=registry(row,checked),lowered=lowerCheckedJavaScriptCallModule(checked,actualRegistry);
+ const heap={$:'ordinaryHeap',objects:[...(row.objects??[]).map(decodeObject),...actualRegistry.functions.map(fn=>({$:'ordinaryObject',identity:fn.identity,prototype:{$:'null'},extensible:true,callable:true,properties:[]}))].sort((left,right)=>left.identity<right.identity?-1:left.identity>right.identity?1:0),symbols:[actualRegistry.exoticKey.identity]};
  const arguments_=row.arguments.map(decodeJavaScriptSemanticValue),entry=actualRegistry.functions.find(fn=>fn.name===row.entry).identity;
  let current=beginJavaScriptCallMachine(lowered.program,heap,entry,{$:'undefined'},arguments_);const trace=[encodeJavaScriptCallMachineTransition(current)];
  for(let steps=0;current.$==='machineContinue';steps+=1){assert.ok(steps<4096,'every actual frontend invocation must reach its full terminal observation');current=stepJavaScriptCallMachine(lowered.program,current.machine);trace.push(encodeJavaScriptCallMachineTransition(current));}
  if(row.maximumFrames!==undefined)assert.ok(Math.max(...trace.filter(entry=>entry.$==='machineContinue').map(entry=>entry.machine.frames.length))<=row.maximumFrames,'lifted loops preserve their complete bounded active frame count');
- assert.equal(current.$,'machineCompleted');assert.deepEqual(encodeJavaScriptSemanticValue(current.value),row.expected);assert.deepEqual(encodeJavaScriptOrdinaryHeap(current.heap),encodeJavaScriptOrdinaryHeap(heap));
+ const expectedHeap=row.afterObjects?{...heap,objects:heap.objects.map(object=>{const replacement=row.afterObjects.find(entry=>BigInt(entry.identity)===object.identity);return replacement?decodeObject(replacement):object;})}:heap;
+ const finalHeap=current.$==='machineAllocateError'?current.machine.heap:current.heap;
+ if(row.expectedOutcome==='allocation'){
+  assert.equal(current.$,'machineAllocateError');assert.equal(String(current.realm),row.errorRealm);assert.equal(current.errorClass,row.errorClass);assert.equal(current.reason,row.errorReason);
+ }else{assert.equal(current.$,'machineCompleted');assert.deepEqual(encodeJavaScriptSemanticValue(current.value),row.expected);}
+ assert.deepEqual(encodeJavaScriptOrdinaryHeap(finalHeap),encodeJavaScriptOrdinaryHeap(expectedHeap));
  const originals=runInNewContext('(function(){"use strict";'+row.source.replaceAll('export function ','function ')+';return {'+row.functions.join(',')+'};})()');
  let context;context=createOrdinaryHostContext(heap,call=>{
   const owner=actualRegistry.functions.find(fn=>fn.identity===call.callee.identity);assert.ok(owner,'actual source owns every registered property call');
   return Reflect.apply(originals[owner.name],context.materialize(call.receiver),call.arguments.map(context.materialize));
  },new Map([[String(actualRegistry.exoticKey.identity),Symbol.toPrimitive]]));
- assert.deepEqual(encodeJavaScriptSemanticValue(context.semantic(Reflect.apply(originals[row.entry],undefined,arguments_.map(context.materialize)))),row.expected,'independent original source behavior');
- assertOrdinaryHostSnapshot(current.heap,context);
+ let result,failure,threw=false;try{result=Reflect.apply(originals[row.entry],undefined,arguments_.map(context.materialize));}catch(error){failure=error;threw=true;}
+ if(row.expectedOutcome==='allocation'){assert.equal(threw,true);assert.equal(failure.name,row.errorClass);}
+ else{assert.equal(threw,false);assert.deepEqual(encodeJavaScriptSemanticValue(context.semantic(result)),row.expected,'independent original source behavior');}
+ assertOrdinaryHostSnapshot(expectedHeap,context);
  const registeredCalls=context.calls.map(call=>({callee:encodeJavaScriptSemanticValue(call.callee),receiver:encodeJavaScriptSemanticValue(call.receiver),arguments:call.arguments.map(encodeJavaScriptSemanticValue)}));
  assert.deepEqual(registeredCalls,row.registeredCalls??[],'all independently observed registered property calls');
  const machineRegisteredCalls=[];

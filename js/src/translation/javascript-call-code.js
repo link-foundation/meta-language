@@ -12,6 +12,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'numberBinary',destination:number,left:number,right:number,operator:string} |
  * {$:'sameValue',destination:number,left:number,right:number} |
  * {$:'strictEqual',destination:number,left:number,right:number} |
+ * {$:'requireWrite',success:number} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
  * {$:'propertyKey',destination:number,input:number,realm:bigint} |
@@ -45,6 +46,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'branch':return [instruction.condition];
     case 'call':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
     case 'return':case 'throw':return [instruction.source];
+    case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];

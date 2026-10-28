@@ -838,6 +838,7 @@ pub enum JavaScriptCallInstruction {
     NumberBinary(f64, f64, f64, self::ml_string::Text),
     SameValue(f64, f64, f64),
     StrictEqual(f64, f64, f64),
+    RequireWrite(f64),
     OrdinaryGet(f64, f64, f64, f64),
     OrdinarySet(f64, f64, f64, f64, f64),
     PropertyKey(f64, f64, self::ml::Big),

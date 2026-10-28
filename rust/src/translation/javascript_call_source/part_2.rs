@@ -147,6 +147,9 @@ pub fn read_java_script_call_code_registers(instruction: self::JavaScriptCallIns
         self::JavaScriptCallInstruction::StrictEqual(destination_8, left_3, right_3) => {
             vec![destination_8, left_3, right_3]
         }
+        self::JavaScriptCallInstruction::RequireWrite(success) => {
+            vec![success]
+        }
         self::JavaScriptCallInstruction::OrdinaryGet(destination_9, object, key, receiver_2) => {
             vec![destination_9, object, key, receiver_2]
         }

@@ -47,6 +47,11 @@ pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptC
                 .map(decode_java_script_call_source)
                 .collect(),
         ),
+        "sourceSet" => native::JavaScriptCallSource::SourceSet(
+            Box::new(decode_java_script_call_source(&data["object"])),
+            Box::new(decode_java_script_call_source(&data["key"])),
+            Box::new(decode_java_script_call_source(&data["value"])),
+        ),
         "sourceGet" => native::JavaScriptCallSource::SourceGet(
             Box::new(decode_java_script_call_source(&data["object"])),
             Box::new(decode_java_script_call_source(&data["key"])),
@@ -93,6 +98,9 @@ pub(super) fn encode_java_script_call_source(value: &native::JavaScriptCallSourc
         }
         native::JavaScriptCallSource::SourceRecur(wire_field_0) => {
             json!({"$":"sourceRecur","arguments":Data::Array(wire_field_0.iter().map(encode_java_script_call_source).collect())})
+        }
+        native::JavaScriptCallSource::SourceSet(wire_field_0, wire_field_1, wire_field_2) => {
+            json!({"$":"sourceSet","object":encode_java_script_call_source(wire_field_0),"key":encode_java_script_call_source(wire_field_1),"value":encode_java_script_call_source(wire_field_2)})
         }
         native::JavaScriptCallSource::SourceGet(wire_field_0, wire_field_1) => {
             json!({"$":"sourceGet","object":encode_java_script_call_source(wire_field_0),"key":encode_java_script_call_source(wire_field_1)})
@@ -250,6 +258,9 @@ pub(super) fn decode_java_script_call_instruction(
             data["left"].as_f64().expect("model Number"),
             data["right"].as_f64().expect("model Number"),
         ),
+        "requireWrite" => native::JavaScriptCallInstruction::RequireWrite(
+            data["success"].as_f64().expect("model Number"),
+        ),
         "ordinaryGet" => native::JavaScriptCallInstruction::OrdinaryGet(
             data["destination"].as_f64().expect("model Number"),
             data["object"].as_f64().expect("model Number"),
@@ -332,6 +343,9 @@ pub(super) fn encode_java_script_call_instruction(
             wire_field_2,
         ) => {
             json!({"$":"strictEqual","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2)})
+        }
+        native::JavaScriptCallInstruction::RequireWrite(wire_field_0) => {
+            json!({"$":"requireWrite","success":wire_number(*wire_field_0)})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,

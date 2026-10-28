@@ -10,6 +10,7 @@ import {testJavaScriptCallCodeCoordinate,readJavaScriptCallConstantError} from '
  * {$:'sourceSameValue',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceStrictEqual',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
+ * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
@@ -77,6 +78,11 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    }
    for(let index=0;index<arguments_.length;index+=1)current=appendJavaScriptCallSourceInstruction(current,{$:'copy',destination:index+1,source:arguments_[index]??0});
    return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(current,{$:'jump',target:0}),register:0};
+  }
+  case 'sourceSet':{
+   const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),value=lowerJavaScriptCallSourceExpression(source.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
+   const write=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinarySet',destination:result.register,object:object.register,key:key.register,value:value.register,receiver:object.register});
+   return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(write,{$:'requireWrite',success:result.register}),register:value.register};
   }
   case 'sourceGet':{
    const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);

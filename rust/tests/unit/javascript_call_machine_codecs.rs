@@ -305,6 +305,9 @@ pub(super) fn decode_java_script_call_instruction(
             data["left"].as_f64().expect("model Number"),
             data["right"].as_f64().expect("model Number"),
         ),
+        "requireWrite" => native::JavaScriptCallInstruction::RequireWrite(
+            data["success"].as_f64().expect("model Number"),
+        ),
         "ordinaryGet" => native::JavaScriptCallInstruction::OrdinaryGet(
             data["destination"].as_f64().expect("model Number"),
             data["object"].as_f64().expect("model Number"),
@@ -387,6 +390,9 @@ pub(super) fn encode_java_script_call_instruction(
             wire_field_2,
         ) => {
             json!({"$":"strictEqual","destination":wire_number(*wire_field_0),"left":wire_number(*wire_field_1),"right":wire_number(*wire_field_2)})
+        }
+        native::JavaScriptCallInstruction::RequireWrite(wire_field_0) => {
+            json!({"$":"requireWrite","success":wire_number(*wire_field_0)})
         }
         native::JavaScriptCallInstruction::OrdinaryGet(
             wire_field_0,
