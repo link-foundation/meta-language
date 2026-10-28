@@ -824,11 +824,64 @@ pub enum JavaScriptSemanticValue {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptOrdinaryProperty {
+    OrdinaryProperty(Box<self::JavaScriptSemanticValue>, (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptOrdinaryObject {
+    OrdinaryObject(self::ml::Big, Box<self::JavaScriptSemanticValue>, bool, bool, Vec<self::JavaScriptOrdinaryProperty>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptOrdinaryHeap {
+    OrdinaryHeap(Vec<self::JavaScriptOrdinaryObject>, Vec<self::ml::Big>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptPrimitiveConversionState {
+    PrimitiveConversion(Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, self::ml_string::Text, self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptPrimitiveConversionCompletion {
+    NormalCompletion(Box<self::JavaScriptSemanticValue>),
+    ThrowCompletion(Box<self::JavaScriptSemanticValue>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptPrimitiveConversionTransition {
+    PrimitiveContinuation(Box<self::JavaScriptPrimitiveConversionState>),
+    PrimitiveCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
+    PrimitiveCompleted(Box<self::JavaScriptSemanticValue>),
+    PrimitiveThrow(Box<self::JavaScriptSemanticValue>),
+    PrimitiveIntrinsicError(self::ml_string::Text, self::ml_string::Text),
+    PrimitiveInvalid(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallPrimitiveResult {
     PrimitiveValue(Box<self::JavaScriptSemanticValue>),
     PrimitiveInvalid(self::ml_string::Text),
     PrimitiveError(self::ml_string::Text, self::ml_string::Text),
     PrimitiveResourceLimit(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptScalarConversionTransition {
+    ScalarContinuation(Box<self::JavaScriptPrimitiveConversionState>),
+    ScalarCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
+    ScalarCompleted(Box<self::JavaScriptSemanticValue>),
+    ScalarThrow(Box<self::JavaScriptSemanticValue>),
+    ScalarIntrinsicError(self::ml_string::Text, self::ml_string::Text),
+    ScalarInvalid(self::ml_string::Text),
+    ScalarResourceLimit(Box<self::JavaScriptSemanticValue>, self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptTextCallState {
+    TextProtocolState(Box<self::JavaScriptPrimitiveConversionState>),
+    TextPrimitiveValue(Box<self::JavaScriptSemanticValue>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -857,56 +910,4 @@ pub enum JavaScriptCallInstruction {
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallFunction {
     CallFunction(self::ml::Big, self::ml::Big, self::ml_string::Text, Box<self::JavaScriptSemanticValue>, f64, f64, Vec<self::JavaScriptSemanticValue>, Vec<self::JavaScriptCallInstruction>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptCallProgram {
-    CallProgram(Vec<self::JavaScriptCallFunction>, Vec<self::ml::Big>, Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptOrdinaryProperty {
-    OrdinaryProperty(Box<self::JavaScriptSemanticValue>, (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptOrdinaryObject {
-    OrdinaryObject(self::ml::Big, Box<self::JavaScriptSemanticValue>, bool, bool, Vec<self::JavaScriptOrdinaryProperty>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptOrdinaryHeap {
-    OrdinaryHeap(Vec<self::JavaScriptOrdinaryObject>, Vec<self::ml::Big>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptDescriptorConversionState {
-    DescriptorConversion(Box<self::JavaScriptSemanticValue>, f64, (bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool), bool),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptSemanticCompletion {
-    NormalCompletion(Box<self::JavaScriptSemanticValue>),
-    ThrowCompletion(Box<self::JavaScriptSemanticValue>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptDescriptorConversionTransition {
-    DescriptorContinuation(Box<self::JavaScriptDescriptorConversionState>),
-    DescriptorCall(Box<self::JavaScriptDescriptorConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
-    DescriptorCompleted((bool, bool, bool, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, self::JavaScriptSemanticValue, bool, bool, bool)),
-    DescriptorThrow(Box<self::JavaScriptSemanticValue>),
-    DescriptorIntrinsicError(self::ml_string::Text, self::ml_string::Text),
-    DescriptorInvalid(self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPrimitiveConversionState {
-    PrimitiveConversion(Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, self::ml_string::Text, self::ml_string::Text),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum JavaScriptPrimitiveConversionCompletion {
-    NormalCompletion(Box<self::JavaScriptSemanticValue>),
-    ThrowCompletion(Box<self::JavaScriptSemanticValue>),
 }

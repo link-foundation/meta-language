@@ -22,6 +22,7 @@ function invocation(program,before,after){
   receiver=parent.registers[instruction.receiver];
  }else if(pending.$==='waitKey')receiver=pending.state.receiver;
  else if(pending.$==='waitNumber'){assert.equal(pending.state.$,'numberProtocolState');receiver=pending.state.state.receiver;}
+ else if(pending.$==='waitText'){assert.equal(pending.state.$,'textProtocolState');receiver=pending.state.state.receiver;}
  else if(pending.$==='waitDefinition')receiver=pending.state.conversion.receiver;
  else assert.fail('every child retains its actual suspended caller');
  return {callee:encodeJavaScriptSemanticValue({$:'object',identity:child.identity,callable:true}),receiver:encodeJavaScriptSemanticValue(receiver),arguments:child.arguments.map(encodeJavaScriptSemanticValue)};
@@ -37,8 +38,8 @@ export function observeCallMachine(row){
   assert.equal(current.machine.frames.at(-1).position,expected.position);
   assert.deepEqual(encodeJavaScriptOrdinaryHeap(current.machine.heap),expected.heap??row.heap);
   if(expected.convertedValue){
-   assert.equal(current.machine.frames.at(-1).pending.$,'waitNumber');
-   assert.equal(current.machine.frames.at(-1).pending.state.$,'numberPrimitiveValue');
+   assert.equal(current.machine.frames.at(-1).pending.$,expected.pending??'waitNumber');
+   assert.equal(current.machine.frames.at(-1).pending.state.$,expected.pending==='waitText'?'textPrimitiveValue':'numberPrimitiveValue');
    assert.deepEqual(encodeJavaScriptSemanticValue(current.machine.frames.at(-1).pending.state.value),expected.convertedValue);
    assert.deepEqual(encodeJavaScriptCallMachineTransition(stepJavaScriptCallMachine(program,current.machine)),trace.at(-1),'quota retry retains the completed primitive and never replays conversion calls');
   }else assert.deepEqual(trace.at(-1).machine,trace.at(-2).machine,'resource refusal keeps every actual frame, register, argument, handler and heap');

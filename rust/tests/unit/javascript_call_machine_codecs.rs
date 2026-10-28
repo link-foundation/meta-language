@@ -550,6 +550,11 @@ pub(super) fn decode_java_script_call_pending(data: &Data) -> native::JavaScript
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
             Box::new(decode_java_script_number_call_state(&data["state"])),
         ),
+        "waitText" => native::JavaScriptCallPending::WaitText(
+            data["destination"].as_f64().expect("model Number"),
+            native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
+            Box::new(decode_java_script_text_call_state(&data["state"])),
+        ),
         "waitError" => native::JavaScriptCallPending::WaitError(
             native::ml::Big::parse(data["realm"].as_str().expect("model exact integer")),
             native::ml_string::Text::from_text(data["errorClass"].as_str().expect("model text")),
@@ -578,6 +583,9 @@ pub(super) fn encode_java_script_call_pending(value: &native::JavaScriptCallPend
         }
         native::JavaScriptCallPending::WaitNumber(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"waitNumber","destination":wire_number(*wire_field_0),"realm":Data::String(wire_field_1.to_string()),"state":encode_java_script_number_call_state(wire_field_2)})
+        }
+        native::JavaScriptCallPending::WaitText(wire_field_0, wire_field_1, wire_field_2) => {
+            json!({"$":"waitText","destination":wire_number(*wire_field_0),"realm":Data::String(wire_field_1.to_string()),"state":encode_java_script_text_call_state(wire_field_2)})
         }
         native::JavaScriptCallPending::WaitError(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"waitError","realm":Data::String(wire_field_0.to_string()),"errorClass":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units")),"reason":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units"))})
@@ -738,6 +746,27 @@ pub(super) fn encode_java_script_number_call_state(
         }
         native::JavaScriptNumberCallState::NumberPrimitiveValue(wire_field_0) => {
             json!({"$":"numberPrimitiveValue","value":encode_java_script_semantic_value(wire_field_0)})
+        }
+    }
+}
+pub(super) fn decode_java_script_text_call_state(data: &Data) -> native::JavaScriptTextCallState {
+    match data["$"].as_str().expect("model constructor") {
+        "textProtocolState" => native::JavaScriptTextCallState::TextProtocolState(Box::new(
+            decode_java_script_primitive_conversion_state(&data["state"]),
+        )),
+        "textPrimitiveValue" => native::JavaScriptTextCallState::TextPrimitiveValue(Box::new(
+            decode_java_script_semantic_value(&data["value"]),
+        )),
+        _ => panic!("unregistered actual model constructor"),
+    }
+}
+pub(super) fn encode_java_script_text_call_state(value: &native::JavaScriptTextCallState) -> Data {
+    match value {
+        native::JavaScriptTextCallState::TextProtocolState(wire_field_0) => {
+            json!({"$":"textProtocolState","state":encode_java_script_primitive_conversion_state(wire_field_0)})
+        }
+        native::JavaScriptTextCallState::TextPrimitiveValue(wire_field_0) => {
+            json!({"$":"textPrimitiveValue","value":encode_java_script_semantic_value(wire_field_0)})
         }
     }
 }

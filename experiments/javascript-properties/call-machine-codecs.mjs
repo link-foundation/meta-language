@@ -120,6 +120,7 @@ case "waitSet":return {$:"waitSet","destination":scalar(value["destination"],"nu
 case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptPrimitiveConversionState(value["state"])};
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptPropertyDefinitionState(value["state"])};
 case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptNumberCallState(value["state"])};
+case "waitText":return {$:"waitText","destination":scalar(value["destination"],"number"),"realm":scalar(value["realm"],"integer"),"state":decodeJavaScriptTextCallState(value["state"])};
 case "waitError":return {$:"waitError","realm":scalar(value["realm"],"integer"),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallPending(value){switch(value.$){
@@ -130,6 +131,7 @@ case "waitSet":return {$:"waitSet","destination":scalar(value["destination"],"nu
 case "waitKey":return {$:"waitKey","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptPrimitiveConversionState(value["state"])};
 case "waitDefinition":return {$:"waitDefinition","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptPropertyDefinitionState(value["state"])};
 case "waitNumber":return {$:"waitNumber","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptNumberCallState(value["state"])};
+case "waitText":return {$:"waitText","destination":scalar(value["destination"],"number"),"realm":String(value["realm"]),"state":encodeJavaScriptTextCallState(value["state"])};
 case "waitError":return {$:"waitError","realm":String(value["realm"]),"errorClass":scalar(value["errorClass"],"string"),"reason":scalar(value["reason"],"string")};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptPrimitiveConversionState(value){switch(value.$){
@@ -159,6 +161,14 @@ default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptNumberCallState(value){switch(value.$){
 case "numberProtocolState":return {$:"numberProtocolState","state":encodeJavaScriptPrimitiveConversionState(value["state"])};
 case "numberPrimitiveValue":return {$:"numberPrimitiveValue","value":encodeJavaScriptSemanticValue(value["value"])};
+default:throw new TypeError("unregistered actual model constructor");}}
+export function decodeJavaScriptTextCallState(value){switch(value.$){
+case "textProtocolState":return {$:"textProtocolState","state":decodeJavaScriptPrimitiveConversionState(value["state"])};
+case "textPrimitiveValue":return {$:"textPrimitiveValue","value":decodeJavaScriptSemanticValue(value["value"])};
+default:throw new TypeError("unregistered actual model constructor");}}
+export function encodeJavaScriptTextCallState(value){switch(value.$){
+case "textProtocolState":return {$:"textProtocolState","state":encodeJavaScriptPrimitiveConversionState(value["state"])};
+case "textPrimitiveValue":return {$:"textPrimitiveValue","value":encodeJavaScriptSemanticValue(value["value"])};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptCallMachineTransition(value){switch(value.$){
 case "machineContinue":return {$:"machineContinue","machine":decodeJavaScriptCallMachine(value["machine"])};

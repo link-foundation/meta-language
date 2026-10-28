@@ -9685,3 +9685,21 @@ Implicit Symbol conversion requests a source-realm TypeError; explicit
 String(Symbol), Symbol descriptions, Object string-hint ToPrimitive and console
 formatting require their own represented behavior. Source names alone do not
 authorize any of these different conversions.
+
+Object text conversion resumes actual string-hint ToPrimitive getters and
+methods before primitive ToString. Ordinary conversion tries toString before
+valueOf; exotic conversion receives the actual string hint. Returned Symbols
+request TypeError even though explicit String on a Symbol primitive has separate
+description semantics. Numeric and textual adapters share one scalar transition
+definition; their registered source operations still select distinct hints and
+final conversions. Pending states retain actual source instruction, receiver,
+Symbol and realm. Completed primitives survive work refusal without method
+replay. Checked arbitrary-object frontend conversion remains required work.
+
+The qualified constructor sharing profile can also group exact text literals
+and same-type numeric literals with identical retained source spelling. It does
+not identify distinct numeric spellings, signed zero, text units or datatype
+owners. An immutable lexical alias of an already bound value can be substituted
+at its actual uses when neither endpoint is shadowed and no deferred closure
+intervenes. Effectful initializers remain. Scope/occurrence receipts and complete
+original source remain inspectable; the semantic-work limit stays unchanged.
