@@ -10,6 +10,8 @@ case "sourceIf":return {$:"sourceIf","condition":decodeJavaScriptCallSource(valu
 case "sourceNumberBinary":return {$:"sourceNumberBinary","operator":scalar(value["operator"],"string"),"left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
 case "sourceSameValue":return {$:"sourceSameValue","left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
 case "sourceStrictEqual":return {$:"sourceStrictEqual","left":decodeJavaScriptCallSource(value["left"]),"right":decodeJavaScriptCallSource(value["right"])};
+case "sourceRecur":return {$:"sourceRecur","arguments":value["arguments"].map(value=>decodeJavaScriptCallSource(value))};
+case "sourceGet":return {$:"sourceGet","object":decodeJavaScriptCallSource(value["object"]),"key":decodeJavaScriptCallSource(value["key"])};
 case "sourceCall":return {$:"sourceCall","callee":decodeJavaScriptCallSource(value["callee"]),"receiver":decodeJavaScriptCallSource(value["receiver"]),"arguments":value["arguments"].map(value=>decodeJavaScriptCallSource(value))};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallSource(value){switch(value.$){
@@ -20,6 +22,8 @@ case "sourceIf":return {$:"sourceIf","condition":encodeJavaScriptCallSource(valu
 case "sourceNumberBinary":return {$:"sourceNumberBinary","operator":scalar(value["operator"],"string"),"left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
 case "sourceSameValue":return {$:"sourceSameValue","left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
 case "sourceStrictEqual":return {$:"sourceStrictEqual","left":encodeJavaScriptCallSource(value["left"]),"right":encodeJavaScriptCallSource(value["right"])};
+case "sourceRecur":return {$:"sourceRecur","arguments":value["arguments"].map(value=>encodeJavaScriptCallSource(value))};
+case "sourceGet":return {$:"sourceGet","object":encodeJavaScriptCallSource(value["object"]),"key":encodeJavaScriptCallSource(value["key"])};
 case "sourceCall":return {$:"sourceCall","callee":encodeJavaScriptCallSource(value["callee"]),"receiver":encodeJavaScriptCallSource(value["receiver"]),"arguments":value["arguments"].map(value=>encodeJavaScriptCallSource(value))};
 default:throw new TypeError("unregistered actual model constructor");}}
 export function decodeJavaScriptSemanticValue(value){switch(value.$){

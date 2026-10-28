@@ -9,10 +9,12 @@ import {testJavaScriptCallCodeCoordinate,readJavaScriptCallConstantError} from '
  * {$:'sourceNumberBinary',operator:string,left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceSameValue',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceStrictEqual',left:JavaScriptCallSource,right:JavaScriptCallSource} |
+ * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
+ * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
 /** @typedef {{$:'sourceBindingRegister',identity:number,register:number}} JavaScriptCallSourceBinding */
-/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,error:string}} JavaScriptCallSourceBuilder */
+/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,error:string}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
 /** @typedef {{$:'sourceCompiled',instructions:JavaScriptCallInstruction[],registers:number,error:string}} JavaScriptCallSourceCompilation */
 
@@ -66,6 +68,20 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    if(source.$==='sourceStrictEqual')return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'strictEqual',destination:result.register,left:left.register,right:right.register})};
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'sameValue',destination:result.register,left:left.register,right:right.register})};
   }
+  case 'sourceRecur':{
+   if(source.arguments.length!==state.parameters)return refuseJavaScriptCallSource(state,'loop updates require every actual parameter operand');
+   let current=state,arguments_=[];
+   for(const argument of source.arguments){
+    const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1),captured=allocateJavaScriptCallSourceRegister(value.builder);
+    current=appendJavaScriptCallSourceInstruction(captured.builder,{$:'copy',destination:captured.register,source:value.register});arguments_.push(captured.register);
+   }
+   for(let index=0;index<arguments_.length;index+=1)current=appendJavaScriptCallSourceInstruction(current,{$:'copy',destination:index+1,source:arguments_[index]??0});
+   return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(current,{$:'jump',target:0}),register:0};
+  }
+  case 'sourceGet':{
+   const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryGet',destination:result.register,object:object.register,key:key.register,receiver:object.register})};
+  }
   case 'sourceCall':{
    if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'source call operands exceed their explicit budget');
    const callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1),receiver=lowerJavaScriptCallSourceExpression(source.receiver,bindings,callee.builder,depth+1);
@@ -103,7 +119,7 @@ export function compileJavaScriptCallSource(source,parameters){
  if(parameters.length>=4096)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters exceed their explicit register budget'};
  for(let index=0;index<parameters.length;index+=1){const owner=parameters[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters require distinct actual lexical owners'};}
  const bindings=parameters.map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1}));
- const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+1,visits:0,error:''},0);
+ const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+1,visits:0,parameters:parameters.length,error:''},0);
  const builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
  return {$:'sourceCompiled',instructions:builder.error===''?builder.instructions:[],registers:builder.error===''?builder.next:0,error:builder.error};
 }

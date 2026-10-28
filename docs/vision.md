@@ -9446,3 +9446,20 @@ original JavaScript observations. The native controls require exact compiler
 output and every resulting native machine transition. Both graph codecs and all
 four source targets remain required. No represented source or instruction body,
 control or native compiler has executed during drafting.
+
+Existing record identities can additionally enter the bridge with their actual
+ordinary heap. Named field reads use ordinary Get with the original object as
+receiver, retaining inherited fields and suspended getter bodies. A call through
+a record field saves the object once, resolves the callee before arguments and
+passes that saved object as receiver. Detached function values retain their
+separate strict call receiver. This adds reads/calls without claiming object
+allocation, writes, exotic objects or general coercions.
+
+The bridge reuses the existing checked tail-loop selection for lifted loop
+functions. Each loop update evaluates and captures every operand before writing
+any parameter register, then jumps to the same function entry. Register and
+frame storage stay fixed across iterations; ordinary recursive source calls
+keep their separate call-stack behavior. This does not choose a new proof of
+loop eligibility or optimize arbitrary source calls. Deferred own-source
+controls retain scalar accumulation, simultaneous state updates, actual heap
+reads, getters and method receivers, plus every prior primitive input.

@@ -515,6 +515,8 @@ pub enum JavaScriptCallSource {
     SourceNumberBinary(String, Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceSameValue(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceStrictEqual(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
+    SourceRecur(Vec<self::JavaScriptCallSource>),
+    SourceGet(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>),
     SourceCall(Box<self::JavaScriptCallSource>, Box<self::JavaScriptCallSource>, Vec<self::JavaScriptCallSource>),
 }
 
@@ -525,7 +527,7 @@ pub enum JavaScriptCallSourceBinding {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallSourceBuilder {
-    SourceBuilder(Vec<self::JavaScriptCallInstruction>, f64, f64, String),
+    SourceBuilder(Vec<self::JavaScriptCallInstruction>, f64, f64, f64, String),
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -39,6 +39,18 @@ pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptC
             Box::new(decode_java_script_call_source(&data["left"])),
             Box::new(decode_java_script_call_source(&data["right"])),
         ),
+        "sourceRecur" => native::JavaScriptCallSource::SourceRecur(
+            data["arguments"]
+                .as_array()
+                .expect("model array")
+                .iter()
+                .map(decode_java_script_call_source)
+                .collect(),
+        ),
+        "sourceGet" => native::JavaScriptCallSource::SourceGet(
+            Box::new(decode_java_script_call_source(&data["object"])),
+            Box::new(decode_java_script_call_source(&data["key"])),
+        ),
         "sourceCall" => native::JavaScriptCallSource::SourceCall(
             Box::new(decode_java_script_call_source(&data["callee"])),
             Box::new(decode_java_script_call_source(&data["receiver"])),
@@ -78,6 +90,12 @@ pub(super) fn encode_java_script_call_source(value: &native::JavaScriptCallSourc
         }
         native::JavaScriptCallSource::SourceStrictEqual(wire_field_0, wire_field_1) => {
             json!({"$":"sourceStrictEqual","left":encode_java_script_call_source(wire_field_0),"right":encode_java_script_call_source(wire_field_1)})
+        }
+        native::JavaScriptCallSource::SourceRecur(wire_field_0) => {
+            json!({"$":"sourceRecur","arguments":Data::Array(wire_field_0.iter().map(encode_java_script_call_source).collect())})
+        }
+        native::JavaScriptCallSource::SourceGet(wire_field_0, wire_field_1) => {
+            json!({"$":"sourceGet","object":encode_java_script_call_source(wire_field_0),"key":encode_java_script_call_source(wire_field_1)})
         }
         native::JavaScriptCallSource::SourceCall(wire_field_0, wire_field_1, wire_field_2) => {
             json!({"$":"sourceCall","callee":encode_java_script_call_source(wire_field_0),"receiver":encode_java_script_call_source(wire_field_1),"arguments":Data::Array(wire_field_2.iter().map(encode_java_script_call_source).collect())})

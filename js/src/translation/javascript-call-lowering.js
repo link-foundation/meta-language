@@ -4,11 +4,13 @@ import {validateLinkedTypedProgram} from '../typed-program-links-validation.js';
 import {recheckLinkedTypedProgram} from '../typed-program-checked-projection.js';
 import {compileJavaScriptCallSource} from './javascript-call-source.js';
 import {unsupported} from './diagnostics.js';
+import {tailLoop} from './ir.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
  if(!type||depth>128)return false;
  if(['float','bool','string','int','unit'].includes(type.kind))return true;
+ if(type.kind==='record')return type.fields.every(field=>acceptType(field.type,depth+1));
  if(type.kind==='option')return ['undefined','null','both'].includes(type.absence)&&acceptType(type.element,depth+1);
  return type.kind==='function'&&type.params.every(param=>acceptType(param.type??param,depth+1))&&acceptType(type.ret,depth+1);
 }
@@ -71,6 +73,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      if(!operation||node.left.type.kind!=='float'||node.right.type.kind!=='float')return refuse(node,'this operator requires additional exact source lowering');
      return {$:'sourceNumberBinary',operator:operation,left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
     }
+    case 'recordField':return {$:'sourceGet',object:expression(node.object,environment,depth+1),key:constant({$:'text',units:Array.from({length:node.field.length},(_,index)=>node.field.charCodeAt(index))})};
     case 'strictEqual':{
      const value={$:'sourceStrictEqual',left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
      return node.negate?{$:'sourceIf',condition:value,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})}:value;
@@ -87,11 +90,19 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      const actual=directory.get(node.fn);if(!actual)return refuse(node,'a source call requires its actual supplied callable');
      return {$:'sourceCall',callee:constant({$:'object',identity:actual.identity,callable:true}),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
     }
-    case 'apply':return {$:'sourceCall',callee:expression(node.fn,environment,depth+1),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
+    case 'recur':return {$:'sourceRecur',arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
+    case 'apply':{
+     if(node.fn.k==='recordField'){
+      const receiver=expression(node.fn.object,environment,depth+1),identity=nextBinding++,saved={$:'sourceBinding',identity};
+      const key=constant({$:'text',units:Array.from({length:node.fn.field.length},(_,index)=>node.fn.field.charCodeAt(index))});
+      return {$:'sourceLet',identity,value:receiver,body:{$:'sourceCall',callee:{$:'sourceGet',object:saved,key},receiver:saved,arguments:node.args.map(arg=>expression(arg,environment,depth+1))}};
+     }
+     return {$:'sourceCall',callee:expression(node.fn,environment,depth+1),receiver:undefinedSource(),arguments:node.args.map(arg=>expression(arg,environment,depth+1))};
+    }
     default:return refuse(node,'the actual expression '+node.k+' needs further source lowering');
    }
   }
-  const source=expression(entry.body,bindings),result=compileJavaScriptCallSource(source,parameters);
+  const source=expression(tailLoop(entry,entry.body)??entry.body,bindings),result=compileJavaScriptCallSource(source,parameters);
   if(result.error)refuse(entry,result.error);
   sourceUnits.push({name,source,parameters,compilation:result});
   instructionCount+=result.instructions.length;if(instructionCount>65536)refuse(entry,'the complete program exceeds its instruction budget');
