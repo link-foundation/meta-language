@@ -244,7 +244,7 @@ export function partitionPortableRustLibrary(source, {notice = '', directory, ma
     let item = lines.slice(starts[index], starts[index + 1]).join('\n').trim();
     if(item.split('\n').length>maximumLines){
       const module=/^pub mod ([a-z][a-z_0-9]*) \{/mu.exec(item);
-      assert.ok(module,'an oversized generated function/type body cannot be split; only complete inline modules can be recursively placed');
+      assert.ok(module,'an oversized generated function/type body cannot be split; only complete inline modules can be recursively placed: '+(item.match(/^pub (?:(?:const )?fn|enum|struct) [^\n{]+/mu)?.[0]??'unidentified declaration')+'; lines='+item.split('\n').length+'; limit='+maximumLines);
       const itemTokens=tokenize(item,'Rust').tokens,first=itemTokens.findIndex(token=>token.kind==='identifier'&&token.value==='pub');
       assert.ok(first>=0&&itemTokens[first+1]?.value==='mod'&&itemTokens[first+2]?.value===module[1],'nested placement cannot split an enclosing function/type body');
       const name=module[1],block=readSourceTextRustBlock(item,'mod',name);

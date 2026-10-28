@@ -18,6 +18,7 @@ import { acceptProgramContainerFields, acceptProgramReferenceField, acceptProgra
 
 export const TYPED_PROGRAM_LINKS_SCHEMA = Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-links-schema.json', import.meta.url)));
 const schema = TYPED_PROGRAM_LINKS_SCHEMA;
+const sharingProfile=Object.freeze(readRuntimeProjectData(new URL('./data/typed-program-value-sharing.lino',import.meta.url)));
 const idOf = (id) => id.asU64();
 const labelOf = (name) => schema.fields[name] ?? name.replace(/[A-Z]/gu, (letter) => ` ${letter.toLowerCase()}`);
 const fieldOf = (label) => Object.entries(schema.fields).find(([, value]) => value === label)?.[0]
@@ -117,31 +118,51 @@ function bindingTargets(program) {
     walk(entry.body ?? entry.value, environment);
   }
   walk(program.main, new Map());
-  return { targets, patternOverrides };
+  return { targets, patternOverrides, typeNodes:seenTypes };
 }
 
-export function encodeTypedProgramLinks(program, { provenance } = {}) {
+export function encodeTypedProgramLinks(program, { provenance, valueSharing='' } = {}) {
+  if(valueSharing!==''&&(valueSharing!==sharingProfile.model||sharingProfile.schemaVersion!==1||sharingProfile.scalarValues!==true||sharingProfile.typeRecords!==true||sharingProfile.sourceSpans!==true||sharingProfile.occurrences!==false))throw new TypeError('unregistered typed program value sharing profile');
   validateLinkedTypedProgram(program);
   recheckLinkedTypedProgram(program);
   const network = new LinkNetwork();
   const identities = new WeakMap();
-  const { targets, patternOverrides } = bindingTargets(program);
+  const { targets, patternOverrides, typeNodes } = bindingTargets(program);
+  const scalars=new Map(),types=new Map(),shapes=new Map(),shapeIdentities=new WeakMap(),activeShapes=new WeakSet();let shapeVisits=0;
+  // Exact shape keys use child identities, retaining ordered fields, complete
+  // metadata and signed-zero spellings without expanding a shared type DAG.
+  // Only declared type roots use this key; expression/binder owners never do.
+  function shape(value,depth=0){
+    if(depth>256||++shapeVisits>1000000)throw new TypeError('typed value sharing exceeds its structural resource limit');
+    if(value&&typeof value==='object'&&shapeIdentities.has(value))return shapeIdentities.get(value);
+    const object=value&&typeof value==='object';if(object&&activeShapes.has(value))throw new TypeError('typed value sharing refuses cyclic type structure');
+    if(object&&!Array.isArray(value)&&(Object.getPrototypeOf(value)!==Object.prototype&&Object.getPrototypeOf(value)!==null))throw new TypeError('typed value sharing requires canonical data objects');
+    if(object)for(const key of Object.keys(value))if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'))throw new TypeError('typed value sharing refuses accessor-driven type structure');
+    if(object)activeShapes.add(value);
+    const key=object?Array.isArray(value)?JSON.stringify(['array',value.map(child=>shape(child,depth+1))]):JSON.stringify(['record',Object.entries(value).map(([field,child])=>[field,shape(child,depth+1)])]):JSON.stringify([value===null?'null':typeof value,typeof value==='number'&&Object.is(value,-0)?'-0':String(value)]);
+    let identity=shapes.get(key);if(identity===undefined){identity=shapes.size;shapes.set(key,identity);}
+    if(object){activeShapes.delete(value);shapeIdentities.set(value,identity);}return identity;
+  }
   const pending = [];
-  function encode(value) {
+  function encode(value,field='',source=true) {
     if (value && typeof value === 'object') {
       if (identities.has(value)) return identities.get(value);
       if (!(Array.isArray(value) || value instanceof Map || Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) throw new TypeError('a typed program contains a non-data host object');
+      const span=source&&field==='span'&&value!==null&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null)&&Object.keys(value).length===2&&Object.hasOwn(value,'start')&&Object.hasOwn(value,'end');
+      const typeIdentity=valueSharing&&(typeNodes.has(value)||span)?shape(value):null;
+      if(typeIdentity!==null&&types.has(typeIdentity)){const id=types.get(typeIdentity);identities.set(value,id);return id;}
       const kind = Array.isArray(value) ? 'array' : value instanceof Map ? 'map' : 'record';
       const id = network.insertLink([], metadata(schema.containers[kind]));
       identities.set(value, id);
-      if (kind === 'array') network.link(id).setReferences(value.map(encode));
-      else if (kind === 'map') network.link(id).setReferences([...value].map(([key, item]) => encode([key, item])));
+      if(typeIdentity!==null)types.set(typeIdentity,id);
+      if (kind === 'array') network.link(id).setReferences(value.map(child=>encode(child,'',source)));
+      else if (kind === 'map') network.link(id).setReferences([...value].map(([key, item]) => encode([key, item],'',source)));
       else {
         const references = targets.get(value) ?? [];
         for (const [name, item] of Object.entries(patternOverrides.get(value) ?? value)) {
           const target = references.find(reference => reference.field === name);
           if (target) pending.push({ parent: id, ...target });
-          else network.insertFieldRelation(id, labelOf(name), encode(item));
+          else network.insertFieldRelation(id, labelOf(name), encode(item,name,source));
         }
       }
       return id;
@@ -150,12 +171,14 @@ export function encodeTypedProgramLinks(program, { provenance } = {}) {
     if (!schema.scalars[kind]) throw new TypeError(`a typed program contains a ${kind} host value`);
     const definition = kind === 'null' || kind === 'undefined' ? undefined
       : kind === 'number' && Object.is(value, -0) ? '-0' : String(value);
-    return network.insertLink([], metadata(schema.scalars[kind], definition));
+    const scalarKey=valueSharing?JSON.stringify([kind,definition??null]):null;
+    if(valueSharing&&scalars.has(scalarKey))return scalars.get(scalarKey);
+    const id=network.insertLink([], metadata(schema.scalars[kind], definition));if(valueSharing)scalars.set(scalarKey,id);return id;
   }
   const body = encode(program);
   for (const reference of pending) network.insertFieldRelation(reference.parent, reference.label, encode(reference.target));
   const root = network.insertLink([body], metadata(schema.root, String(schema.schemaVersion)));
-  if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', encode(provenance));
+  if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', encode(provenance,'',false));
   return { network, root };
 }
 

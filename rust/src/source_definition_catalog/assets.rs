@@ -62,6 +62,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "inert-module-binding-program.lino" => {
             Some(include_str!("../data/inert-module-binding-program.lino"))
         }
+        "javascript-call-machine-program.lino" => {
+            Some(include_str!("../data/javascript-call-machine-program.lino"))
+        }
         "javascript-class-source-program.lino" => {
             Some(include_str!("../data/javascript-class-source-program.lino"))
         }
@@ -79,6 +82,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "javascript-literal-property-program.lino" => Some(include_str!(
             "../data/javascript-literal-property-program.lino"
+        )),
+        "javascript-nominal-spread-program.lino" => Some(include_str!(
+            "../data/javascript-nominal-spread-program.lino"
         )),
         "javascript-nullish-field-program.lino" => Some(include_str!(
             "../data/javascript-nullish-field-program.lino"

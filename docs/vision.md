@@ -9318,3 +9318,98 @@ rejection precedence and exact abrupt text. Full native traces, source codecs
 and all four targets remain required. The actual evaluator, realms, intrinsic
 authority, exotic targets and source frontend binding remain unfinished along
 with every earlier whole-project and global-concept obligation.
+
+### Closed nominal copies and exact presence proofs draft
+
+Owned single-constructor tagged values can be copied by a leading whole-value
+spread, followed by whole copies of the same actual owner and declared-field
+overrides. Every input and copied field is captured in source order, including
+overwritten values; source expressions evaluate once. Extra fields, changed
+owners/tags, multiple constructors, reordered leading fields and unsupported
+prototype changes refuse. This is a closed nominal representation profile;
+general CopyDataProperties, accessor/exotic sources and arbitrary observable
+property-order layouts retain their separate required interpretation.
+
+Inference waits for actual spread source constraints to resolve, rather than
+choosing a structural record or a nominal owner from field spellings. Optional
+source types provide only candidate field information. Checked code requires
+actual strict absence guards on the unchanged local binder before projecting
+its present payload. Exact null/undefined exclusions remain separate, including
+both-absence domains. Shadowing discards the proof; loose/computed guards do
+not create one. The projection is explicit checked optional IR, not a change
+to a variable's stored type. Both runtime adapters use the same source-generated
+selection rules and existing constructor/match/let operations.
+
+Deferred controls retain complete preceding sources, exact evaluation order,
+original/generated programs, all native products, frontend parity and both
+source codecs/four targets. They include extra/missing fields, incompatible
+owners, union layouts and shadowed optional binders. No source program, fixture
+or emitted product has executed. Partition diagnostics now identify an oversized
+declaration while preserving the same source-size limit; complete function/type
+bodies are never cut to make generation pass.
+
+### Registered ordinary call execution draft
+
+The shared source call machine connects ordinary property protocols to actual
+registered function bodies. Functions use the same global callable Object
+identities as the heap, with explicit source realms, strict or lexical receivers,
+parameter registers, captured values and complete invocation arguments. Mutable
+captured bindings require explicit shared cells in source lowering. An arguments
+vector does not substitute for a language arguments object or sloppy binding.
+
+Checked instruction data provides constants, copies, argument reads, branches,
+jumps, typed Number operations, SameValue, calls, returns, throws and handlers.
+Ordinary Get/Set and key/property-definition operations retain their actual
+pending continuation while registered getters, methods and setters execute on
+the same explicit stack. Return resumes the suspended operation against the
+latest global heap; throw unwinds to the nearest active handler and abandons
+pending operations without losing earlier effects. Intrinsic failures request
+allocation in the actual supplied realm; the external allocator must return the
+real Error identity and updated heap before exception propagation resumes.
+Membership and structural state validation do not prove allocator/realm authority.
+
+Every step is an explicit source transition. Complete program/coordinate/context
+checks and separate resource outcomes retain the selected bounds:4096 functions
+and registers per function,65536 instructions,1024 frames and handlers per frame,
+and1048576 total active register slots and argument slots. These bounds do not establish a time/space
+complexity claim. Unknown code, wrong typed operands, unmodeled receiver binding
+and malformed continuations are not silently executed. Full source lowering,
+finally/arguments/sloppy semantics, allocation services, asynchronous execution,
+exotic objects and complete JavaScript/Rust translation remain required work.
+
+Rust semantics and both JavaScript/native model transports derive from actual
+checked declarations and mappings. Deferred independent source controls compare
+all calls, receivers, arguments, intermediate states/heaps, terminal values,
+UTF16 payloads, lexical this, missing/extra arguments, handlers and actual Error
+allocation requests. Literal instruction programs are independent control inputs,
+not claimed automatic translations of their oracle source. No instruction
+program, callback, behavioral control or native compiler has executed.
+
+### Exact typed value sharing and source module exports draft
+
+An explicit shared Links profile interns identical encoded scalar values and
+complete type/source-coordinate values. Ordered type structure, metadata and
+signed-zero spellings remain in the key; shared child identities avoid expanding
+type DAGs exponentially. Declaration, expression and lexical binder occurrences
+remain separate, with their actual reference edges. Equal spellings never merge
+binding owners. This establishes only exact representation sharing inside the
+qualified schema; general cross-language concept equivalence still needs its
+formal evidence. The default encoding retains its previous selection.
+Shared values are immutable. Editing one occurrence replaces its use edge with
+a new value; it must not mutate a shared value and alter other occurrences.
+
+A source-module graph can retain all actual exports and transitive declarations,
+plus complete declared semantic data types. Reachability follows actual checked
+call/function/type/constructor references, never names guessed from arbitrary
+text. All omitted dependency declarations remain listed, and complete original
+sources/native generation remain in the recipe. Dependency libraries retain
+their own catalog entry points. This source graph projection neither deletes
+requirements nor substitutes placeholders for reachable code. The graph's normal
+recheck, existing100000-node/byte/reference limits and all CI gates remain exact.
+
+Deferred controls compare original sources, both graph codecs, target emissions,
+real parameter owner links and complete preceding source snapshots. Generated
+JavaScript transport shares the checked declaration/wire layout used by native
+transport, instead of a separately hand-maintained field transpose. Full dynamic
+source compilation and every earlier architecture/grammar obligation remain
+unfinished; source construction is not execution evidence.

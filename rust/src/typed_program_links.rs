@@ -186,6 +186,31 @@ pub fn encode_typed_program_links_with_provenance(
     checked::validate(program)?;
     codec::encode(program, provenance)
 }
+/// Encode exact scalar/type/source-span value sharing. Declaration, expression
+/// and lexical binder identities remain independently represented.
+///
+/// # Errors
+/// Refuses unknown profiles and every existing checked-program defect.
+pub fn encode_typed_program_links_with_value_sharing(
+    program: &Program,
+    provenance: Option<&Value>,
+    profile: &str,
+) -> Result<TypedProgramLinks> {
+    let definition =
+        crate::read_structured_data_lino(include_str!("data/typed-program-value-sharing.lino"))
+            .map_err(|failure| error(failure.to_string()))?;
+    if definition["model"].as_str() != Some(profile)
+        || definition["schemaVersion"] != serde_json::json!(1)
+        || definition["scalarValues"] != serde_json::json!(true)
+        || definition["typeRecords"] != serde_json::json!(true)
+        || definition["sourceSpans"] != serde_json::json!(true)
+        || definition["occurrences"] != serde_json::json!(false)
+    {
+        return Err(error("unregistered typed program value sharing profile"));
+    }
+    checked::validate(program)?;
+    codec::encode_values(program, provenance)
+}
 /// Decode and recheck a graph with the default structural bounds.
 ///
 /// # Errors

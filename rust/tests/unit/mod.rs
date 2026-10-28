@@ -568,3 +568,9 @@ mod translation_javascript_primitive_conversion;
 mod translation_javascript_property_key_conversion;
 
 mod translation_javascript_property_definition;
+
+mod translation_javascript_nominal_spreads;
+
+mod translation_javascript_call_machine;
+
+mod typed_program_value_sharing;

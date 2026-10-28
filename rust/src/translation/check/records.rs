@@ -113,6 +113,24 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let (projection, property_order, declared) = transport;
+        let nominal = match expected {
+            Some(Type::Data { .. }) => expected.cloned(),
+            _ => declared
+                .map(|ty| self.resolve_type(Some(ty), path, span))
+                .transpose()?,
+        };
+        if let Some(selected) = nominal.as_ref() {
+            if let Some(value) = self.nominal_spread_literal(
+                entries,
+                selected,
+                projection.is_some() || property_order.is_some(),
+                env,
+                path,
+                span,
+            )? {
+                return Ok(value);
+            }
+        }
         let expected = expected
             .or_else(|| declared.filter(|ty| matches!(ty, Type::Record { ordered: true, .. })));
         let expected_fields = match expected {

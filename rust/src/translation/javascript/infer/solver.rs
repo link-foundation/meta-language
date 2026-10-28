@@ -183,6 +183,7 @@ impl Inference {
             progress |= self.solve_arithmetic(false)?;
             progress |= self.solve_joins_and_results()?;
             progress |= self.solve_record_spreads()?;
+            progress |= self.solve_nominal_spreads()?;
             progress |= self.solve_equalities(false)?;
             progress |= self.solve_enumerations()?;
             if !progress && !self.includes.is_empty() {
@@ -266,6 +267,12 @@ impl Inference {
         if let Some(constraint) = self.record_spreads.first() {
             return Err(super::type_error(
                 "an object spread needs a known record shape; declare its fields with JSDoc",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.nominal_spreads.first() {
+            return Err(super::type_error(
+                "an object spread needs its complete actual source owner; declare its fields with JSDoc",
                 constraint.place,
             ));
         }

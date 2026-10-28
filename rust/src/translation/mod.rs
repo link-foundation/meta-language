@@ -358,4 +358,7 @@ pub(crate) mod javascript_primitive_conversion;
 
 pub(crate) mod javascript_property_key_conversion;
 
+pub(crate) mod javascript_nominal_spread_rules;
 pub(crate) mod javascript_property_definition;
+
+pub(crate) mod javascript_call_machine;

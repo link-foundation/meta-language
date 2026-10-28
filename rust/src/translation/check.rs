@@ -54,6 +54,7 @@ mod items;
 mod javascript_concatenation;
 mod javascript_data_fields;
 mod javascript_indexed_properties;
+mod javascript_nominal_spreads;
 mod javascript_nullish_fields;
 mod javascript_object_enumeration;
 mod javascript_optional_calls;
@@ -400,6 +401,7 @@ struct Env {
     known: HashMap<String, Fact>,
     immutable_products: HashMap<String, bool>,
     own_properties: Vec<(String, String)>,
+    nominal_spread_absences: Vec<(String, String)>,
     own_key_callback: Option<guarded_record_indices::OwnKeyCallbackOrigin>,
 }
 
@@ -412,6 +414,8 @@ impl Env {
     fn bind_local(&mut self, name: &str, ty: Type) {
         self.vars.insert(name.to_owned(), ty);
         self.immutable_products.remove(name);
+        self.nominal_spread_absences
+            .retain(|(binder, _)| binder != name);
         self.own_properties
             .retain(|(object, key)| object != name && key != name);
         self.known.retain(|variable, fact| {

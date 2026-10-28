@@ -1,4 +1,5 @@
 import {requireCallableConstantApplicationCapture} from './rust-module-value-rules.js';
+import {readJavaScriptNominalSpreadError} from './javascript-nominal-spread-rules.js';
 import {readJavaScriptDataFieldInferenceForm,acceptJavaScriptDataFieldOwnerFallback} from './javascript-data-field-rules.js';
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
 import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
@@ -115,6 +116,7 @@ class Inference {
     this.recordFormalFields=[];
     this.objectRestFields=[];
     this.recordSpreads = [];
+    this.nominalSpreads = [];
     this.enumerations=[];
     this.collections = new Map();
     this.iterables = [];
@@ -586,6 +588,13 @@ class Inference {
         this.recordSpreads.splice(this.recordSpreads.indexOf(constraint), 1);
         progress = true;
       }
+      for(const constraint of [...this.nominalSpreads]){
+        const source=this.resolve(constraint.leading),candidate=source.kind==='option'?this.resolve(source.element):source;
+        if(candidate.kind==='var'&&(!constraint.expected||this.resolve(constraint.expected).kind!=='data'))continue;
+        const result=this.record(constraint.node,constraint.env,constraint.expected,constraint.leading,constraint.terms);
+        this.unify(constraint.result,result,constraint.node.span);
+        this.nominalSpreads.splice(this.nominalSpreads.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.equalities]) {
         if (this.equalityStep(constraint, false)) {
           this.equalities.splice(this.equalities.indexOf(constraint), 1);
@@ -668,6 +677,7 @@ class Inference {
       }
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
+    if(this.nominalSpreads.length)throw typeError('an object spread needs its complete actual source owner; declare its fields with JSDoc',this.nominalSpreads[0].node.span);
     if(this.recordFormalFields.length)throw typeError('record formal default needs a known represented field domain',this.recordFormalFields[0].where);
     if(this.objectRestFields.length)throw typeError('object rest needs a known complete own-field domain',this.objectRestFields[0].where);
     if(this.recursiveBindingIterables.length)throw typeError('a recursive binding needs a represented iterable',this.recursiveBindingIterables[0].where);
@@ -1306,14 +1316,31 @@ class Inference {
     return { kind: 'data', name };
   }
 
-  record(node, env, expected) {
+  record(node, env, expected, leadingTerm, entryTerms) {
     const want = expected && this.resolve(expected);
+    const leading=leadingTerm??(node.entries[0]?.spread?this.expr(node.entries[0].value,env):null);
+    const raw=leading&&this.resolve(leading),source=raw?.kind==='option'?this.resolve(raw.element):raw;
+    if(leading&&source.kind==='var'&&want?.kind!=='data'){
+      const terms=node.entries.map((entry,index)=>index===0?leading:this.expr(entry.value,env));
+      const result=this.fresh();this.nominalSpreads.push({node,env:new Map(env),expected,leading,terms,result});return result;
+    }
+    const nominal=want?.kind==='data'?want:source?.kind==='data'?source:null;
+    if(nominal&&node.entries[0]?.spread){
+      const ctors=this.data.get(nominal.name)??[],ctor=ctors[0],owners=[];
+      for(const [index,entry]of node.entries.entries()){
+        if(entry.spread){const term=entryTerms?.[index]??(index===0?leading:this.expr(entry.value,env)),raw=this.resolve(term),present=raw.kind==='option'?raw.element:term;this.unify(present,nominal,entry.value.span??node.span);const actual=this.resolve(present);owners.push(actual.kind==='data'?actual.name:'');}
+        else{const field=ctor?.fields.find(field=>field.name===entry.name),declared=field?this.field(field):null,value=entryTerms?.[index]??this.expr(entry.value,env,declared);if(declared)this.unify(value,declared,entry.value.span??node.span);owners.push('');}
+      }
+      const error=readJavaScriptNominalSpreadError('JavaScript',ctors.length,ctor?.fields.map(field=>field.name)??[],node.entries.map(entry=>entry.spread?'spread':'field'),node.entries.map(entry=>entry.spread?'':entry.name),owners,nominal.name,node.prototypeDefinition!==undefined);
+      if(error)throw typeError(error,node.span);
+      this.records.set(node,nominal);return nominal;
+    }
     const fields = [];
     const entries = [];
     let unknownSpread = false;
-    for (const entry of node.entries) {
+    for (const [entryIndex,entry] of node.entries.entries()) {
       if (entry.spread) {
-        const type = this.expr(entry.value, env);
+        const type = entryTerms?.[entryIndex]??(entryIndex===0&&leading?leading:this.expr(entry.value, env));
         entries.push({ spread: true, type });
         const source = this.resolve(type);
         const role = readRecordSpreadRole(source.kind);
@@ -1325,7 +1352,7 @@ class Inference {
       } else {
         const expectedPosition = want?.kind === 'record' ? readRecordFieldPosition(recordNameUnits(want.fields), Array.from({ length: entry.name.length }, (_, index) => entry.name.charCodeAt(index))) : -1;
         const declared = expectedPosition < 0 ? undefined : want.fields[expectedPosition].type;
-        const value = this.expr(entry.value, env, declared);
+        const value = entryTerms?.[entryIndex]??this.expr(entry.value, env, declared);
         if (declared) this.unify(value, declared, entry.value.span ?? node.span);
         fields.push({ name: entry.name, type: declared ?? value });
         entries.push({ spread: false, name: entry.name, type: declared ?? value });

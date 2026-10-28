@@ -28,6 +28,12 @@ mod scopes;
 pub(super) fn encode(program: &Program, provenance: Option<&Value>) -> Result<TypedProgramLinks> {
     encoding::encode(program, provenance)
 }
+pub(super) fn encode_values(
+    program: &Program,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    encoding::encode_values(program, provenance, true)
+}
 
 #[derive(Clone)]
 enum Data {

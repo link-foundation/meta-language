@@ -16,6 +16,17 @@ pub(super) struct RecordSpread {
     entries: Vec<RecordSpreadEntry>,
     pub(super) place: Option<Span>,
 }
+pub(super) struct PendingNominalSpread {
+    node: SExpr,
+    pointer: *const SExpr,
+    entries: Vec<SRecordEntry>,
+    env: Env,
+    expected: Option<Term>,
+    leading: Term,
+    terms: Vec<Term>,
+    result: Term,
+    pub(super) place: Option<Span>,
+}
 
 fn names(fields: &[(String, Term)]) -> Vec<Vec<f64>> {
     fields
@@ -201,7 +212,164 @@ impl Inference {
         env: &Env,
         expected: Option<&Term>,
     ) -> Result<Term> {
+        self.record_expr_leading(node, entries, env, expected, None, None)
+    }
+    fn record_expr_leading(
+        &mut self,
+        node: &SExpr,
+        entries: &[SRecordEntry],
+        env: &Env,
+        expected: Option<&Term>,
+        leading_term: Option<Term>,
+        entry_terms: Option<&[Term]>,
+    ) -> Result<Term> {
         let wanted = expected.map(|term| self.resolve(term));
+        let leading = if let Some(term) = leading_term {
+            Some(term)
+        } else if let Some(entry) = entries.first().filter(|entry| entry.spread) {
+            Some(self.expr(&entry.value, env)?)
+        } else {
+            None
+        };
+        let source = leading.as_ref().map(|term| match self.resolve(term) {
+            Term::Option { element, .. } => self.resolve(&element),
+            other => other,
+        });
+        let owner = match &wanted {
+            Some(Term::Known(crate::translation::types::Type::Data { name })) => Some(name.clone()),
+            _ => match &source {
+                Some(Term::Known(crate::translation::types::Type::Data { name })) => {
+                    Some(name.clone())
+                }
+                _ => None,
+            },
+        };
+        if let Some(leading) = leading
+            .as_ref()
+            .filter(|_| matches!(source, Some(Term::Var(_))) && owner.is_none())
+        {
+            let mut terms = Vec::new();
+            for (index, entry) in entries.iter().enumerate() {
+                terms.push(if index == 0 {
+                    leading.clone()
+                } else {
+                    self.expr(&entry.value, env)?
+                });
+            }
+            let result = self.fresh(false);
+            self.nominal_spreads.push(PendingNominalSpread {
+                node: node.clone(),
+                pointer: std::ptr::from_ref(node),
+                entries: entries.to_vec(),
+                env: env.clone(),
+                expected: expected.cloned(),
+                leading: leading.clone(),
+                terms,
+                result: result.clone(),
+                place: node.span,
+            });
+            return Ok(result);
+        }
+        if let Some(owner) = owner.filter(|_| entries.first().is_some_and(|entry| entry.spread)) {
+            let ctors = self
+                .data
+                .iter()
+                .find(|(name, _)| name == &owner)
+                .map(|(_, ctors)| ctors.clone())
+                .unwrap_or_default();
+            let ctor = ctors.first();
+            let nominal = Term::Known(crate::translation::types::Type::Data {
+                name: owner.clone(),
+            });
+            let mut owners = Vec::new();
+            for (index, entry) in entries.iter().enumerate() {
+                if entry.spread {
+                    let term = if let Some(term) = entry_terms.and_then(|terms| terms.get(index)) {
+                        term.clone()
+                    } else if index == 0 {
+                        leading.clone().expect("actual leading spread")
+                    } else {
+                        self.expr(&entry.value, env)?
+                    };
+                    let present = match self.resolve(&term) {
+                        Term::Option { element, .. } => *element,
+                        _ => term,
+                    };
+                    self.unify(&present, &nominal, entry.value.span.or(node.span))?;
+                    owners.push(
+                        if let Term::Known(crate::translation::types::Type::Data { name }) =
+                            self.resolve(&present)
+                        {
+                            name
+                        } else {
+                            String::new()
+                        },
+                    );
+                } else {
+                    let field = ctor.and_then(|ctor| {
+                        ctor.fields
+                            .iter()
+                            .enumerate()
+                            .find(|(_, field)| field.name.as_deref() == entry.name.as_deref())
+                    });
+                    let declared = field.map(|(index, _)| {
+                        self.field(
+                            &owner,
+                            &ctor.expect("actual declared constructor").name,
+                            index,
+                        )
+                    });
+                    let value = if let Some(term) = entry_terms.and_then(|terms| terms.get(index)) {
+                        term.clone()
+                    } else {
+                        self.expr_expected(&entry.value, env, declared.as_ref())?
+                    };
+                    if let Some(declared) = declared {
+                        self.unify(&value, &declared, entry.value.span.or(node.span))?;
+                    }
+                    owners.push(String::new());
+                }
+            }
+            let fields = ctor
+                .map(|ctor| {
+                    ctor.fields
+                        .iter()
+                        .map(|field| field.name.clone().unwrap_or_default())
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            let kinds = entries
+                .iter()
+                .map(|entry| if entry.spread { "spread" } else { "field" }.to_owned())
+                .collect::<Vec<_>>();
+            let names = entries
+                .iter()
+                .map(|entry| {
+                    if entry.spread {
+                        String::new()
+                    } else {
+                        entry.name.clone().unwrap_or_default()
+                    }
+                })
+                .collect::<Vec<_>>();
+            let prototype = matches!(
+                &node.node,
+                crate::translation::surface::SNode::Record {
+                    prototype_definition: Some(_),
+                    ..
+                }
+            );
+            let count = serde_json::Number::from(ctors.len())
+                .as_f64()
+                .expect("actual constructor count is a Number");
+            let error=crate::translation::javascript_nominal_spread_rules::read_java_script_nominal_spread_error("JavaScript",count,&fields,&kinds,&names,&owners,&owner,prototype);
+            if !error.is_empty() {
+                return Err(type_error(error, node.span));
+            }
+            self.records
+                .insert(std::ptr::from_ref(node), nominal.clone());
+            return Ok(nominal);
+        }
         let wanted = match wanted {
             Some(Term::Record(record)) => record.borrow().fields.clone(),
             _ => Vec::new(),
@@ -209,9 +377,20 @@ impl Inference {
         let mut fields = Vec::new();
         let mut retained = Vec::new();
         let mut open = false;
-        for entry in entries {
+        for (entry_index, entry) in entries.iter().enumerate() {
             if entry.spread {
-                let term = self.expr(&entry.value, env)?;
+                let term = if let Some(term) = entry_terms.and_then(|terms| terms.get(entry_index))
+                {
+                    term.clone()
+                } else if entry_index == 0 {
+                    if let Some(term) = leading.clone() {
+                        term
+                    } else {
+                        self.expr(&entry.value, env)?
+                    }
+                } else {
+                    self.expr(&entry.value, env)?
+                };
                 retained.push(RecordSpreadEntry {
                     name: None,
                     spread: true,
@@ -245,7 +424,12 @@ impl Inference {
                 let declared = number_index(position)
                     .and_then(|index| wanted.get(index))
                     .map(|(_, term)| term);
-                let value = self.expr_expected(&entry.value, env, declared)?;
+                let value = if let Some(term) = entry_terms.and_then(|terms| terms.get(entry_index))
+                {
+                    term.clone()
+                } else {
+                    self.expr_expected(&entry.value, env, declared)?
+                };
                 if let Some(declared) = declared {
                     self.unify(&value, declared, entry.value.span.or(node.span))?;
                 }
@@ -272,6 +456,40 @@ impl Inference {
         }
         self.records.insert(std::ptr::from_ref(node), term.clone());
         Ok(term)
+    }
+    pub(super) fn solve_nominal_spreads(&mut self) -> Result<bool> {
+        let mut progress = false;
+        let mut waiting = Vec::new();
+        for constraint in std::mem::take(&mut self.nominal_spreads) {
+            let source = match self.resolve(&constraint.leading) {
+                Term::Option { element, .. } => self.resolve(&element),
+                other => other,
+            };
+            let expected_data = constraint.expected.as_ref().is_some_and(|term| {
+                matches!(
+                    self.resolve(term),
+                    Term::Known(crate::translation::types::Type::Data { .. })
+                )
+            });
+            if matches!(source, Term::Var(_)) && !expected_data {
+                waiting.push(constraint);
+                continue;
+            }
+            let result = self.record_expr_leading(
+                &constraint.node,
+                &constraint.entries,
+                &constraint.env,
+                constraint.expected.as_ref(),
+                Some(constraint.leading),
+                Some(&constraint.terms),
+            )?;
+            self.records.remove(&std::ptr::from_ref(&constraint.node));
+            self.records.insert(constraint.pointer, result.clone());
+            self.unify(&constraint.result, &result, constraint.place)?;
+            progress = true;
+        }
+        self.nominal_spreads.extend(waiting);
+        Ok(progress)
     }
 
     pub(super) fn solve_record_spreads(&mut self) -> Result<bool> {

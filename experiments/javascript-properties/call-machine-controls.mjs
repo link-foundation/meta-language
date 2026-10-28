@@ -1,0 +1,49 @@
+// Deferred actual machine execution and independent original source controls.
+import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
+import {readProjectData} from '../../js/scripts/project-data.mjs';
+import {assertVersions,encodeValue} from './controls.mjs';
+import {createOrdinaryHostContext,assertOrdinaryHostSnapshot} from './heap-controls.mjs';
+import {beginJavaScriptCallMachine,stepJavaScriptCallMachine} from '../../js/src/translation/javascript-call-machine.js';
+import {decodeJavaScriptCallProgram,encodeJavaScriptCallProgram,decodeJavaScriptOrdinaryHeap,encodeJavaScriptOrdinaryHeap,
+ decodeJavaScriptSemanticValue,encodeJavaScriptSemanticValue,encodeJavaScriptCallMachineTransition} from './call-machine-codecs.mjs';
+export {assertVersions};
+export const machineFixture=readProjectData(new URL('../../parity/fixtures/javascript-call-machine.lino',import.meta.url));
+function invocation(program,before,after){
+ if(after.$!=='machineContinue')return null;
+ const frame=before.frames.at(-1),fn=program.functions.find(fn=>fn.identity===frame.identity),instruction=fn.instructions[frame.position];
+ const returns=frame.pending.$==='callIdle'&&(instruction===undefined||instruction.$==='return'),minimum=before.frames.length-(returns?1:0);
+ if(after.machine.frames.length<=minimum)return null;
+ assert.equal(after.machine.frames.length,minimum+1,'one actual function invocation per step');
+ const child=after.machine.frames.at(-1),parent=after.machine.frames.at(-2);assert.ok(parent);
+ let receiver=child.registers[0],pending=parent.pending;
+ if(pending.$==='waitCall'||pending.$==='waitGet'||pending.$==='waitSet'){
+  const owner=program.functions.find(fn=>fn.identity===parent.identity),instruction=owner.instructions[parent.position-1];
+  receiver=parent.registers[instruction.receiver];
+ }else if(pending.$==='waitKey')receiver=pending.state.receiver;
+ else if(pending.$==='waitDefinition')receiver=pending.state.conversion.receiver;
+ else assert.fail('every child retains its actual suspended caller');
+ return {callee:encodeJavaScriptSemanticValue({$:'object',identity:child.identity,callable:true}),receiver:encodeJavaScriptSemanticValue(receiver),arguments:child.arguments.map(encodeJavaScriptSemanticValue)};
+}
+export function observeCallMachine(row){
+ const program=decodeJavaScriptCallProgram(row.program),heap=decodeJavaScriptOrdinaryHeap(row.heap),receiver=decodeJavaScriptSemanticValue(row.receiver),arguments_=row.arguments.map(decodeJavaScriptSemanticValue);
+ assert.deepEqual(encodeJavaScriptCallProgram(program),row.program);assert.deepEqual(encodeJavaScriptOrdinaryHeap(heap),row.heap);
+ let current=beginJavaScriptCallMachine(program,heap,BigInt(row.entry),receiver,arguments_);const trace=[encodeJavaScriptCallMachineTransition(current)],calls=[];
+ for(let steps=0;current.$==='machineContinue';steps+=1){assert.ok(steps<2048,'complete finite control must not omit execution steps');const before=current.machine;current=stepJavaScriptCallMachine(program,before);const call=invocation(program,before,current);if(call)calls.push(call);trace.push(encodeJavaScriptCallMachineTransition(current));}
+ const expected=row.expected;
+ if(expected.kind==='allocation'){assert.equal(current.$,'machineAllocateError');assert.equal(String(current.realm),expected.realm);assert.equal(current.errorClass,expected.errorClass);assert.equal(current.reason,expected.reason);}
+ else{assert.equal(current.$,expected.kind==='throw'?'machineThrow':'machineCompleted');assert.deepEqual(encodeJavaScriptSemanticValue(current.value),expected.value);assert.deepEqual(encodeJavaScriptOrdinaryHeap(current.heap),expected.heap??row.heap);}
+ let context;const implementations=new Map(row.callbacks.map(row=>[row.identity,runInNewContext('('+row.expression+')')]));
+ context=createOrdinaryHostContext(heap,call=>{
+  const factory=implementations.get(String(call.callee.identity));assert.ok(factory,'every original callback has independent code');
+  const fn=factory(context);return Reflect.apply(fn,context.materialize(call.receiver),call.arguments.map(context.materialize));
+ },new Map([[row.program.exoticKey.identity,Symbol.toPrimitive]]));
+ let result,failure,threw=false;try{result=runInNewContext('('+row.source+')')(context,...arguments_.map(context.materialize));}catch(error){failure=error;threw=true;}
+ const observedCalls=context.calls.map(call=>({callee:encodeValue(call.callee),receiver:encodeValue(call.receiver),arguments:call.arguments.map(encodeValue)}));
+ assert.deepEqual(calls,observedCalls,'all original invocations retain order, callee, actual receiver and complete arguments');
+ if(expected.kind==='allocation'){assert.equal(threw,true);assert.equal(failure.name,expected.errorClass);assertOrdinaryHostSnapshot(heap,context);}
+ else if(expected.kind==='throw'){assert.equal(threw,true);assert.deepEqual(encodeValue(context.semantic(failure)),expected.value);assertOrdinaryHostSnapshot(decodeJavaScriptOrdinaryHeap(expected.heap??row.heap),context);}
+ else{assert.equal(threw,false);assert.deepEqual(encodeValue(context.semantic(result)),expected.value);assertOrdinaryHostSnapshot(decodeJavaScriptOrdinaryHeap(expected.heap??row.heap),context);}
+ return {...row,trace,calls};
+}
+export function observeInvalidCallProgram(row){const program=decodeJavaScriptCallProgram(row.program),heap=decodeJavaScriptOrdinaryHeap(machineFixture.invalidHeap),actual=beginJavaScriptCallMachine(program,heap,10n,{$:'undefined'},[]);assert.deepEqual(actual,{$:'machineInvalid',heap,reason:row.reason});return {...row,result:encodeJavaScriptCallMachineTransition(actual)};}

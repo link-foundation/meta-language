@@ -6,6 +6,7 @@ import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
 import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
 import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
 import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
+import {checkJavaScriptNominalSpread,forgetJavaScriptNominalSpreadGuard,readJavaScriptNominalSpreadBranches,projectJavaScriptGuardedOptional} from './javascript-nominal-spreads.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
@@ -144,6 +145,7 @@ const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
 /** Binds a local, forgetting constructor facts the new binding shadows. */
 export function bindLocal(env, name, type, immutableProduct = false) {
   forgetJavaScriptOwnPropertyGuard(env,name);
+  forgetJavaScriptNominalSpreadGuard(env,name);
   env.set(name, type);
   const products = env.get(PRODUCT_VALUES);
   if (immutableProduct || products?.has(name)) {
@@ -633,7 +635,8 @@ class Checker {
         return expected?.kind === 'option' && this.language === 'JavaScript' ? { k: 'none', absence: 'undefined', type: expected } : { k: 'unit', type: UNIT };
       case 'name': {
         if (node.path.length === 1 && env.has(node.path[0])) {
-          return { k: 'var', name: node.path[0], type: env.get(node.path[0]) };
+          const value={ k: 'var', name: node.path[0], type: env.get(node.path[0]) };
+          return this.language==='JavaScript'?projectJavaScriptGuardedOptional(node,value,env):value;
         }
         const declaration = this.lookup(node.path, path, node.span);
         if (acceptCallableFunctionReference(node.k, expected?.kind ?? '', declaration?.k ?? '')) {
@@ -926,7 +929,8 @@ class Checker {
         return this.binary(node, env, path, expected, allowLiteral);
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
-        const branchesEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.cond,env):{then:env,else:env};
+        const ownEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.cond,env):{then:env,else:env};
+        const branchesEnv=this.language==='JavaScript'?{then:readJavaScriptNominalSpreadBranches(node.cond,ownEnv.then).then,else:readJavaScriptNominalSpreadBranches(node.cond,ownEnv.else).else}:ownEnv;
         if (acceptSemanticBranchContextReordering(expected != null, needsBranchResultContext(node.then), needsBranchResultContext(node.else))) {
           let otherwise = this.expr(node.else, branchesEnv.else, path, undefined, allowLiteral);
           if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, branchesEnv.else, path, this.defaultNumber());
@@ -1013,6 +1017,7 @@ class Checker {
    * ever mutated.
    */
   recordLiteral(node, env, path, expected) {
+    const nominal=checkJavaScriptNominalSpread(this,node,env,path,expected);if(nominal)return nominal;
     if(!expected&&node.type?.kind==='record'&&node.type.ordered===true)expected=this.resolveType(node.type,path,node.span);
     const entries = [];
     const bindings = [];

@@ -4,7 +4,8 @@ import {writeFileSync} from 'node:fs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 import {writeProjectData} from './project-data.mjs';
 import {createHash} from 'node:crypto';
-export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,receipt}){
+import {draftJavaScriptModelCodecs} from './draft-javascript-model-codecs.mjs';
+export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,receipt,javascriptOutput}){
  const root=new URL('../../',import.meta.url);
  if(program.sourceLanguage!=='JavaScript')throw new TypeError('this separately qualified model transport uses the checked JavaScript tuple-constructor layout');
  if(!Array.isArray(roots)||roots.length===0||roots.length>16||!/^rust\/tests\/unit\/[a-z][a-z0-9_]*\.rs$/u.test(output)||!/^parity\/self-translation\/[a-z][a-z0-9-]*\.lino$/u.test(receipt))throw new TypeError('explicit bounded model codec roots and owned outputs are required');
@@ -75,6 +76,7 @@ export function draftNativeModelCodecs({program,emitted,roots,wireRules,output,r
   layout.push({name,target:mapping('data',name),constructors:declaration.ctors.map(ctor=>({name:ctor.name,target:mapping('constructor',name+'.'+ctor.name),fields:ctor.fields}))});
  }
  source=formatProductRuleSource(source);writeFileSync(new URL(output,root),source);
+ const javascript=javascriptOutput===undefined?undefined:draftJavaScriptModelCodecs({selected,overrides,output:javascriptOutput});
  writeProjectData(new URL(receipt,root),{schemaVersion:1,model:'checked native nominal model wire transport 1',roots,wireRules,layout,output,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),
-  boundary:'Actual source type/constructor/target transport only, preserving explicit IEEE-bit overrides. No fixture decoding, modeled operation, behavior comparison, native compilation or execution observation.'});
+  ...(javascript?{javascript}:{}),boundary:'Actual source type/constructor/target transport only, preserving explicit IEEE-bit overrides. No fixture decoding, modeled operation, behavior comparison, native compilation or execution observation.'});
 }

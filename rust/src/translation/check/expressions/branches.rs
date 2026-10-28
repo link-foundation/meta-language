@@ -147,6 +147,8 @@ impl Checker {
                 otherwise,
             } => {
                 let (then_env, else_env) = self.own_property_branch_environments(cond, env);
+                let then_env = self.nominal_spread_branch_environments(cond, &then_env).0;
+                let else_env = self.nominal_spread_branch_environments(cond, &else_env).1;
                 let checked = self.expr(cond, env, path, None, false)?;
                 let cond = self.boolean_value(checked, span)?;
                 if crate::translation::semantic_input_rules::accept_semantic_branch_context_reordering(
