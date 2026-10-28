@@ -9520,6 +9520,17 @@ Complete source dependency composition uses resolved lexical owners to keep
 same-spelled helpers from different modules distinct; original source and
 rename/substitution records remain inspectable in Links data.
 
+An explicit native source-entry profile may emit each actual exported function
+and its entire transitive dependency closure. All original modules are still
+captured and type-checked, and the receipt records retained and omitted
+declarations. All semantic datatype declarations stay represented. This removes
+unused dependency siblings from generated native files without replacing a
+reachable body. If partition counts shrink, the author removes only obsolete
+regular project files whose bytes exactly match its predecessor receipt,
+recording their identities and hashes and refusing edited or symlinked paths.
+Source graph entry selection remains separately explicit. Default authoring
+still emits the complete captured declaration set.
+
 The source bridge also retains optional type queries and ordinary optional
 field reads. It captures each receiver once, skips Get for null/undefined,
 and preserves inherited fields and present zero values. Optional flattening

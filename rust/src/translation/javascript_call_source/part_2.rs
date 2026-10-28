@@ -1,777 +1,797 @@
 // Generated from complete js/src/translation/javascript-call-source.js. Do not edit by hand.
-use super::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop18Result;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result;
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result;
-use super::MlSource1TemporaryConvertStringNumberRationalJoin9;
-use super::MlSource1TemporaryConvertStringNumberRationalJoin10;
-use super::MlSource1TemporaryConvertStringNumberRationalLoop11Result;
-use super::MlSource1TemporaryConvertStringNumberRationalLoop12Result;
-use super::MlSource1TemporaryConvertStringNumberRationalLoop15Result;
-use super::MlSource1TemporaryConvertStringNumberRationalLoop16Result;
+use super::JavaScriptCallInstruction;
+use super::JavaScriptCallSource;
+use super::JavaScriptCallSourceBinding;
+use super::JavaScriptCallSourceBuilder;
+use super::JavaScriptCallSourceResult;
+use super::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop97Result;
+use super::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop98Result;
+use super::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop99Result;
+use super::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop101Result;
+use super::append_java_script_call_source_instruction;
+use super::lower_java_script_call_source_branch;
 use super::ml;
 use super::ml_array;
-use super::read_java_script_utf8_string_units;
-use super::read_string_number_binary_power;
-use super::read_string_number_decimal_power;
-use super::read_string_number_exact_mantissa;
-use super::source_ml_source1_temporary_accept_string_number_infinity_loop17;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop18;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop19;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop20;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop23;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop25;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop26;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop28;
-use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop29;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop11;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop12;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop13;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop14;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop15;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop16;
+use super::read_java_script_call_constant_error;
+use super::read_java_script_call_primitive_arity_error;
+use super::refuse_java_script_call_source;
+use super::source_ml_source1_temporary_lower_java_script_call_source_expression_loop97;
+use super::source_ml_source1_temporary_lower_java_script_call_source_expression_loop98;
+use super::source_ml_source1_temporary_lower_java_script_call_source_expression_loop99;
+use super::source_ml_source1_temporary_lower_java_script_call_source_expression_loop100;
+use super::source_ml_source1_temporary_lower_java_script_call_source_expression_loop101;
+use super::test_java_script_call_code_coordinate;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: self::ml::Big) -> f64 {
-    if ((numerator < (self::ml::Big::from_i128(0))) || (denominator <= (self::ml::Big::from_i128(0)))) {
-        f64::NAN
+pub fn allocate_java_script_call_source_register(builder: self::JavaScriptCallSourceBuilder) -> self::JavaScriptCallSourceResult {
+    if ((match builder.clone() {
+        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value306) => {
+            source_ml_source2_data_property_value306.clone()
+        }
+    }) != "") {
+        self::JavaScriptCallSourceResult::SourceResult(Box::new(builder.clone()), 0f64)
     } else {
-        if (numerator == (self::ml::Big::from_i128(0))) {
-            0f64
+        if ((match builder.clone() {
+            self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value308, _, _, _) => {
+                source_ml_source2_data_property_value308
+            }
+        }) >= (4096f64)) {
+            self::refuse_java_script_call_source(builder.clone(), "source lowering exceeds its register budget")
         } else {
-            {
-                let exponent = 0f64;
+            self::JavaScriptCallSourceResult::SourceResult(Box::new({
+                let source_ml_source2_nominal_spread310 = builder.clone();
                 {
-                    let source_ml_source2_s6 = if (numerator >= denominator) {
-                        {
-                            let scale = denominator.clone();
-                            {
-                                let source_ml_source2_s7 = self::source_ml_source1_temporary_convert_string_number_rational_loop15(numerator.clone(), exponent, scale.clone());
-                                match source_ml_source2_s7.clone() {
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop15Result::MlSource1TemporaryConvertStringNumberRationalLoop15Done(exponent_2) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_2)
-                                    }
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop15Result::MlSource1TemporaryConvertStringNumberRationalLoop15Return(source_ml_source1_temporary_result15) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result15)
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        {
-                            let scale_2 = numerator.clone();
-                            {
-                                let source_ml_source2_s8 = self::source_ml_source1_temporary_convert_string_number_rational_loop16(denominator.clone(), exponent, scale_2.clone());
-                                match source_ml_source2_s8.clone() {
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop16Result::MlSource1TemporaryConvertStringNumberRationalLoop16Done(exponent_3) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_3)
-                                    }
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop16Result::MlSource1TemporaryConvertStringNumberRationalLoop16Return(source_ml_source1_temporary_result16) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result16)
-                                    }
-                                }
-                            }
+                    let source_ml_source2_nominal_field311 = match source_ml_source2_nominal_spread310.clone() {
+                        self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_data_property_value312, _, _, _, _) => {
+                            source_ml_source2_data_property_value312
                         }
                     };
-                    match source_ml_source2_s6.clone() {
-                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_4) => {
+                    {
+                        let source_ml_source2_nominal_field313 = match source_ml_source2_nominal_spread310.clone() {
+                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value314, _, _, _) => {
+                                source_ml_source2_data_property_value314
+                            }
+                        };
+                        {
+                            let source_ml_source2_nominal_field315 = match source_ml_source2_nominal_spread310.clone() {
+                                self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value316, _, _) => {
+                                    source_ml_source2_data_property_value316
+                                }
+                            };
                             {
-                                let shift = if (exponent_4 >= ((-1022f64))) {
-                                    (52f64 - exponent_4)
-                                } else {
-                                    1074f64
+                                let source_ml_source2_nominal_field317 = match source_ml_source2_nominal_spread310.clone() {
+                                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, source_ml_source2_data_property_value318, _) => {
+                                        source_ml_source2_data_property_value318
+                                    }
                                 };
                                 {
-                                    let source_ml_source2_s9 = if (shift >= (0f64)) {
-                                        {
-                                            let index = 0f64;
-                                            {
-                                                let numerator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop13(numerator.clone(), shift, index);
-                                                self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator_2.clone(), denominator.clone())
-                                            }
-                                        }
-                                    } else {
-                                        {
-                                            let index_2 = 0f64;
-                                            {
-                                                let denominator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop14(denominator.clone(), shift, index_2);
-                                                self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator.clone(), denominator_2.clone())
-                                            }
+                                    let source_ml_source2_nominal_field319 = match source_ml_source2_nominal_spread310.clone() {
+                                        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value320) => {
+                                            source_ml_source2_data_property_value320.clone()
                                         }
                                     };
-                                    match source_ml_source2_s9.clone() {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator_3, denominator_3) => {
-                                            {
-                                                let quotient = self::ml::Big::from_i128(0);
-                                                {
-                                                    let remainder = numerator_3.clone();
-                                                    {
-                                                        let scale_3 = denominator_3.clone();
-                                                        {
-                                                            let weight = self::ml::Big::from_i128(1);
-                                                            {
-                                                                let source_ml_source2_s10 = self::source_ml_source1_temporary_convert_string_number_rational_loop11(remainder.clone(), scale_3.clone(), weight.clone());
-                                                                match source_ml_source2_s10.clone() {
-                                                                    self::MlSource1TemporaryConvertStringNumberRationalLoop11Result::MlSource1TemporaryConvertStringNumberRationalLoop11Done(scale_4, weight_2) => {
-                                                                        {
-                                                                            let source_ml_source2_s11 = self::source_ml_source1_temporary_convert_string_number_rational_loop12(quotient.clone(), remainder.clone(), scale_4.clone(), weight_2.clone());
-                                                                            match source_ml_source2_s11.clone() {
-                                                                                self::MlSource1TemporaryConvertStringNumberRationalLoop12Result::MlSource1TemporaryConvertStringNumberRationalLoop12Done(quotient_2, remainder_2) => {
-                                                                                    {
-                                                                                        let twice = remainder_2.mul(&self::ml::Big::from_i128(2));
-                                                                                        {
-                                                                                            let quotient_4 = if ((twice > denominator_3) || ((twice == denominator_3) && ((self::ml::divide(&quotient_2, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)) == (self::ml::Big::from_i128(1))))) {
-                                                                                                {
-                                                                                                    let quotient_3 = quotient_2.add(&self::ml::Big::from_i128(1));
-                                                                                                    quotient_3.clone()
-                                                                                                }
-                                                                                            } else {
-                                                                                                quotient_2.clone()
-                                                                                            };
-                                                                                            (self::read_string_number_exact_mantissa(quotient_4.clone()) * self::read_string_number_binary_power((-shift)))
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result14) => {
-                            source_ml_source1_temporary_result14
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_string_number_infinity(units: &[f64], start: f64, end: f64) -> bool {
-    if (((end - start)) != (8f64)) {
-        false
-    } else {
-        {
-            let expected = vec![73f64, 110f64, 102f64, 105f64, 110f64, 105f64, 116f64, 121f64];
-            {
-                let index = 0f64;
-                {
-                    let source_ml_source2_s12 = self::source_ml_source1_temporary_accept_string_number_infinity_loop17(units, start, &(expected), index);
-                    match source_ml_source2_s12.clone() {
-                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result::MlSource1TemporaryAcceptStringNumberInfinityLoop17Done => {
-                            true
-                        }
-                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result::MlSource1TemporaryAcceptStringNumberInfinityLoop17Return(source_ml_source1_temporary_result17) => {
-                            source_ml_source1_temporary_result17
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn convert_java_script_string_number_units(units: &[f64]) -> f64 {
-    {
-        let index = 0f64;
-        {
-            let source_ml_source2_s13 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop18(units, index);
-            match source_ml_source2_s13.clone() {
-                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop18Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop18Done => {
-                    {
-                        let start = 0f64;
-                        {
-                            let end = (units.len() as f64);
-                            {
-                                let start_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop19(units, start, end);
-                                {
-                                    let end_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop20(units, start_2, end);
-                                    if (start_2 == end_2) {
-                                        0f64
-                                    } else {
-                                        {
-                                            let negative = false;
-                                            {
-                                                let signed = false;
-                                                {
-                                                    let sign = (self::ml_array::optional_at(units, self::ml_array::number_index(start_2))).clone().unwrap_or_else(|| (-1f64));
-                                                    {
-                                                        let source_ml_source2_s14 = if ((sign == (43f64)) || (sign == (45f64))) {
-                                                            {
-                                                                let negative_2 = (sign == (45f64));
-                                                                {
-                                                                    let signed_2 = true;
-                                                                    {
-                                                                        let start_3 = (start_2 + 1f64);
-                                                                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21Next(start_3, negative_2, signed_2)
-                                                                    }
-                                                                }
-                                                            }
-                                                        } else {
-                                                            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21Next(start_2, negative, signed)
-                                                        };
-                                                        match source_ml_source2_s14.clone() {
-                                                            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin21Next(start_4, negative_3, signed_3) => {
-                                                                if (start_4 == end_2) {
-                                                                    f64::NAN
-                                                                } else {
-                                                                    if self::accept_string_number_infinity(units, start_4, end_2) {
-                                                                        if negative_3 {
-                                                                            f64::NEG_INFINITY
-                                                                        } else {
-                                                                            f64::INFINITY
-                                                                        }
-                                                                    } else {
-                                                                        {
-                                                                            let integer_digits = vec![self::ml::Big::from_i128(0), self::ml::Big::from_i128(1), self::ml::Big::from_i128(2), self::ml::Big::from_i128(3), self::ml::Big::from_i128(4), self::ml::Big::from_i128(5), self::ml::Big::from_i128(6), self::ml::Big::from_i128(7), self::ml::Big::from_i128(8), self::ml::Big::from_i128(9), self::ml::Big::from_i128(10), self::ml::Big::from_i128(11), self::ml::Big::from_i128(12), self::ml::Big::from_i128(13), self::ml::Big::from_i128(14), self::ml::Big::from_i128(15)];
-                                                                            {
-                                                                                let source_ml_source2_s16 = if ((!signed_3 && (((self::ml_array::optional_at(units, self::ml_array::number_index(start_4))).clone().unwrap_or_else(|| (-1f64))) == (48f64))) && (((end_2 - start_4)) >= (2f64))) {
-                                                                                    {
-                                                                                        let marker = (self::ml_array::optional_at(units, self::ml_array::number_index((start_4 + 1f64)))).clone().unwrap_or_else(|| (-1f64));
-                                                                                        {
-                                                                                            let radix = if ((marker == (120f64)) || (marker == (88f64))) {
-                                                                                                16f64
-                                                                                            } else {
-                                                                                                if ((marker == (98f64)) || (marker == (66f64))) {
-                                                                                                    2f64
-                                                                                                } else {
-                                                                                                    if ((marker == (111f64)) || (marker == (79f64))) {
-                                                                                                        8f64
-                                                                                                    } else {
-                                                                                                        0f64
-                                                                                                    }
-                                                                                                }
-                                                                                            };
-                                                                                            if (radix != (0f64)) {
-                                                                                                {
-                                                                                                    let value = self::ml::Big::from_i128(0);
-                                                                                                    {
-                                                                                                        let overflow = false;
-                                                                                                        {
-                                                                                                            let limit = self::read_string_number_decimal_power(310f64);
-                                                                                                            {
-                                                                                                                let base = if (radix == (16f64)) {
-                                                                                                                    self::ml::Big::from_i128(16)
-                                                                                                                } else {
-                                                                                                                    if (radix == (8f64)) {
-                                                                                                                        self::ml::Big::from_i128(8)
-                                                                                                                    } else {
-                                                                                                                        self::ml::Big::from_i128(2)
-                                                                                                                    }
-                                                                                                                };
-                                                                                                                {
-                                                                                                                    let start_5 = (start_4 + 2f64);
-                                                                                                                    if (start_5 == end_2) {
-                                                                                                                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Return(f64::NAN)
-                                                                                                                    } else {
-                                                                                                                        {
-                                                                                                                            let index_2 = start_5;
-                                                                                                                            {
-                                                                                                                                let source_ml_source2_s17 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop29(units, end_2, integer_digits.clone(), radix, value.clone(), overflow, limit.clone(), base.clone(), index_2);
-                                                                                                                                match source_ml_source2_s17.clone() {
-                                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Done(value_2, overflow_2) => {
-                                                                                                                                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Return(if overflow_2 {
-                                                                                                                                            f64::INFINITY
-                                                                                                                                        } else {
-                                                                                                                                            self::convert_string_number_rational(value_2.clone(), self::ml::Big::from_i128(1))
-                                                                                                                                        })
-                                                                                                                                    }
-                                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Return(source_ml_source1_temporary_result29) => {
-                                                                                                                                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Return(source_ml_source1_temporary_result29)
-                                                                                                                                    }
-                                                                                                                                }
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            } else {
-                                                                                                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Next(start_4)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                } else {
-                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Next(start_4)
-                                                                                };
-                                                                                match source_ml_source2_s16.clone() {
-                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Next(start_6) => {
-                                                                                        {
-                                                                                            let at = start_6;
-                                                                                            {
-                                                                                                let fraction = 0f64;
-                                                                                                {
-                                                                                                    let digits = 0f64;
-                                                                                                    {
-                                                                                                        let significant = 0f64;
-                                                                                                        {
-                                                                                                            let dot = false;
-                                                                                                            {
-                                                                                                                let source_ml_source2_s18 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop23(units, end_2, at, fraction, digits, significant, dot);
-                                                                                                                match source_ml_source2_s18.clone() {
-                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(at_2, fraction_2, digits_2, significant_2) => {
-                                                                                                                        if (digits_2 == (0f64)) {
-                                                                                                                            f64::NAN
-                                                                                                                        } else {
-                                                                                                                            {
-                                                                                                                                let decimal_end = at_2;
-                                                                                                                                {
-                                                                                                                                    let exponent = 0f64;
-                                                                                                                                    {
-                                                                                                                                        let exponent_limit = ((units.len() as f64) + 10000f64);
-                                                                                                                                        {
-                                                                                                                                            let source_ml_source2_s21 = if ((at_2 < end_2) && ((((self::ml_array::optional_at(units, self::ml_array::number_index(at_2))).clone().unwrap_or_else(|| (-1f64))) == (101f64)) || (((self::ml_array::optional_at(units, self::ml_array::number_index(at_2))).clone().unwrap_or_else(|| (-1f64))) == (69f64)))) {
-                                                                                                                                                {
-                                                                                                                                                    let at_3 = (at_2 + 1f64);
-                                                                                                                                                    {
-                                                                                                                                                        let exponent_negative = false;
-                                                                                                                                                        {
-                                                                                                                                                            let exponent_sign = (self::ml_array::optional_at(units, self::ml_array::number_index(at_3))).clone().unwrap_or_else(|| (-1f64));
-                                                                                                                                                            {
-                                                                                                                                                                let source_ml_source2_s22 = if ((exponent_sign == (43f64)) || (exponent_sign == (45f64))) {
-                                                                                                                                                                    {
-                                                                                                                                                                        let exponent_negative_2 = (exponent_sign == (45f64));
-                                                                                                                                                                        {
-                                                                                                                                                                            let at_4 = (at_3 + 1f64);
-                                                                                                                                                                            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27Next(at_4, exponent_negative_2)
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                } else {
-                                                                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27Next(at_3, exponent_negative)
-                                                                                                                                                                };
-                                                                                                                                                                match source_ml_source2_s22.clone() {
-                                                                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27Next(at_5, exponent_negative_3) => {
-                                                                                                                                                                        {
-                                                                                                                                                                            let first = at_5;
-                                                                                                                                                                            {
-                                                                                                                                                                                let source_ml_source2_s23 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop28(units, end_2, at_5, exponent, exponent_limit);
-                                                                                                                                                                                match source_ml_source2_s23.clone() {
-                                                                                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Done(at_6, exponent_2) => {
-                                                                                                                                                                                        if (at_6 == first) {
-                                                                                                                                                                                            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24Return(f64::NAN)
-                                                                                                                                                                                        } else {
-                                                                                                                                                                                            if exponent_negative_3 {
-                                                                                                                                                                                                {
-                                                                                                                                                                                                    let exponent_3 = (-exponent_2);
-                                                                                                                                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24Next(at_6, exponent_3)
-                                                                                                                                                                                                }
-                                                                                                                                                                                            } else {
-                                                                                                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24Next(at_6, exponent_2)
-                                                                                                                                                                                            }
-                                                                                                                                                                                        }
-                                                                                                                                                                                    }
-                                                                                                                                                                                }
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                }
-                                                                                                                                                            }
-                                                                                                                                                        }
-                                                                                                                                                    }
-                                                                                                                                                }
-                                                                                                                                            } else {
-                                                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24Next(at_2, exponent)
-                                                                                                                                            };
-                                                                                                                                            match source_ml_source2_s21.clone() {
-                                                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24Next(at_7, exponent_4) => {
-                                                                                                                                                    if (at_7 != end_2) {
-                                                                                                                                                        f64::NAN
-                                                                                                                                                    } else {
-                                                                                                                                                        if (significant_2 == (0f64)) {
-                                                                                                                                                            if negative_3 {
-                                                                                                                                                                (-0f64)
-                                                                                                                                                            } else {
-                                                                                                                                                                0f64
-                                                                                                                                                            }
-                                                                                                                                                        } else {
-                                                                                                                                                            {
-                                                                                                                                                                let exponent_5 = (exponent_4 - fraction_2);
-                                                                                                                                                                {
-                                                                                                                                                                    let order = (significant_2 + exponent_5);
-                                                                                                                                                                    if (order > (310f64)) {
-                                                                                                                                                                        if negative_3 {
-                                                                                                                                                                            f64::NEG_INFINITY
-                                                                                                                                                                        } else {
-                                                                                                                                                                            f64::INFINITY
-                                                                                                                                                                        }
-                                                                                                                                                                    } else {
-                                                                                                                                                                        if (order < ((-325f64))) {
-                                                                                                                                                                            if negative_3 {
-                                                                                                                                                                                (-0f64)
-                                                                                                                                                                            } else {
-                                                                                                                                                                                0f64
-                                                                                                                                                                            }
-                                                                                                                                                                        } else {
-                                                                                                                                                                            {
-                                                                                                                                                                                let mantissa_end = decimal_end;
-                                                                                                                                                                                {
-                                                                                                                                                                                    let source_ml_source2_s24 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop25(units, start_6, exponent_5, mantissa_end);
-                                                                                                                                                                                    match source_ml_source2_s24.clone() {
-                                                                                                                                                                                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Done(exponent_6, mantissa_end_2) => {
-                                                                                                                                                                                            {
-                                                                                                                                                                                                let mantissa = self::ml::Big::from_i128(0);
-                                                                                                                                                                                                {
-                                                                                                                                                                                                    let index_3 = start_6;
-                                                                                                                                                                                                    {
-                                                                                                                                                                                                        let mantissa_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop26(units, integer_digits, mantissa_end_2, mantissa.clone(), index_3);
-                                                                                                                                                                                                        {
-                                                                                                                                                                                                            let numerator = if (exponent_6 >= (0f64)) {
-                                                                                                                                                                                                                mantissa_2.mul(&self::read_string_number_decimal_power(exponent_6))
-                                                                                                                                                                                                            } else {
-                                                                                                                                                                                                                mantissa_2.clone()
-                                                                                                                                                                                                            };
-                                                                                                                                                                                                            {
-                                                                                                                                                                                                                let denominator = if (exponent_6 < (0f64)) {
-                                                                                                                                                                                                                    self::read_string_number_decimal_power((-exponent_6))
-                                                                                                                                                                                                                } else {
-                                                                                                                                                                                                                    self::ml::Big::from_i128(1)
-                                                                                                                                                                                                                };
-                                                                                                                                                                                                                {
-                                                                                                                                                                                                                    let value_3 = self::convert_string_number_rational(numerator.clone(), denominator.clone());
-                                                                                                                                                                                                                    if negative_3 {
-                                                                                                                                                                                                                        (-value_3)
-                                                                                                                                                                                                                    } else {
-                                                                                                                                                                                                                        value_3
-                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                }
-                                                                                                                                                                                                            }
-                                                                                                                                                                                                        }
-                                                                                                                                                                                                    }
-                                                                                                                                                                                                }
-                                                                                                                                                                                            }
-                                                                                                                                                                                        }
-                                                                                                                                                                                    }
-                                                                                                                                                                                }
-                                                                                                                                                                            }
-                                                                                                                                                                        }
-                                                                                                                                                                    }
-                                                                                                                                                                }
-                                                                                                                                                            }
-                                                                                                                                                        }
-                                                                                                                                                    }
-                                                                                                                                                }
-                                                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24Return(source_ml_source1_temporary_result26) => {
-                                                                                                                                                    source_ml_source1_temporary_result26
-                                                                                                                                                }
-                                                                                                                                            }
-                                                                                                                                        }
-                                                                                                                                    }
-                                                                                                                                }
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Return(source_ml_source1_temporary_result28) => {
-                                                                                        source_ml_source1_temporary_result28
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop18Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop18Return(source_ml_source1_temporary_result29_2) => {
-                    source_ml_source1_temporary_result29_2
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn convert_java_script_big_integer_number(value: self::ml::Big) -> f64 {
-    if (value < (self::ml::Big::from_i128(0))) {
-        (-(self::convert_string_number_rational(value.neg(), self::ml::Big::from_i128(1))))
-    } else {
-        self::convert_string_number_rational(value.clone(), self::ml::Big::from_i128(1))
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn convert_java_script_utf8_string_number_units(bytes: &[f64]) -> f64 {
-    self::convert_java_script_string_number_units(&(self::read_java_script_utf8_string_units(bytes)))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_number_builtin_operation(name: &str) -> String {
-    if (name == "Number") {
-        String::from("convertJavaScriptNumber")
-    } else {
-        if (name == "isFinite") {
-            String::from("testCoercedJavaScriptNumberFinite")
-        } else {
-            if (name == "isNaN") {
-                String::from("testCoercedJavaScriptNumberNaN")
-            } else {
-                String::from("")
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_number_conversion_result(operation: &str) -> String {
-    if ((operation == "convertJavaScriptNumber") || (operation == "coerceJavaScriptNumber")) {
-        String::from("float")
-    } else {
-        if ((operation == "testCoercedJavaScriptNumberFinite") || (operation == "testCoercedJavaScriptNumberNaN")) {
-            String::from("bool")
-        } else {
-            String::from("")
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_number_conversion_form(kind: &str) -> String {
-    if (((((((kind == "float") || (kind == "bool")) || (kind == "string")) || (kind == "unit")) || (kind == "int")) || (kind == "nat")) || (kind == "option")) {
-        kind.to_owned()
-    } else {
-        String::from("unsupported")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_linked_java_script_number_conversion(kind: &str, operation: &str) -> bool {
-    ((kind == "math") && ((operation == "convertJavaScriptNumber") || (operation == "coerceJavaScriptNumber")))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_number_conversion_failure(operation: &str, kind: &str) -> String {
-    if ((operation == "coerceJavaScriptNumber") && ((kind == "int") || (kind == "nat"))) {
-        String::from("Cannot convert a BigInt value to a number")
-    } else {
-        String::from("")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn require_java_script_number_conversion_units(kind: &str, operation: &str, argument: &str) -> bool {
-    (self::accept_linked_java_script_number_conversion(kind, operation) && (argument == "string"))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_primitive_number_operand(language: &str, kind: &str, element: &str) -> String {
-    if (language != "JavaScript") {
-        String::from("")
-    } else {
-        if (((kind == "bool") || (kind == "string")) || (kind == "unit")) {
-            String::from("coerceJavaScriptNumber")
-        } else {
-            if ((kind == "option") && (element == "string")) {
-                String::from("coerceJavaScriptNumber")
-            } else {
-                String::from("")
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_primitive_numeric_inference_kind(kind: &str) -> String {
-    if (((kind == "bool") || (kind == "string")) || (kind == "unit")) {
-        String::from("float")
-    } else {
-        String::from("")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_primitive_unary_operation(symbol: &str) -> String {
-    if (symbol == "+") {
-        String::from("coerceJavaScriptNumber")
-    } else {
-        String::from("")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_mathematical_conversion_form(language: &str, operation: &str) -> String {
-    if (language != "JavaScript") {
-        String::from("")
-    } else {
-        if (operation == "powerJavaScriptNumberArguments") {
-            String::from("binary")
-        } else {
-            if ((operation == "max") || (operation == "min")) {
-                String::from("variadic")
-            } else {
-                if (((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt")) {
-                    String::from("unary")
-                } else {
-                    String::from("")
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_java_script_number_scalar_conversion(format: &str, operation: &str, form: &str, value: &str, utf16: bool) -> String {
-    if ((!(self::accept_linked_java_script_number_conversion("math", operation)) || ((self::read_java_script_number_conversion_form(form)) == "unsupported")) || (form == "option")) {
-        String::from("")
-    } else {
-        if (format == "JavaScript") {
-            if (operation == "convertJavaScriptNumber") {
-                format!("{}{}", (format!("{}{}", (String::from("Number(")), value.to_owned())), (String::from(")")))
-            } else {
-                format!("{}{}", (format!("{}{}", (String::from("(+(")), value.to_owned())), (String::from("))")))
-            }
-        } else {
-            if ((format == "Lean") || (format == "Rocq")) {
-                if !(self::read_java_script_number_conversion_failure(operation, form)).is_empty() {
-                    String::from("")
-                } else {
-                    if (form == "float") {
-                        value.to_owned()
-                    } else {
-                        if (form == "unit") {
-                            if (format == "Lean") {
-                                format!("{}{}", (format!("{}{}", (String::from("(let _ := ")), value.to_owned())), (String::from("; ((0 : Float) / 0))")))
-                            } else {
-                                format!("{}{}", (format!("{}{}", (String::from("(let _ := ")), value.to_owned())), (String::from(" in PrimFloat.nan)")))
-                            }
-                        } else {
-                            if (form == "bool") {
-                                if (format == "Lean") {
-                                    format!("{}{}", (format!("{}{}", (String::from("(if ")), value.to_owned())), (String::from(" then (1 : Float) else (0 : Float))")))
-                                } else {
-                                    format!("{}{}", (format!("{}{}", (String::from("(if ")), value.to_owned())), (String::from(" then 1%float else 0%float)")))
-                                }
-                            } else {
-                                if ((form == "int") || (form == "nat")) {
-                                    format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertInteger ")), (if (form == "nat") {
-                                        if (format == "Lean") {
-                                            format!("{}{}", (format!("{}{}", (String::from("(Int.ofNat ")), value.to_owned())), (String::from(")")))
-                                        } else {
-                                            format!("{}{}", (format!("{}{}", (String::from("(Z.of_N ")), value.to_owned())), (String::from(")")))
-                                        }
-                                    } else {
-                                        value.to_owned()
-                                    }))), (String::from(")")))
-                                } else {
-                                    if (format == "Lean") {
-                                        format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] ")), value.to_owned())), (String::from("))")))
-                                    } else {
-                                        format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertUtf8 ((fix ml_numeric_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_numeric_bytes rest) end) ")), value.to_owned())), (String::from("))")))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                if (format != "Rust") {
-                    String::from("")
-                } else {
-                    if (form == "float") {
-                        value.to_owned()
-                    } else {
-                        if (form == "bool") {
-                            format!("{}{}", (format!("{}{}", (String::from("(if ")), value.to_owned())), (String::from(" { 1.0f64 } else { 0.0f64 })")))
-                        } else {
-                            if (form == "unit") {
-                                format!("{}{}", (format!("{}{}", (String::from("{ let _ = ")), value.to_owned())), (String::from("; f64::NAN }")))
-                            } else {
-                                if ((form == "int") || (form == "nat")) {
-                                    if (operation == "coerceJavaScriptNumber") {
-                                        format!("{}{}", (format!("{}{}", (String::from("{ let _ = ")), value.to_owned())), (String::from("; crate::ml_source_exception::SourceException::from_text(\"TypeError\", \"Cannot convert a BigInt value to a number\").raise() }")))
-                                    } else {
-                                        format!("{}{}", (format!("{}{}", (String::from("crate::ml_string_number::convert_java_script_big_integer_number(")), value.to_owned())), (String::from(")")))
-                                    }
-                                } else {
                                     {
-                                        let units = if utf16 {
-                                            format!("{}{}", (format!("{}{}", (String::from("(")), value.to_owned())), (String::from(").0.iter().copied()")))
-                                        } else {
-                                            format!("{}{}", (format!("{}{}", (String::from("(")), value.to_owned())), (String::from(").encode_utf16()")))
+                                        let source_ml_source2_nominal_override321 = (match builder.clone() {
+                                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value309, _, _, _) => {
+                                                source_ml_source2_data_property_value309
+                                            }
+                                        } + 1f64);
+                                        self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_nominal_field311, source_ml_source2_nominal_override321, source_ml_source2_nominal_field315, source_ml_source2_nominal_field317, source_ml_source2_nominal_field319.clone())
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }), match builder.clone() {
+                self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value322, _, _, _) => {
+                    source_ml_source2_data_property_value322
+                }
+            })
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn lower_java_script_call_source_expression(source: self::JavaScriptCallSource, bindings: Vec<self::JavaScriptCallSourceBinding>, builder: self::JavaScriptCallSourceBuilder, depth: f64) -> self::JavaScriptCallSourceResult {
+    if ((match builder.clone() {
+        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value324) => {
+            source_ml_source2_data_property_value324.clone()
+        }
+    }) != "") {
+        self::JavaScriptCallSourceResult::SourceResult(Box::new(builder.clone()), 0f64)
+    } else {
+        if ((depth > (128f64)) || ((match builder.clone() {
+            self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value326, _, _) => {
+                source_ml_source2_data_property_value326
+            }
+        }) >= (65536f64))) {
+            self::refuse_java_script_call_source(builder.clone(), "source lowering exceeds its structural budget")
+        } else {
+            {
+                let state = {
+                    let source_ml_source2_nominal_spread328 = builder.clone();
+                    {
+                        let source_ml_source2_nominal_field329 = match source_ml_source2_nominal_spread328.clone() {
+                            self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_data_property_value330, _, _, _, _) => {
+                                source_ml_source2_data_property_value330
+                            }
+                        };
+                        {
+                            let source_ml_source2_nominal_field331 = match source_ml_source2_nominal_spread328.clone() {
+                                self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value332, _, _, _) => {
+                                    source_ml_source2_data_property_value332
+                                }
+                            };
+                            {
+                                let source_ml_source2_nominal_field333 = match source_ml_source2_nominal_spread328.clone() {
+                                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value334, _, _) => {
+                                        source_ml_source2_data_property_value334
+                                    }
+                                };
+                                {
+                                    let source_ml_source2_nominal_field335 = match source_ml_source2_nominal_spread328.clone() {
+                                        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, source_ml_source2_data_property_value336, _) => {
+                                            source_ml_source2_data_property_value336
+                                        }
+                                    };
+                                    {
+                                        let source_ml_source2_nominal_field337 = match source_ml_source2_nominal_spread328.clone() {
+                                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value338) => {
+                                                source_ml_source2_data_property_value338.clone()
+                                            }
                                         };
-                                        format!("{}{}", (format!("{}{}", (String::from("crate::ml_string_number::convert_java_script_string_number_units(&")), units)), (String::from(".map(f64::from).collect::<Vec<f64>>())")))
+                                        {
+                                            let source_ml_source2_nominal_override339 = (match builder.clone() {
+                                                self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value327, _, _) => {
+                                                    source_ml_source2_data_property_value327
+                                                }
+                                            } + 1f64);
+                                            self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_nominal_field329, source_ml_source2_nominal_field331, source_ml_source2_nominal_override339, source_ml_source2_nominal_field335, source_ml_source2_nominal_field337.clone())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                match source.clone() {
+                    self::JavaScriptCallSource::SourceConstant(value) => {
+                        let value = *value;
+                        {
+                            let error = self::read_java_script_call_constant_error(value.clone());
+                            if (error != "") {
+                                self::refuse_java_script_call_source(state.clone(), &(error))
+                            } else {
+                                {
+                                    let result = self::allocate_java_script_call_source_register(state.clone());
+                                    {
+                                        let source_ml_source2_nominal_spread346 = result.clone();
+                                        {
+                                            let source_ml_source2_nominal_field347 = match source_ml_source2_nominal_spread346.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value348, _) => {
+                                                    let source_ml_source2_data_property_value348 = *source_ml_source2_data_property_value348;
+                                                    source_ml_source2_data_property_value348.clone()
+                                                }
+                                            };
+                                            {
+                                                let source_ml_source2_nominal_field349 = match source_ml_source2_nominal_spread346.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value350) => {
+                                                        source_ml_source2_data_property_value350
+                                                    }
+                                                };
+                                                {
+                                                    let source_ml_source2_nominal_override351 = self::append_java_script_call_source_instruction(match result.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value344, _) => {
+                                                            let source_ml_source2_data_property_value344 = *source_ml_source2_data_property_value344;
+                                                            source_ml_source2_data_property_value344.clone()
+                                                        }
+                                                    }, self::JavaScriptCallInstruction::Constant(match result.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value345) => {
+                                                            source_ml_source2_data_property_value345
+                                                        }
+                                                    }, Box::new(value.clone())));
+                                                    self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override351.clone()), source_ml_source2_nominal_field349)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceBinding(identity) => {
+                        if !(self::test_java_script_call_code_coordinate(identity, 65536f64)) {
+                            self::refuse_java_script_call_source(state.clone(), "source binding identities require exact nonnegative coordinates")
+                        } else {
+                            {
+                                let index = ((bindings.len() as f64) - 1f64);
+                                {
+                                    let source_ml_source2_s352 = self::source_ml_source1_temporary_lower_java_script_call_source_expression_loop97(source.clone(), bindings, state.clone(), index);
+                                    match source_ml_source2_s352.clone() {
+                                        self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop97Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop97Done => {
+                                            self::refuse_java_script_call_source(state.clone(), "a source binding reference has no actual lexical owner")
+                                        }
+                                        self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop97Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop97Return(source_ml_source1_temporary_result97) => {
+                                            let source_ml_source1_temporary_result97 = *source_ml_source1_temporary_result97;
+                                            source_ml_source1_temporary_result97.clone()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceLet(identity_2, source_value, body) => {
+                        let source_value = *source_value;
+                        let body = *body;
+                        if (!(self::test_java_script_call_code_coordinate(identity_2, 65536f64)) || { let ml_values1 = bindings.clone(); let ml_callback1 = { let identity_2 = identity_2; std::rc::Rc::new(move |entry: self::JavaScriptCallSourceBinding| -> bool { ((match entry.clone() {
+                            self::JavaScriptCallSourceBinding::SourceBindingRegister(source_ml_source2_data_property_value354, _) => {
+                                source_ml_source2_data_property_value354
+                            }
+                        }) == identity_2) }) }; ml_values1.iter().cloned().enumerate().any(|(ml_index1, ml_value1)| ml_callback1(ml_value1)) }) {
+                            self::refuse_java_script_call_source(state.clone(), "a source binding owner must be unique in its lexical scope")
+                        } else {
+                            {
+                                let value_2 = self::lower_java_script_call_source_expression(source_value.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                                self::lower_java_script_call_source_expression(body.clone(), {
+                                    let source_ml_source2_concat_value356 = bindings;
+                                    {
+                                        let source_ml_source2_concat_value357 = vec![self::JavaScriptCallSourceBinding::SourceBindingRegister(identity_2, match value_2.clone() {
+                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value355) => {
+                                                source_ml_source2_data_property_value355
+                                            }
+                                        })];
+                                        self::ml_array::append(self::ml_array::append(Vec::<self::JavaScriptCallSourceBinding>::new(), source_ml_source2_concat_value356), source_ml_source2_concat_value357)
+                                    }
+                                }, match value_2.clone() {
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value358, _) => {
+                                        let source_ml_source2_data_property_value358 = *source_ml_source2_data_property_value358;
+                                        source_ml_source2_data_property_value358.clone()
+                                    }
+                                }, (depth + 1f64))
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceIf(source_ml_source2_f340, source_ml_source2_f341, source_ml_source2_f342) => {
+                        let source_ml_source2_f340 = *source_ml_source2_f340;
+                        let source_ml_source2_f341 = *source_ml_source2_f341;
+                        let source_ml_source2_f342 = *source_ml_source2_f342;
+                        self::lower_java_script_call_source_branch(source.clone(), bindings, state.clone(), depth)
+                    }
+                    self::JavaScriptCallSource::SourceNumberBinary(source_ml_source2_f343, source_left, source_right) => {
+                        let source_left = *source_left;
+                        let source_right = *source_right;
+                        {
+                            let left = self::lower_java_script_call_source_expression(source_left.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                            {
+                                let right = self::lower_java_script_call_source_expression(source_right.clone(), bindings, match left.clone() {
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value359, _) => {
+                                        let source_ml_source2_data_property_value359 = *source_ml_source2_data_property_value359;
+                                        source_ml_source2_data_property_value359.clone()
+                                    }
+                                }, (depth + 1f64));
+                                {
+                                    let result_2 = self::allocate_java_script_call_source_register(match right.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value360, _) => {
+                                            let source_ml_source2_data_property_value360 = *source_ml_source2_data_property_value360;
+                                            source_ml_source2_data_property_value360.clone()
+                                        }
+                                    });
+                                    {
+                                        let operator = source_ml_source2_f343.clone();
+                                        {
+                                            let source_ml_source2_f369 = source_left.clone();
+                                            {
+                                                let source_ml_source2_f370 = source_right.clone();
+                                                if !(self::ml_array::includes(&vec![String::from("add"), String::from("subtract"), String::from("multiply"), String::from("divide"), String::from("remainder"), String::from("power"), String::from("lessThan"), String::from("equal")], &operator.clone(), 0f64, false, |a, b| a == b)) {
+                                                    self::refuse_java_script_call_source(match result_2.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value386, _) => {
+                                                            let source_ml_source2_data_property_value386 = *source_ml_source2_data_property_value386;
+                                                            source_ml_source2_data_property_value386.clone()
+                                                        }
+                                                    }, "source Number lowering requires its exact registered operator")
+                                                } else {
+                                                    {
+                                                        let source_ml_source2_nominal_spread391 = result_2.clone();
+                                                        {
+                                                            let source_ml_source2_nominal_field392 = match source_ml_source2_nominal_spread391.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value393, _) => {
+                                                                    let source_ml_source2_data_property_value393 = *source_ml_source2_data_property_value393;
+                                                                    source_ml_source2_data_property_value393.clone()
+                                                                }
+                                                            };
+                                                            {
+                                                                let source_ml_source2_nominal_field394 = match source_ml_source2_nominal_spread391.clone() {
+                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value395) => {
+                                                                        source_ml_source2_data_property_value395
+                                                                    }
+                                                                };
+                                                                {
+                                                                    let source_ml_source2_nominal_override396 = self::append_java_script_call_source_instruction(match result_2.clone() {
+                                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value387, _) => {
+                                                                            let source_ml_source2_data_property_value387 = *source_ml_source2_data_property_value387;
+                                                                            source_ml_source2_data_property_value387.clone()
+                                                                        }
+                                                                    }, self::JavaScriptCallInstruction::NumberBinary(match result_2.clone() {
+                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value388) => {
+                                                                            source_ml_source2_data_property_value388
+                                                                        }
+                                                                    }, match left.clone() {
+                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value389) => {
+                                                                            source_ml_source2_data_property_value389
+                                                                        }
+                                                                    }, match right.clone() {
+                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value390) => {
+                                                                            source_ml_source2_data_property_value390
+                                                                        }
+                                                                    }, operator.clone()));
+                                                                    self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override396.clone()), source_ml_source2_nominal_field394)
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceSameValue(source_left_2, source_right_2) => {
+                        let source_left_2 = *source_left_2;
+                        let source_right_2 = *source_right_2;
+                        {
+                            let left_2 = self::lower_java_script_call_source_expression(source_left_2.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                            {
+                                let right_2 = self::lower_java_script_call_source_expression(source_right_2.clone(), bindings, match left_2.clone() {
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value397, _) => {
+                                        let source_ml_source2_data_property_value397 = *source_ml_source2_data_property_value397;
+                                        source_ml_source2_data_property_value397.clone()
+                                    }
+                                }, (depth + 1f64));
+                                {
+                                    let result_3 = self::allocate_java_script_call_source_register(match right_2.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value398, _) => {
+                                            let source_ml_source2_data_property_value398 = *source_ml_source2_data_property_value398;
+                                            source_ml_source2_data_property_value398.clone()
+                                        }
+                                    });
+                                    {
+                                        let source_ml_source2_f409 = source_left_2.clone();
+                                        {
+                                            let source_ml_source2_f410 = source_right_2.clone();
+                                            {
+                                                let source_ml_source2_nominal_spread428 = result_3.clone();
+                                                {
+                                                    let source_ml_source2_nominal_field429 = match source_ml_source2_nominal_spread428.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value430, _) => {
+                                                            let source_ml_source2_data_property_value430 = *source_ml_source2_data_property_value430;
+                                                            source_ml_source2_data_property_value430.clone()
+                                                        }
+                                                    };
+                                                    {
+                                                        let source_ml_source2_nominal_field431 = match source_ml_source2_nominal_spread428.clone() {
+                                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value432) => {
+                                                                source_ml_source2_data_property_value432
+                                                            }
+                                                        };
+                                                        {
+                                                            let source_ml_source2_nominal_override433 = self::append_java_script_call_source_instruction(match result_3.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value424, _) => {
+                                                                    let source_ml_source2_data_property_value424 = *source_ml_source2_data_property_value424;
+                                                                    source_ml_source2_data_property_value424.clone()
+                                                                }
+                                                            }, self::JavaScriptCallInstruction::SameValue(match result_3.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value425) => {
+                                                                    source_ml_source2_data_property_value425
+                                                                }
+                                                            }, match left_2.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value426) => {
+                                                                    source_ml_source2_data_property_value426
+                                                                }
+                                                            }, match right_2.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value427) => {
+                                                                    source_ml_source2_data_property_value427
+                                                                }
+                                                            }));
+                                                            self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override433.clone()), source_ml_source2_nominal_field431)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceStrictEqual(source_left_3, source_right_3) => {
+                        let source_left_3 = *source_left_3;
+                        let source_right_3 = *source_right_3;
+                        {
+                            let left_3 = self::lower_java_script_call_source_expression(source_left_3.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                            {
+                                let right_3 = self::lower_java_script_call_source_expression(source_right_3.clone(), bindings, match left_3.clone() {
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value434, _) => {
+                                        let source_ml_source2_data_property_value434 = *source_ml_source2_data_property_value434;
+                                        source_ml_source2_data_property_value434.clone()
+                                    }
+                                }, (depth + 1f64));
+                                {
+                                    let result_4 = self::allocate_java_script_call_source_register(match right_3.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value435, _) => {
+                                            let source_ml_source2_data_property_value435 = *source_ml_source2_data_property_value435;
+                                            source_ml_source2_data_property_value435.clone()
+                                        }
+                                    });
+                                    {
+                                        let source_ml_source2_f448 = source_left_3.clone();
+                                        {
+                                            let source_ml_source2_f449 = source_right_3.clone();
+                                            {
+                                                let source_ml_source2_nominal_spread465 = result_4.clone();
+                                                {
+                                                    let source_ml_source2_nominal_field466 = match source_ml_source2_nominal_spread465.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value467, _) => {
+                                                            let source_ml_source2_data_property_value467 = *source_ml_source2_data_property_value467;
+                                                            source_ml_source2_data_property_value467.clone()
+                                                        }
+                                                    };
+                                                    {
+                                                        let source_ml_source2_nominal_field468 = match source_ml_source2_nominal_spread465.clone() {
+                                                            self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value469) => {
+                                                                source_ml_source2_data_property_value469
+                                                            }
+                                                        };
+                                                        {
+                                                            let source_ml_source2_nominal_override470 = self::append_java_script_call_source_instruction(match result_4.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value461, _) => {
+                                                                    let source_ml_source2_data_property_value461 = *source_ml_source2_data_property_value461;
+                                                                    source_ml_source2_data_property_value461.clone()
+                                                                }
+                                                            }, self::JavaScriptCallInstruction::StrictEqual(match result_4.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value462) => {
+                                                                    source_ml_source2_data_property_value462
+                                                                }
+                                                            }, match left_3.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value463) => {
+                                                                    source_ml_source2_data_property_value463
+                                                                }
+                                                            }, match right_3.clone() {
+                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value464) => {
+                                                                    source_ml_source2_data_property_value464
+                                                                }
+                                                            }));
+                                                            self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override470.clone()), source_ml_source2_nominal_field468)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourcePrimitive(operation, arguments) => {
+                        {
+                            let error_2 = self::read_java_script_call_primitive_arity_error(&(operation), (arguments.len() as f64));
+                            if (error_2 != "") {
+                                self::refuse_java_script_call_source(state.clone(), &(error_2))
+                            } else {
+                                {
+                                    let current = state.clone();
+                                    {
+                                        let arguments_ = Vec::<f64>::new();
+                                        {
+                                            let source_ml_source1_temporary_values94 = arguments;
+                                            {
+                                                let source_ml_source1_temporary_index94 = self::ml::Big::from_i128(0);
+                                                {
+                                                    let source_ml_source2_s471 = self::source_ml_source1_temporary_lower_java_script_call_source_expression_loop98(bindings, depth, current.clone(), arguments_, source_ml_source1_temporary_values94, source_ml_source1_temporary_index94.clone());
+                                                    match source_ml_source2_s471.clone() {
+                                                        self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop98Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop98Done(current_2, arguments__2) => {
+                                                            let current_2 = *current_2;
+                                                            {
+                                                                let result_5 = self::allocate_java_script_call_source_register(current_2.clone());
+                                                                {
+                                                                    let source_ml_source2_nominal_spread474 = result_5.clone();
+                                                                    {
+                                                                        let source_ml_source2_nominal_field475 = match source_ml_source2_nominal_spread474.clone() {
+                                                                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value476, _) => {
+                                                                                let source_ml_source2_data_property_value476 = *source_ml_source2_data_property_value476;
+                                                                                source_ml_source2_data_property_value476.clone()
+                                                                            }
+                                                                        };
+                                                                        {
+                                                                            let source_ml_source2_nominal_field477 = match source_ml_source2_nominal_spread474.clone() {
+                                                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value478) => {
+                                                                                    source_ml_source2_data_property_value478
+                                                                                }
+                                                                            };
+                                                                            {
+                                                                                let source_ml_source2_nominal_override479 = self::append_java_script_call_source_instruction(match result_5.clone() {
+                                                                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value472, _) => {
+                                                                                        let source_ml_source2_data_property_value472 = *source_ml_source2_data_property_value472;
+                                                                                        source_ml_source2_data_property_value472.clone()
+                                                                                    }
+                                                                                }, self::JavaScriptCallInstruction::Primitive(match result_5.clone() {
+                                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value473) => {
+                                                                                        source_ml_source2_data_property_value473
+                                                                                    }
+                                                                                }, operation.clone(), arguments__2));
+                                                                                self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override479.clone()), source_ml_source2_nominal_field477)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceRecur(arguments_2) => {
+                        if (((arguments_2.len() as f64)) != (match state.clone() {
+                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, source_ml_source2_data_property_value481, _) => {
+                                source_ml_source2_data_property_value481
+                            }
+                        })) {
+                            self::refuse_java_script_call_source(state.clone(), "loop updates require every actual parameter operand")
+                        } else {
+                            {
+                                let current_3 = state.clone();
+                                {
+                                    let arguments__3 = Vec::<f64>::new();
+                                    {
+                                        let source_ml_source1_temporary_values95 = arguments_2;
+                                        {
+                                            let source_ml_source1_temporary_index95 = self::ml::Big::from_i128(0);
+                                            {
+                                                let source_ml_source2_s482 = self::source_ml_source1_temporary_lower_java_script_call_source_expression_loop99(bindings, depth, current_3.clone(), arguments__3, source_ml_source1_temporary_values95, source_ml_source1_temporary_index95.clone());
+                                                match source_ml_source2_s482.clone() {
+                                                    self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop99Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop99Done(current_4, arguments__4) => {
+                                                        let current_4 = *current_4;
+                                                        {
+                                                            let index_2 = 0f64;
+                                                            {
+                                                                let current_5 = self::source_ml_source1_temporary_lower_java_script_call_source_expression_loop100(current_4.clone(), &(arguments__4), index_2);
+                                                                self::JavaScriptCallSourceResult::SourceResult(Box::new(self::append_java_script_call_source_instruction(current_5.clone(), self::JavaScriptCallInstruction::Jump(0f64))), 0f64)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceSet(source_object, source_key, source_value_2) => {
+                        let source_object = *source_object;
+                        let source_key = *source_key;
+                        let source_value_2 = *source_value_2;
+                        {
+                            let object = self::lower_java_script_call_source_expression(source_object.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                            {
+                                let key = self::lower_java_script_call_source_expression(source_key.clone(), bindings.clone(), match object.clone() {
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value483, _) => {
+                                        let source_ml_source2_data_property_value483 = *source_ml_source2_data_property_value483;
+                                        source_ml_source2_data_property_value483.clone()
+                                    }
+                                }, (depth + 1f64));
+                                {
+                                    let value_3 = self::lower_java_script_call_source_expression(source_value_2.clone(), bindings, match key.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value484, _) => {
+                                            let source_ml_source2_data_property_value484 = *source_ml_source2_data_property_value484;
+                                            source_ml_source2_data_property_value484.clone()
+                                        }
+                                    }, (depth + 1f64));
+                                    {
+                                        let result_6 = self::allocate_java_script_call_source_register(match value_3.clone() {
+                                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value485, _) => {
+                                                let source_ml_source2_data_property_value485 = *source_ml_source2_data_property_value485;
+                                                source_ml_source2_data_property_value485.clone()
+                                            }
+                                        });
+                                        {
+                                            let write = self::append_java_script_call_source_instruction(match result_6.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value486, _) => {
+                                                    let source_ml_source2_data_property_value486 = *source_ml_source2_data_property_value486;
+                                                    source_ml_source2_data_property_value486.clone()
+                                                }
+                                            }, self::JavaScriptCallInstruction::OrdinarySet(match result_6.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value487) => {
+                                                    source_ml_source2_data_property_value487
+                                                }
+                                            }, match object.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value488) => {
+                                                    source_ml_source2_data_property_value488
+                                                }
+                                            }, match key.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value489) => {
+                                                    source_ml_source2_data_property_value489
+                                                }
+                                            }, match value_3.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value490) => {
+                                                    source_ml_source2_data_property_value490
+                                                }
+                                            }, match object.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value491) => {
+                                                    source_ml_source2_data_property_value491
+                                                }
+                                            }));
+                                            self::JavaScriptCallSourceResult::SourceResult(Box::new(self::append_java_script_call_source_instruction(write.clone(), self::JavaScriptCallInstruction::RequireWrite(match result_6.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value492) => {
+                                                    source_ml_source2_data_property_value492
+                                                }
+                                            }))), match value_3.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value493) => {
+                                                    source_ml_source2_data_property_value493
+                                                }
+                                            })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceGet(source_object_2, source_key_2) => {
+                        let source_object_2 = *source_object_2;
+                        let source_key_2 = *source_key_2;
+                        {
+                            let object_2 = self::lower_java_script_call_source_expression(source_object_2.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                            {
+                                let key_2 = self::lower_java_script_call_source_expression(source_key_2.clone(), bindings, match object_2.clone() {
+                                    self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value494, _) => {
+                                        let source_ml_source2_data_property_value494 = *source_ml_source2_data_property_value494;
+                                        source_ml_source2_data_property_value494.clone()
+                                    }
+                                }, (depth + 1f64));
+                                {
+                                    let result_7 = self::allocate_java_script_call_source_register(match key_2.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value495, _) => {
+                                            let source_ml_source2_data_property_value495 = *source_ml_source2_data_property_value495;
+                                            source_ml_source2_data_property_value495.clone()
+                                        }
+                                    });
+                                    {
+                                        let source_ml_source2_nominal_spread501 = result_7.clone();
+                                        {
+                                            let source_ml_source2_nominal_field502 = match source_ml_source2_nominal_spread501.clone() {
+                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value503, _) => {
+                                                    let source_ml_source2_data_property_value503 = *source_ml_source2_data_property_value503;
+                                                    source_ml_source2_data_property_value503.clone()
+                                                }
+                                            };
+                                            {
+                                                let source_ml_source2_nominal_field504 = match source_ml_source2_nominal_spread501.clone() {
+                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value505) => {
+                                                        source_ml_source2_data_property_value505
+                                                    }
+                                                };
+                                                {
+                                                    let source_ml_source2_nominal_override506 = self::append_java_script_call_source_instruction(match result_7.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value496, _) => {
+                                                            let source_ml_source2_data_property_value496 = *source_ml_source2_data_property_value496;
+                                                            source_ml_source2_data_property_value496.clone()
+                                                        }
+                                                    }, self::JavaScriptCallInstruction::OrdinaryGet(match result_7.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value497) => {
+                                                            source_ml_source2_data_property_value497
+                                                        }
+                                                    }, match object_2.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value498) => {
+                                                            source_ml_source2_data_property_value498
+                                                        }
+                                                    }, match key_2.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value499) => {
+                                                            source_ml_source2_data_property_value499
+                                                        }
+                                                    }, match object_2.clone() {
+                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value500) => {
+                                                            source_ml_source2_data_property_value500
+                                                        }
+                                                    }));
+                                                    self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override506.clone()), source_ml_source2_nominal_field504)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::JavaScriptCallSource::SourceCall(source_callee, source_receiver, arguments_3) => {
+                        let source_callee = *source_callee;
+                        let source_receiver = *source_receiver;
+                        if (((arguments_3.len() as f64)) > (4096f64)) {
+                            self::refuse_java_script_call_source(state.clone(), "source call operands exceed their explicit budget")
+                        } else {
+                            {
+                                let callee = self::lower_java_script_call_source_expression(source_callee.clone(), bindings.clone(), state.clone(), (depth + 1f64));
+                                {
+                                    let receiver = self::lower_java_script_call_source_expression(source_receiver.clone(), bindings.clone(), match callee.clone() {
+                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value507, _) => {
+                                            let source_ml_source2_data_property_value507 = *source_ml_source2_data_property_value507;
+                                            source_ml_source2_data_property_value507.clone()
+                                        }
+                                    }, (depth + 1f64));
+                                    {
+                                        let current_6 = match receiver.clone() {
+                                            self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value508, _) => {
+                                                let source_ml_source2_data_property_value508 = *source_ml_source2_data_property_value508;
+                                                source_ml_source2_data_property_value508.clone()
+                                            }
+                                        };
+                                        {
+                                            let arguments__5 = Vec::<f64>::new();
+                                            {
+                                                let source_ml_source1_temporary_values96 = arguments_3;
+                                                {
+                                                    let source_ml_source1_temporary_index96 = self::ml::Big::from_i128(0);
+                                                    {
+                                                        let source_ml_source2_s509 = self::source_ml_source1_temporary_lower_java_script_call_source_expression_loop101(bindings, depth, current_6.clone(), arguments__5, source_ml_source1_temporary_values96, source_ml_source1_temporary_index96.clone());
+                                                        match source_ml_source2_s509.clone() {
+                                                            self::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop101Result::MlSource1TemporaryLowerJavaScriptCallSourceExpressionLoop101Done(current_7, arguments__6) => {
+                                                                let current_7 = *current_7;
+                                                                {
+                                                                    let result_8 = self::allocate_java_script_call_source_register(current_7.clone());
+                                                                    {
+                                                                        let source_ml_source2_nominal_spread514 = result_8.clone();
+                                                                        {
+                                                                            let source_ml_source2_nominal_field515 = match source_ml_source2_nominal_spread514.clone() {
+                                                                                self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value516, _) => {
+                                                                                    let source_ml_source2_data_property_value516 = *source_ml_source2_data_property_value516;
+                                                                                    source_ml_source2_data_property_value516.clone()
+                                                                                }
+                                                                            };
+                                                                            {
+                                                                                let source_ml_source2_nominal_field517 = match source_ml_source2_nominal_spread514.clone() {
+                                                                                    self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value518) => {
+                                                                                        source_ml_source2_data_property_value518
+                                                                                    }
+                                                                                };
+                                                                                {
+                                                                                    let source_ml_source2_nominal_override519 = self::append_java_script_call_source_instruction(match result_8.clone() {
+                                                                                        self::JavaScriptCallSourceResult::SourceResult(source_ml_source2_data_property_value510, _) => {
+                                                                                            let source_ml_source2_data_property_value510 = *source_ml_source2_data_property_value510;
+                                                                                            source_ml_source2_data_property_value510.clone()
+                                                                                        }
+                                                                                    }, self::JavaScriptCallInstruction::Call(match result_8.clone() {
+                                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value511) => {
+                                                                                            source_ml_source2_data_property_value511
+                                                                                        }
+                                                                                    }, match callee.clone() {
+                                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value512) => {
+                                                                                            source_ml_source2_data_property_value512
+                                                                                        }
+                                                                                    }, match receiver.clone() {
+                                                                                        self::JavaScriptCallSourceResult::SourceResult(_, source_ml_source2_data_property_value513) => {
+                                                                                            source_ml_source2_data_property_value513
+                                                                                        }
+                                                                                    }, arguments__6));
+                                                                                    self::JavaScriptCallSourceResult::SourceResult(Box::new(source_ml_source2_nominal_override519.clone()), source_ml_source2_nominal_field517)
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -781,12 +801,4 @@ pub fn render_java_script_number_scalar_conversion(format: &str, operation: &str
             }
         }
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_number_conversion_statement() -> String {
-    String::from("ECMAScript Number and ToNumber preserve full UTF-16 StringNumericLiteral syntax, exact binary64 ties-to-even rounding, signed zero, Infinity, NaN, primitive absence and argument evaluation order; explicit BigInt conversion rounds once and implicit BigInt conversion throws")
 }

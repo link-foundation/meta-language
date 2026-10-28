@@ -63,24 +63,3 @@ pub use part_20::*;
 #[path = "javascript_call_machine/part_21.rs"]
 mod part_21;
 pub use part_21::*;
-#[path = "javascript_call_machine/part_22.rs"]
-mod part_22;
-pub use part_22::*;
-#[path = "javascript_call_machine/part_23.rs"]
-mod part_23;
-pub use part_23::*;
-#[path = "javascript_call_machine/part_24.rs"]
-mod part_24;
-pub use part_24::*;
-#[path = "javascript_call_machine/part_25.rs"]
-mod part_25;
-pub use part_25::*;
-#[path = "javascript_call_machine/part_26.rs"]
-mod part_26;
-pub use part_26::*;
-#[path = "javascript_call_machine/part_27.rs"]
-mod part_27;
-pub use part_27::*;
-#[path = "javascript_call_machine/part_28.rs"]
-mod part_28;
-pub use part_28::*;
