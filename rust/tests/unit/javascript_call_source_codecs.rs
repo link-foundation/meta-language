@@ -13,6 +13,18 @@ pub(super) fn decode_java_script_call_source(data: &Data) -> native::JavaScriptC
         "sourceConstant" => native::JavaScriptCallSource::SourceConstant(Box::new(
             decode_java_script_semantic_value(&data["value"]),
         )),
+        "sourceReceiver" => native::JavaScriptCallSource::SourceReceiver,
+        "sourceArgument" => native::JavaScriptCallSource::SourceArgument(
+            data["index"].as_f64().expect("model Number"),
+        ),
+        "sourceThrow" => native::JavaScriptCallSource::SourceThrow(Box::new(
+            decode_java_script_call_source(&data["value"]),
+        )),
+        "sourceTry" => native::JavaScriptCallSource::SourceTry(
+            data["identity"].as_f64().expect("model Number"),
+            Box::new(decode_java_script_call_source(&data["body"])),
+            Box::new(decode_java_script_call_source(&data["handler"])),
+        ),
         "sourceBinding" => native::JavaScriptCallSource::SourceBinding(
             data["identity"].as_f64().expect("model Number"),
         ),
@@ -82,6 +94,16 @@ pub(super) fn encode_java_script_call_source(value: &native::JavaScriptCallSourc
     match value {
         native::JavaScriptCallSource::SourceConstant(wire_field_0) => {
             json!({"$":"sourceConstant","value":encode_java_script_semantic_value(wire_field_0)})
+        }
+        native::JavaScriptCallSource::SourceReceiver => json!({"$":"sourceReceiver"}),
+        native::JavaScriptCallSource::SourceArgument(wire_field_0) => {
+            json!({"$":"sourceArgument","index":wire_number(*wire_field_0)})
+        }
+        native::JavaScriptCallSource::SourceThrow(wire_field_0) => {
+            json!({"$":"sourceThrow","value":encode_java_script_call_source(wire_field_0)})
+        }
+        native::JavaScriptCallSource::SourceTry(wire_field_0, wire_field_1, wire_field_2) => {
+            json!({"$":"sourceTry","identity":wire_number(*wire_field_0),"body":encode_java_script_call_source(wire_field_1),"handler":encode_java_script_call_source(wire_field_2)})
         }
         native::JavaScriptCallSource::SourceBinding(wire_field_0) => {
             json!({"$":"sourceBinding","identity":wire_number(*wire_field_0)})

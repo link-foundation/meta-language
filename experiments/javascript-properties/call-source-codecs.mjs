@@ -4,6 +4,10 @@ function fromBits(value){if(typeof value!=="string"||!/^[0-9a-fA-F]{16}$/u.test(
 function toBits(value){if(typeof value!=="number")throw new TypeError("model Number");const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0).toString(16).padStart(16,"0");}
 export function decodeJavaScriptCallSource(value){switch(value.$){
 case "sourceConstant":return {$:"sourceConstant","value":decodeJavaScriptSemanticValue(value["value"])};
+case "sourceReceiver":return {$:"sourceReceiver"};
+case "sourceArgument":return {$:"sourceArgument","index":scalar(value["index"],"number")};
+case "sourceThrow":return {$:"sourceThrow","value":decodeJavaScriptCallSource(value["value"])};
+case "sourceTry":return {$:"sourceTry","identity":scalar(value["identity"],"number"),"body":decodeJavaScriptCallSource(value["body"]),"handler":decodeJavaScriptCallSource(value["handler"])};
 case "sourceBinding":return {$:"sourceBinding","identity":scalar(value["identity"],"number")};
 case "sourceLet":return {$:"sourceLet","identity":scalar(value["identity"],"number"),"value":decodeJavaScriptCallSource(value["value"]),"body":decodeJavaScriptCallSource(value["body"])};
 case "sourceIf":return {$:"sourceIf","condition":decodeJavaScriptCallSource(value["condition"]),"yes":decodeJavaScriptCallSource(value["yes"]),"no":decodeJavaScriptCallSource(value["no"])};
@@ -18,6 +22,10 @@ case "sourceCall":return {$:"sourceCall","callee":decodeJavaScriptCallSource(val
 default:throw new TypeError("unregistered actual model constructor");}}
 export function encodeJavaScriptCallSource(value){switch(value.$){
 case "sourceConstant":return {$:"sourceConstant","value":encodeJavaScriptSemanticValue(value["value"])};
+case "sourceReceiver":return {$:"sourceReceiver"};
+case "sourceArgument":return {$:"sourceArgument","index":scalar(value["index"],"number")};
+case "sourceThrow":return {$:"sourceThrow","value":encodeJavaScriptCallSource(value["value"])};
+case "sourceTry":return {$:"sourceTry","identity":scalar(value["identity"],"number"),"body":encodeJavaScriptCallSource(value["body"]),"handler":encodeJavaScriptCallSource(value["handler"])};
 case "sourceBinding":return {$:"sourceBinding","identity":scalar(value["identity"],"number")};
 case "sourceLet":return {$:"sourceLet","identity":scalar(value["identity"],"number"),"value":encodeJavaScriptCallSource(value["value"]),"body":encodeJavaScriptCallSource(value["body"])};
 case "sourceIf":return {$:"sourceIf","condition":encodeJavaScriptCallSource(value["condition"]),"yes":encodeJavaScriptCallSource(value["yes"]),"no":encodeJavaScriptCallSource(value["no"])};

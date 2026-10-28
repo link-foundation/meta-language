@@ -4,6 +4,9 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
 /** Binding identities are supplied from actual checked lexical occurrences.
  * The compiler never derives binding identity from equal source spellings.
  * @typedef {{$:'sourceConstant',value:JavaScriptSemanticValue} |
+ * {$:'sourceReceiver'} | {$:'sourceArgument',index:number} |
+ * {$:'sourceThrow',value:JavaScriptCallSource} |
+ * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
  * {$:'sourceLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceIf',condition:JavaScriptCallSource,yes:JavaScriptCallSource,no:JavaScriptCallSource} |
@@ -17,7 +20,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
 /** @typedef {{$:'sourceBindingRegister',identity:number,register:number}} JavaScriptCallSourceBinding */
-/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,error:string}} JavaScriptCallSourceBuilder */
+/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
 /** @typedef {{$:'sourceCompiled',instructions:JavaScriptCallInstruction[],registers:number,error:string}} JavaScriptCallSourceCompilation */
 
@@ -46,6 +49,17 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
  if(depth>128||builder.visits>=65536)return refuseJavaScriptCallSource(builder,'source lowering exceeds its structural budget');
  const state={...builder,visits:builder.visits+1};
  switch(source.$){
+  case 'sourceReceiver':return {$:'sourceResult',builder:state,register:0};
+  case 'sourceArgument':{
+   if(!testJavaScriptCallCodeCoordinate(source.index,1048576))return refuseJavaScriptCallSource(state,'source argument reads require an actual bounded nonnegative coordinate');
+   const result=allocateJavaScriptCallSourceRegister(state);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'argument',destination:result.register,index:source.index})};
+  }
+  case 'sourceThrow':{
+   const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);
+   return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'throw',source:value.register})};
+  }
+  case 'sourceTry':return lowerJavaScriptCallSourceException(source,bindings,state,depth);
   case 'sourceConstant':{
    const error=readJavaScriptCallConstantError(source.value);if(error!=='')return refuseJavaScriptCallSource(state,error);
    const result=allocateJavaScriptCallSourceRegister(state);
@@ -79,6 +93,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'primitive',destination:result.register,operation:source.operation,arguments:arguments_})};
   }
   case 'sourceRecur':{
+   if(state.handlers!==0)return refuseJavaScriptCallSource(state,'source recurrence through an active exception handler requires explicit unwinding');
    if(source.arguments.length!==state.parameters)return refuseJavaScriptCallSource(state,'loop updates require every actual parameter operand');
    let current=state,arguments_=[];
    for(const argument of source.arguments){
@@ -108,6 +123,29 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
  }
 }
 
+/** Catch binding identity is local to the handler, never the protected body.
+ * Normal evaluation pops exactly its own handler. The machine removes that
+ * handler before entering catch; exceptions in catch reach the outer handler.
+ * @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth
+ * @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceException(source,bindings,builder,depth){
+ if(source.$!=='sourceTry')return refuseJavaScriptCallSource(builder,'an exception compiler requires its actual protected body and catch binding');
+ if(!testJavaScriptCallCodeCoordinate(source.identity,65536)||bindings.some(entry=>entry.identity===source.identity))return refuseJavaScriptCallSource(builder,'a catch binding owner must be unique in its lexical scope');
+ if(builder.handlers>=1024)return refuseJavaScriptCallSource(builder,'source exception handlers exceed their explicit active handler budget');
+ const caught=allocateJavaScriptCallSourceRegister(builder),result=allocateJavaScriptCallSourceRegister(caught.builder),position=result.builder.instructions.length;
+ const protectedBuilder=appendJavaScriptCallSourceInstruction({...result.builder,handlers:builder.handlers+1},{$:'pushHandler',destination:caught.register,target:0});
+ const body=lowerJavaScriptCallSourceExpression(source.body,bindings,protectedBuilder,depth+1);
+ const popped=appendJavaScriptCallSourceInstruction({...body.builder,handlers:builder.handlers},{$:'popHandler'});
+ const copied=appendJavaScriptCallSourceInstruction(popped,{$:'copy',destination:result.register,source:body.register}),jump=copied.instructions.length;
+ const alternative=appendJavaScriptCallSourceInstruction(copied,{$:'jump',target:0}),target=alternative.instructions.length;
+ const handler=lowerJavaScriptCallSourceExpression(source.handler,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:caught.register}]),alternative,depth+1);
+ const finished=appendJavaScriptCallSourceInstruction(handler.builder,{$:'copy',destination:result.register,source:handler.register}),end=finished.instructions.length;
+ if(finished.error!=='')return {$:'sourceResult',builder:finished,register:0};
+ const instructions=finished.instructions.map((entry,index)=>index===position?{$:'pushHandler',destination:caught.register,target}:index===jump?{$:'jump',target:end}:entry);
+ return {$:'sourceResult',builder:{...finished,instructions},register:result.register};
+}
+
 /** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
  * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
 export function lowerJavaScriptCallSourceBranch(source,bindings,builder,depth){
@@ -134,7 +172,7 @@ export function compileJavaScriptCallSource(source,parameters){
  if(parameters.length>=4096)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters exceed their explicit register budget'};
  for(let index=0;index<parameters.length;index+=1){const owner=parameters[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters require distinct actual lexical owners'};}
  const bindings=parameters.map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1}));
- const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+1,visits:0,parameters:parameters.length,error:''},0);
+ const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+1,visits:0,parameters:parameters.length,handlers:0,error:''},0);
  const builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
  return {$:'sourceCompiled',instructions:builder.error===''?builder.instructions:[],registers:builder.error===''?builder.next:0,error:builder.error};
 }

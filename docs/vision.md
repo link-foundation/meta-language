@@ -9663,3 +9663,13 @@ the complete actual checked body; a name, signature or assumed template meaning
 cannot select a replacement. Escaping function values, mutable lexical cells,
 function-object introspection and unsupported receiver/argument behavior still
 require their own lowering and allocation rather than this pure value profile.
+
+The registered-call source compiler also represents receiver/actual-argument
+reads, arbitrary value throws, and protected bodies with lexical catch owners.
+The protected body cannot reference the catch binding or leak its locals into
+the handler. Normal completion removes its handler; abrupt completion removes
+that handler before evaluating catch, so rethrows reach the enclosing handler.
+Catch bodies may perform a proven function-entry recurrence after their handler
+has been removed. Recurrence through an active protected handler refuses until
+explicit unwinding is represented. These source graph forms do not imply full
+JavaScript frontend support for try/catch/finally or an arguments object.

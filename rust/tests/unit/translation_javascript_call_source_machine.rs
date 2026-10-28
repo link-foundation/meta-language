@@ -43,7 +43,9 @@ fn actual_source_compiler_output_preserves_every_native_execution_state() {
             program.clone(),
             heap,
             native::ml::Big::parse(row["entry"].as_str().unwrap()),
-            native::JavaScriptSemanticValue::Undefined,
+            row.get("receiver")
+                .map(decode_java_script_semantic_value)
+                .unwrap_or(native::JavaScriptSemanticValue::Undefined),
             arguments,
         );
         let trace = row["trace"].as_array().unwrap();
@@ -71,6 +73,15 @@ fn actual_source_compiler_output_preserves_every_native_execution_state() {
                 matches!(
                     actual,
                     native::JavaScriptCallMachineTransition::MachineAllocateError(_, _, _, _)
+                ),
+                "{}",
+                row["name"]
+            );
+        } else if row["expected"]["kind"] == "throw" {
+            assert!(
+                matches!(
+                    actual,
+                    native::JavaScriptCallMachineTransition::MachineThrow(_, _)
                 ),
                 "{}",
                 row["name"]

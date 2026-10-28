@@ -9,3 +9,6 @@ pub use part_2::*;
 #[path = "javascript_call_source/part_3.rs"]
 mod part_3;
 pub use part_3::*;
+#[path = "javascript_call_source/part_4.rs"]
+mod part_4;
+pub use part_4::*;

@@ -55,4 +55,21 @@ fn all_actual_source_functions_compile_to_the_same_complete_instructions() {
             );
         }
     }
+    for row in data["sourceRefusals"].as_array().unwrap() {
+        let source = decode_java_script_call_source(&row["expression"]);
+        assert_eq!(encode_java_script_call_source(&source), row["expression"]);
+        let parameters = row["parameters"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        let actual = native::compile_java_script_call_source(source, &parameters);
+        assert_eq!(
+            encode_java_script_call_source_compilation(&actual),
+            row["compilation"],
+            "{}",
+            row["name"]
+        );
+    }
 }
