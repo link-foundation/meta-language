@@ -1,3 +1,4 @@
+import {acceptRustSourceBytePatternToken} from './rust-byte-pattern-rules.js';
 import {acceptRustSourceStringPatternToken} from './rust-string-pattern-rules.js';
 import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
 import {readRustArrayLookup} from './rust-array-lookups.js';
@@ -1780,6 +1781,7 @@ class RustParser {
       if (c.is('..') || c.is('..=')) throw unsupported('range pattern', 'ranges are outside the portable pattern language', span(token, c.peek()));
       return { k: 'numLit', value: token.value, span: span(token, token) };
     }
+    if(acceptRustSourceBytePatternToken(token.kind)){c.next();return{k:'byteLit',value:token.value,span:span(token,token)};}
     if (token.kind === 'char' || token.kind === 'byteChar') throw unsupported('character pattern', 'characters are outside the portable core', span(token, token));
     if(acceptRustSourceStringPatternToken(token.kind)){c.next();return{k:'strLit',value:token.value,span:span(token,token)};}
     if (c.is('true') || c.is('false')) {
@@ -1809,7 +1811,7 @@ class RustParser {
     if (c.eat('@')) {
       if (segments.length !== 1) throw this.fail('expected a binding before @', token);
       const inner = this.pattern(path, aliases);
-      const value=patternValue(inner,span(token,c.peek()));this.origins.aliasStringPattern(inner,value);
+      const value=patternValue(inner,span(token,c.peek()));this.origins.aliasLiteralPattern(inner,value);
       aliases.push({ name: segments[0], value });
       return inner;
     }
@@ -1863,6 +1865,8 @@ function patternValue(pattern, range) {
       return { k: 'bool', value: pattern.value, span: range };
     case 'strLit':
       return { k: 'str', value: pattern.value, span: range };
+    case 'byteLit':
+      return {k:'num',value:pattern.value,type:rustFixedType('u8'),span:range};
     case 'ctor':
       if (!pattern.args.length) return { k: 'name', path: pattern.path, span: range };
       return { k: 'app', fn: { k: 'name', path: pattern.path, span: range }, args: pattern.args.map((arg) => patternValue(arg, range)), span: range };

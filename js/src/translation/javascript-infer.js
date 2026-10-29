@@ -1293,6 +1293,8 @@ class Inference {
       case 'numLit':
         this.unify(type, this.fresh(true), where);
         return;
+      case 'byteLit':
+        this.unify(type,{kind:'fixed',bits:8,signed:false},where);return;
       case 'boolLit':
         this.unify(type, BOOL, where);
         return;

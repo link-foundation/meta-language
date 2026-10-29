@@ -10254,3 +10254,34 @@ patterns, mutable/interior state and complete Rust translation remain obligation
 The [Rust literal-pattern rules](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
 and [match guard rules](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards)
 define the independent source-language contract.
+
+
+Rust byte-character patterns retain a distinct typed surface pattern until the
+common match checker validates their actual unsigned eight-bit type. They then
+use existing literal equality, ordered alternatives, exhaustiveness and guard
+semantics. A byte pattern never becomes a literal of a wider/signed/floating
+scrutinee type. A direct unsuffixed numeric scrutinee receives its byte type
+constraint from the actual root column; already typed or named expressions and
+other source languages retain their own types. The constraint and type/alias
+selectors are shared JavaScript source translated automatically to Rust.
+
+Literal aliases retain their actual matched source origin for strings and bytes,
+including borrowed layers and constructor fields. The ordinary JavaScript
+inference adapter also understands the typed byte pattern representation.
+Deferred originals cover all256 byte values with independent selected/fallback
+outputs, guards, actual failures, aliases, references, nested fields and direct
+literal inference. There are271 original programs,48 type-domain premises,
+8 inference premises,4 token premises,4 alias premises and5 typed refusals.
+Original/generated native products, both graph codecs and all four emissions
+remain required execution controls.
+
+The exact two previously rejected byte-pattern inputs remain in the old test
+locations and complete independently captured historical sources. Their obsolete
+blanket rejection expectation now reaches the existing required-main diagnostic;
+all nonbyte character inputs and assertions remain unchanged. This correction
+follows the [byte literal type](https://doc.rust-lang.org/reference/expressions/literal-expr.html#byte-literal-expressions)
+and [literal pattern](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
+rules and is bounded by the declared Node/Rust version ranges. No control has
+executed. General scrutinee constraint propagation, Unicode character patterns,
+range/slice patterns, full match ergonomics and complete translation remain
+requirements; byte support does not establish those capabilities.

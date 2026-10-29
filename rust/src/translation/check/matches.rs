@@ -23,7 +23,27 @@ impl Checker {
     ) -> Result<SExpr> {
         let mut lets = Vec::new();
         let mut columns = Vec::new();
-        for scrutinee in scrutinees {
+        for (column, source) in scrutinees.iter().enumerate() {
+            let patterns =
+                rows.iter()
+                    .map(|row| {
+                        if row.patterns.get(column).is_some_and(|pattern| {
+                            matches!(pattern.node, SPatternNode::ByteLit { .. })
+                        }) {
+                            "byteLit".to_owned()
+                        } else {
+                            String::new()
+                        }
+                    })
+                    .collect::<Vec<_>>();
+            let (kind, typed) = match &source.node {
+                SNode::Num { ty, .. } => ("num", ty.is_some()),
+                _ => ("", false),
+            };
+            let inferred;
+            let scrutinee=if crate::translation::rust_byte_pattern_rules::accept_rust_source_byte_literal_inference(self.language.as_str(),kind,typed,&patterns){
+                let mut value=source.clone();if let SNode::Num{ty,..}=&mut value.node{*ty=Some(Type::Fixed{bits:8,signed:false});}inferred=value;&inferred
+            }else{source};
             let checked = self.expr(scrutinee, env, path, None, false)?;
             if let Some(name) = env.local(scrutinee) {
                 columns.push(Column {
@@ -438,6 +458,32 @@ impl Checker {
                     None,
                 );
                 self.literal_pattern(value, ty, span)
+            }
+            SPatternNode::ByteLit { value } => {
+                let (kind, bits, signed) = match ty {
+                    Type::Fixed { bits, signed } => ("fixed", f64::from(*bits), *signed),
+                    _ => ("", 0.0, false),
+                };
+                let error=crate::translation::rust_byte_pattern_rules::read_rust_source_byte_pattern_type_error(kind,bits,signed);
+                if !error.is_empty() {
+                    return Err(type_error(&error, span));
+                }
+                self.literal_pattern(
+                    SExpr::new(
+                        SNode::Num {
+                            value,
+                            ty: Some(Type::Fixed {
+                                bits: 8,
+                                signed: false,
+                            }),
+                            negative: false,
+                            unit: false,
+                        },
+                        None,
+                    ),
+                    ty,
+                    span,
+                )
             }
             SPatternNode::BoolLit { value, .. } => {
                 self.literal_pattern(SExpr::new(SNode::Bool { value }, None), ty, span)

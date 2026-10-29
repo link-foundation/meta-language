@@ -384,3 +384,5 @@ pub(crate) mod source_parameter_binding_rules;
 pub(crate) mod utf16_text_expansion_rules;
 
 pub mod rust_string_pattern_rules;
+
+pub mod rust_byte_pattern_rules;

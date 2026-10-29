@@ -1,3 +1,4 @@
+import {acceptRustSourceLiteralPatternAlias} from './rust-byte-pattern-rules.js';
 import {readRustSourceStringPatternError} from './rust-string-pattern-rules.js';
 import {projectRustCallableOwnerDescriptor} from './rust-callable-owner-origins.js';
 import {readRustCallableOwnerError,readRustCallableOwnerJoinError,acceptRustCallableOwnerDescriptorsEqual} from './rust-callable-owner-rules.js';
@@ -40,7 +41,7 @@ export class RustSourceOrigins {
     this.scope = new Map();
     this.expressions = new WeakMap();
     this.patternReferences = new WeakMap();
-    this.stringPatternAliases = new WeakMap();
+    this.literalPatternAliases = new WeakMap();
     this.type = unknown();
   }
 
@@ -373,7 +374,7 @@ export class RustSourceOrigins {
     }
   }
 
-  aliasStringPattern(pattern,node){if(pattern.k!=='strLit')return;const aliases=this.stringPatternAliases.get(pattern)??[];aliases.push(node);this.stringPatternAliases.set(pattern,aliases);}
+  aliasLiteralPattern(pattern,node){if(!acceptRustSourceLiteralPatternAlias(pattern.k))return;const aliases=this.literalPatternAliases.get(pattern)??[];aliases.push(node);this.literalPatternAliases.set(pattern,aliases);}
 
   referencePattern(pattern) {
     this.patternReferences.set(pattern, (this.patternReferences.get(pattern) ?? 0) + 1);
@@ -393,7 +394,7 @@ export class RustSourceOrigins {
     if (!this.collecting && !['wild', 'bind', 'bindOrCtor'].includes(pattern.k) && origin.wrappers.includes('box')) {
       throw unsupported('source pattern', 'an owned Box requires an explicit dereference before a constructor or literal pattern', sourceSpan);
     }
-    for(const alias of this.stringPatternAliases.get(pattern)??[])this.mark(alias,origin);
+    for(const alias of this.literalPatternAliases.get(pattern)??[])this.mark(alias,origin);
     if(pattern.k==='strLit'){const owner=origin.sourceOwner,error=readRustSourceStringPatternError(origin.type?.kind??'',origin.textSourceModel??'',origin.proven,origin.wrappers.length,origin.wrappers.every(layer=>layer==='reference'),owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,this.collecting);if(error)throw unsupported('Rust string pattern',error,sourceSpan);}
     if (pattern.k === 'bindOrCtor' || pattern.k === 'bind') {
       if (!this.lookup([pattern.name], path)?.fields) {

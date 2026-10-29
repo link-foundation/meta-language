@@ -364,6 +364,11 @@ pub enum SPatternNode {
     StrLit {
         value: String,
     },
+    /// A Rust byte-character pattern retains its u8 literal type.
+    ByteLit {
+        #[serde(deserialize_with = "numeral")]
+        value: String,
+    },
     /// Lean's `n + 2`; `add` holds the numeral's decimal digits.
     NatAdd {
         inner: Box<SPattern>,

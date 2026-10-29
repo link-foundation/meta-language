@@ -41,6 +41,14 @@ impl Inference {
                 let literal = self.fresh(true);
                 self.unify(ty, &literal, place)
             }
+            SPatternNode::ByteLit { .. } => self.unify(
+                ty,
+                &Term::Known(Type::Fixed {
+                    bits: 8,
+                    signed: false,
+                }),
+                place,
+            ),
             SPatternNode::BoolLit { .. } => self.unify(ty, &Term::Known(BOOL), place),
             SPatternNode::StrLit { .. } => self.unify(ty, &Term::Known(STRING), place),
             _ => Ok(()),

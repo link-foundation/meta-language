@@ -1174,3 +1174,10 @@ reference layers; aliases keep the matched source origin. This supports the
 string dispatch used by generated runtime code without substituting an opaque
 source block. Its original/generated execution controls remain deferred; full
 match ergonomics, other literal domains and full runtime reparsing remain gaps.
+
+
+The Rust byte-pattern draft preserves byte-character `u8` types through common
+match checking, then emits existing equality/guard semantics. It covers all byte
+values, aliases with actual source ownership, constructor fields and direct
+unsuffixed scrutinee constraints. Unicode character patterns remain a distinct
+required domain. No source or native execution controls have run in this phase.

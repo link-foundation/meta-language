@@ -379,6 +379,21 @@ impl RustParser {
                 span: span(&token, &token),
             });
         }
+        if crate::translation::rust_byte_pattern_rules::accept_rust_source_byte_pattern_token(
+            if token.kind == TokenKind::ByteCharacter {
+                "byteChar"
+            } else {
+                ""
+            },
+        ) {
+            self.cursor.advance();
+            return Ok(SPattern {
+                node: SPatternNode::ByteLit {
+                    value: token.value.clone(),
+                },
+                span: span(&token, &token),
+            });
+        }
         if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) {
             return Err(unsupported(
                 "character pattern",
@@ -478,7 +493,7 @@ impl RustParser {
             }
             let inner = self.pattern(path, aliases)?;
             let value = pattern_value(&inner, span(&token, self.cursor.peek()))?;
-            self.origins.alias_string_pattern(&inner, &value);
+            self.origins.alias_literal_pattern(&inner, &value);
             aliases.push(Alias {
                 name: segments[0].clone(),
                 value,

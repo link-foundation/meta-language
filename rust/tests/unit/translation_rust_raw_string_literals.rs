@@ -965,6 +965,7 @@ fn rust_character_selection_preserves_lifetimes_labels_strings_comments_and_fore
 
 #[test]
 fn rust_character_suffixes_and_typed_semantics_remain_explicitly_unsupported() {
+    super::translation_string_array_copy_sort::require_rust_profile();
     for literal in ["'a'word", "b'a'u8", "'a'_suffix", "'a'λ"] {
         let source = format!("// 😀\n{literal}");
         let error = tokenize(&source, Language::Rust).unwrap_err();
@@ -1001,11 +1002,19 @@ fn rust_character_suffixes_and_typed_semantics_remain_explicitly_unsupported() {
         }
         let source = format!("fn choose(x:u8)->u8{{match x{{{literal}=>1,_=>0}}}}");
         let error = meta_language::translation::rust::parse_rust(&source).unwrap_err();
-        assert_eq!(error.kind, ErrorKind::Unsupported);
-        assert_eq!(
-            error.reason,
-            "character pattern: characters are outside the portable core"
-        );
+        if literal.starts_with('b') {
+            // Same original input; the actual u8 pattern now reaches required-main.
+            assert_eq!(error.kind, ErrorKind::Syntax);
+            assert_eq!(error.reason, "a Rust program needs fn main");
+            let end = source.encode_utf16().count();
+            assert_eq!(error.span, Some(Span::new(end, end)));
+        } else {
+            assert_eq!(error.kind, ErrorKind::Unsupported);
+            assert_eq!(
+                error.reason,
+                "character pattern: characters are outside the portable core"
+            );
+        }
     }
     for literal in ["''", "b'é'", r"b'\u{41}'", r"'\x80'"] {
         let error = tokenize(literal, Language::Rust).unwrap_err();

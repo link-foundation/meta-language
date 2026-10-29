@@ -1,3 +1,4 @@
+import {readRustSourceBytePatternTypeError,acceptRustSourceByteLiteralInference} from './rust-byte-pattern-rules.js';
 import {readTypeQueryEvaluationPlan} from './type-query-evaluation-rules.js';
 import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureContainers,checkRustDataTypeFieldSignatureProgramContainers} from './rust-data-type-field-signatures.js';
 import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
@@ -1751,7 +1752,8 @@ class Checker {
    */
   compileMatch(node, env, path) {
     const lets = [];
-    const columns = node.scrutinees.map((scrutinee) => {
+    const columns = node.scrutinees.map((source,column) => {
+      const scrutinee=acceptRustSourceByteLiteralInference(this.language,source.k,Boolean(source.type),node.rows.map(row=>row.patterns[column]?.k??''))?{...source,type:{kind:'fixed',bits:8,signed:false}}:source;
       const checked = this.expr(scrutinee, env, path, undefined);
       if (scrutinee.k === 'name' && scrutinee.path.length === 1 && env.has(scrutinee.path[0])) {
         return { name: scrutinee.path[0], type: checked.type };
@@ -1918,6 +1920,10 @@ class Checker {
           return result;
         }
         return this.literalPattern({ k: 'num', value: pattern.value, negative: pattern.negative }, type, span);
+      }
+      case 'byteLit':{
+        const error=readRustSourceBytePatternTypeError(type.kind,type.bits??0,type.signed===true);if(error)throw typeError(error,pattern.span??span);
+        return this.literalPattern({k:'num',value:pattern.value,type:{kind:'fixed',bits:8,signed:false}},type,span);
       }
       case 'boolLit':
         return this.literalPattern({ k: 'bool', value: pattern.value }, type, span);

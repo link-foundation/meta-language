@@ -6,11 +6,17 @@ use super::super::{Result, SExpr, SPattern, SPatternNode, Span, Type, unsupporte
 use super::{SourceDeclaration, SourceLookup, SourceOrigin, SourceOrigins};
 
 impl SourceOrigins {
-    pub(in super::super) fn alias_string_pattern(&mut self, pattern: &SPattern, node: &SExpr) {
-        if matches!(pattern.node, SPatternNode::StrLit { .. })
-            && let Some(span) = pattern.span
+    pub(in super::super) fn alias_literal_pattern(&mut self, pattern: &SPattern, node: &SExpr) {
+        let form = match pattern.node {
+            SPatternNode::StrLit { .. } => "strLit",
+            SPatternNode::ByteLit { .. } => "byteLit",
+            _ => "",
+        };
+        if crate::translation::rust_byte_pattern_rules::accept_rust_source_literal_pattern_alias(
+            form,
+        ) && let Some(span) = pattern.span
         {
-            self.string_pattern_aliases
+            self.literal_pattern_aliases
                 .entry(span)
                 .or_default()
                 .push(node.clone());
@@ -83,7 +89,7 @@ impl SourceOrigins {
         }
         if let Some(aliases) = pattern
             .span
-            .and_then(|span| self.string_pattern_aliases.get(&span))
+            .and_then(|span| self.literal_pattern_aliases.get(&span))
             .cloned()
         {
             for alias in aliases {
