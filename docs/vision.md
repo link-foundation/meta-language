@@ -7935,6 +7935,12 @@ declarations. Anonymous expressions use the actual immediate function head:
 the first parameter or a later declaration never supplies a fabricated name.
 Their import aliases and duplicate private helpers retain independent lexical
 owners. Head-name admission is itself a shared translated definition.
+Capture also retains exported asynchronous named functions and their exact
+qualifier/comment source. A shared declaration-offset definition admits the
+`async function` head only without an intervening line terminator, including
+terminators inside comments. Deferred composition controls retain original
+Promise results and awaited imported calls. This extends source capture, not
+the existing sequential async translation profile into general scheduling.
 Deferred controls include duplicate private helpers, aliases, both codecs and
 all four emission targets. Source construction is not execution evidence.
 

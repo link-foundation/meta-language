@@ -9,3 +9,8 @@ export const readSourceLibraryDeclarationBindingKind=function(keyword,kind,name,
 };
 /** @param {string} kind @returns {boolean} */
 export function acceptJavaScriptSourceFunctionHeadName(kind){return kind==='identifier';}
+/** @param {string} first @param {string} second @param {boolean} lineBreak
+ * @returns {number} */
+export function readSourceLibraryFunctionDeclarationOffset(first,second,lineBreak){
+ return first==='function'?0:first==='async'&&second==='function'&&!lineBreak?1:-1;
+}

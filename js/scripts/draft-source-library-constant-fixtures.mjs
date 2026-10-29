@@ -5,6 +5,14 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
  schemaVersion:1,model:'actual source module function bindings 1',
  versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024'},
  headNames:[{kind:'identifier',expected:true},{kind:'keyword',expected:false},{kind:'punctuation',expected:false},{kind:'',expected:false}],
+ declarationOffsets:[
+  {first:'function',second:'apply',lineBreak:false,expected:0},
+  {first:'function',second:'apply',lineBreak:true,expected:0},
+  {first:'async',second:'function',lineBreak:false,expected:1},
+  {first:'async',second:'function',lineBreak:true,expected:-1},
+  {first:'async',second:'apply',lineBreak:false,expected:-1},
+  {first:'const',second:'apply',lineBreak:false,expected:-1}
+ ],
  anonymousBindings:[
   {name:'anonymous function parameters are not module names',source:'const outer=function(value){return value;};',bindings:[['outer','const',0],['value','parameter',1]]},
   {name:'anonymous generator parameters are not module names',source:'const outer=function*(value){yield value;};',bindings:[['outer','const',0],['value','parameter',1]]},
@@ -22,6 +30,10 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
  facts:[
   {name:'constant arrow exports retain actual const bindings',source:'export const apply=value=>value;',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'arrow'}]},
   {name:'ordinary functions retain their existing declaration form',source:'export function apply(value){return value;}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
+  {name:'async function exports retain their actual names',source:'export async function apply(value){return value;}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
+  {name:'async comments without line breaks preserve the head',source:'export async /* preserved */ function apply(value){return value;}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
+  {name:'async line breaks cannot fabricate export declarations',source:'export async\nfunction apply(value){return value;}',error:true},
+  {name:'async comment line breaks cannot fabricate export declarations',source:'export async /*\n*/ function apply(value){return value;}',error:true},
   {name:'anonymous function expressions retain their actual outer binding',source:'export const apply=function(value){return value;};',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'function expression'}]},
   {name:'named function expressions are not module declarations',source:'export const apply=function apply(value){return value;};',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'function expression',expressionName:'apply'}]},
   {name:'functions inside default parameter groups remain nested',source:'export function apply(read=function nested(){return 1;}){return read();}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
@@ -49,6 +61,12 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
   {name:'duplicate anonymous private helpers retain separate bindings',entry:'entry.js',aliases:true,arguments:[4],expected:11,files:[
    {path:'left.js',source:'/** @param {number} value @returns {number} */ const increment=function(value){return value+1;};/** @param {number} value @returns {number} */ export const left=function(value){return increment(value);};'},
    {path:'right.js',source:'/** @param {number} value @returns {number} */ const increment=function(value){return value+2;};/** @param {number} value @returns {number} */ export const right=function(value){return increment(value);};'},
-   {path:'entry.js',source:'import {left} from "./left.js";import {right} from "./right.js";/** @param {number} value @returns {number} */ export function run(value){return left(value)+right(value);}'}]}
+   {path:'entry.js',source:'import {left} from "./left.js";import {right} from "./right.js";/** @param {number} value @returns {number} */ export function run(value){return left(value)+right(value);}'}]},
+  {name:'async named source dependency preserves await and alias',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
+   {path:'provider.js',source:'/** @param {number} value @returns {Promise<number>} */ export async function double(value){return value*2;}'},
+   {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {Promise<number>} */ export async function run(value){return await twice(value);}'}]},
+  {name:'async anonymous source dependency preserves await and alias',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
+   {path:'provider.js',source:'/** @param {number} value @returns {Promise<number>} */ export const double=async function(value){return value*2;};'},
+   {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {Promise<number>} */ export const run=async value=>await twice(value);'}]}
  ],
  boundary:'Unexecuted literal controls. Actual module bindings and all source bytes remain explicit. Function-only libraries, alias scopes, complete target/native policy behavior and semantic translations retain their independent controls. General constant data/effects, function-expression alias scopes and full JavaScript modules remain required.'});

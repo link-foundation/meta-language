@@ -6,7 +6,7 @@ import { relative, sep } from 'node:path';
 import { composeSourceLibraryAliases } from './compose-source-library-aliases.mjs';
 import { tokenize } from '../src/translation/lexer.js';
 import {readJavaScriptDocumentationTags,testJavaScriptSourceFunctionStart} from '../src/translation/javascript.js';
-import {readSourceLibraryDeclarationBindingKind} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,readSourceLibraryFunctionDeclarationOffset} from '../src/translation/source-library-binding-rules.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 
 const root = new URL('../../', import.meta.url);
@@ -19,7 +19,9 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
   const tokens = tokenize(source, 'JavaScript').tokens;
   const imports = [], exports = new Set(), declarations = new Set(), declarationBindings=new Map(), expressionHeads=new Set();
   function form(index){
-    const head=tokens[index],name=tokens[index+1];
+    const word=at=>tokens[at]?.kind==='identifier'&&source.slice(tokens[at].start,tokens[at].end)===tokens[at].value?tokens[at].value:'';
+    const offset=readSourceLibraryFunctionDeclarationOffset(word(index),word(index+1),/[\r\n\u2028\u2029]/u.test(source.slice(tokens[index]?.end??0,tokens[index+1]?.start??0)));
+    const head=tokens[index+(offset<0?0:offset)],name=tokens[index+(offset<0?0:offset)+1];
     let callable=false,initializer='',expressionName='';
     if(actual(source,head,'const')&&tokens[index+2]?.kind==='punct'&&tokens[index+2].value==='='&&testJavaScriptSourceFunctionStart(tokens,index+3)){
       callable=true;let at=index+3;
@@ -28,7 +30,7 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
       if(initializer==='function expression'){expressionHeads.add(at);if(tokens[at+1]?.kind==='identifier')expressionName=tokens[at+1].value;}
     }
     const keyword=actual(source,head,'function')?'function':actual(source,head,'const')?'const':'';
-    return {name:name?.value??'',kind:readSourceLibraryDeclarationBindingKind(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{}),...(expressionName?{expressionName}:{})};
+    return {name:name?.value??'',nameKind:name?.kind??'',kind:readSourceLibraryDeclarationBindingKind(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{}),...(expressionName?{expressionName}:{})};
   }
   let depth = 0;
   for (let index = 0; index < tokens.length; index += 1) {
@@ -45,7 +47,7 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
     }
     if (actual(source, token, 'export')) {
       const binding=form(index+1);
-      if (!acceptSourceLibraryFunctionExport(binding.keyword,tokens[index+2]?.kind??'',binding.name,binding.callable))
+      if (!acceptSourceLibraryFunctionExport(binding.keyword,binding.nameKind,binding.name,binding.callable))
         throw new TypeError('source closure exports need actual named function declarations or constant function bindings at '+path+':'+token.start);
       exports.add(binding.name);
     }

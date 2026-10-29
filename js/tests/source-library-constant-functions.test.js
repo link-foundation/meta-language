@@ -8,7 +8,7 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset} from '../src/translation/source-library-binding-rules.js';
 import {analyzeProgram} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
@@ -26,6 +26,7 @@ const fixture=readProjectData(new URL('../../parity/fixtures/source-library-cons
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.node);
 for(const row of fixture.headNames)test('actual function head token '+row.kind,()=>assert.equal(acceptJavaScriptSourceFunctionHeadName(row.kind),row.expected));
+for(const [index,row]of fixture.declarationOffsets.entries())test('actual async function head '+index,()=>assert.equal(readSourceLibraryFunctionDeclarationOffset(row.first,row.second,row.lineBreak),row.expected));
 for(const row of fixture.anonymousBindings)test(row.name,()=>{
  const program=analyzeProgram(row.source,'JavaScript');
  assert.deepEqual(program.bindings.map(binding=>[binding.name,binding.kind,binding.references.length]),row.bindings);
@@ -48,7 +49,7 @@ for(const row of fixture.modules)test(row.name,async context=>{
  for(const file of row.files){assert.match(file.path,/^[a-z][a-z-]*\.js$/u);writeFileSync(join(directory,file.path),file.source);}
  const entry=relative(root,join(directory,row.entry)).replaceAll('\\','/');
  const original=await import(pathToFileURL(join(directory,row.entry)).href);
- assert.equal(original.run(...row.arguments),row.expected);
+ assert.equal(await original.run(...row.arguments),row.expected);
  const read=()=>readSourceLibraryClosure(entry,{aliases:row.aliases});
  if(row.error){assert.throws(read,error=>error instanceof TypeError&&error.message.includes(row.error));return;}
  const closure=read(),checked=checkProgram(parseJavaScript(closure.source,{referenceSemantics:false}));
@@ -57,7 +58,7 @@ for(const row of fixture.modules)test(row.name,async context=>{
  const packet=encodeTypedProgramLinks(selected,{provenance:{sourceModel:fixture.model,sourceClosure:closure,sourceDeclarationOwners:owners}}),products=[selected,...[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))].map(network=>recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true}))];
  for(const product of products){
   const emitted=emitJavaScript(product).text.replace(/^export /gmu,'');
-  assert.equal(runInNewContext(emitted+'\nrun(...input)',{input:row.arguments},{timeout:1000}),row.expected);
+  assert.equal(await runInNewContext(emitted+'\nrun(...input)',{input:row.arguments},{timeout:1000}),row.expected);
   for(const emit of [emitRust,emitLean,emitRocq])assert.ok(emit(product).definitions.length>0);
  }
  for(const input of closure.inputs){assert.equal(input.source,row.files.find(file=>input.path.endsWith('/'+file.path)).source);assert.ok(input.sourceSha256.length===64);}

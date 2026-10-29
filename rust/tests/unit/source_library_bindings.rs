@@ -30,6 +30,16 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             row["expected"].as_bool().unwrap()
         );
     }
+    for row in fixture["declarationOffsets"].as_array().unwrap() {
+        assert_eq!(
+            bindings::read_source_library_function_declaration_offset(
+                row["first"].as_str().unwrap(),
+                row["second"].as_str().unwrap(),
+                row["lineBreak"].as_bool().unwrap()
+            ),
+            row["expected"].as_i64().unwrap() as f64
+        );
+    }
     for row in fixture["anonymousBindings"].as_array().unwrap() {
         let program = meta_language::analyze_program(
             row["source"].as_str().unwrap(),

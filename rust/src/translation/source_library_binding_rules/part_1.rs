@@ -169,6 +169,22 @@ pub fn accept_java_script_source_function_head_name(kind: &str) -> bool {
     kind == "identifier"
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_source_library_function_declaration_offset(
+    first: &str,
+    second: &str,
+    line_break: bool,
+) -> f64 {
+    if first == "function" {
+        0f64
+    } else if ((first == "async") && (second == "function")) && !line_break {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,
