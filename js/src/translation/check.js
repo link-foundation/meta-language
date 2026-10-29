@@ -1,3 +1,4 @@
+import {readTypeQueryEvaluationPlan} from './type-query-evaluation-rules.js';
 import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureContainers,checkRustDataTypeFieldSignatureProgramContainers} from './rust-data-type-field-signatures.js';
 import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
 import {captureCallableConstantApplicationHead} from './callable-constants.js';
@@ -867,12 +868,14 @@ class Checker {
           if (!present) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
           return { k: 'optionalTypeOf', arg, present, type: STRING };
         }
-        if (!acceptTypeQueryOperand(node.arg.k)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
         const constantReference = arg.k === 'call' && this.externals.get(arg.fn)?.k === 'const';
-        if (!acceptCheckedTypeQueryOperand(arg.k, constantReference)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
-        const value = readTypeQueryResult(arg.type.kind);
-        if (!value) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
-        return literal(STRING, value);
+        let value = readTypeQueryResult(arg.type.kind);
+        const plan = readTypeQueryEvaluationPlan(this.language === 'JavaScript', Boolean(value),
+          acceptTypeQueryOperand(node.arg.k), acceptCheckedTypeQueryOperand(arg.k, constantReference), arg.type.kind === 'unit');
+        if (plan === 3) value = 'undefined';
+        if (plan === 0) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
+        const body = literal(STRING, value);
+        return plan === 1 ? body : { k: 'let', name: this.freshName('ml_type_query_operand'), value: arg, body, type: STRING };
       }
       case 'unary': {
         if (node.op === 'not') {

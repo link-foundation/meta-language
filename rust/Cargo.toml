@@ -258,6 +258,7 @@ include = [
     "src/data/string-array-sort-program.lino",
     "src/data/string-construction-program.lino",
     "src/data/string-number-program.lino",
+    "src/data/type-query-evaluation-program.lino",
     "src/data/typed-program-record-shapes.lino",
     "src/data/typed-program-value-sharing.lino",
     "src/data/typed-record-shape-program.lino",

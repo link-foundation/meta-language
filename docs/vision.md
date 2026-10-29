@@ -341,6 +341,20 @@ Documentation defaults do not supply runtime initializers. Provided arguments
 evaluate once in source order before applicable lazy defaults, which retain
 their callee scope and initializer order through source-free rechecking.
 Known record, tuple, Map and Set bindings have JavaScript `typeof` tag `object`.
+The evaluated-query extension captures calls, field reads, constructed values
+and other represented operands before yielding their statically known tag.
+Unit results produce `undefined` only after evaluating their actual operand.
+Pure bound/literal queries keep their earlier constant representation. Shared
+source rules select these cases and automatically generate native definitions;
+unknown value kinds still refuse. The two former refusals (`typeof fail()` and
+`typeof [1]`) retain their exact source inputs and gain translation plus actual
+abrupt/normal-output assertions in both runtime controls. This correction follows
+[ECMAScript 2025 13.5.3.1](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-typeof-operator-runtime-semantics-evaluation),
+which evaluates the operand and gets its value before returning a tag. Deferred
+controls retain heap effects, getter calls, abrupt Error requests, void effects,
+complete typed codecs and four target emissions. No control has run locally.
+Unresolvable names, temporal dead zones, symbols, proxies and HTMLDDA remain
+separate source/environment obligations, rather than inferred from a type tag.
 An optional query requires a known nonempty present-value tag and retains its
 null and undefined alternatives without discarding operand effects or
 exceptions. A raw JavaScript mixed array in an actual `Option<Tuple>` context

@@ -7,6 +7,10 @@ const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-librari
 if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-libraries]');
 process.argv.splice(2,process.argv.length-2,'--draft');
 const root=new URL('../../',import.meta.url);
+for (const path of ['js/src/translation/type-query-evaluation-rules.js',
+ 'js/scripts/draft-type-query-evaluation-rules.mjs', 'js/tests/translation-type-queries.test.js'])
+ parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
+await import('./draft-type-query-evaluation-rules.mjs'); globalThis.gc?.();
 for (const path of ['js/src/translation/record-write-rules.js', 'js/src/translation/record-writes.js',
  'js/scripts/generate-record-write-rules.mjs', 'js/scripts/generate-record-write-fixtures.mjs',
  'js/tests/translation-record-writes.test.js']) parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
@@ -50,6 +54,14 @@ const casts={id:'javascript-fixed-integer-casts',required:true,javascript:{statu
 const castIndex=inventory.features.findIndex(entry=>entry.id===casts.id);if(castIndex<0)inventory.features.push(casts);else inventory.features[castIndex]=casts;
 const naturals={id:'javascript-call-natural-source',required:true,javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-natural-source.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-call-natural-source.test.js','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-controls.mjs']},rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_natural_source.rs','rust/tests/unit/translation_javascript_call_natural_source.rs','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-oracle.mjs']}};
 const naturalIndex=inventory.features.findIndex(entry=>entry.id===naturals.id);if(naturalIndex<0)inventory.features.push(naturals);else inventory.features[naturalIndex]=naturals;
+for(const feature of [
+ {id:'javascript-compound-own-fields',required:true,
+ javascript:{status:'implemented',evidence:['js/src/translation/record-write-rules.js','js/src/translation/record-writes.js','js/tests/translation-record-writes.test.js','parity/fixtures/record-writes.lino','parity/fixtures/javascript-call-source.lino']},
+ rust:{status:'implemented',evidence:['rust/src/translation/record_write_rules.rs','rust/src/translation/record_write_source_interfaces.rs','rust/src/translation/check/record_writes.rs','rust/tests/unit/translation_record_writes.rs','parity/fixtures/record-writes.lino','parity/fixtures/javascript-call-source.lino']}},
+ {id:'javascript-evaluated-type-queries',required:true,
+ javascript:{status:'implemented',evidence:['js/src/translation/type-query-evaluation-rules.js','js/src/translation/check.js','js/tests/translation-type-queries.test.js','parity/fixtures/javascript-call-source.lino']},
+ rust:{status:'implemented',evidence:['rust/src/translation/type_query_evaluation_rules.rs','rust/src/translation/check/type_queries.rs','rust/tests/unit/translation_defaults.rs','parity/fixtures/javascript-call-source.lino']}}
+]){const index=inventory.features.findIndex(entry=>entry.id===feature.id);if(index<0)inventory.features.push(feature);else inventory.features[index]=feature;}
 const at=inventory.features.findIndex(entry=>entry.id===row.id);if(at<0)inventory.features.push(row);else inventory.features[at]=row;writeProjectData(file,inventory);
 process.argv.splice(2,process.argv.length-2,'--draft','--reuse-roots');await import('./draft-source-definition-catalog.mjs');globalThis.gc?.();
 const {draftRustPackageSourceAssets}=await import('./rust-package-source-assets.mjs');draftRustPackageSourceAssets();globalThis.gc?.();
