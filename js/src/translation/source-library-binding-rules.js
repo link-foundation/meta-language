@@ -47,3 +47,6 @@ export function testJavaScriptSourceVariableEnvironmentTerm(term){return term===
 
 /** @param {string} term @returns {boolean} */
 export function testRustSourceOpaqueLiteralTerm(term){return term==='string_literal'||term==='raw_string_literal'||term==='character_literal'||term==='char_literal';}
+
+/** @param {string} term @returns {boolean} */
+export function testJavaScriptSourceOpaqueLiteralTerm(term){return term==='string'||term==='regular_expression'||term==='regex';}

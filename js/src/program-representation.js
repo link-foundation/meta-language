@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm,testRustSourceOpaqueLiteralTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm,testRustSourceOpaqueLiteralTerm,testJavaScriptSourceOpaqueLiteralTerm} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
@@ -916,7 +916,7 @@ function effectEvidence(program) {
 function codeMask(source, language, syntax) {
   const mask = new Array(source.length).fill(true);
   const opaque=new Map();
-  if(language==='Rust')for(const fact of syntax){if(testRustSourceOpaqueLiteralTerm(fact.term)&&fact.end>fact.start&&fact.end<=source.length)opaque.set(fact.start,Math.max(opaque.get(fact.start)??0,fact.end));}
+  for(const fact of syntax){const accepted=language==='Rust'?testRustSourceOpaqueLiteralTerm(fact.term):language==='JavaScript'&&testJavaScriptSourceOpaqueLiteralTerm(fact.term);if(accepted&&fact.end>fact.start&&fact.end<=source.length)opaque.set(fact.start,Math.max(opaque.get(fact.start)??0,fact.end));}
   const lineComment = language === 'Lean' ? '--' : language === 'Rocq' ? null : '//';
   const blockOpen = language === 'Lean' ? '/-' : language === 'Rocq' ? '(*' : '/*';
   const blockClose = language === 'Lean' ? '-/' : language === 'Rocq' ? '*)' : '*/';
@@ -932,7 +932,7 @@ function codeMask(source, language, syntax) {
     } else if (source[offset] === '"' || (language === 'JavaScript' && source[offset] === "'")) {
       offset = maskQuoted(source, mask, offset, source[offset]);
     } else if (language === 'JavaScript' && source[offset] === '`') {
-      offset = maskTemplate(source, mask, offset);
+      offset = maskTemplate(source, mask, offset, opaque);
     } else {
       offset += codePointAt(source, offset).length;
     }
@@ -976,7 +976,7 @@ function maskNested(source, mask, start, open, close) {
   return offset;
 }
 
-function maskTemplate(source, mask, start) {
+function maskTemplate(source, mask, start, opaque) {
   let offset = start;
   mask[offset++] = false;
   while (offset < source.length) {
@@ -988,7 +988,7 @@ function maskTemplate(source, mask, start) {
       break;
     } else if (source.startsWith('${', offset)) {
       mark(mask, offset, offset + 2, false);
-      offset = maskTemplateExpression(source, mask, offset + 2);
+      offset = maskTemplateExpression(source, mask, offset + 2, opaque);
     } else {
       mask[offset++] = false;
     }
@@ -996,11 +996,13 @@ function maskTemplate(source, mask, start) {
   return offset;
 }
 
-function maskTemplateExpression(source, mask, start) {
+function maskTemplateExpression(source, mask, start, opaque) {
   let offset = start;
   let depth = 1;
   while (offset < source.length && depth > 0) {
-    if (source.startsWith('//', offset)) {
+    const literalEnd=opaque.get(offset);
+    if(literalEnd!==undefined){mark(mask,offset,literalEnd,false);offset=literalEnd;}
+    else if (source.startsWith('//', offset)) {
       const end = source.indexOf('\n', offset);
       mark(mask, offset, end < 0 ? source.length : end, false);
       offset = end < 0 ? source.length : end;
@@ -1009,7 +1011,7 @@ function maskTemplateExpression(source, mask, start) {
     } else if (source[offset] === '"' || source[offset] === "'") {
       offset = maskQuoted(source, mask, offset, source[offset]);
     } else if (source[offset] === '`') {
-      offset = maskTemplate(source, mask, offset);
+      offset = maskTemplate(source, mask, offset, opaque);
     } else if (source[offset] === '{') {
       depth += 1;
       offset += 1;

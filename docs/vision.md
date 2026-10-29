@@ -10217,3 +10217,16 @@ controls compile/run both originals and renames exclusively in CI under the
 explicit Rust version profile. Those controls are currently unexecuted; lifetime
 namespaces, labels, complete macro token handling and full translation remain
 separate obligations.
+
+
+JavaScript token masking similarly transports actual `string` and complete
+`regular_expression` CST spans, including the retained `regex` source alias.
+It applies those same spans inside every recursively nested template
+substitution. Literal quotes, slashes, braces and comment markers therefore
+remain literal contents rather than changing the surrounding source scan.
+Template containers remain open to expression analysis; ordinary division
+remains code. The shared source selector is automatically translated to Rust.
+Seven term premises and eight independent whole-source/exact-rename controls
+retain those distinctions, literal contents, original Node values, snapshots
+and concrete reconstruction. These controls remain unexecuted; the change
+does not establish complete template/tag execution or full-language translation.

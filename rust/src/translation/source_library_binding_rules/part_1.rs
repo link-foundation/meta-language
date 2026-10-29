@@ -623,6 +623,12 @@ pub fn test_rust_source_opaque_literal_term(term: &str) -> bool {
         || (term == "char_literal")
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_java_script_source_opaque_literal_term(term: &str) -> bool {
+    ((term == "string") || (term == "regular_expression")) || (term == "regex")
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,

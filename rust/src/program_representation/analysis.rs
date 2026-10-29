@@ -437,11 +437,17 @@ pub(super) fn resolve_bindings(
 fn code_mask(source: &str, language: &str, syntax: &[ProgramSourceMapping]) -> Vec<bool> {
     let mut mask = vec![true; source.len()];
     let mut opaque = BTreeMap::new();
-    if language == "Rust" {
-        for fact in syntax {
-            if crate::translation::source_library_binding_rules::test_rust_source_opaque_literal_term(&fact.term)&&fact.range.end>fact.range.start&&fact.range.end<=source.len(){
-            let end=opaque.entry(fact.range.start).or_insert(fact.range.end);*end=(*end).max(fact.range.end);
-        }
+    for fact in syntax {
+        let accepted = if language == "Rust" {
+            crate::translation::source_library_binding_rules::test_rust_source_opaque_literal_term(
+                &fact.term,
+            )
+        } else {
+            language=="JavaScript"&&crate::translation::source_library_binding_rules::test_java_script_source_opaque_literal_term(&fact.term)
+        };
+        if accepted && fact.range.end > fact.range.start && fact.range.end <= source.len() {
+            let end = opaque.entry(fact.range.start).or_insert(fact.range.end);
+            *end = (*end).max(fact.range.end);
         }
     }
     let line_comment = match language {
@@ -472,7 +478,7 @@ fn code_mask(source: &str, language: &str, syntax: &[ProgramSourceMapping]) -> V
             if character == '"' || (language == "JavaScript" && character == '\'') {
                 offset = mask_quoted(source, &mut mask, offset, character);
             } else if language == "JavaScript" && character == '`' {
-                offset = mask_template(source, &mut mask, offset);
+                offset = mask_template(source, &mut mask, offset, &opaque);
             } else {
                 offset += character.len_utf8();
             }
@@ -524,7 +530,12 @@ fn mask_nested(source: &str, mask: &mut [bool], start: usize, open: &str, close:
     offset
 }
 
-fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
+fn mask_template(
+    source: &str,
+    mask: &mut [bool],
+    start: usize,
+    opaque: &BTreeMap<usize, usize>,
+) -> usize {
     let mut offset = start;
     mask[offset] = false;
     offset += 1;
@@ -538,7 +549,7 @@ fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
             break;
         } else if source[offset..].starts_with("${") {
             mark(mask, offset, offset + 2, false);
-            offset = mask_template_expression(source, mask, offset + 2);
+            offset = mask_template_expression(source, mask, offset + 2, opaque);
         } else {
             let character = char_at(source, offset);
             mark(mask, offset, offset + character.len_utf8(), false);
@@ -548,11 +559,19 @@ fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
     offset
 }
 
-fn mask_template_expression(source: &str, mask: &mut [bool], start: usize) -> usize {
+fn mask_template_expression(
+    source: &str,
+    mask: &mut [bool],
+    start: usize,
+    opaque: &BTreeMap<usize, usize>,
+) -> usize {
     let mut offset = start;
     let mut depth = 1_usize;
     while offset < source.len() && depth > 0 {
-        if source[offset..].starts_with("//") {
+        if let Some(end) = opaque.get(&offset).copied() {
+            mark(mask, offset, end, false);
+            offset = end;
+        } else if source[offset..].starts_with("//") {
             let end = source[offset..]
                 .find('\n')
                 .map_or(source.len(), |end| offset + end);
@@ -564,7 +583,7 @@ fn mask_template_expression(source: &str, mask: &mut [bool], start: usize) -> us
             let character = char_at(source, offset);
             match character {
                 '"' | '\'' => offset = mask_quoted(source, mask, offset, character),
-                '`' => offset = mask_template(source, mask, offset),
+                '`' => offset = mask_template(source, mask, offset, opaque),
                 '{' => {
                     depth += 1;
                     offset += 1;

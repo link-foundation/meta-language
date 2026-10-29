@@ -86,4 +86,247 @@ cases.push(
  {name:'nested ordinary blocks hoist vars only to their static block',source:'let total=0;class Box{static{{var value=7;}total=value;}}function choose(){return total;}',context:'',probe:'choose()',value:'7',bindings:[['total','let',2],['Box','class',0],['value','var',1],['choose','function',0]],unresolved:[],rename:{name:'value',kind:'var',replacement:'selected',source:'let total=0;class Box{static{{var selected=7;}total=selected;}}function choose(){return total;}'}},
  {name:'static block closures capture the block variable environment',source:'let read;class Box{static{var value=7;read=()=>value;}}function choose(){return read();}',context:'',probe:'choose()',value:'7',bindings:[['read','let',2],['Box','class',0],['value','var',1],['choose','function',0]],unresolved:[],rename:{name:'value',kind:'var',replacement:'selected',source:'let read;class Box{static{var selected=7;read=()=>selected;}}function choose(){return read();}'}}
 );
+cases.push(...[
+ {
+  "name": "regular expression quotes cannot conceal following references",
+  "source": "function choose(value=seed){const pattern=/\"/;return pattern.test('\"')?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "pattern",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const pattern=/\"/;return pattern.test('\"')?selected:0;}"
+  }
+ },
+ {
+  "name": "regular expression character classes retain comment markers",
+  "source": "function choose(value=seed){const pattern=/[/*\"']/;return pattern.test('\"')?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "pattern",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const pattern=/[/*\"']/;return pattern.test('\"')?selected:0;}"
+  }
+ },
+ {
+  "name": "regular expression content and flags never become lexical reads",
+  "source": "function choose(value=seed){const pattern=/value/gi;return pattern.test(\"VALUE\")?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "pattern",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const pattern=/value/gi;return pattern.test(\"VALUE\")?selected:0;}"
+  }
+ },
+ {
+  "name": "template substitutions preserve regular expression brace ownership",
+  "source": "function choose(value=seed){return `${/[\"}]/.test('\"')?value:0}`;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){return `${/[\"}]/.test('\"')?selected:0}`;}"
+  }
+ },
+ {
+  "name": "nested template substitutions share actual literal ownership",
+  "source": "function choose(value=seed){return `outer ${`inner ${/[\"}]/.test('\"')?value:0}`}`;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "outer inner 7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){return `outer ${`inner ${/[\"}]/.test('\"')?selected:0}`}`;}"
+  }
+ },
+ {
+  "name": "template substitutions preserve regular expression comment characters",
+  "source": "function choose(value=seed){return `${/[/*\"']/ .test('\"')?value:0}`;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){return `${/[/*\"']/ .test('\"')?selected:0}`;}"
+  }
+ },
+ {
+  "name": "division remains an expression rather than an opaque literal",
+  "source": "function choose(value=seed){const quotient=value/2;return quotient;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "3.5",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "quotient",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const quotient=selected/2;return quotient;}"
+  }
+ },
+ {
+  "name": "ordinary string contents retain same named source words",
+  "source": "function choose(value=seed){const text=\"value // /*\";return text.includes(\"value\")?value:0;}",
+  "context": "const seed=7;",
+  "probe": "choose()",
+  "value": "7",
+  "bindings": [
+   [
+    "choose",
+    "function",
+    0
+   ],
+   [
+    "value",
+    "parameter",
+    1
+   ],
+   [
+    "text",
+    "const",
+    1
+   ]
+  ],
+  "unresolved": [
+   "seed"
+  ],
+  "rename": {
+   "name": "value",
+   "replacement": "selected",
+   "source": "function choose(selected=seed){const text=\"value // /*\";return text.includes(\"value\")?selected:0;}"
+  }
+ }
+]);
 writeProjectData(new URL('../../parity/fixtures/source-parameter-bindings.lino',import.meta.url),{schemaVersion:1,model:'actual JavaScript formal binding positions 1',versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024',language:'ECMAScript 2025 strict source'},terms:[{term:'identifier',expected:true,root:true},{term:'shorthand_property_identifier_pattern',expected:true,root:false},{term:'property_identifier',expected:false,root:false},{term:'shorthand_property_identifier',expected:false,root:false},{term:'computed_property_name',expected:false,root:false},{term:'object_pattern',expected:false,root:true},{term:'array_pattern',expected:false,root:true}],plans,cases,boundary:'Unexecuted literal controls. Actual CST leaf roles and complete default/computed intervals select bindings in parameters, methods, catch patterns and ordinary declarations; they do not validate complete source semantics or establish full-language translation. Every original and exact rename remains independent of the shared policy. Exotic syntax, malformed-source recovery and complete own-codebase translation retain separate controls.'});

@@ -8,7 +8,7 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm,testRustSourceOpaqueLiteralTerm} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm,testRustSourceOpaqueLiteralTerm,testJavaScriptSourceOpaqueLiteralTerm} from '../src/translation/source-library-binding-rules.js';
 import {analyzeProgram,BindingRenameError} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
@@ -96,3 +96,5 @@ for(const row of fixture.classExpressionTerms)test('actual class expression term
 for(const row of fixture.variableEnvironmentTerms)test('actual variable environment term '+row.term,()=>assert.equal(testJavaScriptSourceVariableEnvironmentTerm(row.term),row.expected));
 
 for(const row of fixture.rustOpaqueLiteralTerms)test('actual Rust opaque literal term '+row.term,()=>assert.equal(testRustSourceOpaqueLiteralTerm(row.term),row.expected));
+
+for(const row of fixture.javascriptOpaqueLiteralTerms)test('actual JavaScript opaque literal term '+row.term,()=>assert.equal(testJavaScriptSourceOpaqueLiteralTerm(row.term),row.expected));
