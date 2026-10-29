@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
@@ -449,11 +449,11 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
     .map(({ start }) => start));
   const propertyRanges=syntax.filter(({term})=>term==='property_identifier'||term==='private_property_identifier');
   const propertyNames=new Set(tokens.filter(token=>propertyRanges.some(node=>node.start<=token.start&&token.end<=node.end)).map(({start,end})=>`${start}:${end}`));
-  const loopStarts=new Map();
-  if(language==='JavaScript')for(const node of syntax){if(!testJavaScriptSourceLoopScopeTerm(node.term))continue;const rows=loopStarts.get(node.start)??[];if(!rows.includes(node.end))rows.push(node.end);rows.sort((left,right)=>right-left);loopStarts.set(node.start,rows);}
+  const lexicalStarts=new Map();
+  if(language==='JavaScript')for(const node of syntax){if(!testJavaScriptSourceLoopScopeTerm(node.term)&&!testJavaScriptSourceCatchScopeTerm(node.term))continue;const rows=lexicalStarts.get(node.start)??[];if(!rows.includes(node.end))rows.push(node.end);rows.sort((left,right)=>right-left);lexicalStarts.set(node.start,rows);}
   for (const [index, token] of tokens.entries()) {
     while(stack.length>1&&virtualScopes.has(stack.at(-1).id)&&token.start>=stack.at(-1).end)stack.pop();
-    for(const end of loopStarts.get(token.start)??[]){const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);}
+    for(const end of lexicalStarts.get(token.start)??[]){const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);}
     for(const fact of functionStarts.get(token.start)??[]){
       const create=()=>{const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end:fact.end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);return scope.id;};
       // A named expression's immutable private environment encloses its
@@ -659,10 +659,10 @@ function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declar
       declareDelimitedParameters(tokens, syntax, open, close, scope, declare);
     }
     if (token.text === 'catch') {
-      const open = findToken(tokens, index + 1, '(');
-      const close = matchingDelimiter(tokens, open, '(', ')');
-      const body = findToken(tokens, close + 1, '{');
-      declareDelimitedParameters(tokens, syntax, open, close, braceScopes.get(body), declare);
+      const fact=syntax.find(node=>testJavaScriptSourceCatchScopeTerm(node.term)&&node.start===token.start);
+      const open=fact&&tokens[index+1]?.text==='('?index+1:-1;
+      const close=open<0?-1:matchingDelimiter(tokens,open,'(',')');
+      if(close>=0&&tokens[close].end<=fact.end)declareDelimitedParameters(tokens,syntax,open,close,tokens[open].scope,declare);
     }
     if (token.text === 'import') {
       const statement=syntax.find(fact=>fact.term==='import_statement'&&fact.start===token.start);

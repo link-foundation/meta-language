@@ -275,9 +275,16 @@ pub(super) fn resolve_bindings(
         })
         .map(|fact| fact.range.start)
         .collect::<BTreeSet<_>>();
-    let mut loop_starts: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    let mut lexical_starts: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
     if language == "JavaScript" {
-        for node in syntax.iter().filter(|node|crate::translation::source_library_binding_rules::test_java_script_source_loop_scope_term(&node.term)){let rows=loop_starts.entry(node.range.start).or_default();if !rows.contains(&node.range.end){rows.push(node.range.end);}rows.sort_by_key(|end|std::cmp::Reverse(*end));}
+        for node in syntax.iter().filter(|node| {
+            crate::translation::source_library_binding_rules::test_java_script_source_loop_scope_term(&node.term)
+                || crate::translation::source_library_binding_rules::test_java_script_source_catch_scope_term(&node.term)
+        }) {
+            let rows = lexical_starts.entry(node.range.start).or_default();
+            if !rows.contains(&node.range.end) { rows.push(node.range.end); }
+            rows.sort_by_key(|end| std::cmp::Reverse(*end));
+        }
     }
     for (index, token) in tokens.iter_mut().enumerate() {
         while stack.len() > 1
@@ -286,7 +293,7 @@ pub(super) fn resolve_bindings(
         {
             stack.pop();
         }
-        if let Some(ends) = loop_starts.get(&token.range.start) {
+        if let Some(ends) = lexical_starts.get(&token.range.start) {
             for end in ends {
                 let parent = *stack.last().expect("root scope");
                 let index = scopes.len();

@@ -35,3 +35,6 @@ export function testJavaScriptSourceParameterVariableDependency(first,second,bod
 export function testJavaScriptSourceVariableRedeclaration(kind,existing){return kind==='var'&&existing;}
 /** @param {string} term @returns {boolean} */
 export function testJavaScriptSourceLoopScopeTerm(term){return term==='for_statement'||term==='for_in_statement'||term==='for_of_statement';}
+
+/** @param {string} term @returns {boolean} */
+export function testJavaScriptSourceCatchScopeTerm(term){return term==='catch_clause';}

@@ -5,6 +5,7 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
  schemaVersion:1,model:'actual source module function bindings 1',
  versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024'},
  headNames:[{kind:'identifier',expected:true},{kind:'keyword',expected:false},{kind:'punctuation',expected:false},{kind:'',expected:false}],
+ catchScopeTerms:[{term:'catch_clause',expected:true},{term:'try_statement',expected:false},{term:'statement_block',expected:false},{term:'formal_parameters',expected:false}],
  loopScopeTerms:[{term:'for_statement',expected:true},{term:'for_in_statement',expected:true},{term:'for_of_statement',expected:true},{term:'while_statement',expected:false},{term:'identifier',expected:false}],
  expressionTerms:[{term:'function_expression',expected:true},{term:'generator_function',expected:true},{term:'function_declaration',expected:false},{term:'arrow_function',expected:false},{term:'identifier',expected:false}],
  keywordRoles:[{identifier:true,keyword:true,expected:false},{identifier:true,keyword:false,expected:false},{identifier:false,keyword:true,expected:true},{identifier:false,keyword:false,expected:false}],

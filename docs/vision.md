@@ -10163,3 +10163,16 @@ actual CST spans. This structural binding model does not establish per-iteration
 closure execution or complete translation semantics. Nine independent whole
 source originals and exact rename controls cover the new paths, including a
 collection temporal-dead-zone read; execution remains deferred.
+
+
+Catch clauses have their own lexical environment spanning the actual concrete
+clause, including computed property expressions and default initializers in
+recursive binding patterns. Body blocks retain their own child scope. A catch
+parameter is declared in the environment containing its actual opening formal
+delimiter; optional catches never search later source for a parameter list.
+A shared JavaScript source selector is translated automatically to Rust, while
+runtime adapters transport concrete spans. Independent deferred originals cover
+shorthand/property preservation, earlier and captured later parameter references,
+computed keys, optional catches and outside shadowed reads. These definitions
+do not assert that every catch/var redeclaration interaction or full runtime
+abrupt completion semantics has been implemented or verified.

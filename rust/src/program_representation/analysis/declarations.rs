@@ -113,13 +113,29 @@ pub(super) fn declare_javascript(
             declare_parameters(tokens, syntax, open, close, scope, declarations, declared);
         }
         if token.text == "catch" {
-            let open = find_token(tokens, index + 1, "(");
-            let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
-            let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
-            let scope = body
-                .and_then(|body| brace_scopes.get(&body).copied())
-                .unwrap_or(token.scope);
-            declare_parameters(tokens, syntax, open, close, scope, declarations, declared);
+            let fact=syntax.iter().find(|node|crate::translation::source_library_binding_rules::test_java_script_source_catch_scope_term(&node.term)&&node.range.start==token.range.start);
+            let open = fact.and_then(|_| {
+                tokens
+                    .get(index + 1)
+                    .filter(|next| next.text == "(")
+                    .map(|_| index + 1)
+            });
+            let close = open
+                .and_then(|open| matching_delimiter(tokens, open, "(", ")"))
+                .filter(|close| {
+                    fact.is_some_and(|fact| tokens[*close].range.end <= fact.range.end)
+                });
+            if let (Some(open), Some(close)) = (open, close) {
+                declare_parameters(
+                    tokens,
+                    syntax,
+                    Some(open),
+                    Some(close),
+                    tokens[open].scope,
+                    declarations,
+                    declared,
+                );
+            }
         }
         if token.text == "import" {
             let statement = syntax.iter().find(|fact| {
