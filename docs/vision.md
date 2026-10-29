@@ -9811,3 +9811,44 @@ zero stay distinct. Nullable string ordering remains outside this admission
 profile and cannot be silently treated as numeric ordering. Independent source
 originals retain complete native traces and original-source observations when
 the deferred suites execute.
+
+Legacy JavaScript literal Error throws retained as checked abort nodes use the
+same source-realm Error allocation request as newer constructor forms. Their
+complete literal message, including empty text, unpaired UTF16 units and NUL,
+has an own message property. Conditional branches and actual callee frames
+remain observable. This admission is for actual checked JavaScript abort nodes;
+guarded natural-number signatures retain their separate domain and checks.
+
+The guarded-natural adapter admits the checker's typed BigInt domain, ordered
+literal Error guards, exact widening to integers, checked guarded call-site
+conversions, and complete natural-pattern branches. Guard order must be complete
+and distinct; lost or overwritten guard positions refuse. A guarded module uses
+one actual source realm in this profile, so moving a check to a call site cannot
+select another realm's Error. Guard predicates and checked conversions retain
+the existing integer work bounds; out-of-profile input is not evidence of a
+JavaScript exception. Natural predecessors are computed only in the positive
+branch, with one subject evaluation and lexical binder ownership. Arithmetic
+continues to use the checker's JavaScript integer widening, preserving negative
+results. Error stack behavior, arbitrary typed-domain violations and complete
+cross-realm guarded lowering remain separate obligations. Recursive and tail
+recursive originals, guard order, message units and ignored-argument effects
+are retained as deferred controls.
+Checked call-site conversions require their complete source message and guard
+order; erased callable guard policies remain an explicit refusal. Clamping
+casts retain their distinct zero branch.
+Truncated natural subtraction follows its explicit core semantic tag. Ordinary
+JavaScript subtraction continues to widen to integers, including negative
+results, and mixed Number/natural comparisons retain exact BigInt behavior.
+All literal Error paths select their operation through the shared exception
+registry rather than maintaining another operation-name table.
+These admission decisions and expression templates are themselves shared source
+definitions in `javascript-call-natural-source.js`, automatically translated to
+Rust and retained as a complete paired Links program. The adapter transports
+actual checked fields, source scopes and temporary bindings; shared rules own
+guard ordering, realm admission, cast choices, natural branch selection and
+Error/predicate/predecessor/difference construction. Construction and the actual
+source compiler are available within the same nominal generated model. Deferred
+controls cover every declared policy case and compare complete constructed code,
+codecs and compilation across both runtimes. Source-original execution remains
+the independent semantic control; matching generated output alone is not proof
+of equivalence or task completion.

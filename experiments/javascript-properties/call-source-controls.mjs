@@ -67,4 +67,8 @@ export function observeCallSource(row){
  return {...row,entry:String(entry),program:encodeJavaScriptCallProgram(lowered.program),heap:encodeJavaScriptOrdinaryHeap(heap),trace,
   sourceUnits:lowered.sourceUnits.map(unit=>({...unit,source:encodeJavaScriptCallSource(unit.source),compilation:encodeJavaScriptCallSourceCompilation(unit.compilation)}))};
 }
-export function observeCallSourceRefusal(row){const checked=checkProgram(parseJavaScript(row.source));assert.throws(()=>lowerCheckedJavaScriptCallModule(checked,registry(row,checked)),/registered call source lowering/);}
+export function observeCallSourceRefusal(row){
+ const checked=checkProgram(parseJavaScript(row.source)),context=registry(row,checked);
+ if(row.functionRealms){context.functions=context.functions.map(fn=>({...fn,realm:BigInt(row.functionRealms[fn.name]??String(fn.realm))}));context.realms=[...new Set(context.functions.map(fn=>fn.realm))];}
+ assert.throws(()=>lowerCheckedJavaScriptCallModule(checked,context),/registered call source lowering/);
+}

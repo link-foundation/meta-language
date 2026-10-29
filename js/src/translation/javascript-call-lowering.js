@@ -10,12 +10,13 @@ import {readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-
 import {readBigIntegerBitwiseOperationCode} from './big-integer-bitwise-rules.js';
 import {readJavaScriptNumberBitwiseOperationCode} from './number-bitwise-rules.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
+import {constructJavaScriptLiteralErrorSource,constructJavaScriptNaturalGuardSource,constructJavaScriptNaturalCastSource,constructJavaScriptNaturalDifferenceSource,constructJavaScriptNaturalPredecessorSource,constructJavaScriptNaturalMatchSource,testJavaScriptNaturalSourceRealm,planJavaScriptNaturalGuardOrder,readJavaScriptNaturalCastPlan,readJavaScriptNaturalPatternBinding,planJavaScriptNaturalPatternBranches} from './javascript-call-natural-source.js';
 import {readCheckedJavaScriptIntegerResult} from './javascript-call-integer-lowering.js';
 
 function refuse(node,message){throw unsupported('registered call source lowering',message,node?.span);}
 function acceptType(type,depth=0){
  if(!type||depth>128)return false;
- if(['float','bool','string','int','unit'].includes(type.kind))return true;
+ if(['float','bool','string','int','nat','unit'].includes(type.kind))return true;
  if(type.kind==='record')return type.fields.every(field=>acceptType(field.type,depth+1));
  if(type.kind==='option')return ['undefined','null','both'].includes(type.absence)&&acceptType(type.element,depth+1);
  return type.kind==='function'&&type.params.every(param=>acceptType(param.type??param,depth+1))&&acceptType(type.ret,depth+1);
@@ -42,11 +43,18 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
   directory.set(row.name,row);identities.add(row.identity);
  }
  const constant=value=>({$:'sourceConstant',value}),undefinedSource=()=>constant({$:'undefined'}),primitive=(operation,arguments_)=>({$:'sourcePrimitive',operation,arguments:arguments_});
+ const sourceError=constructJavaScriptLiteralErrorSource;
+ const oneRealm=testJavaScriptNaturalSourceRealm(functions.map(fn=>String(fn.realm)));
  const compiled=[],sourceUnits=[];let instructionCount=0;
  for(const [name,entry]of program.declarations){
   if(entry.k!=='fn')refuse(entry,'semantic data declarations need explicit ordinary-object allocation lowering');
   const owner=directory.get(name);if(!owner)refuse(entry,'every actual function requires its supplied global callable identity');
-  if(!entry.params.every(param=>acceptType(param.type)&&!param.default&&!param.guard)||!acceptType(entry.ret))refuse(entry,'function signatures need their complete represented primitive/callable value profile');
+  if(!entry.params.every(param=>acceptType(param.type)&&!param.default)||!acceptType(entry.ret))refuse(entry,'function signatures need their complete represented primitive/callable value profile');
+  const guarded=entry.params.filter(param=>param.guard);
+  if(guarded.some(param=>typeof param.guard.message!=='string'))refuse(entry,'natural guards retain their actual literal Error messages');
+  const guardOrder=planJavaScriptNaturalGuardOrder(guarded.map(param=>param.type.kind),guarded.map(param=>param.guard.order??-1),oneRealm);
+  if(guardOrder[0]===-1)refuse(entry,'natural guards retain complete source order, domains and one actual source realm');
+  const guards=guardOrder.map(index=>guarded[index]);
   let nextBinding=0,visits=0;const bindings=new Map(),parameters=[];
   for(const param of entry.params){const identity=nextBinding++;if(bindings.has(param.name))refuse(entry,'actual parameter owners must be distinct');bindings.set(param.name,identity);parameters.push(identity);}
   function expression(node,environment,depth=0){
@@ -57,12 +65,16 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'lit':{
      const type=node.type.kind,value=node.value;
      if(type==='float')return constant({$:'number',value:Number(value)});
-     if(type==='int')return constant({$:'integer',value:BigInt(value)});
+     if(type==='int'||type==='nat')return constant({$:'integer',value:BigInt(value)});
      if(type==='bool')return constant({$:'boolean',value});
      if(type==='string')return constant({$:'text',units:Array.from({length:value.length},(_,index)=>value.charCodeAt(index))});
      return refuse(node,'this literal needs its actual semantic value mapping');
     }
     case 'unit':return undefinedSource();
+    case 'abort':{
+     if(typeof node.message!=='string')return refuse(node,'a legacy source Error requires its actual literal message');
+     return sourceError(node.message);
+    }
     case 'none':if(node.absence!=='undefined'&&node.absence!=='null')return refuse(node,'absent literals must retain their exact source absence');return constant({$:node.absence});
     case 'some':return expression(node.value,environment,depth+1);
     case 'flattenOption':return expression(node.value,environment,depth+1);
@@ -75,7 +87,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'toString':case 'optionalText':{
      if(node.console===true)return refuse(node,'console text requires its actual console formatting profile');
      const type=node.arg.type.kind==='option'?node.arg.type.element:node.arg.type;
-     if(!['float','bool','string','int','unit'].includes(type.kind))return refuse(node,'text conversion requires its actual primitive operand semantics');
+     if(!['float','bool','string','int','nat','unit'].includes(type.kind))return refuse(node,'text conversion requires its actual primitive operand semantics');
      return primitive('convert primitive text',[expression(node.arg,environment,depth+1)]);
     }
     case 'optionalTypeOf':{
@@ -119,7 +131,11 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'if':return {$:'sourceIf',condition:expression(node.cond,environment,depth+1),yes:expression(node.then,environment,depth+1),no:expression(node.else,environment,depth+1)};
     case 'binary':{
-     if(node.left.type.kind==='int'&&node.right.type.kind==='int'){
+     if(['int','nat'].includes(node.left.type.kind)&&['int','nat'].includes(node.right.type.kind)){
+      if(node.op==='sub'&&node.semantics==='truncated'){
+       const left=nextBinding++,right=nextBinding++;
+       return {$:'sourceLet',identity:left,value:expression(node.left,environment,depth+1),body:{$:'sourceLet',identity:right,value:expression(node.right,environment,depth+1),body:constructJavaScriptNaturalDifferenceSource(left,right)}};
+      }
       const operation={add:'add integers',sub:'subtract integers',mul:'multiply integers',div:'divide integers',rem:'read integer remainder'}[node.op];
       if(operation)return primitive(operation,[expression(node.left,environment,depth+1),expression(node.right,environment,depth+1)]);
       if(['lt','gt','le','ge'].includes(node.op)){
@@ -149,10 +165,31 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      const value={$:'sourceStrictEqual',left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
      return node.negate?{$:'sourceIf',condition:value,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})}:value;
     }
+    case 'cast':{
+     const plan=readJavaScriptNaturalCastPlan(node.from.kind,node.to.kind,node.flavor,typeof node.message==='string',node.order??-1,oneRealm);
+     if(plan===1)return expression(node.arg,environment,depth+1);
+     if(plan===0)return refuse(node,'this conversion needs its complete checked source guard and realm');
+     const identity=nextBinding++;
+     return {$:'sourceLet',identity,value:expression(node.arg,environment,depth+1),body:constructJavaScriptNaturalCastSource(identity,node.message??'',plan===2)};
+    }
+    case 'match':{
+     const branches=planJavaScriptNaturalPatternBranches(node.scrutinee.type.kind,node.cases.map(arm=>arm.pattern.k));
+     if(branches.length!==2)return refuse(node,'only complete checked natural pattern branches are represented here');
+     const identity=nextBinding++,value={$:'sourceBinding',identity},zero=node.cases[branches[0]],succ=node.cases[branches[1]];
+     function branch(arm){
+      const mode=readJavaScriptNaturalPatternBinding(arm.pattern.k);
+      if(![0,1,2].includes(mode))return refuse(node,'the natural binder must retain its actual source rule');
+      if(mode===0)return expression(arm.body,environment,depth+1);
+      const binding=nextBinding++,inner=new Map(environment);inner.set(arm.pattern.name,binding);
+      const bound=mode===2?constructJavaScriptNaturalPredecessorSource(identity):value;
+      return {$:'sourceLet',identity:binding,value:bound,body:expression(arm.body,inner,depth+1)};
+     }
+     return {$:'sourceLet',identity,value:expression(node.scrutinee,environment,depth+1),body:constructJavaScriptNaturalMatchSource(identity,branch(zero),branch(succ))};
+    }
     case 'truthy':return {$:'sourceIf',condition:expression(node.arg,environment,depth+1),yes:constant({$:'boolean',value:true}),no:constant({$:'boolean',value:false})};
     case 'unary':{
      const value=expression(node.arg,environment,depth+1);
-     if(node.op==='neg'&&node.arg.type.kind==='int')return primitive('negate integer',[value]);
+     if(node.op==='neg'&&['int','nat'].includes(node.arg.type.kind))return primitive('negate integer',[value]);
      if(node.op==='not'&&node.arg.type.kind==='bool')return {$:'sourceIf',condition:value,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})};
      if(node.op==='neg'&&node.arg.type.kind==='float')return {$:'sourceNumberBinary',operator:'multiply',left:constant({$:'number',value:-1}),right:value};
      return refuse(node,'this unary operand requires additional exact source lowering');
@@ -167,7 +204,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
       if(readJavaScriptBigIntegerResultOperation(node.op)==='boolean'&&node.args.length===1&&node.args[0].type.kind==='bool')return {$:'sourceIf',condition:expression(node.args[0],environment,depth+1),yes:constant({$:'integer',value:1n}),no:constant({$:'integer',value:0n})};
       if(readJavaScriptSourceExceptionClass(node.op)!==''&&node.args.length===2&&node.args[0].type.kind==='string'&&node.args[1].type.kind==='bool')return primitive(node.op,node.args.map(arg=>expression(arg,environment,depth+1)));
       const comparison=readJavaScriptBigIntegerResultOperation(node.op);
-      if((comparison==='number-compare'||comparison==='string-compare')&&node.args.length===2&&node.args[1].type.kind==='int'&&node.args[0].type.kind===(comparison==='number-compare'?'float':'string'))return primitive(comparison==='number-compare'?'compare number integer':'compare text integer',node.args.map(arg=>expression(arg,environment,depth+1)));
+      if((comparison==='number-compare'||comparison==='string-compare')&&node.args.length===2&&['int','nat'].includes(node.args[1].type.kind)&&node.args[0].type.kind===(comparison==='number-compare'?'float':'string'))return primitive(comparison==='number-compare'?'compare number integer':'compare text integer',node.args.map(arg=>expression(arg,environment,depth+1)));
       const integerCode=readBigIntegerBitwiseOperationCode(node.op),numberCode=readJavaScriptNumberBitwiseOperationCode(node.op);
       const integerOperations=['conjoin integer bits','disjoin integer bits','exclude equal integer bits','shift integer bits left','shift integer bits right','','complement integer bits'];
       const numberOperations=['conjoin number bits','disjoin number bits','exclude equal number bits','shift number bits left','shift number bits right','shift number bits right unsigned','complement number bits'];
@@ -235,7 +272,11 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     default:return refuse(node,'the actual expression '+node.k+' needs further source lowering');
    }
   }
-  const source=expression(tailLoop(entry,entry.body)??entry.body,bindings),result=compileJavaScriptCallSource(source,parameters);
+  let source=expression(tailLoop(entry,entry.body)??entry.body,bindings);
+  for(const param of [...guards].reverse()){
+   source=constructJavaScriptNaturalGuardSource(bindings.get(param.name),param.guard.message,source);
+  }
+  const result=compileJavaScriptCallSource(source,parameters);
   if(result.error)refuse(entry,result.error);
   sourceUnits.push({name,source,parameters,compilation:result});
   instructionCount+=result.instructions.length;if(instructionCount>65536)refuse(entry,'the complete program exceeds its instruction budget');

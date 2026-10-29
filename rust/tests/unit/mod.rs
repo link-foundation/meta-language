@@ -586,3 +586,5 @@ mod boolean_constructor_match;
 mod translation_javascript_string_arguments;
 
 mod translation_javascript_fixed_integer_casts;
+
+mod translation_javascript_call_natural_source;

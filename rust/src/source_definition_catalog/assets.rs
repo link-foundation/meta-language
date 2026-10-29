@@ -68,6 +68,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-call-machine-program.lino" => {
             Some(include_str!("../data/javascript-call-machine-program.lino"))
         }
+        "javascript-call-natural-source-program.lino" => Some(include_str!(
+            "../data/javascript-call-natural-source-program.lino"
+        )),
         "javascript-call-source-program.lino" => {
             Some(include_str!("../data/javascript-call-source-program.lino"))
         }

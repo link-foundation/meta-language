@@ -370,3 +370,5 @@ pub(crate) mod typed_record_shape_rules;
 pub(crate) mod javascript_string_argument_rules;
 
 pub(crate) mod javascript_fixed_integer_cast_plan;
+
+pub(crate) mod javascript_call_natural_source;
