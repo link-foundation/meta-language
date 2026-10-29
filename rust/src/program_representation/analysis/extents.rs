@@ -159,10 +159,21 @@ pub(super) fn declare_syntax_binders(
 ) {
     let token_at = token_starts(tokens);
     for fact in syntax {
-        let Some(&first) = token_at.get(&fact.range.start) else {
+        let first = token_at.get(&fact.range.start).copied().or_else(|| {
+            if language == "JavaScript" && fact.term == "method_definition" {
+                tokens.iter().position(|token| {
+                    token.range.start >= fact.range.start && token.range.start < fact.range.end
+                })
+            } else {
+                None
+            }
+        });
+        let Some(first) = first else {
             continue;
         };
-        let parameter_scope = if language == "JavaScript" && fact.term == "arrow_function" {
+        let parameter_scope = if language == "JavaScript"
+            && matches!(fact.term.as_str(), "arrow_function" | "method_definition")
+        {
             function_scopes
                 .get(&first)
                 .map(|scope| scope.parameter_scope)
@@ -188,6 +199,15 @@ pub(super) fn declare_syntax_binders(
             if term == "arrow_function" {
                 let (open, close) = arrow_parameters(tokens, first);
                 for index in super::parameters::binding_positions(tokens, syntax, open, close + 1) {
+                    binder(index, "parameter");
+                }
+            }
+            if term == "method_definition"
+                && let Some((open, close)) = function_scopes
+                    .get(&first)
+                    .and_then(|scope| scope.parameter_interval)
+            {
+                for index in super::parameters::binding_positions(tokens, syntax, open, close) {
                     binder(index, "parameter");
                 }
             }

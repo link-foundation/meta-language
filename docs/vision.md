@@ -7986,6 +7986,15 @@ definition rather than separate token scans. Property ranges retain their
 separate namespace, including private names whose spans contain multiple
 semantic tokens. Both runtimes consume the automatically translated rule and
 retain the original concrete tree, exact source and rename capture checks.
+Method parameter environments begin at their actual formal list, after any
+computed name evaluation, and enclose defaults and the complete body. Formal
+lists inside computed names retain their own function owner. Quoted and numeric
+method names do not require a semantic word token at the method's first byte.
+Ordinary, static, private, constructor, accessor and generator methods reuse the
+same CST census and parameter/var rules in both runtime adapters. Their shared
+scope-form definition is automatically translated; original/renamed Node and
+snapshot controls remain deferred. Full class/object execution and implicit
+binding semantics remain obligations.
 Full method/class semantics, additional binding contexts and initialization-
 preserving rewrites remain language obligations. Deferred original Node,
 exact-rename and snapshot controls establish no execution evidence.

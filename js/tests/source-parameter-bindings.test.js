@@ -16,7 +16,7 @@ for(const row of fixture.cases)test(row.name,()=>{
  assert.deepEqual(program.bindings.map(binding=>[binding.name,binding.kind,binding.references.length]),row.bindings);
  assert.deepEqual(program.unresolvedReferences.map(reference=>reference.name),row.unresolved);
  assert.equal(observeSourceParameterProgram(row,row.source).value,row.value);
- const binding=program.bindings.find(binding=>binding.name===row.rename.name&&binding.kind===(row.rename.kind??'parameter'));assert.ok(binding);
+ const binding=program.bindings.filter(binding=>binding.name===row.rename.name&&binding.kind===(row.rename.kind??'parameter'))[row.rename.occurrence??0];assert.ok(binding);
  const renamed=program.renameBinding(binding.id,row.rename.replacement);
  assert.equal(renamed.source,row.rename.source);
  assert.equal(observeSourceParameterProgram(row,renamed.source).value,row.value);

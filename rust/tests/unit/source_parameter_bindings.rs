@@ -104,7 +104,7 @@ fn actual_cst_parameter_bindings_keep_complete_originals_and_source_owners() {
         let binding = program
             .bindings()
             .iter()
-            .find(|binding| {
+            .filter(|binding| {
                 binding.kind()
                     == rename
                         .get("kind")
@@ -112,6 +112,12 @@ fn actual_cst_parameter_bindings_keep_complete_originals_and_source_owners() {
                         .unwrap_or("parameter")
                     && binding.name() == rename["name"].as_str().unwrap()
             })
+            .nth(
+                rename
+                    .get("occurrence")
+                    .and_then(|value| value.as_u64())
+                    .map_or(0, |value| usize::try_from(value).unwrap()),
+            )
             .unwrap();
         let renamed = program
             .rename_binding(binding.id(), rename["replacement"].as_str().unwrap())

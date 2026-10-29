@@ -32,6 +32,7 @@ struct JavaScriptFunctionScope {
     parameter_scope: usize,
     body_start: Option<usize>,
     simple: bool,
+    parameter_interval: Option<(usize, usize)>,
 }
 struct JavaScriptFunctionStart {
     range: ProgramRange,
@@ -40,6 +41,7 @@ struct JavaScriptFunctionStart {
     declaration: bool,
     body_start: Option<usize>,
     simple: bool,
+    parameter_interval: Option<(usize, usize)>,
 }
 
 pub(super) fn syntax_facts(network: &LinkNetwork) -> Vec<ProgramSourceMapping> {
@@ -175,12 +177,23 @@ pub(super) fn resolve_bindings(
             if form.is_empty() {
                 continue;
             }
-            let Some(&first) = token_positions.get(&fact.range.start) else {
+            let method = form == "method definition";
+            let first = token_positions.get(&fact.range.start).copied().or_else(|| {
+                if method {
+                    input.iter().position(|token| {
+                        token.range.start >= fact.range.start && token.range.start < fact.range.end
+                    })
+                } else {
+                    None
+                }
+            });
+            let Some(first) = first else {
                 continue;
             };
             let arrow = form == "arrow function";
-            let head = first + usize::from(!arrow && input[first].text == "async");
+            let head = first + usize::from(!arrow && !method && input[first].text == "async");
             if !arrow
+                && !method
                 && !input
                     .get(head)
                     .is_some_and(|token| token.text == "function")
@@ -189,7 +202,7 @@ pub(super) fn resolve_bindings(
             }
             let name =
                 head + 1 + usize::from(input.get(head + 1).is_some_and(|token| token.text == "*"));
-            let named=!arrow&&input.get(name).is_some_and(|token|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier{"identifier"}else{""}));
+            let named=!arrow&&!method&&input.get(name).is_some_and(|token|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier{"identifier"}else{""}));
             let body = syntax.iter().find(|node| {
                 node.term == "statement_block"
                     && node.range.start >= fact.range.start
@@ -202,19 +215,51 @@ pub(super) fn resolve_bindings(
                         node.term == "formal_parameters"
                             && node.range.start >= fact.range.start
                             && node.range.end <= body.range.start
+                            && (!method
+                                || !syntax.iter().any(|key| {
+                                    key.term == "computed_property_name"
+                                        && key.range.start <= node.range.start
+                                        && node.range.end <= key.range.end
+                                }))
                     })
                     .min_by_key(|node| node.range.start)
             });
+            if method && parameters.is_none() {
+                continue;
+            }
+            let parameter_interval = parameters.and_then(|parameters| {
+                let open =
+                    input.partition_point(|token| token.range.start < parameters.range.start);
+                let close = input
+                    .partition_point(|token| token.range.start < parameters.range.end)
+                    .checked_sub(1)?;
+                (input.get(open).is_some_and(|token| {
+                    token.text == "(" && token.range.end <= parameters.range.end
+                }) && input[close].text == ")"
+                    && input[close].range.start >= parameters.range.start)
+                    .then_some((open + 1, close))
+            });
+            if method && parameter_interval.is_none() {
+                continue;
+            }
+            let scope_start = if method {
+                input[parameter_interval.expect("actual method delimiters").0 - 1]
+                    .range
+                    .start
+            } else {
+                fact.range.start
+            };
             let simple=parameters.is_none_or(|parameters|crate::translation::source_library_binding_rules::accept_java_script_source_simple_parameter_list(&syntax.iter().filter(|node|node.range.start>=parameters.range.start&&node.range.end<=parameters.range.end).map(|node|node.term.clone()).collect::<Vec<_>>()));
-            let rows = function_starts.entry(fact.range.start).or_default();
+            let rows = function_starts.entry(scope_start).or_default();
             if !rows.iter().any(|row| row.range.end == fact.range.end) {
                 rows.push(JavaScriptFunctionStart {
-                    range: fact.range,
+                    range: ProgramRange::new(scope_start, fact.range.end),
                     head,
                     named,
                     declaration: form == "function declaration",
                     body_start: body.map(|body| body.range.start + 1),
                     simple,
+                    parameter_interval,
                 });
             }
             rows.sort_by_key(|row| std::cmp::Reverse(row.range.end));
@@ -268,6 +313,7 @@ pub(super) fn resolve_bindings(
                         parameter_scope,
                         body_start: entry.body_start,
                         simple: entry.simple,
+                        parameter_interval: entry.parameter_interval,
                     },
                 );
             }

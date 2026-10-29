@@ -428,15 +428,21 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   const tokenPositions=language==='JavaScript'?new Map(tokens.map((token,index)=>[token.start,index])):new Map();
   if(language==='JavaScript')for(const fact of syntax){
     const form=readJavaScriptSourceFunctionScopeForm(fact.term);if(!form)continue;
-    const first=tokenPositions.get(fact.start),head=first+(form!=='arrow function'&&tokens[first]?.text==='async'?1:0);
-    if(first===undefined||form!=='arrow function'&&tokens[head]?.text!=='function')continue;
-    const name=head+1+(tokens[head+1]?.text==='*'?1:0),named=form!=='arrow function'&&acceptJavaScriptSourceFunctionHeadName(tokens[name]?.kind??'');
+    const method=form==='method definition';let first=tokenPositions.get(fact.start);
+    if(first===undefined&&method){const at=tokens.findIndex(token=>token.start>=fact.start&&token.start<fact.end);if(at>=0)first=at;}
+    const head=first+(form!=='arrow function'&&!method&&tokens[first]?.text==='async'?1:0);
+    if(first===undefined||form!=='arrow function'&&!method&&tokens[head]?.text!=='function')continue;
+    const name=head+1+(tokens[head+1]?.text==='*'?1:0),named=!method&&form!=='arrow function'&&acceptJavaScriptSourceFunctionHeadName(tokens[name]?.kind??'');
     const body=syntax.find(node=>node.term==='statement_block'&&node.start>=fact.start&&node.end===fact.end);
-    const parameters=body&&syntax.filter(node=>node.term==='formal_parameters'&&node.start>=fact.start&&node.end<=body.start).sort((left,right)=>left.start-right.start)[0];
+    const parameters=body&&syntax.filter(node=>node.term==='formal_parameters'&&node.start>=fact.start&&node.end<=body.start&&(!method||!syntax.some(key=>key.term==='computed_property_name'&&key.start<=node.start&&node.end<=key.end))).sort((left,right)=>left.start-right.start)[0];
+    if(method&&!parameters)continue;
+    const opening=parameters?tokens.findIndex(token=>token.start>=parameters.start&&token.end<=parameters.end):-1,closing=parameters?tokens.findLastIndex(token=>token.start>=parameters.start&&token.end<=parameters.end):-1;
+    const open=opening>=0&&tokens[opening].text==='('?opening:undefined,close=closing>=0&&tokens[closing].text===')'?closing:undefined;
+    if(method&&(open===undefined||close===undefined))continue;
     const simple=parameters?acceptJavaScriptSourceSimpleParameterList(syntax.filter(node=>node.start>=parameters.start&&node.end<=parameters.end).map(node=>node.term)):true;
-    const rows=functionStarts.get(fact.start)??[];
-    if(!rows.some(row=>row.end===fact.end))rows.push({end:fact.end,head,named,form,bodyStart:body?body.start+1:null,simple});
-    rows.sort((left,right)=>right.end-left.end);functionStarts.set(fact.start,rows);
+    const scopeStart=method?tokens[open].start:fact.start,rows=functionStarts.get(scopeStart)??[];
+    if(!rows.some(row=>row.end===fact.end))rows.push({end:fact.end,head,named,form,bodyStart:body?body.start+1:null,simple,parameterFirst:open===undefined?undefined:open+1,parameterLast:close});
+    rows.sort((left,right)=>right.end-left.end);functionStarts.set(scopeStart,rows);
   }
   const scopedBraces = new Set(syntax
     .filter(({ term }) => ['statement_block', 'class_body', 'switch_body'].includes(term))
@@ -450,7 +456,7 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
       // A named expression's immutable private environment encloses its
       // parameter environment, including defaults and the entire body.
       const privateScope=fact.form==='function declaration'?stack.at(-1).id:fact.named?create():null,parameterScope=create();
-      expressionScopes.set(fact.head,{privateScope,parameterScope,bodyStart:fact.bodyStart,simple:fact.simple});
+      expressionScopes.set(fact.head,{privateScope,parameterScope,bodyStart:fact.bodyStart,simple:fact.simple,parameterFirst:fact.parameterFirst,parameterLast:fact.parameterLast});
     }
     token.scope = stack.at(-1).id;
     if (token.text === '{') {

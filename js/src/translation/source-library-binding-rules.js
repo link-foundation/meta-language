@@ -21,7 +21,7 @@ export function testJavaScriptSourceFunctionExpressionTerm(term){return term==='
 export function testJavaScriptSourceKeywordRole(identifier,keyword){return !identifier&&keyword;}
 /** @param {string} term @returns {string} */
 export function readJavaScriptSourceFunctionScopeForm(term){
- return testJavaScriptSourceFunctionExpressionTerm(term)?'function expression':term==='function_declaration'||term==='generator_function_declaration'?'function declaration':term==='arrow_function'?'arrow function':'';
+ return testJavaScriptSourceFunctionExpressionTerm(term)?'function expression':term==='function_declaration'||term==='generator_function_declaration'?'function declaration':term==='arrow_function'?'arrow function':term==='method_definition'?'method definition':'';
 }
 /** @param {string[]} terms @returns {boolean} */
 export function acceptJavaScriptSourceSimpleParameterList(terms){

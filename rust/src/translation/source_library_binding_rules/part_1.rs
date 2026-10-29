@@ -543,6 +543,8 @@ pub fn read_java_script_source_function_scope_form(term: &str) -> String {
         String::from("function declaration")
     } else if term == "arrow_function" {
         String::from("arrow function")
+    } else if term == "method_definition" {
+        String::from("method definition")
     } else {
         String::new()
     }
