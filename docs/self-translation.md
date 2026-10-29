@@ -1328,3 +1328,20 @@ Fresh `into_iter()` receivers use the existing constructor/result provenance
 and a separate owned-item state in the shared iterator rule program. It does
 not conflate consuming owned values with invoking Copy. Other local moves still
 need their complete binding invalidation and ownership interpretation.
+
+
+Lazy scalar map/filter stages use `rust-iterator-pipeline-rules.js` for callback
+context, stage/terminal common-term plans, inactive identities, direction and
+capture order. The actual source translates to its own paired pipeline program
+and native module. Runtime adapters retain actual callable/source type facts
+and construct the registered common nodes. A parameters-only closure context
+infers a mapper's result without inventing one. Immutable reference parameter
+facts now cover multiple actual reference layers and preserve lifetime slots
+through dereference. Unit literals retain their standard source owner.
+
+The existing iterator draft script also authors the new pipeline source,
+literal fixtures, inventory and package assets. New deferred controls use
+`experiments/rust-records/iterator-pipelines.mjs`; earlier reduction controls
+keep their original program and fixtures. No represented original, test or
+oracle executes during source authoring. Functional collection currently uses
+an append fold; linear allocation remains required work.

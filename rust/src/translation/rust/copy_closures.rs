@@ -107,6 +107,14 @@ impl RustParser {
         path: &[String],
         expected: Option<&SourceOrigin>,
     ) -> Result<SExpr> {
+        self.read_expected_copy_closure_result_mode(path, expected, false)
+    }
+    pub(super) fn read_expected_copy_closure_result_mode(
+        &mut self,
+        path: &[String],
+        expected: Option<&SourceOrigin>,
+        parameters_only: bool,
+    ) -> Result<SExpr> {
         if let Some(value) = self.read_primitive_function_value(path, expected)? {
             return Ok(value);
         }
@@ -121,7 +129,7 @@ impl RustParser {
             expected.is_some_and(SourceOrigin::direct_copy_value),
             role,
         ) {
-            self.read_copy_closure_with_expected(path, expected)
+            self.read_copy_closure_with_expected(path, expected, parameters_only)
         } else {
             if expected.is_some_and(|origin| {
                 origin.direct_copy_value() && matches!(origin.ty, Some(Type::Function { .. }))
@@ -145,7 +153,8 @@ impl RustParser {
                             crate::translation::frontend_rules::ml_array::number_index(depth)
                                 .expect("actual source parenthesis count");
                         self.cursor.index += depth;
-                        let node = self.read_copy_closure_with_expected(path, expected)?;
+                        let node =
+                            self.read_copy_closure_with_expected(path, expected, parameters_only)?;
                         for _ in 0..depth {
                             self.cursor.expect(")", Some("contextual closure"))?;
                         }
@@ -161,12 +170,13 @@ impl RustParser {
         }
     }
     pub(super) fn read_copy_closure(&mut self, path: &[String]) -> Result<SExpr> {
-        self.read_copy_closure_with_expected(path, None)
+        self.read_copy_closure_with_expected(path, None, false)
     }
     fn read_copy_closure_with_expected(
         &mut self,
         path: &[String],
         expected: Option<&SourceOrigin>,
+        parameters_only: bool,
     ) -> Result<SExpr> {
         let start = self.peek();
         self.cursor.eat("move");
@@ -238,6 +248,8 @@ impl RustParser {
         let written = self.cursor.eat("->").is_some();
         let mut ret = if written {
             Some(self.parse_type()?)
+        } else if crate::translation::rust_copy_closure_parameter_rules::read_rust_copy_closure_result_context(written,parameters_only)=="inferred" {
+            None
         } else {
             expected.and_then(|origin| match origin.ty.as_ref() {
                 Some(Type::Function { ret, .. }) => Some(ret.as_ref().clone()),

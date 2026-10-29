@@ -1,10 +1,12 @@
 //! Actual standard iterator syntax/source facts into shared reduction plans.
+use super::iterator_pipelines::{self, Pipeline};
 use super::{
     BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span,
     Token, Type, unsupported,
 };
 use crate::translation::rust_array_index_rules::read_rust_scalar_array_index_receiver_error;
 use crate::translation::rust_array_lookup_rules::read_rust_array_lookup_element_owner_error;
+use crate::translation::rust_iterator_pipeline_rules as pipeline_rules;
 use crate::translation::rust_iterator_reduction_rules as rules;
 use crate::translation::source_signatures::SourceOwner;
 use crate::translation::surface::SParam;
@@ -103,22 +105,66 @@ impl RustParser {
         let mut consumer = self.cursor.advance();
         let mut state = rules::read_rust_iterator_reduction_initial_state(&method.value);
         let mut direction = "forward".to_owned();
-        while rules::accept_rust_iterator_reduction_adapter(&consumer.value) {
-            let next = rules::read_rust_iterator_reduction_adapter_state(
-                &consumer.value,
-                &state,
-                &direction,
-            );
-            if next.len() != 2 {
-                return Err(fail(
-                    "the iterator adapter needs its actual item indirection and direction",
-                    Some(consumer.span()),
-                ));
+        let mut stages = Vec::new();
+        let mut current_item = element.map(|ty| {
+            let mut item = SourceOrigin::with_type(ty.clone(), path, Vec::new());
+            item.source_owner = owner.cloned();
+            if state == "borrowed" {
+                item.wrappers.push("reference".to_owned());
+                item.source_lifetimes.push(None);
             }
-            state = next[0].clone();
-            direction = next[1].clone();
-            self.cursor.expect("(", Some("iterator adapter"))?;
-            self.cursor.expect(")", Some("iterator adapter"))?;
+            item
+        });
+        while rules::accept_rust_iterator_reduction_adapter(&consumer.value)
+            || pipeline_rules::accept_rust_iterator_pipeline_stage(&consumer.value)
+        {
+            if pipeline_rules::accept_rust_iterator_pipeline_stage(&consumer.value) {
+                let error =
+                    rules::read_rust_iterator_reduction_receiver_error(known_receiver, known_owner);
+                if !error.is_empty() {
+                    return Err(fail(&error, Some(consumer.span())));
+                }
+                let stage = iterator_pipelines::read_stage(
+                    self,
+                    current_item.as_ref().expect("proved scalar item"),
+                    &consumer,
+                    path,
+                )?;
+                state = pipeline_rules::read_rust_iterator_pipeline_result_state(
+                    &consumer.value,
+                    &state,
+                );
+                current_item = Some(stage.output.clone());
+                stages.push(stage);
+            } else {
+                let next = rules::read_rust_iterator_reduction_adapter_state(
+                    &consumer.value,
+                    &state,
+                    &direction,
+                );
+                if next.len() != 2 {
+                    return Err(fail(
+                        "the iterator adapter needs its actual item indirection and direction",
+                        Some(consumer.span()),
+                    ));
+                }
+                state = next[0].clone();
+                direction = next[1].clone();
+                if let Some(item) = current_item.as_mut() {
+                    item.wrappers = if state == "borrowed" {
+                        vec!["reference".to_owned()]
+                    } else {
+                        Vec::new()
+                    };
+                    item.source_lifetimes = if state == "borrowed" {
+                        vec![None]
+                    } else {
+                        Vec::new()
+                    };
+                }
+                self.cursor.expect("(", Some("iterator adapter"))?;
+                self.cursor.expect(")", Some("iterator adapter"))?;
+            }
             if self.cursor.eat(".").is_none() || !self.cursor.is_kind(super::TokenKind::Identifier)
             {
                 return Err(fail(
@@ -128,7 +174,7 @@ impl RustParser {
             }
             consumer = self.cursor.advance();
         }
-        let borrowed = state == "borrowed";
+
         let operation = rules::read_rust_iterator_reduction_operation(&consumer.value);
         if operation.is_empty() {
             return Err(fail(
@@ -156,8 +202,14 @@ impl RustParser {
         let element = element.cloned();
         let owner = owner.cloned();
         if operation == "collect" {
-            let element = element.clone().expect("proved collection element");
-            let owner = owner.clone().expect("proved collection owner");
+            let item = current_item.as_ref().expect("proved collection item");
+            let final_element = item.ty.clone().expect("proved collection element");
+            let final_owner = item
+                .expanded_source_owner
+                .as_ref()
+                .or(item.source_owner.as_ref())
+                .expect("proved collection owner")
+                .clone();
             let copied = state == "copied" || state == "owned";
             let early = if copied {
                 String::new()
@@ -171,9 +223,12 @@ impl RustParser {
             }
             self.cursor.expect("::", Some("iterator collection type"))?;
             self.cursor.expect("<", Some("iterator collection type"))?;
-            let mut item = SourceOrigin::with_type(element.clone(), path, Vec::new());
-            item.source_owner = Some(owner.clone());
-            let previous = self.iterator_collection_element_origin.replace(item);
+            let mut expected_item =
+                SourceOrigin::with_type(final_element.clone(), path, Vec::new());
+            expected_item.source_owner = Some(final_owner.clone());
+            let previous = self
+                .iterator_collection_element_origin
+                .replace(expected_item);
             let parsed = self.parse_type();
             let mut origin = self.origins.current_type.clone();
             self.iterator_collection_element_origin = previous;
@@ -190,12 +245,12 @@ impl RustParser {
                 .expanded_source_owner
                 .as_ref()
                 .or(origin.source_owner.as_ref());
-            let agrees = matches!(&ty,Type::Array{element:actual,..} if actual.as_ref()==&element)
+            let agrees = matches!(&ty,Type::Array{element:actual,..} if actual.as_ref()==&final_element)
                 && actual_owner
                     .and_then(|owner| owner.arguments.first())
                     .is_some_and(|actual| {
-                        actual.kind == owner.kind
-                            && actual.path == owner.path
+                        actual.kind == final_owner.kind
+                            && actual.path == final_owner.path
                             && actual.arguments.is_empty()
                     });
             let error = rules::read_rust_iterator_collection_error(
@@ -214,6 +269,30 @@ impl RustParser {
             if !error.is_empty() {
                 return Err(fail(&error, Some(consumer.span())));
             }
+            if !stages.is_empty() {
+                origin.path = path.to_vec();
+                origin.source_lifetimes.clear();
+                origin.array_element_copy_evidence = true;
+                origin.fresh_array_value = range;
+                origin.fresh_vector_result_contract = false;
+                return iterator_pipelines::construct(
+                    self,
+                    Pipeline {
+                        receiver,
+                        source: &source,
+                        stages: &stages,
+                        consumer: &consumer.value,
+                        direction: &direction,
+                        input_element: element.as_ref().expect("proved input element"),
+                        item: current_item.as_ref().unwrap(),
+                        initial: None,
+                        callback: None,
+                        result: origin,
+                        span: range,
+                    },
+                )
+                .map(Some);
+            }
             let name = self.fresh_product_binding();
             let local = SExpr::new(
                 SNode::Name {
@@ -225,7 +304,7 @@ impl RustParser {
                 self,
                 local,
                 &name,
-                &element,
+                element.as_ref().expect("proved input element"),
                 &consumer.value,
                 &direction,
                 range,
@@ -263,6 +342,25 @@ impl RustParser {
                 receiver.span.map_or(method.start, |span| span.start),
                 close.end,
             ));
+            if !stages.is_empty() {
+                return iterator_pipelines::construct(
+                    self,
+                    Pipeline {
+                        receiver,
+                        source: &source,
+                        stages: &stages,
+                        consumer: &consumer.value,
+                        direction: &direction,
+                        input_element: element.as_ref().expect("proved input element"),
+                        item: current_item.as_ref().unwrap(),
+                        initial: None,
+                        callback: None,
+                        result: iterator_pipelines::count_origin(path),
+                        span: range,
+                    },
+                )
+                .map(Some);
+            }
             let name = rules::read_rust_iterator_reduction_count_result_owner();
             let ty = super::rust_fixed_type(&name).expect("registered source count owner");
             let mut stack: Vec<SExpr> = Vec::new();
@@ -311,7 +409,7 @@ impl RustParser {
             return Ok(Some(value));
         }
         let element = element.expect("proved scalar element");
-        let owner = owner.expect("proved scalar owner");
+        let _owner = owner.expect("proved scalar owner");
         self.cursor.expect("(", Some("iterator reduction"))?;
         let mut initial = None;
         let mut initial_origin = None;
@@ -330,12 +428,7 @@ impl RustParser {
             initial = Some(value);
             initial_origin = Some(origin);
         }
-        let mut item = SourceOrigin::with_type(element.clone(), path, Vec::new());
-        item.source_owner = Some(owner);
-        if borrowed {
-            item.wrappers.push("reference".to_owned());
-            item.source_lifetimes.push(None);
-        }
+        let item = current_item.clone().expect("proved scalar item");
         let result = initial_origin.clone().unwrap_or_else(|| boolean(path));
         let parameters = if let Some(accumulator) = &initial_origin {
             vec![accumulator.clone(), item]
@@ -395,6 +488,25 @@ impl RustParser {
             &result,
             callback.span,
         )?;
+        if !stages.is_empty() {
+            return iterator_pipelines::construct(
+                self,
+                Pipeline {
+                    receiver,
+                    source: &source,
+                    stages: &stages,
+                    consumer: &consumer.value,
+                    direction: &direction,
+                    input_element: &element,
+                    item: current_item.as_ref().unwrap(),
+                    initial: initial.zip(initial_origin),
+                    callback: Some((callback, callable)),
+                    result,
+                    span: range,
+                },
+            )
+            .map(Some);
+        }
         let mut values = BTreeMap::from([
             (
                 "receiver".to_owned(),
@@ -464,7 +576,7 @@ impl RustParser {
     }
 }
 
-fn construct_iterator_receiver(
+pub(super) fn construct_iterator_receiver(
     parser: &mut RustParser,
     receiver: SExpr,
     receiver_name: &str,

@@ -1,3 +1,4 @@
+import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {acceptRustStaticByteArrayCoercion,acceptRustStaticByteArrayOwnerEquality} from './rust-byte-string-expression-rules.js';
 import {readRustSourceNumericPatternOwnerError,acceptRustSourceNumericPatternAlias} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceLiteralPatternAlias} from './rust-byte-pattern-rules.js';
@@ -190,6 +191,7 @@ export class RustSourceOrigins {
     if (node.k === 'if') {
       return this.join([this.origin(node.then, path), this.origin(node.else, path)]);
     }
+    if(node.k==='unit')return {...value(true,{kind:'unit'}),sourceOwner:{kind:'unit',path:[],arguments:[]}};
     const form = readRustSourceExpressionOrigin(node.k, node.op ?? '');
     if (form === 'value') return value(['num', 'bool', 'unit'].includes(node.k), node.type ?? (node.k === 'bool' ? { kind: 'bool' } : node.k === 'unit' ? { kind: 'unit' } : null));
     if (form === 'diverging') return { ...value(), diverging: true };
@@ -283,7 +285,7 @@ export class RustSourceOrigins {
 
   wrap(node, path, layer) {
     const origin = this.origin(node, path);
-    origin.wrappers.unshift(layer);
+    origin.wrappers.unshift(layer);if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceLifetimes=[null,...(origin.sourceLifetimes??[])];
     return this.mark(node, origin);
   }
 
@@ -293,7 +295,7 @@ export class RustSourceOrigins {
     if (!this.collecting && (!origin.proven || !acceptRustImmutableIndirectionLayer(origin.wrappers[0] ?? ''))) {
       throw unsupported('dereference', 'the operand must have a proven immutable reference or standard Box source type', span);
     }
-    origin.wrappers.shift();
+    const layer=origin.wrappers.shift();if(testRustSourceReferenceLifetimeLayer(layer??''))origin.sourceLifetimes?.shift();
     return this.mark(node, origin);
   }
 

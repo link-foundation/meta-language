@@ -1,3 +1,4 @@
+import {readRustCopyClosureResultContext} from './rust-copy-closure-parameter-rules.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
 import {requireRustNonconstantBinding,readRustSourceValueName} from './rust-source-constants.js';
 import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
@@ -8,14 +9,14 @@ import {readCallableStatementCaptures} from './callable-source.js';
 import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js';
 import {readRustCopyClosureHeaderError,readRustCopyClosureCaptureError,acceptRustCopyClosureInvocation,readRustCopyClosureParameterForm} from './rust-copy-closure-rules.js';
 import {acceptRustContextualCopyClosure,readRustContextualCopyClosureHeaderError,findRustContextualClosureParenthesisCount,acceptRustContextualCopyPointerResultBlock} from './rust-contextual-closure-rules.js';
-export function readRustExpectedCopyClosure(parser,path,expected){
+export function readRustExpectedCopyClosure(parser,path,expected,parametersOnly=false){
  const primitive=readRustPrimitiveFunctionValue(parser,path,expected);if(primitive)return primitive;
  const c=parser.cursor,kind=expected?.type?.kind??'',copy=parser.origins.immutableProduct(expected),role=['|','||','move'].find(value=>c.is(value))??'';
- if(acceptRustContextualCopyClosure(kind,copy,role))return readRustCopyClosure(parser,path,expected);
+ if(acceptRustContextualCopyClosure(kind,copy,role))return readRustCopyClosure(parser,path,expected,parametersOnly);
  if(kind==='function'&&copy&&c.is('(')){
   let count=64;
   for(;;){const tokens=c.tokens.slice(c.index,c.index+count),syntax=tokens.map((_,index)=>['(','|','||','move'].find(value=>c.is(value,index))??''),depth=findRustContextualClosureParenthesisCount(syntax);
-   if(depth>0){for(let index=0;index<depth;index+=1)c.next();const node=readRustCopyClosure(parser,path,expected);for(let index=0;index<depth;index+=1)c.expect(')','contextual closure');return node;}
+   if(depth>0){for(let index=0;index<depth;index+=1)c.next();const node=readRustCopyClosure(parser,path,expected,parametersOnly);for(let index=0;index<depth;index+=1)c.expect(')','contextual closure');return node;}
    if(depth!==-2||tokens.length<count)break;count*=2;
   }
  }
@@ -36,7 +37,7 @@ export function readRustContextualCallArguments(parser,callee,path){
  while(!c.is(')')){const frame=beginRustStandardStringViewArgument(parser,path,parameters[args.length],result);let value;try{value=readRustExpectedCopyClosure(parser,path,parameters[args.length]);}finally{endRustStandardStringViewArgument(parser,frame);}args.push(checkRustStandardStringViewArgument(parser,frame,value,path));if(!c.eat(','))break;}
  return args;
 }
-export function readRustCopyClosure(parser,path,expected=null){
+export function readRustCopyClosure(parser,path,expected=null,parametersOnly=false){
  const c=parser.cursor,start=c.peek(),parameters=[],origins=[];c.eat('move');
  if(!c.eat('||')){
   c.expect('|','closure');
@@ -59,7 +60,7 @@ export function readRustCopyClosure(parser,path,expected=null){
   }
   c.expect('|','closure');
  }
- const written=Boolean(c.eat('->'));let ret=written?parser.type():expected?.type?.ret??null,resultOrigin=written?parser.origins.type:ret?parser.origins.copy(expected?.callableResult)??parser.origins.typeOrigin(ret,path):null;
+ const written=Boolean(c.eat('->'));let ret=written?parser.type():readRustCopyClosureResultContext(written,parametersOnly)==='inferred'?null:expected?.type?.ret??null,resultOrigin=written?parser.origins.type:ret?parser.origins.copy(expected?.callableResult)??parser.origins.typeOrigin(ret,path):null;
  if(written){const reason=readRustCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),written,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
  const outer=parser.origins.enter();parameters.forEach((parameter,index)=>parser.origins.scope.set(parameter.name,origins[index]));
  let body;

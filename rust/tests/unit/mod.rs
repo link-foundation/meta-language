@@ -617,3 +617,5 @@ mod project_translation_archive;
 mod translation_rust_byte_string_expressions;
 
 mod translation_rust_iterator_reductions;
+
+mod translation_rust_iterator_pipelines;

@@ -65,7 +65,7 @@ add('fresh vector function results may be consumed immediately','bytes().into_it
 add('a collected temporary may be consumed as a fresh vector','b"AB".iter().copied().collect::<Vec<_>>().into_iter().all(|value|value>=65)','true');
 const typeTokens=[{token:'>>',expected:['>','>']},{token:'>=',expected:['>','=']},{token:'>>=',expected:['>','>','=']},{token:'>',expected:[]},{token:'<<',expected:[]},{token:'&&',expected:[]},{token:'😀',expected:[]}];
 const parameterPremises=[];
-for(const known of [false,true])for(const baseCopy of [false,true])for(const layers of [0,1,2])for(const reference of [false,true])for(const primitiveOwner of [false,true])parameterPremises.push({known,baseCopy,layers,reference,primitiveOwner,expected:known&&baseCopy&&(layers===0||layers===1&&reference&&primitiveOwner)});
+for(const known of [false,true])for(const baseCopy of [false,true])for(const layers of [0,1,2])for(const reference of [false,true])for(const primitiveOwner of [false,true])parameterPremises.push({known,baseCopy,layers,reference,primitiveOwner,expected:known&&baseCopy&&(layers===0||layers>=1&&layers<=256&&reference&&primitiveOwner)});
 const receiverError='a reduction needs an actual standard immutable scalar array and its complete primitive element owner',accumulatorError='fold needs the actual direct immutable Copy accumulator type',callbackError='a reduction needs its complete direct scalar callable source signature';
 const premises=[];function premise(operation,args,expected){premises.push({operation,args,expected});}
 for(const method of ['iter','into_iter'])for(const count of [0,1])for(const ordinary of [false,true])premise('acceptRustIteratorReductionStart',[method,count,ordinary],(method==='iter'||method==='into_iter')&&count===0&&ordinary);

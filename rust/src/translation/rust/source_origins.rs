@@ -82,13 +82,13 @@ impl SourceOrigin {
                 Type::Fixed { bits, signed } => (bits.to_string(), *signed),
                 _ => (String::new(), false),
             };
-            owner.kind == "primitive" && owner.arguments.is_empty() && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed)
+            owner.arguments.is_empty() && (owner.kind == "unit" && owner.path.is_empty() && ty.kind() == "unit" || owner.kind == "primitive" && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed))
         } else {
             false
         };
         let mut base = self.clone();
         base.wrappers.clear();
-        crate::translation::rust_copy_closure_parameter_rules::accept_rust_copy_closure_parameter_source(self.proven,base.direct_copy_value(),self.wrappers.len() as f64,self.wrappers.first().is_some_and(|value| value == "reference"),primitive)
+        crate::translation::rust_copy_closure_parameter_rules::accept_rust_copy_closure_parameter_source(self.proven,base.direct_copy_value(),self.wrappers.len() as f64,self.wrappers.iter().all(|value| value == "reference"),primitive)
     }
 
     /// Standard readonly view from actual static u8 array facts; no owner mutation.
@@ -711,7 +711,15 @@ impl SourceOrigins {
             "value" => match &node.node {
                 SNode::Num { ty, .. } => SourceOrigin::scalar_copy_value(ty.clone()),
                 SNode::Bool { .. } => SourceOrigin::scalar_copy_value(Some(super::BOOL)),
-                SNode::Unit => SourceOrigin::scalar_copy_value(Some(super::UNIT)),
+                SNode::Unit => {
+                    let mut origin = SourceOrigin::scalar_copy_value(Some(super::UNIT));
+                    origin.source_owner = Some(super::super::source_signatures::SourceOwner {
+                        kind: "unit".to_owned(),
+                        path: Vec::new(),
+                        arguments: Vec::new(),
+                    });
+                    origin
+                }
                 _ => SourceOrigin::value(),
             },
             "diverging" => SourceOrigin {
@@ -1144,6 +1152,7 @@ impl SourceOrigins {
     pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) {
         let mut origin = self.origin(node, path);
         origin.wrappers.insert(0, layer.to_owned());
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_lifetimes.insert(0,None);}
         self.mark(node, origin);
     }
 
@@ -1169,8 +1178,12 @@ impl SourceOrigins {
                 span,
             ));
         }
+        let lifetime=crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer);
         if !origin.wrappers.is_empty() {
             origin.wrappers.remove(0);
+        }
+        if lifetime && !origin.source_lifetimes.is_empty() {
+            origin.source_lifetimes.remove(0);
         }
         self.mark(node, origin);
         Ok(())

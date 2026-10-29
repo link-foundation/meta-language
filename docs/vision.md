@@ -10449,10 +10449,12 @@ source, with native adapters transporting tokens, source facts and terms.
 Immediate borrowed scalar consumers also retain actual immutable reference
 parameters, including explicit dereferences, through the same callable terms.
 Parameter admission requires a known immutable Copy referent and an actual
-matching primitive owner for exactly one reference layer. Source reference
-wrappers and inferred lifetimes survive in callable signatures. This does not
-admit mutable references, nested references, borrowed nonprimitive values,
-reference captures or escaping reference results. Those semantics, arbitrary
+matching primitive or unit owner for every immutable reference layer. The
+current source transport profile bounds those layers at256; deeper types
+retain their full requirements. Source reference wrappers and inferred
+lifetimes survive in callable signatures, with each new reference inserting
+its own lifetime slot and each dereference removing that slot. This does not admit mutable references, borrowed
+nonprimitive values, reference captures or escaping reference results. Those semantics, arbitrary
 iterator state, mutable captures, other combinators and general inference
 remain requirements of full translation. Complete independent originals,
 source decision premises, source ownership, CST reconstruction, both graph
@@ -10515,3 +10517,34 @@ items. Scalar predicates, folds and typed collection reuse their existing
 complete owner checks; fresh owned string vectors can count without extracting
 items. No existing named vector is consumed through this draft: tracking moves,
 invalidating bindings and proving later use remain full requirements.
+
+
+### Lazy scalar iterator map and filter composition
+
+Immediate scalar iterator pipelines retain every `map` and `filter` callable
+as a source-ordered capture. Parameters use actual iterator item provenance;
+filter adds one immutable reference layer, including the additional layer when
+the item is already borrowed. A mapper can infer its actual scalar result from
+its body or use an explicit result annotation. Its complete result type and
+source owner become the next stage's item context; width alone never supplies
+an owner. Unit literal values retain their actual standard unit owner.
+
+Shared source plans fuse stages into common lets and conditionals inside
+predicate or reduction callbacks. Each mapped value is bound once before its
+continuation. A rejected filter item uses the terminal's inactive term: true
+for all, false for any, or the unchanged accumulator. Predicates therefore
+short circuit without precomputing later items or stage callbacks. Counts with
+stages visit them, and collection preserves stage order and result ownership.
+Reversals and right folds choose the consumed direction before callbacks run.
+Receiver, stage callables, fold initializer and terminal callable are captured
+once in that order, including for empty inputs and failing initializers.
+
+The functional collection draft appends through a fold. Linear allocation
+optimization is a remaining performance obligation, rather than a claim that
+repeated vector copying is optimal. Mutable captures, non-Copy mapper results,
+escaping iterator state, broader reference ownership, generators and async
+iteration retain their full requirements. The independent originals and source
+premises in `parity/fixtures/rust-iterator-pipelines.lino` remain unexecuted.
+The [standard map implementation](https://doc.rust-lang.org/src/core/iter/adapters/map.rs.html)
+and [iterator contract](https://doc.rust-lang.org/std/iter/trait.Iterator.html)
+provide independent source semantics for order and laziness.
