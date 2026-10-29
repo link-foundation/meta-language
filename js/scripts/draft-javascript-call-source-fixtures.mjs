@@ -286,6 +286,33 @@ for(const [method,width,value,result]of [
 rows.push({name:'BigInt fixed width evaluates its value operand exactly once',source:'/** @param {{value:number}} holder @returns {bigint} */ export function inspect(holder){return BigInt.asUintN(7,update(holder));} /** @param {{value:number}} holder @returns {bigint} */ function update(holder){holder.value+=1;return -1n;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(1)))])],expected:integer('127')});
 rows.push({name:'BigInt fixed width captures value before ignored arguments',source:'/** @param {bigint} value @param {{value:number}} holder @returns {bigint} */ export function inspect(value,holder){return BigInt.asIntN(7,first(value,holder),second(holder));} /** @param {bigint} value @param {{value:number}} holder @returns {bigint} */ function first(value,holder){holder.value=1;return value;} /** @param {{value:number}} holder @returns {number} */ function second(holder){holder.value=holder.value*10+2;return 0;}',entry:'inspect',functions:['inspect','first','second'],referenceSemantics:true,arguments:[integer('127'),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(12)))])],expected:integer('-1')});
 rows.push({name:'BigInt fixed width preserves abrupt ignored arguments',source:'/** @param {bigint} value @returns {bigint} */ export function inspect(value){return BigInt.asUintN(7,value,fail());} /** @returns {number} */ function fail(){throw new TypeError("ignored cast argument");}',entry:'inspect',functions:['inspect','fail'],arguments:[integer('-1')],expectedOutcome:'sourceAllocation',errorClass:'TypeError',errorRealm:'1000',errorMessage:units('ignored cast argument'),messagePresent:true});
+for(const [name,type,input,result]of [
+ ['present optional Number adds normally','number | undefined',number(7),number(8)],
+ ['undefined optional Number retains NaN','number | undefined',undef,number(NaN)],
+ ['null optional Number converts to zero','number | null | undefined',nil,number(1)],
+ ['true optional Boolean converts to one','boolean | null | undefined',{$:'boolean',value:true},number(2)],
+ ['false optional Boolean converts to zero','boolean | null | undefined',{$:'boolean',value:false},number(1)],
+ ['null optional Boolean converts to zero','boolean | null | undefined',nil,number(1)],
+ ['undefined optional Boolean retains NaN','boolean | null | undefined',undef,number(NaN)]
+])rows.push({name:'nullable arithmetic '+name,source:'/** @param {'+type+'} value @returns {number} */ export function inspect(value){return value+1;}',entry:'inspect',functions:['inspect'],arguments:[input],expected:result});
+for(const [name,type,input,result]of [
+ ['null orders as zero','number | null | undefined',nil,true],
+ ['undefined is unordered','number | null | undefined',undef,false],
+ ['present Number retains its order','number | null | undefined',number(5),false],
+ ['true Boolean orders as one','boolean | null | undefined',{$:'boolean',value:true},false],
+ ['false Boolean orders as zero','boolean | null | undefined',{$:'boolean',value:false},true]
+])rows.push({name:'nullable arithmetic '+name,source:'/** @param {'+type+'} value @returns {boolean} */ export function inspect(value){return value<1;}',entry:'inspect',functions:['inspect'],arguments:[input],expected:{$:'boolean',value:result}});
+for(const [name,type,input,result]of [
+ ['negated null retains negative zero','number | null | undefined',nil,number(-0)],
+ ['negated false retains negative zero','boolean | null | undefined',{$:'boolean',value:false},number(-0)],
+ ['negated negative zero becomes positive zero','number | null | undefined',number(-0),number(0)]
+])rows.push({name:'nullable arithmetic '+name,source:'/** @param {'+type+'} value @returns {number} */ export function inspect(value){return -value;}',entry:'inspect',functions:['inspect'],arguments:[input],expected:result});
+for(const [name,type,input,result]of [
+ ['undefined bitwise conversion yields zero','number | undefined',undef,number(0)],
+ ['null bitwise conversion yields zero','number | null | undefined',nil,number(0)],
+ ['fractional Number bitwise conversion truncates','number | null | undefined',number(5.5),number(5)],
+ ['true bitwise conversion yields one','boolean | null | undefined',{$:'boolean',value:true},number(1)]
+])rows.push({name:'nullable arithmetic '+name,source:'/** @param {'+type+'} value @returns {number} */ export function inspect(value){return value|0;}',entry:'inspect',functions:['inspect'],arguments:[input],expected:result});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

@@ -68,6 +68,10 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     case 'flattenOption':return expression(node.value,environment,depth+1);
     case 'optionalIndexNumber':return expression(node.arg,environment,depth+1);
     case 'unwrapOption':return expression(node.arg,environment,depth+1);
+    case 'nullishNumber':{
+     if(node.type.kind!=='float'||node.arg.type.kind!=='option'||!['float','bool','unit'].includes(node.arg.type.element.kind))return refuse(node,'nullable arithmetic requires its actual admitted Number conversion');
+     return primitive('coerce primitive number',[expression(node.arg,environment,depth+1)]);
+    }
     case 'toString':case 'optionalText':{
      if(node.console===true)return refuse(node,'console text requires its actual console formatting profile');
      const type=node.arg.type.kind==='option'?node.arg.type.element:node.arg.type;

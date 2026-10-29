@@ -9801,3 +9801,13 @@ actual value operand and every ignored operand once in source order, before
 the modular operation. Abrupt ignored arguments retain their original exception.
 The construction profile caps the complete argument list at4096; ordinary
 two-argument calls keep their preceding surface shape.
+
+The checked nullable-number node lowers through the existing shared ToNumber
+operation for optional Number, Boolean and unit operands. Null remains zero,
+undefined remains NaN, present values retain their conversions, and the actual
+operand is evaluated once. This connects nullable arithmetic, ordering,
+bitwise coercion and unary negation to the same executor. Negative and positive
+zero stay distinct. Nullable string ordering remains outside this admission
+profile and cannot be silently treated as numeric ordering. Independent source
+originals retain complete native traces and original-source observations when
+the deferred suites execute.
