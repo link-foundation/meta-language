@@ -330,6 +330,8 @@ pub enum ProgramRepresentationError {
     },
     /// Rename would capture another binding.
     CaptureConflict { identifier: String, offset: usize },
+    /// A parameter and separate body variable retain name-based initialization.
+    BindingDependency { identifier: String, offset: usize },
     /// A range is reversed, out of bounds, or splits a UTF-8 code point.
     InvalidRange { start: usize, end: usize },
     /// A move destination falls strictly inside the moved range.
@@ -362,6 +364,10 @@ impl fmt::Display for ProgramRepresentationError {
             Self::CaptureConflict { identifier, offset } => write!(
                 formatter,
                 "rename would capture {identifier} at {offset} (binding conflict)"
+            ),
+            Self::BindingDependency { identifier, offset } => write!(
+                formatter,
+                "rename would change parameter/var initialization for {identifier} at {offset}"
             ),
             Self::InvalidRange { start, end } => {
                 write!(formatter, "invalid UTF-8 source range {start}..{end}")

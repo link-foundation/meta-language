@@ -7,8 +7,8 @@
 
 use super::declarations::declare;
 use super::{
-    BTreeMap, BTreeSet, Declaration, ProgramRange, ProgramSourceMapping, SemanticToken, TokenKind,
-    char_at, identifier_continue, identifier_start, mark,
+    BTreeMap, BTreeSet, Declaration, JavaScriptFunctionScope, ProgramRange, ProgramSourceMapping,
+    SemanticToken, TokenKind, char_at, identifier_continue, identifier_start, mark,
 };
 
 const RUST_ITEMS: &[&str] = &[
@@ -153,6 +153,7 @@ pub(super) fn declare_syntax_binders(
     tokens: &[SemanticToken],
     syntax: &[ProgramSourceMapping],
     language: &str,
+    function_scopes: &BTreeMap<usize, JavaScriptFunctionScope>,
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
@@ -161,8 +162,26 @@ pub(super) fn declare_syntax_binders(
         let Some(&first) = token_at.get(&fact.range.start) else {
             continue;
         };
+        let parameter_scope = if language == "JavaScript" && fact.term == "arrow_function" {
+            function_scopes
+                .get(&first)
+                .map(|scope| scope.parameter_scope)
+        } else {
+            None
+        };
         let mut binder = |index: usize, kind: &str| {
-            declare(tokens, index, kind, None, declarations, declared);
+            declare(
+                tokens,
+                index,
+                kind,
+                if kind == "parameter" {
+                    parameter_scope
+                } else {
+                    None
+                },
+                declarations,
+                declared,
+            );
         };
         let term = fact.term.as_str();
         if language == "JavaScript" {

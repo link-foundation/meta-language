@@ -26,6 +26,20 @@ struct Declaration {
     scope: usize,
     visibility: Visibility,
 }
+struct JavaScriptFunctionScope {
+    private_scope: Option<usize>,
+    parameter_scope: usize,
+    body_start: Option<usize>,
+    simple: bool,
+}
+struct JavaScriptFunctionStart {
+    range: ProgramRange,
+    head: usize,
+    named: bool,
+    declaration: bool,
+    body_start: Option<usize>,
+    simple: bool,
+}
 
 pub(super) fn syntax_facts(network: &LinkNetwork) -> Vec<ProgramSourceMapping> {
     network
@@ -93,7 +107,7 @@ pub(super) fn semantic_tokens(
             }
             let text = &source[start..offset];
             let keyword = if language == "JavaScript" {
-                crate::translation::source_library_binding_rules::test_java_script_source_keyword_role(identifiers.contains(&(start,offset)),is_keyword(language,text))
+                crate::translation::source_library_binding_rules::test_java_script_source_keyword_role(identifiers.contains(&(start,offset)),is_keyword(language,text)||crate::translation::javascript_identifier_rules::accept_java_script_reserved_identifier(text))
             } else {
                 is_keyword(language, text)
             };
@@ -142,24 +156,67 @@ pub(super) fn resolve_bindings(
     let mut stack = vec![0_usize];
     let mut brace_scopes = BTreeMap::new();
     let mut brace_kinds = Vec::new();
-    let mut function_starts: BTreeMap<usize, Vec<(ProgramRange, usize, bool)>> = BTreeMap::new();
+    let mut function_starts: BTreeMap<usize, Vec<JavaScriptFunctionStart>> = BTreeMap::new();
     let mut expression_scopes = BTreeMap::new();
     let mut virtual_scopes = BTreeSet::new();
-    let token_positions = input
-        .iter()
-        .enumerate()
-        .map(|(index, token)| (token.range.start, index))
-        .collect::<BTreeMap<_, _>>();
+    let token_positions = if language == "JavaScript" {
+        input
+            .iter()
+            .enumerate()
+            .map(|(index, token)| (token.range.start, index))
+            .collect::<BTreeMap<_, _>>()
+    } else {
+        BTreeMap::new()
+    };
     if language == "JavaScript" {
-        for fact in syntax.iter().filter(|fact|crate::translation::source_library_binding_rules::test_java_script_source_function_expression_term(&fact.term)) {
-            let Some(&first)=token_positions.get(&fact.range.start)else{continue};
-            let head=first+usize::from(input[first].text=="async");
-            if !input.get(head).is_some_and(|token|token.text=="function"){continue;}
-            let name=head+1+usize::from(input.get(head+1).is_some_and(|token|token.text=="*"));
-            let named=input.get(name).is_some_and(|token|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier{"identifier"}else{""}));
-            let rows=function_starts.entry(fact.range.start).or_default();
-            if !rows.iter().any(|(range,_,_)|range.end==fact.range.end){rows.push((fact.range,head,named));}
-            rows.sort_by_key(|(range,_,_)|std::cmp::Reverse(range.end));
+        for fact in syntax {
+            let form=crate::translation::source_library_binding_rules::read_java_script_source_function_scope_form(&fact.term);
+            if form.is_empty() {
+                continue;
+            }
+            let Some(&first) = token_positions.get(&fact.range.start) else {
+                continue;
+            };
+            let arrow = form == "arrow function";
+            let head = first + usize::from(!arrow && input[first].text == "async");
+            if !arrow
+                && !input
+                    .get(head)
+                    .is_some_and(|token| token.text == "function")
+            {
+                continue;
+            }
+            let name =
+                head + 1 + usize::from(input.get(head + 1).is_some_and(|token| token.text == "*"));
+            let named=!arrow&&input.get(name).is_some_and(|token|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier{"identifier"}else{""}));
+            let body = syntax.iter().find(|node| {
+                node.term == "statement_block"
+                    && node.range.start >= fact.range.start
+                    && node.range.end == fact.range.end
+            });
+            let parameters = body.and_then(|body| {
+                syntax
+                    .iter()
+                    .filter(|node| {
+                        node.term == "formal_parameters"
+                            && node.range.start >= fact.range.start
+                            && node.range.end <= body.range.start
+                    })
+                    .min_by_key(|node| node.range.start)
+            });
+            let simple=parameters.is_none_or(|parameters|crate::translation::source_library_binding_rules::accept_java_script_source_simple_parameter_list(&syntax.iter().filter(|node|node.range.start>=parameters.range.start&&node.range.end<=parameters.range.end).map(|node|node.term.clone()).collect::<Vec<_>>()));
+            let rows = function_starts.entry(fact.range.start).or_default();
+            if !rows.iter().any(|row| row.range.end == fact.range.end) {
+                rows.push(JavaScriptFunctionStart {
+                    range: fact.range,
+                    head,
+                    named,
+                    declaration: form == "function declaration",
+                    body_start: body.map(|body| body.range.start + 1),
+                    simple,
+                });
+            }
+            rows.sort_by_key(|row| std::cmp::Reverse(row.range.end));
         }
     }
     let scoped_braces = syntax
@@ -180,23 +237,38 @@ pub(super) fn resolve_bindings(
             stack.pop();
         }
         if let Some(entries) = function_starts.get(&token.range.start) {
-            for (range, head, named) in entries {
+            for entry in entries {
+                let outer = *stack.last().expect("root scope");
                 let mut create = || {
                     let parent = *stack.last().expect("root scope");
                     let index = scopes.len();
                     scopes.push(ProgramScope {
                         id: format!("scope:{index}"),
                         parent: Some(scopes[parent].id.clone()),
-                        range: *range,
+                        range: entry.range,
                         depth: stack.len(),
                     });
                     stack.push(index);
                     virtual_scopes.insert(index);
                     index
                 };
-                let private_scope = if *named { Some(create()) } else { None };
+                let private_scope = if entry.declaration {
+                    Some(outer)
+                } else if entry.named {
+                    Some(create())
+                } else {
+                    None
+                };
                 let parameter_scope = create();
-                expression_scopes.insert(*head, (private_scope, parameter_scope));
+                expression_scopes.insert(
+                    entry.head,
+                    JavaScriptFunctionScope {
+                        private_scope,
+                        parameter_scope,
+                        body_start: entry.body_start,
+                        simple: entry.simple,
+                    },
+                );
             }
         }
         token.scope = *stack.last().expect("root scope");
@@ -234,10 +306,23 @@ pub(super) fn resolve_bindings(
             &mut declared,
         );
     }
-    declare_syntax_binders(&tokens, syntax, language, &mut declarations, &mut declared);
+    declare_syntax_binders(
+        &tokens,
+        syntax,
+        language,
+        &expression_scopes,
+        &mut declarations,
+        &mut declared,
+    );
     match language {
         "JavaScript" => {
-            javascript_hoist::hoist_var_declarations(&mut declarations, &tokens, syntax, &scopes);
+            javascript_hoist::hoist_var_declarations(
+                &mut declarations,
+                &tokens,
+                syntax,
+                &scopes,
+                &expression_scopes,
+            );
         }
         "Rust" => declare_rust(
             &tokens,

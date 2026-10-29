@@ -78,7 +78,7 @@ function unmaskFormatArguments(mask, source, start, end) {
 }
 
 /** Declares binders that only the concrete syntax tree delimits. */
-export function declareSyntaxBinders(tokens, syntax, language, declare) {
+export function declareSyntaxBinders(tokens, syntax, language, declare,functionScopes=new Map()) {
   const tokenAt = new Map(tokens.map((token, index) => [token.start, index]));
   for (const fact of syntax) {
     const first = tokenAt.get(fact.start);
@@ -90,7 +90,7 @@ export function declareSyntaxBinders(tokens, syntax, language, declare) {
           const token = tokens[index];
           const previous = tokens[index - 1]?.text;
           if (token.kind === 'identifier' && (index === open || previous === '(' || previous === ',' || previous === '...')) {
-            declare(index, 'parameter');
+            declare(index, 'parameter',functionScopes.get(first)?.parameterScope??token.scope);
           }
         }
       }

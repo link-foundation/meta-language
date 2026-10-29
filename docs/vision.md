@@ -7966,6 +7966,19 @@ function head:
 the first parameter or a later declaration never supplies a fabricated name.
 Their import aliases and duplicate private helpers retain independent lexical
 owners. Head-name admission is itself a shared translated definition.
+Ordinary named functions, function expressions and arrows draft complete
+parameter-environment intervals, including defaults. Arrow parameters cannot
+capture earlier source reads or leak into neighboring arrows. Simple parameter
+lists share their actual binding with matching var redeclarations; repeated
+var declarations retain one binding and explicit source occurrences. Non-simple
+parameter lists retain a separate body environment and its name-dependent
+initialization. Single-binding renames that would disconnect that dependency
+refuse; Rust exposes BindingDependency for the same refusal. Function forms,
+simple-list admission, redeclaration and dependency rules are shared translated
+definitions. Literal true/false/null words do not fabricate unresolved reads.
+Full method/class bindings, complex patterns and initialization-preserving
+rewrites remain language obligations; these source drafts are not execution
+evidence.
 CST identifier intervals also distinguish contextual binding words from actual
 keywords in both runtime analyzers. A shared Boolean role definition retains
 names such as async, as and from; import scanning selects the actual module

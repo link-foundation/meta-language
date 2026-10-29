@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
@@ -194,6 +194,13 @@ export class ProgramRepresentation {
     validateIdentifier(replacement, this.language);
     if (binding.name === replacement) {
       return this;
+    }
+    if(this.language==='JavaScript')for(const other of this.bindings){
+      if(other.id===binding.id||other.name!==binding.name)continue;
+      const parameter=binding.kind==='parameter'?binding:other,variable=binding.kind==='var'?binding:other;
+      const body=scopeFor(this.scopes,variable.scope);
+      const parent=body.parent===parameter.scope&&this.sourceMappings.some(node=>node.term==='statement_block'&&node.start+1===body.start&&node.end-1===body.end);
+      if(testJavaScriptSourceParameterVariableDependency(binding.kind,other.kind,parent))throw new BindingRenameError('rename would change parameter/var initialization for '+binding.name+' at '+other.declaration.start);
     }
     const bindingScope = scopeFor(this.scopes, binding.scope);
     const conflicting = this.bindings.find((candidate) =>
@@ -394,7 +401,7 @@ function semanticTokens(source, language, syntax) {
         offset += next.length;
       }
       const text = source.slice(start, offset);
-      const keyword=identifiers?testJavaScriptSourceKeywordRole(identifiers.has(start+':'+offset),keywords.has(text)):keywords.has(text);
+      const keyword=identifiers?testJavaScriptSourceKeywordRole(identifiers.has(start+':'+offset),keywords.has(text)||acceptJavaScriptReservedIdentifier(text)):keywords.has(text);
       tokens.push({
         kind: keyword ? 'keyword' : 'identifier',
         text,
@@ -417,14 +424,17 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   const braceScopes = new Map();
   const braceKinds = [];
   const functionStarts=new Map(),expressionScopes=new Map(),virtualScopes=new Set();
-  const tokenPositions=new Map(tokens.map((token,index)=>[token.start,index]));
+  const tokenPositions=language==='JavaScript'?new Map(tokens.map((token,index)=>[token.start,index])):new Map();
   if(language==='JavaScript')for(const fact of syntax){
-    if(!testJavaScriptSourceFunctionExpressionTerm(fact.term))continue;
-    const first=tokenPositions.get(fact.start),head=first+(tokens[first]?.text==='async'?1:0);
-    if(first===undefined||tokens[head]?.text!=='function')continue;
-    const name=head+1+(tokens[head+1]?.text==='*'?1:0),named=acceptJavaScriptSourceFunctionHeadName(tokens[name]?.kind??'');
+    const form=readJavaScriptSourceFunctionScopeForm(fact.term);if(!form)continue;
+    const first=tokenPositions.get(fact.start),head=first+(form!=='arrow function'&&tokens[first]?.text==='async'?1:0);
+    if(first===undefined||form!=='arrow function'&&tokens[head]?.text!=='function')continue;
+    const name=head+1+(tokens[head+1]?.text==='*'?1:0),named=form!=='arrow function'&&acceptJavaScriptSourceFunctionHeadName(tokens[name]?.kind??'');
+    const body=syntax.find(node=>node.term==='statement_block'&&node.start>=fact.start&&node.end===fact.end);
+    const parameters=body&&syntax.filter(node=>node.term==='formal_parameters'&&node.start>=fact.start&&node.end<=body.start).sort((left,right)=>left.start-right.start)[0];
+    const simple=parameters?acceptJavaScriptSourceSimpleParameterList(syntax.filter(node=>node.start>=parameters.start&&node.end<=parameters.end).map(node=>node.term)):true;
     const rows=functionStarts.get(fact.start)??[];
-    if(!rows.some(row=>row.end===fact.end))rows.push({end:fact.end,head,named});
+    if(!rows.some(row=>row.end===fact.end))rows.push({end:fact.end,head,named,form,bodyStart:body?body.start+1:null,simple});
     rows.sort((left,right)=>right.end-left.end);functionStarts.set(fact.start,rows);
   }
   const scopedBraces = new Set(syntax
@@ -439,8 +449,8 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
       const create=()=>{const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end:fact.end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);return scope.id;};
       // A named expression's immutable private environment encloses its
       // parameter environment, including defaults and the entire body.
-      const privateScope=fact.named?create():null,parameterScope=create();
-      expressionScopes.set(fact.head,{privateScope,parameterScope});
+      const privateScope=fact.form==='function declaration'?stack.at(-1).id:fact.named?create():null,parameterScope=create();
+      expressionScopes.set(fact.head,{privateScope,parameterScope,bodyStart:fact.bodyStart,simple:fact.simple});
     }
     token.scope = stack.at(-1).id;
     if (token.text === '{') {
@@ -474,8 +484,8 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   };
   if (language === 'JavaScript') {
     declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare);
-    declareSyntaxBinders(tokens, syntax, language, declare);
-    hoistJavaScriptVars(declarations, tokens, syntax, scopes);
+    declareSyntaxBinders(tokens, syntax, language, declare,expressionScopes);
+    hoistJavaScriptVars(declarations, tokens, syntax, scopes,expressionScopes);
   } else if (language === 'Rust') {
     declareSyntaxBinders(tokens, syntax, language, declare);
     declareRust(tokens, syntax, braceScopes, declare);
@@ -572,7 +582,7 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   };
 }
 
-function hoistJavaScriptVars(declarations, tokens, syntax, scopes) {
+function hoistJavaScriptVars(declarations, tokens, syntax, scopes,functionScopes) {
   const functionTerms = new Set([
     'function_declaration', 'function_expression', 'generator_function_declaration',
     'generator_function', 'arrow_function', 'method_definition',
@@ -583,12 +593,19 @@ function hoistJavaScriptVars(declarations, tokens, syntax, scopes) {
       .filter((fact) => fact.term === 'statement_block' && fact.start >= start && fact.end === end)
       .map((fact) => fact.start + 1)));
   const byId = new Map(scopes.map((scope) => [scope.id, scope]));
+  const environments=new Map([...functionScopes.values()].filter(scope=>scope.bodyStart!==null).map(scope=>[scope.bodyStart,scope]));
   for (const declaration of declarations) {
     if (declaration.kind !== 'var') continue;
     let scope = byId.get(tokens[declaration.tokenIndex].scope);
     while (scope?.parent && !functionBodies.has(scope.start)) scope = byId.get(scope.parent);
-    declaration.scope = scope?.id ?? 'scope:0';
+    const environment=scope&&environments.get(scope.start);
+    declaration.scope = environment?.simple?environment.parameterScope:scope?.id??'scope:0';
   }
+  // Redeclaration aliases are reference occurrences of the same binding, not
+  // fresh cells. Non-simple parameter environments retain their separate cells.
+  const cells=new Set(declarations.filter(row=>row.kind==='parameter').map(row=>row.scope+'\0'+tokens[row.tokenIndex].text));
+  const retained=declarations.filter(row=>{if(row.kind!=='var')return true;const key=row.scope+'\0'+tokens[row.tokenIndex].text;if(testJavaScriptSourceVariableRedeclaration(row.kind,cells.has(key)))return false;cells.add(key);return true;});
+  declarations.splice(0,declarations.length,...retained);
 }
 
 function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare) {

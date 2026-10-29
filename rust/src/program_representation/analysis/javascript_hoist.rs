@@ -1,10 +1,14 @@
-use super::{BTreeSet, Declaration, ProgramScope, ProgramSourceMapping, SemanticToken};
+use super::{
+    BTreeMap, BTreeSet, Declaration, JavaScriptFunctionScope, ProgramScope, ProgramSourceMapping,
+    SemanticToken,
+};
 
 pub(super) fn hoist_var_declarations(
-    declarations: &mut [Declaration],
+    declarations: &mut Vec<Declaration>,
     tokens: &[SemanticToken],
     syntax: &[ProgramSourceMapping],
     scopes: &[ProgramScope],
+    function_scopes: &BTreeMap<usize, JavaScriptFunctionScope>,
 ) {
     let function_bodies = syntax
         .iter()
@@ -29,6 +33,10 @@ pub(super) fn hoist_var_declarations(
         })
         .collect::<BTreeSet<_>>();
 
+    let environments = function_scopes
+        .values()
+        .filter_map(|scope| scope.body_start.map(|start| (start, scope)))
+        .collect::<BTreeMap<_, _>>();
     for declaration in declarations.iter_mut().filter(|item| item.kind == "var") {
         let mut scope = tokens[declaration.token].scope;
         while let Some(parent) = scopes[scope].parent.as_ref() {
@@ -40,6 +48,20 @@ pub(super) fn hoist_var_declarations(
                 .position(|candidate| &candidate.id == parent)
                 .expect("parent scope exists");
         }
-        declaration.scope = scope;
+        declaration.scope = environments
+            .get(&scopes[scope].range.start)
+            .filter(|environment| environment.simple)
+            .map_or(scope, |environment| environment.parameter_scope);
     }
+    let mut cells = declarations
+        .iter()
+        .filter(|item| item.kind == "parameter")
+        .map(|item| (item.scope, tokens[item.token].text.clone()))
+        .collect::<BTreeSet<_>>();
+    declarations.retain(|item| {
+        if item.kind!="var"{return true;}
+        let key=(item.scope,tokens[item.token].text.clone());
+        if crate::translation::source_library_binding_rules::test_java_script_source_variable_redeclaration(&item.kind,cells.contains(&key)){return false;}
+        cells.insert(key);true
+    });
 }

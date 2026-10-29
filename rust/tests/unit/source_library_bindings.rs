@@ -47,7 +47,50 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             row["expected"].as_bool().unwrap()
         );
     }
-    for row in fixture["wordBindings"].as_array().unwrap() {
+    for row in fixture["functionScopeForms"].as_array().unwrap() {
+        assert_eq!(
+            bindings::read_java_script_source_function_scope_form(row["term"].as_str().unwrap()),
+            row["expected"].as_str().unwrap()
+        );
+    }
+    for row in fixture["simpleParameterLists"].as_array().unwrap() {
+        assert_eq!(
+            bindings::accept_java_script_source_simple_parameter_list(
+                &row["terms"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|term| term.as_str().unwrap().to_string())
+                    .collect::<Vec<_>>()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+    for row in fixture["variableRedeclarations"].as_array().unwrap() {
+        assert_eq!(
+            bindings::test_java_script_source_variable_redeclaration(
+                row["kind"].as_str().unwrap(),
+                row["existing"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+    for row in fixture["parameterVariableDependencies"].as_array().unwrap() {
+        assert_eq!(
+            bindings::test_java_script_source_parameter_variable_dependency(
+                row["first"].as_str().unwrap(),
+                row["second"].as_str().unwrap(),
+                row["bodyParent"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+    for row in fixture["wordBindings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(fixture["parameterEnvironments"].as_array().unwrap())
+    {
         let program = meta_language::analyze_program(
             row["source"].as_str().unwrap(),
             "JavaScript",
@@ -77,6 +120,58 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
                 .map(|name| name.as_str().unwrap())
                 .collect::<Vec<_>>()
         );
+        if let Some(count) = row.get("parameterScopeCount") {
+            assert_eq!(
+                program
+                    .bindings()
+                    .iter()
+                    .filter(|binding| binding.kind() == "parameter")
+                    .map(|binding| binding.scope())
+                    .collect::<std::collections::BTreeSet<_>>()
+                    .len(),
+                count.as_u64().unwrap() as usize
+            );
+        }
+        if let Some(rename) = row.get("rename") {
+            let binding = program
+                .bindings()
+                .iter()
+                .find(|binding| {
+                    binding.name() == rename["name"].as_str().unwrap()
+                        && binding.kind() == rename["kind"].as_str().unwrap()
+                })
+                .unwrap();
+            assert_eq!(
+                program
+                    .rename_binding(binding.id(), rename["replacement"].as_str().unwrap())
+                    .unwrap()
+                    .source(),
+                rename["expected"].as_str().unwrap()
+            );
+        }
+        for rename in row
+            .get("dependentRenames")
+            .and_then(|rows| rows.as_array())
+            .into_iter()
+            .flatten()
+        {
+            let binding = program
+                .bindings()
+                .iter()
+                .find(|binding| {
+                    binding.name() == rename["name"].as_str().unwrap()
+                        && binding.kind() == rename["kind"].as_str().unwrap()
+                })
+                .unwrap();
+            let error = program
+                .rename_binding(binding.id(), "renamedValue")
+                .unwrap_err();
+            assert!(matches!(
+                &error,
+                meta_language::ProgramRepresentationError::BindingDependency { .. }
+            ));
+            assert!(error.to_string().contains("parameter/var initialization"));
+        }
     }
     for row in fixture["wordRenames"].as_array().unwrap() {
         let program = meta_language::analyze_program(

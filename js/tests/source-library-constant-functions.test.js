@@ -8,7 +8,7 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceParameterVariableDependency} from '../src/translation/source-library-binding-rules.js';
 import {analyzeProgram,BindingRenameError} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
@@ -28,10 +28,17 @@ assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.n
 for(const row of fixture.headNames)test('actual function head token '+row.kind,()=>assert.equal(acceptJavaScriptSourceFunctionHeadName(row.kind),row.expected));
 for(const row of fixture.expressionTerms)test('actual expression scope term '+row.term,()=>assert.equal(testJavaScriptSourceFunctionExpressionTerm(row.term),row.expected));
 for(const [index,row]of fixture.keywordRoles.entries())test('actual keyword role '+index,()=>assert.equal(testJavaScriptSourceKeywordRole(row.identifier,row.keyword),row.expected));
-for(const row of fixture.wordBindings)test(row.name,()=>{
+for(const row of fixture.functionScopeForms)test('function environment form '+row.term,()=>assert.equal(readJavaScriptSourceFunctionScopeForm(row.term),row.expected));
+for(const [index,row]of fixture.simpleParameterLists.entries())test('simple parameter premise '+index,()=>assert.equal(acceptJavaScriptSourceSimpleParameterList(row.terms),row.expected));
+for(const [index,row]of fixture.variableRedeclarations.entries())test('variable alias premise '+index,()=>assert.equal(testJavaScriptSourceVariableRedeclaration(row.kind,row.existing),row.expected));
+for(const [index,row]of fixture.parameterVariableDependencies.entries())test('parameter initialization dependency '+index,()=>assert.equal(testJavaScriptSourceParameterVariableDependency(row.first,row.second,row.bodyParent),row.expected));
+for(const row of [...fixture.wordBindings,...fixture.parameterEnvironments])test(row.name,()=>{
  const program=analyzeProgram(row.source,'JavaScript');
  assert.deepEqual(program.bindings.map(binding=>[binding.name,binding.kind,binding.references.length]),row.bindings);
  assert.deepEqual(program.unresolvedReferences.map(reference=>reference.name),row.unresolved);
+ if(row.parameterScopeCount!==undefined)assert.equal(new Set(program.bindings.filter(binding=>binding.kind==='parameter').map(binding=>binding.scope)).size,row.parameterScopeCount);
+ if(row.rename){const rename=row.rename,binding=program.bindings.find(binding=>binding.name===rename.name&&binding.kind===rename.kind);assert.equal(program.renameBinding(binding.id,rename.replacement).source,rename.expected);}
+ for(const rename of row.dependentRenames??[]){const binding=program.bindings.find(binding=>binding.name===rename.name&&binding.kind===rename.kind);assert.throws(()=>program.renameBinding(binding.id,'renamedValue'),error=>error instanceof BindingRenameError&&error.message.includes('parameter/var initialization'));}
 });
 for(const row of fixture.wordRenames)test('contextual rename '+row.replacement,()=>{
  const program=analyzeProgram(row.source,'JavaScript'),binding=program.bindings.find(binding=>binding.name===row.binding);

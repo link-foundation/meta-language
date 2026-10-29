@@ -2,15 +2,16 @@
 //! delimiters introduce, before syntax-driven binders and extents apply.
 
 use super::{
-    BTreeMap, BTreeSet, Declaration, ProgramSourceMapping, SemanticToken, TokenKind, Visibility,
-    declaration_markers, find_token, inside_binder, matching_delimiter, next_identifier,
+    BTreeMap, BTreeSet, Declaration, JavaScriptFunctionScope, ProgramSourceMapping, SemanticToken,
+    TokenKind, Visibility, declaration_markers, find_token, inside_binder, matching_delimiter,
+    next_identifier,
 };
 
 pub(super) fn declare_javascript(
     tokens: &[SemanticToken],
     syntax: &[ProgramSourceMapping],
     brace_scopes: &BTreeMap<usize, usize>,
-    expression_scopes: &BTreeMap<usize, (Option<usize>, usize)>,
+    expression_scopes: &BTreeMap<usize, JavaScriptFunctionScope>,
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
@@ -68,7 +69,7 @@ pub(super) fn declare_javascript(
                     tokens,
                     name,
                     "function",
-                    expression.and_then(|(private, _)| *private),
+                    expression.and_then(|scope| scope.private_scope),
                     declarations,
                     declared,
                 );
@@ -81,7 +82,7 @@ pub(super) fn declare_javascript(
             let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
             let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
             let scope = expression
-                .map(|(_, parameters)| *parameters)
+                .map(|scope| scope.parameter_scope)
                 .or_else(|| body.and_then(|body| brace_scopes.get(&body).copied()))
                 .unwrap_or(token.scope);
             declare_parameters(tokens, open, close, scope, declarations, declared);

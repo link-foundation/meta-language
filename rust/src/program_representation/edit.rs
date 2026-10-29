@@ -91,6 +91,32 @@ impl ProgramRepresentation {
         if binding.name == replacement {
             return Ok(self.clone());
         }
+        if self.language == "JavaScript" {
+            for other in self
+                .bindings
+                .iter()
+                .filter(|other| other.id != binding.id && other.name == binding.name)
+            {
+                let parameter = if binding.kind == "parameter" {
+                    binding
+                } else {
+                    other
+                };
+                let variable = if binding.kind == "var" {
+                    binding
+                } else {
+                    other
+                };
+                let body = scope_by_id(&self.scopes, &variable.scope);
+                let parent = body.parent.as_deref() == Some(parameter.scope.as_str())
+                    && self.source_mappings.iter().any(|node| {
+                        node.term == "statement_block"
+                            && node.range.start + 1 == body.range.start
+                            && node.range.end == body.range.end + 1
+                    });
+                if crate::translation::source_library_binding_rules::test_java_script_source_parameter_variable_dependency(&binding.kind,&other.kind,parent){return Err(ProgramRepresentationError::BindingDependency{identifier:binding.name.clone(),offset:other.declaration.start});}
+            }
+        }
         let binding_scope = scope_by_id(&self.scopes, &binding.scope);
         if let Some(conflict) = self.bindings.iter().find(|candidate| {
             candidate.id != binding.id

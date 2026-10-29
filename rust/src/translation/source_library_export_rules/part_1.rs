@@ -188,12 +188,12 @@ pub fn source_ml_source1_temporary_dependency_function1_loop3(
                 let word =
                     self::ml_array::optional_at(reserved, self::ml_array::number_index(index));
                 if {
-                    let source_ml_source2_comparison_operand70 = word.clone();
+                    let source_ml_source2_comparison_operand71 = word.clone();
                     {
-                        let source_ml_source2_comparison_operand71 = None::<()>;
+                        let source_ml_source2_comparison_operand72 = None::<()>;
                         match (
-                            source_ml_source2_comparison_operand70,
                             source_ml_source2_comparison_operand71,
+                            source_ml_source2_comparison_operand72,
                         ) {
                             (Some(_ml_left), Some(_ml_right)) => false,
                             (None, None) => true,
