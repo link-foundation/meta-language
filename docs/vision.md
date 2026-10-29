@@ -10459,3 +10459,16 @@ source decision premises, source ownership, CST reconstruction, both graph
 codecs and four target emissions have deferred controls in
 `parity/fixtures/rust-iterator-reductions.lino`. None has executed during the
 complete requirements drafting phase.
+
+Immediate scalar reductions also retain standard double-ended slice/vector
+iteration. Shared adapter state tracks `rev()` direction independently of
+borrowed/copied items, rejects copying already copied items, and composes
+reversals with `rfold`. Right folds retain the same receiver/initializer/callback
+capture order as left folds. A source-owned postfix plan constructs a fresh
+mapped array with reverse indices, using existing common terms for length,
+subtraction, exact natural conversion and lookup. It leaves the original
+receiver unchanged and preserves the direction of predicate short circuit.
+No target-specific reverse implementation or source-text rewrite is needed.
+Independent originals retain cancellation of two reversals, adapters before
+and after copying, right folds, borrowed items, empty input, source preservation
+and reverse short circuit. All execution remains deferred.

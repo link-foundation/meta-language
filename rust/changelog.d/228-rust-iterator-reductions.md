@@ -6,3 +6,6 @@ Controls remain deferred until the complete requirements draft is ready.
 Also draft immediate borrowed scalar predicates and folds, preserving actual
 immutable reference parameter signatures and explicit dereferences. Keep
 mutable, nested and unproved borrowing outside this admission.
+
+Draft `rev()` adapter composition and `rfold` through a source-owned plan and
+existing common array terms, preserving source arrays and visit direction.

@@ -383,7 +383,7 @@ pub fn read_rust_iterator_reduction_operation(method: &str) -> String {
         String::from("every")
     } else if method == "any" {
         String::from("some")
-    } else if method == "fold" {
+    } else if (method == "fold") || (method == "rfold") {
         String::from("reduce")
     } else {
         String::new()
@@ -393,7 +393,7 @@ pub fn read_rust_iterator_reduction_operation(method: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_iterator_reduction_callback_arity(method: &str) -> f64 {
-    if method == "fold" {
+    if (method == "fold") || (method == "rfold") {
         2f64
     } else if (method == "all") || (method == "any") {
         1f64
@@ -405,7 +405,7 @@ pub fn read_rust_iterator_reduction_callback_arity(method: &str) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_iterator_reduction_capture_roles(method: &str) -> Vec<String> {
-    if method == "fold" {
+    if (method == "fold") || (method == "rfold") {
         vec![
             String::from("receiver"),
             String::from("initial"),
@@ -482,6 +482,65 @@ pub fn read_rust_iterator_reduction_callback_error(
             }
         }
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_iterator_reduction_adapter(method: &str) -> bool {
+    (method == "rev") || self::accept_rust_iterator_copy_adapter(method)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_iterator_reduction_adapter_state(
+    method: &str,
+    state: &str,
+    direction: &str,
+) -> Vec<String> {
+    if ((state != "borrowed") && (state != "copied"))
+        || ((direction != "forward") && (direction != "reverse"))
+    {
+        Vec::<String>::new()
+    } else if method == "rev" {
+        vec![
+            state.to_owned(),
+            if direction == "forward" {
+                String::from("reverse")
+            } else {
+                String::from("forward")
+            },
+        ]
+    } else if self::accept_rust_iterator_copy_adapter(method) && (state == "borrowed") {
+        vec![String::from("copied"), direction.to_owned()]
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_iterator_reduction_receiver(method: &str, direction: &str) -> Vec<String> {
+    if (method == "rfold") == (direction == "reverse") {
+        Vec::<String>::new()
+    } else {
+        vec![String::from("map reversed indices")]
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_iterator_reduction_reverse_index() -> Vec<String> {
+    vec![
+        String::from("receiver"),
+        String::from("receiver"),
+        String::from("length"),
+        String::from("index"),
+        String::from("sub"),
+        String::from("one"),
+        String::from("sub"),
+        String::from("natural"),
+        String::from("lookup"),
+    ]
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1306,3 +1306,10 @@ module is generated automatically, with thin source-origin projections in the
 existing runtime adapters. The iterator fixture retains the original refused
 borrowed input as a positive case with its predecessor revision and reason.
 All control execution remains deferred.
+
+The iterator rule program also owns adapter item/direction transitions and the
+postfix common-term plan for reverse indices. Native/JavaScript adapters only
+construct those registered common nodes. `rev()` composes with `rfold`; the
+fresh indexed map prevents source mutation. The complete original/decision
+controls are authored with the existing iterator draft script and stay
+unexecuted during the full requirements draft.

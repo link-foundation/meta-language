@@ -1,11 +1,13 @@
 //! Actual standard iterator syntax/source facts into shared reduction plans.
 use super::{
-    BOOL, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type, unsupported,
+    BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span,
+    Token, Type, unsupported,
 };
 use crate::translation::rust_array_index_rules::read_rust_scalar_array_index_receiver_error;
 use crate::translation::rust_array_lookup_rules::read_rust_array_lookup_element_owner_error;
 use crate::translation::rust_iterator_reduction_rules as rules;
 use crate::translation::source_signatures::SourceOwner;
+use crate::translation::surface::SParam;
 use std::collections::BTreeMap;
 fn count(value: usize) -> f64 {
     value as f64
@@ -91,13 +93,25 @@ impl RustParser {
                 range,
             ));
         }
-        let first = self.cursor.advance();
-        let borrowed = !rules::accept_rust_iterator_copy_adapter(&first.value);
-        let consumer = if borrowed {
-            first
-        } else {
-            self.cursor.expect("(", Some("iterator copy adapter"))?;
-            self.cursor.expect(")", Some("iterator copy adapter"))?;
+        let mut consumer = self.cursor.advance();
+        let mut state = "borrowed".to_owned();
+        let mut direction = "forward".to_owned();
+        while rules::accept_rust_iterator_reduction_adapter(&consumer.value) {
+            let next = rules::read_rust_iterator_reduction_adapter_state(
+                &consumer.value,
+                &state,
+                &direction,
+            );
+            if next.len() != 2 {
+                return Err(fail(
+                    "the iterator adapter needs its actual item indirection and direction",
+                    Some(consumer.span()),
+                ));
+            }
+            state = next[0].clone();
+            direction = next[1].clone();
+            self.cursor.expect("(", Some("iterator adapter"))?;
+            self.cursor.expect(")", Some("iterator adapter"))?;
             if self.cursor.eat(".").is_none() || !self.cursor.is_kind(super::TokenKind::Identifier)
             {
                 return Err(fail(
@@ -105,8 +119,9 @@ impl RustParser {
                     range,
                 ));
             }
-            self.cursor.advance()
-        };
+            consumer = self.cursor.advance();
+        }
+        let borrowed = state == "borrowed";
         let operation = rules::read_rust_iterator_reduction_operation(&consumer.value);
         if operation.is_empty() {
             return Err(fail(
@@ -117,7 +132,7 @@ impl RustParser {
         self.cursor.expect("(", Some("iterator reduction"))?;
         let mut initial = None;
         let mut initial_origin = None;
-        if consumer.value == "fold" {
+        if rules::read_rust_iterator_reduction_callback_arity(&consumer.value) == 2.0 {
             let value = self.expr(path, Options::default())?;
             let origin = self.origins.origin(&value, path);
             let error = rules::read_rust_iterator_reduction_accumulator_error(
@@ -132,7 +147,7 @@ impl RustParser {
             initial = Some(value);
             initial_origin = Some(origin);
         }
-        let mut item = SourceOrigin::with_type(element, path, Vec::new());
+        let mut item = SourceOrigin::with_type(element.clone(), path, Vec::new());
         item.source_owner = Some(owner);
         if borrowed {
             item.wrappers.push("reference".to_owned());
@@ -230,12 +245,129 @@ impl RustParser {
             )
         };
         let mut arguments = vec![Some(local("callback"))];
-        if consumer.value == "fold" {
+        if rules::read_rust_iterator_reduction_callback_arity(&consumer.value) == 2.0 {
             arguments.push(Some(local("initial")));
+        }
+        let mut object = local("receiver");
+        for operation in rules::plan_rust_iterator_reduction_receiver(&consumer.value, &direction) {
+            if operation != "map reversed indices" {
+                return Err(fail(
+                    "an iterator receiver plan needs its registered common operation",
+                    range,
+                ));
+            }
+            let unused = self.fresh_product_binding();
+            let index_name = self.fresh_product_binding();
+            let mut stack: Vec<SExpr> = Vec::new();
+            for step in rules::plan_rust_iterator_reduction_reverse_index() {
+                let value = match step.as_str() {
+                    "receiver" => local("receiver"),
+                    "index" => SExpr::new(
+                        SNode::Name {
+                            path: vec![index_name.clone()],
+                        },
+                        range,
+                    ),
+                    "one" => SExpr::new(
+                        SNode::Num {
+                            value: "1".to_owned(),
+                            ty: Some(FLOAT),
+                            negative: false,
+                            unit: false,
+                        },
+                        range,
+                    ),
+                    "length" => SExpr::new(
+                        SNode::Length {
+                            object: Box::new(stack.pop().expect("registered plan operand")),
+                            integer: false,
+                        },
+                        range,
+                    ),
+                    "natural" => SExpr::new(
+                        SNode::Cast {
+                            arg: Box::new(stack.pop().expect("registered plan operand")),
+                            to: Type::Nat,
+                            from: None,
+                            flavor: Flavor::Exact,
+                        },
+                        range,
+                    ),
+                    "sub" => {
+                        let right = stack.pop().expect("registered plan operand");
+                        let left = stack.pop().expect("registered plan operand");
+                        SExpr::new(
+                            SNode::Binary {
+                                op: BinaryOp::Sub,
+                                left: Box::new(left),
+                                right: Box::new(right),
+                                rounding: None,
+                            },
+                            range,
+                        )
+                    }
+                    "lookup" => {
+                        let index = stack.pop().expect("registered plan operand");
+                        let object = stack.pop().expect("registered plan operand");
+                        SExpr::new(
+                            SNode::Index {
+                                object: Box::new(object),
+                                index: Box::new(index),
+                                optional: None,
+                                proven_in_bounds: None,
+                            },
+                            range,
+                        )
+                    }
+                    _ => {
+                        return Err(fail(
+                            "an iterator index plan needs its registered common operation",
+                            range,
+                        ));
+                    }
+                };
+                stack.push(value);
+            }
+            if stack.len() != 1 {
+                return Err(fail(
+                    "an iterator index plan needs exactly one common term",
+                    range,
+                ));
+            }
+            let parameters = [(unused, element.clone()), (index_name, FLOAT)]
+                .into_iter()
+                .map(|(name, ty)| SParam {
+                    name,
+                    optional: false,
+                    default_value: None,
+                    ty: Some(ty),
+                    span: range,
+                    guard: None,
+                    rocq_type: None,
+                })
+                .collect();
+            let callback = SExpr::new(
+                SNode::Lambda {
+                    params: parameters,
+                    ret: Some(element.clone()),
+                    captures: vec![names["receiver"].clone()],
+                    assigned_captures: None,
+                    body: Box::new(stack.pop().expect("complete plan")),
+                },
+                range,
+            );
+            object = SExpr::new(
+                SNode::Method {
+                    object: Box::new(object),
+                    op: "map".to_owned(),
+                    args: vec![Some(callback)],
+                },
+                range,
+            );
         }
         let mut body = SExpr::new(
             SNode::Method {
-                object: Box::new(local("receiver")),
+                object: Box::new(object),
                 op: operation,
                 args: arguments,
             },

@@ -87,6 +87,22 @@ fn iterator_reductions_preserve_products_and_every_source_decision() {
                     boolean(args, 5)
                 ))
             }
+            "acceptRustIteratorReductionAdapter" => json!(
+                rules::accept_rust_iterator_reduction_adapter(string(args, 0))
+            ),
+            "readRustIteratorReductionAdapterState" => {
+                json!(rules::read_rust_iterator_reduction_adapter_state(
+                    string(args, 0),
+                    string(args, 1),
+                    string(args, 2)
+                ))
+            }
+            "planRustIteratorReductionReceiver" => json!(
+                rules::plan_rust_iterator_reduction_receiver(string(args, 0), string(args, 1))
+            ),
+            "planRustIteratorReductionReverseIndex" => {
+                json!(rules::plan_rust_iterator_reduction_reverse_index())
+            }
             unknown => panic!("uncovered shared decision {unknown}"),
         };
         if actual.is_number() {
