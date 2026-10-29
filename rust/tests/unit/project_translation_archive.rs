@@ -570,3 +570,119 @@ fn duplicate_and_foreign_dependency_directories_cannot_be_restored() {
         );
     }
 }
+
+#[test]
+fn persistent_append_keeps_prior_concrete_graphs_and_snapshot() {
+    super::translation_string_array_copy_sort::require_rust_profile();
+    let data = fixture();
+    let packet = create_project_translation_archive(
+        &data["inputs"],
+        &json!({"targetLanguage":"JavaScript"}),
+    )
+    .unwrap();
+    let before =
+        encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap();
+    let previous =
+        read_project_translation_archive(&packet.network, packet.root, &json!({})).unwrap();
+    for overrides in [
+        json!({}),
+        json!({"targetLanguage":"Rust","projection":"AbstractSyntax"}),
+    ] {
+        let next = meta_language::extend_project_translation_archive(
+            &packet.network,
+            packet.root,
+            &data["additions"],
+            &overrides,
+        )
+        .unwrap();
+        let restored =
+            read_project_translation_archive(&next.network, next.root, &json!({})).unwrap();
+        let target = overrides["targetLanguage"].as_str().unwrap_or("JavaScript");
+        assert_eq!(
+            restored.concrete.sources.len(),
+            data["inputs"].as_array().unwrap().len() + data["additions"].as_array().unwrap().len()
+        );
+        assert_eq!(restored.configuration["options"]["targetLanguage"], target);
+        assert!(
+            restored.draft["modules"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|module| module["targetLanguage"] == target)
+        );
+        for original in &previous.concrete.sources {
+            let source = restored
+                .concrete
+                .sources
+                .iter()
+                .find(|source| source.path == original.path)
+                .unwrap();
+            assert_eq!(
+                encode_link_network_binary(&source.network, BinaryLinksOptions::default()).unwrap(),
+                encode_link_network_binary(&original.network, BinaryLinksOptions::default())
+                    .unwrap()
+            );
+        }
+        assert_eq!(
+            restored
+                .concrete
+                .sources
+                .iter()
+                .find(|source| source.path == data["additions"][0]["identifier"].as_str().unwrap())
+                .unwrap()
+                .source,
+            data["additions"][0]["source"].as_str().unwrap()
+        );
+        let inputs = meta_language::restore_project_translation_archive_inputs(
+            &next.network,
+            next.root,
+            &json!({}),
+        )
+        .unwrap();
+        let mut expected = data["additions"][0].clone();
+        expected["sourceIssues"] = json!([]);
+        assert_eq!(
+            inputs
+                .inputs
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|input| input["identifier"] == expected["identifier"])
+                .unwrap(),
+            &expected
+        );
+        assert_eq!(
+            encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            before
+        );
+        assert_eq!(
+            read_project_translation_archive(&packet.network, packet.root, &json!({}))
+                .unwrap()
+                .concrete
+                .sources
+                .len(),
+            data["inputs"].as_array().unwrap().len()
+        );
+    }
+    let error = meta_language::extend_project_translation_archive(
+        &packet.network,
+        packet.root,
+        &json!([]),
+        &json!({}),
+    )
+    .err()
+    .unwrap();
+    assert!(
+        error.contains("expected nonempty added source inputs"),
+        "{error}"
+    );
+    let error = meta_language::extend_project_translation_archive(
+        &packet.network,
+        packet.root,
+        &json!([data["inputs"][0]]),
+        &json!({}),
+    )
+    .err()
+    .unwrap();
+    assert!(error.contains("duplicate source module"), "{error}");
+}

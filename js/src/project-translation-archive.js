@@ -2,7 +2,7 @@
 // complete CST storage and source-free reconstruction reuse the common archive.
 import {createHash} from 'node:crypto';
 import {draftProjectTranslation,projectTranslationDraftToLinks} from './project-translation.js';
-import {createSourceProjectArchive,readSourceProjectArchive} from './source-project-archive.js';
+import {createSourceProjectArchive,readSourceProjectArchive,extendSourceProjectArchive} from './source-project-archive.js';
 import {createMetaLanguageArchive,readMetaLanguageArchive} from './meta-language-archive.js';
 import {selfTranslationLanguage} from './self-translation.js';
 import {encodeStructuredDataLinks,decodeStructuredDataLinks} from './structured-data-links.js';
@@ -10,17 +10,19 @@ import {readProjectTranslationArchiveVocabulary as vocabulary,readProjectTransla
 const fail=message=>{throw new TypeError('project translation archive: '+message);};
 const digest=source=>createHash('sha256').update(source,'utf8').digest('hex');
 const limits=options=>({nodeLimit:options.nodeLimit??1000000,referenceLimit:options.referenceLimit??4000000,byteLimit:options.byteLimit??128*1024*1024});
-export function createProjectTranslationArchive(inputs,options={}){
- const draft=draftProjectTranslation(inputs,options),packet=projectTranslationDraftToLinks(draft,options);
+function packProjectTranslationArchive(inputs,options,draft,sources){
+ const packet=projectTranslationDraftToLinks(draft,options);
  const inventory=new Map(draft.inventory.map(file=>[file.identifier,file])),originals=new Map(inputs.map(file=>[file.identifier,file]));
  const configuration=encodeStructuredDataLinks({schemaVersion:1,options,modules:draft.inventory.map(file=>({identifier:file.identifier,language:file.language,imports:file.imports,sourceIssues:file.sourceIssues,options:originals.get(file.identifier)?.options??{}}))},options);
- const sources=createSourceProjectArchive(inputs.map(row=>({path:row.identifier,source:row.source,language:readProjectTranslationArchiveSourceLanguage(inventory.get(row.identifier)?.language??'',row.identifier)})),options);
+ sources??=createSourceProjectArchive(inputs.map(row=>({path:row.identifier,source:row.source,language:readProjectTranslationArchiveSourceLanguage(inventory.get(row.identifier)?.language??'',row.identifier)})),options);
  return createMetaLanguageArchive([
   {identifier:vocabulary('configuration'),kind:'language configuration',network:configuration.network,root:configuration.root},
   {identifier:vocabulary('draft'),kind:'language configuration',network:packet.network,root:packet.root},
   {identifier:vocabulary('sources'),kind:'concrete syntax',network:sources.network,root:sources.root}
  ],limits(options));
 }
+export function createProjectTranslationArchive(inputs,options={}){return packProjectTranslationArchive(inputs,options,draftProjectTranslation(inputs,options));}
+
 /** No source files, parser, compiler or current grammar catalog are consulted.
  * This validates preservation and source membership, not product semantics.
  */
@@ -51,13 +53,26 @@ export function readProjectTranslationArchive(network,root,options={}){
   if(code!==null&&typeof code!=='string'||emitted!==null&&typeof emitted!=='string')fail('invalid project product');
   const error=readProjectTranslationArchiveProductError(code!==null,emitted!==null,module.gaps.length,emitted===code,code===null?module.emittedSha256===null:typeof module.emittedSha256==='string'&&digest(code)===module.emittedSha256);if(error)fail(error);
  }
- return {draft,configuration,directory:concrete.directory,sources:concrete.sources};
+ return {draft,configuration,directory:concrete.directory,sources:concrete.sources,sourceArchive:{network:sourceEntry.network,root:sourceEntry.root}};
 }
 
 /** Rebuild portable translator inputs from complete stored trees and settings.
  * This performs no source parse, translation, compilation or product execution.
  */
-export function restoreProjectTranslationArchiveInputs(network,root,options={}){
- const restored=readProjectTranslationArchive(network,root,options),sources=new Map(restored.sources.map(source=>[source.path,source.source]));
+function restoredProjectTranslationInputs(restored){
+ const sources=new Map(restored.sources.map(source=>[source.path,source.source]));
  return {inputs:restored.configuration.modules.map(file=>({identifier:file.identifier,language:file.language,source:sources.get(file.identifier),imports:Object.fromEntries(file.imports.map(row=>[row.specifier,row.identifier])),sourceIssues:[...file.sourceIssues],options:structuredClone(file.options)})),options:structuredClone(restored.configuration.options)};
+}
+
+export function restoreProjectTranslationArchiveInputs(network,root,options={}){return restoredProjectTranslationInputs(readProjectTranslationArchive(network,root,options));}
+
+/** Persistent append. A fresh translation may parse sources; existing stored
+ * concrete graphs retain their exact original identities and grammar state.
+ */
+export function extendProjectTranslationArchive(network,root,additions,options={}){
+ if(!options||typeof options!=='object'||Array.isArray(options)||!Array.isArray(additions)||!additions.length)fail('expected nonempty added source inputs and resource options');
+ const previous=readProjectTranslationArchive(network,root,options),restored=restoredProjectTranslationInputs(previous),selected={...restored.options,...options},inputs=[...restored.inputs,...additions];
+ const draft=draftProjectTranslation(inputs,selected),inventory=new Map(draft.inventory.map(file=>[file.identifier,file]));
+ const sources=extendSourceProjectArchive(previous.sourceArchive.network,previous.sourceArchive.root,additions.map(row=>({path:row.identifier,source:row.source,language:readProjectTranslationArchiveSourceLanguage(inventory.get(row.identifier)?.language??'',row.identifier)})),selected);
+ return packProjectTranslationArchive(inputs,selected,draft,sources);
 }

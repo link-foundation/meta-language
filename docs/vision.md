@@ -4380,6 +4380,18 @@ refuse instead of disappearing during directory reconstruction. Restored values
 are detached from archived graph storage. Future rebuild controls compare the
 entire draft, configuration and complete source graph binary state; they remain
 unexecuted and establish no present semantic or replay evidence.
+Persistent project-archive extension appends new source identities using the
+existing complete source-archive extension. Every preceding concrete graph keeps
+its actual identifiers, term registrations, selected syntax and allocator state;
+its input snapshot remains unchanged. The complete restored input/configuration
+inventory then supplies a fresh project translation, with explicit selected
+option overrides and all current failures retained. Fresh translation uses
+current frontends and may parse source; it is distinct from parser-free archive
+reload and input restoration. Existing identities cannot be silently replaced,
+and empty extensions refuse. Adding sources and retaining trees establishes no
+new semantic equivalence, execution evidence or historical compiler replay.
+Independent append, changed-target/AST, original-snapshot and complete original
+source-state controls remain deferred.
 The tracked-project source author defaults to this complete archive and retains
 its revision, file inventory and unresolved request provenance as linked settings.
 Original-source, text/binary, AST, parser-free reload, changed-directory/product

@@ -86,12 +86,13 @@ fn import_columns(values: &[Value]) -> Result<(Vec<String>, Vec<String>), String
 }
 /// Draft products and retain every original complete CST, including failures.
 /// This runs no generated product and supplies no behavioral evidence.
-pub fn create_project_translation_archive(
+fn pack_project_translation_archive(
     inputs: &Value,
     options: &Value,
+    draft: Value,
+    sources: Option<MetaLanguageArchive>,
 ) -> Result<MetaLanguageArchive, String> {
     let selected = limits(options)?;
-    let draft = draft_project_translation(inputs, options)?;
     let packet = project_translation_draft_to_links(&draft, data_limits(options)?)?;
     let inventory = draft["inventory"]
         .as_array()
@@ -104,7 +105,7 @@ pub fn create_project_translation_archive(
             )
         })
         .collect::<std::collections::BTreeMap<_, _>>();
-    let files=inputs.as_array().unwrap().iter().map(|row|{let path=row["identifier"].as_str().unwrap();json!({"path":path,"source":row["source"],"language":rules::read_project_translation_archive_source_language(inventory[path],path)})}).collect::<Vec<_>>();
+
     let originals = inputs
         .as_array()
         .unwrap()
@@ -115,7 +116,13 @@ pub fn create_project_translation_archive(
         &json!({"schemaVersion":1,"options":options,"modules":draft["inventory"].as_array().unwrap().iter().map(|file|json!({"identifier":file["identifier"],"language":file["language"],"imports":file["imports"],"sourceIssues":file["sourceIssues"],"options":originals[file["identifier"].as_str().unwrap()].get("options").filter(|value|!value.is_null()).cloned().unwrap_or_else(||json!({}))})).collect::<Vec<_>>()}),
         data_limits(options)?,
     )?;
-    let sources = create_source_project_archive(&json!(files), options)?;
+    let sources = match sources {
+        Some(sources) => sources,
+        None => {
+            let files=inputs.as_array().unwrap().iter().map(|row|{let path=row["identifier"].as_str().unwrap();json!({"path":path,"source":row["source"],"language":rules::read_project_translation_archive_source_language(inventory[path],path)})}).collect::<Vec<_>>();
+            create_source_project_archive(&json!(files), options)?
+        }
+    };
     create_meta_language_archive(
         &[
             MetaLanguageArchiveEntry {
@@ -140,11 +147,24 @@ pub fn create_project_translation_archive(
         selected,
     )
 }
+/// Draft a complete project with every original concrete graph and settings.
+pub fn create_project_translation_archive(
+    inputs: &Value,
+    options: &Value,
+) -> Result<MetaLanguageArchive, String> {
+    pack_project_translation_archive(
+        inputs,
+        options,
+        draft_project_translation(inputs, options)?,
+        None,
+    )
+}
 /// Complete parser-free source reconstruction plus the unchanged draft.
 pub struct ProjectTranslationArchiveView {
     pub draft: Value,
     pub configuration: Value,
     pub concrete: SourceProjectArchiveView,
+    pub source_archive: MetaLanguageArchiveEntry,
 }
 /// Reload without original files, a parser, a compiler or a current catalog.
 /// Source and product hashes validate preservation, not semantic correctness.
@@ -333,6 +353,7 @@ pub fn read_project_translation_archive(
         draft,
         configuration,
         concrete,
+        source_archive: source_entry.clone(),
     })
 }
 /// Exact process output, including the ordinary complete-network binary form.
@@ -423,12 +444,9 @@ pub struct RestoredProjectTranslationArchiveInputs {
     pub options: Value,
 }
 /// Recover every translator input without a parser, translation or compiler.
-pub fn restore_project_translation_archive_inputs(
-    network: &LinkNetwork,
-    root: LinkId,
-    options: &Value,
+fn restored_project_translation_inputs(
+    restored: &ProjectTranslationArchiveView,
 ) -> Result<RestoredProjectTranslationArchiveInputs, String> {
-    let restored = read_project_translation_archive(network, root, options)?;
     let sources = restored
         .concrete
         .sources
@@ -443,4 +461,58 @@ pub fn restore_project_translation_archive_inputs(
         inputs: json!(inputs),
         options: restored.configuration["options"].clone(),
     })
+}
+
+/// Reconstruct portable source inputs without parsing or executing translation.
+pub fn restore_project_translation_archive_inputs(
+    network: &LinkNetwork,
+    root: LinkId,
+    options: &Value,
+) -> Result<RestoredProjectTranslationArchiveInputs, String> {
+    restored_project_translation_inputs(&read_project_translation_archive(network, root, options)?)
+}
+/// Append source identities persistently, retaining every preceding concrete graph.
+/// A fresh translation uses current frontends; its products remain unexecuted.
+pub fn extend_project_translation_archive(
+    network: &LinkNetwork,
+    root: LinkId,
+    additions: &Value,
+    options: &Value,
+) -> Result<MetaLanguageArchive, String> {
+    let additions = additions
+        .as_array()
+        .filter(|additions| !additions.is_empty())
+        .ok_or_else(|| fail("expected nonempty added source inputs and resource options"))?;
+    let overrides = options
+        .as_object()
+        .ok_or_else(|| fail("expected nonempty added source inputs and resource options"))?;
+    let previous = read_project_translation_archive(network, root, options)?;
+    let restored = restored_project_translation_inputs(&previous)?;
+    let mut selected = restored.options;
+    selected.as_object_mut().unwrap().extend(overrides.clone());
+    let mut inputs = restored.inputs;
+    inputs
+        .as_array_mut()
+        .unwrap()
+        .extend(additions.iter().cloned());
+    let draft = draft_project_translation(&inputs, &selected)?;
+    let inventory = draft["inventory"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|file| {
+            (
+                file["identifier"].as_str().unwrap(),
+                file["language"].as_str().unwrap(),
+            )
+        })
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let added_sources=additions.iter().map(|row|{let path=row["identifier"].as_str().unwrap();json!({"path":path,"source":row["source"],"language":rules::read_project_translation_archive_source_language(inventory[path],path)})}).collect::<Vec<_>>();
+    let sources = crate::extend_source_project_archive(
+        &previous.source_archive.network,
+        previous.source_archive.root,
+        &json!(added_sources),
+        &selected,
+    )?;
+    pack_project_translation_archive(&inputs, &selected, draft, Some(sources))
 }

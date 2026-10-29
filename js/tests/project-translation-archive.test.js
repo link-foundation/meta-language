@@ -4,7 +4,7 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readProjectData} from '../scripts/project-data.mjs';
-import {createProjectTranslationArchive,readProjectTranslationArchive,restoreProjectTranslationArchiveInputs} from '../src/project-translation-archive.js';
+import {createProjectTranslationArchive,readProjectTranslationArchive,restoreProjectTranslationArchiveInputs,extendProjectTranslationArchive} from '../src/project-translation-archive.js';
 import {runCommandLine} from '../src/cli.js';
 import {LinkNetwork} from '../src/network.js';
 import {LinkType} from '../src/primitives.js';
@@ -67,4 +67,18 @@ test('duplicate or foreign archived dependency directories cannot become restore
   const data=encodeStructuredDataLinks(draft),settings=encodeStructuredDataLinks(configuration),forged=createMetaLanguageArchive(entries.map(entry=>entry.identifier===rules.readProjectTranslationArchiveVocabulary('draft')?{...entry,network:data.network,root:data.root}:entry.identifier===rules.readProjectTranslationArchiveVocabulary('configuration')?{...entry,network:settings.network,root:settings.root}:entry));
   assert.throws(()=>restoreProjectTranslationArchiveInputs(forged.network,forged.root),/duplicate or foreign project source dependency/u);
  }
+});
+
+test('persistent project extension retains old concrete identities and the preceding snapshot',()=>{
+ const packet=createProjectTranslationArchive(fixture.inputs,{targetLanguage:'JavaScript'}),before=encodeLinkNetworkBinary(packet.network),previous=readProjectTranslationArchive(packet.network,packet.root);
+ for(const overrides of [{},{targetLanguage:'Rust',projection:'AbstractSyntax'}]){
+  const next=extendProjectTranslationArchive(packet.network,packet.root,fixture.additions,overrides),restored=readProjectTranslationArchive(next.network,next.root),target=overrides.targetLanguage??'JavaScript';
+  assert.equal(restored.sources.length,fixture.inputs.length+fixture.additions.length);assert.equal(restored.configuration.options.targetLanguage,target);assert.ok(restored.draft.modules.every(module=>module.targetLanguage===target));
+  for(const original of previous.sources)assert.deepEqual(encodeLinkNetworkBinary(restored.sources.find(source=>source.path===original.path).network),encodeLinkNetworkBinary(original.network));
+  assert.equal(restored.sources.find(source=>source.path===fixture.additions[0].identifier).source,fixture.additions[0].source);
+  const inputs=restoreProjectTranslationArchiveInputs(next.network,next.root);assert.deepEqual(inputs.inputs.find(row=>row.identifier===fixture.additions[0].identifier),{...fixture.additions[0],sourceIssues:[]});
+  assert.deepEqual(encodeLinkNetworkBinary(packet.network),before);assert.equal(readProjectTranslationArchive(packet.network,packet.root).sources.length,fixture.inputs.length);
+ }
+ assert.throws(()=>extendProjectTranslationArchive(packet.network,packet.root,[]),/expected nonempty added source inputs/u);
+ assert.throws(()=>extendProjectTranslationArchive(packet.network,packet.root,[fixture.inputs[0]]),/duplicate source module/u);
 });

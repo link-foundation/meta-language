@@ -1257,3 +1257,12 @@ Restoration preserves per-module settings, duplicate source issues and actual
 source identities; duplicate specifier keys and absent source providers refuse.
 The new draft is distinct from parser-free restoration. Its independent complete
 report/configuration/source-state replay controls remain deferred.
+
+`extendProjectTranslationArchive` / `extend_project_translation_archive` append
+nonempty source input records and produce a fresh complete project draft. They
+restore the prior settings, apply explicit overrides, and reuse the existing
+source-archive extension to retain preceding concrete graphs and their complete
+state. The preceding archive stays unchanged; existing source identities cannot
+be replaced. Fresh translation may parse source with current frontends. This is
+separate from parser-free reload/restoration and establishes no historical
+compiler replay or executed semantics. The append controls remain deferred.
