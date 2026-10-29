@@ -10430,3 +10430,26 @@ and [literal pattern rules](https://doc.rust-lang.org/reference/patterns.html#li
 define the independent source contract. No controls have run. General constraint
 propagation, additional pointer widths, f32 and character semantics, ranges,
 full match ergonomics and complete source translation remain obligations.
+
+### Immediate scalar iterator reductions
+
+Rust standard immutable scalar arrays may lower immediate
+`iter().copied()` and `iter().cloned()` consumers `all`, `any` and `fold` into
+the shared array predicate and reduction terms. Actual source element owners
+and complete callback parameter/result signatures are prerequisites. Common
+numeric width is never proof of equal source ownership: `usize` and `u64`
+remain different. Vector literal owners come from agreeing admitted operand
+owners, including byte, boolean and floating primitives.
+
+The source receiver is captured first. A fold initializer is captured before
+callback construction, and each is evaluated once even on empty input.
+Predicate short circuit and left fold use the common operations. JavaScript
+owns the source admission and capture plans; Rust is generated from that
+source, with native adapters transporting tokens, source facts and terms.
+These drafts do not imply support for arbitrary iterator state, borrowed
+callback parameters, mutable captures, other combinators or general inference;
+those remain requirements of full translation. Complete independent originals,
+source decision premises, source ownership, CST reconstruction, both graph
+codecs and four target emissions have deferred controls in
+`parity/fixtures/rust-iterator-reductions.lino`. None has executed during the
+complete requirements drafting phase.

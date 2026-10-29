@@ -83,16 +83,47 @@ impl RustParser {
                 });
                 origin.array_source_model = Some("owned vector");
                 let owner=crate::translation::rust_pointer_integer_owner_rules::select_rust_pointer_integer_result_owner(&owners);
-                if !owner.is_empty() {
+                let actual_owners = argument_origins
+                    .iter()
+                    .map(|value| {
+                        value
+                            .expanded_source_owner
+                            .as_ref()
+                            .or(value.source_owner.as_ref())
+                    })
+                    .collect::<Vec<_>>();
+                let identities = actual_owners
+                    .iter()
+                    .map(|value| {
+                        value.map_or_else(String::new, |value| {
+                            format!("{}:{}", value.kind, value.path.join("::"))
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let admitted = actual_owners.iter().zip(&argument_origins).map(|(owner, value)| {
+                    let Some(owner) = owner else { return false; };
+                    let Some(ty) = value.ty.as_ref() else { return false; };
+                    let (bits, signed) = match ty { Type::Fixed { bits, signed } => (bits.to_string(), *signed), _ => (String::new(), false) };
+                    owner.kind == "primitive" && owner.arguments.is_empty() && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed)
+                }).collect::<Vec<_>>();
+                let owner_index = crate::translation::rust_array_element_owner_rules::select_rust_array_element_owner_index(&identities, &admitted);
+                let element_owner = if owner_index >= 0.0 {
+                    actual_owners[owner_index as usize].cloned()
+                } else if !owner.is_empty() {
+                    Some(crate::translation::source_signatures::SourceOwner {
+                        kind: "primitive".to_owned(),
+                        path: vec![owner],
+                        arguments: Vec::new(),
+                    })
+                } else {
+                    None
+                };
+                if let Some(element_owner) = element_owner {
                     origin.source_owner =
                         Some(crate::translation::source_signatures::SourceOwner {
                             kind: "library".to_owned(),
                             path: vec!["std".to_owned(), "vec".to_owned(), "Vec".to_owned()],
-                            arguments: vec![crate::translation::source_signatures::SourceOwner {
-                                kind: "primitive".to_owned(),
-                                path: vec![owner],
-                                arguments: Vec::new(),
-                            }],
+                            arguments: vec![element_owner],
                         });
                 }
                 origin.array_element_copy_evidence = !args.is_empty()

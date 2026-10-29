@@ -7,7 +7,7 @@ use crate::translation::rust_array_lookup_rules as rules;
 use crate::translation::rust_primitive_from_rules as from_rules;
 use crate::translation::source_signatures::SourceOwner;
 use std::collections::HashMap;
-mod source_owners;
+pub(super) mod source_owners;
 fn count(value: usize) -> f64 {
     u32::try_from(value).map_or(f64::INFINITY, f64::from)
 }

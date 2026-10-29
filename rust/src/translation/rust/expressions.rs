@@ -10,6 +10,7 @@ pub(super) mod control;
 mod integer_bits;
 mod integer_float_plan;
 mod integer_magnitudes;
+mod iterator_reductions;
 mod primitive_associated_calls;
 mod primitive_default;
 mod primitive_from;
@@ -486,6 +487,16 @@ impl RustParser {
                     &method.value,
                     span(&token, self.cursor.peek()),
                 )?;
+                if let Some(reduction) = self.iterator_reduction(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = reduction;
+                    continue;
+                }
                 if let Some(copy) = self.read_scalar_vector_copy(
                     &value,
                     &method,

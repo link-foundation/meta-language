@@ -208,6 +208,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "resource-description-address-program.lino" => Some(include_str!(
             "../data/resource-description-address-program.lino"
         )),
+        "rust-array-element-owner-program.lino" => Some(include_str!(
+            "../data/rust-array-element-owner-program.lino"
+        )),
         "rust-array-index-program.lino" => {
             Some(include_str!("../data/rust-array-index-program.lino"))
         }
@@ -280,6 +283,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "rust-integer-magnitude-program.lino" => {
             Some(include_str!("../data/rust-integer-magnitude-program.lino"))
+        }
+        "rust-iterator-reduction-program.lino" => {
+            Some(include_str!("../data/rust-iterator-reduction-program.lino"))
         }
         "rust-module-value-program.lino" => {
             Some(include_str!("../data/rust-module-value-program.lino"))

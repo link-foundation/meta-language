@@ -392,3 +392,6 @@ pub mod rust_numeric_pattern_rules;
 pub mod source_module_request_rules;
 
 pub mod rust_byte_string_expression_rules;
+
+pub mod rust_iterator_reduction_rules;
+pub mod rust_array_element_owner_rules;

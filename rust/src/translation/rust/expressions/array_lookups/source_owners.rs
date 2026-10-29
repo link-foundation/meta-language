@@ -1,7 +1,7 @@
 //! Bounded original owner-tree transport through shared registered edges only.
 use crate::translation::rust_pointer_integer_owner_rules::accept_rust_pointer_integer_owner_child;
 use crate::translation::source_signatures::SourceOwner;
-pub(super) fn element_owner(mut owner: Option<&SourceOwner>) -> Option<&SourceOwner> {
+pub(in super::super) fn element_owner(mut owner: Option<&SourceOwner>) -> Option<&SourceOwner> {
     for _ in 0..128 {
         let value = owner?;
         if !accept_rust_pointer_integer_owner_child(

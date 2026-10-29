@@ -1,3 +1,4 @@
+import {readRustIteratorReduction} from './rust-iterator-reductions.js';
 import {readRustByteStringExpression,readRustByteStringSliceView} from './rust-byte-string-expressions.js';
 import {readRustSourceNumericPatternOwner,readRustSourceNumericPatternLexicalError} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceBytePatternToken} from './rust-byte-pattern-rules.js';
@@ -58,7 +59,8 @@ import {readRustCopyClosure,readRustCopyClosureCall,readRustExpectedCopyClosure,
 import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
 import {acceptRustExactArrayLength} from './rust-array-length-rules.js';
 import {readRustStringByteLength} from './rust-string-byte-lengths.js';
-import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
+import { acceptRustSourceSignatureModel, acceptRustSourceSignaturePrimitive } from './rust-source-signature-rules.js';
+import {selectRustArrayElementOwnerIndex} from './rust-array-element-owner-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceBodyConstructor, acceptRustTypeNamespaceBodyMethod, acceptRustTypeNamespaceMethodDiscovery, acceptRustTypeNamespaceDiscoveryType } from './rust-type-namespace-rules.js';
 import { captureRustUnitCloneDerivation, acceptRustUnitCloneReceiver } from './rust-unit-clone.js';
@@ -1406,6 +1408,7 @@ class RustParser {
     const expect = (count) => {
       if (args.length !== count) throw new TranslationError('type', `${method.value} expects ${count} arguments but got ${args.length}`, range);
     };
+    const reduction=readRustIteratorReduction(this,receiver,method,args,range,path);if(reduction)return reduction;
     const vectorCopy=readRustScalarVectorCopy(this,receiver,method,args,range,path);
     const arrayLookup=readRustArrayLookup(this,receiver,method,args,range,path);
     if(arrayLookup)return arrayLookup;
@@ -1693,7 +1696,10 @@ class RustParser {
         }
         const element = args.length ? this.origins.origin(args[0], path).type : null;
         const owner=selectRustPointerIntegerResultOwner(owners);
-        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, sourceOwner:owner?{kind:'library',path:['std','vec','Vec'],arguments:[{kind:'primitive',path:[owner],arguments:[]}]}:null,path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
+        const actualOwners=argumentOrigins.map(origin=>origin.expandedSourceOwner??origin.sourceOwner);
+        const ownerIndex=selectRustArrayElementOwnerIndex(actualOwners.map(value=>value?value.kind+':'+value.path.join('::'):''),actualOwners.map((value,index)=>Boolean(value&&value.kind==='primitive'&&value.arguments.length===0&&acceptRustSourceSignaturePrimitive(argumentOrigins[index].type?.kind??'',value.path.join('::'),String(argumentOrigins[index].type?.bits??''),argumentOrigins[index].type?.signed===true))));
+        const elementOwner=ownerIndex>=0?structuredClone(actualOwners[ownerIndex]):owner?{kind:'primitive',path:[owner],arguments:[]}:null;
+        return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null,path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
       }
       case 'format': {
         const formatted=this.format(args,token,path,parsed.names);
