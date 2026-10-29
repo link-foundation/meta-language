@@ -1,3 +1,4 @@
+import {acceptRustStaticByteArrayCoercion,acceptRustStaticByteArrayOwnerEquality} from './rust-byte-string-expression-rules.js';
 import {readRustSourceNumericPatternOwnerError,acceptRustSourceNumericPatternAlias} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceLiteralPatternAlias} from './rust-byte-pattern-rules.js';
 import {readRustSourceStringPatternError} from './rust-string-pattern-rules.js';
@@ -138,6 +139,7 @@ export class RustSourceOrigins {
   }
 
   compareStructure(left,right){
+    if(left&&right&&!acceptRustStaticByteArrayOwnerEquality(left.arraySourceModel??'',left.sourceOwner?.kind??'',left.sourceOwner?.path.join('::')??'',right.sourceOwner?.kind??'',right.sourceOwner?.path.join('::')??''))return false;
     if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || (left.floatSourceModel ?? null) !== (right.floatSourceModel ?? null) || left.textSourceModel !== right.textSourceModel || left.arraySourceModel !== right.arraySourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
     if (Boolean(left.fields) !== Boolean(right.fields) || (left.fields && (left.fields.length !== right.fields.length || left.fields.some((field, index) => !this.compareStructure(field, right.fields[index]))))) return false;
     if(Boolean(left.callableParameters)!==Boolean(right.callableParameters)||left.callableParameters&&(left.callableParameters.length!==right.callableParameters.length||left.callableParameters.some((parameter,index)=>!this.compareStructure(parameter,right.callableParameters[index]))))return false;
@@ -330,7 +332,7 @@ export class RustSourceOrigins {
     const indirected = actual.length > 0 || want.length > 0;
     const exact = JSON.stringify(actual) === JSON.stringify(want);
     const borrowed = actual[0] === 'reference' && want[0] === 'reference';
-    if (actualOrigin.arraySourceModel && expectedOrigin.arraySourceModel && !acceptRustSourceArrayCoercion(actualOrigin.arraySourceModel, expectedOrigin.arraySourceModel, borrowed)) throw unsupported('source array coercion', 'an immutable slice cannot become a reference to an owned vector', span);
+    if (actualOrigin.arraySourceModel && expectedOrigin.arraySourceModel && !acceptRustSourceArrayCoercion(actualOrigin.arraySourceModel, expectedOrigin.arraySourceModel, borrowed)&&!acceptRustStaticByteArrayCoercion(actualOrigin.arraySourceModel,expectedOrigin.arraySourceModel,borrowed)) throw unsupported('source array coercion', 'an immutable slice cannot become a reference to an owned vector', span);
     const removed = actual.length - want.length;
     let initial = true;
     for (const layer of actual.slice(1, removed + 1)) {

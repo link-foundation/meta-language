@@ -23,7 +23,7 @@ impl RustParser {
         let error = read_rust_scalar_array_index_receiver_error(
             receiver.ty.as_ref().map_or("", Type::kind),
             element.map_or("", Type::kind),
-            receiver.array_source_model.unwrap_or(""),
+            &crate::translation::rust_byte_string_expression_rules::read_rust_static_byte_array_read_model(&crate::translation::rust_byte_string_expression_rules::ml_string::Text::from_text(receiver.array_source_model.unwrap_or(""))).to_string(),
             receiver.proven,
             receiver
                 .wrappers

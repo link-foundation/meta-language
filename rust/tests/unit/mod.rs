@@ -613,3 +613,5 @@ mod source_module_requests;
 mod project_dependency_gaps;
 
 mod project_translation_archive;
+
+mod translation_rust_byte_string_expressions;

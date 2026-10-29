@@ -1266,3 +1266,17 @@ state. The preceding archive stays unchanged; existing source identities cannot
 be replaced. Fresh translation may parse source with current frontends. This is
 separate from parser-free reload/restoration and establishes no historical
 compiler replay or executed semantics. The append controls remain deferred.
+
+
+Rust byte-string expressions now draft exact `u8` arrays from the existing
+canonical lexical payload, with fixed-length/static-reference source evidence.
+Direct indices reuse existing array bounds; `as_slice` supplies an explicit
+immutable slice view, and actual borrowed arguments may unsize to a slice.
+Slice lookups/copies reuse their existing operations. Author all shared decisions
+with `draft-rust-byte-string-expression-rules.mjs --draft`; the integrated
+`draft-rust-byte-string-expressions.mjs --draft` constructs native assets and
+literal controls without importing controls or executing represented programs.
+Its original/generated CI producer is `experiments/rust-records/byte-string-expressions.mjs`.
+Physical static allocation/pointer identity, fixed-array source interfaces,
+byte-string patterns, general borrow inference and Unicode characters remain
+obligations. Original/source-owner/codecs/four-target controls stay deferred.

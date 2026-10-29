@@ -390,3 +390,5 @@ pub mod rust_byte_pattern_rules;
 pub mod rust_numeric_pattern_rules;
 
 pub mod source_module_request_rules;
+
+pub mod rust_byte_string_expression_rules;

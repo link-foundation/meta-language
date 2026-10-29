@@ -18,6 +18,7 @@ use super::indirection_rules::{
 use super::product_rules::{accept_rust_immutable_product_type, accept_rust_product_origin};
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
 use crate::translation::rust_array_index_rules::accept_rust_scalar_array_index_element;
+use crate::translation::rust_byte_string_expression_rules::ml_string::Text as ByteStringText;
 use crate::translation::rust_fresh_vector_argument_rules::{
     accept_rust_fresh_owned_vector_argument, read_rust_fresh_vector_argument_form,
 };
@@ -526,6 +527,8 @@ impl SourceOrigins {
         self.compare_origin_structure(left, right)
     }
     fn compare_origin_structure(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_owner_equality(&ByteStringText::from_text(left.array_source_model.unwrap_or("")),&ByteStringText::from_text(left.source_owner.as_ref().map_or("",|owner|owner.kind.as_str())),&ByteStringText::from_text(&left.source_owner.as_ref().map(|owner|owner.path.join("::")).unwrap_or_default()),&ByteStringText::from_text(right.source_owner.as_ref().map_or("",|owner|owner.kind.as_str())),&ByteStringText::from_text(&right.source_owner.as_ref().map(|owner|owner.path.join("::")).unwrap_or_default())){return false;}
+
         if left.proven != right.proven
             || left.diverging != right.diverging
             || left.uncertain != right.uncertain
@@ -1275,7 +1278,7 @@ impl SourceOrigins {
         let borrowed = actual.first().is_some_and(|layer| layer == "reference")
             && want.first().is_some_and(|layer| layer == "reference");
         if let (Some(actual_model), Some(expected_model)) = (actual_model, expected_model)
-            && !accept_rust_source_array_coercion(actual_model, expected_model, borrowed)
+            && !accept_rust_source_array_coercion(actual_model, expected_model, borrowed) && !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_coercion(&ByteStringText::from_text(actual_model),&ByteStringText::from_text(expected_model),borrowed)
         {
             return Err(unsupported(
                 "source array coercion",

@@ -498,8 +498,32 @@ editable typed Links and generates native decisions automatically. Earlier raw
 text decoder controls retain every input and their `notRaw` expectations; the
 full lexer now recognizes actual raw byte strings under the explicit byte-string
 profile. Complete earlier assertion sources and the Rust Reference basis for this
-correction remain available. Static byte-array references, their lifetime and
-ownership semantics still need typed translation support.
+correction remain available.
+The ordinary byte-string expression draft decodes that canonical transport into
+actual `u8` array elements, including an explicitly typed empty array. Source
+origins retain the fixed byte count and static shared-reference ownership;
+different fixed lengths remain distinct before an explicit slice view. Standard
+immutable element reads reuse the existing checked array/slice bounds operation.
+Explicit `as_slice` views and valid borrowed argument unsizing reuse existing
+immutable slice operations, including copied lookups and fresh `to_vec` results.
+The complete decoder, view, owner and admission decisions are editable typed Links
+and automatically generate Rust. Runtime adapters transport actual tokens and
+source origins. Identifier suffixes stay lexically valid data but cannot acquire
+expression meaning. This is an immutable value projection: physical static
+allocation and pointer identity, fixed-array interfaces, byte-string patterns,
+general lifetime/unsizing inference and Unicode `char` remain required work.
+Original/generated products, complete byte arrays, CST/codecs, all four emissions
+and every decision premise remain unexecuted controls in this drafting phase.
+
+The former `fn bytes(){ b"value" }` input remains a refusal. Its implicit unit
+result cannot receive the actual static array reference. The obsolete byte-string
+unsupported expectation now names the precise source-indirection boundary, with
+the exact input, all other assertions and complete hashed predecessor test source
+retained. The Rust Reference defines the
+[static byte-array type](https://doc.rust-lang.org/reference/expressions/literal-expr.html#byte-string-literal-expressions)
+and [implicit unit result](https://doc.rust-lang.org/reference/items/functions.html#function-return-type).
+Assertions are bounded to the recorded Node/Rust ranges; no execution observation
+or full literal-domain completion follows from source construction alone.
 The bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
 UTF-8 length, individual bytes and scalar-boundary slices in both packages.
 Shared numeric rules generate the native byte decisions; thin host adapters

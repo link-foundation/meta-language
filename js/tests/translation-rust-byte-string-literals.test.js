@@ -26,5 +26,5 @@ test('byte strings keep embedded macros braces comments and quotes opaque',()=>{
  assert.equal(tokens.find(token=>token.kind==='byteString').raw,literal);
  assert.deepEqual(tokens.filter(token=>token.value==='{'||token.value==='}').map(token=>token.value),['{','}']);
  assert.deepEqual(comments.map(comment=>comment.text),['// actual']);
- assert.throws(()=>parseRust('fn bytes(){ b"value" }'),error=>error.kind==='unsupported'&&error.message.includes('static byte-array reference'));
+ assert.throws(()=>parseRust('fn bytes(){ b"value" }'),error=>error.kind==='unsupported'&&error.reason==='source indirection: source ownership requires an explicit dereference or matching immutable reference or Box type');
 });

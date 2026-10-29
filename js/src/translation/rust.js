@@ -1,3 +1,4 @@
+import {readRustByteStringExpression,readRustByteStringSliceView} from './rust-byte-string-expressions.js';
 import {readRustSourceNumericPatternOwner,readRustSourceNumericPatternLexicalError} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceBytePatternToken} from './rust-byte-pattern-rules.js';
 import {acceptRustSourceStringPatternToken} from './rust-string-pattern-rules.js';
@@ -1397,6 +1398,7 @@ class RustParser {
   method(receiver, method, args, range, path=this.modulePath) {
     const sharedMethod=readRustSharedArrayHandleMethod(this,receiver,method,args,range);
     if(sharedMethod)return sharedMethod;
+    const byteView=readRustByteStringSliceView(this,receiver,method,args,range,path);if(byteView)return byteView;
     const inherent=readRustInherentMethod(this,receiver,method,args,range,path);
     if(inherent)return inherent;
     const discovery=acceptRustTypeNamespaceMethodDiscovery(this.typeNamespaceDiscovery,method.value);
@@ -1551,7 +1553,7 @@ class RustParser {
       c.next();
       return this.origins.mark({ k: 'num', value: token.value, type, span: span(token, token) },{...this.origins.typeOrigin(type,path),sourceOwner:{kind:'primitive',path:[characterTypeName],arguments:[]}});
     }
-    if(token.kind==='byteString')throw unsupported('Rust byte string literal','the actual static byte-array reference and its ownership must be represented',span(token,token));
+    if(token.kind==='byteString')return readRustByteStringExpression(this,token,path);
     if (token.kind === 'char' || token.kind === 'byteChar' || c.is('\'')) throw unsupported('character literal', 'characters are outside the portable core', span(token, token));
     if (c.is('(')) {
       c.next();

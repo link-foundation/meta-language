@@ -1,3 +1,4 @@
+import {readRustStaticByteArrayReadModel} from './rust-byte-string-expression-rules.js';
 // Actual source ownership facts into the shared scalar read admission policy.
 import {unsupported} from './diagnostics.js';
 import {rustFixedType} from './types.js';
@@ -8,7 +9,7 @@ export function readRustScalarArrayIndex(parser,object,path){
  const open=parser.cursor.next(),index=parser.expr(path),close=parser.cursor.expect(']','array index');
  const span={start:object.span?.start??open.start,end:close.end},receiver=parser.origins.origin(object,path);
  const element=receiver.type?.kind==='array'?receiver.type.element:null;
- const receiverError=readRustScalarArrayIndexReceiverError(receiver.type?.kind??'',element?.kind??'',receiver.arraySourceModel??'',receiver.proven===true,receiver.wrappers.every(layer=>layer==='reference'||layer==='box'),receiver.arrayElementCopyEvidence===true);
+ const receiverError=readRustScalarArrayIndexReceiverError(receiver.type?.kind??'',element?.kind??'',readRustStaticByteArrayReadModel(receiver.arraySourceModel??''),receiver.proven===true,receiver.wrappers.every(layer=>layer==='reference'||layer==='box'),receiver.arrayElementCopyEvidence===true);
  if(receiverError)throw unsupported('Rust scalar array index',receiverError,span);
  const expressionError=readRustUsizeIndexExpression(parser,index,path);
  if(expressionError)throw unsupported('Rust scalar array index',readRustScalarArrayIndexOperandError(false,'',0,false,'',0,false),index.span??span);

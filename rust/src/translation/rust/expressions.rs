@@ -4,6 +4,7 @@ mod array_index;
 mod array_lookups;
 mod ascii_text_predicates;
 mod byte_ascii;
+mod byte_strings;
 mod checked_integer;
 pub(super) mod control;
 mod integer_bits;
@@ -468,6 +469,16 @@ impl RustParser {
                     path,
                 )? {
                     value = inherent;
+                    continue;
+                }
+                if let Some(view) = self.byte_string_slice_view(
+                    &value,
+                    &method,
+                    args.len(),
+                    span(&token, self.cursor.peek()),
+                    path,
+                ) {
+                    value = view;
                     continue;
                 }
                 self.require_type_namespace_body_method(
@@ -1059,11 +1070,7 @@ impl RustParser {
         }
         let c = &self.cursor;
         if token.kind == TokenKind::ByteString {
-            return Err(unsupported(
-                "Rust byte string literal",
-                "the actual static byte-array reference and its ownership must be represented",
-                span(&token, &token),
-            ));
+            return self.byte_string_expression(&token, path);
         }
         if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) || c.is("'") {
             return Err(unsupported(
