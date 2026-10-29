@@ -1218,3 +1218,33 @@ with `generate-project-translation-rules.mjs --draft`; the integrated
 `draft-project-dependency-gaps.mjs --draft` constructs literal controls and package
 assets without executing projects or controls. This does not discharge module
 loading, binding composition or complete own-codebase translation obligations.
+
+
+`createProjectTranslationArchive` / `create_project_translation_archive` combine
+the complete project draft and original global/per-module settings with every
+original source CST using the existing
+archive implementations. `readProjectTranslationArchive` /
+`read_project_translation_archive` reconstruct the original graphs without files
+or reparsing and check source membership, preserved issues and product digests.
+Use `meta-language project-translation <inventory.lino> --to <language>` with a
+Links inventory containing `inputs` and optional resource `options`. `--binary`
+selects the existing full-network codec; `--abstract` selects an AST view while
+retaining all concrete graphs. Source paths must be project-relative archive
+identities. TypeScript `.tsx` sources use the actual TSX concrete grammar.
+The result is an unexecuted draft, including every unresolved translation gap.
+
+Author shared archive admission and arguments with
+`draft-project-translation-archive-rules.mjs --draft`; the integrated
+`draft-project-translation-archive.mjs --draft` constructs native assets, literal
+controls and package/catalog entries without importing tests or executing source
+projects. Source-free restoration and matching hashes establish preservation,
+not executable semantics or shared concept meaning. Complete loading, bindings,
+source translation and proved global concept reuse remain requirements.
+
+The tracked-project author `draft-project-translation.mjs --project <directory>
+--to <language> --out <links-file>` now defaults to the same complete archive.
+It retains the actual revision, tracked source metadata and unresolved dependency
+provenance inside its linked configuration. Its programmatic report-only helper
+remains available; `draftTrackedProjectTranslationArchive` provides full concrete
+storage. Configuration uses portable structured Links values and rejects opaque
+host callbacks or nonrepresentable settings.

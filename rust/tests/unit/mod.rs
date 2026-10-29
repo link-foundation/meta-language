@@ -611,3 +611,5 @@ mod translation_rust_numeric_patterns;
 mod source_module_requests;
 
 mod project_dependency_gaps;
+
+mod project_translation_archive;

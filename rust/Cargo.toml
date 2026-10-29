@@ -175,6 +175,7 @@ include = [
     "src/data/optional-policy-program.lino",
     "src/data/optional-value-program.lino",
     "src/data/owned-array-reader-domain-program.lino",
+    "src/data/project-translation-archive-program.lino",
     "src/data/record-callable-parameter-program.lino",
     "src/data/record-closure-parameter-program.lino",
     "src/data/record-order-surface-library.lino",

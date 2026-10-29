@@ -579,3 +579,11 @@ pub use source_module_requests::{
     SourceModuleRequests, analyze_source_module_requests,
     analyze_source_module_requests_with_limits, run_source_module_request_command,
 };
+
+mod project_translation_archive;
+mod project_translation_archive_rules;
+pub use project_translation_archive::{
+    ProjectTranslationArchiveCommandOutput, ProjectTranslationArchiveView,
+    create_project_translation_archive, read_project_translation_archive,
+    run_project_translation_archive_command,
+};

@@ -14,6 +14,7 @@ import { runMetaLanguageArchiveCommand } from './meta-language-archive-cli.js';
 import { runDynamicLanguageCommand } from './dynamic-language-cli.js';
 import {runSourceDefinitionCommand} from './source-definition-cli.js';
 import {runSourceModuleRequestCommand} from './source-module-request-cli.js';
+import {runProjectTranslationArchiveCommand} from './project-translation-archive-cli.js';
 import {runRustSourceProjectCommand} from './rust-source-project-cli.js';
 
 const USAGE = 'usage: meta-language grammar <command> [options]; run meta-language grammar help\n'
@@ -21,6 +22,7 @@ const USAGE = 'usage: meta-language grammar <command> [options]; run meta-langua
   + '       meta-language language <command> [options]; run meta-language language help\n'
   + '       meta-language definition <command> [options]; run meta-language definition help\n'
   + '       meta-language module-requests <file> [--language <JavaScript|TypeScript>] [--tsx] [--binary]\n'
+  + '       meta-language project-translation <inventory.lino> --to <language> [--abstract] [--binary]\n'
   + '       meta-language source-project <inventory.lino> --entry <path> [--library] [--to <language> | --binary]\n'
   + '       meta-language translate --to <language> [--from <language>] [--items] <file>\n';
 const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] [--semantic] <file>\n'
@@ -63,6 +65,7 @@ export function runCommandLine(args, { readFile = (file) => readFileSync(file, '
   if (group === 'language') return runDynamicLanguageCommand(rest, { readFile, readBytes });
   if (group === 'definition') return runSourceDefinitionCommand(rest);
   if(group==='module-requests')return runSourceModuleRequestCommand(rest,{readFile});
+  if(group==='project-translation')return runProjectTranslationArchiveCommand(rest,{readFile});
   if (group === 'source-project') return runRustSourceProjectCommand(rest,{readFile});
   if (group === '--help' || group === '-h' || group === 'help') return { exitCode: 0, stdout: USAGE, stderr: '' };
   return { exitCode: 2, stdout: '', stderr: group === undefined ? USAGE : `error: unknown command ${group}\n${USAGE}` };

@@ -149,3 +149,6 @@ export {createJavaScriptArrayFormalParameterProgramLinks} from './array-formal-p
 export {analyzeSourceModuleRequests} from './source-module-requests.js';
 
 export {runSourceModuleRequestCommand} from './source-module-request-cli.js';
+
+export {createProjectTranslationArchive,readProjectTranslationArchive} from './project-translation-archive.js';
+export {runProjectTranslationArchiveCommand} from './project-translation-archive-cli.js';

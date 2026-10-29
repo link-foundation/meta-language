@@ -6,7 +6,9 @@ import { dirname, extname, resolve, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import {analyzeSourceModuleRequests} from '../src/source-module-requests.js';
-import { draftProjectTranslation, projectTranslationDraftToLinks } from '../src/project-translation.js';
+import {createProjectTranslationArchive} from '../src/project-translation-archive.js';
+import {metaLanguageArchiveToText} from '../src/meta-language-archive.js';
+import { draftProjectTranslation } from '../src/project-translation.js';
 
 const languages = new Map([['.js', 'JavaScript'], ['.mjs', 'JavaScript'], ['.cjs', 'JavaScript'], ['.jsx','JavaScript'],
   ['.ts', 'TypeScript'], ['.tsx', 'TypeScript'], ['.mts','TypeScript'], ['.cts','TypeScript'], ['.rs', 'Rust']]);
@@ -80,6 +82,12 @@ export function draftTrackedProjectTranslation(project, options) {
     totalBytes: inventory.totalBytes, unresolved: inventory.unresolved } };
 }
 
+/** Complete original CSTs and the actual tracked inventory accompany drafts. */
+export function draftTrackedProjectTranslationArchive(project,options={}){
+ const inventory=materializeProjectTranslationInputs(project,options);
+ return createProjectTranslationArchive(inventory.inputs,{...options,provenance:{user:options.provenance??null,trackedProject:{revision:inventory.revision,files:inventory.files,totalBytes:inventory.totalBytes,unresolved:inventory.unresolved}}});
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const options = {}, args = process.argv.slice(2);
   for (let index = 0; index < args.length; index += 1) {
@@ -89,7 +97,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     options[name] = args[++index];
   }
   if (!options.project || !options.to || !options.out) throw new TypeError('project, target language and Links output are required');
-  const draft = draftTrackedProjectTranslation(options.project, { targetLanguage: options.to });
-  const packet = projectTranslationDraftToLinks(draft);
-  writeFileSync(resolve(options.out), packet.network.toLino());
+  const packet=draftTrackedProjectTranslationArchive(options.project,{targetLanguage:options.to});
+  writeFileSync(resolve(options.out),metaLanguageArchiveToText(packet,{nodeLimit:1000000,referenceLimit:4000000,byteLimit:128*1024*1024}));
 }

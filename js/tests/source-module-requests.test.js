@@ -6,7 +6,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {runCommandLine} from '../src/cli.js';
-import {materializeProjectTranslationInputs} from '../scripts/draft-project-translation.mjs';
+import {readProjectTranslationArchive} from '../src/project-translation-archive.js';
+import {materializeProjectTranslationInputs,draftTrackedProjectTranslationArchive} from '../scripts/draft-project-translation.mjs';
 import {createHash} from 'node:crypto';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {analyzeSourceModuleRequests} from '../src/source-module-requests.js';
@@ -63,6 +64,10 @@ test('tracked project discovery keeps reexports JSX TSX and unknown edges',()=>{
   assert.equal(inventory.unresolved.length,1);assert.equal(inventory.unresolved[0].identifier,'src/dynamic.js');assert.equal(inventory.unresolved[0].kind,'dynamic module import');assert.equal(inventory.unresolved[0].reason,'computed module specifier requires a source interpretation');
   assert.equal(inventory.files.find(file=>file.identifier==='src/types.ts').moduleRequests[0].kind,'type module export');
   assert.deepEqual(inputs.get('src/dynamic.js').sourceIssues,['computed module specifier requires a source interpretation']);
+  const archive=draftTrackedProjectTranslationArchive(root,{targetLanguage:'JavaScript'}),restored=readProjectTranslationArchive(archive.network,archive.root);
+  assert.equal(restored.sources.length,Object.keys(files).length);for(const [path,source]of Object.entries(files))assert.equal(restored.sources.find(file=>file.path===path).source,source);
+  assert.equal(restored.configuration.options.provenance.trackedProject.revision,inventory.revision);assert.deepEqual(restored.configuration.options.provenance.trackedProject.unresolved,inventory.unresolved);
+
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 

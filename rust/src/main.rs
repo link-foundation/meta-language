@@ -29,6 +29,12 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Draft a project while retaining every original concrete source graph.
+    #[command(disable_help_flag = true)]
+    ProjectTranslation {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Export complete concrete source and module-request links.
     #[command(disable_help_flag = true)]
     ModuleRequests {
@@ -268,6 +274,20 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::ProjectTranslation { args } => {
+            let output = meta_language::run_project_translation_archive_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            if !output.stdout.is_empty() {
+                std::io::stdout()
+                    .write_all(&output.stdout)
+                    .unwrap_or_else(|error| fail(error.to_string()));
+            }
+            if !output.stderr.is_empty() {
+                eprint!("{}", output.stderr);
+            }
+            std::process::exit(output.exit_code);
+        }
         Command::ModuleRequests { args } => {
             let output = meta_language::run_source_module_request_command(&args, |path| {
                 fs::read_to_string(path).map_err(|error| error.to_string())

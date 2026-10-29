@@ -4348,6 +4348,32 @@ Byte and graph-work budgets bound discovery; this does not establish an
 independent bound on all existing parser work. Original-source, codec, CLI and
 tracked-project controls remain unexecuted drafts in this phase.
 
+The complete project-translation archive draft combines the unchanged project
+report and explicit global/per-module configuration with every full original
+concrete source graph through the existing
+source-project and meta-language archive mechanisms. Both public runtimes and
+`project-translation <inventory.lino> --to <language>` retain partial products,
+all diagnostics, term registrations, syntax state and original graph identities.
+CST remains the default; an optional AST view retains the same complete concrete
+storage. TypeScript files with the TSX extension select the actual TSX grammar
+for the concrete archive, without claiming executable TSX translation.
+Reload reconstructs all source graphs from links without original files,
+reparsing or consulting a current grammar catalog. Shared source-generated
+admission compares ordered source identities, language profiles, byte counts,
+digests, import directories and duplicate inventory issues against both the
+report, its module rows and retained configuration. Concrete source/type options
+remain structured Links data; settings outside that portable data domain refuse.
+Source inventory diagnostics cannot disappear on
+reload. A product with unresolved gaps cannot become an executable output;
+draft hashes and any exposed product must agree. These checks establish byte
+preservation and directory consistency, not semantic correctness. Qualified
+concrete islands preserve their own concepts; equal labels or hashes authorize
+no concept deduplication. Existing graph/byte limits also bound CLI serialization.
+The tracked-project source author defaults to this complete archive and retains
+its revision, file inventory and unresolved request provenance as linked settings.
+Original-source, text/binary, AST, parser-free reload, changed-directory/product
+and CLI controls remain unexecuted drafts in this phase.
+
 Complete project drafts retain source-inventory issues as well as individual
 translation failures. A shared, source-generated reverse dependency traversal
 withholds executable output for every dependent of an unresolved module,
