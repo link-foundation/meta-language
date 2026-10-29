@@ -255,6 +255,8 @@ include = [
     "src/data/source-definition-catalog.lino",
     "src/data/source-exception-program.lino",
     "src/data/source-identifier-program.lino",
+    "src/data/source-library-binding-program.lino",
+    "src/data/source-library-export-program.lino",
     "src/data/source-project-archive-program.lino",
     "src/data/string-array-sort-program.lino",
     "src/data/string-construction-program.lino",

@@ -9,6 +9,7 @@ const digest=source=>createHash('sha256').update(source).digest('hex');
 export function composeSourceLibraryAliases(inputs,entryPath,readImports) {
   const names=new Set(),counts=new Map(),selected=new Map();
   for(const input of inputs){
+    if(input.declarationBindings?.some(binding=>binding.kind==='const'&&binding.initializer==='function expression'))throw new TypeError('source constant function-expression aliases need their separate inner binding scopes');
     for(const token of tokenize(input.source,'JavaScript').tokens)if(token.kind==='identifier')names.add(token.value);
     for(const name of input.declarations)counts.set(name,(counts.get(name)??0)+1);
   }
@@ -25,7 +26,7 @@ export function composeSourceLibraryAliases(inputs,entryPath,readImports) {
   let rewrites=0;
   for(const input of inputs){
     const requests=[],imports=[];
-    for(const name of input.declarations){const target=selected.get(key(input.path,name));if(target!==name)requests.push({name,target,kind:'function'});}
+    for(const name of input.declarations){const target=selected.get(key(input.path,name));if(target!==name)requests.push({name,target,kind:input.declarationBindings?.find(binding=>binding.name===name)?.kind??'function'});}
     for(const imported of input.removedImports)for(const binding of imported.bindings){
       const target=selected.get(key(imported.dependency,binding.imported));
       if(!target)throw new TypeError('source alias has no actual declared provider '+binding.imported+' in '+imported.dependency);

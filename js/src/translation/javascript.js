@@ -116,6 +116,27 @@ const ASSERTIONS = { strictEqual: 'eq', notStrictEqual: 'ne', deepStrictEqual: '
  * module's directory inside its crate as path segments, which makes relative
  * imports items of the crate.
  */
+// Actual token structure shared with source-library capture; no initializer runs.
+export function testJavaScriptSourceFunctionStart(tokens,index){
+ let token=tokens[index];
+ if(!token)return false;
+ if(token.kind==='identifier'&&!acceptJavaScriptSourceKeywordToken(token.value,token.raw)&&tokens[index+1]?.value!=='=>')return false;
+ if(token.kind==='identifier'&&token.value==='async'&&tokens[index+1]?.value!=='=>'){
+  index+=1;token=tokens[index];if(!token)return false;
+ }
+ let afterGroup='';
+ if(token.kind==='punct'&&token.value==='('){
+  let depth=0,close=tokens.length-1;
+  for(let at=index;at<tokens.length;at+=1){
+   if(tokens[at].kind!=='punct')continue;
+   if(['(','[','{'].includes(tokens[at].value))depth+=1;
+   if([')',']','}'].includes(tokens[at].value)&&--depth===0){close=at;break;}
+  }
+  afterGroup=tokens[close+1]?.value??'';
+ }
+ return acceptJavaScriptFunctionStart(token.kind,token.value,tokens[index+1]?.value??'',afterGroup);
+}
+
 export function parseJavaScript(source, context = {}) {
   if (!acceptRustScalarLoopModel(context.scalarLoopModel ?? '')) throw unsupported('JavaScript scalar loop model', 'the selected model is not registered');
   const { tokens, comments } = tokenize(source, 'JavaScript');
@@ -380,17 +401,7 @@ class JavaScriptParser {
 
   /** Whether the tokens from `index` are a function expression or an arrow function, either maybe async. */
   startsFunction(index) {
-    const tokens = this.cursor.tokens;
-    let token = tokens[index];
-    if (!token) return false;
-    if (token.kind === 'identifier' && !acceptJavaScriptSourceKeywordToken(token.value, token.raw) && tokens[index + 1]?.value !== '=>') return false;
-    if (token.kind === 'identifier' && token.value === 'async' && tokens[index + 1]?.value !== '=>') {
-      index += 1;
-      token = tokens[index];
-      if (!token) return false;
-    }
-    const afterGroup = token.kind === 'punct' && token.value === '(' ? tokens[this.matching(index) + 1]?.value ?? '' : '';
-    return acceptJavaScriptFunctionStart(token.kind, token.value, tokens[index + 1]?.value ?? '', afterGroup);
+    return testJavaScriptSourceFunctionStart(this.cursor.tokens,index);
   }
 
   /**

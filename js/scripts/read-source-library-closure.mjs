@@ -5,7 +5,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { relative, sep } from 'node:path';
 import { composeSourceLibraryAliases } from './compose-source-library-aliases.mjs';
 import { tokenize } from '../src/translation/lexer.js';
-import {readJavaScriptDocumentationTags} from '../src/translation/javascript.js';
+import {readJavaScriptDocumentationTags,testJavaScriptSourceFunctionStart} from '../src/translation/javascript.js';
+import {readSourceLibraryDeclarationBindingKind} from '../src/translation/source-library-binding-rules.js';
+import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 
 const root = new URL('../../', import.meta.url);
 const rootPath = realpathSync(fileURLToPath(root));
@@ -15,21 +17,37 @@ const actual = (source, token, value) => token?.kind === 'identifier' && token.v
 
 export function readSourceLibraryModuleFacts(source,path,aliases=false) {
   const tokens = tokenize(source, 'JavaScript').tokens;
-  const imports = [], exports = new Set(), declarations = new Set();
+  const imports = [], exports = new Set(), declarations = new Set(), declarationBindings=new Map(), expressionHeads=new Set();
+  function form(index){
+    const head=tokens[index],name=tokens[index+1];
+    let callable=false,initializer='';
+    if(actual(source,head,'const')&&tokens[index+2]?.kind==='punct'&&tokens[index+2].value==='='&&testJavaScriptSourceFunctionStart(tokens,index+3)){
+      callable=true;let at=index+3;
+      if(actual(source,tokens[at],'async')&&tokens[at+1]?.value!=='=>')at+=1;
+      initializer=actual(source,tokens[at],'function')?'function expression':'arrow';
+      if(initializer==='function expression')expressionHeads.add(at);
+    }
+    const keyword=actual(source,head,'function')?'function':actual(source,head,'const')?'const':'';
+    return {name:name?.value??'',kind:readSourceLibraryDeclarationBindingKind(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{})};
+  }
   let depth = 0;
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (token.kind === 'punct') {
-      if (token.value === '{') depth += 1;
-      else if (token.value === '}') depth -= 1;
+      if (['{','(','['].includes(token.value)) depth += 1;
+      else if (['}',')',']'].includes(token.value)) depth -= 1;
       continue;
     }
     if (depth !== 0) continue;
-    if (actual(source, token, 'function') && tokens[index + 1]?.kind === 'identifier') declarations.add(tokens[index + 1].value);
+    if(!expressionHeads.has(index)&&(actual(source,token,'function')||actual(source,token,'const'))){
+      const binding=form(index);
+      if(binding.kind){if(declarations.has(binding.name))throw new TypeError('source closure needs unique actual module declarations at '+path+':'+token.start);declarations.add(binding.name);declarationBindings.set(binding.name,{name:binding.name,kind:binding.kind,...(binding.initializer?{initializer:binding.initializer}:{})});}
+    }
     if (actual(source, token, 'export')) {
-      if (!actual(source, tokens[index + 1], 'function') || tokens[index + 2]?.kind !== 'identifier')
-        throw new TypeError('source closure exports need actual named function declarations at '+path+':'+token.start);
-      exports.add(tokens[index + 2].value);
+      const binding=form(index+1);
+      if (!acceptSourceLibraryFunctionExport(binding.keyword,tokens[index+2]?.kind??'',binding.name,binding.callable))
+        throw new TypeError('source closure exports need actual named function declarations or constant function bindings at '+path+':'+token.start);
+      exports.add(binding.name);
     }
     if (!actual(source, token, 'import')) continue;
     let at = index + 1;
@@ -65,7 +83,7 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
     if (importedNames.has(name) || declarations.has(name)) throw new TypeError('source closure import has a duplicate actual binding '+name+' in '+path);
     importedNames.add(name);
   }
-  return {imports,exports:[...exports],declarations:[...declarations]};
+  return {imports,exports:[...exports],declarations:[...declarations],...([...declarationBindings.values()].some(binding=>binding.kind==='const')?{declarationBindings:[...declarationBindings.values()]}:{})};
 }
 
 /** Capture complete named-function modules. The optional CST alias profile
@@ -85,8 +103,8 @@ export function readSourceLibraryClosure(sourcePath,{aliases=false}={}) {
     const source = readFileSync(absolute, 'utf8');
     bytes += Buffer.byteLength(source);
     if (bytes > 16 * 1024 * 1024) throw new RangeError('source library closure exceeds 16 MiB');
-    const {imports,exports,declarations}=readSourceLibraryModuleFacts(source,path,aliases);
-    const capture = {path,source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),removedImports:imports,exports:[...exports]};
+    const {imports,exports,declarations,declarationBindings}=readSourceLibraryModuleFacts(source,path,aliases);
+    const capture = {path,source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),removedImports:imports,exports:[...exports],...(declarationBindings?{declarationBindings}:{})};
     states.set(absolute,capture);
     for (const imported of imports) {
       const dependency = visit(new URL(imported.specifier,url));

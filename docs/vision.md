@@ -7921,6 +7921,19 @@ representation; their current source adapters refuse rather than accepting the
 scalar display as a name. Formal targets use the shared unit representation
 described below.
 
+Automatic source-library composition captures actual constant-bound arrow and
+function initializers alongside named function declarations. The parser and
+capture reader share callable-start syntax; grouped parameter/default syntax
+does not introduce accidental module declarations. Alias composition selects
+the actual declaration kind and lexical owner, retaining complete original
+source bytes, hashes and ownership in the typed Links provenance. Binding and
+export admission are shared inspectable definitions translated automatically
+to Rust. General module data, effects and function-expression inner binding
+scopes remain separate obligations; the current alias adapter explicitly
+refuses the latter rather than conflating the inner and outer declarations.
+Deferred controls include duplicate private helpers, aliases, both codecs and
+all four emission targets. Source construction is not execution evidence.
+
 Automatic source-library composition also retains declared documentation
 datatypes, attached to their actual complete source comment and module owner.
 It does not relabel user declarations as generated data or infer ownership from

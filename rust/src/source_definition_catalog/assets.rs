@@ -397,6 +397,12 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "source-identifier-program.lino" => {
             Some(include_str!("../data/source-identifier-program.lino"))
         }
+        "source-library-binding-program.lino" => {
+            Some(include_str!("../data/source-library-binding-program.lino"))
+        }
+        "source-library-export-program.lino" => {
+            Some(include_str!("../data/source-library-export-program.lino"))
+        }
         "source-project-archive-program.lino" => {
             Some(include_str!("../data/source-project-archive-program.lino"))
         }

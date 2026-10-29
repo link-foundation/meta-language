@@ -595,3 +595,5 @@ mod utf16_text_expansion;
 mod translation_rust_array_lookup_lazy;
 
 mod translation_rust_canonical_discovery;
+
+mod source_library_bindings;
