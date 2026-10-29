@@ -141,6 +141,7 @@ include = [
     "src/data/javascript-comparison-program.lino",
     "src/data/javascript-data-field-program.lino",
     "src/data/javascript-descriptor-conversion-program.lino",
+    "src/data/javascript-fixed-integer-cast-program.lino",
     "src/data/javascript-literal-property-program.lino",
     "src/data/javascript-nominal-spread-program.lino",
     "src/data/javascript-nullish-field-program.lino",

@@ -269,6 +269,23 @@ for(const [name,operation,right,message]of [
  ['BigInt exponentiation preserves negative-exponent failure','**',integer('-1'),'Exponent must be positive']
 ])rows.push({name,source:'/** @param {bigint} left @param {bigint} right @returns {bigint} */ export function inspect(left,right){return left'+operation+'right;}',entry:'inspect',functions:['inspect'],arguments:[integer('2'),right],expectedOutcome:'allocation',errorClass:'RangeError',errorRealm:'1000',...(message.isWellFormed()?{errorReason:message}:{errorReasonUnits:Array.from({length:message.length},(_,index)=>message.charCodeAt(index))})});
 rows.push({name:'BigInt conversion captures ignored argument effects before parsing',source:'/** @param {string} value @param {{value:number}} holder @returns {bigint} */ export function inspect(value,holder){return BigInt(value,update(holder));} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 0;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[units('42'),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:integer('42')});
+// Constant-width originals exercise the actual shared construction plan.
+for(const [method,width,value,result]of [
+ ['asUintN','0','123','0'],['asIntN','0','-1','0'],
+ ['asUintN','-0','1','0'],['asIntN','-0.5','123','0'],
+ ['asUintN','1','-1','1'],['asIntN','1','1','-1'],
+ ['asUintN','7','-1','127'],['asIntN','7','127','-1'],
+ ['asUintN','8','-1','255'],['asIntN','8','255','-1'],
+ ['asUintN','24','-1','16777215'],['asIntN','24','8388608','-8388608'],
+ ['asIntN','32.9','4294967295','-1'],
+ ['asUintN','64','-1','18446744073709551615'],
+ ['asIntN','128','340282366920938463463374607431768211455','-1'],
+ ['asUintN','256','1','1'],['asIntN','256','-1','-1'],
+ ['asUintN','NaN','123','0']
+])rows.push({name:'BigInt fixed width '+method+' '+width+' on '+value,source:'/** @param {bigint} value @returns {bigint} */ export function inspect(value){return BigInt.'+method+'('+width+',value);}',entry:'inspect',functions:['inspect'],arguments:[integer(value)],expected:integer(result)});
+rows.push({name:'BigInt fixed width evaluates its value operand exactly once',source:'/** @param {{value:number}} holder @returns {bigint} */ export function inspect(holder){return BigInt.asUintN(7,update(holder));} /** @param {{value:number}} holder @returns {bigint} */ function update(holder){holder.value+=1;return -1n;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(1)))])],expected:integer('127')});
+rows.push({name:'BigInt fixed width captures value before ignored arguments',source:'/** @param {bigint} value @param {{value:number}} holder @returns {bigint} */ export function inspect(value,holder){return BigInt.asIntN(7,first(value,holder),second(holder));} /** @param {bigint} value @param {{value:number}} holder @returns {bigint} */ function first(value,holder){holder.value=1;return value;} /** @param {{value:number}} holder @returns {number} */ function second(holder){holder.value=holder.value*10+2;return 0;}',entry:'inspect',functions:['inspect','first','second'],referenceSemantics:true,arguments:[integer('127'),object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(12)))])],expected:integer('-1')});
+rows.push({name:'BigInt fixed width preserves abrupt ignored arguments',source:'/** @param {bigint} value @returns {bigint} */ export function inspect(value){return BigInt.asUintN(7,value,fail());} /** @returns {number} */ function fail(){throw new TypeError("ignored cast argument");}',entry:'inspect',functions:['inspect','fail'],arguments:[integer('-1')],expectedOutcome:'sourceAllocation',errorClass:'TypeError',errorRealm:'1000',errorMessage:units('ignored cast argument'),messagePresent:true});
 const refusals=[
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
  {name:'captured function construction requires explicit lexical cells',source:'/** @param {number} value @returns {(other:number)=>number} */ export function closure(value){return other=>value+other;}',functions:['closure']},

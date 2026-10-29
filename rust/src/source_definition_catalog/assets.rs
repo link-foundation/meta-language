@@ -83,6 +83,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-descriptor-conversion-program.lino" => Some(include_str!(
             "../data/javascript-descriptor-conversion-program.lino"
         )),
+        "javascript-fixed-integer-cast-program.lino" => Some(include_str!(
+            "../data/javascript-fixed-integer-cast-program.lino"
+        )),
         "javascript-identifier-program.lino" => {
             Some(include_str!("../data/javascript-identifier-program.lino"))
         }

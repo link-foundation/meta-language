@@ -584,3 +584,5 @@ mod typed_program_record_shapes;
 mod boolean_constructor_match;
 
 mod translation_javascript_string_arguments;
+
+mod translation_javascript_fixed_integer_casts;

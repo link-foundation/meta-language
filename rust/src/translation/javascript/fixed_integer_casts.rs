@@ -1,9 +1,11 @@
 //! Allocate existing surface terms from the automatically translated cast plan.
 use super::{
-    BinaryOp, FLOAT, INT, JavaScriptParser, Result, SExpr, SNode, Span, TokenKind, node,
+    BinaryOp, FLOAT, INT, JavaScriptParser, Result, SExpr, SNode, Span, TokenKind, UnaryOp, node,
     unsupported,
 };
-use crate::translation::fixed_integer_cast_rules::plan_fixed_integer_cast_expression;
+use crate::translation::javascript_fixed_integer_cast_plan::{
+    plan_java_script_fixed_integer_arguments, plan_java_script_fixed_integer_cast_expression,
+};
 
 impl JavaScriptParser {
     pub(super) fn read_fixed_integer_cast(
@@ -15,13 +17,30 @@ impl JavaScriptParser {
         if name != "BigInt.asIntN" && name != "BigInt.asUintN" {
             return Ok(None);
         }
-        let bits = match args.first().map(|arg| &arg.node) {
+        let mut width = args.first();
+        let mut sign = 1.0;
+        for _ in 0..64 {
+            match width.map(|arg| &arg.node) {
+                Some(SNode::Unary {
+                    op: UnaryOp::Neg,
+                    arg,
+                }) => {
+                    sign = -sign;
+                    width = Some(arg.as_ref());
+                }
+                _ => break,
+            }
+        }
+        let bits = match width.map(|arg| &arg.node) {
             Some(SNode::Num {
                 value,
                 ty: Some(ty),
-                negative: false,
+                negative,
                 ..
-            }) if *ty == FLOAT && args.len() == 2 => value.parse::<f64>().ok(),
+            }) if *ty == FLOAT && (2..=4096).contains(&args.len()) => value
+                .parse::<f64>()
+                .ok()
+                .map(|value| value * if *negative { -sign } else { sign }),
             _ => None,
         }
         .ok_or_else(|| {
@@ -31,11 +50,11 @@ impl JavaScriptParser {
                 Some(place),
             )
         })?;
-        let plan = plan_fixed_integer_cast_expression(bits, name == "BigInt.asIntN");
+        let plan = plan_java_script_fixed_integer_cast_expression(bits, name == "BigInt.asIntN");
         if plan.is_empty() {
             return Err(unsupported(
                 name,
-                "a width of 8, 16, 32, 64 or 128 is represented; other widths need an integer-domain extension",
+                "constant widths whose ToIndex result is between 0 and 4096 are represented; other widths require their complete conversion and resource model",
                 Some(place),
             ));
         }
@@ -52,8 +71,9 @@ impl JavaScriptParser {
                     .collect(),
             );
         }
+        let captures = plan_java_script_fixed_integer_arguments(args.len() as f64);
         let mut names = Vec::new();
-        while names.len() < 3 {
+        while names.len() < 3 + captures.len() {
             if self.record_parameter_ordinal >= 9_007_199_254_740_991 {
                 return Err(unsupported(
                     name,
@@ -93,7 +113,18 @@ impl JavaScriptParser {
                     })
             };
             let value = match instruction[0].as_str() {
-                "input" => args[1].clone(),
+                "input" => {
+                    if captures.is_empty() {
+                        args[1].clone()
+                    } else {
+                        node(
+                            SNode::Name {
+                                path: vec![names[3].clone()],
+                            },
+                            place,
+                        )
+                    }
+                }
                 "integer" => node(
                     SNode::Num {
                         value: instruction[1].clone(),
@@ -161,6 +192,20 @@ impl JavaScriptParser {
             };
             terms.push(value);
         }
-        Ok(terms.pop())
+        let mut body = terms
+            .pop()
+            .expect("a complete shared cast plan has a result");
+        for (slot, coordinate) in captures.iter().enumerate().rev() {
+            body = node(
+                SNode::Let {
+                    name: names[slot + 3].clone(),
+                    ty: None,
+                    value: Box::new(args[*coordinate as usize].clone()),
+                    body: Box::new(body),
+                },
+                place,
+            );
+        }
+        Ok(Some(body))
     }
 }

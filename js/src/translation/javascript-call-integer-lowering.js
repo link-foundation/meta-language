@@ -37,6 +37,6 @@ export function readCheckedJavaScriptIntegerResult(node){
  if(!owns(read,['k','array','index','type'])||read.k!=='optionalIndex'||read.type?.kind!=='option'||read.type.absence!=='undefined'||!integer(read.type.element)||!reference(read.array,node.name))return null;
  if(!scalar(read.index,'float','0')&&!(form==='division'&&scalar(read.index,'float','1')))return null;
  const failure=body.else,errorClass=form==='power'||form==='division'?'RangeError':readJavaScriptBigIntegerConversionErrorClass(form);
- if(!owns(failure,['k','op','args','type'])||failure.k!=='math'||failure.op!==readJavaScriptSourceExceptionOperation(errorClass)||!integer(failure.type)||failure.args.length!==2||!scalar(failure.args[1],'bool',true)||!message(failure.args[0],form,operation.args[0]))return null;
+ if(!owns(failure,['k','op','args','type'])||failure.k!=='math'||failure.op!==readJavaScriptSourceExceptionOperation(errorClass)||!integer(failure.type)||!Array.isArray(failure.args)||failure.args.length!==2||!scalar(failure.args[1],'bool',true)||!message(failure.args[0],form,operation.args[0]))return null;
  return {operation:form==='division'?(read.index.value==='0'?'divide integers':'read integer remainder'):form==='power'?'raise integer power':'convert explicit integer',arguments:operation.args};
 }

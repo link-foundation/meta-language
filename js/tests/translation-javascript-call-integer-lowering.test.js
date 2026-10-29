@@ -33,6 +33,7 @@ for(const [name,source,operation]of originals)test('complete integer result admi
   node=>{node.body.else.op='raiseJavaScriptEvalError';},
   node=>{node.body.else.args[1].value=false;},
   node=>{node.body.else.args[0]={k:'lit',type:{kind:'string'},value:'different error'};},
+  node=>{node.body.else.args=null;},
   node=>{node.value.ignoredEffect={k:'call',fn:'sideEffect'};},
   node=>{node.body.ignoredEffect=true;}
  ]){

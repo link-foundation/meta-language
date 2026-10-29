@@ -9783,3 +9783,21 @@ range and16777216-unit budget. A native scalar-string profile refuses units it
 cannot represent; it never replaces them. Fixture producers convert unpaired
 text expectations to units automatically, preserving the original source inputs
 and comparisons. These code drafts and their controls remain unexecuted.
+
+JavaScript constant-width BigInt casts specialize the preceding complete modular
+construction plan. Both frontends use the same source-generated algorithm:
+constant Number ToIndex truncation, NaN/negative zero, zero width, low-bit
+residue and signed interpretation remain explicit. The selected construction
+profile admits constant widths whose ToIndex is0 through4096. Arbitrary dynamic
+widths and non-BigInt operands still require complete conversion lowering;
+unsupported cases refuse. This does not add Rust primitive integer types.
+Actual Number constant syntax and bounded unary-negation wrappers are transported
+by each frontend; value operands occur once in the shared plan. Runtime work
+limits remain independent of the construction profile. Deferred originals cover
+widths0,1,7,8,24,32,64,128,256, truncation, NaN and mutation. Existing8/16/32/64/128
+plans retain their complete original instruction sequences.
+For calls with ignored arguments, a second shared coordinate plan captures the
+actual value operand and every ignored operand once in source order, before
+the modular operation. Abrupt ignored arguments retain their original exception.
+The construction profile caps the complete argument list at4096; ordinary
+two-argument calls keep their preceding surface shape.
