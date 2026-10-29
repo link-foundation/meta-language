@@ -7966,6 +7966,15 @@ function head:
 the first parameter or a later declaration never supplies a fabricated name.
 Their import aliases and duplicate private helpers retain independent lexical
 owners. Head-name admission is itself a shared translated definition.
+CST identifier intervals also distinguish contextual binding words from actual
+keywords in both runtime analyzers. A shared Boolean role definition retains
+names such as async, as and from; import scanning selects the actual module
+specifier keyword within its complete import statement. Strict module rename
+admission reuses the existing reserved-identifier definition, admits contextual
+words and refuses reserved words, eval and arguments. Actual production source
+uses an async-named parameter and its target spelling is generated normally.
+Other script goals, escaped identifier reconstruction and complete binding
+forms retain their independent language obligations.
 Capture also retains exported asynchronous named functions and their exact
 qualifier/comment source. A shared declaration-offset definition admits the
 `async function` head only without an intervening line terminator, including

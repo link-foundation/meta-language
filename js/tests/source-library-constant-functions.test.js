@@ -8,7 +8,7 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole} from '../src/translation/source-library-binding-rules.js';
 import {analyzeProgram,BindingRenameError} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
@@ -27,6 +27,20 @@ const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.node);
 for(const row of fixture.headNames)test('actual function head token '+row.kind,()=>assert.equal(acceptJavaScriptSourceFunctionHeadName(row.kind),row.expected));
 for(const row of fixture.expressionTerms)test('actual expression scope term '+row.term,()=>assert.equal(testJavaScriptSourceFunctionExpressionTerm(row.term),row.expected));
+for(const [index,row]of fixture.keywordRoles.entries())test('actual keyword role '+index,()=>assert.equal(testJavaScriptSourceKeywordRole(row.identifier,row.keyword),row.expected));
+for(const row of fixture.wordBindings)test(row.name,()=>{
+ const program=analyzeProgram(row.source,'JavaScript');
+ assert.deepEqual(program.bindings.map(binding=>[binding.name,binding.kind,binding.references.length]),row.bindings);
+ assert.deepEqual(program.unresolvedReferences.map(reference=>reference.name),row.unresolved);
+});
+for(const row of fixture.wordRenames)test('contextual rename '+row.replacement,()=>{
+ const program=analyzeProgram(row.source,'JavaScript'),binding=program.bindings.find(binding=>binding.name===row.binding);
+ assert.equal(program.renameBinding(binding.id,row.replacement).source,row.expected);
+});
+for(const replacement of fixture.reservedRenames)test('strict source rename refuses '+replacement,()=>{
+ const program=analyzeProgram('export function inspect(value){return value;}','JavaScript'),binding=program.bindings.find(binding=>binding.name==='value');
+ assert.throws(()=>program.renameBinding(binding.id,replacement),BindingRenameError);
+});
 for(const [index,row]of fixture.declarationOffsets.entries())test('actual async function head '+index,()=>assert.equal(readSourceLibraryFunctionDeclarationOffset(row.first,row.second,row.lineBreak),row.expected));
 for(const row of [...fixture.anonymousBindings,...fixture.namedBindings])test(row.name,()=>{
  const program=analyzeProgram(row.source,'JavaScript');

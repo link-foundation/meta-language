@@ -1,5 +1,6 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,testJavaScriptSourceFunctionExpressionTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
@@ -376,6 +377,7 @@ function semanticTokens(source, language, syntax) {
   }
   unmaskInterpolations(mask, source, language, syntax);
   const keywords = KEYWORDS[language];
+  const identifiers=language==='JavaScript'?new Set(syntax.filter(fact=>fact.term==='identifier'||fact.term==='shorthand_property_identifier'||fact.term==='shorthand_property_identifier_pattern').map(fact=>fact.start+':'+fact.end)):null;
   const tokens = [];
   for (let offset = 0; offset < source.length;) {
     const character = codePointAt(source, offset);
@@ -392,8 +394,9 @@ function semanticTokens(source, language, syntax) {
         offset += next.length;
       }
       const text = source.slice(start, offset);
+      const keyword=identifiers?testJavaScriptSourceKeywordRole(identifiers.has(start+':'+offset),keywords.has(text)):keywords.has(text);
       tokens.push({
-        kind: keywords.has(text) ? 'keyword' : 'identifier',
+        kind: keyword ? 'keyword' : 'identifier',
         text,
         start,
         end: offset,
@@ -630,7 +633,8 @@ function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declar
       declareDelimitedParameters(tokens, open, close, braceScopes.get(body), declare);
     }
     if (token.text === 'import') {
-      const from = findToken(tokens, index + 1, 'from');
+      const statement=syntax.find(fact=>fact.term==='import_statement'&&fact.start===token.start);
+      const from = tokens.findIndex((candidate,at)=>at>index&&candidate.kind==='keyword'&&candidate.text==='from'&&(!statement||candidate.end<=statement.end));
       const end = from < 0 ? findToken(tokens, index + 1, ';') : from;
       for (let cursor = index + 1; cursor >= 0 && cursor < end; cursor += 1) {
         if (tokens[cursor].kind !== 'identifier') continue;
@@ -1023,7 +1027,7 @@ function validateIdentifier(identifier, language) {
     characters.length === 0 ||
     !identifierStart(characters[0], language) ||
     !characters.slice(1).every((character) => identifierContinue(character, language)) ||
-    KEYWORDS[language].has(value)
+    (language==='JavaScript'?acceptJavaScriptReservedIdentifier(value)||value==='eval'||value==='arguments':KEYWORDS[language].has(value))
   ) {
     throw new BindingRenameError(`${JSON.stringify(value)} is not a valid ${language} identifier`);
   }

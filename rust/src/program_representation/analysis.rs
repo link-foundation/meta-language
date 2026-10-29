@@ -57,6 +57,22 @@ pub(super) fn semantic_tokens(
         }
     }
     unmask_interpolations(&mut mask, source, language, syntax);
+    let identifiers = if language == "JavaScript" {
+        syntax
+            .iter()
+            .filter(|fact| {
+                matches!(
+                    fact.term.as_str(),
+                    "identifier"
+                        | "shorthand_property_identifier"
+                        | "shorthand_property_identifier_pattern"
+                )
+            })
+            .map(|fact| (fact.range.start, fact.range.end))
+            .collect::<BTreeSet<_>>()
+    } else {
+        BTreeSet::new()
+    };
     let mut result = Vec::new();
     let mut offset = 0;
     while offset < source.len() {
@@ -76,7 +92,12 @@ pub(super) fn semantic_tokens(
                 offset += next.len_utf8();
             }
             let text = &source[start..offset];
-            let kind = if is_keyword(language, text) {
+            let keyword = if language == "JavaScript" {
+                crate::translation::source_library_binding_rules::test_java_script_source_keyword_role(identifiers.contains(&(start,offset)),is_keyword(language,text))
+            } else {
+                is_keyword(language, text)
+            };
+            let kind = if keyword {
                 TokenKind::Keyword
             } else {
                 TokenKind::Identifier
@@ -403,7 +424,13 @@ pub(super) fn validate_identifier(
         .next()
         .is_some_and(|character| identifier_start(character, language))
         && characters.all(|character| identifier_continue(character, language))
-        && !is_keyword(language, identifier);
+        && !(if language == "JavaScript" {
+            crate::translation::javascript_identifier_rules::accept_java_script_reserved_identifier(
+                identifier,
+            ) || matches!(identifier, "eval" | "arguments")
+        } else {
+            is_keyword(language, identifier)
+        });
     if valid {
         Ok(())
     } else {

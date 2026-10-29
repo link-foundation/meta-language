@@ -9,10 +9,13 @@ export const readSourceLibraryDeclarationBindingKind=function classifySourceLibr
 };
 /** @param {string} kind @returns {boolean} */
 export function acceptJavaScriptSourceFunctionHeadName(kind){return kind==='identifier';}
-/** @param {string} first @param {string} second @param {boolean} lineBreak
+/** @param {string} async @param {string} second @param {boolean} lineBreak
  * @returns {number} */
-export function readSourceLibraryFunctionDeclarationOffset(first,second,lineBreak){
- return first==='function'?0:first==='async'&&second==='function'&&!lineBreak?1:-1;
+export function readSourceLibraryFunctionDeclarationOffset(async,second,lineBreak){
+ return async==='function'?0:async==='async'&&second==='function'&&!lineBreak?1:-1;
 }
 /** @param {string} term @returns {boolean} */
 export function testJavaScriptSourceFunctionExpressionTerm(term){return term==='function_expression'||term==='generator_function';}
+/** The actual CST role takes precedence over a context-free word inventory.
+ * @param {boolean} identifier @param {boolean} keyword @returns {boolean} */
+export function testJavaScriptSourceKeywordRole(identifier,keyword){return !identifier&&keyword;}

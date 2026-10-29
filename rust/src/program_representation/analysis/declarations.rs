@@ -96,7 +96,20 @@ pub(super) fn declare_javascript(
             declare_parameters(tokens, open, close, scope, declarations, declared);
         }
         if token.text == "import" {
-            let end = find_token(tokens, index + 1, "from")
+            let statement = syntax.iter().find(|fact| {
+                fact.term == "import_statement" && fact.range.start == token.range.start
+            });
+            let end = tokens
+                .iter()
+                .enumerate()
+                .skip(index + 1)
+                .find(|(_, candidate)| {
+                    candidate.kind == TokenKind::Keyword
+                        && candidate.text == "from"
+                        && statement
+                            .is_none_or(|statement| candidate.range.end <= statement.range.end)
+                })
+                .map(|(index, _)| index)
                 .or_else(|| find_token(tokens, index + 1, ";"))
                 .unwrap_or(tokens.len());
             for cursor in index + 1..end {

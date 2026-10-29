@@ -6,6 +6,10 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
  versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024'},
  headNames:[{kind:'identifier',expected:true},{kind:'keyword',expected:false},{kind:'punctuation',expected:false},{kind:'',expected:false}],
  expressionTerms:[{term:'function_expression',expected:true},{term:'generator_function',expected:true},{term:'function_declaration',expected:false},{term:'arrow_function',expected:false},{term:'identifier',expected:false}],
+ keywordRoles:[{identifier:true,keyword:true,expected:false},{identifier:true,keyword:false,expected:false},{identifier:false,keyword:true,expected:true},{identifier:false,keyword:false,expected:false}],
+ wordBindings:['as','async','from','of','get','set','meta','target'].map(word=>({name:'actual contextual parameter '+word,source:'export function inspect('+word+'){return '+word+';}'+word+';',bindings:[['inspect','function',0],[word,'parameter',1]],unresolved:[word]})),
+ wordRenames:['as','async','from','of','get','set','meta','target'].map(word=>({source:'export function inspect(value){return value;}',binding:'value',replacement:word,expected:'export function inspect('+word+'){return '+word+';}'})),
+ reservedRenames:['if','await','true','enum','implements','eval','arguments'],
  namedBindings:[
   {name:'private expression names cover defaults and exclude outer reads',source:'const outer=function inner(value=inner){return value;};inner;',bindings:[['outer','const',0],['inner','function',1],['value','parameter',1]],unresolved:['inner']},
   {name:'later parameters shadow the private expression environment',source:'const outer=function inner(value=inner,inner=1){return value;};',bindings:[['outer','const',0],['inner','function',0],['value','parameter',1],['inner','parameter',1]],unresolved:[]},
@@ -82,6 +86,12 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
    {path:'provider.js',source:'/** @param {number} privateName @returns {number} */ export const identity=function privateName(privateName){return privateName;};'},
    {path:'entry.js',source:'import {identity as original} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return original(value);}'}]},
   {name:'private-name normalization preserves every existing capture guard',entry:'entry.js',aliases:true,arguments:[4],expected:4,error:'rename would capture',errorKind:'BindingRenameError',files:[
-   {path:'entry.js',source:'/** @param {number} value @returns {number} */ export const run=function privateName(value){if(value<=0)return 0;return run(value-1)+1;};'}]}
+   {path:'entry.js',source:'/** @param {number} value @returns {number} */ export const run=function privateName(value){if(value<=0)return 0;return run(value-1)+1;};'}]},
+  {name:'an arrow parameter named async retains its actual identifier role',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
+   {path:'provider.js',source:'/** @param {number} async @returns {number} */ export const double=async=>async*2;'},
+   {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return twice(value);}'}]},
+  {name:'a named from export and async parameter retain exact import roles',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
+   {path:'provider.js',source:'/** @param {number} async @returns {number} */ export function from(async){return async*2;}'},
+   {path:'entry.js',source:'import {from as convert} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return convert(value);}'}]}
  ],
  boundary:'Unexecuted literal controls. Actual module bindings, private expression environments, parameter environments and all source bytes remain explicit. Function-only libraries, alias scopes, complete target/native policy behavior and semantic translations retain their independent controls. General constant data/effects, capture-conflicting private expression normalizations, reflection and full JavaScript modules remain required.'});

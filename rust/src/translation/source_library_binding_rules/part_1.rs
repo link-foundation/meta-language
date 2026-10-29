@@ -172,13 +172,13 @@ pub fn accept_java_script_source_function_head_name(kind: &str) -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_source_library_function_declaration_offset(
-    first: &str,
+    async_: &str,
     second: &str,
     line_break: bool,
 ) -> f64 {
-    if first == "function" {
+    if async_ == "function" {
         0f64
-    } else if ((first == "async") && (second == "function")) && !line_break {
+    } else if ((async_ == "async") && (second == "function")) && !line_break {
         1f64
     } else {
         -1f64
@@ -189,6 +189,12 @@ pub fn read_source_library_function_declaration_offset(
 #[must_use]
 pub fn test_java_script_source_function_expression_term(term: &str) -> bool {
     (term == "function_expression") || (term == "generator_function")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn test_java_script_source_keyword_role(identifier: bool, keyword: bool) -> bool {
+    !identifier && keyword
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
