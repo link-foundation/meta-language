@@ -92,11 +92,24 @@ pub(super) fn resolve_references(
         "Rust" => &["field_identifier", "fragment_specifier"],
         _ => &[],
     };
-    let ignored = syntax
+    let ignored_ranges = syntax
         .iter()
         .filter(|fact| ignored_terms.contains(&fact.term.as_str()))
         .map(|fact| fact.range)
         .collect::<BTreeSet<_>>();
+    let ignored = if language == "JavaScript" {
+        tokens
+            .iter()
+            .filter(|token| {
+                ignored_ranges
+                    .iter()
+                    .any(|range| range.start <= token.range.start && token.range.end <= range.end)
+            })
+            .map(|token| token.range)
+            .collect::<BTreeSet<_>>()
+    } else {
+        ignored_ranges
+    };
     let declared = declarations
         .iter()
         .map(|declaration| declaration.token)

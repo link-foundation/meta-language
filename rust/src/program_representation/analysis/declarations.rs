@@ -15,7 +15,32 @@ pub(super) fn declare_javascript(
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
+    let properties = syntax
+        .iter()
+        .filter(|node| {
+            matches!(
+                node.term.as_str(),
+                "property_identifier" | "private_property_identifier"
+            )
+        })
+        .map(|node| node.range)
+        .collect::<Vec<_>>();
     for (index, token) in tokens.iter().enumerate() {
+        if token.kind != TokenKind::Keyword
+            || properties
+                .iter()
+                .any(|range| range.start <= token.range.start && token.range.end <= range.end)
+        {
+            continue;
+        }
+        if matches!(token.text.as_str(), "const" | "let" | "var")
+            && let Some(positions) = super::parameters::variable_positions(tokens, syntax, index)
+        {
+            for at in positions {
+                declare(tokens, at, &token.text, None, declarations, declared);
+            }
+            continue;
+        }
         if matches!(token.text.as_str(), "const" | "let" | "var" | "class") {
             let pattern = (token.text != "class")
                 .then(|| {
@@ -85,7 +110,7 @@ pub(super) fn declare_javascript(
                 .map(|scope| scope.parameter_scope)
                 .or_else(|| body.and_then(|body| brace_scopes.get(&body).copied()))
                 .unwrap_or(token.scope);
-            declare_parameters(tokens, open, close, scope, declarations, declared);
+            declare_parameters(tokens, syntax, open, close, scope, declarations, declared);
         }
         if token.text == "catch" {
             let open = find_token(tokens, index + 1, "(");
@@ -94,7 +119,7 @@ pub(super) fn declare_javascript(
             let scope = body
                 .and_then(|body| brace_scopes.get(&body).copied())
                 .unwrap_or(token.scope);
-            declare_parameters(tokens, open, close, scope, declarations, declared);
+            declare_parameters(tokens, syntax, open, close, scope, declarations, declared);
         }
         if token.text == "import" {
             let statement = syntax.iter().find(|fact| {
@@ -248,6 +273,7 @@ pub(super) fn declare(
 
 fn declare_parameters(
     tokens: &[SemanticToken],
+    syntax: &[ProgramSourceMapping],
     open: Option<usize>,
     close: Option<usize>,
     scope: usize,
@@ -257,21 +283,14 @@ fn declare_parameters(
     let (Some(open), Some(close)) = (open, close) else {
         return;
     };
-    let mut segment = open + 1;
-    for index in open + 1..=close {
-        if index == close || tokens[index].text == "," {
-            if let Some(candidate) = next_identifier(tokens, segment).filter(|value| *value < index)
-            {
-                declare(
-                    tokens,
-                    candidate,
-                    "parameter",
-                    Some(scope),
-                    declarations,
-                    declared,
-                );
-            }
-            segment = index + 1;
-        }
+    for index in super::parameters::binding_positions(tokens, syntax, open + 1, close) {
+        declare(
+            tokens,
+            index,
+            "parameter",
+            Some(scope),
+            declarations,
+            declared,
+        );
     }
 }

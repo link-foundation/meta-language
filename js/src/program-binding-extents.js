@@ -4,6 +4,7 @@
 // source window each declaration is visible in, qualified Rust paths, and the
 // identifiers that interpolated strings expose to name resolution.
 // The Rust twin is rust/src/program_representation/analysis/extents.rs.
+import {readJavaScriptSourceParameterBindings} from './program-parameter-bindings.js';
 
 const RUST_ITEMS = new Set(['struct', 'enum', 'trait', 'type', 'const', 'static', 'mod', 'union', 'function', 'import']);
 const RUST_PATH_ROOTS = new Set(['self', 'super', 'crate']);
@@ -86,13 +87,7 @@ export function declareSyntaxBinders(tokens, syntax, language, declare,functionS
     if (language === 'JavaScript') {
       if (fact.term === 'arrow_function') {
         const [open, close] = arrowParameters(tokens, first);
-        for (let index = open; index <= close; index += 1) {
-          const token = tokens[index];
-          const previous = tokens[index - 1]?.text;
-          if (token.kind === 'identifier' && (index === open || previous === '(' || previous === ',' || previous === '...')) {
-            declare(index, 'parameter',functionScopes.get(first)?.parameterScope??token.scope);
-          }
-        }
+        for(const index of readJavaScriptSourceParameterBindings(tokens,syntax,open,close+1))declare(index,'parameter',functionScopes.get(first)?.parameterScope??tokens[index].scope);
       }
     } else if (language === 'Rust') {
       if (fact.term === 'token_binding_pattern') {

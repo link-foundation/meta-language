@@ -187,17 +187,8 @@ pub(super) fn declare_syntax_binders(
         if language == "JavaScript" {
             if term == "arrow_function" {
                 let (open, close) = arrow_parameters(tokens, first);
-                for index in open..=close {
-                    let previous = index
-                        .checked_sub(1)
-                        .map(|previous| tokens[previous].text.as_str());
-                    if tokens
-                        .get(index)
-                        .is_some_and(|token| token.kind == TokenKind::Identifier)
-                        && (index == open || matches!(previous, Some("(" | "," | "...")))
-                    {
-                        binder(index, "parameter");
-                    }
+                for index in super::parameters::binding_positions(tokens, syntax, open, close + 1) {
+                    binder(index, "parameter");
                 }
             }
         } else if language == "Rust" {

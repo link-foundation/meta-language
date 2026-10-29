@@ -1,6 +1,7 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
 import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
+import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
@@ -440,9 +441,8 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   const scopedBraces = new Set(syntax
     .filter(({ term }) => ['statement_block', 'class_body', 'switch_body'].includes(term))
     .map(({ start }) => start));
-  const propertyNames = new Set(syntax
-    .filter(({ term }) => term === 'property_identifier' || term === 'private_property_identifier')
-    .map(({ start, end }) => `${start}:${end}`));
+  const propertyRanges=syntax.filter(({term})=>term==='property_identifier'||term==='private_property_identifier');
+  const propertyNames=new Set(tokens.filter(token=>propertyRanges.some(node=>node.start<=token.start&&token.end<=node.end)).map(({start,end})=>`${start}:${end}`));
   for (const [index, token] of tokens.entries()) {
     while(stack.length>1&&virtualScopes.has(stack.at(-1).id)&&token.start>=stack.at(-1).end)stack.pop();
     for(const fact of functionStarts.get(token.start)??[]){
@@ -609,8 +609,14 @@ function hoistJavaScriptVars(declarations, tokens, syntax, scopes,functionScopes
 }
 
 function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare) {
+  const properties=syntax.filter(node=>node.term==='property_identifier'||node.term==='private_property_identifier');
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
+    if(token.kind!=='keyword'||properties.some(node=>node.start<=token.start&&token.end<=node.end))continue;
+    if(['const','let','var'].includes(token.text)){
+      const positions=readJavaScriptSourceVariableBindings(tokens,syntax,index);
+      if(positions!==null){for(const at of positions)declare(at,token.text);continue;}
+    }
     if (['const', 'let', 'var', 'class'].includes(token.text)) {
       const pattern = token.text === 'class' ? undefined : syntax.find(({ term, start }) =>
         term === 'object_pattern' && start === tokens[index + 1]?.start);
@@ -641,13 +647,13 @@ function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declar
       const close = matchingDelimiter(tokens, open, '(', ')');
       const body = findToken(tokens, close + 1, '{');
       const scope = expression?.parameterScope??braceScopes.get(body)??token.scope;
-      declareDelimitedParameters(tokens, open, close, scope, declare);
+      declareDelimitedParameters(tokens, syntax, open, close, scope, declare);
     }
     if (token.text === 'catch') {
       const open = findToken(tokens, index + 1, '(');
       const close = matchingDelimiter(tokens, open, '(', ')');
       const body = findToken(tokens, close + 1, '{');
-      declareDelimitedParameters(tokens, open, close, braceScopes.get(body), declare);
+      declareDelimitedParameters(tokens, syntax, open, close, braceScopes.get(body), declare);
     }
     if (token.text === 'import') {
       const statement=syntax.find(fact=>fact.term==='import_statement'&&fact.start===token.start);
@@ -709,16 +715,9 @@ function declareProofLanguage(tokens, language, declare) {
   }
 }
 
-function declareDelimitedParameters(tokens, open, close, scope, declare) {
+function declareDelimitedParameters(tokens, syntax, open, close, scope, declare) {
   if (open < 0 || close < 0) return;
-  let segmentStart = open + 1;
-  for (let index = open + 1; index <= close; index += 1) {
-    if (index === close || tokens[index].text === ',') {
-      const candidate = nextIdentifier(tokens, segmentStart);
-      if (candidate >= 0 && candidate < index) declare(candidate, 'parameter', scope);
-      segmentStart = index + 1;
-    }
-  }
+  for(const index of readJavaScriptSourceParameterBindings(tokens,syntax,open+1,close))declare(index,'parameter',scope);
 }
 
 function moduleFacts(tokens, syntax, source, language, project, projectResult) {

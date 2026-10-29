@@ -7976,9 +7976,19 @@ initialization. Single-binding renames that would disconnect that dependency
 refuse; Rust exposes BindingDependency for the same refusal. Function forms,
 simple-list admission, redeclaration and dependency rules are shared translated
 definitions. Literal true/false/null words do not fabricate unresolved reads.
-Full method/class bindings, complex patterns and initialization-preserving
-rewrites remain language obligations; these source drafts are not execution
-evidence.
+Binding discovery now uses one shared CST census for named functions, arrows,
+catch patterns and ordinary const/let/var declarations. Actual identifier and
+shorthand pattern roles select candidates. Inner default intervals become
+opaque before outer defaults; computed property keys and complete initializers
+remain source reads, including commas in templates and regular expressions.
+Nested object/array patterns, rest names and declaration lists reuse this
+definition rather than separate token scans. Property ranges retain their
+separate namespace, including private names whose spans contain multiple
+semantic tokens. Both runtimes consume the automatically translated rule and
+retain the original concrete tree, exact source and rename capture checks.
+Full method/class semantics, additional binding contexts and initialization-
+preserving rewrites remain language obligations. Deferred original Node,
+exact-rename and snapshot controls establish no execution evidence.
 CST identifier intervals also distinguish contextual binding words from actual
 keywords in both runtime analyzers. A shared Boolean role definition retains
 names such as async, as and from; import scanning selects the actual module

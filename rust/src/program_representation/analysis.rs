@@ -6,6 +6,7 @@ use super::{
 mod declarations;
 mod extents;
 mod javascript_hoist;
+mod parameters;
 mod resolution;
 
 use declarations::{declare_javascript, declare_proof_language, declare_rust};
