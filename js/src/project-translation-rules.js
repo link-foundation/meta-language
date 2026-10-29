@@ -35,3 +35,27 @@ export function acceptProjectTranslationSourceFamily(source, target) {
 export function compareProjectTranslationIdentifiers(first, second) {
   return first < second ? -1 : first > second ? 1 : 0;
 }
+
+/** Deterministic reverse dependency witnesses. Triples are [module,next,root];
+ * [-1] exhausts explicit edge and directory-search work. Append-only columns
+ * preserve complete first-discovery witnesses without shared indexed writes.
+ * @param {number} count @param {number[]} failed @param {number[]} importers
+ * @param {number[]} providers @param {number} limit @returns {number[]} */
+export function planProjectTranslationDependencyGaps(count,failed,importers,providers,limit){
+ const parents=[],roots=[],queue=[],result=[];let work=0;
+ for(const index of failed){work+=queue.length;if(work>limit)return [-1];if(!queue.includes(index)){parents.push(index);roots.push(index);queue.push(index);}}
+ for(let at=0;at<queue.length;at+=1){const current=queue[at]??-1;
+  for(let edge=0;edge<providers.length;edge+=1){
+   work+=1;if(work>limit)return [-1];
+   if(providers[edge]!==current)continue;
+   work+=queue.length;if(work>limit)return [-1];
+   const importer=importers[edge]??-1;
+   if(!queue.includes(importer)){parents.push(current);roots.push(roots[at]??-1);queue.push(importer);}
+  }
+ }
+ for(let index=0;index<count;index+=1){
+  work+=queue.length;if(work>limit)return [-1];const position=queue.indexOf(index);
+  if(position>=0&&parents[position]!==index){result.push(index);result.push(parents[position]??-1);result.push(roots[position]??-1);}
+ }
+ return result;
+}

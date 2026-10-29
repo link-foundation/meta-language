@@ -68,6 +68,8 @@ export function materializeProjectTranslationInputs(project, { byteLimit = 128 *
       } else input.imports[specifier] = matches[0];
     }
   }
+  const inputsByName=new Map(inputs.map(input=>[input.identifier,input]));
+  for(const issue of unresolved){const input=inputsByName.get(issue.identifier);(input.sourceIssues??=[]).push(issue.reason);}
   return { root, revision, files, inputs, unresolved, totalBytes };
 }
 

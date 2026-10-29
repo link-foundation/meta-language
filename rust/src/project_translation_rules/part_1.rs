@@ -1,6 +1,6 @@
 // Generated from complete js/src/project-translation-rules.js. Do not edit by hand.
-use super::ml_read_project_translation_frontier_loop2;
-use super::ml_read_project_translation_frontier_loop3;
+use super::source_ml_temporary_read_project_translation_frontier_loop2;
+use super::source_ml_temporary_read_project_translation_frontier_loop3;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -818,28 +818,24 @@ pub fn read_project_translation_frontier(
             {
                 let edge = 0f64;
                 {
-                    let selected_2 = self::ml_read_project_translation_frontier_loop2(
-                        importers,
-                        providers,
-                        &(active),
-                        selected,
-                        edge,
-                    );
+                    let selected_2 =
+                        self::source_ml_temporary_read_project_translation_frontier_loop2(
+                            importers,
+                            providers,
+                            &(active),
+                            selected,
+                            edge,
+                        );
                     {
                         let affected = self::ml_array::set(selected_2, |a, b| a == b);
                         {
                             let next = Vec::<self::ml_string::Text>::new();
                             {
-                                let ml_values1 = identifiers.to_vec();
+                                let source_ml_temporary_values1 = identifiers.to_vec();
                                 {
-                                    let ml_index1 = self::ml::Big::from_i128(0);
+                                    let source_ml_temporary_index1 = self::ml::Big::from_i128(0);
                                     {
-                                        self::ml_read_project_translation_frontier_loop3(
-                                            &(affected),
-                                            next,
-                                            &(ml_values1),
-                                            ml_index1,
-                                        )
+                                        self::source_ml_temporary_read_project_translation_frontier_loop3(&(affected), next, &(source_ml_temporary_values1), source_ml_temporary_index1)
                                     }
                                 }
                             }

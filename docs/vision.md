@@ -4348,6 +4348,19 @@ Byte and graph-work budgets bound discovery; this does not establish an
 independent bound on all existing parser work. Original-source, codec, CLI and
 tracked-project controls remain unexecuted drafts in this phase.
 
+Complete project drafts retain source-inventory issues as well as individual
+translation failures. A shared, source-generated reverse dependency traversal
+withholds executable output for every dependent of an unresolved module,
+including cyclic components. Each added dependency gap names its immediate
+provider and original failing source; original diagnostics, source identities,
+draft code and hashes remain intact. Discovery issues enter this same path from
+the tracked-project importer. Separate unaffected modules retain their original
+result. An explicit dependency-work budget counts edge visits and directory
+searches; exhaustion withholds every uncertified executable without discarding
+its draft. This is a conservative failure boundary, not a module-loading or
+semantic equivalence proof. Its independent graph, public-project and codec
+controls remain unexecuted during drafting.
+
 Shared project worklist and item-admission rules are generated from JavaScript,
 including its exact UTF-16 identifier ordering. Changed providers select only
 their actual dependent sources for the next refinement pass. Actual compiler

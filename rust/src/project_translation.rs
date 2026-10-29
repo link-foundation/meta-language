@@ -2,7 +2,8 @@
 //! Shared worklist decisions are automatically translated from JavaScript.
 use crate::project_translation_rules::{
     accept_project_translation_item, accept_project_translation_source_family,
-    compare_project_translation_identifiers, ml_string::Text, read_project_translation_frontier,
+    compare_project_translation_identifiers, ml_string::Text,
+    plan_project_translation_dependency_gaps, read_project_translation_frontier,
 };
 use crate::{
     SelfTranslationOptions, SelfTranslationSignature, StructuredDataLinks,
@@ -23,6 +24,7 @@ struct Source {
     source_sha256: String,
     imports: Vec<(String, String)>,
     options: Value,
+    source_issues: Vec<String>,
 }
 fn fail(message: &str) -> String {
     format!("project translation: {message}")
@@ -60,6 +62,7 @@ fn sources(inputs: &Value, options: &Value) -> Result<Vec<Source>, String> {
     }
     let mut seen = BTreeSet::new();
     let mut bytes = 0usize;
+    let mut issue_bytes = 0usize;
     let mut records = Vec::new();
     for input in inputs {
         let identifier = input["identifier"]
@@ -82,6 +85,26 @@ fn sources(inputs: &Value, options: &Value) -> Result<Vec<Source>, String> {
         if bytes > limit(options, "byteLimit", 128 * 1024 * 1024)? {
             return Err(fail("source byte resource limit exceeded"));
         }
+        let mut source_issues = Vec::new();
+        if let Some(issues) = input.get("sourceIssues").filter(|value| !value.is_null()) {
+            let issues = issues
+                .as_array()
+                .filter(|issues| issues.len() <= 10000)
+                .ok_or_else(|| fail("invalid source inventory issues"))?;
+            for issue in issues {
+                let issue = issue
+                    .as_str()
+                    .filter(|issue| !issue.is_empty())
+                    .ok_or_else(|| fail("invalid source inventory issues"))?;
+                issue_bytes = issue_bytes
+                    .checked_add(issue.len())
+                    .ok_or_else(|| fail("source issue byte resource limit exceeded"))?;
+                if issue_bytes > limit(options, "byteLimit", 128 * 1024 * 1024)? {
+                    return Err(fail("source issue byte resource limit exceeded"));
+                }
+                source_issues.push(issue.to_owned());
+            }
+        }
         let mut imports = Vec::new();
         if let Some(values) = input.get("imports").filter(|value| !value.is_null()) {
             for (specifier, provider) in values
@@ -101,6 +124,7 @@ fn sources(inputs: &Value, options: &Value) -> Result<Vec<Source>, String> {
             source: source.to_owned(),
             source_sha256: digest(source),
             imports,
+            source_issues,
             options: input
                 .get("options")
                 .filter(|value| !value.is_null())
@@ -183,7 +207,12 @@ pub fn draft_project_translation(inputs: &Value, options: &Value) -> Result<Valu
         .as_str()
         .and_then(self_translation_language)
         .ok_or_else(|| fail("an explicit supported target language is required"))?;
-    for name in ["moduleLimit", "byteLimit", "refinementLimit"] {
+    for name in [
+        "moduleLimit",
+        "byteLimit",
+        "refinementLimit",
+        "dependencyWorkLimit",
+    ] {
         limit(options, name, 1)?;
     }
     let records = sources(inputs, options)?;
@@ -267,9 +296,9 @@ pub fn draft_project_translation(inputs: &Value, options: &Value) -> Result<Valu
             .map(|(specifier, identifier)| json!({"specifier":specifier,"identifier":identifier}))
             .collect();
         inventory.push(json!({"identifier":record.identifier,"language":record.language,"sourceSha256":record.source_sha256,
-            "sourceBytes":record.source.len(),"imports":imports}));
+            "sourceBytes":record.source.len(),"imports":imports,"sourceIssues":record.source_issues}));
         let mut module = json!({"identifier":record.identifier,"sourceLanguage":record.language,"targetLanguage":target,
-            "sourceSha256":record.source_sha256,"sourceBytes":record.source.len(),"imports":imports,"signatures":signatures[&record.identifier]});
+            "sourceSha256":record.source_sha256,"sourceBytes":record.source.len(),"imports":imports,"sourceIssues":record.source_issues,"signatures":signatures[&record.identifier]});
         let product = context(record, &signatures, options).and_then(|context| {
             self_translate_with_diagnostics(&record.source, record.language, target, &context)
                 .map_err(|error| error.to_string())
@@ -279,7 +308,7 @@ pub fn draft_project_translation(inputs: &Value, options: &Value) -> Result<Valu
                 let same_family =
                     accept_project_translation_source_family(&text(record.language), &text(target));
                 let mut items = Vec::new();
-                let mut gaps = Vec::new();
+                let mut gaps = record.source_issues.iter().map(|message|json!({"diagnostic":{"name":"SourceInventoryGap","message":message}})).collect::<Vec<_>>();
                 for (index, item) in report.translation.items.iter().enumerate() {
                     let mut value = json!({"term":item.term,"start":item.start,"end":item.end,"status":item.status,"reason":item.reason});
                     if let Some(Some(diagnostic)) = report.diagnostics.get(index) {
@@ -305,13 +334,55 @@ pub fn draft_project_translation(inputs: &Value, options: &Value) -> Result<Valu
             }
             Err(error) => {
                 module["items"] = json!([]);
-                module["gaps"] = json!([{"diagnostic":diagnostic(&error)}]);
+                let mut gaps=record.source_issues.iter().map(|message|json!({"diagnostic":{"name":"SourceInventoryGap","message":message}})).collect::<Vec<_>>();
+                gaps.push(json!({"diagnostic":diagnostic(&error)}));
+                module["gaps"] = json!(gaps);
                 module["emittedCode"] = Value::Null;
                 module["draftCode"] = Value::Null;
                 module["emittedSha256"] = Value::Null;
             }
         }
         modules.push(module);
+    }
+    let positions = records
+        .iter()
+        .enumerate()
+        .map(|(index, record)| (record.identifier.as_str(), index))
+        .collect::<BTreeMap<_, _>>();
+    let failed = modules
+        .iter()
+        .enumerate()
+        .filter(|(_, module)| !module["gaps"].as_array().unwrap().is_empty())
+        .map(|(index, _)| index as f64)
+        .collect::<Vec<_>>();
+    let mut importer_indices = Vec::new();
+    let mut provider_indices = Vec::new();
+    for record in &records {
+        for (_, provider) in &record.imports {
+            importer_indices.push(positions[record.identifier.as_str()] as f64);
+            provider_indices.push(positions[provider.as_str()] as f64);
+        }
+    }
+    let witnesses = plan_project_translation_dependency_gaps(
+        records.len() as f64,
+        &failed,
+        &importer_indices,
+        &provider_indices,
+        limit(options, "dependencyWorkLimit", 1000000)? as f64,
+    );
+    if witnesses == [-1.0] {
+        for module in &mut modules {
+            module["gaps"].as_array_mut().unwrap().push(json!({"diagnostic":{"name":"DependencyWorkLimitGap","message":"Complete dependency failure propagation exceeded its explicit work budget."}}));
+            module["emittedCode"] = Value::Null;
+        }
+    } else {
+        for witness in witnesses.chunks_exact(3) {
+            let index = witness[0] as usize;
+            let provider = &records[witness[1] as usize].identifier;
+            let root = &records[witness[2] as usize].identifier;
+            modules[index]["gaps"].as_array_mut().unwrap().push(json!({"diagnostic":{"name":"DependencySourceGap","message":"A source dependency has an unresolved inventory or translation gap.","provider":provider,"root":root}}));
+            modules[index]["emittedCode"] = Value::Null;
+        }
     }
     Ok(
         json!({"schemaVersion":1,"interpretation":"independent source semantic translation","targetLanguage":target,

@@ -5,7 +5,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { selfTranslate, selfTranslationLanguage, selfTranslationSignatures } from './self-translation.js';
 import { encodeStructuredDataLinks } from './structured-data-links.js';
 import { acceptProjectTranslationItem, readProjectTranslationFrontier,
-  acceptProjectTranslationSourceFamily, compareProjectTranslationIdentifiers } from './project-translation-rules.js';
+  acceptProjectTranslationSourceFamily, compareProjectTranslationIdentifiers, planProjectTranslationDependencyGaps } from './project-translation-rules.js';
 
 const fail = message => { throw new TypeError(`project translation: ${message}`); };
 const digest = source => createHash('sha256').update(source, 'utf8').digest('hex');
@@ -13,7 +13,7 @@ const digest = source => createHash('sha256').update(source, 'utf8').digest('hex
 function sourceRecords(inputs, options) {
   if (!Array.isArray(inputs) || inputs.length === 0 || inputs.length > (options.moduleLimit ?? 10000)) fail('expected a bounded nonempty complete module inventory');
   const seen = new Set();
-  let bytes = 0;
+  let bytes = 0, issueBytes = 0;
   const records = inputs.map(input => {
     if (!input || typeof input.identifier !== 'string' || !input.identifier.length
       || typeof input.source !== 'string' || !input.source.isWellFormed()
@@ -23,12 +23,16 @@ function sourceRecords(inputs, options) {
     if (!language) fail(`unknown source language for ${input.identifier}`);
     bytes += Buffer.byteLength(input.source);
     if (bytes > (options.byteLimit ?? 128 * 1024 * 1024)) fail('source byte resource limit exceeded');
+    const sourceIssues=input.sourceIssues??[];
+    if(!Array.isArray(sourceIssues)||sourceIssues.length>10000||sourceIssues.some(issue=>typeof issue!=='string'||!issue.length||!issue.isWellFormed()))fail('invalid source inventory issues');
+    for(const issue of sourceIssues)issueBytes+=Buffer.byteLength(issue);
+    if(issueBytes>(options.byteLimit??128*1024*1024))fail('source issue byte resource limit exceeded');
     const imports = Object.entries(input.imports ?? {}).map(([specifier, identifier]) => {
       if (typeof identifier !== 'string' || !identifier.length) fail('invalid imported source identity');
       return { specifier, identifier };
     });
     return { identifier: input.identifier, language, source: input.source,
-      sourceSha256: digest(input.source), sourceBytes: Buffer.byteLength(input.source), imports,
+      sourceSha256: digest(input.source), sourceBytes: Buffer.byteLength(input.source), imports, sourceIssues:[...sourceIssues],
       options: input.options ?? {} };
   }).sort((first, second) => compareProjectTranslationIdentifiers(first.identifier, second.identifier));
   for (const record of records) for (const dependency of record.imports) {
@@ -62,7 +66,7 @@ function context(record, signatures, options) {
 export function draftProjectTranslation(inputs, options = {}) {
   const targetLanguage = selfTranslationLanguage(options.targetLanguage);
   if (!targetLanguage) fail('an explicit supported target language is required');
-  for (const name of ['moduleLimit', 'byteLimit', 'refinementLimit']) {
+  for (const name of ['moduleLimit', 'byteLimit', 'refinementLimit', 'dependencyWorkLimit']) {
     if (options[name] !== undefined && (!Number.isSafeInteger(options[name]) || options[name] < 1)) fail('invalid drafting resource limit');
   }
   const records = sourceRecords(inputs, options);
@@ -95,13 +99,14 @@ export function draftProjectTranslation(inputs, options = {}) {
     if (pending.size === 0) { stable = true; break; }
   }
   const modules = records.map(record => {
+    const sourceGaps=record.sourceIssues.map(message=>({diagnostic:{name:'SourceInventoryGap',message}}));
     const base = { identifier: record.identifier, sourceLanguage: record.language, targetLanguage,
       sourceSha256: record.sourceSha256, sourceBytes: record.sourceBytes,
-      imports: record.imports, signatures: signatures.get(record.identifier) };
+      imports: record.imports, sourceIssues:record.sourceIssues, signatures: signatures.get(record.identifier) };
     try {
       const translation = selfTranslate(record.source, record.language, targetLanguage, context(record, signatures, options));
       const sameFamily = acceptProjectTranslationSourceFamily(record.language, targetLanguage);
-      const gaps = translation.items.filter(item => !acceptProjectTranslationItem(item.status, sameFamily));
+      const gaps = [...sourceGaps,...translation.items.filter(item => !acceptProjectTranslationItem(item.status, sameFamily))];
       if (!stable) gaps.push({ diagnostic: { name: 'DependencyRefinementGap', message: 'Source signature refinement did not converge within the explicit budget.' } });
       return { ...base, items: translation.items, gaps,
         // Partial carried envelopes are retained as diagnostics. A consumer
@@ -109,9 +114,14 @@ export function draftProjectTranslation(inputs, options = {}) {
         emittedCode: gaps.length === 0 ? translation.code : null,
         draftCode: translation.code, emittedSha256: digest(translation.code) };
     } catch (error) {
-      return { ...base, items: [], gaps: [{ diagnostic: diagnostic(error) }], emittedCode: null, draftCode: null, emittedSha256: null };
+      return { ...base, items: [], gaps: [...sourceGaps,{ diagnostic: diagnostic(error) }], emittedCode: null, draftCode: null, emittedSha256: null };
     }
   });
+  const positions=new Map(identifiers.map((identifier,index)=>[identifier,index]));
+  const failures=modules.flatMap((module,index)=>module.gaps.length?[index]:[]);
+  const witnesses=planProjectTranslationDependencyGaps(records.length,failures,importers.map(identifier=>positions.get(identifier)),providers.map(identifier=>positions.get(identifier)),options.dependencyWorkLimit??1000000);
+  if(witnesses.length===1&&witnesses[0]===-1){for(const module of modules){module.gaps.push({diagnostic:{name:'DependencyWorkLimitGap',message:'Complete dependency failure propagation exceeded its explicit work budget.'}});module.emittedCode=null;}}
+  else for(let at=0;at<witnesses.length;at+=3){const module=modules[witnesses[at]],provider=identifiers[witnesses[at+1]],root=identifiers[witnesses[at+2]];module.gaps.push({diagnostic:{name:'DependencySourceGap',message:'A source dependency has an unresolved inventory or translation gap.',provider,root}});module.emittedCode=null;}
   return { schemaVersion: 1, interpretation: 'independent source semantic translation',
     targetLanguage, inventory: records.map(({ source, options: configuration, ...record }) => record),
     dependencyRefinement: { stable, limit, passes }, modules };

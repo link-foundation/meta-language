@@ -62,6 +62,7 @@ test('tracked project discovery keeps reexports JSX TSX and unknown edges',()=>{
   for(const name of ['src/b.js','src/view.jsx','src/view.tsx','src/types.ts'])assert.equal(inputs.get(name).imports[name.endsWith('b.js')||name.endsWith('types.ts')?'./a.js':'./b.js'],name.endsWith('b.js')||name.endsWith('types.ts')?'src/a.js':'src/b.js');
   assert.equal(inventory.unresolved.length,1);assert.equal(inventory.unresolved[0].identifier,'src/dynamic.js');assert.equal(inventory.unresolved[0].kind,'dynamic module import');assert.equal(inventory.unresolved[0].reason,'computed module specifier requires a source interpretation');
   assert.equal(inventory.files.find(file=>file.identifier==='src/types.ts').moduleRequests[0].kind,'type module export');
+  assert.deepEqual(inputs.get('src/dynamic.js').sourceIssues,['computed module specifier requires a source interpretation']);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 

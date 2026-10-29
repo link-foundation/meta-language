@@ -1206,3 +1206,15 @@ controls, source catalog entries and package assets. Neither author executes
 represented programs or controls. Runtime adapters read actual CST fields;
 the tracked-project materializer consumes those requests, including reexports,
 type imports and JSX/TSX. Module loading and full translation remain obligations.
+
+
+Project inputs may retain nonempty `sourceIssues` strings from actual inventory
+discovery. Both project draft APIs retain these issues and propagate every
+unresolved module through its real dependency edges. Dependent executable output
+is withheld with provider/root witnesses, while draft code and original gaps
+remain available. `dependencyWorkLimit` bounds edge and directory work; budget
+exhaustion withholds all uncertified executable output. Author shared decisions
+with `generate-project-translation-rules.mjs --draft`; the integrated
+`draft-project-dependency-gaps.mjs --draft` constructs literal controls and package
+assets without executing projects or controls. This does not discharge module
+loading, binding composition or complete own-codebase translation obligations.
