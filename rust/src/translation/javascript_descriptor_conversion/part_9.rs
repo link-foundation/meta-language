@@ -3,333 +3,15 @@ use super::JavaScriptOrdinaryHeap;
 use super::JavaScriptOrdinaryObject;
 use super::JavaScriptOrdinaryProperty;
 use super::JavaScriptSemanticValue;
-use super::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Result;
+use super::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop13Result;
+use super::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result;
 use super::find_java_script_ordinary_object;
 use super::find_java_script_ordinary_property;
 use super::ml;
 use super::ml_array;
-use super::ml_big_integer_conversion;
-use super::ml_source_exception;
 use super::read_java_script_ordinary_key_error;
 use super::read_java_script_ordinary_value_error;
 use super::test_complete_java_script_property_descriptor;
-use super::test_java_script_semantic_same_value;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_find_java_script_ordinary_object_loop5(
-    mut objects: Vec<self::JavaScriptOrdinaryObject>,
-    mut identity: self::ml::Big,
-    mut low: f64,
-    mut high: f64,
-) -> self::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Result {
-    loop {
-        return if low < high {
-            {
-                let middle = ((low + high) / 2f64).floor();
-                {
-                    let object =
-                        self::ml_array::optional_at(&objects, self::ml_array::number_index(middle));
-                    if match (object.clone(), None::<()>) {
-                        (Some(_ml_left), Some(_ml_right)) => false,
-                        (None, None) => true,
-                        _ => false,
-                    } {
-                        self::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Result::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Return(-1f64)
-                    } else {
-                        let ml_product_condition_2 = {
-                            let source_ml_source1_nullish_field_receiver978 = (object.clone(),);
-                            if match (source_ml_source1_nullish_field_receiver978.clone()).0 {
-                                Some(ml_present) => {
-                                    let _ = ml_present.clone();
-                                    true
-                                }
-                                None => false,
-                            } {
-                                {
-                                    let source_ml_source1_nullish_field_present979 =
-                                        ((source_ml_source1_nullish_field_receiver978.clone()).0)
-                                            .clone()
-                                            .expect("a proven present value");
-                                    match source_ml_source1_nullish_field_present979 {
-                                        self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                            source_ml_source1_data_property_value980,
-                                            _,
-                                            _,
-                                            _,
-                                            _,
-                                        ) => source_ml_source1_data_property_value980.clone(),
-                                    }
-                                }
-                            } else {
-                                (self::ml_source_exception::SourceException {
-                                    class_name: String::from("TypeError"),
-                                    message_units: (String::from(
-                                        "Cannot read properties of undefined (reading 'identity')",
-                                    ))
-                                    .encode_utf16()
-                                    .collect(),
-                                    message_present: true,
-                                })
-                                .raise()
-                            }
-                        };
-                        if ml_product_condition_2 {
-                            self::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Result::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Return(middle)
-                        } else {
-                            {
-                                let ml_product_condition_1 = {
-                                    let source_ml_source1_nullish_field_receiver984 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver984.clone()).0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present985 =
-                                                ((source_ml_source1_nullish_field_receiver984
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present985 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    source_ml_source1_data_property_value986,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                ) => {
-                                                    source_ml_source1_data_property_value986.clone()
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'identity')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                };
-                                if ml_product_condition_1 {
-                                    {
-                                        let low_2 = middle + 1f64;
-                                        {
-                                            low = low_2;
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                            {
-                                {
-                                    let high_2 = middle;
-                                    {
-                                        high = high_2;
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Result::MlTemporaryFindJavaScriptOrdinaryObjectLoop5Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryTestJavaScriptOrdinarySymbolLoop6Result {
-    MlTemporaryTestJavaScriptOrdinarySymbolLoop6Done,
-    MlTemporaryTestJavaScriptOrdinarySymbolLoop6Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_test_java_script_ordinary_symbol_loop6(
-    mut symbols: Vec<self::ml::Big>,
-    mut identity: self::ml::Big,
-    mut low: f64,
-    mut high: f64,
-) -> self::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Result {
-    loop {
-        return if low < high {
-            {
-                let middle = ((low + high) / 2f64).floor();
-                {
-                    let symbol =
-                        self::ml_array::optional_at(&symbols, self::ml_array::number_index(middle));
-                    if {
-                        let source_ml_source1_comparison_operand987 = symbol.clone();
-                        {
-                            let source_ml_source1_comparison_operand988 = None::<()>;
-                            match (
-                                source_ml_source1_comparison_operand987,
-                                source_ml_source1_comparison_operand988,
-                            ) {
-                                (Some(_ml_left), Some(_ml_right)) => false,
-                                (None, None) => true,
-                                _ => false,
-                            }
-                        }
-                    } {
-                        self::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Result::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Return(false)
-                    } else if {
-                        let source_ml_source1_comparison_operand989 = symbol.clone();
-                        {
-                            let source_ml_source1_comparison_operand990 = identity.clone();
-                            match (
-                                source_ml_source1_comparison_operand989,
-                                source_ml_source1_comparison_operand990,
-                            ) {
-                                (Some(ml_left), ml_right) => ml_left == ml_right,
-                                _ => false,
-                            }
-                        }
-                    } {
-                        self::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Result::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Return(true)
-                    } else if {
-                        let source_ml_source1_comparison_operand991 = symbol.clone();
-                        {
-                            let source_ml_source1_comparison_operand992 = identity.clone();
-                            if match (
-                                source_ml_source1_comparison_operand991.clone(),
-                                None::<self::ml::Big>,
-                            ) {
-                                (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
-                                (None, None) => true,
-                                _ => false,
-                            } {
-                                {
-                                    let source_ml_source1_comparison_order993 = self::ml_big_integer_conversion::compare_java_script_number_big_integer(f64::NAN,source_ml_source1_comparison_operand992.clone());
-                                    (source_ml_source1_comparison_order993 == -1f64)
-                                }
-                            } else {
-                                (source_ml_source1_comparison_operand991
-                                    .clone()
-                                    .expect("a proven present value"))
-                                    < source_ml_source1_comparison_operand992
-                            }
-                        }
-                    } {
-                        {
-                            let low_2 = middle + 1f64;
-                            {
-                                low = low_2;
-                                continue;
-                            }
-                        }
-                    } else {
-                        {
-                            let high_2 = middle;
-                            {
-                                high = high_2;
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Result::MlTemporaryTestJavaScriptOrdinarySymbolLoop6Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Result {
-    MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Done,
-    MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_find_java_script_ordinary_property_loop7(
-    mut properties: Vec<self::JavaScriptOrdinaryProperty>,
-    mut key: self::JavaScriptSemanticValue,
-    mut at: f64,
-) -> self::MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Result {
-    loop {
-        return if at < (properties.len() as f64) {
-            {
-                let property =
-                    self::ml_array::optional_at(&properties, self::ml_array::number_index(at));
-                if !(match (property.clone(), None::<()>) {
-                    (Some(_ml_left), Some(_ml_right)) => false,
-                    (None, None) => true,
-                    _ => false,
-                }) && self::test_java_script_semantic_same_value(
-                    {
-                        let source_ml_source1_nullish_field_receiver994 = (property.clone(),);
-                        if match (source_ml_source1_nullish_field_receiver994.clone()).0 {
-                            Some(ml_present) => {
-                                let _ = ml_present.clone();
-                                true
-                            }
-                            None => false,
-                        } {
-                            {
-                                let source_ml_source1_nullish_field_present995 =
-                                    ((source_ml_source1_nullish_field_receiver994.clone()).0)
-                                        .clone()
-                                        .expect("a proven present value");
-                                match source_ml_source1_nullish_field_present995 {
-                                    self::JavaScriptOrdinaryProperty::OrdinaryProperty(
-                                        source_ml_source1_data_property_value996,
-                                        _,
-                                    ) => {
-                                        let source_ml_source1_data_property_value996 =
-                                            *source_ml_source1_data_property_value996;
-                                        source_ml_source1_data_property_value996.clone()
-                                    }
-                                }
-                            }
-                        } else {
-                            (self::ml_source_exception::SourceException {
-                                class_name: String::from("TypeError"),
-                                message_units: (String::from(
-                                    "Cannot read properties of undefined (reading 'key')",
-                                ))
-                                .encode_utf16()
-                                .collect(),
-                                message_present: true,
-                            })
-                            .raise()
-                        }
-                    },
-                    key.clone(),
-                ) {
-                    self::MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Result::MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Return(at)
-                } else {
-                    {
-                        let at_2 = at + 1f64;
-                        {
-                            at = at_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Result::MlTemporaryFindJavaScriptOrdinaryPropertyLoop7Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop13Result {
-    MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop13Done,
-    MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop13Return(String),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result {
-    MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done,
-    MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Return(String),
-}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -347,57 +29,47 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop15(
             self::JavaScriptSemanticValue::Null => {
                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
             }
-            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f997) => {
+            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f853) => {
                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
             }
-            self::JavaScriptSemanticValue::Number(source_ml_source1_f998) => {
+            self::JavaScriptSemanticValue::Number(source_ml_source1_f854) => {
                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
             }
-            self::JavaScriptSemanticValue::Integer(source_ml_source1_f999) => {
+            self::JavaScriptSemanticValue::Integer(source_ml_source1_f855) => {
                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
             }
-            self::JavaScriptSemanticValue::Text(source_ml_source1_f1000) => {
+            self::JavaScriptSemanticValue::Text(source_ml_source1_f856) => {
                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
             }
-            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f1001) => {
+            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f857) => {
                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done
             }
-            self::JavaScriptSemanticValue::Object(identity, source_ml_source1_f1002) => {
+            self::JavaScriptSemanticValue::Object(identity, source_ml_source1_f858) => {
                 {
                     let depth_2 = depth + 1f64;
                     if (identity == (match object.clone() {
-                        self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source1_data_property_value1004, _, _, _, _) => {
-                            source_ml_source1_data_property_value1004.clone()
+                        self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source1_data_property_value860, _, _, _, _) => {
+                            source_ml_source1_data_property_value860.clone()
                         }
-                    })) || (depth_2 > ((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value1006, _) => source_ml_source1_data_property_value1006.as_slice() }).len() as f64)) {
+                    })) || (depth_2 > ((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value862, _) => source_ml_source1_data_property_value862.as_slice() }).len() as f64)) {
                         self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Return(String::from("ordinary prototype chains must be acyclic"))
                     } else {
                         {
                             let index = self::find_java_script_ordinary_object(match heap.clone() {
-                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value1007, _) => {
-                                    source_ml_source1_data_property_value1007
+                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value863, _) => {
+                                    source_ml_source1_data_property_value863
                                 }
                             }, identity.clone());
                             {
-                                let parent = self::ml_array::optional_at((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value1008, _) => source_ml_source1_data_property_value1008.as_slice() }), self::ml_array::number_index(index));
+                                let parent = self::ml_array::optional_at((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value864, _) => source_ml_source1_data_property_value864.as_slice() }), self::ml_array::number_index(index));
                                 if match (parent.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
                                     self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Return(String::from("every ordinary prototype must remain in the global directory"))
                                 } else {
                                     {
-                                        let prototype_2 = {
-                                            let source_ml_source1_nullish_field_receiver1009 = (parent.clone(),);
-                                            if match (source_ml_source1_nullish_field_receiver1009.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
-                                                {
-                                                    let source_ml_source1_nullish_field_present1010 = ((source_ml_source1_nullish_field_receiver1009.clone()).0).clone().expect("a proven present value");
-                                                    match source_ml_source1_nullish_field_present1010 {
-                                                        self::JavaScriptOrdinaryObject::OrdinaryObject(_, source_ml_source1_data_property_value1011, _, _, _) => {
-                                                            let source_ml_source1_data_property_value1011 = *source_ml_source1_data_property_value1011;
-                                                            source_ml_source1_data_property_value1011.clone()
-                                                        }
-                                                    }
-                                                }
-                                            } else {
-                                                (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'prototype')")).encode_utf16().collect(), message_present: true }).raise()
+                                        let prototype_2 = match parent.clone().expect("a proven present value") {
+                                            self::JavaScriptOrdinaryObject::OrdinaryObject(_, source_ml_source1_data_property_value865, _, _, _) => {
+                                                let source_ml_source1_data_property_value865 = *source_ml_source1_data_property_value865;
+                                                source_ml_source1_data_property_value865.clone()
                                             }
                                         };
                                         {
@@ -448,8 +120,8 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                     _,
                     _,
                     _,
-                    source_ml_source1_data_property_value1013,
-                ) => source_ml_source1_data_property_value1013.as_slice(),
+                    source_ml_source1_data_property_value867,
+                ) => source_ml_source1_data_property_value867.as_slice(),
             })
             .len() as f64)
         {
@@ -461,8 +133,8 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                             _,
                             _,
                             _,
-                            source_ml_source1_data_property_value1014,
-                        ) => source_ml_source1_data_property_value1014.as_slice(),
+                            source_ml_source1_data_property_value868,
+                        ) => source_ml_source1_data_property_value868.as_slice(),
                     }),
                     self::ml_array::number_index(at),
                 );
@@ -474,44 +146,19 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                     self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Return(String::from("ordinary property storage must be dense"))
                 } else {
                     {
-                        let key_error = self::read_java_script_ordinary_key_error(heap.clone(), {
-                            let source_ml_source1_nullish_field_receiver1015 = (property.clone(),);
-                            if match (source_ml_source1_nullish_field_receiver1015.clone()).0 {
-                                Some(ml_present) => {
-                                    let _ = ml_present.clone();
-                                    true
+                        let key_error = self::read_java_script_ordinary_key_error(
+                            heap.clone(),
+                            match property.clone().expect("a proven present value") {
+                                self::JavaScriptOrdinaryProperty::OrdinaryProperty(
+                                    source_ml_source1_data_property_value869,
+                                    _,
+                                ) => {
+                                    let source_ml_source1_data_property_value869 =
+                                        *source_ml_source1_data_property_value869;
+                                    source_ml_source1_data_property_value869.clone()
                                 }
-                                None => false,
-                            } {
-                                {
-                                    let source_ml_source1_nullish_field_present1016 =
-                                        ((source_ml_source1_nullish_field_receiver1015.clone()).0)
-                                            .clone()
-                                            .expect("a proven present value");
-                                    match source_ml_source1_nullish_field_present1016 {
-                                        self::JavaScriptOrdinaryProperty::OrdinaryProperty(
-                                            source_ml_source1_data_property_value1017,
-                                            _,
-                                        ) => {
-                                            let source_ml_source1_data_property_value1017 =
-                                                *source_ml_source1_data_property_value1017;
-                                            source_ml_source1_data_property_value1017.clone()
-                                        }
-                                    }
-                                }
-                            } else {
-                                (self::ml_source_exception::SourceException {
-                                    class_name: String::from("TypeError"),
-                                    message_units: (String::from(
-                                        "Cannot read properties of undefined (reading 'key')",
-                                    ))
-                                    .encode_utf16()
-                                    .collect(),
-                                    message_present: true,
-                                })
-                                .raise()
-                            }
-                        });
+                            },
+                        );
                         if !(key_error).is_empty() {
                             self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Return(key_error.clone())
                         } else if (self::find_java_script_ordinary_property(
@@ -521,48 +168,17 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                                     _,
                                     _,
                                     _,
-                                    source_ml_source1_data_property_value1022,
-                                ) => source_ml_source1_data_property_value1022,
+                                    source_ml_source1_data_property_value872,
+                                ) => source_ml_source1_data_property_value872,
                             },
-                            {
-                                let source_ml_source1_nullish_field_receiver1023 =
-                                    (property.clone(),);
-                                if match (source_ml_source1_nullish_field_receiver1023.clone()).0 {
-                                    Some(ml_present) => {
-                                        let _ = ml_present.clone();
-                                        true
-                                    }
-                                    None => false,
-                                } {
-                                    {
-                                        let source_ml_source1_nullish_field_present1024 =
-                                            ((source_ml_source1_nullish_field_receiver1023
-                                                .clone())
-                                            .0)
-                                                .clone()
-                                                .expect("a proven present value");
-                                        match source_ml_source1_nullish_field_present1024 {
-                                            self::JavaScriptOrdinaryProperty::OrdinaryProperty(
-                                                source_ml_source1_data_property_value1025,
-                                                _,
-                                            ) => {
-                                                let source_ml_source1_data_property_value1025 =
-                                                    *source_ml_source1_data_property_value1025;
-                                                source_ml_source1_data_property_value1025.clone()
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    (self::ml_source_exception::SourceException {
-                                        class_name: String::from("TypeError"),
-                                        message_units: (String::from(
-                                            "Cannot read properties of undefined (reading 'key')",
-                                        ))
-                                        .encode_utf16()
-                                        .collect(),
-                                        message_present: true,
-                                    })
-                                    .raise()
+                            match property.clone().expect("a proven present value") {
+                                self::JavaScriptOrdinaryProperty::OrdinaryProperty(
+                                    source_ml_source1_data_property_value873,
+                                    _,
+                                ) => {
+                                    let source_ml_source1_data_property_value873 =
+                                        *source_ml_source1_data_property_value873;
+                                    source_ml_source1_data_property_value873.clone()
                                 }
                             },
                         )) != at
@@ -570,40 +186,18 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                             self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Return(String::from("ordinary property keys must be unique without reordering their creation history"))
                         } else {
                             {
-                                let descriptor = {
-                                    let source_ml_source1_nullish_field_receiver1026 =
-                                        (property.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver1026.clone())
-                                        .0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present1027 =
-                                                ((source_ml_source1_nullish_field_receiver1026
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present1027 {
-                                                    self::JavaScriptOrdinaryProperty::OrdinaryProperty(_, source_ml_source1_data_property_value1028) => {
-                                                        source_ml_source1_data_property_value1028.clone()
-                                                    }
-                                                }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'descriptor')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                };
+                                let descriptor =
+                                    match property.clone().expect("a proven present value") {
+                                        self::JavaScriptOrdinaryProperty::OrdinaryProperty(
+                                            _,
+                                            source_ml_source1_data_property_value874,
+                                        ) => source_ml_source1_data_property_value874.clone(),
+                                    };
                                 if (self::test_complete_java_script_property_descriptor(
                                     descriptor.clone(),
                                 )) {
                                     {
-                                        let source_ml_source1_s1029 = if (descriptor.clone()).9 {
+                                        let source_ml_source1_s875 = if (descriptor.clone()).9 {
                                             {
                                                 let error =
                                                     self::read_java_script_ordinary_value_error(
@@ -619,10 +213,10 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                                         } else {
                                             self::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin16::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin16Next
                                         };
-                                        match source_ml_source1_s1029 {
+                                        match source_ml_source1_s875 {
                                                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin16::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin16Next => {
                                                     {
-                                                        let source_ml_source1_s1030 = if (descriptor.clone()).5 {
+                                                        let source_ml_source1_s876 = if (descriptor.clone()).5 {
                                                             {
                                                                 let error_2 = self::read_java_script_ordinary_value_error(heap.clone(), (descriptor.clone()).4);
                                                                 if !(error_2).is_empty() {
@@ -634,7 +228,7 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop14(
                                                         } else {
                                                             self::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin17::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin17Next
                                                         };
-                                                        match source_ml_source1_s1030 {
+                                                        match source_ml_source1_s876 {
                                                             self::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin17::MlTemporaryReadJavaScriptOrdinaryHeapErrorJoin17Next => {
                                                                 if (descriptor.clone()).7 {
                                                                     {
@@ -704,57 +298,57 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop13(
                     source_ml_temporary_index10.to_index(),
                 );
                 if {
-                    let source_ml_source1_s1032 = match object.clone() {
+                    let source_ml_source1_s878 = match object.clone() {
                         self::JavaScriptOrdinaryObject::OrdinaryObject(
                             _,
-                            source_ml_source1_data_property_value1040,
+                            source_ml_source1_data_property_value886,
                             _,
                             _,
                             _,
                         ) => {
-                            let source_ml_source1_data_property_value1040 =
-                                *source_ml_source1_data_property_value1040;
-                            source_ml_source1_data_property_value1040.clone()
+                            let source_ml_source1_data_property_value886 =
+                                *source_ml_source1_data_property_value886;
+                            source_ml_source1_data_property_value886.clone()
                         }
                     };
-                    match source_ml_source1_s1032 {
+                    match source_ml_source1_s878 {
                         self::JavaScriptSemanticValue::Undefined => true,
                         self::JavaScriptSemanticValue::Null => false,
-                        self::JavaScriptSemanticValue::Boolean(source_ml_source1_f1033) => true,
-                        self::JavaScriptSemanticValue::Number(source_ml_source1_f1034) => true,
-                        self::JavaScriptSemanticValue::Integer(source_ml_source1_f1035) => true,
-                        self::JavaScriptSemanticValue::Text(source_ml_source1_f1036) => true,
-                        self::JavaScriptSemanticValue::Symbol(source_ml_source1_f1037) => true,
+                        self::JavaScriptSemanticValue::Boolean(source_ml_source1_f879) => true,
+                        self::JavaScriptSemanticValue::Number(source_ml_source1_f880) => true,
+                        self::JavaScriptSemanticValue::Integer(source_ml_source1_f881) => true,
+                        self::JavaScriptSemanticValue::Text(source_ml_source1_f882) => true,
+                        self::JavaScriptSemanticValue::Symbol(source_ml_source1_f883) => true,
                         self::JavaScriptSemanticValue::Object(
-                            source_ml_source1_f1038,
-                            source_ml_source1_f1039,
+                            source_ml_source1_f884,
+                            source_ml_source1_f885,
                         ) => true,
                     }
                 } && {
-                    let source_ml_source1_s1042 = match object.clone() {
+                    let source_ml_source1_s888 = match object.clone() {
                         self::JavaScriptOrdinaryObject::OrdinaryObject(
                             _,
-                            source_ml_source1_data_property_value1050,
+                            source_ml_source1_data_property_value896,
                             _,
                             _,
                             _,
                         ) => {
-                            let source_ml_source1_data_property_value1050 =
-                                *source_ml_source1_data_property_value1050;
-                            source_ml_source1_data_property_value1050.clone()
+                            let source_ml_source1_data_property_value896 =
+                                *source_ml_source1_data_property_value896;
+                            source_ml_source1_data_property_value896.clone()
                         }
                     };
-                    match source_ml_source1_s1042 {
+                    match source_ml_source1_s888 {
                         self::JavaScriptSemanticValue::Undefined => true,
                         self::JavaScriptSemanticValue::Null => true,
-                        self::JavaScriptSemanticValue::Boolean(source_ml_source1_f1043) => true,
-                        self::JavaScriptSemanticValue::Number(source_ml_source1_f1044) => true,
-                        self::JavaScriptSemanticValue::Integer(source_ml_source1_f1045) => true,
-                        self::JavaScriptSemanticValue::Text(source_ml_source1_f1046) => true,
-                        self::JavaScriptSemanticValue::Symbol(source_ml_source1_f1047) => true,
+                        self::JavaScriptSemanticValue::Boolean(source_ml_source1_f889) => true,
+                        self::JavaScriptSemanticValue::Number(source_ml_source1_f890) => true,
+                        self::JavaScriptSemanticValue::Integer(source_ml_source1_f891) => true,
+                        self::JavaScriptSemanticValue::Text(source_ml_source1_f892) => true,
+                        self::JavaScriptSemanticValue::Symbol(source_ml_source1_f893) => true,
                         self::JavaScriptSemanticValue::Object(
-                            source_ml_source1_f1048,
-                            source_ml_source1_f1049,
+                            source_ml_source1_f894,
+                            source_ml_source1_f895,
                         ) => false,
                     }
                 } {
@@ -766,14 +360,14 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop13(
                             match object.clone() {
                                 self::JavaScriptOrdinaryObject::OrdinaryObject(
                                     _,
-                                    source_ml_source1_data_property_value1051,
+                                    source_ml_source1_data_property_value897,
                                     _,
                                     _,
                                     _,
                                 ) => {
-                                    let source_ml_source1_data_property_value1051 =
-                                        *source_ml_source1_data_property_value1051;
-                                    source_ml_source1_data_property_value1051.clone()
+                                    let source_ml_source1_data_property_value897 =
+                                        *source_ml_source1_data_property_value897;
+                                    source_ml_source1_data_property_value897.clone()
                                 }
                             },
                         );
@@ -788,8 +382,8 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop13(
                                             _,
                                             _,
                                             _,
-                                            source_ml_source1_data_property_value1052,
-                                        ) => source_ml_source1_data_property_value1052.as_slice(),
+                                            source_ml_source1_data_property_value898,
+                                        ) => source_ml_source1_data_property_value898.as_slice(),
                                     })
                                     .len() as f64);
                                 if (property_count_2 > 16_384f64)
@@ -799,8 +393,8 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop13(
                                             _,
                                             _,
                                             _,
-                                            source_ml_source1_data_property_value1054,
-                                        ) => source_ml_source1_data_property_value1054.as_slice(),
+                                            source_ml_source1_data_property_value900,
+                                        ) => source_ml_source1_data_property_value900.as_slice(),
                                     })
                                     .len() as f64)
                                         > 4096f64)
@@ -810,21 +404,21 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop13(
                                     {
                                         let at = 0f64;
                                         {
-                                            let source_ml_source1_s1055 = self::source_ml_temporary_read_java_script_ordinary_heap_error_loop14(heap.clone(), object.clone(), at);
-                                            match source_ml_source1_s1055 {
+                                            let source_ml_source1_s901 = self::source_ml_temporary_read_java_script_ordinary_heap_error_loop14(heap.clone(), object.clone(), at);
+                                            match source_ml_source1_s901 {
                                                 self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop14Done => {
                                                     {
                                                         let prototype = match object.clone() {
-                                                            self::JavaScriptOrdinaryObject::OrdinaryObject(_, source_ml_source1_data_property_value1056, _, _, _) => {
-                                                                let source_ml_source1_data_property_value1056 = *source_ml_source1_data_property_value1056;
-                                                                source_ml_source1_data_property_value1056.clone()
+                                                            self::JavaScriptOrdinaryObject::OrdinaryObject(_, source_ml_source1_data_property_value902, _, _, _) => {
+                                                                let source_ml_source1_data_property_value902 = *source_ml_source1_data_property_value902;
+                                                                source_ml_source1_data_property_value902.clone()
                                                             }
                                                         };
                                                         {
                                                             let depth = 0f64;
                                                             {
-                                                                let source_ml_source1_s1057 = self::source_ml_temporary_read_java_script_ordinary_heap_error_loop15(heap.clone(), object.clone(), prototype, depth);
-                                                                match source_ml_source1_s1057 {
+                                                                let source_ml_source1_s903 = self::source_ml_temporary_read_java_script_ordinary_heap_error_loop15(heap.clone(), object.clone(), prototype, depth);
+                                                                match source_ml_source1_s903 {
                                                                     self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop15Done => {
                                                                         {
                                                                             let source_ml_temporary_index10_2 = source_ml_temporary_index10.add(&self::ml::Big::from_i128(1));
@@ -864,4 +458,454 @@ pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop13(
 pub enum MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Result {
     MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Done,
     MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Return(String),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop12(
+    mut heap: self::JavaScriptOrdinaryHeap,
+    mut previous: self::ml::Big,
+    mut source_ml_temporary_values9: Vec<self::ml::Big>,
+    mut source_ml_temporary_index9: self::ml::Big,
+) -> self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Result {
+    loop {
+        return if source_ml_temporary_index9
+            < (self::ml::Big::from_u128(source_ml_temporary_values9.len() as u128))
+        {
+            {
+                let symbol = self::ml_array::at(
+                    &source_ml_temporary_values9,
+                    source_ml_temporary_index9.to_index(),
+                );
+                if ((symbol <= previous)
+                    || (symbol > (self::ml::Big::from_i128(18_446_744_073_709_551_615))))
+                    || ((self::find_java_script_ordinary_object(
+                        match heap.clone() {
+                            self::JavaScriptOrdinaryHeap::OrdinaryHeap(
+                                source_ml_source1_data_property_value905,
+                                _,
+                            ) => source_ml_source1_data_property_value905,
+                        },
+                        symbol.clone(),
+                    )) >= 0f64)
+                {
+                    self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Return(String::from("Symbols and Objects need distinct strictly ordered positive unsigned64 identities"))
+                } else {
+                    {
+                        let previous_2 = symbol.clone();
+                        {
+                            let source_ml_temporary_index9_2 =
+                                source_ml_temporary_index9.add(&self::ml::Big::from_i128(1));
+                            {
+                                (previous, source_ml_temporary_index9) =
+                                    (previous_2, source_ml_temporary_index9_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop12Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Result {
+    MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Done(self::ml::Big),
+    MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Return(String),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_ordinary_heap_error_loop11(
+    mut previous: self::ml::Big,
+    mut source_ml_temporary_values8: Vec<self::JavaScriptOrdinaryObject>,
+    mut source_ml_temporary_index8: self::ml::Big,
+) -> self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Result {
+    loop {
+        return if source_ml_temporary_index8
+            < (self::ml::Big::from_u128(source_ml_temporary_values8.len() as u128))
+        {
+            {
+                let object = self::ml_array::at(
+                    &source_ml_temporary_values8,
+                    source_ml_temporary_index8.to_index(),
+                );
+                if ((match object.clone() {
+                    self::JavaScriptOrdinaryObject::OrdinaryObject(
+                        source_ml_source1_data_property_value907,
+                        _,
+                        _,
+                        _,
+                        _,
+                    ) => source_ml_source1_data_property_value907.clone(),
+                }) <= previous)
+                    || ((match object.clone() {
+                        self::JavaScriptOrdinaryObject::OrdinaryObject(
+                            source_ml_source1_data_property_value909,
+                            _,
+                            _,
+                            _,
+                            _,
+                        ) => source_ml_source1_data_property_value909.clone(),
+                    }) > (self::ml::Big::from_i128(18_446_744_073_709_551_615)))
+                {
+                    self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Return(String::from("ordinary Objects need strictly ordered unique positive unsigned64 identities"))
+                } else {
+                    {
+                        let previous_2 = match object.clone() {
+                            self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                source_ml_source1_data_property_value910,
+                                _,
+                                _,
+                                _,
+                                _,
+                            ) => source_ml_source1_data_property_value910.clone(),
+                        };
+                        {
+                            let source_ml_temporary_index8_2 =
+                                source_ml_temporary_index8.add(&self::ml::Big::from_i128(1));
+                            {
+                                (previous, source_ml_temporary_index8) =
+                                    (previous_2, source_ml_temporary_index8_2);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Result::MlTemporaryReadJavaScriptOrdinaryHeapErrorLoop11Done(previous.clone())
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result {
+    MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done,
+    MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Return(
+        (
+            (
+                bool,
+                bool,
+                bool,
+                bool,
+                self::JavaScriptSemanticValue,
+                bool,
+                self::JavaScriptSemanticValue,
+                bool,
+                self::JavaScriptSemanticValue,
+                bool,
+                bool,
+                bool,
+            ),
+            bool,
+            self::ml::Big,
+        ),
+    ),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_locate_java_script_ordinary_property_loop18(
+    mut heap: self::JavaScriptOrdinaryHeap,
+    mut key: self::JavaScriptSemanticValue,
+    mut current: self::ml::Big,
+    mut depth: f64,
+) -> self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result {
+    loop {
+        return if depth
+            < ((match &heap {
+                self::JavaScriptOrdinaryHeap::OrdinaryHeap(
+                    source_ml_source1_data_property_value912,
+                    _,
+                ) => source_ml_source1_data_property_value912.as_slice(),
+            })
+            .len() as f64)
+        {
+            {
+                let index = self::find_java_script_ordinary_object(
+                    match heap.clone() {
+                        self::JavaScriptOrdinaryHeap::OrdinaryHeap(
+                            source_ml_source1_data_property_value913,
+                            _,
+                        ) => source_ml_source1_data_property_value913,
+                    },
+                    current.clone(),
+                );
+                {
+                    let object = self::ml_array::optional_at(
+                        (match &heap {
+                            self::JavaScriptOrdinaryHeap::OrdinaryHeap(
+                                source_ml_source1_data_property_value914,
+                                _,
+                            ) => source_ml_source1_data_property_value914.as_slice(),
+                        }),
+                        self::ml_array::number_index(index),
+                    );
+                    if match (object.clone(), None::<()>) {
+                        (Some(_ml_left), Some(_ml_right)) => false,
+                        (None, None) => true,
+                        _ => false,
+                    } {
+                        self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                    } else {
+                        {
+                            let at = self::find_java_script_ordinary_property(
+                                match object.clone().expect("a proven present value") {
+                                    self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                        _,
+                                        _,
+                                        _,
+                                        _,
+                                        source_ml_source1_data_property_value915,
+                                    ) => source_ml_source1_data_property_value915,
+                                },
+                                key.clone(),
+                            );
+                            {
+                                let property = self::ml_array::optional_at(
+                                    &match object.clone().expect("a proven present value") {
+                                        self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                            _,
+                                            _,
+                                            _,
+                                            _,
+                                            source_ml_source1_data_property_value916,
+                                        ) => source_ml_source1_data_property_value916,
+                                    },
+                                    self::ml_array::number_index(at),
+                                );
+                                if (match (property.clone(), None::<()>) {
+                                    (Some(_ml_left), Some(_ml_right)) => false,
+                                    (None, None) => true,
+                                    _ => false,
+                                }) {
+                                    {
+                                        let prototype =
+                                            match object.clone().expect("a proven present value") {
+                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                                    _,
+                                                    source_ml_source1_data_property_value921,
+                                                    _,
+                                                    _,
+                                                    _,
+                                                ) => {
+                                                    let source_ml_source1_data_property_value921 =
+                                                        *source_ml_source1_data_property_value921;
+                                                    source_ml_source1_data_property_value921.clone()
+                                                }
+                                            };
+                                        match prototype {
+                                            self::JavaScriptSemanticValue::Undefined => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Null => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f922) => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Number(source_ml_source1_f923) => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Integer(source_ml_source1_f924) => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Text(source_ml_source1_f925) => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f926) => {
+                                                self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+                                            }
+                                            self::JavaScriptSemanticValue::Object(current_2, source_ml_source1_f927) => {
+                                                {
+                                                    let depth_2 = depth + 1f64;
+                                                    {
+                                                        (current, depth) = (current_2.clone(), depth_2);
+                                                        continue;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Return({
+                                        let source_ml_source1_field917 = true;
+                                        {
+                                            let source_ml_source1_field918 = current.clone();
+                                            {
+                                                let source_ml_source1_field920 = match property.clone().expect("a proven present value") {
+                                                    self::JavaScriptOrdinaryProperty::OrdinaryProperty(_, source_ml_source1_data_property_value919) => {
+                                                        source_ml_source1_data_property_value919.clone()
+                                                    }
+                                                };
+                                                (source_ml_source1_field920, source_ml_source1_field917, source_ml_source1_field918)
+                                            }
+                                        }
+                                    })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Result::MlTemporaryLocateJavaScriptOrdinaryPropertyLoop18Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_define_java_script_ordinary_property_loop20(
+    mut count: f64,
+    mut source_ml_temporary_values19: Vec<self::JavaScriptOrdinaryObject>,
+    mut source_ml_temporary_index19: self::ml::Big,
+) -> f64 {
+    loop {
+        if source_ml_temporary_index19
+            < (self::ml::Big::from_u128(source_ml_temporary_values19.len() as u128))
+        {
+            {
+                let entry = self::ml_array::at(
+                    &source_ml_temporary_values19,
+                    source_ml_temporary_index19.to_index(),
+                );
+                {
+                    let count_2 = count
+                        + ((match &entry {
+                            self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                _,
+                                _,
+                                _,
+                                _,
+                                source_ml_source1_data_property_value928,
+                            ) => source_ml_source1_data_property_value928.as_slice(),
+                        })
+                        .len() as f64);
+                    {
+                        let source_ml_temporary_index19_2 =
+                            source_ml_temporary_index19.add(&self::ml::Big::from_i128(1));
+                        {
+                            (count, source_ml_temporary_index19) =
+                                (count_2, source_ml_temporary_index19_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        return { count };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result {
+    MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done,
+    MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Return(
+        (String, self::JavaScriptOrdinaryHeap, bool),
+    ),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_set_java_script_ordinary_prototype_loop21(
+    mut heap: self::JavaScriptOrdinaryHeap,
+    mut identity: self::ml::Big,
+    mut next: self::JavaScriptSemanticValue,
+    mut depth: f64,
+) -> self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result {
+    loop {
+        return if depth
+            <= ((match &heap {
+                self::JavaScriptOrdinaryHeap::OrdinaryHeap(
+                    source_ml_source1_data_property_value930,
+                    _,
+                ) => source_ml_source1_data_property_value930.as_slice(),
+            })
+            .len() as f64)
+        {
+            match next.clone() {
+                self::JavaScriptSemanticValue::Undefined => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Null => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Boolean(source_ml_source1_f931) => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Number(source_ml_source1_f932) => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Integer(source_ml_source1_f933) => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Text(source_ml_source1_f934) => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Symbol(source_ml_source1_f935) => {
+                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+                }
+                self::JavaScriptSemanticValue::Object(next_identity, source_ml_source1_f936) => {
+                    if next_identity == identity {
+                        self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Return({
+                            let source_ml_source1_field937 = heap.clone();
+                            {
+                                let source_ml_source1_field938 = false;
+                                {
+                                    let source_ml_source1_field939 = String::new();
+                                    (source_ml_source1_field939, source_ml_source1_field937, source_ml_source1_field938)
+                                }
+                            }
+                        })
+                    } else {
+                        {
+                            let at = self::find_java_script_ordinary_object(match heap.clone() {
+                                self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value940, _) => {
+                                    source_ml_source1_data_property_value940
+                                }
+                            }, next_identity.clone());
+                            {
+                                let parent = self::ml_array::optional_at((match &heap { self::JavaScriptOrdinaryHeap::OrdinaryHeap(source_ml_source1_data_property_value941, _) => source_ml_source1_data_property_value941.as_slice() }), self::ml_array::number_index(at));
+                                if match (parent.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
+                                    self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Return({
+                                        let source_ml_source1_field942 = heap.clone();
+                                        {
+                                            let source_ml_source1_field943 = false;
+                                            {
+                                                let source_ml_source1_field944 = String::from("every ordinary prototype must remain in the global directory");
+                                                (source_ml_source1_field944, source_ml_source1_field942, source_ml_source1_field943)
+                                            }
+                                        }
+                                    })
+                                } else {
+                                    {
+                                        let next_2 = match parent.clone().expect("a proven present value") {
+                                            self::JavaScriptOrdinaryObject::OrdinaryObject(_, source_ml_source1_data_property_value945, _, _, _) => {
+                                                let source_ml_source1_data_property_value945 = *source_ml_source1_data_property_value945;
+                                                source_ml_source1_data_property_value945.clone()
+                                            }
+                                        };
+                                        {
+                                            let depth_2 = depth + 1f64;
+                                            {
+                                                (next, depth) = (next_2, depth_2);
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done
+        };
+    }
 }

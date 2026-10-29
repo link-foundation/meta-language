@@ -53,6 +53,22 @@ use super::source_ml_source1_temporary_read_string_number_decimal_power_loop5;
 use super::source_ml_source1_temporary_read_string_number_exact_mantissa_loop6;
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptPrimitiveConversionCompletion {
+    NormalCompletion(Box<self::JavaScriptSemanticValue>),
+    ThrowCompletion(Box<self::JavaScriptSemanticValue>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum JavaScriptPrimitiveConversionTransition {
+    PrimitiveContinuation(Box<self::JavaScriptPrimitiveConversionState>),
+    PrimitiveCall(Box<self::JavaScriptPrimitiveConversionState>, Box<self::JavaScriptSemanticValue>, Box<self::JavaScriptSemanticValue>, Vec<self::JavaScriptSemanticValue>),
+    PrimitiveCompleted(Box<self::JavaScriptSemanticValue>),
+    PrimitiveThrow(Box<self::JavaScriptSemanticValue>),
+    PrimitiveIntrinsicError(self::ml_string::Text, self::ml_string::Text),
+    PrimitiveInvalid(self::ml_string::Text),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptCallPrimitiveResult {
     PrimitiveValue(Box<self::JavaScriptSemanticValue>),
     PrimitiveInvalid(self::ml_string::Text),

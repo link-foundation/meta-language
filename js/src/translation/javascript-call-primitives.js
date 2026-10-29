@@ -5,7 +5,7 @@ import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,rea
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
 import {executeJavaScriptCallIntegerConversion} from './javascript-call-integer-conversion.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
-import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
+import {replaceUtf16Text,planUtf16TextSubstitution,sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
 /** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
  * {$:'primitiveInvalid',reason:string} | {$:'primitiveError',errorClass:string,reason:string} |
@@ -27,7 +27,7 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
  const unary=['read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer'];
  const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
- const ternary=['slice text','find text','find last text'];
+ const ternary=['slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
  return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
 }
@@ -60,6 +60,7 @@ export function executeJavaScriptCallUnaryNumber(operation,number){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextPrimitive(operation,values){
+ if(operation==='replace text'||operation==='replace all text')return executeJavaScriptCallTextReplacementOperands(values,operation==='replace all text');
  const receiver=values[0]??{$:'undefined'};if(receiver.$!=='text')return {$:'primitiveInvalid',reason:'text primitives require their actual complete UTF16 receiver'};
  const text=receiver.units;
  if(operation==='read text length')return {$:'primitiveValue',value:{$:'number',value:text.length}};
@@ -104,6 +105,40 @@ export function executeJavaScriptCallTextPair(operation,text,values){
   return {$:'primitiveValue',value:{$:'number',value:operation==='find text'?indexUtf16Text(text,needle,third.value):lastIndexUtf16Text(text,needle,third.value)}};
  }
  return {$:'primitiveInvalid',reason:'the text primitive executor needs its actual registered operation'};
+}
+/** Keep the new operand match independent of existing text-search continuations.
+ * @param {JavaScriptSemanticValue[]} values @param {boolean} all @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallTextReplacementOperands(values,all){
+ const text=values[0]??{$:'undefined'},search=values[1]??{$:'undefined'},replacement=values[2]??{$:'undefined'};
+ if(text.$!=='text')return {$:'primitiveInvalid',reason:'text replacement requires its three actual converted UTF16 operands'};
+ if(search.$!=='text')return {$:'primitiveInvalid',reason:'text replacement requires its three actual converted UTF16 operands'};
+ if(replacement.$!=='text')return {$:'primitiveInvalid',reason:'text replacement requires its three actual converted UTF16 operands'};
+ return executeJavaScriptCallTextReplacement(text.units,search.units,replacement.units,all);
+}
+/** Preflight the complete existing substitution algorithm without executing it.
+ * @param {number} length @param {number} search @param {number[]} replacement
+ * @param {boolean} all @returns {string} */
+export function readJavaScriptCallTextReplacementWorkError(length,search,replacement,all){
+ if(length>1048576||search>1048576||replacement.length>4096)return 'text replacement exceeds its explicit input or substitution-plan budget';
+ let matches=search===0?length+1:Math.floor(length/search);
+ if(!all)matches=Math.min(1,matches);
+ if(matches===0)return '';
+ if((length+1)*search>67108864)return 'text replacement exceeds its explicit search work quota';
+ const plan=planUtf16TextSubstitution(replacement);
+ if(matches*(plan.length/3)>67108864)return 'text replacement exceeds its explicit substitution work quota';
+ let width=0;
+ for(let index=0;index<plan.length;index+=3){
+  const kind=plan[index]??0;
+  width+=kind===0?(plan[index+2]??0)-(plan[index+1]??0):kind===1?search:length;
+ }
+ return length+matches*width>1048576?'text replacement exceeds its conservative UTF16 output work bound':'';
+}
+/** Reuse literal GetSubstitution after the independent work/output preflight.
+ * @param {number[]} text @param {number[]} search @param {number[]} replacement
+ * @param {boolean} all @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallTextReplacement(text,search,replacement,all){
+ const error=readJavaScriptCallTextReplacementWorkError(text.length,search.length,replacement,all);
+ return error!==''?{$:'primitiveResourceLimit',reason:error}:{$:'primitiveValue',value:{$:'text',units:replaceUtf16Text(text,search,replacement,all)}};
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallPrimitive(operation,values){

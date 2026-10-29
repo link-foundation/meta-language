@@ -205,20 +205,23 @@ export function planUtf16TextSubstitution(replacement){
  * @param {boolean} all @returns {number[]} */
 export function replaceUtf16Text(text,search,replacement,all){
  const result=[],plan=planUtf16TextSubstitution(replacement);
- let start=0,from=0;
- for(;;){
+ let start=0,from=0,searching=true;
+ while(searching){
   const found=indexUtf16Text(text,search,from);
-  if(found<0)break;
-  for(let at=start;at<found;at+=1)result.push(text[at]??0);
-  for(let instruction=0;instruction<plan.length;instruction+=3){
-   const kind=plan[instruction]??0;
-   const first=kind===0?(plan[instruction+1]??0):kind===2?0:kind===1?found:found+search.length;
-   const last=kind===0?(plan[instruction+2]??0):kind===2?found:kind===1?found+search.length:text.length;
-   for(let at=first;at<last;at+=1)result.push(kind===0?(replacement[at]??0):(text[at]??0));
+  if(found<0)searching=false;
+  else{
+   for(let at=start;at<found;at+=1)result.push(text[at]??0);
+   for(let instruction=0;instruction<plan.length;instruction+=3){
+    const kind=plan[instruction]??0;
+    const first=kind===0?(plan[instruction+1]??0):kind===2?0:kind===1?found:found+search.length;
+    const last=kind===0?(plan[instruction+2]??0):kind===2?found:kind===1?found+search.length:text.length;
+    const source=kind===0?replacement:text;
+    for(let at=first;at<last;at+=1)result.push(source[at]??0);
+   }
+   start=found+search.length;
+   searching=all&&!(search.length===0&&found===text.length);
+   from=start+(search.length===0?1:0);
   }
-  start=found+search.length;
-  if(!all||search.length===0&&found===text.length)break;
-  from=start+(search.length===0?1:0);
  }
  for(let at=start;at<text.length;at+=1)result.push(text[at]??0);
  return result;

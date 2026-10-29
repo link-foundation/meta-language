@@ -10,9 +10,12 @@ use super::MlSource1TemporaryExecuteJavaScriptCallNumericPrimitiveLoop117Result;
 use super::MlSource1TemporaryIndexUtf16TextLoop97Result;
 use super::MlSource1TemporaryLastIndexUtf16TextLoop98Result;
 use super::MlSource1TemporaryMatchUtf16TextLoop96Result;
+use super::MlSource1TemporaryPlanUtf16TextSubstitutionLoop110Result;
+use super::MlSource1TemporaryReplaceUtf16TextLoop111Result;
 use super::continue_java_script_primitive_conversion;
 use super::convert_java_script_big_integer_number;
 use super::convert_java_script_string_number_units;
+use super::execute_java_script_call_unary_number;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
@@ -30,6 +33,9 @@ use super::source_ml_source1_temporary_execute_java_script_call_numeric_primitiv
 use super::source_ml_source1_temporary_index_utf16_text_loop97;
 use super::source_ml_source1_temporary_last_index_utf16_text_loop98;
 use super::source_ml_source1_temporary_match_utf16_text_loop96;
+use super::source_ml_source1_temporary_plan_utf16_text_substitution_loop110;
+use super::source_ml_source1_temporary_replace_utf16_text_loop111;
+use super::source_ml_source1_temporary_replace_utf16_text_loop112;
 use super::source_ml_source1_temporary_slice_utf16_text_loop92;
 use super::source_ml_source1_temporary_trim_utf16_text_loop103;
 use super::source_ml_source1_temporary_trim_utf16_text_loop104;
@@ -726,6 +732,62 @@ pub fn character_units_utf16_text(values: Vec<f64>) -> Vec<f64> {
     }
 }
 
+pub fn plan_utf16_text_substitution(replacement: Vec<f64>) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let start = 0f64;
+            {
+                let at = 0f64;
+                {
+                    let source_ml_source2_s963 = self::source_ml_source1_temporary_plan_utf16_text_substitution_loop110(replacement.clone(), result, start, at);
+                    match source_ml_source2_s963.clone() {
+                        self::MlSource1TemporaryPlanUtf16TextSubstitutionLoop110Result::MlSource1TemporaryPlanUtf16TextSubstitutionLoop110Done(result_2, start_2) => {
+                            {
+                                let result_4 = if (start_2 < ((replacement.len() as f64))) {
+                                    {
+                                        let result_3 = { let (ml_append_right, ml_append_left) = (vec![0f64, start_2, (replacement.len() as f64)], result_2); self::ml_array::append(ml_append_left, ml_append_right) };
+                                        result_3
+                                    }
+                                } else {
+                                    result_2
+                                };
+                                result_4
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn replace_utf16_text(text: Vec<f64>, search: Vec<f64>, replacement: Vec<f64>, all: bool) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let plan = self::plan_utf16_text_substitution(replacement.clone());
+            {
+                let start = 0f64;
+                {
+                    let from = 0f64;
+                    {
+                        let source_ml_source2_s964 = self::source_ml_source1_temporary_replace_utf16_text_loop111(text.clone(), search, replacement, all, result, plan, start, from, true);
+                        match source_ml_source2_s964.clone() {
+                            self::MlSource1TemporaryReplaceUtf16TextLoop111Result::MlSource1TemporaryReplaceUtf16TextLoop111Done(result_2, start_2) => {
+                                {
+                                    let result_3 = self::source_ml_source1_temporary_replace_utf16_text_loop112(text, result_2, start_2);
+                                    result_3
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn test_java_script_call_unary_number_operation(operation: &self::ml_string::Text) -> bool {
@@ -769,7 +831,7 @@ pub fn read_java_script_call_primitive_arity_error(operation: &self::ml_string::
                                 {
                                     let binary = vec![self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 116, 101, 120, 116, 32, 99, 111, 100, 101, 32, 112, 111, 105, 110, 116]), self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 116, 101, 120, 116, 32, 99, 104, 97, 114, 97, 99, 116, 101, 114]), self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 114, 101, 108, 97, 116, 105, 118, 101, 32, 116, 101, 120, 116, 32, 99, 104, 97, 114, 97, 99, 116, 101, 114]), self::ml_string::Text::from_units(vec![99, 111, 110, 99, 97, 116, 101, 110, 97, 116, 101, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![99, 111, 109, 112, 97, 114, 101, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 116, 101, 120, 116, 32, 112, 114, 101, 102, 105, 120]), self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 116, 101, 120, 116, 32, 115, 117, 102, 102, 105, 120]), self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 116, 101, 120, 116, 32, 105, 110, 99, 108, 117, 115, 105, 111, 110])];
                                     {
-                                        let ternary = vec![self::ml_string::Text::from_units(vec![115, 108, 105, 99, 101, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![102, 105, 110, 100, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![102, 105, 110, 100, 32, 108, 97, 115, 116, 32, 116, 101, 120, 116])];
+                                        let ternary = vec![self::ml_string::Text::from_units(vec![115, 108, 105, 99, 101, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![102, 105, 110, 100, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![102, 105, 110, 100, 32, 108, 97, 115, 116, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![114, 101, 112, 108, 97, 99, 101, 32, 116, 101, 120, 116]), self::ml_string::Text::from_units(vec![114, 101, 112, 108, 97, 99, 101, 32, 97, 108, 108, 32, 116, 101, 120, 116])];
                                         {
                                             let arity = if self::ml_array::includes(&unary, operation, 0f64, false, |a, b| a == b) {
                                                 1f64
@@ -868,55 +930,6 @@ pub fn execute_java_script_call_numeric_primitive(operation: &self::ml_string::T
                         self::MlSource1TemporaryExecuteJavaScriptCallNumericPrimitiveLoop117Result::MlSource1TemporaryExecuteJavaScriptCallNumericPrimitiveLoop117Return(source_ml_source1_temporary_result117) => {
                             let source_ml_source1_temporary_result117 = *source_ml_source1_temporary_result117;
                             source_ml_source1_temporary_result117.clone()
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn execute_java_script_call_unary_number(operation: &self::ml_string::Text, number: f64) -> self::JavaScriptCallPrimitiveResult {
-    if ((*operation) == (self::ml_string::Text::from_units(vec![110, 101, 103, 97, 116, 101, 32, 110, 117, 109, 98, 101, 114]))) {
-        self::JavaScriptCallPrimitiveResult::PrimitiveValue(Box::new(self::JavaScriptSemanticValue::Number((-number))))
-    } else {
-        if ((*operation) == (self::ml_string::Text::from_units(vec![116, 114, 117, 110, 99, 97, 116, 101, 32, 110, 117, 109, 98, 101, 114]))) {
-            self::JavaScriptCallPrimitiveResult::PrimitiveValue(Box::new(self::JavaScriptSemanticValue::Number(number.trunc())))
-        } else {
-            if ((*operation) == (self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 110, 117, 109, 98, 101, 114]))) {
-                self::JavaScriptCallPrimitiveResult::PrimitiveValue(Box::new(self::JavaScriptSemanticValue::Boolean(self::ml_math::is_integer(number))))
-            } else {
-                if ((*operation) == (self::ml_string::Text::from_units(vec![116, 101, 115, 116, 32, 115, 97, 102, 101, 32, 105, 110, 116, 101, 103, 101, 114, 32, 110, 117, 109, 98, 101, 114]))) {
-                    self::JavaScriptCallPrimitiveResult::PrimitiveValue(Box::new(self::JavaScriptSemanticValue::Boolean(self::ml_math::is_safe_integer(number))))
-                } else {
-                    if !(self::test_java_script_call_unary_number_operation(operation)) {
-                        self::JavaScriptCallPrimitiveResult::PrimitiveInvalid(self::ml_string::Text::from_units(vec![117, 110, 97, 114, 121, 32, 110, 117, 109, 101, 114, 105, 99, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 115, 32, 114, 101, 113, 117, 105, 114, 101, 32, 116, 104, 101, 105, 114, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 103, 105, 115, 116, 101, 114, 101, 100, 32, 111, 112, 101, 114, 97, 116, 105, 111, 110]))
-                    } else {
-                        {
-                            let result = if ((*operation) == (self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 97, 98, 115, 111, 108, 117, 116, 101, 32, 110, 117, 109, 98, 101, 114]))) {
-                                number.abs()
-                            } else {
-                                if ((*operation) == (self::ml_string::Text::from_units(vec![102, 108, 111, 111, 114, 32, 110, 117, 109, 98, 101, 114]))) {
-                                    number.floor()
-                                } else {
-                                    if ((*operation) == (self::ml_string::Text::from_units(vec![99, 101, 105, 108, 32, 110, 117, 109, 98, 101, 114]))) {
-                                        number.ceil()
-                                    } else {
-                                        if ((*operation) == (self::ml_string::Text::from_units(vec![114, 111, 117, 110, 100, 32, 110, 117, 109, 98, 101, 114]))) {
-                                            self::ml_math::round(number)
-                                        } else {
-                                            if ((*operation) == (self::ml_string::Text::from_units(vec![114, 101, 97, 100, 32, 110, 117, 109, 98, 101, 114, 32, 115, 105, 103, 110]))) {
-                                                self::ml_math::sign(number)
-                                            } else {
-                                                number.sqrt()
-                                            }
-                                        }
-                                    }
-                                }
-                            };
-                            self::JavaScriptCallPrimitiveResult::PrimitiveValue(Box::new(self::JavaScriptSemanticValue::Number(result)))
                         }
                     }
                 }

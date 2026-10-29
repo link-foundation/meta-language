@@ -786,23 +786,27 @@ pub fn replace_utf16_text(
                 {
                     let from = 0f64;
                     {
-                        let source_ml_source1_s10 =
-                            self::source_ml_temporary_replace_utf16_text_loop24(
-                                text,
-                                search,
-                                replacement,
-                                all,
-                                result,
-                                &(plan),
-                                start,
-                                from,
-                            );
-                        match source_ml_source1_s10 {
-                            self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_2, start_2) => {
-                                {
-                                    let at = start_2;
+                        let searching = true;
+                        {
+                            let source_ml_source1_s10 =
+                                self::source_ml_temporary_replace_utf16_text_loop24(
+                                    text,
+                                    search,
+                                    replacement,
+                                    all,
+                                    result,
+                                    &(plan),
+                                    start,
+                                    from,
+                                    searching,
+                                );
+                            match source_ml_source1_s10 {
+                                self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_2, start_2) => {
                                     {
-                                        self::source_ml_temporary_replace_utf16_text_loop25(text, result_2, at)
+                                        let at = start_2;
+                                        {
+                                            self::source_ml_temporary_replace_utf16_text_loop25(text, result_2, at)
+                                        }
                                     }
                                 }
                             }

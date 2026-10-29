@@ -1,10 +1,6 @@
 // Generated from actual checked source function signatures and target mappings.
 // UTF8 source/schema fragments only; runtime text retains its UTF16 interface.
 use crate::translation::record_write_rules as implementation;
-pub(crate) fn accept_record_field_assignment_operator(source_argument_0: &str) -> bool {
-    let native_argument_0 = implementation::ml_string::Text::from_text(source_argument_0);
-    implementation::accept_record_field_assignment_operator(&native_argument_0)
-}
 pub(crate) fn read_record_field_write_identity(
     source_argument_0: &str,
     source_argument_1: &str,
@@ -63,28 +59,6 @@ pub(crate) fn accept_linked_record_field_write(
         &native_argument_2,
         source_argument_3,
     )
-}
-pub(crate) fn read_record_field_write_refusal(
-    source_argument_0: &str,
-    source_argument_1: &str,
-    source_argument_2: bool,
-    source_argument_3: bool,
-    source_argument_4: bool,
-    source_argument_5: &str,
-) -> String {
-    let native_argument_0 = implementation::ml_string::Text::from_text(source_argument_0);
-    let native_argument_1 = implementation::ml_string::Text::from_text(source_argument_1);
-    let native_argument_5 = implementation::ml_string::Text::from_text(source_argument_5);
-    let value = implementation::read_record_field_write_refusal(
-        &native_argument_0,
-        &native_argument_1,
-        source_argument_2,
-        source_argument_3,
-        source_argument_4,
-        &native_argument_5,
-    );
-    String::from_utf16(&value.0)
-        .expect("a native source operation must preserve Unicode scalar spelling")
 }
 pub(crate) fn read_record_compound_binary_operation(
     source_argument_0: &str,

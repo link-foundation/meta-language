@@ -43,6 +43,3 @@ pub use part_9::*;
 #[path = "javascript_descriptor_conversion/part_10.rs"]
 mod part_10;
 pub use part_10::*;
-#[path = "javascript_descriptor_conversion/part_11.rs"]
-mod part_11;
-pub use part_11::*;

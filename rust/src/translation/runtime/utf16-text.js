@@ -349,7 +349,8 @@ function replaceUtf16Text(text, search, replacement, all) {
   const plan = planUtf16TextSubstitution(replacement);
   const start = 0;
   const from = 0;
-  const source_ml_source1_s10 = source_ml_temporary_replaceUtf16Text_loop24(text, search, replacement, all, result, plan, start, from);
+  const searching = true;
+  const source_ml_source1_s10 = source_ml_temporary_replaceUtf16Text_loop24(text, search, replacement, all, result, plan, start, from, searching);
   switch (source_ml_source1_s10.$) {
     case "ml_temporary_replaceUtf16Text_loop24_done": {
       const result_2 = source_ml_source1_s10["result"];
@@ -848,12 +849,12 @@ function source_ml_temporary_replaceUtf16Text_loop26(text, result, found, at) {
   }
 }
 
-function source_ml_temporary_replaceUtf16Text_loop28(text, replacement, result, kind, last, at) {
+function source_ml_temporary_replaceUtf16Text_loop28(result, last, source, at) {
   for (;;) {
     if ((at < last)) {
-      const result_2 = [...result, ...[((kind === 0) ? ((replacement)[at] ?? 0) : ((text)[at] ?? 0))]];
+      const result_2 = [...result, ...[((source)[at] ?? 0)]];
       const at_2 = (at + 1);
-      [text, replacement, result, kind, last, at] = [text, replacement, result_2, kind, last, at_2];
+      [result, last, source, at] = [result_2, last, source, at_2];
       continue;
     } else {
       return result;
@@ -867,8 +868,9 @@ function source_ml_temporary_replaceUtf16Text_loop27(text, search, replacement, 
       const kind = ((plan)[instruction] ?? 0);
       const first = ((kind === 0) ? ((plan)[(instruction + 1)] ?? 0) : ((kind === 2) ? 0 : ((kind === 1) ? found : (found + search.length))));
       const last = ((kind === 0) ? ((plan)[(instruction + 2)] ?? 0) : ((kind === 2) ? found : ((kind === 1) ? (found + search.length) : text.length)));
+      const source = ((kind === 0) ? replacement : text);
       const at = first;
-      const result_2 = source_ml_temporary_replaceUtf16Text_loop28(text, replacement, result, kind, last, at);
+      const result_2 = source_ml_temporary_replaceUtf16Text_loop28(result, last, source, at);
       const instruction_2 = (instruction + 3);
       [text, search, replacement, result, plan, found, instruction] = [text, search, replacement, result_2, plan, found, instruction_2];
       continue;
@@ -878,24 +880,27 @@ function source_ml_temporary_replaceUtf16Text_loop27(text, search, replacement, 
   }
 }
 
-function source_ml_temporary_replaceUtf16Text_loop24(text, search, replacement, all, result, plan, start, from) {
+function source_ml_temporary_replaceUtf16Text_loop24(text, search, replacement, all, result, plan, start, from, searching) {
   for (;;) {
-    const found = indexUtf16Text(text, search, from);
-    if ((found < 0)) {
-      return ({ $: "ml_temporary_replaceUtf16Text_loop24_done", ["result"]: result, ["start"]: start });
-    } else {
-      const at = start;
-      const result_2 = source_ml_temporary_replaceUtf16Text_loop26(text, result, found, at);
-      const instruction = 0;
-      const result_3 = source_ml_temporary_replaceUtf16Text_loop27(text, search, replacement, result_2, plan, found, instruction);
-      const start_2 = (found + search.length);
-      if ((!all || ((search.length === 0) && (found === text.length)))) {
-        return ({ $: "ml_temporary_replaceUtf16Text_loop24_done", ["result"]: result_3, ["start"]: start_2 });
+    if (searching) {
+      const found = indexUtf16Text(text, search, from);
+      if ((found < 0)) {
+        const searching_2 = false;
+        [text, search, replacement, all, result, plan, start, from, searching] = [text, search, replacement, all, result, plan, start, from, searching_2];
+        continue;
       } else {
+        const at = start;
+        const result_2 = source_ml_temporary_replaceUtf16Text_loop26(text, result, found, at);
+        const instruction = 0;
+        const result_3 = source_ml_temporary_replaceUtf16Text_loop27(text, search, replacement, result_2, plan, found, instruction);
+        const start_2 = (found + search.length);
+        const searching_3 = (all && !((search.length === 0) && (found === text.length)));
         const from_2 = (start_2 + ((search.length === 0) ? 1 : 0));
-        [text, search, replacement, all, result, plan, start, from] = [text, search, replacement, all, result_3, plan, start_2, from_2];
+        [text, search, replacement, all, result, plan, start, from, searching] = [text, search, replacement, all, result_3, plan, start_2, from_2, searching_3];
         continue;
       }
+    } else {
+      return ({ $: "ml_temporary_replaceUtf16Text_loop24_done", ["result"]: result, ["start"]: start });
     }
   }
 }

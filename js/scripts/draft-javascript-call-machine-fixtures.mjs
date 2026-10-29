@@ -143,6 +143,15 @@ for(const [original,name,result]of integerConversions){
 }
 add('implicit object BigInt rejects a Number only after actual method effects',heap([entity('1',[property('valueOf',data(object('5',true)))])]),convertObject('coerce primitive integer'),[methodFive],"ctx=>BigInt.asIntN(64,ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Number value to a BigInt'},[methodFiveOriginal]);
 for(const [input,expected]of [['7ff8000000000042','fff8000000000042'],['fff8000000000042','7ff8000000000042']])add('scalar Number negation retains quiet NaN bits '+input,heap(),fn('10',3,[constant(1,{$:'number',bits:input}),{$:'primitive',destination:2,operation:'negate number',arguments:[1]},ret(2)]),[],"ctx=>{const view=new DataView(new ArrayBuffer(8));view.setBigUint64(0,0x"+input+"n);return -view.getFloat64(0);}",{kind:'value',value:{$:'number',bits:expected}});
+for(const [name,operation,value,search,replacement,result] of [
+ ['literal first substitution','replace text','ababa','b','$`','aaaba'],
+ ['literal all substitution','replace all text','ababa','b',"$'",'aabaaaa'],
+ ['literal empty code unit boundaries','replace all text','😀','','|','|\uD83D|\uDE00|'],
+ ['literal isolated replacement units','replace text','a','a','\uD800\0\uDC00','\uD800\0\uDC00']
+])add(name,heap(),fn('10',5,[constant(1,text(value)),constant(2,text(search)),constant(3,text(replacement)),
+ {$:'primitive',destination:4,operation,arguments:[1,2,3]},ret(4)]),[],
+ 'ctx=>'+JSON.stringify(value)+'.'+(operation==='replace text'?'replace':'replaceAll')+'('+JSON.stringify(search)+','+JSON.stringify(replacement)+')',
+ {kind:'value',value:text(result)});
 const base=programs[0];
 const invalid=[{name:'unknown source realm',program:{...base.program,realms:[]},reason:'call functions require their actual declared source realm'},
  {name:'out of range register destination',program:{...base.program,functions:[{...base.program.functions[0],instructions:[constant(3,undef),ret(0)]}]},reason:'call instructions require actual in-range register coordinates'},

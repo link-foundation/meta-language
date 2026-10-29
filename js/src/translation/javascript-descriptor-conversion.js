@@ -74,11 +74,16 @@ export function applyJavaScriptDescriptorField(state,value){
   if((state.next===4||state.next===5)&&!testJavaScriptSemanticAccessor(value))
     return {$:'descriptorIntrinsicError',errorClass:'TypeError',reason:'a descriptor accessor must be callable or undefined'};
   const before=state.descriptor;
-  const descriptor=state.next===0?{...before,enumerablePresent:true,enumerable:convertJavaScriptSemanticBoolean(value)}:
-    state.next===1?{...before,configurablePresent:true,configurable:convertJavaScriptSemanticBoolean(value)}:
-    state.next===2?{...before,valuePresent:true,value}:
-    state.next===3?{...before,writablePresent:true,writable:convertJavaScriptSemanticBoolean(value)}:
-    state.next===4?{...before,getterPresent:true,getter:value}:{...before,setterPresent:true,setter:value};
+  const enumerable=state.next===0,configurable=state.next===1,dataValue=state.next===2,writable=state.next===3,getter=state.next===4;
+  const setter=!(enumerable||configurable||dataValue||writable||getter);
+  const flag=enumerable||configurable||writable?convertJavaScriptSemanticBoolean(value):false;
+  const descriptor={...before,
+    enumerablePresent:enumerable||before.enumerablePresent,enumerable:enumerable?flag:before.enumerable,
+    configurablePresent:configurable||before.configurablePresent,configurable:configurable?flag:before.configurable,
+    valuePresent:dataValue||before.valuePresent,value:dataValue?value:before.value,
+    writablePresent:writable||before.writablePresent,writable:writable?flag:before.writable,
+    getterPresent:getter||before.getterPresent,getter:getter?value:before.getter,
+    setterPresent:setter||before.setterPresent,setter:setter?value:before.setter};
   return {$:'descriptorContinuation',state:{$:'descriptorConversion',receiver:state.receiver,next:state.next+1,descriptor,pending:false}};
 }
 

@@ -8,6 +8,40 @@ fn wire_number(value: f64) -> Data {
     }
     Data::Number(value.to_string().parse().expect("finite model Number"))
 }
+fn wire_text_units(value: &Data) -> Vec<u16> {
+    let units = if let Some(text) = value.as_str() {
+        text.encode_utf16().collect::<Vec<u16>>()
+    } else {
+        let object = value.as_object().expect("qualified model text units");
+        assert_eq!(object.len(), 2, "exact model text keys");
+        assert_eq!(
+            object.get("textEncoding").and_then(Data::as_str),
+            Some("UTF16 code units 1"),
+            "model text encoding"
+        );
+        let input = object
+            .get("units")
+            .and_then(Data::as_array)
+            .expect("model text units");
+        assert!(input.len() <= 16777216, "model text unit budget");
+        input
+            .iter()
+            .map(|unit| {
+                u16::try_from(unit.as_u64().expect("model UTF16 unit"))
+                    .expect("model UTF16 unit range")
+            })
+            .collect()
+    };
+    assert!(units.len() <= 16777216, "model text unit budget");
+    units
+}
+fn wire_text(units: &[u16]) -> Data {
+    assert!(units.len() <= 16777216, "model text unit budget");
+    match String::from_utf16(units) {
+        Ok(text) => Data::String(text),
+        Err(_) => json!({"textEncoding":"UTF16 code units 1","units":units}),
+    }
+}
 pub(super) fn decode_java_script_ordinary_heap(data: &Data) -> native::JavaScriptOrdinaryHeap {
     match data["$"].as_str().expect("model constructor") {
         "ordinaryHeap" => native::JavaScriptOrdinaryHeap::OrdinaryHeap(
@@ -225,8 +259,8 @@ pub(super) fn decode_java_script_primitive_conversion_state(
         "primitiveConversion" => native::JavaScriptPrimitiveConversionState::PrimitiveConversion(
             Box::new(decode_java_script_semantic_value(&data["receiver"])),
             Box::new(decode_java_script_semantic_value(&data["exoticKey"])),
-            native::ml_string::Text::from_text(data["hint"].as_str().expect("model text")),
-            native::ml_string::Text::from_text(data["phase"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["hint"])),
+            native::ml_string::Text::from_units(wire_text_units(&data["phase"])),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -241,7 +275,7 @@ pub(super) fn encode_java_script_primitive_conversion_state(
             wire_field_2,
             wire_field_3,
         ) => {
-            json!({"$":"primitiveConversion","receiver":encode_java_script_semantic_value(wire_field_0),"exoticKey":encode_java_script_semantic_value(wire_field_1),"hint":Data::String(String::from_utf16(&wire_field_2.0).expect("schema text must preserve all UTF16 units")),"phase":Data::String(String::from_utf16(&wire_field_3.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"primitiveConversion","receiver":encode_java_script_semantic_value(wire_field_0),"exoticKey":encode_java_script_semantic_value(wire_field_1),"hint":wire_text(&wire_field_2.0),"phase":wire_text(&wire_field_3.0)})
         }
     }
 }
@@ -359,7 +393,7 @@ pub(super) fn decode_java_script_property_definition_transition(
                     .expect("model array")
                     .iter()
                     .map(|wire_value| {
-                        native::ml_string::Text::from_text(wire_value.as_str().expect("model text"))
+                        native::ml_string::Text::from_units(wire_text_units(&wire_value))
                     })
                     .collect(),
             )
@@ -369,14 +403,12 @@ pub(super) fn decode_java_script_property_definition_transition(
         ),
         "definitionIntrinsicError" => {
             native::JavaScriptPropertyDefinitionTransition::DefinitionIntrinsicError(
-                native::ml_string::Text::from_text(
-                    data["errorClass"].as_str().expect("model text"),
-                ),
-                native::ml_string::Text::from_text(data["reason"].as_str().expect("model text")),
+                native::ml_string::Text::from_units(wire_text_units(&data["errorClass"])),
+                native::ml_string::Text::from_units(wire_text_units(&data["reason"])),
             )
         }
         "definitionInvalid" => native::JavaScriptPropertyDefinitionTransition::DefinitionInvalid(
-            native::ml_string::Text::from_text(data["reason"].as_str().expect("model text")),
+            native::ml_string::Text::from_units(wire_text_units(&data["reason"])),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -401,7 +433,7 @@ pub(super) fn encode_java_script_property_definition_transition(
             wire_field_1,
             wire_field_2,
         ) => {
-            json!({"$":"definitionCompleted","heap":encode_java_script_ordinary_heap(wire_field_0),"value":encode_java_script_semantic_value(wire_field_1),"writes":Data::Array(wire_field_2.iter().map(|wire_value|Data::String(String::from_utf16(&wire_value.0).expect("schema text must preserve all UTF16 units"))).collect())})
+            json!({"$":"definitionCompleted","heap":encode_java_script_ordinary_heap(wire_field_0),"value":encode_java_script_semantic_value(wire_field_1),"writes":Data::Array(wire_field_2.iter().map(|wire_value|wire_text(&wire_value.0)).collect())})
         }
         native::JavaScriptPropertyDefinitionTransition::DefinitionThrow(wire_field_0) => {
             json!({"$":"definitionThrow","value":encode_java_script_semantic_value(wire_field_0)})
@@ -410,10 +442,10 @@ pub(super) fn encode_java_script_property_definition_transition(
             wire_field_0,
             wire_field_1,
         ) => {
-            json!({"$":"definitionIntrinsicError","errorClass":Data::String(String::from_utf16(&wire_field_0.0).expect("schema text must preserve all UTF16 units")),"reason":Data::String(String::from_utf16(&wire_field_1.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"definitionIntrinsicError","errorClass":wire_text(&wire_field_0.0),"reason":wire_text(&wire_field_1.0)})
         }
         native::JavaScriptPropertyDefinitionTransition::DefinitionInvalid(wire_field_0) => {
-            json!({"$":"definitionInvalid","reason":Data::String(String::from_utf16(&wire_field_0.0).expect("schema text must preserve all UTF16 units"))})
+            json!({"$":"definitionInvalid","reason":wire_text(&wire_field_0.0)})
         }
     }
 }

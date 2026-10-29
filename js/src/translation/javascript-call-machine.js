@@ -86,6 +86,12 @@ export function readJavaScriptCallProgramError(program,heap){
 export function replaceJavaScriptCallFrame(heap,frames,frame){return {$:'callMachine',heap,frames:frames.map((entry,index)=>index===frames.length-1?frame:entry)};}
 /** @param {JavaScriptCallFrame} frame @param {number} destination @param {JavaScriptSemanticValue} value @returns {JavaScriptCallFrame} */
 export function writeJavaScriptCallRegister(frame,destination,value){return {...frame,registers:frame.registers.map((entry,index)=>index===destination?value:entry),pending:{$:'callIdle'}};}
+/** Reuse one complete frame update for all suspended operation variants.
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallPending} pending
+ * @returns {JavaScriptCallFrame} */
+export function replaceJavaScriptCallPending(frame,pending){return {...frame,pending};}
+/** @param {JavaScriptCallFrame} frame @returns {JavaScriptCallFrame} */
+export function advanceJavaScriptCallFrame(frame){return {...frame,position:frame.position+1};}
 /** @param {JavaScriptCallFunction} fn @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue[]} arguments_ @returns {JavaScriptCallFrame} */
 export function createJavaScriptCallFrame(fn,receiver,arguments_){
   let registers=[];
@@ -159,21 +165,38 @@ export function readJavaScriptCallMachineError(program,machine){
     const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return 'every call frame retains its actual registered function';
     if(frame.registers.length!==fn.registers||!testJavaScriptCallCoordinate(frame.position,fn.instructions.length+1))return 'call frames retain their complete register and instruction coordinates';
     slots+=frame.registers.length;argumentSlots+=frame.arguments.length;if(slots>1048576||argumentSlots>1048576||frame.handlers.length>1024)return 'call frame storage exceeds its explicit resource budget';
-    for(const value of frame.registers)if(readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return 'call registers belong to the latest global context';
-    for(const value of frame.arguments)if(readJavaScriptOrdinaryValueError(machine.heap,value)!=='')return 'call arguments belong to the latest global context';
+    const frameError=readJavaScriptCallFrameError(program,machine.heap,frame,fn,index<machine.frames.length-1);
+    if(frameError!=='')return frameError;
+  }
+  return '';
+}
+
+/** Validate all destination-bearing variants before their independent state checks.
+ * Keeping this decision separate avoids copying later continuations per variant.
+ * @param {JavaScriptCallPending} pending @param {number} registers @returns {boolean} */
+export function testJavaScriptCallPendingDestination(pending,registers){
+ switch(pending.$){
+  case 'waitCall':case 'waitGet':case 'waitSet':case 'waitKey':case 'waitDefinition':case 'waitNumber':case 'waitText':
+   return testJavaScriptCallCoordinate(pending.destination,registers);
+  case 'callIdle':case 'waitError':case 'waitSourceError':return true;
+ }
+}
+/** Complete per-frame validation, shared outside the stack-accounting loop.
+ * Caller retains coordinate/storage checks before this actual frame traversal.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFrame} frame @param {JavaScriptCallFunction} fn
+ * @param {boolean} suspended @returns {string} */
+export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
+    for(const value of frame.registers)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call registers belong to the latest global context';
+    for(const value of frame.arguments)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call arguments belong to the latest global context';
     for(const handler of frame.handlers)if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';
     const pending=frame.pending;
-    switch(pending.$){
-      case 'waitCall':case 'waitGet':case 'waitSet':case 'waitKey':case 'waitDefinition':case 'waitNumber':case 'waitText':
-        if(!testJavaScriptCallCoordinate(pending.destination,fn.registers))return 'pending calls retain their actual destination register';
-        break;
-      case 'callIdle':case 'waitError':case 'waitSourceError':break;
-    }
+    if(!testJavaScriptCallPendingDestination(pending,fn.registers))return 'pending calls retain their actual destination register';
     switch(pending.$){
       case 'waitError':if(!program.realms.includes(pending.realm))return 'pending Error allocation retains its actual intrinsic realm';break;
       case 'waitSourceError':{
         if(!program.realms.includes(pending.realm)||fn.realm!==pending.realm)return 'pending source Error allocation retains its actual source realm';
-        if(pending.message.$!=='text'||readJavaScriptOrdinaryValueError(machine.heap,pending.message)!==''||typeof pending.messagePresent!=='boolean')return 'pending source Error retains exact UTF16 message and Boolean presence';
+        if(pending.message.$!=='text'||readJavaScriptOrdinaryValueError(heap,pending.message)!==''||typeof pending.messagePresent!=='boolean')return 'pending source Error retains exact UTF16 message and Boolean presence';
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction===undefined)return 'pending source Error retains its actual source instruction and arguments';
         switch(instruction.$){
@@ -194,9 +217,9 @@ export function readJavaScriptCallMachineError(program,machine){
       case 'waitNumber':{
         if(!program.realms.includes(pending.realm))return 'pending number conversion retains its actual intrinsic realm';
         const numberState=pending.state;
-        const stateError=readJavaScriptNumberCallStateError(machine.heap,numberState);if(stateError!=='')return stateError;
+        const stateError=readJavaScriptNumberCallStateError(heap,numberState);if(stateError!=='')return stateError;
         if(readJavaScriptNumberCallSourceOperation(fn,frame,pending.destination,pending.realm,program.exoticKey,numberState)==='')return 'pending number conversion retains its actual source instruction, receiver, Symbol and realm';
-        if(index<machine.frames.length-1){
+        if(suspended){
           switch(numberState.$){
             case 'numberPrimitiveValue':return 'a completed numeric primitive cannot have a suspended child call';
             case 'numberProtocolState':break;
@@ -207,9 +230,9 @@ export function readJavaScriptCallMachineError(program,machine){
       case 'waitText':{
         if(!program.realms.includes(pending.realm))return 'pending text conversion retains its actual intrinsic realm';
         const textState=pending.state;
-        const stateError=readJavaScriptTextCallStateError(machine.heap,textState);if(stateError!=='')return stateError;
+        const stateError=readJavaScriptTextCallStateError(heap,textState);if(stateError!=='')return stateError;
         if(readJavaScriptTextCallSourceOperation(fn,frame,pending.destination,pending.realm,program.exoticKey,textState)==='')return 'pending text conversion retains its actual source instruction, receiver, Symbol and realm';
-        if(index<machine.frames.length-1){
+        if(suspended){
           switch(textState.$){
             case 'textPrimitiveValue':return 'a completed string primitive cannot have a suspended child call';
             case 'textProtocolState':break;
@@ -219,8 +242,7 @@ export function readJavaScriptCallMachineError(program,machine){
       }
       default:break;
     }
-    if(index<machine.frames.length-1&&(pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'))return 'a suspended parent frame retains its actual pending call';
-  }
+    if(suspended&&(pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'))return 'a suspended parent frame retains its actual pending call';
   return '';
 }
 
@@ -268,7 +290,7 @@ export function throwJavaScriptCallValue(machine,value){
 /** @param {JavaScriptCallMachine} machine @param {bigint} realm @param {string} errorClass @param {string} reason @returns {JavaScriptCallMachineTransition} */
 export function requestJavaScriptCallError(machine,realm,errorClass,reason){
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error allocation requires its actual active frame'};
-  const next=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitError',realm,errorClass,reason}});
+  const next=replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitError',realm,errorClass,reason}));
   return {$:'machineAllocateError',machine:next,realm,errorClass,reason};
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
@@ -290,8 +312,8 @@ export function pushJavaScriptCall(program,machine,callee,receiver,arguments_){
 export function acceptJavaScriptCallKey(program,machine,destination,realm,transition){
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'key conversion needs its actual active frame'};
   switch(transition.$){
-    case 'propertyKeyContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitKey',destination,realm,state:transition.state}})};
-    case 'propertyKeyCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitKey',destination,realm,state:transition.state}}),transition.callee,transition.receiver,transition.arguments);
+    case 'propertyKeyContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitKey',destination,realm,state:transition.state}))};
+    case 'propertyKeyCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitKey',destination,realm,state:transition.state})),transition.callee,transition.receiver,transition.arguments);
     case 'propertyKeyCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,transition.key))};
     case 'propertyKeyThrow':return throwJavaScriptCallValue(machine,transition.value);
     case 'propertyKeyIntrinsicError':return requestJavaScriptCallError(machine,realm,transition.errorClass,transition.reason);
@@ -303,8 +325,8 @@ export function acceptJavaScriptCallKey(program,machine,destination,realm,transi
 export function acceptJavaScriptCallDefinition(program,machine,destination,realm,transition){
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'property definition needs its actual active frame'};
   switch(transition.$){
-    case 'definitionContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitDefinition',destination,realm,state:transition.state}})};
-    case 'definitionCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitDefinition',destination,realm,state:transition.state}}),transition.callee,transition.receiver,transition.arguments);
+    case 'definitionContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state}))};
+    case 'definitionCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state})),transition.callee,transition.receiver,transition.arguments);
     case 'definitionCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,transition.value))};
     case 'definitionThrow':return throwJavaScriptCallValue(machine,transition.value);
     case 'definitionIntrinsicError':return requestJavaScriptCallError(machine,realm,transition.errorClass,transition.reason);
@@ -317,13 +339,13 @@ export function acceptJavaScriptCallDefinition(program,machine,destination,realm
 export function acceptJavaScriptCallNumber(program,machine,destination,realm,transition){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual active frame'};
  switch(transition.$){
-  case 'scalarContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitNumber',destination,realm,state:{$:'numberProtocolState',state:transition.state}}})};
-  case 'scalarCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitNumber',destination,realm,state:{$:'numberProtocolState',state:transition.state}}}),transition.callee,transition.receiver,transition.arguments);
+  case 'scalarContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitNumber',destination,realm,state:{$:'numberProtocolState',state:transition.state}}))};
+  case 'scalarCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitNumber',destination,realm,state:{$:'numberProtocolState',state:transition.state}})),transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,transition.value))};
   case 'scalarThrow':return throwJavaScriptCallValue(machine,transition.value);
   case 'scalarIntrinsicError':return requestJavaScriptCallError(machine,realm,transition.errorClass,transition.reason);
   case 'scalarInvalid':return {$:'machineInvalid',heap:machine.heap,reason:transition.reason};
-  case 'scalarResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitNumber',destination,realm,state:{$:'numberPrimitiveValue',value:transition.value}}}),reason:transition.reason};
+  case 'scalarResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitNumber',destination,realm,state:{$:'numberPrimitiveValue',value:transition.value}})),reason:transition.reason};
  }
 }
 
@@ -356,13 +378,13 @@ export function resumeJavaScriptCallNumber(program,machine,destination,realm,sta
 export function acceptJavaScriptCallText(program,machine,destination,realm,transition){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual active frame'};
  switch(transition.$){
-  case 'scalarContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitText',destination,realm,state:{$:'textProtocolState',state:transition.state}}})};
-  case 'scalarCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitText',destination,realm,state:{$:'textProtocolState',state:transition.state}}}),transition.callee,transition.receiver,transition.arguments);
+  case 'scalarContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitText',destination,realm,state:{$:'textProtocolState',state:transition.state}}))};
+  case 'scalarCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitText',destination,realm,state:{$:'textProtocolState',state:transition.state}})),transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,transition.value))};
   case 'scalarThrow':return throwJavaScriptCallValue(machine,transition.value);
   case 'scalarIntrinsicError':return requestJavaScriptCallError(machine,realm,transition.errorClass,transition.reason);
   case 'scalarInvalid':return {$:'machineInvalid',heap:machine.heap,reason:transition.reason};
-  case 'scalarResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,pending:{$:'waitText',destination,realm,state:{$:'textPrimitiveValue',value:transition.value}}}),reason:transition.reason};
+  case 'scalarResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitText',destination,realm,state:{$:'textPrimitiveValue',value:transition.value}})),reason:transition.reason};
  }
 }
 
@@ -410,7 +432,7 @@ export function returnJavaScriptCallValue(program,machine,value){
  * @param {JavaScriptCallFrame} frame @param {JavaScriptCallInstruction} instruction
  * @returns {JavaScriptCallMachineTransition} */
 export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction){
-  const next={...frame,position:frame.position+1},registers=frame.registers;
+  const next=advanceJavaScriptCallFrame(frame),registers=frame.registers;
   switch(instruction.$){
     case 'ordinaryGet':{
       const object=registers[instruction.object]??{$:'undefined'};if(object.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary Get instructions require their actual Object operand'};
@@ -447,24 +469,24 @@ export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,
  if((instruction.operation==='convert explicit number'||instruction.operation==='coerce primitive number'||readJavaScriptIntegerProtocolOperationError(instruction.operation)==='')&&input.$==='object'){
   const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a number conversion needs its actual registered source owner'};
-  const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,position:frame.position+1});
+  const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,advanceJavaScriptCallFrame(frame));
   return acceptJavaScriptCallNumber(program,current,instruction.destination,owner.realm,beginJavaScriptScalarProtocol(machine.heap,input,program.exoticKey,instruction.operation));
  }
  if(instruction.operation==='convert primitive text'&&input.$==='object'){
   const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a text conversion needs its actual registered source owner'};
-  const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,position:frame.position+1});
+  const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,advanceJavaScriptCallFrame(frame));
   return acceptJavaScriptCallText(program,current,instruction.destination,owner.realm,beginJavaScriptScalarProtocol(machine.heap,input,program.exoticKey,instruction.operation));
  }
  const result=executeJavaScriptCallPrimitive(instruction.operation,arguments_);
  switch(result.$){
-  case 'primitiveValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister({...frame,position:frame.position+1},instruction.destination,result.value))};
+  case 'primitiveValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,result.value))};
   case 'primitiveInvalid':return {$:'machineInvalid',heap:machine.heap,reason:result.reason};
   case 'primitiveResourceLimit':return {$:'machineResourceLimit',machine,reason:result.reason};
   case 'primitiveError':{
    const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
    if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a primitive failure needs its actual registered source owner'};
-   return requestJavaScriptCallError(replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,position:frame.position+1}),owner.realm,result.errorClass,result.reason);
+   return requestJavaScriptCallError(replaceJavaScriptCallFrame(machine.heap,machine.frames,advanceJavaScriptCallFrame(frame)),owner.realm,result.errorClass,result.reason);
   }
  }
 }
@@ -487,7 +509,7 @@ export function stepJavaScriptCallMachine(program,machine){
   const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call step needs its actual source function'};
   const instruction=fn.instructions[frame.position];
   if(instruction===undefined)return returnJavaScriptCallValue(program,machine,{$:'undefined'});
-  const next={...frame,position:frame.position+1},current=replaceJavaScriptCallFrame(machine.heap,machine.frames,next),registers=frame.registers;
+  const next=advanceJavaScriptCallFrame(frame),current=replaceJavaScriptCallFrame(machine.heap,machine.frames,next),registers=frame.registers;
   switch(instruction.$){
     case 'constant':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,instruction.value))};
     case 'copy':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,registers[instruction.source]??{$:'undefined'}))};

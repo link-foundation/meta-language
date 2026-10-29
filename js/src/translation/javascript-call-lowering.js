@@ -234,7 +234,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
     }
     case 'method':{
      if(node.object.type.kind==='string'){
-      const operation={slice:'slice text',charAt:'read text character',at:'read relative text character',codePointAt:'read text code point',indexOf:'find text',lastIndexOf:'find last text'}[node.op];
+      const operation={replace:'replace text',replaceAll:'replace all text',slice:'slice text',charAt:'read text character',at:'read relative text character',codePointAt:'read text code point',indexOf:'find text',lastIndexOf:'find last text'}[node.op];
       if(!operation)return refuse(node,'this text method requires its complete source operation');
       return primitive(operation,[expression(node.object,environment,depth+1),...node.args.map(arg=>expression(arg,environment,depth+1))]);
      }

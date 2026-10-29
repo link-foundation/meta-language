@@ -30,18 +30,3 @@ pub use part_9::*;
 #[path = "javascript_property_definition/part_10.rs"]
 mod part_10;
 pub use part_10::*;
-#[path = "javascript_property_definition/part_11.rs"]
-mod part_11;
-pub use part_11::*;
-#[path = "javascript_property_definition/part_12.rs"]
-mod part_12;
-pub use part_12::*;
-#[path = "javascript_property_definition/part_13.rs"]
-mod part_13;
-pub use part_13::*;
-#[path = "javascript_property_definition/part_14.rs"]
-mod part_14;
-pub use part_14::*;
-#[path = "javascript_property_definition/part_15.rs"]
-mod part_15;
-pub use part_15::*;

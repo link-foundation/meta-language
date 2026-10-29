@@ -8,6 +8,40 @@ fn wire_number(value: f64) -> Data {
     }
     Data::Number(value.to_string().parse().expect("finite model Number"))
 }
+fn wire_text_units(value: &Data) -> Vec<u16> {
+    let units = if let Some(text) = value.as_str() {
+        text.encode_utf16().collect::<Vec<u16>>()
+    } else {
+        let object = value.as_object().expect("qualified model text units");
+        assert_eq!(object.len(), 2, "exact model text keys");
+        assert_eq!(
+            object.get("textEncoding").and_then(Data::as_str),
+            Some("UTF16 code units 1"),
+            "model text encoding"
+        );
+        let input = object
+            .get("units")
+            .and_then(Data::as_array)
+            .expect("model text units");
+        assert!(input.len() <= 16777216, "model text unit budget");
+        input
+            .iter()
+            .map(|unit| {
+                u16::try_from(unit.as_u64().expect("model UTF16 unit"))
+                    .expect("model UTF16 unit range")
+            })
+            .collect()
+    };
+    assert!(units.len() <= 16777216, "model text unit budget");
+    units
+}
+fn wire_text(units: &[u16]) -> Data {
+    assert!(units.len() <= 16777216, "model text unit budget");
+    match String::from_utf16(units) {
+        Ok(text) => Data::String(text),
+        Err(_) => json!({"textEncoding":"UTF16 code units 1","units":units}),
+    }
+}
 pub(super) fn decode_java_script_ordinary_heap(data: &Data) -> native::JavaScriptOrdinaryHeap {
     match data["$"].as_str().expect("model constructor") {
         "ordinaryHeap" => native::JavaScriptOrdinaryHeap::OrdinaryHeap(
@@ -319,12 +353,15 @@ pub(super) fn decode_java_script_descriptor_conversion_transition(
         ),
         "descriptorIntrinsicError" => {
             native::JavaScriptDescriptorConversionTransition::DescriptorIntrinsicError(
-                data["errorClass"].as_str().expect("model text").to_owned(),
-                data["reason"].as_str().expect("model text").to_owned(),
+                String::from_utf16(&wire_text_units(&data["errorClass"]))
+                    .expect("model text requires Unicode scalar values in this native profile"),
+                String::from_utf16(&wire_text_units(&data["reason"]))
+                    .expect("model text requires Unicode scalar values in this native profile"),
             )
         }
         "descriptorInvalid" => native::JavaScriptDescriptorConversionTransition::DescriptorInvalid(
-            data["reason"].as_str().expect("model text").to_owned(),
+            String::from_utf16(&wire_text_units(&data["reason"]))
+                .expect("model text requires Unicode scalar values in this native profile"),
         ),
         _ => panic!("unregistered actual model constructor"),
     }
@@ -354,10 +391,10 @@ pub(super) fn encode_java_script_descriptor_conversion_transition(
             wire_field_0,
             wire_field_1,
         ) => {
-            json!({"$":"descriptorIntrinsicError","errorClass":Data::String(wire_field_0.to_owned()),"reason":Data::String(wire_field_1.to_owned())})
+            json!({"$":"descriptorIntrinsicError","errorClass":wire_text(&wire_field_0.encode_utf16().collect::<Vec<u16>>()),"reason":wire_text(&wire_field_1.encode_utf16().collect::<Vec<u16>>())})
         }
         native::JavaScriptDescriptorConversionTransition::DescriptorInvalid(wire_field_0) => {
-            json!({"$":"descriptorInvalid","reason":Data::String(wire_field_0.to_owned())})
+            json!({"$":"descriptorInvalid","reason":wire_text(&wire_field_0.encode_utf16().collect::<Vec<u16>>())})
         }
     }
 }

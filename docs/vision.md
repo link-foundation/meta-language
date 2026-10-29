@@ -9897,3 +9897,35 @@ The same shared unary-operation selector controls arity and scalar dispatch for
 truncation, absolute value, rounding, sign, square root and Number predicates.
 Those operations also consume their original scalar without a numeric-array
 intermediate; each keeps its own existing operation semantics and diagnostics.
+
+The registered call-source text replacement extension composes string `replace`
+and `replaceAll` with the existing complete literal UTF-16 substitution source.
+Dollar escapes, matched text, original prefixes/suffixes, empty-search code-unit
+boundaries and capture-looking literals reuse that definition. Receiver and
+arguments evaluate in source order, including abrupt completion before later
+arguments. This admits checked string operands, not regexps, function replacers,
+replacement intrinsics or general object coercion. Native implementation and
+both editable Links source programs are automatically generated from actual
+JavaScript definitions. The bounded primitive profile admits at most 1,048,576
+input/search units and 4,096 replacement units, preflights 67,108,864 search work
+and substitution-plan instructions, and a conservative 1,048,576-unit output bound. A conservative refusal can occur
+without an actual match; it is an explicit work refusal, never a language
+exception or an altered result. Deferred original-source and literal instruction
+controls retain all substitution forms, isolated units, argument effects, no
+later effects after a thrown search and the work/refusal boundaries. They have
+not run; the profile establishes neither full String semantics nor runtime parity.
+
+The call-machine source construction shares pending-frame replacement and
+instruction advancement as complete functions. Per-frame validation is separated
+from stack accounting while retaining coordinate/storage checks first, then
+registers, arguments, handlers, pending destinations, source/realm state and
+suspended-parent checks in their original order. Descriptor-field application
+selects converted values and builds its complete descriptor once, preserving
+all presence bits and the existing accessor validation and selected Boolean
+conversion. These are operations over internal checked value records, distinct
+from ordinary user-object property access. The substitution loop uses an explicit
+Boolean continuation and selects each unchanged source range before copying its
+units. All predecessor input/assertion controls remain required. These source
+forms reduce repeated constructor/continuation expansion for automatic Rust and
+editable Links generation; they neither raise the 100,000 semantic-visit gate
+nor establish execution evidence or a completed equivalence certificate.

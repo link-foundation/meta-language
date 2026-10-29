@@ -7,6 +7,7 @@ const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-librari
 if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-libraries]');
 process.argv.splice(2,process.argv.length-2,'--draft');
 const root=new URL('../../',import.meta.url);
+parseAuthoredJavaScriptModule(readFileSync(new URL('js/tests/translation-javascript-text-replacement.test.js',root),'utf8'),'js/tests/translation-javascript-text-replacement.test.js');
 for (const path of ['js/src/translation/type-query-evaluation-rules.js',
  'js/scripts/draft-type-query-evaluation-rules.mjs', 'js/tests/translation-type-queries.test.js'])
  parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
@@ -55,6 +56,9 @@ const castIndex=inventory.features.findIndex(entry=>entry.id===casts.id);if(cast
 const naturals={id:'javascript-call-natural-source',required:true,javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-natural-source.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-call-natural-source.test.js','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-controls.mjs']},rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_natural_source.rs','rust/tests/unit/translation_javascript_call_natural_source.rs','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-oracle.mjs']}};
 const naturalIndex=inventory.features.findIndex(entry=>entry.id===naturals.id);if(naturalIndex<0)inventory.features.push(naturals);else inventory.features[naturalIndex]=naturals;
 for(const feature of [
+ {id:'javascript-call-literal-text-replacement',required:true,
+ javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-primitives.js','js/src/translation/utf16-text-rules.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-text-replacement.test.js','parity/fixtures/javascript-call-source.lino','parity/fixtures/javascript-call-machine.lino']},
+ rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_machine.rs','rust/tests/unit/translation_javascript_call_source_machine.rs','parity/fixtures/javascript-call-source.lino','parity/fixtures/javascript-call-machine.lino']}},
  {id:'javascript-compound-own-fields',required:true,
  javascript:{status:'implemented',evidence:['js/src/translation/record-write-rules.js','js/src/translation/record-writes.js','js/tests/translation-record-writes.test.js','parity/fixtures/record-writes.lino','parity/fixtures/javascript-call-source.lino']},
  rust:{status:'implemented',evidence:['rust/src/translation/record_write_rules.rs','rust/src/translation/record_write_source_interfaces.rs','rust/src/translation/check/record_writes.rs','rust/tests/unit/translation_record_writes.rs','parity/fixtures/record-writes.lino','parity/fixtures/javascript-call-source.lino']}},

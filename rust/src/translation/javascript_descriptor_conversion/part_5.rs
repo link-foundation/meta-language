@@ -6,242 +6,11 @@ use super::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result;
 use super::find_java_script_ordinary_object;
 use super::ml;
 use super::ml_array;
-use super::ml_source_exception;
 use super::read_java_script_ordinary_heap_error;
 use super::read_java_script_ordinary_value_error;
 use super::replace_java_script_ordinary_object;
 use super::source_ml_temporary_set_java_script_ordinary_prototype_loop21;
 use super::test_java_script_semantic_same_value;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn prevent_java_script_ordinary_extensions(
-    heap: self::JavaScriptOrdinaryHeap,
-    identity: self::ml::Big,
-) -> (String, self::JavaScriptOrdinaryHeap, bool) {
-    {
-        let error = self::read_java_script_ordinary_heap_error(heap.clone());
-        if !(error).is_empty() {
-            {
-                let source_ml_source1_field435 = heap.clone();
-                {
-                    let source_ml_source1_field436 = false;
-                    {
-                        let source_ml_source1_field437 = error.clone();
-                        (
-                            source_ml_source1_field437,
-                            source_ml_source1_field435,
-                            source_ml_source1_field436,
-                        )
-                    }
-                }
-            }
-        } else {
-            {
-                let index = self::find_java_script_ordinary_object(
-                    match heap.clone() {
-                        self::JavaScriptOrdinaryHeap::OrdinaryHeap(
-                            source_ml_source1_data_property_value438,
-                            _,
-                        ) => source_ml_source1_data_property_value438,
-                    },
-                    identity.clone(),
-                );
-                {
-                    let object = self::ml_array::optional_at(
-                        (match &heap {
-                            self::JavaScriptOrdinaryHeap::OrdinaryHeap(
-                                source_ml_source1_data_property_value439,
-                                _,
-                            ) => source_ml_source1_data_property_value439.as_slice(),
-                        }),
-                        self::ml_array::number_index(index),
-                    );
-                    if match (object.clone(), None::<()>) {
-                        (Some(_ml_left), Some(_ml_right)) => false,
-                        (None, None) => true,
-                        _ => false,
-                    } {
-                        {
-                            let source_ml_source1_field440 = heap.clone();
-                            {
-                                let source_ml_source1_field441 = false;
-                                {
-                                    let source_ml_source1_field442 = String::from(
-                                        "PreventExtensions needs its actual Object identity",
-                                    );
-                                    (
-                                        source_ml_source1_field442,
-                                        source_ml_source1_field440,
-                                        source_ml_source1_field441,
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        {
-                            let replacement = self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                {
-                                    let source_ml_source1_nullish_field_receiver443 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver443.clone()).0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present444 =
-                                                ((source_ml_source1_nullish_field_receiver443
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present444 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    source_ml_source1_data_property_value445,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                ) => {
-                                                    source_ml_source1_data_property_value445.clone()
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'identity')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                },
-                                Box::new({
-                                    let source_ml_source1_nullish_field_receiver446 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver446.clone()).0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present447 =
-                                                ((source_ml_source1_nullish_field_receiver446
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present447 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    _,
-                                                    source_ml_source1_data_property_value448,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                ) => {
-                                                    let source_ml_source1_data_property_value448 =
-                                                        *source_ml_source1_data_property_value448;
-                                                    source_ml_source1_data_property_value448.clone()
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'prototype')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                }),
-                                false,
-                                {
-                                    let source_ml_source1_nullish_field_receiver449 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver449.clone()).0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present450 =
-                                                ((source_ml_source1_nullish_field_receiver449
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present450 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    _,
-                                                    _,
-                                                    _,
-                                                    source_ml_source1_data_property_value451,
-                                                    _,
-                                                ) => source_ml_source1_data_property_value451,
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'callable')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                },
-                                {
-                                    let source_ml_source1_nullish_field_receiver452 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver452.clone()).0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present453 =
-                                                ((source_ml_source1_nullish_field_receiver452
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present453 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    _,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                    source_ml_source1_data_property_value454,
-                                                ) => source_ml_source1_data_property_value454,
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'properties')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                },
-                            );
-                            {
-                                let source_ml_source1_field455 =
-                                    self::replace_java_script_ordinary_object(
-                                        heap.clone(),
-                                        replacement,
-                                    );
-                                {
-                                    let source_ml_source1_field456 = true;
-                                    {
-                                        let source_ml_source1_field457 = String::new();
-                                        (
-                                            source_ml_source1_field457,
-                                            source_ml_source1_field455,
-                                            source_ml_source1_field456,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -254,15 +23,15 @@ pub fn set_java_script_ordinary_prototype(
         let heap_error = self::read_java_script_ordinary_heap_error(heap.clone());
         if !(heap_error).is_empty() {
             {
-                let source_ml_source1_field458 = heap.clone();
+                let source_ml_source1_field410 = heap.clone();
                 {
-                    let source_ml_source1_field459 = false;
+                    let source_ml_source1_field411 = false;
                     {
-                        let source_ml_source1_field460 = heap_error.clone();
+                        let source_ml_source1_field412 = heap_error.clone();
                         (
-                            source_ml_source1_field460,
-                            source_ml_source1_field458,
-                            source_ml_source1_field459,
+                            source_ml_source1_field412,
+                            source_ml_source1_field410,
+                            source_ml_source1_field411,
                         )
                     }
                 }
@@ -270,39 +39,39 @@ pub fn set_java_script_ordinary_prototype(
         } else if match prototype.clone() {
             self::JavaScriptSemanticValue::Undefined => true,
             self::JavaScriptSemanticValue::Null => false,
-            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f461) => true,
-            self::JavaScriptSemanticValue::Number(source_ml_source1_f462) => true,
-            self::JavaScriptSemanticValue::Integer(source_ml_source1_f463) => true,
-            self::JavaScriptSemanticValue::Text(source_ml_source1_f464) => true,
-            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f465) => true,
+            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f413) => true,
+            self::JavaScriptSemanticValue::Number(source_ml_source1_f414) => true,
+            self::JavaScriptSemanticValue::Integer(source_ml_source1_f415) => true,
+            self::JavaScriptSemanticValue::Text(source_ml_source1_f416) => true,
+            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f417) => true,
             self::JavaScriptSemanticValue::Object(
-                source_ml_source1_f466,
-                source_ml_source1_f467,
+                source_ml_source1_f418,
+                source_ml_source1_f419,
             ) => true,
         } && match prototype.clone() {
             self::JavaScriptSemanticValue::Undefined => true,
             self::JavaScriptSemanticValue::Null => true,
-            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f468) => true,
-            self::JavaScriptSemanticValue::Number(source_ml_source1_f469) => true,
-            self::JavaScriptSemanticValue::Integer(source_ml_source1_f470) => true,
-            self::JavaScriptSemanticValue::Text(source_ml_source1_f471) => true,
-            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f472) => true,
+            self::JavaScriptSemanticValue::Boolean(source_ml_source1_f420) => true,
+            self::JavaScriptSemanticValue::Number(source_ml_source1_f421) => true,
+            self::JavaScriptSemanticValue::Integer(source_ml_source1_f422) => true,
+            self::JavaScriptSemanticValue::Text(source_ml_source1_f423) => true,
+            self::JavaScriptSemanticValue::Symbol(source_ml_source1_f424) => true,
             self::JavaScriptSemanticValue::Object(
-                source_ml_source1_f473,
-                source_ml_source1_f474,
+                source_ml_source1_f425,
+                source_ml_source1_f426,
             ) => false,
         } {
             {
-                let source_ml_source1_field475 = heap.clone();
+                let source_ml_source1_field427 = heap.clone();
                 {
-                    let source_ml_source1_field476 = false;
+                    let source_ml_source1_field428 = false;
                     {
-                        let source_ml_source1_field477 =
+                        let source_ml_source1_field429 =
                             String::from("an ordinary prototype must be null or a declared Object");
                         (
-                            source_ml_source1_field477,
-                            source_ml_source1_field475,
-                            source_ml_source1_field476,
+                            source_ml_source1_field429,
+                            source_ml_source1_field427,
+                            source_ml_source1_field428,
                         )
                     }
                 }
@@ -313,15 +82,15 @@ pub fn set_java_script_ordinary_prototype(
                     self::read_java_script_ordinary_value_error(heap.clone(), prototype.clone());
                 if !(error).is_empty() {
                     {
-                        let source_ml_source1_field478 = heap.clone();
+                        let source_ml_source1_field430 = heap.clone();
                         {
-                            let source_ml_source1_field479 = false;
+                            let source_ml_source1_field431 = false;
                             {
-                                let source_ml_source1_field480 = error.clone();
+                                let source_ml_source1_field432 = error.clone();
                                 (
-                                    source_ml_source1_field480,
-                                    source_ml_source1_field478,
-                                    source_ml_source1_field479,
+                                    source_ml_source1_field432,
+                                    source_ml_source1_field430,
+                                    source_ml_source1_field431,
                                 )
                             }
                         }
@@ -331,9 +100,9 @@ pub fn set_java_script_ordinary_prototype(
                         let index = self::find_java_script_ordinary_object(
                             match heap.clone() {
                                 self::JavaScriptOrdinaryHeap::OrdinaryHeap(
-                                    source_ml_source1_data_property_value481,
+                                    source_ml_source1_data_property_value433,
                                     _,
-                                ) => source_ml_source1_data_property_value481,
+                                ) => source_ml_source1_data_property_value433,
                             },
                             identity.clone(),
                         );
@@ -341,9 +110,9 @@ pub fn set_java_script_ordinary_prototype(
                             let object = self::ml_array::optional_at(
                                 (match &heap {
                                     self::JavaScriptOrdinaryHeap::OrdinaryHeap(
-                                        source_ml_source1_data_property_value482,
+                                        source_ml_source1_data_property_value434,
                                         _,
-                                    ) => source_ml_source1_data_property_value482.as_slice(),
+                                    ) => source_ml_source1_data_property_value434.as_slice(),
                                 }),
                                 self::ml_array::number_index(index),
                             );
@@ -353,181 +122,93 @@ pub fn set_java_script_ordinary_prototype(
                                 _ => false,
                             } {
                                 {
-                                    let source_ml_source1_field483 = heap.clone();
+                                    let source_ml_source1_field435 = heap.clone();
                                     {
-                                        let source_ml_source1_field484 = false;
+                                        let source_ml_source1_field436 = false;
                                         {
-                                            let source_ml_source1_field485 = String::from(
+                                            let source_ml_source1_field437 = String::from(
                                                 "SetPrototypeOf needs its actual Object identity",
                                             );
                                             (
-                                                source_ml_source1_field485,
-                                                source_ml_source1_field483,
-                                                source_ml_source1_field484,
+                                                source_ml_source1_field437,
+                                                source_ml_source1_field435,
+                                                source_ml_source1_field436,
                                             )
                                         }
                                     }
                                 }
                             } else if self::test_java_script_semantic_same_value(
-                                {
-                                    let source_ml_source1_nullish_field_receiver486 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver486.clone()).0
-                                    {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
-                                        {
-                                            let source_ml_source1_nullish_field_present487 =
-                                                ((source_ml_source1_nullish_field_receiver486
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present487 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    _,
-                                                    source_ml_source1_data_property_value488,
-                                                    _,
-                                                    _,
-                                                    _,
-                                                ) => {
-                                                    let source_ml_source1_data_property_value488 =
-                                                        *source_ml_source1_data_property_value488;
-                                                    source_ml_source1_data_property_value488.clone()
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'prototype')")).encode_utf16().collect(), message_present: true }).raise()
+                                match object.clone().expect("a proven present value") {
+                                    self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                        _,
+                                        source_ml_source1_data_property_value438,
+                                        _,
+                                        _,
+                                        _,
+                                    ) => {
+                                        let source_ml_source1_data_property_value438 =
+                                            *source_ml_source1_data_property_value438;
+                                        source_ml_source1_data_property_value438.clone()
                                     }
                                 },
                                 prototype.clone(),
                             ) {
                                 {
-                                    let source_ml_source1_field489 = heap.clone();
+                                    let source_ml_source1_field439 = heap.clone();
                                     {
-                                        let source_ml_source1_field490 = true;
+                                        let source_ml_source1_field440 = true;
                                         {
-                                            let source_ml_source1_field491 = String::new();
+                                            let source_ml_source1_field441 = String::new();
                                             (
-                                                source_ml_source1_field491,
-                                                source_ml_source1_field489,
-                                                source_ml_source1_field490,
+                                                source_ml_source1_field441,
+                                                source_ml_source1_field439,
+                                                source_ml_source1_field440,
                                             )
                                         }
                                     }
                                 }
-                            } else {
-                                let ml_product_condition_1 = {
-                                    let source_ml_source1_nullish_field_receiver492 =
-                                        (object.clone(),);
-                                    if match (source_ml_source1_nullish_field_receiver492.clone()).0
+                            } else if (match object.clone().expect("a proven present value") {
+                                self::JavaScriptOrdinaryObject::OrdinaryObject(
+                                    _,
+                                    _,
+                                    source_ml_source1_data_property_value442,
+                                    _,
+                                    _,
+                                ) => source_ml_source1_data_property_value442,
+                            }) {
+                                {
+                                    let next = prototype.clone();
                                     {
-                                        Some(ml_present) => {
-                                            let _ = ml_present.clone();
-                                            true
-                                        }
-                                        None => false,
-                                    } {
+                                        let depth = 0f64;
                                         {
-                                            let source_ml_source1_nullish_field_present493 =
-                                                ((source_ml_source1_nullish_field_receiver492
-                                                    .clone())
-                                                .0)
-                                                    .clone()
-                                                    .expect("a proven present value");
-                                            match source_ml_source1_nullish_field_present493 {
-                                                self::JavaScriptOrdinaryObject::OrdinaryObject(
-                                                    _,
-                                                    _,
-                                                    source_ml_source1_data_property_value494,
-                                                    _,
-                                                    _,
-                                                ) => source_ml_source1_data_property_value494,
-                                            }
-                                        }
-                                    } else {
-                                        (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'extensible')")).encode_utf16().collect(), message_present: true }).raise()
-                                    }
-                                };
-                                if ml_product_condition_1 {
-                                    {
-                                        let next = prototype.clone();
-                                        {
-                                            let depth = 0f64;
-                                            {
-                                                let source_ml_source1_s498 = self::source_ml_temporary_set_java_script_ordinary_prototype_loop21(heap.clone(), identity.clone(), next, depth);
-                                                match source_ml_source1_s498 {
+                                            let source_ml_source1_s446 = self::source_ml_temporary_set_java_script_ordinary_prototype_loop21(heap.clone(), identity.clone(), next, depth);
+                                            match source_ml_source1_s446 {
                                                             self::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Result::MlTemporarySetJavaScriptOrdinaryPrototypeLoop21Done => {
                                                                 {
-                                                                    let replacement = self::JavaScriptOrdinaryObject::OrdinaryObject({
-                                                                        let source_ml_source1_nullish_field_receiver499 = (object.clone(),);
-                                                                        if match (source_ml_source1_nullish_field_receiver499.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
-                                                                            {
-                                                                                let source_ml_source1_nullish_field_present500 = ((source_ml_source1_nullish_field_receiver499.clone()).0).clone().expect("a proven present value");
-                                                                                match source_ml_source1_nullish_field_present500 {
-                                                                                    self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source1_data_property_value501, _, _, _, _) => {
-                                                                                        source_ml_source1_data_property_value501.clone()
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'identity')")).encode_utf16().collect(), message_present: true }).raise()
+                                                                    let replacement = self::JavaScriptOrdinaryObject::OrdinaryObject(match object.clone().expect("a proven present value") {
+                                                                        self::JavaScriptOrdinaryObject::OrdinaryObject(source_ml_source1_data_property_value447, _, _, _, _) => {
+                                                                            source_ml_source1_data_property_value447.clone()
                                                                         }
-                                                                    }, Box::new(prototype.clone()), {
-                                                                        let source_ml_source1_nullish_field_receiver502 = (object.clone(),);
-                                                                        if match (source_ml_source1_nullish_field_receiver502.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
-                                                                            {
-                                                                                let source_ml_source1_nullish_field_present503 = ((source_ml_source1_nullish_field_receiver502.clone()).0).clone().expect("a proven present value");
-                                                                                match source_ml_source1_nullish_field_present503 {
-                                                                                    self::JavaScriptOrdinaryObject::OrdinaryObject(_, _, source_ml_source1_data_property_value504, _, _) => {
-                                                                                        source_ml_source1_data_property_value504
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'extensible')")).encode_utf16().collect(), message_present: true }).raise()
+                                                                    }, Box::new(prototype.clone()), match object.clone().expect("a proven present value") {
+                                                                        self::JavaScriptOrdinaryObject::OrdinaryObject(_, _, source_ml_source1_data_property_value448, _, _) => {
+                                                                            source_ml_source1_data_property_value448
                                                                         }
-                                                                    }, {
-                                                                        let source_ml_source1_nullish_field_receiver505 = (object.clone(),);
-                                                                        if match (source_ml_source1_nullish_field_receiver505.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
-                                                                            {
-                                                                                let source_ml_source1_nullish_field_present506 = ((source_ml_source1_nullish_field_receiver505.clone()).0).clone().expect("a proven present value");
-                                                                                match source_ml_source1_nullish_field_present506 {
-                                                                                    self::JavaScriptOrdinaryObject::OrdinaryObject(_, _, _, source_ml_source1_data_property_value507, _) => {
-                                                                                        source_ml_source1_data_property_value507
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'callable')")).encode_utf16().collect(), message_present: true }).raise()
+                                                                    }, match object.clone().expect("a proven present value") {
+                                                                        self::JavaScriptOrdinaryObject::OrdinaryObject(_, _, _, source_ml_source1_data_property_value449, _) => {
+                                                                            source_ml_source1_data_property_value449
                                                                         }
-                                                                    }, {
-                                                                        let source_ml_source1_nullish_field_receiver508 = (object.clone(),);
-                                                                        if match (source_ml_source1_nullish_field_receiver508.clone()).0 { Some(ml_present) => { let _ = ml_present.clone(); true }, None => false } {
-                                                                            {
-                                                                                let source_ml_source1_nullish_field_present509 = ((source_ml_source1_nullish_field_receiver508.clone()).0).clone().expect("a proven present value");
-                                                                                match source_ml_source1_nullish_field_present509 {
-                                                                                    self::JavaScriptOrdinaryObject::OrdinaryObject(_, _, _, _, source_ml_source1_data_property_value510) => {
-                                                                                        source_ml_source1_data_property_value510
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        } else {
-                                                                            (self::ml_source_exception::SourceException { class_name: String::from("TypeError"), message_units: (String::from("Cannot read properties of undefined (reading 'properties')")).encode_utf16().collect(), message_present: true }).raise()
+                                                                    }, match object.clone().expect("a proven present value") {
+                                                                        self::JavaScriptOrdinaryObject::OrdinaryObject(_, _, _, _, source_ml_source1_data_property_value450) => {
+                                                                            source_ml_source1_data_property_value450
                                                                         }
                                                                     });
                                                                     {
-                                                                        let source_ml_source1_field511 = self::replace_java_script_ordinary_object(heap.clone(), replacement);
+                                                                        let source_ml_source1_field451 = self::replace_java_script_ordinary_object(heap.clone(), replacement);
                                                                         {
-                                                                            let source_ml_source1_field512 = true;
+                                                                            let source_ml_source1_field452 = true;
                                                                             {
-                                                                                let source_ml_source1_field513 = String::new();
-                                                                                (source_ml_source1_field513, source_ml_source1_field511, source_ml_source1_field512)
+                                                                                let source_ml_source1_field453 = String::new();
+                                                                                (source_ml_source1_field453, source_ml_source1_field451, source_ml_source1_field452)
                                                                             }
                                                                         }
                                                                     }
@@ -537,22 +218,21 @@ pub fn set_java_script_ordinary_prototype(
                                                                 source_ml_temporary_result21.clone()
                                                             }
                                                         }
-                                            }
                                         }
                                     }
-                                } else {
+                                }
+                            } else {
+                                {
+                                    let source_ml_source1_field443 = heap.clone();
                                     {
-                                        let source_ml_source1_field495 = heap.clone();
+                                        let source_ml_source1_field444 = false;
                                         {
-                                            let source_ml_source1_field496 = false;
-                                            {
-                                                let source_ml_source1_field497 = String::new();
-                                                (
-                                                    source_ml_source1_field497,
-                                                    source_ml_source1_field495,
-                                                    source_ml_source1_field496,
-                                                )
-                                            }
+                                            let source_ml_source1_field445 = String::new();
+                                            (
+                                                source_ml_source1_field445,
+                                                source_ml_source1_field443,
+                                                source_ml_source1_field444,
+                                            )
                                         }
                                     }
                                 }
@@ -585,44 +265,44 @@ pub fn create_java_script_ordinary_set_descriptor(
     bool,
 ) {
     {
-        let source_ml_source1_field514 = creation;
+        let source_ml_source1_field454 = creation;
         {
-            let source_ml_source1_field515 = creation;
+            let source_ml_source1_field455 = creation;
             {
-                let source_ml_source1_field516 = creation;
+                let source_ml_source1_field456 = creation;
                 {
-                    let source_ml_source1_field517 = creation;
+                    let source_ml_source1_field457 = creation;
                     {
-                        let source_ml_source1_field518 = true;
+                        let source_ml_source1_field458 = true;
                         {
-                            let source_ml_source1_field519 = value.clone();
+                            let source_ml_source1_field459 = value.clone();
                             {
-                                let source_ml_source1_field520 = creation;
+                                let source_ml_source1_field460 = creation;
                                 {
-                                    let source_ml_source1_field521 = creation;
+                                    let source_ml_source1_field461 = creation;
                                     {
-                                        let source_ml_source1_field522 = false;
+                                        let source_ml_source1_field462 = false;
                                         {
-                                            let source_ml_source1_field523 =
+                                            let source_ml_source1_field463 =
                                                 self::JavaScriptSemanticValue::Undefined;
                                             {
-                                                let source_ml_source1_field524 = false;
+                                                let source_ml_source1_field464 = false;
                                                 {
-                                                    let source_ml_source1_field525 =
+                                                    let source_ml_source1_field465 =
                                                         self::JavaScriptSemanticValue::Undefined;
                                                     (
-                                                        source_ml_source1_field515,
-                                                        source_ml_source1_field514,
-                                                        source_ml_source1_field517,
-                                                        source_ml_source1_field516,
-                                                        source_ml_source1_field523,
-                                                        source_ml_source1_field522,
-                                                        source_ml_source1_field525,
-                                                        source_ml_source1_field524,
-                                                        source_ml_source1_field519,
-                                                        source_ml_source1_field518,
-                                                        source_ml_source1_field521,
-                                                        source_ml_source1_field520,
+                                                        source_ml_source1_field455,
+                                                        source_ml_source1_field454,
+                                                        source_ml_source1_field457,
+                                                        source_ml_source1_field456,
+                                                        source_ml_source1_field463,
+                                                        source_ml_source1_field462,
+                                                        source_ml_source1_field465,
+                                                        source_ml_source1_field464,
+                                                        source_ml_source1_field459,
+                                                        source_ml_source1_field458,
+                                                        source_ml_source1_field461,
+                                                        source_ml_source1_field460,
                                                     )
                                                 }
                                             }

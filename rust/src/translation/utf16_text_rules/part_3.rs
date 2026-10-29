@@ -279,11 +279,9 @@ pub fn source_ml_temporary_replace_utf16_text_loop26(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn source_ml_temporary_replace_utf16_text_loop28(
-    text: &[f64],
-    replacement: &[f64],
     mut result: Vec<f64>,
-    mut kind: f64,
     mut last: f64,
+    source: &[f64],
     mut at: f64,
 ) -> Vec<f64> {
     loop {
@@ -291,16 +289,10 @@ pub fn source_ml_temporary_replace_utf16_text_loop28(
             {
                 let result_2 = {
                     let (ml_append_right, ml_append_left) = (
-                        vec![if kind == 0f64 {
-                            (self::ml_array::optional_at(
-                                replacement,
-                                self::ml_array::number_index(at),
-                            ))
-                            .unwrap_or_else(|| 0f64)
-                        } else {
-                            (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
-                                .unwrap_or_else(|| 0f64)
-                        }],
+                        vec![
+                            (self::ml_array::optional_at(source, self::ml_array::number_index(at)))
+                                .unwrap_or_else(|| 0f64),
+                        ],
                         result,
                     );
                     self::ml_array::append(ml_append_left, ml_append_right)
@@ -364,21 +356,27 @@ pub fn source_ml_temporary_replace_utf16_text_loop27(
                             text.len() as f64
                         };
                         {
-                            let at = first;
+                            let source = if kind == 0f64 {
+                                replacement.to_vec()
+                            } else {
+                                text.to_vec()
+                            };
                             {
-                                let result_2 = self::source_ml_temporary_replace_utf16_text_loop28(
-                                    text,
-                                    replacement,
-                                    result,
-                                    kind,
-                                    last,
-                                    at,
-                                );
+                                let at = first;
                                 {
-                                    let instruction_2 = instruction + 3f64;
+                                    let result_2 =
+                                        self::source_ml_temporary_replace_utf16_text_loop28(
+                                            result,
+                                            last,
+                                            &(source),
+                                            at,
+                                        );
                                     {
-                                        (result, instruction) = (result_2, instruction_2);
-                                        continue;
+                                        let instruction_2 = instruction + 3f64;
+                                        {
+                                            (result, instruction) = (result_2, instruction_2);
+                                            continue;
+                                        }
                                     }
                                 }
                             }
@@ -407,51 +405,59 @@ pub fn source_ml_temporary_replace_utf16_text_loop24(
     plan: &[f64],
     mut start: f64,
     mut from: f64,
+    mut searching: bool,
 ) -> self::MlTemporaryReplaceUtf16TextLoop24Result {
     loop {
-        return {
-            let found = self::index_utf16_text(text, search, from);
-            if found < 0f64 {
-                self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(
-                    result, start,
-                )
-            } else {
-                {
-                    let at = start;
+        if searching {
+            {
+                let found = self::index_utf16_text(text, search, from);
+                if found < 0f64 {
                     {
-                        let result_2 = self::source_ml_temporary_replace_utf16_text_loop26(
-                            text, result, found, at,
-                        );
+                        let searching_2 = false;
                         {
-                            let instruction = 0f64;
+                            searching = searching_2;
+                            continue;
+                        }
+                    }
+                }
+                {
+                    {
+                        let at = start;
+                        {
+                            let result_2 = self::source_ml_temporary_replace_utf16_text_loop26(
+                                text, result, found, at,
+                            );
                             {
-                                let result_3 = self::source_ml_temporary_replace_utf16_text_loop27(
-                                    text,
-                                    search,
-                                    replacement,
-                                    result_2,
-                                    plan,
-                                    found,
-                                    instruction,
-                                );
+                                let instruction = 0f64;
                                 {
-                                    let start_2 = found + (search.len() as f64);
-                                    if !all
-                                        || (((search.len() as f64) == 0f64)
-                                            && (found == (text.len() as f64)))
+                                    let result_3 =
+                                        self::source_ml_temporary_replace_utf16_text_loop27(
+                                            text,
+                                            search,
+                                            replacement,
+                                            result_2,
+                                            plan,
+                                            found,
+                                            instruction,
+                                        );
                                     {
-                                        self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_3, start_2)
-                                    } else {
+                                        let start_2 = found + (search.len() as f64);
                                         {
-                                            let from_2 = start_2
-                                                + if (search.len() as f64) == 0f64 {
-                                                    1f64
-                                                } else {
-                                                    0f64
-                                                };
+                                            let searching_3 = all
+                                                && !(((search.len() as f64) == 0f64)
+                                                    && (found == (text.len() as f64)));
                                             {
-                                                (result, start, from) = (result_3, start_2, from_2);
-                                                continue;
+                                                let from_2 = start_2
+                                                    + if (search.len() as f64) == 0f64 {
+                                                        1f64
+                                                    } else {
+                                                        0f64
+                                                    };
+                                                {
+                                                    (result, start, from, searching) =
+                                                        (result_3, start_2, from_2, searching_3);
+                                                    continue;
+                                                }
                                             }
                                         }
                                     }
@@ -461,6 +467,11 @@ pub fn source_ml_temporary_replace_utf16_text_loop24(
                     }
                 }
             }
+        }
+        return {
+            self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(
+                result, start,
+            )
         };
     }
 }

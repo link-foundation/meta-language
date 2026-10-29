@@ -567,9 +567,6 @@ pub mod ml_source_exception {
     impl std::error::Error for SourceException {}
 }
 
-#[path = "ml_big_integer_conversion.rs"]
-pub mod ml_big_integer_conversion;
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum JavaScriptSemanticValue {
     Undefined,

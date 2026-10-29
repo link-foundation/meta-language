@@ -379,6 +379,31 @@ rows.push({name:'typeof call preserves prior heap effects',source:'/** @param {{
  {name:'typeof preserves an abrupt called Error',source:'/** @returns {string} */ export function inspect(){return typeof fail();} function fail(){throw new Error("preserve");}',entry:'inspect',functions:['inspect','fail'],arguments:[],expectedOutcome:'sourceAllocation',errorClass:'Error',errorRealm:'1000',errorMessage:units('preserve'),messagePresent:true},
  {name:'typeof void keeps actual call effects',source:'/** @param {{value:number}} holder @returns {string} */ export function inspect(holder){return typeof void update(holder);} /** @param {{value:number}} holder @returns {number} */ function update(holder){holder.value=9;return 7;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,
  arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(9)))])],expected:units('undefined')});
+for(const [name,method,value,search,replacement,result] of [
+ ['first match','replace','ababa','a','x','xbaba'],
+ ['all matches','replaceAll','ababa','a','x','xbxbx'],
+ ['empty search','replace','ab','',':',':ab'],
+ ['empty all search','replaceAll','ab','',':',':a:b:'],
+ ['empty input','replaceAll','','',':',':'],
+ ['dollar escape','replaceAll','ababa','b','$$','a$a$a'],
+ ['matched substitution','replaceAll','ababa','b','[$&]','a[b]a[b]a'],
+ ['original prefix','replace','ababa','b','$`','aaaba'],
+ ['original suffix','replace','ababa','b',"$'",'aabaaba'],
+ ['all original prefixes','replaceAll','ababa','b','$`','aaaabaa'],
+ ['all original suffixes','replaceAll','ababa','b',"$'",'aabaaaa'],
+ ['capture-looking literals','replace','a','a','$1$0$<name>','$1$0$<name>'],
+ ['escaped dollar then ampersand','replace','a','a','$$&','$&'],
+ ['empty search splits code units','replaceAll','😀','','|','|\uD83D|\uDE00|'],
+ ['isolated source units','replaceAll','\uD800\uDC00\uD800','\uD800','x','x\uDC00x'],
+ ['isolated replacement units','replace','a','a','\uD800\0\uDC00','\uD800\0\uDC00'],
+ ['no match','replaceAll','ab','z','x','ab'],
+ ['longer needle','replace','a','abcdef','x','a'],
+ ['nonoverlapping matches','replaceAll','aaaa','aa','b','bb']
+])rows.push({name:'literal text replacement '+name,source:'/** @param {string} value @param {string} search @param {string} replacement @returns {string} */ export function inspect(value,search,replacement){return value.'+method+'(search,replacement);}',entry:'inspect',functions:['inspect'],arguments:[units(value),units(search),units(replacement)],expected:units(result)});
+rows.push({name:'literal text replacement retains receiver and argument effect order',source:'/** @param {{value:number}} holder @returns {string} */ export function inspect(holder){return receiver(holder).replace(search(holder),replacement(holder));} /** @param {{value:number}} holder @returns {string} */ function receiver(holder){holder.value=holder.value*10+1;return "aba";} /** @param {{value:number}} holder @returns {string} */ function search(holder){holder.value=holder.value*10+2;return "b";} /** @param {{value:number}} holder @returns {string} */ function replacement(holder){holder.value=holder.value*10+3;return "x";}',entry:'inspect',functions:['inspect','receiver','search','replacement'],referenceSemantics:true,
+ arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(123)))])],expected:units('axa')});
+rows.push({name:'abrupt replacement search prevents later argument effects',source:'/** @param {{value:number}} holder @returns {string} */ export function inspect(holder){return "aba".replace(fail(),update(holder));} /** @returns {string} */ function fail(){throw new Error("replacement search");} /** @param {{value:number}} holder @returns {string} */ function update(holder){holder.value=9;return "x";}',entry:'inspect',functions:['inspect','fail','update'],referenceSemantics:true,
+ arguments:[object('1')],objects:[entity('1',[property(data(number(0)))])],afterObjects:[entity('1',[property(data(number(0)))])],expectedOutcome:'sourceAllocation',errorClass:'Error',errorRealm:'1000',errorMessage:units('replacement search'),messagePresent:true});
 const refusals=[
  {name:'guarded natural cross-realm casts require complete realm lowering',source:'/** @param {bigint} value @returns {bigint} */ export function inspect(value){return natural(value);} /** @param {bigint} value @returns {bigint} */ function natural(value){if(value<0n)throw new Error("natural realm");return value;}',functions:['inspect','natural'],functionRealms:{inspect:'1000',natural:'1001'}},
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},
