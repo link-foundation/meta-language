@@ -590,3 +590,4 @@ mod translation_javascript_fixed_integer_casts;
 mod translation_javascript_call_natural_source;
 
 mod conditional_constructor_sharing;
+mod utf16_text_expansion;

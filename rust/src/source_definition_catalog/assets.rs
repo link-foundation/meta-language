@@ -424,6 +424,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "utf16-method-emission-program.lino" => {
             Some(include_str!("../data/utf16-method-emission-program.lino"))
         }
+        "utf16-text-expansion-program.lino" => {
+            Some(include_str!("../data/utf16-text-expansion-program.lino"))
+        }
         "utf16-text-program.lino" => Some(include_str!("../data/utf16-text-program.lino")),
         "whole-parameter-default-bab148f9-program.lino" => Some(include_str!(
             "../data/whole-parameter-default-bab148f9-program.lino"

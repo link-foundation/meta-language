@@ -1,11 +1,86 @@
 //! Actual operands/type transport into the shared source unit-call decisions.
 use super::{
-    BOOL, Checker, Env, Expr, FLOAT, LitValue, Node, Result, SExpr, STRING, Span, Type, array,
-    type_error, unsupported,
+    BOOL, BinaryOp, Checker, Env, Expr, FLOAT, LitValue, Node, Result, SExpr, STRING, Span, Type,
+    array, binary_node, type_error, unsupported,
 };
 use crate::translation::javascript_property_call_rules as rules;
 fn number(value: &str) -> Expr {
     Expr::lit(FLOAT, LitValue::Text(value.to_owned()))
+}
+fn expansion_predicate(plan: Vec<String>, count: &Expr, receiver: &Expr) -> Expr {
+    let mut stack = Vec::new();
+    for instruction in plan {
+        match instruction.as_str() {
+            "count" => stack.push(count.clone()),
+            "length" => stack.push(Expr::new(
+                Node::Length {
+                    array: Box::new(receiver.clone()),
+                },
+                FLOAT,
+            )),
+            "true" => stack.push(Expr::lit(BOOL, LitValue::Bool(true))),
+            "zero" => stack.push(number("0")),
+            "infinity" => stack.push(number("Infinity")),
+            "isNaN" | "trunc" => {
+                let value = stack.pop().expect("shared padding unary operand");
+                stack.push(Expr::new(
+                    Node::Math {
+                        op: instruction.clone(),
+                        args: vec![value],
+                    },
+                    if instruction == "isNaN" { BOOL } else { FLOAT },
+                ));
+            }
+            "le" | "lt" | "eq" => {
+                let right = stack.pop().expect("shared padding right operand");
+                let left = stack.pop().expect("shared padding left operand");
+                stack.push(Expr::new(
+                    binary_node(
+                        match instruction.as_str() {
+                            "le" => BinaryOp::Le,
+                            "lt" => BinaryOp::Lt,
+                            _ => BinaryOp::Eq,
+                        },
+                        Box::new(left),
+                        Box::new(right),
+                        Some(FLOAT),
+                        None,
+                        None,
+                        None,
+                    ),
+                    BOOL,
+                ));
+            }
+            "or" => {
+                let right = stack.pop().expect("shared expansion right operand");
+                let left = stack.pop().expect("shared expansion left operand");
+                stack.push(Expr::new(
+                    Node::If {
+                        cond: Box::new(left),
+                        then: Box::new(Expr::lit(BOOL, LitValue::Bool(true))),
+                        otherwise: Box::new(right),
+                    },
+                    BOOL,
+                ));
+            }
+            "if" => {
+                let otherwise = stack.pop().expect("shared padding otherwise operand");
+                let then = stack.pop().expect("shared padding then operand");
+                let condition = stack.pop().expect("shared padding condition");
+                stack.push(Expr::new(
+                    Node::If {
+                        cond: Box::new(condition),
+                        then: Box::new(then),
+                        otherwise: Box::new(otherwise),
+                    },
+                    BOOL,
+                ));
+            }
+            _ => unreachable!("unregistered shared padding predicate instruction"),
+        }
+    }
+    assert_eq!(stack.len(), 1, "complete shared padding predicate");
+    stack.pop().expect("shared padding predicate result")
 }
 fn undefined_condition(value: &Expr) -> Option<Expr> {
     if value.ty == Type::Unit {
@@ -94,6 +169,122 @@ impl Checker {
                 path,
                 span,
             )?
+        } else if rules::read_java_script_string_unit_call_form(operation) == "repetition" {
+            let count_name = self.fresh_name("ml_string_repetition_bound");
+            let count = Expr::var(count_name.clone(), FLOAT);
+            let call = self.materialize_primitive_method(
+                bound[0].clone(),
+                operation,
+                vec![Some(count.clone())],
+                path,
+                span,
+            )?;
+            let original = bound
+                .get(1)
+                .cloned()
+                .unwrap_or_else(|| Expr::new(Node::Unit, Type::Unit));
+            let diagnostic = super::string_search::primitive_text(original, span)?;
+            let message = Expr::new(
+                binary_node(
+                    BinaryOp::Concat,
+                    Box::new(Expr::lit(
+                        STRING,
+                        LitValue::Text("Invalid count value: ".to_owned()),
+                    )),
+                    Box::new(diagnostic),
+                    None,
+                    None,
+                    None,
+                    None,
+                ),
+                STRING,
+            );
+            let failure = Expr::new(
+                Node::Math {
+                    op: "raiseJavaScriptRangeError".to_owned(),
+                    args: vec![message, Expr::lit(BOOL, LitValue::Bool(true))],
+                },
+                STRING,
+            );
+            let conditional = Expr::new(
+                Node::If {
+                    cond: Box::new(expansion_predicate(
+                        rules::plan_java_script_string_repetition_invalid(),
+                        &count,
+                        &bound[0],
+                    )),
+                    then: Box::new(failure),
+                    otherwise: Box::new(call),
+                },
+                STRING,
+            );
+            let value = self.string_unit_numeric_operand(bound.get(1), number("0"), span)?;
+            Expr::new(
+                Node::Let {
+                    name: count_name,
+                    value: Box::new(value),
+                    body: Box::new(conditional),
+                },
+                STRING,
+            )
+        } else if rules::read_java_script_string_unit_call_form(operation) == "padding" {
+            let count_name = self.fresh_name("ml_string_padding_bound");
+            let filler_name = self.fresh_name("ml_string_padding_filler");
+            let count = Expr::var(count_name.clone(), FLOAT);
+            let space = Expr::lit(STRING, LitValue::Text(" ".to_owned()));
+            let mut converted = space.clone();
+            if let Some(filler) = bound.get(2).filter(|value| value.ty != Type::Unit) {
+                converted = super::string_search::primitive_text(filler.clone(), span)?;
+                if let Some(condition) = undefined_condition(filler) {
+                    converted = Expr::new(
+                        Node::If {
+                            cond: Box::new(condition),
+                            then: Box::new(space),
+                            otherwise: Box::new(converted),
+                        },
+                        STRING,
+                    );
+                }
+            }
+            let call = self.materialize_primitive_method(
+                bound[0].clone(),
+                operation,
+                vec![
+                    Some(count.clone()),
+                    Some(Expr::var(filler_name.clone(), STRING)),
+                ],
+                path,
+                span,
+            )?;
+            let present = Expr::new(
+                Node::Let {
+                    name: filler_name,
+                    value: Box::new(converted),
+                    body: Box::new(call),
+                },
+                STRING,
+            );
+            let conditional = Expr::new(
+                Node::If {
+                    cond: Box::new(expansion_predicate(
+                        rules::plan_java_script_string_padding_unchanged(),
+                        &count,
+                        &bound[0],
+                    )),
+                    then: Box::new(bound[0].clone()),
+                    otherwise: Box::new(present),
+                },
+                STRING,
+            );
+            let value = self.string_unit_numeric_operand(bound.get(1), number("0"), span)?;
+            Expr::new(
+                Node::Let {
+                    name: count_name,
+                    value: Box::new(value),
+                    body: Box::new(conditional),
+                },
+                STRING,
+            )
         } else if rules::read_java_script_string_unit_call_form(operation) == "replacement" {
             let search_name = self.fresh_name("ml_string_replace_search");
             let replacement_name = self.fresh_name("ml_string_replace_template");

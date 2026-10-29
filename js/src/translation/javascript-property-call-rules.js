@@ -60,6 +60,8 @@ export function readJavaScriptStringSearchResultKind(operation){return operation
 /** Source unit methods normalize primitives after every raw argument evaluation.
  * @param {string} operation @returns {string} */
 export function readJavaScriptStringUnitCallForm(operation){
+ if(operation==='repeat')return 'repetition';
+ if(operation==='padStart'||operation==='padEnd')return 'padding';
  if(operation==='replace'||operation==='replaceAll')return 'replacement';
  if(operation==='split')return 'split';
  return operation==='charCodeAt'||operation==='charAt'||operation==='at'||operation==='codePointAt'?'position':'';
@@ -70,4 +72,13 @@ export function readJavaScriptStringUnitCallResultForm(operation){
  if(operation==='charCodeAt')return 'float';
  if(operation==='codePointAt')return 'optional-float';
  return operation==='at'?'optional-string':'string';
+}
+/** Build the Number-only ToLength early-return predicate before filler conversion.
+ * @returns {string[]} */
+export function planJavaScriptStringPaddingUnchanged(){
+ return ['count','isNaN','true','count','trunc','length','le','if'];
+}
+/** @returns {string[]} */
+export function planJavaScriptStringRepetitionInvalid(){
+ return ['count','trunc','zero','lt','count','infinity','eq','or'];
 }

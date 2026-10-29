@@ -267,6 +267,7 @@ include = [
     "src/data/unicode-case-program.lino",
     "src/data/unsigned-link-identity-program.lino",
     "src/data/utf16-method-emission-program.lino",
+    "src/data/utf16-text-expansion-program.lino",
     "src/data/utf16-text-program.lino",
     "src/data/whole-parameter-default-bab148f9-program.lino",
     "src/data/whole-parameter-default-program.lino",

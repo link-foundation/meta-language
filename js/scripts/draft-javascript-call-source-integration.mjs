@@ -7,6 +7,12 @@ const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-librari
 if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-libraries]');
 process.argv.splice(2,process.argv.length-2,'--draft');
 const root=new URL('../../',import.meta.url);
+for(const path of ['js/src/translation/javascript-property-call-rules.js','js/src/translation/javascript-string-unit-calls.js'])parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
+await import('./generate-javascript-property-call-rules.mjs'); globalThis.gc?.();
+for(const path of ['js/src/translation/utf16-text-expansion-rules.js','js/scripts/draft-utf16-text-expansion-rules.mjs',
+ 'js/scripts/draft-utf16-text-expansion-fixtures.mjs','js/tests/translation-utf16-text-expansion.test.js'])parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
+await import('./draft-utf16-text-expansion-rules.mjs'); globalThis.gc?.();
+await import('./draft-utf16-text-expansion-fixtures.mjs'); globalThis.gc?.();
 for(const path of ['js/src/translation/conditional-constructor-sharing-rules.js','js/scripts/source-conditional-constructors.mjs',
  'js/scripts/draft-conditional-constructor-sharing-rules.mjs','js/scripts/draft-conditional-constructor-sharing-fixtures.mjs','js/tests/translation-conditional-constructor-sharing.test.js'])parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
 await import('./draft-conditional-constructor-sharing-rules.mjs'); globalThis.gc?.();
@@ -62,6 +68,9 @@ const castIndex=inventory.features.findIndex(entry=>entry.id===casts.id);if(cast
 const naturals={id:'javascript-call-natural-source',required:true,javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-natural-source.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-call-natural-source.test.js','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-controls.mjs']},rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_natural_source.rs','rust/tests/unit/translation_javascript_call_natural_source.rs','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-oracle.mjs']}};
 const naturalIndex=inventory.features.findIndex(entry=>entry.id===naturals.id);if(naturalIndex<0)inventory.features.push(naturals);else inventory.features[naturalIndex]=naturals;
 for(const feature of [
+ {id:'bounded-utf16-text-expansion',required:true,
+  javascript:{status:'implemented',evidence:['js/src/translation/utf16-text-expansion-rules.js','js/src/translation/javascript-call-primitives.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-utf16-text-expansion.test.js','parity/fixtures/utf16-text-expansion.lino','parity/fixtures/javascript-call-source.lino']},
+  rust:{status:'implemented',evidence:['rust/src/translation/utf16_text_expansion_rules.rs','rust/src/translation/javascript_call_machine.rs','rust/tests/unit/utf16_text_expansion.rs','parity/fixtures/utf16-text-expansion.lino','parity/fixtures/javascript-call-source.lino']}},
  {id:'source-conditional-value-constructor-selection',required:true,
  javascript:{status:'implemented',evidence:['js/src/translation/conditional-constructor-sharing-rules.js','js/scripts/source-conditional-constructors.mjs','js/tests/translation-conditional-constructor-sharing.test.js','parity/fixtures/conditional-constructor-sharing.lino']},
  rust:{status:'implemented',evidence:['rust/src/translation/conditional_constructor_sharing_rules.rs','rust/tests/unit/conditional_constructor_sharing.rs','parity/fixtures/conditional-constructor-sharing.lino','parity/self-translation/javascript-call-machine-native.lino']}},

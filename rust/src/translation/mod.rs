@@ -378,3 +378,4 @@ pub(crate) mod record_write_source_interfaces;
 pub(crate) mod type_query_evaluation_rules;
 
 pub(crate) mod conditional_constructor_sharing_rules;
+pub(crate) mod utf16_text_expansion_rules;

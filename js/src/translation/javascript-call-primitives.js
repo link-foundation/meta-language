@@ -5,6 +5,7 @@ import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,rea
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
 import {executeJavaScriptCallIntegerConversion} from './javascript-call-integer-conversion.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
+import {readUtf16TextRepetitionLength,readUtf16TextPaddingLength,constructUtf16TextRepetition,constructUtf16TextPadding} from './utf16-text-expansion-rules.js';
 import {replaceUtf16Text,planUtf16TextSubstitution,sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text} from './utf16-text-rules.js';
 
 /** @typedef {{$:'primitiveValue',value:JavaScriptSemanticValue} |
@@ -26,8 +27,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
  const unary=['read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer'];
- const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
- const ternary=['slice text','find text','find last text','replace text','replace all text'];
+ const binary=['repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
+ const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
  return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
 }
@@ -60,6 +61,7 @@ export function executeJavaScriptCallUnaryNumber(operation,number){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextPrimitive(operation,values){
+ if(operation==='repeat text'||operation==='pad text start'||operation==='pad text end')return executeJavaScriptCallTextExpansion(operation,values);
  if(operation==='replace text'||operation==='replace all text')return executeJavaScriptCallTextReplacementOperands(values,operation==='replace all text');
  const receiver=values[0]??{$:'undefined'};if(receiver.$!=='text')return {$:'primitiveInvalid',reason:'text primitives require their actual complete UTF16 receiver'};
  const text=receiver.units;
@@ -67,6 +69,26 @@ export function executeJavaScriptCallTextPrimitive(operation,values){
  if(operation==='trim text'||operation==='trim text start'||operation==='trim text end')return {$:'primitiveValue',value:{$:'text',units:trimUtf16Text(text,operation!=='trim text end',operation!=='trim text start')}};
  if(operation==='read text code point'||operation==='read text character'||operation==='read relative text character'||operation==='slice text')return executeJavaScriptCallTextPosition(operation,text,values);
  return executeJavaScriptCallTextPair(operation,text,values);
+}
+/** Converted operands only. Resource limits remain distinct from exceptions.
+ * @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallTextExpansion(operation,values){
+ const receiver=values[0]??{$:'undefined'};
+ if(receiver.$!=='text')return {$:'primitiveInvalid',reason:'text expansion requires its actual complete UTF16 receiver'};
+ const count=values[1]??{$:'undefined'};
+ if(count.$!=='number')return {$:'primitiveInvalid',reason:'text expansion requires its actual converted Number bound'};
+ if(operation==='repeat text'){
+  const length=readUtf16TextRepetitionLength(receiver.units.length,count.value);
+  if(length===-1)return {$:'primitiveError',errorClass:'RangeError',reason:'Invalid count value: '+String(count.value)};
+  if(length<0)return {$:'primitiveResourceLimit',reason:'text expansion exceeds its explicit UTF16 output budget'};
+  return {$:'primitiveValue',value:{$:'text',units:constructUtf16TextRepetition(receiver.units,length)}};
+ }
+ if(operation!=='pad text start'&&operation!=='pad text end')return {$:'primitiveInvalid',reason:'text expansion requires its actual registered operation'};
+ const filler=values[2]??{$:'undefined'};
+ if(filler.$!=='text')return {$:'primitiveInvalid',reason:'text padding requires its actual converted UTF16 filler'};
+ const length=readUtf16TextPaddingLength(receiver.units.length,count.value,filler.units.length);
+ if(length<0)return {$:'primitiveResourceLimit',reason:'text expansion exceeds its explicit UTF16 output budget'};
+ return {$:'primitiveValue',value:{$:'text',units:constructUtf16TextPadding(receiver.units,filler.units,length,operation==='pad text start')}};
 }
 /** @param {string} operation @param {number[]} text @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextPosition(operation,text,values){

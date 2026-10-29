@@ -8541,6 +8541,31 @@ literal searches, primitive templates and successful allocation. Callable
 replacements, RegExp/Symbol.replace, generic receivers/unions, complete resource
 limits/failures and every preceding requirement remain required.
 
+The registered call source also drafts string repetition and start/end padding
+through `utf16-text-expansion-rules.js`, automatically translated Rust and paired
+editable Links definitions. Repetition applies ToIntegerOrInfinity semantics;
+negative counts and positive infinity request an actual realm RangeError even
+for empty input. Padding applies ToLength semantics, preserves unchanged text
+when the target is shorter or the filler is empty, and truncates repeated filler
+by code units, including surrogate halves. Bounds and dense registered input
+vectors establish constructor indices. Original receiver, used arguments and
+ignored extra argument effects retain the ordinary source checker order. See
+[repeat and StringPad](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.repeat).
+
+The profile limits constructed output to 1,048,576 units before allocation.
+Larger required outputs are explicit resource refusals, separate from language
+exceptions. An empty filler or finite repetition of empty input avoids allocation
+without iterating over a huge requested length. Source repetition captures its
+numeric bound before testing the shared invalid-count predicate, then builds the
+RangeError from the original primitive argument. This preserves whitespace and
+noncanonical numeric text in V8 count diagnostics rather than substituting the
+converted or truncated Number, following its
+[repeat implementation](https://raw.githubusercontent.com/v8/v8/main/src/builtins/string-repeat.tq),
+with future assertions bounded to Node22.15/24 and Rust1.90–1.99. Independent
+literal controls, native kernel controls and actual source-call controls are
+drafted but unexecuted. Generic receivers, Object/Symbol coercion and complete
+allocation-failure semantics remain required.
+
 
 ### Normalized method reconstruction boundary draft
 

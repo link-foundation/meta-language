@@ -298,7 +298,11 @@ pub fn read_java_script_string_search_result_kind(operation: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_string_unit_call_form(operation: &str) -> String {
-    if (operation == "replace") || (operation == "replaceAll") {
+    if operation == "repeat" {
+        String::from("repetition")
+    } else if (operation == "padStart") || (operation == "padEnd") {
+        String::from("padding")
+    } else if (operation == "replace") || (operation == "replaceAll") {
         String::from("replacement")
     } else if operation == "split" {
         String::from("split")
@@ -325,4 +329,34 @@ pub fn read_java_script_string_unit_call_result_form(operation: &str) -> String 
     } else {
         String::from("string")
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_string_padding_unchanged() -> Vec<String> {
+    vec![
+        String::from("count"),
+        String::from("isNaN"),
+        String::from("true"),
+        String::from("count"),
+        String::from("trunc"),
+        String::from("length"),
+        String::from("le"),
+        String::from("if"),
+    ]
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_string_repetition_invalid() -> Vec<String> {
+    vec![
+        String::from("count"),
+        String::from("trunc"),
+        String::from("zero"),
+        String::from("lt"),
+        String::from("count"),
+        String::from("infinity"),
+        String::from("eq"),
+        String::from("or"),
+    ]
 }
