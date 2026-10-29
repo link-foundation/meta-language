@@ -24,26 +24,40 @@ impl Checker {
         let mut lets = Vec::new();
         let mut columns = Vec::new();
         for (column, source) in scrutinees.iter().enumerate() {
-            let patterns =
-                rows.iter()
-                    .map(|row| {
-                        if row.patterns.get(column).is_some_and(|pattern| {
-                            matches!(pattern.node, SPatternNode::ByteLit { .. })
-                        }) {
-                            "byteLit".to_owned()
-                        } else {
-                            String::new()
-                        }
-                    })
-                    .collect::<Vec<_>>();
+            let owners = rows
+                .iter()
+                .map(
+                    |row| match row.patterns.get(column).map(|pattern| &pattern.node) {
+                        Some(SPatternNode::ByteLit { .. }) => "u8".to_owned(),
+                        Some(SPatternNode::TypedNumLit { owner, .. }) => owner.clone(),
+                        _ => String::new(),
+                    },
+                )
+                .collect::<Vec<_>>();
             let (kind, typed) = match &source.node {
                 SNode::Num { ty, .. } => ("num", ty.is_some()),
                 _ => ("", false),
             };
+            let inference_error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_inference_error(self.language.as_str(),kind,typed,&owners);
+            if !inference_error.is_empty() {
+                return Err(type_error(&inference_error, source.span.or(span)));
+            }
+            let owner=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_inference(self.language.as_str(),kind,typed,&owners);
             let inferred;
-            let scrutinee=if crate::translation::rust_byte_pattern_rules::accept_rust_source_byte_literal_inference(self.language.as_str(),kind,typed,&patterns){
-                let mut value=source.clone();if let SNode::Num{ty,..}=&mut value.node{*ty=Some(Type::Fixed{bits:8,signed:false});}inferred=value;&inferred
-            }else{source};
+            let scrutinee = if !owner.is_empty() {
+                let mut value = source.clone();
+                if let SNode::Num { ty, .. } = &mut value.node {
+                    *ty = if owner == "f64" {
+                        Some(crate::translation::types::FLOAT)
+                    } else {
+                        crate::translation::types::rust_fixed_type(&owner)
+                    };
+                }
+                inferred = value;
+                &inferred
+            } else {
+                source
+            };
             let checked = self.expr(scrutinee, env, path, None, false)?;
             if let Some(name) = env.local(scrutinee) {
                 columns.push(Column {
@@ -433,6 +447,11 @@ impl Checker {
                 Ok(NPat::Bind(name))
             }
             SPatternNode::NumLit { value, negative } => {
+                let context_error=crate::translation::rust_numeric_pattern_rules::read_rust_source_integer_pattern_context_error(self.language.as_str(),if *ty==Type::Float{"float"}else{""});
+                if !context_error.is_empty() {
+                    return Err(type_error(&context_error, span));
+                }
+
                 // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
                 // Numerals up to NAT_PATTERN_UNFOLD unfold to successor chains; larger
                 // ones are equality tests, so a pattern never costs a node per unit.
@@ -458,6 +477,40 @@ impl Checker {
                     None,
                 );
                 self.literal_pattern(value, ty, span)
+            }
+            SPatternNode::TypedNumLit {
+                value,
+                ty: literal_type,
+                owner,
+                negative,
+            } => {
+                let (kind, bits, signed) = match &literal_type {
+                    Type::Fixed { bits, signed } => ("fixed", bits.to_string(), *signed),
+                    Type::Float => ("float", String::new(), false),
+                    _ => ("", String::new(), false),
+                };
+                let error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_type_error(&owner,kind,&bits,signed);
+                let error = if error.is_empty() {
+                    crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_negation_error(&owner,negative)
+                } else {
+                    error
+                };
+                if !error.is_empty() {
+                    return Err(type_error(&error, span));
+                }
+                self.literal_pattern(
+                    SExpr::new(
+                        SNode::Num {
+                            value,
+                            ty: Some(literal_type),
+                            negative,
+                            unit: false,
+                        },
+                        None,
+                    ),
+                    ty,
+                    span,
+                )
             }
             SPatternNode::ByteLit { value } => {
                 let (kind, bits, signed) = match ty {

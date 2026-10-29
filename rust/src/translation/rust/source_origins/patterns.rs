@@ -10,16 +10,13 @@ impl SourceOrigins {
         let form = match pattern.node {
             SPatternNode::StrLit { .. } => "strLit",
             SPatternNode::ByteLit { .. } => "byteLit",
+            SPatternNode::TypedNumLit { .. } => "typedNumLit",
             _ => "",
         };
-        if crate::translation::rust_byte_pattern_rules::accept_rust_source_literal_pattern_alias(
-            form,
-        ) && let Some(span) = pattern.span
-        {
-            self.literal_pattern_aliases
-                .entry(span)
-                .or_default()
-                .push(node.clone());
+        if (crate::translation::rust_byte_pattern_rules::accept_rust_source_literal_pattern_alias(form)
+            || crate::translation::rust_numeric_pattern_rules::accept_rust_source_numeric_pattern_alias(form))
+            && let Some(span)=pattern.span {
+            self.literal_pattern_aliases.entry(span).or_default().push(node.clone());
         }
     }
 
@@ -94,6 +91,17 @@ impl SourceOrigins {
         {
             for alias in aliases {
                 self.mark(&alias, origin.clone());
+            }
+        }
+        if let SPatternNode::TypedNumLit { owner, .. } = &pattern.node {
+            let mut contract = origin.clone();
+            if let Some(expanded) = origin.expanded_source_owner.as_ref() {
+                contract.source_owner = Some(expanded.clone());
+            }
+            let actual = contract.pointer_integer_owner();
+            let error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_owner_error(&actual,owner,origin.ty.is_some(),self.collecting);
+            if !error.is_empty() {
+                return Err(unsupported("Rust numeric pattern", &error, source_span));
             }
         }
         if matches!(pattern.node, SPatternNode::StrLit { .. }) {

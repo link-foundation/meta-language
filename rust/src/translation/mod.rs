@@ -386,3 +386,5 @@ pub(crate) mod utf16_text_expansion_rules;
 pub mod rust_string_pattern_rules;
 
 pub mod rust_byte_pattern_rules;
+
+pub mod rust_numeric_pattern_rules;

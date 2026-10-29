@@ -41,6 +41,9 @@ impl Inference {
                 let literal = self.fresh(true);
                 self.unify(ty, &literal, place)
             }
+            SPatternNode::TypedNumLit {
+                ty: literal_type, ..
+            } => self.unify(ty, &Term::Known(literal_type.clone()), place),
             SPatternNode::ByteLit { .. } => self.unify(
                 ty,
                 &Term::Known(Type::Fixed {

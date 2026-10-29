@@ -1181,3 +1181,12 @@ match checking, then emits existing equality/guard semantics. It covers all byte
 values, aliases with actual source ownership, constructor fields and direct
 unsuffixed scrutinee constraints. Unicode character patterns remain a distinct
 required domain. No source or native execution controls have run in this phase.
+
+
+The numeric-pattern draft preserves actual Rust suffix types and primitive
+source owners through match admission. It keeps pointer-sized and fixed-width
+names distinct, retains alias provenance, rejects unsigned negation and
+integer/float pattern coercions, and supplies direct compatible integer literal
+constraints. Semantics reuse the existing common match algebra and all native
+decisions come from shared source. Its original/generated controls remain
+unexecuted; general type constraints and full source coverage remain required.

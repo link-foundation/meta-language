@@ -813,6 +813,17 @@ fn pattern_value(pattern: &SPattern, range: Option<Span>) -> Result<SExpr> {
             unit: false,
         },
         SPatternNode::BoolLit { value, .. } => SNode::Bool { value: *value },
+        SPatternNode::TypedNumLit {
+            value,
+            ty,
+            negative,
+            ..
+        } => SNode::Num {
+            value: value.clone(),
+            ty: Some(ty.clone()),
+            negative: *negative,
+            unit: false,
+        },
         SPatternNode::ByteLit { value } => SNode::Num {
             value: value.clone(),
             ty: Some(Type::Fixed {

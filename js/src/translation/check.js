@@ -1,4 +1,5 @@
-import {readRustSourceBytePatternTypeError,acceptRustSourceByteLiteralInference} from './rust-byte-pattern-rules.js';
+import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
+import {readRustSourceBytePatternTypeError} from './rust-byte-pattern-rules.js';
 import {readTypeQueryEvaluationPlan} from './type-query-evaluation-rules.js';
 import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureContainers,checkRustDataTypeFieldSignatureProgramContainers} from './rust-data-type-field-signatures.js';
 import {acceptLinkedStringArrayCopySort} from './string-array-sort-rules.js';
@@ -117,7 +118,7 @@ import { acceptProgramTupleProductModel, acceptProgramExpressionOperation } from
 import {readStringOrderOperation} from './string-order-rules.js';
 import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
 import {
-  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
+  BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, rustFixedType, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
 
 const COMPARISONS = new Set(['eq', 'ne', 'lt', 'le', 'gt', 'ge']);
@@ -1753,7 +1754,10 @@ class Checker {
   compileMatch(node, env, path) {
     const lets = [];
     const columns = node.scrutinees.map((source,column) => {
-      const scrutinee=acceptRustSourceByteLiteralInference(this.language,source.k,Boolean(source.type),node.rows.map(row=>row.patterns[column]?.k??''))?{...source,type:{kind:'fixed',bits:8,signed:false}}:source;
+      const owners=node.rows.map(row=>row.patterns[column]?.k==='byteLit'?'u8':row.patterns[column]?.k==='typedNumLit'?row.patterns[column].owner:'');
+      const inferenceError=readRustSourceNumericPatternInferenceError(this.language,source.k,Boolean(source.type),owners);if(inferenceError)throw typeError(inferenceError,source.span??node.span);
+      const inferred=readRustSourceNumericPatternInference(this.language,source.k,Boolean(source.type),owners);
+      const scrutinee=inferred?{...source,type:inferred==='f64'?FLOAT:rustFixedType(inferred)}:source;
       const checked = this.expr(scrutinee, env, path, undefined);
       if (scrutinee.k === 'name' && scrutinee.path.length === 1 && env.has(scrutinee.path[0])) {
         return { name: scrutinee.path[0], type: checked.type };
@@ -1911,6 +1915,7 @@ class Checker {
         return { k: 'bind', name: pattern.name };
       }
       case 'numLit': {
+        const contextError=readRustSourceIntegerPatternContextError(this.language,type.kind);if(contextError)throw typeError(contextError,pattern.span??span);
         // A JavaScript `case 0n:` is an `===` test, which the recursion analysis reads as a zero test.
         // Numerals up to NAT_PATTERN_UNFOLD unfold to successor chains; larger
         // ones are equality tests, so a pattern never costs a node per unit.
@@ -1920,6 +1925,10 @@ class Checker {
           return result;
         }
         return this.literalPattern({ k: 'num', value: pattern.value, negative: pattern.negative }, type, span);
+      }
+      case 'typedNumLit':{
+        const error=readRustSourceNumericPatternTypeError(pattern.owner,pattern.type?.kind??'',String(pattern.type?.bits??''),pattern.type?.signed===true)||readRustSourceNumericPatternNegationError(pattern.owner,pattern.negative===true);if(error)throw typeError(error,pattern.span??span);
+        return this.literalPattern({k:'num',value:pattern.value,type:pattern.type,negative:pattern.negative},type,span);
       }
       case 'byteLit':{
         const error=readRustSourceBytePatternTypeError(type.kind,type.bits??0,type.signed===true);if(error)throw typeError(error,pattern.span??span);

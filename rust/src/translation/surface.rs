@@ -364,6 +364,16 @@ pub enum SPatternNode {
     StrLit {
         value: String,
     },
+    /// Explicit numeric suffix type and primitive source owner.
+    TypedNumLit {
+        #[serde(deserialize_with = "numeral")]
+        value: String,
+        #[serde(rename = "type")]
+        ty: Type,
+        owner: String,
+        #[serde(default, skip_serializing_if = "is_false")]
+        negative: bool,
+    },
     /// A Rust byte-character pattern retains its u8 literal type.
     ByteLit {
         #[serde(deserialize_with = "numeral")]

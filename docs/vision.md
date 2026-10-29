@@ -10285,3 +10285,35 @@ rules and is bounded by the declared Node/Rust version ranges. No control has
 executed. General scrutinee constraint propagation, Unicode character patterns,
 range/slice patterns, full match ergonomics and complete translation remain
 requirements; byte support does not establish those capabilities.
+
+
+Rust numeric patterns retain their actual lexical suffix (or floating lexical
+role), primitive type and negation in a typed surface pattern. The original
+primitive source owner is checked before common lowering, including the
+usize/u64 and isize/i64 distinctions at equal representation widths. Numeric
+aliases retain the matched value's actual source ownership, including borrowed
+layers and constructor fields. The common checker validates that the retained
+type agrees with the suffix, rejects unsigned negation even at zero, and uses
+the existing literal equality/guard algebra after admission. Plain integer
+patterns remain integer patterns; they cannot acquire floating meaning from
+a float scrutinee. A floating lexical token cannot carry an integer suffix.
+
+Direct untyped integer scrutinees receive compatible actual integer constraints
+from byte and suffixed numeric patterns in their column. Conflicting owners
+do not produce a guessed type; floating patterns cannot coerce an integer
+scrutinee. Explicitly typed and named expressions keep their existing type,
+and other source languages keep their own inference. Shared JavaScript source
+owns these decisions and the native implementation is translated automatically,
+including the existing primitive-signature policy dependency.
+
+Forty-eight independent original programs retain all twelve integer owner names,
+signed minima, f64 values and zero equality, literal radices, aliases, guards,
+actual failures and nested fields. Fifty-six premise controls and eighteen
+invalid-source controls remain deferred, alongside complete original/generated
+native products, both graph codecs and all four emissions. The integer/float
+invalid input discovered while drafting is retained as a rejection control.
+The [integer literal rules](https://doc.rust-lang.org/reference/expressions/literal-expr.html#integer-literal-expressions)
+and [literal pattern rules](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
+define the independent source contract. No controls have run. General constraint
+propagation, additional pointer widths, f32 and character semantics, ranges,
+full match ergonomics and complete source translation remain obligations.

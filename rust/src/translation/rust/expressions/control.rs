@@ -321,6 +321,58 @@ impl RustParser {
 
     /// Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`.
     #[allow(clippy::too_many_lines)] // one branch per pattern form, as in rust.js
+    fn numeric_pattern(&self, token: &Token, first: &Token, negative: bool) -> Result<SPattern> {
+        if self.cursor.is("..") || self.cursor.is("..=") {
+            return Err(unsupported(
+                "range pattern",
+                "ranges are outside the portable pattern language",
+                span(first, self.cursor.peek()),
+            ));
+        }
+        let lexical_error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_lexical_error(&token.suffix,token.floating);
+        if !lexical_error.is_empty() {
+            return Err(unsupported(
+                "Rust numeric pattern",
+                &lexical_error,
+                span(first, token),
+            ));
+        }
+        let owner =
+            crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_owner(
+                &token.suffix,
+                token.floating,
+            );
+        let node = if owner.is_empty() {
+            SPatternNode::NumLit {
+                value: token.value.clone(),
+                negative,
+            }
+        } else {
+            let ty = if owner == "f64" {
+                Some(super::super::FLOAT)
+            } else {
+                super::super::rust_fixed_type(&owner)
+            };
+            let Some(ty) = ty else {
+                return Err(unsupported(
+                    &format!("literal suffix {owner}"),
+                    "portable numeric literals are integers and IEEE-754 binary64 values",
+                    span(first, token),
+                ));
+            };
+            SPatternNode::TypedNumLit {
+                value: token.value.clone(),
+                ty,
+                owner,
+                negative,
+            }
+        };
+        Ok(SPattern {
+            node,
+            span: span(first, token),
+        })
+    }
+
     pub(in super::super) fn pattern(
         &mut self,
         path: &[String],
@@ -354,30 +406,11 @@ impl RustParser {
         if self.cursor.is("-") && self.cursor.is_kind_at(TokenKind::Number, 1) {
             self.cursor.advance();
             let number = self.cursor.advance();
-            return Ok(SPattern {
-                node: SPatternNode::NumLit {
-                    value: number.value.clone(),
-                    negative: true,
-                },
-                span: span(&token, &number),
-            });
+            return self.numeric_pattern(&number, &token, true);
         }
         if token.kind == TokenKind::Number {
             self.cursor.advance();
-            if self.cursor.is("..") || self.cursor.is("..=") {
-                return Err(unsupported(
-                    "range pattern",
-                    "ranges are outside the portable pattern language",
-                    span(&token, self.cursor.peek()),
-                ));
-            }
-            return Ok(SPattern {
-                node: SPatternNode::NumLit {
-                    value: token.value.clone(),
-                    negative: false,
-                },
-                span: span(&token, &token),
-            });
+            return self.numeric_pattern(&token, &token, false);
         }
         if crate::translation::rust_byte_pattern_rules::accept_rust_source_byte_pattern_token(
             if token.kind == TokenKind::ByteCharacter {

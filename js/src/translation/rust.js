@@ -1,3 +1,4 @@
+import {readRustSourceNumericPatternOwner,readRustSourceNumericPatternLexicalError} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceBytePatternToken} from './rust-byte-pattern-rules.js';
 import {acceptRustSourceStringPatternToken} from './rust-string-pattern-rules.js';
 import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
@@ -1764,6 +1765,16 @@ class RustParser {
     return this.origins.mark(result, this.origins.join(origins));
   }
 
+  numericPattern(token,first,negative){
+    const c=this.cursor;if(c.is('..')||c.is('..='))throw unsupported('range pattern','ranges are outside the portable pattern language',span(first,c.peek()));
+    const lexicalError=readRustSourceNumericPatternLexicalError(token.suffix??'',token.floating===true);if(lexicalError)throw unsupported('Rust numeric pattern',lexicalError,span(first,token));
+    const owner=readRustSourceNumericPatternOwner(token.suffix??'',token.floating===true);
+    if(!owner)return{k:'numLit',value:token.value,...(negative?{negative:true}:{}),span:span(first,token)};
+    const type=owner==='f64'?FLOAT:rustFixedType(owner);
+    if(!type)throw unsupported('literal suffix '+owner,'portable numeric literals are integers and IEEE-754 binary64 values',span(first,token));
+    return{k:'typedNumLit',value:token.value,...(negative?{negative:true}:{}),type,owner,span:span(first,token)};
+  }
+
   /** Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`. */
   pattern(path, aliases) {
     const c = this.cursor;
@@ -1771,16 +1782,8 @@ class RustParser {
     if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
     if (c.eat('_')) return this.recordPatternDepth?{k:'wild',span:{start:token.start,end:token.end}}:{k:'wild'};
     if (c.is('ref') || c.is('mut')) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
-    if (c.is('-') && c.isKind('number', 1)) {
-      c.next();
-      const number = c.next();
-      return { k: 'numLit', value: number.value, negative: true, span: span(token, number) };
-    }
-    if (token.kind === 'number') {
-      c.next();
-      if (c.is('..') || c.is('..=')) throw unsupported('range pattern', 'ranges are outside the portable pattern language', span(token, c.peek()));
-      return { k: 'numLit', value: token.value, span: span(token, token) };
-    }
+    if(c.is('-')&&c.isKind('number',1)){c.next();return this.numericPattern(c.next(),token,true);}
+    if(token.kind==='number'){c.next();return this.numericPattern(token,token,false);}
     if(acceptRustSourceBytePatternToken(token.kind)){c.next();return{k:'byteLit',value:token.value,span:span(token,token)};}
     if (token.kind === 'char' || token.kind === 'byteChar') throw unsupported('character pattern', 'characters are outside the portable core', span(token, token));
     if(acceptRustSourceStringPatternToken(token.kind)){c.next();return{k:'strLit',value:token.value,span:span(token,token)};}
@@ -1867,6 +1870,8 @@ function patternValue(pattern, range) {
       return { k: 'str', value: pattern.value, span: range };
     case 'byteLit':
       return {k:'num',value:pattern.value,type:rustFixedType('u8'),span:range};
+    case 'typedNumLit':
+      return {k:'num',value:pattern.value,type:pattern.type,negative:pattern.negative,span:range};
     case 'ctor':
       if (!pattern.args.length) return { k: 'name', path: pattern.path, span: range };
       return { k: 'app', fn: { k: 'name', path: pattern.path, span: range }, args: pattern.args.map((arg) => patternValue(arg, range)), span: range };
