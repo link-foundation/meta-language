@@ -602,6 +602,12 @@ pub fn test_java_script_source_catch_scope_term(term: &str) -> bool {
     term == "catch_clause"
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_java_script_source_class_expression_term(term: &str) -> bool {
+    term == "class"
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,

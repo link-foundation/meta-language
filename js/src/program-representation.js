@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
@@ -450,7 +450,7 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   const propertyRanges=syntax.filter(({term})=>term==='property_identifier'||term==='private_property_identifier');
   const propertyNames=new Set(tokens.filter(token=>propertyRanges.some(node=>node.start<=token.start&&token.end<=node.end)).map(({start,end})=>`${start}:${end}`));
   const lexicalStarts=new Map();
-  if(language==='JavaScript')for(const node of syntax){if(!testJavaScriptSourceLoopScopeTerm(node.term)&&!testJavaScriptSourceCatchScopeTerm(node.term))continue;const rows=lexicalStarts.get(node.start)??[];if(!rows.includes(node.end))rows.push(node.end);rows.sort((left,right)=>right-left);lexicalStarts.set(node.start,rows);}
+  if(language==='JavaScript')for(const node of syntax){if(!testJavaScriptSourceLoopScopeTerm(node.term)&&!testJavaScriptSourceCatchScopeTerm(node.term)&&!testJavaScriptSourceClassExpressionTerm(node.term))continue;const rows=lexicalStarts.get(node.start)??[];if(!rows.includes(node.end))rows.push(node.end);rows.sort((left,right)=>right-left);lexicalStarts.set(node.start,rows);}
   for (const [index, token] of tokens.entries()) {
     while(stack.length>1&&virtualScopes.has(stack.at(-1).id)&&token.start>=stack.at(-1).end)stack.pop();
     for(const end of lexicalStarts.get(token.start)??[]){const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);}
@@ -626,7 +626,8 @@ function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declar
       const positions=readJavaScriptSourceVariableBindings(tokens,syntax,index);
       if(positions!==null){for(const at of positions)declare(at,token.text);continue;}
     }
-    if (['const', 'let', 'var', 'class'].includes(token.text)) {
+    if(token.text==='class'){if(acceptJavaScriptSourceFunctionHeadName(tokens[index+1]?.kind??''))declare(index+1,'class');continue;}
+    if (['const', 'let', 'var'].includes(token.text)) {
       const pattern = token.text === 'class' ? undefined : syntax.find(({ term, start }) =>
         term === 'object_pattern' && start === tokens[index + 1]?.start);
       if (pattern) {

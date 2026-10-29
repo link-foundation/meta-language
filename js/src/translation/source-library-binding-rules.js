@@ -38,3 +38,6 @@ export function testJavaScriptSourceLoopScopeTerm(term){return term==='for_state
 
 /** @param {string} term @returns {boolean} */
 export function testJavaScriptSourceCatchScopeTerm(term){return term==='catch_clause';}
+
+/** @param {string} term @returns {boolean} */
+export function testJavaScriptSourceClassExpressionTerm(term){return term==='class';}

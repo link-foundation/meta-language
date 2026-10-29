@@ -10176,3 +10176,16 @@ shorthand/property preservation, earlier and captured later parameter references
 computed keys, optional catches and outside shadowed reads. These definitions
 do not assert that every catch/var redeclaration interaction or full runtime
 abrupt completion semantics has been implemented or verified.
+
+
+A JavaScript class expression owns a private lexical environment spanning its
+actual `class` CST node, including heritage evaluation and method closures.
+Named expressions bind only the immediate identifier after the class keyword;
+anonymous expressions never acquire a declaration from a later method name or
+heritage expression. Outside reads remain outside that private environment.
+Both adapters use an automatically translated shared source term selector. Six
+independent whole-source and exact-rename controls retain recursive self names,
+outer shadowing, anonymous classes and a heritage temporal-dead-zone read. This
+structural draft does not establish immutable class-name assignment behavior,
+class-declaration inner/outer cell equivalence, decorators or full class runtime
+translation; those retain their own obligations and require execution evidence.

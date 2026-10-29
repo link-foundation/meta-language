@@ -8,7 +8,7 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm,testJavaScriptSourceKeywordRole,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm} from '../src/translation/source-library-binding-rules.js';
 import {analyzeProgram,BindingRenameError} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
@@ -90,3 +90,5 @@ for(const row of fixture.modules)test(row.name,async context=>{
 });
 
 for(const row of fixture.catchScopeTerms)test('actual catch scope term '+row.term,()=>assert.equal(testJavaScriptSourceCatchScopeTerm(row.term),row.expected));
+
+for(const row of fixture.classExpressionTerms)test('actual class expression term '+row.term,()=>assert.equal(testJavaScriptSourceClassExpressionTerm(row.term),row.expected));

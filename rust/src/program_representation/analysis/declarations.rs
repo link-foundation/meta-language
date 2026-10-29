@@ -41,7 +41,11 @@ pub(super) fn declare_javascript(
             }
             continue;
         }
-        if matches!(token.text.as_str(), "const" | "let" | "var" | "class") {
+        if token.text == "class" {
+            if tokens.get(index+1).is_some_and(|next|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if next.kind==TokenKind::Identifier{"identifier"}else{""})) { declare(tokens,index+1,"class",None,declarations,declared); }
+            continue;
+        }
+        if matches!(token.text.as_str(), "const" | "let" | "var") {
             let pattern = (token.text != "class")
                 .then(|| {
                     syntax.iter().find(|fact| {

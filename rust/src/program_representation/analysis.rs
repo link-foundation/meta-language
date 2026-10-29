@@ -280,6 +280,7 @@ pub(super) fn resolve_bindings(
         for node in syntax.iter().filter(|node| {
             crate::translation::source_library_binding_rules::test_java_script_source_loop_scope_term(&node.term)
                 || crate::translation::source_library_binding_rules::test_java_script_source_catch_scope_term(&node.term)
+                || crate::translation::source_library_binding_rules::test_java_script_source_class_expression_term(&node.term)
         }) {
             let rows = lexical_starts.entry(node.range.start).or_default();
             if !rows.contains(&node.range.end) { rows.push(node.range.end); }
