@@ -813,6 +813,9 @@ fn pattern_value(pattern: &SPattern, range: Option<Span>) -> Result<SExpr> {
             unit: false,
         },
         SPatternNode::BoolLit { value, .. } => SNode::Bool { value: *value },
+        SPatternNode::StrLit { value } => SNode::Str {
+            value: value.clone(),
+        },
         SPatternNode::Ctor { path, args } if args.is_empty() => SNode::Name { path: path.clone() },
         SPatternNode::Ctor { path, args } => SNode::App {
             func: Box::new(SExpr::new(SNode::Name { path: path.clone() }, range)),

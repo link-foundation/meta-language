@@ -1165,3 +1165,12 @@ fully qualified standard clone on one borrowed receiver, JavaScript creates a
 new dense array and proof targets retain immutable list values. Selection stays
 separate from other source languages and general slice ranges. Future original,
 IEEE/allocation, source-free and complete-decision controls remain deferred.
+
+
+The ordinary Rust frontend now drafts borrowed-str string literal patterns
+through the common match algebra, including guards, conditional patterns and
+actual constructor fields. Ownership checks retain the source str type and
+reference layers; aliases keep the matched source origin. This supports the
+string dispatch used by generated runtime code without substituting an opaque
+source block. Its original/generated execution controls remain deferred; full
+match ergonomics, other literal domains and full runtime reparsing remain gaps.

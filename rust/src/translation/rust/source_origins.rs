@@ -270,6 +270,7 @@ pub(super) struct SourceOrigins {
     // successive wraps and dereferences update the same source evidence.
     expressions: HashMap<Span, SourceOrigin>,
     pattern_references: HashMap<Span, usize>,
+    string_pattern_aliases: HashMap<Span, Vec<SExpr>>,
     wildcard_references: VecDeque<usize>,
 }
 
@@ -288,6 +289,7 @@ impl SourceOrigins {
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
             pattern_references: HashMap::new(),
+            string_pattern_aliases: HashMap::new(),
             wildcard_references: VecDeque::new(),
         }
     }

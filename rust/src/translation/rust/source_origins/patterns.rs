@@ -6,6 +6,17 @@ use super::super::{Result, SExpr, SPattern, SPatternNode, Span, Type, unsupporte
 use super::{SourceDeclaration, SourceLookup, SourceOrigin, SourceOrigins};
 
 impl SourceOrigins {
+    pub(in super::super) fn alias_string_pattern(&mut self, pattern: &SPattern, node: &SExpr) {
+        if matches!(pattern.node, SPatternNode::StrLit { .. })
+            && let Some(span) = pattern.span
+        {
+            self.string_pattern_aliases
+                .entry(span)
+                .or_default()
+                .push(node.clone());
+        }
+    }
+
     pub(in super::super) fn reference_pattern(&mut self, pattern: &SPattern) {
         if let Some(span) = pattern.span {
             *self.pattern_references.entry(span).or_default() += 1;
@@ -69,6 +80,27 @@ impl SourceOrigins {
                 "an owned Box requires an explicit dereference before a constructor or literal pattern",
                 source_span,
             ));
+        }
+        if let Some(aliases) = pattern
+            .span
+            .and_then(|span| self.string_pattern_aliases.get(&span))
+            .cloned()
+        {
+            for alias in aliases {
+                self.mark(&alias, origin.clone());
+            }
+        }
+        if matches!(pattern.node, SPatternNode::StrLit { .. }) {
+            let owner = origin.source_owner.as_ref();
+            let owner_path = owner.map(|owner| owner.path.join("::")).unwrap_or_default();
+            let count = |value: usize| {
+                f64::from(u32::try_from(value).expect("source column count fits the source limit"))
+            };
+            let error=crate::translation::rust_string_pattern_rules::read_rust_source_string_pattern_error(
+                if origin.ty==Some(super::super::STRING){"string"}else{""},origin.text_source_model.unwrap_or(""),origin.proven,count(origin.wrappers.len()),origin.wrappers.iter().all(|layer|layer=="reference"),owner.map_or("",|owner|owner.kind.as_str()),&owner_path,owner.map_or(-1.0,|owner|count(owner.arguments.len())),self.collecting);
+            if !error.is_empty() {
+                return Err(unsupported("Rust string pattern", &error, source_span));
+            }
         }
         match &pattern.node {
             SPatternNode::Tuple { args, rest } => {

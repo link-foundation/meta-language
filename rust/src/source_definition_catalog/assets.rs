@@ -358,6 +358,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-string-byte-length-program.lino" => {
             Some(include_str!("../data/rust-string-byte-length-program.lino"))
         }
+        "rust-string-pattern-program.lino" => {
+            Some(include_str!("../data/rust-string-pattern-program.lino"))
+        }
         "rust-string-predicate-interface-program.lino" => Some(include_str!(
             "../data/rust-string-predicate-interface-program.lino"
         )),

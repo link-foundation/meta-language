@@ -386,12 +386,20 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
-        if token.kind == TokenKind::String {
-            return Err(unsupported(
-                "string pattern",
-                "match on &str is outside the Rust frontend",
-                span(&token, &token),
-            ));
+        if crate::translation::rust_string_pattern_rules::accept_rust_source_string_pattern_token(
+            if token.kind == TokenKind::String {
+                "string"
+            } else {
+                ""
+            },
+        ) {
+            self.cursor.advance();
+            return Ok(SPattern {
+                node: SPatternNode::StrLit {
+                    value: token.value.clone(),
+                },
+                span: span(&token, &token),
+            });
         }
         if self.cursor.is("true") || self.cursor.is("false") {
             self.cursor.advance();
@@ -470,6 +478,7 @@ impl RustParser {
             }
             let inner = self.pattern(path, aliases)?;
             let value = pattern_value(&inner, span(&token, self.cursor.peek()))?;
+            self.origins.alias_string_pattern(&inner, &value);
             aliases.push(Alias {
                 name: segments[0].clone(),
                 value,

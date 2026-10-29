@@ -10230,3 +10230,27 @@ Seven term premises and eight independent whole-source/exact-rename controls
 retain those distinctions, literal contents, original Node values, snapshots
 and concrete reconstruction. These controls remain unexecuted; the change
 does not establish complete template/tag execution or full-language translation.
+
+
+Rust string literal patterns enter the existing common literal-pattern algebra
+from actual string tokens. Their source check requires a proven immutable
+borrowed str owner, including actual nominal/type-alias resolution; a core
+String alone does not establish that owner. Ordinary arms, alternatives,
+guards, conditional patterns and constructor fields reuse their existing match
+semantics. String aliases retain the actual matched source origin, including
+reference/lifetime and nested field ownership, while their immutable common
+value uses the selected literal. Alias origin records are attached when the
+actual pattern is checked rather than inferred from its spelling.
+
+The token and source-owner decisions are shared JavaScript source translated
+automatically to Rust. Twenty independent original programs retain ordered
+selection, Unicode distinctions, raw text, guard and scrutinee failures, lazy
+branches, borrowed layers, aliases and nested field cases. Four token premises,
+thirteen source-owner premises and two invalid-source controls remain deferred,
+with complete original/generated native products, both graph codecs and four
+target emissions declared for CI. Neither these controls nor source-generation
+receipts establish execution evidence. Full match ergonomics, character/byte/C
+patterns, mutable/interior state and complete Rust translation remain obligations.
+The [Rust literal-pattern rules](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
+and [match guard rules](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards)
+define the independent source-language contract.

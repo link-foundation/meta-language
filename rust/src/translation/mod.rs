@@ -378,7 +378,9 @@ pub(crate) mod record_write_source_interfaces;
 pub(crate) mod type_query_evaluation_rules;
 
 pub(crate) mod conditional_constructor_sharing_rules;
-pub(crate) mod utf16_text_expansion_rules;
 pub(crate) mod source_library_binding_rules;
 pub(crate) mod source_library_export_rules;
 pub(crate) mod source_parameter_binding_rules;
+pub(crate) mod utf16_text_expansion_rules;
+
+pub mod rust_string_pattern_rules;
