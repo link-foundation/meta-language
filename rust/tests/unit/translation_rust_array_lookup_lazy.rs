@@ -28,6 +28,22 @@ fn explicit_lazy_callable_signatures_and_branch_plan() {
     assert!(!rules::test_rust_array_lookup_lazy_fallback("map_or"));
     assert!(!rules::test_rust_array_lookup_predicate_consumer("map_or"));
     assert_eq!(
+        rules::read_rust_array_lookup_consumer_arity("map_or_else", true),
+        2.0
+    );
+    assert_eq!(
+        rules::read_rust_array_lookup_consumer_arity("map_or_else", false),
+        -1.0
+    );
+    assert!(rules::test_rust_array_lookup_lazy_fallback("map_or_else"));
+    assert!(!rules::test_rust_array_lookup_predicate_consumer(
+        "map_or_else"
+    ));
+    assert_eq!(
+        rules::plan_rust_array_lookup_consumer("map_or_else"),
+        ["condition", "selected", "fallback", "if"]
+    );
+    assert_eq!(
         rules::plan_rust_array_lookup_consumer("map_or"),
         ["condition", "selected", "fallback", "if"]
     );
@@ -103,6 +119,18 @@ fn explicit_lazy_callable_signatures_and_branch_plan() {
                 row["element"].as_bool().unwrap()
             ),
             row["expected"].as_f64().unwrap()
+        );
+    }
+    for row in fixture["mapperSignatures"].as_array().unwrap() {
+        assert_eq!(
+            rules::read_rust_array_lookup_mapper_error(
+                row["kind"].as_str().unwrap(),
+                row["parameters"].as_f64().unwrap(),
+                row["wrappers"].as_f64().unwrap(),
+                row["knownParameter"].as_bool().unwrap(),
+                row["knownResult"].as_bool().unwrap()
+            ),
+            row["expected"].as_str().unwrap()
         );
     }
     for row in fixture["closureParameterForms"].as_array().unwrap() {

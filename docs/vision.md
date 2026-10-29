@@ -666,10 +666,23 @@ result ownership, including Boolean identity, signed widening, portable pointer
 implementations and exact floating conversion. Receiver, index and eager
 default evaluate once in source order; the guarded selected element and its
 conversion remain inside the present branch. Equal machine widths never
-authorize a missing trait implementation. General mapper closures and escaping
-Option values remain obligations. Deferred originals and independent effect
+authorize a missing trait implementation. Known direct Copy closures and
+function items also retain their actual one-element parameter and complete
+result contracts. Contextual parameters come from the proven selected element;
+result hints come from the actual default value, independently of that element.
+Custom functions named `from` retain their own source owners rather than being
+replaced with standard conversions.
+
+The same lookup profile drafts map_or_else with a direct zero-argument fallback
+and a one-argument mapper. Both callable expressions are captured eagerly in
+source order; exactly the selected callback is invoked. The absent default is
+not assumed to return the element type. Complete FnOnce/FnMut, non-Copy captures
+and results, mutable lookups and escaping Option values remain obligations.
+Deferred originals and independent effect
 traces follow [Option::map_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or);
-source construction establishes no execution evidence.
+[Option::map_or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or_else)
+retains its separate lazy-default contract. Source construction establishes no
+execution evidence or runtime parity.
 
 Four thousand one hundred forty-six complete original programs retain
 independent BigInt interval expectations across seven operations, all owners,

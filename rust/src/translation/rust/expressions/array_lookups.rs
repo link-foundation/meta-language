@@ -174,6 +174,7 @@ impl RustParser {
         receiver: &SExpr,
         consumer: &str,
         path: &[String],
+        mapping_result: Option<&SourceOrigin>,
     ) -> Option<SourceOrigin> {
         let source = self.origins.origin(receiver, path);
         let Some(Type::Array { element, .. }) = source.ty.as_ref() else {
@@ -221,11 +222,18 @@ impl RustParser {
         }
         let mut selected = SourceOrigin::with_type(element.as_ref().clone(), path, Vec::new());
         selected.source_owner = Some(owner.clone());
-        let result = if arity == 0.0 {
+        let result = if consumer == "map_or" {
+            let result = mapping_result?;
+            if !result.proven || result.ty.is_none() {
+                return None;
+            }
+            result.clone()
+        } else if arity == 0.0 {
             selected.clone()
         } else {
             lookup_result_origin(&BOOL, "", true, path)
         };
+        let return_type = result.ty.clone()?;
         let parameters = if arity == 0.0 {
             Vec::new()
         } else {
@@ -238,11 +246,7 @@ impl RustParser {
                 } else {
                     vec![element.as_ref().clone()]
                 },
-                ret: Box::new(if arity == 0.0 {
-                    element.as_ref().clone()
-                } else {
-                    BOOL
-                }),
+                ret: Box::new(return_type),
             },
             path,
             Vec::new(),
@@ -308,7 +312,11 @@ impl RustParser {
         let mut defaults = Vec::new();
         let mut mapper_owner = String::new();
         if consumer_arity > 0.0 {
-            let context = self.array_lookup_callable_context(receiver, &consumer.value, path);
+            let context = if consumer.value == "map_or_else" {
+                None
+            } else {
+                self.array_lookup_callable_context(receiver, &consumer.value, path, None)
+            };
             defaults.push(if let Some(context) = context {
                 self.read_expected_copy_closure(path, Some(&context))?
             } else {
@@ -316,31 +324,37 @@ impl RustParser {
             });
             if consumer_arity == 2.0 {
                 self.cursor.expect(",", Some("array lookup mapper"))?;
-                let mapper = self
+                if let Some((mapper, owner)) = self
                     .primitive_try_head(path)
                     .filter(|head| head.resolved.last().is_some_and(|method| method == "from"))
-                    .ok_or_else(|| {
-                        unsupported(
-                            "Rust array lookup mapper",
-                            "an actual admitted standard primitive From function item is required",
-                            range,
-                        )
-                    })?;
-                mapper_owner = from_rules::read_rust_primitive_from_owner(
-                    &mapper.resolved,
-                    self.ordinary_completion_context(),
-                    mapper.shadowed,
-                    mapper.absolute,
-                );
-                if mapper_owner.is_empty() {
-                    return Err(unsupported(
-                        "Rust array lookup mapper",
-                        "an actual admitted standard primitive From function item is required",
-                        range,
-                    ));
-                }
-                for _ in 0..mapper.offset {
-                    self.cursor.advance();
+                    .and_then(|mapper| {
+                        let owner = from_rules::read_rust_primitive_from_owner(
+                            &mapper.resolved,
+                            self.ordinary_completion_context(),
+                            mapper.shadowed,
+                            mapper.absolute,
+                        );
+                        (!owner.is_empty()).then_some((mapper, owner))
+                    })
+                {
+                    mapper_owner = owner;
+                    for _ in 0..mapper.offset {
+                        self.cursor.advance();
+                    }
+                } else {
+                    let fallback = self.origins.origin(&defaults[0], path);
+                    let result = if consumer.value == "map_or_else" {
+                        fallback.callable_result.as_deref()
+                    } else {
+                        Some(&fallback)
+                    };
+                    let context =
+                        self.array_lookup_callable_context(receiver, "map_or", path, result);
+                    defaults.push(if let Some(context) = context {
+                        self.read_expected_copy_closure(path, Some(&context))?
+                    } else {
+                        self.expr(path, Options::default())?
+                    });
                 }
             }
             self.cursor.eat(",");
@@ -458,7 +472,7 @@ impl RustParser {
                 range,
             ));
         }
-        let result_type = if !mapper_owner.is_empty() {
+        let mut result_type = if !mapper_owner.is_empty() {
             if mapper_owner == "bool" {
                 BOOL
             } else if mapper_owner == "f64" {
@@ -489,6 +503,37 @@ impl RustParser {
         );
         if !presence && string_clone {
             result_origin.source_owner = element_owner.clone();
+        }
+        if let Some(mapper) = defaults.get(1) {
+            let mapper_origin = self.origins.origin(mapper, path);
+            let parameter = mapper_origin
+                .callable_parameters
+                .as_ref()
+                .and_then(|parameters| parameters.first());
+            let result = mapper_origin.callable_result.as_deref();
+            let error = rules::read_rust_array_lookup_mapper_error(
+                mapper_origin.ty.as_ref().map_or("", Type::kind),
+                match &mapper_origin.ty {
+                    Some(Type::Function { params, .. }) => count(params.len()),
+                    _ => -1.0,
+                },
+                count(mapper_origin.wrappers.len()),
+                parameter.is_some_and(|parameter| parameter.proven),
+                result.is_some_and(|result| result.proven && result.ty.is_some()),
+            );
+            if !error.is_empty() {
+                return Err(unsupported("Rust array lookup mapper", &error, range));
+            }
+            self.origins.argument(
+                &result_origin,
+                parameter.expect("shared mapper parameter admission"),
+                mapper.span.or(range),
+            )?;
+            result_origin = result.expect("shared mapper result admission").clone();
+            result_type = result_origin
+                .ty
+                .clone()
+                .expect("complete shared mapper result type");
         }
         if let Some(default) = defaults.first() {
             let lazy = rules::test_rust_array_lookup_lazy_fallback(&consumer.value);
@@ -615,6 +660,13 @@ impl RustParser {
                 };
             captures.push((self.fresh_product_binding(), default_type, default.clone()));
         }
+        if let Some(mapper) = defaults.get(1) {
+            captures.push((
+                self.fresh_product_binding(),
+                self.origins.origin(mapper, path).ty,
+                mapper.clone(),
+            ));
+        }
         let local = |index: usize| {
             SExpr::new(
                 SNode::Name {
@@ -648,13 +700,22 @@ impl RustParser {
                 );
                 selected = self.project_primitive_from(selected, mapper_owner, range, path)?;
             }
+            if defaults.len() == 2 {
+                selected = SExpr::new(
+                    SNode::App {
+                        func: Box::new(local(captures.len() - 1)),
+                        args: vec![selected],
+                    },
+                    range,
+                );
+            }
             values.insert("selected".to_owned(), selected);
             let default_term = rules::read_rust_array_lookup_default_term(
                 result_type.kind(),
                 result_type == super::super::STRING && element_owner.is_some(),
             );
             let fallback = if !defaults.is_empty() {
-                let value = local(captures.len() - 1);
+                let value = local(captures.len() - if defaults.len() == 2 { 2 } else { 1 });
                 if rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
                     SExpr::new(
                         SNode::App {

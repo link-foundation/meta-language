@@ -764,7 +764,7 @@ pub fn accept_rust_array_lookup_presence_consumer(consumer: &str) -> bool {
 pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f64 {
     if self::accept_rust_array_lookup_presence_consumer(consumer) {
         0f64
-    } else if copied && (consumer == "map_or") {
+    } else if copied && ((consumer == "map_or") || (consumer == "map_or_else")) {
         2f64
     } else if copied
         && (((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
@@ -781,7 +781,7 @@ pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f6
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn test_rust_array_lookup_lazy_fallback(consumer: &str) -> bool {
-    consumer == "unwrap_or_else"
+    (consumer == "unwrap_or_else") || (consumer == "map_or_else")
 }
 
 /// Execute the checked shared source algorithm.
@@ -829,6 +829,26 @@ pub fn read_rust_array_lookup_predicate_error(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_array_lookup_mapper_error(
+    kind: &str,
+    parameters: f64,
+    wrappers: f64,
+    known_parameter: bool,
+    known_result: bool,
+) -> String {
+    if ((((kind == "function") && (parameters == 1f64)) && (wrappers == 0f64)) && known_parameter)
+        && known_result
+    {
+        String::new()
+    } else {
+        String::from(
+            "a lookup mapper needs a known direct one-argument callable with a complete result",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_array_lookup_callable_context_arity(
     consumer: &str,
     receiver: bool,
@@ -838,7 +858,7 @@ pub fn read_rust_array_lookup_callable_context_arity(
         -1f64
     } else if self::test_rust_array_lookup_lazy_fallback(consumer) {
         0f64
-    } else if self::test_rust_array_lookup_predicate_consumer(consumer) {
+    } else if self::test_rust_array_lookup_predicate_consumer(consumer) || (consumer == "map_or") {
         1f64
     } else {
         -1f64
@@ -866,31 +886,5 @@ pub fn read_rust_array_lookup_receiver_error(
         String::new()
     } else {
         String::from("the receiver needs a proven standard vector or immutable slice")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_element_owner_error(
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner: &str,
-) -> String {
-    if (kind == "unit")
-        || self::accept_rust_primitive_from_source(
-            kind,
-            bits,
-            signed,
-            "primitive",
-            owner,
-            0f64,
-            true,
-            0f64,
-        )
-    {
-        String::new()
-    } else {
-        String::from("a copied element needs its complete standard scalar source owner")
     }
 }

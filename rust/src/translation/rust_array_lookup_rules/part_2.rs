@@ -1,5 +1,31 @@
 // Generated from complete js/src/translation/rust-array-lookup-rules.js. Do not edit by hand.
-use super::read_rust_array_lookup_element_owner_error;
+use super::accept_rust_primitive_from_source;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_element_owner_error(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+) -> String {
+    if (kind == "unit")
+        || self::accept_rust_primitive_from_source(
+            kind,
+            bits,
+            signed,
+            "primitive",
+            owner,
+            0f64,
+            true,
+            0f64,
+        )
+    {
+        String::new()
+    } else {
+        String::from("a copied element needs its complete standard scalar source owner")
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -97,9 +123,10 @@ pub fn plan_rust_array_lookup_consumer(consumer: &str) -> Vec<String> {
             String::from("true"),
             String::from("if"),
         ]
-    } else if (((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
+    } else if ((((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
         || (consumer == "unwrap_or_default"))
-        || (consumer == "map_or")
+        || (consumer == "map_or"))
+        || (consumer == "map_or_else")
     {
         vec![
             String::from("condition"),
