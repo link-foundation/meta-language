@@ -764,12 +764,33 @@ pub fn accept_rust_array_lookup_presence_consumer(consumer: &str) -> bool {
 pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f64 {
     if self::accept_rust_array_lookup_presence_consumer(consumer) {
         0f64
-    } else if copied && (consumer == "unwrap_or") {
+    } else if copied && ((consumer == "unwrap_or") || (consumer == "unwrap_or_else")) {
         1f64
     } else if copied && (consumer == "unwrap_or_default") {
         0f64
     } else {
         -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_array_lookup_lazy_fallback(consumer: &str) -> bool {
+    consumer == "unwrap_or_else"
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_lazy_fallback_error(
+    kind: &str,
+    parameters: f64,
+    wrappers: f64,
+    known_result: bool,
+) -> String {
+    if (((kind == "function") && (parameters == 0f64)) && (wrappers == 0f64)) && known_result {
+        String::new()
+    } else {
+        String::from("a lazy lookup fallback needs a known direct zero-argument callable result")
     }
 }
 
@@ -857,43 +878,5 @@ pub fn read_rust_array_lookup_default_term(kind: &str, standard_string: bool) ->
         String::from("empty string")
     } else {
         String::from("primitive default")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_array_lookup_condition(method: &str) -> Vec<String> {
-    if method == "get" {
-        vec![
-            String::from("index"),
-            String::from("length"),
-            String::from("lt"),
-        ]
-    } else if (method == "first") || (method == "last") {
-        vec![
-            String::from("length"),
-            String::from("zero"),
-            String::from("gt"),
-        ]
-    } else {
-        Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_array_lookup_index(method: &str) -> Vec<String> {
-    if method == "get" {
-        vec![String::from("index")]
-    } else if method == "first" {
-        vec![String::from("zero")]
-    } else if method == "last" {
-        vec![
-            String::from("length"),
-            String::from("one"),
-            String::from("sub"),
-        ]
-    } else {
-        Vec::<String>::new()
     }
 }

@@ -5071,6 +5071,21 @@ distinctions. Escaping Options/references, ranges, arbitrary mappers, mutable
 lookups, custom indexing, complete ownership and whole-project semantics remain
 required; these controls supply no executed observations.
 
+The same lookup plans draft `unwrap_or_else` after admitted copied/cloned value
+consumers. Source adapters retain the complete callable expression in an eager
+binding and place only its zero-argument invocation in the absent branch. Shared
+admission checks require an actual known, unborrowed callable result; its full
+source owner must match the selected element, including pointer-sized integer
+distinctions. Existing immutable Copy closure/callable rules retain capture and
+result restrictions. Neither a matching function type nor a name substitutes
+for that source result. Callable creation is separate from invocation, following
+[Option::unwrap_or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else).
+Independent originals cover selected/absent values, signed zero, Unit, captures,
+unused failing fallbacks, extreme indices, slices and complete effect traces.
+They remain unexecuted under the Node22.15/24, Rust1.90–1.99 and 64-bit pointer
+profiles. General FnOnce/FnMut, non-Copy captures/results and earlier lookup,
+ownership, allocation and project obligations retain their full scope.
+
 The lookup draft also admits cloned values for the supported scalar domains and
 actual standard owned Strings. Shared source-owner rules govern that choice;
 bounded projections cross only registered standard containers and retain each

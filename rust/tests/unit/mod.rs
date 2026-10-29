@@ -591,3 +591,5 @@ mod translation_javascript_call_natural_source;
 
 mod conditional_constructor_sharing;
 mod utf16_text_expansion;
+
+mod translation_rust_array_lookup_lazy;

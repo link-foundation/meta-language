@@ -354,11 +354,38 @@ impl RustParser {
             result_origin.source_owner = element_owner.clone();
         }
         if let Some(default) = defaults.first() {
-            self.origins.argument(
-                &self.origins.origin(default, path),
-                &result_origin,
-                default.span.or(range),
-            )?;
+            let lazy = rules::test_rust_array_lookup_lazy_fallback(&consumer.value);
+            let fallback_origin = self.origins.origin(default, path);
+            let fallback_result = if lazy {
+                let parameters = match &fallback_origin.ty {
+                    Some(Type::Function { params, .. }) => count(params.len()),
+                    _ => -1.0,
+                };
+                let error = rules::read_rust_array_lookup_lazy_fallback_error(
+                    fallback_origin.ty.as_ref().map_or("", Type::kind),
+                    parameters,
+                    count(fallback_origin.wrappers.len()),
+                    fallback_origin
+                        .callable_result
+                        .as_ref()
+                        .is_some_and(|result| result.proven),
+                );
+                if !error.is_empty() {
+                    return Err(unsupported(
+                        "Rust array lookup lazy fallback",
+                        &error,
+                        range,
+                    ));
+                }
+                fallback_origin
+                    .callable_result
+                    .as_deref()
+                    .expect("shared lazy result admission")
+            } else {
+                &fallback_origin
+            };
+            self.origins
+                .argument(fallback_result, &result_origin, default.span.or(range))?;
         }
         Ok(LookupFacts {
             source,
@@ -406,11 +433,12 @@ impl RustParser {
             ));
         }
         if let Some(default) = defaults.first() {
-            captures.push((
-                self.fresh_product_binding(),
-                element.clone(),
-                default.clone(),
-            ));
+            let default_type = if rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
+                self.origins.origin(default, path).ty
+            } else {
+                element.clone()
+            };
+            captures.push((self.fresh_product_binding(), default_type, default.clone()));
         }
         let local = |index: usize| {
             SExpr::new(
@@ -445,7 +473,18 @@ impl RustParser {
                 result_type == super::super::STRING && element_owner.is_some(),
             );
             let fallback = if !defaults.is_empty() {
-                local(captures.len() - 1)
+                let value = local(captures.len() - 1);
+                if rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
+                    SExpr::new(
+                        SNode::App {
+                            func: Box::new(value),
+                            args: Vec::new(),
+                        },
+                        range,
+                    )
+                } else {
+                    value
+                }
             } else if default_term == "unit" {
                 SExpr::new(SNode::Unit, range)
             } else if default_term == "empty string" {

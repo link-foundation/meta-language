@@ -6,6 +6,7 @@ import {projectRustArrayLookupElementOwner} from './rust-array-lookup-source-own
 import {readRustUsizeIndexExpression} from './rust-usize-index-expressions.js';
 import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
 import {projectRustPrimitiveDefault} from './rust-primitive-default.js';
+import {testRustArrayLookupLazyFallback,readRustArrayLookupLazyFallbackError} from './rust-array-lookup-rules.js';
 export function readRustArrayLookup(parser,receiver,method,args,range,path){
  const arity=readRustArrayLookupArity(method.value,parser.ordinaryCompletionContext());if(arity<0)return null;
  if(args.length!==arity)throw new TranslationError('type',method.value+' needs '+arity+' actual array lookup arguments',range);
@@ -26,13 +27,15 @@ export function readRustArrayLookup(parser,receiver,method,args,range,path){
  const owner=readRustPointerIntegerContractOwner(source.expandedSourceOwner??source.sourceOwner);
  if(!presence&&!cloned){const error=readRustArrayLookupElementOwnerError(element.kind,String(element.bits??''),element.signed===true,owner);if(error)throw unsupported('Rust array lookup result',error,range);}
  const resultOrigin=presence?{...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}}:{...parser.origins.typeOrigin(element,path),sourceOwner:stringClone?structuredClone(leaf):element.kind==='unit'?{kind:'unit',path:[],arguments:[]}:owner?{kind:'primitive',path:[owner],arguments:[]}:null};
- if(defaults.length)parser.origins.argument(parser.origins.origin(defaults[0],path),resultOrigin,defaults[0].span??range);
- const usize=rustFixedType('usize'),captures=[{name:parser.freshProductBinding(),value:receiver,type:source.type},...(arity?[{name:parser.freshProductBinding(),value:args[0],type:usize}]:[]),...(defaults.length?[{name:parser.freshProductBinding(),value:defaults[0],type:element}]:[])],local=index=>({k:'name',path:[captures[index].name],span:captures[index].value.span??range});
+ const lazy=testRustArrayLookupLazyFallback(consumer.value),fallbackOrigin=defaults.length?parser.origins.origin(defaults[0],path):null;
+ if(lazy){const error=readRustArrayLookupLazyFallbackError(fallbackOrigin?.type?.kind??'',fallbackOrigin?.type?.params?.length??-1,fallbackOrigin?.wrappers.length??-1,fallbackOrigin?.callableResult?.proven===true);if(error)throw unsupported('Rust array lookup lazy fallback',error,range);}
+ if(defaults.length)parser.origins.argument(lazy?fallbackOrigin.callableResult:fallbackOrigin,resultOrigin,defaults[0].span??range);
+ const usize=rustFixedType('usize'),captures=[{name:parser.freshProductBinding(),value:receiver,type:source.type},...(arity?[{name:parser.freshProductBinding(),value:args[0],type:usize}]:[]),...(defaults.length?[{name:parser.freshProductBinding(),value:defaults[0],type:lazy?fallbackOrigin.type:element}]:[])],local=index=>({k:'name',path:[captures[index].name],span:captures[index].value.span??range});
  const length={k:'cast',arg:{k:'length',object:local(0),integer:true,span:range},to:usize,flavor:'exact',span:range},number=value=>({k:'num',value,type:usize,span:range});
  const values={index:arity?local(1):null,length,zero:number('0'),one:number('1')};
  function project(plan){const stack=[],pop=()=>{if(!stack.length)throw new TypeError('an array lookup source plan lost an earlier term');return stack.pop();};for(const term of plan){if(values[term])stack.push(values[term]);else if(term==='lt'||term==='gt'||term==='sub'){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}else if(term==='not')stack.push({k:'unary',op:'not',arg:pop(),span:range});else if(term==='if'){const otherwise=pop(),then=pop(),cond=pop();stack.push({k:'if',cond,then,else:otherwise,span:range});}else throw new TypeError('unknown array lookup source term');}if(stack.length!==1)throw new TypeError('an array lookup source plan needs one complete result');return stack[0];}
  values.condition=project(planRustArrayLookupCondition(method.value));
- if(!presence){const index=project(planRustArrayLookupIndex(method.value)),term=readRustArrayLookupDefaultTerm(element.kind,stringClone);values.selected={k:'index',object:local(0),index:{k:'cast',arg:index,to:{kind:'nat'},flavor:'exact',span:range},span:range};values.fallback=defaults.length?local(captures.length-1):term==='unit'?{k:'unit',span:range}:term==='empty string'?{k:'str',value:'',span:range}:projectRustPrimitiveDefault(parser,owner,path,range);}
+ if(!presence){const index=project(planRustArrayLookupIndex(method.value)),term=readRustArrayLookupDefaultTerm(element.kind,stringClone);values.selected={k:'index',object:local(0),index:{k:'cast',arg:index,to:{kind:'nat'},flavor:'exact',span:range},span:range};values.fallback=defaults.length?(lazy?{k:'app',fn:local(captures.length-1),args:[],span:range}:local(captures.length-1)):term==='unit'?{k:'unit',span:range}:term==='empty string'?{k:'str',value:'',span:range}:projectRustPrimitiveDefault(parser,owner,path,range);}
  let body=project(planRustArrayLookupConsumer(consumer.value));for(let at=captures.length-1;at>=0;at-=1){const capture=captures[at];body={k:'let',name:capture.name,...(capture.type?{type:capture.type}:{}),value:capture.value,body,span:range};}
  return parser.origins.mark(body,resultOrigin);
 }
