@@ -1,3 +1,5 @@
+import {splitRustTypeClosingToken} from './rust-type-tokens.js';
+import {acceptRustIteratorCollectionInferredType} from './rust-iterator-reduction-rules.js';
 import {readRustIteratorReduction} from './rust-iterator-reductions.js';
 import {readRustByteStringExpression,readRustByteStringSliceView} from './rust-byte-string-expressions.js';
 import {readRustSourceNumericPatternOwner,readRustSourceNumericPatternLexicalError} from './rust-numeric-pattern-rules.js';
@@ -210,6 +212,7 @@ class RustParser {
     this.primitiveConstantSites=[];
     this.primitiveImportNames=new Set();
     this.sourceOwnerFrames = [];
+    this.iteratorCollectionElementOrigin = null;
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.namedRecords = new Map();
     this.inherentOwner = null;
@@ -543,6 +546,9 @@ class RustParser {
   typeValue() {
     const c = this.cursor;
     const token = c.peek();
+    if(acceptRustIteratorCollectionInferredType(token.value,Boolean(this.iteratorCollectionElementOrigin))){
+      c.next();const origin=structuredClone(this.iteratorCollectionElementOrigin);this.origins.type={...origin,expandedSourceOwner:structuredClone(origin.sourceOwner)};return origin.type;
+    }
     if(c.is('fn'))return readRustFunctionPointerType(this);
     const inherentSelf=readRustInherentSelfType(this);
     if(inherentSelf)return inherentSelf;
@@ -626,14 +632,14 @@ class RustParser {
       const elementToken = c.peek();
       const inner = this.type();
       this.arrayElement(token, elementToken);
-      c.expect('>', 'Vec');
+      splitRustTypeClosingToken(this);c.expect('>', 'Vec');
       return this.origins.typed(array(inner), this.modulePath);
     }
     if (acceptRustSourceBoxOwner(name, false) || acceptRustSourceBoxOwner(resolved.join('::'), false)) {
       this.origins.box(segments, resolved, this.modulePath, span(token, c.peek()));
       c.expect('<', 'Box');
       const inner = this.type();
-      c.expect('>', 'Box');
+      splitRustTypeClosingToken(this);c.expect('>', 'Box');
       const lifetimes = this.origins.type.sourceLifetimes;
       const arraySourceModel = this.origins.type.arraySourceModel;
       const result = this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);

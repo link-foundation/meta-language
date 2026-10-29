@@ -5,6 +5,8 @@ mod owners;
 mod parameters;
 #[path = "../../src/translation/rust_iterator_reduction_rules.rs"]
 mod rules;
+#[path = "../../src/translation/rust_type_token_rules.rs"]
+mod type_tokens;
 use serde_json::{Value, json};
 fn string(args: &Value, index: usize) -> &str {
     args[index].as_str().unwrap()
@@ -103,6 +105,48 @@ fn iterator_reductions_preserve_products_and_every_source_decision() {
             "planRustIteratorReductionReverseIndex" => {
                 json!(rules::plan_rust_iterator_reduction_reverse_index())
             }
+            "readRustIteratorReductionCountResultOwner" => {
+                json!(rules::read_rust_iterator_reduction_count_result_owner())
+            }
+            "planRustIteratorReductionCount" => json!(rules::plan_rust_iterator_reduction_count()),
+            "acceptRustIteratorCollectionInferredType" => {
+                json!(rules::accept_rust_iterator_collection_inferred_type(
+                    string(args, 0),
+                    boolean(args, 1)
+                ))
+            }
+            "readRustIteratorCollectionError" => json!(rules::read_rust_iterator_collection_error(
+                boolean(args, 0),
+                boolean(args, 1),
+                string(args, 2),
+                string(args, 3),
+                string(args, 4),
+                string(args, 5),
+                number(args, 6),
+                boolean(args, 7),
+                number(args, 8)
+            )),
+            "readRustIteratorCountReceiverError" => {
+                json!(rules::read_rust_iterator_count_receiver_error(
+                    string(args, 0),
+                    string(args, 1),
+                    boolean(args, 2),
+                    boolean(args, 3),
+                    boolean(args, 4)
+                ))
+            }
+            "readRustIteratorReductionInitialState" => json!(
+                rules::read_rust_iterator_reduction_initial_state(string(args, 0))
+            ),
+            "readRustIteratorOwnedReceiverError" => {
+                json!(rules::read_rust_iterator_owned_receiver_error(
+                    string(args, 0),
+                    string(args, 1),
+                    boolean(args, 2),
+                    number(args, 3),
+                    boolean(args, 4)
+                ))
+            }
             unknown => panic!("uncovered shared decision {unknown}"),
         };
         if actual.is_number() {
@@ -110,6 +154,14 @@ fn iterator_reductions_preserve_products_and_every_source_decision() {
         } else {
             assert_eq!(actual, row["expected"], "{row}");
         }
+    }
+    for row in data["typeTokens"].as_array().unwrap() {
+        assert_eq!(
+            json!(type_tokens::read_rust_type_closing_token_parts(
+                row["token"].as_str().unwrap()
+            )),
+            row["expected"]
+        );
     }
     for row in data["ownerSelections"].as_array().unwrap() {
         let identities = row["identities"]

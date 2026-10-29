@@ -1,3 +1,4 @@
+import {readRustTypeClosingTokenParts} from '../src/translation/rust-type-token-rules.js';
 import {acceptRustCopyClosureParameterSource} from '../src/translation/rust-copy-closure-parameter-rules.js';
 // Deferred controls: source authors may syntax-parse, never import this module.
 import assert from 'node:assert/strict';
@@ -11,6 +12,7 @@ import * as rules from '../src/translation/rust-iterator-reduction-rules.js';
 import {selectRustArrayElementOwnerIndex} from '../src/translation/rust-array-element-owner-rules.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-iterator-reductions.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
+for(const [index,row]of fixture.typeTokens.entries())test('type closing token '+index,()=>assert.deepEqual(readRustTypeClosingTokenParts(row.token),row.expected));
 for(const [index,row]of fixture.premises.entries())test('iterator decision '+index,()=>assert.deepEqual(rules[row.operation](...row.args),row.expected));
 for(const [index,row]of fixture.parameterPremises.entries())test('immutable scalar parameter '+index,()=>assert.equal(acceptRustCopyClosureParameterSource(row.known,row.baseCopy,row.layers,row.reference,row.primitiveOwner),row.expected));
 for(const [index,row]of fixture.ownerSelections.entries())test('actual vector owner '+index,()=>assert.equal(selectRustArrayElementOwnerIndex(row.identities,row.admitted),row.expected));

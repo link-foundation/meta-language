@@ -10472,3 +10472,46 @@ No target-specific reverse implementation or source-text rewrite is needed.
 Independent originals retain cancellation of two reversals, adapters before
 and after copying, right folds, borrowed items, empty input, source preservation
 and reverse short circuit. All execution remains deferred.
+
+### Exact iterator counts and source-typed vector collection
+
+Immediate standard vector or slice iterator `count()` uses the actual receiver length
+and an exact conversion to its `usize` result owner. It evaluates its receiver
+once and requires no callback or reversed temporary array. Borrowed counts do
+not require Copy elements or invent primitive owners: standard owned-string
+and unit vectors/slices can be counted without reading their elements. Invalid
+Copy adapters are still refused. Primitive copied
+and cloned items can also collect through an explicit standard `Vec<T>`
+turbofish. Admission checks the actual type, storage model, library owner,
+generic arity, primitive item owner and type, and reference layers in shared
+source. Equal numeric widths do not establish equal source types.
+
+`Vec<_>` in that collection context infers its scalar item type from the proven
+iterator item, retaining the complete primitive owner and original CST spelling.
+The parser restores this context after success or failure; it supplies no
+inference in item signatures or unrelated type positions. General contextual
+inference, bare `collect()`, other collections and escaping borrowed element
+vectors retain their full requirements. Collection captures the receiver once
+and uses the common fresh copy operation, with the existing source-owned
+reverse-index plan where necessary. Its source constructor evidence can
+establish a fresh vector function result.
+
+Rust compound closing punctuation is split only at actual type closing angles,
+through shared source rules for `>>`, `>=` and `>>=`. Token raw text and spans
+are partitioned exactly; shifts in expressions remain shifts. This supports
+collection turbofish closings and adjacent nested type/assignment syntax.
+Independent complete original programs and type/source-owner/decision controls
+remain unexecuted in `parity/fixtures/rust-iterator-reductions.lino`.
+The [inferred type contract](https://doc.rust-lang.org/reference/types/inferred.html)
+and [iterator contract](https://doc.rust-lang.org/std/iter/trait.Iterator.html)
+are independent sources for the supported draft behavior.
+
+
+Fresh standard owned vectors may enter immediate `into_iter()` pipelines with
+an explicit owned-item state. The existing fresh constructor/result proof and
+zero reference layers are prerequisites. Shared adapter transitions preserve
+owned items through reversals and reject attempts to copy reference-free
+items. Scalar predicates, folds and typed collection reuse their existing
+complete owner checks; fresh owned string vectors can count without extracting
+items. No existing named vector is consumed through this draft: tracking moves,
+invalidating bindings and proving later use remain full requirements.

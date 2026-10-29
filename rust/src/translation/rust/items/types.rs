@@ -11,11 +11,39 @@ use super::super::{
 };
 
 impl RustParser {
+    pub(in super::super) fn split_type_closing_token(&mut self) {
+        let token = self.cursor.peek().clone();
+        let parts = crate::translation::rust_type_token_rules::read_rust_type_closing_token_parts(
+            &token.value,
+        );
+        if parts.is_empty() {
+            return;
+        }
+        let mut offset = token.start;
+        let tokens = parts
+            .into_iter()
+            .map(|value| {
+                let mut part = token.clone();
+                part.start = offset;
+                offset += value.len();
+                part.end = offset;
+                part.raw = value.clone();
+                part.value = value;
+                part
+            })
+            .collect::<Vec<_>>();
+        let index = self.cursor.index;
+        self.cursor.tokens.splice(index..index + 1, tokens);
+    }
     /// Types: machine integers, `bool`, `String`, `&str`, `()`, crate types,
     /// and `&T`/`Box<T>`, which denote the value `T` since every portable value
     /// is immutable.
     pub(in super::super) fn parse_type_value(&mut self) -> Result<Type> {
         let token = self.peek();
+        if crate::translation::rust_iterator_reduction_rules::accept_rust_iterator_collection_inferred_type(&token.value,self.iterator_collection_element_origin.is_some()) {
+            self.cursor.advance();let mut origin=self.iterator_collection_element_origin.clone().expect("actual collection item");
+            origin.expanded_source_owner=origin.source_owner.clone();let ty=origin.ty.clone().expect("actual collection item type");self.origins.current_type=origin;return Ok(ty);
+        }
         if self.cursor.is("fn") {
             return self.read_function_pointer_type();
         }
@@ -204,6 +232,7 @@ impl RustParser {
             let element_token = self.peek();
             let inner = self.parse_type()?;
             self.array_element(&token, &element_token)?;
+            self.split_type_closing_token();
             self.cursor.expect(">", Some("Vec"))?;
             return Ok(self.origins.typed(
                 Type::Array {
@@ -225,6 +254,7 @@ impl RustParser {
             )?;
             self.cursor.expect("<", Some("Box"))?;
             let inner = self.parse_type()?;
+            self.split_type_closing_token();
             self.cursor.expect(">", Some("Box"))?;
             let origin = self.origins.current_type.clone();
             let mut wrappers = vec!["box".to_owned()];

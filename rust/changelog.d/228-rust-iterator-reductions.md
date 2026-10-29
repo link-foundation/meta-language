@@ -9,3 +9,10 @@ mutable, nested and unproved borrowing outside this admission.
 
 Draft `rev()` adapter composition and `rfold` through a source-owned plan and
 existing common array terms, preserving source arrays and visit direction.
+
+Draft exact iterator counts and copied/cloned collection into the actual standard
+`Vec<T>`, with scoped `Vec<_>` item inference and fresh result ownership. Handle
+compound generic closing punctuation contextually without changing shifts.
+
+Draft fresh owned `into_iter()` pipelines with explicit consumption provenance
+and owned-item state, retaining named-vector move tracking as a requirement.

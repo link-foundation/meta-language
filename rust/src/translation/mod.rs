@@ -397,3 +397,5 @@ pub mod rust_iterator_reduction_rules;
 pub mod rust_array_element_owner_rules;
 
 pub mod rust_copy_closure_parameter_rules;
+
+pub mod rust_type_token_rules;

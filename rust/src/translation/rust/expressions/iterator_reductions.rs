@@ -81,12 +81,19 @@ impl RustParser {
         } else {
             false
         };
-        let error = rules::read_rust_iterator_reduction_receiver_error(known_receiver, known_owner);
-        if !error.is_empty() {
-            return Err(fail(&error, range));
+        let owned = method.value == "into_iter";
+        if owned {
+            let error = rules::read_rust_iterator_owned_receiver_error(
+                source.ty.as_ref().map_or("", Type::kind),
+                source.array_source_model.unwrap_or(""),
+                source.proven,
+                count(source.wrappers.len()),
+                self.origins.fresh_vector_argument(receiver, path, true),
+            );
+            if !error.is_empty() {
+                return Err(fail(&error, Some(method.span())));
+            }
         }
-        let element = element.unwrap().clone();
-        let owner = owner.unwrap().clone();
         if self.cursor.eat(".").is_none() || !self.cursor.is_kind(super::TokenKind::Identifier) {
             return Err(fail(
                 "an iterator requires its immediate copied or cloned reduction",
@@ -94,7 +101,7 @@ impl RustParser {
             ));
         }
         let mut consumer = self.cursor.advance();
-        let mut state = "borrowed".to_owned();
+        let mut state = rules::read_rust_iterator_reduction_initial_state(&method.value);
         let mut direction = "forward".to_owned();
         while rules::accept_rust_iterator_reduction_adapter(&consumer.value) {
             let next = rules::read_rust_iterator_reduction_adapter_state(
@@ -129,6 +136,182 @@ impl RustParser {
                 Some(consumer.span()),
             ));
         }
+        let error = if operation == "count" {
+            rules::read_rust_iterator_count_receiver_error(
+                source.ty.as_ref().map_or("", Type::kind),
+                source.array_source_model.unwrap_or(""),
+                source.proven,
+                source
+                    .wrappers
+                    .iter()
+                    .all(|layer| layer == "reference" || layer == "box"),
+                owned || state == "borrowed" || known_receiver && known_owner,
+            )
+        } else {
+            rules::read_rust_iterator_reduction_receiver_error(known_receiver, known_owner)
+        };
+        if !error.is_empty() {
+            return Err(fail(&error, range));
+        }
+        let element = element.cloned();
+        let owner = owner.cloned();
+        if operation == "collect" {
+            let element = element.clone().expect("proved collection element");
+            let owner = owner.clone().expect("proved collection owner");
+            let copied = state == "copied" || state == "owned";
+            let early = if copied {
+                String::new()
+            } else {
+                rules::read_rust_iterator_collection_error(
+                    false, false, "", "", "", "", 0.0, false, 0.0,
+                )
+            };
+            if !early.is_empty() {
+                return Err(fail(&early, Some(consumer.span())));
+            }
+            self.cursor.expect("::", Some("iterator collection type"))?;
+            self.cursor.expect("<", Some("iterator collection type"))?;
+            let mut item = SourceOrigin::with_type(element.clone(), path, Vec::new());
+            item.source_owner = Some(owner.clone());
+            let previous = self.iterator_collection_element_origin.replace(item);
+            let parsed = self.parse_type();
+            let mut origin = self.origins.current_type.clone();
+            self.iterator_collection_element_origin = previous;
+            let ty = parsed?;
+            self.split_type_closing_token();
+            self.cursor.expect(">", Some("iterator collection type"))?;
+            self.cursor.expect("(", Some("iterator collect"))?;
+            let close = self.cursor.expect(")", Some("iterator collect"))?;
+            range = Some(Span::new(
+                receiver.span.map_or(method.start, |span| span.start),
+                close.end,
+            ));
+            let actual_owner = origin
+                .expanded_source_owner
+                .as_ref()
+                .or(origin.source_owner.as_ref());
+            let agrees = matches!(&ty,Type::Array{element:actual,..} if actual.as_ref()==&element)
+                && actual_owner
+                    .and_then(|owner| owner.arguments.first())
+                    .is_some_and(|actual| {
+                        actual.kind == owner.kind
+                            && actual.path == owner.path
+                            && actual.arguments.is_empty()
+                    });
+            let error = rules::read_rust_iterator_collection_error(
+                copied,
+                origin.proven,
+                ty.kind(),
+                origin.array_source_model.unwrap_or(""),
+                actual_owner.map_or("", |owner| owner.kind.as_str()),
+                &actual_owner
+                    .map(|owner| owner.path.join("::"))
+                    .unwrap_or_default(),
+                actual_owner.map_or(0, |owner| owner.arguments.len()) as f64,
+                agrees,
+                count(origin.wrappers.len()),
+            );
+            if !error.is_empty() {
+                return Err(fail(&error, Some(consumer.span())));
+            }
+            let name = self.fresh_product_binding();
+            let local = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                range,
+            );
+            let object = construct_iterator_receiver(
+                self,
+                local,
+                &name,
+                &element,
+                &consumer.value,
+                &direction,
+                range,
+            )?;
+            origin.path = path.to_vec();
+            origin.source_lifetimes.clear();
+            origin.array_element_copy_evidence = true;
+            origin.fresh_array_value = range;
+            origin.fresh_vector_result_contract = false;
+            let value = SExpr::new(
+                SNode::Method {
+                    object: Box::new(object),
+                    op: "slice".to_owned(),
+                    args: Vec::new(),
+                },
+                range,
+            );
+            self.origins.mark_vector_constructor(&value, origin.clone());
+            let body = SExpr::new(
+                SNode::Let {
+                    name,
+                    ty: Some(source.ty.clone().unwrap().into()),
+                    value: Box::new(receiver.clone()),
+                    body: Box::new(value),
+                },
+                range,
+            );
+            self.origins.mark(&body, origin);
+            return Ok(Some(body));
+        }
+        if operation == "count" {
+            self.cursor.expect("(", Some("iterator count"))?;
+            let close = self.cursor.expect(")", Some("iterator count"))?;
+            range = Some(Span::new(
+                receiver.span.map_or(method.start, |span| span.start),
+                close.end,
+            ));
+            let name = rules::read_rust_iterator_reduction_count_result_owner();
+            let ty = super::rust_fixed_type(&name).expect("registered source count owner");
+            let mut stack: Vec<SExpr> = Vec::new();
+            for step in rules::plan_rust_iterator_reduction_count() {
+                let value = match step.as_str() {
+                    "receiver" => receiver.clone(),
+                    "integer length" => SExpr::new(
+                        SNode::Length {
+                            object: Box::new(stack.pop().expect("registered count operand")),
+                            integer: true,
+                        },
+                        range,
+                    ),
+                    "result cast" => SExpr::new(
+                        SNode::Cast {
+                            arg: Box::new(stack.pop().expect("registered count operand")),
+                            to: ty.clone(),
+                            from: None,
+                            flavor: Flavor::Exact,
+                        },
+                        range,
+                    ),
+                    _ => {
+                        return Err(fail(
+                            "an iterator count plan needs its registered common operation",
+                            range,
+                        ));
+                    }
+                };
+                stack.push(value);
+            }
+            if stack.len() != 1 {
+                return Err(fail(
+                    "an iterator count plan needs exactly one common term",
+                    range,
+                ));
+            }
+            let value = stack.pop().expect("complete count plan");
+            let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
+            origin.source_owner = Some(SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec![name],
+                arguments: Vec::new(),
+            });
+            self.origins.mark(&value, origin);
+            return Ok(Some(value));
+        }
+        let element = element.expect("proved scalar element");
+        let owner = owner.expect("proved scalar owner");
         self.cursor.expect("(", Some("iterator reduction"))?;
         let mut initial = None;
         let mut initial_origin = None;
@@ -248,123 +431,15 @@ impl RustParser {
         if rules::read_rust_iterator_reduction_callback_arity(&consumer.value) == 2.0 {
             arguments.push(Some(local("initial")));
         }
-        let mut object = local("receiver");
-        for operation in rules::plan_rust_iterator_reduction_receiver(&consumer.value, &direction) {
-            if operation != "map reversed indices" {
-                return Err(fail(
-                    "an iterator receiver plan needs its registered common operation",
-                    range,
-                ));
-            }
-            let unused = self.fresh_product_binding();
-            let index_name = self.fresh_product_binding();
-            let mut stack: Vec<SExpr> = Vec::new();
-            for step in rules::plan_rust_iterator_reduction_reverse_index() {
-                let value = match step.as_str() {
-                    "receiver" => local("receiver"),
-                    "index" => SExpr::new(
-                        SNode::Name {
-                            path: vec![index_name.clone()],
-                        },
-                        range,
-                    ),
-                    "one" => SExpr::new(
-                        SNode::Num {
-                            value: "1".to_owned(),
-                            ty: Some(FLOAT),
-                            negative: false,
-                            unit: false,
-                        },
-                        range,
-                    ),
-                    "length" => SExpr::new(
-                        SNode::Length {
-                            object: Box::new(stack.pop().expect("registered plan operand")),
-                            integer: false,
-                        },
-                        range,
-                    ),
-                    "natural" => SExpr::new(
-                        SNode::Cast {
-                            arg: Box::new(stack.pop().expect("registered plan operand")),
-                            to: Type::Nat,
-                            from: None,
-                            flavor: Flavor::Exact,
-                        },
-                        range,
-                    ),
-                    "sub" => {
-                        let right = stack.pop().expect("registered plan operand");
-                        let left = stack.pop().expect("registered plan operand");
-                        SExpr::new(
-                            SNode::Binary {
-                                op: BinaryOp::Sub,
-                                left: Box::new(left),
-                                right: Box::new(right),
-                                rounding: None,
-                            },
-                            range,
-                        )
-                    }
-                    "lookup" => {
-                        let index = stack.pop().expect("registered plan operand");
-                        let object = stack.pop().expect("registered plan operand");
-                        SExpr::new(
-                            SNode::Index {
-                                object: Box::new(object),
-                                index: Box::new(index),
-                                optional: None,
-                                proven_in_bounds: None,
-                            },
-                            range,
-                        )
-                    }
-                    _ => {
-                        return Err(fail(
-                            "an iterator index plan needs its registered common operation",
-                            range,
-                        ));
-                    }
-                };
-                stack.push(value);
-            }
-            if stack.len() != 1 {
-                return Err(fail(
-                    "an iterator index plan needs exactly one common term",
-                    range,
-                ));
-            }
-            let parameters = [(unused, element.clone()), (index_name, FLOAT)]
-                .into_iter()
-                .map(|(name, ty)| SParam {
-                    name,
-                    optional: false,
-                    default_value: None,
-                    ty: Some(ty),
-                    span: range,
-                    guard: None,
-                    rocq_type: None,
-                })
-                .collect();
-            let callback = SExpr::new(
-                SNode::Lambda {
-                    params: parameters,
-                    ret: Some(element.clone()),
-                    captures: vec![names["receiver"].clone()],
-                    assigned_captures: None,
-                    body: Box::new(stack.pop().expect("complete plan")),
-                },
-                range,
-            );
-            object = SExpr::new(
-                SNode::Method {
-                    object: Box::new(object),
-                    op: "map".to_owned(),
-                    args: vec![Some(callback)],
-                },
-                range,
-            );
-        }
+        let object = construct_iterator_receiver(
+            self,
+            local("receiver"),
+            &names["receiver"],
+            &element,
+            &consumer.value,
+            &direction,
+            range,
+        )?;
         let mut body = SExpr::new(
             SNode::Method {
                 object: Box::new(object),
@@ -387,4 +462,133 @@ impl RustParser {
         self.origins.mark(&body, result);
         Ok(Some(body))
     }
+}
+
+fn construct_iterator_receiver(
+    parser: &mut RustParser,
+    receiver: SExpr,
+    receiver_name: &str,
+    element: &Type,
+    consumer: &str,
+    direction: &str,
+    range: Option<Span>,
+) -> Result<SExpr> {
+    let mut object = receiver.clone();
+    for operation in rules::plan_rust_iterator_reduction_receiver(consumer, direction) {
+        if operation != "map reversed indices" {
+            return Err(fail(
+                "an iterator receiver plan needs its registered common operation",
+                range,
+            ));
+        }
+        let unused = parser.fresh_product_binding();
+        let index_name = parser.fresh_product_binding();
+        let mut stack: Vec<SExpr> = Vec::new();
+        for step in rules::plan_rust_iterator_reduction_reverse_index() {
+            let value = match step.as_str() {
+                "receiver" => receiver.clone(),
+                "index" => SExpr::new(
+                    SNode::Name {
+                        path: vec![index_name.clone()],
+                    },
+                    range,
+                ),
+                "one" => SExpr::new(
+                    SNode::Num {
+                        value: "1".to_owned(),
+                        ty: Some(FLOAT),
+                        negative: false,
+                        unit: false,
+                    },
+                    range,
+                ),
+                "length" => SExpr::new(
+                    SNode::Length {
+                        object: Box::new(stack.pop().expect("registered plan operand")),
+                        integer: false,
+                    },
+                    range,
+                ),
+                "natural" => SExpr::new(
+                    SNode::Cast {
+                        arg: Box::new(stack.pop().expect("registered plan operand")),
+                        to: Type::Nat,
+                        from: None,
+                        flavor: Flavor::Exact,
+                    },
+                    range,
+                ),
+                "sub" => {
+                    let right = stack.pop().expect("registered plan operand");
+                    let left = stack.pop().expect("registered plan operand");
+                    SExpr::new(
+                        SNode::Binary {
+                            op: BinaryOp::Sub,
+                            left: Box::new(left),
+                            right: Box::new(right),
+                            rounding: None,
+                        },
+                        range,
+                    )
+                }
+                "lookup" => {
+                    let index = stack.pop().expect("registered plan operand");
+                    let object = stack.pop().expect("registered plan operand");
+                    SExpr::new(
+                        SNode::Index {
+                            object: Box::new(object),
+                            index: Box::new(index),
+                            optional: None,
+                            proven_in_bounds: None,
+                        },
+                        range,
+                    )
+                }
+                _ => {
+                    return Err(fail(
+                        "an iterator index plan needs its registered common operation",
+                        range,
+                    ));
+                }
+            };
+            stack.push(value);
+        }
+        if stack.len() != 1 {
+            return Err(fail(
+                "an iterator index plan needs exactly one common term",
+                range,
+            ));
+        }
+        let parameters = [(unused, element.clone()), (index_name, FLOAT)]
+            .into_iter()
+            .map(|(name, ty)| SParam {
+                name,
+                optional: false,
+                default_value: None,
+                ty: Some(ty),
+                span: range,
+                guard: None,
+                rocq_type: None,
+            })
+            .collect();
+        let callback = SExpr::new(
+            SNode::Lambda {
+                params: parameters,
+                ret: Some(element.clone()),
+                captures: vec![receiver_name.to_owned()],
+                assigned_captures: None,
+                body: Box::new(stack.pop().expect("complete plan")),
+            },
+            range,
+        );
+        object = SExpr::new(
+            SNode::Method {
+                object: Box::new(object),
+                op: "map".to_owned(),
+                args: vec![Some(callback)],
+            },
+            range,
+        );
+    }
+    Ok(object)
 }

@@ -367,7 +367,7 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_rust_iterator_reduction_start(method: &str, count: f64, ordinary: bool) -> bool {
-    (ordinary && (method == "iter")) && (count == 0f64)
+    (ordinary && ((method == "iter") || (method == "into_iter"))) && (count == 0f64)
 }
 
 /// Execute the checked shared source algorithm.
@@ -379,7 +379,11 @@ pub fn accept_rust_iterator_copy_adapter(method: &str) -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_iterator_reduction_operation(method: &str) -> String {
-    if method == "all" {
+    if method == "collect" {
+        String::from("collect")
+    } else if method == "count" {
+        String::from("count")
+    } else if method == "all" {
         String::from("every")
     } else if method == "any" {
         String::from("some")
@@ -497,7 +501,7 @@ pub fn read_rust_iterator_reduction_adapter_state(
     state: &str,
     direction: &str,
 ) -> Vec<String> {
-    if ((state != "borrowed") && (state != "copied"))
+    if (((state != "borrowed") && (state != "copied")) && (state != "owned"))
         || ((direction != "forward") && (direction != "reverse"))
     {
         Vec::<String>::new()
@@ -541,6 +545,111 @@ pub fn plan_rust_iterator_reduction_reverse_index() -> Vec<String> {
         String::from("natural"),
         String::from("lookup"),
     ]
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_iterator_reduction_count_result_owner() -> String {
+    String::from("usize")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_iterator_reduction_count() -> Vec<String> {
+    vec![
+        String::from("receiver"),
+        String::from("integer length"),
+        String::from("result cast"),
+    ]
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_iterator_collection_inferred_type(token: &str, known: bool) -> bool {
+    (token == "_") && known
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_rust_iterator_collection_error(
+    copied: bool,
+    known: bool,
+    kind: &str,
+    model: &str,
+    owner_kind: &str,
+    owner_path: &str,
+    children: f64,
+    same_element: bool,
+    layers: f64,
+) -> String {
+    if (((((((copied && known) && (kind == "array")) && (model == "owned vector"))
+        && (owner_kind == "library"))
+        && (owner_path == "std::vec::Vec"))
+        && (children == 1f64))
+        && same_element)
+        && (layers == 0f64)
+    {
+        String::new()
+    } else {
+        String::from(
+            "collection needs copied scalar items and an actual standard Vec of their complete source type",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_iterator_count_receiver_error(
+    kind: &str,
+    model: &str,
+    known: bool,
+    layers: bool,
+    adapters: bool,
+) -> String {
+    if ((((kind == "array") && ((model == "owned vector") || (model == "immutable slice")))
+        && known)
+        && layers)
+        && adapters
+    {
+        String::new()
+    } else {
+        String::from("count needs an actual standard array receiver and valid item adapters")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_iterator_reduction_initial_state(method: &str) -> String {
+    if method == "into_iter" {
+        String::from("owned")
+    } else if method == "iter" {
+        String::from("borrowed")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_iterator_owned_receiver_error(
+    kind: &str,
+    model: &str,
+    known: bool,
+    layers: f64,
+    fresh: bool,
+) -> String {
+    if ((((kind == "array") && (model == "owned vector")) && known) && (layers == 0f64)) && fresh {
+        String::new()
+    } else {
+        String::from(
+            "owned iteration needs an actual fresh standard vector and its consumption proof",
+        )
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

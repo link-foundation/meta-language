@@ -1,10 +1,10 @@
 // Standard dense immutable iterator reductions reuse the common array algebra.
 /** @param {string} method @param {number} count @param {boolean} ordinary @returns {boolean} */
-export function acceptRustIteratorReductionStart(method,count,ordinary){return ordinary&&method==='iter'&&count===0;}
+export function acceptRustIteratorReductionStart(method,count,ordinary){return ordinary&&(method==='iter'||method==='into_iter')&&count===0;}
 /** @param {string} method @returns {boolean} */
 export function acceptRustIteratorCopyAdapter(method){return method==='copied'||method==='cloned';}
 /** @param {string} method @returns {string} */
-export function readRustIteratorReductionOperation(method){return method==='all'?'every':method==='any'?'some':(method==='fold'||method==='rfold')?'reduce':'';}
+export function readRustIteratorReductionOperation(method){return method==='collect'?'collect':method==='count'?'count':method==='all'?'every':method==='any'?'some':(method==='fold'||method==='rfold')?'reduce':'';}
 /** @param {string} method @returns {number} */
 export function readRustIteratorReductionCallbackArity(method){return (method==='fold'||method==='rfold')?2:method==='all'||method==='any'?1:-1;}
 /** @param {string} method @returns {string[]} */
@@ -28,7 +28,7 @@ export function acceptRustIteratorReductionAdapter(method){return method==='rev'
 /** State transitions retain actual source item indirection; rev never copies.
  * @param {string} method @param {string} state @param {string} direction @returns {string[]} */
 export function readRustIteratorReductionAdapterState(method,state,direction){
- if(state!=='borrowed'&&state!=='copied'||direction!=='forward'&&direction!=='reverse')return [];
+ if(state!=='borrowed'&&state!=='copied'&&state!=='owned'||direction!=='forward'&&direction!=='reverse')return [];
  if(method==='rev')return [state,direction==='forward'?'reverse':'forward'];
  if(acceptRustIteratorCopyAdapter(method)&&state==='borrowed')return ['copied',direction];
  return [];
@@ -42,3 +42,29 @@ export function planRustIteratorReductionReceiver(method,direction){
 /** Complete postfix common-term plan; indices originate from the dense map.
  * @returns {string[]} */
 export function planRustIteratorReductionReverseIndex(){return ['receiver','receiver','length','index','sub','one','sub','natural','lookup'];}
+
+/** @returns {string} */
+export function readRustIteratorReductionCountResultOwner(){return 'usize';}
+/** Count retains exact source length and does not invoke a callback.
+ * @returns {string[]} */
+export function planRustIteratorReductionCount(){return ['receiver','integer length','result cast'];}
+
+/** Only the actual iterator item context supplies this scalar placeholder.
+ * @param {string} token @param {boolean} known @returns {boolean} */
+export function acceptRustIteratorCollectionInferredType(token,known){return token==='_'&&known;}
+/** @param {boolean} copied @param {boolean} known @param {string} kind
+ * @param {string} model @param {string} ownerKind @param {string} ownerPath
+ * @param {number} children @param {boolean} sameElement @param {number} layers @returns {string} */
+export function readRustIteratorCollectionError(copied,known,kind,model,ownerKind,ownerPath,children,sameElement,layers){return copied&&known&&kind==='array'&&model==='owned vector'&&ownerKind==='library'&&ownerPath==='std::vec::Vec'&&children===1&&sameElement&&layers===0?'':'collection needs copied scalar items and an actual standard Vec of their complete source type';}
+
+/** Counting borrowed values never reads, clones or copies their elements.
+ * @param {string} kind @param {string} model @param {boolean} known
+ * @param {boolean} layers @param {boolean} adapters @returns {string} */
+export function readRustIteratorCountReceiverError(kind,model,known,layers,adapters){return kind==='array'&&(model==='owned vector'||model==='immutable slice')&&known&&layers&&adapters?'':'count needs an actual standard array receiver and valid item adapters';}
+
+/** @param {string} method @returns {string} */
+export function readRustIteratorReductionInitialState(method){return method==='into_iter'?'owned':method==='iter'?'borrowed':'';}
+/** Existing local moves need independent invalidation; fresh values cannot alias.
+ * @param {string} kind @param {string} model @param {boolean} known
+ * @param {number} layers @param {boolean} fresh @returns {string} */
+export function readRustIteratorOwnedReceiverError(kind,model,known,layers,fresh){return kind==='array'&&model==='owned vector'&&known&&layers===0&&fresh?'':'owned iteration needs an actual fresh standard vector and its consumption proof';}

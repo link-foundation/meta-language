@@ -1313,3 +1313,18 @@ construct those registered common nodes. `rev()` composes with `rfold`; the
 fresh indexed map prevents source mutation. The complete original/decision
 controls are authored with the existing iterator draft script and stay
 unexecuted during the full requirements draft.
+
+The same iterator source program now includes exact count plans and collection
+admission using actual type/library/owner facts. The ordinary source type parser
+receives an isolated proven scalar item context only while reading collection
+turbofish types, so `Vec<_>` retains the actual item owner. Neither runtime
+infers equality from width. `rust-type-token-rules.js` owns compound closing
+punctuation partitions; its native module and paired source asset are generated
+with `draft-rust-type-token-rules.mjs --draft`. Cursor adapters partition actual
+token values and spans only at type closing boundaries. Existing graph controls
+and twenty-one additional complete originals stay deferred.
+
+Fresh `into_iter()` receivers use the existing constructor/result provenance
+and a separate owned-item state in the shared iterator rule program. It does
+not conflate consuming owned values with invoking Copy. Other local moves still
+need their complete binding invalidation and ownership interpretation.
