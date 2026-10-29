@@ -5,29 +5,13 @@ import { readFileSync, writeFileSync, lstatSync, realpathSync } from 'node:fs';
 import { dirname, extname, resolve, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { tokenize } from '../src/translation/lexer.js';
+import {analyzeSourceModuleRequests} from '../src/source-module-requests.js';
 import { draftProjectTranslation, projectTranslationDraftToLinks } from '../src/project-translation.js';
 
-const languages = new Map([['.js', 'JavaScript'], ['.mjs', 'JavaScript'], ['.cjs', 'JavaScript'],
-  ['.ts', 'TypeScript'], ['.tsx', 'TypeScript'], ['.rs', 'Rust']]);
+const languages = new Map([['.js', 'JavaScript'], ['.mjs', 'JavaScript'], ['.cjs', 'JavaScript'], ['.jsx','JavaScript'],
+  ['.ts', 'TypeScript'], ['.tsx', 'TypeScript'], ['.mts','TypeScript'], ['.cts','TypeScript'], ['.rs', 'Rust']]);
 const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
-
-function importSpecifiers(source) {
-  const { tokens } = tokenize(source, 'JavaScript'), result = [];
-  let braces = 0;
-  for (let index = 0; index < tokens.length; index += 1) {
-    const token = tokens[index];
-    if (token.kind === 'punct' && token.value === '{') braces += 1;
-    else if (token.kind === 'punct' && token.value === '}') braces -= 1;
-    if (braces !== 0 || token.kind !== 'identifier' || token.value !== 'import' || tokens[index + 1]?.value === '(' || tokens[index + 1]?.value === '.') continue;
-    for (let at = index + 1; at < tokens.length; at += 1) {
-      if (tokens[at].value === ';') break;
-      if (tokens[at].kind === 'string') { result.push(tokens[at].value); break; }
-    }
-  }
-  return [...new Set(result)];
-}
 
 /** Full tracked-file inventory. No dependency clones, installs, generated
  * scratch directories or language compiler processes are created.
@@ -58,26 +42,29 @@ export function materializeProjectTranslationInputs(project, { byteLimit = 128 *
     files.push({ identifier, indexObject: header[1], mode: header[0], bytes: bytes.length, sourceSha256: hash(bytes) });
     names.add(identifier);
   }
+  const filesByName=new Map(files.map(file=>[file.identifier,file]));
   for (const input of inputs) {
     if (input.language === 'Rust') continue;
-    let specifiers;
-    try { specifiers = importSpecifiers(input.source); }
+    let requests;
+    try { requests=analyzeSourceModuleRequests(input.source,input.language,{tsx:extname(input.identifier)==='.tsx'}).requests; filesByName.get(input.identifier).moduleRequests=requests.map(({linkId,syntaxLinkId,...request})=>({...request,coordinateUnit:'UTF-8 bytes'})); }
     catch (error) { unresolved.push({ identifier: input.identifier, reason: error.message, specifier: null }); continue; }
-    for (const specifier of specifiers) {
+    for (const request of requests) {
+      const {specifier,kind,start,end}=request;
+      if(specifier===null){unresolved.push({identifier:input.identifier,specifier:null,kind,start,end,reason:request.specifierUnits===null?'computed module specifier requires a source interpretation':'module request needs an exact scalar filesystem name'});continue;}
       if (!specifier.startsWith('.')) {
-        unresolved.push({ identifier: input.identifier, specifier, reason: 'external dependency requires an explicit source or runtime interpretation' });
+        unresolved.push({ identifier: input.identifier, specifier, kind, start, end, reason: 'external dependency requires an explicit source or runtime interpretation' });
         continue;
       }
       const base = posix.normalize(posix.join(posix.dirname(input.identifier), specifier));
       if (base === '..' || base.startsWith('../') || base.startsWith('/')) {
-        unresolved.push({ identifier: input.identifier, specifier, reason: 'import escapes the supplied project' });
+        unresolved.push({ identifier: input.identifier, specifier, kind, start, end, reason: 'import escapes the supplied project' });
         continue;
       }
-      const candidates = extname(base) ? [base] : [base, ...['.js', '.mjs', '.cjs', '.ts', '.tsx'].map(extension => base + extension),
-        ...['index.js', 'index.mjs', 'index.ts'].map(name => posix.join(base, name))];
+      const candidates = extname(base) ? [base] : [base, ...['.js', '.mjs', '.cjs', '.jsx', '.ts', '.tsx', '.mts', '.cts'].map(extension => base + extension),
+        ...['index.js', 'index.mjs', 'index.jsx', 'index.ts', 'index.tsx', 'index.mts', 'index.cts'].map(name => posix.join(base, name))];
       const matches = candidates.filter(candidate => names.has(candidate));
       if (matches.length !== 1) {
-        unresolved.push({ identifier: input.identifier, specifier, reason: matches.length ? 'ambiguous source resolution requires an explicit module policy' : 'import has no tracked source in the supplied project' });
+        unresolved.push({ identifier: input.identifier, specifier, kind, start, end, reason: matches.length ? 'ambiguous source resolution requires an explicit module policy' : 'import has no tracked source in the supplied project' });
       } else input.imports[specifier] = matches[0];
     }
   }

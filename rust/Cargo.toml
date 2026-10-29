@@ -260,6 +260,7 @@ include = [
     "src/data/source-identifier-program.lino",
     "src/data/source-library-binding-program.lino",
     "src/data/source-library-export-program.lino",
+    "src/data/source-module-request-program.lino",
     "src/data/source-parameter-binding-program.lino",
     "src/data/source-project-archive-program.lino",
     "src/data/string-array-sort-program.lino",

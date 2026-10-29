@@ -607,3 +607,5 @@ mod translation_rust_string_patterns;
 mod translation_rust_byte_patterns;
 
 mod translation_rust_numeric_patterns;
+
+mod source_module_requests;

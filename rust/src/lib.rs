@@ -572,3 +572,10 @@ pub use translation::rust_unit_value_program::create_rust_unit_value_program_lin
 pub use translation::array_formal_parameter_program::create_java_script_array_formal_parameter_program_links;
 pub use translation::record_callable_parameter_program::create_java_script_record_callable_parameter_program_links;
 pub use translation::rust_formatting_program::create_rust_formatting_program_links;
+
+mod source_module_requests;
+pub use source_module_requests::{
+    SourceModuleRequest, SourceModuleRequestCommandOutput, SourceModuleRequestLimits,
+    SourceModuleRequests, analyze_source_module_requests,
+    analyze_source_module_requests_with_limits, run_source_module_request_command,
+};

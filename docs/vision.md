@@ -4329,6 +4329,25 @@ Rust source, retains unresolved imports and writes the products and diagnostics
 as Links Notation. It executes no products. This orchestration exposes remaining
 language, library and independent Rust signature-discovery gaps; the complete
 own-codebase translator remains a critical delivery requirement.
+Module-request discovery uses the complete JavaScript, TypeScript or TSX CST,
+including original field relationships, as its source of truth. Imports,
+reexports, dynamic imports and type-only requests become semantic links to their
+actual concrete owners in that same network. Exact UTF-16 specifier units remain
+ordered links, including isolated surrogates; scalar filesystem names are
+exposed only when representable without replacement. Computed specifiers remain
+explicit unresolved concepts, never evaluated during discovery. All request
+coordinates are UTF-8 byte intervals in the complete preserved original source.
+The public module-request API and CLI retain this complete network in text or
+binary Links. Native selection and command planning are generated from shared
+JavaScript; adapters transport actual CST fields, bytes and filesystem effects.
+Tracked-project discovery includes JSX, TSX, MTS and CTS source files and retains
+request kinds, spans and unresolved dependencies. Discovery does not establish
+module-loading semantics, type/value erasure, evaluation order, binding
+composition or executable translation. Those remain required translation work.
+Byte and graph-work budgets bound discovery; this does not establish an
+independent bound on all existing parser work. Original-source, codec, CLI and
+tracked-project controls remain unexecuted drafts in this phase.
+
 Shared project worklist and item-admission rules are generated from JavaScript,
 including its exact UTF-16 identifier ordering. Changed providers select only
 their actual dependent sources for the next refinement pass. Actual compiler

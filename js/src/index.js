@@ -145,3 +145,7 @@ export {sourceDefinitionCatalog,sourceDefinitionEntry,createSourceDefinitionProg
 export {runSourceDefinitionCommand} from './source-definition-cli.js';
 export {createJavaScriptRecordCallableParameterProgramLinks} from './record-callable-parameter-program.js';
 export {createJavaScriptArrayFormalParameterProgramLinks} from './array-formal-parameter-program.js';
+
+export {analyzeSourceModuleRequests} from './source-module-requests.js';
+
+export {runSourceModuleRequestCommand} from './source-module-request-cli.js';

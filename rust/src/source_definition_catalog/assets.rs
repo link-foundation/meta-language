@@ -412,6 +412,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "source-library-export-program.lino" => {
             Some(include_str!("../data/source-library-export-program.lino"))
         }
+        "source-module-request-program.lino" => {
+            Some(include_str!("../data/source-module-request-program.lino"))
+        }
         "source-parameter-binding-program.lino" => Some(include_str!(
             "../data/source-parameter-binding-program.lino"
         )),

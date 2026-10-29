@@ -1190,3 +1190,19 @@ integer/float pattern coercions, and supplies direct compatible integer literal
 constraints. Semantics reuse the existing common match algebra and all native
 decisions come from shared source. Its original/generated controls remain
 unexecuted; general type constraints and full source coverage remain required.
+
+
+Module dependency discovery is exposed by `analyzeSourceModuleRequests` /
+`analyze_source_module_requests` and `meta-language module-requests <file>`.
+Use `--binary` for the existing complete-network codec; TypeScript extensions
+select TypeScript/TSX automatically, with explicit `--language` and `--tsx`
+selection available. This operation exports the complete original CST together
+with request relations, not a translated executable. Requests retain exact
+UTF-16 specifiers and UTF-8 byte spans; computed names stay unresolved.
+Author shared selection and command rules with
+`draft-source-module-request-rules.mjs --draft`; the integrated
+`draft-source-module-requests.mjs --draft` author also constructs literal Links
+controls, source catalog entries and package assets. Neither author executes
+represented programs or controls. Runtime adapters read actual CST fields;
+the tracked-project materializer consumes those requests, including reexports,
+type imports and JSX/TSX. Module loading and full translation remain obligations.
