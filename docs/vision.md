@@ -9852,3 +9852,21 @@ controls cover every declared policy case and compare complete constructed code,
 codecs and compilation across both runtimes. Source-original execution remains
 the independent semantic control; matching generated output alone is not proof
 of equivalence or task completion.
+
+Number negation uses the actual shared unary operation on the original scalar,
+before collecting numbers in any numeric-only array. It is not encoded as
+multiplication by minus one. The bounded bit profile keeps signed zero,
+infinities and selected quiet-NaN sign/payload controls explicit. Upstream
+[Node22.15 unary source](https://github.com/nodejs/node/blob/v22.15.0/deps/v8/src/ic/unary-op-assembler.cc)
+and [Node24 unary source](https://github.com/nodejs/node/blob/v24.0.0/deps/v8/src/ic/unary-op-assembler.cc)
+select floating negation; the corresponding
+[numeric-array source](https://github.com/nodejs/node/blob/v24.0.0/deps/v8/src/objects/fixed-array-inl.h)
+can canonicalize NaNs. The generated `number-negation-profile.lino` retains
+version ranges and upstream blob hashes. This is implementation-source evidence
+for deferred assertions, not a local behavioral observation or a universal NaN
+encoding claim. Original inputs, exact trace comparison and existing assertions
+remain intact.
+The same shared unary-operation selector controls arity and scalar dispatch for
+truncation, absolute value, rounding, sign, square root and Number predicates.
+Those operations also consume their original scalar without a numeric-array
+intermediate; each keeps its own existing operation semantics and diagnostics.

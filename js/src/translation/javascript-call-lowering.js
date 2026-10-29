@@ -191,7 +191,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      const value=expression(node.arg,environment,depth+1);
      if(node.op==='neg'&&['int','nat'].includes(node.arg.type.kind))return primitive('negate integer',[value]);
      if(node.op==='not'&&node.arg.type.kind==='bool')return {$:'sourceIf',condition:value,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})};
-     if(node.op==='neg'&&node.arg.type.kind==='float')return {$:'sourceNumberBinary',operator:'multiply',left:constant({$:'number',value:-1}),right:value};
+     if(node.op==='neg'&&node.arg.type.kind==='float')return primitive('negate number',[value]);
      return refuse(node,'this unary operand requires additional exact source lowering');
     }
     case 'functionRef':{const actual=directory.get(node.fn);if(!actual)return refuse(node,'a function reference requires its actual supplied callable');return constant({$:'object',identity:actual.identity,callable:true});}

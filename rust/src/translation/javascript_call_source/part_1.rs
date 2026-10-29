@@ -672,6 +672,12 @@ pub fn read_java_script_source_exception_class(operation: &str) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn test_java_script_call_unary_number_operation(operation: &str) -> bool {
+    self::ml_array::includes(&vec![String::from("negate number"), String::from("truncate number"), String::from("read absolute number"), String::from("floor number"), String::from("ceil number"), String::from("round number"), String::from("read number sign"), String::from("read square root"), String::from("test integer number"), String::from("test safe integer number")], &operation.to_owned(), 0f64, false, |a, b| a == b)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_call_primitive_arity_error(operation: &str, count: f64) -> String {
     if ((!(self::ml_math::is_safe_integer(count)) || (count < (0f64))) || (count > (4096f64))) {
         String::from("primitive operands exceed their explicit call register budget")
@@ -695,33 +701,41 @@ pub fn read_java_script_call_primitive_arity_error(operation: &str, count: f64) 
                     if (((operation == "read minimum number") || (operation == "read maximum number")) || (operation == "construct text units")) {
                         String::from("")
                     } else {
-                        {
-                            let unary = vec![String::from("truncate number"), String::from("read text length"), String::from("trim text"), String::from("trim text start"), String::from("trim text end"), String::from("convert explicit number"), String::from("coerce primitive number"), String::from("convert primitive text"), String::from("convert explicit integer"), String::from("coerce primitive integer"), String::from("read absolute number"), String::from("floor number"), String::from("ceil number"), String::from("round number"), String::from("read number sign"), String::from("read square root"), String::from("test integer number"), String::from("test safe integer number")];
+                        if self::test_java_script_call_unary_number_operation(operation) {
+                            if (count == (1f64)) {
+                                String::from("")
+                            } else {
+                                String::from("primitive instructions require every actual operand coordinate")
+                            }
+                        } else {
                             {
-                                let binary = vec![String::from("read text code point"), String::from("read text character"), String::from("read relative text character"), String::from("concatenate text"), String::from("compare text"), String::from("test text prefix"), String::from("test text suffix"), String::from("test text inclusion")];
+                                let unary = vec![String::from("read text length"), String::from("trim text"), String::from("trim text start"), String::from("trim text end"), String::from("convert explicit number"), String::from("coerce primitive number"), String::from("convert primitive text"), String::from("convert explicit integer"), String::from("coerce primitive integer")];
                                 {
-                                    let ternary = vec![String::from("slice text"), String::from("find text"), String::from("find last text")];
+                                    let binary = vec![String::from("read text code point"), String::from("read text character"), String::from("read relative text character"), String::from("concatenate text"), String::from("compare text"), String::from("test text prefix"), String::from("test text suffix"), String::from("test text inclusion")];
                                     {
-                                        let arity = if self::ml_array::includes(&unary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
-                                            1f64
-                                        } else {
-                                            if self::ml_array::includes(&binary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
-                                                2f64
+                                        let ternary = vec![String::from("slice text"), String::from("find text"), String::from("find last text")];
+                                        {
+                                            let arity = if self::ml_array::includes(&unary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
+                                                1f64
                                             } else {
-                                                if self::ml_array::includes(&ternary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
-                                                    3f64
+                                                if self::ml_array::includes(&binary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
+                                                    2f64
                                                 } else {
-                                                    (-1f64)
+                                                    if self::ml_array::includes(&ternary, &operation.to_owned(), 0f64, false, |a, b| a == b) {
+                                                        3f64
+                                                    } else {
+                                                        (-1f64)
+                                                    }
                                                 }
-                                            }
-                                        };
-                                        if (arity < (0f64)) {
-                                            String::from("primitive instructions require their actual registered operation")
-                                        } else {
-                                            if (count != arity) {
-                                                String::from("primitive instructions require every actual operand coordinate")
+                                            };
+                                            if (arity < (0f64)) {
+                                                String::from("primitive instructions require their actual registered operation")
                                             } else {
-                                                String::from("")
+                                                if (count != arity) {
+                                                    String::from("primitive instructions require every actual operand coordinate")
+                                                } else {
+                                                    String::from("")
+                                                }
                                             }
                                         }
                                     }
@@ -739,46 +753,46 @@ pub fn read_java_script_call_primitive_arity_error(operation: &str, count: f64) 
 #[must_use]
 pub fn refuse_java_script_call_source(builder: self::JavaScriptCallSourceBuilder, error: &str) -> self::JavaScriptCallSourceResult {
     self::JavaScriptCallSourceResult::SourceResult(Box::new({
-        let source_ml_source2_nominal_spread318 = builder.clone();
+        let source_ml_source2_nominal_spread324 = builder.clone();
         {
-            let source_ml_source2_nominal_field319 = match source_ml_source2_nominal_spread318.clone() {
-                self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_data_property_value320, _, _, _, _, _) => {
-                    source_ml_source2_data_property_value320
+            let source_ml_source2_nominal_field325 = match source_ml_source2_nominal_spread324.clone() {
+                self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_data_property_value326, _, _, _, _, _) => {
+                    source_ml_source2_data_property_value326
                 }
             };
             {
-                let source_ml_source2_nominal_field321 = match source_ml_source2_nominal_spread318.clone() {
-                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value322, _, _, _, _) => {
-                        source_ml_source2_data_property_value322
+                let source_ml_source2_nominal_field327 = match source_ml_source2_nominal_spread324.clone() {
+                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, source_ml_source2_data_property_value328, _, _, _, _) => {
+                        source_ml_source2_data_property_value328
                     }
                 };
                 {
-                    let source_ml_source2_nominal_field323 = match source_ml_source2_nominal_spread318.clone() {
-                        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value324, _, _, _) => {
-                            source_ml_source2_data_property_value324
+                    let source_ml_source2_nominal_field329 = match source_ml_source2_nominal_spread324.clone() {
+                        self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, source_ml_source2_data_property_value330, _, _, _) => {
+                            source_ml_source2_data_property_value330
                         }
                     };
                     {
-                        let source_ml_source2_nominal_field325 = match source_ml_source2_nominal_spread318.clone() {
-                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, source_ml_source2_data_property_value326, _, _) => {
-                                source_ml_source2_data_property_value326
+                        let source_ml_source2_nominal_field331 = match source_ml_source2_nominal_spread324.clone() {
+                            self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, source_ml_source2_data_property_value332, _, _) => {
+                                source_ml_source2_data_property_value332
                             }
                         };
                         {
-                            let source_ml_source2_nominal_field327 = match source_ml_source2_nominal_spread318.clone() {
-                                self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value328, _) => {
-                                    source_ml_source2_data_property_value328
+                            let source_ml_source2_nominal_field333 = match source_ml_source2_nominal_spread324.clone() {
+                                self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, source_ml_source2_data_property_value334, _) => {
+                                    source_ml_source2_data_property_value334
                                 }
                             };
                             {
-                                let source_ml_source2_nominal_field329 = match source_ml_source2_nominal_spread318.clone() {
-                                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, _, source_ml_source2_data_property_value330) => {
-                                        source_ml_source2_data_property_value330.clone()
+                                let source_ml_source2_nominal_field335 = match source_ml_source2_nominal_spread324.clone() {
+                                    self::JavaScriptCallSourceBuilder::SourceBuilder(_, _, _, _, _, source_ml_source2_data_property_value336) => {
+                                        source_ml_source2_data_property_value336.clone()
                                     }
                                 };
                                 {
-                                    let source_ml_source2_nominal_override331 = error.to_owned();
-                                    self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_nominal_field319, source_ml_source2_nominal_field321, source_ml_source2_nominal_field323, source_ml_source2_nominal_field325, source_ml_source2_nominal_field327, source_ml_source2_nominal_override331.clone())
+                                    let source_ml_source2_nominal_override337 = error.to_owned();
+                                    self::JavaScriptCallSourceBuilder::SourceBuilder(source_ml_source2_nominal_field325, source_ml_source2_nominal_field327, source_ml_source2_nominal_field329, source_ml_source2_nominal_field331, source_ml_source2_nominal_field333, source_ml_source2_nominal_override337.clone())
                                 }
                             }
                         }

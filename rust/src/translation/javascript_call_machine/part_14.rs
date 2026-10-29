@@ -42,32 +42,32 @@ pub fn apply_java_script_descriptor_field(state: self::JavaScriptDescriptorConve
                     {
                         let descriptor = if (shared_constructor_field2 == (0f64)) {
                             {
-                                let source_ml_source2_spread_field1122 = (before.clone()).0;
+                                let source_ml_source2_spread_field1128 = (before.clone()).0;
                                 {
-                                    let source_ml_source2_spread_field1123 = (before.clone()).1;
+                                    let source_ml_source2_spread_field1129 = (before.clone()).1;
                                     {
-                                        let source_ml_source2_spread_field1124 = (before.clone()).2;
+                                        let source_ml_source2_spread_field1130 = (before.clone()).2;
                                         {
-                                            let source_ml_source2_spread_field1125 = (before.clone()).3;
+                                            let source_ml_source2_spread_field1131 = (before.clone()).3;
                                             {
-                                                let source_ml_source2_spread_field1126 = (before.clone()).4;
+                                                let source_ml_source2_spread_field1132 = (before.clone()).4;
                                                 {
-                                                    let source_ml_source2_spread_field1127 = (before.clone()).5;
+                                                    let source_ml_source2_spread_field1133 = (before.clone()).5;
                                                     {
-                                                        let source_ml_source2_spread_field1128 = (before.clone()).6;
+                                                        let source_ml_source2_spread_field1134 = (before.clone()).6;
                                                         {
-                                                            let source_ml_source2_spread_field1129 = (before.clone()).7;
+                                                            let source_ml_source2_spread_field1135 = (before.clone()).7;
                                                             {
-                                                                let source_ml_source2_spread_field1130 = (before.clone()).8;
+                                                                let source_ml_source2_spread_field1136 = (before.clone()).8;
                                                                 {
-                                                                    let source_ml_source2_spread_field1131 = (before.clone()).9;
+                                                                    let source_ml_source2_spread_field1137 = (before.clone()).9;
                                                                     {
-                                                                        let source_ml_source2_spread_field1132 = (before.clone()).10;
+                                                                        let source_ml_source2_spread_field1138 = (before.clone()).10;
                                                                         {
-                                                                            let source_ml_source2_spread_field1133 = (before.clone()).11;
+                                                                            let source_ml_source2_spread_field1139 = (before.clone()).11;
                                                                             {
-                                                                                let source_ml_source2_field1135 = self::convert_java_script_semantic_boolean(value.clone());
-                                                                                (source_ml_source2_spread_field1122, source_ml_source2_spread_field1123, source_ml_source2_field1135, true, source_ml_source2_spread_field1126.clone(), source_ml_source2_spread_field1127, source_ml_source2_spread_field1128.clone(), source_ml_source2_spread_field1129, source_ml_source2_spread_field1130.clone(), source_ml_source2_spread_field1131, source_ml_source2_spread_field1132, source_ml_source2_spread_field1133)
+                                                                                let source_ml_source2_field1141 = self::convert_java_script_semantic_boolean(value.clone());
+                                                                                (source_ml_source2_spread_field1128, source_ml_source2_spread_field1129, source_ml_source2_field1141, true, source_ml_source2_spread_field1132.clone(), source_ml_source2_spread_field1133, source_ml_source2_spread_field1134.clone(), source_ml_source2_spread_field1135, source_ml_source2_spread_field1136.clone(), source_ml_source2_spread_field1137, source_ml_source2_spread_field1138, source_ml_source2_spread_field1139)
                                                                             }
                                                                         }
                                                                     }
@@ -84,32 +84,32 @@ pub fn apply_java_script_descriptor_field(state: self::JavaScriptDescriptorConve
                         } else {
                             if (shared_constructor_field2 == (1f64)) {
                                 {
-                                    let source_ml_source2_spread_field1139 = (before.clone()).0;
+                                    let source_ml_source2_spread_field1145 = (before.clone()).0;
                                     {
-                                        let source_ml_source2_spread_field1140 = (before.clone()).1;
+                                        let source_ml_source2_spread_field1146 = (before.clone()).1;
                                         {
-                                            let source_ml_source2_spread_field1141 = (before.clone()).2;
+                                            let source_ml_source2_spread_field1147 = (before.clone()).2;
                                             {
-                                                let source_ml_source2_spread_field1142 = (before.clone()).3;
+                                                let source_ml_source2_spread_field1148 = (before.clone()).3;
                                                 {
-                                                    let source_ml_source2_spread_field1143 = (before.clone()).4;
+                                                    let source_ml_source2_spread_field1149 = (before.clone()).4;
                                                     {
-                                                        let source_ml_source2_spread_field1144 = (before.clone()).5;
+                                                        let source_ml_source2_spread_field1150 = (before.clone()).5;
                                                         {
-                                                            let source_ml_source2_spread_field1145 = (before.clone()).6;
+                                                            let source_ml_source2_spread_field1151 = (before.clone()).6;
                                                             {
-                                                                let source_ml_source2_spread_field1146 = (before.clone()).7;
+                                                                let source_ml_source2_spread_field1152 = (before.clone()).7;
                                                                 {
-                                                                    let source_ml_source2_spread_field1147 = (before.clone()).8;
+                                                                    let source_ml_source2_spread_field1153 = (before.clone()).8;
                                                                     {
-                                                                        let source_ml_source2_spread_field1148 = (before.clone()).9;
+                                                                        let source_ml_source2_spread_field1154 = (before.clone()).9;
                                                                         {
-                                                                            let source_ml_source2_spread_field1149 = (before.clone()).10;
+                                                                            let source_ml_source2_spread_field1155 = (before.clone()).10;
                                                                             {
-                                                                                let source_ml_source2_spread_field1150 = (before.clone()).11;
+                                                                                let source_ml_source2_spread_field1156 = (before.clone()).11;
                                                                                 {
-                                                                                    let source_ml_source2_field1152 = self::convert_java_script_semantic_boolean(value.clone());
-                                                                                    (source_ml_source2_field1152, true, source_ml_source2_spread_field1141, source_ml_source2_spread_field1142, source_ml_source2_spread_field1143.clone(), source_ml_source2_spread_field1144, source_ml_source2_spread_field1145.clone(), source_ml_source2_spread_field1146, source_ml_source2_spread_field1147.clone(), source_ml_source2_spread_field1148, source_ml_source2_spread_field1149, source_ml_source2_spread_field1150)
+                                                                                    let source_ml_source2_field1158 = self::convert_java_script_semantic_boolean(value.clone());
+                                                                                    (source_ml_source2_field1158, true, source_ml_source2_spread_field1147, source_ml_source2_spread_field1148, source_ml_source2_spread_field1149.clone(), source_ml_source2_spread_field1150, source_ml_source2_spread_field1151.clone(), source_ml_source2_spread_field1152, source_ml_source2_spread_field1153.clone(), source_ml_source2_spread_field1154, source_ml_source2_spread_field1155, source_ml_source2_spread_field1156)
                                                                                 }
                                                                             }
                                                                         }
@@ -126,30 +126,30 @@ pub fn apply_java_script_descriptor_field(state: self::JavaScriptDescriptorConve
                             } else {
                                 if (shared_constructor_field2 == (2f64)) {
                                     {
-                                        let source_ml_source2_spread_field1156 = (before.clone()).0;
+                                        let source_ml_source2_spread_field1162 = (before.clone()).0;
                                         {
-                                            let source_ml_source2_spread_field1157 = (before.clone()).1;
+                                            let source_ml_source2_spread_field1163 = (before.clone()).1;
                                             {
-                                                let source_ml_source2_spread_field1158 = (before.clone()).2;
+                                                let source_ml_source2_spread_field1164 = (before.clone()).2;
                                                 {
-                                                    let source_ml_source2_spread_field1159 = (before.clone()).3;
+                                                    let source_ml_source2_spread_field1165 = (before.clone()).3;
                                                     {
-                                                        let source_ml_source2_spread_field1160 = (before.clone()).4;
+                                                        let source_ml_source2_spread_field1166 = (before.clone()).4;
                                                         {
-                                                            let source_ml_source2_spread_field1161 = (before.clone()).5;
+                                                            let source_ml_source2_spread_field1167 = (before.clone()).5;
                                                             {
-                                                                let source_ml_source2_spread_field1162 = (before.clone()).6;
+                                                                let source_ml_source2_spread_field1168 = (before.clone()).6;
                                                                 {
-                                                                    let source_ml_source2_spread_field1163 = (before.clone()).7;
+                                                                    let source_ml_source2_spread_field1169 = (before.clone()).7;
                                                                     {
-                                                                        let source_ml_source2_spread_field1164 = (before.clone()).8;
+                                                                        let source_ml_source2_spread_field1170 = (before.clone()).8;
                                                                         {
-                                                                            let source_ml_source2_spread_field1165 = (before.clone()).9;
+                                                                            let source_ml_source2_spread_field1171 = (before.clone()).9;
                                                                             {
-                                                                                let source_ml_source2_spread_field1166 = (before.clone()).10;
+                                                                                let source_ml_source2_spread_field1172 = (before.clone()).10;
                                                                                 {
-                                                                                    let source_ml_source2_spread_field1167 = (before.clone()).11;
-                                                                                    (source_ml_source2_spread_field1156, source_ml_source2_spread_field1157, source_ml_source2_spread_field1158, source_ml_source2_spread_field1159, source_ml_source2_spread_field1160.clone(), source_ml_source2_spread_field1161, source_ml_source2_spread_field1162.clone(), source_ml_source2_spread_field1163, value.clone(), true, source_ml_source2_spread_field1166, source_ml_source2_spread_field1167)
+                                                                                    let source_ml_source2_spread_field1173 = (before.clone()).11;
+                                                                                    (source_ml_source2_spread_field1162, source_ml_source2_spread_field1163, source_ml_source2_spread_field1164, source_ml_source2_spread_field1165, source_ml_source2_spread_field1166.clone(), source_ml_source2_spread_field1167, source_ml_source2_spread_field1168.clone(), source_ml_source2_spread_field1169, value.clone(), true, source_ml_source2_spread_field1172, source_ml_source2_spread_field1173)
                                                                                 }
                                                                             }
                                                                         }
@@ -165,32 +165,32 @@ pub fn apply_java_script_descriptor_field(state: self::JavaScriptDescriptorConve
                                 } else {
                                     if (shared_constructor_field2 == (3f64)) {
                                         {
-                                            let source_ml_source2_spread_field1173 = (before.clone()).0;
+                                            let source_ml_source2_spread_field1179 = (before.clone()).0;
                                             {
-                                                let source_ml_source2_spread_field1174 = (before.clone()).1;
+                                                let source_ml_source2_spread_field1180 = (before.clone()).1;
                                                 {
-                                                    let source_ml_source2_spread_field1175 = (before.clone()).2;
+                                                    let source_ml_source2_spread_field1181 = (before.clone()).2;
                                                     {
-                                                        let source_ml_source2_spread_field1176 = (before.clone()).3;
+                                                        let source_ml_source2_spread_field1182 = (before.clone()).3;
                                                         {
-                                                            let source_ml_source2_spread_field1177 = (before.clone()).4;
+                                                            let source_ml_source2_spread_field1183 = (before.clone()).4;
                                                             {
-                                                                let source_ml_source2_spread_field1178 = (before.clone()).5;
+                                                                let source_ml_source2_spread_field1184 = (before.clone()).5;
                                                                 {
-                                                                    let source_ml_source2_spread_field1179 = (before.clone()).6;
+                                                                    let source_ml_source2_spread_field1185 = (before.clone()).6;
                                                                     {
-                                                                        let source_ml_source2_spread_field1180 = (before.clone()).7;
+                                                                        let source_ml_source2_spread_field1186 = (before.clone()).7;
                                                                         {
-                                                                            let source_ml_source2_spread_field1181 = (before.clone()).8;
+                                                                            let source_ml_source2_spread_field1187 = (before.clone()).8;
                                                                             {
-                                                                                let source_ml_source2_spread_field1182 = (before.clone()).9;
+                                                                                let source_ml_source2_spread_field1188 = (before.clone()).9;
                                                                                 {
-                                                                                    let source_ml_source2_spread_field1183 = (before.clone()).10;
+                                                                                    let source_ml_source2_spread_field1189 = (before.clone()).10;
                                                                                     {
-                                                                                        let source_ml_source2_spread_field1184 = (before.clone()).11;
+                                                                                        let source_ml_source2_spread_field1190 = (before.clone()).11;
                                                                                         {
-                                                                                            let source_ml_source2_field1186 = self::convert_java_script_semantic_boolean(value.clone());
-                                                                                            (source_ml_source2_spread_field1173, source_ml_source2_spread_field1174, source_ml_source2_spread_field1175, source_ml_source2_spread_field1176, source_ml_source2_spread_field1177.clone(), source_ml_source2_spread_field1178, source_ml_source2_spread_field1179.clone(), source_ml_source2_spread_field1180, source_ml_source2_spread_field1181.clone(), source_ml_source2_spread_field1182, source_ml_source2_field1186, true)
+                                                                                            let source_ml_source2_field1192 = self::convert_java_script_semantic_boolean(value.clone());
+                                                                                            (source_ml_source2_spread_field1179, source_ml_source2_spread_field1180, source_ml_source2_spread_field1181, source_ml_source2_spread_field1182, source_ml_source2_spread_field1183.clone(), source_ml_source2_spread_field1184, source_ml_source2_spread_field1185.clone(), source_ml_source2_spread_field1186, source_ml_source2_spread_field1187.clone(), source_ml_source2_spread_field1188, source_ml_source2_field1192, true)
                                                                                         }
                                                                                     }
                                                                                 }
@@ -207,30 +207,30 @@ pub fn apply_java_script_descriptor_field(state: self::JavaScriptDescriptorConve
                                     } else {
                                         if (shared_constructor_field2 == (4f64)) {
                                             {
-                                                let source_ml_source2_spread_field1190 = (before.clone()).0;
+                                                let source_ml_source2_spread_field1196 = (before.clone()).0;
                                                 {
-                                                    let source_ml_source2_spread_field1191 = (before.clone()).1;
+                                                    let source_ml_source2_spread_field1197 = (before.clone()).1;
                                                     {
-                                                        let source_ml_source2_spread_field1192 = (before.clone()).2;
+                                                        let source_ml_source2_spread_field1198 = (before.clone()).2;
                                                         {
-                                                            let source_ml_source2_spread_field1193 = (before.clone()).3;
+                                                            let source_ml_source2_spread_field1199 = (before.clone()).3;
                                                             {
-                                                                let source_ml_source2_spread_field1194 = (before.clone()).4;
+                                                                let source_ml_source2_spread_field1200 = (before.clone()).4;
                                                                 {
-                                                                    let source_ml_source2_spread_field1195 = (before.clone()).5;
+                                                                    let source_ml_source2_spread_field1201 = (before.clone()).5;
                                                                     {
-                                                                        let source_ml_source2_spread_field1196 = (before.clone()).6;
+                                                                        let source_ml_source2_spread_field1202 = (before.clone()).6;
                                                                         {
-                                                                            let source_ml_source2_spread_field1197 = (before.clone()).7;
+                                                                            let source_ml_source2_spread_field1203 = (before.clone()).7;
                                                                             {
-                                                                                let source_ml_source2_spread_field1198 = (before.clone()).8;
+                                                                                let source_ml_source2_spread_field1204 = (before.clone()).8;
                                                                                 {
-                                                                                    let source_ml_source2_spread_field1199 = (before.clone()).9;
+                                                                                    let source_ml_source2_spread_field1205 = (before.clone()).9;
                                                                                     {
-                                                                                        let source_ml_source2_spread_field1200 = (before.clone()).10;
+                                                                                        let source_ml_source2_spread_field1206 = (before.clone()).10;
                                                                                         {
-                                                                                            let source_ml_source2_spread_field1201 = (before.clone()).11;
-                                                                                            (source_ml_source2_spread_field1190, source_ml_source2_spread_field1191, source_ml_source2_spread_field1192, source_ml_source2_spread_field1193, value.clone(), true, source_ml_source2_spread_field1196.clone(), source_ml_source2_spread_field1197, source_ml_source2_spread_field1198.clone(), source_ml_source2_spread_field1199, source_ml_source2_spread_field1200, source_ml_source2_spread_field1201)
+                                                                                            let source_ml_source2_spread_field1207 = (before.clone()).11;
+                                                                                            (source_ml_source2_spread_field1196, source_ml_source2_spread_field1197, source_ml_source2_spread_field1198, source_ml_source2_spread_field1199, value.clone(), true, source_ml_source2_spread_field1202.clone(), source_ml_source2_spread_field1203, source_ml_source2_spread_field1204.clone(), source_ml_source2_spread_field1205, source_ml_source2_spread_field1206, source_ml_source2_spread_field1207)
                                                                                         }
                                                                                     }
                                                                                 }
@@ -245,30 +245,30 @@ pub fn apply_java_script_descriptor_field(state: self::JavaScriptDescriptorConve
                                             }
                                         } else {
                                             {
-                                                let source_ml_source2_spread_field1205 = (before.clone()).0;
+                                                let source_ml_source2_spread_field1211 = (before.clone()).0;
                                                 {
-                                                    let source_ml_source2_spread_field1206 = (before.clone()).1;
+                                                    let source_ml_source2_spread_field1212 = (before.clone()).1;
                                                     {
-                                                        let source_ml_source2_spread_field1207 = (before.clone()).2;
+                                                        let source_ml_source2_spread_field1213 = (before.clone()).2;
                                                         {
-                                                            let source_ml_source2_spread_field1208 = (before.clone()).3;
+                                                            let source_ml_source2_spread_field1214 = (before.clone()).3;
                                                             {
-                                                                let source_ml_source2_spread_field1209 = (before.clone()).4;
+                                                                let source_ml_source2_spread_field1215 = (before.clone()).4;
                                                                 {
-                                                                    let source_ml_source2_spread_field1210 = (before.clone()).5;
+                                                                    let source_ml_source2_spread_field1216 = (before.clone()).5;
                                                                     {
-                                                                        let source_ml_source2_spread_field1211 = (before.clone()).6;
+                                                                        let source_ml_source2_spread_field1217 = (before.clone()).6;
                                                                         {
-                                                                            let source_ml_source2_spread_field1212 = (before.clone()).7;
+                                                                            let source_ml_source2_spread_field1218 = (before.clone()).7;
                                                                             {
-                                                                                let source_ml_source2_spread_field1213 = (before.clone()).8;
+                                                                                let source_ml_source2_spread_field1219 = (before.clone()).8;
                                                                                 {
-                                                                                    let source_ml_source2_spread_field1214 = (before.clone()).9;
+                                                                                    let source_ml_source2_spread_field1220 = (before.clone()).9;
                                                                                     {
-                                                                                        let source_ml_source2_spread_field1215 = (before.clone()).10;
+                                                                                        let source_ml_source2_spread_field1221 = (before.clone()).10;
                                                                                         {
-                                                                                            let source_ml_source2_spread_field1216 = (before.clone()).11;
-                                                                                            (source_ml_source2_spread_field1205, source_ml_source2_spread_field1206, source_ml_source2_spread_field1207, source_ml_source2_spread_field1208, source_ml_source2_spread_field1209.clone(), source_ml_source2_spread_field1210, value.clone(), true, source_ml_source2_spread_field1213.clone(), source_ml_source2_spread_field1214, source_ml_source2_spread_field1215, source_ml_source2_spread_field1216)
+                                                                                            let source_ml_source2_spread_field1222 = (before.clone()).11;
+                                                                                            (source_ml_source2_spread_field1211, source_ml_source2_spread_field1212, source_ml_source2_spread_field1213, source_ml_source2_spread_field1214, source_ml_source2_spread_field1215.clone(), source_ml_source2_spread_field1216, value.clone(), true, source_ml_source2_spread_field1219.clone(), source_ml_source2_spread_field1220, source_ml_source2_spread_field1221, source_ml_source2_spread_field1222)
                                                                                         }
                                                                                     }
                                                                                 }
@@ -303,8 +303,8 @@ pub fn step_java_script_descriptor_conversion(heap: self::JavaScriptOrdinaryHeap
             self::JavaScriptDescriptorConversionTransition::DescriptorInvalid(error.clone())
         } else {
             if match state.clone() {
-                self::JavaScriptDescriptorConversionState::DescriptorConversion(_, _, _, source_ml_source2_data_property_value1221) => {
-                    source_ml_source2_data_property_value1221
+                self::JavaScriptDescriptorConversionState::DescriptorConversion(_, _, _, source_ml_source2_data_property_value1227) => {
+                    source_ml_source2_data_property_value1227
                 }
             } {
                 self::JavaScriptDescriptorConversionTransition::DescriptorInvalid(self::ml_string::Text::from_units(vec![97, 32, 112, 101, 110, 100, 105, 110, 103, 32, 100, 101, 115, 99, 114, 105, 112, 116, 111, 114, 32, 71, 101, 116, 32, 109, 117, 115, 116, 32, 98, 101, 32, 99, 111, 109, 112, 108, 101, 116, 101, 100, 32, 98, 101, 102, 111, 114, 101, 32, 105, 116, 115, 32, 110, 101, 120, 116, 32, 115, 116, 101, 112]))
@@ -312,8 +312,8 @@ pub fn step_java_script_descriptor_conversion(heap: self::JavaScriptOrdinaryHeap
                 {
                     let current = state.clone();
                     {
-                        let source_ml_source2_s1222 = self::source_ml_source1_temporary_step_java_script_descriptor_conversion_loop124(heap.clone(), current.clone());
-                        match source_ml_source2_s1222.clone() {
+                        let source_ml_source2_s1228 = self::source_ml_source1_temporary_step_java_script_descriptor_conversion_loop124(heap.clone(), current.clone());
+                        match source_ml_source2_s1228.clone() {
                             self::MlSource1TemporaryStepJavaScriptDescriptorConversionLoop124Result::MlSource1TemporaryStepJavaScriptDescriptorConversionLoop124Done(current_2) => {
                                 let current_2 = *current_2;
                                 match current_2.clone() {
@@ -392,21 +392,21 @@ pub fn resume_java_script_descriptor_conversion(heap: self::JavaScriptOrdinaryHe
             self::JavaScriptDescriptorConversionTransition::DescriptorInvalid(error.clone())
         } else {
             if !(match state.clone() {
-                self::JavaScriptDescriptorConversionState::DescriptorConversion(_, _, _, source_ml_source2_data_property_value1233) => {
-                    source_ml_source2_data_property_value1233
+                self::JavaScriptDescriptorConversionState::DescriptorConversion(_, _, _, source_ml_source2_data_property_value1239) => {
+                    source_ml_source2_data_property_value1239
                 }
             }) {
                 self::JavaScriptDescriptorConversionTransition::DescriptorInvalid(self::ml_string::Text::from_units(vec![100, 101, 115, 99, 114, 105, 112, 116, 111, 114, 32, 114, 101, 115, 117, 109, 112, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 112, 101, 110, 100, 105, 110, 103, 32, 71, 101, 116]))
             } else {
                 {
                     let value_error = self::read_java_script_ordinary_value_error(heap.clone(), match completion.clone() {
-                        self::JavaScriptSemanticCompletion::NormalCompletion(source_ml_source2_data_property_value1234) => {
-                            let source_ml_source2_data_property_value1234 = *source_ml_source2_data_property_value1234;
-                            source_ml_source2_data_property_value1234.clone()
+                        self::JavaScriptSemanticCompletion::NormalCompletion(source_ml_source2_data_property_value1240) => {
+                            let source_ml_source2_data_property_value1240 = *source_ml_source2_data_property_value1240;
+                            source_ml_source2_data_property_value1240.clone()
                         }
-                        self::JavaScriptSemanticCompletion::ThrowCompletion(source_ml_source2_data_property_value1235) => {
-                            let source_ml_source2_data_property_value1235 = *source_ml_source2_data_property_value1235;
-                            source_ml_source2_data_property_value1235.clone()
+                        self::JavaScriptSemanticCompletion::ThrowCompletion(source_ml_source2_data_property_value1241) => {
+                            let source_ml_source2_data_property_value1241 = *source_ml_source2_data_property_value1241;
+                            source_ml_source2_data_property_value1241.clone()
                         }
                     });
                     if (value_error != (self::ml_string::Text::from_units(vec![]))) {
@@ -683,8 +683,8 @@ pub fn begin_java_script_property_key_conversion(heap: self::JavaScriptOrdinaryH
 #[must_use]
 pub fn step_java_script_property_key_conversion(heap: self::JavaScriptOrdinaryHeap, state: self::JavaScriptPrimitiveConversionState) -> self::JavaScriptPropertyKeyConversionTransition {
     if ((match state.clone() {
-        self::JavaScriptPrimitiveConversionState::PrimitiveConversion(_, _, source_ml_source2_data_property_value1273, _) => {
-            source_ml_source2_data_property_value1273.clone()
+        self::JavaScriptPrimitiveConversionState::PrimitiveConversion(_, _, source_ml_source2_data_property_value1279, _) => {
+            source_ml_source2_data_property_value1279.clone()
         }
     }) != (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) {
         self::JavaScriptPropertyKeyConversionTransition::PropertyKeyInvalid(self::ml_string::Text::from_units(vec![97, 32, 112, 114, 111, 112, 101, 114, 116, 121, 32, 107, 101, 121, 32, 99, 111, 110, 116, 105, 110, 117, 97, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 115, 116, 114, 105, 110, 103, 32, 104, 105, 110, 116]))
@@ -697,8 +697,8 @@ pub fn step_java_script_property_key_conversion(heap: self::JavaScriptOrdinaryHe
 #[must_use]
 pub fn resume_java_script_property_key_conversion(heap: self::JavaScriptOrdinaryHeap, state: self::JavaScriptPrimitiveConversionState, completion: self::JavaScriptPrimitiveConversionCompletion) -> self::JavaScriptPropertyKeyConversionTransition {
     if ((match state.clone() {
-        self::JavaScriptPrimitiveConversionState::PrimitiveConversion(_, _, source_ml_source2_data_property_value1275, _) => {
-            source_ml_source2_data_property_value1275.clone()
+        self::JavaScriptPrimitiveConversionState::PrimitiveConversion(_, _, source_ml_source2_data_property_value1281, _) => {
+            source_ml_source2_data_property_value1281.clone()
         }
     }) != (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))) {
         self::JavaScriptPropertyKeyConversionTransition::PropertyKeyInvalid(self::ml_string::Text::from_units(vec![97, 32, 112, 114, 111, 112, 101, 114, 116, 121, 32, 107, 101, 121, 32, 99, 111, 110, 116, 105, 110, 117, 97, 116, 105, 111, 110, 32, 114, 101, 116, 97, 105, 110, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 115, 116, 114, 105, 110, 103, 32, 104, 105, 110, 116]))

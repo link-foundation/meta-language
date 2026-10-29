@@ -340,6 +340,14 @@ for(const [value,result]of [['2',integer('3')],['-1',null]])rows.push({name:'gua
 rows.push({name:'guarded natural subtraction retains a negative integer result',source:'/** @param {bigint} first @param {bigint} second @returns {bigint} */ export function inspect(first,second){if(first<0n)throw new Error("first natural");if(second<0n)throw new Error("second natural");return first-second;}',entry:'inspect',functions:['inspect'],arguments:[integer('1'),integer('2')],expected:integer('-1')});
 const naturalMixed='/** @param {bigint} value @param {number} limit @returns {boolean} */ export function inspect(value,limit){if(value<0n)throw new Error("natural comparison");return value>limit;}';
 for(const [value,limit,result]of [['1',1.5,false],['2',1.5,true],['9007199254740993',9007199254740992,true]])rows.push({name:'guarded natural exact mixed comparison '+value,source:naturalMixed,entry:'inspect',functions:['inspect'],arguments:[integer(value),number(limit)],expected:{$:'boolean',value:result}});
+for(const [name,input,expected]of [
+ ['positive zero becomes negative zero',number(0),number(-0)],
+ ['negative zero becomes positive zero',number(-0),number(0)],
+ ['finite value retains its negated magnitude',number(42),number(-42)],
+ ['positive infinity becomes negative infinity',number(Infinity),number(-Infinity)],
+ ['negative infinity becomes positive infinity',number(-Infinity),number(Infinity)],
+ ['canonical quiet NaN follows scalar unary negation',{$:'number',bits:'7ff8000000000000'},{$:'number',bits:'fff8000000000000'}]
+])rows.push({name:'number scalar negation '+name,source:'/** @param {number} value @returns {number} */ export function inspect(value){return -value;}',entry:'inspect',functions:['inspect'],arguments:[input],expected});
 const refusals=[
  {name:'guarded natural cross-realm casts require complete realm lowering',source:'/** @param {bigint} value @returns {bigint} */ export function inspect(value){return natural(value);} /** @param {bigint} value @returns {bigint} */ function natural(value){if(value<0n)throw new Error("natural realm");return value;}',functions:['inspect','natural'],functionRealms:{inspect:'1000',natural:'1001'}},
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},

@@ -11,6 +11,10 @@ import {sliceUtf16Text,codePointUtf16Text,characterUtf16Text,relativeCharacterUt
  * {$:'primitiveInvalid',reason:string} | {$:'primitiveError',errorClass:string,reason:string} |
  * {$:'primitiveResourceLimit',reason:string}} JavaScriptCallPrimitiveResult */
 
+/** @param {string} operation @returns {boolean} */
+export function testJavaScriptCallUnaryNumberOperation(operation){
+ return ['negate number','truncate number','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation);
+}
 /** Operations consume already checked primitive values. Unmodeled coercions,
  * wrappers and replacement intrinsics need their own source lowering.
  * @param {string} operation @param {number} count @returns {string} */
@@ -20,8 +24,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  const integerArity=readJavaScriptCallIntegerArity(operation);
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
- const unary=['truncate number','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer',
- 'read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'];
+ if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
+ const unary=['read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer'];
  const binary=['read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
  const ternary=['slice text','find text','find last text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
@@ -29,20 +33,28 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallNumericPrimitive(operation,values){
+ // A Number-only array can canonicalize NaNs in supported engines. Unary
+ // operations consume the original scalar directly, preserving its input bits.
+ if(testJavaScriptCallUnaryNumberOperation(operation)){
+  if(values.length!==1)return {$:'primitiveInvalid',reason:'primitive instructions require every actual operand coordinate'};
+  const first=values[0]??{$:'undefined'};
+  if(first.$!=='number')return {$:'primitiveInvalid',reason:'numeric primitives require actual Number operands after source conversion'};
+  return executeJavaScriptCallUnaryNumber(operation,first.value);
+ }
  let numbers=[];
  for(const value of values){if(value.$!=='number')return {$:'primitiveInvalid',reason:'numeric primitives require actual Number operands after source conversion'};numbers.push(value.value);}
- if(operation==='truncate number')return {$:'primitiveValue',value:{$:'number',value:Math.trunc(numbers[0]??NaN)}};
  if(operation==='read minimum number')return {$:'primitiveValue',value:{$:'number',value:Math.min(...numbers)}};
  if(operation==='read maximum number')return {$:'primitiveValue',value:{$:'number',value:Math.max(...numbers)}};
  if(operation==='construct text units')return {$:'primitiveValue',value:{$:'text',units:characterUnitsUtf16Text(numbers)}};
- if(['read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation))return executeJavaScriptCallUnaryNumber(operation,numbers[0]??NaN);
  return {$:'primitiveInvalid',reason:'the numeric primitive executor needs its actual registered operation'};
 }
 /** @param {string} operation @param {number} number @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallUnaryNumber(operation,number){
+ if(operation==='negate number')return {$:'primitiveValue',value:{$:'number',value:-number}};
+ if(operation==='truncate number')return {$:'primitiveValue',value:{$:'number',value:Math.trunc(number)}};
  if(operation==='test integer number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isInteger(number)}};
  if(operation==='test safe integer number')return {$:'primitiveValue',value:{$:'boolean',value:Number.isSafeInteger(number)}};
- if(!['read absolute number','floor number','ceil number','round number','read number sign','read square root'].includes(operation))return {$:'primitiveInvalid',reason:'unary numeric primitives require their actual registered operation'};
+ if(!testJavaScriptCallUnaryNumberOperation(operation))return {$:'primitiveInvalid',reason:'unary numeric primitives require their actual registered operation'};
  const result=operation==='read absolute number'?Math.abs(number):operation==='floor number'?Math.floor(number):operation==='ceil number'?Math.ceil(number):operation==='round number'?Math.round(number):operation==='read number sign'?Math.sign(number):Math.sqrt(number);
  return {$:'primitiveValue',value:{$:'number',value:result}};
 }
@@ -102,7 +114,7 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='convert explicit integer'||operation==='coerce primitive integer')return executeJavaScriptCallIntegerConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert primitive text')return executeJavaScriptCallTextConversion(values[0]??{$:'undefined'});
  if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);
- return ['truncate number','read minimum number','read maximum number','construct text units','read absolute number','floor number','ceil number','round number','read number sign','read square root','test integer number','test safe integer number'].includes(operation)?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
+ return testJavaScriptCallUnaryNumberOperation(operation)||['read minimum number','read maximum number','construct text units'].includes(operation)?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
 }
 
 /** Primitive ToString uses the existing scalar formatting definitions. Symbol

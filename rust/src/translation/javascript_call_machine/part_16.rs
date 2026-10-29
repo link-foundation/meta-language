@@ -44,25 +44,25 @@ pub fn accept_java_script_call_key(program: self::JavaScriptCallProgram, machine
                         self::JavaScriptPropertyKeyConversionTransition::PropertyKeyContinuation(state) => {
                             let state = *state;
                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1571 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1571.clone() {
+                                let source_ml_source2_nominal_spread1577 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1577.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1, shared_constructor_field2, shared_constructor_field3, shared_constructor_field4, shared_constructor_field5, shared_constructor_field6) => {
                                         let shared_constructor_field6 = *shared_constructor_field6;
                                         {
-                                            let source_ml_source2_nominal_field1572 = shared_constructor_field1.clone();
+                                            let source_ml_source2_nominal_field1578 = shared_constructor_field1.clone();
                                             {
-                                                let source_ml_source2_nominal_field1574 = shared_constructor_field2;
+                                                let source_ml_source2_nominal_field1580 = shared_constructor_field2;
                                                 {
-                                                    let source_ml_source2_nominal_field1576 = shared_constructor_field3;
+                                                    let source_ml_source2_nominal_field1582 = shared_constructor_field3;
                                                     {
-                                                        let source_ml_source2_nominal_field1578 = shared_constructor_field4;
+                                                        let source_ml_source2_nominal_field1584 = shared_constructor_field4;
                                                         {
-                                                            let source_ml_source2_nominal_field1580 = shared_constructor_field5;
+                                                            let source_ml_source2_nominal_field1586 = shared_constructor_field5;
                                                             {
-                                                                let source_ml_source2_nominal_field1582 = shared_constructor_field6.clone();
+                                                                let source_ml_source2_nominal_field1588 = shared_constructor_field6.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1584 = self::JavaScriptCallPending::WaitKey(destination, realm.clone(), Box::new(state.clone()));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1572.clone(), source_ml_source2_nominal_field1574, source_ml_source2_nominal_field1576, source_ml_source2_nominal_field1578, source_ml_source2_nominal_field1580, Box::new(source_ml_source2_nominal_override1584.clone()))
+                                                                    let source_ml_source2_nominal_override1590 = self::JavaScriptCallPending::WaitKey(destination, realm.clone(), Box::new(state.clone()));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1578.clone(), source_ml_source2_nominal_field1580, source_ml_source2_nominal_field1582, source_ml_source2_nominal_field1584, source_ml_source2_nominal_field1586, Box::new(source_ml_source2_nominal_override1590.clone()))
                                                                 }
                                                             }
                                                         }
@@ -79,25 +79,25 @@ pub fn accept_java_script_call_key(program: self::JavaScriptCallProgram, machine
                             let callee = *callee;
                             let receiver = *receiver;
                             self::push_java_script_call(program.clone(), self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1587 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1587.clone() {
+                                let source_ml_source2_nominal_spread1593 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1593.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1_2, shared_constructor_field2_2, shared_constructor_field3_2, shared_constructor_field4_2, shared_constructor_field5_2, shared_constructor_field6_2) => {
                                         let shared_constructor_field6_2 = *shared_constructor_field6_2;
                                         {
-                                            let source_ml_source2_nominal_field1588 = shared_constructor_field1_2.clone();
+                                            let source_ml_source2_nominal_field1594 = shared_constructor_field1_2.clone();
                                             {
-                                                let source_ml_source2_nominal_field1590 = shared_constructor_field2_2;
+                                                let source_ml_source2_nominal_field1596 = shared_constructor_field2_2;
                                                 {
-                                                    let source_ml_source2_nominal_field1592 = shared_constructor_field3_2;
+                                                    let source_ml_source2_nominal_field1598 = shared_constructor_field3_2;
                                                     {
-                                                        let source_ml_source2_nominal_field1594 = shared_constructor_field4_2;
+                                                        let source_ml_source2_nominal_field1600 = shared_constructor_field4_2;
                                                         {
-                                                            let source_ml_source2_nominal_field1596 = shared_constructor_field5_2;
+                                                            let source_ml_source2_nominal_field1602 = shared_constructor_field5_2;
                                                             {
-                                                                let source_ml_source2_nominal_field1598 = shared_constructor_field6_2.clone();
+                                                                let source_ml_source2_nominal_field1604 = shared_constructor_field6_2.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1600 = self::JavaScriptCallPending::WaitKey(destination, realm.clone(), Box::new(state_2.clone()));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1588.clone(), source_ml_source2_nominal_field1590, source_ml_source2_nominal_field1592, source_ml_source2_nominal_field1594, source_ml_source2_nominal_field1596, Box::new(source_ml_source2_nominal_override1600.clone()))
+                                                                    let source_ml_source2_nominal_override1606 = self::JavaScriptCallPending::WaitKey(destination, realm.clone(), Box::new(state_2.clone()));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1594.clone(), source_ml_source2_nominal_field1596, source_ml_source2_nominal_field1598, source_ml_source2_nominal_field1600, source_ml_source2_nominal_field1602, Box::new(source_ml_source2_nominal_override1606.clone()))
                                                                 }
                                                             }
                                                         }
@@ -145,25 +145,25 @@ pub fn accept_java_script_call_definition(program: self::JavaScriptCallProgram, 
                         self::JavaScriptPropertyDefinitionTransition::DefinitionContinuation(state) => {
                             let state = *state;
                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1610 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1610.clone() {
+                                let source_ml_source2_nominal_spread1616 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1616.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1, shared_constructor_field2, shared_constructor_field3, shared_constructor_field4, shared_constructor_field5, shared_constructor_field6) => {
                                         let shared_constructor_field6 = *shared_constructor_field6;
                                         {
-                                            let source_ml_source2_nominal_field1611 = shared_constructor_field1.clone();
+                                            let source_ml_source2_nominal_field1617 = shared_constructor_field1.clone();
                                             {
-                                                let source_ml_source2_nominal_field1613 = shared_constructor_field2;
+                                                let source_ml_source2_nominal_field1619 = shared_constructor_field2;
                                                 {
-                                                    let source_ml_source2_nominal_field1615 = shared_constructor_field3;
+                                                    let source_ml_source2_nominal_field1621 = shared_constructor_field3;
                                                     {
-                                                        let source_ml_source2_nominal_field1617 = shared_constructor_field4;
+                                                        let source_ml_source2_nominal_field1623 = shared_constructor_field4;
                                                         {
-                                                            let source_ml_source2_nominal_field1619 = shared_constructor_field5;
+                                                            let source_ml_source2_nominal_field1625 = shared_constructor_field5;
                                                             {
-                                                                let source_ml_source2_nominal_field1621 = shared_constructor_field6.clone();
+                                                                let source_ml_source2_nominal_field1627 = shared_constructor_field6.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1623 = self::JavaScriptCallPending::WaitDefinition(destination, realm.clone(), Box::new(state.clone()));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1611.clone(), source_ml_source2_nominal_field1613, source_ml_source2_nominal_field1615, source_ml_source2_nominal_field1617, source_ml_source2_nominal_field1619, Box::new(source_ml_source2_nominal_override1623.clone()))
+                                                                    let source_ml_source2_nominal_override1629 = self::JavaScriptCallPending::WaitDefinition(destination, realm.clone(), Box::new(state.clone()));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1617.clone(), source_ml_source2_nominal_field1619, source_ml_source2_nominal_field1621, source_ml_source2_nominal_field1623, source_ml_source2_nominal_field1625, Box::new(source_ml_source2_nominal_override1629.clone()))
                                                                 }
                                                             }
                                                         }
@@ -180,25 +180,25 @@ pub fn accept_java_script_call_definition(program: self::JavaScriptCallProgram, 
                             let callee = *callee;
                             let receiver = *receiver;
                             self::push_java_script_call(program.clone(), self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1626 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1626.clone() {
+                                let source_ml_source2_nominal_spread1632 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1632.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1_2, shared_constructor_field2_2, shared_constructor_field3_2, shared_constructor_field4_2, shared_constructor_field5_2, shared_constructor_field6_2) => {
                                         let shared_constructor_field6_2 = *shared_constructor_field6_2;
                                         {
-                                            let source_ml_source2_nominal_field1627 = shared_constructor_field1_2.clone();
+                                            let source_ml_source2_nominal_field1633 = shared_constructor_field1_2.clone();
                                             {
-                                                let source_ml_source2_nominal_field1629 = shared_constructor_field2_2;
+                                                let source_ml_source2_nominal_field1635 = shared_constructor_field2_2;
                                                 {
-                                                    let source_ml_source2_nominal_field1631 = shared_constructor_field3_2;
+                                                    let source_ml_source2_nominal_field1637 = shared_constructor_field3_2;
                                                     {
-                                                        let source_ml_source2_nominal_field1633 = shared_constructor_field4_2;
+                                                        let source_ml_source2_nominal_field1639 = shared_constructor_field4_2;
                                                         {
-                                                            let source_ml_source2_nominal_field1635 = shared_constructor_field5_2;
+                                                            let source_ml_source2_nominal_field1641 = shared_constructor_field5_2;
                                                             {
-                                                                let source_ml_source2_nominal_field1637 = shared_constructor_field6_2.clone();
+                                                                let source_ml_source2_nominal_field1643 = shared_constructor_field6_2.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1639 = self::JavaScriptCallPending::WaitDefinition(destination, realm.clone(), Box::new(state_2.clone()));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1627.clone(), source_ml_source2_nominal_field1629, source_ml_source2_nominal_field1631, source_ml_source2_nominal_field1633, source_ml_source2_nominal_field1635, Box::new(source_ml_source2_nominal_override1639.clone()))
+                                                                    let source_ml_source2_nominal_override1645 = self::JavaScriptCallPending::WaitDefinition(destination, realm.clone(), Box::new(state_2.clone()));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1633.clone(), source_ml_source2_nominal_field1635, source_ml_source2_nominal_field1637, source_ml_source2_nominal_field1639, source_ml_source2_nominal_field1641, Box::new(source_ml_source2_nominal_override1645.clone()))
                                                                 }
                                                             }
                                                         }
@@ -247,25 +247,25 @@ pub fn accept_java_script_call_number(program: self::JavaScriptCallProgram, mach
                         self::JavaScriptScalarConversionTransition::ScalarContinuation(state) => {
                             let state = *state;
                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1647 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1647.clone() {
+                                let source_ml_source2_nominal_spread1653 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1653.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1, shared_constructor_field2, shared_constructor_field3, shared_constructor_field4, shared_constructor_field5, shared_constructor_field6) => {
                                         let shared_constructor_field6 = *shared_constructor_field6;
                                         {
-                                            let source_ml_source2_nominal_field1648 = shared_constructor_field1.clone();
+                                            let source_ml_source2_nominal_field1654 = shared_constructor_field1.clone();
                                             {
-                                                let source_ml_source2_nominal_field1650 = shared_constructor_field2;
+                                                let source_ml_source2_nominal_field1656 = shared_constructor_field2;
                                                 {
-                                                    let source_ml_source2_nominal_field1652 = shared_constructor_field3;
+                                                    let source_ml_source2_nominal_field1658 = shared_constructor_field3;
                                                     {
-                                                        let source_ml_source2_nominal_field1654 = shared_constructor_field4;
+                                                        let source_ml_source2_nominal_field1660 = shared_constructor_field4;
                                                         {
-                                                            let source_ml_source2_nominal_field1656 = shared_constructor_field5;
+                                                            let source_ml_source2_nominal_field1662 = shared_constructor_field5;
                                                             {
-                                                                let source_ml_source2_nominal_field1658 = shared_constructor_field6.clone();
+                                                                let source_ml_source2_nominal_field1664 = shared_constructor_field6.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1660 = self::JavaScriptCallPending::WaitNumber(destination, realm.clone(), Box::new(self::JavaScriptNumberCallState::NumberProtocolState(Box::new(state.clone()))));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1648.clone(), source_ml_source2_nominal_field1650, source_ml_source2_nominal_field1652, source_ml_source2_nominal_field1654, source_ml_source2_nominal_field1656, Box::new(source_ml_source2_nominal_override1660.clone()))
+                                                                    let source_ml_source2_nominal_override1666 = self::JavaScriptCallPending::WaitNumber(destination, realm.clone(), Box::new(self::JavaScriptNumberCallState::NumberProtocolState(Box::new(state.clone()))));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1654.clone(), source_ml_source2_nominal_field1656, source_ml_source2_nominal_field1658, source_ml_source2_nominal_field1660, source_ml_source2_nominal_field1662, Box::new(source_ml_source2_nominal_override1666.clone()))
                                                                 }
                                                             }
                                                         }
@@ -282,25 +282,25 @@ pub fn accept_java_script_call_number(program: self::JavaScriptCallProgram, mach
                             let callee = *callee;
                             let receiver = *receiver;
                             self::push_java_script_call(program.clone(), self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1663 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1663.clone() {
+                                let source_ml_source2_nominal_spread1669 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1669.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1_2, shared_constructor_field2_2, shared_constructor_field3_2, shared_constructor_field4_2, shared_constructor_field5_2, shared_constructor_field6_2) => {
                                         let shared_constructor_field6_2 = *shared_constructor_field6_2;
                                         {
-                                            let source_ml_source2_nominal_field1664 = shared_constructor_field1_2.clone();
+                                            let source_ml_source2_nominal_field1670 = shared_constructor_field1_2.clone();
                                             {
-                                                let source_ml_source2_nominal_field1666 = shared_constructor_field2_2;
+                                                let source_ml_source2_nominal_field1672 = shared_constructor_field2_2;
                                                 {
-                                                    let source_ml_source2_nominal_field1668 = shared_constructor_field3_2;
+                                                    let source_ml_source2_nominal_field1674 = shared_constructor_field3_2;
                                                     {
-                                                        let source_ml_source2_nominal_field1670 = shared_constructor_field4_2;
+                                                        let source_ml_source2_nominal_field1676 = shared_constructor_field4_2;
                                                         {
-                                                            let source_ml_source2_nominal_field1672 = shared_constructor_field5_2;
+                                                            let source_ml_source2_nominal_field1678 = shared_constructor_field5_2;
                                                             {
-                                                                let source_ml_source2_nominal_field1674 = shared_constructor_field6_2.clone();
+                                                                let source_ml_source2_nominal_field1680 = shared_constructor_field6_2.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1676 = self::JavaScriptCallPending::WaitNumber(destination, realm.clone(), Box::new(self::JavaScriptNumberCallState::NumberProtocolState(Box::new(state_2.clone()))));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1664.clone(), source_ml_source2_nominal_field1666, source_ml_source2_nominal_field1668, source_ml_source2_nominal_field1670, source_ml_source2_nominal_field1672, Box::new(source_ml_source2_nominal_override1676.clone()))
+                                                                    let source_ml_source2_nominal_override1682 = self::JavaScriptCallPending::WaitNumber(destination, realm.clone(), Box::new(self::JavaScriptNumberCallState::NumberProtocolState(Box::new(state_2.clone()))));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1670.clone(), source_ml_source2_nominal_field1672, source_ml_source2_nominal_field1674, source_ml_source2_nominal_field1676, source_ml_source2_nominal_field1678, Box::new(source_ml_source2_nominal_override1682.clone()))
                                                                 }
                                                             }
                                                         }
@@ -329,25 +329,25 @@ pub fn accept_java_script_call_number(program: self::JavaScriptCallProgram, mach
                         self::JavaScriptScalarConversionTransition::ScalarResourceLimit(value_3, reason_3) => {
                             let value_3 = *value_3;
                             self::JavaScriptCallMachineTransition::MachineResourceLimit(Box::new(self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1682 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1682.clone() {
+                                let source_ml_source2_nominal_spread1688 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1688.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1_3, shared_constructor_field2_3, shared_constructor_field3_3, shared_constructor_field4_3, shared_constructor_field5_3, shared_constructor_field6_3) => {
                                         let shared_constructor_field6_3 = *shared_constructor_field6_3;
                                         {
-                                            let source_ml_source2_nominal_field1683 = shared_constructor_field1_3.clone();
+                                            let source_ml_source2_nominal_field1689 = shared_constructor_field1_3.clone();
                                             {
-                                                let source_ml_source2_nominal_field1685 = shared_constructor_field2_3;
+                                                let source_ml_source2_nominal_field1691 = shared_constructor_field2_3;
                                                 {
-                                                    let source_ml_source2_nominal_field1687 = shared_constructor_field3_3;
+                                                    let source_ml_source2_nominal_field1693 = shared_constructor_field3_3;
                                                     {
-                                                        let source_ml_source2_nominal_field1689 = shared_constructor_field4_3;
+                                                        let source_ml_source2_nominal_field1695 = shared_constructor_field4_3;
                                                         {
-                                                            let source_ml_source2_nominal_field1691 = shared_constructor_field5_3;
+                                                            let source_ml_source2_nominal_field1697 = shared_constructor_field5_3;
                                                             {
-                                                                let source_ml_source2_nominal_field1693 = shared_constructor_field6_3.clone();
+                                                                let source_ml_source2_nominal_field1699 = shared_constructor_field6_3.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1695 = self::JavaScriptCallPending::WaitNumber(destination, realm.clone(), Box::new(self::JavaScriptNumberCallState::NumberPrimitiveValue(Box::new(value_3.clone()))));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1683.clone(), source_ml_source2_nominal_field1685, source_ml_source2_nominal_field1687, source_ml_source2_nominal_field1689, source_ml_source2_nominal_field1691, Box::new(source_ml_source2_nominal_override1695.clone()))
+                                                                    let source_ml_source2_nominal_override1701 = self::JavaScriptCallPending::WaitNumber(destination, realm.clone(), Box::new(self::JavaScriptNumberCallState::NumberPrimitiveValue(Box::new(value_3.clone()))));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1689.clone(), source_ml_source2_nominal_field1691, source_ml_source2_nominal_field1693, source_ml_source2_nominal_field1695, source_ml_source2_nominal_field1697, Box::new(source_ml_source2_nominal_override1701.clone()))
                                                                 }
                                                             }
                                                         }
@@ -382,8 +382,8 @@ pub fn step_java_script_call_number(program: self::JavaScriptCallProgram, machin
                         } else {
                             {
                                 let fn_ = self::ml_array::optional_at(&shared_constructor_field1, self::ml_array::number_index(self::find_java_script_call_function(program.clone(), match frame.clone().expect("a proven present value") {
-                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1700, _, _, _, _, _) => {
-                                        source_ml_source2_data_property_value1700.clone()
+                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1706, _, _, _, _, _) => {
+                                        source_ml_source2_data_property_value1706.clone()
                                     }
                                 })));
                                 if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -432,8 +432,8 @@ pub fn resume_java_script_call_number(program: self::JavaScriptCallProgram, mach
                         } else {
                             {
                                 let fn_ = self::ml_array::optional_at(&shared_constructor_field1, self::ml_array::number_index(self::find_java_script_call_function(program.clone(), match frame.clone().expect("a proven present value") {
-                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1709, _, _, _, _, _) => {
-                                        source_ml_source2_data_property_value1709.clone()
+                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1715, _, _, _, _, _) => {
+                                        source_ml_source2_data_property_value1715.clone()
                                     }
                                 })));
                                 if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -480,25 +480,25 @@ pub fn accept_java_script_call_text(program: self::JavaScriptCallProgram, machin
                         self::JavaScriptScalarConversionTransition::ScalarContinuation(state) => {
                             let state = *state;
                             self::JavaScriptCallMachineTransition::MachineContinue(Box::new(self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1721 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1721.clone() {
+                                let source_ml_source2_nominal_spread1727 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1727.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1, shared_constructor_field2, shared_constructor_field3, shared_constructor_field4, shared_constructor_field5, shared_constructor_field6) => {
                                         let shared_constructor_field6 = *shared_constructor_field6;
                                         {
-                                            let source_ml_source2_nominal_field1722 = shared_constructor_field1.clone();
+                                            let source_ml_source2_nominal_field1728 = shared_constructor_field1.clone();
                                             {
-                                                let source_ml_source2_nominal_field1724 = shared_constructor_field2;
+                                                let source_ml_source2_nominal_field1730 = shared_constructor_field2;
                                                 {
-                                                    let source_ml_source2_nominal_field1726 = shared_constructor_field3;
+                                                    let source_ml_source2_nominal_field1732 = shared_constructor_field3;
                                                     {
-                                                        let source_ml_source2_nominal_field1728 = shared_constructor_field4;
+                                                        let source_ml_source2_nominal_field1734 = shared_constructor_field4;
                                                         {
-                                                            let source_ml_source2_nominal_field1730 = shared_constructor_field5;
+                                                            let source_ml_source2_nominal_field1736 = shared_constructor_field5;
                                                             {
-                                                                let source_ml_source2_nominal_field1732 = shared_constructor_field6.clone();
+                                                                let source_ml_source2_nominal_field1738 = shared_constructor_field6.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1734 = self::JavaScriptCallPending::WaitText(destination, realm.clone(), Box::new(self::JavaScriptTextCallState::TextProtocolState(Box::new(state.clone()))));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1722.clone(), source_ml_source2_nominal_field1724, source_ml_source2_nominal_field1726, source_ml_source2_nominal_field1728, source_ml_source2_nominal_field1730, Box::new(source_ml_source2_nominal_override1734.clone()))
+                                                                    let source_ml_source2_nominal_override1740 = self::JavaScriptCallPending::WaitText(destination, realm.clone(), Box::new(self::JavaScriptTextCallState::TextProtocolState(Box::new(state.clone()))));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1728.clone(), source_ml_source2_nominal_field1730, source_ml_source2_nominal_field1732, source_ml_source2_nominal_field1734, source_ml_source2_nominal_field1736, Box::new(source_ml_source2_nominal_override1740.clone()))
                                                                 }
                                                             }
                                                         }
@@ -515,25 +515,25 @@ pub fn accept_java_script_call_text(program: self::JavaScriptCallProgram, machin
                             let callee = *callee;
                             let receiver = *receiver;
                             self::push_java_script_call(program.clone(), self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1737 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1737.clone() {
+                                let source_ml_source2_nominal_spread1743 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1743.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1_2, shared_constructor_field2_2, shared_constructor_field3_2, shared_constructor_field4_2, shared_constructor_field5_2, shared_constructor_field6_2) => {
                                         let shared_constructor_field6_2 = *shared_constructor_field6_2;
                                         {
-                                            let source_ml_source2_nominal_field1738 = shared_constructor_field1_2.clone();
+                                            let source_ml_source2_nominal_field1744 = shared_constructor_field1_2.clone();
                                             {
-                                                let source_ml_source2_nominal_field1740 = shared_constructor_field2_2;
+                                                let source_ml_source2_nominal_field1746 = shared_constructor_field2_2;
                                                 {
-                                                    let source_ml_source2_nominal_field1742 = shared_constructor_field3_2;
+                                                    let source_ml_source2_nominal_field1748 = shared_constructor_field3_2;
                                                     {
-                                                        let source_ml_source2_nominal_field1744 = shared_constructor_field4_2;
+                                                        let source_ml_source2_nominal_field1750 = shared_constructor_field4_2;
                                                         {
-                                                            let source_ml_source2_nominal_field1746 = shared_constructor_field5_2;
+                                                            let source_ml_source2_nominal_field1752 = shared_constructor_field5_2;
                                                             {
-                                                                let source_ml_source2_nominal_field1748 = shared_constructor_field6_2.clone();
+                                                                let source_ml_source2_nominal_field1754 = shared_constructor_field6_2.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1750 = self::JavaScriptCallPending::WaitText(destination, realm.clone(), Box::new(self::JavaScriptTextCallState::TextProtocolState(Box::new(state_2.clone()))));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1738.clone(), source_ml_source2_nominal_field1740, source_ml_source2_nominal_field1742, source_ml_source2_nominal_field1744, source_ml_source2_nominal_field1746, Box::new(source_ml_source2_nominal_override1750.clone()))
+                                                                    let source_ml_source2_nominal_override1756 = self::JavaScriptCallPending::WaitText(destination, realm.clone(), Box::new(self::JavaScriptTextCallState::TextProtocolState(Box::new(state_2.clone()))));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1744.clone(), source_ml_source2_nominal_field1746, source_ml_source2_nominal_field1748, source_ml_source2_nominal_field1750, source_ml_source2_nominal_field1752, Box::new(source_ml_source2_nominal_override1756.clone()))
                                                                 }
                                                             }
                                                         }
@@ -562,25 +562,25 @@ pub fn accept_java_script_call_text(program: self::JavaScriptCallProgram, machin
                         self::JavaScriptScalarConversionTransition::ScalarResourceLimit(value_3, reason_3) => {
                             let value_3 = *value_3;
                             self::JavaScriptCallMachineTransition::MachineResourceLimit(Box::new(self::replace_java_script_call_frame(shared_constructor_field7.clone(), shared_constructor_field8, {
-                                let source_ml_source2_nominal_spread1756 = frame.clone().expect("a proven present value");
-                                match source_ml_source2_nominal_spread1756.clone() {
+                                let source_ml_source2_nominal_spread1762 = frame.clone().expect("a proven present value");
+                                match source_ml_source2_nominal_spread1762.clone() {
                                     self::JavaScriptCallFrame::CallFrame(shared_constructor_field1_3, shared_constructor_field2_3, shared_constructor_field3_3, shared_constructor_field4_3, shared_constructor_field5_3, shared_constructor_field6_3) => {
                                         let shared_constructor_field6_3 = *shared_constructor_field6_3;
                                         {
-                                            let source_ml_source2_nominal_field1757 = shared_constructor_field1_3.clone();
+                                            let source_ml_source2_nominal_field1763 = shared_constructor_field1_3.clone();
                                             {
-                                                let source_ml_source2_nominal_field1759 = shared_constructor_field2_3;
+                                                let source_ml_source2_nominal_field1765 = shared_constructor_field2_3;
                                                 {
-                                                    let source_ml_source2_nominal_field1761 = shared_constructor_field3_3;
+                                                    let source_ml_source2_nominal_field1767 = shared_constructor_field3_3;
                                                     {
-                                                        let source_ml_source2_nominal_field1763 = shared_constructor_field4_3;
+                                                        let source_ml_source2_nominal_field1769 = shared_constructor_field4_3;
                                                         {
-                                                            let source_ml_source2_nominal_field1765 = shared_constructor_field5_3;
+                                                            let source_ml_source2_nominal_field1771 = shared_constructor_field5_3;
                                                             {
-                                                                let source_ml_source2_nominal_field1767 = shared_constructor_field6_3.clone();
+                                                                let source_ml_source2_nominal_field1773 = shared_constructor_field6_3.clone();
                                                                 {
-                                                                    let source_ml_source2_nominal_override1769 = self::JavaScriptCallPending::WaitText(destination, realm.clone(), Box::new(self::JavaScriptTextCallState::TextPrimitiveValue(Box::new(value_3.clone()))));
-                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1757.clone(), source_ml_source2_nominal_field1759, source_ml_source2_nominal_field1761, source_ml_source2_nominal_field1763, source_ml_source2_nominal_field1765, Box::new(source_ml_source2_nominal_override1769.clone()))
+                                                                    let source_ml_source2_nominal_override1775 = self::JavaScriptCallPending::WaitText(destination, realm.clone(), Box::new(self::JavaScriptTextCallState::TextPrimitiveValue(Box::new(value_3.clone()))));
+                                                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_nominal_field1763.clone(), source_ml_source2_nominal_field1765, source_ml_source2_nominal_field1767, source_ml_source2_nominal_field1769, source_ml_source2_nominal_field1771, Box::new(source_ml_source2_nominal_override1775.clone()))
                                                                 }
                                                             }
                                                         }
@@ -615,8 +615,8 @@ pub fn step_java_script_call_text(program: self::JavaScriptCallProgram, machine:
                         } else {
                             {
                                 let fn_ = self::ml_array::optional_at(&shared_constructor_field1, self::ml_array::number_index(self::find_java_script_call_function(program.clone(), match frame.clone().expect("a proven present value") {
-                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1774, _, _, _, _, _) => {
-                                        source_ml_source2_data_property_value1774.clone()
+                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1780, _, _, _, _, _) => {
+                                        source_ml_source2_data_property_value1780.clone()
                                     }
                                 })));
                                 if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -665,8 +665,8 @@ pub fn resume_java_script_call_text(program: self::JavaScriptCallProgram, machin
                         } else {
                             {
                                 let fn_ = self::ml_array::optional_at(&shared_constructor_field1, self::ml_array::number_index(self::find_java_script_call_function(program.clone(), match frame.clone().expect("a proven present value") {
-                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1783, _, _, _, _, _) => {
-                                        source_ml_source2_data_property_value1783.clone()
+                                    self::JavaScriptCallFrame::CallFrame(source_ml_source2_data_property_value1789, _, _, _, _, _) => {
+                                        source_ml_source2_data_property_value1789.clone()
                                     }
                                 })));
                                 if match (fn_.clone(), None::<()>) { (Some(_ml_left), Some(_ml_right)) => false, (None, None) => true, _ => false } {
@@ -715,9 +715,9 @@ pub fn return_java_script_call_value(program: self::JavaScriptCallProgram, machi
                             let current = self::JavaScriptCallMachine::CallMachine(Box::new(shared_constructor_field1.clone()), frames.clone());
                             {
                                 let pending = match parent.clone().expect("a proven present value") {
-                                    self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value1794) => {
-                                        let source_ml_source2_data_property_value1794 = *source_ml_source2_data_property_value1794;
-                                        source_ml_source2_data_property_value1794.clone()
+                                    self::JavaScriptCallFrame::CallFrame(_, _, _, _, _, source_ml_source2_data_property_value1800) => {
+                                        let source_ml_source2_data_property_value1800 = *source_ml_source2_data_property_value1800;
+                                        source_ml_source2_data_property_value1800.clone()
                                     }
                                 };
                                 match pending.clone() {
