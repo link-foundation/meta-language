@@ -15,7 +15,8 @@ impl RustParser {
             object.span.map_or(open.start, |span| span.start),
             close.end,
         ));
-        let receiver = self.origins.origin(&object, path);
+        let actual = self.origins.origin(&object, path);
+        let receiver = actual.static_byte_array_read_view().unwrap_or(actual);
         let element = match receiver.ty.as_ref() {
             Some(Type::Array { element, .. }) => Some(element.as_ref()),
             _ => None,
@@ -23,7 +24,7 @@ impl RustParser {
         let error = read_rust_scalar_array_index_receiver_error(
             receiver.ty.as_ref().map_or("", Type::kind),
             element.map_or("", Type::kind),
-            &crate::translation::rust_byte_string_expression_rules::read_rust_static_byte_array_read_model(&crate::translation::rust_byte_string_expression_rules::ml_string::Text::from_text(receiver.array_source_model.unwrap_or(""))).to_string(),
+            receiver.array_source_model.unwrap_or(""),
             receiver.proven,
             receiver
                 .wrappers

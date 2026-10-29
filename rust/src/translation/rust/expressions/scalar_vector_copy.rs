@@ -14,7 +14,8 @@ impl RustParser {
         range: Option<Span>,
         path: &[String],
     ) -> Option<SExpr> {
-        let origin = self.origins.origin(receiver, path);
+        let actual = self.origins.origin(receiver, path);
+        let origin = actual.static_byte_array_read_view().unwrap_or(actual);
         let layers = u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY, f64::from);
         if !accept_rust_scalar_vector_copy_query(
             self.ordinary_completion_context(),

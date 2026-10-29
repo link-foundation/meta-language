@@ -22,3 +22,10 @@ export function acceptRustStaticByteArraySliceView(method,count,model,proven,lay
  * The source owner and exact fixed length remain unchanged on the operand.
  * @param {string} model @returns {string} */
 export function readRustStaticByteArrayReadModel(model){return model==='static byte array'?'immutable slice':model;}
+/** Auto-borrowed readonly slice operations require the actual static u8 owner.
+ * @param {string} model @param {string} kind @param {string} element
+ * @param {number} bits @param {boolean} signed @param {boolean} proven
+ * @param {number} layers @param {boolean} references @param {string} owner
+ * @param {number} children @param {string} childKind @param {string} childPath
+ * @returns {boolean} */
+export function acceptRustStaticByteArrayReadView(model,kind,element,bits,signed,proven,layers,references,owner,children,childKind,childPath){return model==='static byte array'&&kind==='array'&&element==='fixed'&&bits===8&&!signed&&proven&&Number.isSafeInteger(layers)&&layers>0&&references&&owner==='array'&&children===1&&childKind==='primitive'&&childPath==='u8';}

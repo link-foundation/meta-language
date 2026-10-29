@@ -98,15 +98,7 @@ impl RustParser {
         ) {
             return None;
         }
-        let child = origin.source_owner.as_ref()?.arguments.first()?.clone();
-        origin.wrappers = vec!["reference".to_owned()];
-        origin.source_lifetimes = vec![Some("static".to_owned())];
-        origin.array_source_model = Some("immutable slice");
-        origin.source_owner = Some(SourceOwner {
-            kind: "slice".to_owned(),
-            path: Vec::new(),
-            arguments: vec![child],
-        });
+        origin = origin.static_byte_array_read_view()?;
         let result = SExpr::new(receiver.node.clone(), range);
         self.origins.mark(&result, origin);
         Some(result)

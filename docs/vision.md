@@ -506,6 +506,14 @@ different fixed lengths remain distinct before an explicit slice view. Standard
 immutable element reads reuse the existing checked array/slice bounds operation.
 Explicit `as_slice` views and valid borrowed argument unsizing reuse existing
 immutable slice operations, including copied lookups and fresh `to_vec` results.
+Direct static-array `get`/`first`/`last` consumers and `to_vec` also derive a
+local standard readonly view from the actual proven array, unsigned eight-bit
+element, immutable reference layers and primitive `u8` owner. Original fixed
+length, source owner and operand identity stay intact. Lookup callback inference,
+standard widening conversions, byte predicates and fresh vector result contracts
+reuse the same slice operations. Unknown owners and nonbyte/refutable source
+facts supply no view. This read admission does not assign owned-vector clone or
+`to_owned` meaning to a static array reference.
 The complete decoder, view, owner and admission decisions are editable typed Links
 and automatically generate Rust. Runtime adapters transport actual tokens and
 source origins. Identifier suffixes stay lexically valid data but cannot acquire

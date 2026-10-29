@@ -1,4 +1,84 @@
 // Generated from complete js/src/translation/rust-byte-string-expression-rules.js. Do not edit by hand.
+/// The Math functions that Rust's f64 methods do not share with JavaScript.
+pub mod ml_math {
+    /// Math.round: the nearest integer, the one towards +Infinity on a tie,
+    /// with the sign of a zero result from the argument.
+    #[must_use]
+    pub fn round(x: f64) -> f64 {
+        if !x.is_finite() || x == 0.0 {
+            return x;
+        }
+        if x > 0.0 && x < 0.5 {
+            return 0.0;
+        }
+        if (-0.5..0.0).contains(&x) {
+            return -0.0;
+        }
+        let floor = x.floor();
+        if x - floor >= 0.5 { floor + 1.0 } else { floor }
+    }
+
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
+    #[must_use]
+    pub fn sign(x: f64) -> f64 {
+        if x > 0.0 {
+            1.0
+        } else if x < 0.0 {
+            -1.0
+        } else {
+            x
+        }
+    }
+
+    /// Math.max of two Numbers: NaN when either is, and 0 above -0.
+    #[must_use]
+    pub fn max(a: f64, b: f64) -> f64 {
+        if a > b {
+            a
+        } else if b > a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() { b } else { a }
+        } else {
+            f64::NAN
+        }
+    }
+
+    /// Math.min of two Numbers: NaN when either is, and -0 below 0.
+    #[must_use]
+    pub fn min(a: f64, b: f64) -> f64 {
+        if a < b {
+            a
+        } else if b < a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() { a } else { b }
+        } else {
+            f64::NAN
+        }
+    }
+
+    #[must_use]
+    pub fn max_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))
+    }
+
+    #[must_use]
+    pub fn min_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))
+    }
+
+    #[must_use]
+    pub fn is_integer(x: f64) -> bool {
+        x.is_finite() && x.trunc() == x
+    }
+
+    #[must_use]
+    pub fn is_safe_integer(x: f64) -> bool {
+        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0
+    }
+}
+
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     /// The element at an index; a read outside the array, undefined in
@@ -487,6 +567,49 @@ pub fn read_rust_static_byte_array_read_model(
     } else {
         model.clone()
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_static_byte_array_read_view(
+    model: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    element: &self::ml_string::Text,
+    bits: f64,
+    signed: bool,
+    proven: bool,
+    layers: f64,
+    references: bool,
+    owner: &self::ml_string::Text,
+    children: f64,
+    child_kind: &self::ml_string::Text,
+    child_path: &self::ml_string::Text,
+) -> bool {
+    (((((((((((((*model)
+        == (self::ml_string::Text::from_units(vec![
+            115, 116, 97, 116, 105, 99, 32, 98, 121, 116, 101, 32, 97, 114, 114, 97, 121,
+        ])))
+        && ((*kind) == (self::ml_string::Text::from_units(vec![97, 114, 114, 97, 121]))))
+        && ((*element)
+            == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
+        && (bits == 8f64))
+        && !signed)
+        && proven)
+        && self::ml_math::is_safe_integer(layers))
+        && (layers > 0f64))
+        && references)
+        && ((*owner) == (self::ml_string::Text::from_units(vec![97, 114, 114, 97, 121]))))
+        && (children == 1f64))
+        && ((*child_kind)
+            == (self::ml_string::Text::from_units(vec![
+                112, 114, 105, 109, 105, 116, 105, 118, 101,
+            ]))))
+        && ((*child_path) == (self::ml_string::Text::from_units(vec![117, 56])))
 }
 
 #[derive(Clone, Debug, PartialEq)]

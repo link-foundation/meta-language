@@ -1,3 +1,4 @@
+import {projectRustStaticByteArrayReadOrigin} from './rust-byte-string-expressions.js';
 // Actual tokens/origins project complete shared plans into the existing core.
 import {BOOL,FLOAT,rustFixedType} from './types.js';
 import {readRustPrimitiveConversionHead} from './rust-primitive-try-from.js';
@@ -12,7 +13,7 @@ import {projectRustPrimitiveDefault} from './rust-primitive-default.js';
 import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {testRustArrayLookupLazyFallback,readRustArrayLookupLazyFallbackError,testRustArrayLookupPredicateConsumer,readRustArrayLookupPredicateError,readRustArrayLookupCallableContextArity,readRustArrayLookupMapperError} from './rust-array-lookup-rules.js';
 function callableContext(parser,receiver,consumer,path,mappingResult=null){
- const source=parser.origins.origin(receiver,path),type=source.type,element=type?.kind==='array'?type.element:null;
+ const actual=parser.origins.origin(receiver,path),source=projectRustStaticByteArrayReadOrigin(actual)??actual,type=source.type,element=type?.kind==='array'?type.element:null;
  if(!element)return null;
  const owner=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner);
  const knownElement=Boolean(owner&&owner.arguments.length===0&&(owner.kind==='primitive'||owner.kind==='unit'&&owner.path.length===0)&&readRustArrayLookupElementOwnerError(element.kind,String(element.bits??''),element.signed===true,owner.path.join('::'))==='');
@@ -44,7 +45,7 @@ export function readRustArrayLookup(parser,receiver,method,args,range,path){
     const context=callableContext(parser,receiver,'map_or',path,result);defaults.push(context?readRustExpectedCopyClosure(parser,path,context):parser.expr(path));}}
   c.eat(',');}
  const close=c.expect(')','array lookup consumer');range={start:receiver.span?.start??range.start,end:close.end};
- const source=parser.origins.origin(receiver,path),element=source.type?.kind==='array'?source.type.element:null,leaf=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner),cloneError=cloned?readRustArrayLookupClonedElementError(element?.kind??'',String(element?.bits??''),element?.signed===true,leaf?.kind??'',leaf?.path.join('::')??'',leaf?.arguments.length??-1):'',stringClone=cloned&&element?.kind==='string'&&cloneError==='',error=readRustArrayLookupReceiverError(source.type?.kind??'',element?.kind??'',source.arraySourceModel??'',source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'),source.arrayElementCopyEvidence===true,copied&&!stringClone);
+ const actual=parser.origins.origin(receiver,path),source=projectRustStaticByteArrayReadOrigin(actual)??actual,element=source.type?.kind==='array'?source.type.element:null,leaf=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner),cloneError=cloned?readRustArrayLookupClonedElementError(element?.kind??'',String(element?.bits??''),element?.signed===true,leaf?.kind??'',leaf?.path.join('::')??'',leaf?.arguments.length??-1):'',stringClone=cloned&&element?.kind==='string'&&cloneError==='',error=readRustArrayLookupReceiverError(source.type?.kind??'',element?.kind??'',source.arraySourceModel??'',source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'),source.arrayElementCopyEvidence===true,copied&&!stringClone);
  if(error)throw unsupported('Rust array lookup receiver',error,range);
  if(cloneError)throw unsupported('Rust array lookup clone',cloneError,range);
  if(arity&&readRustUsizeIndexExpression(parser,args[0],path))throw unsupported('Rust array lookup index','the actual index needs its complete direct usize source meaning',args[0].span??range);

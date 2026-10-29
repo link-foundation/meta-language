@@ -71,6 +71,32 @@ pub(super) struct SourceOrigin {
 }
 
 impl SourceOrigin {
+    /// Standard readonly view from actual static u8 array facts; no owner mutation.
+    pub(super) fn static_byte_array_read_view(&self) -> Option<Self> {
+        let element = match &self.ty {
+            Some(Type::Array { element, .. }) => Some(element.as_ref()),
+            _ => None,
+        };
+        let (bits, signed) = match element {
+            Some(Type::Fixed { bits, signed }) => (*bits, *signed),
+            _ => (0, false),
+        };
+        let owner = self.source_owner.as_ref();
+        let child = owner.and_then(|owner| owner.arguments.first());
+        if !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_read_view(&ByteStringText::from_text(self.array_source_model.unwrap_or("")),&ByteStringText::from_text(self.ty.as_ref().map_or("",Type::kind)),&ByteStringText::from_text(element.map_or("",Type::kind)),f64::from(bits),signed,self.proven,self.wrappers.len() as f64,self.wrappers.iter().all(|layer|layer=="reference"),&ByteStringText::from_text(owner.map_or("",|owner|owner.kind.as_str())),owner.map_or(0,|owner|owner.arguments.len()) as f64,&ByteStringText::from_text(child.map_or("",|child|child.kind.as_str())),&ByteStringText::from_text(&child.map(|child|child.path.join("::")).unwrap_or_default())){return None;}
+        let mut view = self.clone();
+        view.wrappers = vec!["reference".to_owned()];
+        view.source_lifetimes = vec![Some("static".to_owned())];
+        view.array_source_model = Some("immutable slice");
+        view.source_owner = Some(super::super::source_signatures::SourceOwner {
+            kind: "slice".to_owned(),
+            path: Vec::new(),
+            arguments: vec![child?.clone()],
+        });
+        view.expanded_source_owner = None;
+        Some(view)
+    }
+
     pub(super) const fn unknown() -> Self {
         Self {
             ty: None,

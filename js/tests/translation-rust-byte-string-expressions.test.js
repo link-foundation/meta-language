@@ -26,3 +26,5 @@ for(const row of fixture.cases)test(row.name,()=>{
  }
 });
 for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>createRustSourceOwnerProgramLinks(row.source),error=>error.kind===row.kind&&error.reason===row.reason));
+
+for(const [index,row]of fixture.readViews.entries())test('actual static byte readonly view '+index,()=>assert.equal(rules.acceptRustStaticByteArrayReadView(row.model,row.kind,row.element,row.bits,row.signed,row.proven,row.layers,row.references,row.owner,row.children,row.childKind,row.childPath),row.expected));

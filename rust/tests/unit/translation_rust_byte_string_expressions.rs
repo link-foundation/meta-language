@@ -81,3 +81,31 @@ fn static_byte_arrays_keep_original_products_and_all_shared_premises() {
         );
     }
 }
+
+#[test]
+fn every_actual_static_byte_read_view_premise_is_retained() {
+    super::translation_string_array_copy_sort::require_rust_profile();
+    let data = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-byte-string-expressions.lino"
+    ))
+    .unwrap();
+    for row in data["readViews"].as_array().unwrap() {
+        assert_eq!(
+            rules::accept_rust_static_byte_array_read_view(
+                &text(row, "model"),
+                &text(row, "kind"),
+                &text(row, "element"),
+                row["bits"].as_f64().unwrap(),
+                row["signed"].as_bool().unwrap(),
+                row["proven"].as_bool().unwrap(),
+                row["layers"].as_f64().unwrap(),
+                row["references"].as_bool().unwrap(),
+                &text(row, "owner"),
+                row["children"].as_f64().unwrap(),
+                &text(row, "childKind"),
+                &text(row, "childPath")
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+}

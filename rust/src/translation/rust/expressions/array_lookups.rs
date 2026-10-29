@@ -176,7 +176,8 @@ impl RustParser {
         path: &[String],
         mapping_result: Option<&SourceOrigin>,
     ) -> Option<SourceOrigin> {
-        let source = self.origins.origin(receiver, path);
+        let actual = self.origins.origin(receiver, path);
+        let source = actual.static_byte_array_read_view().unwrap_or(actual);
         let Some(Type::Array { element, .. }) = source.ty.as_ref() else {
             return None;
         };
@@ -399,7 +400,8 @@ impl RustParser {
         let copied = *copied;
         let cloned = *cloned;
         let arity = count(args.len());
-        let source = self.origins.origin(receiver, path);
+        let actual = self.origins.origin(receiver, path);
+        let source = actual.static_byte_array_read_view().unwrap_or(actual);
         let element = match &source.ty {
             Some(Type::Array { element, .. }) => Some(element.as_ref().clone()),
             _ => None,
