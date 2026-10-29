@@ -8,8 +8,8 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset} from '../src/translation/source-library-binding-rules.js';
-import {analyzeProgram} from '../src/program-representation.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName,readSourceLibraryFunctionDeclarationOffset,testJavaScriptSourceFunctionExpressionTerm} from '../src/translation/source-library-binding-rules.js';
+import {analyzeProgram,BindingRenameError} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
@@ -26,11 +26,14 @@ const fixture=readProjectData(new URL('../../parity/fixtures/source-library-cons
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.node);
 for(const row of fixture.headNames)test('actual function head token '+row.kind,()=>assert.equal(acceptJavaScriptSourceFunctionHeadName(row.kind),row.expected));
+for(const row of fixture.expressionTerms)test('actual expression scope term '+row.term,()=>assert.equal(testJavaScriptSourceFunctionExpressionTerm(row.term),row.expected));
 for(const [index,row]of fixture.declarationOffsets.entries())test('actual async function head '+index,()=>assert.equal(readSourceLibraryFunctionDeclarationOffset(row.first,row.second,row.lineBreak),row.expected));
-for(const row of fixture.anonymousBindings)test(row.name,()=>{
+for(const row of [...fixture.anonymousBindings,...fixture.namedBindings])test(row.name,()=>{
  const program=analyzeProgram(row.source,'JavaScript');
  assert.deepEqual(program.bindings.map(binding=>[binding.name,binding.kind,binding.references.length]),row.bindings);
  for(const binding of program.bindings)if(binding.kind==='parameter')assert.notEqual(binding.scope,'scope:0');
+ if(row.unresolved)assert.deepEqual(program.unresolvedReferences.map(reference=>reference.name),row.unresolved);
+ for(const binding of program.bindings)if(binding.kind==='function')assert.notEqual(binding.scope,'scope:0');
 });
 for(const [index,row]of fixture.policies.entries())test('actual source binding policy '+index,()=>{
  assert.equal(readSourceLibraryDeclarationBindingKind(row.keyword,row.kind,row.name,row.callable),row.binding);
@@ -51,7 +54,7 @@ for(const row of fixture.modules)test(row.name,async context=>{
  const original=await import(pathToFileURL(join(directory,row.entry)).href);
  assert.equal(await original.run(...row.arguments),row.expected);
  const read=()=>readSourceLibraryClosure(entry,{aliases:row.aliases});
- if(row.error){assert.throws(read,error=>error instanceof TypeError&&error.message.includes(row.error));return;}
+ if(row.error){assert.throws(read,error=>error instanceof (row.errorKind==='BindingRenameError'?BindingRenameError:TypeError)&&error.message.includes(row.error));return;}
  const closure=read(),checked=checkProgram(parseJavaScript(closure.source,{referenceSemantics:false}));
  const owners=readSourceLibraryDeclarationOwnership(closure,checked);assert.equal(owners.length,checked.declarations.size);
  const selected=projectSourceLibraryEntryPoints(checked,closure,entry).program;

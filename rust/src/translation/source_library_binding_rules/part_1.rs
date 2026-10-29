@@ -185,6 +185,12 @@ pub fn read_source_library_function_declaration_offset(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_java_script_source_function_expression_term(term: &str) -> bool {
+    (term == "function_expression") || (term == "generator_function")
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,

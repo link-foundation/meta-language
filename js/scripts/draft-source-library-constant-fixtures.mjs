@@ -5,6 +5,13 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
  schemaVersion:1,model:'actual source module function bindings 1',
  versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024'},
  headNames:[{kind:'identifier',expected:true},{kind:'keyword',expected:false},{kind:'punctuation',expected:false},{kind:'',expected:false}],
+ expressionTerms:[{term:'function_expression',expected:true},{term:'generator_function',expected:true},{term:'function_declaration',expected:false},{term:'arrow_function',expected:false},{term:'identifier',expected:false}],
+ namedBindings:[
+  {name:'private expression names cover defaults and exclude outer reads',source:'const outer=function inner(value=inner){return value;};inner;',bindings:[['outer','const',0],['inner','function',1],['value','parameter',1]],unresolved:['inner']},
+  {name:'later parameters shadow the private expression environment',source:'const outer=function inner(value=inner,inner=1){return value;};',bindings:[['outer','const',0],['inner','function',0],['value','parameter',1],['inner','parameter',1]],unresolved:[]},
+  {name:'parameters shadow private expression names without leaking',source:'const outer=function inner(inner){return inner;};inner;',bindings:[['outer','const',0],['inner','function',0],['inner','parameter',1]],unresolved:['inner']},
+  {name:'recursive private references retain their own expression owner',source:'const outer=function inner(value){return inner(value);};inner;',bindings:[['outer','const',0],['inner','function',1],['value','parameter',1]],unresolved:['inner']}
+ ],
  declarationOffsets:[
   {first:'function',second:'apply',lineBreak:false,expected:0},
   {first:'function',second:'apply',lineBreak:true,expected:0},
@@ -52,7 +59,7 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
    {path:'left.js',source:'/** @param {number} value @returns {number} */ const increment=value=>value+1;/** @param {number} value @returns {number} */ export const left=value=>increment(value);'},
    {path:'right.js',source:'/** @param {number} value @returns {number} */ const increment=value=>value+2;/** @param {number} value @returns {number} */ export const right=value=>increment(value);'},
    {path:'entry.js',source:'import {left} from "./left.js";import {right} from "./right.js";/** @param {number} value @returns {number} */ export function run(value){return left(value)+right(value);}'}]},
-  {name:'function-expression aliases retain their inner-scope obligation',entry:'entry.js',aliases:true,arguments:[4],expected:4,error:'separate inner binding scopes',files:[
+  {name:'function-expression aliases retain their private scopes',entry:'entry.js',aliases:true,arguments:[4],expected:4,formerDraftDiagnostic:'source named constant function-expression aliases need their separate inner binding scopes',files:[
    {path:'provider.js',source:'/** @param {number} value @returns {number} */ export const identity=function identity(value){return value;};'},
    {path:'entry.js',source:'import {identity as original} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return original(value);}'}]},
   {name:'anonymous function import aliases preserve parameters',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
@@ -67,6 +74,14 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
    {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {Promise<number>} */ export async function run(value){return await twice(value);}'}]},
   {name:'async anonymous source dependency preserves await and alias',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
    {path:'provider.js',source:'/** @param {number} value @returns {Promise<number>} */ export const double=async function(value){return value*2;};'},
-   {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {Promise<number>} */ export const run=async value=>await twice(value);'}]}
+   {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {Promise<number>} */ export const run=async value=>await twice(value);'}]},
+  {name:'different private recursive names normalize through actual lexical owners',entry:'entry.js',aliases:true,arguments:[4],expected:4,files:[
+   {path:'provider.js',source:'/** @param {number} value @returns {number} */ export const count=function step(value){if(value<=0)return 0;return step(value-1)+1;};'},
+   {path:'entry.js',source:'import {count as original} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return original(value);}'}]},
+  {name:'parameters retain their own owner during private-name normalization',entry:'entry.js',aliases:true,arguments:[4],expected:4,files:[
+   {path:'provider.js',source:'/** @param {number} privateName @returns {number} */ export const identity=function privateName(privateName){return privateName;};'},
+   {path:'entry.js',source:'import {identity as original} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return original(value);}'}]},
+  {name:'private-name normalization preserves every existing capture guard',entry:'entry.js',aliases:true,arguments:[4],expected:4,error:'rename would capture',errorKind:'BindingRenameError',files:[
+   {path:'entry.js',source:'/** @param {number} value @returns {number} */ export const run=function privateName(value){if(value<=0)return 0;return run(value-1)+1;};'}]}
  ],
- boundary:'Unexecuted literal controls. Actual module bindings and all source bytes remain explicit. Function-only libraries, alias scopes, complete target/native policy behavior and semantic translations retain their independent controls. General constant data/effects, function-expression alias scopes and full JavaScript modules remain required.'});
+ boundary:'Unexecuted literal controls. Actual module bindings, private expression environments, parameter environments and all source bytes remain explicit. Function-only libraries, alias scopes, complete target/native policy behavior and semantic translations retain their independent controls. General constant data/effects, capture-conflicting private expression normalizations, reflection and full JavaScript modules remain required.'});

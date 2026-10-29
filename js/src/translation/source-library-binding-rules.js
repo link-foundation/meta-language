@@ -3,7 +3,7 @@
 import {acceptJavaScriptSourceBindingName as admittedName} from './source-identifier-rules.js';
 /** @param {string} keyword @param {string} kind @param {string} name
  * @param {boolean} callable @returns {string} */
-export const readSourceLibraryDeclarationBindingKind=function(keyword,kind,name,callable){
+export const readSourceLibraryDeclarationBindingKind=function classifySourceLibraryDeclaration(keyword,kind,name,callable){
  if(!admittedName(kind,name,false,[]))return '';
  return keyword==='function'?'function':keyword==='const'&&callable?'const':'';
 };
@@ -14,3 +14,5 @@ export function acceptJavaScriptSourceFunctionHeadName(kind){return kind==='iden
 export function readSourceLibraryFunctionDeclarationOffset(first,second,lineBreak){
  return first==='function'?0:first==='async'&&second==='function'&&!lineBreak?1:-1;
 }
+/** @param {string} term @returns {boolean} */
+export function testJavaScriptSourceFunctionExpressionTerm(term){return term==='function_expression'||term==='generator_function';}

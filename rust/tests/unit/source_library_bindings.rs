@@ -30,6 +30,14 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             row["expected"].as_bool().unwrap()
         );
     }
+    for row in fixture["expressionTerms"].as_array().unwrap() {
+        assert_eq!(
+            bindings::test_java_script_source_function_expression_term(
+                row["term"].as_str().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
     for row in fixture["declarationOffsets"].as_array().unwrap() {
         assert_eq!(
             bindings::read_source_library_function_declaration_offset(
@@ -40,7 +48,12 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             row["expected"].as_i64().unwrap() as f64
         );
     }
-    for row in fixture["anonymousBindings"].as_array().unwrap() {
+    for row in fixture["anonymousBindings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .chain(fixture["namedBindings"].as_array().unwrap())
+    {
         let program = meta_language::analyze_program(
             row["source"].as_str().unwrap(),
             "JavaScript",
@@ -59,6 +72,24 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             if binding.kind() == "parameter" {
                 assert_ne!(binding.scope(), "scope:0");
             }
+            if binding.kind() == "function" {
+                assert_ne!(binding.scope(), "scope:0");
+            }
+        }
+        if let Some(unresolved) = row.get("unresolved") {
+            assert_eq!(
+                program
+                    .unresolved_references()
+                    .iter()
+                    .map(|reference| reference.name())
+                    .collect::<Vec<_>>(),
+                unresolved
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|name| name.as_str().unwrap())
+                    .collect::<Vec<_>>()
+            );
         }
     }
 }

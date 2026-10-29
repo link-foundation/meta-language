@@ -7953,10 +7953,16 @@ does not introduce accidental module declarations. Alias composition selects
 the actual declaration kind and lexical owner, retaining complete original
 source bytes, hashes and ownership in the typed Links provenance. Binding and
 export admission are shared inspectable definitions translated automatically
-to Rust. General module data, effects and function-expression inner binding
-scopes remain separate obligations; the current alias adapter explicitly
-refuses named expression aliases rather than conflating their inner and outer
-declarations. Anonymous expressions use the actual immediate function head:
+to Rust. Named expressions receive a private name environment enclosing a
+separate parameter environment, spanning defaults and the entire body in both
+CST binding adapters. Their private name is not a module declaration; later
+parameters can shadow it without exposing it outside the expression. Alias
+composition selects the actual private binding and uses the existing checked
+rename operation to normalize its name with the compiled constant function.
+Every capture and resolution guard remains mandatory. Capture-conflicting
+normalizations, reflective function observations, general module data and
+effects remain separate obligations. Anonymous expressions use the immediate
+function head:
 the first parameter or a later declaration never supplies a fabricated name.
 Their import aliases and duplicate private helpers retain independent lexical
 owners. Head-name admission is itself a shared translated definition.

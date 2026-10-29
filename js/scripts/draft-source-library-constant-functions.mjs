@@ -10,7 +10,7 @@ await import('./draft-source-library-binding-rules.mjs');globalThis.gc?.();
 await import('./draft-source-library-constant-fixtures.mjs');globalThis.gc?.();
 const file=new URL('parity/language-features.lino',root),inventory=readProjectData(file),id='source-library-constant-functions';
 const common=['parity/fixtures/source-library-constant-functions.lino'];
-const row={id,required:true,javascript:{status:'implemented',evidence:[...javascript,...common]},rust:{status:'implemented',evidence:['rust/src/translation/source_library_binding_rules.rs','rust/src/translation/source_library_export_rules.rs','rust/src/program_representation/analysis/declarations.rs','rust/tests/unit/source_library_bindings.rs',...common]}};
+const row={id,required:true,javascript:{status:'implemented',evidence:[...javascript,...common]},rust:{status:'implemented',evidence:['rust/src/translation/source_library_binding_rules.rs','rust/src/translation/source_library_export_rules.rs','rust/src/program_representation/analysis.rs','rust/src/program_representation/analysis/declarations.rs','rust/tests/unit/source_library_bindings.rs',...common]}};
 const index=inventory.features.findIndex(prior=>prior.id===id);if(index<0)inventory.features.push(row);else inventory.features[index]=row;writeProjectData(file,inventory);
 const modulesFile=new URL('rust/tests/unit/mod.rs',root),modules=readFileSync(modulesFile,'utf8'),declaration='mod source_library_bindings;';
 if(!modules.includes(declaration))writeFileSync(modulesFile,modules+'\n'+declaration+'\n');

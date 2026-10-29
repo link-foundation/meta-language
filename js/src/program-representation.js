@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,testJavaScriptSourceFunctionExpressionTerm} from './translation/source-library-binding-rules.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
@@ -413,6 +413,17 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
   const stack = [scopes[0]];
   const braceScopes = new Map();
   const braceKinds = [];
+  const functionStarts=new Map(),expressionScopes=new Map(),virtualScopes=new Set();
+  const tokenPositions=new Map(tokens.map((token,index)=>[token.start,index]));
+  if(language==='JavaScript')for(const fact of syntax){
+    if(!testJavaScriptSourceFunctionExpressionTerm(fact.term))continue;
+    const first=tokenPositions.get(fact.start),head=first+(tokens[first]?.text==='async'?1:0);
+    if(first===undefined||tokens[head]?.text!=='function')continue;
+    const name=head+1+(tokens[head+1]?.text==='*'?1:0),named=acceptJavaScriptSourceFunctionHeadName(tokens[name]?.kind??'');
+    const rows=functionStarts.get(fact.start)??[];
+    if(!rows.some(row=>row.end===fact.end))rows.push({end:fact.end,head,named});
+    rows.sort((left,right)=>right.end-left.end);functionStarts.set(fact.start,rows);
+  }
   const scopedBraces = new Set(syntax
     .filter(({ term }) => ['statement_block', 'class_body', 'switch_body'].includes(term))
     .map(({ start }) => start));
@@ -420,6 +431,14 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
     .filter(({ term }) => term === 'property_identifier' || term === 'private_property_identifier')
     .map(({ start, end }) => `${start}:${end}`));
   for (const [index, token] of tokens.entries()) {
+    while(stack.length>1&&virtualScopes.has(stack.at(-1).id)&&token.start>=stack.at(-1).end)stack.pop();
+    for(const fact of functionStarts.get(token.start)??[]){
+      const create=()=>{const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end:fact.end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);return scope.id;};
+      // A named expression's immutable private environment encloses its
+      // parameter environment, including defaults and the entire body.
+      const privateScope=fact.named?create():null,parameterScope=create();
+      expressionScopes.set(fact.head,{privateScope,parameterScope});
+    }
     token.scope = stack.at(-1).id;
     if (token.text === '{') {
       const createsScope = language !== 'JavaScript' || scopedBraces.has(token.start);
@@ -451,7 +470,7 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
     declarations.push({ tokenIndex: index, kind, scope });
   };
   if (language === 'JavaScript') {
-    declareJavaScript(tokens, syntax, braceScopes, declare);
+    declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare);
     declareSyntaxBinders(tokens, syntax, language, declare);
     hoistJavaScriptVars(declarations, tokens, syntax, scopes);
   } else if (language === 'Rust') {
@@ -569,7 +588,7 @@ function hoistJavaScriptVars(declarations, tokens, syntax, scopes) {
   }
 }
 
-function declareJavaScript(tokens, syntax, braceScopes, declare) {
+function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare) {
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (['const', 'let', 'var', 'class'].includes(token.text)) {
@@ -596,11 +615,12 @@ function declareJavaScript(tokens, syntax, braceScopes, declare) {
     if (token.text === 'function') {
       const head=index+1+(tokens[index+1]?.text==='*'?1:0);
       const name=acceptJavaScriptSourceFunctionHeadName(tokens[head]?.kind??'')?head:-1;
-      if(name>=0)declare(name, 'function');
+      const expression=expressionScopes.get(index);
+      if(name>=0)declare(name, 'function',expression?.privateScope??tokens[name].scope);
       const open = tokens[name>=0?name+1:head]?.text==='('?name>=0?name+1:head:-1;
       const close = matchingDelimiter(tokens, open, '(', ')');
       const body = findToken(tokens, close + 1, '{');
-      const scope = braceScopes.get(body) ?? token.scope;
+      const scope = expression?.parameterScope??braceScopes.get(body)??token.scope;
       declareDelimitedParameters(tokens, open, close, scope, declare);
     }
     if (token.text === 'catch') {

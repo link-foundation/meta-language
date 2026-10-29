@@ -4,12 +4,12 @@ import { analyzeProgram } from '../src/program-representation.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readModuleBindingFields } from '../src/module-binding-fields.js';
 import { readSourceModuleBindingRangeRole,readSourceBindingRenameAffixes } from '../src/translation/module-binding-rules.js';
+import {testJavaScriptSourceFunctionExpressionTerm} from '../src/translation/source-library-binding-rules.js';
 const digest=source=>createHash('sha256').update(source).digest('hex');
 
 export function composeSourceLibraryAliases(inputs,entryPath,readImports) {
   const names=new Set(),counts=new Map(),selected=new Map();
   for(const input of inputs){
-    if(input.declarationBindings?.some(binding=>binding.kind==='const'&&binding.initializer==='function expression'&&binding.expressionName))throw new TypeError('source named constant function-expression aliases need their separate inner binding scopes');
     for(const token of tokenize(input.source,'JavaScript').tokens)if(token.kind==='identifier')names.add(token.value);
     for(const name of input.declarations)counts.set(name,(counts.get(name)??0)+1);
   }
@@ -43,6 +43,22 @@ export function composeSourceLibraryAliases(inputs,entryPath,readImports) {
       const before=digest(source);
       program=program.renameBinding(binding.id,request.target);source=program.source;
       transformations.push({operation:'resolved lexical binding rename',binding:binding.id,original:request.name,replacement:request.target,beforeSourceSha256:before,sourceSha256:digest(source)});
+    }
+    for(const original of input.declarationBindings??[]){
+      if(original.kind!=='const'||!original.expressionName)continue;
+      program??=analyzeProgram(source,'JavaScript');
+      const target=selected.get(key(input.path,original.name));
+      const outer=program.bindings.find(binding=>binding.scope==='scope:0'&&binding.kind==='const'&&binding.name===target);
+      const declarator=outer&&program.sourceMappings.find(node=>node.term==='variable_declarator'&&node.start===outer.declaration.start);
+      const expression=declarator&&program.sourceMappings.filter(node=>testJavaScriptSourceFunctionExpressionTerm(node.term)&&node.start>=outer.declaration.end&&node.end<=declarator.end).sort((left,right)=>left.start-right.start||right.end-left.end)[0];
+      const inner=expression&&program.bindings.find(binding=>binding.kind==='function'&&binding.name===original.expressionName&&program.scopes.some(scope=>scope.id===binding.scope&&scope.start===expression.start&&scope.end===expression.end));
+      if(!inner)throw new TypeError('source function-expression normalization needs its actual private lexical binding in '+input.path);
+      if(inner.name===target)continue;
+      const before=digest(source);
+      // The ordinary rename operation proves every binding/reference stays
+      // resolved to its original owner, including default parameter reads.
+      program=program.renameBinding(inner.id,target);source=program.source;
+      transformations.push({operation:'resolved private function binding rename',binding:inner.id,original:inner.name,replacement:target,beforeSourceSha256:before,sourceSha256:digest(source)});
     }
     // Substitute all imported references against one original binding model.
     // Imports are removed later, so two aliases can retain the same provider

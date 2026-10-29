@@ -10,6 +10,7 @@ pub(super) fn declare_javascript(
     tokens: &[SemanticToken],
     syntax: &[ProgramSourceMapping],
     brace_scopes: &BTreeMap<usize, usize>,
+    expression_scopes: &BTreeMap<usize, (Option<usize>, usize)>,
     declarations: &mut Vec<Declaration>,
     declared: &mut BTreeSet<usize>,
 ) {
@@ -61,8 +62,16 @@ pub(super) fn declare_javascript(
                 + 1
                 + usize::from(tokens.get(index + 1).is_some_and(|token| token.text == "*"));
             let name=tokens.get(head).filter(|token| crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier {"identifier"}else{""})).map(|_|head);
+            let expression = expression_scopes.get(&index);
             if let Some(name) = name {
-                declare(tokens, name, "function", None, declarations, declared);
+                declare(
+                    tokens,
+                    name,
+                    "function",
+                    expression.and_then(|(private, _)| *private),
+                    declarations,
+                    declared,
+                );
             }
             let opening = name.map_or(head, |name| name + 1);
             let open = tokens
@@ -71,8 +80,9 @@ pub(super) fn declare_javascript(
                 .map(|_| opening);
             let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
             let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
-            let scope = body
-                .and_then(|body| brace_scopes.get(&body).copied())
+            let scope = expression
+                .map(|(_, parameters)| *parameters)
+                .or_else(|| body.and_then(|body| brace_scopes.get(&body).copied()))
                 .unwrap_or(token.scope);
             declare_parameters(tokens, open, close, scope, declarations, declared);
         }

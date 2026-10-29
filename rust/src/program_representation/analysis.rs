@@ -121,6 +121,26 @@ pub(super) fn resolve_bindings(
     let mut stack = vec![0_usize];
     let mut brace_scopes = BTreeMap::new();
     let mut brace_kinds = Vec::new();
+    let mut function_starts: BTreeMap<usize, Vec<(ProgramRange, usize, bool)>> = BTreeMap::new();
+    let mut expression_scopes = BTreeMap::new();
+    let mut virtual_scopes = BTreeSet::new();
+    let token_positions = input
+        .iter()
+        .enumerate()
+        .map(|(index, token)| (token.range.start, index))
+        .collect::<BTreeMap<_, _>>();
+    if language == "JavaScript" {
+        for fact in syntax.iter().filter(|fact|crate::translation::source_library_binding_rules::test_java_script_source_function_expression_term(&fact.term)) {
+            let Some(&first)=token_positions.get(&fact.range.start)else{continue};
+            let head=first+usize::from(input[first].text=="async");
+            if !input.get(head).is_some_and(|token|token.text=="function"){continue;}
+            let name=head+1+usize::from(input.get(head+1).is_some_and(|token|token.text=="*"));
+            let named=input.get(name).is_some_and(|token|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier{"identifier"}else{""}));
+            let rows=function_starts.entry(fact.range.start).or_default();
+            if !rows.iter().any(|(range,_,_)|range.end==fact.range.end){rows.push((fact.range,head,named));}
+            rows.sort_by_key(|(range,_,_)|std::cmp::Reverse(range.end));
+        }
+    }
     let scoped_braces = syntax
         .iter()
         .filter(|fact| {
@@ -132,6 +152,32 @@ pub(super) fn resolve_bindings(
         .map(|fact| fact.range.start)
         .collect::<BTreeSet<_>>();
     for (index, token) in tokens.iter_mut().enumerate() {
+        while stack.len() > 1
+            && virtual_scopes.contains(stack.last().expect("root scope"))
+            && scopes[*stack.last().expect("root scope")].range.end <= token.range.start
+        {
+            stack.pop();
+        }
+        if let Some(entries) = function_starts.get(&token.range.start) {
+            for (range, head, named) in entries {
+                let mut create = || {
+                    let parent = *stack.last().expect("root scope");
+                    let index = scopes.len();
+                    scopes.push(ProgramScope {
+                        id: format!("scope:{index}"),
+                        parent: Some(scopes[parent].id.clone()),
+                        range: *range,
+                        depth: stack.len(),
+                    });
+                    stack.push(index);
+                    virtual_scopes.insert(index);
+                    index
+                };
+                let private_scope = if *named { Some(create()) } else { None };
+                let parameter_scope = create();
+                expression_scopes.insert(*head, (private_scope, parameter_scope));
+            }
+        }
         token.scope = *stack.last().expect("root scope");
         if token.text == "{" {
             let creates_scope =
@@ -162,6 +208,7 @@ pub(super) fn resolve_bindings(
             &tokens,
             syntax,
             &brace_scopes,
+            &expression_scopes,
             &mut declarations,
             &mut declared,
         );
