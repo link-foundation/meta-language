@@ -44,3 +44,6 @@ export function testJavaScriptSourceClassExpressionTerm(term){return term==='cla
 
 /** @param {string} term @returns {boolean} */
 export function testJavaScriptSourceVariableEnvironmentTerm(term){return term==='class_static_block'||readJavaScriptSourceFunctionScopeForm(term)!=='';}
+
+/** @param {string} term @returns {boolean} */
+export function testRustSourceOpaqueLiteralTerm(term){return term==='string_literal'||term==='raw_string_literal'||term==='character_literal'||term==='char_literal';}

@@ -10202,3 +10202,18 @@ function environment. Eleven independent term premises and five whole-source
 rename controls retain these distinctions. Static initialization effects and
 complete class translation still require their separate runtime definitions
 and executed controls; construction alone does not establish those outcomes.
+
+
+Rust semantic token masking uses complete actual CST spans for ordinary, byte,
+C, raw and character literals. Their leading prefixes and embedded quote or
+comment markers remain within the literal rather than becoming identifiers or
+masking later code. A shared JavaScript source selector recognizes canonical
+character terms and the retained source alias, then is automatically translated
+to Rust. Runtime adapters only transport source intervals in their own coordinate
+system. A lifetime apostrophe is not treated as a character-literal delimiter.
+Eight independent whole-source and exact-rename controls preserve references
+after literals and lifetime annotations, concrete text and snapshots. Native
+controls compile/run both originals and renames exclusively in CI under the
+explicit Rust version profile. Those controls are currently unexecuted; lifetime
+namespaces, labels, complete macro token handling and full translation remain
+separate obligations.

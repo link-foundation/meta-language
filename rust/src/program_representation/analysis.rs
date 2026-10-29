@@ -64,7 +64,7 @@ pub(super) fn semantic_tokens(
     language: &str,
     syntax: &[ProgramSourceMapping],
 ) -> Vec<SemanticToken> {
-    let mut mask = code_mask(source, language);
+    let mut mask = code_mask(source, language, syntax);
     if language == "JavaScript" {
         for fact in syntax
             .iter()
@@ -434,8 +434,16 @@ pub(super) fn resolve_bindings(
     (scopes, bindings, unresolved)
 }
 
-fn code_mask(source: &str, language: &str) -> Vec<bool> {
+fn code_mask(source: &str, language: &str, syntax: &[ProgramSourceMapping]) -> Vec<bool> {
     let mut mask = vec![true; source.len()];
+    let mut opaque = BTreeMap::new();
+    if language == "Rust" {
+        for fact in syntax {
+            if crate::translation::source_library_binding_rules::test_rust_source_opaque_literal_term(&fact.term)&&fact.range.end>fact.range.start&&fact.range.end<=source.len(){
+            let end=opaque.entry(fact.range.start).or_insert(fact.range.end);*end=(*end).max(fact.range.end);
+        }
+        }
+    }
     let line_comment = match language {
         "Lean" => Some("--"),
         "Rocq" => None,
@@ -448,7 +456,10 @@ fn code_mask(source: &str, language: &str) -> Vec<bool> {
     };
     let mut offset = 0;
     while offset < source.len() {
-        if line_comment.is_some_and(|comment| source[offset..].starts_with(comment)) {
+        if let Some(end) = opaque.get(&offset).copied() {
+            mark(&mut mask, offset, end, false);
+            offset = end;
+        } else if line_comment.is_some_and(|comment| source[offset..].starts_with(comment)) {
             let end = source[offset..]
                 .find('\n')
                 .map_or(source.len(), |end| offset + end);
@@ -458,8 +469,7 @@ fn code_mask(source: &str, language: &str) -> Vec<bool> {
             offset = mask_nested(source, &mut mask, offset, block_open, block_close);
         } else {
             let character = char_at(source, offset);
-            if character == '"' || (matches!(language, "JavaScript" | "Rust") && character == '\'')
-            {
+            if character == '"' || (language == "JavaScript" && character == '\'') {
                 offset = mask_quoted(source, &mut mask, offset, character);
             } else if language == "JavaScript" && character == '`' {
                 offset = mask_template(source, &mut mask, offset);

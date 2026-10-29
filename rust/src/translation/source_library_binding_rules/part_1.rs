@@ -615,6 +615,14 @@ pub fn test_java_script_source_variable_environment_term(term: &str) -> bool {
         || (!(self::read_java_script_source_function_scope_form(term)).is_empty())
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_source_opaque_literal_term(term: &str) -> bool {
+    (((term == "string_literal") || (term == "raw_string_literal"))
+        || (term == "character_literal"))
+        || (term == "char_literal")
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,

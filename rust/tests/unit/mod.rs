@@ -599,3 +599,5 @@ mod translation_rust_canonical_discovery;
 mod source_library_bindings;
 
 mod source_parameter_bindings;
+
+mod source_rust_literal_masking;

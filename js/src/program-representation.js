@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm,testRustSourceOpaqueLiteralTerm} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
@@ -377,7 +377,7 @@ function decorateSyntaxFacts(facts, source, decorators) {
 }
 
 function semanticTokens(source, language, syntax) {
-  const mask = codeMask(source, language);
+  const mask = codeMask(source, language, syntax);
   for (const fact of syntax) {
     if (/regex/u.test(fact.term) && language === 'JavaScript') {
       mark(mask, fact.start, fact.end, false);
@@ -913,19 +913,23 @@ function effectEvidence(program) {
   return uniqueFacts(evidence);
 }
 
-function codeMask(source, language) {
+function codeMask(source, language, syntax) {
   const mask = new Array(source.length).fill(true);
+  const opaque=new Map();
+  if(language==='Rust')for(const fact of syntax){if(testRustSourceOpaqueLiteralTerm(fact.term)&&fact.end>fact.start&&fact.end<=source.length)opaque.set(fact.start,Math.max(opaque.get(fact.start)??0,fact.end));}
   const lineComment = language === 'Lean' ? '--' : language === 'Rocq' ? null : '//';
   const blockOpen = language === 'Lean' ? '/-' : language === 'Rocq' ? '(*' : '/*';
   const blockClose = language === 'Lean' ? '-/' : language === 'Rocq' ? '*)' : '*/';
   for (let offset = 0; offset < source.length;) {
-    if (lineComment && source.startsWith(lineComment, offset)) {
+    const literalEnd=opaque.get(offset);
+    if(literalEnd!==undefined){mark(mask,offset,literalEnd,false);offset=literalEnd;}
+    else if (lineComment && source.startsWith(lineComment, offset)) {
       const end = source.indexOf('\n', offset);
       mark(mask, offset, end < 0 ? source.length : end, false);
       offset = end < 0 ? source.length : end;
     } else if (source.startsWith(blockOpen, offset)) {
       offset = maskNested(source, mask, offset, blockOpen, blockClose);
-    } else if (source[offset] === '"' || ((language === 'JavaScript' || language === 'Rust') && source[offset] === "'")) {
+    } else if (source[offset] === '"' || (language === 'JavaScript' && source[offset] === "'")) {
       offset = maskQuoted(source, mask, offset, source[offset]);
     } else if (language === 'JavaScript' && source[offset] === '`') {
       offset = maskTemplate(source, mask, offset);

@@ -5,6 +5,7 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
  schemaVersion:1,model:'actual source module function bindings 1',
  versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024'},
  headNames:[{kind:'identifier',expected:true},{kind:'keyword',expected:false},{kind:'punctuation',expected:false},{kind:'',expected:false}],
+ rustOpaqueLiteralTerms:[{term:'string_literal',expected:true},{term:'raw_string_literal',expected:true},{term:'character_literal',expected:true},{term:'char_literal',expected:true},{term:'lifetime',expected:false},{term:'lifetime_parameter',expected:false},{term:'identifier',expected:false},{term:'string_content',expected:false}],
  variableEnvironmentTerms:[{term:'function_declaration',expected:true},{term:'function_expression',expected:true},{term:'generator_function_declaration',expected:true},{term:'generator_function',expected:true},{term:'arrow_function',expected:true},{term:'method_definition',expected:true},{term:'class_static_block',expected:true},{term:'class_body',expected:false},{term:'statement_block',expected:false},{term:'for_statement',expected:false},{term:'catch_clause',expected:false}],
  classExpressionTerms:[{term:'class',expected:true},{term:'class_declaration',expected:false},{term:'class_body',expected:false},{term:'identifier',expected:false}],
  catchScopeTerms:[{term:'catch_clause',expected:true},{term:'try_statement',expected:false},{term:'statement_block',expected:false},{term:'formal_parameters',expected:false}],
