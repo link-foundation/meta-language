@@ -590,6 +590,12 @@ pub fn test_java_script_source_variable_redeclaration(kind: &str, existing: bool
     (kind == "var") && existing
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_java_script_source_loop_scope_term(term: &str) -> bool {
+    ((term == "for_statement") || (term == "for_in_statement")) || (term == "for_of_statement")
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,

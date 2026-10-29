@@ -1,11 +1,19 @@
 // Coordinate transport from the existing concrete tree to shared definitions.
 import {acceptJavaScriptSourceParameterIdentifierTerm,acceptJavaScriptSourceBindingRootTerm,planJavaScriptSourceParameterBindings} from './translation/source-parameter-binding-rules.js';
+import {testJavaScriptSourceLoopScopeTerm} from './translation/source-library-binding-rules.js';
 export function readJavaScriptSourceParameterBindings(tokens,syntax,first,last){
  return readBindingPositions(tokens,syntax,first,last,false);
 }
 export function readJavaScriptSourceVariableBindings(tokens,syntax,index){
  const declaration=syntax.find(node=>(node.term==='lexical_declaration'||node.term==='variable_declaration')&&node.start===tokens[index].start);
- if(!declaration)return null;
+ if(!declaration){
+  const first=index+1,token=tokens[first];
+  if(!token||!syntax.some(node=>testJavaScriptSourceLoopScopeTerm(node.term)&&node.start<=tokens[index].start&&tokens[index].end<=node.end))return null;
+  const pattern=syntax.filter(node=>acceptJavaScriptSourceBindingRootTerm(node.term)&&node.start===token.start).sort((left,right)=>right.end-left.end)[0];
+  if(!pattern)return null;
+  let last=first;while(last<tokens.length&&tokens[last].start<pattern.end)last+=1;
+  return readBindingPositions(tokens,syntax,first,last,false,pattern.end);
+ }
  let last=index+1;while(last<tokens.length&&tokens[last].start<declaration.end)last+=1;
  return readBindingPositions(tokens,syntax,index+1,last,true,declaration.end);
 }

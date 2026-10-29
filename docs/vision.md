@@ -10148,3 +10148,18 @@ controls retain independent original source, condition and field traces, abrupt
 completion, fresh-name collisions, excluded floating/reference profiles, complete
 typed text/binary reload and four-target emission. Neither those declarations
 nor unexecuted theorem sources are evidence of completed delivery.
+
+
+JavaScript lexical loop environments begin at the actual CST `for_statement`,
+`for_in_statement` or `for_of_statement` and end at its complete source extent.
+Headers, collection reads and bodies share that enclosing lexical environment;
+outside reads retain their enclosing binding. Nested loops keep separate
+identities. `var` still climbs to its existing function environment. Actual
+`for…in`/`for…of` binding roots reuse the same recursive pattern census as
+ordinary declarations, preserving property names, defaults, array holes and
+rest bindings while excluding collection expressions. The loop selector is
+JavaScript source automatically translated to Rust; adapters only transport
+actual CST spans. This structural binding model does not establish per-iteration
+closure execution or complete translation semantics. Nine independent whole
+source originals and exact rename controls cover the new paths, including a
+collection temporal-dead-zone read; execution remains deferred.

@@ -30,6 +30,12 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             row["expected"].as_bool().unwrap()
         );
     }
+    for row in fixture["loopScopeTerms"].as_array().unwrap() {
+        assert_eq!(
+            bindings::test_java_script_source_loop_scope_term(row["term"].as_str().unwrap()),
+            row["expected"].as_bool().unwrap()
+        );
+    }
     for row in fixture["expressionTerms"].as_array().unwrap() {
         assert_eq!(
             bindings::test_java_script_source_function_expression_term(

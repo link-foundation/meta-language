@@ -20,7 +20,28 @@ pub(super) fn variable_positions(
             node.term.as_str(),
             "lexical_declaration" | "variable_declaration"
         ) && node.range.start == tokens[index].range.start
-    })?;
+    });
+    let Some(declaration) = declaration else {
+        let first = index + 1;
+        let token = tokens.get(first)?;
+        if !syntax.iter().any(|node|crate::translation::source_library_binding_rules::test_java_script_source_loop_scope_term(&node.term)&&node.range.start<=tokens[index].range.start&&tokens[index].range.end<=node.range.end){return None;}
+        let pattern = syntax
+            .iter()
+            .filter(|node| {
+                rules::accept_java_script_source_binding_root_term(&node.term)
+                    && node.range.start == token.range.start
+            })
+            .max_by_key(|node| node.range.end)?;
+        let last = tokens.partition_point(|token| token.range.start < pattern.range.end);
+        return Some(positions(
+            tokens,
+            syntax,
+            first,
+            last,
+            false,
+            Some(pattern.range.end),
+        ));
+    };
     let last = tokens.partition_point(|token| token.range.start < declaration.range.end);
     Some(positions(
         tokens,

@@ -33,3 +33,5 @@ export function acceptJavaScriptSourceSimpleParameterList(terms){
 export function testJavaScriptSourceParameterVariableDependency(first,second,bodyParent){return bodyParent&&(first==='parameter'&&second==='var'||first==='var'&&second==='parameter');}
 /** @param {string} kind @param {boolean} existing @returns {boolean} */
 export function testJavaScriptSourceVariableRedeclaration(kind,existing){return kind==='var'&&existing;}
+/** @param {string} term @returns {boolean} */
+export function testJavaScriptSourceLoopScopeTerm(term){return term==='for_statement'||term==='for_in_statement'||term==='for_of_statement';}

@@ -275,12 +275,30 @@ pub(super) fn resolve_bindings(
         })
         .map(|fact| fact.range.start)
         .collect::<BTreeSet<_>>();
+    let mut loop_starts: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    if language == "JavaScript" {
+        for node in syntax.iter().filter(|node|crate::translation::source_library_binding_rules::test_java_script_source_loop_scope_term(&node.term)){let rows=loop_starts.entry(node.range.start).or_default();if !rows.contains(&node.range.end){rows.push(node.range.end);}rows.sort_by_key(|end|std::cmp::Reverse(*end));}
+    }
     for (index, token) in tokens.iter_mut().enumerate() {
         while stack.len() > 1
             && virtual_scopes.contains(stack.last().expect("root scope"))
             && scopes[*stack.last().expect("root scope")].range.end <= token.range.start
         {
             stack.pop();
+        }
+        if let Some(ends) = loop_starts.get(&token.range.start) {
+            for end in ends {
+                let parent = *stack.last().expect("root scope");
+                let index = scopes.len();
+                scopes.push(ProgramScope {
+                    id: format!("scope:{index}"),
+                    parent: Some(scopes[parent].id.clone()),
+                    range: ProgramRange::new(token.range.start, *end),
+                    depth: stack.len(),
+                });
+                stack.push(index);
+                virtual_scopes.insert(index);
+            }
         }
         if let Some(entries) = function_starts.get(&token.range.start) {
             for entry in entries {
