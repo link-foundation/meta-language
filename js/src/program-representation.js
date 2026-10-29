@@ -1,4 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
+import {acceptJavaScriptSourceFunctionHeadName} from './translation/source-library-binding-rules.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
@@ -593,12 +594,13 @@ function declareJavaScript(tokens, syntax, braceScopes, declare) {
       }
     }
     if (token.text === 'function') {
-      const name = nextIdentifier(tokens, index + 1);
-      declare(name, 'function');
-      const open = findToken(tokens, name + 1, '(');
+      const head=index+1+(tokens[index+1]?.text==='*'?1:0);
+      const name=acceptJavaScriptSourceFunctionHeadName(tokens[head]?.kind??'')?head:-1;
+      if(name>=0)declare(name, 'function');
+      const open = tokens[name>=0?name+1:head]?.text==='('?name>=0?name+1:head:-1;
       const close = matchingDelimiter(tokens, open, '(', ')');
       const body = findToken(tokens, close + 1, '{');
-      const scope = braceScopes.get(body) ?? tokens[name]?.scope;
+      const scope = braceScopes.get(body) ?? token.scope;
       declareDelimitedParameters(tokens, open, close, scope, declare);
     }
     if (token.text === 'catch') {

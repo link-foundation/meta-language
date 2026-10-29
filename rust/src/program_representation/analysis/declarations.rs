@@ -56,16 +56,24 @@ pub(super) fn declare_javascript(
                 declare_next(tokens, index + 1, &token.text, None, declarations, declared);
             }
         }
-        if token.text == "function"
-            && let Some(name) = next_identifier(tokens, index + 1)
-        {
-            declare(tokens, name, "function", None, declarations, declared);
-            let open = find_token(tokens, name + 1, "(");
+        if token.text == "function" {
+            let head = index
+                + 1
+                + usize::from(tokens.get(index + 1).is_some_and(|token| token.text == "*"));
+            let name=tokens.get(head).filter(|token| crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier {"identifier"}else{""})).map(|_|head);
+            if let Some(name) = name {
+                declare(tokens, name, "function", None, declarations, declared);
+            }
+            let opening = name.map_or(head, |name| name + 1);
+            let open = tokens
+                .get(opening)
+                .filter(|token| token.text == "(")
+                .map(|_| opening);
             let close = open.and_then(|open| matching_delimiter(tokens, open, "(", ")"));
             let body = close.and_then(|close| find_token(tokens, close + 1, "{"));
             let scope = body
                 .and_then(|body| brace_scopes.get(&body).copied())
-                .unwrap_or(tokens[name].scope);
+                .unwrap_or(token.scope);
             declare_parameters(tokens, open, close, scope, declarations, declared);
         }
         if token.text == "catch" {

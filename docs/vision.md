@@ -7930,7 +7930,11 @@ source bytes, hashes and ownership in the typed Links provenance. Binding and
 export admission are shared inspectable definitions translated automatically
 to Rust. General module data, effects and function-expression inner binding
 scopes remain separate obligations; the current alias adapter explicitly
-refuses the latter rather than conflating the inner and outer declarations.
+refuses named expression aliases rather than conflating their inner and outer
+declarations. Anonymous expressions use the actual immediate function head:
+the first parameter or a later declaration never supplies a fabricated name.
+Their import aliases and duplicate private helpers retain independent lexical
+owners. Head-name admission is itself a shared translated definition.
 Deferred controls include duplicate private helpers, aliases, both codecs and
 all four emission targets. Source construction is not execution evidence.
 

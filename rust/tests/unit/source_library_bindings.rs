@@ -24,4 +24,31 @@ fn actual_binding_and_export_policy_retains_literal_source_roles() {
             row["exported"].as_bool().unwrap()
         );
     }
+    for row in fixture["headNames"].as_array().unwrap() {
+        assert_eq!(
+            bindings::accept_java_script_source_function_head_name(row["kind"].as_str().unwrap()),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+    for row in fixture["anonymousBindings"].as_array().unwrap() {
+        let program = meta_language::analyze_program(
+            row["source"].as_str().unwrap(),
+            "JavaScript",
+            meta_language::ProgramProjectContext::default(),
+        )
+        .unwrap();
+        let expected = row["bindings"].as_array().unwrap();
+        assert_eq!(program.bindings().len(), expected.len());
+        for (binding, expected) in program.bindings().iter().zip(expected) {
+            assert_eq!(binding.name(), expected[0].as_str().unwrap());
+            assert_eq!(binding.kind(), expected[1].as_str().unwrap());
+            assert_eq!(
+                binding.references().len(),
+                expected[2].as_u64().unwrap() as usize
+            );
+            if binding.kind() == "parameter" {
+                assert_ne!(binding.scope(), "scope:0");
+            }
+        }
+    }
 }

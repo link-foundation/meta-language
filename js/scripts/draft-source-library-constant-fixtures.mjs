@@ -4,6 +4,13 @@ if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft'
 writeProjectData(new URL('../../parity/fixtures/source-library-constant-functions.lino',import.meta.url),{
  schemaVersion:1,model:'actual source module function bindings 1',
  versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024'},
+ headNames:[{kind:'identifier',expected:true},{kind:'keyword',expected:false},{kind:'punctuation',expected:false},{kind:'',expected:false}],
+ anonymousBindings:[
+  {name:'anonymous function parameters are not module names',source:'const outer=function(value){return value;};',bindings:[['outer','const',0],['value','parameter',1]]},
+  {name:'anonymous generator parameters are not module names',source:'const outer=function*(value){yield value;};',bindings:[['outer','const',0],['value','parameter',1]]},
+  {name:'anonymous async parameters are not module names',source:'const outer=async function(value){return value;};',bindings:[['outer','const',0],['value','parameter',1]]},
+  {name:'anonymous empty parameter groups do not steal later declarations',source:'const outer=function(){return 1;};const sibling=2;',bindings:[['outer','const',0],['sibling','const',0]]}
+ ],
  policies:[
   {keyword:'function',kind:'identifier',name:'apply',callable:false,binding:'function',exported:true},
   {keyword:'const',kind:'identifier',name:'apply',callable:true,binding:'const',exported:true},
@@ -16,7 +23,7 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
   {name:'constant arrow exports retain actual const bindings',source:'export const apply=value=>value;',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'arrow'}]},
   {name:'ordinary functions retain their existing declaration form',source:'export function apply(value){return value;}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
   {name:'anonymous function expressions retain their actual outer binding',source:'export const apply=function(value){return value;};',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'function expression'}]},
-  {name:'named function expressions are not module declarations',source:'export const apply=function apply(value){return value;};',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'function expression'}]},
+  {name:'named function expressions are not module declarations',source:'export const apply=function apply(value){return value;};',exports:['apply'],bindings:[{name:'apply',kind:'const',initializer:'function expression',expressionName:'apply'}]},
   {name:'functions inside default parameter groups remain nested',source:'export function apply(read=function nested(){return 1;}){return read();}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
   {name:'source-like literal text does not declare functions',source:'const words=["function phantom(){}","const fake=()=>1"];export function apply(){return 1;}',exports:['apply'],bindings:[{name:'apply',kind:'function'}]},
   {name:'scalar constant exports retain their complete separate obligation',source:'export const amount=3;',error:true},
@@ -35,6 +42,13 @@ writeProjectData(new URL('../../parity/fixtures/source-library-constant-function
    {path:'entry.js',source:'import {left} from "./left.js";import {right} from "./right.js";/** @param {number} value @returns {number} */ export function run(value){return left(value)+right(value);}'}]},
   {name:'function-expression aliases retain their inner-scope obligation',entry:'entry.js',aliases:true,arguments:[4],expected:4,error:'separate inner binding scopes',files:[
    {path:'provider.js',source:'/** @param {number} value @returns {number} */ export const identity=function identity(value){return value;};'},
-   {path:'entry.js',source:'import {identity as original} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return original(value);}'}]}
+   {path:'entry.js',source:'import {identity as original} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return original(value);}'}]},
+  {name:'anonymous function import aliases preserve parameters',entry:'entry.js',aliases:true,arguments:[4],expected:8,files:[
+   {path:'provider.js',source:'/** @param {number} value @returns {number} */ export const double=function(value){return value*2;};'},
+   {path:'entry.js',source:'import {double as twice} from "./provider.js";/** @param {number} value @returns {number} */ export function run(value){return twice(value);}'}]},
+  {name:'duplicate anonymous private helpers retain separate bindings',entry:'entry.js',aliases:true,arguments:[4],expected:11,files:[
+   {path:'left.js',source:'/** @param {number} value @returns {number} */ const increment=function(value){return value+1;};/** @param {number} value @returns {number} */ export const left=function(value){return increment(value);};'},
+   {path:'right.js',source:'/** @param {number} value @returns {number} */ const increment=function(value){return value+2;};/** @param {number} value @returns {number} */ export const right=function(value){return increment(value);};'},
+   {path:'entry.js',source:'import {left} from "./left.js";import {right} from "./right.js";/** @param {number} value @returns {number} */ export function run(value){return left(value)+right(value);}'}]}
  ],
  boundary:'Unexecuted literal controls. Actual module bindings and all source bytes remain explicit. Function-only libraries, alias scopes, complete target/native policy behavior and semantic translations retain their independent controls. General constant data/effects, function-expression alias scopes and full JavaScript modules remain required.'});

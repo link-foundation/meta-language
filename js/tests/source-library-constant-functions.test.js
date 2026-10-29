@@ -8,7 +8,8 @@ import {runInNewContext} from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readSourceLibraryModuleFacts,readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
 import {projectSourceLibraryEntryPoints} from '../scripts/source-library-entry-points.mjs';
-import {readSourceLibraryDeclarationBindingKind} from '../src/translation/source-library-binding-rules.js';
+import {readSourceLibraryDeclarationBindingKind,acceptJavaScriptSourceFunctionHeadName} from '../src/translation/source-library-binding-rules.js';
+import {analyzeProgram} from '../src/program-representation.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
@@ -24,6 +25,12 @@ const root=fileURLToPath(new URL('../../',import.meta.url));
 const fixture=readProjectData(new URL('../../parity/fixtures/source-library-constant-functions.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.node);
+for(const row of fixture.headNames)test('actual function head token '+row.kind,()=>assert.equal(acceptJavaScriptSourceFunctionHeadName(row.kind),row.expected));
+for(const row of fixture.anonymousBindings)test(row.name,()=>{
+ const program=analyzeProgram(row.source,'JavaScript');
+ assert.deepEqual(program.bindings.map(binding=>[binding.name,binding.kind,binding.references.length]),row.bindings);
+ for(const binding of program.bindings)if(binding.kind==='parameter')assert.notEqual(binding.scope,'scope:0');
+});
 for(const [index,row]of fixture.policies.entries())test('actual source binding policy '+index,()=>{
  assert.equal(readSourceLibraryDeclarationBindingKind(row.keyword,row.kind,row.name,row.callable),row.binding);
  assert.equal(acceptSourceLibraryFunctionExport(row.keyword,row.kind,row.name,row.callable),row.exported);

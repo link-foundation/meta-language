@@ -163,6 +163,12 @@ pub fn read_source_library_declaration_binding_kind(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_source_function_head_name(kind: &str) -> bool {
+    kind == "identifier"
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlSource1TemporaryDependencyFunction1Loop3Result {
     MlSource1TemporaryDependencyFunction1Loop3Done,

@@ -3,7 +3,9 @@
 import {acceptJavaScriptSourceBindingName as admittedName} from './source-identifier-rules.js';
 /** @param {string} keyword @param {string} kind @param {string} name
  * @param {boolean} callable @returns {string} */
-export const readSourceLibraryDeclarationBindingKind=(keyword,kind,name,callable)=>{
+export const readSourceLibraryDeclarationBindingKind=function(keyword,kind,name,callable){
  if(!admittedName(kind,name,false,[]))return '';
  return keyword==='function'?'function':keyword==='const'&&callable?'const':'';
 };
+/** @param {string} kind @returns {boolean} */
+export function acceptJavaScriptSourceFunctionHeadName(kind){return kind==='identifier';}

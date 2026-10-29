@@ -20,15 +20,15 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
   const imports = [], exports = new Set(), declarations = new Set(), declarationBindings=new Map(), expressionHeads=new Set();
   function form(index){
     const head=tokens[index],name=tokens[index+1];
-    let callable=false,initializer='';
+    let callable=false,initializer='',expressionName='';
     if(actual(source,head,'const')&&tokens[index+2]?.kind==='punct'&&tokens[index+2].value==='='&&testJavaScriptSourceFunctionStart(tokens,index+3)){
       callable=true;let at=index+3;
       if(actual(source,tokens[at],'async')&&tokens[at+1]?.value!=='=>')at+=1;
       initializer=actual(source,tokens[at],'function')?'function expression':'arrow';
-      if(initializer==='function expression')expressionHeads.add(at);
+      if(initializer==='function expression'){expressionHeads.add(at);if(tokens[at+1]?.kind==='identifier')expressionName=tokens[at+1].value;}
     }
     const keyword=actual(source,head,'function')?'function':actual(source,head,'const')?'const':'';
-    return {name:name?.value??'',kind:readSourceLibraryDeclarationBindingKind(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{})};
+    return {name:name?.value??'',kind:readSourceLibraryDeclarationBindingKind(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{}),...(expressionName?{expressionName}:{})};
   }
   let depth = 0;
   for (let index = 0; index < tokens.length; index += 1) {
@@ -41,7 +41,7 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
     if (depth !== 0) continue;
     if(!expressionHeads.has(index)&&(actual(source,token,'function')||actual(source,token,'const'))){
       const binding=form(index);
-      if(binding.kind){if(declarations.has(binding.name))throw new TypeError('source closure needs unique actual module declarations at '+path+':'+token.start);declarations.add(binding.name);declarationBindings.set(binding.name,{name:binding.name,kind:binding.kind,...(binding.initializer?{initializer:binding.initializer}:{})});}
+      if(binding.kind){if(declarations.has(binding.name))throw new TypeError('source closure needs unique actual module declarations at '+path+':'+token.start);declarations.add(binding.name);declarationBindings.set(binding.name,{name:binding.name,kind:binding.kind,...(binding.initializer?{initializer:binding.initializer}:{}),...(binding.expressionName?{expressionName:binding.expressionName}:{})});}
     }
     if (actual(source, token, 'export')) {
       const binding=form(index+1);
