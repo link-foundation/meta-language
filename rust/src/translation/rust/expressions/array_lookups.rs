@@ -233,23 +233,6 @@ impl RustParser {
                 .map_or(method.start, |span| span.start),
             close.end,
         ));
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: std::iter::once(receiver.clone())
-                        .chain(args.iter().cloned())
-                        .chain(defaults)
-                        .collect(),
-                },
-                range,
-            )));
-        }
         let input = LookupInput {
             receiver,
             method,
@@ -356,36 +339,71 @@ impl RustParser {
         if let Some(default) = defaults.first() {
             let lazy = rules::test_rust_array_lookup_lazy_fallback(&consumer.value);
             let fallback_origin = self.origins.origin(default, path);
-            let fallback_result = if lazy {
+            if rules::test_rust_array_lookup_predicate_consumer(&consumer.value) {
+                let parameter = fallback_origin
+                    .callable_parameters
+                    .as_ref()
+                    .and_then(|parameters| parameters.first());
+                let result = fallback_origin.callable_result.as_deref();
                 let parameters = match &fallback_origin.ty {
                     Some(Type::Function { params, .. }) => count(params.len()),
                     _ => -1.0,
                 };
-                let error = rules::read_rust_array_lookup_lazy_fallback_error(
+                let error = rules::read_rust_array_lookup_predicate_error(
                     fallback_origin.ty.as_ref().map_or("", Type::kind),
                     parameters,
                     count(fallback_origin.wrappers.len()),
-                    fallback_origin
-                        .callable_result
-                        .as_ref()
-                        .is_some_and(|result| result.proven),
+                    parameter.is_some_and(|value| value.proven),
+                    result
+                        .and_then(|value| value.ty.as_ref())
+                        .map_or("", Type::kind),
+                    result.is_some_and(|value| value.proven),
                 );
                 if !error.is_empty() {
-                    return Err(unsupported(
-                        "Rust array lookup lazy fallback",
-                        &error,
-                        range,
-                    ));
+                    return Err(unsupported("Rust array lookup predicate", &error, range));
                 }
-                fallback_origin
-                    .callable_result
-                    .as_deref()
-                    .expect("shared lazy result admission")
+                self.origins.argument(
+                    &result_origin,
+                    parameter.expect("shared predicate parameter admission"),
+                    default.span.or(range),
+                )?;
+                self.origins.argument(
+                    result.expect("shared predicate result admission"),
+                    &lookup_result_origin(&BOOL, "", true, path),
+                    default.span.or(range),
+                )?;
             } else {
-                &fallback_origin
-            };
-            self.origins
-                .argument(fallback_result, &result_origin, default.span.or(range))?;
+                let fallback_result = if lazy {
+                    let parameters = match &fallback_origin.ty {
+                        Some(Type::Function { params, .. }) => count(params.len()),
+                        _ => -1.0,
+                    };
+                    let error = rules::read_rust_array_lookup_lazy_fallback_error(
+                        fallback_origin.ty.as_ref().map_or("", Type::kind),
+                        parameters,
+                        count(fallback_origin.wrappers.len()),
+                        fallback_origin
+                            .callable_result
+                            .as_ref()
+                            .is_some_and(|result| result.proven),
+                    );
+                    if !error.is_empty() {
+                        return Err(unsupported(
+                            "Rust array lookup lazy fallback",
+                            &error,
+                            range,
+                        ));
+                    }
+                    fallback_origin
+                        .callable_result
+                        .as_deref()
+                        .expect("shared lazy result admission")
+                } else {
+                    &fallback_origin
+                };
+                self.origins
+                    .argument(fallback_result, &result_origin, default.span.or(range))?;
+            }
         }
         Ok(LookupFacts {
             source,
@@ -414,6 +432,7 @@ impl RustParser {
         } = input;
         let range = *range;
         let arity = count(args.len());
+        let predicate = rules::test_rust_array_lookup_predicate_consumer(&consumer.value);
         let LookupFacts {
             source,
             element,
@@ -433,11 +452,12 @@ impl RustParser {
             ));
         }
         if let Some(default) = defaults.first() {
-            let default_type = if rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
-                self.origins.origin(default, path).ty
-            } else {
-                element.clone()
-            };
+            let default_type =
+                if predicate || rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
+                    self.origins.origin(default, path).ty
+                } else {
+                    element.clone()
+                };
             captures.push((self.fresh_product_binding(), default_type, default.clone()));
         }
         let local = |index: usize| {
@@ -499,6 +519,30 @@ impl RustParser {
             };
             values.insert("fallback".to_owned(), fallback);
         }
+        if predicate {
+            let selected = values
+                .get("selected")
+                .expect("shared predicate selected value")
+                .clone();
+            values.insert(
+                "predicate".to_owned(),
+                SExpr::new(
+                    SNode::App {
+                        func: Box::new(local(captures.len() - 1)),
+                        args: vec![selected],
+                    },
+                    range,
+                ),
+            );
+            values.insert(
+                "true".to_owned(),
+                SExpr::new(SNode::Bool { value: true }, range),
+            );
+            values.insert(
+                "false".to_owned(),
+                SExpr::new(SNode::Bool { value: false }, range),
+            );
+        }
         let mut body = project(
             &rules::plan_rust_array_lookup_consumer(&consumer.value),
             &values,
@@ -515,7 +559,14 @@ impl RustParser {
                 range,
             );
         }
-        self.origins.mark(&body, result_origin);
+        self.origins.mark(
+            &body,
+            if predicate {
+                lookup_result_origin(&BOOL, "", true, path)
+            } else {
+                result_origin
+            },
+        );
         Ok(body)
     }
 }

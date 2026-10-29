@@ -5,11 +5,15 @@ export function readRustArrayLookupArity(method,ordinary){return !ordinary?-1:me
 /** @param {string} consumer @returns {boolean} */
 export function acceptRustArrayLookupPresenceConsumer(consumer){return consumer==='is_some'||consumer==='is_none';}
 /** @param {string} consumer @param {boolean} copied @returns {number} */
-export function readRustArrayLookupConsumerArity(consumer,copied){return acceptRustArrayLookupPresenceConsumer(consumer)?0:copied&&(consumer==='unwrap_or'||consumer==='unwrap_or_else')?1:copied&&consumer==='unwrap_or_default'?0:-1;}
+export function readRustArrayLookupConsumerArity(consumer,copied){return acceptRustArrayLookupPresenceConsumer(consumer)?0:copied&&(consumer==='unwrap_or'||consumer==='unwrap_or_else'||testRustArrayLookupPredicateConsumer(consumer))?1:copied&&consumer==='unwrap_or_default'?0:-1;}
 /** @param {string} consumer @returns {boolean} */
 export function testRustArrayLookupLazyFallback(consumer){return consumer==='unwrap_or_else';}
 /** @param {string} kind @param {number} parameters @param {number} wrappers @param {boolean} knownResult @returns {string} */
 export function readRustArrayLookupLazyFallbackError(kind,parameters,wrappers,knownResult){return kind==='function'&&parameters===0&&wrappers===0&&knownResult?'':'a lazy lookup fallback needs a known direct zero-argument callable result';}
+/** @param {string} consumer @returns {boolean} */
+export function testRustArrayLookupPredicateConsumer(consumer){return consumer==='is_some_and'||consumer==='is_none_or';}
+/** @param {string} kind @param {number} parameters @param {number} wrappers @param {boolean} knownParameter @param {string} result @param {boolean} knownResult @returns {string} */
+export function readRustArrayLookupPredicateError(kind,parameters,wrappers,knownParameter,result,knownResult){return kind==='function'&&parameters===1&&wrappers===0&&knownParameter&&result==='bool'&&knownResult?'':'a lookup predicate needs a known direct one-argument callable with a Boolean result';}
 /** @param {string} kind @param {string} element @param {string} model
  * @param {boolean} proven @param {boolean} immutable @param {boolean} copy
  * @param {boolean} copied @returns {string} */
@@ -37,4 +41,4 @@ export function planRustArrayLookupCondition(method){return method==='get'?['ind
 /** @param {string} method @returns {string[]} */
 export function planRustArrayLookupIndex(method){return method==='get'?['index']:method==='first'?['zero']:method==='last'?['length','one','sub']:[];}
 /** @param {string} consumer @returns {string[]} */
-export function planRustArrayLookupConsumer(consumer){return consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='unwrap_or'||consumer==='unwrap_or_else'||consumer==='unwrap_or_default'?['condition','selected','fallback','if']:[];}
+export function planRustArrayLookupConsumer(consumer){return consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='is_some_and'?['condition','predicate','false','if']:consumer==='is_none_or'?['condition','predicate','true','if']:consumer==='unwrap_or'||consumer==='unwrap_or_else'||consumer==='unwrap_or_default'?['condition','selected','fallback','if']:[];}

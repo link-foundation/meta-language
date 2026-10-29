@@ -5086,6 +5086,22 @@ They remain unexecuted under the Node22.15/24, Rust1.90–1.99 and 64-bit pointe
 profiles. General FnOnce/FnMut, non-Copy captures/results and earlier lookup,
 ownership, allocation and project obligations retain their full scope.
 
+Presence-selected scalar lookup predicates use the same captured callable path.
+`is_some_and` returns false on absence; `is_none_or` returns true. On presence,
+only the selected value reaches the predicate once. Shared plans retain those
+different defaults; admission checks require an actual one-argument callable,
+complete parameter/result origins and a Boolean result. The selected primitive
+owner is checked against the parameter owner, preserving usize versus u64 even
+on a 64-bit target. Closure captures, evaluation order and source scopes retain
+the same immutable profile. Their documented
+[Option predicates](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none_or)
+fit the selected Rust1.90–1.99 range. Original/generated value, trace, codec,
+target and native controls are drafted and unexecuted; general borrowed/non-Copy
+predicates, mutable captures and preceding full ownership obligations remain.
+Lookup discovery also constructs this same canonical source projection before
+the ordinary semantic check. It never substitutes an unresolved free function
+named after a method. Final source-owner validation remains required.
+
 The lookup draft also admits cloned values for the supported scalar domains and
 actual standard owned Strings. Shared source-owner rules govern that choice;
 bounded projections cross only registered standard containers and retain each

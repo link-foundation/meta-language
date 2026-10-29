@@ -764,7 +764,10 @@ pub fn accept_rust_array_lookup_presence_consumer(consumer: &str) -> bool {
 pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f64 {
     if self::accept_rust_array_lookup_presence_consumer(consumer) {
         0f64
-    } else if copied && ((consumer == "unwrap_or") || (consumer == "unwrap_or_else")) {
+    } else if copied
+        && (((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
+            || self::test_rust_array_lookup_predicate_consumer(consumer))
+    {
         1f64
     } else if copied && (consumer == "unwrap_or_default") {
         0f64
@@ -791,6 +794,34 @@ pub fn read_rust_array_lookup_lazy_fallback_error(
         String::new()
     } else {
         String::from("a lazy lookup fallback needs a known direct zero-argument callable result")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_array_lookup_predicate_consumer(consumer: &str) -> bool {
+    (consumer == "is_some_and") || (consumer == "is_none_or")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_predicate_error(
+    kind: &str,
+    parameters: f64,
+    wrappers: f64,
+    known_parameter: bool,
+    result: &str,
+    known_result: bool,
+) -> String {
+    if (((((kind == "function") && (parameters == 1f64)) && (wrappers == 0f64)) && known_parameter)
+        && (result == "bool"))
+        && known_result
+    {
+        String::new()
+    } else {
+        String::from(
+            "a lookup predicate needs a known direct one-argument callable with a Boolean result",
+        )
     }
 }
 
@@ -841,42 +872,5 @@ pub fn read_rust_array_lookup_element_owner_error(
         String::new()
     } else {
         String::from("a copied element needs its complete standard scalar source owner")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_cloned_element_error(
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner_kind: &str,
-    owner: &str,
-    children: f64,
-) -> String {
-    if ((((kind == "string") && (owner_kind == "library")) && (owner == "std::string::String"))
-        && (children == 0f64))
-        || ((kind == "unit")
-            || (((owner_kind == "primitive") && (children == 0f64))
-                && ((self::read_rust_array_lookup_element_owner_error(kind, bits, signed, owner))
-                    .is_empty())))
-    {
-        String::new()
-    } else {
-        String::from(
-            "a cloned element needs its complete standard scalar or owned String source meaning",
-        )
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_default_term(kind: &str, standard_string: bool) -> String {
-    if kind == "unit" {
-        String::from("unit")
-    } else if (kind == "string") && standard_string {
-        String::from("empty string")
-    } else {
-        String::from("primitive default")
     }
 }
