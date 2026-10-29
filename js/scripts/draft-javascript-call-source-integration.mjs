@@ -7,6 +7,10 @@ const mode=process.argv.slice(2).join(' '),reuse=mode==='--draft --reuse-librari
 if(mode!=='--draft'&&!reuse)throw new TypeError('use --draft [--reuse-libraries]');
 process.argv.splice(2,process.argv.length-2,'--draft');
 const root=new URL('../../',import.meta.url);
+for(const path of ['js/src/translation/conditional-constructor-sharing-rules.js','js/scripts/source-conditional-constructors.mjs',
+ 'js/scripts/draft-conditional-constructor-sharing-rules.mjs','js/scripts/draft-conditional-constructor-sharing-fixtures.mjs','js/tests/translation-conditional-constructor-sharing.test.js'])parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);
+await import('./draft-conditional-constructor-sharing-rules.mjs'); globalThis.gc?.();
+await import('./draft-conditional-constructor-sharing-fixtures.mjs'); globalThis.gc?.();
 parseAuthoredJavaScriptModule(readFileSync(new URL('js/tests/translation-javascript-text-replacement.test.js',root),'utf8'),'js/tests/translation-javascript-text-replacement.test.js');
 for (const path of ['js/src/translation/type-query-evaluation-rules.js',
  'js/scripts/draft-type-query-evaluation-rules.mjs', 'js/tests/translation-type-queries.test.js'])
@@ -29,6 +33,8 @@ if(reuse){
  // exact current source inputs and the complete original generated files.
  for(const stem of ['javascript-call-source','javascript-call-machine']){
   const recipe=readProjectData(new URL('parity/self-translation/'+stem+'-native.lino',root));
+  if(stem==='javascript-call-machine'&&recipe.conditionalConstructorSharing?.model!=='closed value constructor selection 1')throw new TypeError('regenerate the call machine with its actual conditional constructor selection profile');
+  if(stem==='javascript-call-machine'){const inputs=recipe.conditionalConstructorSharing.producer?.inputs;if(!Array.isArray(inputs)||inputs.length<3)throw new TypeError('constructor sharing requires its actual producer inputs');for(const input of inputs){const bytes=readFileSync(new URL(input.path,root));if(bytes.length!==input.bytes||createHash('sha256').update(bytes).digest('hex')!==input.sha256)throw new TypeError('constructor-sharing producer changed; regenerate '+stem);}}
   if(recipe.schemaVersion!==1||!recipe.sourceClosure?.inputs?.length||!recipe.files?.length||!recipe.programProjection?.entryPoints?.length||!recipe.programAsset)throw new TypeError('reuse needs complete actual source and linked-model receipts; native-only construction is insufficient');
   for(const input of recipe.sourceClosure.inputs){
    if(!/^js\/src\/(?:[a-z0-9-]+\/)*[a-z0-9-]+\.js$/u.test(input.path)||readFileSync(new URL(input.path,root),'utf8')!==input.source)throw new TypeError('source-library input changed; regenerate '+stem);
@@ -56,6 +62,9 @@ const castIndex=inventory.features.findIndex(entry=>entry.id===casts.id);if(cast
 const naturals={id:'javascript-call-natural-source',required:true,javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-natural-source.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-call-natural-source.test.js','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-controls.mjs']},rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_natural_source.rs','rust/tests/unit/translation_javascript_call_natural_source.rs','parity/fixtures/javascript-call-natural-source.lino','parity/fixtures/javascript-call-source.lino','experiments/javascript-properties/call-natural-source-oracle.mjs']}};
 const naturalIndex=inventory.features.findIndex(entry=>entry.id===naturals.id);if(naturalIndex<0)inventory.features.push(naturals);else inventory.features[naturalIndex]=naturals;
 for(const feature of [
+ {id:'source-conditional-value-constructor-selection',required:true,
+ javascript:{status:'implemented',evidence:['js/src/translation/conditional-constructor-sharing-rules.js','js/scripts/source-conditional-constructors.mjs','js/tests/translation-conditional-constructor-sharing.test.js','parity/fixtures/conditional-constructor-sharing.lino']},
+ rust:{status:'implemented',evidence:['rust/src/translation/conditional_constructor_sharing_rules.rs','rust/tests/unit/conditional_constructor_sharing.rs','parity/fixtures/conditional-constructor-sharing.lino','parity/self-translation/javascript-call-machine-native.lino']}},
  {id:'javascript-call-literal-text-replacement',required:true,
  javascript:{status:'implemented',evidence:['js/src/translation/javascript-call-primitives.js','js/src/translation/utf16-text-rules.js','js/src/translation/javascript-call-lowering.js','js/tests/translation-javascript-text-replacement.test.js','parity/fixtures/javascript-call-source.lino','parity/fixtures/javascript-call-machine.lino']},
  rust:{status:'implemented',evidence:['rust/src/translation/javascript_call_machine.rs','rust/tests/unit/translation_javascript_call_source_machine.rs','parity/fixtures/javascript-call-source.lino','parity/fixtures/javascript-call-machine.lino']}},

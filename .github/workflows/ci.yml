@@ -1174,6 +1174,24 @@ jobs:
           node js/scripts/check-big-integer-bitwise-native.mjs
           --target "${{ matrix.target }}"
 
+      - name: Check constructor selection algebraic laws
+        if: ${{ !cancelled() }}
+        env:
+          CONSTRUCTOR_PROOF_TARGET: ${{ matrix.target }}
+        run: |
+          set -o pipefail
+          proof_work="issue-195-results/work/native/constructor-sharing/${CONSTRUCTOR_PROOF_TARGET}"
+          proof_log="issue-195-results/logs/constructor-sharing-${CONSTRUCTOR_PROOF_TARGET}.log"
+          mkdir -p "$proof_work" issue-195-results/logs
+          printf 'commit: %s\ntarget: %s\n' "$GITHUB_SHA" "$CONSTRUCTOR_PROOF_TARGET" > "$proof_log"
+          if [ "$CONSTRUCTOR_PROOF_TARGET" = lean ]; then
+            cp experiments/constructor-sharing/ConstructorSelection.lean "$proof_work/ConstructorSelection.lean"
+            node scripts/with-cache-cleanup.mjs --event test -- lean "$proof_work/ConstructorSelection.lean" 2>&1 | tee -a "$proof_log"
+          else
+            cp experiments/constructor-sharing/ConstructorSelection.v "$proof_work/ConstructorSelection.v"
+            node scripts/with-cache-cleanup.mjs --event test -- rocq compile -q "$proof_work/ConstructorSelection.v" 2>&1 | tee -a "$proof_log"
+          fi
+
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
       - name: Upload the stage outputs

@@ -11,3 +11,10 @@ export function parseAuthoredJavaScriptModule(source,identifier){
  catch(error){throw new SyntaxError('authored module syntax '+identifier+': '+String(error.stderr??error.message).slice(0,16384));}
  return {language:'ECMAScript module',engine:'Node.js V8',versionRange,inputEncoding:'UTF16LE code units',phase:'parse without linking, resolving imports or evaluation'};
 }
+
+// Inspect actual static dependencies without linking or executing the module.
+export function readAuthoredJavaScriptModuleDependencies(source,identifier){
+ parseAuthoredJavaScriptModule(source,identifier);
+ const inspect="import {readFileSync} from 'node:fs';import {SourceTextModule} from 'node:vm';const module=new SourceTextModule(readFileSync(0).toString('utf16le'),{identifier:process.argv[1]});process.stdout.write(JSON.stringify(module.dependencySpecifiers));";
+ return JSON.parse(execFileSync(process.execPath,['--no-warnings','--experimental-vm-modules','--max-old-space-size=64','--input-type=module','-e',inspect,identifier],{input:Buffer.from(source,'utf16le'),encoding:'utf8',maxBuffer:1024*1024,timeout:20000}));
+}

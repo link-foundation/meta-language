@@ -588,3 +588,5 @@ mod translation_javascript_string_arguments;
 mod translation_javascript_fixed_integer_casts;
 
 mod translation_javascript_call_natural_source;
+
+mod conditional_constructor_sharing;

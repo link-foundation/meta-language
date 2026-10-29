@@ -9929,3 +9929,38 @@ units. All predecessor input/assertion controls remain required. These source
 forms reduce repeated constructor/continuation expansion for automatic Rust and
 editable Links generation; they neither raise the 100,000 semantic-visit gate
 nor establish execution evidence or a completed equivalence certificate.
+
+Source authoring may select the separate `closed value constructor selection 1`
+profile. It resolves every candidate through the actual checked declaration,
+then captures the original condition tree once as a bounded alternative ordinal.
+Compatible occurrences share one complete constructor; every field selects its
+original argument in declaration order. Other constructors and arbitrary leaf
+bodies remain explicit alternatives. Equal source hashes never classify field
+meanings: only the same binding in the unchanged scope, exact literals, absence
+values and actual nullary value constructors form shared atom classes. Unknown
+owners, open/function-bearing values, ordinary references and constructors with
+bare floating fields stay outside this profile. In particular, it assumes no
+new NaN-boxing behavior. Original conditions and selected argument expressions
+remain actual code, including their exceptions and effects.
+
+The transformation keeps only smaller typed structural encodings. Its receipts
+retain original leaf and argument origins, complete field/class/choice tables,
+input/output structural hashes and actual producer input hashes. Fingerprints
+preserve undefined versus missing fields, signed scalar bits and every UTF-16
+unit; they establish source membership, not meaning equivalence. Cyclic type
+references are inspected through their actual nominal declarations using a
+bounded graph walk. Source work, depth, branch count and fingerprint sizes have
+explicit limits in the shared Links profile. No validation/resource gate is
+raised. Both packages ship the automatically translated finite ownership and
+selection definitions; the host source-authoring adapter only builds owned,
+typed terms from those decisions.
+
+Optional Lean and Rocq laws describe default-argument selection and constructor
+congruence under explicit class soundness. They use their selected prover logic,
+not a universal consumer foundation. They do not establish the complete adapter,
+field classification, JavaScript representation or execution trace obligations.
+CI checks those laws after JavaScript using the existing pinned provers. Deferred
+controls retain independent original source, condition and field traces, abrupt
+completion, fresh-name collisions, excluded floating/reference profiles, complete
+typed text/binary reload and four-target emission. Neither those declarations
+nor unexecuted theorem sources are evidence of completed delivery.
