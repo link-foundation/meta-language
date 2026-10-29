@@ -5102,6 +5102,19 @@ Lookup discovery also constructs this same canonical source projection before
 the ordinary semantic check. It never substitutes an unresolved free function
 named after a method. Final source-owner validation remains required.
 
+The canonical discovery requirement also applies to byte ASCII classification,
+checked integers, integer bits/magnitudes, primitive associated calls and
+TryFrom, primitive selections, standard owned calls, wrapping shifts and checked
+nonescaping String views. Their existing shared projections construct the real
+source operations during discovery. Synthetic method-name free calls and
+unregistered standard trait-function calls cannot stand in for those operations
+before `checkProgram(surface)`. Arity, actual receiver/argument owners, borrow
+consumers and the final source-origin pass remain required; the check itself is
+unchanged. Deferred cross-family originals retain matching-name decoys, forward
+siblings, eager effect order, complete source contracts, both codecs, four
+targets and independently compiled products. This source repair supplies no
+executed observations and does not establish full trait or grammar coverage.
+
 The lookup draft also admits cloned values for the supported scalar domains and
 actual standard owned Strings. Shared source-owner rules govern that choice;
 bounded projections cross only registered standard containers and retain each

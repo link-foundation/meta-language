@@ -7,7 +7,6 @@ export function readRustByteAscii(parser,receiver,method,args,range,path){
  const arity=readRustByteAsciiArity(method.value,parser.ordinaryCompletionContext());if(arity<0)return null;
  const source=parser.origins.origin(receiver,path);if(source.type?.kind==='string')return null;
  if(args.length!==arity)throw new TranslationError('type',method.value+' needs no actual byte predicate arguments',range);
- if(parser.origins.collecting)return{k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver],span:range};
  const owner=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner),error=readRustByteAsciiReceiverError(source.type?.kind??'',String(source.type?.bits??''),source.type?.signed===true,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'));
  if(error)throw unsupported('Rust byte ASCII receiver',error,range);
  const name=parser.freshProductBinding(),stack=[],pop=()=>{if(!stack.length)throw new TypeError('a byte predicate source plan lost an earlier term');return stack.pop();};

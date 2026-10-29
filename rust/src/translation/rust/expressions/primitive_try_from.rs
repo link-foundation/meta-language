@@ -269,20 +269,6 @@ impl RustParser {
             start: head.start.start,
             end: close.end,
         });
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: head.resolved,
-                        },
-                        range,
-                    )),
-                    args: inputs.into_iter().chain(defaults).collect(),
-                },
-                range,
-            )));
-        }
         let input = self.prepare_primitive_from_argument(inputs.remove(0), range, path)?;
         let source = facts(self, &input, path);
         let target = rust_fixed_type(&owner).ok_or_else(|| {

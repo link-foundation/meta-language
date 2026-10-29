@@ -273,23 +273,6 @@ impl RustParser {
                 .map_or(consumer.start, |span| span.start),
             end: close.end,
         });
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: std::iter::once(receiver.clone())
-                        .chain(args.iter().cloned())
-                        .chain(defaults)
-                        .collect(),
-                },
-                range,
-            )));
-        }
         let mut source = facts(self, receiver, path);
         let references_only = source
             .origin

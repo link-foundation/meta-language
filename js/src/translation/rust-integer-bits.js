@@ -7,7 +7,6 @@ import {readRustPrimitiveConversionFacts} from './rust-primitive-try-from.js';
 export function readRustIntegerBits(parser,receiver,method,args,range,path){
  if(!parser.ordinaryCompletionContext()||!acceptRustIntegerBitMethod(method.value))return null;
  if(args.length!==0)throw new TranslationError('type',method.value+' needs no actual source arguments',range);
- if(parser.origins.collecting)return{k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver],span:range};
  const source=readRustPrimitiveConversionFacts(parser,receiver,path),old=source.origin,owner=source.owner?.path.join('::')??'';
  if(acceptRustPrimitiveInherentCopy(method.value,source.kind,source.bits,source.signed,source.owner?.kind??'',owner,source.owner?.arguments.length??-1,old.proven===true,old.wrappers.length,old.wrappers.every(layer=>layer==='reference'),old.copyEvidence===true))source.origin={...old,wrappers:[],sourceLifetimes:[],copyEvidence:true};
  if(!acceptRustIntegerBitReceiver(source.kind,source.bits,source.signed,source.owner?.kind??'',owner,source.owner?.arguments.length??-1,source.origin.proven===true,source.origin.wrappers.length))throw unsupported('Rust integer bit operation','a proven standard fixed integer receiver with its actual source owner is required',range);

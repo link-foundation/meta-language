@@ -27,7 +27,6 @@ export function readRustPrimitiveAssociatedCall(parser,path){
  const values=[];while(!c.is(')')){values.push(parser.expr(path));if(!c.eat(','))break;}
  const close=c.expect(')','primitive associated call'),range={start:start.start,end:close.end};
  if(values.length!==arity)throw new TranslationError('type',`primitive associated ${method} expects ${arity} arguments but got ${values.length}`,range);
- if(parser.origins.collecting){const checked=readRustCheckedInteger(parser,values[0],{...start,value:method},values.slice(1),range,path);if(checked)return checked;return{k:'app',fn:{k:'name',path:resolved,span:range},args:values,span:range};}
  if(conversion)return projectRustPrimitiveFrom(parser,values[0],owner,range,path);
  let receiver=values[0];const negative=receiver.k==='unary'&&receiver.op==='neg'&&receiver.arg.k==='num',number=negative?receiver.arg:receiver;
  if(acceptRustPrimitiveAssociatedLiteral(owner,negative?'negative numeral':receiver.k==='num'?'numeral':'',Boolean(number.type))){

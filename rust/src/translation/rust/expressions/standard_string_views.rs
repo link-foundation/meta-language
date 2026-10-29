@@ -167,7 +167,7 @@ impl RustParser {
         &mut self,
         path: &[String],
     ) -> Result<Option<SExpr>> {
-        let Some((segments, offset)) = self.standard_string_view_path(path, false) else {
+        let Some((_segments, offset)) = self.standard_string_view_path(path, false) else {
             return Ok(None);
         };
         let start = self.peek();
@@ -182,7 +182,7 @@ impl RustParser {
                 head,
             ));
         }
-        if !self.origins.collecting && !self.standard_string_borrow.enabled {
+        if !self.standard_string_borrow.enabled {
             return Err(unsupported(
                 "Rust standard string view",
                 "the view needs an immediate checked nonstatic string argument consumer",
@@ -209,15 +209,6 @@ impl RustParser {
                 "a standard string view needs one actual borrowed String argument",
                 range,
             ));
-        }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(SNode::Name { path: segments }, range)),
-                    args,
-                },
-                range,
-            )));
         }
         self.project_standard_string_view(&args[0], range, path)
             .map(Some)

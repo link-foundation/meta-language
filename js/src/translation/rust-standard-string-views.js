@@ -39,12 +39,11 @@ export function readRustStandardStringView(parser,path){
  const c=parser.cursor,start=c.peek();
  if(!c.is('(',selected.offset))fail('a standard string view function value needs its own callable interpretation',{start:start.start,end:c.peek(selected.offset).end});
  const context=parser.standardStringBorrowContext;
- if(!parser.origins.collecting&&!context?.enabled)fail('the view needs an immediate checked nonstatic string argument consumer',{start:start.start,end:c.peek(selected.offset).end});
+ if(!context?.enabled)fail('the view needs an immediate checked nonstatic string argument consumer',{start:start.start,end:c.peek(selected.offset).end});
  for(let index=0;index<=selected.offset;index+=1)c.next();
  const args=[];while(!c.is(')')){args.push(parser.expr(path));if(!c.eat(','))break;}
  const close=c.expect(')','standard string view'),range={start:start.start,end:close.end};
  if(args.length!==1)throw typeError('a standard string view needs one actual borrowed String argument',range);
- if(parser.origins.collecting)return{k:'app',fn:{k:'name',path:selected.segments,span:range},args,span:range};
  const receiver=args[0],origin=parser.origins.origin(receiver,path),owner=origin.sourceOwner??readRustSourceTypeOwner(parser,['String'],[],STRING);
  const known=owner.kind==='library'&&owner.path.join('::')==='std::string::String'&&owner.arguments.length===0;
  if(!acceptRustStandardStringViewReceiver(origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true,origin.wrappers.every(layer=>layer==='reference'),known,args.length))fail('the receiver needs its actual standard borrowed String owner',range);

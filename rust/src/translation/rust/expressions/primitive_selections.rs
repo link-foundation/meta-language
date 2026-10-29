@@ -184,22 +184,6 @@ impl RustParser {
                 range,
             ));
         }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: std::iter::once(receiver.clone())
-                        .chain(args.iter().cloned())
-                        .collect(),
-                },
-                range,
-            )));
-        }
         let left = self.primitive_selection_facts(receiver, path);
         let right = self.primitive_selection_facts(&args[0], path);
         if !left.admitted() {
@@ -357,20 +341,6 @@ impl RustParser {
                 ),
                 range,
             ));
-        }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: vec![receiver.clone()],
-                },
-                range,
-            )));
         }
         let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         if !properties::accept_rust_signed_integer_property_receiver(
@@ -593,22 +563,6 @@ impl RustParser {
                 range,
             ));
         }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: std::iter::once(receiver.clone())
-                        .chain(args.iter().cloned())
-                        .collect(),
-                },
-                range,
-            )));
-        }
         let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         if !saturating::accept_rust_saturating_integer_receiver(
             &method.value,
@@ -692,22 +646,6 @@ impl RustParser {
                 format!("saturating_mul expects 1 arguments but got {}", args.len()),
                 range,
             ));
-        }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: std::iter::once(receiver.clone())
-                        .chain(args.iter().cloned())
-                        .collect(),
-                },
-                range,
-            )));
         }
         let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         let right = self.primitive_selection_facts(&args[0], path);
@@ -795,22 +733,6 @@ impl RustParser {
                 ),
                 range,
             ));
-        }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: std::iter::once(receiver.clone())
-                        .chain(args.iter().cloned())
-                        .collect(),
-                },
-                range,
-            )));
         }
         let value = self.primitive_inherent_copy_facts(receiver, path, &method.value);
         if !wrapping::accept_rust_wrapping_integer_receiver(

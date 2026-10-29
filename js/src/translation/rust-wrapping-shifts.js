@@ -8,7 +8,6 @@ import {readRustPrimitiveConversionFacts} from './rust-primitive-try-from.js';
 export function readRustWrappingShifts(parser,receiver,method,args,range,path){
  if(!parser.ordinaryCompletionContext()||!acceptRustWrappingShiftMethod(method.value))return null;
  if(args.length!==1)throw new TranslationError('type',method.value+' needs one actual u32 count argument',range);
- if(parser.origins.collecting)return{k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
  const source=readRustPrimitiveConversionFacts(parser,receiver,path),old=source.origin,owner=source.owner?.path.join('::')??'';
  if(acceptRustPrimitiveInherentCopy(method.value,source.kind,source.bits,source.signed,source.owner?.kind??'',owner,source.owner?.arguments.length??-1,old.proven===true,old.wrappers.length,old.wrappers.every(layer=>layer==='reference'),old.copyEvidence===true))source.origin={...old,wrappers:[],sourceLifetimes:[],copyEvidence:true};
  if(!acceptRustWrappingShiftReceiver(source.kind,source.bits,source.signed,source.owner?.kind??'',owner,source.owner?.arguments.length??-1,source.origin.proven===true,source.origin.wrappers.length))throw unsupported('Rust wrapping shift','a proven standard fixed integer receiver with its actual source owner is required',range);

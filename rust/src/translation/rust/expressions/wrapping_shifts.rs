@@ -35,20 +35,6 @@ impl RustParser {
                 range,
             ));
         }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: vec![receiver.clone(), args[0].clone()],
-                },
-                range,
-            )));
-        }
         let mut source = facts(self, receiver, path);
         let owner = source.path();
         if crate::translation::rust_primitive_inherent_copy_rules::accept_rust_primitive_inherent_copy(&method.value,&source.kind,&source.bits,source.signed,source.owner.as_ref().map_or("",|owner|owner.kind.as_str()),&owner,source.owner.as_ref().map_or(-1.0,|owner|count(owner.arguments.len())),source.origin.proven,count(source.origin.wrappers.len()),source.origin.wrappers.iter().all(|layer|layer=="reference"),source.origin.copy_evidence.is_some()){

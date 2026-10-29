@@ -9,7 +9,6 @@ import {readRustSaturatingIntegerBoundMagnitude} from './rust-saturating-integer
 export function readRustIntegerMagnitudes(parser,receiver,method,args,range,path){
  const arity=readRustIntegerMagnitudeArity(method.value,parser.ordinaryCompletionContext());if(arity<0)return null;
  if(args.length!==arity)throw new TranslationError('type',method.value+' needs '+arity+' actual source arguments',range);
- if(parser.origins.collecting)return{k:'app',fn:{k:'name',path:[method.value],span:range},args:[receiver,...args],span:range};
  const source=readRustPrimitiveConversionFacts(parser,receiver,path),old=source.origin,owner=source.owner?.path.join('::')??'';
  if(acceptRustPrimitiveInherentCopy(method.value,source.kind,source.bits,source.signed,source.owner?.kind??'',owner,source.owner?.arguments.length??-1,old.proven===true,old.wrappers.length,old.wrappers.every(layer=>layer==='reference'),old.copyEvidence===true))source.origin={...old,wrappers:[],sourceLifetimes:[],copyEvidence:true};
  if(!acceptRustIntegerMagnitudeReceiver(method.value,source.kind,source.bits,source.signed,source.owner?.kind??'',owner,source.owner?.arguments.length??-1,source.origin.proven===true,source.origin.wrappers.length))throw unsupported('Rust integer magnitude','a proven standard integer receiver with the actual signed method is required',range);

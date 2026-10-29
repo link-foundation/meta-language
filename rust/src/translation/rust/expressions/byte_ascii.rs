@@ -106,20 +106,6 @@ impl RustParser {
                 range,
             ));
         }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(
-                        SNode::Name {
-                            path: vec![method.value.clone()],
-                        },
-                        range,
-                    )),
-                    args: vec![receiver.clone()],
-                },
-                range,
-            )));
-        }
         let owner = leaf(
             source
                 .expanded_source_owner

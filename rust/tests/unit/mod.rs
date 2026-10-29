@@ -593,3 +593,5 @@ mod conditional_constructor_sharing;
 mod utf16_text_expansion;
 
 mod translation_rust_array_lookup_lazy;
+
+mod translation_rust_canonical_discovery;

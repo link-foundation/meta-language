@@ -20,7 +20,6 @@ export function readRustStandardOwnedCall(parser,path){
  const args=[];while(!c.is(')')){args.push(parser.expr(path));if(!c.eat(','))break;}
  const close=c.expect(')','standard owned call'),range={start:start.start,end:close.end};
  if(args.length!==1)throw typeError('a standard owned call needs one actual borrowed argument',range);
- if(parser.origins.collecting)return{k:'app',fn:{k:'name',path:segments,span:range},args,span:range};
  const receiver=args[0],origin=parser.origins.origin(receiver,path);
  const owner=origin.sourceOwner??(origin.type?.kind==='string'?readRustSourceTypeOwner(parser,origin.textSourceModel==='string slice'?['str']:['String'],[],STRING):null);
  const knownText=Boolean(owner&&acceptRustReadOnlyQueryOwner('string empty',owner.kind,owner.path.join('::')));

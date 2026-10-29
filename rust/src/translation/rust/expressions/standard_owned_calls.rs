@@ -97,15 +97,6 @@ impl RustParser {
                 range,
             ));
         }
-        if self.origins.collecting {
-            return Ok(Some(SExpr::new(
-                SNode::App {
-                    func: Box::new(SExpr::new(SNode::Name { path: segments }, range)),
-                    args,
-                },
-                range,
-            )));
-        }
         self.project_standard_owned_call(&role, &args[0], range, path)
     }
 
