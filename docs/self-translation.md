@@ -1297,3 +1297,12 @@ from numeric width. Both policies have generated native modules and paired
 source program assets. `draft-rust-iterator-reductions.mjs --draft` constructs
 these actual source translations, literal controls and package inventories;
 it does not import deferred tests or parse represented original programs.
+
+Borrowed scalar consumers reuse the same reduction path. The separate
+`rust-copy-closure-parameter-rules.js` owns admission of actual immutable
+primitive reference parameters. Closure headers use this fact without changing
+capture/result admission or erasing source reference wrappers. Its native
+module is generated automatically, with thin source-origin projections in the
+existing runtime adapters. The iterator fixture retains the original refused
+borrowed input as a positive case with its predecessor revision and reason.
+All control execution remains deferred.

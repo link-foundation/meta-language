@@ -1,3 +1,4 @@
+import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
 // Actual iterator tokens, source owners and checked callback facts. Runtime
 // reduction/short-circuit behavior belongs to the existing common array terms.
 import {BOOL} from './types.js';
@@ -15,15 +16,15 @@ export function readRustIteratorReduction(parser,receiver,method,args,range,path
  const knownOwner=Boolean(element&&owner&&owner.arguments.length===0&&(owner.kind==='primitive'||owner.kind==='unit'&&owner.path.length===0)&&readRustArrayLookupElementOwnerError(element.kind,String(element.bits??''),element.signed===true,owner.path.join('::'))==='');
  const receiverError=readRustIteratorReductionReceiverError(knownReceiver,knownOwner);if(receiverError)refuse(receiverError);
  const c=parser.cursor;if(!c.eat('.')||c.peek().kind!=='identifier')refuse('an iterator requires its immediate copied or cloned reduction');
- const adapter=c.next();if(!acceptRustIteratorCopyAdapter(adapter.value))refuse('an iterator requires its immediate copied or cloned reduction',adapter);
- c.expect('(','iterator copy adapter');c.expect(')','iterator copy adapter');if(!c.eat('.')||c.peek().kind!=='identifier')refuse('an iterator requires its complete immediate reduction');
- const consumer=c.next(),operation=readRustIteratorReductionOperation(consumer.value);if(!operation)refuse('the complete standard iterator reduction needs a registered operation',consumer);
+ const first=c.next(),borrowed=!acceptRustIteratorCopyAdapter(first.value);let consumer=first;
+ if(!borrowed){c.expect('(','iterator copy adapter');c.expect(')','iterator copy adapter');if(!c.eat('.')||c.peek().kind!=='identifier')refuse('an iterator requires its complete immediate reduction');consumer=c.next();}
+ const operation=readRustIteratorReductionOperation(consumer.value);if(!operation)refuse('the complete standard iterator reduction needs a registered operation',consumer);
  c.expect('(','iterator reduction');let initial=null,initialOrigin=null;
  if(consumer.value==='fold'){initial=parser.expr(path);initialOrigin=parser.origins.origin(initial,path);const error=readRustIteratorReductionAccumulatorError(Boolean(initialOrigin.type)&&initialOrigin.proven===true,parser.origins.immutableProduct(initialOrigin),initialOrigin.wrappers.length);if(error)refuse(error,initial.span);c.expect(',','iterator fold');}
- const itemOrigin={...parser.origins.typeOrigin(element,path),sourceOwner:structuredClone(owner)},resultOrigin=initialOrigin??{...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}},parameters=initialOrigin?[initialOrigin,itemOrigin]:[itemOrigin];
+ const itemOrigin={...parser.origins.typeOrigin(element,path),sourceOwner:structuredClone(owner),wrappers:borrowed?['reference']:[],sourceLifetimes:borrowed?[null]:[]},resultOrigin=initialOrigin??{...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}},parameters=initialOrigin?[initialOrigin,itemOrigin]:[itemOrigin];
  const expected={...parser.origins.typeOrigin({kind:'function',params:parameters.map(origin=>origin.type),ret:resultOrigin.type},path),copyEvidence:true,callableParameters:parameters,callableResult:resultOrigin};
  const callback=readRustExpectedCopyClosure(parser,path,expected);c.eat(',');const close=c.expect(')','iterator reduction');range={start:receiver.span?.start??range.start,end:close.end};
- const callable=parser.origins.origin(callback,path),error=readRustIteratorReductionCallbackError(consumer.value,callable.type?.kind??'',callable.type?.params?.length??-1,callable.wrappers.length,(callable.callableParameters??[]).map(origin=>origin.proven===true&&parser.origins.immutableProduct(origin)),callable.callableResult?.proven===true&&Boolean(callable.callableResult.type));if(error)refuse(error,callback.span);
+ const callable=parser.origins.origin(callback,path),error=readRustIteratorReductionCallbackError(consumer.value,callable.type?.kind??'',callable.type?.params?.length??-1,callable.wrappers.length,(callable.callableParameters??[]).map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),callable.callableResult?.proven===true&&Boolean(callable.callableResult.type));if(error)refuse(error,callback.span);
  for(let index=0;index<parameters.length;index+=1)parser.origins.argument(callable.callableParameters[index],parameters[index],callback.span);parser.origins.argument(callable.callableResult,resultOrigin,callback.span);
  const values={receiver,initial,callback},types={receiver:source.type,initial:initialOrigin?.type,callback:callable.type},captures=readRustIteratorReductionCaptureRoles(consumer.value).map(role=>({name:parser.freshProductBinding(),value:values[role],type:types[role],role})),names=new Map(captures.map(capture=>[capture.role,capture.name])),local=role=>({k:'name',path:[names.get(role)],span:range});
  let body={k:'method',object:local('receiver'),op:operation,args:[local('callback'),...(initial?[local('initial')]:[])],span:range};

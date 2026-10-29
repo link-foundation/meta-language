@@ -260,7 +260,7 @@ impl RustParser {
             .collect::<Vec<_>>();
         let copies = origins
             .iter()
-            .map(SourceOrigin::direct_copy_value)
+            .map(SourceOrigin::copy_closure_parameter)
             .collect::<Vec<_>>();
         let reason = if written {
             rules::read_rust_copy_closure_header_error(

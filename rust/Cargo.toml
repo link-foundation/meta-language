@@ -198,6 +198,7 @@ include = [
     "src/data/rust-checked-integer-program.lino",
     "src/data/rust-constructed-string-interface-program.lino",
     "src/data/rust-contextual-closure-program.lino",
+    "src/data/rust-copy-closure-parameter-program.lino",
     "src/data/rust-copy-closure-program.lino",
     "src/data/rust-data-type-field-signature-program.lino",
     "src/data/rust-declaration-header-controls.lino",

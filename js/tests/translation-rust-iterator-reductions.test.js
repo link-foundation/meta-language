@@ -1,3 +1,4 @@
+import {acceptRustCopyClosureParameterSource} from '../src/translation/rust-copy-closure-parameter-rules.js';
 // Deferred controls: source authors may syntax-parse, never import this module.
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -11,6 +12,7 @@ import {selectRustArrayElementOwnerIndex} from '../src/translation/rust-array-el
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-iterator-reductions.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 for(const [index,row]of fixture.premises.entries())test('iterator decision '+index,()=>assert.deepEqual(rules[row.operation](...row.args),row.expected));
+for(const [index,row]of fixture.parameterPremises.entries())test('immutable scalar parameter '+index,()=>assert.equal(acceptRustCopyClosureParameterSource(row.known,row.baseCopy,row.layers,row.reference,row.primitiveOwner),row.expected));
 for(const [index,row]of fixture.ownerSelections.entries())test('actual vector owner '+index,()=>assert.equal(selectRustArrayElementOwnerIndex(row.identities,row.admitted),row.expected));
 for(const row of fixture.cases)test(row.name,()=>{
  const original=row.source+'fn main(){}',concrete=LinkNetwork.parse(original,'Rust');for(const network of [concrete,LinkNetwork.fromLino(concrete.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(concrete))])assert.equal(network.reconstructText(),original);

@@ -395,3 +395,5 @@ pub mod rust_byte_string_expression_rules;
 
 pub mod rust_iterator_reduction_rules;
 pub mod rust_array_element_owner_rules;
+
+pub mod rust_copy_closure_parameter_rules;

@@ -244,6 +244,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-contextual-closure-program.lino" => {
             Some(include_str!("../data/rust-contextual-closure-program.lino"))
         }
+        "rust-copy-closure-parameter-program.lino" => Some(include_str!(
+            "../data/rust-copy-closure-parameter-program.lino"
+        )),
         "rust-copy-closure-program.lino" => {
             Some(include_str!("../data/rust-copy-closure-program.lino"))
         }

@@ -10446,9 +10446,15 @@ callback construction, and each is evaluated once even on empty input.
 Predicate short circuit and left fold use the common operations. JavaScript
 owns the source admission and capture plans; Rust is generated from that
 source, with native adapters transporting tokens, source facts and terms.
-These drafts do not imply support for arbitrary iterator state, borrowed
-callback parameters, mutable captures, other combinators or general inference;
-those remain requirements of full translation. Complete independent originals,
+Immediate borrowed scalar consumers also retain actual immutable reference
+parameters, including explicit dereferences, through the same callable terms.
+Parameter admission requires a known immutable Copy referent and an actual
+matching primitive owner for exactly one reference layer. Source reference
+wrappers and inferred lifetimes survive in callable signatures. This does not
+admit mutable references, nested references, borrowed nonprimitive values,
+reference captures or escaping reference results. Those semantics, arbitrary
+iterator state, mutable captures, other combinators and general inference
+remain requirements of full translation. Complete independent originals,
 source decision premises, source ownership, CST reconstruction, both graph
 codecs and four target emissions have deferred controls in
 `parity/fixtures/rust-iterator-reductions.lino`. None has executed during the

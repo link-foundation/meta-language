@@ -71,6 +71,26 @@ pub(super) struct SourceOrigin {
 }
 
 impl SourceOrigin {
+    /// Actual immutable scalar-reference parameter facts; source wrappers survive.
+    pub(super) fn copy_closure_parameter(&self) -> bool {
+        let owner = self
+            .expanded_source_owner
+            .as_ref()
+            .or(self.source_owner.as_ref());
+        let primitive = if let (Some(owner), Some(ty)) = (owner, self.ty.as_ref()) {
+            let (bits, signed) = match ty {
+                Type::Fixed { bits, signed } => (bits.to_string(), *signed),
+                _ => (String::new(), false),
+            };
+            owner.kind == "primitive" && owner.arguments.is_empty() && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed)
+        } else {
+            false
+        };
+        let mut base = self.clone();
+        base.wrappers.clear();
+        crate::translation::rust_copy_closure_parameter_rules::accept_rust_copy_closure_parameter_source(self.proven,base.direct_copy_value(),self.wrappers.len() as f64,self.wrappers.first().is_some_and(|value| value == "reference"),primitive)
+    }
+
     /// Standard readonly view from actual static u8 array facts; no owner mutation.
     pub(super) fn static_byte_array_read_view(&self) -> Option<Self> {
         let element = match &self.ty {

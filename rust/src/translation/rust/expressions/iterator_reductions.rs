@@ -91,22 +91,22 @@ impl RustParser {
                 range,
             ));
         }
-        let adapter = self.cursor.advance();
-        if !rules::accept_rust_iterator_copy_adapter(&adapter.value) {
-            return Err(fail(
-                "an iterator requires its immediate copied or cloned reduction",
-                Some(adapter.span()),
-            ));
-        }
-        self.cursor.expect("(", Some("iterator copy adapter"))?;
-        self.cursor.expect(")", Some("iterator copy adapter"))?;
-        if self.cursor.eat(".").is_none() || !self.cursor.is_kind(super::TokenKind::Identifier) {
-            return Err(fail(
-                "an iterator requires its complete immediate reduction",
-                range,
-            ));
-        }
-        let consumer = self.cursor.advance();
+        let first = self.cursor.advance();
+        let borrowed = !rules::accept_rust_iterator_copy_adapter(&first.value);
+        let consumer = if borrowed {
+            first
+        } else {
+            self.cursor.expect("(", Some("iterator copy adapter"))?;
+            self.cursor.expect(")", Some("iterator copy adapter"))?;
+            if self.cursor.eat(".").is_none() || !self.cursor.is_kind(super::TokenKind::Identifier)
+            {
+                return Err(fail(
+                    "an iterator requires its complete immediate reduction",
+                    range,
+                ));
+            }
+            self.cursor.advance()
+        };
         let operation = rules::read_rust_iterator_reduction_operation(&consumer.value);
         if operation.is_empty() {
             return Err(fail(
@@ -134,6 +134,10 @@ impl RustParser {
         }
         let mut item = SourceOrigin::with_type(element, path, Vec::new());
         item.source_owner = Some(owner);
+        if borrowed {
+            item.wrappers.push("reference".to_owned());
+            item.source_lifetimes.push(None);
+        }
         let result = initial_origin.clone().unwrap_or_else(|| boolean(path));
         let parameters = if let Some(accumulator) = &initial_origin {
             vec![accumulator.clone(), item]
@@ -165,7 +169,7 @@ impl RustParser {
         let actual_parameters = callable.callable_parameters.as_deref().unwrap_or(&[]);
         let known = actual_parameters
             .iter()
-            .map(|parameter| parameter.proven && parameter.direct_copy_value())
+            .map(SourceOrigin::copy_closure_parameter)
             .collect::<Vec<_>>();
         let count_parameters = match &callable.ty {
             Some(Type::Function { params, .. }) => count(params.len()),

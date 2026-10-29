@@ -1,6 +1,8 @@
 //! Deferred source products and every shared reduction/owner decision.
 #[path = "../../src/translation/rust_array_element_owner_rules.rs"]
 mod owners;
+#[path = "../../src/translation/rust_copy_closure_parameter_rules.rs"]
+mod parameters;
 #[path = "../../src/translation/rust_iterator_reduction_rules.rs"]
 mod rules;
 use serde_json::{Value, json};
@@ -109,6 +111,28 @@ fn iterator_reductions_preserve_products_and_every_source_decision() {
         assert_eq!(
             owners::select_rust_array_element_owner_index(&identities, &admitted),
             row["expected"].as_f64().unwrap()
+        );
+    }
+}
+
+#[test]
+fn every_immutable_scalar_parameter_admission() {
+    super::translation_string_array_copy_sort::require_rust_profile();
+    let data = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-iterator-reductions.lino"
+    ))
+    .unwrap();
+    for row in data["parameterPremises"].as_array().unwrap() {
+        assert_eq!(
+            parameters::accept_rust_copy_closure_parameter_source(
+                row["known"].as_bool().unwrap(),
+                row["baseCopy"].as_bool().unwrap(),
+                row["layers"].as_f64().unwrap(),
+                row["reference"].as_bool().unwrap(),
+                row["primitiveOwner"].as_bool().unwrap()
+            ),
+            row["expected"].as_bool().unwrap(),
+            "{row}"
         );
     }
 }
