@@ -30,6 +30,7 @@ use super::ml_array;
 use super::ml_string;
 use super::project_java_script_property_key_completion;
 use super::read_java_script_call_code_registers;
+use super::read_java_script_integer_protocol_operation_error;
 use super::read_java_script_ordinary_heap_error;
 use super::read_java_script_ordinary_value_error;
 use super::read_java_script_primitive_conversion_state_error;
@@ -168,7 +169,7 @@ pub fn resume_java_script_property_definition(heap: self::JavaScriptOrdinaryHeap
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_number_protocol_operation_error(operation: &self::ml_string::Text) -> self::ml_string::Text {
-    if (((*operation) == (self::ml_string::Text::from_units(vec![99, 111, 110, 118, 101, 114, 116, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 110, 117, 109, 98, 101, 114]))) || ((*operation) == (self::ml_string::Text::from_units(vec![99, 111, 101, 114, 99, 101, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 110, 117, 109, 98, 101, 114])))) {
+    if ((((*operation) == (self::ml_string::Text::from_units(vec![99, 111, 110, 118, 101, 114, 116, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 110, 117, 109, 98, 101, 114]))) || ((*operation) == (self::ml_string::Text::from_units(vec![99, 111, 101, 114, 99, 101, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 110, 117, 109, 98, 101, 114])))) || ((self::read_java_script_integer_protocol_operation_error(operation)) == (self::ml_string::Text::from_units(vec![])))) {
         self::ml_string::Text::from_units(vec![])
     } else {
         self::ml_string::Text::from_units(vec![110, 117, 109, 98, 101, 114, 32, 99, 111, 110, 118, 101, 114, 115, 105, 111, 110, 32, 114, 101, 113, 117, 105, 114, 101, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 114, 101, 103, 105, 115, 116, 101, 114, 101, 100, 32, 115, 111, 117, 114, 99, 101, 32, 111, 112, 101, 114, 97, 116, 105, 111, 110])

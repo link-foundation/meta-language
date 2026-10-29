@@ -116,6 +116,32 @@ add('explicit BigInt conversion preserves exact Number inputs',heap(),fn('10',3,
 add('implicit BigInt conversion rejects Number operands',heap(),fn('10',3,[constant(1,number(1)),{$:'primitive',destination:2,operation:'coerce primitive integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt.asIntN(64,1)",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Number value to a BigInt'});
 add('BigInt text work quota retains the original conversion state',heap(),fn('10',3,[constant(1,text(' '.repeat(4097))),{$:'primitive',destination:2,operation:'convert explicit integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt(' '.repeat(4097))",{kind:'resource',position:1,reason:'BigInt text conversion exceeds the selected 4096-unit work profile',referenceValue:integer('0')});
 add('BigInt identity does not perform bounded arithmetic work',heap(),fn('10',3,[constant(1,integer(oversizedInteger)),{$:'primitive',destination:2,operation:'convert explicit integer',arguments:[1]},ret(2)]),[],"ctx=>BigInt(BigInt('1'+'0'.repeat(1234)))",{kind:'value',value:integer(oversizedInteger)});
+// Derive independent BigInt originals from complete retained Number protocol
+// inputs. This transforms literal programs/expectations, never executes them.
+const integerConversions=[
+ ['Number executes the actual ordinary valueOf body','BigInt executes actual valueOf before integer conversion','41'],
+ ['Number inherited valueOf retains the original receiver','BigInt inherited valueOf retains the original receiver','41'],
+ ['Number tries toString only after valueOf returns an Object','BigInt tries toString after an Object valueOf result','0'],
+ ['explicit Number applies the numeric exotic hint and rounds returned BigInt','BigInt keeps the numeric exotic hint and exact returned integer','9007199254740993'],
+ ['a noncallable exotic Number method requests the actual realm','BigInt refuses a noncallable exotic method',null],
+ ['Number getter throws retain their exact original value','BigInt getter throws retain their exact original value',null],
+ ['Number reads its second method from the latest heap after valueOf effects','BigInt reads its second method from the latest mutated heap','42'],
+ ['Number quota retains a completed Object conversion without replaying its method','BigInt quota retains its completed primitive without repeating methods','resource'],
+ ['exotic Number method cannot return an Object','BigInt exotic method must return a primitive',null],
+ ['Number exhausted ordinary methods request the actual realm','BigInt exhausted methods request the actual realm',null],
+ ['null exotic Number method falls back to actual ordinary conversion','BigInt null exotic method retains ordinary fallback','41'],
+ ['noncallable ordinary Number method is skipped without coercion','BigInt skips a noncallable ordinary method','43']
+];
+for(const [original,name,result]of integerConversions){
+ const row=structuredClone(programs.find(row=>row.name===original));
+ if(!row)throw new TypeError('integer original must retain its full source protocol');
+ row.name=name;row.source=row.source.replace('Number(','BigInt(');
+ for(const fn of row.program.functions)for(const instruction of fn.instructions)if(instruction.$==='primitive'&&instruction.operation==='convert explicit number')instruction.operation='convert explicit integer';
+ if(result==='resource')row.expected={...row.expected,reason:'BigInt text conversion exceeds the selected 4096-unit work profile',referenceValue:integer('0'),pending:'waitNumber'};
+ else if(result!==null)row.expected={...row.expected,value:integer(result)};
+ programs.push(row);
+}
+add('implicit object BigInt rejects a Number only after actual method effects',heap([entity('1',[property('valueOf',data(object('5',true)))])]),convertObject('coerce primitive integer'),[methodFive],"ctx=>BigInt.asIntN(64,ctx.objects.get('1'))",{kind:'allocation',realm,errorClass:'TypeError',reason:'Cannot convert a Number value to a BigInt'},[methodFiveOriginal]);
 const base=programs[0];
 const invalid=[{name:'unknown source realm',program:{...base.program,realms:[]},reason:'call functions require their actual declared source realm'},
  {name:'out of range register destination',program:{...base.program,functions:[{...base.program.functions[0],instructions:[constant(3,undef),ret(0)]}]},reason:'call instructions require actual in-range register coordinates'},
@@ -142,6 +168,17 @@ const invalidStates=[
  stateRow('completed numeric primitive cannot retain an active child',primitiveState(text('')),'a completed numeric primitive cannot have a suspended child call',{machine:{$:'callMachine',heap:heap(),frames:[stateFrame(numericPending(primitiveState(text('')))),{...stateFrame({$:'callIdle'}),position:0}]}}),
  stateRow('numeric continuation preserves the original coordinate gate',protocolState(conversionState),'pending calls retain their actual destination register',{machine:{$:'callMachine',heap:heap(),frames:[stateFrame({...numericPending(protocolState(conversionState)),destination:3})]}}),
  ];
+// Preserve every original continuation-refusal input in the integer profile.
+function integerContinuationLiteral(value){
+ if(typeof value==='string'){
+  const tags={'convert explicit number':'convert explicit integer','coerce primitive number':'coerce primitive integer'};
+  return tags[value]??value.replace('numeric continuation','integer continuation');
+ }
+ if(Array.isArray(value))return value.map(integerContinuationLiteral);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,integerContinuationLiteral(item)]));
+ return value;
+}
+invalidStates.push(...invalidStates.map(row=>({...integerContinuationLiteral(row),name:'integer profile: '+row.name})));
 const textProgram={...stateProgram,functions:stateProgram.functions.map(value=>({...value,instructions:value.instructions.map(instruction=>instruction.$==='primitive'?{...instruction,operation:'convert primitive text'}:instruction)}))};
 const textPending=state=>({$:'waitText',destination:2,realm,state}),textState={$:'textProtocolState',state:{...conversionState,hint:'string'}};
 const textStateRow=(name,state,reason,extra={})=>({name,program:textProgram,heap:heap(),machine:{$:'callMachine',heap:heap(),frames:[stateFrame(textPending(state))]},reason,...extra});

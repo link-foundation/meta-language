@@ -8,6 +8,7 @@ use super::JavaScriptOrdinaryHeap;
 use super::JavaScriptSemanticValue;
 use super::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop132Result;
 use super::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop134Result;
+use super::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Result;
 use super::ml;
 use super::ml_array;
 use super::ml_source_exception;
@@ -15,42 +16,8 @@ use super::ml_string;
 use super::read_java_script_call_primitive_arity_error;
 use super::read_java_script_call_registers;
 use super::read_java_script_ordinary_value_error;
+use super::source_ml_source1_temporary_read_java_script_call_program_error_loop135;
 use super::test_java_script_call_coordinate;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Result {
-    MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Done,
-    MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Return(self::ml_string::Text),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_java_script_call_program_error_loop135(mut fn_: self::JavaScriptCallFunction, source_ml_source1_temporary_values130: &[f64], mut source_ml_source1_temporary_index130: self::ml::Big) -> self::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Result {
-    loop {
-        return if (source_ml_source1_temporary_index130 < (self::ml::Big::from_u128(source_ml_source1_temporary_values130.len() as u128))) {
-            {
-                let register = self::ml_array::at(source_ml_source1_temporary_values130, source_ml_source1_temporary_index130.to_index());
-                if !(self::test_java_script_call_coordinate(register, match fn_.clone() {
-                    self::JavaScriptCallFunction::CallFunction(_, _, _, _, _, source_ml_source2_data_property_value2752, _, _) => {
-                        source_ml_source2_data_property_value2752
-                    }
-                })) {
-                    self::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Result::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Return(self::ml_string::Text::from_units(vec![99, 97, 108, 108, 32, 105, 110, 115, 116, 114, 117, 99, 116, 105, 111, 110, 115, 32, 114, 101, 113, 117, 105, 114, 101, 32, 97, 99, 116, 117, 97, 108, 32, 105, 110, 45, 114, 97, 110, 103, 101, 32, 114, 101, 103, 105, 115, 116, 101, 114, 32, 99, 111, 111, 114, 100, 105, 110, 97, 116, 101, 115]))
-                } else {
-                    {
-                        let source_ml_source1_temporary_index130_2 = source_ml_source1_temporary_index130.add(&self::ml::Big::from_i128(1));
-                        {
-                            source_ml_source1_temporary_index130 = source_ml_source1_temporary_index130_2.clone();
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Result::MlSource1TemporaryReadJavaScriptCallProgramErrorLoop135Done
-        };
-    }
-}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

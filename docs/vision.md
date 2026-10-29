@@ -9757,8 +9757,14 @@ conversion definitions. Existing BigInt identity conversion performs no
 arithmetic and retains its full value. Parsing uses the selected4096-unit and
 4096-bit work profiles; invalid input requests the actual SyntaxError or
 RangeError, while resource exhaustion stays distinct. Implicit ToBigInt rejects
-Number even when integral. Object conversion still requires its suspended
-ToPrimitive continuation; primitive support does not claim that requirement.
+Number even when integral. Registered object BigInt conversion uses the existing
+numeric-hint ToPrimitive continuation. The legacy Number pending-state tags
+remain compatible; the actual suspended source instruction selects the complete
+Number or BigInt conversion, which retain distinct meanings. Ordinary/exotic
+getters, calls, receiver, authoritative Symbol, realm and latest heap remain
+checked. A work refusal retains the completed primitive so retry cannot repeat
+method effects. Complete JavaScript frontend object admission and all object
+allocation/closure semantics remain separate requirements.
 
 The frontend-to-call lowering recognizes complete checked integer result-column
 protocols for construction, exponentiation, division and remainder. It checks

@@ -19,6 +19,7 @@ use super::plan_java_script_ordinary_get;
 use super::plan_java_script_ordinary_set;
 use super::push_java_script_call;
 use super::read_java_script_call_primitive_arity_error;
+use super::read_java_script_integer_protocol_operation_error;
 use super::read_java_script_source_exception_class;
 use super::replace_java_script_call_frame;
 use super::request_java_script_call_error;
@@ -369,7 +370,7 @@ pub fn execute_java_script_call_primitive_instruction(program: self::JavaScriptC
                                                     if ((self::read_java_script_source_exception_class(&(operation))) != (self::ml_string::Text::from_units(vec![]))) {
                                                         self::request_java_script_call_source_error(program.clone(), machine.clone(), frame.clone(), instruction.clone())
                                                     } else {
-                                                        if (((operation == (self::ml_string::Text::from_units(vec![99, 111, 110, 118, 101, 114, 116, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 110, 117, 109, 98, 101, 114]))) || (operation == (self::ml_string::Text::from_units(vec![99, 111, 101, 114, 99, 101, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 110, 117, 109, 98, 101, 114])))) && match input.clone() {
+                                                        if ((((operation == (self::ml_string::Text::from_units(vec![99, 111, 110, 118, 101, 114, 116, 32, 101, 120, 112, 108, 105, 99, 105, 116, 32, 110, 117, 109, 98, 101, 114]))) || (operation == (self::ml_string::Text::from_units(vec![99, 111, 101, 114, 99, 101, 32, 112, 114, 105, 109, 105, 116, 105, 118, 101, 32, 110, 117, 109, 98, 101, 114])))) || ((self::read_java_script_integer_protocol_operation_error(&(operation))) == (self::ml_string::Text::from_units(vec![])))) && match input.clone() {
                                                             self::JavaScriptSemanticValue::Object(_, _) => {
                                                                 true
                                                             }

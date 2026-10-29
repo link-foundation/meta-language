@@ -3,6 +3,9 @@
 import {convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger,readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces} from './big-integer-conversion-rules.js';
 import {readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
 
+/** @param {string} operation @returns {string} */
+export function readJavaScriptIntegerProtocolOperationError(operation){return operation==='convert explicit integer'||operation==='coerce primitive integer'?'':'integer conversion requires its actual registered source operation';}
+
 /** @param {string} form @param {string} value @returns {JavaScriptCallPrimitiveResult} */
 export function refuseJavaScriptCallIntegerConversion(form,value){
  const pieces=readJavaScriptBigIntegerConversionMessagePieces(form);
@@ -17,7 +20,7 @@ export function readJavaScriptCallIntegerText(units){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallIntegerConversion(operation,value){
- if(operation!=='convert explicit integer'&&operation!=='coerce primitive integer')return {$:'primitiveInvalid',reason:'integer conversion requires its actual registered source operation'};
+ const error=readJavaScriptIntegerProtocolOperationError(operation);if(error!=='')return {$:'primitiveInvalid',reason:error};
  switch(value.$){
   case 'integer':return {$:'primitiveValue',value};
   case 'boolean':return {$:'primitiveValue',value:{$:'integer',value:convertJavaScriptBooleanBigInteger(value.value)}};

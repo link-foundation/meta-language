@@ -1,3 +1,6 @@
+// Numeric-hint continuations retain legacy Number state tags for compatibility.
+// Their source instruction distinguishes Number and BigInt conversion semantics.
+import {readJavaScriptIntegerProtocolOperationError} from './javascript-call-integer-conversion.js';
 import {readJavaScriptTextProtocolOperationError} from './javascript-text-conversion-protocol.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptCallPrimitiveArityError,executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
@@ -441,7 +444,7 @@ export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,
  const arity=readJavaScriptCallPrimitiveArityError(instruction.operation,instruction.arguments.length);if(arity!=='')return {$:'machineInvalid',heap:machine.heap,reason:arity};
  const arguments_=instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}),input=arguments_[0]??{$:'undefined'};
  if(readJavaScriptSourceExceptionClass(instruction.operation)!=='')return requestJavaScriptCallSourceError(program,machine,frame,instruction);
- if((instruction.operation==='convert explicit number'||instruction.operation==='coerce primitive number')&&input.$==='object'){
+ if((instruction.operation==='convert explicit number'||instruction.operation==='coerce primitive number'||readJavaScriptIntegerProtocolOperationError(instruction.operation)==='')&&input.$==='object'){
   const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a number conversion needs its actual registered source owner'};
   const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...frame,position:frame.position+1});
