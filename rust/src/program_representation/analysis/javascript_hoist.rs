@@ -12,17 +12,7 @@ pub(super) fn hoist_var_declarations(
 ) {
     let function_bodies = syntax
         .iter()
-        .filter(|fact| {
-            matches!(
-                fact.term.as_str(),
-                "function_declaration"
-                    | "function_expression"
-                    | "generator_function_declaration"
-                    | "generator_function"
-                    | "arrow_function"
-                    | "method_definition"
-            )
-        })
+        .filter(|fact| crate::translation::source_library_binding_rules::test_java_script_source_variable_environment_term(&fact.term))
         .flat_map(|function| {
             syntax.iter().filter_map(move |block| {
                 (block.term == "statement_block"

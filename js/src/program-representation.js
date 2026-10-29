@@ -1,5 +1,5 @@
 import { readModuleBindingFields } from './module-binding-fields.js';
-import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm} from './translation/source-library-binding-rules.js';
 import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
 import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
 import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
@@ -592,12 +592,8 @@ function resolveBindings(tokens, syntax, source, language, moduleBindings = []) 
 }
 
 function hoistJavaScriptVars(declarations, tokens, syntax, scopes,functionScopes) {
-  const functionTerms = new Set([
-    'function_declaration', 'function_expression', 'generator_function_declaration',
-    'generator_function', 'arrow_function', 'method_definition',
-  ]);
   const functionBodies = new Set(syntax
-    .filter(({ term }) => functionTerms.has(term))
+    .filter(({ term }) => testJavaScriptSourceVariableEnvironmentTerm(term))
     .flatMap(({ start, end }) => syntax
       .filter((fact) => fact.term === 'statement_block' && fact.start >= start && fact.end === end)
       .map((fact) => fact.start + 1)));

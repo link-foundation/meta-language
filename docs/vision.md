@@ -10189,3 +10189,16 @@ outer shadowing, anonymous classes and a heritage temporal-dead-zone read. This
 structural draft does not establish immutable class-name assignment behavior,
 class-declaration inner/outer cell equivalence, decorators or full class runtime
 translation; those retain their own obligations and require execution evidence.
+
+
+Variable hoisting chooses its owning environment through one shared JavaScript
+source definition: ordinary/generator functions, arrows, methods and class
+static blocks own var environments; ordinary blocks, loops, catches and class
+bodies do not. The definition is automatically translated to Rust. Static
+blocks use their actual statement-body scope, preserving nested block hoisting,
+separate static-block identities and captured local references. Existing simple
+function parameter/var alias rules remain selected through their own actual
+function environment. Eleven independent term premises and five whole-source
+rename controls retain these distinctions. Static initialization effects and
+complete class translation still require their separate runtime definitions
+and executed controls; construction alone does not establish those outcomes.

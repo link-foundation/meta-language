@@ -41,3 +41,6 @@ export function testJavaScriptSourceCatchScopeTerm(term){return term==='catch_cl
 
 /** @param {string} term @returns {boolean} */
 export function testJavaScriptSourceClassExpressionTerm(term){return term==='class';}
+
+/** @param {string} term @returns {boolean} */
+export function testJavaScriptSourceVariableEnvironmentTerm(term){return term==='class_static_block'||readJavaScriptSourceFunctionScopeForm(term)!=='';}
