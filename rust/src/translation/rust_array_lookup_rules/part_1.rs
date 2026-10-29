@@ -764,6 +764,8 @@ pub fn accept_rust_array_lookup_presence_consumer(consumer: &str) -> bool {
 pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f64 {
     if self::accept_rust_array_lookup_presence_consumer(consumer) {
         0f64
+    } else if copied && (consumer == "map_or") {
+        2f64
     } else if copied
         && (((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
             || self::test_rust_array_lookup_predicate_consumer(consumer))

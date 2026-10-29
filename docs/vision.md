@@ -659,6 +659,18 @@ once in source order, including successful operations. Immutable Copy receiver
 adjustment and exact qualified/aliased associated calls preserve actual owners;
 explicit associated arguments retain their original direct-value obligations.
 
+Immutable scalar array/slice get, first and last copied/cloned lookups also
+draft immediate map_or through actual standard primitive From function items.
+The existing shared From relation determines trait availability and exact
+result ownership, including Boolean identity, signed widening, portable pointer
+implementations and exact floating conversion. Receiver, index and eager
+default evaluate once in source order; the guarded selected element and its
+conversion remain inside the present branch. Equal machine widths never
+authorize a missing trait implementation. General mapper closures and escaping
+Option values remain obligations. Deferred originals and independent effect
+traces follow [Option::map_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or);
+source construction establishes no execution evidence.
+
 Four thousand one hundred forty-six complete original programs retain
 independent BigInt interval expectations across seven operations, all owners,
 boundaries, zero divisors, signed overflow, consumers, exact mapper values,

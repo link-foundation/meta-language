@@ -54,6 +54,13 @@ for(const consumer of ['is_some_and','is_none_or'])for(const present of [false,t
 add('a wildcard predicate does not shadow an actual captured value','let value:u32=9;let values:Vec<u32>=vec![7u32];values.first().copied().is_some_and(|_|value==9)',true,'bool');
 add('a wildcard predicate retains its Unit argument','let values:Vec<()>=vec![()];values.first().copied().is_some_and(|_|true)',true,'bool');
 add('repeated wildcard parameters keep arity without duplicate bindings','invoke(|_,_|true)',true,'bool','fn invoke(callback:fn(u32,u32)->bool)->bool{callback(1u32,2u32)}');
+for(const [sourceOwner,targetOwner,value]of [['u8','u32','7u8'],['u32','u64','7u32'],['i8','i32','-7i8'],['bool','u8','true'],['u16','usize','7u16']])for(const method of ['get','first','last'])for(const present of [false,true]){
+ const expected=present?(sourceOwner==='bool'?1:sourceOwner==='i8'?-7:7):37;
+ add('standard From lookup map_or '+sourceOwner+' '+targetOwner+' '+method+' '+present,'let values:Vec<'+sourceOwner+'>=vec!['+(present?value:'')+'];values.'+method+'('+(method==='get'?'0usize':'')+').copied().map_or(37'+targetOwner+','+targetOwner+'::from)',expected,targetOwner);
+}
+add('lookup map_or supports exact primitive floating conversion','let values:Vec<u32>=vec![7u32];values.first().copied().map_or(37.0f64,f64::from)',7,'f64');
+add('lookup map_or retains Boolean identity conversion','let values:Vec<bool>=vec![true];values.first().copied().map_or(false,bool::from)',true,'bool');
+add('lookup map_or keeps standard qualified mapper owners','let values:Vec<u8>=vec![7u8];values.first().cloned().map_or(37u64,core::primitive::u64::from)',7,'u64');
 const printedSources=[
  {name:'present lookup captures receiver and index but does not invoke fallback',source:'pub fn receiver()->Vec<u32>{println!("receiver");vec![7u32]}pub fn index()->usize{println!("index");0usize}pub fn fallback()->u32{println!("fallback");37u32}fn main(){println!("{}",receiver().get(index()).copied().unwrap_or_else(||->u32{fallback()}));}',lines:['receiver','index','7']},
  {name:'absent lookup invokes fallback after receiver and index once',source:'pub fn receiver()->Vec<u32>{println!("receiver");vec![]}pub fn index()->usize{println!("index");0usize}pub fn fallback()->u32{println!("fallback");37u32}fn main(){println!("{}",receiver().get(index()).copied().unwrap_or_else(||->u32{fallback()}));}',lines:['receiver','index','fallback','37']}
@@ -66,6 +73,9 @@ for(const present of [false,true])printedSources.push({name:'contextual predicat
  source:'pub fn receiver()->Vec<u32>{println!("receiver");vec!['+(present?'7u32':'')+']}pub fn index()->usize{println!("index");0usize}pub fn predicate(value:u32)->bool{println!("predicate");value>2u32}fn main(){println!("{}",receiver().get(index()).copied().is_none_or(|value|predicate(value)));}',
  lines:['receiver','index',...(present?['predicate']:[]),'true']});
 printedSources.push({name:'wildcard callback arguments retain both eager input effects',source:'pub fn first()->u32{println!("first");1u32}pub fn second()->u32{println!("second");2u32}pub fn invoke(callback:fn(u32,u32)->bool)->bool{callback(first(),second())}fn main(){println!("{}",invoke(|_,_|true));}',lines:['first','second','true']});
+for(const present of [false,true])printedSources.push({name:'map_or evaluates default eagerly after receiver and index '+present,
+ source:'pub fn receiver()->Vec<u8>{println!("receiver");vec!['+(present?'7u8':'')+']}pub fn index()->usize{println!("index");0usize}pub fn fallback()->u32{println!("fallback");37u32}fn main(){println!("{}",receiver().get(index()).copied().map_or(fallback(),u32::from));}',
+ lines:['receiver','index','fallback',present?'7':'37']});
 const refusals=[
  {name:'lazy fallback preserves pointer-sized result ownership',source:'pub fn select()->usize{let values:Vec<usize>=vec![];values.first().copied().unwrap_or_else(||->u64{1u64})}fn main(){}',kind:'unsupported',reason:'Rust integer source owner: distinct pointer-sized and fixed-width integer source types need an explicit cast',originalRustAccepted:false},
  {name:'lazy fallback requires zero arguments',source:'pub fn select()->u32{let values:Vec<u32>=vec![];values.first().copied().unwrap_or_else(|value:u32|->u32{value})}fn main(){}',kind:'unsupported',reason:'Rust array lookup lazy fallback: a lazy lookup fallback needs a known direct zero-argument callable result',originalRustAccepted:false},
@@ -73,6 +83,7 @@ const refusals=[
 ];
 refusals.push({name:'lookup predicates retain their Boolean result',source:'pub fn select()->bool{let values:Vec<u32>=vec![7u32];values.first().copied().is_some_and(|value:u32|->u32{value})}fn main(){}',kind:'unsupported',reason:'Rust array lookup predicate: a lookup predicate needs a known direct one-argument callable with a Boolean result',originalRustAccepted:false},
  {name:'lookup predicate parameters preserve actual pointer owners',source:'pub fn select()->bool{let values:Vec<usize>=vec![7usize];values.first().copied().is_none_or(|value:u64|->bool{value>2u64})}fn main(){}',kind:'unsupported',reason:'Rust integer source owner: distinct pointer-sized and fixed-width integer source types need an explicit cast',originalRustAccepted:false});
+for(const [sourceOwner,targetOwner]of [['u64','u32'],['usize','u64']])refusals.push({name:'lookup map_or retains actual From trait availability '+sourceOwner+' '+targetOwner,source:'pub fn select()->'+targetOwner+'{let values:Vec<'+sourceOwner+'>=vec![];values.first().copied().map_or(0'+targetOwner+','+targetOwner+'::from)}fn main(){}',kind:'unsupported',reason:'Rust array lookup mapper: the actual standard primitive From implementation must exist for the selected element',originalRustAccepted:false});
 writeProjectData(new URL('../../parity/fixtures/rust-array-lookup-lazy.lino',import.meta.url),{
  schemaVersion:1,retainSourceTypeOwners:true,model:null,cases,printedSources,refusals,
  malformed:[{name:'lazy fallback retains its one argument',source:'pub fn select()->u32{let values:Vec<u32>=vec![];values.first().copied().unwrap_or_else()}fn main(){}'},
@@ -92,5 +103,5 @@ writeProjectData(new URL('../../parity/fixtures/rust-array-lookup-lazy.lino',imp
  {consumer:'unwrap_or_else',receiver:false,element:true,expected:-1},{consumer:'is_some_and',receiver:true,element:false,expected:-1}],
  closureParameterForms:[{role:'binding',expected:'binding'},{role:'_',expected:'wildcard'},
  {role:'mut',expected:'unsupported'},{role:'ref',expected:'unsupported'},{role:'&',expected:'unsupported'},{role:'unknown',expected:'unsupported'}],
- references:['https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else'],
- boundary:'Unexecuted source draft for actual immutable scalar lookup, copied/cloned values and known direct zero-argument fallback or one-argument Boolean predicate callables. Callable construction remains eager; invocation occurs only on its selected presence/absence branch. Complete FnOnce/FnMut, non-Copy closure captures/results, mutable lookups, borrow/drop/allocation observations and escaping Option values retain separate obligations.'});
+ references:['https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else','https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or'],
+ boundary:'Unexecuted source draft for actual immutable scalar lookup, copied/cloned values, known direct zero-argument fallback or one-argument Boolean predicate callables and standard primitive From map_or consumers. Callable/default construction remains eager; invocation occurs only on its selected presence/absence branch. General map_or mappers, complete FnOnce/FnMut, non-Copy closure captures/results, mutable lookups, borrow/drop/allocation observations and escaping Option values retain separate obligations.'});

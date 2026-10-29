@@ -97,8 +97,9 @@ pub fn plan_rust_array_lookup_consumer(consumer: &str) -> Vec<String> {
             String::from("true"),
             String::from("if"),
         ]
-    } else if ((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
-        || (consumer == "unwrap_or_default")
+    } else if (((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
+        || (consumer == "unwrap_or_default"))
+        || (consumer == "map_or")
     {
         vec![
             String::from("condition"),

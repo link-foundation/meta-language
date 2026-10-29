@@ -1,9 +1,10 @@
 //! Original tokens/types and generic shared source-plan term transport only.
 use super::{
-    BOOL, BinaryOp, Flavor, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Token,
-    Type, UnaryOp, rust_fixed_type, type_error, unsupported,
+    BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span,
+    Token, Type, UnaryOp, rust_fixed_type, type_error, unsupported,
 };
 use crate::translation::rust_array_lookup_rules as rules;
+use crate::translation::rust_primitive_from_rules as from_rules;
 use crate::translation::source_signatures::SourceOwner;
 use std::collections::HashMap;
 mod source_owners;
@@ -73,6 +74,7 @@ struct LookupInput<'a> {
     copied: bool,
     cloned: bool,
     defaults: Vec<SExpr>,
+    mapper_owner: String,
 }
 struct LookupFacts {
     source: SourceOrigin,
@@ -304,6 +306,7 @@ impl RustParser {
         }
         self.cursor.expect("(", Some("array lookup consumer"))?;
         let mut defaults = Vec::new();
+        let mut mapper_owner = String::new();
         if consumer_arity > 0.0 {
             let context = self.array_lookup_callable_context(receiver, &consumer.value, path);
             defaults.push(if let Some(context) = context {
@@ -311,6 +314,35 @@ impl RustParser {
             } else {
                 self.expr(path, Options::default())?
             });
+            if consumer_arity == 2.0 {
+                self.cursor.expect(",", Some("array lookup mapper"))?;
+                let mapper = self
+                    .primitive_try_head(path)
+                    .filter(|head| head.resolved.last().is_some_and(|method| method == "from"))
+                    .ok_or_else(|| {
+                        unsupported(
+                            "Rust array lookup mapper",
+                            "an actual admitted standard primitive From function item is required",
+                            range,
+                        )
+                    })?;
+                mapper_owner = from_rules::read_rust_primitive_from_owner(
+                    &mapper.resolved,
+                    self.ordinary_completion_context(),
+                    mapper.shadowed,
+                    mapper.absolute,
+                );
+                if mapper_owner.is_empty() {
+                    return Err(unsupported(
+                        "Rust array lookup mapper",
+                        "an actual admitted standard primitive From function item is required",
+                        range,
+                    ));
+                }
+                for _ in 0..mapper.offset {
+                    self.cursor.advance();
+                }
+            }
             self.cursor.eat(",");
         }
         let close = self.cursor.expect(")", Some("array lookup consumer"))?;
@@ -331,6 +363,7 @@ impl RustParser {
             copied,
             cloned,
             defaults,
+            mapper_owner,
         };
         let facts = self.array_lookup_facts(&input)?;
         self.project_array_lookup(&input, facts).map(Some)
@@ -346,6 +379,7 @@ impl RustParser {
             copied,
             cloned,
             defaults,
+            mapper_owner,
         } = input;
         let range = *range;
         let copied = *copied;
@@ -415,12 +449,44 @@ impl RustParser {
                 return Err(unsupported("Rust array lookup result", &error, range));
             }
         }
-        let result_type = if presence {
+        if !mapper_owner.is_empty()
+            && from_rules::plan_rust_primitive_from(mapper_owner, &owner).is_empty()
+        {
+            return Err(unsupported(
+                "Rust array lookup mapper",
+                "the actual standard primitive From implementation must exist for the selected element",
+                range,
+            ));
+        }
+        let result_type = if !mapper_owner.is_empty() {
+            if mapper_owner == "bool" {
+                BOOL
+            } else if mapper_owner == "f64" {
+                FLOAT
+            } else {
+                rust_fixed_type(mapper_owner).ok_or_else(|| {
+                    unsupported(
+                        "Rust array lookup mapper",
+                        "a standard primitive result type is required",
+                        range,
+                    )
+                })?
+            }
+        } else if presence {
             BOOL
         } else {
             element.clone().expect("complete copied element")
         };
-        let mut result_origin = lookup_result_origin(&result_type, &owner, presence, path);
+        let mut result_origin = lookup_result_origin(
+            &result_type,
+            if mapper_owner.is_empty() {
+                &owner
+            } else {
+                mapper_owner
+            },
+            presence,
+            path,
+        );
         if !presence && string_clone {
             result_origin.source_owner = element_owner.clone();
         }
@@ -516,6 +582,7 @@ impl RustParser {
             path,
             consumer,
             defaults,
+            mapper_owner,
             ..
         } = input;
         let range = *range;
@@ -544,7 +611,7 @@ impl RustParser {
                 if predicate || rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
                     self.origins.origin(default, path).ty
                 } else {
-                    element.clone()
+                    Some(result_type.clone())
                 };
             captures.push((self.fresh_product_binding(), default_type, default.clone()));
         }
@@ -572,10 +639,16 @@ impl RustParser {
                 &values,
                 range,
             )?;
-            values.insert(
-                "selected".to_owned(),
-                selected_lookup(local(0), index, range),
-            );
+            let mut selected = selected_lookup(local(0), index, range);
+            if !mapper_owner.is_empty() {
+                let selected_type = element.as_ref().expect("complete selected source type");
+                self.origins.mark(
+                    &selected,
+                    lookup_result_origin(selected_type, &owner, false, path),
+                );
+                selected = self.project_primitive_from(selected, mapper_owner, range, path)?;
+            }
+            values.insert("selected".to_owned(), selected);
             let default_term = rules::read_rust_array_lookup_default_term(
                 result_type.kind(),
                 result_type == super::super::STRING && element_owner.is_some(),

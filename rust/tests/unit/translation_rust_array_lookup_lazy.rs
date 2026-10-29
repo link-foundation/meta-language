@@ -18,6 +18,20 @@ fn explicit_lazy_callable_signatures_and_branch_plan() {
     ))
     .unwrap();
     assert_eq!(
+        rules::read_rust_array_lookup_consumer_arity("map_or", true),
+        2.0
+    );
+    assert_eq!(
+        rules::read_rust_array_lookup_consumer_arity("map_or", false),
+        -1.0
+    );
+    assert!(!rules::test_rust_array_lookup_lazy_fallback("map_or"));
+    assert!(!rules::test_rust_array_lookup_predicate_consumer("map_or"));
+    assert_eq!(
+        rules::plan_rust_array_lookup_consumer("map_or"),
+        ["condition", "selected", "fallback", "if"]
+    );
+    assert_eq!(
         rules::read_rust_array_lookup_consumer_arity("unwrap_or_else", true),
         1.0
     );

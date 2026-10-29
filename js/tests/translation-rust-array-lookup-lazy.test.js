@@ -6,6 +6,13 @@ import {registerRustCallableProfile} from './helpers/rust-callable-profile.js';
 import {readRustCopyClosureParameterForm} from '../src/translation/rust-copy-closure-rules.js';
 import {readRustArrayLookupConsumerArity,testRustArrayLookupLazyFallback,readRustArrayLookupLazyFallbackError,planRustArrayLookupConsumer,testRustArrayLookupPredicateConsumer,readRustArrayLookupPredicateError,readRustArrayLookupCallableContextArity} from '../src/translation/rust-array-lookup-rules.js';
 registerRustCallableProfile('rust-array-lookup-lazy');
+test('lookup map_or retains two eager arguments and its selected conversion branch',()=>{
+ assert.equal(readRustArrayLookupConsumerArity('map_or',true),2);
+ assert.equal(readRustArrayLookupConsumerArity('map_or',false),-1);
+ assert.equal(testRustArrayLookupLazyFallback('map_or'),false);
+ assert.equal(testRustArrayLookupPredicateConsumer('map_or'),false);
+ assert.deepEqual(planRustArrayLookupConsumer('map_or'),['condition','selected','fallback','if']);
+});
 test('lazy lookup retains its actual arity, callable ownership and branch plan',()=>{
  const fixture=readProjectData(new URL('../../parity/fixtures/rust-array-lookup-lazy.lino',import.meta.url));
  assert.equal(readRustArrayLookupConsumerArity('unwrap_or_else',true),1);
