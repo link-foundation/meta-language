@@ -222,6 +222,11 @@ pub fn read_project_translation_archive(
     if !error.is_empty() {
         return Err(fail(&error));
     }
+    let identifiers = concrete
+        .sources
+        .iter()
+        .map(|source| source.path.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
     for (index, file) in inventory.iter().enumerate() {
         let module = &modules[index];
         let source = &concrete.sources[index];
@@ -262,6 +267,15 @@ pub fn read_project_translation_archive(
         let gap_issues = text_values(&gap_values)?;
         let (specifiers, providers) = import_columns(list(file, "imports")?)?;
         let (actual_specifiers, actual_providers) = import_columns(list(module, "imports")?)?;
+        let providers_known = providers
+            .iter()
+            .map(|provider| identifiers.contains(provider.as_str()))
+            .collect::<Vec<_>>();
+        let error =
+            rules::read_project_translation_archive_import_error(&specifiers, &providers_known);
+        if !error.is_empty() {
+            return Err(fail(&error));
+        }
         let error = rules::read_project_translation_archive_binding_error(
             &issues,
             &actual_issues,
@@ -401,4 +415,32 @@ where
             stderr: format!("error: {error}\n"),
         },
     }
+}
+
+/// Portable translator inputs and the actual selected global settings.
+pub struct RestoredProjectTranslationArchiveInputs {
+    pub inputs: Value,
+    pub options: Value,
+}
+/// Recover every translator input without a parser, translation or compiler.
+pub fn restore_project_translation_archive_inputs(
+    network: &LinkNetwork,
+    root: LinkId,
+    options: &Value,
+) -> Result<RestoredProjectTranslationArchiveInputs, String> {
+    let restored = read_project_translation_archive(network, root, options)?;
+    let sources = restored
+        .concrete
+        .sources
+        .iter()
+        .map(|source| (source.path.as_str(), source.source.as_str()))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let inputs=restored.configuration["modules"].as_array().unwrap().iter().map(|file|{
+  let imports=file["imports"].as_array().unwrap().iter().map(|row|(row["specifier"].as_str().unwrap().to_owned(),row["identifier"].clone())).collect::<serde_json::Map<_,_>>();
+  json!({"identifier":file["identifier"],"language":file["language"],"source":sources[file["identifier"].as_str().unwrap()],"imports":imports,"sourceIssues":file["sourceIssues"],"options":file["options"]})
+ }).collect::<Vec<_>>();
+    Ok(RestoredProjectTranslationArchiveInputs {
+        inputs: json!(inputs),
+        options: restored.configuration["options"].clone(),
+    })
 }

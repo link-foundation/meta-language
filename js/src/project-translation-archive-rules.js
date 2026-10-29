@@ -57,3 +57,11 @@ export function planProjectTranslationArchiveCommand(args){
  * @param {number} version @param {number} count @param {number} inventory
  * @param {string} target @param {string} selected @returns {string} */
 export function readProjectTranslationArchiveConfigurationError(version,count,inventory,target,selected){return version===1&&count===inventory&&target!==''&&target===selected?'':'project translation configuration changed';}
+
+/** Directory membership facts come from the complete actual source archive.
+ * @param {string[]} specifiers @param {boolean[]} providers @returns {string} */
+export function readProjectTranslationArchiveImportError(specifiers,providers){
+ if(specifiers.length!==providers.length||new Set(specifiers).size!==specifiers.length)return 'duplicate or foreign project source dependency';
+ for(const known of providers)if(!known)return 'duplicate or foreign project source dependency';
+ return '';
+}

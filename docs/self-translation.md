@@ -1248,3 +1248,12 @@ provenance inside its linked configuration. Its programmatic report-only helper
 remains available; `draftTrackedProjectTranslationArchive` provides full concrete
 storage. Configuration uses portable structured Links values and rejects opaque
 host callbacks or nonrepresentable settings.
+
+`restoreProjectTranslationArchiveInputs` /
+`restore_project_translation_archive_inputs` reconstruct portable `{inputs,
+options}` data from archived CSTs and settings without parsing or translating.
+The inputs can enter the existing project APIs for an explicit new draft.
+Restoration preserves per-module settings, duplicate source issues and actual
+source identities; duplicate specifier keys and absent source providers refuse.
+The new draft is distinct from parser-free restoration. Its independent complete
+report/configuration/source-state replay controls remain deferred.

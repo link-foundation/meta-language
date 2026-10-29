@@ -4,7 +4,7 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readProjectData} from '../scripts/project-data.mjs';
-import {createProjectTranslationArchive,readProjectTranslationArchive} from '../src/project-translation-archive.js';
+import {createProjectTranslationArchive,readProjectTranslationArchive,restoreProjectTranslationArchiveInputs} from '../src/project-translation-archive.js';
 import {runCommandLine} from '../src/cli.js';
 import {LinkNetwork} from '../src/network.js';
 import {LinkType} from '../src/primitives.js';
@@ -48,4 +48,23 @@ test('configuration target changes retain an explicit refusal',()=>{
  const packet=createProjectTranslationArchive(fixture.inputs,{targetLanguage:'JavaScript'}),view=readProjectTranslationArchive(packet.network,packet.root),entries=readMetaLanguageArchive(packet.network,packet.root).entries;
  const changed=structuredClone(view.configuration);changed.options.targetLanguage='Rust';const replacement=encodeStructuredDataLinks(changed),forged=createMetaLanguageArchive(entries.map(entry=>entry.identifier===rules.readProjectTranslationArchiveVocabulary('configuration')?{...entry,network:replacement.network,root:replacement.root}:entry));
  assert.throws(()=>readProjectTranslationArchive(forged.network,forged.root),/configuration changed/u);
+});
+
+for(const [index,row]of fixture.dependencies.entries())test('archive dependency membership '+index,()=>assert.equal(rules.readProjectTranslationArchiveImportError(row.specifiers,row.providers),row.expected));
+test('source-free inputs retain selected options and reproduce the complete draft',()=>{
+ const packet=createProjectTranslationArchive(fixture.inputs,{targetLanguage:'JavaScript'}),view=readProjectTranslationArchive(packet.network,packet.root),network=decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network));let restored;const parse=LinkNetwork.parse;
+ try{LinkNetwork.parse=()=>{throw new Error('input restoration must not parse source');};restored=restoreProjectTranslationArchiveInputs(network,packet.root);}finally{LinkNetwork.parse=parse;}
+ const expected=fixture.inputs.map(row=>({identifier:row.identifier,language:row.language,source:row.source,imports:row.imports??{},sourceIssues:row.sourceIssues??[],options:row.options??{}})).sort((a,b)=>a.identifier<b.identifier?-1:1);
+ assert.deepEqual(restored.inputs,expected);assert.deepEqual(restored.options,{targetLanguage:'JavaScript'});
+ const rebuilt=createProjectTranslationArchive(restored.inputs,restored.options),again=readProjectTranslationArchive(rebuilt.network,rebuilt.root);assert.deepEqual(again.draft,view.draft);assert.deepEqual(again.configuration,view.configuration);
+ for(const source of again.sources)assert.deepEqual(encodeLinkNetworkBinary(source.network),encodeLinkNetworkBinary(view.sources.find(file=>file.path===source.path).network));
+ restored.options.targetLanguage='Rust';restored.inputs[0].options.moduleDirectory=['changed'];assert.deepEqual(restoreProjectTranslationArchiveInputs(network,packet.root).inputs,expected);
+});
+test('duplicate or foreign archived dependency directories cannot become restored inputs',()=>{
+ const packet=createProjectTranslationArchive(fixture.inputs,{targetLanguage:'JavaScript'}),view=readProjectTranslationArchive(packet.network,packet.root),entries=readMetaLanguageArchive(packet.network,packet.root).entries;
+ for(const imports of [[{specifier:'./missing.js',identifier:'src/missing.js'}],[{specifier:'./a.js',identifier:'src/a.js'},{specifier:'./a.js',identifier:'src/a.js'}]]){
+  const draft=structuredClone(view.draft),configuration=structuredClone(view.configuration);for(const rows of [draft.inventory,draft.modules,configuration.modules])rows.find(row=>row.identifier==='src/b.js').imports=imports;
+  const data=encodeStructuredDataLinks(draft),settings=encodeStructuredDataLinks(configuration),forged=createMetaLanguageArchive(entries.map(entry=>entry.identifier===rules.readProjectTranslationArchiveVocabulary('draft')?{...entry,network:data.network,root:data.root}:entry.identifier===rules.readProjectTranslationArchiveVocabulary('configuration')?{...entry,network:settings.network,root:settings.root}:entry));
+  assert.throws(()=>restoreProjectTranslationArchiveInputs(forged.network,forged.root),/duplicate or foreign project source dependency/u);
+ }
 });

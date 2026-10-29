@@ -419,3 +419,154 @@ fn changed_configuration_target_refuses() {
         .unwrap();
     assert!(error.contains("configuration changed"), "{error}");
 }
+
+#[test]
+fn source_free_inputs_restore_settings_and_reproduce_the_original_draft() {
+    super::translation_string_array_copy_sort::require_rust_profile();
+    let data = fixture();
+    for row in data["dependencies"].as_array().unwrap() {
+        let providers = row["providers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_bool().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            rules::read_project_translation_archive_import_error(
+                &texts(row, "specifiers"),
+                &providers
+            ),
+            text(row, "expected")
+        );
+    }
+    let packet = create_project_translation_archive(
+        &data["inputs"],
+        &json!({"targetLanguage":"JavaScript"}),
+    )
+    .unwrap();
+    let view = read_project_translation_archive(&packet.network, packet.root, &json!({})).unwrap();
+    let graph = decode_link_network_binary(
+        &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+        BinaryLinksOptions::default(),
+    )
+    .unwrap();
+    let mut restored =
+        meta_language::restore_project_translation_archive_inputs(&graph, packet.root, &json!({}))
+            .unwrap();
+    let mut expected=data["inputs"].as_array().unwrap().iter().map(|row|json!({"identifier":row["identifier"],"language":row["language"],"source":row["source"],"imports":row.get("imports").cloned().unwrap_or_else(||json!({})),"sourceIssues":row.get("sourceIssues").cloned().unwrap_or_else(||json!([])),"options":row.get("options").cloned().unwrap_or_else(||json!({}))})).collect::<Vec<_>>();
+    expected.sort_by(|a, b| a["identifier"].as_str().cmp(&b["identifier"].as_str()));
+    assert_eq!(restored.inputs, json!(expected));
+    assert_eq!(restored.options, json!({"targetLanguage":"JavaScript"}));
+    let rebuilt = create_project_translation_archive(&restored.inputs, &restored.options).unwrap();
+    let again =
+        read_project_translation_archive(&rebuilt.network, rebuilt.root, &json!({})).unwrap();
+    assert_eq!(again.draft, view.draft);
+    assert_eq!(again.configuration, view.configuration);
+    for source in again.concrete.sources {
+        let original = view
+            .concrete
+            .sources
+            .iter()
+            .find(|file| file.path == source.path)
+            .unwrap();
+        assert_eq!(
+            encode_link_network_binary(&source.network, BinaryLinksOptions::default()).unwrap(),
+            encode_link_network_binary(&original.network, BinaryLinksOptions::default()).unwrap()
+        );
+    }
+    restored.options["targetLanguage"] = json!("Rust");
+    restored.inputs[0]["options"]["moduleDirectory"] = json!(["changed"]);
+    assert_eq!(
+        meta_language::restore_project_translation_archive_inputs(&graph, packet.root, &json!({}))
+            .unwrap()
+            .inputs,
+        json!(expected)
+    );
+}
+#[test]
+fn duplicate_and_foreign_dependency_directories_cannot_be_restored() {
+    super::translation_string_array_copy_sort::require_rust_profile();
+    let data = fixture();
+    let packet = create_project_translation_archive(
+        &data["inputs"],
+        &json!({"targetLanguage":"JavaScript"}),
+    )
+    .unwrap();
+    let view = read_project_translation_archive(&packet.network, packet.root, &json!({})).unwrap();
+    let entries = read_meta_language_archive(
+        &packet.network,
+        packet.root,
+        MetaLanguageArchiveLimits::default(),
+    )
+    .unwrap()
+    .entries;
+    for imports in [
+        json!([{"specifier":"./missing.js","identifier":"src/missing.js"}]),
+        json!([{"specifier":"./a.js","identifier":"src/a.js"},{"specifier":"./a.js","identifier":"src/a.js"}]),
+    ] {
+        let mut draft = view.draft.clone();
+        let mut configuration = view.configuration.clone();
+        for key in ["inventory", "modules"] {
+            draft[key]
+                .as_array_mut()
+                .unwrap()
+                .iter_mut()
+                .find(|row| row["identifier"] == "src/b.js")
+                .unwrap()["imports"] = imports.clone();
+        }
+        configuration["modules"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|row| row["identifier"] == "src/b.js")
+            .unwrap()["imports"] = imports;
+        let data =
+            encode_structured_data_links_with_limits(&draft, StructuredDataLinksLimits::default())
+                .unwrap();
+        let settings = encode_structured_data_links_with_limits(
+            &configuration,
+            StructuredDataLinksLimits::default(),
+        )
+        .unwrap();
+        let draft_root = data.root;
+        let draft_network = Arc::new(data.network);
+        let settings_root = settings.root;
+        let settings_network = Arc::new(settings.network);
+        let forged_entries = entries
+            .iter()
+            .map(|entry| {
+                if entry.identifier == rules::read_project_translation_archive_vocabulary("draft") {
+                    MetaLanguageArchiveEntry {
+                        root: draft_root,
+                        network: Arc::clone(&draft_network),
+                        ..entry.clone()
+                    }
+                } else if entry.identifier
+                    == rules::read_project_translation_archive_vocabulary("configuration")
+                {
+                    MetaLanguageArchiveEntry {
+                        root: settings_root,
+                        network: Arc::clone(&settings_network),
+                        ..entry.clone()
+                    }
+                } else {
+                    entry.clone()
+                }
+            })
+            .collect::<Vec<_>>();
+        let forged =
+            create_meta_language_archive(&forged_entries, MetaLanguageArchiveLimits::default())
+                .unwrap();
+        let error = meta_language::restore_project_translation_archive_inputs(
+            &forged.network,
+            forged.root,
+            &json!({}),
+        )
+        .err()
+        .unwrap();
+        assert!(
+            error.contains("duplicate or foreign project source dependency"),
+            "{error}"
+        );
+    }
+}

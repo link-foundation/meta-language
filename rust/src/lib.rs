@@ -584,6 +584,7 @@ mod project_translation_archive;
 mod project_translation_archive_rules;
 pub use project_translation_archive::{
     ProjectTranslationArchiveCommandOutput, ProjectTranslationArchiveView,
-    create_project_translation_archive, read_project_translation_archive,
+    RestoredProjectTranslationArchiveInputs, create_project_translation_archive,
+    read_project_translation_archive, restore_project_translation_archive_inputs,
     run_project_translation_archive_command,
 };

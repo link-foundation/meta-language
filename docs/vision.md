@@ -4369,6 +4369,17 @@ draft hashes and any exposed product must agree. These checks establish byte
 preservation and directory consistency, not semantic correctness. Qualified
 concrete islands preserve their own concepts; equal labels or hashes authorize
 no concept deduplication. Existing graph/byte limits also bound CLI serialization.
+Source-free input restoration also reconstructs every portable translator input
+from the stored concrete graph and retained settings. It preserves actual
+source text, source language, per-module options, ordered issue multiplicity,
+dependency providers and global options. It runs no parser or translator.
+Dependency names must be unique within each import directory and every provider
+must belong to the complete archived source inventory. Multiple distinct
+specifiers may select the same provider. Unknown or duplicate dependencies
+refuse instead of disappearing during directory reconstruction. Restored values
+are detached from archived graph storage. Future rebuild controls compare the
+entire draft, configuration and complete source graph binary state; they remain
+unexecuted and establish no present semantic or replay evidence.
 The tracked-project source author defaults to this complete archive and retains
 its revision, file inventory and unresolved request provenance as linked settings.
 Original-source, text/binary, AST, parser-free reload, changed-directory/product
