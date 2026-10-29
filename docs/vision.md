@@ -4230,8 +4230,21 @@ record and rechecked field, arity and value type during typed Links reload.
 Complete checked JavaScript definitions automatically generate native source and
 ship as editable Links programs. Mutation-sensitive callback admission includes
 these field writes. This follows the [ECMAScript assignment order](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-assignment-operators-runtime-semantics-evaluation).
-Fourteen source controls and three refusal controls have been authored and have
-not run. Field creation, descriptors, prototype setters, arbitrary coercions,
+The compound source extension additionally admits JavaScript BigInt arithmetic
+and statement increments, plus string `+=`, through the existing checked binary
+and exponentiation operations. Receiver and previous field values are captured
+once before the actual right operand. The resulting ordinary assignment reuses
+exact integer arithmetic, truncating division, standard source exceptions and
+UTF-16 concatenation; it adds no handwritten native arithmetic. Mechanically
+constructed source/schema interfaces call the generated rules using checked
+Unicode scalar transport; runtime text values retain their lossless UTF-16
+representation. The original
+Number renderer keeps its original domain checks. The former string-refusal
+source is retained as a success input because the new checked concatenation
+path supplies its previously missing operation. Deferred controls include exact
+integers, aliases, negative division, exponentiation, mixed-domain and zero-divisor
+failures without writeback, right-hand mutations and isolated UTF-16 units.
+These source and refusal controls have been authored and have not run. Field creation, descriptors, prototype setters, arbitrary coercions,
 indexed slots and the rest of full project translation remain obligations.
 
 The current development sequence drafts the complete outstanding batch before

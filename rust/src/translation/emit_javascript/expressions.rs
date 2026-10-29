@@ -232,7 +232,7 @@ impl JavaScriptEmitter<'_> {
                     self.state.encode(&crate::translation::array_state_method_rules::read_array_state_method_identity(op),&crate::translation::array_state_method_rules::read_array_state_method_statement());
                     return Ok(crate::translation::array_state_method_rules::render_array_state_method_expression("JavaScript",op,&receiver,&arguments,&[],&[],""));
                 }
-                if crate::translation::record_write_rules::accept_linked_record_field_write(
+                if crate::translation::record_write_source_interfaces::accept_linked_record_field_write(
                     "method",
                     op,
                     object.ty.kind(),
@@ -252,12 +252,12 @@ impl JavaScriptEmitter<'_> {
                     }
                     self.state.encode(
                         "write-record-field",
-                        &crate::translation::record_write_rules::read_record_field_write_statement(
+                        &crate::translation::record_write_source_interfaces::read_record_field_write_statement(
                         ),
                     );
-                    return Ok(crate::translation::record_write_rules::render_record_field_write("JavaScript",
-                        &crate::translation::record_write_rules::read_record_field_write_operator(op), &receiver,
-                        &json_string(&crate::translation::record_write_rules::read_record_field_write_name(op)), "", &arguments, ""));
+                    return Ok(crate::translation::record_write_source_interfaces::render_record_field_write("JavaScript",
+                        &crate::translation::record_write_source_interfaces::read_record_field_write_operator(op), &receiver,
+                        &json_string(&crate::translation::record_write_source_interfaces::read_record_field_write_name(op)), "", &arguments, ""));
                 }
                 if object.ty.is_reference()
                     && !crate::translation::reference_method_rules::read_reference_method_result(

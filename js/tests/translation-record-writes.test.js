@@ -1,6 +1,7 @@
 // Future CI controls, intentionally unexecuted during the complete draft phase.
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readRecordCompoundBinaryOperation, readRecordFieldWriteRefusal, readRecordFieldSourceWriteRefusal } from '../src/translation/record-write-rules.js';
 import { runInNewContext } from 'node:vm';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -32,4 +33,21 @@ for (const fixture of fixtures.cases) test(fixture.name + ': actual builtin sema
 
 for (const fixture of fixtures.refusals) test(fixture.name + ' retains its explicit field-state obligation', () => {
   assert.throws(() => emitRust(checkProgram(parseJavaScript(fixture.source))), error => error.message.includes(fixture.reason));
+});
+
+// The direct Number renderer keeps its original admission; new domains must
+// normalize before emission. This retains the old rule assertion and input.
+test('compound source domains require real closed own-field owners', () => {
+  for (const [kind, operator, operation] of [['int','+=','plus'], ['int','**=','exponentiation'],
+    ['int','++','plus'], ['string','+=','plus']]) {
+    assert.equal(readRecordCompoundBinaryOperation('JavaScript', operator, kind), operation);
+    assert.ok(readRecordFieldWriteRefusal(operator, 'record', true, false, true, kind).includes('compound field assignment'));
+    assert.equal(readRecordFieldSourceWriteRefusal('JavaScript', operator, 'record', true, false, true, kind), '');
+    assert.ok(readRecordFieldSourceWriteRefusal('JavaScript', operator, 'record', false, false, true, kind));
+    assert.ok(readRecordFieldSourceWriteRefusal('JavaScript', operator, 'record', true, true, true, kind));
+    assert.ok(readRecordFieldSourceWriteRefusal('JavaScript', operator, 'record', true, false, false, kind));
+    assert.ok(readRecordFieldSourceWriteRefusal('Rust', operator, 'record', true, false, true, kind));
+  }
+  for(const operator of ['-=','*=','/=','%=','**=','++','--'])
+    assert.equal(readRecordCompoundBinaryOperation('JavaScript', operator, 'string'), '');
 });

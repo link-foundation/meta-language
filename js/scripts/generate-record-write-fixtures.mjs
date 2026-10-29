@@ -19,10 +19,18 @@ writeProjectData(new URL('../../parity/fixtures/record-writes.lino', import.meta
     { name: 'nested right side writes release previous storage borrows', source: source('const item={value:1,other:2};const update=()=>{item.other=9;return 7;};item.value=update();return item.value*10+item.other;') },
     { name: 'signed zero survives a simple field assignment', source: source('const item={value:1};item.value=-0;return 1/item.value===-Infinity?1:0;') },
     { name: 'generated field temporary names avoid source captures', source: source('const ml_field_owner1=7;const ml_field_value2=11;const item={value:1};item.value=ml_field_owner1;item.value+=ml_field_value2;return item.value;') },
+    // The former refusal input is retained as a success through checked concatenation.
+    { name: 'string compound writes use checked concatenation', source: source('const item={value:"a"};item.value+="b";return item.value.length;') },
+    { name: 'string compound writes convert exact integers', source: source('const item={value:"a"};item.value+=9007199254740993n;return item.value==="a9007199254740993"?1:0;') },
+    { name: 'string compound writes retain UTF16 units', source: source('const item={value:"\\uD800"};item.value+="\\0\\uDC00";return item.value.length;') },
+    { name: 'BigInt compound writes retain exact values and aliases', source: source('const item={value:9007199254740993n};const alias=item;item.value+=2n;alias.value-=3n;item.value*=4n;item.value/=2n;item.value%=7n;return item.value===1n?1:0;') },
+    { name: 'BigInt compound negative division truncates', source: source('const item={value:-7n};item.value/=3n;return item.value===-2n?1:0;') },
+    { name: 'BigInt statement increments retain their domain', source: source('const item={value:9007199254740993n};const alias=item;++item.value;alias.value++;--item.value;alias.value--;return item.value===9007199254740993n?1:0;') },
+    { name: 'BigInt compound exponentiation uses its checked kernel', source: source('const item={value:3n};item.value**=4n;return item.value===81n?1:0;') },
+    { name: 'BigInt previous value precedes mutation by the right operand', source: source('const item={value:2n};const update=()=>{item.value=40n;return 3n;};item.value+=update();return item.value===5n?1:0;') },
   ],
   refusals: [
     { name: 'dynamic field creation keeps descriptor obligation', source: source('const item={value:1};item.extra=2;return item.value;'), reason: 'field' },
-    { name: 'string compound writes keep their coercion obligation', source: source('const item={value:"a"};item.value+="b";return item.value.length;'), reason: 'compound field assignment' },
     { name: 'array index writes keep live slot obligation', source: source('const item=[1,2];const alias=item;alias[0]=7;return item[0]??0;'), reason: 'live slots' },
   ],
 });

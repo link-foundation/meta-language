@@ -1,6 +1,6 @@
 //! Shared construction over actual record type and value owners.
 use super::{Expr, Node, Result, RustEmitter, Type, unsupported};
-use crate::translation::record_write_rules as rules;
+use crate::translation::record_write_source_interfaces as rules;
 
 impl RustEmitter<'_> {
     pub(super) fn record_field_write(&mut self, expression: &Expr) -> Result<String> {

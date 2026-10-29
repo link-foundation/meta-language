@@ -36,7 +36,7 @@ impl RustEmitter<'_> {
             return self.array_state_method(expr);
         }
         if let Node::Method { object, op, .. } = &expr.node
-            && crate::translation::record_write_rules::accept_linked_record_field_write(
+            && crate::translation::record_write_source_interfaces::accept_linked_record_field_write(
                 "method",
                 op,
                 object.ty.kind(),

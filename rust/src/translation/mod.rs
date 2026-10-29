@@ -372,3 +372,5 @@ pub(crate) mod javascript_string_argument_rules;
 pub(crate) mod javascript_fixed_integer_cast_plan;
 
 pub(crate) mod javascript_call_natural_source;
+
+pub(crate) mod record_write_source_interfaces;

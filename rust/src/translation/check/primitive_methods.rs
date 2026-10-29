@@ -92,8 +92,10 @@ impl Checker {
         ) {
             return self.check_array_state_method(object, operation, args, env, path, span);
         }
-        if !crate::translation::record_write_rules::read_record_field_write_operator(operation)
-            .is_empty()
+        if !crate::translation::record_write_source_interfaces::read_record_field_write_operator(
+            operation,
+        )
+        .is_empty()
         {
             return self.check_record_field_write(object, operation, args, env, path, span);
         }

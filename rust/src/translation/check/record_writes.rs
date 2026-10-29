@@ -1,6 +1,9 @@
 //! Actual typed owners for the automatically translated record-write rules.
-use super::{Checker, Env, Expr, Node, Result, SExpr, Span, Type, UNIT, type_error, unsupported};
-use crate::translation::record_write_rules as rules;
+use super::{
+    Checker, Env, Expr, Node, Result, SArrayItem, SExpr, SNode, Span, Type, UNIT, type_error,
+    unsupported,
+};
+use crate::translation::record_write_source_interfaces as rules;
 
 impl Checker {
     pub(super) fn check_record_field_write(
@@ -21,7 +24,8 @@ impl Checker {
             ),
             _ => (None, false),
         };
-        let refusal = rules::read_record_field_write_refusal(
+        let refusal = rules::read_record_field_source_write_refusal(
+            self.language.as_str(),
             &operator,
             object.ty.kind(),
             object.ty.is_reference(),
@@ -48,6 +52,105 @@ impl Checker {
             ));
         }
         let field = field.expect("the shared field rule retained its actual owner");
+        let binary = rules::read_record_compound_binary_operation(
+            self.language.as_str(),
+            &operator,
+            field.ty.kind(),
+        );
+        if !binary.is_empty() {
+            let mut inner = env.clone();
+            let mut bindings = Vec::new();
+            let owner_name = loop {
+                let name = self.fresh_name("ml_field_owner");
+                if !inner.has(&name) {
+                    break name;
+                }
+            };
+            inner.bind_local(&owner_name, object.ty.clone());
+            let owner = Expr::new(
+                Node::Var {
+                    name: owner_name.clone(),
+                },
+                object.ty.clone(),
+            );
+            let index = match &object.ty {
+                Type::Record { fields, .. } => fields
+                    .iter()
+                    .position(|value| value.name == name)
+                    .expect("the own field was retained"),
+                _ => unreachable!("the shared rule requires its actual record"),
+            };
+            bindings.push((owner_name, object));
+            let previous_name = loop {
+                let name = self.fresh_name("ml_field_previous");
+                if !inner.has(&name) {
+                    break name;
+                }
+            };
+            inner.bind_local(&previous_name, field.ty.clone());
+            bindings.push((
+                previous_name.clone(),
+                Expr::new(
+                    Node::RecordField {
+                        object: Box::new(owner.clone()),
+                        field: name.clone(),
+                        index,
+                    },
+                    field.ty.clone(),
+                ),
+            ));
+            let left = SExpr::name(&previous_name);
+            let right = args
+                .first()
+                .and_then(Option::as_ref)
+                .cloned()
+                .unwrap_or_else(|| {
+                    SExpr::new(
+                        SNode::Num {
+                            value: "1".to_owned(),
+                            ty: Some(field.ty.clone()),
+                            negative: false,
+                            unit: false,
+                        },
+                        span,
+                    )
+                });
+            let calculated = if binary == "exponentiation" {
+                self.javascript_exponentiation(
+                    &[SArrayItem::new(left, false), SArrayItem::new(right, false)],
+                    span,
+                    &inner,
+                    path,
+                    Some(&field.ty),
+                )?
+            } else {
+                let op = serde_json::from_value(serde_json::Value::String(binary))
+                    .expect("the source rule supplies a registered surface binary operation");
+                self.binary(
+                    op,
+                    &left,
+                    &right,
+                    None,
+                    span,
+                    &inner,
+                    path,
+                    Some(&field.ty),
+                    false,
+                )?
+            };
+            let calculated = self.coerce(calculated, &field.ty, span)?;
+            let body = Expr::new(
+                Node::Method {
+                    object: Box::new(owner),
+                    op: rules::read_record_field_write_identity("=", &name),
+                    args: vec![Some(calculated)],
+                },
+                UNIT,
+            );
+            return Ok(super::array_source_operands::wrap_array_source_operands(
+                body, bindings,
+            ));
+        }
         let mut values = Vec::new();
         for argument in args {
             let argument = argument.as_ref().expect("the actual operand was retained");

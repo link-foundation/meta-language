@@ -348,6 +348,28 @@ for(const [name,input,expected]of [
  ['negative infinity becomes positive infinity',number(-Infinity),number(Infinity)],
  ['canonical quiet NaN follows scalar unary negation',{$:'number',bits:'7ff8000000000000'},{$:'number',bits:'fff8000000000000'}]
 ])rows.push({name:'number scalar negation '+name,source:'/** @param {number} value @returns {number} */ export function inspect(value){return -value;}',entry:'inspect',functions:['inspect'],arguments:[input],expected});
+// Existing heap operands, including updates during the actual right-hand call.
+for (const [operator, initial, operand, expected] of [
+ ['+=','9007199254740993','2','9007199254740995'], ['-=','3','5','-2'],
+ ['*=','9007199254740993','2','18014398509481986'], ['/=', '-7','3','-2'],
+ ['%=','-7','3','-1'], ['**=','3','4','81'], ['++','9007199254740993',null,'9007199254740994'],
+ ['--','9007199254740993',null,'9007199254740992']
+]) rows.push({name:'BigInt compound heap write '+operator,source:'/** @param {{value:bigint}} holder @returns {bigint} */ export function inspect(holder){holder.value'+operator+(operand===null?'':operand+'n')+';return holder.value;}',entry:'inspect',functions:['inspect'],referenceSemantics:true,
+ arguments:[object('1')],objects:[entity('1',[property(data(integer(initial)))])],
+ afterObjects:[entity('1',[property(data(integer(expected)))])],expected:integer(expected)});
+rows.push({name:'BigInt compound captures its previous field before a right-hand mutation',source:'/** @param {{value:bigint}} holder @returns {bigint} */ export function inspect(holder){holder.value+=update(holder);return holder.value;} /** @param {{value:bigint}} holder @returns {bigint} */ function update(holder){holder.value=40n;return 3n;}',entry:'inspect',functions:['inspect','update'],referenceSemantics:true,
+ arguments:[object('1')],objects:[entity('1',[property(data(integer('2')))])],afterObjects:[entity('1',[property(data(integer('5')))])],expected:integer('5')});
+for(const [name,expression,initial,expected] of [
+ ['text','"b"','a','ab'],['exact integer','9007199254740993n','a','a9007199254740993'],
+ ['code units','"\\0\\uDC00"','\uD800','\uD800\0\uDC00'],['negative zero','-0','value:','value:0'],['boolean','true','value:','value:true']
+])rows.push({name:'text compound heap write '+name,source:'/** @param {{value:string}} holder @returns {string} */ export function inspect(holder){holder.value+='+expression+';return holder.value;}',entry:'inspect',functions:['inspect'],referenceSemantics:true,
+ arguments:[object('1')],objects:[entity('1',[property(data(units(initial)))])],afterObjects:[entity('1',[property(data(units(expected)))])],expected:units(expected)});
+for(const [operator,operand,errorClass,message] of [
+ ['/=', '0n','RangeError','Division by zero'], ['%=', '0n','RangeError','Division by zero'],
+ ['**=', '-1n','RangeError','Exponent must be positive'],
+ ['+=', '1','TypeError','Cannot mix BigInt and other types, use explicit conversions']
+])rows.push({name:'abrupt BigInt compound leaves the old heap field '+operator+operand,source:'/** @param {{value:bigint}} holder @returns {bigint} */ export function inspect(holder){holder.value'+operator+operand+';return holder.value;}',entry:'inspect',functions:['inspect'],referenceSemantics:true,
+ arguments:[object('1')],objects:[entity('1',[property(data(integer('2')))])],afterObjects:[entity('1',[property(data(integer('2')))])],expectedOutcome:'allocation',errorClass,errorRealm:'1000',errorReason:message});
 const refusals=[
  {name:'guarded natural cross-realm casts require complete realm lowering',source:'/** @param {bigint} value @returns {bigint} */ export function inspect(value){return natural(value);} /** @param {bigint} value @returns {bigint} */ function natural(value){if(value<0n)throw new Error("natural realm");return value;}',functions:['inspect','natural'],functionRealms:{inspect:'1000',natural:'1001'}},
  {name:'structured arrays require ordinary allocation lowering',source:'/** @param {number[]} values @returns {number} */ export function size(values){return values.length;}',functions:['size']},

@@ -49,6 +49,32 @@ export function readRecordFieldWriteRefusal(operator, kind, reference, open, fie
   if (operator !== '=' && valueKind !== 'float') return 'this compound field assignment needs its actual coercion and value domain';
   return '';
 }
+/** Additional JavaScript domains normalize through the ordinary checked binary operation.
+ * The original refusal remains the contract of the direct Number write renderer.
+ * @param {string} language @param {string} operator @param {string} kind @returns {string} */
+export function readRecordCompoundBinaryOperation(language, operator, kind) {
+  if (language !== 'JavaScript' || (kind !== 'int' && kind !== 'string')) return '';
+  if (kind === 'string') return operator === '+=' ? 'plus' : '';
+  if (operator === '+=' || operator === '++') return 'plus';
+  if (operator === '-=' || operator === '--') return 'sub';
+  if (operator === '*=') return 'mul';
+  if (operator === '/=') return 'div';
+  if (operator === '%=') return 'rem';
+  if (operator === '**=') return 'exponentiation';
+  return '';
+}
+/** @param {string} language @param {string} operator @param {string} kind
+ * @param {boolean} reference @param {boolean} open @param {boolean} field
+ * @param {string} valueKind @returns {string} */
+export function readRecordFieldSourceWriteRefusal(language, operator, kind, reference, open, field, valueKind) {
+  const operation = readRecordCompoundBinaryOperation(language, operator, valueKind);
+  if (operation !== '') {
+    if (kind !== 'record' || !reference || open) return 'a field write needs a closed shared record with explicit own fields';
+    if (!field) return 'creating a field needs a dynamic property and descriptor representation';
+    return '';
+  }
+  return readRecordFieldWriteRefusal(operator, kind, reference, open, field, valueKind);
+}
 /** @param {string} target @param {string} operator @param {string} receiver
  * @param {string} field @param {string} index @param {string[]} arguments_
  * @param {string} suffix @returns {string} */
