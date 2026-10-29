@@ -176,18 +176,26 @@ impl RustParser {
             self.cursor.expect("|", Some("closure"))?;
             while !self.cursor.is("|") {
                 let token = self.peek();
-                if ["mut", "ref", "&", "_"]
-                    .iter()
-                    .any(|value| self.cursor.is(value))
-                {
+                let role = ["mut", "ref", "&", "_"]
+                    .into_iter()
+                    .find(|value| self.cursor.is(value))
+                    .unwrap_or("binding");
+                let form = rules::read_rust_copy_closure_parameter_form(role);
+                if form == "unsupported" {
                     return Err(unsupported(
                         "Rust closure parameter",
                         "a closure needs a named direct immutable typed parameter",
                         Some(token.span()),
                     ));
                 }
-                let name = self.cursor.identifier(Some("closure parameter"))?.value;
-                self.require_nonconstant_binding(&name, path, Some(token.span()))?;
+                let name = if form == "wildcard" {
+                    self.cursor.advance();
+                    self.fresh_product_binding()
+                } else {
+                    let name = self.cursor.identifier(Some("closure parameter"))?.value;
+                    self.require_nonconstant_binding(&name, path, Some(token.span()))?;
+                    name
+                };
                 let (ty, origin) = if self.cursor.eat(":").is_some() {
                     let ty = self.parse_type()?;
                     (ty, self.origins.current_type.clone())

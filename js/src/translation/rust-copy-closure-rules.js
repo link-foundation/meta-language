@@ -1,4 +1,7 @@
 import {readRequiredBooleanFact,readRequiredTextFact} from './fact-column-rules.js';
+/** Actual syntax roles only; a wildcard consumes a value without a binding.
+ * @param {string} role @returns {string} */
+export function readRustCopyClosureParameterForm(role){return role==='_'?'wildcard':role==='binding'?'binding':'unsupported';}
 /** A distinct ordinary immutable source profile, with no inferred ownership.
  * @param {boolean} ordinary @param {string[]} names @param {boolean[]} copies
  * @param {boolean} resultWritten @param {boolean} resultCopy @returns {string} */

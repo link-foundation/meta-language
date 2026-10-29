@@ -1,4 +1,6 @@
 //! Deferred complete original/generated products and shared rule controls.
+#[path = "../../src/translation/rust_copy_closure_rules.rs"]
+mod closure_rules;
 #[path = "../../src/translation/rust_array_lookup_rules.rs"]
 mod rules;
 #[test]
@@ -76,6 +78,22 @@ fn explicit_lazy_callable_signatures_and_branch_plan() {
                 row["result"].as_str().unwrap(),
                 row["knownResult"].as_bool().unwrap()
             ),
+            row["expected"].as_str().unwrap()
+        );
+    }
+    for row in fixture["callableContexts"].as_array().unwrap() {
+        assert_eq!(
+            rules::read_rust_array_lookup_callable_context_arity(
+                row["consumer"].as_str().unwrap(),
+                row["receiver"].as_bool().unwrap(),
+                row["element"].as_bool().unwrap()
+            ),
+            row["expected"].as_f64().unwrap()
+        );
+    }
+    for row in fixture["closureParameterForms"].as_array().unwrap() {
+        assert_eq!(
+            closure_rules::read_rust_copy_closure_parameter_form(row["role"].as_str().unwrap()),
             row["expected"].as_str().unwrap()
         );
     }

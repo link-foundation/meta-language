@@ -14,6 +14,12 @@ export function readRustArrayLookupLazyFallbackError(kind,parameters,wrappers,kn
 export function testRustArrayLookupPredicateConsumer(consumer){return consumer==='is_some_and'||consumer==='is_none_or';}
 /** @param {string} kind @param {number} parameters @param {number} wrappers @param {boolean} knownParameter @param {string} result @param {boolean} knownResult @returns {string} */
 export function readRustArrayLookupPredicateError(kind,parameters,wrappers,knownParameter,result,knownResult){return kind==='function'&&parameters===1&&wrappers===0&&knownParameter&&result==='bool'&&knownResult?'':'a lookup predicate needs a known direct one-argument callable with a Boolean result';}
+/** Context comes from the actual standard scalar lookup, not closure text.
+ * @param {string} consumer @param {boolean} receiver @param {boolean} element @returns {number} */
+export function readRustArrayLookupCallableContextArity(consumer,receiver,element){
+ if(!receiver||!element)return -1;
+ return testRustArrayLookupLazyFallback(consumer)?0:testRustArrayLookupPredicateConsumer(consumer)?1:-1;
+}
 /** @param {string} kind @param {string} element @param {string} model
  * @param {boolean} proven @param {boolean} immutable @param {boolean} copy
  * @param {boolean} copied @returns {string} */

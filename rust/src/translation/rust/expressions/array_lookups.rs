@@ -167,6 +167,89 @@ fn lookup_dimensions(
     ])
 }
 impl RustParser {
+    fn array_lookup_callable_context(
+        &self,
+        receiver: &SExpr,
+        consumer: &str,
+        path: &[String],
+    ) -> Option<SourceOrigin> {
+        let source = self.origins.origin(receiver, path);
+        let Some(Type::Array { element, .. }) = source.ty.as_ref() else {
+            return None;
+        };
+        let owner = source_owners::element_owner(
+            source
+                .expanded_source_owner
+                .as_ref()
+                .or(source.source_owner.as_ref()),
+        )?;
+        let (bits, signed) = match element.as_ref() {
+            Type::Fixed { bits, signed } => (bits.to_string(), *signed),
+            _ => (String::new(), false),
+        };
+        let known_element = owner.arguments.is_empty()
+            && (owner.kind == "primitive" || owner.kind == "unit" && owner.path.is_empty())
+            && rules::read_rust_array_lookup_element_owner_error(
+                element.kind(),
+                &bits,
+                signed,
+                &owner.path.join("::"),
+            )
+            .is_empty();
+        let known_receiver = rules::read_rust_array_lookup_receiver_error(
+            "array",
+            element.kind(),
+            source.array_source_model.unwrap_or(""),
+            source.proven,
+            source
+                .wrappers
+                .iter()
+                .all(|layer| layer == "reference" || layer == "box"),
+            source.array_element_copy_evidence,
+            true,
+        )
+        .is_empty();
+        let arity = rules::read_rust_array_lookup_callable_context_arity(
+            consumer,
+            known_receiver,
+            known_element,
+        );
+        if arity < 0.0 {
+            return None;
+        }
+        let mut selected = SourceOrigin::with_type(element.as_ref().clone(), path, Vec::new());
+        selected.source_owner = Some(owner.clone());
+        let result = if arity == 0.0 {
+            selected.clone()
+        } else {
+            lookup_result_origin(&BOOL, "", true, path)
+        };
+        let parameters = if arity == 0.0 {
+            Vec::new()
+        } else {
+            vec![selected]
+        };
+        let mut context = SourceOrigin::with_type(
+            Type::Function {
+                params: if arity == 0.0 {
+                    Vec::new()
+                } else {
+                    vec![element.as_ref().clone()]
+                },
+                ret: Box::new(if arity == 0.0 {
+                    element.as_ref().clone()
+                } else {
+                    BOOL
+                }),
+            },
+            path,
+            Vec::new(),
+        );
+        context.copy_evidence = Some(());
+        context.callable_parameters = Some(parameters);
+        context.callable_result = Some(Box::new(result));
+        Some(context)
+    }
     pub(super) fn read_array_lookup(
         &mut self,
         receiver: &SExpr,
@@ -222,7 +305,12 @@ impl RustParser {
         self.cursor.expect("(", Some("array lookup consumer"))?;
         let mut defaults = Vec::new();
         if consumer_arity > 0.0 {
-            defaults.push(self.expr(path, Options::default())?);
+            let context = self.array_lookup_callable_context(receiver, &consumer.value, path);
+            defaults.push(if let Some(context) = context {
+                self.read_expected_copy_closure(path, Some(&context))?
+            } else {
+                self.expr(path, Options::default())?
+            });
             self.cursor.eat(",");
         }
         let close = self.cursor.expect(")", Some("array lookup consumer"))?;

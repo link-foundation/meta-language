@@ -827,6 +827,24 @@ pub fn read_rust_array_lookup_predicate_error(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_array_lookup_callable_context_arity(
+    consumer: &str,
+    receiver: bool,
+    element: bool,
+) -> f64 {
+    if !receiver || !element {
+        -1f64
+    } else if self::test_rust_array_lookup_lazy_fallback(consumer) {
+        0f64
+    } else if self::test_rust_array_lookup_predicate_consumer(consumer) {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_array_lookup_receiver_error(
     kind: &str,
     element: &str,

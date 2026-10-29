@@ -6,7 +6,21 @@ import {projectRustArrayLookupElementOwner} from './rust-array-lookup-source-own
 import {readRustUsizeIndexExpression} from './rust-usize-index-expressions.js';
 import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
 import {projectRustPrimitiveDefault} from './rust-primitive-default.js';
-import {testRustArrayLookupLazyFallback,readRustArrayLookupLazyFallbackError,testRustArrayLookupPredicateConsumer,readRustArrayLookupPredicateError} from './rust-array-lookup-rules.js';
+import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
+import {testRustArrayLookupLazyFallback,readRustArrayLookupLazyFallbackError,testRustArrayLookupPredicateConsumer,readRustArrayLookupPredicateError,readRustArrayLookupCallableContextArity} from './rust-array-lookup-rules.js';
+function callableContext(parser,receiver,consumer,path){
+ const source=parser.origins.origin(receiver,path),type=source.type,element=type?.kind==='array'?type.element:null;
+ if(!element)return null;
+ const owner=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner);
+ const knownElement=Boolean(owner&&owner.arguments.length===0&&(owner.kind==='primitive'||owner.kind==='unit'&&owner.path.length===0)&&readRustArrayLookupElementOwnerError(element.kind,String(element.bits??''),element.signed===true,owner.path.join('::'))==='');
+ const knownReceiver=readRustArrayLookupReceiverError(type.kind,element.kind,source.arraySourceModel??'',source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'),source.arrayElementCopyEvidence===true,true)==='';
+ const arity=readRustArrayLookupCallableContextArity(consumer,knownReceiver,knownElement);
+ if(arity<0)return null;
+ const selected={...parser.origins.typeOrigin(element,path),sourceOwner:structuredClone(owner)};
+ const result=arity===0?selected:{...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}};
+ const parameters=arity===0?[]:[selected];
+ return {...parser.origins.typeOrigin({kind:'function',params:parameters.map(parameter=>parameter.type),ret:result.type},path),copyEvidence:true,callableParameters:parameters,callableResult:result};
+}
 export function readRustArrayLookup(parser,receiver,method,args,range,path){
  const arity=readRustArrayLookupArity(method.value,parser.ordinaryCompletionContext());if(arity<0)return null;
  if(args.length!==arity)throw new TranslationError('type',method.value+' needs '+arity+' actual array lookup arguments',range);
@@ -16,7 +30,7 @@ export function readRustArrayLookup(parser,receiver,method,args,range,path){
  if(consumer.value==='copied'||consumer.value==='cloned'){cloned=consumer.value==='cloned';copied=true;c.expect('(','copied lookup');c.expect(')','copied lookup');if(!c.eat('.')||c.peek().kind!=='identifier')throw unsupported('Rust array lookup Option','an immediate standard presence or copied-value consumer is required',range);consumer=c.identifier('copied lookup consumer');}
  const consumerArity=readRustArrayLookupConsumerArity(consumer.value,copied);
  if(consumerArity<0)throw unsupported('Rust array lookup Option','an immediate standard presence or copied-value consumer is required',range);
- c.expect('(','array lookup consumer');const defaults=[];if(consumerArity>0){defaults.push(parser.expr(path));c.eat(',');}const close=c.expect(')','array lookup consumer');range={start:receiver.span?.start??range.start,end:close.end};
+ c.expect('(','array lookup consumer');const defaults=[];if(consumerArity>0){const context=callableContext(parser,receiver,consumer.value,path);defaults.push(context?readRustExpectedCopyClosure(parser,path,context):parser.expr(path));c.eat(',');}const close=c.expect(')','array lookup consumer');range={start:receiver.span?.start??range.start,end:close.end};
  const source=parser.origins.origin(receiver,path),element=source.type?.kind==='array'?source.type.element:null,leaf=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner),cloneError=cloned?readRustArrayLookupClonedElementError(element?.kind??'',String(element?.bits??''),element?.signed===true,leaf?.kind??'',leaf?.path.join('::')??'',leaf?.arguments.length??-1):'',stringClone=cloned&&element?.kind==='string'&&cloneError==='',error=readRustArrayLookupReceiverError(source.type?.kind??'',element?.kind??'',source.arraySourceModel??'',source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'),source.arrayElementCopyEvidence===true,copied&&!stringClone);
  if(error)throw unsupported('Rust array lookup receiver',error,range);
  if(cloneError)throw unsupported('Rust array lookup clone',cloneError,range);

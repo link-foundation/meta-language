@@ -240,6 +240,18 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_copy_closure_parameter_form(role: &str) -> String {
+    if role == "_" {
+        String::from("wildcard")
+    } else if role == "binding" {
+        String::from("binding")
+    } else {
+        String::from("unsupported")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_copy_closure_header_error(
     ordinary: bool,
     names: &[String],

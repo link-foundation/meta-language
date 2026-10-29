@@ -5102,6 +5102,26 @@ Lookup discovery also constructs this same canonical source projection before
 the ordinary semantic check. It never substitutes an unresolved free function
 named after a method. Final source-owner validation remains required.
 
+Actual standard scalar lookup receivers and terminal element owners can supply
+context for omitted closure annotations. Shared context selection chooses the
+zero-argument fallback or one-argument Boolean predicate signature; the normal
+Copy closure reader retains explicit source types, captures, spans and anonymous
+closure identity. The context is a callback signature, not authority to coerce
+a captured closure into a source function pointer. Unknown receiver/element
+ownership supplies no context, and explicit usize/u64 distinctions and literal
+overflow still pass through the ordinary checks.
+
+Copy closure parameters may also use a
+[wildcard pattern](https://doc.rust-lang.org/reference/patterns.html#wildcard-pattern).
+A hygienic internal argument retains its type and arity without making `_` an
+expression binding or shadowing an outer source name. Repeated wildcards remain
+separate arguments, and every actual call argument still evaluates in order.
+Source spans retain the original pattern. This applies only to the existing
+direct immutable Copy parameter/capture/result profile; general destructuring,
+mutable patterns, non-Copy moves and drop behavior keep their full obligations.
+Inferred, partly annotated, wildcard and standard-function-item originals,
+malformed inputs, source-owner controls and traces remain drafted and unexecuted.
+
 The canonical discovery requirement also applies to byte ASCII classification,
 checked integers, integer bits/magnitudes, primitive associated calls and
 TryFrom, primitive selections, standard owned calls, wrapping shifts and checked
