@@ -302,3 +302,32 @@ fn complete_source_projects_keep_original_files_executable_meanings_and_graph_is
             .contains("Default output retains")
     );
 }
+
+#[test]
+fn project_source_version_options_are_not_silently_dropped() {
+    super::unsigned_source_documents::require_versions();
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-source-project.lino"
+    ))
+    .unwrap();
+    let inputs = json!([{"path":"src/main.rs","source":"fn main(){}"}]);
+    for row in fixture["versionRefusals"].as_array().unwrap() {
+        let error = parse_rust_source_project(&inputs, "src/main.rs", &row["options"]).unwrap_err();
+        assert!(error.contains(row["message"].as_str().unwrap()), "{error}");
+        let input = meta_language::structured_data_to_lino(
+            &json!({"inputs":inputs,"options":row["options"]}),
+        )
+        .unwrap();
+        let output = meta_language::run_rust_source_project_command(
+            &[
+                "inventory.lino".to_owned(),
+                "--entry".to_owned(),
+                "src/main.rs".to_owned(),
+            ],
+            |_| Ok(input.clone()),
+        );
+        assert_eq!(output.exit_code, 1);
+        assert!(output.stdout.is_empty());
+        assert!(output.stderr.contains(row["message"].as_str().unwrap()));
+    }
+}

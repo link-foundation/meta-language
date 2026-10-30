@@ -265,8 +265,24 @@ pub fn parse_rust_source_project(
         Some(Value::Bool(value)) => *value,
         _ => return Err("Rust source project: retainSourceTypeOwners must be Boolean".to_owned()),
     };
+    let source_version = match options.get("sourceVersion") {
+        None => None,
+        Some(Value::String(value)) => Some(
+            crate::translation::rust::source_versions::canonical(value)
+                .map_err(|error| error.to_string())?,
+        ),
+        _ => return Err("Rust sourceVersion must be a string".to_owned()),
+    };
     let parse = |source: &str| {
-        if retain {
+        if let Some(version) = source_version.as_deref() {
+            if retain {
+                crate::translation::rust::parse_rust_with_source_type_owners_and_version(
+                    source, version,
+                )
+            } else {
+                crate::translation::rust::parse_rust_with_source_version(source, version)
+            }
+        } else if retain {
             crate::translation::rust::parse_rust_with_source_type_owners(source)
         } else {
             parse_rust(source)
@@ -300,11 +316,14 @@ pub fn create_rust_source_project_program_links(
 ) -> Result<TypedProgramLinks, String> {
     let (composition, surface, normalization) = parse_rust_source_project(inputs, entry, options)?;
     let program = check_program(&surface).map_err(|error| error.to_string())?;
-    let mut packet = encode_typed_program_links_with_provenance(
-        &program,
-        Some(&json!({"sourceProject":composition,"entryNormalization":normalization,"userProvenance":options.get("provenance").unwrap_or(&Value::Null)})),
-    )
-    .map_err(|error| error.to_string())?;
+    let mut provenance = json!({"sourceProject":composition,"entryNormalization":normalization,"userProvenance":options.get("provenance").unwrap_or(&Value::Null)});
+    if let Some(version) = options.get("sourceVersion").and_then(Value::as_str) {
+        let version = crate::translation::rust::source_versions::canonical(version)
+            .map_err(|error| error.to_string())?;
+        provenance["sourceProfile"] = json!({"language":"Rust","rustSourceVersion":version});
+    }
+    let mut packet = encode_typed_program_links_with_provenance(&program, Some(&provenance))
+        .map_err(|error| error.to_string())?;
     let node_limit = limit(options, "nodeLimit", 1000000)?;
     let inputs = composition["files"]
         .as_array()

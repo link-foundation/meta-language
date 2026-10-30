@@ -1,3 +1,4 @@
+import {createRustSourceProjectProgramLinks} from '../src/rust-source-project.js';
 // Deferred version/context/codec controls; never import while source drafting.
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -16,7 +17,7 @@ const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major
 for(const [index,row]of fixture.premises.entries())test('source version decision '+index,()=>assert.deepEqual((versions[row.operation]??errors[row.operation]??columns[row.operation])(...row.args),row.expected));
 for(const version of fixture.sourceVersions)for(const row of fixture.cases)test(version+' '+row.name,()=>{
  const source=row.source+'fn main(){}',concrete=LinkNetwork.parse(source,'Rust');assert.equal(LinkNetwork.fromLino(concrete.toLino()).reconstructText(),source);
- for(const packet of [createRustSourceOwnerProgramLinks(source,{sourceVersion:version}),createTypedProgramLinks(source,'Rust',{rustSourceVersion:version})]){
+ for(const packet of [createRustSourceOwnerProgramLinks(source,{sourceVersion:version}),createTypedProgramLinks(source,'Rust',{rustSourceVersion:version}),createRustSourceProjectProgramLinks([{path:'src/main.rs',source}],'src/main.rs',{sourceVersion:version,retainSourceTypeOwners:true})]){
   const before=decodeTypedProgramLinks(packet.network,packet.root);
   for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
    assert.deepEqual(decodeTypedProgramLinks(network,packet.root).items,before.items);
@@ -31,7 +32,7 @@ for(const version of fixture.invalidVersions)test('uncovered source version '+ve
 test('source version selectors require their source language',()=>assert.throws(()=>createTypedProgramLinks('','JavaScript',{rustSourceVersion:'1.90.0'}),TypeError));
 
 test('the source-version option is captured once before parsing and provenance',()=>{
- for(const make of [options=>createRustSourceOwnerProgramLinks(fixture.cases[0].source+'fn main(){}',options),options=>createTypedProgramLinks(fixture.cases[0].source+'fn main(){}','Rust',Object.defineProperty({},'rustSourceVersion',{get:()=>options.sourceVersion}))]){
+ for(const make of [options=>createRustSourceOwnerProgramLinks(fixture.cases[0].source+'fn main(){}',options),options=>createRustSourceProjectProgramLinks([{path:'src/main.rs',source:fixture.cases[0].source+'fn main(){}'}],'src/main.rs',options),options=>createTypedProgramLinks(fixture.cases[0].source+'fn main(){}','Rust',Object.defineProperty({},'rustSourceVersion',{get:()=>options.sourceVersion}))]){
   let reads=0;const options=Object.defineProperty({},'sourceVersion',{get:()=>{reads+=1;return reads===1?'1.96.0':'1.99.0';}}),packet=make(options);assert.equal(reads,1);
   const emission=emitTypedProgramLinks(packet.network,packet.root,'JavaScript'),name=emission.mappings.find(row=>row.kind==='function'&&row.source==='result').target;
   assert.throws(()=>runInNewContext(emission.code.replace(/^export /gmu,'')+'\n'+name+'()',{}, {timeout:1000}),error=>error.message===fixture.cases[0].expectedByVersion['1.96.0'].message);

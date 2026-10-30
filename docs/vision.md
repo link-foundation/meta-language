@@ -11441,3 +11441,20 @@ obligations remain required. This source rule follows the
 Independent unexecuted original programs cover all four names on both owners,
 receiver mutation, synchronous values and a shared owner spelling; additional
 refusals retain the genuinely different modifier and detachment obligations.
+
+
+Multi-file Rust source translation snapshots an explicit `sourceVersion` once
+and passes the same canonical source-std selection through ordinary parsing,
+source-owner retention and library entry normalization. Structured Links
+provenance retains that selection, so saved editable semantic and concrete
+graphs do not depend on the later target compiler's std version. Omitted
+selectors preserve the existing default behavior; malformed and uncovered
+selectors reach the same shared version rules as the single-source API.
+The project CLI consumes this option through its Links inventory. No host
+reimplements the language's version decisions. Independent deferred controls
+include every supported snapshot endpoint with/without retained owners, library
+fallbacks, codec reloads, conversion-error differences, single-read getters and
+invalid selectors through both APIs and commands. Complete Cargo configuration,
+dependency version resolution, alternate editions, target ABI and all earlier
+source-project obligations remain required; this draft supplies no evidence of
+execution or complete project translation.

@@ -49,3 +49,18 @@ test('installed source-project command retains default CST graphs and optional s
  for(const args of [['--entry'],['inventory.lino'],['inventory.lino','--entry','src/main.rs','--entry','src/main.rs'],['inventory.lino','--entry','src/main.rs','--binary','--to','Rust']])assert.equal(runRustSourceProjectCommand(args,io).exitCode,2);
  const help=runRustSourceProjectCommand(['help'],{readFile:()=>assert.fail('help cannot read a source')});assert.equal(help.exitCode,0);assert.match(help.stdout,/Default output retains/);
 });
+
+for(const row of fixture.versionRefusals)test(row.name,()=>{
+ const inputs=[{path:'src/main.rs',source:'fn main(){}'}];
+ assert.throws(()=>parseRustSourceProject(inputs,'src/main.rs',row.options),error=>error.message.includes(row.message));
+ const output=runRustSourceProjectCommand(['inventory.lino','--entry','src/main.rs'],{readFile:()=>structuredDataToLino({inputs,options:row.options})});
+ assert.equal(output.exitCode,1);assert.equal(output.stdout,'');assert.ok(output.stderr.includes(row.message));
+});
+test('project source snapshots survive the library fallback and exact codec reloads',()=>{
+ for(const row of fixture.cases.filter(row=>Object.hasOwn(row.options,'sourceVersion'))){
+  const parsed=parseRustSourceProject(row.inputs,row.entry,row.options),expected=row.options.sourceVersion||'1.99.0';
+  assert.equal(parsed.sourceVersion,expected);
+  const packet=createRustSourceProjectProgramLinks(row.inputs,row.entry,row.options);
+  for(const network of [packet.network,LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.ok(network.toLino().includes(expected));
+ }
+});

@@ -1,3 +1,4 @@
+import {readRustSourceVersion} from './translation/rust-source-versions.js';
 // Supplied source inventories only: no disk traversal, downloads or subprocess.
 import {createHash} from 'node:crypto';
 import {tokenize} from './translation/lexer.js';
@@ -47,15 +48,20 @@ export function composeRustSourceProject(inputs,entry,options={}){
  * records its empty entry normalization, used only when no main exists.
  */
 export function parseRustSourceProject(inputs,entry,options={}){
+ if(!options||typeof options!=='object'||Array.isArray(options))fail('expected a resource options record');
+ return parseRustSourceProjectVersion(inputs,entry,options,options.sourceVersion);
+}
+function parseRustSourceProjectVersion(inputs,entry,options,selectedVersion){
  const composition=composeRustSourceProject(inputs,entry,options);let source=composition.source,entryNormalization='none',surface;
  if(options.retainSourceTypeOwners!==undefined&&typeof options.retainSourceTypeOwners!=='boolean')fail('retainSourceTypeOwners must be Boolean');
- const sourceOptions={retainSourceTypeOwners:options.retainSourceTypeOwners===true};
+ const sourceVersion=selectedVersion===undefined?undefined:readRustSourceVersion(selectedVersion).spelling;
+ const sourceOptions={retainSourceTypeOwners:options.retainSourceTypeOwners===true,...(sourceVersion===undefined?{}:{sourceVersion})};
  try{surface=parseRust(source,sourceOptions);}catch(error){
   if(options.library===true&&error.kind==='syntax'&&error.reason==='a Rust program needs fn main'){
    source+='\nfn main(){}\n';entryNormalization='empty frontend entry for a source library';surface=parseRust(source,sourceOptions);
   }else throw error;
  }
- return {composition,surface,entryNormalization};
+ return {composition,surface,entryNormalization,...(sourceVersion===undefined?{}:{sourceVersion})};
 }
 
 /** Checked editable semantic Links plus every complete original concrete graph.
@@ -63,9 +69,14 @@ export function parseRustSourceProject(inputs,entry,options={}){
  * concepts. Resource failure returns no partial archive or executable product.
  */
 export function createRustSourceProjectProgramLinks(inputs,entry,options={}){
- const {composition,surface,entryNormalization}=parseRustSourceProject(inputs,entry,options),program=checkProgram(surface);
- const packet=encodeTypedProgramLinks(program,{provenance:{sourceProject:composition,entryNormalization,userProvenance:options.provenance??null}}),nodeLimit=limit(options,'nodeLimit',1000000);
- const archive=createSourceProjectArchive(composition.files.map(file=>({path:file.path,source:file.source,language:'Rust'})),{...options,requireClean:true,projection:'ConcreteSyntax'}),links=archive.network.links();
+ if(!options||typeof options!=='object'||Array.isArray(options))fail('expected a resource options record');
+ const selectedVersion=options.sourceVersion;
+ const {composition,surface,entryNormalization,sourceVersion}=parseRustSourceProjectVersion(inputs,entry,options,selectedVersion),program=checkProgram(surface);
+ const packet=encodeTypedProgramLinks(program,{provenance:{sourceProject:composition,entryNormalization,...(sourceVersion===undefined?{}:{sourceProfile:{language:'Rust',rustSourceVersion:sourceVersion}}),userProvenance:options.provenance??null}}),nodeLimit=limit(options,'nodeLimit',1000000);
+ // The concrete parser does not consume a semantic std-version selector.
+ // Exclude it before copying enumerable archive options to avoid rereading a getter.
+ const archiveOptions=Object.fromEntries(Object.keys(options).filter(key=>key!=='sourceVersion').map(key=>[key,options[key]]));
+ const archive=createSourceProjectArchive(composition.files.map(file=>({path:file.path,source:file.source,language:'Rust'})),{...archiveOptions,requireClean:true,projection:'ConcreteSyntax'}),links=archive.network.links();
  if(packet.network.links().length+links.length+2>nodeLimit)fail('concrete graph node limit exceeded');
  const ids=new Map();for(const link of links)ids.set(link.id().asU64(),packet.network.insertLink([],link.metadata().clone()));
  for(const link of links)packet.network.link(ids.get(link.id().asU64())).setReferences(link.references().map(reference=>{const target=ids.get(reference.asU64());if(!target)fail('dangling original concrete reference');return target;}));

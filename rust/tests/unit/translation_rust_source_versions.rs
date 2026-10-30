@@ -83,7 +83,18 @@ fn selected_source_std_survives_both_transports_and_replays_on_the_current_targe
             None,
         )
         .unwrap();
-        for actual in [&packet, &plain] {
+        let project = meta_language::create_rust_source_project_program_links(
+            &json!([{"path":"src/main.rs","source":fixture["source"]}]),
+            "src/main.rs",
+            &json!({"sourceVersion":version,"retainSourceTypeOwners":true}),
+        )
+        .unwrap();
+        assert_eq!(
+            decode_typed_program_links(&project.network, project.root).unwrap(),
+            decode_typed_program_links(&packet.network, packet.root).unwrap(),
+            "the selected source snapshot preserves every version-sensitive semantic term"
+        );
+        for actual in [&packet, &plain, &project] {
             let before = decode_typed_program_links(&actual.network, actual.root).unwrap();
             for network in [
                 LinkNetwork::from_lino(&actual.network.to_lino()).unwrap(),
