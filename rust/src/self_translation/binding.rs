@@ -446,6 +446,7 @@ impl Binder<'_, '_> {
             utf16_strings: self.utf16_strings,
             reference_semantics: self.reference_semantics,
             module_binding_scope: Some(Self::module_binding_scope(state)),
+            ..Context::default()
         };
         state.outs[index] = Some(translate_group(
             group,

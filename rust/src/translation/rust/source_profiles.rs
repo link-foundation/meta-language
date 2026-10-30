@@ -258,3 +258,22 @@ pub fn parse_rust_with_source_type_owners_and_version(
         },
     )
 }
+
+/// Read shared handles using the selected source std snapshot.
+///
+/// # Errors
+/// Refuses invalid selectors, ownership or unsupported source constructs.
+pub fn parse_rust_with_shared_array_handle_source_model_and_version(
+    source: &str,
+    model: &str,
+    version: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            shared_array_handle_source: model,
+            source_version: version,
+            ..SourceProfiles::default()
+        },
+    )
+}

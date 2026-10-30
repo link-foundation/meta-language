@@ -47,10 +47,15 @@ pub(super) fn validate_options(
 pub(super) fn read_whole_module(
     source: &str,
     model: &str,
+    source_version: &str,
 ) -> Result<(Emitted, Vec<SelfTranslationSignature>), SelfTranslationError> {
     let surface =
-        crate::translation::rust::parse_rust_with_shared_array_handle_source_model(source, model)
-            .map_err(|error| failure(&error.to_string()))?;
+        crate::translation::rust::parse_rust_with_shared_array_handle_source_model_and_version(
+            source,
+            model,
+            source_version,
+        )
+        .map_err(|error| failure(&error.to_string()))?;
     let program = crate::translation::check::check_program(&surface)
         .map_err(|error| failure(&error.to_string()))?;
     if program.main.is_some() {

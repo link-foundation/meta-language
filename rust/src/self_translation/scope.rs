@@ -14,6 +14,7 @@ use crate::translation::surface::{SEffect, SExpr, SNode};
 use std::collections::{HashMap, HashSet};
 
 pub(super) struct BindingScopeContext {
+    pub(super) rust_source_version: String,
     pub(super) utf16_strings: bool,
     pub(super) reference_semantics: bool,
     pub(super) module_scope_known: bool,
@@ -32,6 +33,7 @@ pub(super) fn translate_binding_groups<'a>(
     context: BindingScopeContext,
 ) -> Vec<(Group<'a>, Translated)> {
     let BindingScopeContext {
+        rust_source_version,
         utf16_strings,
         reference_semantics,
         module_scope_known,
@@ -115,6 +117,7 @@ pub(super) fn translate_binding_groups<'a>(
                 to,
                 decorators,
                 &Context {
+                    rust_source_version: rust_source_version.clone(),
                     utf16_strings,
                     reference_semantics,
                     module_binding_scope: Some(module_scope.clone()),
@@ -173,6 +176,7 @@ pub(super) fn translate_binding_groups<'a>(
             to,
             decorators,
             &Context {
+                rust_source_version: rust_source_version.clone(),
                 utf16_strings,
                 reference_semantics,
                 module_binding_scope: Some(module_scope),

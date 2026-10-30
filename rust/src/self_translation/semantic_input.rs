@@ -12,7 +12,10 @@ pub(super) fn read_independent_rust_module_signatures(
     if !options.imports.is_empty() {
         return Err(super::SelfTranslationError { message: "independent Rust signature imports: a source module with external signature assumptions requires a composed Rust namespace interpretation".to_owned() });
     }
-    let program = read_independent_rust_program(source)?;
+    let program = read_independent_rust_program(
+        source,
+        options.rust_source_version.as_deref().unwrap_or(""),
+    )?;
     crate::translation::emit_javascript::emit_javascript(&program).map_err(failure)?;
     let names = read_rust_public_bindings(source)?;
     read_rust_module_value_signatures(&program, &names)
@@ -28,16 +31,22 @@ fn failure(
 
 fn read_independent_rust_program(
     source: &str,
+    source_version: &str,
 ) -> Result<crate::translation::ir::Program, super::SelfTranslationError> {
-    use crate::translation::{check::check_program, rust::parse_rust_with_source_type_owners};
-    let surface = match parse_rust_with_source_type_owners(source) {
+    use crate::translation::{
+        check::check_program, rust::parse_rust_with_source_type_owners_and_version,
+    };
+    let surface = match parse_rust_with_source_type_owners_and_version(source, source_version) {
         Ok(surface) => surface,
         Err(error)
             if error.kind == crate::translation::diagnostics::ErrorKind::Syntax
                 && error.reason == "a Rust program needs fn main" =>
         {
-            parse_rust_with_source_type_owners(&format!("{source}\nfn main() {{}}\n"))
-                .map_err(failure)?
+            parse_rust_with_source_type_owners_and_version(
+                &format!("{source}\nfn main() {{}}\n"),
+                source_version,
+            )
+            .map_err(failure)?
         }
         Err(error) => return Err(failure(error)),
     };
@@ -146,6 +155,7 @@ fn read_rust_module_value_signatures(
 pub(super) fn read_independent_rust_module_publication(
     source: &str,
     items: &[Item<'_>],
+    source_version: &str,
 ) -> Result<
     Option<(
         crate::translation::emit_common::Emitted,
@@ -166,7 +176,7 @@ pub(super) fn read_independent_rust_module_publication(
         return Ok(None);
     }
     let names = read_rust_public_bindings(source)?;
-    let program = read_independent_rust_program(source)?;
+    let program = read_independent_rust_program(source, source_version)?;
     let tree = crate::native_grammar_parser::parse_native("native-rust", source);
     let mut owners = std::collections::HashSet::new();
     for (node, _) in tree.children.iter().filter(|(node, _)| {

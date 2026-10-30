@@ -17,6 +17,8 @@ use super::representation_rules::{
 
 #[derive(Default)]
 pub struct Context {
+    /// Selected stable Rust source std version; empty retains the default.
+    pub rust_source_version: String,
     pub module: ModuleContext,
     pub utf16_strings: bool,
     /// Keep one selected shared heap representation across sibling items.

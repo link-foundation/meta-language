@@ -685,3 +685,5 @@ mod unsigned_source_documents;
 mod unsigned_source_command;
 
 mod unsigned_graph_command;
+
+mod self_translation_source_versions;

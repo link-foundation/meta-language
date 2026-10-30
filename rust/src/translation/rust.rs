@@ -134,10 +134,10 @@ pub use source_profiles::{
     parse_rust_with_empty_option_source_model, parse_rust_with_primitive_owner_model,
     parse_rust_with_pure_unit_call_model, parse_rust_with_runtime_shell_model,
     parse_rust_with_scalar_loop_model, parse_rust_with_shared_array_handle_source_model,
-    parse_rust_with_source_models, parse_rust_with_source_profiles,
-    parse_rust_with_source_signature_model, parse_rust_with_source_type_owners,
-    parse_rust_with_source_type_owners_and_version, parse_rust_with_source_version,
-    parse_rust_with_type_namespace_model,
+    parse_rust_with_shared_array_handle_source_model_and_version, parse_rust_with_source_models,
+    parse_rust_with_source_profiles, parse_rust_with_source_signature_model,
+    parse_rust_with_source_type_owners, parse_rust_with_source_type_owners_and_version,
+    parse_rust_with_source_version, parse_rust_with_type_namespace_model,
 };
 
 /// Read explicit owned String local state and its exact source interface.

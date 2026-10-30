@@ -1,3 +1,4 @@
+import {readRustSourceVersion} from './translation/rust-source-versions.js';
 import {acceptRustValueModuleItem,readRustValueModuleOwnerKind,readRustPublicConstantNamePosition,planRustModuleValueExportBindings,renderRustModuleValueExport} from './translation/rust-module-value-rules.js';
 // Translates meta-language's own modules between JavaScript, TypeScript and
 // Rust through meta-language links. The source is parsed losslessly with its
@@ -128,7 +129,8 @@ export function selfTranslate(source, sourceLanguage, targetLanguage, options = 
 
 /** Preserve the actual compiler diagnostic for each ordinary source item. */
 export function selfTranslateWithDiagnostics(source, sourceLanguage, targetLanguage, options = {}) {
-  const translation = selfTranslate(source, sourceLanguage, targetLanguage, { ...options, retainDiagnostics: true });
+  const {rustSourceVersion,...remaining}=options;
+  const translation = selfTranslate(source, sourceLanguage, targetLanguage, { ...remaining, rustSourceVersion, retainDiagnostics: true });
   return { translation, diagnostics: translation.items.map(item => item.diagnostic ?? null) };
 }
 
@@ -145,7 +147,7 @@ export function selfTranslationSignatures(source, language, options = {}) {
     return translateModule(source, language, 'JavaScript', options, true).signatures;
   }
   if (family(required(language)) === 'Rust' && options.semanticTranslation === true) {
-    return readIndependentRustModuleSignatures(source, options);
+    return readIndependentRustModuleSignatures(source, options, readSelectedRustSourceVersion(language,options.rustSourceVersion));
   }
   if (family(required(language)) !== 'JavaScript') {
     throw new SelfTranslationError(`signatures are read from JavaScript or TypeScript modules, not ${language}`);
@@ -153,10 +155,16 @@ export function selfTranslationSignatures(source, language, options = {}) {
   return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function readIndependentRustModuleSignatures(source, options) {
+function readSelectedRustSourceVersion(language,version){
+ if(version===undefined)return '';
+ if(family(required(language))!=='Rust')throw new SelfTranslationError('Rust source version requires Rust source');
+ return readRustSourceVersion(version).spelling;
+}
+
+function readIndependentRustModuleSignatures(source, options, sourceVersion) {
   if (Object.keys(options.imports ?? {}).length) throw unsupported('independent Rust signature imports',
     'a source module with external signature assumptions requires a composed Rust namespace interpretation');
-  const program = readIndependentRustProgram(source);
+  const program = readIndependentRustProgram(source,sourceVersion);
   // Every body, private dependency and actual source type is checked together;
   // successful source parsing alone cannot publish an import signature.
   emitJavaScript(program);
@@ -165,12 +173,12 @@ function readIndependentRustModuleSignatures(source, options) {
   return readRustModuleValueSignatures(program,names);
 }
 
-function readIndependentRustProgram(source) {
+function readIndependentRustProgram(source,sourceVersion) {
   let surface;
-  try { surface = parseRustWithSourceTypeOwners(source); }
+  try { surface = parseRustWithSourceTypeOwners(source,{sourceVersion}); }
   catch (error) {
     if (!(error instanceof TranslationError) || error.kind !== 'syntax' || error.reason !== 'a Rust program needs fn main') throw error;
-    surface = parseRustWithSourceTypeOwners(`${source}\nfn main() {}\n`);
+    surface = parseRustWithSourceTypeOwners(`${source}\nfn main() {}\n`,{sourceVersion});
   }
   return checkProgram(surface);
 }
@@ -198,10 +206,10 @@ function readRustModuleValueSignatures(program,bindings){
  if(signatures.length!==bindings.size)throw unsupported('independent Rust module interface','every public source value needs its actual checked signature');
  return signatures;
 }
-function readIndependentRustModulePublication(source, bytes, parsed, items) {
+function readIndependentRustModulePublication(source, bytes, parsed, items, sourceVersion) {
   if (!items.length || items.some(item => !acceptRustValueModuleItem(item.term, item.comment,
     readSemanticSourceRole(item.comment, item.text)))) return null;
-  const names = readRustPublicBindings(bytes, parsed), program = readIndependentRustProgram(source);
+  const names = readRustPublicBindings(bytes, parsed), program = readIndependentRustProgram(source,sourceVersion);
   const owners = new Set();
   for (const node of parsed.tree.children.filter(node => readRustValueModuleOwnerKind(node.term)!=='')) {
     const declarations = node.children.filter(child => child.field === 'name');
@@ -226,10 +234,11 @@ function readIndependentRustModulePublication(source, bytes, parsed, items) {
     signatures: readRustModuleValueSignatures(program,names) };
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '', semanticTranslation = false } = {}, signaturesOnly = false) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '', rustSourceVersion, semanticTranslation = false } = {}, signaturesOnly = false) {
   if (typeof semanticTranslation !== 'boolean') throw new TypeError('semanticTranslation must be Boolean');
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
+  const sourceVersion=readSelectedRustSourceVersion(from,rustSourceVersion);
   const set = decoratorSet(decorators);
   const text = String(source);
   if (!acceptRustSharedArrayHandleSourceModel(rustSharedArrayHandleSourceModel)) throw unsupported('Rust shared array handle source model', 'select the installed source model');
@@ -255,7 +264,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   if (family(from) === family(to) && (from === to || (keptFamily && !text.startsWith(HEADER)))) {
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
-  let wholePublication = rustSharedArrayHandleSourceModel ? readRustSharedArrayHandleModule(text, rustSharedArrayHandleSourceModel) : null;
+  let wholePublication = rustSharedArrayHandleSourceModel ? readRustSharedArrayHandleModule(text, rustSharedArrayHandleSourceModel, sourceVersion) : null;
   if(!wholePublication&&semanticTranslation&&from==='JavaScript'&&family(to)==='Rust'
     &&!moduleDirectory.length&&!Object.keys(imports).length&&!utf16Strings){
     const tokens=tokenize(text,'JavaScript').tokens;
@@ -270,7 +279,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   }
   if (!wholePublication && semanticTranslation && from === 'Rust' && family(to) === 'JavaScript'
     && !Object.keys(imports).length && !utf16Strings && !referenceSemantics) {
-    try { wholePublication = readIndependentRustModulePublication(text, bytes, parsed, items); }
+    try { wholePublication = readIndependentRustModulePublication(text, bytes, parsed, items, sourceVersion); }
     catch (error) { if (!(error instanceof TranslationError)) throw error; }
   }
   const blocks = [];
@@ -310,11 +319,11 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     }
   }
   const { outs, scans, moduleScopeKnown, ownerCounts } = wholePublication
-    ?{outs:groups.map(group=>translateGroup(group,from,to,set,{retainDiagnostics,wholePublication})),scans:[],moduleScopeKnown:true,ownerCounts:new Map()}
+    ?{outs:groups.map(group=>translateGroup(group,from,to,set,{retainDiagnostics,wholePublication,rustSourceVersion:sourceVersion})),scans:[],moduleScopeKnown:true,ownerCounts:new Map()}
     :family(to) === 'Rust'
     ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
-    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, wholePublication })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
-  const results = wholePublication?groups.map((group,index)=>({group,out:outs[index]})):translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics }, scans);
+    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, wholePublication, rustSourceVersion:sourceVersion })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
+  const results = wholePublication?groups.map((group,index)=>({group,out:outs[index]})):translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, rustSourceVersion:sourceVersion }, scans);
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   // An isolated item proof does not certify its actual mutable module binding.
   // Public/importable signatures need the same complete scope and unique owner
@@ -367,7 +376,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     }
   }
   if (family(to) === 'Rust' && recorded.some(({ status }) => status === 'translated')) preludes.unshift(RUST_ALLOW);
-  const lines = [`${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}`, ''];
+  const lines = [`${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}${sourceVersion?' rust-source-version='+sourceVersion:''}`, ''];
   if (preludes.length) lines.push(PRELUDE_BEGIN, ...preludes.flatMap((prelude, index) => (index ? ['', prelude] : [prelude])), PRELUDE_END, '');
   if (requireSelfTranslationLayoutEnvelope(text.includes('\r'),
     (results[0]?.group.items[0]?.start ?? bytes.length) > 0,
@@ -939,7 +948,7 @@ function translateGroup(group, from, to, decorators, context = {}, capture = nul
     } else {
     // The Rust frontend reads a program, so an item alone gets an empty main.
     program = checkProgram(family(from) === 'Rust'
-      ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
+      ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`,{sourceVersion:context.rustSourceVersion})
       : parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(text).code : text, { ...context, readonlyModuleConstants: family(to) === 'Rust' }));
     if (context.utf16Strings) program.utf16Strings = true;
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.

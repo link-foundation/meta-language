@@ -11458,3 +11458,18 @@ invalid selectors through both APIs and commands. Complete Cargo configuration,
 dependency version resolution, alternate editions, target ABI and all earlier
 source-project obligations remain required; this draft supplies no evidence of
 execution or complete project translation.
+
+
+Self-translation also accepts an explicit `rustSourceVersion` (`rust_source_version`
+in native options). The captured canonical source snapshot reaches independent
+whole-module checking and public signature discovery, per-item interpretation,
+binding-scope retries, actual shared-handle source admission and empty library
+entry normalization. Invalid/uncovered versions refuse before any kept or carried
+output; non-Rust source cannot claim a Rust std interpretation. Generated source
+headers retain explicit selections. With no selection, historical output remains
+unchanged. This is source context, not a target toolchain requirement or a proof
+of complete dependency/ABI equivalence. Both runtimes transport into the existing
+shared version definitions rather than reimplementing std behavior. Deferred
+controls retain original narrowing-conversion inputs and independent expected
+error meanings across every declared std snapshot, both translation modes,
+diagnostics, complete signatures and single-read selectors; no controls have run.

@@ -77,6 +77,8 @@ pub struct SelfTranslationOptions {
     pub reference_semantics: bool,
     /// Reparse actual emitted code; saved originals never restore semantics.
     pub semantic_translation: bool,
+    /// Canonical source std selection, independent of the generated target compiler.
+    pub rust_source_version: Option<String>,
     /// Independent interpretation of complete actual standard Rust shared handles.
     pub rust_shared_array_handle_source_model: String,
     /// The emitter decorators, as [`self_translate_decorated`] applies them.
@@ -291,6 +293,7 @@ pub fn self_translation_signatures(
             .map(|(_, signatures)| signatures);
     }
     if family(required(language)?) == "Rust" && options.semantic_translation {
+        selected_rust_source_version(language, options.rust_source_version.as_deref())?;
         return semantic_input::read_independent_rust_module_signatures(source, options);
     }
     if family(required(language)?) != "JavaScript" {
@@ -301,6 +304,25 @@ pub fn self_translation_signatures(
         });
     }
     translate_module(source, language, "Rust", options).map(|(_, signatures)| signatures)
+}
+
+fn selected_rust_source_version(
+    language: &str,
+    version: Option<&str>,
+) -> Result<String, SelfTranslationError> {
+    let Some(version) = version else {
+        return Ok(String::new());
+    };
+    if family(required(language)?) != "Rust" {
+        return Err(SelfTranslationError {
+            message: "Rust source version requires Rust source".to_owned(),
+        });
+    }
+    crate::translation::rust::source_versions::canonical(version).map_err(|error| {
+        SelfTranslationError {
+            message: error.to_string(),
+        }
+    })
 }
 
 fn translate_module(
@@ -322,6 +344,8 @@ fn translate_module_diagnostic(
     let decorators = &options.decorators;
     let from = required(source_language)?;
     let to = required(target_language)?;
+    let source_version =
+        selected_rust_source_version(from, options.rust_source_version.as_deref())?;
     shared_array_handles::validate_options(source, from, options)?;
     let network = LinkNetwork::parse(source, from, ParseConfiguration::default());
     let reconstructed = network.reconstruct_text();
@@ -363,6 +387,7 @@ fn translate_module_diagnostic(
         Some(shared_array_handles::read_whole_module(
             source,
             &options.rust_shared_array_handle_source_model,
+            &source_version,
         )?)
     };
     if whole_publication.is_none()
@@ -385,10 +410,13 @@ fn translate_module_diagnostic(
     {
         // A refused whole module retains all ordinary per-item diagnostics;
         // unsupported owners cannot publish provisional helper signatures.
-        whole_publication =
-            semantic_input::read_independent_rust_module_publication(source, &items)
-                .ok()
-                .flatten();
+        whole_publication = semantic_input::read_independent_rust_module_publication(
+            source,
+            &items,
+            &source_version,
+        )
+        .ok()
+        .flatten();
     }
     let groups = if whole_publication.is_some() {
         vec![Group {
@@ -443,6 +471,7 @@ fn translate_module_diagnostic(
                     to,
                     decorators,
                     &Context {
+                        rust_source_version: source_version.clone(),
                         utf16_strings,
                         reference_semantics,
                         ..Context::default()
@@ -469,6 +498,7 @@ fn translate_module_diagnostic(
         decorators,
         &outs,
         BindingScopeContext {
+            rust_source_version: source_version.clone(),
             utf16_strings,
             reference_semantics,
             module_scope_known,
@@ -642,9 +672,14 @@ fn translate_module_diagnostic(
     }
     let mut lines = vec![
         format!(
-            "{HEADER}source={from} target={to} sha256={} bytes={}",
+            "{HEADER}source={from} target={to} sha256={} bytes={}{}",
             sha256(source),
-            source.len()
+            source.len(),
+            if source_version.is_empty() {
+                String::new()
+            } else {
+                format!(" rust-source-version={source_version}")
+            }
         ),
         String::new(),
     ];

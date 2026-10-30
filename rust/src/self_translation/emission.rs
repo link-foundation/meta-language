@@ -11,7 +11,7 @@ use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::{emit_rust_constants, emit_rust_with_representation};
 use crate::translation::ir::Program;
 use crate::translation::javascript::parse_javascript_bound_in_with_module_representation;
-use crate::translation::rust::parse_rust;
+use crate::translation::rust::parse_rust_with_source_version;
 use crate::translation::surface::{External, SExpr};
 
 /// The item emitted by the portable core with the signatures it gives the
@@ -72,9 +72,12 @@ fn check_and_emit_item_profile(
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
         if RUST_MAIN.is_match(text) {
-            parse_rust(text)?
+            parse_rust_with_source_version(text, &context.rust_source_version)?
         } else {
-            parse_rust(&format!("{text}\nfn main() {{}}\n"))?
+            parse_rust_with_source_version(
+                &format!("{text}\nfn main() {{}}\n"),
+                &context.rust_source_version,
+            )?
         }
     } else {
         if from == "TypeScript" {

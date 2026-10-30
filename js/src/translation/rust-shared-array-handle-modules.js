@@ -6,8 +6,8 @@ import {checkProgram} from './check.js';
 import {emitJavaScript} from './emit-javascript.js';
 import {parseProgrammingLanguage} from '../programming-language-parser.js';
 
-export function readRustSharedArrayHandleModule(source, model) {
-  const program = checkProgram(parseRust(source, {sharedArrayHandleSourceModel: model}));
+export function readRustSharedArrayHandleModule(source, model, sourceVersion) {
+  const program = checkProgram(parseRust(source, {sharedArrayHandleSourceModel: model,sourceVersion}));
   const parsed = parseProgrammingLanguage(source, 'Rust');
   const fail = reason => { throw unsupported('Rust shared array handle module', reason); };
   if (program.main !== null) fail('whole executable entry points require an independent runtime composition proof');
