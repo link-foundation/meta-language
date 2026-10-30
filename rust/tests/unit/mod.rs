@@ -655,3 +655,5 @@ mod translation_rust_checked_integer_lazy_mappers;
 mod translation_rust_deferred_closures;
 
 mod translation_rust_array_lookup_contexts;
+
+mod translation_rust_scalar_default_contexts;

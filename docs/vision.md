@@ -10979,3 +10979,12 @@ reads and callback invocation. Deferred originals include fixed/pointer owners,
 Copy scalar clones, Boolean/floating/unit payloads, slices and byte views.
 Unconstrained sibling results, owned/mutable callback environments, escaping
 Option/Result and the whole-source/grammar/concept scope remain required.
+
+Immediate checked-integer and primitive TryFrom eager defaults use the same
+source-node result-context policy as lookup defaults and deferred closures.
+The selected actual scalar owner governs unsuffixed integer literals and unary
+negation; integer syntax cannot silently become binary64, and unsigned negation
+remains invalid even for zero. Existing primitive-owner admission remains an
+additional condition. Typed floating/Boolean defaults and eager effect order
+retain independent source controls. These unexecuted drafts establish neither
+whole-expression inference nor full Option/Result or source-language coverage.

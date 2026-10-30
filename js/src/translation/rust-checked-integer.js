@@ -1,6 +1,6 @@
 import {readRustCopyClosureDeferredSourceError} from './rust-copy-closure-rules.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
-import {readRustExpectedCopyClosure,finishRustDeferredCopyClosure} from './rust-copy-closures.js';
+import {readRustExpectedCopyClosure,finishRustDeferredCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
 import {testRustCheckedIntegerLazyFallback,readRustCheckedIntegerFallbackError,testRustCheckedIntegerPredicateConsumer,readRustCheckedIntegerPredicateError,testRustCheckedIntegerLazyMapper,testRustCheckedIntegerMappingConsumer,readRustCheckedIntegerMappedFallbackError} from './rust-checked-integer-rules.js';
 import {readRustPanicValueOperation,readRustPanicMessageSourceError,testRustOptionPanicConsumer,readRustOptionPanicMessage} from './rust-panic-value-rules.js';
 // Actual tokens, source types and origin transport; algorithms are shared data.
@@ -58,7 +58,8 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
  const panicking=testRustOptionPanicConsumer(consumer.value);
  if(consumerArity>0&&!lazyOrigin){const actual=readRustPrimitiveConversionFacts(parser,defaults[0],path);
   if(panicking){const error=readRustPanicMessageSourceError(consumer.value,actual.kind,actual.origin.textSourceModel??'',actual.origin.wrappers.length,actual.origin.proven===true,actual.origin.wrappers.every(layer=>layer==='reference'));if(error)throw unsupported('Rust checked integer message',error,range);}
-  else if(!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal(defaults[0]))))throw unsupported('Rust checked integer default','the actual default must retain the selected result type and source owner',range);
+  if(!panicking){const result={...parser.origins.typeOrigin(resultType,path),sourceOwner:{kind:'primitive',path:[resultOwner],arguments:[]}},error=readRustCopyClosureResultContextError(defaults[0],result);if(error)throw unsupported('Rust checked integer default',error,defaults[0].span??range);}
+  if(!panicking&&!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal(defaults[0]))))throw unsupported('Rust checked integer default','the actual default must retain the selected result type and source owner',range);
   captures.push({name:parser.freshProductBinding(),type:panicking?STRING:resultType,value:defaults[0]});}
 
  if(lazyOrigin)captures.push({name:parser.freshProductBinding(),type:lazyOrigin.type,value:defaults[0]});

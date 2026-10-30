@@ -676,6 +676,18 @@ impl RustParser {
                     return Err(unsupported("Rust checked integer message", &error, range));
                 }
             }
+            if !panicking {
+                let selected = origin(result_type.clone(), &result_owner, path);
+                let error =
+                    super::super::copy_closures::result_context_error(&defaults[0], &selected);
+                if !error.is_empty() {
+                    return Err(unsupported(
+                        "Rust checked integer default",
+                        &error,
+                        defaults[0].span.or(range),
+                    ));
+                }
+            }
             if !panicking
                 && !arguments::accept_rust_primitive_selection_argument(
                     result_type.kind(),

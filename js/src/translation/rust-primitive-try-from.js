@@ -1,4 +1,4 @@
-import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
+import {readRustExpectedCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
 import {readRustPrimitiveTryFromPredicateError,readRustPrimitiveTryFromMapperError,readRustPrimitiveTryFromMapperOwner} from './rust-primitive-try-from-rules.js';
 import {STRING} from './types.js';
@@ -72,6 +72,7 @@ export function readRustPrimitiveTryFrom(parser,path){
  const panicking=testRustPrimitiveTryFromPanicConsumer(consumer.value);
  if(arity>0&&!predicate){const actual=readRustPrimitiveConversionFacts(parser,defaults[0],path),literal=defaults[0].k==='num'&&!defaults[0].type||defaults[0].k==='unary'&&defaults[0].op==='neg'&&defaults[0].arg.k==='num'&&!defaults[0].arg.type;
   if(panicking){const error=readRustPanicMessageSourceError(consumer.value,actual.kind,actual.origin.textSourceModel??'',actual.origin.wrappers.length,actual.origin.proven===true,actual.origin.wrappers.every(layer=>layer==='reference'));if(error)throw unsupported('Rust primitive TryFrom message',error,range);}
+  if(!panicking){const result={...parser.origins.typeOrigin(resultType,path),sourceOwner:{kind:'primitive',path:[resultOwner],arguments:[]}},error=readRustCopyClosureResultContextError(defaults[0],result);if(error)throw unsupported('Rust primitive TryFrom default',error,defaults[0].span??range);}
   if(!panicking&&!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal)))throw unsupported('Rust primitive TryFrom default','the actual default must retain the selected result type and primitive source owner',range);
   captures.push({name:parser.freshProductBinding(),type:panicking?STRING:resultType,value:defaults[0]});}
  if(mapperCallback)captures.push({name:parser.freshProductBinding(),type:mapperOrigin.type,value:mapperCallback});
