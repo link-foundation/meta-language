@@ -269,6 +269,7 @@ impl RustParser {
         self.cursor.expect("(", Some("checked integer consumer"))?;
         let mut defaults = Vec::new();
         let mut mapper_owner = String::new();
+        let mut mapper_callback = None;
         let mut lazy_origin = None;
         if consumer_arity > 0.0 {
             if rules::test_rust_checked_integer_lazy_fallback(&consumer.value)
@@ -391,31 +392,34 @@ impl RustParser {
             }
             if consumer_arity == 2.0 {
                 self.cursor.expect(",", Some("checked integer mapper"))?;
-                let mapper = self
-                    .primitive_try_head(path)
-                    .filter(|head| head.resolved.last().is_some_and(|method| method == "from"))
-                    .ok_or_else(|| {
-                        unsupported(
-                            "Rust checked integer mapper",
-                            "an actual admitted standard primitive From function item is required",
-                            range,
+                let mapper = self.primitive_try_head(path);
+                let standard_owner = mapper
+                    .as_ref()
+                    .filter(|value| value.resolved.last().is_some_and(|method| method == "from"))
+                    .map_or_else(String::new, |value| {
+                        from_rules::read_rust_primitive_from_owner(
+                            &value.resolved,
+                            self.ordinary_completion_context(),
+                            value.shadowed,
+                            value.absolute,
                         )
-                    })?;
-                mapper_owner = from_rules::read_rust_primitive_from_owner(
-                    &mapper.resolved,
-                    self.ordinary_completion_context(),
-                    mapper.shadowed,
-                    mapper.absolute,
-                );
-                if mapper_owner.is_empty() {
-                    return Err(unsupported(
+                    });
+                if !standard_owner.is_empty() {
+                    mapper_owner = standard_owner;
+                    let mapper = mapper.unwrap();
+                    for _ in 0..mapper.offset {
+                        self.cursor.advance();
+                    }
+                } else {
+                    let source_owner = facts(self, &receiver, path).path();
+                    let (callback, callable, result_owner) = self.primitive_scalar_mapper(
+                        &source_owner,
+                        &defaults[0],
+                        path,
                         "Rust checked integer mapper",
-                        "an actual admitted standard primitive From function item is required",
-                        range,
-                    ));
-                }
-                for _ in 0..mapper.offset {
-                    self.cursor.advance();
+                    )?;
+                    mapper_owner = result_owner;
+                    mapper_callback = Some((callback, callable));
                 }
             }
         }
@@ -500,6 +504,7 @@ impl RustParser {
             }
         }
         if consumer.value == "map_or"
+            && mapper_callback.is_none()
             && from_rules::plan_rust_primitive_from(&mapper_owner, &owner).is_empty()
         {
             return Err(unsupported(
@@ -648,6 +653,26 @@ impl RustParser {
             ));
             terms.fallback = Some(node);
         }
+        let mapper_local = if let Some((callback, callable)) = mapper_callback {
+            let name = self.fresh_product_binding();
+            let node = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                callback.span.or(range),
+            );
+            self.origins.mark(&node, callable.clone());
+            captures.push((
+                name,
+                callable.ty.ok_or_else(|| {
+                    type_error("the checked mapper lost its callable type", range)
+                })?,
+                callback,
+            ));
+            Some(node)
+        } else {
+            None
+        };
         terms.condition = Some(terms.project(
             &rules::plan_rust_checked_integer_condition(&method.value, source.signed),
             range,
@@ -657,7 +682,15 @@ impl RustParser {
             range,
         )?;
         self.origins.mark(&success, origin(ty, &owner, path));
-        terms.success = Some(if consumer.value == "map_or" {
+        terms.success = Some(if let Some(mapper) = mapper_local {
+            SExpr::new(
+                SNode::App {
+                    func: Box::new(mapper),
+                    args: vec![success],
+                },
+                range,
+            )
+        } else if consumer.value == "map_or" {
             self.project_primitive_from(success, &mapper_owner, range, path)?
         } else {
             success

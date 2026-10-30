@@ -647,3 +647,5 @@ mod translation_rust_checked_euclidean;
 mod translation_rust_checked_integer_lazy;
 
 mod translation_rust_checked_integer_predicates;
+
+mod translation_rust_checked_integer_mappers;

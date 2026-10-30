@@ -10929,3 +10929,14 @@ standard Boolean without invoking the predicate. Deferred originals cover
 source-owner widths, checked operations, captures and evaluation order. Stored
 Option/Result control, mutable/non-Copy callbacks and the entire source grammar
 and concept-space scope remain requirements.
+
+Checked-integer `map_or` accepts actual scalar callbacks through the same
+source-origin mapper adapter used by integer TryFrom results. Known eager
+defaults supply result contexts; otherwise actual callback results constrain
+the default. Immutable Copy closures, named functions and pointer factories
+retain complete parameter/result ownership, including Boolean, binary64 and
+fixed/pointer result changes. Standard primitive From items keep their own
+trait checks. Operands, default and mapper are captured once in source order;
+invocation and successful arithmetic stay in the valid branch. Deferred
+originals cover both shared entry points. Generic/non-scalar, mutable/non-Copy
+and escaping Option/Result translation remain required.
