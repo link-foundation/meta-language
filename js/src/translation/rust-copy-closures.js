@@ -10,7 +10,7 @@ import {readCallableStatementCaptures} from './callable-source.js';
 import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js';
 import {readRustCopyClosureHeaderError,readRustCopyClosureCaptureError,acceptRustCopyClosureInvocation,readRustCopyClosureParameterForm} from './rust-copy-closure-rules.js';
 import {acceptRustContextualCopyClosure,readRustContextualCopyClosureHeaderError,findRustContextualClosureParenthesisCount,acceptRustContextualCopyPointerResultBlock} from './rust-contextual-closure-rules.js';
-function resultContextError(node,result){
+export function readRustCopyClosureResultContextError(node,result){
  const pending=[{value:node,scope:null}],scopes=[],visited=new WeakMap();while(pending.length){const {value,scope}=pending.pop(),seen=visited.get(value)??new Set();if(seen.has(scope))continue;seen.add(scope);visited.set(value,seen);
   const error=readRustCopyClosureLiteralResultError(value.k,value.k==='unary'&&value.op==='neg',Boolean(value.type),result.type?.kind??'',result.type?.signed===true);if(error)return error;
   const role=readRustCopyClosureResultContextRole(value.k,value.op??''),push=child=>pending.push({value:child,scope});
@@ -78,7 +78,7 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
   if(written||c.is('{'))body=readRustCopyPointerResultBlock(parser,path,resultOrigin)??(ret&&parser.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(parser,path,ret,resultOrigin):parser.block(path,true));else body=parser.expr(path);
   if(!ret){resultOrigin=parser.origins.origin(body,path);ret=resultOrigin.type??null;}
   if(!written){const deferred=testRustCopyClosureDeferredResult(deferResult,written,ret!==null),reason=deferred?readRustCopyClosureParameterHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin))):readRustContextualCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),ret!==null,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
-  if(ret){const error=resultContextError(body,resultOrigin);if(error)throw unsupported('Rust Copy closure',error,body.span);parser.origins.argument(parser.origins.origin(body,path),resultOrigin,body.span);}
+  if(ret){const error=readRustCopyClosureResultContextError(body,resultOrigin);if(error)throw unsupported('Rust Copy closure',error,body.span);parser.origins.argument(parser.origins.origin(body,path),resultOrigin,body.span);}
  }
  finally{parser.origins.scope=outer;}
  const {captures,assignedCaptures}=readCallableStatementCaptures([{s:'return',expr:body}],parameters.map(param=>param.name),outer.keys());
@@ -90,7 +90,7 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
 export function finishRustDeferredCopyClosure(parser,node,result,path){
  const prior=parser.origins.origin(node,path),error=readRustCopyClosureDeferredResultError(node.k,node.ret==null&&prior.type===null&&Boolean(prior.copyClosureSpan)&&Boolean(node.span)&&prior.copyClosureSpan?.start===node.span?.start&&prior.copyClosureSpan?.end===node.span?.end,result?.proven===true&&Boolean(result.type),parser.origins.immutableProduct(result));
  if(error)throw unsupported('Rust Copy closure',error,node.span);
- const contextError=resultContextError(node.body,result);if(contextError)throw unsupported('Rust Copy closure',contextError,node.body.span);
+ const contextError=readRustCopyClosureResultContextError(node.body,result);if(contextError)throw unsupported('Rust Copy closure',contextError,node.body.span);
  parser.origins.argument(parser.origins.origin(node.body,path),result,node.body.span);
  const ret=result.type,finished={...node,ret};return parser.origins.mark(finished,{...parser.origins.typeOrigin({kind:'function',params:node.params.map(param=>param.type),ret},path),copyClosureSpan:prior.copyClosureSpan,copyClosureCaptureCount:prior.copyClosureCaptureCount,callableParameters:prior.callableParameters,callableResult:parser.origins.copy(result)});
 }

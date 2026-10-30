@@ -175,6 +175,7 @@ impl RustParser {
         consumer: &str,
         path: &[String],
         mapping_result: Option<&SourceOrigin>,
+        infer_mapping_result: bool,
     ) -> Option<SourceOrigin> {
         let actual = self.origins.origin(receiver, path);
         let source = actual.static_byte_array_read_view().unwrap_or(actual);
@@ -224,17 +225,20 @@ impl RustParser {
         let mut selected = SourceOrigin::with_type(element.as_ref().clone(), path, Vec::new());
         selected.source_owner = Some(owner.clone());
         let result = if consumer == "map_or" {
-            let result = mapping_result?;
-            if !result.proven || result.ty.is_none() {
-                return None;
+            match mapping_result {
+                Some(value) if value.proven && value.ty.is_some() => Some(value.clone()),
+                _ if infer_mapping_result => None,
+                _ => return None,
             }
-            result.clone()
         } else if arity == 0.0 {
-            selected.clone()
+            Some(selected.clone())
         } else {
-            lookup_result_origin(&BOOL, "", true, path)
+            Some(lookup_result_origin(&BOOL, "", true, path))
         };
-        let return_type = result.ty.clone()?;
+        let return_type = result
+            .as_ref()
+            .and_then(|value| value.ty.clone())
+            .unwrap_or(super::UNIT);
         let parameters = if arity == 0.0 {
             Vec::new()
         } else {
@@ -254,7 +258,7 @@ impl RustParser {
         );
         context.copy_evidence = Some(());
         context.callable_parameters = Some(parameters);
-        context.callable_result = Some(Box::new(result));
+        context.callable_result = result.map(Box::new);
         Some(context)
     }
     pub(super) fn read_array_lookup(
@@ -312,17 +316,54 @@ impl RustParser {
         self.cursor.expect("(", Some("array lookup consumer"))?;
         let mut defaults = Vec::new();
         let mut mapper_owner = String::new();
+        let mut deferred_fallback = false;
         if consumer_arity > 0.0 {
-            let context = if consumer.value == "map_or_else" {
-                None
+            if consumer.value == "map_or_else" {
+                let mut expected = SourceOrigin::with_type(
+                    Type::Function {
+                        params: Vec::new(),
+                        ret: Box::new(super::UNIT),
+                    },
+                    path,
+                    Vec::new(),
+                );
+                expected.copy_evidence = Some(());
+                expected.callable_parameters = Some(Vec::new());
+                expected.callable_result = None;
+                let value =
+                    self.read_expected_copy_closure_deferred_result(path, Some(&expected))?;
+                let origin = self.origins.origin(&value, path);
+                deferred_fallback =
+                    matches!(&value.node, SNode::Lambda { ret: None, .. }) && origin.ty.is_none();
+                if deferred_fallback {
+                    let parameters = match &value.node {
+                        SNode::Lambda { params, .. } => count(params.len()),
+                        _ => -1.0,
+                    };
+                    let error=crate::translation::rust_copy_closure_rules::read_rust_copy_closure_deferred_source_error("lambda",parameters,count(origin.wrappers.len()),origin.copy_closure_identity.is_some()&&origin.copy_closure_identity==value.span);
+                    if !error.is_empty() {
+                        return Err(unsupported(
+                            "Rust array lookup lazy fallback",
+                            &error,
+                            value.span,
+                        ));
+                    }
+                }
+                defaults.push(value);
             } else {
-                self.array_lookup_callable_context(receiver, &consumer.value, path, None)
-            };
-            defaults.push(if let Some(context) = context {
-                self.read_expected_copy_closure(path, Some(&context))?
-            } else {
-                self.expr(path, Options::default())?
-            });
+                let context = self.array_lookup_callable_context(
+                    receiver,
+                    &consumer.value,
+                    path,
+                    None,
+                    false,
+                );
+                defaults.push(if let Some(context) = context {
+                    self.read_expected_copy_closure(path, Some(&context))?
+                } else {
+                    self.expr(path, Options::default())?
+                });
+            }
             if consumer_arity == 2.0 {
                 self.cursor.expect(",", Some("array lookup mapper"))?;
                 if let Some((mapper, owner)) = self
@@ -350,9 +391,13 @@ impl RustParser {
                         Some(&fallback)
                     };
                     let context =
-                        self.array_lookup_callable_context(receiver, "map_or", path, result);
+                        self.array_lookup_callable_context(receiver, "map_or", path, result, true);
                     defaults.push(if let Some(context) = context {
-                        self.read_expected_copy_closure(path, Some(&context))?
+                        self.read_expected_copy_closure_result_mode(
+                            path,
+                            Some(&context),
+                            result.is_none_or(|value| !value.proven || value.ty.is_none()),
+                        )?
                     } else {
                         self.expr(path, Options::default())?
                     });
@@ -368,6 +413,52 @@ impl RustParser {
                 .map_or(method.start, |span| span.start),
             close.end,
         ));
+        if deferred_fallback {
+            let result = if !mapper_owner.is_empty() {
+                let ty = match mapper_owner.as_str() {
+                    "bool" => BOOL,
+                    "f64" => FLOAT,
+                    _ => rust_fixed_type(&mapper_owner).ok_or_else(|| {
+                        unsupported(
+                            "Rust array lookup mapper",
+                            "a standard primitive result type is required",
+                            range,
+                        )
+                    })?,
+                };
+                lookup_result_origin(&ty, &mapper_owner, false, path)
+            } else {
+                let mapper = defaults.get(1).ok_or_else(|| {
+                    type_error("a deferred lookup fallback needs its actual mapper", range)
+                })?;
+                let origin = self.origins.origin(mapper, path);
+                let parameter = origin
+                    .callable_parameters
+                    .as_ref()
+                    .and_then(|values| values.first());
+                let result = origin.callable_result.as_deref();
+                let parameters = match &origin.ty {
+                    Some(Type::Function { params, .. }) => count(params.len()),
+                    _ => -1.0,
+                };
+                let error = rules::read_rust_array_lookup_mapper_error(
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    parameters,
+                    count(origin.wrappers.len()),
+                    parameter.is_some_and(|value| value.proven),
+                    result.is_some_and(|value| value.proven && value.ty.is_some()),
+                );
+                if !error.is_empty() {
+                    return Err(unsupported("Rust array lookup mapper", &error, range));
+                }
+                result.unwrap().clone()
+            };
+            let unfinished = defaults.remove(0);
+            defaults.insert(
+                0,
+                self.finish_deferred_copy_closure(unfinished, &result, path)?,
+            );
+        }
         let input = LookupInput {
             receiver,
             method,
@@ -634,6 +725,17 @@ impl RustParser {
                 } else {
                     &fallback_origin
                 };
+                if !lazy {
+                    let error =
+                        super::super::copy_closures::result_context_error(default, &result_origin);
+                    if !error.is_empty() {
+                        return Err(unsupported(
+                            "Rust array lookup default",
+                            &error,
+                            default.span.or(range),
+                        ));
+                    }
+                }
                 self.origins
                     .argument(fallback_result, &result_origin, default.span.or(range))?;
             }

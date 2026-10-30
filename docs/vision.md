@@ -10968,3 +10968,14 @@ strict when no contextual deferral is requested. Deferred originals cover all
 integer/pointer owners, forward result constraints, source order and negative
 literal contexts. Simultaneously unconstrained siblings, whole-expression
 inference, generics, ownership and the full grammar/concept scope remain required.
+
+Array lookup scalar mapping uses the same deferred source-closure mechanism.
+Actual element owners contextually type the mapper; its known result completes
+an unresolved zero-argument fallback for `map_or_else`. Eager `map_or` defaults
+can likewise inherit the mapper's actual result. Header, capture, identity and
+literal-domain checks stay shared with checked arithmetic. Source factories
+retain receiver/index/default/mapper order, and lookup guards dominate payload
+reads and callback invocation. Deferred originals include fixed/pointer owners,
+Copy scalar clones, Boolean/floating/unit payloads, slices and byte views.
+Unconstrained sibling results, owned/mutable callback environments, escaping
+Option/Result and the whole-source/grammar/concept scope remain required.

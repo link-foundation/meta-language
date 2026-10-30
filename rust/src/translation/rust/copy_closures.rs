@@ -7,7 +7,7 @@ use crate::translation::rust_contextual_closure_rules as contextual;
 use crate::translation::rust_copy_closure_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 
-fn result_context_error(node: &SExpr, result: &SourceOrigin) -> String {
+pub(super) fn result_context_error(node: &SExpr, result: &SourceOrigin) -> String {
     let mut pending = vec![(node, None)];
     let mut scopes: Vec<(&str, &SExpr, Option<usize>)> = Vec::new();
     let mut visited = std::collections::HashSet::new();
