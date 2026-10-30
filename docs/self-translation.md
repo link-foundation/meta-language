@@ -1316,7 +1316,7 @@ unexecuted during the full requirements draft.
 
 The same iterator source program now includes exact count plans and collection
 admission using actual type/library/owner facts. The ordinary source type parser
-receives an isolated proven scalar item context only while reading collection
+receives an isolated proven scalar item context while reading iterator result
 turbofish types, so `Vec<_>` retains the actual item owner. Neither runtime
 infers equality from width. `rust-type-token-rules.js` owns compound closing
 punctuation partitions; its native module and paired source asset are generated
@@ -1345,3 +1345,15 @@ literal fixtures, inventory and package assets. New deferred controls use
 keep their original program and fixtures. No represented original, test or
 oracle executes during source authoring. Functional collection currently uses
 an append fold; linear allocation remains required work.
+
+
+`rust-iterator-arithmetic-rules.js` owns standard numeric consumer admission,
+empty identities and terminal arithmetic plans. Both the pipeline and reduction
+rule programs import that same actual source with dependency translation.
+Runtime adapters transport actual item/result facts and generic type syntax.
+A structured negative sign preserves floating sum's negative-zero identity.
+The common fold path preserves strict stage/visit order and integer failures.
+The generalized item-type inference context retains the old collection helper
+as an alias. `draft-rust-iterator-reductions.mjs --draft` constructs all three
+source programs and the new deferred arithmetic fixture/package entries.
+No original arithmetic source or control executes during drafting.

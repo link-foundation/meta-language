@@ -10,6 +10,7 @@ pub(super) mod control;
 mod integer_bits;
 mod integer_float_plan;
 mod integer_magnitudes;
+mod iterator_arithmetic;
 mod iterator_pipelines;
 mod iterator_reductions;
 mod primitive_associated_calls;

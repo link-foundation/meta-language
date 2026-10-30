@@ -40,8 +40,8 @@ impl RustParser {
     /// is immutable.
     pub(in super::super) fn parse_type_value(&mut self) -> Result<Type> {
         let token = self.peek();
-        if crate::translation::rust_iterator_reduction_rules::accept_rust_iterator_collection_inferred_type(&token.value,self.iterator_collection_element_origin.is_some()) {
-            self.cursor.advance();let mut origin=self.iterator_collection_element_origin.clone().expect("actual collection item");
+        if crate::translation::rust_iterator_reduction_rules::accept_rust_iterator_item_inferred_type(&token.value,self.iterator_item_type_inference_origin.is_some()) {
+            self.cursor.advance();let mut origin=self.iterator_item_type_inference_origin.clone().expect("actual collection item");
             origin.expanded_source_owner=origin.source_owner.clone();let ty=origin.ty.clone().expect("actual collection item type");self.origins.current_type=origin;return Ok(ty);
         }
         if self.cursor.is("fn") {

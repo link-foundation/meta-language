@@ -201,6 +201,11 @@ impl RustParser {
         }
         let element = element.cloned();
         let owner = owner.cloned();
+        if crate::translation::rust_iterator_arithmetic_rules::accept_rust_iterator_arithmetic_consumer(&consumer.value){
+            let (result,close)=super::iterator_arithmetic::read(self,current_item.as_ref().expect("proved numeric item"),path,&consumer)?;
+            range=Some(Span::new(receiver.span.map_or(method.start,|span|span.start),close.end));
+            return iterator_pipelines::construct(self,Pipeline{receiver,source:&source,stages:&stages,consumer:&consumer.value,direction:&direction,input_element:element.as_ref().unwrap(),item:current_item.as_ref().unwrap(),initial:None,callback:None,result,span:range}).map(Some);
+        }
         if operation == "collect" {
             let item = current_item.as_ref().expect("proved collection item");
             let final_element = item.ty.clone().expect("proved collection element");
@@ -227,11 +232,11 @@ impl RustParser {
                 SourceOrigin::with_type(final_element.clone(), path, Vec::new());
             expected_item.source_owner = Some(final_owner.clone());
             let previous = self
-                .iterator_collection_element_origin
+                .iterator_item_type_inference_origin
                 .replace(expected_item);
             let parsed = self.parse_type();
             let mut origin = self.origins.current_type.clone();
-            self.iterator_collection_element_origin = previous;
+            self.iterator_item_type_inference_origin = previous;
             let ty = parsed?;
             self.split_type_closing_token();
             self.cursor.expect(">", Some("iterator collection type"))?;

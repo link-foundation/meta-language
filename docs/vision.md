@@ -10548,3 +10548,32 @@ premises in `parity/fixtures/rust-iterator-pipelines.lino` remain unexecuted.
 The [standard map implementation](https://doc.rust-lang.org/src/core/iter/adapters/map.rs.html)
 and [iterator contract](https://doc.rust-lang.org/std/iter/trait.Iterator.html)
 provide independent source semantics for order and laziness.
+
+
+### Standard numeric iterator sums and products
+
+Standard numeric `sum` and `product` share the existing lazy scalar pipeline
+fold path, including borrowed items, copied/cloned items, fresh owned iteration,
+map/filter stages and reverse consumption. Shared source defines the numeric
+owner admission, terminal add/multiply terms and structured literal identities.
+Floating sum starts from negative zero; floating product starts from positive
+one. Integer operations retain the current checked arithmetic and standard
+failure messages. Zero products do not skip later source callbacks.
+
+An explicit result turbofish must have the same actual primitive type and
+source owner as its item. Equal widths do not equate usize/u64 or isize/i64.
+The isolated item-type context supports `_` in numeric result arguments as
+well as vector element arguments, restoring that context after success or
+failure. The earlier collection-only helper remains an alias; item signatures
+and unrelated inference positions gain no guessed type.
+
+This draft inherits the existing explicit64-bit source pointer model and
+requires overflow checks on for original numeric controls. Other pointer/build
+profiles, other float formats, custom arithmetic traits and wrapped/optional/
+result accumulators remain full requirements. Independent originals include
+all twelve integer owner names, both empty identities, checked overflows,
+callback failures, IEEE signed zero, infinity, NaN and floating visit order.
+They remain unexecuted in `parity/fixtures/rust-iterator-arithmetic.lino`.
+The [Rust1.90 implementation](https://raw.githubusercontent.com/rust-lang/rust/1.90.0/library/core/src/iter/traits/accum.rs)
+and [current standard implementation](https://doc.rust-lang.org/src/core/iter/traits/accum.rs.html)
+are independent contracts, rather than results computed by this translator.

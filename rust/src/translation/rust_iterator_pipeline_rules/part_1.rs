@@ -29,6 +29,80 @@ pub mod ml_array {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_iterator_arithmetic_consumer(consumer: &str) -> bool {
+    (consumer == "sum") || (consumer == "product")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_rust_iterator_arithmetic_error(
+    kind: &str,
+    known: bool,
+    owner: bool,
+    layers: f64,
+    result_known: bool,
+    result_layers: f64,
+    same_type: bool,
+    same_owner: bool,
+) -> String {
+    if ((((((((kind == "fixed") || (kind == "float")) && known) && owner)
+        && ((layers == 0f64) || (layers == 1f64)))
+        && result_known)
+        && (result_layers == 0f64))
+        && same_type)
+        && same_owner
+    {
+        String::new()
+    } else {
+        String::from(
+            "sum and product need one standard numeric item owner and the matching direct result type",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_iterator_arithmetic_seed(consumer: &str, kind: &str) -> Vec<String> {
+    if consumer == "sum" {
+        if kind == "float" {
+            vec![String::from("0"), String::from("negative")]
+        } else {
+            vec![String::from("0"), String::from("positive")]
+        }
+    } else if consumer == "product" {
+        vec![String::from("1"), String::from("positive")]
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_iterator_arithmetic_terminal(consumer: &str) -> Vec<String> {
+    if consumer == "sum" {
+        vec![
+            String::from("accumulator"),
+            String::from("item"),
+            String::from("add"),
+        ]
+    } else if consumer == "product" {
+        vec![
+            String::from("accumulator"),
+            String::from("item"),
+            String::from("multiply"),
+        ]
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_iterator_pipeline_stage(operation: &str) -> bool {
     (operation == "map") || (operation == "filter")
 }
@@ -117,7 +191,9 @@ pub fn plan_rust_iterator_pipeline_stage(operation: &str) -> Vec<String> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_rust_iterator_pipeline_terminal(consumer: &str) -> Vec<String> {
-    if (consumer == "all") || (consumer == "any") {
+    if self::accept_rust_iterator_arithmetic_consumer(consumer) {
+        self::plan_rust_iterator_arithmetic_terminal(consumer)
+    } else if (consumer == "all") || (consumer == "any") {
         vec![
             String::from("callback"),
             String::from("item"),
@@ -154,8 +230,9 @@ pub fn read_rust_iterator_pipeline_inactive(consumer: &str) -> String {
         String::from("true")
     } else if consumer == "any" {
         String::from("false")
-    } else if (((consumer == "fold") || (consumer == "rfold")) || (consumer == "count"))
-        || (consumer == "collect")
+    } else if ((((consumer == "fold") || (consumer == "rfold")) || (consumer == "count"))
+        || (consumer == "collect"))
+        || self::accept_rust_iterator_arithmetic_consumer(consumer)
     {
         String::from("accumulator")
     } else {
@@ -170,8 +247,9 @@ pub fn read_rust_iterator_pipeline_consumer_operation(consumer: &str) -> String 
         String::from("every")
     } else if consumer == "any" {
         String::from("some")
-    } else if (((consumer == "fold") || (consumer == "rfold")) || (consumer == "count"))
-        || (consumer == "collect")
+    } else if ((((consumer == "fold") || (consumer == "rfold")) || (consumer == "count"))
+        || (consumer == "collect"))
+        || self::accept_rust_iterator_arithmetic_consumer(consumer)
     {
         String::from("reduce")
     } else {
@@ -238,7 +316,9 @@ pub fn read_rust_iterator_pipeline_continuation_item(operation: &str) -> String 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_iterator_pipeline_seed(consumer: &str) -> String {
-    if consumer == "count" {
+    if self::accept_rust_iterator_arithmetic_consumer(consumer) {
+        String::from("numeric identity")
+    } else if consumer == "count" {
         String::from("zero")
     } else if consumer == "collect" {
         String::from("empty array")

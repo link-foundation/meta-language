@@ -1,3 +1,5 @@
+import {acceptRustIteratorArithmeticConsumer} from './rust-iterator-arithmetic-rules.js';
+import {readRustIteratorArithmetic} from './rust-iterator-arithmetic.js';
 import {acceptRustIteratorPipelineStage,readRustIteratorPipelineResultState} from './rust-iterator-pipeline-rules.js';
 import {readRustIteratorPipelineStage,constructRustIteratorPipeline,createRustIteratorPipelineCountOrigin} from './rust-iterator-pipelines.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
@@ -34,12 +36,13 @@ export function readRustIteratorReduction(parser,receiver,method,args,range,path
  const operation=readRustIteratorReductionOperation(consumer.value);if(!operation)refuse('the complete standard iterator reduction needs a registered operation',consumer);
  const receiverError=operation==='count'?readRustIteratorCountReceiverError(source.type?.kind??'',source.arraySourceModel??'',source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'),owned||state==='borrowed'||knownReceiver&&knownOwner):readRustIteratorReductionReceiverError(knownReceiver,knownOwner);if(receiverError)refuse(receiverError);
  const pipeline=(resultOrigin,initial=null,initialOrigin=null,callback=null,callable=null)=>constructRustIteratorPipeline(parser,{receiver,source,stages,consumer:consumer.value,direction,inputElement:element,item,initial,initialOrigin,callback,callable,resultOrigin,range,constructReceiver:(local,name,type,method,direction,range)=>constructIteratorReceiver(parser,local,name,type,method,direction,range,refuse)});
+ if(acceptRustIteratorArithmeticConsumer(consumer.value)){const parsed=readRustIteratorArithmetic(parser,item,path,consumer);range={start:receiver.span?.start??range.start,end:parsed.close.end};return pipeline(parsed.origin);}
  if(operation==='collect'){
   const copied=state==='copied'||state==='owned',early=copied?'':readRustIteratorCollectionError(false,false,'','','','',0,false,0);if(early)refuse(early,consumer);
   c.expect('::','iterator collection type');c.expect('<','iterator collection type');
-  const previous=parser.iteratorCollectionElementOrigin,expectedItem={...parser.origins.typeOrigin(item.type,path),sourceOwner:structuredClone(item.expandedSourceOwner??item.sourceOwner)};let type,collected;
-  parser.iteratorCollectionElementOrigin=expectedItem;
-  try{type=parser.type();collected=structuredClone(parser.origins.type);}finally{parser.iteratorCollectionElementOrigin=previous;}
+  const previous=parser.iteratorItemTypeInferenceOrigin,expectedItem={...parser.origins.typeOrigin(item.type,path),sourceOwner:structuredClone(item.expandedSourceOwner??item.sourceOwner)};let type,collected;
+  parser.iteratorItemTypeInferenceOrigin=expectedItem;
+  try{type=parser.type();collected=structuredClone(parser.origins.type);}finally{parser.iteratorItemTypeInferenceOrigin=previous;}
   splitRustTypeClosingToken(parser);c.expect('>','iterator collection type');c.expect('(','iterator collect');const close=c.expect(')','iterator collect');range={start:receiver.span?.start??range.start,end:close.end};
   const actualOwner=collected.expandedSourceOwner??collected.sourceOwner,child=actualOwner?.arguments[0];
   const agrees=type.kind==='array'&&sameType(type.element,item.type)&&Boolean(child&&child.kind===(item.expandedSourceOwner??item.sourceOwner).kind&&child.path.join('::')===(item.expandedSourceOwner??item.sourceOwner).path.join('::')&&child.arguments.length===0);

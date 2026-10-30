@@ -239,12 +239,16 @@ impl Builder<'_> {
                         self.range,
                     )
                 }
-                "add" => {
+                "add" | "multiply" => {
                     let right = stack.pop().expect("registered term operand");
                     let left = stack.pop().expect("registered term operand");
                     SExpr::new(
                         SNode::Binary {
-                            op: BinaryOp::Add,
+                            op: if step == "add" {
+                                BinaryOp::Add
+                            } else {
+                                BinaryOp::Mul
+                            },
                             left: Box::new(left),
                             right: Box::new(right),
                             rounding: None,
@@ -472,7 +476,18 @@ pub(super) fn construct(parser: &mut RustParser, pipeline: Pipeline<'_>) -> Resu
     let mut arguments = vec![Some(callback)];
     if reducing {
         let seed_role = rules::read_rust_iterator_pipeline_seed(pipeline.consumer);
-        let seed = if seed_role == "zero" {
+        let seed = if seed_role == "numeric identity" {
+            let literal=crate::translation::rust_iterator_arithmetic_rules::plan_rust_iterator_arithmetic_seed(pipeline.consumer,ty.kind());
+            SExpr::new(
+                SNode::Num {
+                    value: literal[0].clone(),
+                    ty: Some(ty),
+                    negative: literal[1] == "negative",
+                    unit: false,
+                },
+                pipeline.span,
+            )
+        } else if seed_role == "zero" {
             SExpr::new(
                 SNode::Num {
                     value: "0".to_owned(),

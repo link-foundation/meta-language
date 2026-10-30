@@ -1,3 +1,4 @@
+import {acceptRustIteratorArithmeticConsumer,planRustIteratorArithmeticTerminal} from './rust-iterator-arithmetic-rules.js';
 // Lazy scalar iterator composition is expressed in existing common terms.
 /** @param {string} operation @returns {boolean} */
 export function acceptRustIteratorPipelineStage(operation){return operation==='map'||operation==='filter';}
@@ -13,11 +14,11 @@ export function readRustIteratorPipelineCallableError(kind,parameters,wrappers,p
 /** @param {string} operation @returns {string[]} */
 export function planRustIteratorPipelineStage(operation){return operation==='map'?['application','continuation','bind']:operation==='filter'?['application','continuation','inactive','if']:[];}
 /** @param {string} consumer @returns {string[]} */
-export function planRustIteratorPipelineTerminal(consumer){return consumer==='all'||consumer==='any'?['callback','item','call one']:consumer==='fold'||consumer==='rfold'?['callback','accumulator','item','call two']:consumer==='count'?['accumulator','one','add']:consumer==='collect'?['accumulator','item','append']:[];}
+export function planRustIteratorPipelineTerminal(consumer){return acceptRustIteratorArithmeticConsumer(consumer)?planRustIteratorArithmeticTerminal(consumer):consumer==='all'||consumer==='any'?['callback','item','call one']:consumer==='fold'||consumer==='rfold'?['callback','accumulator','item','call two']:consumer==='count'?['accumulator','one','add']:consumer==='collect'?['accumulator','item','append']:[];}
 /** @param {string} consumer @returns {string} */
-export function readRustIteratorPipelineInactive(consumer){return consumer==='all'?'true':consumer==='any'?'false':consumer==='fold'||consumer==='rfold'||consumer==='count'||consumer==='collect'?'accumulator':'';}
+export function readRustIteratorPipelineInactive(consumer){return consumer==='all'?'true':consumer==='any'?'false':consumer==='fold'||consumer==='rfold'||consumer==='count'||consumer==='collect'||acceptRustIteratorArithmeticConsumer(consumer)?'accumulator':'';}
 /** @param {string} consumer @returns {string} */
-export function readRustIteratorPipelineConsumerOperation(consumer){return consumer==='all'?'every':consumer==='any'?'some':consumer==='fold'||consumer==='rfold'||consumer==='count'||consumer==='collect'?'reduce':'';}
+export function readRustIteratorPipelineConsumerOperation(consumer){return consumer==='all'?'every':consumer==='any'?'some':consumer==='fold'||consumer==='rfold'||consumer==='count'||consumer==='collect'||acceptRustIteratorArithmeticConsumer(consumer)?'reduce':'';}
 /** The role stream retains receiver/stage/initializer/terminal construction order.
  * @param {string} consumer @param {number} count @returns {string[]} */
 export function planRustIteratorPipelineCaptures(consumer,count){
@@ -30,4 +31,4 @@ export function planRustIteratorPipelineCaptures(consumer,count){
 /** @param {string} operation @returns {string} */
 export function readRustIteratorPipelineContinuationItem(operation){return operation==='map'?'mapped':operation==='filter'?'original':'';}
 /** @param {string} consumer @returns {string} */
-export function readRustIteratorPipelineSeed(consumer){return consumer==='count'?'zero':consumer==='collect'?'empty array':consumer==='fold'||consumer==='rfold'?'initial':'';}
+export function readRustIteratorPipelineSeed(consumer){return acceptRustIteratorArithmeticConsumer(consumer)?'numeric identity':consumer==='count'?'zero':consumer==='collect'?'empty array':consumer==='fold'||consumer==='rfold'?'initial':'';}

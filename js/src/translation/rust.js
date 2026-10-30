@@ -1,5 +1,5 @@
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
-import {acceptRustIteratorCollectionInferredType} from './rust-iterator-reduction-rules.js';
+import {acceptRustIteratorItemInferredType} from './rust-iterator-reduction-rules.js';
 import {readRustIteratorReduction} from './rust-iterator-reductions.js';
 import {readRustByteStringExpression,readRustByteStringSliceView} from './rust-byte-string-expressions.js';
 import {readRustSourceNumericPatternOwner,readRustSourceNumericPatternLexicalError} from './rust-numeric-pattern-rules.js';
@@ -212,7 +212,7 @@ class RustParser {
     this.primitiveConstantSites=[];
     this.primitiveImportNames=new Set();
     this.sourceOwnerFrames = [];
-    this.iteratorCollectionElementOrigin = null;
+    this.iteratorItemTypeInferenceOrigin = null;
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.namedRecords = new Map();
     this.inherentOwner = null;
@@ -546,8 +546,8 @@ class RustParser {
   typeValue() {
     const c = this.cursor;
     const token = c.peek();
-    if(acceptRustIteratorCollectionInferredType(token.value,Boolean(this.iteratorCollectionElementOrigin))){
-      c.next();const origin=structuredClone(this.iteratorCollectionElementOrigin);this.origins.type={...origin,expandedSourceOwner:structuredClone(origin.sourceOwner)};return origin.type;
+    if(acceptRustIteratorItemInferredType(token.value,Boolean(this.iteratorItemTypeInferenceOrigin))){
+      c.next();const origin=structuredClone(this.iteratorItemTypeInferenceOrigin);this.origins.type={...origin,expandedSourceOwner:structuredClone(origin.sourceOwner)};return origin.type;
     }
     if(c.is('fn'))return readRustFunctionPointerType(this);
     const inherentSelf=readRustInherentSelfType(this);

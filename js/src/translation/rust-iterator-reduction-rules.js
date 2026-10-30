@@ -1,10 +1,11 @@
+import {acceptRustIteratorArithmeticConsumer} from './rust-iterator-arithmetic-rules.js';
 // Standard dense immutable iterator reductions reuse the common array algebra.
 /** @param {string} method @param {number} count @param {boolean} ordinary @returns {boolean} */
 export function acceptRustIteratorReductionStart(method,count,ordinary){return ordinary&&(method==='iter'||method==='into_iter')&&count===0;}
 /** @param {string} method @returns {boolean} */
 export function acceptRustIteratorCopyAdapter(method){return method==='copied'||method==='cloned';}
 /** @param {string} method @returns {string} */
-export function readRustIteratorReductionOperation(method){return method==='collect'?'collect':method==='count'?'count':method==='all'?'every':method==='any'?'some':(method==='fold'||method==='rfold')?'reduce':'';}
+export function readRustIteratorReductionOperation(method){return acceptRustIteratorArithmeticConsumer(method)?method:method==='collect'?'collect':method==='count'?'count':method==='all'?'every':method==='any'?'some':(method==='fold'||method==='rfold')?'reduce':'';}
 /** @param {string} method @returns {number} */
 export function readRustIteratorReductionCallbackArity(method){return (method==='fold'||method==='rfold')?2:method==='all'||method==='any'?1:-1;}
 /** @param {string} method @returns {string[]} */
@@ -51,7 +52,9 @@ export function planRustIteratorReductionCount(){return ['receiver','integer len
 
 /** Only the actual iterator item context supplies this scalar placeholder.
  * @param {string} token @param {boolean} known @returns {boolean} */
-export function acceptRustIteratorCollectionInferredType(token,known){return token==='_'&&known;}
+export function acceptRustIteratorCollectionInferredType(token,known){return acceptRustIteratorItemInferredType(token,known);}
+/** @param {string} token @param {boolean} known @returns {boolean} */
+export function acceptRustIteratorItemInferredType(token,known){return token==='_'&&known;}
 /** @param {boolean} copied @param {boolean} known @param {string} kind
  * @param {string} model @param {string} ownerKind @param {string} ownerPath
  * @param {number} children @param {boolean} sameElement @param {number} layers @returns {string} */
