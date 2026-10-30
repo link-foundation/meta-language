@@ -1,3 +1,4 @@
+import {readRustPanicCompletionKind} from './rust-panic-value-rules.js';
 import {hasRustConditionalChain,readRustConditionalChainStages,lowerRustConditionalChainStages} from './rust-conditional-chains.js';
 import {findRustReturningLetElseCompletion} from './let-else-completion-rules.js';
 import {readRustLetElseInitializerError} from './rust-record-rules.js';
@@ -48,8 +49,8 @@ function sequence(parser,path,open){
   }
   if(['while','loop','for'].includes(token.value)&&token.kind==='identifier')throw unsupported(`${token.value} loop`,'loops over mutable state are outside the portable core; use recursion',range(token,token));
   const expression=token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print'?parser.functionPrintValue(path):parser.expr(path,{statement:true});
-  const terminated=Boolean(c.eat(';'));
-  if(terminated&&expression.k!=='abort'){
+  const terminated=Boolean(c.eat(';')),completionKind=readRustPanicCompletionKind(expression.k,expression.op??'');
+  if(terminated&&completionKind!=='abort'){
    const origin=parser.origins.origin(expression,path);
    if(readRustOrdinaryStatementDisposition(expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',expression.span);
    bindings.push({name:parser.freshProductBinding(),value:expression,span:expression.span});continue;
@@ -58,11 +59,11 @@ function sequence(parser,path,open){
   const implicit=readRustImplicitBlockStatementDisposition(expression.k,expression.block===true,!c.is('}'),parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
   if(implicit==='bind'){bindings.push({name:parser.freshProductBinding(),type:{kind:'unit'},value:expression,span:expression.span});continue;}
   if(!c.is('}')){
-   if(expression.k==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',expression.span);
+   if(completionKind==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',expression.span);
    if(['if','match','block'].includes(expression.k))throw unsupported('expression statement','a block value must be its last expression',expression.span);
    throw parser.fail('expected }');
   }
-  result=leaf(parser,expression.k==='abort'?'abort':'value',expression,path);break;
+  result=leaf(parser,completionKind==='abort'?'abort':'value',expression,path);break;
  }
  for(let index=bindings.length-1;index>=0;index-=1)result={node:'binding',binding:bindings[index],body:result,kind:result.kind};
  return result;

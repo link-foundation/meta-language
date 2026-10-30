@@ -10793,3 +10793,20 @@ is retained as a positive original with its previous input/reason in history;
 the old literal-only policy remains available to callers selecting that subset.
 General non-string panic payloads and arbitrary panic formatting remain separate
 requirements, along with every previously recorded Option and Result obligation.
+
+#### Formatted Rust panic macros
+
+Ordinary panic, unreachable, unimplemented and todo macros share the existing
+plain Display formatter, including positional, indexed, repeated, named and
+lexically captured operands. Prefixes and source completion roles are shared
+Links policies automatically translated from JavaScript. Formatted messages use
+the evaluated panic operation and stay nonreturning in statement, conditional,
+closure and typed result contexts. Explicit operands evaluate once in source
+order before Display occurrences, even when fields reorder or repeat them.
+Source owner checks cover both explicit operands and synthesized lexical reads.
+Closed completion profiles retain their original selected interpretation. Former
+ordinary-profile refusals retain exact complete source and historical metadata,
+with positive coverage of their present behavior. Snapshot copying is automated
+as Links data; the old fixture is not reinterpreted as new execution evidence.
+All formatting specifiers, custom Display effects, panic hooks and locations,
+non-string payloads and full Rust exception control remain requirements.

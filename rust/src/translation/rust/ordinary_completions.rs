@@ -431,7 +431,7 @@ impl RustParser {
                 )?
             };
             let terminated = self.cursor.eat(";").is_some();
-            let abort = matches!(expression.node, SNode::Abort { .. });
+            let abort = super::expressions::source_completion_kind(&expression) == "abort";
             if terminated && !abort {
                 let origin = self.origins.origin(&expression, path);
                 if rules::read_rust_ordinary_statement_disposition(

@@ -41,6 +41,18 @@ use super::{
 use crate::translation::rust_character_rules::read_rust_character_expression_type;
 use crate::translation::source_diagnostic_attributes::token_kind;
 
+pub(in super::super) fn source_completion_kind(node: &SExpr) -> String {
+    let operation = if let SNode::Math { op, .. } = &node.node {
+        op.as_str()
+    } else {
+        ""
+    };
+    crate::translation::rust_panic_value_rules::read_rust_panic_completion_kind(
+        node.node.kind(),
+        operation,
+    )
+}
+
 impl RustParser {
     pub(super) fn expr(&mut self, path: &[String], options: Options) -> Result<SExpr> {
         self.or(path, options)

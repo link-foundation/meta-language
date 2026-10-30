@@ -617,7 +617,7 @@ impl RustParser {
             let token = self.peek();
             if tail
                 .as_ref()
-                .is_some_and(|value| matches!(value.node, SNode::Abort { .. }))
+                .is_some_and(|value| super::expressions::source_completion_kind(value) == "abort")
             {
                 return Err(unsupported(
                     "unreachable continuation",
@@ -706,7 +706,7 @@ impl RustParser {
                 } else {
                     crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition
                 })(
-                    expr.node.kind(),
+                    &super::expressions::source_completion_kind(&expr),
                     self.origins.collecting,
                     origin.proven,
                     origin.ty.as_ref().map_or("", Type::kind),

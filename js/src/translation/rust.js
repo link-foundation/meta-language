@@ -1,6 +1,8 @@
+import {readRustFormattedPanic} from './rust-panic-values.js';
+import {acceptRustPanicFormattingMacro,readRustPanicCompletionKind} from './rust-panic-value-rules.js';
 import {readRustStringByteView} from './rust-string-byte-views.js';
 import {acceptRustOwnedMacroArgumentTransfer,acceptRustStringSliceCloneReference} from './rust-owned-binding-rules.js';
-import {noteRustOwnedBindingRead} from './rust-owned-bindings.js';
+import {checkRustOwnedOrigin,noteRustOwnedBindingRead} from './rust-owned-bindings.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {acceptRustIteratorItemInferredType} from './rust-iterator-reduction-rules.js';
 import {readRustIteratorReduction} from './rust-iterator-reductions.js';
@@ -867,7 +869,7 @@ class RustParser {
     while (!c.is('}')) {
       if(c.eat(';'))continue;
       const token = c.peek();
-      if(tail?.k==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',span(token,token));
+      if(readRustPanicCompletionKind(tail?.k??'',tail?.op??'')==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',span(token,token));
       if (c.is('let')) {
         lets.push(...this.letStatement(path));
         continue;
@@ -894,7 +896,7 @@ class RustParser {
       if (c.eat(';')) {
         this.origins.finishOwnedExpression(expr,path,temporaryFrame,false);
         const origin=this.origins.origin(expr,path);
-        const disposition=(ordinary?readRustOrdinaryStatementDisposition:readRustUnitStatementDisposition)(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+        const disposition=(ordinary?readRustOrdinaryStatementDisposition:readRustUnitStatementDisposition)(readRustPanicCompletionKind(expr.k,expr.op??''),this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='abort'){tail=expr;continue;}
         if(disposition==='bind'){this.origins.consumeOwnedBinding(origin,expr.span);lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', expr.span);
@@ -1163,6 +1165,7 @@ class RustParser {
     }
     const captures=planRustFormattingOperandCapture(values.length).map(index=>{
       const value=values[index],name=this.freshProductBinding();
+      checkRustOwnedOrigin(this.origins,this.origins.origin(value,path),value.span);
       refuseRustCallableObservation(this,value,path,value.span);
       refuseRustSharedArrayHandleObservation(this,value,path,value.span);
       const reference=this.origins.mark({k:'name',path:[name],span:value.span},this.origins.origin(value,path));
@@ -1182,6 +1185,7 @@ class RustParser {
         refuseRustCallableObservation(this,value,path,value.span);
         refuseRustSharedArrayHandleObservation(this,value,path,value.span);
       }else throw new TypeError('unknown Rust formatting term instruction');
+      checkRustOwnedOrigin(this.origins,this.origins.origin(value,path),value.span);
       pieces.push({k:'show',arg:value,style:'rust',span:value.span});
     }
     let body=pieces.reduce((left,right)=>({k:'binary',op:'concat',left,right,span:template.span}));
@@ -1705,7 +1709,7 @@ class RustParser {
 
   expressionMacro(token, path) {
     if (token.value === 'matches') return readRustLiteralMatch(this, token, path);
-    const parsed = token.value==='format'?this.formattingArguments(token,path):{args:this.macroArguments(token,path),names:null};
+    const parsed = token.value==='format'||acceptRustPanicFormattingMacro(token.value,this.ordinaryCompletionContext())?this.formattingArguments(token,path):{args:this.macroArguments(token,path),names:null};
     const args=parsed.args;
     const range = span(token, this.cursor.peek());
     switch (token.value) {
@@ -1735,6 +1739,7 @@ class RustParser {
       case 'todo': {
         const message = readRustCompletionPanicMessage(this.completionModel, token.value, args);
         if (message !== null) return { k: 'abort', message, span: range };
+        const formatted=readRustFormattedPanic(this,token,args,parsed.names,range,path);if(formatted)return formatted;
         if (args.length > 1) throw unsupported(`${token.value}! arguments`, 'only a literal message is portable', range);
         if (args.length && args[0].k !== 'str') throw unsupported(`${token.value}! message`, 'the message must be a literal', range);
         return { k: 'abort', message: rustMacroMessage(token.value, args.length ? panicText(args[0]) : undefined), span: range };

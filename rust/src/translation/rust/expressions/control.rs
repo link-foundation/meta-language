@@ -21,7 +21,11 @@ impl RustParser {
         if token.value == "matches" {
             return self.literal_match(token, path);
         }
-        let (args, argument_names) = if token.value == "format" {
+        let (args, argument_names) = if token.value == "format"
+            || crate::translation::rust_panic_value_rules::accept_rust_panic_formatting_macro(
+                &token.value,
+                self.ordinary_completion_context(),
+            ) {
             let (args, names) = self.formatting_arguments(token, path)?;
             (args, Some(names))
         } else {
@@ -158,6 +162,36 @@ impl RustParser {
                     &args,
                 ) {
                     return Ok(SExpr::new(SNode::Abort { message }, range));
+                }
+                let (kind,braces)=args.first().map_or(("",false),|value|(value.node.kind(),matches!(&value.node,SNode::Str{value} if value.contains('{')||value.contains('}'))));
+                if crate::translation::rust_panic_value_rules::accept_rust_panic_formatting_value(
+                    &token.value,
+                    self.ordinary_completion_context(),
+                    kind,
+                    args.len() as f64,
+                    braces,
+                ) {
+                    let formatted = self.format(args, token, path, argument_names)?;
+                    let prefix=crate::translation::rust_panic_value_rules::read_rust_panic_formatting_prefix(&token.value);
+                    let value = if prefix.is_empty() {
+                        formatted
+                    } else {
+                        SExpr::new(
+                            SNode::Binary {
+                                op: super::BinaryOp::Concat,
+                                left: Box::new(SExpr::new(SNode::Str { value: prefix }, range)),
+                                right: Box::new(formatted),
+                                rounding: None,
+                            },
+                            range,
+                        )
+                    };
+                    let result=SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust formatted panic message".to_owned(),args:vec![SArrayItem{value,spread:false}]},range);
+                    let mut origin =
+                        SourceOrigin::with_type(super::super::super::UNIT, path, Vec::new());
+                    origin.diverging = true;
+                    self.origins.mark(&result, origin);
+                    return Ok(result);
                 }
                 if args.len() > 1 {
                     return Err(unsupported(

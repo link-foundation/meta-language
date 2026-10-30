@@ -429,7 +429,7 @@ fn linked_return_edit_and_abort_continuation_change_only_the_selected_branch() {
 }
 
 #[test]
-fn canonical_literal_panic_replays_exact_data_and_preserves_default_refusals() {
+fn canonical_literal_panic_replays_selected_data_and_retained_ordinary_inputs() {
     let data = meta_language::read_structured_data_lino(include_str!(
         "../../../parity/fixtures/rust-completion-panic.lino"
     ))
@@ -504,16 +504,19 @@ fn canonical_literal_panic_replays_exact_data_and_preserves_default_refusals() {
             assert!(result.stderr.contains(message));
         }
     }
+    for key in ["legacy", "defaultCanonical"] {
+        let source = data[key]["source"].as_str().unwrap();
+        let surface = parse_rust(source).expect("ordinary formatted panic source is retained");
+        let program =
+            check_program(&surface).expect("ordinary formatted panic has a complete typed result");
+        assert!(!emit_rust(&program).unwrap().text.is_empty());
+    }
     for (case, selected) in data["invalid"]
         .as_array()
         .unwrap()
         .iter()
         .map(|case| (case, true))
-        .chain([
-            (&data["legacy"], false),
-            (&data["legacy"], true),
-            (&data["defaultCanonical"], false),
-        ])
+        .chain([(&data["legacy"], true)])
     {
         let source = case["source"].as_str().unwrap();
         let surface = if selected {

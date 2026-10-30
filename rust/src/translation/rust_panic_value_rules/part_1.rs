@@ -40,3 +40,48 @@ pub fn render_rust_panic_value_expression(target: &str, message: &str) -> String
         String::new()
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_macro(name: &str, ordinary: bool) -> bool {
+    ordinary
+        && ((((name == "panic") || (name == "unreachable")) || (name == "unimplemented"))
+            || (name == "todo"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_value(
+    name: &str,
+    ordinary: bool,
+    kind: &str,
+    count: f64,
+    braces: bool,
+) -> bool {
+    (self::accept_rust_panic_formatting_macro(name, ordinary) && (count > 0f64))
+        && ((count > 1f64) || ((kind == "str") && braces))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_formatting_prefix(name: &str) -> String {
+    if name == "unreachable" {
+        String::from("internal error: entered unreachable code: ")
+    } else if name == "unimplemented" {
+        String::from("not implemented: ")
+    } else if name == "todo" {
+        String::from("not yet implemented: ")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_completion_kind(kind: &str, operation: &str) -> String {
+    if self::accept_linked_rust_panic_value(kind, operation) {
+        String::from("abort")
+    } else {
+        kind.to_owned()
+    }
+}

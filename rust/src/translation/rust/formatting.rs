@@ -203,6 +203,7 @@ impl RustParser {
                 value.span,
             );
             let origin = self.origins.origin(&value, path);
+            self.origins.check_owned_origin(&origin, value.span)?;
             self.origins.mark(&reference, origin);
             references.push(reference);
             captures.push((name, value));
@@ -250,6 +251,8 @@ impl RustParser {
                 }
                 _ => return Err(malformed(template_span)),
             };
+            self.origins
+                .check_owned_origin(&self.origins.origin(&value, path), value.span)?;
             let value_span = value.span;
             pieces.push(SExpr::new(
                 SNode::Show {
