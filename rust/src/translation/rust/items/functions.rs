@@ -254,6 +254,16 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        if self.ordinary_completion_context() {
+            self.capture_source_constant_function(
+                &name,
+                path,
+                &function_keyword,
+                const_keyword.as_ref(),
+                &source_params,
+                &source_result,
+            );
+        }
         // Private inventory only; these bodies are never emitted or returned publicly.
         if self.header_discovery {
             let close = self.declaration_body_boundary()?;

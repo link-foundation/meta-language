@@ -1,4 +1,4 @@
-import {captureRustSourceConstantInitializer,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
+import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
 import {readRustIntegerRangePattern} from './rust-integer-ranges.js';
@@ -182,6 +182,8 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   syntax.origins.nominalCopyOwners=new Set(declarations.origins.nominalCopyOwners);
   syntax.origins.nominalCopyDerivations=new Map(declarations.origins.nominalCopyDerivations);
   syntax.sourceConstantInitializers=new Map(declarations.sourceConstantInitializers);
+  syntax.sourceConstantFunctions=new Map(declarations.sourceConstantFunctions);
+  syntax.sourceConstantTokens=declarations.sourceConstantTokens;
   syntax.aliases = declarations.aliases;
   syntax.namedRecords = new Map(declarations.namedRecords);
   syntax.inherentMethods = new Map(declarations.inherentMethods);
@@ -199,6 +201,8 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   parser.origins.nominalCopyOwners=new Set(syntax.origins.nominalCopyOwners);
   parser.origins.nominalCopyDerivations=new Map(syntax.origins.nominalCopyDerivations);
   parser.sourceConstantInitializers=new Map(syntax.sourceConstantInitializers);
+  parser.sourceConstantFunctions=new Map(syntax.sourceConstantFunctions);
+  parser.sourceConstantTokens=syntax.sourceConstantTokens;
   parser.aliases = syntax.aliases;
   parser.namedRecords = new Map(syntax.namedRecords);
   parser.inherentMethods = new Map(syntax.inherentMethods);
@@ -208,8 +212,9 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
 class RustParser {
   constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',source=null,sharedArrayHandleSourceModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
+    this.sourceConstantTokens=[...tokens];
     this.headerDiscovery=false;
-    this.sourceConstantInitializers=new Map();this.sourceConstantReadStack=new Set();
+    this.sourceConstantInitializers=new Map();this.sourceConstantFunctions=new Map();this.sourceConstantReadStack=new Set();
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
@@ -779,6 +784,7 @@ class RustParser {
       sourceResult.freshVectorResultContract=acceptRustFreshVectorResultDeclaration(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.kind==='array'?ret.element.kind:'',sourceResult.arrayElementCopyEvidence===true);
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
+      if(this.ordinaryCompletionContext())captureRustSourceConstantFunction(this,name,path,functionKeyword,constKeyword,sourceParams,sourceResult);
       // This private declaration inventory is discarded; no body semantics are inferred here.
       if(this.headerDiscovery){const close=readRustDeclarationBodyBoundary(this);return {k:'fn',name,params,ret,body:{k:'unit',span:{start:close.start,end:close.end}},span:{start:start.start,end:close.end}};}
       const constHeaderEnd=constKeyword?c.peek().start:null;
@@ -842,18 +848,22 @@ class RustParser {
   }
 
   readSourceConstantInitializer(row){
+    if(row.kind==='function'&&!row.isConst)throw typeError('Rust source constant pattern: a constant function call needs its actual const declaration');
     if(this.sourceConstantReadStack.has(row.owner))throw typeError('Rust source constant pattern: a constant pattern dependency cannot evaluate itself recursively');
     this.sourceConstantReadStack.add(row.owner);
     try{
-      const reader=new RustParser(this.cursor.tokens,this.origins.catalog);
+      const reader=new RustParser(this.sourceConstantTokens,this.origins.catalog);
+      reader.sourceConstantTokens=this.sourceConstantTokens;
       reader.source=this.source;reader.sourceVersionMinor=this.sourceVersionMinor;reader.retainSourceTypeOwners=this.retainSourceTypeOwners;
       reader.aliases=this.aliases;reader.namedRecords=new Map(this.namedRecords);reader.inherentMethods=new Map(this.inherentMethods);
       reader.origins.nominalCopyOwners=new Set(this.origins.nominalCopyOwners);reader.origins.nominalCopyDerivations=new Map(this.origins.nominalCopyDerivations);
-      reader.sourceConstantInitializers=new Map(this.sourceConstantInitializers);reader.sourceConstantReadStack=this.sourceConstantReadStack;
+      reader.sourceConstantInitializers=new Map(this.sourceConstantInitializers);reader.sourceConstantFunctions=new Map(this.sourceConstantFunctions);reader.sourceConstantReadStack=this.sourceConstantReadStack;
       initializeRustTypeAliases(reader);finishRustTypeAliases(reader);reader.modulePath=[...row.path];reader.cursor.index=reader.cursor.tokens.findIndex(token=>token.start===row.keyword);
       if(reader.cursor.index<0)throw reader.fail('the constant initializer needs its actual source declaration');
-      const declaration=reader.constItem(row.path),result=reader.sourceConstantInitializers.get(row.owner).result;
-      return{declaration,reader,result};
+      reader.inherentOwner=row.inherent?structuredClone(row.inherent):null;
+      const constKeyword=row.constKeyword==null?null:reader.cursor.tokens.find(token=>token.start===row.constKeyword);
+      const declaration=row.kind==='function'?reader.fn(row.path,constKeyword):reader.constItem(row.path),actual=(row.kind==='function'?reader.sourceConstantFunctions:reader.sourceConstantInitializers).get(row.owner),result=actual.result;
+      return{declaration,reader,result,parameters:actual.parameters??[]};
     }finally{this.sourceConstantReadStack.delete(row.owner);}
   }
 

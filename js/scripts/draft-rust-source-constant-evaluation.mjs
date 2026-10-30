@@ -7,8 +7,8 @@ import {draftTranslationProfileInventory} from './draft-translation-profile-inve
 const reuse=process.argv.slice(2).join(' ')==='--draft --reuse-policies';
 if(!reuse&&process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft, optionally --reuse-policies after source generation');
 const root=new URL('../../',import.meta.url);
-const javascript=['js/src/translation/rust-source-constant-evaluation-rules.js','js/src/translation/rust-source-constant-evaluation.js','js/src/translation/rust-constant-integer-rules.js','js/src/translation/rust-integer-ranges.js','js/src/translation/rust.js','js/tests/translation-rust-source-constant-evaluation.test.js'];
-for(const path of [...javascript,'js/scripts/draft-rust-source-constant-evaluation.mjs','js/scripts/draft-rust-source-constants-fixtures.mjs','experiments/rust-records/source-constant-evaluation.mjs']){parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);globalThis.gc?.();}
+const javascript=['js/src/translation/rust-source-constant-evaluation-rules.js','js/src/translation/rust-source-constant-evaluation.js','js/src/translation/rust-constant-integer-rules.js','js/src/translation/rust-integer-ranges.js','js/src/translation/rust.js','js/tests/translation-rust-source-constant-evaluation.test.js','js/tests/translation-rust-const-function-evaluation.test.js','js/tests/translation-portable-number-source-style.test.js','js/scripts/portable-number-source-style.mjs'];
+for(const path of [...javascript,'js/scripts/draft-rust-source-constant-evaluation.mjs','js/scripts/draft-rust-source-constants-fixtures.mjs','js/scripts/draft-rust-const-functions-fixtures.mjs','experiments/rust-records/source-constant-evaluation.mjs','experiments/rust-records/const-function-evaluation.mjs']){parseAuthoredJavaScriptModule(readFileSync(new URL(path,root),'utf8'),path);globalThis.gc?.();}
 process.argv.splice(2,process.argv.length-2,'--draft');
 for(const name of ['rust-constant-integer','rust-source-constant-evaluation']){
  if(!reuse){await import('./draft-'+name+'-rules.mjs');globalThis.gc?.();continue;}
@@ -18,7 +18,9 @@ for(const name of ['rust-constant-integer','rust-source-constant-evaluation']){
 }
 await import('./draft-rust-constant-patterns-fixtures.mjs');globalThis.gc?.();
 await import('./draft-rust-source-constants-fixtures.mjs');globalThis.gc?.();
+await import('./draft-rust-const-functions-fixtures.mjs');globalThis.gc?.();
 draftTranslationProfileInventory({id:'ordinary-rust-source-constant-scalar-evaluation',fixture:'rust-source-constant-evaluation',programAsset:'rust-source-constant-evaluation-program',sourceLanguage:'Rust',experimentPath:'experiments/rust-records/source-constant-evaluation.mjs',nativeTest:'translation_rust_source_constant_evaluation',javascript,rust:['rust/src/translation/rust_source_constant_evaluation_rules.rs','rust/src/translation/rust/source_constant_evaluation.rs','rust/src/translation/rust/items/constants.rs','rust/src/translation/rust/expressions/control.rs','rust/tests/unit/translation_rust_source_constant_evaluation.rs']});
+draftTranslationProfileInventory({id:'ordinary-rust-actual-const-function-scalar-evaluation',fixture:'rust-const-function-evaluation',programAsset:'rust-source-constant-evaluation-program',sourceLanguage:'Rust',experimentPath:'experiments/rust-records/const-function-evaluation.mjs',nativeTest:'translation_rust_const_function_evaluation',javascript,rust:['rust/src/translation/rust_source_constant_evaluation_rules.rs','rust/src/translation/rust/source_constant_evaluation.rs','rust/src/translation/rust/items/functions.rs','rust/tests/unit/translation_rust_const_function_evaluation.rs']});
 process.argv.splice(2,process.argv.length-2,'--draft','--reuse-roots');await import('./draft-source-definition-catalog.mjs');globalThis.gc?.();
 const {draftRustPackageSourceAssets}=await import('./rust-package-source-assets.mjs');draftRustPackageSourceAssets();globalThis.gc?.();
 process.argv.splice(2,process.argv.length-2,'--refresh-manifest');await import('./check-issue-195-acceptance.mjs');

@@ -37,3 +37,6 @@ pub use part_7::*;
 #[path = "rust_source_constant_evaluation_rules/part_8.rs"]
 mod part_8;
 pub use part_8::*;
+#[path = "rust_source_constant_evaluation_rules/part_9.rs"]
+mod part_9;
+pub use part_9::*;

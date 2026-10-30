@@ -73,41 +73,70 @@ function constantLiteral(texts,starts,counts,labels,targets,node,expected){
 }
 /** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
 function constantCast(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
-  const target=constantTypeOwner(texts,starts,counts,labels,targets,node,expected),domain=constantDomain(target),arg=constantField(starts,counts,labels,targets,node,'arg'),hint=constantHint(texts,starts,counts,labels,targets,rows,arg,names,values,0),value=constantExpression(texts,starts,counts,labels,targets,rows,arg,hint!==''?hint:'i32',names,values,visiting,depth+1,fuel-1);
+  const target=constantTypeOwner(texts,starts,counts,labels,targets,node,expected),domain=constantDomain(target),arg=constantField(starts,counts,labels,targets,node,'arg'),hint=constantHint(texts,starts,counts,labels,targets,rows,arg,names,values,0),value=constantExpression(texts,starts,counts,labels,targets,rows,arg,hint!==''?hint:'i32',names,values,visiting,depth+1,fuel);
   if(readRequiredTextFact(value,0)==='error')return value;if(readRequiredTextFact(value,0)!=='integer'&&readRequiredTextFact(value,0)!=='boolean'||domain.length!==2)return ['error','a constant cast requires actual integer source and target owners'];
-  const result=evaluateRustConstantIntegerOperation('cast',readRequiredTextFact(value,0)==='boolean'?readRequiredTextFact(value,2)==='true'?'1':'0':readRequiredTextFact(value,2),'0',readRequiredTextFact(domain,0),readRequiredTextFact(domain,1),constantBits(target));return readRequiredTextFact(result,0)==='error'?result:['integer',target,readRequiredTextFact(result,1)];
+  const result=evaluateRustConstantIntegerOperation('cast',readRequiredTextFact(value,0)==='boolean'?readRequiredTextFact(value,2)==='true'?'1':'0':readRequiredTextFact(value,2),'0',readRequiredTextFact(domain,0),readRequiredTextFact(domain,1),constantBits(target));return readRequiredTextFact(result,0)==='error'?result:constantFinish(['integer',target,readRequiredTextFact(result,1)],constantRemaining(value));
 }
 /** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
 function constantOptionalChoice(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
- const left=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'left'),expected,names,values,visiting,depth+1,Math.floor((fuel-1)/2)),kind=readRequiredTextFact(left,0);
+ const left=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'left'),expected,names,values,visiting,depth+1,fuel),kind=readRequiredTextFact(left,0);
  if(kind==='error')return left;
- if(kind==='some'){const owner=readRequiredTextFact(left,1);return [owner==='bool'?'boolean':owner==='str'?'string':'integer',owner,readRequiredTextFact(left,2)];}
- if(kind==='none')return constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'right'),expected,names,values,visiting,depth+1,Math.floor((fuel-1)/2));
+ if(kind==='some'){const owner=readRequiredTextFact(left,1);return constantFinish([owner==='bool'?'boolean':owner==='str'?'string':'integer',owner,readRequiredTextFact(left,2)],constantRemaining(left));}
+ if(kind==='none')return constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'right'),expected,names,values,visiting,depth+1,constantRemaining(left));
  return ['error','a constant optional choice requires its actual optional value'];
 }
-/** Scalar result: kind, actual primitive owner, canonical value; errors: error, reason.
- * @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
-function constantExpression(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
- const budget=readRustConstantPatternEvaluationError(depth,65536-fuel,false);if(node<0||fuel<=0||budget!=='')return ['error',budget!==''?budget:'constant pattern evaluation exceeds its source resource budget'];
+/** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {number} row @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
+function constantFunction(texts,starts,counts,labels,targets,rows,node,row,names,values,visiting,depth,fuel){
+ if(constantText(texts,starts,counts,labels,targets,row,'const')!=='true')return ['error','a constant function call needs its actual const declaration'];
+ const parameters=constantField(starts,counts,labels,targets,row,'parameters'),args=constantField(starts,counts,labels,targets,node,'args'),arity=parameters<0?0:readRequiredNumberFact(counts,parameters),count=args<0?0:readRequiredNumberFact(counts,args);
+ if(arity!==count)return ['error','a constant function call needs all actual source arguments'];
+ let available=fuel,boundNames=[],boundValues=[];
+ for(let at=0;at<arity;at+=1){
+  const parameter=constantElement(starts,counts,targets,parameters,at),domain=constantText(texts,starts,counts,labels,targets,parameter,'domain'),value=constantExpression(texts,starts,counts,labels,targets,rows,constantElement(starts,counts,targets,args,at),domain,names,values,visiting,depth+1,available);
+  if(readRequiredTextFact(value,0)==='error')return value;
+  if(readRequiredTextFact(value,1)!==domain)return ['error','a constant argument must retain its actual parameter source owner'];
+  boundNames=boundNames.concat([constantText(texts,starts,counts,labels,targets,parameter,'name')]);boundValues=boundValues.concat(value.slice(0,3));available=constantRemaining(value);
+ }
+ const domain=constantText(texts,starts,counts,labels,targets,row,'domain'),result=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,row,'body'),domain,boundNames,boundValues,visiting,depth+1,available);
+ return readRequiredTextFact(result,0)==='error'?result:readRequiredTextFact(result,1)!==domain?['error','a constant function result must retain its actual declared source owner']:result;
+}
+/** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
+function constantReference(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
  const kind=constantText(texts,starts,counts,labels,targets,node,'k');
- if(kind==='bool'||kind==='str'||kind==='num'||kind==='lit')return constantLiteral(texts,starts,counts,labels,targets,node,expected);
- if(kind==='name'||kind==='var'||kind==='call'){
   const path=constantField(starts,counts,labels,targets,node,'path'),head=constantElement(starts,counts,targets,path,0),name=kind==='var'?constantText(texts,starts,counts,labels,targets,node,'name'):head<0?'':readRequiredTextFact(texts,head),bound=kind==='var'||path>=0&&readRequiredNumberFact(counts,path)===1?names.lastIndexOf(name):-1;
   if(bound>=0)return [readRequiredTextFact(values,bound*3),readRequiredTextFact(values,bound*3+1),readRequiredTextFact(values,bound*3+2)];
   const reference=constantText(texts,starts,counts,labels,targets,node,'sourceConstantOwner'),owner=reference!==''?reference:kind==='call'?constantText(texts,starts,counts,labels,targets,node,'fn'):'',row=constantRow(texts,starts,counts,labels,targets,rows,owner);
-  const args=constantField(starts,counts,labels,targets,node,'args');if(kind==='call'&&args>=0&&readRequiredNumberFact(counts,args)!==0)return ['error','constant function calls need their actual const source interpretation'];
+  const args=constantField(starts,counts,labels,targets,node,'args');
+  if(constantText(texts,starts,counts,labels,targets,row,'kind')==='function')return kind==='call'?constantFunction(texts,starts,counts,labels,targets,rows,node,row,names,values,visiting,depth,fuel):['error','a constant function item needs an actual call expression'];
+  if(kind==='call'&&args>=0&&readRequiredNumberFact(counts,args)!==0)return ['error','constant function calls need their actual const source interpretation'];
   if(row<0)return ['error','a constant expression name needs its actual source constant or local binding'];
   if(visiting.includes(owner))return ['error',readRustConstantPatternEvaluationError(depth,0,true)];
-  const domain=constantText(texts,starts,counts,labels,targets,row,'domain'),result=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,row,'body'),domain,[],[],visiting.concat([owner]),depth+1,fuel-1);
+  const domain=constantText(texts,starts,counts,labels,targets,row,'domain'),result=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,row,'body'),domain,[],[],visiting.concat([owner]),depth+1,fuel);
   return readRequiredTextFact(result,0)==='error'?result:readRequiredTextFact(result,1)!==domain?['error','a constant initializer must retain its actual declared primitive owner']:result;
- }
+}
+/** @param {string[]} value @param {number} fuel @returns {string[]} */
+function constantFinish(value,fuel){return readRequiredTextFact(value,0)==='error'?value:[readRequiredTextFact(value,0),readRequiredTextFact(value,1),readRequiredTextFact(value,2),String(fuel)];}
+/** @param {string[]} value @returns {number} */
+function constantRemaining(value){const text=readRequiredTextFact(value,3);let result=0;for(let at=0;at<text.length;at+=1){const digit='0123456789'.indexOf(text.charAt(at));if(digit<0)return -1;result=result*10+digit;}return result;}
+/** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
+function constantExpression(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
+ const budget=readRustConstantPatternEvaluationError(depth,65536-fuel,false);if(node<0||fuel<=0||budget!=='')return ['error',budget!==''?budget:'constant pattern evaluation exceeds its source resource budget'];
+ const result=constantBody(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel-1);return result.length===3?constantFinish(result,fuel-1):result;
+}
+/** Scalar result: kind, actual primitive owner, canonical value; errors: error, reason.
+ * @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
+function constantBody(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
+ const kind=constantText(texts,starts,counts,labels,targets,node,'k');
+ if(kind==='unit')return ['unit','unit',''];
+ if(kind==='bool'||kind==='str'||kind==='num'||kind==='lit')return constantLiteral(texts,starts,counts,labels,targets,node,expected);
+ if(kind==='name'||kind==='var'||kind==='call')return constantReference(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel);
  if(kind==='let'){
-  const value=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'value'),expected,names,values,visiting,depth+1,Math.floor((fuel-1)/2));if(readRequiredTextFact(value,0)==='error')return value;
-  return constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'body'),expected,names.concat([constantText(texts,starts,counts,labels,targets,node,'name')]),values.concat(value),visiting,depth+1,Math.floor((fuel-1)/2));
+  const value=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'value'),expected,names,values,visiting,depth+1,fuel);if(readRequiredTextFact(value,0)==='error')return value;
+  return constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'body'),expected,names.concat([constantText(texts,starts,counts,labels,targets,node,'name')]),values.concat(value.slice(0,3)),visiting,depth+1,constantRemaining(value));
  }
  if(kind==='if'){
-  const condition=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'cond'),'bool',names,values,visiting,depth+1,Math.floor((fuel-1)/2));if(readRequiredTextFact(condition,0)==='error')return condition;if(readRequiredTextFact(condition,0)!=='boolean')return ['error','a constant condition requires its actual Boolean value'];
-  return constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,readRequiredTextFact(condition,2)==='true'?'then':'else'),expected,names,values,visiting,depth+1,Math.floor((fuel-1)/2));
+  const condition=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,'cond'),'bool',names,values,visiting,depth+1,fuel);if(readRequiredTextFact(condition,0)==='error')return condition;if(readRequiredTextFact(condition,0)!=='boolean')return ['error','a constant condition requires its actual Boolean value'];
+  return constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,node,readRequiredTextFact(condition,2)==='true'?'then':'else'),expected,names,values,visiting,depth+1,constantRemaining(condition));
  }
  if(kind==='coalesce')return constantOptionalChoice(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel);
  if(kind==='abort')return ['error','the constant initializer aborts: '+constantText(texts,starts,counts,labels,targets,node,'message')];
@@ -122,26 +151,27 @@ function constantExpression(texts,starts,counts,labels,targets,rows,node,expecte
    const result=evaluateRustConstantIntegerOperation('add',readRequiredTextFact(literal,1),'0',readRequiredTextFact(domain,0),readRequiredTextFact(domain,1),constantBits(owner));return readRequiredTextFact(result,0)==='error'?result:['integer',owner,readRequiredTextFact(result,1)];
   }
   const unaryInput=kind==='unary'||operation==='bitnot';
-  const a=constantExpression(texts,starts,counts,labels,targets,rows,left,operand,names,values,visiting,depth+1,unaryInput?fuel-1:Math.floor((fuel-1)/2));if(readRequiredTextFact(a,0)==='error')return a;
+  const a=constantExpression(texts,starts,counts,labels,targets,rows,left,operand,names,values,visiting,depth+1,fuel);if(readRequiredTextFact(a,0)==='error')return a;
   if(readRequiredTextFact(a,0)==='boolean'&&!requireRustConstantBooleanRight(operation,readRequiredTextFact(a,2)==='true'))return a;
   if(operation==='not'&&readRequiredTextFact(a,0)==='integer')operation='bitnot';
-  const unary=unaryInput,b=unary?['integer',readRequiredTextFact(a,1),'0']:constantExpression(texts,starts,counts,labels,targets,rows,right,operation==='shl'||operation==='shr'?rightHint!==''?rightHint:'i32':readRequiredTextFact(a,1),names,values,visiting,depth+1,Math.floor((fuel-1)/2));if(readRequiredTextFact(b,0)==='error')return b;
-  if(readRequiredTextFact(a,0)==='boolean'&&(unary||readRequiredTextFact(b,0)==='boolean')){const result=evaluateRustConstantBooleanOperation(operation,readRequiredTextFact(a,2)==='true',readRequiredTextFact(b,2)==='true');return readRequiredTextFact(result,0)==='error'?result:['boolean','bool',readRequiredTextFact(result,1)];}
+  const unary=unaryInput,b=unary?['integer',readRequiredTextFact(a,1),'0',String(constantRemaining(a))]:constantExpression(texts,starts,counts,labels,targets,rows,right,operation==='shl'||operation==='shr'?rightHint!==''?rightHint:'i32':readRequiredTextFact(a,1),names,values,visiting,depth+1,constantRemaining(a));if(readRequiredTextFact(b,0)==='error')return b;
+  if(readRequiredTextFact(a,0)==='boolean'&&(unary||readRequiredTextFact(b,0)==='boolean')){const result=evaluateRustConstantBooleanOperation(operation,readRequiredTextFact(a,2)==='true',readRequiredTextFact(b,2)==='true');return readRequiredTextFact(result,0)==='error'?result:constantFinish(['boolean','bool',readRequiredTextFact(result,1)],constantRemaining(b));}
   if(readRequiredTextFact(a,0)!=='integer'||readRequiredTextFact(b,0)!=='integer'||!unary&&operation!=='shl'&&operation!=='shr'&&readRequiredTextFact(a,1)!==readRequiredTextFact(b,1))return ['error','constant operands require compatible actual primitive owners'];
   const owner=readRequiredTextFact(a,1),domain=constantDomain(owner);if(domain.length!==2)return ['error','a constant numeric expression needs its actual integer owner'];
   const result=evaluateRustConstantIntegerOperation(operation,readRequiredTextFact(a,2),readRequiredTextFact(b,2),readRequiredTextFact(domain,0),readRequiredTextFact(domain,1),constantBits(owner));
   const original=constantText(texts,starts,counts,labels,targets,node,'op');
   if(original==='readCheckedRustLeftShift'||original==='readCheckedRustRightShift'){
-   if(readRequiredTextFact(result,0)==='error')return readRequiredTextFact(result,1)==='overflow in a constant integer shift'?['none',owner,'']:result;
-   return ['some',owner,readRequiredTextFact(result,1)];
+   if(readRequiredTextFact(result,0)==='error')return readRequiredTextFact(result,1)==='overflow in a constant integer shift'?constantFinish(['none',owner,''],constantRemaining(b)):result;
+   return constantFinish(['some',owner,readRequiredTextFact(result,1)],constantRemaining(b));
   }
-  return readRequiredTextFact(result,0)==='error'?result:[readRequiredTextFact(result,0),readRequiredTextFact(result,0)==='boolean'?'bool':owner,readRequiredTextFact(result,1)];
+  return readRequiredTextFact(result,0)==='error'?result:constantFinish([readRequiredTextFact(result,0),readRequiredTextFact(result,0)==='boolean'?'bool':owner,readRequiredTextFact(result,1)],constantRemaining(b));
  }
  return ['error','the constant initializer expression needs its source evaluation interpretation'];
 }
 /** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} root @param {string} owner @returns {string[]} */
 export function evaluateRustSourceConstant(texts,starts,counts,labels,targets,root,owner){
  const rows=constantField(starts,counts,labels,targets,root,'constants'),row=constantRow(texts,starts,counts,labels,targets,rows,owner);if(row<0)return ['error','a constant pattern needs its actual source declaration'];
+ if(constantText(texts,starts,counts,labels,targets,row,'kind')==='function')return ['error','a constant pattern needs its actual source constant declaration'];
  const domain=constantText(texts,starts,counts,labels,targets,row,'domain'),result=constantExpression(texts,starts,counts,labels,targets,rows,constantField(starts,counts,labels,targets,row,'body'),domain,[],[],[owner],0,65536);
- return readRequiredTextFact(result,0)==='error'?result:readRequiredTextFact(result,1)!==domain?['error','a constant initializer must retain its actual declared primitive owner']:result;
+ return readRequiredTextFact(result,0)==='error'?result:readRequiredTextFact(result,1)!==domain?['error','a constant initializer must retain its actual declared primitive owner']:result.slice(0,3);
 }

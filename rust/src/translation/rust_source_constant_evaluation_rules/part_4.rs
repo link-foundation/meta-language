@@ -15,9 +15,72 @@ use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::read_rust_constant_primitive_alias_owner;
+use super::source_ml_temporary_constant_domain_loop20;
 use super::source_ml_temporary_constant_row_loop26;
 use super::source_ml_temporary_read_rust_source_constant_initializer_boundary_loop25;
 use super::source_ml_temporary_read_rust_source_constant_integer_literal_loop23;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn constant_domain(owner: &self::ml_string::Text) -> Vec<self::ml_string::Text> {
+    {
+        let bits = self::constant_bits(owner);
+        if bits == 0f64 {
+            Vec::<self::ml_string::Text>::new()
+        } else {
+            {
+                let modulus = self::ml::Big::from_i128(1);
+                {
+                    let at = 0f64;
+                    {
+                        let modulus_2 =
+                            self::source_ml_temporary_constant_domain_loop20(bits, modulus, at);
+                        {
+                            let signed =
+                                owner.starts_with(&self::ml_string::Text::from_units(vec![105]));
+                            vec![
+                                {
+                                    let source_ml_source1_string_argument40 = if signed {
+                                        (self::ml::divide(
+                                            &modulus_2,
+                                            &self::ml::Big::from_i128(2),
+                                            "trunc",
+                                            Some("Division by zero"),
+                                            false,
+                                        ))
+                                        .neg()
+                                    } else {
+                                        self::ml::Big::from_i128(0)
+                                    };
+                                    self::ml_string::Text::from_text(
+                                        &source_ml_source1_string_argument40.to_string(),
+                                    )
+                                },
+                                {
+                                    let source_ml_source1_string_argument41 = if signed {
+                                        (self::ml::divide(
+                                            &modulus_2,
+                                            &self::ml::Big::from_i128(2),
+                                            "trunc",
+                                            Some("Division by zero"),
+                                            false,
+                                        ))
+                                        .sub(&self::ml::Big::from_i128(1))
+                                    } else {
+                                        modulus_2.sub(&self::ml::Big::from_i128(1))
+                                    };
+                                    self::ml_string::Text::from_text(
+                                        &source_ml_source1_string_argument41.to_string(),
+                                    )
+                                },
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

@@ -11161,9 +11161,9 @@ arithmetic/casts/bit operations, Boolean/string literals, lazy Boolean demand an
 selected conditional branches use shared rules. Checked shift option carriers
 keep their actual success/fallback behavior. Source owners survive integer
 erasure, including usize/isize; equal values do not merge distinct declarations.
-Cycle, depth and work limits report errors. Constant functions, mutable local
-state/loops, aggregate structural equality and floating/character constant values
-remain required extensions. Complete function bodies still obey the generated
+Cycle, depth and work limits report errors. General constant functions, mutable
+local state/loops, aggregate structural equality and floating/character constant
+values remain required extensions beyond the scalar call draft below. Complete function bodies still obey the generated
 900-line partition bound; factoring source functions supplies smaller complete
 native functions without editing generated semantics or changing the bound.
 
@@ -11175,3 +11175,36 @@ policies only when every captured source/dependency digest and byte count, both
 asset twins and their exact digest match their complete generation recipes. This
 is source membership, not behavior or completion evidence. All whole-language,
 grammar, shared-concept and remaining delivery obligations stay active.
+
+
+Actual scalar `const fn` calls now have a source draft in both parser hosts.
+Header discovery retains each function's actual `const` token, declaration
+identity, parameter owners and result owner. Needed bodies are reparsed from the
+complete original token snapshot, including when a pattern is read within a
+macro's temporary token stream. The existing checker supplies the typed body;
+ordinary functions cannot gain a compile-time interpretation by projection.
+
+Shared evaluator definitions bind arguments in source order to fresh callee
+frames, preserve actual parameter/result owners, and allow direct or mutual
+recursion subject to depth and total executed expression work. Constant
+initializer cycles remain separate from function recursion. Remaining work is
+threaded through actual evaluated branches and arguments rather than reserved
+exponentially for unevaluated alternatives. Unit arguments/results have explicit
+structural values alongside integer, Boolean and borrowed text values. Native
+semantics are generated from the JavaScript definitions, not reimplemented in
+host adapters.
+
+Independent, unexecuted original-source and fact-packet controls cover scalar
+calls, every integer owner, module aliases, shadowing, mutual recursion, unit and
+borrowed text, argument evaluation order, owner mismatches, arity, ordinary
+function refusal and resource exhaustion. This is a draft, not verification of
+these behaviors. Mutable/aggregate/float/character evaluation and complete
+methods, traits, lifetimes and whole-language requirements remain obligations.
+
+Numeric source styling retains exact proven function byte ranges even when
+identical function text appears under different module owners. Ambiguous text
+uses a single complete-source decorator context, with every function ownership,
+non-overlap and exact-source guard retained. Distinct module ownership is not
+inferred from text identity. A deferred replay control retains both modules and
+an unrelated integer function. Source generation and manifest refresh supply no
+behavioral observations or completion evidence.

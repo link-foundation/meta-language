@@ -15,6 +15,18 @@ pub(super) struct ConstantInitializer {
     pub(super) path: Vec<String>,
     pub(super) keyword: usize,
     pub(super) result: SourceOrigin,
+    pub(super) function: bool,
+    pub(super) is_const: bool,
+    pub(super) const_keyword: Option<usize>,
+    pub(super) parameters: Vec<SourceOrigin>,
+    pub(super) inherent: Option<super::inherent::InherentOwner>,
+}
+struct ConstantRecord {
+    domain: String,
+    declaration: SFn,
+    parameters: Vec<String>,
+    function: bool,
+    is_const: bool,
 }
 fn number(value: usize) -> f64 {
     u32::try_from(value).map_or(f64::INFINITY, f64::from)
@@ -28,6 +40,7 @@ fn domain(origin: &SourceOrigin) -> Result<String> {
             }
         }
         Some(Type::Bool) => return Ok("bool".to_owned()),
+        Some(Type::Unit) if origin.wrappers.is_empty() => return Ok("unit".to_owned()),
         Some(Type::String)
             if origin.text_source_model == Some("borrowed str")
                 && origin
@@ -93,6 +106,11 @@ impl RustParser {
                 path: path.to_vec(),
                 keyword: start.start,
                 result: result.clone(),
+                function: false,
+                is_const: false,
+                const_keyword: None,
+                parameters: Vec::new(),
+                inherent: None,
             },
         );
         if self.header_discovery {
@@ -100,10 +118,43 @@ impl RustParser {
         }
         Ok(())
     }
+    pub(super) fn capture_source_constant_function(
+        &mut self,
+        name: &str,
+        path: &[String],
+        function_keyword: &Token,
+        const_keyword: Option<&Token>,
+        parameters: &[SourceOrigin],
+        result: &SourceOrigin,
+    ) {
+        let mut owner = path.to_vec();
+        owner.push(name.to_owned());
+        let owner = owner.join(".");
+        self.source_constant_functions.insert(
+            owner.clone(),
+            ConstantInitializer {
+                owner,
+                path: path.to_vec(),
+                keyword: function_keyword.start,
+                result: result.clone(),
+                function: true,
+                is_const: const_keyword.is_some(),
+                const_keyword: const_keyword.map(|token| token.start),
+                parameters: parameters.to_vec(),
+                inherent: self.inherent_owner.clone(),
+            },
+        );
+    }
     fn read_source_constant_initializer(
         &mut self,
         row: &ConstantInitializer,
-    ) -> Result<(SFn, SourceOrigin, Self)> {
+    ) -> Result<(SFn, ConstantInitializer, Self)> {
+        if row.function && !row.is_const {
+            return Err(type_error(
+                "Rust source constant pattern: a constant function call needs its actual const declaration",
+                None,
+            ));
+        }
         if self.source_constant_read_stack.contains(&row.owner) {
             return Err(type_error(
                 "Rust source constant pattern: a constant pattern dependency cannot evaluate itself recursively",
@@ -114,12 +165,13 @@ impl RustParser {
         let result = (|| {
             let origins = super::SourceOrigins::new(Some(self.origins.catalog.clone()), "");
             let mut reader = Self::new(
-                self.cursor.tokens.clone(),
+                self.source_constant_tokens.as_ref().clone(),
                 origins,
                 super::SourceProfiles::default(),
                 false,
                 self.original_source.clone(),
             );
+            reader.source_constant_tokens = std::sync::Arc::clone(&self.source_constant_tokens);
             reader.source_version_minor = self.source_version_minor;
             reader.retain_source_type_owners = self.retain_source_type_owners;
             reader.aliases = self.aliases.clone();
@@ -128,6 +180,7 @@ impl RustParser {
             reader.origins.nominal_copy_owners = self.origins.nominal_copy_owners.clone();
             reader.origins.nominal_copy_derivations = self.origins.nominal_copy_derivations.clone();
             reader.source_constant_initializers = self.source_constant_initializers.clone();
+            reader.source_constant_functions = self.source_constant_functions.clone();
             reader.source_constant_read_stack = self.source_constant_read_stack.clone();
             reader.initialize_type_aliases()?;
             reader.finish_type_aliases()?;
@@ -143,13 +196,27 @@ impl RustParser {
                         self.cursor.peek(),
                     )
                 })?;
-            let declaration = reader.const_item(&row.path)?;
-            let result = reader
-                .source_constant_initializers
-                .get(&row.owner)
-                .expect("the actual parsed constant retains its header")
-                .result
-                .clone();
+            reader.inherent_owner = row.inherent.clone();
+            reader.const_function_keyword = row.const_keyword.and_then(|start| {
+                reader
+                    .cursor
+                    .tokens
+                    .iter()
+                    .find(|token| token.start == start)
+                    .cloned()
+            });
+            let declaration = if row.function {
+                reader.function(&row.path)?
+            } else {
+                reader.const_item(&row.path)?
+            };
+            let result = if row.function {
+                reader.source_constant_functions.get(&row.owner)
+            } else {
+                reader.source_constant_initializers.get(&row.owner)
+            }
+            .expect("the actual parsed declaration retains its header")
+            .clone();
             Ok((declaration, result, reader))
         })();
         self.source_constant_read_stack.remove(&row.owner);
@@ -202,7 +269,7 @@ impl RustParser {
         span: Option<Span>,
     ) -> Result<super::SPattern> {
         let mut pending = vec![owner.to_owned()];
-        let mut records = BTreeMap::<String, (String, SFn)>::new();
+        let mut records = BTreeMap::<String, ConstantRecord>::new();
         let mut owners_by_span = HashMap::<Span, String>::new();
         let mut at = 0;
         while at < pending.len() {
@@ -214,6 +281,7 @@ impl RustParser {
             let row = self
                 .source_constant_initializers
                 .get(&name)
+                .or_else(|| self.source_constant_functions.get(&name))
                 .cloned()
                 .ok_or_else(|| {
                     unsupported(
@@ -230,14 +298,32 @@ impl RustParser {
                 &mut body,
                 &reader,
                 &row.path,
-                &HashSet::new(),
+                &declaration
+                    .params
+                    .iter()
+                    .map(|parameter| parameter.name.clone())
+                    .collect(),
                 &mut dependencies,
                 &mut owners_by_span,
-            );
+            )?;
             declaration.body = serde_json::from_value(body)
                 .expect("source name qualification preserves expression structure");
             declaration.name = name.clone();
-            records.insert(name, (domain(&result)?, declaration));
+            let parameters = result
+                .parameters
+                .iter()
+                .map(domain)
+                .collect::<Result<Vec<_>>>()?;
+            records.insert(
+                name,
+                ConstantRecord {
+                    domain: domain(&result.result)?,
+                    declaration,
+                    parameters,
+                    function: result.function,
+                    is_const: result.is_const,
+                },
+            );
             for dependency in dependencies {
                 if !records.contains_key(&dependency) {
                     pending.push(dependency);
@@ -258,7 +344,7 @@ impl RustParser {
             language: Language::Rust,
             items: records
                 .values()
-                .map(|(_, function)| SItem::Fn(function.clone()))
+                .map(|record| SItem::Fn(record.declaration.clone()))
                 .collect(),
             main: None,
             imports: Vec::new(),
@@ -271,9 +357,20 @@ impl RustParser {
                 let mut body =
                     serde_json::to_value(&function.body).expect("checked expression serializes");
                 retain(&mut body, &owners_by_span);
-                constants.push(
-                    json!({"owner":function.name,"domain":records[&function.name].0,"body":body}),
-                );
+                let record = &records[&function.name];
+                if function.params.len() != record.parameters.len() {
+                    return Err(type_error(
+                        "a constant declaration must retain every actual parameter source owner",
+                        span,
+                    ));
+                }
+                let parameters = function
+                    .params
+                    .iter()
+                    .zip(&record.parameters)
+                    .map(|(parameter, domain)| json!({"name":parameter.name,"domain":domain}))
+                    .collect::<Vec<_>>();
+                constants.push(json!({"owner":function.name,"domain":record.domain,"body":body,"kind":if record.function{"function"}else{"constant"},"const":record.is_const,"parameters":parameters}));
             }
         }
         let packet = json!({"constants":constants});
@@ -311,6 +408,10 @@ impl RustParser {
                     negative,
                 }
             }
+            "unit" => super::SPatternNode::Tuple {
+                args: Vec::new(),
+                rest: None,
+            },
             "boolean" => super::SPatternNode::BoolLit {
                 value: value[2] == "true",
                 negative: false,
@@ -336,15 +437,15 @@ fn project(
     locals: &HashSet<String>,
     dependencies: &mut Vec<String>,
     owners: &mut HashMap<Span, String>,
-) {
+) -> Result<()> {
     if let Some(values) = value.as_array_mut() {
         for value in values {
-            project(value, reader, path, locals, dependencies, owners);
+            project(value, reader, path, locals, dependencies, owners)?;
         }
-        return;
+        return Ok(());
     }
     let Some(fields) = value.as_object_mut() else {
-        return;
+        return Ok(());
     };
     let kind = fields
         .get("k")
@@ -360,9 +461,9 @@ fn project(
         if key == "body" && kind == "let" {
             let mut scope = locals.clone();
             scope.insert(name.clone());
-            project(child, reader, path, &scope, dependencies, owners);
+            project(child, reader, path, &scope, dependencies, owners)?;
         } else {
-            project(child, reader, path, locals, dependencies, owners);
+            project(child, reader, path, locals, dependencies, owners)?;
         }
     }
     if kind == "name" {
@@ -376,8 +477,22 @@ fn project(
             && let Some(entry) = reader
                 .origins
                 .lookup(&reader.source_value_path(&names, path), path)
-            && matches!(entry.declaration, SourceDeclaration::Constant { .. })
+            && matches!(
+                entry.declaration,
+                SourceDeclaration::Constant { .. } | SourceDeclaration::Function { .. }
+            )
         {
+            if matches!(entry.declaration, SourceDeclaration::Function { .. })
+                && !reader
+                    .source_constant_functions
+                    .get(&entry.full_name)
+                    .is_some_and(|row| row.is_const)
+            {
+                return Err(type_error(
+                    "Rust source constant pattern: a constant function call needs its actual const declaration",
+                    None,
+                ));
+            }
             let names = std::iter::once("crate".to_owned())
                 .chain(entry.full_name.split('.').map(str::to_owned))
                 .collect::<Vec<_>>();
@@ -396,6 +511,7 @@ fn project(
             owners.insert(span, owner);
         }
     }
+    Ok(())
 }
 fn retain(value: &mut Value, owners: &HashMap<Span, String>) {
     if let Some(values) = value.as_array_mut() {

@@ -424,6 +424,8 @@ fn parse_rust_with_selected_profiles(
     );
     syntax.source_version_minor = source_version_minor;
     syntax.source_constant_initializers = declarations.source_constant_initializers;
+    syntax.source_constant_functions = declarations.source_constant_functions;
+    syntax.source_constant_tokens = Arc::clone(&declarations.source_constant_tokens);
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     syntax.named_records = declarations.named_records;
@@ -450,6 +452,8 @@ fn parse_rust_with_selected_profiles(
     parser.origins.nominal_copy_derivations = syntax.origins.nominal_copy_derivations;
     parser.origins.nominal_copy_owners = syntax.origins.nominal_copy_owners;
     parser.source_constant_initializers = syntax.source_constant_initializers;
+    parser.source_constant_functions = syntax.source_constant_functions;
+    parser.source_constant_tokens = Arc::clone(&syntax.source_constant_tokens);
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
     parser.named_records = syntax.named_records;
@@ -495,6 +499,8 @@ struct RustParser {
     header_discovery: bool,
     source_constant_initializers: HashMap<String, source_constant_evaluation::ConstantInitializer>,
     source_constant_read_stack: HashSet<String>,
+    source_constant_functions: HashMap<String, source_constant_evaluation::ConstantInitializer>,
+    source_constant_tokens: Arc<Vec<Token>>,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
     const_function_model: String,
@@ -575,13 +581,16 @@ impl RustParser {
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         origins.owned_binding_excluded =
             !profiles.scalar_loop.is_empty() || !profiles.const_function.is_empty();
+        let source_constant_tokens = Arc::new(tokens.clone());
         Self {
+            source_constant_tokens,
             source_version_minor: 0.0,
             retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),
             header_discovery: false,
             source_constant_initializers: HashMap::new(),
             source_constant_read_stack: HashSet::new(),
+            source_constant_functions: HashMap::new(),
             shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),
             shared_array_state: shared_array_handles::SharedArrayState::default(),
             const_function_model: profiles.const_function.to_owned(),

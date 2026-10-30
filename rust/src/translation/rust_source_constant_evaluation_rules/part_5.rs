@@ -1,15 +1,20 @@
 // Generated from complete js/src/translation/rust-source-constant-evaluation-rules.js. Do not edit by hand.
+use super::MlTemporaryConstantFunctionLoop27Result;
 use super::constant_bits;
 use super::constant_domain;
 use super::constant_expression;
 use super::constant_field;
+use super::constant_finish;
 use super::constant_hint;
+use super::constant_remaining;
 use super::constant_text;
 use super::constant_type_owner;
 use super::evaluate_rust_constant_integer_operation;
 use super::ml_string;
+use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::read_rust_source_constant_integer_literal;
+use super::source_ml_temporary_constant_function_loop27;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -301,7 +306,7 @@ pub fn constant_cast(
                             values,
                             visiting,
                             (depth + 1f64),
-                            (fuel - 1f64),
+                            fuel,
                         );
                         if (self::read_required_text_fact(&(value), 0f64))
                             == (self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]))
@@ -360,13 +365,16 @@ pub fn constant_cast(
                                 {
                                     result
                                 } else {
-                                    vec![
-                                        self::ml_string::Text::from_units(vec![
-                                            105, 110, 116, 101, 103, 101, 114,
+                                    self::constant_finish(
+                                        &(vec![
+                                            self::ml_string::Text::from_units(vec![
+                                                105, 110, 116, 101, 103, 101, 114,
+                                            ]),
+                                            target.clone(),
+                                            self::read_required_text_fact(&(result), 1f64),
                                         ]),
-                                        target.clone(),
-                                        self::read_required_text_fact(&(result), 1f64),
-                                    ]
+                                        self::constant_remaining(&(value)),
+                                    )
                                 }
                             }
                         }
@@ -420,7 +428,7 @@ pub fn constant_optional_choice(
             values,
             visiting,
             (depth + 1f64),
-            ((fuel - 1f64) / 2f64).floor(),
+            fuel,
         );
         {
             let kind = self::read_required_text_fact(&(left), 0f64);
@@ -429,20 +437,29 @@ pub fn constant_optional_choice(
             } else if kind == (self::ml_string::Text::from_units(vec![115, 111, 109, 101])) {
                 {
                     let owner = self::read_required_text_fact(&(left), 1f64);
-                    vec![
-                        if owner == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])) {
-                            self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110])
-                        } else if owner == (self::ml_string::Text::from_units(vec![115, 116, 114]))
-                        {
-                            self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])
-                        } else {
-                            self::ml_string::Text::from_units(vec![
-                                105, 110, 116, 101, 103, 101, 114,
-                            ])
-                        },
-                        owner,
-                        self::read_required_text_fact(&(left), 2f64),
-                    ]
+                    self::constant_finish(
+                        &(vec![
+                            if owner == (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))
+                            {
+                                self::ml_string::Text::from_units(vec![
+                                    98, 111, 111, 108, 101, 97, 110,
+                                ])
+                            } else if owner
+                                == (self::ml_string::Text::from_units(vec![115, 116, 114]))
+                            {
+                                self::ml_string::Text::from_units(vec![
+                                    115, 116, 114, 105, 110, 103,
+                                ])
+                            } else {
+                                self::ml_string::Text::from_units(vec![
+                                    105, 110, 116, 101, 103, 101, 114,
+                                ])
+                            },
+                            owner.clone(),
+                            self::read_required_text_fact(&(left), 2f64),
+                        ]),
+                        self::constant_remaining(&(left)),
+                    )
                 }
             } else if kind == (self::ml_string::Text::from_units(vec![110, 111, 110, 101])) {
                 self::constant_expression(
@@ -465,7 +482,7 @@ pub fn constant_optional_choice(
                     values,
                     visiting,
                     (depth + 1f64),
-                    ((fuel - 1f64) / 2f64).floor(),
+                    self::constant_remaining(&(left)),
                 )
             } else {
                 vec![
@@ -477,6 +494,147 @@ pub fn constant_optional_choice(
                         112, 116, 105, 111, 110, 97, 108, 32, 118, 97, 108, 117, 101,
                     ]),
                 ]
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn constant_function(
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    rows: f64,
+    node: f64,
+    row: f64,
+    names: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    visiting: &[self::ml_string::Text],
+    depth: f64,
+    fuel: f64,
+) -> Vec<self::ml_string::Text> {
+    {
+        let ml_library_inequality_3 =
+            (self::constant_text(
+                texts,
+                starts,
+                counts,
+                labels,
+                targets,
+                row,
+                &(self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116])),
+            )) != (self::ml_string::Text::from_units(vec![116, 114, 117, 101]));
+        if ml_library_inequality_3 {
+            vec![
+                self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]),
+                self::ml_string::Text::from_units(vec![
+                    97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 102, 117, 110, 99, 116, 105,
+                    111, 110, 32, 99, 97, 108, 108, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115,
+                    32, 97, 99, 116, 117, 97, 108, 32, 99, 111, 110, 115, 116, 32, 100, 101, 99,
+                    108, 97, 114, 97, 116, 105, 111, 110,
+                ]),
+            ]
+        } else {
+            {
+                let parameters = self::constant_field(
+                    starts,
+                    counts,
+                    labels,
+                    targets,
+                    row,
+                    &(self::ml_string::Text::from_units(vec![
+                        112, 97, 114, 97, 109, 101, 116, 101, 114, 115,
+                    ])),
+                );
+                {
+                    let args = self::constant_field(
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        node,
+                        &(self::ml_string::Text::from_units(vec![97, 114, 103, 115])),
+                    );
+                    {
+                        let arity = if parameters < 0f64 {
+                            0f64
+                        } else {
+                            self::read_required_number_fact(counts, parameters)
+                        };
+                        {
+                            let count = if args < 0f64 {
+                                0f64
+                            } else {
+                                self::read_required_number_fact(counts, args)
+                            };
+                            {
+                                let ml_library_inequality_2 = arity != count;
+                                if ml_library_inequality_2 {
+                                    vec![
+                                        self::ml_string::Text::from_units(vec![
+                                            101, 114, 114, 111, 114,
+                                        ]),
+                                        self::ml_string::Text::from_units(vec![
+                                            97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 102,
+                                            117, 110, 99, 116, 105, 111, 110, 32, 99, 97, 108, 108,
+                                            32, 110, 101, 101, 100, 115, 32, 97, 108, 108, 32, 97,
+                                            99, 116, 117, 97, 108, 32, 115, 111, 117, 114, 99, 101,
+                                            32, 97, 114, 103, 117, 109, 101, 110, 116, 115,
+                                        ]),
+                                    ]
+                                } else {
+                                    {
+                                        let available = fuel;
+                                        {
+                                            let bound_names = Vec::<self::ml_string::Text>::new();
+                                            {
+                                                let bound_values =
+                                                    Vec::<self::ml_string::Text>::new();
+                                                {
+                                                    let at = 0f64;
+                                                    {
+                                                        let source_ml_source1_s80 = self::source_ml_temporary_constant_function_loop27(texts, starts, counts, labels, targets, rows, names, values, visiting, depth, parameters, args, arity, available, bound_names, bound_values, at);
+                                                        match source_ml_source1_s80 {
+                                                    self::MlTemporaryConstantFunctionLoop27Result::MlTemporaryConstantFunctionLoop27Done(available_2, bound_names_2, bound_values_2) => {
+                                                        {
+                                                            let domain = self::constant_text(texts, starts, counts, labels, targets, row, &(self::ml_string::Text::from_units(vec![100, 111, 109, 97, 105, 110])));
+                                                            {
+                                                                let result = self::constant_expression(texts, starts, counts, labels, targets, rows, self::constant_field(starts, counts, labels, targets, row, &(self::ml_string::Text::from_units(vec![98, 111, 100, 121]))), &(domain), &(bound_names_2), &(bound_values_2), visiting, (depth + 1f64), available_2);
+                                                                if (self::read_required_text_fact(&(result), 0f64)) == (self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114])) {
+                                                                    result
+                                                                } else {
+let ml_library_inequality_1 = (self::read_required_text_fact(&(result), 1f64)) != domain ;
+if ml_library_inequality_1 {
+                                                                        vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 102, 117, 110, 99, 116, 105, 111, 110, 32, 114, 101, 115, 117, 108, 116, 32, 109, 117, 115, 116, 32, 114, 101, 116, 97, 105, 110, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 100, 101, 99, 108, 97, 114, 101, 100, 32, 115, 111, 117, 114, 99, 101, 32, 111, 119, 110, 101, 114])]
+                                                                    } else {
+                                                                        result
+                                                                    }
+}
+                                                            }
+                                                        }
+                                                    }
+                                                    self::MlTemporaryConstantFunctionLoop27Result::MlTemporaryConstantFunctionLoop27Return(source_ml_temporary_result27) => {
+                                                        source_ml_temporary_result27
+                                                    }
+                                                }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
