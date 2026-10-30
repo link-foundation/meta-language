@@ -125,6 +125,8 @@ mod typed_program_links;
 mod unsigned_link_identity_program;
 mod unsigned_link_identity_rules;
 mod unsigned_link_network;
+mod unsigned_source_cli;
+mod unsigned_source_command_rules;
 mod unsigned_source_document_rules;
 mod unsigned_typed_program_links;
 pub use link_allocation_program::create_link_allocation_program_links;
@@ -540,6 +542,7 @@ pub use unsigned_link_network::{
     encode_unsigned_link_network_binary, rebase_unsigned_link_network,
     restore_dense_unsigned_link_network,
 };
+pub use unsigned_source_cli::{UnsignedSourceCommandOutput, run_unsigned_source_command};
 pub use unsigned_typed_program_links::{
     RebasedUnsignedTypedProgramLinks, create_unsigned_rust_source_owner_program_links,
     create_unsigned_rust_source_owner_program_links_with_source_version,

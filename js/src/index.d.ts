@@ -2103,6 +2103,7 @@ export function createDenseUnsignedLinkNetwork(source: UnsignedLinkNetwork, opti
 export function restoreDenseUnsignedLinkNetwork(dense: LinkNetwork, directory: UnsignedLinkIdValue[], nextIdentity: UnsignedLinkIdValue | null, options?: BinaryLinksOptions): UnsignedLinkNetwork;
 export function encodeUnsignedLinkNetworkBinary(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): Uint8Array;
 export function decodeUnsignedLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function runUnsignedSourceCommand(args: string[], io: {readFile(path: string): string}): {exitCode: number; stdout: string | Uint8Array; stderr: string};
 export interface RebasedUnsignedTypedProgramLinks extends RebasedUnsignedLinkNetwork {
   root: UnsignedLinkId;
 }

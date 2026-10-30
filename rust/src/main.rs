@@ -29,6 +29,12 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Export complete exact-ID CST or checked source Links; run exact-source help.
+    #[command(disable_help_flag = true)]
+    ExactSource {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Draft a project while retaining every original concrete source graph.
     #[command(disable_help_flag = true)]
     ProjectTranslation {
@@ -286,6 +292,16 @@ fn main() {
             if !output.stderr.is_empty() {
                 eprint!("{}", output.stderr);
             }
+            std::process::exit(output.exit_code);
+        }
+        Command::ExactSource { args } => {
+            let output = meta_language::run_unsigned_source_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
             std::process::exit(output.exit_code);
         }
         Command::ModuleRequests { args } => {

@@ -15,7 +15,7 @@ fn data() -> Value {
     ))
     .unwrap()
 }
-fn require_versions() {
+pub(super) fn require_versions() {
     super::translation_string_array_copy_sort::require_rust_profile();
     let version = super::issue_195_translation_pairs::run(Command::new("rustc").arg("--version"));
     assert!(version.ok, "{}", version.stderr);

@@ -11298,3 +11298,34 @@ graphs and emitted code, refuse deleted roots, and retain source versions and
 invalid emission-choice checks. No control or represented source runs during
 authoring. This code draft does not establish complete translation semantics,
 full exact-ID integration or any remaining requirement's execution evidence.
+
+
+The `exact-source` command has a draft in both runtimes. Its argument policy is
+a shared editable Links definition automatically translated from JavaScript.
+It exports complete concrete source networks by default; `--typed` requests
+checked JavaScript/Rust semantic Links and `--rust-source-owners` retains actual
+Rust owners, with optional explicit source version. `--first-id` selects exact
+positive decimal coordinates. Text uses canonical Links Notation; `--binary`
+uses the existing exact-ID snapshot envelope. `--to` imports checked source and
+emits JavaScript, Rust, Lean or Rocq from the resulting current graph. The
+ordinary frontend's remaining unsupported semantics retain their refusals.
+
+The shared planner validates argument combinations and exact decimal identity
+bounds before any file read. Repeated options, incompatible source modes,
+unsupported typed languages/targets and binary/code-output conflicts refuse;
+help performs no I/O. Process transports only read the chosen file, call the
+existing source/typed/exact factories and return text or binary bytes. Native
+argument strings use the generated UTF-16 representation at that boundary;
+argument interpretation is not handwritten separately in Rust. Explicit source
+and target models remain passed through the existing pipeline.
+
+Independent unexecuted controls cover every declared command plan and identity
+boundary, no-I/O refusals/help, exactly one selected file read, file failures,
+CST text/binary source reconstruction, actual typed roots, four target emissions,
+Rust source-version retention and original JavaScript result checks. Native
+controls compare future actual JavaScript process outputs and invoke the actual
+native command binary on isolated task-owned temporary files. Those temporary
+files are scoped for cleanup. The command definition has independent text/binary
+and four-emission controls. None of these controls or represented sources runs
+during the complete-code drafting phase; CLI availability is not verification
+of the wider whole-language, exact-ID or concept requirements.

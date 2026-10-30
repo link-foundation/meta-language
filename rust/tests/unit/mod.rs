@@ -681,3 +681,5 @@ mod translation_rust_source_constant_evaluation;
 mod translation_rust_const_function_evaluation;
 
 mod unsigned_source_documents;
+
+mod unsigned_source_command;

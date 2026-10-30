@@ -1357,3 +1357,18 @@ The generalized item-type inference context retains the old collection helper
 as an alias. `draft-rust-iterator-reductions.mjs --draft` constructs all three
 source programs and the new deferred arithmetic fixture/package entries.
 No original arithmetic source or control executes during drafting.
+
+
+The exact-ID source command is a draft entry point for source and checked Links:
+
+```sh
+meta-language exact-source module.rs --language Rust --first-id 9007199254740993
+meta-language exact-source module.rs --language Rust --rust-source-owners --binary
+meta-language exact-source module.mjs --language JavaScript --to Rust
+```
+
+The default exports the complete concrete source graph as Links Notation.
+`--typed` exports checked JavaScript/Rust semantic Links. `--rust-source-owners`
+preserves actual Rust owners and accepts `--source-version`; `--to` emits from
+the checked graph. `--binary` writes the exact-ID snapshot and cannot accompany
+`--to`. These draft command controls remain unexecuted during full-scope drafting.
