@@ -831,7 +831,10 @@ impl SourceOrigins {
                             ..SourceOrigin::scalar_copy_value(Some(super::BOOL))
                         };
                     }
-                    return SourceOrigin::text_value();
+                    return SourceOrigin {
+                        source_owned_result_proof: true,
+                        ..SourceOrigin::text_value()
+                    };
                 }
                 let owners = operands
                     .iter()
@@ -1114,7 +1117,10 @@ impl SourceOrigins {
                     })
             });
         }
-        if origin.wrappers.is_empty() && !matches!(origin.ty, Some(Type::Array { .. })) {
+        if origin.wrappers.is_empty()
+            && !matches!(origin.ty, Some(Type::Array { .. }))
+            && !self.owned_binding_value(&origin)
+        {
             origin.source_place_binding_identity = origin
                 .source_place_binding_identity
                 .or(origin.source_binding_identity.take());
@@ -1146,6 +1152,20 @@ impl SourceOrigins {
         )
     }
 
+    pub(super) fn mark_owned_string_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
+        origin.source_binding_identity = None;
+        origin.source_place_binding_identity = None;
+        origin.source_loan_binding_identities.clear();
+        origin.source_place_loan_binding_identities.clear();
+        origin.source_owned_result_proof =
+            crate::translation::rust_owned_binding_rules::accept_rust_owned_binding_value(
+                origin.ty.as_ref().map_or("", Type::kind),
+                origin.text_source_model.unwrap_or(""),
+                origin.wrappers.len() as f64,
+                origin.proven,
+            );
+        self.mark(node, origin);
+    }
     pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
         if let Some(span) = node.span {
             self.fresh_vector_constructors.insert(span);
@@ -1164,7 +1184,10 @@ impl SourceOrigins {
         allow_calls: bool,
     ) -> bool {
         let origin = self.origin(node, path);
-        if origin.source_owned_result_proof && self.available_owned_binding(&origin) {
+        if matches!(origin.ty, Some(Type::Array { .. }))
+            && origin.source_owned_result_proof
+            && self.available_owned_binding(&origin)
+        {
             return true;
         }
         if crate::translation::rust_scalar_vector_copy_rules::accept_rust_scalar_vector_copy_occurrence(node.kind(),origin.array_source_model.unwrap_or(""),u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY,f64::from),node.span.is_some_and(|span|self.fresh_vector_constructors.contains(&span))){return true;}
@@ -1472,25 +1495,38 @@ impl SourceOrigins {
         self.argument(&self.origin(node, path), &SourceOrigin::value(), span)
     }
 
-    pub(super) fn conversion(&mut self, node: &SExpr, path: &[String]) {
+    pub(super) fn conversion(&mut self, node: &SExpr, path: &[String]) -> Result<()> {
         let SNode::ToString { arg } = &node.node else {
-            return;
+            return Ok(());
         };
         let operand = self.origin(arg, path);
+        self.check_owned_origin(&operand, node.span)?;
+        if operand.ty == Some(super::STRING) {
+            self.consume_owned_binding(&operand, node.span)?;
+        }
         let form = read_rust_source_expression_origin(node.node.kind(), "from");
-        let result = if !self.collecting
+        if !self.collecting
             && form == "unboxed-conversion"
             && operand.wrappers.iter().any(|layer| layer == "box")
         {
-            SourceOrigin::uncertain()
-        } else if operand.proven {
+            self.mark(node, SourceOrigin::uncertain());
+            return Ok(());
+        }
+        if !self.collecting {
+            let error=crate::translation::rust_owned_binding_rules::read_rust_owned_string_construction_error(operand.ty.as_ref().map_or("",Type::kind),operand.text_source_model.unwrap_or(""),operand.wrappers.len() as f64,operand.proven,operand.wrappers.iter().all(|layer|layer=="reference"));
+            if !error.is_empty() {
+                return Err(unsupported("Rust string construction", error, node.span));
+            }
+        }
+        let result = if operand.proven {
             SourceOrigin::text_value()
         } else if operand.uncertain {
             SourceOrigin::uncertain()
         } else {
             SourceOrigin::unknown()
         };
-        self.mark(node, result);
+        self.mark_owned_string_constructor(node, result);
+        Ok(())
     }
 
     pub(super) fn call(
@@ -1568,10 +1604,7 @@ impl SourceOrigins {
                 actual.array_source_model = Some("owned vector");
             }
             self.argument(&actual, expected, span)?;
-            if !transferred
-                && expected.array_source_model == Some("owned vector")
-                && expected.wrappers.is_empty()
-            {
+            if !transferred && self.owned_binding_value(expected) {
                 self.consume_owned_binding(&actual, span)?;
             }
         }

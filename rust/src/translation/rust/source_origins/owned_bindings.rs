@@ -16,7 +16,10 @@ impl SourceOrigins {
         self.track_owned_bindings()
             && rules::accept_rust_owned_binding_value(
                 origin.ty.as_ref().map_or("", Type::kind),
-                origin.array_source_model.unwrap_or(""),
+                origin
+                    .array_source_model
+                    .or(origin.text_source_model)
+                    .unwrap_or(""),
                 origin.wrappers.len() as f64,
                 origin.proven,
             )

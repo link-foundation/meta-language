@@ -1,4 +1,4 @@
-import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings} from './rust-owned-binding-rules.js';
+import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {acceptRustStaticByteArrayCoercion,acceptRustStaticByteArrayOwnerEquality} from './rust-byte-string-expression-rules.js';
@@ -210,7 +210,7 @@ export class RustSourceOrigins {
     if (form === 'derived-value') {
       const operands = [node.arg ?? node.object, ...(node.search ? [node.search] : [])].map(operand => this.origin(operand, path));
       if (operands.some(operand => !operand.proven)) return unknown(operands.some(operand => operand.uncertain));
-      return node.k==='stringTest'?{...value(true,{kind:'bool'}),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}}:value(false,{kind:'string'});
+      return node.k==='stringTest'?{...value(true,{kind:'bool'}),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}}:{...value(false,{kind:'string'}),sourceOwnedResultProof:true};
     }
     if (['numeric-cast', 'primitive-operation', 'comparison', 'boolean-operation'].includes(form)) {
       const operands = (node.arg ? [node.arg] : [node.left, node.right]).map(operand => this.origin(operand, path));
@@ -265,7 +265,7 @@ export class RustSourceOrigins {
     if (this.arrayResultModel && node.k === 'array') origin = { ...origin,
       freshArrayValue: origin.arraySourceModel === 'owned vector' && origin.wrappers.length === 0
         && node.items.every(item => !item.spread && this.immutableProduct(this.origin(item.value, origin.path))) };
-    if(origin.wrappers.length===0&&origin.type?.kind!=='array')origin={...origin,sourcePlaceBindingIdentity:origin.sourcePlaceBindingIdentity??origin.sourceBindingIdentity??null,sourceBindingIdentity:null,sourcePlaceLoanBindingIdentities:mergeRustOwnedLoanBindings(origin.sourcePlaceLoanBindingIdentities??[],origin.sourceLoanBindingIdentities??[]),sourceLoanBindingIdentities:[]};
+    if(origin.wrappers.length===0&&origin.type?.kind!=='array'&&!isRustOwnedBindingValue(this,origin))origin={...origin,sourcePlaceBindingIdentity:origin.sourcePlaceBindingIdentity??origin.sourceBindingIdentity??null,sourceBindingIdentity:null,sourcePlaceLoanBindingIdentities:mergeRustOwnedLoanBindings(origin.sourcePlaceLoanBindingIdentities??[],origin.sourceLoanBindingIdentities??[]),sourceLoanBindingIdentities:[]};
     this.expressions.set(node, clone(origin));
     return node;
   }
@@ -280,6 +280,8 @@ export class RustSourceOrigins {
 
   // Independent of the explicit array-result profile and its binding evidence.
   // Source intervals survive the parser's block and completion reconstruction.
+  markOwnedStringConstructor(node,origin){return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceOwnedResultProof:acceptRustOwnedBindingValue(origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true)});}
+
   markVectorConstructor(node,origin) {
     this.freshVectorConstructors.add(`${node.span?.start}:${node.span?.end}`);
     return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[]});
@@ -287,7 +289,7 @@ export class RustSourceOrigins {
 
   freshVectorArgument(node,path,allowCalls=true) {
     const origin=this.origin(node,path);
-    if(origin.sourceOwnedResultProof===true&&this.availableOwnedBinding(origin))return true;
+    if(origin.type?.kind==='array'&&origin.sourceOwnedResultProof===true&&this.availableOwnedBinding(origin))return true;
     if(acceptRustScalarVectorCopyOccurrence(node.k,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`)))return true;
     if(allowCalls&&acceptRustKnownFreshVectorCall(node.k,origin.arraySourceModel??'',origin.wrappers.length,Boolean(origin.freshArrayValue)))return true;
     const form=readRustFreshVectorArgumentForm(node.k,origin.diverging===true,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`));
@@ -375,9 +377,11 @@ export class RustSourceOrigins {
 
   conversion(node, path) {
     const operand = this.origin(node.arg, path);
+    checkRustOwnedOrigin(this,operand,node.span);if(operand.type?.kind==='string')this.consumeOwnedBinding(operand,node.span);
     const form = readRustSourceExpressionOrigin(node.k, 'from');
     if (!this.collecting && form === 'unboxed-conversion' && operand.wrappers.includes('box')) return this.mark(node, unknown(true));
-    return this.mark(node, operand.proven ? value(false, { kind: 'string' }) : unknown(operand.uncertain));
+    if(!this.collecting){const error=readRustOwnedStringConstructionError(operand.type?.kind??'',operand.textSourceModel??'',operand.wrappers.length,operand.proven,operand.wrappers.every(layer=>layer==='reference'));if(error)throw unsupported('Rust string construction',error,node.span);}
+    return this.markOwnedStringConstructor(node, operand.proven ? value(false, { kind: 'string' }) : unknown(operand.uncertain));
   }
 
   // Keep Box ownership contracts until source admission has checked a call;
@@ -397,7 +401,7 @@ export class RustSourceOrigins {
       // Immutable reference coercions may dereference Box behind a reference;
       // an owned Box never coerces into its owned inner value.
       this.argument(fresh?{...actual,proven:true,uncertain:false,wrappers:[],arraySourceModel:'owned vector'}:actual, expected[index], span);
-      if(!transferred&&parameter.arraySourceModel==='owned vector'&&parameter.wrappers.length===0)this.consumeOwnedBinding(actual,span);
+      if(!transferred&&isRustOwnedBindingValue(this,parameter))this.consumeOwnedBinding(actual,span);
     }
   }
 

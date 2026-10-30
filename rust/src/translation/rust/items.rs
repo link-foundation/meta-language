@@ -1002,7 +1002,9 @@ impl RustParser {
         self.cursor.advance();
         let mut args = Vec::new();
         while !self.cursor.is(close) {
-            args.push(self.expr(path, Options::default())?);
+            let value = self.expr(path, Options::default())?;
+            if crate::translation::rust_owned_binding_rules::accept_rust_owned_macro_argument_transfer(&token.value){let origin=self.origins.origin(&value,path);self.origins.consume_owned_binding(&origin,value.span)?;}
+            args.push(value);
             if self.cursor.eat(",").is_none() {
                 break;
             }

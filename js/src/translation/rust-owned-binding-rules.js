@@ -2,7 +2,7 @@
 /** @param {boolean} collecting @param {boolean} excluded @returns {boolean} */
 export function acceptRustOwnedBindingTracking(collecting,excluded){return !collecting&&!excluded;}
 /** @param {string} kind @param {string} storage @param {number} layers @param {boolean} known @returns {boolean} */
-export function acceptRustOwnedBindingValue(kind,storage,layers,known){return kind==='array'&&storage==='owned vector'&&layers===0&&known;}
+export function acceptRustOwnedBindingValue(kind,storage,layers,known){return (kind==='array'&&storage==='owned vector'||kind==='string'&&storage==='owned string')&&layers===0&&known;}
 /** @param {string} state @returns {string} */
 export function readRustOwnedBindingReadError(state){return state==='available'?'':state==='moved'?'a moved source binding cannot be read or consumed again':state==='dropped'?'an owned source binding does not outlive this use':state==='possibly moved'?'a source binding moved on a returning branch cannot be reused':'a source binding needs its actual ownership state';}
 /** @param {string} state @returns {string} */
@@ -52,3 +52,17 @@ export function readRustOwnedLoanReadError(states){
  for(const state of states)if(state!=='available')return readRustOwnedBindingReadError('');
  return '';
 }
+
+/** The represented standard String From cases preserve actual source storage.
+ * @param {string} kind @param {string} storage @param {number} layers
+ * @param {boolean} known @param {boolean} references @returns {string} */
+export function readRustOwnedStringConstructionError(kind,storage,layers,known,references){return known&&kind==='string'&&(storage==='owned string'&&layers===0||(storage==='owned string'||storage==='string slice')&&layers===1&&references)?'':'standard String construction needs an actual owned String or one immutable String/str reference';}
+
+/** Container elements move before the next source macro argument is evaluated.
+ * @param {string} macro @returns {boolean} */
+export function acceptRustOwnedMacroArgumentTransfer(macro){return macro==='vec';}
+
+/** str itself is unsized; cloning its single shared reference keeps that loan.
+ * @param {string} method @param {string} kind @param {string} storage
+ * @param {number} layers @returns {boolean} */
+export function acceptRustStringSliceCloneReference(method,kind,storage,layers){return method==='clone'&&kind==='string'&&storage==='string slice'&&layers===1;}

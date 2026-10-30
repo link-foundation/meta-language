@@ -24,7 +24,7 @@ export function readRustStandardOwnedCall(parser,path){
  const owner=origin.sourceOwner??(origin.type?.kind==='string'?readRustSourceTypeOwner(parser,origin.textSourceModel==='string slice'?['str']:['String'],[],STRING):null);
  const knownText=Boolean(owner&&acceptRustReadOnlyQueryOwner('string empty',owner.kind,owner.path.join('::')));
  if(acceptRustStandardOwnedTextCall(role,origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true,origin.wrappers.every(layer=>layer==='reference'),knownText)){
-  return parser.origins.mark({...receiver,span:range},{...origin,type:STRING,path:[...path],wrappers:[],sourceLifetimes:[],textSourceModel:'owned string',sourceOwner:{kind:'library',path:['std','string','String'],arguments:[]},copyEvidence:false});
+  return parser.origins.markOwnedStringConstructor({...receiver,span:range},{...origin,type:STRING,path:[...path],wrappers:[],sourceLifetimes:[],textSourceModel:'owned string',sourceOwner:{kind:'library',path:['std','string','String'],arguments:[]},copyEvidence:false});
  }
  const knownScalar=Boolean(owner&&owner.arguments.length===0&&(owner.kind==='unit'&&owner.path.length===0&&origin.type?.kind==='unit'||owner.kind==='primitive'&&owner.path.length===1&&acceptRustSourceSignaturePrimitive(origin.type?.kind??'',owner.path[0],String(origin.type?.bits??''),Boolean(origin.type?.signed))));
  if(acceptRustStandardOwnedScalarCall(role,origin.type?.kind??'',origin.wrappers.length,origin.proven===true,origin.wrappers.every(layer=>layer==='reference'),knownScalar))return parser.origins.mark({...receiver,span:range},{...origin,path:[...path],wrappers:[],sourceLifetimes:[],copyEvidence:true});

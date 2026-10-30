@@ -79,7 +79,9 @@ impl RustParser {
             path: vec!["std".to_owned(), "string".to_owned(), "String".to_owned()],
             arguments: Vec::new(),
         });
-        self.origins.mark(&value, origin);
+        self.origins.consume_owned_binding(&left, node.span)?;
+        self.origins.check_owned_origin(&right, node.span)?;
+        self.origins.mark_owned_string_constructor(&value, origin);
         Ok(Some(value))
     }
 }

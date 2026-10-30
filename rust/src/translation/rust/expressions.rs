@@ -735,6 +735,7 @@ impl RustParser {
                     origin.source_owner.as_ref().map_or(-1.0, |owner| u32::try_from(owner.arguments.len()).map_or(f64::INFINITY, f64::from)),
                 );
                 if ["clone", "to_owned"].contains(&method_name)
+                    && !crate::translation::rust_owned_binding_rules::accept_rust_string_slice_clone_reference(&method_name,origin.ty.as_ref().map_or("",Type::kind),origin.text_source_model.unwrap_or(""),origin.wrappers.len() as f64)
                     && origin
                         .wrappers
                         .first()
@@ -765,6 +766,12 @@ impl RustParser {
                     }
                     origin.ty = Some(STRING);
                     origin.text_source_model = Some("string slice");
+                    origin.source_owner =
+                        Some(crate::translation::source_signatures::SourceOwner {
+                            kind: "primitive".to_owned(),
+                            path: vec!["str".to_owned()],
+                            arguments: Vec::new(),
+                        });
                     origin.path = path.to_vec();
                     origin.wrappers = vec!["reference".to_owned()];
                 }
@@ -775,7 +782,11 @@ impl RustParser {
                 if ["clone", "to_owned", "as_str", "div_euclid", "rem_euclid"]
                     .contains(&method_name)
                 {
-                    self.origins.mark(&value, origin);
+                    if owned_text {
+                        self.origins.mark_owned_string_constructor(&value, origin);
+                    } else {
+                        self.origins.mark(&value, origin);
+                    }
                 }
                 continue;
             }

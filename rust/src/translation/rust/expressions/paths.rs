@@ -262,7 +262,7 @@ impl RustParser {
                 },
                 range,
             );
-            self.origins.conversion(&result, path);
+            self.origins.conversion(&result, path)?;
             if !self.local_value_state_model.is_empty() {
                 self.local_value_constructors.insert(
                     range.expect("a parsed constructor has a range"),

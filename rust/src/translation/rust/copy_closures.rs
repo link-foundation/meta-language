@@ -56,11 +56,16 @@ impl RustParser {
             && let Some(entry) = self
                 .origins
                 .lookup(&self.source_value_path(names, path), path)
-            && let SourceDeclaration::Function {
+            && let (SourceDeclaration::Function {
                 parameters: actual,
                 result: actual_result,
                 ..
-            } = entry.declaration
+            }
+            | SourceDeclaration::Constructor {
+                fields: actual,
+                result: actual_result,
+                ..
+            }) = entry.declaration
         {
             parameters = Some(actual);
             result = Some(actual_result);

@@ -31,7 +31,7 @@ export function readRustCopyPointerResultBlock(parser,path,expected){
 }
 export function readRustContextualCallArguments(parser,callee,path){
  let parameters=null,result=null;
- if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn'){parameters=entry.parameters;result=entry.result;}}
+ if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn'||entry?.k==='ctor'){parameters=entry.k==='fn'?entry.parameters:entry.fields;result=entry.result;}}
  if(parameters===null){const origin=parser.origins.origin(callee,path);result??=origin.callableResult??null;parameters=origin.type?.kind==='function'?origin.type.params.map((type,index)=>origin.callableParameters?.[index]??({...parser.origins.typeOrigin(type,path),...(type.kind==='function'?{copyEvidence:true}:{})})):[];}
  const args=[],c=parser.cursor;
  while(!c.is(')')){const frame=beginRustStandardStringViewArgument(parser,path,parameters[args.length],result);let value;try{value=readRustExpectedCopyClosure(parser,path,parameters[args.length]);}finally{endRustStandardStringViewArgument(parser,frame);}const argument=checkRustStandardStringViewArgument(parser,frame,value,path);parser.origins.prepareOwnedArgument(argument,parameters[args.length],path);args.push(argument);if(!c.eat(','))break;}

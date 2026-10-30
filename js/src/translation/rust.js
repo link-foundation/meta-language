@@ -1,3 +1,4 @@
+import {acceptRustOwnedMacroArgumentTransfer,acceptRustStringSliceCloneReference} from './rust-owned-binding-rules.js';
 import {noteRustOwnedBindingRead} from './rust-owned-bindings.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {acceptRustIteratorItemInferredType} from './rust-iterator-reduction-rules.js';
@@ -1093,7 +1094,7 @@ class RustParser {
     c.next();
     const args = [];
     while (!c.is(close)) {
-      args.push(this.expr(path));
+      const value=this.expr(path);if(acceptRustOwnedMacroArgumentTransfer(token.value))this.origins.consumeOwnedBinding(this.origins.origin(value,path),value.span);args.push(value);
       if (!c.eat(',')) break;
     }
     c.expect(close, `${token.value}!`);
@@ -1509,16 +1510,16 @@ class RustParser {
         }
         if (origin.arraySourceModel) throw unsupported('Rust array clone', 'array cloning needs a separate source allocation and ownership proof', range);
         const ownedText=acceptRustStandardStringOwnedMethodResult(method.value,origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true,origin.wrappers.every(layer=>layer==='reference'),origin.sourceOwner?.kind??'',origin.sourceOwner?.path.join('::')??'',origin.sourceOwner?.arguments.length??-1);
-        if (origin.wrappers[0] === 'reference') origin.wrappers.shift();
+        if (origin.wrappers[0] === 'reference'&&!acceptRustStringSliceCloneReference(method.value,origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length)) origin.wrappers.shift();
         if (method.value === 'to_owned' && origin.type?.kind === 'string') origin.textSourceModel = 'owned string';
         if(ownedText){origin.sourceOwner={kind:'library',path:['std','string','String'],arguments:[]};origin.sourceLifetimes=[];origin.copyEvidence=false;}
-        return this.origins.mark(receiver, origin);
+        return ownedText?this.origins.markOwnedStringConstructor(receiver,origin):this.origins.mark(receiver, origin);
       }
       case 'as_str':
         expect(0);
         if(this.localValueStateModel&&!acceptRustOwnedLocalSourceOperation('borrow'))throw unsupported('Rust owned local state','source indirection requires a separate ownership interpretation',range);
         if (this.origins.origin(receiver, this.modulePath).arraySourceModel) throw unsupported('method as_str', 'outside the portable core', range);
-        return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, textSourceModel: 'string slice', path: [...this.modulePath], wrappers: ['reference'] });
+        return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, textSourceModel: 'string slice',sourceOwner:{kind:'primitive',path:['str'],arguments:[]}, path: [...this.modulePath], wrappers: ['reference'] });
       case 'to_string':
         expect(0);
         return { k: 'toString', arg: receiver, span: range };

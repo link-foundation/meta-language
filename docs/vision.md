@@ -10648,3 +10648,46 @@ Source index reads validate receiver ownership after evaluating their index.
 The unchanged earlier alternative-loan refusal has independent positive and
 negative original controls. These controls and generated policy assets remain
 unexecuted until full requirement drafting finishes.
+
+
+### Shared owned string source identities
+
+Ordinary standard owned Strings use the same source identity, move, scope and
+loan-union policies as standard vectors. Actual owned storage, a proven source
+type and zero indirection layers distinguish an owner from a borrowed String or
+str view. Binding moves, returned values, conditional/match results and owned
+call arguments transfer the identity. A view retains its actual owner; a copy
+gets an independent owner and carries no prior loan provenance.
+
+String construction from an owned String consumes that argument. Construction
+from a borrowed view copies its contents. Standard string clone/to_owned,
+qualified standard trait copies and derived text-producing operations record
+new owned-value provenance. String addition consumes its left owner before
+checking the right-hand loan, so borrowing the same transferred String refuses.
+Owned arguments transfer before later arguments are parsed. Legacy explicit
+source profiles retain their own contracts.
+
+Independent complete originals in `parity/fixtures/rust-owned-strings.lino`
+cover moves, copies, calls, forwarding, concatenation, views, conditional loans
+and scope exit. Shared rules generate Rust and paired Links assets; native
+frontends transport the existing source facts. All controls remain deferred.
+Allocation identity/capacity/allocator effects, mutation, nominal field and
+resource ownership, general temporary lifetime extension and complete source
+language translation remain obligations.
+
+The represented String constructor cases require actual owned String or one
+immutable String/str reference; primitive display conversion cannot invent a
+standard `From` implementation. The independent pinned [Rust1.90 source](https://raw.githubusercontent.com/rust-lang/rust/1.90.0/library/alloc/src/string.rs)
+provides the reference-copy contract. Additional standard/custom conversions
+remain explicit source-owner and trait obligations.
+
+Vector macro elements transfer owned string payloads before evaluating later
+elements, using a shared macro-role rule. Formatting macros retain borrowing
+behavior. The container owns the moved payload; retaining a prior view cannot
+make the original string usable after that move. Copied payloads preserve their
+independent source owner.
+
+The `as_str` result carries the actual primitive str owner while retaining its
+loan to the String. Cloning a single shared str reference keeps that reference;
+`to_owned` creates an independent String. The shared reference-shape rule keeps
+those operations distinct, including scope and move checks on a cloned view.

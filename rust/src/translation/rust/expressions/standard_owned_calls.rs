@@ -211,7 +211,11 @@ impl RustParser {
                 arguments: Vec::new(),
             });
         }
-        self.origins.mark(&result, copied);
+        if text {
+            self.origins.mark_owned_string_constructor(&result, copied);
+        } else {
+            self.origins.mark(&result, copied);
+        }
         result
     }
 }
