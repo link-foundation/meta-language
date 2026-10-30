@@ -1,5 +1,6 @@
 // Generated from complete js/src/translation/rust-checked-integer-rules.js. Do not edit by hand.
 use super::test_rust_checked_integer_lazy_fallback;
+use super::test_rust_checked_integer_predicate_consumer;
 
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
@@ -116,6 +117,18 @@ pub mod ml_array {
         }
         out
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_scalar_predicate(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> bool {
+    ((((kind == "function") && (parameters == 1f64)) && (layers == 0f64)) && parameter) && result
 }
 
 /// Execute the checked shared source algorithm.
@@ -499,8 +512,9 @@ pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
         || (consumer == "unwrap")
     {
         0f64
-    } else if ((consumer == "unwrap_or") || (consumer == "expect"))
-        || self::test_rust_checked_integer_lazy_fallback(consumer)
+    } else if (((consumer == "unwrap_or") || (consumer == "expect"))
+        || self::test_rust_checked_integer_lazy_fallback(consumer))
+        || self::test_rust_checked_integer_predicate_consumer(consumer)
     {
         1f64
     } else if consumer == "map_or" {

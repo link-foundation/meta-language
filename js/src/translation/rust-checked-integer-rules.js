@@ -1,3 +1,4 @@
+import {acceptRustScalarPredicate} from './rust-scalar-callable-rules.js';
 import {testRustOptionPanicConsumer} from './rust-panic-value-rules.js';
 import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-rules.js';
 /** @param {string} method @param {boolean} ordinary @returns {number} */
@@ -11,7 +12,7 @@ export function readRustCheckedIntegerArity(method,ordinary){
  * @returns {boolean} */
 export function acceptRustCheckedIntegerReceiver(method,kind,bits,signed,owner,path,children,proven,layers){return readRustCheckedIntegerArity(method,true)>=0&&kind==='fixed'&&(method!=='checked_abs'||signed)&&acceptRustPrimitiveSelectionReceiver(kind,bits,signed,owner,path,children,proven,layers);}
 /** @param {string} consumer @returns {number} */
-export function readRustCheckedIntegerConsumerArity(consumer){return consumer==='is_some'||consumer==='is_none'||consumer==='unwrap_or_default'||consumer==='unwrap'?0:consumer==='unwrap_or'||consumer==='expect'||testRustCheckedIntegerLazyFallback(consumer)?1:consumer==='map_or'?2:-1;}
+export function readRustCheckedIntegerConsumerArity(consumer){return consumer==='is_some'||consumer==='is_none'||consumer==='unwrap_or_default'||consumer==='unwrap'?0:consumer==='unwrap_or'||consumer==='expect'||testRustCheckedIntegerLazyFallback(consumer)||testRustCheckedIntegerPredicateConsumer(consumer)?1:consumer==='map_or'?2:-1;}
 /** Actual standard checked shift counts are u32, independently of Self.
  * @param {string} method @param {string} receiver @returns {string} */
 export function readRustCheckedIntegerArgumentOwner(method,receiver){return method==='checked_shl'||method==='checked_shr'?'u32':receiver;}
@@ -64,9 +65,9 @@ export function planRustCheckedIntegerSuccess(method,signed){
  return operation?['operand','right',operation]:[];
 }
 /** @param {string} consumer @returns {string[]} */
-export function planRustCheckedIntegerConsumer(consumer){return consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='unwrap'?['condition','success','unwrap message','raise','if']:consumer==='expect'?['condition','success','fallback','raise','if']:consumer==='unwrap_or_default'?['condition','success','default','if']:testRustCheckedIntegerLazyFallback(consumer)?['condition','success','fallback','call zero','if']:consumer==='unwrap_or'||consumer==='map_or'?['condition','success','fallback','if']:[];}
+export function planRustCheckedIntegerConsumer(consumer){return testRustCheckedIntegerPredicateConsumer(consumer)?['condition','fallback','success','call one',consumer==='is_none_or'?'true':'false','if']:consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='unwrap'?['condition','success','unwrap message','raise','if']:consumer==='expect'?['condition','success','fallback','raise','if']:consumer==='unwrap_or_default'?['condition','success','default','if']:testRustCheckedIntegerLazyFallback(consumer)?['condition','success','fallback','call zero','if']:consumer==='unwrap_or'||consumer==='map_or'?['condition','success','fallback','if']:[];}
 /** @param {string} consumer @param {string} receiver @param {string} mapper @returns {string} */
-export function readRustCheckedIntegerResultOwner(consumer,receiver,mapper){return consumer==='is_some'||consumer==='is_none'?'bool':consumer==='unwrap_or'||consumer==='unwrap_or_default'||testRustOptionPanicConsumer(consumer)||testRustCheckedIntegerLazyFallback(consumer)?receiver:consumer==='map_or'?mapper:'';}
+export function readRustCheckedIntegerResultOwner(consumer,receiver,mapper){return consumer==='is_some'||consumer==='is_none'||testRustCheckedIntegerPredicateConsumer(consumer)?'bool':consumer==='unwrap_or'||consumer==='unwrap_or_default'||testRustOptionPanicConsumer(consumer)||testRustCheckedIntegerLazyFallback(consumer)?receiver:consumer==='map_or'?mapper:'';}
 
 /** @param {string} consumer @returns {boolean} */
 export function testRustCheckedIntegerLazyFallback(consumer){return consumer==='unwrap_or_else';}
@@ -78,3 +79,10 @@ export function testRustCheckedIntegerLazyFallback(consumer){return consumer==='
  * @param {string} expectedBits @param {boolean} expectedSigned
  * @param {string} expectedOwner @returns {string} */
 export function readRustCheckedIntegerFallbackError(kind,parameters,layers,result,bits,signed,ownerKind,owner,children,proven,resultLayers,expectedBits,expectedSigned,expectedOwner){return kind==='function'&&parameters===0&&layers===0&&result==='fixed'&&bits===expectedBits&&signed===expectedSigned&&owner===expectedOwner&&acceptRustPrimitiveSelectionReceiver(result,bits,signed,ownerKind,owner,children,proven,resultLayers)?'':'a checked integer fallback needs a direct zero-argument callable with the actual receiver result owner';}
+
+/** @param {string} consumer @returns {boolean} */
+export function testRustCheckedIntegerPredicateConsumer(consumer){return consumer==='is_some_and'||consumer==='is_none_or';}
+/** Standard Option and Result predicates have the same actual scalar contract.
+ * @param {string} kind @param {number} parameters @param {number} layers
+ * @param {boolean} parameter @param {boolean} result @returns {string} */
+export function readRustCheckedIntegerPredicateError(kind,parameters,layers,parameter,result){return acceptRustScalarPredicate(kind,parameters,layers,parameter,result)?'':'a checked integer predicate needs a direct one-argument callable with its actual integer parameter and Boolean result';}

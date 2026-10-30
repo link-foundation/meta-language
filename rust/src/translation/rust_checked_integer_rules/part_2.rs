@@ -1,5 +1,6 @@
 // Generated from complete js/src/translation/rust-checked-integer-rules.js. Do not edit by hand.
 use super::accept_rust_primitive_selection_receiver;
+use super::accept_rust_scalar_predicate;
 use super::ml_array;
 use super::test_rust_option_panic_consumer;
 
@@ -187,7 +188,20 @@ pub fn plan_rust_checked_integer_success(method: &str, signed: bool) -> Vec<Stri
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
-    if consumer == "is_some" {
+    if self::test_rust_checked_integer_predicate_consumer(consumer) {
+        vec![
+            String::from("condition"),
+            String::from("fallback"),
+            String::from("success"),
+            String::from("call one"),
+            if consumer == "is_none_or" {
+                String::from("true")
+            } else {
+                String::from("false")
+            },
+            String::from("if"),
+        ]
+    } else if consumer == "is_some" {
         vec![String::from("condition")]
     } else if consumer == "is_none" {
         vec![String::from("condition"), String::from("not")]
@@ -241,7 +255,9 @@ pub fn read_rust_checked_integer_result_owner(
     receiver: &str,
     mapper: &str,
 ) -> String {
-    if (consumer == "is_some") || (consumer == "is_none") {
+    if ((consumer == "is_some") || (consumer == "is_none"))
+        || self::test_rust_checked_integer_predicate_consumer(consumer)
+    {
         String::from("bool")
     } else if (((consumer == "unwrap_or") || (consumer == "unwrap_or_default"))
         || self::test_rust_option_panic_consumer(consumer))
@@ -304,6 +320,30 @@ pub fn read_rust_checked_integer_fallback_error(
     } else {
         String::from(
             "a checked integer fallback needs a direct zero-argument callable with the actual receiver result owner",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_checked_integer_predicate_consumer(consumer: &str) -> bool {
+    (consumer == "is_some_and") || (consumer == "is_none_or")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_predicate_error(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> String {
+    if self::accept_rust_scalar_predicate(kind, parameters, layers, parameter, result) {
+        String::new()
+    } else {
+        String::from(
+            "a checked integer predicate needs a direct one-argument callable with its actual integer parameter and Boolean result",
         )
     }
 }

@@ -737,6 +737,23 @@ pub fn plan_rust_integer_bits(method: &self::ml_string::Text, bits: f64) -> Vec<
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_scalar_predicate(
+    kind: &self::ml_string::Text,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> bool {
+    (((((*kind)
+        == (self::ml_string::Text::from_units(vec![102, 117, 110, 99, 116, 105, 111, 110])))
+        && (parameters == 1f64))
+        && (layers == 0f64))
+        && parameter)
+        && result
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_panic_value_operation() -> self::ml_string::Text {
     self::ml_string::Text::from_units(vec![
         114, 97, 105, 115, 101, 82, 117, 115, 116, 80, 97, 110, 105, 99, 86, 97, 108, 117, 101,

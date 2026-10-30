@@ -1,3 +1,4 @@
+import {acceptRustScalarPredicate} from './rust-scalar-callable-rules.js';
 import {readRustIntegerConversionErrorDebugModel} from './rust-source-version-rules.js';
 import {readRustPrimitiveIntegerConstantOwner} from './rust-primitive-integer-constant-rules.js';
 import {acceptRustPrimitiveFromSource,acceptRustPrimitiveFromMethod} from './rust-primitive-from-rules.js';
@@ -57,7 +58,7 @@ export function readRustPrimitiveTryFromVersionedFailureDebug(direction,minor){
 /** Actual callback signature, not its spelling, determines admission.
  * @param {string} kind @param {number} parameters @param {number} layers
  * @param {boolean} parameter @param {boolean} result @returns {string} */
-export function readRustPrimitiveTryFromPredicateError(kind,parameters,layers,parameter,result){return kind==='function'&&parameters===1&&layers===0&&parameter&&result?'':'a Result predicate needs a direct one-argument callable with its actual integer parameter and Boolean result';}
+export function readRustPrimitiveTryFromPredicateError(kind,parameters,layers,parameter,result){return acceptRustScalarPredicate(kind,parameters,layers,parameter,result)?'':'a Result predicate needs a direct one-argument callable with its actual integer parameter and Boolean result';}
 
 /** @param {string} kind @param {number} parameters @param {number} layers
  * @param {boolean} parameter @param {boolean} result @returns {string} */

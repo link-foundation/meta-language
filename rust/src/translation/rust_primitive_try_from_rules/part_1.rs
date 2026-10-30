@@ -198,6 +198,18 @@ pub mod ml_array {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_scalar_predicate(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> bool {
+    ((((kind == "function") && (parameters == 1f64)) && (layers == 0f64)) && parameter) && result
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_source_version_default() -> String {
     String::from("1.99.0")
 }
@@ -871,27 +883,4 @@ pub fn read_rust_primitive_try_from_owner(
 pub fn accept_rust_primitive_try_from_import(path: &str, ordinary: bool, shadowed: bool) -> bool {
     (ordinary && !shadowed)
         && ((path == "std::convert::TryFrom") || (path == "core::convert::TryFrom"))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn accept_rust_primitive_try_from_source(
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner: &str,
-    path: &str,
-    children: f64,
-    proven: bool,
-    layers: f64,
-) -> bool {
-    ((kind == "fixed") && self::accept_rust_primitive_from_method(path, "from"))
-        && self::accept_rust_primitive_from_source(
-            kind, bits, signed, owner, path, children, proven, layers,
-        )
 }

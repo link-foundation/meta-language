@@ -1,7 +1,32 @@
 // Generated from complete js/src/translation/rust-primitive-try-from-rules.js. Do not edit by hand.
+use super::accept_rust_primitive_from_method;
 use super::accept_rust_primitive_from_source;
+use super::accept_rust_scalar_predicate;
 use super::ml_array;
 use super::read_rust_integer_conversion_error_debug_model;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_try_from_source(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((kind == "fixed") && self::accept_rust_primitive_from_method(path, "from"))
+        && self::accept_rust_primitive_from_source(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -365,8 +390,7 @@ pub fn read_rust_primitive_try_from_predicate_error(
     parameter: bool,
     result: bool,
 ) -> String {
-    if ((((kind == "function") && (parameters == 1f64)) && (layers == 0f64)) && parameter) && result
-    {
+    if self::accept_rust_scalar_predicate(kind, parameters, layers, parameter, result) {
         String::new()
     } else {
         String::from(

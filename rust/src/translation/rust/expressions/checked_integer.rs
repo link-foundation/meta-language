@@ -119,6 +119,17 @@ impl Terms {
                         },
                     );
                 }
+                "call one" => {
+                    let value = pop(&mut stack, range)?;
+                    let function = pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::App {
+                            func: Box::new(function),
+                            args: vec![value],
+                        },
+                        range,
+                    ));
+                }
                 "call zero" => {
                     let function = pop(&mut stack, range)?;
                     stack.push(SExpr::new(
@@ -260,21 +271,38 @@ impl RustParser {
         let mut mapper_owner = String::new();
         let mut lazy_origin = None;
         if consumer_arity > 0.0 {
-            if rules::test_rust_checked_integer_lazy_fallback(&consumer.value) {
+            if rules::test_rust_checked_integer_lazy_fallback(&consumer.value)
+                || rules::test_rust_checked_integer_predicate_consumer(&consumer.value)
+            {
                 let source = facts(self, &receiver, path);
                 let owner = source.path();
                 let ty=rust_fixed_type(&owner).ok_or_else(||unsupported("Rust checked integer arithmetic","a proven standard integer receiver with the actual signed operation is required",range))?;
-                let result = origin(ty.clone(), &owner, path);
+                let predicate =
+                    rules::test_rust_checked_integer_predicate_consumer(&consumer.value);
+                let parameter = origin(ty.clone(), &owner, path);
+                let result = if predicate {
+                    origin(BOOL, "bool", path)
+                } else {
+                    parameter.clone()
+                };
                 let mut expected = super::SourceOrigin::with_type(
                     Type::Function {
-                        params: Vec::new(),
-                        ret: Box::new(ty.clone()),
+                        params: if predicate {
+                            vec![ty.clone()]
+                        } else {
+                            Vec::new()
+                        },
+                        ret: Box::new(result.ty.clone().unwrap()),
                     },
                     path,
                     Vec::new(),
                 );
                 expected.copy_evidence = Some(());
-                expected.callable_parameters = Some(Vec::new());
+                expected.callable_parameters = Some(if predicate {
+                    vec![parameter.clone()]
+                } else {
+                    Vec::new()
+                });
                 expected.callable_result = Some(Box::new(result.clone()));
                 let callback =
                     self.read_expected_copy_closure_result_mode(path, Some(&expected), false)?;
@@ -300,28 +328,59 @@ impl RustParser {
                         range,
                     ));
                 };
-                let error = rules::read_rust_checked_integer_fallback_error(
-                    callable.ty.as_ref().map_or("", Type::kind),
-                    parameters,
-                    count(callable.wrappers.len()),
-                    output_type.map_or("", Type::kind),
-                    &bits,
-                    signed,
-                    output_owner.map_or("", |value| value.kind.as_str()),
-                    &output_owner.map_or_else(String::new, |value| value.path.join("::")),
-                    output_owner.map_or(-1.0, |value| count(value.arguments.len())),
-                    output.is_some_and(|value| value.proven),
-                    output.map_or(-1.0, |value| count(value.wrappers.len())),
-                    &expected_bits.to_string(),
-                    *expected_signed,
-                    &owner,
-                );
+                let error = if predicate {
+                    rules::read_rust_checked_integer_predicate_error(
+                        callable.ty.as_ref().map_or("", Type::kind),
+                        parameters,
+                        count(callable.wrappers.len()),
+                        callable
+                            .callable_parameters
+                            .as_ref()
+                            .and_then(|values| values.first())
+                            .is_some_and(super::SourceOrigin::copy_closure_parameter),
+                        output.is_some_and(|value| {
+                            value.proven && value.ty == Some(BOOL) && value.wrappers.is_empty()
+                        }),
+                    )
+                } else {
+                    rules::read_rust_checked_integer_fallback_error(
+                        callable.ty.as_ref().map_or("", Type::kind),
+                        parameters,
+                        count(callable.wrappers.len()),
+                        output_type.map_or("", Type::kind),
+                        &bits,
+                        signed,
+                        output_owner.map_or("", |value| value.kind.as_str()),
+                        &output_owner.map_or_else(String::new, |value| value.path.join("::")),
+                        output_owner.map_or(-1.0, |value| count(value.arguments.len())),
+                        output.is_some_and(|value| value.proven),
+                        output.map_or(-1.0, |value| count(value.wrappers.len())),
+                        &expected_bits.to_string(),
+                        *expected_signed,
+                        &owner,
+                    )
+                };
                 if !error.is_empty() {
                     return Err(unsupported(
-                        "Rust checked integer fallback",
+                        if predicate {
+                            "Rust checked integer predicate"
+                        } else {
+                            "Rust checked integer fallback"
+                        },
                         &error,
                         callback.span,
                     ));
+                }
+                if predicate {
+                    self.origins.argument(
+                        callable
+                            .callable_parameters
+                            .as_ref()
+                            .and_then(|values| values.first())
+                            .unwrap(),
+                        &parameter,
+                        callback.span,
+                    )?;
                 }
                 self.origins
                     .argument(output.unwrap(), &result, callback.span)?;

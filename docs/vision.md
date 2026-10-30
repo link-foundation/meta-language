@@ -10918,3 +10918,14 @@ source remains verbatim in a positive original alongside its old rejection;
 version-bounded arity revisions document the standard Option contract.
 Mutable/non-Copy environments, stored Option control and whole-source coverage
 remain obligations; the declared controls are not execution evidence.
+
+Checked-integer Option predicates have a source draft for `is_some_and` and
+`is_none_or`. They reuse the scalar predicate signature contract already shared
+by integer Result consumers. Actual successful integer owners contextually type
+the callback input, and the Boolean result stays explicit. Callable factories
+are captured eagerly after operands; predicate invocation and successful
+arithmetic remain inside the presence branch. Absence returns the selected
+standard Boolean without invoking the predicate. Deferred originals cover
+source-owner widths, checked operations, captures and evaluation order. Stored
+Option/Result control, mutable/non-Copy callbacks and the entire source grammar
+and concept-space scope remain requirements.

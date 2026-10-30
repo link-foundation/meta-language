@@ -1,6 +1,7 @@
 // Generated from complete js/src/translation/rust-primitive-associated-call-rules.js. Do not edit by hand.
 use super::accept_rust_integer_bit_method;
 use super::accept_rust_primitive_selection_receiver;
+use super::accept_rust_scalar_predicate;
 use super::accept_rust_wrapping_shift_method;
 use super::ml_array;
 use super::ml_string;
@@ -14,7 +15,26 @@ use super::test_rust_option_panic_consumer;
 pub fn plan_rust_checked_integer_consumer(
     consumer: &self::ml_string::Text,
 ) -> Vec<self::ml_string::Text> {
-    if (*consumer) == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])) {
+    if self::test_rust_checked_integer_predicate_consumer(consumer) {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![99, 97, 108, 108, 32, 111, 110, 101]),
+            if (*consumer)
+                == (self::ml_string::Text::from_units(vec![
+                    105, 115, 95, 110, 111, 110, 101, 95, 111, 114,
+                ]))
+            {
+                self::ml_string::Text::from_units(vec![116, 114, 117, 101])
+            } else {
+                self::ml_string::Text::from_units(vec![102, 97, 108, 115, 101])
+            },
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
+    } else if (*consumer)
+        == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101]))
+    {
         vec![self::ml_string::Text::from_units(vec![
             99, 111, 110, 100, 105, 116, 105, 111, 110,
         ])]
@@ -86,9 +106,11 @@ pub fn read_rust_checked_integer_result_owner(
     receiver: &self::ml_string::Text,
     mapper: &self::ml_string::Text,
 ) -> self::ml_string::Text {
-    if ((*consumer) == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])))
+    if (((*consumer)
+        == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])))
         || ((*consumer)
-            == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101])))
+            == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101]))))
+        || self::test_rust_checked_integer_predicate_consumer(consumer)
     {
         self::ml_string::Text::from_units(vec![98, 111, 111, 108])
     } else if ((((*consumer)
@@ -168,6 +190,43 @@ pub fn read_rust_checked_integer_fallback_error(
             32, 99, 97, 108, 108, 97, 98, 108, 101, 32, 119, 105, 116, 104, 32, 116, 104, 101, 32,
             97, 99, 116, 117, 97, 108, 32, 114, 101, 99, 101, 105, 118, 101, 114, 32, 114, 101,
             115, 117, 108, 116, 32, 111, 119, 110, 101, 114,
+        ])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_checked_integer_predicate_consumer(consumer: &self::ml_string::Text) -> bool {
+    ((*consumer)
+        == (self::ml_string::Text::from_units(vec![
+            105, 115, 95, 115, 111, 109, 101, 95, 97, 110, 100,
+        ])))
+        || ((*consumer)
+            == (self::ml_string::Text::from_units(vec![
+                105, 115, 95, 110, 111, 110, 101, 95, 111, 114,
+            ])))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_predicate_error(
+    kind: &self::ml_string::Text,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> self::ml_string::Text {
+    if self::accept_rust_scalar_predicate(kind, parameters, layers, parameter, result) {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        self::ml_string::Text::from_units(vec![
+            97, 32, 99, 104, 101, 99, 107, 101, 100, 32, 105, 110, 116, 101, 103, 101, 114, 32,
+            112, 114, 101, 100, 105, 99, 97, 116, 101, 32, 110, 101, 101, 100, 115, 32, 97, 32,
+            100, 105, 114, 101, 99, 116, 32, 111, 110, 101, 45, 97, 114, 103, 117, 109, 101, 110,
+            116, 32, 99, 97, 108, 108, 97, 98, 108, 101, 32, 119, 105, 116, 104, 32, 105, 116, 115,
+            32, 97, 99, 116, 117, 97, 108, 32, 105, 110, 116, 101, 103, 101, 114, 32, 112, 97, 114,
+            97, 109, 101, 116, 101, 114, 32, 97, 110, 100, 32, 66, 111, 111, 108, 101, 97, 110, 32,
+            114, 101, 115, 117, 108, 116,
         ])
     }
 }
