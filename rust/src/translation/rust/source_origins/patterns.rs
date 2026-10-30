@@ -271,7 +271,14 @@ impl SourceOrigins {
                         span,
                     ));
                 }
-                scope.insert(name.clone(), self.join(&candidates));
+                let binding = self.join(&candidates);
+                if self.owned_binding_value(&binding) {
+                    self.consume_owned_binding(&binding, span)?;
+                    let binding = self.register_owned_binding(binding);
+                    scope.insert(name.clone(), binding);
+                } else {
+                    scope.insert(name.clone(), binding);
+                }
             }
         }
         Ok(scope)

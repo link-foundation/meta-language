@@ -170,6 +170,7 @@ impl RustParser {
                 span(token, token),
             );
             self.shared_array_name(&node, path)?;
+            self.origins.check_owned_name(&node, path)?;
             return Ok(node);
         }
         self.cursor.advance();
@@ -247,7 +248,7 @@ impl RustParser {
             self.origins
                 .box_owner(owner, &resolved_owner, path, range)?;
             let result = args.remove(0);
-            self.origins.wrap(&result, path, "box");
+            self.origins.wrap(&result, path, "box")?;
             return Ok(result);
         }
         if name == "String::from" {

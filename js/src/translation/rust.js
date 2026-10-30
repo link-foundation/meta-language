@@ -1,3 +1,4 @@
+import {noteRustOwnedBindingRead} from './rust-owned-bindings.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {acceptRustIteratorItemInferredType} from './rust-iterator-reduction-rules.js';
 import {readRustIteratorReduction} from './rust-iterator-reductions.js';
@@ -204,6 +205,7 @@ class RustParser {
     this.typeNamespaceDiscovery = Boolean(typeNamespaceModel && catalog === null);
     this.typeNamespaceFrames = [];
     this.scalarLoopModel = scalarLoopModel;
+    this.origins.ownedBindingExcluded=Boolean(scalarLoopModel||constFunctionModel);
     this.emptyOptionSourceModel=emptyOptionSourceModel;
     this.pureUnitCallModel=pureUnitCallModel;
     this.emptyOptionMainSeen=false;
@@ -849,6 +851,7 @@ class RustParser {
   block(path,functionBody=false) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
+    const ownershipBefore=this.origins.snapshotOwnedBindings();
     const previous = this.origins.enter();
     const lets = [];
     const ordinary = this.ordinaryCompletionContext();
@@ -883,7 +886,7 @@ class RustParser {
         const origin=this.origins.origin(expr,path);
         const disposition=(ordinary?readRustOrdinaryStatementDisposition:readRustUnitStatementDisposition)(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='abort'){tail=expr;continue;}
-        if(disposition==='bind'){lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
+        if(disposition==='bind'){this.origins.consumeOwnedBinding(origin,expr.span);lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', expr.span);
       }
       if(ordinary){
@@ -901,6 +904,8 @@ class RustParser {
     if(!tail)tail={k:'unit',span:span(open,close)};
     const origin = this.origins.origin(tail, path);
     const result = lets.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: binding.span }), tail);
+    this.origins.expireOwnedBindings(ownershipBefore,origin);
+    if(origin.wrappers.length===0&&origin.type?.kind!=='array')origin.sourcePlaceBindingIdentity=null;
     this.origins.scope = previous;
     return this.origins.mark(result, origin);
   }
@@ -946,6 +951,7 @@ class RustParser {
     }
     const bindings = [];
     const name = this.freshProductBinding();
+    if(pattern.k==='wild'){if(sourceType)this.origins.argument(this.origins.origin(value,path),sourceType,range);return [{name,...(type===undefined?{}:{type}),value,span:range}];}
     this.origins.bind(name, value, path, sourceType);
     bindings.push({ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range });
     if(fallback!==null){
@@ -1636,7 +1642,7 @@ class RustParser {
       if(sharedConstruction)return sharedConstruction;
       requireRustTypeAliasValueConstructor(this,segments,path,{start:token.start,end:c.tokens[c.index-1].end});
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
-      if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??readRustSourceValueName(this,segments,path), span: span(token, token) },path);
+      if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustOwnedBindingRead(this,noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??readRustSourceValueName(this,segments,path), span: span(token, token) },path),path);
       c.next();
       const args = readRustContextualCallArguments(this,{k:'name',path:segments,span:span(token,token)},path);
       c.expect(')', 'call');
@@ -1733,9 +1739,11 @@ class RustParser {
     if (c.is('let')) return readRustConditionalPattern(this,path,token);
     const cond = this.expr(path, { noStruct: true });
     this.origins.direct(cond, path, cond.span);
-    const then = this.block(path);
+    const ownershipBase=this.origins.snapshotOwnedBindings();
+    const then = this.block(path);const ownershipThen=this.origins.snapshotOwnedBindings();this.origins.restoreOwnedBindings(ownershipBase);
     if (!c.eat('else')) throw unsupported('if without else', 'the value of an if must be defined on both branches', span(token, c.peek()));
     const otherwise = c.is('if') ? this.ifExpr(path) : this.block(path);
+    const ownershipElse=this.origins.snapshotOwnedBindings();this.origins.joinOwnedBindings(ownershipThen,ownershipElse,!this.origins.origin(then,path).diverging,!this.origins.origin(otherwise,path).diverging);
     this.origins.join([this.origins.origin(then,path),this.origins.origin(otherwise,path)]);
     return { k: 'if', cond, then, else: otherwise, span: span(token, c.peek()) };
   }
@@ -1745,8 +1753,9 @@ class RustParser {
     const token = c.next();
     const scrutinee = this.expr(path, { noStruct: true });
     c.expect('{', 'match');
-    const rows = [],guardedArms=[];
+    const rows = [],guardedArms=[],ownershipBase=this.origins.snapshotOwnedBindings(),ownershipArms=[];
     while (!c.is('}')) {
+      this.origins.restoreOwnedBindings(ownershipBase);
       const armStart = c.peek();
       const aliases = [];
       c.eat('|');
@@ -1756,9 +1765,9 @@ class RustParser {
       let body,bodyOrigin,guard;
       try{
         for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
-        guard=c.eat('if')?this.expr(path):null;
+        const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?this.expr(path):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
         if(guard)this.origins.direct(guard,path,guard.span);
-        c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.origin(body,path);
+        c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.origin(body,path);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
       }finally{this.origins.scope=previous;}
       if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');
       else if (!c.is('}')) c.expect(',', 'match arm');
@@ -1773,6 +1782,7 @@ class RustParser {
     }
     c.expect('}', 'match');
     if (!rows.length) throw unsupported('empty match', 'uninhabited types are outside the portable core', span(token, c.peek()));
+    let ownershipJoined=new Map(),ownershipReturns=false;for(const arm of ownershipArms){this.origins.joinOwnedBindings(ownershipJoined,arm.states,ownershipReturns,arm.returns);ownershipJoined=this.origins.snapshotOwnedBindings();ownershipReturns=ownershipReturns||arm.returns;}
     if(guardedArms.some(arm=>arm.guard))return lowerRustGuardedMatch(this,scrutinee,guardedArms,path,span(token,c.peek()));
     const origins = rows.map(row => this.origins.origin(row.body, path));
     const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };

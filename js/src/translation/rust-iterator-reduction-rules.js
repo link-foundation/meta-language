@@ -67,7 +67,7 @@ export function readRustIteratorCountReceiverError(kind,model,known,layers,adapt
 
 /** @param {string} method @returns {string} */
 export function readRustIteratorReductionInitialState(method){return method==='into_iter'?'owned':method==='iter'?'borrowed':'';}
-/** Existing local moves need independent invalidation; fresh values cannot alias.
+/** Consumption accepts fresh values or an independently tracked available owner.
  * @param {string} kind @param {string} model @param {boolean} known
- * @param {number} layers @param {boolean} fresh @returns {string} */
-export function readRustIteratorOwnedReceiverError(kind,model,known,layers,fresh){return kind==='array'&&model==='owned vector'&&known&&layers===0&&fresh?'':'owned iteration needs an actual fresh standard vector and its consumption proof';}
+ * @param {number} layers @param {boolean} consumable @returns {string} */
+export function readRustIteratorOwnedReceiverError(kind,model,known,layers,consumable){return kind==='array'&&model==='owned vector'&&known&&layers===0&&consumable?'':'owned iteration needs an actual consumable standard vector and its consumption proof';}

@@ -10515,8 +10515,9 @@ zero reference layers are prerequisites. Shared adapter transitions preserve
 owned items through reversals and reject attempts to copy reference-free
 items. Scalar predicates, folds and typed collection reuse their existing
 complete owner checks; fresh owned string vectors can count without extracting
-items. No existing named vector is consumed through this draft: tracking moves,
-invalidating bindings and proving later use remain full requirements.
+items. The ordinary owned-vector binding draft below additionally admits
+tracked available named vectors, consuming their source identity. Full move
+and borrow analysis across all source constructs remains required.
 
 
 ### Lazy scalar iterator map and filter composition
@@ -10577,3 +10578,38 @@ They remain unexecuted in `parity/fixtures/rust-iterator-arithmetic.lino`.
 The [Rust1.90 implementation](https://raw.githubusercontent.com/rust-lang/rust/1.90.0/library/core/src/iter/traits/accum.rs)
 and [current standard implementation](https://doc.rust-lang.org/src/core/iter/traits/accum.rs.html)
 are independent contracts, rather than results computed by this translator.
+
+
+### Ordinary owned vector binding identity
+
+Ordinary acyclic Rust function translation tracks each direct standard vector
+binding with a distinct source identity. Assigning that value to another name,
+passing it to an owned parameter, binding an owning match pattern or starting
+an owned immediate iterator consumes the old identity. An owned argument transfers before the next
+argument is parsed, preserving source evaluation order even through nested calls. A new binding receives
+a new identity; shadowing does not revive the old one. Fresh vector copies
+receive independent identities. A wildcard does not consume its matched place.
+
+Immutable loans retain the actual owner identity. Indexed places retain that
+identity for a subsequent borrow; scalar copies lose it when bound as values.
+A later source read checks the recorded state, rather than revalidating earlier
+expressions against a later move. Scoped owners expire unless the owned value
+itself escapes as the block result. A reference cannot outlive its owner.
+
+Branch analysis snapshots and joins actual source states on returning paths.
+An identity consumed on one returning path is unavailable after the join.
+Match alternatives analyze the incoming ownership state independently. Moves
+in guards require their complete fallthrough proof; unproved owned temporary
+borrows refuse. These decisions are authored in JavaScript and translated
+mechanically to Rust; native code supplies identities, source facts and lexical
+snapshots. Links source assets preserve the shared decision program.
+
+The literal controls in `parity/fixtures/rust-owned-bindings.lino` retain source
+versions, valid transfers, invalid reuse, loans, indexed places, branch joins
+and scope exits. Former valid named-argument/iterator refusals retain their
+exact complete inputs, predecessor reasons and added positive controls. These
+are unexecuted drafts. They establish no execution evidence or completion.
+Legacy local-state, shared-handle, scalar-loop and const-function profiles keep
+their independent contracts. Full String/record/Box/resource ownership, mutable
+borrows, backedges, temporary lifetime extension, conditional-pattern paths
+and all other source constructs remain obligations.

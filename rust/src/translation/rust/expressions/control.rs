@@ -208,7 +208,11 @@ impl RustParser {
             },
         )?;
         self.origins.direct(&cond, path, cond.span)?;
+        let ownership_base = self.origins.snapshot_owned_bindings();
         let then = self.block(path)?;
+        let ownership_then = self.origins.snapshot_owned_bindings();
+        self.origins.restore_owned_bindings(ownership_base);
+
         if self.cursor.eat("else").is_none() {
             return Err(unsupported(
                 "if without else",
@@ -221,6 +225,13 @@ impl RustParser {
         } else {
             self.block(path)?
         };
+        let ownership_else = self.origins.snapshot_owned_bindings();
+        self.origins.join_owned_bindings(
+            &ownership_then,
+            &ownership_else,
+            !self.origins.origin(&then, path).diverging,
+            !self.origins.origin(&otherwise, path).diverging,
+        );
         self.origins.checked_join(&[
             self.origins.origin(&then, path),
             self.origins.origin(&otherwise, path),
@@ -246,8 +257,11 @@ impl RustParser {
         )?;
         self.cursor.expect("{", Some("match"))?;
         let mut rows = Vec::new();
+        let ownership_base = self.origins.snapshot_owned_bindings();
+        let mut ownership_arms = Vec::new();
         let mut guarded_arms = Vec::new();
         while !self.cursor.is("}") {
+            self.origins.restore_owned_bindings(ownership_base.clone());
             let arm_start = self.peek();
             let mut aliases = Vec::new();
             self.cursor.eat("|");
@@ -261,6 +275,7 @@ impl RustParser {
                 for alias in &aliases {
                     self.origins.bind(&alias.name, &alias.value, path, None)?;
                 }
+                let ownership_guard = self.origins.snapshot_owned_bindings();
                 let guard = if self.cursor.eat("if").is_some() {
                     let guard = self.expr(path, Options::default())?;
                     self.origins.direct(&guard, path, guard.span)?;
@@ -268,9 +283,14 @@ impl RustParser {
                 } else {
                     None
                 };
+                if let Some(guard) = guard.as_ref() {
+                    self.origins
+                        .check_owned_guard(&ownership_guard, guard.span)?;
+                }
                 self.cursor.expect("=>", Some("match arm"))?;
                 let body = self.expr(path, Options::default())?;
                 let origin = self.origins.origin(&body, path);
+                ownership_arms.push((self.origins.snapshot_owned_bindings(), !origin.diverging));
                 Ok::<_, crate::translation::diagnostics::TranslationError>((body, origin, guard))
             })();
             self.origins.scope = previous;
@@ -325,6 +345,18 @@ impl RustParser {
                 "uninhabited types are outside the portable core",
                 span(&token, self.cursor.peek()),
             ));
+        }
+        let mut ownership_joined = std::collections::HashMap::new();
+        let mut ownership_returns = false;
+        for (states, returns) in ownership_arms {
+            self.origins.join_owned_bindings(
+                &ownership_joined,
+                &states,
+                ownership_returns,
+                returns,
+            );
+            ownership_joined = self.origins.snapshot_owned_bindings();
+            ownership_returns |= returns;
         }
         if guarded_arms.iter().any(|arm| arm.guard.is_some()) {
             return self.lower_guarded_match(

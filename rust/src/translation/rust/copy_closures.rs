@@ -90,11 +90,14 @@ impl RustParser {
         });
         let mut args = Vec::new();
         while !self.cursor.is(")") {
-            args.push(self.read_standard_string_view_argument(
+            let argument = self.read_standard_string_view_argument(
                 path,
                 parameters.get(args.len()),
                 result.as_ref(),
-            )?);
+            )?;
+            self.origins
+                .prepare_owned_argument(&argument, parameters.get(args.len()), path)?;
+            args.push(argument);
             if self.cursor.eat(",").is_none() {
                 break;
             }

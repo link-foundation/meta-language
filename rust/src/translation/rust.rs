@@ -549,6 +549,8 @@ impl RustParser {
                 .any(|token| token.kind == TokenKind::Identifier && token.value == "enum");
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
+        origins.owned_binding_excluded =
+            !profiles.scalar_loop.is_empty() || !profiles.const_function.is_empty();
         Self {
             retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),

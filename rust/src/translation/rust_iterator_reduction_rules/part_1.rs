@@ -723,13 +723,15 @@ pub fn read_rust_iterator_owned_receiver_error(
     model: &str,
     known: bool,
     layers: f64,
-    fresh: bool,
+    consumable: bool,
 ) -> String {
-    if ((((kind == "array") && (model == "owned vector")) && known) && (layers == 0f64)) && fresh {
+    if ((((kind == "array") && (model == "owned vector")) && known) && (layers == 0f64))
+        && consumable
+    {
         String::new()
     } else {
         String::from(
-            "owned iteration needs an actual fresh standard vector and its consumption proof",
+            "owned iteration needs an actual consumable standard vector and its consumption proof",
         )
     }
 }

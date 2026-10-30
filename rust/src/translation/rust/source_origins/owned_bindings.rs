@@ -1,0 +1,185 @@
+//! Identity allocation and snapshots; state decisions are generated shared rules.
+use super::{Result, SExpr, SNode, SourceOrigin, SourceOrigins, Span, Type, unsupported};
+use crate::translation::rust_owned_binding_rules as rules;
+use std::collections::{HashMap, HashSet};
+impl SourceOrigins {
+    pub(in super::super) fn track_owned_bindings(&self) -> bool {
+        rules::accept_rust_owned_binding_tracking(
+            self.collecting,
+            self.owned_binding_excluded || self.owned_local_values || self.shared_array_handles,
+        )
+    }
+    pub(in super::super) fn owned_binding_value(&self, origin: &SourceOrigin) -> bool {
+        self.track_owned_bindings()
+            && rules::accept_rust_owned_binding_value(
+                origin.ty.as_ref().map_or("", Type::kind),
+                origin.array_source_model.unwrap_or(""),
+                origin.wrappers.len() as f64,
+                origin.proven,
+            )
+    }
+    pub(in super::super) fn check_owned_origin(
+        &self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        if !self.track_owned_bindings() {
+            return Ok(());
+        }
+        let Some(id) = origin.source_binding_identity.as_ref() else {
+            return Ok(());
+        };
+        let error = rules::read_rust_owned_binding_read_error(
+            self.source_binding_states
+                .get(id)
+                .map_or("", String::as_str),
+        );
+        if !error.is_empty() {
+            return Err(unsupported("Rust owned binding", &error, span));
+        }
+        Ok(())
+    }
+    pub(in super::super) fn register_owned_binding(
+        &mut self,
+        mut origin: SourceOrigin,
+    ) -> SourceOrigin {
+        if self.owned_binding_value(&origin) {
+            let id = self.next_source_binding_identity.to_string();
+            self.next_source_binding_identity += 1;
+            origin.source_binding_identity = Some(id.clone());
+            origin.source_place_binding_identity = None;
+            self.source_binding_states
+                .insert(id, "available".to_owned());
+        }
+        origin
+    }
+    pub(in super::super) fn available_owned_binding(&self, origin: &SourceOrigin) -> bool {
+        self.owned_binding_value(origin)
+            && origin.source_binding_identity.as_ref().is_some_and(|id| {
+                rules::read_rust_owned_binding_read_error(
+                    self.source_binding_states
+                        .get(id)
+                        .map_or("", String::as_str),
+                )
+                .is_empty()
+            })
+    }
+    pub(in super::super) fn consume_owned_binding(
+        &mut self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<bool> {
+        if !self.owned_binding_value(origin) || origin.source_binding_identity.is_none() {
+            return Ok(false);
+        }
+        self.check_owned_origin(origin, span)?;
+        let id = origin.source_binding_identity.as_ref().unwrap();
+        let state =
+            rules::consume_rust_owned_binding_state(self.source_binding_states.get(id).unwrap());
+        self.source_binding_states.insert(id.clone(), state);
+        Ok(true)
+    }
+    pub(in super::super) fn check_owned_name(&self, node: &SExpr, path: &[String]) -> Result<()> {
+        if let SNode::Name { path: names } = &node.node {
+            if names.len() == 1 {
+                if let Some(origin) = self.scope.get(&names[0]) {
+                    self.check_owned_origin(origin, node.span)?;
+                }
+            }
+        }
+        let _ = path;
+        Ok(())
+    }
+    pub(in super::super) fn prepare_owned_argument(
+        &mut self,
+        node: &SExpr,
+        parameter: Option<&SourceOrigin>,
+        path: &[String],
+    ) -> Result<()> {
+        if !parameter.is_some_and(|value| self.owned_binding_value(value)) {
+            return Ok(());
+        }
+        let origin = self.origin(node, path);
+        if self.consume_owned_binding(&origin, node.span)? {
+            if let Some(place) = node.span {
+                self.owned_argument_transfers.insert(place);
+            }
+        }
+        Ok(())
+    }
+    pub(in super::super) fn expire_owned_bindings(
+        &mut self,
+        before: &HashMap<String, String>,
+        result: &SourceOrigin,
+    ) {
+        let escaping = if self.owned_binding_value(result) {
+            result.source_binding_identity.clone()
+        } else {
+            None
+        };
+        for (id, state) in &mut self.source_binding_states {
+            if !before.contains_key(id) && escaping.as_ref() != Some(id) {
+                *state = rules::expire_rust_owned_binding_state(state);
+            }
+        }
+    }
+    pub(in super::super) fn snapshot_owned_bindings(&self) -> HashMap<String, String> {
+        self.source_binding_states.clone()
+    }
+    pub(in super::super) fn restore_owned_bindings(&mut self, snapshot: HashMap<String, String>) {
+        self.source_binding_states = snapshot;
+    }
+    pub(in super::super) fn join_owned_bindings(
+        &mut self,
+        left: &HashMap<String, String>,
+        right: &HashMap<String, String>,
+        left_returns: bool,
+        right_returns: bool,
+    ) {
+        let ids = left
+            .keys()
+            .chain(right.keys())
+            .cloned()
+            .collect::<HashSet<_>>();
+        self.source_binding_states = ids
+            .into_iter()
+            .map(|id| {
+                let state = rules::merge_rust_owned_binding_states(
+                    left.get(&id).map_or("absent", String::as_str),
+                    right.get(&id).map_or("absent", String::as_str),
+                    left_returns,
+                    right_returns,
+                );
+                (id, state)
+            })
+            .collect();
+    }
+    pub(in super::super) fn check_owned_guard(
+        &self,
+        before: &HashMap<String, String>,
+        span: Option<Span>,
+    ) -> Result<()> {
+        let ids = before.keys().collect::<Vec<_>>();
+        let left = ids
+            .iter()
+            .map(|id| before.get(*id).unwrap().clone())
+            .collect::<Vec<_>>();
+        let right = ids
+            .iter()
+            .map(|id| {
+                self.source_binding_states
+                    .get(*id)
+                    .cloned()
+                    .unwrap_or_else(|| "absent".to_owned())
+            })
+            .collect::<Vec<_>>();
+        if !rules::accept_rust_owned_binding_guard(&left, &right) {
+            return Err(unsupported(
+                "Rust owned binding",
+                "owned consumption in guards needs its complete fallthrough path proof",
+                span,
+            ));
+        }
+        Ok(())
+    }
+}

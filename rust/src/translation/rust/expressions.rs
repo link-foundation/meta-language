@@ -308,9 +308,9 @@ impl RustParser {
             }
             let arg = self.unary(path, Options::default())?;
             if token.value == "&&" {
-                self.origins.wrap(&arg, path, "reference");
+                self.origins.wrap(&arg, path, "reference")?;
             }
-            self.origins.wrap(&arg, path, "reference");
+            self.origins.wrap(&arg, path, "reference")?;
             self.shared_array_borrow(&arg, path)?;
             return Ok(arg);
         }

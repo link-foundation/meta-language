@@ -256,6 +256,18 @@ impl RustParser {
         range: Option<Span>,
     ) -> Result<Vec<Binding>> {
         let name = self.fresh_product_binding();
+        if matches!(pattern, ProductBindingPattern::Wildcard(_)) {
+            if let Some(expected) = source_type {
+                let actual = self.origins.origin(&value, path);
+                self.origins.argument(&actual, expected, range)?;
+            }
+            return Ok(vec![Binding {
+                name,
+                ty,
+                value,
+                span: range,
+            }]);
+        }
         self.origins.bind(&name, &value, path, source_type)?;
         let origin = self.origins.scope[&name].clone();
         let mut bindings = vec![Binding {

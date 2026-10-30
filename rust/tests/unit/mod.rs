@@ -621,3 +621,5 @@ mod translation_rust_iterator_reductions;
 mod translation_rust_iterator_pipelines;
 
 mod translation_rust_iterator_arithmetic;
+
+mod translation_rust_owned_bindings;

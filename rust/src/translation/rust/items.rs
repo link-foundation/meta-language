@@ -605,6 +605,7 @@ impl RustParser {
         function_body: bool,
     ) -> Result<SExpr> {
         let open = self.cursor.expect("{", Some("block"))?;
+        let ownership_before = self.origins.snapshot_owned_bindings();
         let previous = self.origins.enter(None);
         let mut lets = Vec::new();
         let ordinary = self.ordinary_completion_context();
@@ -713,6 +714,7 @@ impl RustParser {
                     continue;
                 }
                 if disposition == "bind" {
+                    self.origins.consume_owned_binding(&origin, expr.span)?;
                     lets.push(Binding {
                         name: self.fresh_product_binding(),
                         ty: None,
@@ -756,7 +758,7 @@ impl RustParser {
         }
         let close = self.cursor.expect("}", Some("block"))?;
         let tail = tail.unwrap_or_else(|| SExpr::new(SNode::Unit, span(&open, &close)));
-        let origin = self.origins.origin(&tail, path);
+        let mut origin = self.origins.origin(&tail, path);
         let result = lets.into_iter().rev().fold(tail, |body, binding| {
             SExpr::new(
                 SNode::Let {
@@ -768,6 +770,11 @@ impl RustParser {
                 binding.span,
             )
         });
+        self.origins
+            .expire_owned_bindings(&ownership_before, &origin);
+        if origin.wrappers.is_empty() && !matches!(origin.ty, Some(Type::Array { .. })) {
+            origin.source_place_binding_identity = None;
+        }
         self.origins.mark(&result, origin);
         self.origins.scope = previous;
         Ok(result)

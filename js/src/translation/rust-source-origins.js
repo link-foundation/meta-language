@@ -1,3 +1,4 @@
+import {isRustOwnedBindingValue,expireRustOwnedBindings,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {acceptRustStaticByteArrayCoercion,acceptRustStaticByteArrayOwnerEquality} from './rust-byte-string-expression-rules.js';
 import {readRustSourceNumericPatternOwnerError,acceptRustSourceNumericPatternAlias} from './rust-numeric-pattern-rules.js';
@@ -42,6 +43,7 @@ export class RustSourceOrigins {
     this.collecting = catalog === null;
     this.catalog = catalog ?? new Map();
     this.scope = new Map();
+    this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
     this.expressions = new WeakMap();
     this.patternReferences = new WeakMap();
     this.literalPatternAliases = new WeakMap();
@@ -52,10 +54,18 @@ export class RustSourceOrigins {
 
   enter(scope = this.scope) {
     const previous = this.scope;
-    this.scope = new Map(scope);
+    this.scope = new Map([...scope].map(([name,origin])=>[name,origin.sourceBindingIdentity==null?registerRustOwnedBinding(this,origin):origin]));
     return previous;
   }
 
+  prepareOwnedArgument(node,parameter,path){if(!parameter||!isRustOwnedBindingValue(this,parameter))return;const actual=this.origin(node,path);if(consumeRustOwnedOrigin(this,actual,node.span))this.ownedArgumentTransfers.add(node);}
+  expireOwnedBindings(before,result){expireRustOwnedBindings(this,before,result);}
+  snapshotOwnedBindings(){return new Map(this.sourceBindingStates);}
+  restoreOwnedBindings(snapshot){this.sourceBindingStates=new Map(snapshot);}
+  joinOwnedBindings(left,right,leftReturns,rightReturns){joinRustOwnedBindings(this,left,right,leftReturns,rightReturns);}
+  checkOwnedGuard(snapshot,span){checkRustOwnedGuard(this,snapshot,span);}
+  availableOwnedBinding(origin){return availableRustOwnedOrigin(this,origin);}
+  consumeOwnedBinding(origin,span){return consumeRustOwnedOrigin(this,origin,span);}
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
     this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector',arrayElementCopyEvidence:acceptRustScalarArrayIndexElement(type.element.kind) }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
@@ -236,7 +246,7 @@ export class RustSourceOrigins {
     const callableError=readRustCallableOwnerJoinError(returning.flatMap(projectRustCallableOwnerDescriptor));if(callableError)return {...unknown(true),callableSourceOwnerError:callableError};
     const first = returning[0];
     for(const origin of returning){const error=readRustCopyClosureJoinError(Boolean(first.copyClosureSpan),Boolean(origin.copyClosureSpan),first.copyClosureSpan?.start===origin.copyClosureSpan?.start&&first.copyClosureSpan?.end===origin.copyClosureSpan?.end);if(error)throw unsupported('Rust closure source join',error);}
-    if (returning.every(origin => this.same(origin, first))) return { ...clone(first), integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners),freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
+    if (returning.every(origin => this.same(origin, first))) return { ...clone(first),sourceBindingIdentity:returning.every(origin=>origin.sourceBindingIdentity===first.sourceBindingIdentity)?first.sourceBindingIdentity:null, integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners),freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
     if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array',integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners) };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
@@ -252,6 +262,7 @@ export class RustSourceOrigins {
     if (this.arrayResultModel && node.k === 'array') origin = { ...origin,
       freshArrayValue: origin.arraySourceModel === 'owned vector' && origin.wrappers.length === 0
         && node.items.every(item => !item.spread && this.immutableProduct(this.origin(item.value, origin.path))) };
+    if(origin.wrappers.length===0&&origin.type?.kind!=='array')origin={...origin,sourcePlaceBindingIdentity:origin.sourcePlaceBindingIdentity??origin.sourceBindingIdentity??null,sourceBindingIdentity:null};
     this.expressions.set(node, clone(origin));
     return node;
   }
@@ -268,7 +279,7 @@ export class RustSourceOrigins {
   // Source intervals survive the parser's block and completion reconstruction.
   markVectorConstructor(node,origin) {
     this.freshVectorConstructors.add(`${node.span?.start}:${node.span?.end}`);
-    return this.mark(node,origin);
+    return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null});
   }
 
   freshVectorArgument(node,path,allowCalls=true) {
@@ -285,6 +296,8 @@ export class RustSourceOrigins {
 
   wrap(node, path, layer) {
     const origin = this.origin(node, path);
+    if(testRustSourceReferenceLifetimeLayer(layer)&&isRustOwnedBindingValue(this,origin)&&origin.sourceBindingIdentity!=null&&(node.block===true||['if','match'].includes(node.k)))throw unsupported('Rust owned binding','owned temporary borrows need their complete lifetime proof',node.span);
+    if(testRustSourceReferenceLifetimeLayer(layer)&&origin.sourcePlaceBindingIdentity!=null)origin.sourceBindingIdentity=origin.sourcePlaceBindingIdentity;
     origin.wrappers.unshift(layer);if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceLifetimes=[null,...(origin.sourceLifetimes??[])];
     return this.mark(node, origin);
   }
@@ -304,9 +317,11 @@ export class RustSourceOrigins {
     this.pointerIntegerArgument(actual,value(),node.span);
     if(this.sharedArrayHandleSourceModel&&!this.collecting&&actual.type?.kind==='array'&&!acceptRustSharedArrayHandleTransfer(actual.arraySourceModel,actual.arraySourceModel,actual.wrappers.length,actual.wrappers.length))throw unsupported('Rust shared array handle source','a binding requires an actual owned shared handle, not its vector payload',node.span);
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
-    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
+    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue&&!this.availableOwnedBinding(actual)) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
-    this.scope.set(name, { ...clone(declared ?? actual), ...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue: false, freshVectorResultContract:false });
+    if(this.availableOwnedBinding(actual))this.consumeOwnedBinding(actual,node.span);
+    const binding={...clone(declared??actual),...(actual.wrappers.length?{sourceBindingIdentity:actual.sourceBindingIdentity}:{}),...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue:false,freshVectorResultContract:false,sourcePlaceBindingIdentity:null};
+    this.scope.set(name,registerRustOwnedBinding(this,binding));
   }
 
   pointerIntegerArgument(actualOrigin,expectedOrigin,span){
@@ -323,6 +338,7 @@ export class RustSourceOrigins {
   argument(actualOrigin, expectedOrigin, span) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    if(actualOrigin.wrappers.length)checkRustOwnedOrigin(this,actualOrigin,span);
     this.pointerIntegerArgument(actualOrigin,expectedOrigin,span);
     const callableError=readRustCallableOwnerError(projectRustCallableOwnerDescriptor(actualOrigin),projectRustCallableOwnerDescriptor(expectedOrigin));if(callableError)throw unsupported('Rust callable source owner',callableError,span);
     const pointerError=readRustFunctionPointerCoercionError(expectedOrigin.type?.kind==='function'&&expectedOrigin.copyEvidence===true,actualOrigin.type?.kind??'',Boolean(actualOrigin.copyClosureSpan),actualOrigin.copyClosureCaptureCount??-1,actualOrigin.proven);if(pointerError)throw unsupported('Rust function pointer coercion',pointerError,span);
@@ -369,13 +385,14 @@ export class RustSourceOrigins {
     if (!expected || args.length !== expected.length) return;
     for (let index = 0; index < args.length; index += 1) {
       const parameter=expected[index];
+      const actual=this.origin(args[index],path),transferred=this.ownedArgumentTransfers.has(args[index]);if(!transferred)checkRustOwnedOrigin(this,actual,span);const consumable=transferred||this.availableOwnedBinding(actual);
       const fresh=parameter.arraySourceModel==='owned vector'&&parameter.wrappers.length===0&&acceptRustFreshOwnedVectorArgument(ordinary,parameter.arraySourceModel,parameter.wrappers.length,parameter.type?.kind==='array'?parameter.type.element.kind:'',this.freshVectorArgument(args[index],path));
       if (parameter.arraySourceModel === 'owned vector' && parameter.wrappers.length === 0
-        && !fresh) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
+        && !fresh&&!consumable) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
       // Immutable reference coercions may dereference Box behind a reference;
       // an owned Box never coerces into its owned inner value.
-      const actual=this.origin(args[index],path);
       this.argument(fresh?{...actual,proven:true,uncertain:false,wrappers:[],arraySourceModel:'owned vector'}:actual, expected[index], span);
+      if(!transferred&&parameter.arraySourceModel==='owned vector'&&parameter.wrappers.length===0)this.consumeOwnedBinding(actual,span);
     }
   }
 
@@ -444,7 +461,9 @@ export class RustSourceOrigins {
         || candidates.some(candidate => !candidate || !candidate.proven || JSON.stringify(candidate.wrappers) !== JSON.stringify(origin.wrappers)))) {
         throw unsupported('or-pattern ownership', 'every alternative must bind the same names with the same source ownership', span);
       }
-      scope.set(name, this.join(candidates.filter(Boolean)));
+      const binding=this.join(candidates.filter(Boolean));
+      if(isRustOwnedBindingValue(this,binding)){consumeRustOwnedOrigin(this,binding,span);scope.set(name,registerRustOwnedBinding(this,binding));}
+      else scope.set(name,binding);
     }
     return scope;
   }

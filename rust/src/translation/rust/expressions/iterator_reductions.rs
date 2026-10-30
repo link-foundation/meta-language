@@ -43,7 +43,9 @@ impl RustParser {
             return Ok(None);
         }
         let actual = self.origins.origin(receiver, path);
-        let source = actual.static_byte_array_read_view().unwrap_or(actual);
+        let source = actual
+            .static_byte_array_read_view()
+            .unwrap_or_else(|| actual.clone());
         let element = match &source.ty {
             Some(Type::Array { element, .. }) => Some(element.as_ref()),
             _ => None,
@@ -90,11 +92,14 @@ impl RustParser {
                 source.array_source_model.unwrap_or(""),
                 source.proven,
                 count(source.wrappers.len()),
-                self.origins.fresh_vector_argument(receiver, path, true),
+                self.origins.fresh_vector_argument(receiver, path, true)
+                    || self.origins.available_owned_binding(&actual),
             );
             if !error.is_empty() {
                 return Err(fail(&error, Some(method.span())));
             }
+            self.origins
+                .consume_owned_binding(&actual, Some(method.span()))?;
         }
         if self.cursor.eat(".").is_none() || !self.cursor.is_kind(super::TokenKind::Identifier) {
             return Err(fail(

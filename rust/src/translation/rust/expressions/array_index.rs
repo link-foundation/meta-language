@@ -16,7 +16,9 @@ impl RustParser {
             close.end,
         ));
         let actual = self.origins.origin(&object, path);
-        let receiver = actual.static_byte_array_read_view().unwrap_or(actual);
+        let receiver = actual
+            .static_byte_array_read_view()
+            .unwrap_or_else(|| actual.clone());
         let element = match receiver.ty.as_ref() {
             Some(Type::Array { element, .. }) => Some(element.as_ref()),
             _ => None,
@@ -91,6 +93,10 @@ impl RustParser {
                 arguments: Vec::new(),
             });
         }
+        origin.source_place_binding_identity = actual
+            .source_binding_identity
+            .clone()
+            .or(actual.source_place_binding_identity.clone());
         self.origins.mark(&result, origin);
         Ok(result)
     }
