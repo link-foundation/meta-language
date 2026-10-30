@@ -10776,3 +10776,20 @@ scalar copies keep actual primitive source owners. Independent original cases
 cover each selected source type and both branches. General Option values,
 borrowed outputs and computed panic payloads remain requirements; the current
 literal-message construction is not evidence that those are implemented.
+
+#### Evaluated Rust panic messages
+
+Rust panic messages may be checked String-valued expressions, represented by a
+shared `raiseRustPanicValue` operation. The source owner, exact operand count and
+message type are checked before emission. The nonreturning result may receive
+its surrounding expected type while retaining its message operand and effects.
+Direct JavaScript and Rust targets evaluate and raise the message once. Formal
+output normalization places that same evaluated message in the existing abort
+sum, allowing Lean and Rocq to retain it without a host-language panic callback.
+Expect evaluates its complete immutable standard str message before choosing
+Some or None, including when Some succeeds. Message calls, named str values and
+borrowed standard Strings use this path. The former literal-only source refusal
+is retained as a positive original with its previous input/reason in history;
+the old literal-only policy remains available to callers selecting that subset.
+General non-string panic payloads and arbitrary panic formatting remain separate
+requirements, along with every previously recorded Option and Result obligation.

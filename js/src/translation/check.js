@@ -1,3 +1,4 @@
+import {acceptLinkedRustPanicValue,readRustPanicValueArgumentError} from './rust-panic-value-rules.js';
 import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
 import {readRustSourceBytePatternTypeError} from './rust-byte-pattern-rules.js';
 import {readTypeQueryEvaluationPlan} from './type-query-evaluation-rules.js';
@@ -1363,6 +1364,7 @@ class Checker {
     if(acceptJavaScriptLooseEqualityOperation(node.op))return checkJavaScriptLooseComparison(this,node,env,path);
     if(node.op==='exponentiateJavaScriptNumericValue')return checkJavaScriptExponentiation(this,node,env,path,expected);
     if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);
+    if(acceptLinkedRustPanicValue('math',node.op)){const value=node.args.length===1&&!node.args[0].spread?this.expr(node.args[0].value,env,path,STRING):null,error=readRustPanicValueArgumentError(this.language,node.args.length,node.args.some(item=>item.spread),value?.type.kind??'');if(error)throw typeError(error,node.span);return{k:'math',op:node.op,args:[value],type:expected??UNIT};}
     if(readJavaScriptExceptionConstructorClass(node.op))return checkJavaScriptSourceException(this,node,env,path,expected);
     if(acceptLinkedJavaScriptSourceException('math',node.op))return checkJavaScriptSourceExceptionValue(this,node,env,path,expected);
     if(readJavaScriptNumberConversionResult(node.op))return checkJavaScriptNumberBuiltin(this,node,env,path);

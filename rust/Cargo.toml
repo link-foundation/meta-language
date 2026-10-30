@@ -221,6 +221,7 @@ include = [
     "src/data/rust-named-formatting-program.lino",
     "src/data/rust-numeric-pattern-program.lino",
     "src/data/rust-owned-binding-program.lino",
+    "src/data/rust-panic-value-program.lino",
     "src/data/rust-pointer-integer-owner-program.lino",
     "src/data/rust-primitive-associated-call-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",

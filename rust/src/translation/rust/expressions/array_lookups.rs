@@ -538,9 +538,26 @@ impl RustParser {
                 .expect("complete shared mapper result type");
         }
         self.origins.check_owned_origin(&source, range)?;
-        let message_error = rules::read_rust_array_lookup_panic_message_error(
+        let message_origin = defaults
+            .first()
+            .map(|value| self.origins.origin(value, path));
+        let message_error = rules::read_rust_array_lookup_panic_value_error(
             &consumer.value,
-            defaults.first().map_or("", |node| node.node.kind()),
+            message_origin
+                .as_ref()
+                .and_then(|value| value.ty.as_ref())
+                .map_or("", Type::kind),
+            message_origin
+                .as_ref()
+                .and_then(|value| value.text_source_model)
+                .unwrap_or(""),
+            message_origin
+                .as_ref()
+                .map_or(0.0, |value| value.wrappers.len() as f64),
+            message_origin.as_ref().is_some_and(|value| value.proven),
+            message_origin
+                .as_ref()
+                .is_some_and(|value| value.wrappers.iter().all(|layer| layer == "reference")),
         );
         if !message_error.is_empty() {
             return Err(unsupported(
@@ -776,6 +793,13 @@ impl RustParser {
                 )
             } else {
                 self.project_primitive_default(&owner, path, range)?
+            };
+            let fallback = if rules::test_rust_array_lookup_panic_consumer(&consumer.value)
+                && !defaults.is_empty()
+            {
+                SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust evaluated expect message".to_owned(),args:vec![super::SArrayItem{value:local(captures.len()-1),spread:false}]},range)
+            } else {
+                fallback
             };
             values.insert("fallback".to_owned(), fallback);
         }

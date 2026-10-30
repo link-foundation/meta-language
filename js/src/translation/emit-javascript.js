@@ -1,3 +1,4 @@
+import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {renderStringArrayCopySort} from './string-array-sort-rules.js';
@@ -660,6 +661,7 @@ class JavaScriptEmitter {
           if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
           return renderJavaScriptBigIntegerResultExpression('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
         }
+        if(acceptLinkedRustPanicValue(e.k,e.op))return renderRustPanicValueExpression('JavaScript',this.expr(e.args[0]));
         if(acceptLinkedJavaScriptSourceException(e.k,e.op))return renderJavaScriptSourceExceptionExpression('JavaScript',e.op,this.expr(e.args[0]),this.expr(e.args[1]),false);
         if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return renderJavaScriptNumberScalarConversion('JavaScript',e.op,'float',this.expr(e.args[0]),false);
         if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('JavaScript',e,argument=>this.expr(argument));

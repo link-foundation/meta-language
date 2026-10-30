@@ -59,3 +59,8 @@ export function readRustArrayLookupPanicMessageError(consumer,kind){return consu
 /** Literal panic messages do not perform formatting; braces and NUL survive.
  * @param {string} consumer @param {string} message @returns {string} */
 export function readRustArrayLookupPanicMessage(consumer,message){return consumer==='unwrap'?'called `Option::unwrap()` on a `None` value':consumer==='expect'?message:'';}
+
+/** @param {string} consumer @param {string} kind @param {string} storage
+ * @param {number} layers @param {boolean} known @param {boolean} references
+ * @returns {string} */
+export function readRustArrayLookupPanicValueError(consumer,kind,storage,layers,known,references){return consumer!=='expect'||kind==='string'&&(storage==='string slice'||storage==='owned string')&&layers>=1&&known&&references?'':'expect needs its actual immutable standard str message source';}

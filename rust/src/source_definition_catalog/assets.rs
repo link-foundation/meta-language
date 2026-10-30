@@ -308,6 +308,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-owned-binding-program.lino" => {
             Some(include_str!("../data/rust-owned-binding-program.lino"))
         }
+        "rust-panic-value-program.lino" => {
+            Some(include_str!("../data/rust-panic-value-program.lino"))
+        }
         "rust-pointer-integer-owner-program.lino" => Some(include_str!(
             "../data/rust-pointer-integer-owner-program.lino"
         )),

@@ -29,6 +29,14 @@ impl JavaScriptEmitter<'_> {
             if form=="division" {return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_division("JavaScript",&args[0],&args[1]));}
             return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_result_expression("JavaScript",&form,&args[0],false));
         }
+        if crate::translation::rust_panic_value_rules::accept_linked_rust_panic_value("math", op) {
+            return Ok(
+                crate::translation::rust_panic_value_rules::render_rust_panic_value_expression(
+                    "JavaScript",
+                    &args[0],
+                ),
+            );
+        }
         if crate::translation::source_exception_rules::accept_linked_java_script_source_exception(
             "math", op,
         ) {

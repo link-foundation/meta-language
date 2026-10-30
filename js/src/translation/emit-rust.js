@@ -1,3 +1,4 @@
+import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {acceptRustScalarMathematicalInterfaceModel,readRustScalarMathematicalEncoding,readRustScalarMathematicalStatement} from './rust-scalar-mathematical-interface-rules.js';
@@ -1580,7 +1581,8 @@ class RustEmitter {
           if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
           return renderJavaScriptBigIntegerResultExpression('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.utf16Strings);
     }
-    if(acceptLinkedJavaScriptSourceException(e.k,e.op)){
+    if(acceptLinkedRustPanicValue(e.k,e.op))return renderRustPanicValueExpression('Rust',this.expr(e.args[0]));
+        if(acceptLinkedJavaScriptSourceException(e.k,e.op)){
       this.usesSourceException=true;
       return renderJavaScriptSourceExceptionExpression('Rust',e.op,this.expr(e.args[0]),this.expr(e.args[1]),this.utf16Strings);
     }

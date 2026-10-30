@@ -170,3 +170,26 @@ pub fn read_rust_array_lookup_panic_message(consumer: &str, message: &str) -> St
         String::new()
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_panic_value_error(
+    consumer: &str,
+    kind: &str,
+    storage: &str,
+    layers: f64,
+    known: bool,
+    references: bool,
+) -> String {
+    if (consumer != "expect")
+        || (((((kind == "string")
+            && ((storage == "string slice") || (storage == "owned string")))
+            && (layers >= 1f64))
+            && known)
+            && references)
+    {
+        String::new()
+    } else {
+        String::from("expect needs its actual immutable standard str message source")
+    }
+}

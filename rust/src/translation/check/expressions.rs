@@ -10,6 +10,7 @@ use super::{
 };
 use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
 use crate::translation::rust_character_rules::accept_rust_numeric_literal_negation;
+use crate::translation::rust_panic_value_rules as rust_panic_rules;
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
@@ -691,6 +692,29 @@ impl Checker {
                     ) > 0.0
                 {
                     return self.check_number_bitwise_operands(op, args, span, env, path, expected);
+                }
+                if rust_panic_rules::accept_linked_rust_panic_value("math", op) {
+                    let value = if args.len() == 1 && !args[0].spread {
+                        Some(self.expr(&args[0].value, env, path, Some(&super::STRING), false)?)
+                    } else {
+                        None
+                    };
+                    let error = rust_panic_rules::read_rust_panic_value_argument_error(
+                        self.language.as_str(),
+                        args.len() as f64,
+                        args.iter().any(|item| item.spread),
+                        value.as_ref().map_or("", |value| value.ty.kind()),
+                    );
+                    if !error.is_empty() {
+                        return Err(type_error(error, span));
+                    }
+                    return Ok(Expr::new(
+                        Node::Math {
+                            op: op.clone(),
+                            args: vec![value.expect("checked panic message")],
+                        },
+                        expected.cloned().unwrap_or(super::UNIT),
+                    ));
                 }
                 if !crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty(){return self.javascript_source_exception(op,args,span,env,path,expected);}
                 if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op) {

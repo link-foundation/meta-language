@@ -118,6 +118,48 @@ pub mod ml_array {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_panic_value_operation() -> String {
+    String::from("raiseRustPanicValue")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_rust_panic_value(kind: &str, operation: &str) -> bool {
+    (kind == "math") && (operation == (self::read_rust_panic_value_operation()))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_value_argument_error(
+    language: &str,
+    count: f64,
+    spread: bool,
+    kind: &str,
+) -> String {
+    if (((language == "Rust") && (count == 1f64)) && !spread) && (kind == "string") {
+        String::new()
+    } else {
+        String::from("a Rust panic value needs one checked source String message")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_rust_panic_value_expression(target: &str, message: &str) -> String {
+    if target == "JavaScript" {
+        format!(
+            "((ml_message)=>{{throw new Error(ml_message);}})({})",
+            message.to_owned()
+        )
+    } else if target == "Rust" {
+        format!("panic!(\"{{}}\", {})", message.to_owned())
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_source_exception_operation(name: &str) -> String {
     if name == "Error" {
         String::from("raiseJavaScriptError")
@@ -452,7 +494,9 @@ pub fn read_java_script_numeric_operation_message(failure: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_abrupt_result_coercion_form(kind: &str, operation: &str) -> String {
-    if (kind == "abort") || self::accept_linked_java_script_source_exception(kind, operation) {
+    if (self::accept_linked_rust_panic_value(kind, operation) || (kind == "abort"))
+        || self::accept_linked_java_script_source_exception(kind, operation)
+    {
         String::from("leaf")
     } else if (kind == "let") || (kind == "print") {
         String::from("body")

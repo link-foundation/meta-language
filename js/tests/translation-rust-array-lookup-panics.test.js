@@ -7,9 +7,11 @@ import {createRustSourceOwnerProgramLinks,decodeTypedProgramLinks,emitTypedProgr
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import * as rules from '../src/translation/rust-array-lookup-rules.js';
+import * as panic from '../src/translation/rust-panic-value-rules.js';
+import * as abrupt from '../src/translation/abrupt-result-rules.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-array-lookup-panics.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
-for(const [index,row]of fixture.premises.entries())test('iterator decision '+index,()=>assert.deepEqual(rules[row.operation](...row.args),row.expected));
+for(const [index,row]of fixture.premises.entries())test('iterator decision '+index,()=>assert.deepEqual((rules[row.operation]??panic[row.operation]??abrupt[row.operation])(...row.args),row.expected));
 for(const row of fixture.cases)test(row.name,()=>{
  const original=row.source+'fn main(){}',concrete=LinkNetwork.parse(original,'Rust');for(const network of [concrete,LinkNetwork.fromLino(concrete.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(concrete))])assert.equal(network.reconstructText(),original);
  const packet=createRustSourceOwnerProgramLinks(original),program=decodeTypedProgramLinks(packet.network,packet.root);

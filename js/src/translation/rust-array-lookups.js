@@ -1,6 +1,8 @@
+import {readRustPanicValueOperation} from './rust-panic-value-rules.js';
+import {readRustArrayLookupPanicValueError} from './rust-array-lookup-rules.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {STRING} from './types.js';
-import {testRustArrayLookupPanicConsumer,readRustArrayLookupPanicMessageError,readRustArrayLookupPanicMessage} from './rust-array-lookup-rules.js';
+import {testRustArrayLookupPanicConsumer,readRustArrayLookupPanicMessage} from './rust-array-lookup-rules.js';
 import {projectRustStaticByteArrayReadOrigin} from './rust-byte-string-expressions.js';
 // Actual tokens/origins project complete shared plans into the existing core.
 import {BOOL,FLOAT,rustFixedType} from './types.js';
@@ -53,7 +55,7 @@ export function readRustArrayLookup(parser,receiver,method,args,range,path){
  if(cloneError)throw unsupported('Rust array lookup clone',cloneError,range);
  if(arity&&readRustUsizeIndexExpression(parser,args[0],path))throw unsupported('Rust array lookup index','the actual index needs its complete direct usize source meaning',args[0].span??range);
  checkRustOwnedOrigin(parser.origins,actual,range);
- const panicking=testRustArrayLookupPanicConsumer(consumer.value),messageError=readRustArrayLookupPanicMessageError(consumer.value,defaults[0]?.k??'');if(messageError)throw unsupported('Rust array lookup panic',messageError,range);
+ const panicking=testRustArrayLookupPanicConsumer(consumer.value),messageOrigin=defaults.length?parser.origins.origin(defaults[0],path):null,messageError=readRustArrayLookupPanicValueError(consumer.value,messageOrigin?.type?.kind??'',messageOrigin?.textSourceModel??'',messageOrigin?.wrappers.length??0,messageOrigin?.proven===true,messageOrigin?.wrappers.every(layer=>layer==='reference')??false);if(messageError)throw unsupported('Rust array lookup panic',messageError,range);
  const presence=acceptRustArrayLookupPresenceConsumer(consumer.value);
  if(!presence&&!element)throw unsupported('Rust array lookup result','a copied value needs its complete actual scalar element type',range);
  const owner=readRustPointerIntegerContractOwner(source.expandedSourceOwner??source.sourceOwner);
@@ -75,6 +77,7 @@ export function readRustArrayLookup(parser,receiver,method,args,range,path){
  function project(plan){const stack=[],pop=()=>{if(!stack.length)throw new TypeError('an array lookup source plan lost an earlier term');return stack.pop();};for(const term of plan){if(values[term])stack.push(values[term]);else if(term==='lt'||term==='gt'||term==='sub'){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}else if(term==='not')stack.push({k:'unary',op:'not',arg:pop(),span:range});else if(term==='if'){const otherwise=pop(),then=pop(),cond=pop();stack.push({k:'if',cond,then,else:otherwise,span:range});}else throw new TypeError('unknown array lookup source term');}if(stack.length!==1)throw new TypeError('an array lookup source plan needs one complete result');return stack[0];}
  values.condition=project(planRustArrayLookupCondition(method.value));
  if(!presence){const index=project(planRustArrayLookupIndex(method.value)),term=readRustArrayLookupDefaultTerm(element.kind,stringClone);values.selected={k:'index',object:local(0),index:{k:'cast',arg:index,to:{kind:'nat'},flavor:'exact',span:range},span:range};values.fallback=panicking?{k:'abort',message:readRustArrayLookupPanicMessage(consumer.value,defaults[0]?.value??''),span:range}:defaults.length?(lazy?{k:'app',fn:local(captures.length-1),args:[],span:range}:local(captures.length-1)):term==='unit'?{k:'unit',span:range}:term==='empty string'?{k:'str',value:'',span:range}:projectRustPrimitiveDefault(parser,owner,path,range);}
+ if(panicking&&defaults.length)values.fallback={k:'math',op:readRustPanicValueOperation(),name:'Rust evaluated expect message',args:[{value:local(captures.length-1),spread:false}],span:range};
  if(predicate){values.predicate={k:'app',fn:local(captures.length-1),args:[values.selected],span:range};values.true={k:'bool',value:true,span:range};values.false={k:'bool',value:false,span:range};}
  if(mapperOwner)values.selected=projectRustPrimitiveFrom(parser,parser.origins.mark(values.selected,selectedOrigin),mapperOwner,range,path);
  if(mapperOrigin){const fallback=local(captures.length-2);values.fallback=lazy?{k:'app',fn:fallback,args:[],span:range}:fallback;values.selected={k:'app',fn:local(captures.length-1),args:[values.selected],span:range};}
