@@ -1,3 +1,6 @@
+import {STRING} from './types.js';
+import {readRustPanicValueOperation,readRustPanicMessageSourceError} from './rust-panic-value-rules.js';
+import {testRustPrimitiveTryFromPanicConsumer,readRustPrimitiveTryFromFailureDebug,readRustPrimitiveTryFromPanicPrefix} from './rust-primitive-try-from-rules.js';
 // Actual token/type/origin transport into shared standard Result plans.
 import {BOOL,FLOAT,rustFixedType} from './types.js';
 import {TranslationError,unsupported} from './diagnostics.js';
@@ -36,14 +39,21 @@ export function readRustPrimitiveTryFrom(parser,path){
  const inputValue=()=>local(captures[0],source.origin),targetOrigin={...parser.origins.typeOrigin(target,path),sourceOwner:{kind:'primitive',path:[owner],arguments:[]}};
  const success=parser.origins.mark({k:'cast',arg:inputValue(),to:target,flavor:'exact',span:range},targetOrigin);
  const converted=consumer.value==='map_or'?projectRustPrimitiveFrom(parser,success,mapperOwner,range,path):success;
+ const panicking=testRustPrimitiveTryFromPanicConsumer(consumer.value);
  if(arity>0){const actual=readRustPrimitiveConversionFacts(parser,defaults[0],path),literal=defaults[0].k==='num'&&!defaults[0].type||defaults[0].k==='unary'&&defaults[0].op==='neg'&&defaults[0].arg.k==='num'&&!defaults[0].arg.type;
-  if(!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal)))throw unsupported('Rust primitive TryFrom default','the actual default must retain the selected result type and primitive source owner',range);
-  captures.push({name:parser.freshProductBinding(),type:resultType,value:defaults[0]});}
+  if(panicking){const error=readRustPanicMessageSourceError(consumer.value,actual.kind,actual.origin.textSourceModel??'',actual.origin.wrappers.length,actual.origin.proven===true,actual.origin.wrappers.every(layer=>layer==='reference'));if(error)throw unsupported('Rust primitive TryFrom message',error,range);}
+  if(!panicking&&!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal)))throw unsupported('Rust primitive TryFrom default','the actual default must retain the selected result type and primitive source owner',range);
+  captures.push({name:parser.freshProductBinding(),type:panicking?STRING:resultType,value:defaults[0]});}
  const plan=planRustPrimitiveTryFromConsumer(consumer.value,readRustPrimitiveTryFromGuards(source.type.bits,source.signed,target.bits,target.signed)),stack=[];
  const pop=()=>{if(!stack.length)throw new TypeError('the shared primitive Result plan lost an earlier source term');return stack.pop();};
  for(const term of plan){
   if(term==='input')stack.push(inputValue());
   else if(term==='minimum'||term==='maximum'){const magnitude=readRustSaturatingIntegerBoundMagnitude(term,target.bits,target.signed),number={k:'num',value:magnitude,type:source.type,span:range};stack.push(acceptRustSaturatingIntegerBoundNegative(term,target.signed)?{k:'unary',op:'neg',arg:number,span:range}:number);}
+  else if(term==='positive error'||term==='negative error')stack.push({k:'str',value:readRustPrimitiveTryFromFailureDebug(term),span:range});
+  else if(term==='panic prefix')stack.push({k:'str',value:readRustPrimitiveTryFromPanicPrefix(consumer.value),span:range});
+  else if(term==='message')stack.push(local(captures[1],parser.origins.origin(defaults[0],path)));
+  else if(term==='concat'){const right=pop(),left=pop();stack.push({k:'binary',op:'concat',left,right,span:range});}
+  else if(term==='raise')stack.push({k:'math',op:readRustPanicValueOperation(),name:'Rust primitive conversion panic message',args:[{value:pop(),spread:false}],span:range});
   else if(term==='true')stack.push({k:'bool',value:true,span:range});
   else if(term==='success')stack.push(converted);
   else if(term==='default')stack.push({k:'num',value:'0',type:target,span:range});

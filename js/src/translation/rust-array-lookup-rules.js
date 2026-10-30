@@ -1,3 +1,4 @@
+import {readRustPanicMessageSourceError} from './rust-panic-value-rules.js';
 import {readRustScalarArrayIndexReceiverError} from './rust-array-index-rules.js';
 import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 /** @param {string} method @param {boolean} ordinary @returns {number} */
@@ -63,4 +64,4 @@ export function readRustArrayLookupPanicMessage(consumer,message){return consume
 /** @param {string} consumer @param {string} kind @param {string} storage
  * @param {number} layers @param {boolean} known @param {boolean} references
  * @returns {string} */
-export function readRustArrayLookupPanicValueError(consumer,kind,storage,layers,known,references){return consumer!=='expect'||kind==='string'&&(storage==='string slice'||storage==='owned string')&&layers>=1&&known&&references?'':'expect needs its actual immutable standard str message source';}
+export function readRustArrayLookupPanicValueError(consumer,kind,storage,layers,known,references){return readRustPanicMessageSourceError(consumer,kind,storage,layers,known,references);}

@@ -21,3 +21,9 @@ export function acceptRustPanicFormattingValue(name,ordinary,kind,count,braces){
 export function readRustPanicFormattingPrefix(name){return name==='unreachable'?'internal error: entered unreachable code: ':name==='unimplemented'?'not implemented: ':name==='todo'?'not yet implemented: ':'';}
 /** @param {string} kind @param {string} operation @returns {string} */
 export function readRustPanicCompletionKind(kind,operation){return acceptLinkedRustPanicValue(kind,operation)?'abort':kind;}
+
+/** Shared actual str argument contract for Option/Result expect.
+ * @param {string} consumer @param {string} kind @param {string} storage
+ * @param {number} layers @param {boolean} known @param {boolean} references
+ * @returns {string} */
+export function readRustPanicMessageSourceError(consumer,kind,storage,layers,known,references){return consumer!=='expect'||kind==='string'&&(storage==='string slice'||storage==='owned string')&&layers>=1&&known&&references?'':'expect needs its actual immutable standard str message source';}

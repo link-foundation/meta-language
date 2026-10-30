@@ -1,4 +1,6 @@
 // Generated from complete js/src/translation/rust-array-lookup-rules.js. Do not edit by hand.
+use super::test_rust_array_lookup_predicate_consumer;
+
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     #[must_use]
@@ -113,6 +115,116 @@ pub mod ml_array {
             }
         }
         out
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_value_operation() -> String {
+    String::from("raiseRustPanicValue")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_rust_panic_value(kind: &str, operation: &str) -> bool {
+    (kind == "math") && (operation == (self::read_rust_panic_value_operation()))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_value_argument_error(
+    language: &str,
+    count: f64,
+    spread: bool,
+    kind: &str,
+) -> String {
+    if (((language == "Rust") && (count == 1f64)) && !spread) && (kind == "string") {
+        String::new()
+    } else {
+        String::from("a Rust panic value needs one checked source String message")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_rust_panic_value_expression(target: &str, message: &str) -> String {
+    if target == "JavaScript" {
+        format!(
+            "((ml_message)=>{{throw new Error(ml_message);}})({})",
+            message.to_owned()
+        )
+    } else if target == "Rust" {
+        format!("panic!(\"{{}}\", {})", message.to_owned())
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_macro(name: &str, ordinary: bool) -> bool {
+    ordinary
+        && ((((name == "panic") || (name == "unreachable")) || (name == "unimplemented"))
+            || (name == "todo"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_value(
+    name: &str,
+    ordinary: bool,
+    kind: &str,
+    count: f64,
+    braces: bool,
+) -> bool {
+    (self::accept_rust_panic_formatting_macro(name, ordinary) && (count > 0f64))
+        && ((count > 1f64) || ((kind == "str") && braces))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_formatting_prefix(name: &str) -> String {
+    if name == "unreachable" {
+        String::from("internal error: entered unreachable code: ")
+    } else if name == "unimplemented" {
+        String::from("not implemented: ")
+    } else if name == "todo" {
+        String::from("not yet implemented: ")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_completion_kind(kind: &str, operation: &str) -> String {
+    if self::accept_linked_rust_panic_value(kind, operation) {
+        String::from("abort")
+    } else {
+        kind.to_owned()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_message_source_error(
+    consumer: &str,
+    kind: &str,
+    storage: &str,
+    layers: f64,
+    known: bool,
+    references: bool,
+) -> String {
+    if (consumer != "expect")
+        || (((((kind == "string")
+            && ((storage == "string slice") || (storage == "owned string")))
+            && (layers >= 1f64))
+            && known)
+            && references)
+    {
+        String::new()
+    } else {
+        String::from("expect needs its actual immutable standard str message source")
     }
 }
 
@@ -784,109 +896,4 @@ pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f6
 #[must_use]
 pub fn test_rust_array_lookup_lazy_fallback(consumer: &str) -> bool {
     (consumer == "unwrap_or_else") || (consumer == "map_or_else")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_lazy_fallback_error(
-    kind: &str,
-    parameters: f64,
-    wrappers: f64,
-    known_result: bool,
-) -> String {
-    if (((kind == "function") && (parameters == 0f64)) && (wrappers == 0f64)) && known_result {
-        String::new()
-    } else {
-        String::from("a lazy lookup fallback needs a known direct zero-argument callable result")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_rust_array_lookup_predicate_consumer(consumer: &str) -> bool {
-    (consumer == "is_some_and") || (consumer == "is_none_or")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_predicate_error(
-    kind: &str,
-    parameters: f64,
-    wrappers: f64,
-    known_parameter: bool,
-    result: &str,
-    known_result: bool,
-) -> String {
-    if (((((kind == "function") && (parameters == 1f64)) && (wrappers == 0f64)) && known_parameter)
-        && (result == "bool"))
-        && known_result
-    {
-        String::new()
-    } else {
-        String::from(
-            "a lookup predicate needs a known direct one-argument callable with a Boolean result",
-        )
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_mapper_error(
-    kind: &str,
-    parameters: f64,
-    wrappers: f64,
-    known_parameter: bool,
-    known_result: bool,
-) -> String {
-    if ((((kind == "function") && (parameters == 1f64)) && (wrappers == 0f64)) && known_parameter)
-        && known_result
-    {
-        String::new()
-    } else {
-        String::from(
-            "a lookup mapper needs a known direct one-argument callable with a complete result",
-        )
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_callable_context_arity(
-    consumer: &str,
-    receiver: bool,
-    element: bool,
-) -> f64 {
-    if !receiver || !element {
-        -1f64
-    } else if self::test_rust_array_lookup_lazy_fallback(consumer) {
-        0f64
-    } else if self::test_rust_array_lookup_predicate_consumer(consumer) || (consumer == "map_or") {
-        1f64
-    } else {
-        -1f64
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_array_lookup_receiver_error(
-    kind: &str,
-    element: &str,
-    model: &str,
-    proven: bool,
-    immutable: bool,
-    copy: bool,
-    copied: bool,
-) -> String {
-    if copied {
-        self::read_rust_scalar_array_index_receiver_error(
-            kind, element, model, proven, immutable, copy,
-        )
-    } else if ((proven && immutable) && ((model == "owned vector") || (model == "immutable slice")))
-        && ((kind == "array") || (((kind).is_empty()) && copy))
-    {
-        String::new()
-    } else {
-        String::from("the receiver needs a proven standard vector or immutable slice")
-    }
 }

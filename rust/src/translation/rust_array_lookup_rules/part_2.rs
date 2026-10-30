@@ -1,5 +1,113 @@
 // Generated from complete js/src/translation/rust-array-lookup-rules.js. Do not edit by hand.
 use super::accept_rust_primitive_from_source;
+use super::read_rust_panic_message_source_error;
+use super::read_rust_scalar_array_index_receiver_error;
+use super::test_rust_array_lookup_lazy_fallback;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_lazy_fallback_error(
+    kind: &str,
+    parameters: f64,
+    wrappers: f64,
+    known_result: bool,
+) -> String {
+    if (((kind == "function") && (parameters == 0f64)) && (wrappers == 0f64)) && known_result {
+        String::new()
+    } else {
+        String::from("a lazy lookup fallback needs a known direct zero-argument callable result")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_array_lookup_predicate_consumer(consumer: &str) -> bool {
+    (consumer == "is_some_and") || (consumer == "is_none_or")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_predicate_error(
+    kind: &str,
+    parameters: f64,
+    wrappers: f64,
+    known_parameter: bool,
+    result: &str,
+    known_result: bool,
+) -> String {
+    if (((((kind == "function") && (parameters == 1f64)) && (wrappers == 0f64)) && known_parameter)
+        && (result == "bool"))
+        && known_result
+    {
+        String::new()
+    } else {
+        String::from(
+            "a lookup predicate needs a known direct one-argument callable with a Boolean result",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_mapper_error(
+    kind: &str,
+    parameters: f64,
+    wrappers: f64,
+    known_parameter: bool,
+    known_result: bool,
+) -> String {
+    if ((((kind == "function") && (parameters == 1f64)) && (wrappers == 0f64)) && known_parameter)
+        && known_result
+    {
+        String::new()
+    } else {
+        String::from(
+            "a lookup mapper needs a known direct one-argument callable with a complete result",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_callable_context_arity(
+    consumer: &str,
+    receiver: bool,
+    element: bool,
+) -> f64 {
+    if !receiver || !element {
+        -1f64
+    } else if self::test_rust_array_lookup_lazy_fallback(consumer) {
+        0f64
+    } else if self::test_rust_array_lookup_predicate_consumer(consumer) || (consumer == "map_or") {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_receiver_error(
+    kind: &str,
+    element: &str,
+    model: &str,
+    proven: bool,
+    immutable: bool,
+    copy: bool,
+    copied: bool,
+) -> String {
+    if copied {
+        self::read_rust_scalar_array_index_receiver_error(
+            kind, element, model, proven, immutable, copy,
+        )
+    } else if ((proven && immutable) && ((model == "owned vector") || (model == "immutable slice")))
+        && ((kind == "array") || (((kind).is_empty()) && copy))
+    {
+        String::new()
+    } else {
+        String::from("the receiver needs a proven standard vector or immutable slice")
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -181,15 +289,5 @@ pub fn read_rust_array_lookup_panic_value_error(
     known: bool,
     references: bool,
 ) -> String {
-    if (consumer != "expect")
-        || (((((kind == "string")
-            && ((storage == "string slice") || (storage == "owned string")))
-            && (layers >= 1f64))
-            && known)
-            && references)
-    {
-        String::new()
-    } else {
-        String::from("expect needs its actual immutable standard str message source")
-    }
+    self::read_rust_panic_message_source_error(consumer, kind, storage, layers, known, references)
 }

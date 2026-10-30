@@ -85,3 +85,26 @@ pub fn read_rust_panic_completion_kind(kind: &str, operation: &str) -> String {
         kind.to_owned()
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_message_source_error(
+    consumer: &str,
+    kind: &str,
+    storage: &str,
+    layers: f64,
+    known: bool,
+    references: bool,
+) -> String {
+    if (consumer != "expect")
+        || (((((kind == "string")
+            && ((storage == "string slice") || (storage == "owned string")))
+            && (layers >= 1f64))
+            && known)
+            && references)
+    {
+        String::new()
+    } else {
+        String::from("expect needs its actual immutable standard str message source")
+    }
+}

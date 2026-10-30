@@ -346,6 +346,7 @@ impl RustParser {
         };
         let mut captures = vec![(first, source_type.clone(), input)];
         let mut fallback = None;
+        let panicking = rules::test_rust_primitive_try_from_panic_consumer(&consumer.value);
         if arity > 0.0 {
             let actual = facts(self, &defaults[0], path);
             let literal = matches!(defaults[0].node, SNode::Num { ty: None, .. })
@@ -354,20 +355,28 @@ impl RustParser {
                 Type::Fixed { bits, signed } => (bits.to_string(), *signed),
                 _ => (String::new(), false),
             };
-            if !argument_rules::accept_rust_primitive_selection_argument(
-                result_type.kind(),
-                &bits,
-                signed,
-                &result_owner,
-                &actual.kind,
-                &actual.bits,
-                actual.signed,
-                &actual.path(),
-                count(actual.origin.wrappers.len()),
-                actual.origin.proven,
-                actual.admitted(),
-                literal,
-            ) {
+            if panicking {
+                let error=crate::translation::rust_panic_value_rules::read_rust_panic_message_source_error(&consumer.value,&actual.kind,actual.origin.text_source_model.unwrap_or(""),count(actual.origin.wrappers.len()),actual.origin.proven,actual.origin.wrappers.iter().all(|layer|layer=="reference"));
+                if !error.is_empty() {
+                    return Err(unsupported("Rust primitive TryFrom message", &error, range));
+                }
+            }
+            if !panicking
+                && !argument_rules::accept_rust_primitive_selection_argument(
+                    result_type.kind(),
+                    &bits,
+                    signed,
+                    &result_owner,
+                    &actual.kind,
+                    &actual.bits,
+                    actual.signed,
+                    &actual.path(),
+                    count(actual.origin.wrappers.len()),
+                    actual.origin.proven,
+                    actual.admitted(),
+                    literal,
+                )
+            {
                 return Err(unsupported(
                     "Rust primitive TryFrom default",
                     "the actual default must retain the selected result type and primitive source owner",
@@ -381,10 +390,24 @@ impl RustParser {
                 },
                 defaults[0].span.or(range),
             );
-            self.origins
-                .mark(&node, origin(result_type.clone(), &result_owner, path));
+            self.origins.mark(
+                &node,
+                if panicking {
+                    actual.origin.clone()
+                } else {
+                    origin(result_type.clone(), &result_owner, path)
+                },
+            );
             fallback = Some(node);
-            captures.push((name, result_type.clone(), defaults.remove(0)));
+            captures.push((
+                name,
+                if panicking {
+                    super::STRING
+                } else {
+                    result_type.clone()
+                },
+                defaults.remove(0),
+            ));
         }
         let Type::Fixed {
             bits: source_bits, ..
@@ -449,6 +472,38 @@ impl RustParser {
                             number
                         },
                     );
+                }
+                "positive error" | "negative error" => stack.push(SExpr::new(
+                    SNode::Str {
+                        value: rules::read_rust_primitive_try_from_failure_debug(&term),
+                    },
+                    range,
+                )),
+                "panic prefix" => stack.push(SExpr::new(
+                    SNode::Str {
+                        value: rules::read_rust_primitive_try_from_panic_prefix(&consumer.value),
+                    },
+                    range,
+                )),
+                "message" => stack.push(fallback.clone().ok_or_else(|| {
+                    type_error("the Result expect message capture is required", range)
+                })?),
+                "concat" => {
+                    let right = pop(&mut stack, range)?;
+                    let left = pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::Binary {
+                            op: BinaryOp::Concat,
+                            left: Box::new(left),
+                            right: Box::new(right),
+                            rounding: None,
+                        },
+                        range,
+                    ));
+                }
+                "raise" => {
+                    let message = pop(&mut stack, range)?;
+                    stack.push(SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust primitive conversion panic message".to_owned(),args:vec![super::SArrayItem{value:message,spread:false}]},range));
                 }
                 "true" => stack.push(SExpr::new(SNode::Bool { value: true }, range)),
                 "success" => stack.push(converted.clone()),

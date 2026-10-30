@@ -774,9 +774,11 @@ pub fn accept_rust_primitive_try_from_source(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_primitive_try_from_consumer_arity(method: &str) -> f64 {
-    if ((method == "is_ok") || (method == "is_err")) || (method == "unwrap_or_default") {
+    if (((method == "is_ok") || (method == "is_err")) || (method == "unwrap_or_default"))
+        || (method == "unwrap")
+    {
         0f64
-    } else if method == "unwrap_or" {
+    } else if (method == "unwrap_or") || (method == "expect") {
         1f64
     } else if method == "map_or" {
         2f64

@@ -631,3 +631,5 @@ mod translation_rust_string_byte_views;
 mod translation_rust_array_lookup_panics;
 
 mod translation_rust_formatted_panics;
+
+mod translation_rust_primitive_try_from_panics;

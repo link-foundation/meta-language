@@ -10810,3 +10810,21 @@ with positive coverage of their present behavior. Snapshot copying is automated
 as Links data; the old fixture is not reinterpreted as new execution evidence.
 All formatting specifiers, custom Display effects, panic hooks and locations,
 non-string payloads and full Rust exception control remain requirements.
+
+#### Standard integer Result panic consumers and std versions
+
+Immediate primitive integer TryFrom results support unwrap and computed-message
+expect through the same shared range guards, successful casts and evaluated
+panic operation. Inputs and eager messages are captured once in source order;
+only failing conversions compute their Debug failure and raise. The complete
+standard error spelling is version-sensitive: Rust1.90–1.96 uses a unit payload,
+whereas Rust1.97–1.99 exposes NegOverflow or PosOverflow. The current prepared
+source interpretation matches the pinned CI std snapshot (Rust1.99); its panic
+assertions are explicitly bounded to >=1.97 <1.100 and report other versions as
+uncovered. Explicit source-version selection and the earlier Debug interpretation
+remain requirements. This bound does not change existing non-panic conversion
+coverage. An independent fixed-integer matrix covers every width/sign pair,
+zero and source extrema. A shared immutable str message predicate serves both
+Option and Result expect, with the old Option entry point retained as a wrapper.
+Error escape, custom Debug implementations, generic Result control and all
+previous whole-source/grammar obligations remain binding.
