@@ -475,7 +475,6 @@ class RustParser {
   resolve(segments, path) {
     const inherent=resolveRustInherentPath(this,segments,path);
     if(inherent)return inherent;
-    const stringBytes=readRustStringByteView(this,receiver,method,args,range,path);if(stringBytes)return stringBytes;
     const aliases = this.aliases.get(path.join('.'));
     return aliases?.has(segments[0]) ? [...aliases.get(segments[0]), ...segments.slice(1)] : segments;
   }
@@ -1437,6 +1436,7 @@ class RustParser {
     const byteView=readRustByteStringSliceView(this,receiver,method,args,range,path);if(byteView)return byteView;
     const inherent=readRustInherentMethod(this,receiver,method,args,range,path);
     if(inherent)return inherent;
+    const stringBytes=readRustStringByteView(this,receiver,method,args,range,path);if(stringBytes)return stringBytes;
     const discovery=acceptRustTypeNamespaceMethodDiscovery(this.typeNamespaceDiscovery,method.value);
     if (!acceptRustTypeNamespaceBodyMethod(Boolean(this.typeNamespaceModel)&&!discovery, method.value, acceptRustUnitCloneReceiver(this,receiver))) throw unsupported('Rust type namespace body method', `${method.value} requires a separate actual method owner proof`, range);
     const expect = (count) => {
