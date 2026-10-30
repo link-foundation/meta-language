@@ -1,4 +1,5 @@
 //! Actual standard iterator syntax/source facts into shared reduction plans.
+use super::super::UNIT;
 use super::iterator_pipelines::{self, Pipeline};
 use super::{
     BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SExpr, SNode, SourceOrigin, Span,
@@ -462,7 +463,19 @@ impl RustParser {
             initial_origin = Some(origin);
         }
         let item = current_item.clone().expect("proved scalar item");
-        let result = initial_origin.clone().unwrap_or_else(|| boolean(path));
+        let result = initial_origin.clone().unwrap_or_else(|| {
+            if rules::read_rust_iterator_reduction_result_context(&consumer.value) == "unit" {
+                let mut origin = SourceOrigin::with_type(UNIT, path, Vec::new());
+                origin.source_owner = Some(SourceOwner {
+                    kind: "unit".to_owned(),
+                    path: Vec::new(),
+                    arguments: Vec::new(),
+                });
+                origin
+            } else {
+                boolean(path)
+            }
+        });
         let parameters = if let Some(accumulator) = &initial_origin {
             vec![accumulator.clone(), item]
         } else {
@@ -521,7 +534,10 @@ impl RustParser {
             &result,
             callback.span,
         )?;
-        if !stages.is_empty() {
+        if rules::accept_rust_iterator_reduction_fused_terminal(
+            &consumer.value,
+            stages.len() as f64,
+        ) {
             return iterator_pipelines::construct(
                 self,
                 Pipeline {

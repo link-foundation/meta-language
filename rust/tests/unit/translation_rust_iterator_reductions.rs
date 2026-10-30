@@ -41,6 +41,15 @@ fn iterator_reductions_preserve_products_and_every_source_decision() {
     for row in data["premises"].as_array().unwrap() {
         let args = &row["args"];
         let actual = match row["operation"].as_str().unwrap() {
+            "readRustIteratorReductionResultContext" => json!(
+                rules::read_rust_iterator_reduction_result_context(string(args, 0))
+            ),
+            "acceptRustIteratorReductionFusedTerminal" => {
+                json!(rules::accept_rust_iterator_reduction_fused_terminal(
+                    string(args, 0),
+                    number(args, 1)
+                ))
+            }
             "acceptRustIteratorReductionStart" => {
                 json!(rules::accept_rust_iterator_reduction_start(
                     string(args, 0),

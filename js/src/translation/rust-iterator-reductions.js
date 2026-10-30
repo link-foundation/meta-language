@@ -8,14 +8,14 @@ import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
 // Actual iterator tokens, source owners and checked callback facts. Runtime
 // reduction/short-circuit behavior belongs to the existing common array terms.
-import {BOOL,FLOAT,NAT,rustFixedType,sameType} from './types.js';
+import {BOOL,FLOAT,NAT,UNIT,rustFixedType,sameType} from './types.js';
 import {unsupported} from './diagnostics.js';
 import {projectRustStaticByteArrayReadOrigin} from './rust-byte-string-expressions.js';
 import {readRustScalarArrayIndexReceiverError} from './rust-array-index-rules.js';
 import {readRustArrayLookupElementOwnerError} from './rust-array-lookup-rules.js';
 import {projectRustArrayLookupElementOwner} from './rust-array-lookup-source-owners.js';
 import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
-import {readRustIteratorOwnedReceiverError,readRustIteratorReductionInitialState,readRustIteratorCountReceiverError,readRustIteratorCollectionError,readRustIteratorReductionCountResultOwner,planRustIteratorReductionCount,acceptRustIteratorReductionStart,acceptRustIteratorReductionAdapter,readRustIteratorReductionAdapterState,planRustIteratorReductionReceiver,planRustIteratorReductionReverseIndex,readRustIteratorReductionCallbackArity,readRustIteratorReductionOperation,readRustIteratorReductionCaptureRoles,readRustIteratorReductionReceiverError,readRustIteratorReductionAccumulatorError,readRustIteratorReductionCallbackError} from './rust-iterator-reduction-rules.js';
+import {readRustIteratorReductionResultContext,acceptRustIteratorReductionFusedTerminal,readRustIteratorOwnedReceiverError,readRustIteratorReductionInitialState,readRustIteratorCountReceiverError,readRustIteratorCollectionError,readRustIteratorReductionCountResultOwner,planRustIteratorReductionCount,acceptRustIteratorReductionStart,acceptRustIteratorReductionAdapter,readRustIteratorReductionAdapterState,planRustIteratorReductionReceiver,planRustIteratorReductionReverseIndex,readRustIteratorReductionCallbackArity,readRustIteratorReductionOperation,readRustIteratorReductionCaptureRoles,readRustIteratorReductionReceiverError,readRustIteratorReductionAccumulatorError,readRustIteratorReductionCallbackError} from './rust-iterator-reduction-rules.js';
 export function readRustIteratorReduction(parser,receiver,method,args,range,path){
  if(!acceptRustIteratorReductionStart(method.value,args.length,parser.ordinaryCompletionContext()))return null;
  const actual=parser.origins.origin(receiver,path),result=readRustIteratorReductionValue(parser,receiver,method,args,range,path);
@@ -75,12 +75,12 @@ function readRustIteratorReductionValue(parser,receiver,method,args,range,path){
  }
  c.expect('(','iterator reduction');let initial=null,initialOrigin=null;
  if(readRustIteratorReductionCallbackArity(consumer.value)===2){initial=parser.expr(path);initialOrigin=parser.origins.origin(initial,path);const error=readRustIteratorReductionAccumulatorError(Boolean(initialOrigin.type)&&initialOrigin.proven===true,parser.origins.immutableProduct(initialOrigin),initialOrigin.wrappers.length);if(error)refuse(error,initial.span);c.expect(',','iterator fold');}
- const itemOrigin=structuredClone(item),resultOrigin=initialOrigin??{...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}},parameters=initialOrigin?[initialOrigin,itemOrigin]:[itemOrigin];
+ const itemOrigin=structuredClone(item),resultContext=readRustIteratorReductionResultContext(consumer.value),resultOrigin=initialOrigin??{...parser.origins.typeOrigin(resultContext==='unit'?UNIT:BOOL,path),sourceOwner:{kind:resultContext==='unit'?'unit':'primitive',path:resultContext==='unit'?[]:['bool'],arguments:[]}},parameters=initialOrigin?[initialOrigin,itemOrigin]:[itemOrigin];
  const expected={...parser.origins.typeOrigin({kind:'function',params:parameters.map(origin=>origin.type),ret:resultOrigin.type},path),copyEvidence:true,callableParameters:parameters,callableResult:resultOrigin};
  const callback=readRustExpectedCopyClosure(parser,path,expected);c.eat(',');const close=c.expect(')','iterator reduction');range={start:receiver.span?.start??range.start,end:close.end};
  const callable=parser.origins.origin(callback,path),error=readRustIteratorReductionCallbackError(consumer.value,callable.type?.kind??'',callable.type?.params?.length??-1,callable.wrappers.length,(callable.callableParameters??[]).map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),callable.callableResult?.proven===true&&Boolean(callable.callableResult.type));if(error)refuse(error,callback.span);
  for(let index=0;index<parameters.length;index+=1)parser.origins.argument(callable.callableParameters[index],parameters[index],callback.span);parser.origins.argument(callable.callableResult,resultOrigin,callback.span);
- if(stages.length)return pipeline(resultOrigin,initial,initialOrigin,callback,callable);
+ if(acceptRustIteratorReductionFusedTerminal(consumer.value,stages.length))return pipeline(resultOrigin,initial,initialOrigin,callback,callable);
  const values={receiver,initial,callback},types={receiver:source.type,initial:initialOrigin?.type,callback:callable.type},captures=readRustIteratorReductionCaptureRoles(consumer.value).map(role=>({name:parser.freshProductBinding(),value:values[role],type:types[role],role})),names=new Map(captures.map(capture=>[capture.role,capture.name])),local=role=>({k:'name',path:[names.get(role)],span:range});
  const object=constructIteratorReceiver(parser,local,names.get('receiver'),element,consumer.value,direction,range,refuse);
  let body={k:'method',object,op:operation,args:[local('callback'),...(initial?[local('initial')]:[])],span:range};

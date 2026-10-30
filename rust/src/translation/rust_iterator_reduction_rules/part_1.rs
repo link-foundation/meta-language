@@ -464,7 +464,7 @@ pub fn read_rust_iterator_reduction_operation(method: &str) -> String {
         String::from("every")
     } else if method == "any" {
         String::from("some")
-    } else if (method == "fold") || (method == "rfold") {
+    } else if ((method == "fold") || (method == "rfold")) || (method == "for_each") {
         String::from("reduce")
     } else {
         String::new()
@@ -476,7 +476,7 @@ pub fn read_rust_iterator_reduction_operation(method: &str) -> String {
 pub fn read_rust_iterator_reduction_callback_arity(method: &str) -> f64 {
     if (method == "fold") || (method == "rfold") {
         2f64
-    } else if (method == "all") || (method == "any") {
+    } else if ((method == "all") || (method == "any")) || (method == "for_each") {
         1f64
     } else {
         -1f64
@@ -492,7 +492,7 @@ pub fn read_rust_iterator_reduction_capture_roles(method: &str) -> Vec<String> {
             String::from("initial"),
             String::from("callback"),
         ]
-    } else if (method == "all") || (method == "any") {
+    } else if ((method == "all") || (method == "any")) || (method == "for_each") {
         vec![String::from("receiver"), String::from("callback")]
     } else {
         Vec::<String>::new()
@@ -737,6 +737,24 @@ pub fn read_rust_iterator_owned_receiver_error(
             "owned iteration needs an actual consumable standard vector and its consumption proof",
         )
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_iterator_reduction_result_context(consumer: &str) -> String {
+    if consumer == "for_each" {
+        String::from("unit")
+    } else if (consumer == "fold") || (consumer == "rfold") {
+        String::from("initial")
+    } else {
+        String::from("bool")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_iterator_reduction_fused_terminal(consumer: &str, stages: f64) -> bool {
+    (stages > 0f64) || (consumer == "for_each")
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

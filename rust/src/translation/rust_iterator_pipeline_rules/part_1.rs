@@ -104,13 +104,13 @@ pub fn plan_rust_iterator_arithmetic_terminal(consumer: &str) -> Vec<String> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_rust_iterator_pipeline_stage(operation: &str) -> bool {
-    (operation == "map") || (operation == "filter")
+    ((operation == "map") || (operation == "filter")) || (operation == "inspect")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_iterator_pipeline_parameter_layers(operation: &str, layers: f64) -> f64 {
-    if operation == "filter" {
+    if (operation == "filter") || (operation == "inspect") {
         layers + 1f64
     } else if operation == "map" {
         layers
@@ -122,7 +122,9 @@ pub fn read_rust_iterator_pipeline_parameter_layers(operation: &str, layers: f64
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_iterator_pipeline_result_context(operation: &str) -> String {
-    if operation == "filter" {
+    if operation == "inspect" {
+        String::from("unit")
+    } else if operation == "filter" {
         String::from("bool")
     } else if operation == "map" {
         String::from("infer")
@@ -136,7 +138,7 @@ pub fn read_rust_iterator_pipeline_result_context(operation: &str) -> String {
 pub fn read_rust_iterator_pipeline_result_state(operation: &str, state: &str) -> String {
     if operation == "map" {
         String::from("owned")
-    } else if operation == "filter" {
+    } else if (operation == "filter") || (operation == "inspect") {
         state.to_owned()
     } else {
         String::new()
@@ -170,7 +172,7 @@ pub fn read_rust_iterator_pipeline_callable_error(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_rust_iterator_pipeline_stage(operation: &str) -> Vec<String> {
-    if operation == "map" {
+    if (operation == "map") || (operation == "inspect") {
         vec![
             String::from("application"),
             String::from("continuation"),
@@ -193,7 +195,7 @@ pub fn plan_rust_iterator_pipeline_stage(operation: &str) -> Vec<String> {
 pub fn plan_rust_iterator_pipeline_terminal(consumer: &str) -> Vec<String> {
     if self::accept_rust_iterator_arithmetic_consumer(consumer) {
         self::plan_rust_iterator_arithmetic_terminal(consumer)
-    } else if (consumer == "all") || (consumer == "any") {
+    } else if ((consumer == "all") || (consumer == "any")) || (consumer == "for_each") {
         vec![
             String::from("callback"),
             String::from("item"),
@@ -230,7 +232,8 @@ pub fn read_rust_iterator_pipeline_inactive(consumer: &str) -> String {
         String::from("true")
     } else if consumer == "any" {
         String::from("false")
-    } else if ((((consumer == "fold") || (consumer == "rfold")) || (consumer == "count"))
+    } else if (((((consumer == "fold") || (consumer == "rfold")) || (consumer == "for_each"))
+        || (consumer == "count"))
         || (consumer == "collect"))
         || self::accept_rust_iterator_arithmetic_consumer(consumer)
     {
@@ -247,7 +250,8 @@ pub fn read_rust_iterator_pipeline_consumer_operation(consumer: &str) -> String 
         String::from("every")
     } else if consumer == "any" {
         String::from("some")
-    } else if ((((consumer == "fold") || (consumer == "rfold")) || (consumer == "count"))
+    } else if (((((consumer == "fold") || (consumer == "rfold")) || (consumer == "for_each"))
+        || (consumer == "count"))
         || (consumer == "collect"))
         || self::accept_rust_iterator_arithmetic_consumer(consumer)
     {
@@ -281,7 +285,9 @@ pub fn plan_rust_iterator_pipeline_captures(consumer: &str, count: f64) -> Vec<S
                         roles_2
                     };
                     {
-                        if (((consumer == "all") || (consumer == "any")) || (consumer == "fold"))
+                        if ((((consumer == "all") || (consumer == "any"))
+                            || (consumer == "for_each"))
+                            || (consumer == "fold"))
                             || (consumer == "rfold")
                         {
                             {
@@ -306,7 +312,7 @@ pub fn plan_rust_iterator_pipeline_captures(consumer: &str, count: f64) -> Vec<S
 pub fn read_rust_iterator_pipeline_continuation_item(operation: &str) -> String {
     if operation == "map" {
         String::from("mapped")
-    } else if operation == "filter" {
+    } else if (operation == "filter") || (operation == "inspect") {
         String::from("original")
     } else {
         String::new()
@@ -318,6 +324,8 @@ pub fn read_rust_iterator_pipeline_continuation_item(operation: &str) -> String 
 pub fn read_rust_iterator_pipeline_seed(consumer: &str) -> String {
     if self::accept_rust_iterator_arithmetic_consumer(consumer) {
         String::from("numeric identity")
+    } else if consumer == "for_each" {
+        String::from("unit")
     } else if consumer == "count" {
         String::from("zero")
     } else if consumer == "collect" {

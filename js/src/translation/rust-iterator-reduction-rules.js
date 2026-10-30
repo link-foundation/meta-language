@@ -5,11 +5,11 @@ export function acceptRustIteratorReductionStart(method,count,ordinary){return o
 /** @param {string} method @returns {boolean} */
 export function acceptRustIteratorCopyAdapter(method){return method==='copied'||method==='cloned';}
 /** @param {string} method @returns {string} */
-export function readRustIteratorReductionOperation(method){return acceptRustIteratorArithmeticConsumer(method)?method:method==='collect'?'collect':method==='count'?'count':method==='all'?'every':method==='any'?'some':(method==='fold'||method==='rfold')?'reduce':'';}
+export function readRustIteratorReductionOperation(method){return acceptRustIteratorArithmeticConsumer(method)?method:method==='collect'?'collect':method==='count'?'count':method==='all'?'every':method==='any'?'some':(method==='fold'||method==='rfold'||method==='for_each')?'reduce':'';}
 /** @param {string} method @returns {number} */
-export function readRustIteratorReductionCallbackArity(method){return (method==='fold'||method==='rfold')?2:method==='all'||method==='any'?1:-1;}
+export function readRustIteratorReductionCallbackArity(method){return (method==='fold'||method==='rfold')?2:method==='all'||method==='any'||method==='for_each'?1:-1;}
 /** @param {string} method @returns {string[]} */
-export function readRustIteratorReductionCaptureRoles(method){return (method==='fold'||method==='rfold')?['receiver','initial','callback']:method==='all'||method==='any'?['receiver','callback']:[];}
+export function readRustIteratorReductionCaptureRoles(method){return (method==='fold'||method==='rfold')?['receiver','initial','callback']:method==='all'||method==='any'||method==='for_each'?['receiver','callback']:[];}
 /** @param {boolean} receiver @param {boolean} owner @returns {string} */
 export function readRustIteratorReductionReceiverError(receiver,owner){return receiver&&owner?'':'a reduction needs an actual standard immutable scalar array and its complete primitive element owner';}
 /** @param {boolean} known @param {boolean} copy @param {number} layers @returns {string} */
@@ -71,3 +71,8 @@ export function readRustIteratorReductionInitialState(method){return method==='i
  * @param {string} kind @param {string} model @param {boolean} known
  * @param {number} layers @param {boolean} consumable @returns {string} */
 export function readRustIteratorOwnedReceiverError(kind,model,known,layers,consumable){return kind==='array'&&model==='owned vector'&&known&&layers===0&&consumable?'':'owned iteration needs an actual consumable standard vector and its consumption proof';}
+
+/** @param {string} consumer @returns {string} */
+export function readRustIteratorReductionResultContext(consumer){return consumer==='for_each'?'unit':consumer==='fold'||consumer==='rfold'?'initial':'bool';}
+/** @param {string} consumer @param {number} stages @returns {boolean} */
+export function acceptRustIteratorReductionFusedTerminal(consumer,stages){return stages>0||consumer==='for_each';}

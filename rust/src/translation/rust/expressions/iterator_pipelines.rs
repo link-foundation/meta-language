@@ -55,14 +55,28 @@ pub(super) fn read_stage(
     let mut parameter = item.clone();
     parameter.wrappers = vec!["reference".to_owned(); layers];
     parameter.source_lifetimes = vec![None; layers];
-    let infer = rules::read_rust_iterator_pipeline_result_context(&method.value) == "infer";
+    let context = rules::read_rust_iterator_pipeline_result_context(&method.value);
+    let infer = context == "infer";
     let result = if infer {
         None
     } else {
-        let mut value = SourceOrigin::with_type(BOOL, path, Vec::new());
+        let mut value = SourceOrigin::with_type(
+            if context == "unit" { UNIT } else { BOOL },
+            path,
+            Vec::new(),
+        );
         value.source_owner = Some(SourceOwner {
-            kind: "primitive".to_owned(),
-            path: vec!["bool".to_owned()],
+            kind: if context == "unit" {
+                "unit"
+            } else {
+                "primitive"
+            }
+            .to_owned(),
+            path: if context == "unit" {
+                Vec::new()
+            } else {
+                vec!["bool".to_owned()]
+            },
             arguments: Vec::new(),
         });
         Some(value)
@@ -365,7 +379,18 @@ impl Builder<'_> {
                 ("continuation".to_owned(), continued),
                 ("inactive".to_owned(), self.inactive()?),
             ]),
-            Some((binding, stage.output.ty.clone().unwrap())),
+            Some((
+                binding,
+                match &stage.ty {
+                    Type::Function { ret, .. } => ret.as_ref().clone(),
+                    _ => {
+                        return Err(fail(
+                            "a pipeline stage needs its actual callable return type",
+                            self.range,
+                        ));
+                    }
+                },
+            )),
         )
     }
 }
@@ -476,7 +501,9 @@ pub(super) fn construct(parser: &mut RustParser, pipeline: Pipeline<'_>) -> Resu
     let mut arguments = vec![Some(callback)];
     if reducing {
         let seed_role = rules::read_rust_iterator_pipeline_seed(pipeline.consumer);
-        let seed = if seed_role == "numeric identity" {
+        let seed = if seed_role == "unit" {
+            SExpr::new(SNode::Unit, pipeline.span)
+        } else if seed_role == "numeric identity" {
             let literal=crate::translation::rust_iterator_arithmetic_rules::plan_rust_iterator_arithmetic_seed(pipeline.consumer,ty.kind());
             SExpr::new(
                 SNode::Num {

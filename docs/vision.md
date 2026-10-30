@@ -10745,3 +10745,19 @@ fresh value provenance. Scalar Copy projections retain their existing behavior.
 This follows the [Rust place-expression rules](https://doc.rust-lang.org/reference/expressions.html#moving-out-of-a-place-expression).
 General field moves, resource ownership and Box extraction still require their
 complete source contracts; this source draft does not claim their completion.
+
+#### Unit consumers and inspection in ordinary Rust iterators
+
+The common iterator pipeline includes `for_each` as a Unit-seeded ordered fold
+and `inspect` as a lazy borrowed-item callback whose Unit result is bound once
+before continuing with the original item. Inspect preserves item ownership and
+reference layers; it receives one additional immutable reference layer. A map's
+result type and an inspection callback's result type are independently retained
+from the following iterator item type. Capture plans preserve receiver, stage
+and terminal callable construction even on empty input. Predicate terminals
+retain short circuiting; count must still execute preceding inspection stages.
+Both runtimes use JavaScript-derived shared Links plans and the existing common
+fold, application, binding and conditional terms. Independent original source
+controls cover Unit callbacks, borrowed and copied items, type-changing maps,
+construction/abort order, empty inputs and reversed visits. Mutable callback
+state and escaping iterators still require their complete ownership model.
