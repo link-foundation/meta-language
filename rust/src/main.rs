@@ -29,6 +29,12 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Read exact saved Links and optionally rebase or emit current typed graphs.
+    #[command(disable_help_flag = true)]
+    ExactGraph {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Export complete exact-ID CST or checked source Links; run exact-source help.
     #[command(disable_help_flag = true)]
     ExactSource {
@@ -292,6 +298,18 @@ fn main() {
             if !output.stderr.is_empty() {
                 eprint!("{}", output.stderr);
             }
+            std::process::exit(output.exit_code);
+        }
+        Command::ExactGraph { args } => {
+            let output = meta_language::run_unsigned_graph_command(
+                &args,
+                |path| fs::read_to_string(path).map_err(|error| error.to_string()),
+                |path| fs::read(path).map_err(|error| error.to_string()),
+            );
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
             std::process::exit(output.exit_code);
         }
         Command::ExactSource { args } => {

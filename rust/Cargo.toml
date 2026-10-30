@@ -294,6 +294,7 @@ include = [
     "src/data/typed-record-shape-program.lino",
     "src/data/unicode-case-emission-program.lino",
     "src/data/unicode-case-program.lino",
+    "src/data/unsigned-graph-command-program.lino",
     "src/data/unsigned-link-identity-program.lino",
     "src/data/unsigned-source-command-program.lino",
     "src/data/unsigned-source-document-program.lino",

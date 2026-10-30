@@ -500,6 +500,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "unicode-case-program.lino" => Some(include_str!("../data/unicode-case-program.lino")),
         "unicode-scalar-program.lino" => Some(include_str!("../data/unicode-scalar-program.lino")),
+        "unsigned-graph-command-program.lino" => {
+            Some(include_str!("../data/unsigned-graph-command-program.lino"))
+        }
         "unsigned-link-identity-program.lino" => {
             Some(include_str!("../data/unsigned-link-identity-program.lino"))
         }

@@ -1372,3 +1372,19 @@ The default exports the complete concrete source graph as Links Notation.
 preserves actual Rust owners and accepts `--source-version`; `--to` emits from
 the checked graph. `--binary` writes the exact-ID snapshot and cannot accompany
 `--to`. These draft command controls remain unexecuted during full-scope drafting.
+
+
+The saved-graph command is also drafted:
+
+```sh
+meta-language exact-graph current.lino --to JavaScript
+meta-language exact-graph current.bin --input-binary --to Rust --root 9007199254740993
+meta-language exact-graph current.lino --rebase 9007199254740993 --binary
+```
+
+It reads the current exact graph, selects an actual typed root for emission and
+passes it through the existing semantic checks. Multiple declared roots require
+`--root`. `--rebase` uses fresh coordinates and carries the chosen input root
+through the inverse directory. Binary output preserves the full snapshot state;
+text follows the existing Links text-state scope. These draft controls remain
+unexecuted until the complete requirements code draft is ready.

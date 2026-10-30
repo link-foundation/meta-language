@@ -20,7 +20,7 @@ impl fmt::Display for UnsignedLinksError {
     }
 }
 impl Error for UnsignedLinksError {}
-fn fail(message: impl ToString) -> UnsignedLinksError {
+pub(crate) fn fail(message: impl ToString) -> UnsignedLinksError {
     UnsignedLinksError(message.to_string())
 }
 fn limits(options: BinaryLinksOptions) -> Result<(), UnsignedLinksError> {

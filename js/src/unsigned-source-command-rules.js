@@ -16,7 +16,7 @@ function acceptUnsignedSourceOwnerLanguage(language){const source=language.toLow
 /** @param {string} language @returns {boolean} */
 function acceptUnsignedSourceTypedLanguage(language){return ['javascript','js','mjs','rust','rs'].includes(language.toLowerCase());}
 /** @param {string} language @returns {boolean} */
-function acceptUnsignedSourceTarget(language){return ['javascript','js','mjs','rust','rs','lean','rocq'].includes(language.toLowerCase());}
+export function acceptUnsignedSourceTarget(language){return ['javascript','js','mjs','rust','rs','lean','rocq'].includes(language.toLowerCase());}
 /** @param {string} file @param {string} language @param {string} first @param {string} target @param {string} version @param {boolean} typed @param {boolean} owners @param {boolean} binary @returns {string[]} */
 function finishUnsignedSourceCommand(file,language,first,target,version,typed,owners,binary){
  if(file===''||language===''||typed&&owners||binary&&target!==''||version!==''&&!owners)return ['error'];

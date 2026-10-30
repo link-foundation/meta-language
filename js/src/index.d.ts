@@ -1277,6 +1277,7 @@ export class LinkNetwork {
   importConceptOntology(source: LinkNetwork): ConceptOntologyImportReport;
   linksNotationReading(id: LinkId): LinksNotationReading;
   linksNotationText(ids: LinkId[]): string;
+  setLinkMetadata(id: LinkIdValue, metadata: LinkMetadata): boolean;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
   /** Original links; omission selects concrete syntax. Resolve provenance through this complete network. */
@@ -2068,6 +2069,7 @@ export interface RebasedUnsignedLinkNetwork {
   identities: UnsignedLinkId[];
 }
 export class UnsignedLinkNetwork {
+  setLinkMetadata(id: UnsignedLinkIdValue, metadata: LinkMetadata): boolean;
   static parse(text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): UnsignedLinkNetwork;
   static parseWithRegistry(registry: ParserRegistry, text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): UnsignedLinkNetwork;
   reconstructText(options?: BinaryLinksOptions): string;
@@ -2103,6 +2105,9 @@ export function createDenseUnsignedLinkNetwork(source: UnsignedLinkNetwork, opti
 export function restoreDenseUnsignedLinkNetwork(dense: LinkNetwork, directory: UnsignedLinkIdValue[], nextIdentity: UnsignedLinkIdValue | null, options?: BinaryLinksOptions): UnsignedLinkNetwork;
 export function encodeUnsignedLinkNetworkBinary(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): Uint8Array;
 export function decodeUnsignedLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function readUnsignedGraphSnapshot(source: string | Uint8Array | readonly number[], encoding?: 'text' | 'binary', options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function selectUnsignedTypedProgramRoot(network: UnsignedLinkNetwork, requested?: UnsignedLinkIdValue, options?: {recordLimit?: number}): UnsignedLinkId;
+export function runUnsignedGraphCommand(args: string[], io: {readFile(path: string): string; readBytes?(path: string): Uint8Array | readonly number[]}): {exitCode: number; stdout: string | Uint8Array; stderr: string};
 export function runUnsignedSourceCommand(args: string[], io: {readFile(path: string): string}): {exitCode: number; stdout: string | Uint8Array; stderr: string};
 export interface RebasedUnsignedTypedProgramLinks extends RebasedUnsignedLinkNetwork {
   root: UnsignedLinkId;

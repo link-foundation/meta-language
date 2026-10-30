@@ -11329,3 +11329,55 @@ files are scoped for cleanup. The command definition has independent text/binary
 and four-emission controls. None of these controls or represented sources runs
 during the complete-code drafting phase; CLI availability is not verification
 of the wider whole-language, exact-ID or concept requirements.
+
+
+Saved exact graph processing now has a source draft. `readUnsignedGraphSnapshot`
+and the native text/binary readers load the supplied current Links snapshot.
+Text uses identified flat positive unsigned links and canonical percent-encoded
+metadata; a shared source-defined surface check aligns the two runtimes before
+the existing canonical metadata decoder runs. This snapshot profile is separate
+from parsing arbitrary LiNo source documents into concrete syntax. Empty graphs,
+repeated/dangling references and full unsigned identities remain graph data.
+Shared byte/record and metadata-frame depth bounds precede deeper decoding;
+binary input retains the existing full exact snapshot envelope and its limits.
+
+`selectUnsignedTypedProgramRoot` / `select_unsigned_typed_program_root` consume
+actual stored identity/type/language/term/schema columns. They validate complete
+aligned metadata and canonical identity order under explicit record bounds.
+One declared schema-1 typed root can be inferred; multiple roots require an
+explicit actual input identity. Explicit decimal spellings normalize only their
+coordinates. Invalid, missing and undeclared choices refuse. Root selection does
+not establish typing or semantic validity: emission still performs the existing
+complete current-graph checks. It provides no concept-equivalence or name-based
+merge proof.
+
+`exact-graph` reads a text snapshot or explicit binary input, writes text or
+binary, optionally rebases into a separate exact coordinate space, or emits a
+selected typed graph to JavaScript, Rust, Lean or Rocq. Its shared source-defined
+argument policy generates native Rust. Requested roots use input coordinates;
+rebasing carries the selected actual root through the complete inverse directory.
+Source parsers, source restoration and cached target code are not inputs to graph
+loading. Source-version and owner facts already in the graph remain available to
+the existing semantic emitter. Binary-to-binary transport preserves allocator
+history and selected syntax; text keeps the existing text format's state scope.
+
+Existing-link metadata replacement is public in both runtimes, including the
+explicit JavaScript exact graph. It preserves identity, references, allocator
+and explicit registrations/caches; replacing an absent identity returns false
+without interning unused native metadata. Clone edits retain the original graph.
+Explicit caches retain their existing state semantics and are not new proofs of
+meaning. Independent deferred controls edit a typed scalar from7 to9, retain the
+original source graph and require current emitted behavior to return9, including
+after binary transport and rebasing. Two actual roots sharing one body remain
+separate entry links and require an explicit choice.
+
+Unexecuted controls also retain exact maximum roots, false metadata markers,
+aligned columns, unordered/duplicate facts, resource/surface refusals, all command
+plans, no selected-file reads for help/refusals, each chosen input transport,
+all four target emissions, original-link metadata updates, binary state history,
+source-document parser traps and actual future native/JavaScript process bytes.
+Native integration controls invoke the actual binary on scoped temporary saved
+graphs. Both codecs and all four emissions of the editable policy are retained.
+No represented graphs, behavioral controls, native compilation or CI feedback
+run during this authoring phase. Every remaining whole-language, grammar union,
+full exact-ID, shared-concept and dynamic-extension obligation remains active.

@@ -102,6 +102,7 @@ export class UnsignedLinkNetwork {
   const field=this.insertTypedPoint(LinkType.Field,label,'A field label names a relation between links.');
   return this.insertLink([parent,field,child],LinkMetadata.new().withLinkType(LinkType.Field));
  }
+ setLinkMetadata(id,metadata){const link=this.link(id);if(!link)return false;link.setMetadata(metadata);return true;}
  deleteLink(id){
   const actual=UnsignedLinkId.from(id);this._links.delete(actual.asU64());
   for(const [term,value]of this._terms)if(value.equals(actual))this._terms.delete(term);

@@ -122,6 +122,8 @@ pub mod transform;
 pub mod translation;
 pub mod translation_rules;
 mod typed_program_links;
+mod unsigned_graph_cli;
+mod unsigned_graph_command_rules;
 mod unsigned_link_identity_program;
 mod unsigned_link_identity_rules;
 mod unsigned_link_network;
@@ -533,6 +535,11 @@ pub use typed_program_links::{
     emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
     encode_typed_program_links_with_record_shapes, encode_typed_program_links_with_value_sharing,
     read_typed_program_binding_identities, typed_program_links_schema,
+};
+pub use unsigned_graph_cli::{
+    UnsignedGraphCommandOutput, read_unsigned_graph_snapshot_binary,
+    read_unsigned_graph_snapshot_text, run_unsigned_graph_command,
+    select_unsigned_typed_program_root,
 };
 pub use unsigned_link_identity_program::create_unsigned_link_identity_program_links;
 pub use unsigned_link_network::{

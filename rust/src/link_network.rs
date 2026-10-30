@@ -814,6 +814,21 @@ impl LinkNetwork {
         self.link(id).and_then(|link| link.metadata().definition())
     }
 
+    /// Replace existing metadata without changing IDs, references or explicit caches.
+    /// Returns false for an absent identity, without interning unused metadata.
+    pub fn set_link_metadata(&mut self, id: LinkId, metadata: LinkMetadata) -> bool {
+        if !self.links.contains_key(&id) {
+            return false;
+        }
+        let metadata = self.intern_metadata(metadata);
+        let link = self
+            .links
+            .get_mut(&id)
+            .expect("the stored link retains its identity");
+        *Arc::make_mut(link).metadata_mut() = metadata;
+        true
+    }
+
     /// Sets a source span on an existing link.
     pub fn set_span(&mut self, id: LinkId, span: SourceSpan) -> bool {
         let Some(link) = self.links.get_mut(&id) else {

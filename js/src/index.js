@@ -28,6 +28,7 @@ export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } fr
 export { UnsignedLinkId, UnsignedLink, UnsignedLinkNetwork, createDenseUnsignedLinkNetwork,
   restoreDenseUnsignedLinkNetwork, encodeUnsignedLinkNetworkBinary,
   decodeUnsignedLinkNetworkBinary, rebaseUnsignedLinkNetwork, createUnsignedSourceDocumentLinks, createUnsignedSourceDocumentLinksWithRegistry } from './unsigned-link-network.js';
+export {readUnsignedGraphSnapshot,selectUnsignedTypedProgramRoot,runUnsignedGraphCommand} from './unsigned-graph-cli.js';
 export {runUnsignedSourceCommand} from './unsigned-source-cli.js';
 export {rebaseUnsignedTypedProgramLinks,createUnsignedTypedProgramLinks,createUnsignedRustSourceOwnerProgramLinks,emitUnsignedTypedProgramLinks} from './unsigned-typed-program-links.js';
 export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,
