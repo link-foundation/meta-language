@@ -120,6 +120,17 @@ impl SourceOrigins {
             }
         }
         match &pattern.node {
+            SPatternNode::IntegerRange { lower, upper, .. } => {
+                for endpoint in [lower, upper].into_iter().flatten() {
+                    self.pattern(
+                        endpoint,
+                        &origin,
+                        path,
+                        result,
+                        endpoint.span.or(source_span),
+                    )?;
+                }
+            }
             SPatternNode::Alias {
                 name,
                 pattern: inner,

@@ -332,6 +332,11 @@ pub struct SPattern {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum SPatternNode {
+    IntegerRange {
+        lower: Option<Box<SPattern>>,
+        upper: Option<Box<SPattern>>,
+        inclusive: bool,
+    },
     Wild,
     /// Bind the actual matched column before testing its nested pattern.
     Alias {

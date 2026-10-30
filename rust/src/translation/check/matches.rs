@@ -8,6 +8,20 @@ use super::{
     SNode, SPatternNode, SRow, Span, Type, decrement, surface_let, type_error, unsupported,
 };
 
+fn pattern_owners(pattern: &super::SPattern) -> Vec<String> {
+    match &pattern.node {
+        SPatternNode::Alias { pattern, .. } => pattern_owners(pattern),
+        SPatternNode::IntegerRange { lower, upper, .. } => [lower, upper]
+            .into_iter()
+            .flatten()
+            .flat_map(|pattern| pattern_owners(pattern))
+            .collect(),
+        SPatternNode::ByteLit { .. } => vec!["u8".to_owned()],
+        SPatternNode::TypedNumLit { owner, .. } => vec![owner.clone()],
+        _ => vec![String::new()],
+    }
+}
+
 impl Checker {
     /// Compiles a surface match (several scrutinees, nested and literal
     /// patterns) into single-level constructor matches and literal if-chains.
@@ -26,21 +40,8 @@ impl Checker {
         for (column, source) in scrutinees.iter().enumerate() {
             let owners = rows
                 .iter()
-                .map(|row| {
-                    let mut pattern = row.patterns.get(column);
-                    while let Some(value) = pattern {
-                        if let SPatternNode::Alias { pattern: inner, .. } = &value.node {
-                            pattern = Some(inner.as_ref());
-                        } else {
-                            break;
-                        }
-                    }
-                    match pattern.map(|value| &value.node) {
-                        Some(SPatternNode::ByteLit { .. }) => "u8".to_owned(),
-                        Some(SPatternNode::TypedNumLit { owner, .. }) => owner.clone(),
-                        _ => String::new(),
-                    }
-                })
+                .filter_map(|row| row.patterns.get(column))
+                .flat_map(pattern_owners)
                 .collect::<Vec<_>>();
             let (kind, typed) = match &source.node {
                 SNode::Num { ty, .. } => ("num", ty.is_some()),
@@ -151,6 +152,13 @@ impl Checker {
         };
         let column = columns[refutable].clone();
         let pivot = first.patterns[refutable].clone();
+        if matches!(column.ty, Type::Fixed { .. })
+            && normalised
+                .iter()
+                .any(|row| matches!(row.patterns[refutable], NPat::Interval { .. }))
+        {
+            return self.compile_integer_range_column(columns, &normalised, refutable, span);
+        }
         let rest = |patterns: &[NPat]| -> Vec<NPat> {
             patterns
                 .iter()
@@ -379,6 +387,17 @@ impl Checker {
             args: Vec::new(),
         };
         match pattern.node {
+            SPatternNode::IntegerRange {
+                lower,
+                upper,
+                inclusive,
+            } => self.normalise_integer_range(
+                lower.map(|value| *value),
+                upper.map(|value| *value),
+                inclusive,
+                ty,
+                at,
+            ),
             SPatternNode::Alias {
                 name,
                 pattern: inner,

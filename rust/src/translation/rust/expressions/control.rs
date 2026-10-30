@@ -4,6 +4,7 @@ mod completion_panic;
 mod completions;
 pub(in crate::translation::rust) mod conditional_chains;
 mod conditional_patterns;
+mod integer_ranges;
 mod literal_matches;
 mod pattern_matches;
 
@@ -433,7 +434,7 @@ impl RustParser {
     /// Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`.
     #[allow(clippy::too_many_lines)] // one branch per pattern form, as in rust.js
     fn numeric_pattern(&self, token: &Token, first: &Token, negative: bool) -> Result<SPattern> {
-        if self.cursor.is("..") || self.cursor.is("..=") {
+        if !self.ordinary_completion_context() && (self.cursor.is("..") || self.cursor.is("..=")) {
             return Err(unsupported(
                 "range pattern",
                 "ranges are outside the portable pattern language",
@@ -515,14 +516,27 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
+        if self.ordinary_completion_context() && (self.cursor.is("..") || self.cursor.is("..=")) {
+            return self.integer_range_pattern(&token, None);
+        }
         if self.cursor.is("-") && self.cursor.is_kind_at(TokenKind::Number, 1) {
             self.cursor.advance();
             let number = self.cursor.advance();
-            return self.numeric_pattern(&number, &token, true);
+            let pattern = self.numeric_pattern(&number, &token, true)?;
+            return if self.ordinary_completion_context() {
+                self.integer_range_pattern(&token, Some(pattern))
+            } else {
+                Ok(pattern)
+            };
         }
         if token.kind == TokenKind::Number {
             self.cursor.advance();
-            return self.numeric_pattern(&token, &token, false);
+            let pattern = self.numeric_pattern(&token, &token, false)?;
+            return if self.ordinary_completion_context() {
+                self.integer_range_pattern(&token, Some(pattern))
+            } else {
+                Ok(pattern)
+            };
         }
         if crate::translation::rust_byte_pattern_rules::accept_rust_source_byte_pattern_token(
             if token.kind == TokenKind::ByteCharacter {
@@ -532,12 +546,17 @@ impl RustParser {
             },
         ) {
             self.cursor.advance();
-            return Ok(SPattern {
+            let pattern = SPattern {
                 node: SPatternNode::ByteLit {
                     value: token.value.clone(),
                 },
                 span: span(&token, &token),
-            });
+            };
+            return if self.ordinary_completion_context() {
+                self.integer_range_pattern(&token, Some(pattern))
+            } else {
+                Ok(pattern)
+            };
         }
         if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) {
             return Err(unsupported(
@@ -578,7 +597,8 @@ impl RustParser {
                 let mut rest = None;
                 let mut comma = false;
                 while !self.cursor.is(")") {
-                    if self.cursor.eat("..").is_some() {
+                    if self.cursor.is("..") && (!self.ordinary_completion_context() || crate::translation::rust_integer_range_rules::test_rust_integer_range_rest_follower(&self.cursor.peek_at(1).value)) {
+                        self.cursor.advance();
                         if rest.is_some() {
                             return Err(unsupported(
                                 "tuple rest pattern",
@@ -670,7 +690,7 @@ impl RustParser {
             let mut args = Vec::new();
             let mut rest = None;
             while !self.cursor.is(")") {
-                if self.cursor.is("..") {
+                if self.cursor.is("..") && (!self.ordinary_completion_context() || crate::translation::rust_integer_range_rules::test_rust_integer_range_rest_follower(&self.cursor.peek_at(1).value)) {
                     if rest.is_some() {
                         return Err(unsupported(
                             "constructor rest pattern",

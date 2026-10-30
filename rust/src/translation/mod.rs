@@ -419,3 +419,5 @@ pub mod rust_source_version_rules;
 pub mod source_version_column_rules;
 
 pub(crate) mod rust_nominal_copy_rules;
+
+pub(crate) mod rust_integer_range_rules;

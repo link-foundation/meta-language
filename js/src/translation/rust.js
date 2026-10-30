@@ -1,3 +1,5 @@
+import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
+import {readRustIntegerRangePattern} from './rust-integer-ranges.js';
 import {registerRustNominalCopyDeclaration,finishRustNominalCopies} from './rust-nominal-copies.js';
 import {readRustSourceVersion} from './rust-source-versions.js';
 import {readRustFormattedPanic} from './rust-panic-values.js';
@@ -1821,7 +1823,7 @@ class RustParser {
   }
 
   numericPattern(token,first,negative){
-    const c=this.cursor;if(c.is('..')||c.is('..='))throw unsupported('range pattern','ranges are outside the portable pattern language',span(first,c.peek()));
+    const c=this.cursor;if(!this.ordinaryCompletionContext()&&(c.is('..')||c.is('..=')))throw unsupported('range pattern','ranges are outside the portable pattern language',span(first,c.peek()));
     const lexicalError=readRustSourceNumericPatternLexicalError(token.suffix??'',token.floating===true);if(lexicalError)throw unsupported('Rust numeric pattern',lexicalError,span(first,token));
     const owner=readRustSourceNumericPatternOwner(token.suffix??'',token.floating===true);
     if(!owner)return{k:'numLit',value:token.value,...(negative?{negative:true}:{}),span:span(first,token)};
@@ -1838,9 +1840,10 @@ class RustParser {
     if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
     if (c.eat('_')) return this.recordPatternDepth?{k:'wild',span:{start:token.start,end:token.end}}:{k:'wild'};
     if (c.is('ref') || c.is('mut')) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
-    if(c.is('-')&&c.isKind('number',1)){c.next();return this.numericPattern(c.next(),token,true);}
-    if(token.kind==='number'){c.next();return this.numericPattern(token,token,false);}
-    if(acceptRustSourceBytePatternToken(token.kind)){c.next();return{k:'byteLit',value:token.value,span:span(token,token)};}
+    if(this.ordinaryCompletionContext()&&(c.is('..')||c.is('..=')))return readRustIntegerRangePattern(this,token);
+    if(c.is('-')&&c.isKind('number',1)){c.next();const pattern=this.numericPattern(c.next(),token,true);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,token,pattern):pattern;}
+    if(token.kind==='number'){c.next();const pattern=this.numericPattern(token,token,false);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,token,pattern):pattern;}
+    if(acceptRustSourceBytePatternToken(token.kind)){c.next();const pattern={k:'byteLit',value:token.value,span:span(token,token)};return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,token,pattern):pattern;}
     if (token.kind === 'char' || token.kind === 'byteChar') throw unsupported('character pattern', 'characters are outside the portable core', span(token, token));
     if(acceptRustSourceStringPatternToken(token.kind)){c.next();return{k:'strLit',value:token.value,span:span(token,token)};}
     if (c.is('true') || c.is('false')) {
@@ -1852,7 +1855,7 @@ class RustParser {
       this.recordPatternDepth+=1;
       try{
         while(!c.is(')')){
-          if(c.eat('..')){
+          if(c.is('..')&&(!this.ordinaryCompletionContext()||testRustIntegerRangeRestFollower(c.peek(1).value))){c.next();
             if(rest!==null)throw unsupported('tuple rest pattern','a tuple pattern has at most one rest position',span(token,c.peek()));
             rest=args.length;
           }else args.push(this.pattern(path,aliases));
@@ -1880,7 +1883,7 @@ class RustParser {
       const args = [];
       let rest=null;
       while (!c.is(')')) {
-        if(c.is('..')){
+        if(c.is('..')&&(!this.ordinaryCompletionContext()||testRustIntegerRangeRestFollower(c.peek(1).value))){
           if(rest)throw unsupported('constructor rest pattern','a constructor pattern has at most one rest position',span(token,c.peek()));
           rest={index:args.length,token:c.next()};
         }else args.push(this.pattern(path, aliases));

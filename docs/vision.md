@@ -11096,3 +11096,26 @@ all codec/emission/native products remain unexecuted drafts. General manual
 traits, generic bounds, non-Copy ownership, reference-region composition and
 complete language/grammar/concept obligations remain required. Rust's Copy
 rules are defined by the [Rust Reference](https://doc.rust-lang.org/reference/special-types-and-traits.html#copy).
+
+Ordinary Rust integer range patterns retain their actual lower/upper patterns,
+operator, inclusive flag and source spans. Checked endpoint owners are validated
+against the scrutinee before canonical exact bounds enter a shared domain
+partition. Canonical decimal comparison and successor are source-defined and
+automatically translated to Rust, preserving i128/u128 extrema and the boundary
+after the maximum without binary64 conversion or enumeration. Empty and
+reversed ranges fail; a full integer domain is irrefutable for match coverage.
+
+The shared rule partitions the complete typed domain at every interval/literal
+boundary, retaining all matching source rows in order for each cell. The existing
+match compiler then checks remaining columns and lowers the cell decision tree
+to typed comparisons. This keeps adjacent/overlapping ranges, wildcard/binding
+rows, aliases, guards, products, constructor fields and receiver evaluation in
+the ordinary match algebra. Open ranges inside products are distinguished from
+rest syntax by their actual following token. Closed source interpretations keep
+their existing range refusal. Independent originals and premises cover all
+fixed/pointer integers, exact extrema, negative/zero boundaries, nested ranges,
+source ownership and failure order. Codec/four-emission/native controls remain
+unexecuted. Float/character/constant-path bounds, complete irrefutable parameter
+bindings, ownership/traits and all full-language/grammar/shared-concept
+requirements remain active. The range contract follows the
+[Rust Reference](https://doc.rust-lang.org/reference/patterns.html#range-patterns).

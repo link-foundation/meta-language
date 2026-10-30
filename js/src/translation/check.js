@@ -1,3 +1,4 @@
+import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {projectPatternAliasRow} from './pattern-aliases.js';
 import {acceptLinkedRustPanicValue,readRustPanicValueArgumentError} from './rust-panic-value-rules.js';
 import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
@@ -1757,7 +1758,7 @@ class Checker {
   compileMatch(node, env, path) {
     const lets = [];
     const columns = node.scrutinees.map((source,column) => {
-      const owners=node.rows.map(row=>{let pattern=row.patterns[column];while(pattern?.k==='alias')pattern=pattern.pattern;return pattern?.k==='byteLit'?'u8':pattern?.k==='typedNumLit'?pattern.owner:'';});
+      const owners=node.rows.flatMap(row=>readRustIntegerPatternOwners(row.patterns[column]));
       const inferenceError=readRustSourceNumericPatternInferenceError(this.language,source.k,Boolean(source.type),owners);if(inferenceError)throw typeError(inferenceError,source.span??node.span);
       const inferred=readRustSourceNumericPatternInference(this.language,source.k,Boolean(source.type),owners);
       const scrutinee=inferred?{...source,type:inferred==='f64'?FLOAT:rustFixedType(inferred)}:source;
@@ -1801,6 +1802,7 @@ class Checker {
     }
     const column = columns[refutable];
     const pivot = first.patterns[refutable];
+    if(column.type.kind==='fixed'&&normalised.some(row=>row.patterns[refutable].k==='interval'))return compileRustIntegerRangeRows(this,columns,normalised,refutable,span);
     const rest = (patterns) => patterns.filter((_, index) => index !== refutable);
     const bindColumn = (row) => {
       const pattern = row.patterns[refutable];
@@ -1897,6 +1899,7 @@ class Checker {
   normalisePattern(pattern, type, span) {
     const natural = type.kind === 'nat';
     switch (pattern.k) {
+      case 'integerRange':return normaliseRustIntegerRangePattern(this,pattern,type,span);
       case 'alias':return {k:'alias',name:pattern.name,pattern:this.normalisePattern(pattern.pattern,type,pattern.span??span)};
       case 'wild':
       case 'bind':

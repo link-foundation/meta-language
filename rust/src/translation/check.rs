@@ -50,6 +50,7 @@ mod expectation;
 mod exponentiation;
 mod expressions;
 mod externals;
+mod integer_ranges;
 mod items;
 mod javascript_concatenation;
 mod javascript_data_fields;
@@ -442,6 +443,7 @@ const NAT_PATTERN_UNFOLD: i128 = 16;
 /// A match-compilation pattern: surface patterns are normalised against their column type.
 #[derive(Clone, Debug)]
 enum NPat {
+    Interval { lower: String, upper: String },
     Surface(SPattern),
     Alias { name: String, pattern: Box<Self> },
     Wild,

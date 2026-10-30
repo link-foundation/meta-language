@@ -216,6 +216,7 @@ include = [
     "src/data/rust-integer-bit-program.lino",
     "src/data/rust-integer-float-plan-program.lino",
     "src/data/rust-integer-magnitude-program.lino",
+    "src/data/rust-integer-range-program.lino",
     "src/data/rust-iterator-arithmetic-program.lino",
     "src/data/rust-iterator-pipeline-program.lino",
     "src/data/rust-iterator-reduction-program.lino",
