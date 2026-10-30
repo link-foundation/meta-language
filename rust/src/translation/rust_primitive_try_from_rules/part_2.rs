@@ -1,4 +1,5 @@
 // Generated from complete js/src/translation/rust-primitive-try-from-rules.js. Do not edit by hand.
+use super::accept_rust_primitive_from_source;
 use super::ml_array;
 use super::read_rust_integer_conversion_error_debug_model;
 
@@ -371,5 +372,50 @@ pub fn read_rust_primitive_try_from_predicate_error(
         String::from(
             "a Result predicate needs a direct one-argument callable with its actual integer parameter and Boolean result",
         )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_mapper_error(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> String {
+    if ((((kind == "function") && (parameters == 1f64)) && (layers == 0f64)) && parameter) && result
+    {
+        String::new()
+    } else {
+        String::from(
+            "a Result mapper needs a direct one-argument callable with its actual integer parameter and scalar result",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_rust_primitive_try_from_mapper_owner(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner_kind: &str,
+    owner: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> String {
+    if self::accept_rust_primitive_from_source(
+        kind, bits, signed, owner_kind, owner, children, proven, layers,
+    ) {
+        owner.to_owned()
+    } else {
+        String::new()
     }
 }

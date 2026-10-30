@@ -57,15 +57,28 @@ pub(super) fn origin(ty: Type, owner: &str, path: &[String]) -> SourceOrigin {
 }
 pub(super) fn facts(parser: &RustParser, node: &SExpr, path: &[String]) -> Facts {
     let origin = parser.origins.origin(node, path);
-    let owner = origin.source_owner.clone().or_else(|| {
-        (origin.ty == Some(FLOAT) && origin.float_source_model == Some("binary64 scalar")).then(
-            || SourceOwner {
+    let owner = origin
+        .source_owner
+        .clone()
+        .or_else(|| {
+            (matches!(&node.node, SNode::Bool { .. })
+                && origin.proven
+                && origin.wrappers.is_empty())
+            .then(|| SourceOwner {
                 kind: "primitive".to_owned(),
-                path: vec!["f64".to_owned()],
+                path: vec!["bool".to_owned()],
                 arguments: Vec::new(),
-            },
-        )
-    });
+            })
+        })
+        .or_else(|| {
+            (origin.ty == Some(FLOAT) && origin.float_source_model == Some("binary64 scalar")).then(
+                || SourceOwner {
+                    kind: "primitive".to_owned(),
+                    path: vec!["f64".to_owned()],
+                    arguments: Vec::new(),
+                },
+            )
+        });
     let (bits, signed) = match &origin.ty {
         Some(Type::Fixed { bits, signed }) => (bits.to_string(), *signed),
         _ => (String::new(), false),
@@ -215,6 +228,7 @@ impl RustParser {
         let mut defaults = Vec::new();
         let mut mapper_owner = String::new();
         let mut predicate = None;
+        let mut mapper_callback = None;
         if consumer.value == "is_ok_and" {
             let parameter = origin(
                 rust_fixed_type(&owner).ok_or_else(|| {
@@ -272,44 +286,114 @@ impl RustParser {
             defaults.push(self.expr(path, Options::default())?);
             if arity == 2.0 {
                 self.cursor.expect(",", Some("primitive TryFrom mapper"))?;
-                let mapper = self
-                    .primitive_try_head(path)
-                    .filter(|mapper| {
-                        mapper
-                            .resolved
-                            .last()
-                            .is_some_and(|method| method == "from")
-                    })
-                    .ok_or_else(|| {
-                        unsupported(
-                            "Rust primitive TryFrom mapper",
-                            "an actual admitted standard primitive From function item is required",
-                            Some(Span {
-                                start: self.cursor.peek().start,
-                                end: self.cursor.peek().end,
-                            }),
+                let mapper = self.primitive_try_head(path);
+                let standard_owner = mapper
+                    .as_ref()
+                    .filter(|value| value.resolved.last().is_some_and(|method| method == "from"))
+                    .map_or_else(String::new, |value| {
+                        from_rules::read_rust_primitive_from_owner(
+                            &value.resolved,
+                            self.ordinary_completion_context(),
+                            value.shadowed,
+                            value.absolute,
                         )
-                    })?;
-                mapper_owner = from_rules::read_rust_primitive_from_owner(
-                    &mapper.resolved,
-                    self.ordinary_completion_context(),
-                    mapper.shadowed,
-                    mapper.absolute,
-                );
-                if mapper_owner.is_empty()
-                    || from_rules::plan_rust_primitive_from(&mapper_owner, &owner).is_empty()
-                {
-                    return Err(unsupported(
-                        "Rust primitive TryFrom mapper",
-                        "the actual standard primitive From implementation must exist for the successful target",
-                        Some(Span {
-                            start: mapper.start.start,
-                            end: self.cursor.peek_at(mapper.offset - 1).end,
-                        }),
-                    ));
-                }
-                for _ in 0..mapper.offset {
-                    self.cursor.advance();
+                    });
+                if !standard_owner.is_empty() {
+                    let mapper = mapper.unwrap();
+                    mapper_owner = standard_owner;
+                    if from_rules::plan_rust_primitive_from(&mapper_owner, &owner).is_empty() {
+                        return Err(unsupported(
+                            "Rust primitive TryFrom mapper",
+                            "the actual standard primitive From implementation must exist for the successful target",
+                            Some(Span {
+                                start: mapper.start.start,
+                                end: self.cursor.peek_at(mapper.offset - 1).end,
+                            }),
+                        ));
+                    }
+                    for _ in 0..mapper.offset {
+                        self.cursor.advance();
+                    }
+                } else {
+                    let parameter = origin(
+                        rust_fixed_type(&owner).ok_or_else(|| {
+                            type_error("the Result mapper needs its target type", None)
+                        })?,
+                        &owner,
+                        path,
+                    );
+                    let mut expected = SourceOrigin::with_type(
+                        Type::Function {
+                            params: vec![parameter.ty.clone().unwrap()],
+                            ret: Box::new(super::UNIT),
+                        },
+                        path,
+                        Vec::new(),
+                    );
+                    expected.copy_evidence = Some(());
+                    expected.callable_parameters = Some(vec![parameter.clone()]);
+                    expected.callable_result = None;
+                    let callback =
+                        self.read_expected_copy_closure_result_mode(path, Some(&expected), true)?;
+                    let callable = self.origins.origin(&callback, path);
+                    let actual = callable
+                        .callable_parameters
+                        .as_ref()
+                        .and_then(|values| values.first());
+                    let output = callable.callable_result.as_deref();
+                    let ty = output.and_then(|value| value.ty.as_ref());
+                    let result_owner = output.and_then(|value| {
+                        value.source_owner.clone().or_else(|| {
+                            (value.ty == Some(FLOAT)
+                                && value.float_source_model == Some("binary64 scalar"))
+                            .then(|| SourceOwner {
+                                kind: "primitive".to_owned(),
+                                path: vec!["f64".to_owned()],
+                                arguments: Vec::new(),
+                            })
+                        })
+                    });
+                    let (bits, signed) = match ty {
+                        Some(Type::Fixed { bits, signed }) => (bits.to_string(), *signed),
+                        _ => (String::new(), false),
+                    };
+                    mapper_owner = rules::read_rust_primitive_try_from_mapper_owner(
+                        ty.map_or("", Type::kind),
+                        &bits,
+                        signed,
+                        result_owner
+                            .as_ref()
+                            .map_or("", |value| value.kind.as_str()),
+                        &result_owner
+                            .as_ref()
+                            .map_or_else(String::new, |value| value.path.join("::")),
+                        result_owner
+                            .as_ref()
+                            .map_or(-1.0, |value| count(value.arguments.len())),
+                        output.is_some_and(|value| value.proven),
+                        output.map_or(-1.0, |value| count(value.wrappers.len())),
+                    );
+                    let parameters = match &callable.ty {
+                        Some(Type::Function { params, .. }) => count(params.len()),
+                        _ => -1.0,
+                    };
+                    let error = rules::read_rust_primitive_try_from_mapper_error(
+                        callable.ty.as_ref().map_or("", Type::kind),
+                        parameters,
+                        count(callable.wrappers.len()),
+                        actual.is_some_and(SourceOrigin::copy_closure_parameter),
+                        !mapper_owner.is_empty(),
+                    );
+                    if !error.is_empty() {
+                        return Err(unsupported(
+                            "Rust primitive TryFrom mapper",
+                            &error,
+                            callback.span,
+                        ));
+                    }
+                    self.origins
+                        .argument(actual.unwrap(), &parameter, callback.span)?;
+                    mapper_callback = Some((callback, callable));
                 }
             }
         }
@@ -393,7 +477,7 @@ impl RustParser {
         );
         self.origins
             .mark(&success, origin(target.clone(), &owner, path));
-        let converted = if consumer.value == "map_or" {
+        let converted = if consumer.value == "map_or" && mapper_callback.is_none() {
             self.project_primitive_from(success, &mapper_owner, range, path)?
         } else {
             success
@@ -463,6 +547,26 @@ impl RustParser {
                 defaults.remove(0),
             ));
         }
+        let mapper_local = if let Some((callback, callable)) = mapper_callback {
+            let name = self.fresh_product_binding();
+            let node = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                callback.span.or(range),
+            );
+            self.origins.mark(&node, callable.clone());
+            captures.push((
+                name,
+                callable
+                    .ty
+                    .ok_or_else(|| type_error("the Result mapper lost its callable type", range))?,
+                callback,
+            ));
+            Some(node)
+        } else {
+            None
+        };
         let predicate_local = if let Some((callback, callable)) = predicate {
             let name = self.fresh_product_binding();
             let node = SExpr::new(
@@ -593,7 +697,17 @@ impl RustParser {
                 )),
                 "false" => stack.push(SExpr::new(SNode::Bool { value: false }, range)),
                 "true" => stack.push(SExpr::new(SNode::Bool { value: true }, range)),
-                "success" => stack.push(converted.clone()),
+                "success" => stack.push(if let Some(mapper) = mapper_local.as_ref() {
+                    SExpr::new(
+                        SNode::App {
+                            func: Box::new(mapper.clone()),
+                            args: vec![converted.clone()],
+                        },
+                        range,
+                    )
+                } else {
+                    converted.clone()
+                }),
                 "default" => stack.push(SExpr::new(
                     SNode::Num {
                         value: "0".to_owned(),

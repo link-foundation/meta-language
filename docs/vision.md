@@ -10866,4 +10866,15 @@ on successful conversion. Shared Links-backed JavaScript decisions generate
 Rust automatically. Deferred originals cover interval boundaries, immutable
 Copy captures, named predicates, function-pointer factories and panic order.
 These are authored controls, not execution evidence. Escaping Result values,
-error callbacks, general mapping and complete ownership remain obligations.
+error callbacks, generic mapping and complete ownership remain obligations.
+
+The immediate primitive integer `map_or` draft also accepts immutable Copy
+closures, named functions and function-pointer factories with independently
+known scalar result owners. It retains standard `From` function items and their
+actual trait-implementation checks. Callback parameters receive the successful
+integer context; inferred scalar result owners constrain eager defaults without
+changing pointer/integer identity. Input, default and callable values are
+captured once in that order; only success invokes the mapper. Deferred originals
+include exact wide endpoints, result-type changes, captures and abort order.
+General Result values, non-scalar/mutable/non-Copy callbacks and unrestricted
+inference remain required; these declarations are not execution evidence.

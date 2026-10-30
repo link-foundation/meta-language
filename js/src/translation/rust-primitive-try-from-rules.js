@@ -58,3 +58,11 @@ export function readRustPrimitiveTryFromVersionedFailureDebug(direction,minor){
  * @param {string} kind @param {number} parameters @param {number} layers
  * @param {boolean} parameter @param {boolean} result @returns {string} */
 export function readRustPrimitiveTryFromPredicateError(kind,parameters,layers,parameter,result){return kind==='function'&&parameters===1&&layers===0&&parameter&&result?'':'a Result predicate needs a direct one-argument callable with its actual integer parameter and Boolean result';}
+
+/** @param {string} kind @param {number} parameters @param {number} layers
+ * @param {boolean} parameter @param {boolean} result @returns {string} */
+export function readRustPrimitiveTryFromMapperError(kind,parameters,layers,parameter,result){return kind==='function'&&parameters===1&&layers===0&&parameter&&result?'':'a Result mapper needs a direct one-argument callable with its actual integer parameter and scalar result';}
+/** @param {string} kind @param {string} bits @param {boolean} signed
+ * @param {string} ownerKind @param {string} owner @param {number} children
+ * @param {boolean} proven @param {number} layers @returns {string} */
+export function readRustPrimitiveTryFromMapperOwner(kind,bits,signed,ownerKind,owner,children,proven,layers){return acceptRustPrimitiveFromSource(kind,bits,signed,ownerKind,owner,children,proven,layers)?owner:'';}

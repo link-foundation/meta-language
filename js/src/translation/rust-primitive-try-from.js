@@ -1,11 +1,11 @@
 import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
-import {readRustPrimitiveTryFromPredicateError} from './rust-primitive-try-from-rules.js';
+import {readRustPrimitiveTryFromPredicateError,readRustPrimitiveTryFromMapperError,readRustPrimitiveTryFromMapperOwner} from './rust-primitive-try-from-rules.js';
 import {STRING} from './types.js';
 import {readRustPanicValueOperation,readRustPanicMessageSourceError} from './rust-panic-value-rules.js';
 import {testRustPrimitiveTryFromPanicConsumer,readRustPrimitiveTryFromVersionedFailureDebug,readRustPrimitiveTryFromPanicPrefix} from './rust-primitive-try-from-rules.js';
 // Actual token/type/origin transport into shared standard Result plans.
-import {BOOL,FLOAT,rustFixedType} from './types.js';
+import {BOOL,FLOAT,UNIT,rustFixedType} from './types.js';
 import {TranslationError,unsupported} from './diagnostics.js';
 import {readRustPrimitiveTryFromOwner,acceptRustPrimitiveTryFromImport,acceptRustPrimitiveTryFromSource,readRustPrimitiveTryFromConsumerArity,readRustPrimitiveTryFromGuards,planRustPrimitiveTryFromConsumer,readRustPrimitiveTryFromResultOwner} from './rust-primitive-try-from-rules.js';
 import {readRustPrimitiveFromOwner,acceptRustPrimitiveFromSource,planRustPrimitiveFrom} from './rust-primitive-from-rules.js';
@@ -19,7 +19,7 @@ export function readRustPrimitiveConversionHead(parser,path){
  const resolved=absolute?segments:parser.resolve(segments,path),root=segments[0],target=resolved[0],shadowed=!absolute&&Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.origins.lookup([target],path)||parser.origins.scope.has(target));
  return {start,absolute,offset,segments,resolved,shadowed};
 }
-export function readRustPrimitiveConversionFacts(parser,value,path){const origin=parser.origins.origin(value,path),type=origin.type,owner=origin.sourceOwner??(type?.kind==='float'&&origin.floatSourceModel==='binary64 scalar'?{kind:'primitive',path:['f64'],arguments:[]}:null);return {origin,type,owner,kind:type?.kind??'',bits:String(type?.bits??''),signed:type?.signed===true};}
+export function readRustPrimitiveConversionFacts(parser,value,path){const origin=parser.origins.origin(value,path),type=origin.type,owner=origin.sourceOwner??(value.k==='bool'&&origin.proven&&origin.wrappers.length===0?{kind:'primitive',path:['bool'],arguments:[]}:null)??(type?.kind==='float'&&origin.floatSourceModel==='binary64 scalar'?{kind:'primitive',path:['f64'],arguments:[]}:null);return {origin,type,owner,kind:type?.kind??'',bits:String(type?.bits??''),signed:type?.signed===true};}
 function admitted(value){return acceptRustPrimitiveFromSource(value.kind,value.bits,value.signed,value.owner?.kind??'',value.owner?.path.join('::')??'',value.owner?.arguments.length??-1,value.origin.proven===true,value.origin.wrappers.length);}
 export function readRustPrimitiveTryFromImport(parser,segments,path){const root=segments[0]??'',shadowed=Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.aliases.get(path.join('.'))?.has(root));return acceptRustPrimitiveTryFromImport(segments.join('::'),parser.ordinaryCompletionContext(),shadowed);}
 export function readRustPrimitiveTryFrom(parser,path){
@@ -33,14 +33,24 @@ export function readRustPrimitiveTryFrom(parser,path){
  const consumer=c.next(),arity=readRustPrimitiveTryFromConsumerArity(consumer.value);
  if(arity<0)throw unsupported('Rust primitive TryFrom','the actual Result needs an immediate admitted standard consumer',{start:valueHead.start.start,end:consumer.end});
  c.expect('(','primitive TryFrom consumer');const defaults=[];let mapperOwner='';
- let predicate=null,predicateOrigin=null;
+ let predicate=null,predicateOrigin=null,mapperCallback=null,mapperOrigin=null;
  if(consumer.value==='is_ok_and'){
   const parameter={...parser.origins.typeOrigin(rustFixedType(owner),path),sourceOwner:{kind:'primitive',path:[owner],arguments:[]}},result={...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}},expected={...parser.origins.typeOrigin({kind:'function',params:[parameter.type],ret:BOOL},path),copyEvidence:true,callableParameters:[parameter],callableResult:result};
   predicate=readRustExpectedCopyClosure(parser,path,expected);predicateOrigin=parser.origins.origin(predicate,path);
   const actual=predicateOrigin.callableParameters?.[0],output=predicateOrigin.callableResult,error=readRustPrimitiveTryFromPredicateError(predicateOrigin.type?.kind??'',predicateOrigin.type?.params?.length??-1,predicateOrigin.wrappers.length,acceptRustCopyClosureParameterOrigin(parser,actual),output?.proven===true&&output.type?.kind==='bool'&&output.wrappers.length===0);
   if(error)throw unsupported('Rust primitive TryFrom predicate',error,predicate.span);
   parser.origins.argument(actual,parameter,predicate.span);parser.origins.argument(output,result,predicate.span);
- }else if(arity>0){defaults.push(parser.expr(path));if(arity===2){c.expect(',','primitive TryFrom mapper');const mapper=readRustPrimitiveConversionHead(parser,path);if(!mapper||mapper.resolved.at(-1)!=='from')throw unsupported('Rust primitive TryFrom mapper','an actual admitted standard primitive From function item is required',{start:c.peek().start,end:c.peek().end});mapperOwner=readRustPrimitiveFromOwner(mapper.resolved,parser.ordinaryCompletionContext(),mapper.shadowed,mapper.absolute);if(!mapperOwner||!planRustPrimitiveFrom(mapperOwner,owner))throw unsupported('Rust primitive TryFrom mapper','the actual standard primitive From implementation must exist for the successful target',{start:mapper.start.start,end:c.peek(mapper.offset-1).end});for(let at=0;at<mapper.offset;at+=1)c.next();}}
+ }else if(arity>0){defaults.push(parser.expr(path));if(arity===2){c.expect(',','primitive TryFrom mapper');const mapper=readRustPrimitiveConversionHead(parser,path),standardOwner=mapper?.resolved.at(-1)==='from'?readRustPrimitiveFromOwner(mapper.resolved,parser.ordinaryCompletionContext(),mapper.shadowed,mapper.absolute):'';
+  if(standardOwner){mapperOwner=standardOwner;if(!planRustPrimitiveFrom(mapperOwner,owner))throw unsupported('Rust primitive TryFrom mapper','the actual standard primitive From implementation must exist for the successful target',{start:mapper.start.start,end:c.peek(mapper.offset-1).end});for(let at=0;at<mapper.offset;at+=1)c.next();}
+  else {
+   const parameter={...parser.origins.typeOrigin(rustFixedType(owner),path),sourceOwner:{kind:'primitive',path:[owner],arguments:[]}},expected={...parser.origins.typeOrigin({kind:'function',params:[parameter.type],ret:UNIT},path),copyEvidence:true,callableParameters:[parameter],callableResult:null};
+   mapperCallback=readRustExpectedCopyClosure(parser,path,expected,true);mapperOrigin=parser.origins.origin(mapperCallback,path);
+   const actual=mapperOrigin.callableParameters?.[0],output=mapperOrigin.callableResult,type=output?.type,sourceOwner=output?.sourceOwner??(type?.kind==='float'&&output.floatSourceModel==='binary64 scalar'?{kind:'primitive',path:['f64'],arguments:[]}:null);
+   mapperOwner=readRustPrimitiveTryFromMapperOwner(type?.kind??'',String(type?.bits??''),type?.signed===true,sourceOwner?.kind??'',sourceOwner?.path.join('::')??'',sourceOwner?.arguments.length??-1,output?.proven===true,output?.wrappers.length??-1);
+   const error=readRustPrimitiveTryFromMapperError(mapperOrigin.type?.kind??'',mapperOrigin.type?.params?.length??-1,mapperOrigin.wrappers.length,acceptRustCopyClosureParameterOrigin(parser,actual),mapperOwner!=='');if(error)throw unsupported('Rust primitive TryFrom mapper',error,mapperCallback.span);
+   parser.origins.argument(actual,parameter,mapperCallback.span);
+  }
+ }}
  if(arity>0)c.eat(',');const close=c.expect(')','primitive TryFrom consumer'),range={start:valueHead.start.start,end:close.end};
  const input=prepareRustPrimitiveFromArgument(parser,inputArgs[0],path),source=readRustPrimitiveConversionFacts(parser,input,path),target=rustFixedType(owner);
  if(!acceptRustPrimitiveTryFromSource(source.kind,source.bits,source.signed,source.owner?.kind??'',source.owner?.path.join('::')??'',source.owner?.arguments.length??-1,source.origin.proven===true,source.origin.wrappers.length))throw unsupported('Rust primitive TryFrom','the actual input must retain a proven direct standard integer source owner',range);
@@ -48,12 +58,13 @@ export function readRustPrimitiveTryFrom(parser,path){
  const local=(capture,origin)=>parser.origins.mark({k:'name',path:[capture.name],span:capture.value.span??range},origin);
  const inputValue=()=>local(captures[0],source.origin),targetOrigin={...parser.origins.typeOrigin(target,path),sourceOwner:{kind:'primitive',path:[owner],arguments:[]}};
  const success=parser.origins.mark({k:'cast',arg:inputValue(),to:target,flavor:'exact',span:range},targetOrigin);
- const converted=consumer.value==='map_or'?projectRustPrimitiveFrom(parser,success,mapperOwner,range,path):success;
+ const converted=consumer.value==='map_or'&&!mapperCallback?projectRustPrimitiveFrom(parser,success,mapperOwner,range,path):success;
  const panicking=testRustPrimitiveTryFromPanicConsumer(consumer.value);
  if(arity>0&&!predicate){const actual=readRustPrimitiveConversionFacts(parser,defaults[0],path),literal=defaults[0].k==='num'&&!defaults[0].type||defaults[0].k==='unary'&&defaults[0].op==='neg'&&defaults[0].arg.k==='num'&&!defaults[0].arg.type;
   if(panicking){const error=readRustPanicMessageSourceError(consumer.value,actual.kind,actual.origin.textSourceModel??'',actual.origin.wrappers.length,actual.origin.proven===true,actual.origin.wrappers.every(layer=>layer==='reference'));if(error)throw unsupported('Rust primitive TryFrom message',error,range);}
   if(!panicking&&!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal)))throw unsupported('Rust primitive TryFrom default','the actual default must retain the selected result type and primitive source owner',range);
   captures.push({name:parser.freshProductBinding(),type:panicking?STRING:resultType,value:defaults[0]});}
+ if(mapperCallback)captures.push({name:parser.freshProductBinding(),type:mapperOrigin.type,value:mapperCallback});
  if(predicate)captures.push({name:parser.freshProductBinding(),type:predicateOrigin.type,value:predicate});
  const plan=planRustPrimitiveTryFromConsumer(consumer.value,readRustPrimitiveTryFromGuards(source.type.bits,source.signed,target.bits,target.signed)),stack=[];
  const pop=()=>{if(!stack.length)throw new TypeError('the shared primitive Result plan lost an earlier source term');return stack.pop();};
@@ -68,7 +79,7 @@ export function readRustPrimitiveTryFrom(parser,path){
   else if(term==='predicate')stack.push({k:'app',fn:local(captures[1],predicateOrigin),args:[success],span:range});
   else if(term==='false')stack.push({k:'bool',value:false,span:range});
   else if(term==='true')stack.push({k:'bool',value:true,span:range});
-  else if(term==='success')stack.push(converted);
+  else if(term==='success')stack.push(mapperCallback?{k:'app',fn:local(captures[2],mapperOrigin),args:[success],span:range}:converted);
   else if(term==='default')stack.push({k:'num',value:'0',type:target,span:range});
   else if(term==='fallback')stack.push(local(captures[1],{...parser.origins.typeOrigin(resultType,path),sourceOwner:{kind:'primitive',path:[resultOwner],arguments:[]}}));
   else if(['ge','le','and'].includes(term)){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
