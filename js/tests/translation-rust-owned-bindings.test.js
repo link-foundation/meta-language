@@ -22,5 +22,7 @@ for(const row of fixture.cases)test(row.name,()=>{
 });
 for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>createRustSourceOwnerProgramLinks(row.source),error=>error.kind===row.kind&&error.reason===row.reason));
 
-const historical=readProjectData(new URL('../../parity/fixtures/rust-fresh-vector-arguments.lino',import.meta.url));
-for(const row of historical.correctedAssertions)test('retained historical input: '+row.name,()=>assert.doesNotThrow(()=>createRustSourceOwnerProgramLinks(row.source)));
+for(const fixtureName of ['rust-fresh-vector-arguments','rust-fresh-vector-results','rust-fresh-vector-call-results']){
+const historical=readProjectData(new URL('../../parity/fixtures/'+fixtureName+'.lino',import.meta.url));
+for(const row of historical.correctedAssertions)test('retained historical input: '+fixtureName+' '+row.name,()=>assert.doesNotThrow(()=>createRustSourceOwnerProgramLinks(row.source)));
+}

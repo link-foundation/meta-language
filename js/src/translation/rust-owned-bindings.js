@@ -1,8 +1,8 @@
 // Source identity allocation/snapshots; all admission and transition decisions
 // are shared source policies, including branch joins and unavailable reads.
 import {unsupported} from './diagnostics.js';
-import {acceptRustOwnedBindingTracking,acceptRustOwnedBindingValue,readRustOwnedBindingReadError,consumeRustOwnedBindingState,mergeRustOwnedBindingStates,acceptRustOwnedBindingGuard,expireRustOwnedBindingState} from './rust-owned-binding-rules.js';
-export function trackRustOwnedBindings(table){return acceptRustOwnedBindingTracking(table.collecting,table.ownedBindingExcluded===true||Boolean(table.localValueStateModel)||Boolean(table.sharedArrayHandleSourceModel));}
+import {acceptRustOwnedBindingTracking,acceptRustOwnedBindingValue,readRustOwnedBindingReadError,consumeRustOwnedBindingState,mergeRustOwnedBindingStates,acceptRustOwnedBindingGuard,expireRustOwnedBindingState,acceptRustOwnedResultTransfer} from './rust-owned-binding-rules.js';
+export function trackRustOwnedBindings(table){return acceptRustOwnedBindingTracking(table.collecting,table.ownedBindingExcluded===true||Boolean(table.localValueStateModel)||Boolean(table.sharedArrayHandleSourceModel)||Boolean(table.arrayResultModel));}
 export function isRustOwnedBindingValue(table,origin){return trackRustOwnedBindings(table)&&acceptRustOwnedBindingValue(origin?.type?.kind??'',origin?.arraySourceModel??'',origin?.wrappers.length??-1,origin?.proven===true);}
 export function checkRustOwnedOrigin(table,origin,span){if(!trackRustOwnedBindings(table)||origin?.sourceBindingIdentity==null)return;const error=readRustOwnedBindingReadError(table.sourceBindingStates.get(origin.sourceBindingIdentity)??'');if(error)throw unsupported('Rust owned binding',error,span);}
 export function registerRustOwnedBinding(table,origin){const value=structuredClone(origin);if(!isRustOwnedBindingValue(table,value))return value;const identity=String(table.nextSourceBindingIdentity++);value.sourceBindingIdentity=identity;value.sourcePlaceBindingIdentity=null;table.sourceBindingStates.set(identity,'available');return value;}
@@ -13,3 +13,5 @@ export function checkRustOwnedGuard(table,before,span){const ids=[...before.keys
 export function noteRustOwnedBindingRead(parser,node,path){if(node.k==='name'&&node.path.length===1&&parser.origins.scope.has(node.path[0]))checkRustOwnedOrigin(parser.origins,parser.origins.scope.get(node.path[0]),node.span);return node;}
 
 export function expireRustOwnedBindings(table,before,result){for(const [id,state]of table.sourceBindingStates)if(!before.has(id)&&!(isRustOwnedBindingValue(table,result)&&result.sourceBindingIdentity===id))table.sourceBindingStates.set(id,expireRustOwnedBindingState(state));}
+
+export function transferRustOwnedResult(table,node,path){const origin=table.origin(node,path);if(!isRustOwnedBindingValue(table,origin)||!acceptRustOwnedResultTransfer(origin.sourceBindingIdentity!=null,availableRustOwnedOrigin(table,origin),origin.sourceOwnedResultProof===true,origin.freshArrayValue===true||table.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`)))return origin;consumeRustOwnedOrigin(table,origin,node.span);const result=registerRustOwnedBinding(table,origin);result.sourceOwnedResultProof=true;table.mark(node,result);return result;}

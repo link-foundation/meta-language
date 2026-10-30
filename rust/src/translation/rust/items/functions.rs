@@ -335,6 +335,7 @@ impl RustParser {
                 const_header_end,
             ))
         });
+        self.origins.transfer_owned_result(&body, path)?;
         if let Type::Array { element, .. } = &ret
             && !self.shared_array_origin(&source_result)
         {

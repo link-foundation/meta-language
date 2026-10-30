@@ -36,6 +36,18 @@ fn owned_vector_bindings_preserve_consumption_and_unavailable_reads() {
     for row in data["premises"].as_array().unwrap() {
         let args = &row["args"];
         let actual = match row["operation"].as_str().unwrap() {
+            "readRustOwnedBorrowJoinError" => json!(rules::read_rust_owned_borrow_join_error(
+                boolean(args, 0),
+                boolean(args, 1),
+                boolean(args, 2),
+                boolean(args, 3)
+            )),
+            "acceptRustOwnedResultTransfer" => json!(rules::accept_rust_owned_result_transfer(
+                boolean(args, 0),
+                boolean(args, 1),
+                boolean(args, 2),
+                boolean(args, 3)
+            )),
             "acceptRustOwnedBindingTracking" => json!(rules::accept_rust_owned_binding_tracking(
                 boolean(args, 0),
                 boolean(args, 1)
@@ -74,12 +86,15 @@ fn owned_vector_bindings_preserve_consumption_and_unavailable_reads() {
 #[test]
 fn retained_named_argument_inputs_have_tracked_consumption_proofs() {
     super::translation_string_array_copy_sort::require_rust_profile();
-    let data = meta_language::read_structured_data_lino(include_str!(
-        "../../../parity/fixtures/rust-fresh-vector-arguments.lino"
-    ))
-    .unwrap();
-    for row in data["correctedAssertions"].as_array().unwrap() {
-        meta_language::create_rust_source_owner_program_links(row["source"].as_str().unwrap())
-            .unwrap();
+    for source in [
+        include_str!("../../../parity/fixtures/rust-fresh-vector-arguments.lino"),
+        include_str!("../../../parity/fixtures/rust-fresh-vector-results.lino"),
+        include_str!("../../../parity/fixtures/rust-fresh-vector-call-results.lino"),
+    ] {
+        let data = meta_language::read_structured_data_lino(source).unwrap();
+        for row in data["correctedAssertions"].as_array().unwrap() {
+            meta_language::create_rust_source_owner_program_links(row["source"].as_str().unwrap())
+                .unwrap();
+        }
     }
 }

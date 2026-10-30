@@ -219,6 +219,36 @@ pub fn expire_rust_owned_binding_state(state: &str) -> String {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn accept_rust_owned_result_transfer(
+    binding: bool,
+    available: bool,
+    transferred: bool,
+    fresh: bool,
+) -> bool {
+    if binding {
+        available
+    } else {
+        transferred || fresh
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_owned_borrow_join_error(
+    tracked: bool,
+    borrowed: bool,
+    named: bool,
+    same: bool,
+) -> String {
+    if ((tracked && borrowed) && named) && !same {
+        String::from("alternative borrowed owners need their complete loan union proof")
+    } else {
+        String::new()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryAcceptRustOwnedBindingGuardLoop1Result {
     MlTemporaryAcceptRustOwnedBindingGuardLoop1Done,

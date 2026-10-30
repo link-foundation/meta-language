@@ -236,14 +236,16 @@ impl RustParser {
             self.origins.origin(&then, path),
             self.origins.origin(&otherwise, path),
         ])?;
-        Ok(SExpr::new(
+        let result = SExpr::new(
             SNode::If {
                 cond: Box::new(cond),
                 then: Box::new(then),
                 otherwise: Box::new(otherwise),
             },
             span(&token, self.cursor.peek()),
-        ))
+        );
+        self.origins.transfer_owned_result(&result, path)?;
+        Ok(result)
     }
 
     pub(in super::super) fn match_expr(&mut self, path: &[String]) -> Result<SExpr> {
@@ -289,7 +291,8 @@ impl RustParser {
                 }
                 self.cursor.expect("=>", Some("match arm"))?;
                 let body = self.expr(path, Options::default())?;
-                let origin = self.origins.origin(&body, path);
+                let origin = self.origins.transfer_owned_result(&body, path)?;
+                self.origins.expire_owned_bindings(&ownership_base, &origin);
                 ownership_arms.push((self.origins.snapshot_owned_bindings(), !origin.diverging));
                 Ok::<_, crate::translation::diagnostics::TranslationError>((body, origin, guard))
             })();
@@ -379,6 +382,7 @@ impl RustParser {
             span(&token, self.cursor.peek()),
         );
         self.origins.mark(&result, origin);
+        self.origins.transfer_owned_result(&result, path)?;
         Ok(result)
     }
 

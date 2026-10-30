@@ -22,3 +22,12 @@ export function acceptRustOwnedBindingGuard(before,after){if(before.length!==aft
 
 /** @param {string} state @returns {string} */
 export function expireRustOwnedBindingState(state){return state==='available'||state==='possibly moved'?'dropped':state;}
+
+/** A result must be a tracked available owner or a constructed/previously
+ * transferred temporary. @param {boolean} binding @param {boolean} available
+ * @param {boolean} transferred @param {boolean} fresh @returns {boolean} */
+export function acceptRustOwnedResultTransfer(binding,available,transferred,fresh){return binding?available:transferred||fresh;}
+
+/** @param {boolean} tracked @param {boolean} borrowed @param {boolean} named
+ * @param {boolean} same @returns {string} */
+export function readRustOwnedBorrowJoinError(tracked,borrowed,named,same){return tracked&&borrowed&&named&&!same?'alternative borrowed owners need their complete loan union proof':'';}

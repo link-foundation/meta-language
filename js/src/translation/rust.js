@@ -769,6 +769,7 @@ class RustParser {
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
       const body = emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
+      this.origins.transferOwnedResult(body,path);
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))
           && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,this.origins.freshVectorArgument(body,path,true))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
@@ -902,8 +903,9 @@ class RustParser {
     }
     const close = c.expect('}', 'block');
     if(!tail)tail={k:'unit',span:span(open,close)};
-    const origin = this.origins.origin(tail, path);
+    let origin = this.origins.transferOwnedResult(tail, path);
     const result = lets.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: binding.span }), tail);
+    this.origins.mark(result,origin);origin=this.origins.transferOwnedResult(result,path);
     this.origins.expireOwnedBindings(ownershipBefore,origin);
     if(origin.wrappers.length===0&&origin.type?.kind!=='array')origin.sourcePlaceBindingIdentity=null;
     this.origins.scope = previous;
@@ -1745,7 +1747,7 @@ class RustParser {
     const otherwise = c.is('if') ? this.ifExpr(path) : this.block(path);
     const ownershipElse=this.origins.snapshotOwnedBindings();this.origins.joinOwnedBindings(ownershipThen,ownershipElse,!this.origins.origin(then,path).diverging,!this.origins.origin(otherwise,path).diverging);
     this.origins.join([this.origins.origin(then,path),this.origins.origin(otherwise,path)]);
-    return { k: 'if', cond, then, else: otherwise, span: span(token, c.peek()) };
+    const result={ k: 'if', cond, then, else: otherwise, span: span(token, c.peek()) };this.origins.transferOwnedResult(result,path);return result;
   }
 
   match(path) {
@@ -1767,7 +1769,7 @@ class RustParser {
         for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
         const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?this.expr(path):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
         if(guard)this.origins.direct(guard,path,guard.span);
-        c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.origin(body,path);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
+        c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.transferOwnedResult(body,path);this.origins.expireOwnedBindings(ownershipBase,bodyOrigin);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
       }finally{this.origins.scope=previous;}
       if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');
       else if (!c.is('}')) c.expect(',', 'match arm');
@@ -1786,7 +1788,7 @@ class RustParser {
     if(guardedArms.some(arm=>arm.guard))return lowerRustGuardedMatch(this,scrutinee,guardedArms,path,span(token,c.peek()));
     const origins = rows.map(row => this.origins.origin(row.body, path));
     const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };
-    return this.origins.mark(result, this.origins.join(origins));
+    this.origins.mark(result, this.origins.join(origins));this.origins.transferOwnedResult(result,path);return result;
   }
 
   numericPattern(token,first,negative){

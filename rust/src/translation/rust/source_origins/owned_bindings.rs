@@ -6,7 +6,10 @@ impl SourceOrigins {
     pub(in super::super) fn track_owned_bindings(&self) -> bool {
         rules::accept_rust_owned_binding_tracking(
             self.collecting,
-            self.owned_binding_excluded || self.owned_local_values || self.shared_array_handles,
+            self.owned_binding_excluded
+                || self.owned_local_values
+                || self.shared_array_handles
+                || !self.array_result_model.is_empty(),
         )
     }
     pub(in super::super) fn owned_binding_value(&self, origin: &SourceOrigin) -> bool {
@@ -89,6 +92,31 @@ impl SourceOrigins {
         }
         let _ = path;
         Ok(())
+    }
+    pub(in super::super) fn transfer_owned_result(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+    ) -> Result<SourceOrigin> {
+        let origin = self.origin(node, path);
+        if !self.owned_binding_value(&origin)
+            || !rules::accept_rust_owned_result_transfer(
+                origin.source_binding_identity.is_some(),
+                self.available_owned_binding(&origin),
+                origin.source_owned_result_proof,
+                origin.fresh_array_value.is_some()
+                    || node
+                        .span
+                        .is_some_and(|place| self.fresh_vector_constructors.contains(&place)),
+            )
+        {
+            return Ok(origin);
+        }
+        self.consume_owned_binding(&origin, node.span)?;
+        let mut result = self.register_owned_binding(origin);
+        result.source_owned_result_proof = true;
+        self.mark(node, result.clone());
+        Ok(result)
     }
     pub(in super::super) fn prepare_owned_argument(
         &mut self,

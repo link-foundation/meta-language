@@ -38,6 +38,7 @@ mod type_owners;
 pub(super) struct SourceOrigin {
     pub(super) source_binding_identity: Option<String>,
     pub(super) source_place_binding_identity: Option<String>,
+    pub(super) source_owned_result_proof: bool,
     pub(super) ty: Option<Type>,
     /// Explicit primitive f64 annotation or literal evidence, never fallback inference.
     pub(super) float_source_model: Option<&'static str>,
@@ -137,6 +138,7 @@ impl SourceOrigin {
             source_lifetimes: Vec::new(),
             source_binding_identity: None,
             source_place_binding_identity: None,
+            source_owned_result_proof: false,
             source_owner: None,
             expanded_source_owner: None,
             integer_source_owner_conflict: false,
@@ -186,6 +188,7 @@ impl SourceOrigin {
             source_lifetimes: Vec::new(),
             source_binding_identity: None,
             source_place_binding_identity: None,
+            source_owned_result_proof: false,
             source_owner: None,
             expanded_source_owner: None,
             integer_source_owner_conflict: false,
@@ -950,6 +953,20 @@ impl SourceOrigins {
         {
             return SourceOrigin::integer_conflict();
         }
+        let borrow_error =
+            crate::translation::rust_owned_binding_rules::read_rust_owned_borrow_join_error(
+                self.track_owned_bindings(),
+                !first.wrappers.is_empty(),
+                returning
+                    .iter()
+                    .any(|origin| origin.source_binding_identity.is_some()),
+                returning
+                    .iter()
+                    .all(|origin| origin.source_binding_identity == first.source_binding_identity),
+            );
+        if !borrow_error.is_empty() {
+            return SourceOrigin::uncertain();
+        }
         if returning
             .iter()
             .all(|origin| self.same_origin(origin, first))
@@ -969,6 +986,9 @@ impl SourceOrigins {
                 } else {
                     None
                 },
+                source_owned_result_proof: returning
+                    .iter()
+                    .all(|origin| origin.source_owned_result_proof),
                 source_binding_identity: if returning
                     .iter()
                     .all(|origin| origin.source_binding_identity == first.source_binding_identity)
@@ -1058,6 +1078,22 @@ impl SourceOrigins {
             .filter(|origin| !origin.diverging)
             .collect::<Vec<_>>();
         if let Some(first) = returning.first() {
+            let error =
+                crate::translation::rust_owned_binding_rules::read_rust_owned_borrow_join_error(
+                    self.track_owned_bindings(),
+                    !first.wrappers.is_empty(),
+                    returning
+                        .iter()
+                        .any(|origin| origin.source_binding_identity.is_some()),
+                    returning.iter().all(|origin| {
+                        origin.source_binding_identity == first.source_binding_identity
+                    }),
+                );
+            if !error.is_empty() {
+                return Err(unsupported("Rust owned binding", error, None));
+            }
+        }
+        if let Some(first) = returning.first() {
             for origin in &returning {
                 let error =
                     crate::translation::rust_copy_closure_rules::read_rust_copy_closure_join_error(
@@ -1127,6 +1163,9 @@ impl SourceOrigins {
         allow_calls: bool,
     ) -> bool {
         let origin = self.origin(node, path);
+        if origin.source_owned_result_proof && self.available_owned_binding(&origin) {
+            return true;
+        }
         if crate::translation::rust_scalar_vector_copy_rules::accept_rust_scalar_vector_copy_occurrence(node.kind(),origin.array_source_model.unwrap_or(""),u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY,f64::from),node.span.is_some_and(|span|self.fresh_vector_constructors.contains(&span))){return true;}
         if allow_calls
             && accept_rust_known_fresh_vector_call(
@@ -1192,6 +1231,7 @@ impl SourceOrigins {
 
     pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) -> Result<()> {
         let mut origin = self.origin(node, path);
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin)&&origin.source_binding_identity.is_none(){origin=self.register_owned_binding(origin);}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin)&&origin.source_binding_identity.is_some()&&(node.block||matches!(node.node,SNode::If{..}|SNode::Match{..})){return Err(unsupported("Rust owned binding","owned temporary borrows need their complete lifetime proof",node.span));}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&origin.source_place_binding_identity.is_some(){origin.source_binding_identity=origin.source_place_binding_identity.clone();}
         origin.wrappers.insert(0, layer.to_owned());

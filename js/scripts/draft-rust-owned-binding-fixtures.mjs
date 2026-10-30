@@ -25,11 +25,32 @@ add('a named vector enters an owned immediate iterator','let a=vec![65u8,66u8];a
 add('owned reduction preserves source values after a transfer','let a=vec![2u8,3u8];let b=a;b.into_iter().sum::<u8>()','5');
 add('counting owned strings consumes only their vector','let a=vec![String::from("a"),String::from("b")];a.into_iter().count()','2','usize');
 add('an earlier scalar argument is evaluated before the later owner transfer','let a=vec![65u8];take(a[0],a)','130','u8','fn take(byte:u8,a:Vec<u8>)->u8{byte+a[0]}');
+add('a block transfers its outer vector into a fresh result owner','let a=vec![65u8];let b={a};b[0]','65');
+add('conditional results transfer either existing vector','let a=vec![65u8];let b=vec![66u8];let c=if false{a}else{b};c[0]','66');
+add('conditional results may mix a fresh constructor and an existing owner','let a=vec![65u8];let b=if true{a}else{vec![66u8]};b[0]','65');
+add('a diverging alternative supplies no returning owner','let a=vec![65u8];let b=if true{a}else{panic!("unselected owner")};b[0]','65');
+add('match results transfer existing vectors independently','let a=vec![65u8];let b=vec![66u8];let c=match false{true=>a,false=>b};c[0]','66');
+add('match results may mix a constructor and an existing owner','let a=vec![65u8];let b=match true{true=>a,false=>vec![66u8]};b[0]','65');
+add('a function may return its owned vector parameter','let a=vec![65u8];let b=identity(a);b[0]','65','u8','fn identity(a:Vec<u8>)->Vec<u8>{a}');
+add('a function may return its locally bound vector','let a=make();a[0]','65','u8','fn make()->Vec<u8>{let a=vec![65u8];a}');
+add('a function may forward a moved parameter in either declaration order','let a=forward(vec![65u8]);a[0]','65','u8','fn forward(a:Vec<u8>)->Vec<u8>{identity(a)}fn identity(a:Vec<u8>)->Vec<u8>{a}');
+add('a conditional moved result supplies an owned call argument','let a=vec![65u8];take(if false{vec![66u8]}else{a})','65','u8','fn take(a:Vec<u8>)->u8{a[0]}');
+add('a moved match result may enter an immediate owned iterator','let a=vec![2u8,3u8];(match true{true=>a,false=>vec![4u8]}).into_iter().sum::<u8>()','5');
+add('a directly bound borrowed vector temporary retains its enclosing scope','let r=&vec![65u8];r[0]','65');
+add('both borrowed alternatives may retain the same actual owner','let a=vec![65u8];let r=if true{&a}else{&a};r[0]','65');
 const refusals=[];
 function refuse(name,body,error,ret='u8',declarations=''){refusals.push({name,source:declarations+'pub fn result()->'+ret+'{'+body+'}fn main(){}',kind:'unsupported',reason:'Rust owned binding: '+error});}
 const moved='a moved source binding cannot be read or consumed again';
+refuse('a borrowed match binding cannot escape its owning arm','let a=vec![65u8];let r=match a{b=>&b};r[0]','an owned source binding does not outlive this use');
+refuse('scoped borrowed vector temporaries cannot escape their block','let r={&vec![65u8]};r[0]','an owned source binding does not outlive this use');
+refuse('different borrowed branch owners retain their loan union obligation','let a=vec![65u8];let b=vec![66u8];let r=if true{&a}else{&b};r[0]','alternative borrowed owners need their complete loan union proof');
 refuse('an earlier owned argument is consumed before a later scalar read','let a=vec![65u8];take(a,a[0])',moved,'u8','fn take(a:Vec<u8>,byte:u8)->u8{a[0]+byte}');
 refuse('an earlier owned argument is consumed before a nested later borrowed call','let a=vec![65u8];take(a,read(&a))',moved,'u8','fn read(a:&Vec<u8>)->u8{a[0]}fn take(a:Vec<u8>,byte:u8)->u8{a[0]+byte}');
+refuse('a block result consumes the original outer owner','let a=vec![65u8];let b={a};a[0]',moved);
+refuse('both returning branches consuming an owner prevent later reuse','let a=vec![65u8];let b=if true{a}else{a};a[0]',moved);
+refuse('a mixed branch result retains conditional unavailability','let a=vec![65u8];let b=if true{a}else{vec![66u8]};a[0]','a source binding moved on a returning branch cannot be reused');
+refuse('a matched result retains conditional unavailability','let a=vec![65u8];let b=match true{true=>a,false=>vec![66u8]};a[0]','a source binding moved on a returning branch cannot be reused');
+refuse('a loan cannot survive moving its owner through a block','let a=vec![65u8];let r=&a;let b={a};r[0]',moved);
 refuse('a moved vector cannot be indexed again','let a=vec![65u8];let b=a;a[0]',moved);
 refuse('a moved vector cannot be borrowed again','let a=vec![65u8];let b=a;let r=&a;r[0]',moved);
 refuse('a moved vector cannot transfer twice','let a=vec![65u8];let b=a;let c=a;c[0]',moved);
@@ -44,6 +65,8 @@ refuse('an indexed loan cannot outlive its scoped vector','let r={let a=vec![65u
 refuse('a moved block value is not silently borrowed as its original place','let a=vec![65u8];let r=&{a};r[0]','owned temporary borrows need their complete lifetime proof');
 refuse('a guard cannot conceal a move on its fallthrough path','let a=vec![65u8];match true{true if check(a)=>1u8,_=>2u8}','owned consumption in guards needs its complete fallthrough path proof','u8','fn check(a:Vec<u8>)->bool{a[0]==65}');
 const premises=[];function premise(operation,args,expected){premises.push({operation,args,expected});}
+for(const tracked of [false,true])for(const borrowed of [false,true])for(const named of [false,true])for(const same of [false,true])premise('readRustOwnedBorrowJoinError',[tracked,borrowed,named,same],tracked&&borrowed&&named&&!same?'alternative borrowed owners need their complete loan union proof':'');
+for(const binding of [false,true])for(const available of [false,true])for(const transferred of [false,true])for(const fresh of [false,true])premise('acceptRustOwnedResultTransfer',[binding,available,transferred,fresh],binding?available:transferred||fresh);
 for(const collecting of [false,true])for(const excluded of [false,true])premise('acceptRustOwnedBindingTracking',[collecting,excluded],!collecting&&!excluded);
 for(const [kind,storage,layers,known]of [['array','owned vector',0,true],['array','immutable slice',0,true],['array','owned vector',1,true],['array','owned vector',0,false],['string','owned vector',0,true]])premise('acceptRustOwnedBindingValue',[kind,storage,layers,known],kind==='array'&&storage==='owned vector'&&layers===0&&known);
 for(const [state,error,consumed,expired]of [['available','','moved','dropped'],['moved',moved,'moved','moved'],['possibly moved','a source binding moved on a returning branch cannot be reused','possibly moved','dropped'],['dropped','an owned source binding does not outlive this use','dropped','dropped'],['unreachable','a source binding needs its actual ownership state','unreachable','unreachable'],['','a source binding needs its actual ownership state','','']]){premise('readRustOwnedBindingReadError',[state],error);premise('consumeRustOwnedBindingState',[state],consumed);premise('expireRustOwnedBindingState',[state],expired);}

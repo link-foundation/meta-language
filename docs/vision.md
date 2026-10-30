@@ -10613,3 +10613,20 @@ Legacy local-state, shared-handle, scalar-loop and const-function profiles keep
 their independent contracts. Full String/record/Box/resource ownership, mutable
 borrows, backedges, temporary lifetime extension, conditional-pattern paths
 and all other source constructs remain obligations.
+
+
+Owned block and branch results transfer their source owner before joining the
+continuation. Each returning path supplies a constructed value or a tracked
+available owner; the result gets a separate identity. A mixed existing/fresh
+conditional result cannot revive the original owner on the path that moved it.
+The same source proof permits ordinary scalar-vector functions to return their
+parameter or a local binding, including checked interprocedural forwarding.
+This is a consumption proof independent of constructor freshness. Historical
+valid refusals retain their exact inputs and former reasons as admission
+controls, with independent executable originals. Explicit legacy array-result
+profiles remain separate. All controls are still unexecuted drafts.
+
+Borrowed vector temporaries receive source identities too, and owning match
+bindings expire on arm exit. Conditional loans with different source owners
+require their full loan-union proof before admission; they are not silently
+merged into an ownerless reference. The shared policy records that boundary.

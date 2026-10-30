@@ -758,7 +758,7 @@ impl RustParser {
         }
         let close = self.cursor.expect("}", Some("block"))?;
         let tail = tail.unwrap_or_else(|| SExpr::new(SNode::Unit, span(&open, &close)));
-        let mut origin = self.origins.origin(&tail, path);
+        let origin = self.origins.transfer_owned_result(&tail, path)?;
         let result = lets.into_iter().rev().fold(tail, |body, binding| {
             SExpr::new(
                 SNode::Let {
@@ -770,6 +770,8 @@ impl RustParser {
                 binding.span,
             )
         });
+        self.origins.mark(&result, origin);
+        let mut origin = self.origins.transfer_owned_result(&result, path)?;
         self.origins
             .expire_owned_bindings(&ownership_before, &origin);
         if origin.wrappers.is_empty() && !matches!(origin.ty, Some(Type::Array { .. })) {
