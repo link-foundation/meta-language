@@ -11208,3 +11208,20 @@ non-overlap and exact-source guard retained. Distinct module ownership is not
 inferred from text identity. A deferred replay control retains both modules and
 an unrelated integer function. Source generation and manifest refresh supply no
 behavioral observations or completion evidence.
+
+
+Borrowed string byte lengths in scalar constant expressions have a source draft
+that reuses the existing Unicode scalar validation and exact UTF-8 measurement
+rules. The checked operation keeps its actual `usize` source owner even when
+nested in arithmetic or casts; both hosts transport that owner from the original
+math expression. Source evaluation charges string units against remaining work
+before allocating the unit buffer. Invalid scalar text, erased result owners,
+wrong arity and non-string operands refuse explicitly. The shared JavaScript
+operation is automatically translated with the evaluator. Independent original
+programs and fact packets retain empty, ASCII, multibyte and supplementary text,
+plus invalid scalar and source-owner cases. These controls remain unexecuted;
+this extension establishes neither general const string operations nor complete
+constant interpretation. The source interface follows the
+[standard str byte-length contract](https://doc.rust-lang.org/std/primitive.str.html#method.len),
+which records const availability since Rust 1.39.0; the controls remain bounded
+to the declared Rust profile.

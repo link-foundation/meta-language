@@ -1,9 +1,9 @@
 // Generated from complete js/src/translation/rust-source-constant-evaluation-rules.js. Do not edit by hand.
-use super::MlTemporaryConstantRowLoop26Result;
-use super::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop25Result;
-use super::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21;
-use super::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22;
-use super::MlTemporaryReadRustSourceConstantIntegerLiteralLoop23Result;
+use super::MlTemporaryConstantRowLoop30Result;
+use super::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop29Result;
+use super::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25;
+use super::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26;
+use super::MlTemporaryReadRustSourceConstantIntegerLiteralLoop27Result;
 use super::constant_bits;
 use super::constant_element;
 use super::constant_field;
@@ -15,72 +15,9 @@ use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::read_rust_constant_primitive_alias_owner;
-use super::source_ml_temporary_constant_domain_loop20;
-use super::source_ml_temporary_constant_row_loop26;
-use super::source_ml_temporary_read_rust_source_constant_initializer_boundary_loop25;
-use super::source_ml_temporary_read_rust_source_constant_integer_literal_loop23;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn constant_domain(owner: &self::ml_string::Text) -> Vec<self::ml_string::Text> {
-    {
-        let bits = self::constant_bits(owner);
-        if bits == 0f64 {
-            Vec::<self::ml_string::Text>::new()
-        } else {
-            {
-                let modulus = self::ml::Big::from_i128(1);
-                {
-                    let at = 0f64;
-                    {
-                        let modulus_2 =
-                            self::source_ml_temporary_constant_domain_loop20(bits, modulus, at);
-                        {
-                            let signed =
-                                owner.starts_with(&self::ml_string::Text::from_units(vec![105]));
-                            vec![
-                                {
-                                    let source_ml_source1_string_argument40 = if signed {
-                                        (self::ml::divide(
-                                            &modulus_2,
-                                            &self::ml::Big::from_i128(2),
-                                            "trunc",
-                                            Some("Division by zero"),
-                                            false,
-                                        ))
-                                        .neg()
-                                    } else {
-                                        self::ml::Big::from_i128(0)
-                                    };
-                                    self::ml_string::Text::from_text(
-                                        &source_ml_source1_string_argument40.to_string(),
-                                    )
-                                },
-                                {
-                                    let source_ml_source1_string_argument41 = if signed {
-                                        (self::ml::divide(
-                                            &modulus_2,
-                                            &self::ml::Big::from_i128(2),
-                                            "trunc",
-                                            Some("Division by zero"),
-                                            false,
-                                        ))
-                                        .sub(&self::ml::Big::from_i128(1))
-                                    } else {
-                                        modulus_2.sub(&self::ml::Big::from_i128(1))
-                                    };
-                                    self::ml_string::Text::from_text(
-                                        &source_ml_source1_string_argument41.to_string(),
-                                    )
-                                },
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+use super::source_ml_temporary_constant_row_loop30;
+use super::source_ml_temporary_read_rust_source_constant_initializer_boundary_loop29;
+use super::source_ml_temporary_read_rust_source_constant_integer_literal_loop27;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -97,23 +34,23 @@ pub fn read_rust_source_constant_integer_literal(
                 {
                     let negated = negative;
                     {
-                        let source_ml_source1_s46 = if digits
+                        let source_ml_source1_s49 = if digits
                             .starts_with(&self::ml_string::Text::from_units(vec![45]))
                         {
                             {
                                 let digits_2 = {
-                                    let source_ml_source1_string_range_operand47 = digits;
+                                    let source_ml_source1_string_range_operand50 = digits;
                                     {
-                                        let source_ml_source1_string_range_operand48 = 1f64;
+                                        let source_ml_source1_string_range_operand51 = 1f64;
                                         {
-                                            let source_ml_source1_string_range_position49 =
-                                                source_ml_source1_string_range_operand48;
+                                            let source_ml_source1_string_range_position52 =
+                                                source_ml_source1_string_range_operand51;
                                             {
-                                                let source_ml_source1_string_range_position50 =
+                                                let source_ml_source1_string_range_position53 =
                                                     f64::INFINITY;
-                                                source_ml_source1_string_range_operand47.slice(
-                                                    source_ml_source1_string_range_position49,
-                                                    source_ml_source1_string_range_position50,
+                                                source_ml_source1_string_range_operand50.slice(
+                                                    source_ml_source1_string_range_position52,
+                                                    source_ml_source1_string_range_position53,
                                                 )
                                             }
                                         }
@@ -121,26 +58,26 @@ pub fn read_rust_source_constant_integer_literal(
                                 };
                                 {
                                     let negated_2 = !negated;
-                                    self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21Next(digits_2, negated_2)
+                                    self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25Next(digits_2, negated_2)
                                 }
                             }
                         } else {
-                            self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21Next(digits, negated)
+                            self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25Next(digits, negated)
                         };
-                        match source_ml_source1_s46 {
-                            self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21::MlTemporaryReadRustSourceConstantIntegerLiteralJoin21Next(digits_3, negated_3) => {
+                        match source_ml_source1_s49 {
+                            self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25::MlTemporaryReadRustSourceConstantIntegerLiteralJoin25Next(digits_3, negated_3) => {
                                 {
-                                    let source_ml_source1_s63 = if digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 120])) || digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 88])) {
+                                    let source_ml_source1_s66 = if digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 120])) || digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 88])) {
                                         {
                                             let digits_4 = {
-                                                let source_ml_source1_string_range_operand64 = digits_3;
+                                                let source_ml_source1_string_range_operand67 = digits_3;
                                                 {
-                                                    let source_ml_source1_string_range_operand65 = 2f64;
+                                                    let source_ml_source1_string_range_operand68 = 2f64;
                                                     {
-                                                        let source_ml_source1_string_range_position66 = source_ml_source1_string_range_operand65;
+                                                        let source_ml_source1_string_range_position69 = source_ml_source1_string_range_operand68;
                                                         {
-                                                            let source_ml_source1_string_range_position67 = f64::INFINITY;
-                                                            source_ml_source1_string_range_operand64.slice(source_ml_source1_string_range_position66, source_ml_source1_string_range_position67)
+                                                            let source_ml_source1_string_range_position70 = f64::INFINITY;
+                                                            source_ml_source1_string_range_operand67.slice(source_ml_source1_string_range_position69, source_ml_source1_string_range_position70)
                                                         }
                                                     }
                                                 }
@@ -149,21 +86,21 @@ pub fn read_rust_source_constant_integer_literal(
                                                 let base_2 = self::ml::Big::from_i128(16);
                                                 {
                                                     let limit_2 = 16f64;
-                                                    self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22Next(digits_4, base_2, limit_2)
+                                                    self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26Next(digits_4, base_2, limit_2)
                                                 }
                                             }
                                         }
                                     } else if digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 111])) || digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 79])) {
                                             {
                                                 let digits_5 = {
-                                                    let source_ml_source1_string_range_operand68 = digits_3;
+                                                    let source_ml_source1_string_range_operand71 = digits_3;
                                                     {
-                                                        let source_ml_source1_string_range_operand69 = 2f64;
+                                                        let source_ml_source1_string_range_operand72 = 2f64;
                                                         {
-                                                            let source_ml_source1_string_range_position70 = source_ml_source1_string_range_operand69;
+                                                            let source_ml_source1_string_range_position73 = source_ml_source1_string_range_operand72;
                                                             {
-                                                                let source_ml_source1_string_range_position71 = f64::INFINITY;
-                                                                source_ml_source1_string_range_operand68.slice(source_ml_source1_string_range_position70, source_ml_source1_string_range_position71)
+                                                                let source_ml_source1_string_range_position74 = f64::INFINITY;
+                                                                source_ml_source1_string_range_operand71.slice(source_ml_source1_string_range_position73, source_ml_source1_string_range_position74)
                                                             }
                                                         }
                                                     }
@@ -172,21 +109,21 @@ pub fn read_rust_source_constant_integer_literal(
                                                     let base_3 = self::ml::Big::from_i128(8);
                                                     {
                                                         let limit_3 = 8f64;
-                                                        self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22Next(digits_5, base_3, limit_3)
+                                                        self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26Next(digits_5, base_3, limit_3)
                                                     }
                                                 }
                                             }
                                         } else if digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 98])) || digits_3.starts_with(&self::ml_string::Text::from_units(vec![48, 66])) {
                                                 {
                                                     let digits_6 = {
-                                                        let source_ml_source1_string_range_operand72 = digits_3;
+                                                        let source_ml_source1_string_range_operand75 = digits_3;
                                                         {
-                                                            let source_ml_source1_string_range_operand73 = 2f64;
+                                                            let source_ml_source1_string_range_operand76 = 2f64;
                                                             {
-                                                                let source_ml_source1_string_range_position74 = source_ml_source1_string_range_operand73;
+                                                                let source_ml_source1_string_range_position77 = source_ml_source1_string_range_operand76;
                                                                 {
-                                                                    let source_ml_source1_string_range_position75 = f64::INFINITY;
-                                                                    source_ml_source1_string_range_operand72.slice(source_ml_source1_string_range_position74, source_ml_source1_string_range_position75)
+                                                                    let source_ml_source1_string_range_position78 = f64::INFINITY;
+                                                                    source_ml_source1_string_range_operand75.slice(source_ml_source1_string_range_position77, source_ml_source1_string_range_position78)
                                                                 }
                                                             }
                                                         }
@@ -195,15 +132,15 @@ pub fn read_rust_source_constant_integer_literal(
                                                         let base_4 = self::ml::Big::from_i128(2);
                                                         {
                                                             let limit_4 = 2f64;
-                                                            self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22Next(digits_6, base_4, limit_4)
+                                                            self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26Next(digits_6, base_4, limit_4)
                                                         }
                                                     }
                                                 }
                                             } else {
-                                                self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22Next(digits_3, base, limit)
+                                                self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26Next(digits_3, base, limit)
                                             };
-                                    match source_ml_source1_s63 {
-                                        self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22::MlTemporaryReadRustSourceConstantIntegerLiteralJoin22Next(digits_7, base_5, limit_5) => {
+                                    match source_ml_source1_s66 {
+                                        self::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26::MlTemporaryReadRustSourceConstantIntegerLiteralJoin26Next(digits_7, base_5, limit_5) => {
                                             if digits_7 == (self::ml_string::Text::from_units(vec![])) {
                                                 vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 108, 105, 116, 101, 114, 97, 108, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 105, 110, 116, 101, 103, 101, 114, 32, 115, 112, 101, 108, 108, 105, 110, 103])]
                                             } else {
@@ -212,20 +149,20 @@ pub fn read_rust_source_constant_integer_literal(
                                                     {
                                                         let at = 0f64;
                                                         {
-                                                            let source_ml_source1_s76 = self::source_ml_temporary_read_rust_source_constant_integer_literal_loop23(&(digits_7), base_5.clone(), limit_5, value, at);
-                                                            match source_ml_source1_s76 {
-                                                                self::MlTemporaryReadRustSourceConstantIntegerLiteralLoop23Result::MlTemporaryReadRustSourceConstantIntegerLiteralLoop23Done(value_2) => {
+                                                            let source_ml_source1_s79 = self::source_ml_temporary_read_rust_source_constant_integer_literal_loop27(&(digits_7), base_5.clone(), limit_5, value, at);
+                                                            match source_ml_source1_s79 {
+                                                                self::MlTemporaryReadRustSourceConstantIntegerLiteralLoop27Result::MlTemporaryReadRustSourceConstantIntegerLiteralLoop27Done(value_2) => {
                                                                     vec![self::ml_string::Text::from_units(vec![105, 110, 116, 101, 103, 101, 114]), {
-                                                                        let source_ml_source1_string_argument77 = if negated_3 {
+                                                                        let source_ml_source1_string_argument80 = if negated_3 {
                                                                             value_2.neg()
                                                                         } else {
                                                                             value_2.clone()
                                                                         };
-                                                                        self::ml_string::Text::from_text(&source_ml_source1_string_argument77.to_string())
+                                                                        self::ml_string::Text::from_text(&source_ml_source1_string_argument80.to_string())
                                                                     }]
                                                                 }
-                                                                self::MlTemporaryReadRustSourceConstantIntegerLiteralLoop23Result::MlTemporaryReadRustSourceConstantIntegerLiteralLoop23Return(source_ml_temporary_result23) => {
-                                                                    source_ml_temporary_result23
+                                                                self::MlTemporaryReadRustSourceConstantIntegerLiteralLoop27Result::MlTemporaryReadRustSourceConstantIntegerLiteralLoop27Return(source_ml_temporary_result27) => {
+                                                                    source_ml_temporary_result27
                                                                 }
                                                             }
                                                         }
@@ -262,13 +199,13 @@ pub fn read_rust_source_constant_initializer_boundary(
             {
                 let at = first;
                 {
-                    let source_ml_source1_s78 = self::source_ml_temporary_read_rust_source_constant_initializer_boundary_loop25(kinds, values, depth, at);
-                    match source_ml_source1_s78 {
-                        self::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop25Result::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop25Done => {
+                    let source_ml_source1_s81 = self::source_ml_temporary_read_rust_source_constant_initializer_boundary_loop29(kinds, values, depth, at);
+                    match source_ml_source1_s81 {
+                        self::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop29Result::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop29Done => {
                             -1f64
                         }
-                        self::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop25Result::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop25Return(source_ml_temporary_result25) => {
-                            source_ml_temporary_result25
+                        self::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop29Result::MlTemporaryReadRustSourceConstantInitializerBoundaryLoop29Return(source_ml_temporary_result29) => {
+                            source_ml_temporary_result29
                         }
                     }
                 }
@@ -354,15 +291,15 @@ pub fn constant_row(
         {
             let at = 0f64;
             {
-                let source_ml_source1_s79 = self::source_ml_temporary_constant_row_loop26(
+                let source_ml_source1_s82 = self::source_ml_temporary_constant_row_loop30(
                     texts, starts, counts, labels, targets, rows, owner, at,
                 );
-                match source_ml_source1_s79 {
-                    self::MlTemporaryConstantRowLoop26Result::MlTemporaryConstantRowLoop26Done => {
+                match source_ml_source1_s82 {
+                    self::MlTemporaryConstantRowLoop30Result::MlTemporaryConstantRowLoop30Done => {
                         -1f64
                     }
-                    self::MlTemporaryConstantRowLoop26Result::MlTemporaryConstantRowLoop26Return(source_ml_temporary_result26) => {
-                        source_ml_temporary_result26
+                    self::MlTemporaryConstantRowLoop30Result::MlTemporaryConstantRowLoop30Return(source_ml_temporary_result30) => {
+                        source_ml_temporary_result30
                     }
                 }
             }

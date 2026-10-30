@@ -1,5 +1,5 @@
 // Generated from complete js/src/translation/rust-source-constant-evaluation-rules.js. Do not edit by hand.
-use super::MlTemporaryConstantFunctionLoop27Result;
+use super::MlTemporaryConstantFunctionLoop31Result;
 use super::constant_bits;
 use super::constant_domain;
 use super::constant_expression;
@@ -14,7 +14,7 @@ use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::read_rust_source_constant_integer_literal;
-use super::source_ml_temporary_constant_function_loop27;
+use super::source_ml_temporary_constant_function_loop31;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -601,9 +601,9 @@ pub fn constant_function(
                                                 {
                                                     let at = 0f64;
                                                     {
-                                                        let source_ml_source1_s80 = self::source_ml_temporary_constant_function_loop27(texts, starts, counts, labels, targets, rows, names, values, visiting, depth, parameters, args, arity, available, bound_names, bound_values, at);
-                                                        match source_ml_source1_s80 {
-                                                    self::MlTemporaryConstantFunctionLoop27Result::MlTemporaryConstantFunctionLoop27Done(available_2, bound_names_2, bound_values_2) => {
+                                                        let source_ml_source1_s83 = self::source_ml_temporary_constant_function_loop31(texts, starts, counts, labels, targets, rows, names, values, visiting, depth, parameters, args, arity, available, bound_names, bound_values, at);
+                                                        match source_ml_source1_s83 {
+                                                    self::MlTemporaryConstantFunctionLoop31Result::MlTemporaryConstantFunctionLoop31Done(available_2, bound_names_2, bound_values_2) => {
                                                         {
                                                             let domain = self::constant_text(texts, starts, counts, labels, targets, row, &(self::ml_string::Text::from_units(vec![100, 111, 109, 97, 105, 110])));
                                                             {
@@ -621,8 +621,8 @@ if ml_library_inequality_1 {
                                                             }
                                                         }
                                                     }
-                                                    self::MlTemporaryConstantFunctionLoop27Result::MlTemporaryConstantFunctionLoop27Return(source_ml_temporary_result27) => {
-                                                        source_ml_temporary_result27
+                                                    self::MlTemporaryConstantFunctionLoop31Result::MlTemporaryConstantFunctionLoop31Return(source_ml_temporary_result31) => {
+                                                        source_ml_temporary_result31
                                                     }
                                                 }
                                                     }

@@ -500,7 +500,7 @@ fn project(
             dependencies.push(entry.full_name);
         }
     }
-    if kind == "num" || kind == "cast" {
+    if kind == "num" || kind == "cast" || kind == "math" {
         let expression: SExpr = serde_json::from_value(Value::Object(fields.clone()))
             .expect("actual scalar expression");
         let origin = reader.origins.origin(&expression, path);

@@ -1,12 +1,7 @@
 // Generated from complete js/src/translation/rust-source-constant-evaluation-rules.js. Do not edit by hand.
-use super::MlTemporaryConstantFieldLoop19Result;
-use super::MlTemporaryEvaluateRustConstantIntegerOperationJoin17;
-use super::MlTemporaryPlanRustIntegerRangeRowsLoop9Result;
-use super::MlTemporaryPlanRustIntegerRangeRowsLoop10Result;
-use super::MlTemporaryPlanRustIntegerRangeRowsLoop11Result;
-use super::MlTemporaryReadRustIntegerRangeCutsLoop5Result;
+use super::MlTemporaryConstantFieldLoop23Result;
+use super::MlTemporaryEvaluateRustConstantIntegerOperationJoin21;
 use super::accept_rust_source_signature_primitive;
-use super::compare_rust_integer_range_decimals;
 use super::ml;
 use super::ml_array;
 use super::ml_big_integer_bitwise;
@@ -16,202 +11,12 @@ use super::ml_source_exception;
 use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
-use super::source_ml_temporary_constant_field_loop19;
-use super::source_ml_temporary_evaluate_rust_constant_integer_operation_loop16;
-use super::source_ml_temporary_evaluate_rust_constant_integer_operation_loop18;
-use super::source_ml_temporary_plan_rust_integer_range_rows_loop9;
-use super::source_ml_temporary_plan_rust_integer_range_rows_loop10;
-use super::source_ml_temporary_plan_rust_integer_range_rows_loop11;
-use super::source_ml_temporary_read_rust_constant_integer_decimal_loop14;
-use super::source_ml_temporary_read_rust_integer_range_cuts_loop5;
-use super::source_ml_temporary_read_rust_integer_range_cuts_loop6;
+use super::read_rust_constant_integer_decimal;
+use super::source_ml_temporary_constant_domain_loop24;
+use super::source_ml_temporary_constant_field_loop23;
+use super::source_ml_temporary_evaluate_rust_constant_integer_operation_loop20;
+use super::source_ml_temporary_evaluate_rust_constant_integer_operation_loop22;
 use super::test_rust_integer_range_canonical_decimal;
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_integer_range_bounds_error(
-    lower: &self::ml_string::Text,
-    upper: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    {
-        let order = self::compare_rust_integer_range_decimals(lower, upper);
-        if order == 2f64 {
-            self::ml_string::Text::from_units(vec![
-                114, 97, 110, 103, 101, 32, 101, 110, 100, 112, 111, 105, 110, 116, 115, 32, 114,
-                101, 113, 117, 105, 114, 101, 32, 101, 120, 97, 99, 116, 32, 99, 97, 110, 111, 110,
-                105, 99, 97, 108, 32, 105, 110, 116, 101, 103, 101, 114, 115,
-            ])
-        } else if order >= 0f64 {
-            self::ml_string::Text::from_units(vec![
-                97, 32, 114, 97, 110, 103, 101, 32, 112, 97, 116, 116, 101, 114, 110, 32, 109, 117,
-                115, 116, 32, 99, 111, 110, 116, 97, 105, 110, 32, 97, 116, 32, 108, 101, 97, 115,
-                116, 32, 111, 110, 101, 32, 105, 110, 116, 101, 103, 101, 114,
-            ])
-        } else {
-            self::ml_string::Text::from_units(vec![])
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_integer_range_cuts(
-    minimum: &self::ml_string::Text,
-    maximum: &self::ml_string::Text,
-    lowers: &[self::ml_string::Text],
-    uppers: &[self::ml_string::Text],
-) -> Vec<self::ml_string::Text> {
-    if ((lowers.len() as f64) != (uppers.len() as f64))
-        || ((self::read_rust_integer_range_bounds_error(minimum, maximum))
-            != (self::ml_string::Text::from_units(vec![])))
-    {
-        Vec::<self::ml_string::Text>::new()
-    } else {
-        {
-            let row = 0f64;
-            {
-                let source_ml_source1_s23 =
-                    self::source_ml_temporary_read_rust_integer_range_cuts_loop5(
-                        minimum, maximum, lowers, uppers, row,
-                    );
-                match source_ml_source1_s23 {
-                    self::MlTemporaryReadRustIntegerRangeCutsLoop5Result::MlTemporaryReadRustIntegerRangeCutsLoop5Done => {
-                        {
-                            let result = vec![minimum.clone()];
-                            {
-                                let current = minimum.clone();
-                                {
-                                    self::source_ml_temporary_read_rust_integer_range_cuts_loop6(maximum, lowers, uppers, result, current)
-                                }
-                            }
-                        }
-                    }
-                    self::MlTemporaryReadRustIntegerRangeCutsLoop5Result::MlTemporaryReadRustIntegerRangeCutsLoop5Return(source_ml_temporary_result7) => {
-                        source_ml_temporary_result7
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_integer_range_rows(
-    kinds: &[self::ml_string::Text],
-    lowers: &[self::ml_string::Text],
-    uppers: &[self::ml_string::Text],
-    cuts: &[self::ml_string::Text],
-) -> Vec<f64> {
-    if (((kinds.len() as f64) != (lowers.len() as f64))
-        || ((kinds.len() as f64) != (uppers.len() as f64)))
-        || ((cuts.len() as f64) < 2f64)
-    {
-        vec![-1f64]
-    } else {
-        {
-            let cell = 0f64;
-            {
-                let source_ml_source1_s24 =
-                    self::source_ml_temporary_plan_rust_integer_range_rows_loop9(cuts, cell);
-                match source_ml_source1_s24 {
-                    self::MlTemporaryPlanRustIntegerRangeRowsLoop9Result::MlTemporaryPlanRustIntegerRangeRowsLoop9Done => {
-                        {
-                            let row = 0f64;
-                            {
-                                let source_ml_source1_s25 = self::source_ml_temporary_plan_rust_integer_range_rows_loop10(kinds, lowers, uppers, cuts, row);
-                                match source_ml_source1_s25 {
-                                    self::MlTemporaryPlanRustIntegerRangeRowsLoop10Result::MlTemporaryPlanRustIntegerRangeRowsLoop10Done => {
-                                        {
-                                            let result = vec![0f64, ((cuts.len() as f64) - 1f64)];
-                                            {
-                                                let cell_2 = 0f64;
-                                                {
-                                                    let source_ml_source1_s26 = self::source_ml_temporary_plan_rust_integer_range_rows_loop11(kinds, lowers, uppers, cuts, result, cell_2);
-                                                    match source_ml_source1_s26 {
-                                                        self::MlTemporaryPlanRustIntegerRangeRowsLoop11Result::MlTemporaryPlanRustIntegerRangeRowsLoop11Done(result_2) => {
-                                                            result_2
-                                                        }
-                                                        self::MlTemporaryPlanRustIntegerRangeRowsLoop11Result::MlTemporaryPlanRustIntegerRangeRowsLoop11Return(source_ml_temporary_result11) => {
-                                                            source_ml_temporary_result11
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    self::MlTemporaryPlanRustIntegerRangeRowsLoop10Result::MlTemporaryPlanRustIntegerRangeRowsLoop10Return(source_ml_temporary_result13) => {
-                                        source_ml_temporary_result13
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    self::MlTemporaryPlanRustIntegerRangeRowsLoop9Result::MlTemporaryPlanRustIntegerRangeRowsLoop9Return(source_ml_temporary_result13_2) => {
-                        source_ml_temporary_result13_2
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn test_rust_integer_range_rest_follower(next: &self::ml_string::Text) -> bool {
-    ((*next) == (self::ml_string::Text::from_units(vec![44])))
-        || ((*next) == (self::ml_string::Text::from_units(vec![41])))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_constant_integer_decimal(text: &self::ml_string::Text) -> self::ml::Big {
-    {
-        let negative = text.starts_with(&self::ml_string::Text::from_units(vec![45]));
-        {
-            let digits = if negative {
-                {
-                    let source_ml_source1_string_range_operand27 = text.clone();
-                    {
-                        let source_ml_source1_string_range_operand28 = 1f64;
-                        {
-                            let source_ml_source1_string_range_position29 =
-                                source_ml_source1_string_range_operand28;
-                            {
-                                let source_ml_source1_string_range_position30 = f64::INFINITY;
-                                source_ml_source1_string_range_operand27.slice(
-                                    source_ml_source1_string_range_position29,
-                                    source_ml_source1_string_range_position30,
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                text.clone()
-            };
-            {
-                let result = self::ml::Big::from_i128(0);
-                {
-                    let at = 0f64;
-                    {
-                        let result_2 =
-                            self::source_ml_temporary_read_rust_constant_integer_decimal_loop14(
-                                &(digits),
-                                result,
-                                at,
-                            );
-                        if negative {
-                            result_2.neg()
-                        } else {
-                            result_2.clone()
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -259,7 +64,7 @@ pub fn evaluate_rust_constant_integer_operation(
                             {
                                 let at = 0f64;
                                 {
-                                    let modulus_2 = self::source_ml_temporary_evaluate_rust_constant_integer_operation_loop16(bits, modulus, at);
+                                    let modulus_2 = self::source_ml_temporary_evaluate_rust_constant_integer_operation_loop20(bits, modulus, at);
                                     {
                                         let expected_low = if low < (self::ml::Big::from_i128(0)) {
                                             (self::ml::divide(
@@ -471,57 +276,57 @@ pub fn evaluate_rust_constant_integer_operation(
                                                                 let value =
                                                                     self::ml::Big::from_i128(0);
                                                                 {
-                                                                    let source_ml_source1_s33 = if (*operation) == (self::ml_string::Text::from_units(vec![97, 100, 100])) {
+                                                                    let source_ml_source1_s36 = if (*operation) == (self::ml_string::Text::from_units(vec![97, 100, 100])) {
                                                                                                     {
                                                                                                         let value_2 = a.add(&b);
-                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_2)
+                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_2)
                                                                                                     }
                                                                                                 } else if (*operation) == (self::ml_string::Text::from_units(vec![115, 117, 98])) {
                                                                                                         {
                                                                                                             let value_3 = a.sub(&b);
-                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_3)
+                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_3)
                                                                                                         }
                                                                                                     } else if (*operation) == (self::ml_string::Text::from_units(vec![109, 117, 108])) {
                                                                                                             {
                                                                                                                 let value_4 = a.mul(&b);
-                                                                                                                self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_4)
+                                                                                                                self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_4)
                                                                                                             }
                                                                                                         } else if ((*operation) == (self::ml_string::Text::from_units(vec![100, 105, 118]))) || ((*operation) == (self::ml_string::Text::from_units(vec![114, 101, 109]))) {
                                                                                                                 if b == (self::ml::Big::from_i128(0)) {
-                                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![100, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110])])
+                                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![100, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110])])
                                                                                                                 } else if ((low < (self::ml::Big::from_i128(0))) && (a == low)) && (b == (self::ml::Big::from_i128(-1))) {
-                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![111, 118, 101, 114, 102, 108, 111, 119, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110])])
+                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![111, 118, 101, 114, 102, 108, 111, 119, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110])])
                                                                                                                     } else {
                                                                                                                         {
                                                                                                                             let value_5 = if (*operation) == (self::ml_string::Text::from_units(vec![100, 105, 118])) {
                                                                                                                                 {
-                                                                                                                                    let source_ml_source1_integer_division34 = self::ml_big_integer_conversion::divide_java_script_big_integer(a.clone(),b.clone());
-                                                                                                                                    if (source_ml_source1_integer_division34.len() as f64) == 2f64 {
-                                                                                                                                        (self::ml_array::optional_at(&source_ml_source1_integer_division34, self::ml_array::number_index(0f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
+                                                                                                                                    let source_ml_source1_integer_division37 = self::ml_big_integer_conversion::divide_java_script_big_integer(a.clone(),b.clone());
+                                                                                                                                    if (source_ml_source1_integer_division37.len() as f64) == 2f64 {
+                                                                                                                                        (self::ml_array::optional_at(&source_ml_source1_integer_division37, self::ml_array::number_index(0f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
                                                                                                                                     } else {
                                                                                                                                         (self::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (self::ml_string::Text::from_units(vec![68, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111])).0, message_present: true }).raise()
                                                                                                                                     }
                                                                                                                                 }
                                                                                                                             } else {
                                                                                                                                 {
-                                                                                                                                    let source_ml_source1_integer_division35 = self::ml_big_integer_conversion::divide_java_script_big_integer(a.clone(),b.clone());
-                                                                                                                                    if (source_ml_source1_integer_division35.len() as f64) == 2f64 {
-                                                                                                                                        (self::ml_array::optional_at(&source_ml_source1_integer_division35, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
+                                                                                                                                    let source_ml_source1_integer_division38 = self::ml_big_integer_conversion::divide_java_script_big_integer(a.clone(),b.clone());
+                                                                                                                                    if (source_ml_source1_integer_division38.len() as f64) == 2f64 {
+                                                                                                                                        (self::ml_array::optional_at(&source_ml_source1_integer_division38, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
                                                                                                                                     } else {
                                                                                                                                         (self::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (self::ml_string::Text::from_units(vec![68, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111])).0, message_present: true }).raise()
                                                                                                                                     }
                                                                                                                                 }
                                                                                                                             };
-                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_5)
+                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_5)
                                                                                                                         }
                                                                                                                     }
                                                                                                             } else if (*operation) == (self::ml_string::Text::from_units(vec![110, 101, 103])) {
                                                                                                                     if low == (self::ml::Big::from_i128(0)) {
-                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![97, 110, 32, 117, 110, 115, 105, 103, 110, 101, 100, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 99, 97, 110, 110, 111, 116, 32, 117, 115, 101, 32, 117, 110, 97, 114, 121, 32, 110, 101, 103, 97, 116, 105, 111, 110])])
+                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![97, 110, 32, 117, 110, 115, 105, 103, 110, 101, 100, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 99, 97, 110, 110, 111, 116, 32, 117, 115, 101, 32, 117, 110, 97, 114, 121, 32, 110, 101, 103, 97, 116, 105, 111, 110])])
                                                                                                                     } else {
                                                                                                                         {
                                                                                                                             let value_6 = a.neg();
-                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_6)
+                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_6)
                                                                                                                         }
                                                                                                                     }
                                                                                                                 } else if (*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 110, 111, 116])) {
@@ -531,22 +336,22 @@ pub fn evaluate_rust_constant_integer_operation(
                                                                                                                             } else {
                                                                                                                                 self::ml_big_integer_bitwise::apply_big_integer_bitwise_operation(6f64, a.clone(), ml::Big::zero())
                                                                                                                             };
-                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_7)
+                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_7)
                                                                                                                         }
                                                                                                                     } else if (*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 97, 110, 100])) {
                                                                                                                             {
                                                                                                                                 let value_8 = self::ml_big_integer_bitwise::apply_big_integer_bitwise_operation(0f64, a.clone(), b.clone());
-                                                                                                                                self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_8)
+                                                                                                                                self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_8)
                                                                                                                             }
                                                                                                                         } else if (*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 111, 114])) {
                                                                                                                                 {
                                                                                                                                     let value_9 = self::ml_big_integer_bitwise::apply_big_integer_bitwise_operation(1f64, a.clone(), b.clone());
-                                                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_9)
+                                                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_9)
                                                                                                                                 }
                                                                                                                             } else if (*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 120, 111, 114])) {
                                                                                                                                     {
                                                                                                                                         let value_10 = self::ml_big_integer_bitwise::apply_big_integer_bitwise_operation(2f64, a.clone(), b.clone());
-                                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_10)
+                                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_10)
                                                                                                                                     }
                                                                                                                                 } else if shift {
                                                                                                                                         {
@@ -554,9 +359,9 @@ pub fn evaluate_rust_constant_integer_operation(
                                                                                                                                             {
                                                                                                                                                 let at_2 = 0f64;
                                                                                                                                                 {
-                                                                                                                                                    let width_2 = self::source_ml_temporary_evaluate_rust_constant_integer_operation_loop18(bits, width, at_2);
+                                                                                                                                                    let width_2 = self::source_ml_temporary_evaluate_rust_constant_integer_operation_loop22(bits, width, at_2);
                                                                                                                                                     if (b < (self::ml::Big::from_i128(0))) || (b >= width_2) {
-                                                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![111, 118, 101, 114, 102, 108, 111, 119, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 115, 104, 105, 102, 116])])
+                                                                                                                                                        self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![111, 118, 101, 114, 102, 108, 111, 119, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 115, 104, 105, 102, 116])])
                                                                                                                                                     } else {
                                                                                                                                                         {
                                                                                                                                                             let value_11 = if (*operation) == (self::ml_string::Text::from_units(vec![115, 104, 108])) {
@@ -564,7 +369,7 @@ pub fn evaluate_rust_constant_integer_operation(
                                                                                                                                                             } else {
                                                                                                                                                                 self::ml_big_integer_bitwise::apply_big_integer_bitwise_operation(4f64, a.clone(), b.clone())
                                                                                                                                                             };
-                                                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_11)
+                                                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_11)
                                                                                                                                                         }
                                                                                                                                                     }
                                                                                                                                                 }
@@ -573,29 +378,29 @@ pub fn evaluate_rust_constant_integer_operation(
                                                                                                                                     } else if (*operation) == (self::ml_string::Text::from_units(vec![99, 97, 115, 116])) {
                                                                                                                                             {
                                                                                                                                                 let value_12 = a.clone();
-                                                                                                                                                self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_12)
+                                                                                                                                                self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_12)
                                                                                                                                             }
                                                                                                                                         } else {
-                                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![116, 104, 101, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 111, 112, 101, 114, 97, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 115, 111, 117, 114, 99, 101, 32, 105, 110, 116, 101, 114, 112, 114, 101, 116, 97, 116, 105, 111, 110])])
+                                                                                                                                            self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Return(vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![116, 104, 101, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 111, 112, 101, 114, 97, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 115, 111, 117, 114, 99, 101, 32, 105, 110, 116, 101, 114, 112, 114, 101, 116, 97, 116, 105, 111, 110])])
                                                                                                                                         };
-                                                                    match source_ml_source1_s33 {
-                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Next(value_13) => {
+                                                                    match source_ml_source1_s36 {
+                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Next(value_13) => {
                                                                                                         {
                                                                                                             let value_16 = if ((*operation) == (self::ml_string::Text::from_units(vec![99, 97, 115, 116]))) || ((*operation) == (self::ml_string::Text::from_units(vec![115, 104, 108]))) {
                                                                                                                 {
                                                                                                                     let source_ml_shadow_modulus_1 = (high.sub(&low)).add(&self::ml::Big::from_i128(1));
                                                                                                                     {
                                                                                                                         let value_14 = {
-                                                                                                                            let source_ml_source1_integer_division37 = self::ml_big_integer_conversion::divide_java_script_big_integer(({
-                                                                                                                                let source_ml_source1_integer_division36 = self::ml_big_integer_conversion::divide_java_script_big_integer(value_13.clone(),source_ml_shadow_modulus_1.clone());
-                                                                                                                                if (source_ml_source1_integer_division36.len() as f64) == 2f64 {
-                                                                                                                                    (self::ml_array::optional_at(&source_ml_source1_integer_division36, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
+                                                                                                                            let source_ml_source1_integer_division40 = self::ml_big_integer_conversion::divide_java_script_big_integer(({
+                                                                                                                                let source_ml_source1_integer_division39 = self::ml_big_integer_conversion::divide_java_script_big_integer(value_13.clone(),source_ml_shadow_modulus_1.clone());
+                                                                                                                                if (source_ml_source1_integer_division39.len() as f64) == 2f64 {
+                                                                                                                                    (self::ml_array::optional_at(&source_ml_source1_integer_division39, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
                                                                                                                                 } else {
                                                                                                                                     (self::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (self::ml_string::Text::from_units(vec![68, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111])).0, message_present: true }).raise()
                                                                                                                                 }
                                                                                                                             }).add(&source_ml_shadow_modulus_1),source_ml_shadow_modulus_1.clone());
-                                                                                                                            if (source_ml_source1_integer_division37.len() as f64) == 2f64 {
-                                                                                                                                (self::ml_array::optional_at(&source_ml_source1_integer_division37, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
+                                                                                                                            if (source_ml_source1_integer_division40.len() as f64) == 2f64 {
+                                                                                                                                (self::ml_array::optional_at(&source_ml_source1_integer_division40, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0))
                                                                                                                             } else {
                                                                                                                                 (self::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (self::ml_string::Text::from_units(vec![68, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111])).0, message_present: true }).raise()
                                                                                                                             }
@@ -616,14 +421,14 @@ pub fn evaluate_rust_constant_integer_operation(
                                                                                                                 vec![self::ml_string::Text::from_units(vec![101, 114, 114, 111, 114]), self::ml_string::Text::from_units(vec![111, 118, 101, 114, 102, 108, 111, 119, 32, 105, 110, 32, 97, 32, 99, 111, 110, 115, 116, 97, 110, 116, 32, 105, 110, 116, 101, 103, 101, 114, 32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110])]
                                                                                                             } else {
                                                                                                                 vec![self::ml_string::Text::from_units(vec![105, 110, 116, 101, 103, 101, 114]), {
-                                                                                                                    let source_ml_source1_string_argument38 = value_16.clone();
-                                                                                                                    self::ml_string::Text::from_text(&source_ml_source1_string_argument38.to_string())
+                                                                                                                    let source_ml_source1_string_argument41 = value_16.clone();
+                                                                                                                    self::ml_string::Text::from_text(&source_ml_source1_string_argument41.to_string())
                                                                                                                 }]
                                                                                                             }
                                                                                                         }
                                                                                                     }
-                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin17::MlTemporaryEvaluateRustConstantIntegerOperationJoin17Return(source_ml_temporary_result17) => {
-                                                                                                        source_ml_temporary_result17
+                                                                                                    self::MlTemporaryEvaluateRustConstantIntegerOperationJoin21::MlTemporaryEvaluateRustConstantIntegerOperationJoin21Return(source_ml_temporary_result21) => {
+                                                                                                        source_ml_temporary_result21
                                                                                                     }
                                                                                                 }
                                                                 }
@@ -805,15 +610,15 @@ pub fn constant_field(
                 {
                     let at = start;
                     {
-                        let source_ml_source1_s39 = self::source_ml_temporary_constant_field_loop19(
+                        let source_ml_source1_s42 = self::source_ml_temporary_constant_field_loop23(
                             labels, targets, name, start, count, at,
                         );
-                        match source_ml_source1_s39 {
-                            self::MlTemporaryConstantFieldLoop19Result::MlTemporaryConstantFieldLoop19Done => {
+                        match source_ml_source1_s42 {
+                            self::MlTemporaryConstantFieldLoop23Result::MlTemporaryConstantFieldLoop23Done => {
                                 -1f64
                             }
-                            self::MlTemporaryConstantFieldLoop19Result::MlTemporaryConstantFieldLoop19Return(source_ml_temporary_result19) => {
-                                source_ml_temporary_result19
+                            self::MlTemporaryConstantFieldLoop23Result::MlTemporaryConstantFieldLoop23Return(source_ml_temporary_result23) => {
+                                source_ml_temporary_result23
                             }
                         }
                     }
@@ -892,5 +697,67 @@ pub fn constant_bits(owner: &self::ml_string::Text) -> f64 {
         128f64
     } else {
         0f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn constant_domain(owner: &self::ml_string::Text) -> Vec<self::ml_string::Text> {
+    {
+        let bits = self::constant_bits(owner);
+        if bits == 0f64 {
+            Vec::<self::ml_string::Text>::new()
+        } else {
+            {
+                let modulus = self::ml::Big::from_i128(1);
+                {
+                    let at = 0f64;
+                    {
+                        let modulus_2 =
+                            self::source_ml_temporary_constant_domain_loop24(bits, modulus, at);
+                        {
+                            let signed =
+                                owner.starts_with(&self::ml_string::Text::from_units(vec![105]));
+                            vec![
+                                {
+                                    let source_ml_source1_string_argument43 = if signed {
+                                        (self::ml::divide(
+                                            &modulus_2,
+                                            &self::ml::Big::from_i128(2),
+                                            "trunc",
+                                            Some("Division by zero"),
+                                            false,
+                                        ))
+                                        .neg()
+                                    } else {
+                                        self::ml::Big::from_i128(0)
+                                    };
+                                    self::ml_string::Text::from_text(
+                                        &source_ml_source1_string_argument43.to_string(),
+                                    )
+                                },
+                                {
+                                    let source_ml_source1_string_argument44 = if signed {
+                                        (self::ml::divide(
+                                            &modulus_2,
+                                            &self::ml::Big::from_i128(2),
+                                            "trunc",
+                                            Some("Division by zero"),
+                                            false,
+                                        ))
+                                        .sub(&self::ml::Big::from_i128(1))
+                                    } else {
+                                        modulus_2.sub(&self::ml::Big::from_i128(1))
+                                    };
+                                    self::ml_string::Text::from_text(
+                                        &source_ml_source1_string_argument44.to_string(),
+                                    )
+                                },
+                            ]
+                        }
+                    }
+                }
+            }
+        }
     }
 }

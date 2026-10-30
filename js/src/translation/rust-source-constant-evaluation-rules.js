@@ -1,4 +1,6 @@
 // Source-defined constant evaluation over actual primitive fact columns.
+import {measureRustUtf8ByteLength,readRustStringByteLengthOperation} from './rust-string-byte-length-rules.js';
+import {acceptSourceTextScalarUnits} from './source-text-byte-rules.js';
 import {readRequiredNumberFact,readRequiredTextFact} from './fact-column-rules.js';
 import {evaluateRustConstantIntegerOperation,evaluateRustConstantBooleanOperation,requireRustConstantBooleanRight,readRustConstantPatternEvaluationError,readRustConstantPrimitiveAliasOwner} from './rust-constant-integer-rules.js';
 /** @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} node @param {string} name @returns {number} */
@@ -123,11 +125,27 @@ function constantExpression(texts,starts,counts,labels,targets,rows,node,expecte
  const budget=readRustConstantPatternEvaluationError(depth,65536-fuel,false);if(node<0||fuel<=0||budget!=='')return ['error',budget!==''?budget:'constant pattern evaluation exceeds its source resource budget'];
  const result=constantBody(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel-1);return result.length===3?constantFinish(result,fuel-1):result;
 }
+/** @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
+function constantByteLength(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
+ const args=constantField(starts,counts,labels,targets,node,'args');
+ if(args<0||readRequiredNumberFact(counts,args)!==1)return ['error','a constant byte length needs one actual string operand'];
+ const first=constantElement(starts,counts,targets,args,0),input=constantText(texts,starts,counts,labels,targets,first,'k')!==''?first:constantField(starts,counts,labels,targets,first,'value'),value=constantExpression(texts,starts,counts,labels,targets,rows,input,'str',names,values,visiting,depth+1,fuel);
+ if(readRequiredTextFact(value,0)==='error')return value;
+ if(readRequiredTextFact(value,0)!=='string'||readRequiredTextFact(value,1)!=='str')return ['error','a constant byte length needs its actual Unicode scalar string'];
+ const text=readRequiredTextFact(value,2),remaining=constantRemaining(value);
+ if(text.length>remaining)return ['error','constant pattern evaluation exceeds its source resource budget'];
+ const units=[];for(let at=0;at<text.length;at+=1)units.push(text.charCodeAt(at));
+ if(!acceptSourceTextScalarUnits(units))return ['error','a constant byte length needs its actual Unicode scalar string'];
+ const owner=constantTypeOwner(texts,starts,counts,labels,targets,node,expected);
+ if(owner!=='usize')return ['error','a constant byte length must retain its actual usize source owner'];
+ return constantFinish(['integer',owner,String(measureRustUtf8ByteLength(units))],remaining-text.length);
+}
 /** Scalar result: kind, actual primitive owner, canonical value; errors: error, reason.
  * @param {string[]} texts @param {number[]} starts @param {number[]} counts @param {string[]} labels @param {number[]} targets @param {number} rows @param {number} node @param {string} expected @param {string[]} names @param {string[]} values @param {string[]} visiting @param {number} depth @param {number} fuel @returns {string[]} */
 function constantBody(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel){
  const kind=constantText(texts,starts,counts,labels,targets,node,'k');
  if(kind==='unit')return ['unit','unit',''];
+ if(kind==='math'&&constantText(texts,starts,counts,labels,targets,node,'op')===readRustStringByteLengthOperation())return constantByteLength(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel);
  if(kind==='bool'||kind==='str'||kind==='num'||kind==='lit')return constantLiteral(texts,starts,counts,labels,targets,node,expected);
  if(kind==='name'||kind==='var'||kind==='call')return constantReference(texts,starts,counts,labels,targets,rows,node,expected,names,values,visiting,depth,fuel);
  if(kind==='let'){
