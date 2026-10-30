@@ -25,6 +25,7 @@ mod scalar_vector_copy;
 mod standard_owned_calls;
 pub(super) mod standard_string_views;
 mod string_addition;
+mod string_byte_views;
 mod usize_index_expressions;
 mod wrapping_shifts;
 
@@ -484,6 +485,16 @@ impl RustParser {
                     value = view;
                     continue;
                 }
+                if let Some(bytes) = self.string_byte_view(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = bytes;
+                    continue;
+                }
                 self.require_type_namespace_body_method(
                     &value,
                     &method.value,
@@ -764,6 +775,8 @@ impl RustParser {
                             span(&token, self.cursor.peek()),
                         ));
                     }
+                    origin = self.origins.capture_owned_borrow(origin);
+                    origin.source_extending_temporary_bindings.clear();
                     origin.ty = Some(STRING);
                     origin.text_source_model = Some("string slice");
                     origin.source_owner =

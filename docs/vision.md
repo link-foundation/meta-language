@@ -10691,3 +10691,44 @@ The `as_str` result carries the actual primitive str owner while retaining its
 loan to the String. Cloning a single shared str reference keeps that reference;
 `to_owned` creates an independent String. The shared reference-shape rule keeps
 those operations distinct, including scope and move checks on a cloned view.
+
+
+### Source-derived Rust string byte views
+
+Standard `str`/`String` byte views and immediate byte iteration use one complete
+JavaScript UTF-8 kernel. Source generation derives a closed callable from that
+actual declaration, stores paired Links templates, translates the complete
+kernel to Rust, and registers both kernel and admission programs. Frontends
+instantiate the shared callable and retain the source operand once; existing
+common flat-map and exact byte casts supply runtime behavior. There is no
+separate handwritten native UTF-8 algorithm. Per-character byte packets flatten
+once instead of repeatedly copying a growing complete output array.
+
+`as_bytes` retains the actual String loan, `into_bytes` consumes an owned String
+and produces a fresh byte vector, and immediate `bytes` pipelines yield copied
+u8 items. Existing map/filter/reverse/reduction/collection rules apply. Receiver
+loans are checked after callback construction too. Literal independent byte
+columns cover the boundaries in [RFC3629](https://www.rfc-editor.org/rfc/rfc3629.html),
+embedded zero, combining text, supplementary scalars and BOM preservation.
+Shared representation rules let scalar-source UTF-8 lengths coexist with the
+operational UTF-16 kernels in Rust, JavaScript, Lean and Rocq. The existing
+unbridged representation guard remains; a selected scalar bridge discharges it.
+
+Full-expression temporary frames preserve temporaries belonging to enclosing
+expressions. Eligible explicit borrow initializers extend actual temporary drop
+scopes through blocks and returning if/match alternatives. Method receivers do
+not acquire initializer extension merely by returning a view. Named local
+owners still expire with their scope. Bound values clear the extending-expression
+marker, preventing a later name read from inventing another extension. The
+[Reference](https://doc.rust-lang.org/reference/destructors.html#temporary-lifetime-extension)
+and [Rust1.79 release](https://blog.rust-lang.org/2024/06/13/Rust-1.79.0/)
+provide independent scope contracts within the supported >=1.90 <1.100 profile.
+Earlier wrong temporary-refusal inputs remain exact positive controls with
+revision/reason/reference history; named-owner escape and short-lived method
+borrow refusals retain coverage.
+
+The source templates, native products, CST reconstruction, both graph codecs,
+four-target emissions and all kernel/decision controls remain unexecuted drafts.
+Zero-copy/pointer/allocator ABI observables, mutable and non-Copy place-use
+proofs, all extending syntax categories, general returned borrow regions,
+escaping iterator state and full source-language support remain obligations.

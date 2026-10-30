@@ -271,7 +271,8 @@ impl SourceOrigins {
                         span,
                     ));
                 }
-                let binding = self.join(&candidates);
+                let mut binding = self.join(&candidates);
+                binding.source_extending_temporary_bindings.clear();
                 if self.owned_binding_value(&binding) {
                     self.consume_owned_binding(&binding, span)?;
                     let binding = self.register_owned_binding(binding);

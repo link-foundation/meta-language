@@ -717,6 +717,22 @@ pub fn accept_rust_string_slice_clone_reference(
     (((method == "clone") && (kind == "string")) && (storage == "string slice")) && (layers == 1f64)
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_owned_temporary_disposition(
+    framed: bool,
+    extended: bool,
+    escaping: bool,
+) -> String {
+    if framed || escaping {
+        String::from("leave")
+    } else if extended {
+        String::from("extend")
+    } else {
+        String::from("expire")
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryAcceptRustOwnedBindingGuardLoop1Result {
     MlTemporaryAcceptRustOwnedBindingGuardLoop1Done,

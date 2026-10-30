@@ -36,6 +36,7 @@ impl RustParser {
             ));
         }
         let initializer_start = self.cursor.index;
+        let temporary_frame = self.origins.owned_temporary_frame();
         let value = self.read_expected_copy_closure(path, source_type.as_ref())?;
         if self.cursor.is("else") {
             let tokens = &self.cursor.tokens[initializer_start..self.cursor.index];
@@ -79,6 +80,8 @@ impl RustParser {
             None
         };
         self.cursor.expect(";", Some("let"))?;
+        self.origins
+            .finish_owned_expression(&value, path, &temporary_frame, true);
         let range = span(&start, self.cursor.peek());
         if let ProductBindingPattern::Name(token) = pattern {
             self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;

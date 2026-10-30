@@ -6,7 +6,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {createRustSourceOwnerProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import * as rules from '../src/translation/rust-owned-bindings-rules.js';
+import * as rules from '../src/translation/rust-owned-binding-rules.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-owned-strings.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 for(const [index,row]of fixture.premises.entries())test('ownership decision '+index,()=>assert.deepEqual(rules[row.operation](...row.args),row.expected));

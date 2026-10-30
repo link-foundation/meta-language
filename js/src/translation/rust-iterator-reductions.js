@@ -1,3 +1,5 @@
+import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {readRustStringByteIteratorError} from './rust-string-byte-view-rules.js';
 import {acceptRustIteratorArithmeticConsumer} from './rust-iterator-arithmetic-rules.js';
 import {readRustIteratorArithmetic} from './rust-iterator-arithmetic.js';
 import {acceptRustIteratorPipelineStage,readRustIteratorPipelineResultState} from './rust-iterator-pipeline-rules.js';
@@ -16,9 +18,15 @@ import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {readRustIteratorOwnedReceiverError,readRustIteratorReductionInitialState,readRustIteratorCountReceiverError,readRustIteratorCollectionError,readRustIteratorReductionCountResultOwner,planRustIteratorReductionCount,acceptRustIteratorReductionStart,acceptRustIteratorReductionAdapter,readRustIteratorReductionAdapterState,planRustIteratorReductionReceiver,planRustIteratorReductionReverseIndex,readRustIteratorReductionCallbackArity,readRustIteratorReductionOperation,readRustIteratorReductionCaptureRoles,readRustIteratorReductionReceiverError,readRustIteratorReductionAccumulatorError,readRustIteratorReductionCallbackError} from './rust-iterator-reduction-rules.js';
 export function readRustIteratorReduction(parser,receiver,method,args,range,path){
  if(!acceptRustIteratorReductionStart(method.value,args.length,parser.ordinaryCompletionContext()))return null;
+ const actual=parser.origins.origin(receiver,path),result=readRustIteratorReductionValue(parser,receiver,method,args,range,path);
+ if(result&&method.value!=='into_iter')checkRustOwnedOrigin(parser.origins,actual,range);
+ return result;
+}
+function readRustIteratorReductionValue(parser,receiver,method,args,range,path){
  const refuse=(reason,where=range)=>{throw unsupported('Rust iterator reduction',reason,where);},actual=parser.origins.origin(receiver,path),source=projectRustStaticByteArrayReadOrigin(actual)??actual,element=source.type?.kind==='array'?source.type.element:null,owner=projectRustArrayLookupElementOwner(source.expandedSourceOwner??source.sourceOwner);
  const knownReceiver=readRustScalarArrayIndexReceiverError(source.type?.kind??'',element?.kind??'',source.arraySourceModel??'',source.proven===true,source.wrappers.every(layer=>layer==='reference'||layer==='box'),source.arrayElementCopyEvidence===true)==='';
  const knownOwner=Boolean(element&&owner&&owner.arguments.length===0&&(owner.kind==='primitive'||owner.kind==='unit'&&owner.path.length===0)&&readRustArrayLookupElementOwnerError(element.kind,String(element.bits??''),element.signed===true,owner.path.join('::'))==='');
+ const byteError=readRustStringByteIteratorError(method.value,source.sourceByteIterator===true);if(byteError)refuse(byteError);
  const owned=method.value==='into_iter';if(owned){const error=readRustIteratorOwnedReceiverError(source.type?.kind??'',source.arraySourceModel??'',source.proven===true,source.wrappers.length,parser.origins.freshVectorArgument(receiver,path,true)||parser.origins.availableOwnedBinding(actual));if(error)refuse(error,method);parser.origins.consumeOwnedBinding(actual,method);}
  const c=parser.cursor;if(!c.eat('.')||c.peek().kind!=='identifier')refuse('an iterator requires its immediate copied or cloned reduction');
  let consumer=c.next(),state=readRustIteratorReductionInitialState(method.value),direction='forward';const stages=[];let item=element?{...parser.origins.typeOrigin(element,path),sourceOwner:structuredClone(owner),wrappers:state==='borrowed'?['reference']:[],sourceLifetimes:state==='borrowed'?[null]:[]}:null;

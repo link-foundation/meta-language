@@ -22,6 +22,23 @@ pub(super) fn validate(value: &Expr, language: Language, utf16: bool) -> Result<
     }
 }
 
+// Validate the actual representation after the selected shared scalar bridge.
+pub(super) fn validate_with_scalar_bridge(
+    value: &Expr,
+    language: Language,
+    utf16: bool,
+    target: &str,
+) -> Result<()> {
+    validate(
+        value,
+        language,
+        utf16
+            && !super::rust_string_byte_view_rules::accept_rust_string_byte_scalar_bridge(
+                target, utf16,
+            ),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::rules;

@@ -59,6 +59,7 @@ impl SourceOrigins {
             let id = self.next_source_binding_identity.to_string();
             self.next_source_binding_identity += 1;
             origin.source_binding_identity = Some(id.clone());
+            origin.source_extending_temporary_bindings.clear();
             origin.source_place_binding_identity = None;
             origin.source_loan_binding_identities.clear();
             origin.source_place_loan_binding_identities.clear();
@@ -126,8 +127,51 @@ impl SourceOrigins {
         self.consume_owned_binding(&origin, node.span)?;
         let mut result = self.register_owned_binding(origin);
         result.source_owned_result_proof = true;
+        if let Some(id) = result.source_binding_identity.as_ref() {
+            self.source_temporary_bindings.insert(id.clone());
+        }
         self.mark(node, result.clone());
         Ok(result)
+    }
+    pub(in super::super) fn owned_temporary_frame(&self) -> HashSet<String> {
+        self.source_temporary_bindings.clone()
+    }
+    pub(in super::super) fn capture_owned_borrow(&mut self, origin: SourceOrigin) -> SourceOrigin {
+        if !self.owned_binding_value(&origin) || origin.source_binding_identity.is_some() {
+            return origin;
+        }
+        let result = self.register_owned_binding(origin);
+        if let Some(id) = result.source_binding_identity.as_ref() {
+            self.source_temporary_bindings.insert(id.clone());
+        }
+        result
+    }
+    pub(in super::super) fn finish_owned_expression(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+        frame: &HashSet<String>,
+        extending: bool,
+    ) {
+        let origin = self.origin(node, path);
+        for id in self.source_temporary_bindings.clone() {
+            let Some(state) = self.source_binding_states.get(&id).cloned() else {
+                continue;
+            };
+            let disposition = rules::read_rust_owned_temporary_disposition(
+                frame.contains(&id),
+                extending && origin.source_extending_temporary_bindings.contains(&id),
+                self.owned_binding_value(&origin)
+                    && origin.source_binding_identity.as_ref() == Some(&id),
+            );
+            if disposition == "extend" {
+                self.source_temporary_bindings.remove(&id);
+            } else if disposition == "expire" {
+                self.source_binding_states
+                    .insert(id.clone(), rules::expire_rust_owned_binding_state(&state));
+                self.source_temporary_bindings.remove(&id);
+            }
+        }
     }
     pub(in super::super) fn prepare_owned_argument(
         &mut self,
@@ -157,7 +201,10 @@ impl SourceOrigins {
             None
         };
         for (id, state) in &mut self.source_binding_states {
-            if !before.contains_key(id) && escaping.as_ref() != Some(id) {
+            if !before.contains_key(id)
+                && escaping.as_ref() != Some(id)
+                && !result.source_extending_temporary_bindings.contains(id)
+            {
                 *state = rules::expire_rust_owned_binding_state(state);
             }
         }

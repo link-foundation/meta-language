@@ -405,3 +405,6 @@ pub mod rust_iterator_pipeline_rules;
 pub mod rust_iterator_arithmetic_rules;
 
 pub mod rust_owned_binding_rules;
+
+pub mod rust_string_byte_kernel;
+pub mod rust_string_byte_view_rules;

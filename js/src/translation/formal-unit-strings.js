@@ -1,3 +1,4 @@
+import {acceptRustStringByteKernelUnitRequirement} from './rust-string-byte-view-rules.js';
 // Actual checked IR adapters for the shared formal UTF-16 representation.
 import {requireFormalStringUnitRepresentation,renderFormalArraySlice,renderFormalStringUnitLiteral,renderFormalStringUnitsFromScalar,renderFormalStringScalarDisplay,renderFormalStringUnitNumbers,renderFormalStringUnitsFromNumbers,renderFormalStringUnitComparison,renderFormalStringUnitOperation} from './formal-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
@@ -11,12 +12,12 @@ import {acceptUnicodeCaseMappingOperation,readUnicodeCaseEncodingStatement} from
 
 export function requireFormalUnitStrings(program){
  if(program.utf16Strings)return true;
- if(program.sourceLanguage!=='JavaScript')return false;
+ if(program.sourceLanguage!=='JavaScript'&&program.sourceLanguage!=='Rust')return false;
  const pending=[...program.declarations.values(),program.main],seen=new WeakSet();
  while(pending.length){
   const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);
-  if(requireFormalStringUnitRepresentation('type',value.kind??'',''))return true;
-  if(requireFormalStringUnitRepresentation(value.k??'',value.op??'',value.object?.type?.kind??''))return true;
+  if(program.sourceLanguage==='JavaScript'&&(requireFormalStringUnitRepresentation('type',value.kind??'','')||requireFormalStringUnitRepresentation(value.k??'',value.op??'',value.object?.type?.kind??'')))return true;
+  if(acceptRustStringByteKernelUnitRequirement(program.sourceLanguage,value.k??'',value.op??'',value.object?.type?.kind??''))return true;
   pending.push(...Object.entries(value).filter(([key])=>key!=='span').map(([,child])=>child));
  }
  return false;

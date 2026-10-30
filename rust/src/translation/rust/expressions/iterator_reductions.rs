@@ -32,7 +32,7 @@ impl RustParser {
         receiver: &SExpr,
         method: &Token,
         args: &[SExpr],
-        mut range: Option<Span>,
+        range: Option<Span>,
         path: &[String],
     ) -> Result<Option<SExpr>> {
         if !rules::accept_rust_iterator_reduction_start(
@@ -42,6 +42,21 @@ impl RustParser {
         ) {
             return Ok(None);
         }
+        let actual = self.origins.origin(receiver, path);
+        let result = self.iterator_reduction_value(receiver, method, args, range, path)?;
+        if result.is_some() && method.value != "into_iter" {
+            self.origins.check_owned_origin(&actual, range)?;
+        }
+        Ok(result)
+    }
+    fn iterator_reduction_value(
+        &mut self,
+        receiver: &SExpr,
+        method: &Token,
+        args: &[SExpr],
+        mut range: Option<Span>,
+        path: &[String],
+    ) -> Result<Option<SExpr>> {
         let actual = self.origins.origin(receiver, path);
         let source = actual
             .static_byte_array_read_view()
@@ -85,6 +100,14 @@ impl RustParser {
         } else {
             false
         };
+        let byte_error =
+            crate::translation::rust_string_byte_view_rules::read_rust_string_byte_iterator_error(
+                &method.value,
+                source.source_byte_iterator,
+            );
+        if !byte_error.is_empty() {
+            return Err(fail(&byte_error, range));
+        }
         let owned = method.value == "into_iter";
         if owned {
             let error = rules::read_rust_iterator_owned_receiver_error(

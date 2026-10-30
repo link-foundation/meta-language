@@ -46,8 +46,10 @@ impl RocqEmitter<'_> {
             unreachable!("not a Math expression")
         };
         if crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation("math",op) {
-            crate::translation::rust_string_byte_lengths::validate(e,self.program.source_language,self.utf16_strings)?;
-            return Ok(crate::translation::rust_string_byte_length_rules::render_rust_string_byte_length("Rocq",&self.expr(&args[0])?));
+            crate::translation::rust_string_byte_lengths::validate_with_scalar_bridge(e,self.program.source_language,self.utf16_strings,"Rocq")?;
+            let mut value=crate::translation::rust_string_byte_view_rules::render_rust_string_byte_scalar_bridge("Rocq",&self.expr(&args[0])?,self.utf16_strings);
+            if self.utf16_strings{self.helpers.insert("utf16Text");value=crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq",&value);}
+            return Ok(crate::translation::rust_string_byte_length_rules::render_rust_string_byte_length("Rocq",&value));
         }
         if crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
             self.floats();self.helpers.insert(super::Helper::Utf16Text);

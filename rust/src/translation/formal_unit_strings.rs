@@ -12,12 +12,13 @@ pub(super) fn requires(program: &Program) -> bool {
     if program.utf16_strings.unwrap_or(false) {
         return true;
     }
-    if program.source_language != Language::JavaScript {
+    if program.source_language != Language::JavaScript && program.source_language != Language::Rust
+    {
         return false;
     }
-    fn walk(value: &serde_json::Value) -> bool {
+    fn walk(value: &serde_json::Value, language: Language) -> bool {
         match value {
-            serde_json::Value::Array(values) => values.iter().any(walk),
+            serde_json::Value::Array(values) => values.iter().any(|value| walk(value, language)),
             serde_json::Value::Object(fields) => {
                 let text = |key: &str| {
                     fields
@@ -31,20 +32,24 @@ pub(super) fn requires(program: &Program) -> bool {
                     .and_then(|value| value.get("kind"))
                     .and_then(serde_json::Value::as_str)
                     .unwrap_or("");
-                rules::require_formal_string_unit_representation("type", text("kind"), "")
+                (language==Language::JavaScript&&(rules::require_formal_string_unit_representation("type", text("kind"), "")
                     || rules::require_formal_string_unit_representation(
                         text("k"),
                         text("op"),
                         receiver,
-                    )
+                    )))
+                    || crate::translation::rust_string_byte_view_rules::accept_rust_string_byte_kernel_unit_requirement(language.as_str(),text("k"),text("op"),receiver)
                     || fields
                         .iter()
-                        .any(|(key, value)| key != "span" && walk(value))
+                        .any(|(key, value)| key != "span" && walk(value,language))
             }
             _ => false,
         }
     }
-    walk(&serde_json::to_value(program).expect("checked source program retains its real IR"))
+    walk(
+        &serde_json::to_value(program).expect("checked source program retains its real IR"),
+        program.source_language,
+    )
 }
 
 pub(super) trait Emitter {

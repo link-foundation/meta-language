@@ -1,3 +1,4 @@
+import {readRustStringByteView} from './rust-string-byte-views.js';
 import {acceptRustOwnedMacroArgumentTransfer,acceptRustStringSliceCloneReference} from './rust-owned-binding-rules.js';
 import {noteRustOwnedBindingRead} from './rust-owned-bindings.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
@@ -466,6 +467,7 @@ class RustParser {
   resolve(segments, path) {
     const inherent=resolveRustInherentPath(this,segments,path);
     if(inherent)return inherent;
+    const stringBytes=readRustStringByteView(this,receiver,method,args,range,path);if(stringBytes)return stringBytes;
     const aliases = this.aliases.get(path.join('.'));
     return aliases?.has(segments[0]) ? [...aliases.get(segments[0]), ...segments.slice(1)] : segments;
   }
@@ -759,6 +761,7 @@ class RustParser {
       if(this.headerDiscovery){const close=readRustDeclarationBodyBoundary(this);return {k:'fn',name,params,ret,body:{k:'unit',span:{start:close.start,end:close.end}},span:{start:start.start,end:close.end}};}
       const constHeaderEnd=constKeyword?c.peek().start:null;
       this.lifetimeHeader = false;
+      const functionOwnership=this.origins.snapshotOwnedBindings();
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
       const signature = scalarLoop||this.localValueStateModel ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
       let lowered = null;
@@ -769,7 +772,10 @@ class RustParser {
         else if(this.localValueStateModel)lowered=readRustOwnedLocalStateBody(this,path,name,params,ret,signature);
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
+      const temporaryFrame=this.origins.ownedTemporaryFrame();
       const body = emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
+      this.origins.finishOwnedExpression(body,path,temporaryFrame,false);
+      this.origins.expireOwnedBindings(functionOwnership,this.origins.origin(body,path));
       this.origins.transferOwnedResult(body,path);
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))
@@ -883,8 +889,10 @@ class RustParser {
       if (['while', 'loop', 'for'].includes(token.value) && token.kind === 'identifier') {
         throw unsupported(`${token.value} loop`, 'loops over mutable state are outside the portable core; use recursion', span(token, token));
       }
+      const temporaryFrame=this.origins.ownedTemporaryFrame();
       const expr = this.expr(path, { statement: true });
       if (c.eat(';')) {
+        this.origins.finishOwnedExpression(expr,path,temporaryFrame,false);
         const origin=this.origins.origin(expr,path);
         const disposition=(ordinary?readRustOrdinaryStatementDisposition:readRustUnitStatementDisposition)(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='abort'){tail=expr;continue;}
@@ -935,7 +943,7 @@ class RustParser {
     const type = c.eat(':') ? this.type() : undefined;
     const sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
-    const initializerStart=c.index;
+    const initializerStart=c.index,temporaryFrame=this.origins.ownedTemporaryFrame();
     const value = readRustExpectedCopyClosure(this,path,sourceType);
     let fallback=null;
     if(c.is('else')){
@@ -947,6 +955,7 @@ class RustParser {
       if(!this.origins.origin(fallback,path).diverging)throw unsupported('Rust let-else fallback','the fallback needs a represented diverging completion',fallback.span);
     }
     c.expect(';', 'let');
+    this.origins.finishOwnedExpression(value,path,temporaryFrame,true);
     const range = span(start, c.peek());
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path, sourceType);
@@ -1519,7 +1528,7 @@ class RustParser {
         expect(0);
         if(this.localValueStateModel&&!acceptRustOwnedLocalSourceOperation('borrow'))throw unsupported('Rust owned local state','source indirection requires a separate ownership interpretation',range);
         if (this.origins.origin(receiver, this.modulePath).arraySourceModel) throw unsupported('method as_str', 'outside the portable core', range);
-        return this.origins.mark(receiver, { ...this.origins.origin(receiver, this.modulePath), type: STRING, textSourceModel: 'string slice',sourceOwner:{kind:'primitive',path:['str'],arguments:[]}, path: [...this.modulePath], wrappers: ['reference'] });
+        return this.origins.mark(receiver, { ...this.origins.captureOwnedBorrow(this.origins.origin(receiver, this.modulePath)),sourceExtendingTemporaryBindings:[], type: STRING, textSourceModel: 'string slice',sourceOwner:{kind:'primitive',path:['str'],arguments:[]}, path: [...this.modulePath], wrappers: ['reference'] });
       case 'to_string':
         expect(0);
         return { k: 'toString', arg: receiver, span: range };

@@ -441,7 +441,8 @@ pub fn plan_rust_iterator_arithmetic_terminal(consumer: &str) -> Vec<String> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_rust_iterator_reduction_start(method: &str, count: f64, ordinary: bool) -> bool {
-    (ordinary && ((method == "iter") || (method == "into_iter"))) && (count == 0f64)
+    (ordinary && (((method == "iter") || (method == "into_iter")) || (method == "bytes")))
+        && (count == 0f64)
 }
 
 /// Execute the checked shared source algorithm.
@@ -711,6 +712,8 @@ pub fn read_rust_iterator_reduction_initial_state(method: &str) -> String {
         String::from("owned")
     } else if method == "iter" {
         String::from("borrowed")
+    } else if method == "bytes" {
+        String::from("copied")
     } else {
         String::new()
     }

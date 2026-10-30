@@ -41,6 +41,8 @@ pub(super) struct SourceOrigin {
     pub(super) source_loan_binding_identities: Vec<String>,
     pub(super) source_place_loan_binding_identities: Vec<String>,
     pub(super) source_owned_result_proof: bool,
+    pub(super) source_byte_iterator: bool,
+    pub(super) source_extending_temporary_bindings: Vec<String>,
     pub(super) ty: Option<Type>,
     /// Explicit primitive f64 annotation or literal evidence, never fallback inference.
     pub(super) float_source_model: Option<&'static str>,
@@ -143,6 +145,8 @@ impl SourceOrigin {
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
+            source_byte_iterator: false,
+            source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
             expanded_source_owner: None,
             integer_source_owner_conflict: false,
@@ -195,6 +199,8 @@ impl SourceOrigin {
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
+            source_byte_iterator: false,
+            source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
             expanded_source_owner: None,
             integer_source_owner_conflict: false,
@@ -327,6 +333,7 @@ pub(super) struct SourceOrigins {
     source_binding_states: HashMap<String, String>,
     next_source_binding_identity: usize,
     owned_argument_transfers: HashSet<Span>,
+    source_temporary_bindings: HashSet<String>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
@@ -354,6 +361,7 @@ impl SourceOrigins {
             source_binding_states: HashMap::new(),
             next_source_binding_identity: 0,
             owned_argument_transfers: HashSet::new(),
+            source_temporary_bindings: HashSet::new(),
             catalog: catalog.unwrap_or_default(),
             unit_clone_facts: HashMap::new(),
             scope: HashMap::new(),
@@ -962,6 +970,13 @@ impl SourceOrigins {
         {
             return SourceOrigin::integer_conflict();
         }
+        let source_extending_temporary_bindings =
+            returning.iter().fold(Vec::new(), |ids, origin| {
+                crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(
+                    &ids,
+                    &origin.source_extending_temporary_bindings,
+                )
+            });
         let source_loan_binding_identities = if first.wrappers.is_empty() {
             Vec::new()
         } else {
@@ -994,6 +1009,7 @@ impl SourceOrigins {
                 } else {
                     None
                 },
+                source_extending_temporary_bindings,
                 source_loan_binding_identities,
                 source_place_loan_binding_identities: Vec::new(),
                 source_owned_result_proof: returning
@@ -1068,6 +1084,7 @@ impl SourceOrigins {
                     .or_else(|| super::rust_fixed_type(&integer_owner)),
                 integer_source_owner_constraint: (!integer_owner.is_empty())
                     .then_some(integer_owner),
+                source_extending_temporary_bindings,
                 source_loan_binding_identities,
                 source_place_loan_binding_identities: Vec::new(),
                 text_source_model,
@@ -1155,6 +1172,7 @@ impl SourceOrigins {
     pub(super) fn mark_owned_string_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
         origin.source_binding_identity = None;
         origin.source_place_binding_identity = None;
+        origin.source_extending_temporary_bindings.clear();
         origin.source_loan_binding_identities.clear();
         origin.source_place_loan_binding_identities.clear();
         origin.source_owned_result_proof =
@@ -1174,6 +1192,7 @@ impl SourceOrigins {
         origin.source_place_binding_identity = None;
         origin.source_loan_binding_identities.clear();
         origin.source_place_loan_binding_identities.clear();
+        origin.source_extending_temporary_bindings.clear();
         self.mark(node, origin);
     }
 
@@ -1255,8 +1274,7 @@ impl SourceOrigins {
 
     pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) -> Result<()> {
         let mut origin = self.origin(node, path);
-        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin)&&origin.source_binding_identity.is_none(){origin=self.register_owned_binding(origin);}
-        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin)&&origin.source_binding_identity.is_some()&&(node.block||matches!(node.node,SNode::If{..}|SNode::Match{..})){return Err(unsupported("Rust owned binding","owned temporary borrows need their complete lifetime proof",node.span));}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&origin.source_place_binding_identity.is_some(){origin.source_binding_identity=origin.source_place_binding_identity.clone();}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_loan_binding_identities=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_loan_binding_identities,&origin.source_place_loan_binding_identities);}
         origin.wrappers.insert(0, layer.to_owned());
@@ -1345,6 +1363,7 @@ impl SourceOrigins {
             binding.source_binding_identity = actual.source_binding_identity.clone();
             binding.source_loan_binding_identities = actual.source_loan_binding_identities.clone();
         }
+        binding.source_extending_temporary_bindings.clear();
         binding.source_place_binding_identity = None;
         binding.source_place_loan_binding_identities.clear();
         binding.fresh_array_value = None;

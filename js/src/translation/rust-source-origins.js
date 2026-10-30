@@ -1,5 +1,5 @@
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
-import {isRustOwnedBindingValue,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
+import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {acceptRustStaticByteArrayCoercion,acceptRustStaticByteArrayOwnerEquality} from './rust-byte-string-expression-rules.js';
 import {readRustSourceNumericPatternOwnerError,acceptRustSourceNumericPatternAlias} from './rust-numeric-pattern-rules.js';
@@ -44,7 +44,7 @@ export class RustSourceOrigins {
     this.collecting = catalog === null;
     this.catalog = catalog ?? new Map();
     this.scope = new Map();
-    this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
+    this.sourceTemporaryBindings=new Set();this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
     this.expressions = new WeakMap();
     this.patternReferences = new WeakMap();
     this.literalPatternAliases = new WeakMap();
@@ -59,6 +59,9 @@ export class RustSourceOrigins {
     return previous;
   }
 
+  ownedTemporaryFrame(){return new Set(this.sourceTemporaryBindings);}
+  captureOwnedBorrow(origin){return captureRustOwnedBorrow(this,origin);}
+  finishOwnedExpression(node,path,frame,extending){finishRustOwnedExpression(this,node,path,frame,extending);}
   transferOwnedResult(node,path){return transferRustOwnedResult(this,node,path);}
   prepareOwnedArgument(node,parameter,path){if(!parameter||!isRustOwnedBindingValue(this,parameter))return;const actual=this.origin(node,path);if(consumeRustOwnedOrigin(this,actual,node.span))this.ownedArgumentTransfers.add(node);}
   expireOwnedBindings(before,result){expireRustOwnedBindings(this,before,result);}
@@ -248,15 +251,16 @@ export class RustSourceOrigins {
     const callableError=readRustCallableOwnerJoinError(returning.flatMap(projectRustCallableOwnerDescriptor));if(callableError)return {...unknown(true),callableSourceOwnerError:callableError};
     const first = returning[0];
     for(const origin of returning){const error=readRustCopyClosureJoinError(Boolean(first.copyClosureSpan),Boolean(origin.copyClosureSpan),first.copyClosureSpan?.start===origin.copyClosureSpan?.start&&first.copyClosureSpan?.end===origin.copyClosureSpan?.end);if(error)throw unsupported('Rust closure source join',error);}
+    const sourceExtendingTemporaryBindings=returning.reduce((ids,origin)=>mergeRustOwnedLoanBindings(ids,origin.sourceExtendingTemporaryBindings??[]),[]);
     const sourceLoanBindingIdentities=first.wrappers.length?returning.reduce((loans,origin)=>mergeRustOwnedLoanBindings(loans,projectRustOwnedLoanBindings(origin.sourceBindingIdentity??'',origin.sourceLoanBindingIdentities??[])),[]):[];
-    if (returning.every(origin => this.same(origin, first))) return { ...clone(first),sourceLoanBindingIdentities,sourcePlaceLoanBindingIdentities:[],sourceBindingIdentity:returning.every(origin=>origin.sourceBindingIdentity===first.sourceBindingIdentity)?first.sourceBindingIdentity:null,sourceOwnedResultProof:returning.every(origin=>origin.sourceOwnedResultProof===true), integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners),freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
+    if (returning.every(origin => this.same(origin, first))) return { ...clone(first),sourceExtendingTemporaryBindings,sourceLoanBindingIdentities,sourcePlaceLoanBindingIdentities:[],sourceBindingIdentity:returning.every(origin=>origin.sourceBindingIdentity===first.sourceBindingIdentity)?first.sourceBindingIdentity:null,sourceOwnedResultProof:returning.every(origin=>origin.sourceOwnedResultProof===true), integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners),freshArrayValue: returning.every(origin => origin.freshArrayValue),arrayElementCopyEvidence:returning.every(origin=>origin.arrayElementCopyEvidence===true) };
     if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array',integerSourceOwnerConstraint:selectRustPointerIntegerResultOwner(owners) };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {
       const fields = returning.every(origin => origin.fields?.length === first.fields?.length) && first.fields
         ? first.fields.map((_, index) => this.join(returning.map(origin => origin.fields[index]))) : null;
       const textSourceModel = returning.every(origin => origin.textSourceModel === first.textSourceModel) ? first.textSourceModel : null;
       const integerSourceOwnerConstraint=selectRustPointerIntegerResultOwner(owners);
-      return { ...value(returning.every(origin => origin.copyEvidence), textSourceModel ? { kind: 'string' } : integerSourceOwnerConstraint?rustFixedType(integerSourceOwnerConstraint):null), wrappers: [...first.wrappers], fields, textSourceModel,integerSourceOwnerConstraint,sourceLoanBindingIdentities,sourcePlaceLoanBindingIdentities:[] };
+      return { ...value(returning.every(origin => origin.copyEvidence), textSourceModel ? { kind: 'string' } : integerSourceOwnerConstraint?rustFixedType(integerSourceOwnerConstraint):null), wrappers: [...first.wrappers], fields, textSourceModel,integerSourceOwnerConstraint,sourceExtendingTemporaryBindings,sourceLoanBindingIdentities,sourcePlaceLoanBindingIdentities:[] };
     }
     return unknown(returning.some(origin => origin.uncertain || origin.wrappers.length > 0));
   }
@@ -280,11 +284,11 @@ export class RustSourceOrigins {
 
   // Independent of the explicit array-result profile and its binding evidence.
   // Source intervals survive the parser's block and completion reconstruction.
-  markOwnedStringConstructor(node,origin){return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceOwnedResultProof:acceptRustOwnedBindingValue(origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true)});}
+  markOwnedStringConstructor(node,origin){return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceExtendingTemporaryBindings:[],sourceOwnedResultProof:acceptRustOwnedBindingValue(origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true)});}
 
   markVectorConstructor(node,origin) {
     this.freshVectorConstructors.add(`${node.span?.start}:${node.span?.end}`);
-    return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[]});
+    return this.mark(node,{...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceExtendingTemporaryBindings:[]});
   }
 
   freshVectorArgument(node,path,allowCalls=true) {
@@ -302,8 +306,7 @@ export class RustSourceOrigins {
 
   wrap(node, path, layer) {
     let origin = this.origin(node, path);
-    if(testRustSourceReferenceLifetimeLayer(layer)&&isRustOwnedBindingValue(this,origin)&&origin.sourceBindingIdentity==null)origin=registerRustOwnedBinding(this,origin);
-    if(testRustSourceReferenceLifetimeLayer(layer)&&isRustOwnedBindingValue(this,origin)&&origin.sourceBindingIdentity!=null&&(node.block===true||['if','match'].includes(node.k)))throw unsupported('Rust owned binding','owned temporary borrows need their complete lifetime proof',node.span);
+    if(testRustSourceReferenceLifetimeLayer(layer)&&isRustOwnedBindingValue(this,origin)){origin=captureRustOwnedBorrow(this,origin);if(this.sourceTemporaryBindings.has(origin.sourceBindingIdentity))origin.sourceExtendingTemporaryBindings=mergeRustOwnedLoanBindings(origin.sourceExtendingTemporaryBindings??[],[origin.sourceBindingIdentity]);}
     if(testRustSourceReferenceLifetimeLayer(layer)){if(origin.sourcePlaceBindingIdentity!=null)origin.sourceBindingIdentity=origin.sourcePlaceBindingIdentity;origin.sourceLoanBindingIdentities=mergeRustOwnedLoanBindings(origin.sourceLoanBindingIdentities??[],origin.sourcePlaceLoanBindingIdentities??[]);}
     origin.wrappers.unshift(layer);if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceLifetimes=[null,...(origin.sourceLifetimes??[])];
     return this.mark(node, origin);
@@ -327,7 +330,7 @@ export class RustSourceOrigins {
     if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue&&!this.availableOwnedBinding(actual)) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
     if(this.availableOwnedBinding(actual))this.consumeOwnedBinding(actual,node.span);
-    const binding={...clone(declared??actual),...(actual.wrappers.length?{sourceBindingIdentity:actual.sourceBindingIdentity,sourceLoanBindingIdentities:actual.sourceLoanBindingIdentities??[]}:{}),...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue:false,freshVectorResultContract:false,sourcePlaceBindingIdentity:null,sourcePlaceLoanBindingIdentities:[]};
+    const binding={...clone(declared??actual),...(actual.wrappers.length?{sourceBindingIdentity:actual.sourceBindingIdentity,sourceLoanBindingIdentities:actual.sourceLoanBindingIdentities??[]}:{}),...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue:false,freshVectorResultContract:false,sourceExtendingTemporaryBindings:[],sourcePlaceBindingIdentity:null,sourcePlaceLoanBindingIdentities:[]};
     this.scope.set(name,registerRustOwnedBinding(this,binding));
   }
 
@@ -470,7 +473,7 @@ export class RustSourceOrigins {
         || candidates.some(candidate => !candidate || !candidate.proven || JSON.stringify(candidate.wrappers) !== JSON.stringify(origin.wrappers)))) {
         throw unsupported('or-pattern ownership', 'every alternative must bind the same names with the same source ownership', span);
       }
-      const binding=this.join(candidates.filter(Boolean));
+      const binding=this.join(candidates.filter(Boolean));binding.sourceExtendingTemporaryBindings=[];
       if(isRustOwnedBindingValue(this,binding)){consumeRustOwnedOrigin(this,binding,span);scope.set(name,registerRustOwnedBinding(this,binding));}
       else scope.set(name,binding);
     }

@@ -689,6 +689,7 @@ impl RustParser {
                     span(&token, &token),
                 ));
             }
+            let temporary_frame = self.origins.owned_temporary_frame();
             let expr = self.expr(
                 path,
                 Options {
@@ -697,6 +698,8 @@ impl RustParser {
                 },
             )?;
             if self.cursor.eat(";").is_some() {
+                self.origins
+                    .finish_owned_expression(&expr, path, &temporary_frame, false);
                 let origin = self.origins.origin(&expr, path);
                 let disposition = (if ordinary {
                     crate::translation::rust_unit_value_rules::read_rust_ordinary_statement_disposition

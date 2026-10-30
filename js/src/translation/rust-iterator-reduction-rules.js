@@ -1,7 +1,7 @@
 import {acceptRustIteratorArithmeticConsumer} from './rust-iterator-arithmetic-rules.js';
 // Standard dense immutable iterator reductions reuse the common array algebra.
 /** @param {string} method @param {number} count @param {boolean} ordinary @returns {boolean} */
-export function acceptRustIteratorReductionStart(method,count,ordinary){return ordinary&&(method==='iter'||method==='into_iter')&&count===0;}
+export function acceptRustIteratorReductionStart(method,count,ordinary){return ordinary&&(method==='iter'||method==='into_iter'||method==='bytes')&&count===0;}
 /** @param {string} method @returns {boolean} */
 export function acceptRustIteratorCopyAdapter(method){return method==='copied'||method==='cloned';}
 /** @param {string} method @returns {string} */
@@ -66,7 +66,7 @@ export function readRustIteratorCollectionError(copied,known,kind,model,ownerKin
 export function readRustIteratorCountReceiverError(kind,model,known,layers,adapters){return kind==='array'&&(model==='owned vector'||model==='immutable slice')&&known&&layers&&adapters?'':'count needs an actual standard array receiver and valid item adapters';}
 
 /** @param {string} method @returns {string} */
-export function readRustIteratorReductionInitialState(method){return method==='into_iter'?'owned':method==='iter'?'borrowed':'';}
+export function readRustIteratorReductionInitialState(method){return method==='into_iter'?'owned':method==='iter'?'borrowed':method==='bytes'?'copied':'';}
 /** Consumption accepts fresh values or an independently tracked available owner.
  * @param {string} kind @param {string} model @param {boolean} known
  * @param {number} layers @param {boolean} consumable @returns {string} */

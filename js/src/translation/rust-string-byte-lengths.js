@@ -1,3 +1,5 @@
+import {renderRustStringByteScalarBridge,acceptRustStringByteScalarBridge} from './rust-string-byte-view-rules.js';
+import {renderFormalStringScalarDisplay} from './formal-string-unit-rules.js';
 // Proven standard source owners into the explicit UTF-8 count operation.
 import {unsupported,typeError} from './diagnostics.js';
 import {STRING,rustFixedType} from './types.js';
@@ -15,6 +17,9 @@ export function readRustStringByteLength(parser,receiver,args,span,path){
 }
 export function emitRustStringByteLength(emitter,node,target,render){
  if(!acceptRustStringByteLengthOperation(node.k,node.op))return null;
- const error=readRustStringByteLengthArgumentError(emitter.program.sourceLanguage,emitter.utf16Strings===true||emitter.program.utf16Strings===true,node.args.length,false,node.args[0]?.type.kind??'');if(error)throw unsupported('Rust String byte length',error,node.span);
- return renderRustStringByteLength(target,render(node.args[0]));
+ const units=emitter.utf16Strings===true||emitter.program.utf16Strings===true;
+ const error=readRustStringByteLengthArgumentError(emitter.program.sourceLanguage,units&&!acceptRustStringByteScalarBridge(target,units),node.args.length,false,node.args[0]?.type.kind??'');if(error)throw unsupported('Rust String byte length',error,node.span);
+ let value=renderRustStringByteScalarBridge(target,render(node.args[0]),units);
+ if(units&&(target==='Lean'||target==='Rocq')){emitter.helpers.add('utf16Text');value=renderFormalStringScalarDisplay(target,value);}
+ return renderRustStringByteLength(target,value);
 }

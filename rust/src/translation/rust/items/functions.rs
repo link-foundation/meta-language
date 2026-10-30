@@ -289,9 +289,11 @@ impl RustParser {
             .zip(source_params.iter().cloned())
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
+        let function_ownership = self.origins.snapshot_owned_bindings();
         let previous = self.origins.enter(Some(scope));
         let mut source_loop = None;
         let mut source_local_state = None;
+        let temporary_frame = self.origins.owned_temporary_frame();
         let body = if scalar_loop {
             if !path.is_empty() {
                 return Err(unsupported(
@@ -335,6 +337,11 @@ impl RustParser {
                 const_header_end,
             ))
         });
+        self.origins
+            .finish_owned_expression(&body, path, &temporary_frame, false);
+        let body_origin = self.origins.origin(&body, path);
+        self.origins
+            .expire_owned_bindings(&function_ownership, &body_origin);
         self.origins.transfer_owned_result(&body, path)?;
         if let Type::Array { element, .. } = &ret
             && !self.shared_array_origin(&source_result)

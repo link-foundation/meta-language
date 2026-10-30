@@ -66,3 +66,9 @@ export function acceptRustOwnedMacroArgumentTransfer(macro){return macro==='vec'
  * @param {string} method @param {string} kind @param {string} storage
  * @param {number} layers @returns {boolean} */
 export function acceptRustStringSliceCloneReference(method,kind,storage,layers){return method==='clone'&&kind==='string'&&storage==='string slice'&&layers===1;}
+
+/** Full-expression frames preserve enclosing temporaries; extending initializer
+ * borrows move their drop scope, while owned results move out as values.
+ * @param {boolean} framed @param {boolean} extended @param {boolean} escaping
+ * @returns {string} */
+export function readRustOwnedTemporaryDisposition(framed,extended,escaping){return framed||escaping?'leave':extended?'extend':'expire';}
