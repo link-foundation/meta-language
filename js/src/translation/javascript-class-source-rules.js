@@ -165,8 +165,9 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
       const finish=findJavaScriptClosedClassFieldEnd(values,initial,end);if(finish<0||(values[position+1]??'')==='='&&finish===initial)return [-10,initial];
       fields=fields.concat([-position-1,initial,finish]);names=names.concat(['instance:'+name]);at=finish+1;continue;
     }
-    if ((kinds[position] ?? '') !== 'identifier' || name === 'static' || name === 'get'
-      || name === 'set' || name === 'async' || name === '__proto__'
+    // A contextual word followed directly by '(' is the ordinary method name.
+    // Accessor/async/static modifiers still require their separate complete forms.
+    if ((kinds[position] ?? '') !== 'identifier' || name === '__proto__'
       || name === 'prototype' || name === '$' || staticMember && name === 'constructor'
       || names.includes(owner) || (values[position + 1] ?? '') !== '(') return [-2, at];
     const parameters = findJavaScriptClassGroupEnd(values, position + 1);

@@ -616,36 +616,18 @@ pub fn source_ml_temporary_read_java_script_closed_class_directory_loop12(
                                                 }
                                             }
                                         }
-                                    } else if ((((((((((((self::ml_array::optional_at(
+                                    } else if ((((((((self::ml_array::optional_at(
                                         kinds,
                                         self::ml_array::number_index(position),
                                     ))
                                     .unwrap_or_else(|| {
                                         self::ml_string::Text::from_units(vec![])
-                                    }))
-                                        != (self::ml_string::Text::from_units(vec![
-                                            105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
-                                        ])))
-                                        || (name
-                                            == (self::ml_string::Text::from_units(vec![
-                                                115, 116, 97, 116, 105, 99,
-                                            ]))))
-                                        || (name
-                                            == (self::ml_string::Text::from_units(vec![
-                                                103, 101, 116,
-                                            ]))))
-                                        || (name
-                                            == (self::ml_string::Text::from_units(vec![
-                                                115, 101, 116,
-                                            ]))))
-                                        || (name
-                                            == (self::ml_string::Text::from_units(vec![
-                                                97, 115, 121, 110, 99,
-                                            ]))))
-                                        || (name
-                                            == (self::ml_string::Text::from_units(vec![
-                                                95, 95, 112, 114, 111, 116, 111, 95, 95,
-                                            ]))))
+                                    })) != (self::ml_string::Text::from_units(
+                                        vec![105, 100, 101, 110, 116, 105, 102, 105, 101, 114],
+                                    ))) || (name
+                                        == (self::ml_string::Text::from_units(vec![
+                                            95, 95, 112, 114, 111, 116, 111, 95, 95,
+                                        ]))))
                                         || (name
                                             == (self::ml_string::Text::from_units(vec![
                                                 112, 114, 111, 116, 111, 116, 121, 112, 101,

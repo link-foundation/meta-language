@@ -72,6 +72,16 @@ add('field literal contents are not class syntax','class FieldLiteral { text="{ 
 add('field initializer static calls retain actual class owners','class StaticField { value=StaticField.make(4); static make(value){return value+1;} read(){return this.value;} }','return new StaticField().read();',5);
 add('field initializers and constructor effects run in source order','class FieldOrder { first=trackFieldOrder(1); second=trackFieldOrder(2); constructor(){trackFieldOrder(3);this.third=trackFieldOrder(4);} read(){return this.first+this.second+this.third;} }','new FieldOrder();return fieldOrderTrace.join(",");','1,2,3,4','string','const fieldOrderTrace=[];function trackFieldOrder(value){fieldOrderTrace.push(value);return value;}');
 add('overwriting a field retains its initializer effects and constructor write order','class FieldOverwriteOrder { value=trackFieldOverwrite(1); other=trackFieldOverwrite(2); constructor(value){trackFieldOverwrite(3);this.value=trackFieldOverwrite(value);this.extra=trackFieldOverwrite(5);} read(){return this.value+this.other+this.extra;} }','new FieldOverwriteOrder(4);return fieldOverwriteTrace.join(",");','1,2,3,4,5','string','const fieldOverwriteTrace=[];function trackFieldOverwrite(value){fieldOverwriteTrace.push(value);return value;}');
+// Literal controls distinguish contextual property names from method modifiers.
+add('ordinary get methods retain their receiver','class ContextGet { value=3; get(amount){return this.value+amount;} }','return new ContextGet().get(4);',7);
+add('ordinary set methods retain field writes','class ContextSet { value=3; set(amount){this.value=amount;return this.value;} }','const object=new ContextSet();object.set(8);return object.value;',8);
+add('ordinary async methods return their actual synchronous value','class ContextAsync { async(value){return value+2;} }','return new ContextAsync().async(4);',6);
+add('ordinary static named methods retain their instance owner','class ContextStatic { value=5; static(amount){return this.value+amount;} }','return new ContextStatic().static(4);',9);
+add('static get names retain constructor method ownership','class StaticContextGet { static get(value){return value+1;} }','return StaticContextGet.get(5);',6);
+add('static set names do not become accessors','class StaticContextSet { static set(value){return value+2;} }','return StaticContextSet.set(5);',7);
+add('static async names remain synchronous ordinary methods','class StaticContextAsync { static async(value){return value+3;} }','return StaticContextAsync.async(5);',8);
+add('static static names retain both contextual coordinates','class StaticContextStatic { static static(value){return value+4;} }','return StaticContextStatic.static(5);',9);
+add('one contextual property spelling can have distinct instance and static owners','class ContextOwners { value=2; get(value){return this.value+value;} static get(value){return value+10;} }','return new ContextOwners().get(3)+ContextOwners.get(4);',19);
 const counter='class Refusal { constructor(value){this.value=value;} read(){return this.value;} }\n';
 const refusals=[
  ['a constructor cannot be called as an ordinary function',counter+'function compute(){return Refusal(1).read();}'],
@@ -115,6 +125,13 @@ refusals.push(...[
  ['duplicate public fields retain all descriptor and effect obligations','class DuplicateField { value=1; value=2; } function compute(){return new DuplicateField().value;}'],
  ['a public field cannot silently replace a prototype method in the closed model','class ShadowedMethod { value=1; value(){return 2;} } function compute(){return new ShadowedMethod().value;}'],
  ['field ASI needs its complete source boundary model','class FieldAutomaticSemicolon { value=1\nread(){return this.value;} } function compute(){return new FieldAutomaticSemicolon().read();}'],
+].map(([name,source])=>({name,source,kind:'unsupported'})));
+refusals.push(...[
+ ['a getter modifier retains its descriptor model','class ContextGetter { get value(){return 1;} } function compute(){return new ContextGetter().value;}'],
+ ['a setter modifier retains its descriptor model','class ContextSetter { set value(amount){observe(amount);} } function compute(){return 1;}'],
+ ['an async modifier retains promise scheduling','class ContextAsyncModifier { async read(){return 1;} } function compute(){return 1;}'],
+ ['a static async modifier retains promise scheduling','class ContextStaticAsyncModifier { static async read(){return 1;} } function compute(){return 1;}'],
+ ['a detached contextual method retains its receiver obligation','class ContextDetach { get(){return 1;} } function compute(){const object=new ContextDetach();const method=object.get;return method();}'],
 ].map(([name,source])=>({name,source,kind:'unsupported'})));
 const malformed=[
  {name:'a class body must close at its actual source boundary',source:'class Broken { constructor(){this.value=1;} function compute(){return 1;}'},

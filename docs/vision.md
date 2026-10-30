@@ -11428,3 +11428,16 @@ retains all six preceding artifacts and three exact constructor-prologue
 predecessors, with independent hashes/byte counts; the active assertion now
 requires all nine and reports unsupported fixture models. No original control
 or source program is removed, and no behavioral execution is claimed.
+
+
+Ordinary class methods whose names are `get`, `set`, `async` or `static`
+use the same checked receiver, parameter and callable representation as other
+fixed identifier methods. Actual following syntax distinguishes a name from
+an accessor, async or static modifier; constructor and instance ownership stay
+separate even when their method spellings coincide. Accessor descriptors,
+promise scheduling, detached receivers and all existing full object-model
+obligations remain required. This source rule follows the
+[ECMAScript 2025 method productions](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-method-definitions).
+Independent unexecuted original programs cover all four names on both owners,
+receiver mutation, synchronous values and a shared owner spelling; additional
+refusals retain the genuinely different modifier and detachment obligations.
