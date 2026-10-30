@@ -127,7 +127,7 @@ impl RustParser {
                     path: vec!["std".to_owned(), "vec".to_owned(), "Vec".to_owned()],
                     arguments: vec![owner],
                 });
-            self.origins.mark(&result, origin);
+            self.origins.mark_vector_constructor(&result, origin);
             return Ok(result);
         }
         if let Some(shared) = self.shared_array_constructor(&segments, token, path)? {
@@ -183,6 +183,25 @@ impl RustParser {
         let mut args = self.contextual_call_arguments(path, &callee)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if let Some(mut origin) = self.type_alias_empty_vector_origin(&segments, path) {
+            if !args.is_empty() {
+                return Err(type_error("Vec::new expects 0 arguments", range));
+            }
+            let element = match origin.ty.as_ref() {
+                Some(Type::Array { element, .. }) => element.as_ref().clone(),
+                _ => unreachable!("the shared vector alias rule proves the checked array type"),
+            };
+            let result = SExpr::new(
+                SNode::Array {
+                    items: Vec::new(),
+                    element: Some(element),
+                },
+                range,
+            );
+            origin.path = path.to_vec();
+            self.origins.mark_vector_constructor(&result, origin);
+            return Ok(result);
+        }
         if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {
             let function = SExpr::new(
                 SNode::Name {

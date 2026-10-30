@@ -330,6 +330,46 @@ pub mod ml_source_exception {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_source_array_owner(owner: &str, shadowed: bool) -> bool {
+    !shadowed && ((owner == "Vec") || (owner == "std::vec::Vec"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_array_element(kind: &str, indirected: bool) -> bool {
+    !indirected
+        && (((((kind == "bool") || (kind == "float")) || (kind == "fixed")) || (kind == "unit"))
+            || (kind == "string"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_array_coercion(actual: &str, expected: &str, borrowed: bool) -> bool {
+    (actual == expected)
+        || ((borrowed && (actual == "owned vector")) && (expected == "immutable slice"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_array_result_model(model: &str) -> bool {
+    ((model).is_empty()) || (model == "immutable fresh scalar vector results 1")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_array_result(model: &str, kind: &str, owned: bool, fresh: bool) -> bool {
+    (((model == "immutable fresh scalar vector results 1") && owned) && fresh)
+        && ((((kind == "bool") || (kind == "float")) || (kind == "fixed")) || (kind == "unit"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_fresh_array_result_tail(kind: &str, constructor: bool, children: bool) -> bool {
+    ((kind == "array") && constructor) || (((kind == "let") || (kind == "if")) && children)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_scalar_predicate(
     kind: &str,
     parameters: f64,
@@ -855,31 +895,4 @@ pub fn read_rust_primitive_from_literal_owner(form: &str, typed: bool, kind: &st
     } else {
         String::from("i32")
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn accept_rust_primitive_from_source(
-    kind: &str,
-    bits: &str,
-    signed: bool,
-    owner: &str,
-    path: &str,
-    children: f64,
-    proven: bool,
-    layers: f64,
-) -> bool {
-    ((((((((kind == "float") && ((bits).is_empty())) && !signed) && (owner == "primitive"))
-        && (path == "f64"))
-        && (children == 0f64))
-        && proven)
-        && (layers == 0f64))
-        || self::accept_rust_primitive_selection_receiver(
-            kind, bits, signed, owner, path, children, proven, layers,
-        )
 }

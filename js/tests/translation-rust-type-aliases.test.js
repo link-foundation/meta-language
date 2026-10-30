@@ -1,3 +1,4 @@
+import {acceptRustTypeAliasEmptyVectorMember} from '../src/translation/rust-type-alias-rules.js';
 import {acceptRustTypeAliasOwnedStringMember} from '../src/translation/rust-type-alias-rules.js';
 import {readRustTypeAliasPrimitiveMemberOwner} from '../src/translation/rust-type-alias-rules.js';
 // Deferred source, declaration-plan and public-interface controls.
@@ -27,3 +28,5 @@ test('an unused invalid alias cannot publish a valid-looking public function',()
 for(const [index,row]of fixture.primitiveOwners.entries())test('checked primitive alias owner '+index,()=>assert.equal(readRustTypeAliasPrimitiveMemberOwner(row.kind,row.bits,row.signed,row.ownerKind,row.owner,row.children,row.proven,row.layers,row.suffix),row.expected));
 
 for(const [index,row]of fixture.stringMembers.entries())test('checked String alias member '+index,()=>assert.equal(acceptRustTypeAliasOwnedStringMember(row.kind,row.ownerKind,row.owner,row.children,row.proven,row.layers,row.member),row.expected));
+
+for(const [index,row]of fixture.vectorMembers.entries())test('checked empty vector alias member '+index,()=>assert.equal(acceptRustTypeAliasEmptyVectorMember(row.kind,row.ownerKind,row.owner,row.children,row.element,row.model,row.proven,row.layers,row.member),row.expected));

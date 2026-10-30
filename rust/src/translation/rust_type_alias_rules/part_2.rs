@@ -3,16 +3,42 @@ use super::MlTemporaryGroupAfterLoop1Result;
 use super::MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Result;
 use super::MlTemporaryReadRustTypeAliasLookupKeysJoin4;
 use super::accept_rust_primitive_from_method;
-use super::accept_rust_primitive_from_source;
+use super::accept_rust_primitive_selection_receiver;
 use super::accept_rust_scalar_predicate;
 use super::ml_array;
 use super::ml_source_exception;
 use super::read_rust_integer_conversion_error_debug_model;
 use super::read_rust_primitive_integer_constant_owner;
 use super::source_ml_temporary_group_after_loop1;
-use super::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6;
 use super::source_ml_temporary_read_rust_type_alias_declaration_plan_loop2;
 use super::source_ml_temporary_read_rust_type_alias_lookup_keys_loop5;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_from_source(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((((((((kind == "float") && ((bits).is_empty())) && !signed) && (owner == "primitive"))
+        && (path == "f64"))
+        && (children == 0f64))
+        && proven)
+        && (layers == 0f64))
+        || self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -884,21 +910,5 @@ pub fn read_rust_type_alias_clone_error(current: f64, needed: f64) -> String {
         String::from("source type alias materialization limit exceeded")
     } else {
         String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_type_alias_access_prefix_lengths(count: f64, bare: bool) -> Vec<f64> {
-    {
-        let result = Vec::<f64>::new();
-        {
-            let length = if bare { count } else { count - 1f64 };
-            {
-                self::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6(
-                    result, length,
-                )
-            }
-        }
     }
 }

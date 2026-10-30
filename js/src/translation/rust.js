@@ -1,3 +1,4 @@
+import {readRustTypeAliasEmptyVectorOrigin} from './rust-type-aliases.js';
 import {readRustTypeAliasStringMemberOwner} from './rust-type-aliases.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
@@ -1694,10 +1695,11 @@ class RustParser {
         const elementToken = c.peek();
         const element = this.type();
         const elementOwner=this.origins.type.sourceOwner;
+        const elementCopy=this.origins.immutableProduct(this.origins.type);
         this.arrayElement(token, elementToken);
         c.expect('>', 'Vec constructor'); c.expect('::', 'Vec constructor'); c.expect('new', 'Vec constructor');
         c.expect('(', 'Vec constructor'); c.expect(')', 'Vec constructor');
-        return this.origins.mark({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element),sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
+        return this.origins.markVectorConstructor({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element),sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', arrayElementCopyEvidence:elementCopy, proven: true });
       }
       if (c.is('::') && c.is('<', 1)) throw unsupported('turbofish', 'generic functions are outside the portable core', span(token, c.peek()));
       if (c.is('{') && (/^[A-Z]/u.test(segments.at(-1)) || this.hasRecordConstructions) && !options.noStruct) {
@@ -1712,6 +1714,11 @@ class RustParser {
       const args = readRustContextualCallArguments(this,{k:'name',path:segments,span:span(token,token)},path);
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      const emptyVector=readRustTypeAliasEmptyVectorOrigin(this,segments,path);
+      if(emptyVector){
+        if(args.length!==0)throw new TranslationError('type','Vec::new expects 0 arguments',range);
+        return this.origins.markVectorConstructor({k:'array',items:[],element:emptyVector.type.element,span:range},{...emptyVector,path:[...path]});
+      }
       if(segments.length===1&&this.origins.scope.has(segments[0])){const closureCall=readRustCopyClosureCall(this,{k:'name',path:segments,span:span(token,token)},args,path,range);if(closureCall)return closureCall;throw typeError(readRustSourceCallableValueError(this.origins.scope.get(segments[0]).type?.kind??'','local value'),range);}
       const constantCall=readRustSourceConstantCall(this,segments,args,path,range);if(constantCall)return constantCall;
       if(recordValuePath){

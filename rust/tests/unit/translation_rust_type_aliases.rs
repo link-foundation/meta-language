@@ -142,3 +142,28 @@ fn owned_string_alias_members_keep_the_actual_library_owner() {
         );
     }
 }
+
+#[test]
+fn vector_alias_empty_constructors_require_complete_element_and_owner_facts() {
+    super::unsigned_source_documents::require_versions();
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-type-aliases.lino"
+    ))
+    .unwrap();
+    for row in fixture["vectorMembers"].as_array().unwrap() {
+        assert_eq!(
+            alias_rules::accept_rust_type_alias_empty_vector_member(
+                row["kind"].as_str().unwrap(),
+                row["ownerKind"].as_str().unwrap(),
+                row["owner"].as_str().unwrap(),
+                row["children"].as_f64().unwrap(),
+                row["element"].as_str().unwrap(),
+                row["model"].as_str().unwrap(),
+                row["proven"].as_bool().unwrap(),
+                row["layers"].as_f64().unwrap(),
+                row["member"].as_str().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+}

@@ -1,3 +1,4 @@
+import {acceptRustSourceArrayElement} from './rust-array-rules.js';
 import {readRustPrimitiveTryFromMapperOwner} from './rust-primitive-try-from-rules.js';
 import {readRequiredTextFact,readRequiredNumberFact} from './fact-column-rules.js';
 /** @param {string[]} kinds @param {string[]} values @param {number} position @returns {number} */
@@ -108,4 +109,12 @@ export function readRustTypeAliasPrimitiveMemberOwner(kind,bits,signed,ownerKind
  * @param {string} member @returns {boolean} */
 export function acceptRustTypeAliasOwnedStringMember(kind,ownerKind,owner,children,proven,layers,member){
  return kind==='string'&&ownerKind==='library'&&owner==='std::string::String'&&children===0&&proven&&layers===0&&(member==='new'||member==='from');
+}
+
+/** @param {string} kind @param {string} ownerKind @param {string} owner
+ * @param {number} children @param {string} element @param {string} model
+ * @param {boolean} proven @param {number} layers @param {string} member
+ * @returns {boolean} */
+export function acceptRustTypeAliasEmptyVectorMember(kind,ownerKind,owner,children,element,model,proven,layers,member){
+ return kind==='array'&&ownerKind==='library'&&owner==='std::vec::Vec'&&children===1&&acceptRustSourceArrayElement(element,false)&&model==='owned vector'&&proven&&layers===0&&member==='new';
 }

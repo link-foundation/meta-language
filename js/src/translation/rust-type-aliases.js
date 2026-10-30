@@ -1,3 +1,4 @@
+import {acceptRustTypeAliasEmptyVectorMember} from './rust-type-alias-rules.js';
 import {acceptRustTypeAliasOwnedStringMember} from './rust-type-alias-rules.js';
 import {readRustTypeAliasPrimitiveMemberOwner} from './rust-type-alias-rules.js';
 import {readRustConstantPrimitiveAliasOwner} from './rust-constant-integer-rules.js';
@@ -129,6 +130,20 @@ export function readRustTypeAliasStringMemberOwner(parser,segments,path){
   const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return null;
   const owner=origin.expandedSourceOwner??origin.sourceOwner;
   return acceptRustTypeAliasOwnedStringMember(origin.type?.kind??'',owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,origin.wrappers.length,segments[segments.length-1])?structuredClone(owner):null;
+ }
+ return null;
+}
+
+/** Reuse the actual concrete element type and its complete checked origin. */
+export function readRustTypeAliasEmptyVectorOrigin(parser,segments,path){
+ if(!parser.ordinaryCompletionContext()||segments.length<2)return null;
+ const resolved=parser.resolve(segments.slice(0,-1),path);
+ for(const key of readRustTypeAliasLookupKeys(resolved,path)){
+  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.catalog.get(key)?.k??'');
+  if(disposition==='block')return null;if(disposition!=='alias')continue;
+  const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return null;
+  const owner=origin.expandedSourceOwner??origin.sourceOwner;
+  return acceptRustTypeAliasEmptyVectorMember(origin.type?.kind??'',owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.type?.element?.kind??'',origin.arraySourceModel??'',origin.proven===true,origin.wrappers.length,segments[segments.length-1])?structuredClone(origin):null;
  }
  return null;
 }

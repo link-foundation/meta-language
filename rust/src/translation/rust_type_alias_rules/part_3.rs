@@ -1,10 +1,27 @@
 // Generated from complete js/src/translation/rust-type-alias-rules.js. Do not edit by hand.
+use super::accept_rust_source_array_element;
 use super::group_after;
 use super::ml_array;
 use super::ml_number;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::read_rust_primitive_try_from_mapper_owner;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_type_alias_access_prefix_lengths(count: f64, bare: bool) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let length = if bare { count } else { count - 1f64 };
+            {
+                self::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6(
+                    result, length,
+                )
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -89,6 +106,33 @@ pub fn accept_rust_type_alias_owned_string_member(
         && proven)
         && (layers == 0f64))
         && ((member == "new") || (member == "from"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_type_alias_empty_vector_member(
+    kind: &str,
+    owner_kind: &str,
+    owner: &str,
+    children: f64,
+    element: &str,
+    model: &str,
+    proven: bool,
+    layers: f64,
+    member: &str,
+) -> bool {
+    ((((((((kind == "array") && (owner_kind == "library")) && (owner == "std::vec::Vec"))
+        && (children == 1f64))
+        && self::accept_rust_source_array_element(element, false))
+        && (model == "owned vector"))
+        && proven)
+        && (layers == 0f64))
+        && (member == "new")
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -11520,3 +11520,22 @@ or trait implementation model. Deferred originals include Unicode/byte lengths,
 empty/owned/borrowed construction, forward/imported aliases and namespace owners;
 independent owner controls reject forged, wrapped and unrelated members. All
 previous original inputs and full translation obligations remain required.
+
+
+Checked concrete Rust aliases of standard Vec retain their complete element
+type and source owner in empty `new` construction. The shared rule requires an
+actual proved owned-vector alias, one admitted direct element argument, no source
+wrappers and the real `new` member. It admits no inferred generic argument or
+caller-spelled substitute. Both frontends produce the existing empty typed array
+term and register its actual fresh-constructor origin. Explicit `Vec::<T>::new()`
+uses the same constructor identity; the JavaScript origin also retains the checked
+element's scalar Copy fact, as the native type-origin constructor already does.
+Fresh owned-argument and lookup rules remain responsible for consumption and
+absence. Source original alias definitions, generic element syntax and all actual
+ranges stay in complete CSTs. This follows the
+[standard Vec constructor](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new).
+Unqualified constructors without an actual element proof, arbitrary generic or
+allocator models, capacity/pointer/drop observations and all previous obligations
+remain required. Independent deferred controls cover every admitted scalar/String
+and Unit element, chains/imports/namespaces, fresh arguments, safe empty lookups
+and forged owner/element/wrapper/member premises. No represented controls ran.
