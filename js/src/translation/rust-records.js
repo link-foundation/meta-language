@@ -1,3 +1,4 @@
+import {registerRustNominalCopyDeclaration} from './rust-nominal-copies.js';
 // Token and source-origin transport. Shared plans decide field order/bindings;
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
@@ -30,7 +31,7 @@ function braceOwner(parser,segments,path){
  return found?{owner:found.owner,constructor:found.fullName,names:found.fields.map((_,index)=>String(index)),syntax:found.fields.length?'tuple':'unit',update:false}:null;
 }
 
-export function readRustRecordItem(parser,path){
+export function readRustRecordItem(parser,path,derivations=[]){
  const c=parser.cursor,start=c.next(),token=c.identifier('struct'),name=token.value;
  if(!acceptRustRecordSourceName(name))throw unsupported('Rust record type owner','a builtin-shadowing record needs its complete namespace interpretation',span(token,token));
  if(c.is('<')||c.is('where'))throw unsupported('generic Rust record','record parameters and predicates need their complete ownership interpretation',span(start,c.peek()));
@@ -59,6 +60,7 @@ export function readRustRecordItem(parser,path){
  const constructor=fullName+'.'+constructorName;
  parser.namedRecords.set(fullName,{owner:fullName,constructor,names,syntax,update:true});
  parser.origins.declaration(name,path,{k:'data',unitFields:fields.length===0});
+ if(parser.ordinaryCompletionContext())registerRustNominalCopyDeclaration(parser.origins,name,path,derivations);
  parser.origins.declaration(constructorName,[...path,name],{k:'ctor',owner:fullName,fields:origins,
   result:{wrappers:[],type:{kind:'named',path:['crate',...path,name]},path:[]}});
  return retainRustDataTypeFieldSignatures(parser,{k:'data',name,ctors:[{name:constructorName,fields}],span:span(start,c.peek())},path,[origins]);

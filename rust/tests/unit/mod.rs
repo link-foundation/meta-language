@@ -669,3 +669,5 @@ mod translation_rust_pattern_matches;
 mod translation_rust_pattern_aliases;
 
 mod translation_javascript_fresh_array_slices;
+
+mod translation_rust_nominal_copies;

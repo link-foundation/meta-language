@@ -406,9 +406,14 @@ fn parse_rust_with_selected_profiles(
         SourceOrigins::new(None, array_result_model),
     );
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
+    if declarations.ordinary_completion_context() {
+        origins.finish_nominal_copies()?;
+    }
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.collecting = true;
     source_origins.unit_clone_facts = origins.unit_clone_facts;
+    source_origins.nominal_copy_derivations = origins.nominal_copy_derivations;
+    source_origins.nominal_copy_owners = origins.nominal_copy_owners;
     let mut syntax = RustParser::new(
         tokens.clone(),
         source_origins,
@@ -422,6 +427,9 @@ fn parse_rust_with_selected_profiles(
     syntax.named_records = declarations.named_records;
     syntax.inherent_methods = declarations.inherent_methods;
     let surface = syntax.file()?;
+    if syntax.ordinary_completion_context() {
+        syntax.origins.finish_nominal_copies()?;
+    }
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
     if super::check::check_program(&surface).is_err() && shared_array_handle_source_model.is_empty()
@@ -437,6 +445,8 @@ fn parse_rust_with_selected_profiles(
     );
     parser.source_version_minor = source_version_minor;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
+    parser.origins.nominal_copy_derivations = syntax.origins.nominal_copy_derivations;
+    parser.origins.nominal_copy_owners = syntax.origins.nominal_copy_owners;
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
     parser.named_records = syntax.named_records;

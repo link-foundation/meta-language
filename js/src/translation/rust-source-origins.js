@@ -1,3 +1,4 @@
+import {retainRustNominalCopyOrigin} from './rust-nominal-copies.js';
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
@@ -43,6 +44,7 @@ export class RustSourceOrigins {
     this.freshVectorConstructors = new Set();
     this.collecting = catalog === null;
     this.catalog = catalog ?? new Map();
+    this.nominalCopyDerivations=new Map();this.nominalCopyOwners=new Set();
     this.scope = new Map();
     this.sourceTemporaryBindings=new Set();this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
     this.expressions = new WeakMap();
@@ -75,12 +77,13 @@ export class RustSourceOrigins {
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
     this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector',arrayElementCopyEvidence:acceptRustScalarArrayIndexElement(type.element.kind) }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
+    retainRustNominalCopyOrigin(this,this.type);
     return type;
   }
 
   typeOrigin(type, path) {
     const fields = type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
-    return { ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, path: [...path], fields };
+    return retainRustNominalCopyOrigin(this,{ ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, path: [...path], fields });
   }
 
   immutableProduct(origin) {
@@ -117,17 +120,20 @@ export class RustSourceOrigins {
       if (existing && existing.k !== entry.k && (existing.k === 'externalCrate' || entry.k === 'externalCrate')) {
         throw unsupported('extern crate alloc', 'a source crate declaration cannot share its module name with another item');
       }
+      const values=entry.k==='fn'?[...entry.parameters,entry.result]:entry.k==='ctor'?[...entry.fields,entry.result]:entry.k==='const'?[entry.result]:[];
+      values.forEach(origin=>retainRustNominalCopyOrigin(this,origin));
       this.catalog.set(key, entry);
     }
   }
 
   resolveTypes(resolve) {
-    for (const entry of this.catalog.values()) {
-      const origins = entry.k === 'fn' ? [...entry.parameters, entry.result] : entry.k === 'const' ? [entry.result]
-        : entry.k === 'ctor' ? [...entry.fields, entry.result] : [];
-      for (const origin of origins) {
-        if (origin.type?.kind === 'named') origin.type = { ...origin.type, path: resolve(origin.type.path, origin.path) };
-      }
+    const resolveOrigin=origin=>{
+      if(origin.type?.kind==='named')origin.type={...origin.type,path:resolve(origin.type.path,origin.path)};
+      origin.fields?.forEach(resolveOrigin);origin.callableParameters?.forEach(resolveOrigin);if(origin.callableResult)resolveOrigin(origin.callableResult);
+    };
+    for(const entry of this.catalog.values()){
+      const origins=entry.k==='fn'?[...entry.parameters,entry.result]:entry.k==='const'?[entry.result]:entry.k==='ctor'?[...entry.fields,entry.result]:[];
+      origins.forEach(resolveOrigin);
     }
   }
 

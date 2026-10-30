@@ -1,3 +1,4 @@
+import {registerRustNominalCopyDeclaration,finishRustNominalCopies} from './rust-nominal-copies.js';
 import {readRustSourceVersion} from './rust-source-versions.js';
 import {readRustFormattedPanic} from './rust-panic-values.js';
 import {acceptRustPanicFormattingMacro,readRustPanicCompletionKind} from './rust-panic-value-rules.js';
@@ -169,14 +170,18 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   declarations.headerDiscovery=declarations.ordinaryCompletionContext();
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
+  if(declarations.ordinaryCompletionContext())finishRustNominalCopies(declarations.origins);
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   syntax.sourceVersionMinor=sourceVersionFacts.minor;
   syntax.retainSourceTypeOwners=retainSourceTypeOwners;
   syntax.origins.collecting = true;
+  syntax.origins.nominalCopyOwners=new Set(declarations.origins.nominalCopyOwners);
+  syntax.origins.nominalCopyDerivations=new Map(declarations.origins.nominalCopyDerivations);
   syntax.aliases = declarations.aliases;
   syntax.namedRecords = new Map(declarations.namedRecords);
   syntax.inherentMethods = new Map(declarations.inherentMethods);
   const surface = syntax.file();
+  if(syntax.ordinaryCompletionContext())finishRustNominalCopies(syntax.origins);
   // Preserve syntax trees and the existing checker's diagnostic precedence
   // for programs that already cannot enter the canonical semantic core.
   try { checkProgram(surface); } catch (error) {
@@ -186,6 +191,8 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.sourceVersionMinor=sourceVersionFacts.minor;
   parser.retainSourceTypeOwners=retainSourceTypeOwners;
+  parser.origins.nominalCopyOwners=new Set(syntax.origins.nominalCopyOwners);
+  parser.origins.nominalCopyDerivations=new Map(syntax.origins.nominalCopyDerivations);
   parser.aliases = syntax.aliases;
   parser.namedRecords = new Map(syntax.namedRecords);
   parser.inherentMethods = new Map(syntax.inherentMethods);
@@ -377,7 +384,7 @@ class RustParser {
         continue;
       }
       if (c.is('struct')) {
-        items.push(readRustRecordItem(this,path));
+        items.push(readRustRecordItem(this,path,derivations));
         continue;
       }
       if(c.is('type')&&this.ordinaryCompletionContext()){
@@ -519,6 +526,7 @@ class RustParser {
     const proof=this.typeNamespaceModel?captureRustUnitCloneDerivation(derivations,declaration,path):null;
     if(proof)declaration.sourceUnitCloneDerivation=proof;
     this.origins.declaration(name,path,{k:'data',unitFields:ctors.every(constructor=>constructor.fields.length===0),...(proof?{sourceUnitCloneDerivation:proof}:{})});
+    if(this.ordinaryCompletionContext())registerRustNominalCopyDeclaration(this.origins,name,path,derivations);
     return declaration;
   }
 
@@ -614,7 +622,7 @@ class RustParser {
       }
       c.expect(')', 'tuple type');
       const result = this.origins.typed(tuple(elements), this.modulePath, [], fields);
-      if (!acceptRustProductOrigin(this.origins.immutableProduct(this.origins.type), this.origins.ownedLocalProduct(this.origins.type))) {
+      if (!this.headerDiscovery&&!acceptRustProductOrigin(this.origins.immutableProduct(this.origins.type), this.origins.ownedLocalProduct(this.origins.type))) {
         throw unsupported('immutable Rust tuple product', 'every field requires a direct recursively immutable scalar Copy source value', span(token, c.peek()));
       }
       return result;

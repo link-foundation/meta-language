@@ -154,10 +154,12 @@ impl RustParser {
                 .typed(Type::Tuple { elements }, &self.module_path, Vec::new());
             self.origins.current_type.copy_evidence = children_accepted.then_some(());
             self.origins.current_type.fields = Some(fields);
-            if !accept_rust_product_origin(
-                self.origins.current_type.direct_copy_value(),
-                self.origins.owned_local_product(&self.origins.current_type),
-            ) {
+            if !self.header_discovery
+                && !accept_rust_product_origin(
+                    self.origins.current_type.direct_copy_value(),
+                    self.origins.owned_local_product(&self.origins.current_type),
+                )
+            {
                 return Err(unsupported(
                     "immutable Rust tuple product",
                     "every field requires a direct recursively immutable scalar Copy source value",

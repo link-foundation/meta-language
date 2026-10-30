@@ -205,7 +205,7 @@ impl RustParser {
                 continue;
             }
             if c.is("struct") {
-                items.push(SItem::Data(self.record_item(path)?));
+                items.push(SItem::Data(self.record_item(path, &derivations)?));
                 continue;
             }
             if c.is("impl") {
@@ -524,6 +524,10 @@ impl RustParser {
                 .iter()
                 .map(|(name, fields)| (name.as_str(), fields.as_slice())),
         )?;
+        if self.ordinary_completion_context() {
+            self.origins
+                .register_nominal_copy_declaration(&name, path, derivations);
+        }
         let mut declaration = SData {
             name,
             ctors,

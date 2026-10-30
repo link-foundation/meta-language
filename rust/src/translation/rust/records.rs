@@ -93,7 +93,11 @@ impl RustParser {
         )
     }
 
-    pub(super) fn record_item(&mut self, path: &[String]) -> Result<SData> {
+    pub(super) fn record_item(
+        &mut self,
+        path: &[String],
+        derivations: &[serde_json::Value],
+    ) -> Result<SData> {
         let start = self.cursor.advance();
         let token = self.cursor.identifier(Some("struct"))?;
         let name = token.value.clone();
@@ -195,6 +199,10 @@ impl RustParser {
         );
         self.origins
             .declaration(&name, path, SourceDeclaration::Data)?;
+        if self.ordinary_completion_context() {
+            self.origins
+                .register_nominal_copy_declaration(&name, path, derivations);
+        }
         let mut result_path = vec!["crate".to_owned()];
         result_path.extend(owner_path.clone());
         let source_field_signatures = self.capture_data_field_signatures(

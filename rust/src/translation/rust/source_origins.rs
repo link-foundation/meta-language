@@ -29,6 +29,7 @@ use crate::translation::rust_pointer_integer_owner_rules::{
 };
 
 mod callable_owners;
+mod nominal_copies;
 mod owned_bindings;
 mod patterns;
 mod primitive_expressions;
@@ -339,6 +340,8 @@ pub(super) struct SourceOrigins {
     source_temporary_bindings: HashSet<String>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
+    pub(super) nominal_copy_derivations: HashMap<String, nominal_copies::NominalCopyDerivation>,
+    pub(super) nominal_copy_owners: HashSet<String>,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
     pub(super) scope: HashMap<String, SourceOrigin>,
     pub(super) current_type: SourceOrigin,
@@ -367,6 +370,8 @@ impl SourceOrigins {
             source_temporary_bindings: HashSet::new(),
             catalog: catalog.unwrap_or_default(),
             unit_clone_facts: HashMap::new(),
+            nominal_copy_derivations: HashMap::new(),
+            nominal_copy_owners: HashSet::new(),
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
@@ -396,7 +401,9 @@ impl SourceOrigins {
     }
 
     pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
-        self.current_type = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        let mut origin = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        self.retain_nominal_copy_origin(&mut origin);
+        self.current_type = origin;
         ty
     }
 
@@ -498,9 +505,10 @@ impl SourceOrigins {
         &mut self,
         name: &str,
         path: &[String],
-        entry: SourceDeclaration,
+        mut entry: SourceDeclaration,
     ) -> Result<()> {
         if self.collecting {
+            self.retain_nominal_copy_declaration(&mut entry);
             let mut full_path = path.to_vec();
             full_path.push(name.to_owned());
             let key = full_path.join(".");
@@ -525,21 +533,41 @@ impl SourceOrigins {
     where
         F: FnMut(&[String], &[String]) -> Vec<String>,
     {
-        let mut resolve_origin = |origin: &mut SourceOrigin| {
+        fn resolve_origin<F>(origin: &mut SourceOrigin, resolve: &mut F)
+        where
+            F: FnMut(&[String], &[String]) -> Vec<String>,
+        {
             if let Some(Type::Named { path, .. }) = &mut origin.ty {
                 *path = resolve(path, &origin.path);
             }
-        };
+            if let Some(fields) = &mut origin.fields {
+                for field in fields {
+                    resolve_origin(field, resolve);
+                }
+            }
+            if let Some(fields) = &mut origin.callable_parameters {
+                for field in fields {
+                    resolve_origin(field, resolve);
+                }
+            }
+            if let Some(result) = &mut origin.callable_result {
+                resolve_origin(result, resolve);
+            }
+        }
         for declaration in self.catalog.values_mut() {
             match declaration {
                 SourceDeclaration::Function { parameters, result } => {
-                    parameters.iter_mut().for_each(&mut resolve_origin);
-                    resolve_origin(result);
+                    parameters
+                        .iter_mut()
+                        .for_each(|parameter| resolve_origin(parameter, &mut resolve));
+                    resolve_origin(result, &mut resolve);
                 }
-                SourceDeclaration::Constant { result } => resolve_origin(result),
+                SourceDeclaration::Constant { result } => resolve_origin(result, &mut resolve),
                 SourceDeclaration::Constructor { fields, result, .. } => {
-                    fields.iter_mut().for_each(&mut resolve_origin);
-                    resolve_origin(result);
+                    fields
+                        .iter_mut()
+                        .for_each(|field| resolve_origin(field, &mut resolve));
+                    resolve_origin(result, &mut resolve);
                 }
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module

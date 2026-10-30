@@ -11075,3 +11075,24 @@ result. Independent JavaScript originals cover bounds, unchanged inputs, copies,
 loops, shadows and source failure order. Custom/proxy/species behavior, all
 inferred receiver domains, element ownership and full-language coverage remain
 requirements; these controls have not executed.
+
+Nominal Rust Copy admission uses the actual datatype identity and its source
+Copy and Clone derivations. It is never inferred from an unannotated record's
+scalar fields. All fields of every constructor enter one shared dependency
+plan, including nested tuples and forward nominal references. The graph retains
+a complete ordered field partition; unresolved or non-Copy dependencies and
+by-value cycles cannot supply a proof. Shared-reference fields carry the
+separate Rust Copy fact for references, without proving their target Copy.
+
+The complete header catalog supplies these facts before ordinary body parsing.
+Both parser hosts propagate the shared plan into source parameter, result,
+constructor and nested product origins, preserving actual wrappers and source
+owners. Invalid derivations report their actual attribute range. Native policy
+source is generated from the same JavaScript Links definitions. Closed source
+interpretations retain their existing admissions. Independent originals cover
+all fixed/pointer owners, nominal closures and captures, variants, aliases,
+forward/module/tuple dependencies and source failure order; their controls and
+all codec/emission/native products remain unexecuted drafts. General manual
+traits, generic bounds, non-Copy ownership, reference-region composition and
+complete language/grammar/concept obligations remain required. Rust's Copy
+rules are defined by the [Rust Reference](https://doc.rust-lang.org/reference/special-types-and-traits.html#copy).
