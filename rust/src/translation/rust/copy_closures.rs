@@ -320,10 +320,21 @@ impl RustParser {
         self.cursor.eat("move");
         let mut params = Vec::new();
         let mut origins = Vec::new();
+        let mut bindings = Vec::new();
         if self.cursor.eat("||").is_none() {
             self.cursor.expect("|", Some("closure"))?;
             while !self.cursor.is("|") {
                 let token = self.peek();
+                let mut reference_depth = 0usize;
+                loop {
+                    let depth =
+                        rules::read_rust_copy_closure_reference_pattern_depth(&self.peek().value);
+                    if depth == 0.0 {
+                        break;
+                    }
+                    reference_depth += depth as usize;
+                    self.cursor.advance();
+                }
                 let role = ["mut", "ref", "&", "_"]
                     .into_iter()
                     .find(|value| self.cursor.is(value))
@@ -364,6 +375,28 @@ impl RustParser {
                     self.cursor.expect(":", Some("closure parameter"))?;
                     unreachable!("missing actual source type");
                 };
+                let reference_error = rules::read_rust_copy_closure_reference_pattern_error(
+                    reference_depth as f64,
+                    origin.wrappers.len() as f64,
+                    origin.wrappers.iter().all(|layer| layer == "reference"),
+                    origin.copy_closure_parameter(),
+                );
+                if !reference_error.is_empty() {
+                    return Err(unsupported(
+                        "Rust closure parameter",
+                        reference_error,
+                        Some(token.span()),
+                    ));
+                }
+                let mut binding = origin.clone();
+                binding.wrappers = binding.wrappers[reference_depth..].to_vec();
+                binding.source_lifetimes = binding
+                    .source_lifetimes
+                    .iter()
+                    .skip(reference_depth)
+                    .cloned()
+                    .collect();
+                bindings.push(binding);
                 origins.push(origin);
                 params.push(SParam {
                     name,
@@ -429,7 +462,7 @@ impl RustParser {
             return Err(unsupported("Rust Copy closure", reason, Some(start.span())));
         }
         let outer = self.origins.enter(None);
-        for (parameter, origin) in params.iter().zip(origins.iter().cloned()) {
+        for (parameter, origin) in params.iter().zip(bindings.iter().cloned()) {
             self.origins.scope.insert(parameter.name.clone(), origin);
         }
         let read: Result<SExpr> = (|| {

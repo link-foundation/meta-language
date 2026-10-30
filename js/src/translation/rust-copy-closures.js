@@ -8,7 +8,7 @@ import {beginRustStandardStringViewArgument,endRustStandardStringViewArgument,ch
 import {unsupported} from './diagnostics.js';
 import {readCallableStatementCaptures} from './callable-source.js';
 import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js';
-import {readRustCopyClosureHeaderError,readRustCopyClosureCaptureError,acceptRustCopyClosureInvocation,readRustCopyClosureParameterForm} from './rust-copy-closure-rules.js';
+import {readRustCopyClosureHeaderError,readRustCopyClosureCaptureError,acceptRustCopyClosureInvocation,readRustCopyClosureParameterForm,readRustCopyClosureReferencePatternDepth,readRustCopyClosureReferencePatternError} from './rust-copy-closure-rules.js';
 import {acceptRustContextualCopyClosure,readRustContextualCopyClosureHeaderError,findRustContextualClosureParenthesisCount,acceptRustContextualCopyPointerResultBlock} from './rust-contextual-closure-rules.js';
 export function readRustCopyClosureResultContextError(node,result){
  const pending=[{value:node,scope:null}],scopes=[],visited=new WeakMap();while(pending.length){const {value,scope}=pending.pop(),seen=visited.get(value)??new Set();if(seen.has(scope))continue;seen.add(scope);visited.set(value,seen);
@@ -48,11 +48,12 @@ export function readRustContextualCallArguments(parser,callee,path){
  return args;
 }
 export function readRustCopyClosure(parser,path,expected=null,parametersOnly=false,deferResult=false){
- const c=parser.cursor,start=c.peek(),parameters=[],origins=[];c.eat('move');
+ const c=parser.cursor,start=c.peek(),parameters=[],origins=[],bindings=[];c.eat('move');
  if(!c.eat('||')){
   c.expect('|','closure');
   while(!c.is('|')){
-   const token=c.peek(),role=['mut','ref','&','_'].find(value=>c.is(value))??'binding';
+   const token=c.peek();let referenceDepth=0;for(;;){const depth=readRustCopyClosureReferencePatternDepth(c.peek().value);if(depth===0)break;referenceDepth+=depth;c.next();}
+   const role=['mut','ref','&','_'].find(value=>c.is(value))??'binding';
    const form=readRustCopyClosureParameterForm(role);
    if(form==='unsupported')throw unsupported('Rust closure parameter','a closure needs a named direct immutable typed parameter',token);
    let name;
@@ -65,6 +66,8 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
     if(!type){c.expect(':','closure parameter');throw parser.fail('a closure parameter needs its source type');}
     origin=parser.origins.copy(expected?.callableParameters?.[parameters.length])??parser.origins.typeOrigin(type,path);
    }
+   const referenceError=readRustCopyClosureReferencePatternError(referenceDepth,origin.wrappers.length,origin.wrappers.every(layer=>layer==='reference'),acceptRustCopyClosureParameterOrigin(parser,origin));if(referenceError)throw unsupported('Rust closure parameter',referenceError,token);
+   const binding=parser.origins.copy(origin);binding.wrappers=binding.wrappers.slice(referenceDepth);binding.sourceLifetimes=binding.sourceLifetimes?.slice(referenceDepth);bindings.push(binding);
    parameters.push({name,type,span:{start:token.start,end:c.peek(-1).end}});origins.push(origin);
    if(!c.eat(','))break;
   }
@@ -72,7 +75,7 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
  }
  const written=Boolean(c.eat('->'));let ret=written?parser.type():readRustCopyClosureResultContext(written,parametersOnly)==='inferred'?null:expected?.type?.ret??null,resultOrigin=written?parser.origins.type:ret?parser.origins.copy(expected?.callableResult)??parser.origins.typeOrigin(ret,path):null;
  if(written){const reason=readRustCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),written,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
- const outer=parser.origins.enter();parameters.forEach((parameter,index)=>parser.origins.scope.set(parameter.name,origins[index]));
+ const outer=parser.origins.enter();parameters.forEach((parameter,index)=>parser.origins.scope.set(parameter.name,bindings[index]));
  let body;
  try{
   if(written||c.is('{'))body=readRustCopyPointerResultBlock(parser,path,resultOrigin)??(ret&&parser.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(parser,path,ret,resultOrigin):parser.block(path,true));else body=parser.expr(path);

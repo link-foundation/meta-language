@@ -657,3 +657,5 @@ mod translation_rust_deferred_closures;
 mod translation_rust_array_lookup_contexts;
 
 mod translation_rust_scalar_default_contexts;
+
+mod translation_rust_closure_reference_patterns;

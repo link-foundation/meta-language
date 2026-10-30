@@ -10988,3 +10988,14 @@ remains invalid even for zero. Existing primitive-owner admission remains an
 additional condition. Typed floating/Boolean defaults and eager effect order
 retain independent source controls. These unexecuted drafts establish neither
 whole-expression inference nor full Option/Result or source-language coverage.
+
+Immutable scalar closure reference patterns retain two distinct origins: the
+callable parameter keeps every actual reference layer, while its lexical binding
+removes exactly the layers written in the pattern. Shared JavaScript policies
+count `&` and `&&` tokens and require complete Copy scalar provenance before
+native generation; wrapper and lifetime projection stays mechanical. Contextual
+and written types, wildcard bindings, shadowing and nested Copy captures use the
+same path, including borrowed iterator maps and filters. Independent originals
+cover one/two layers and width/sign/pointer, Boolean, floating and unit owners.
+Mutable/non-Copy/structural patterns, escaping references and full Rust ownership
+remain requirements; these source controls have not executed.

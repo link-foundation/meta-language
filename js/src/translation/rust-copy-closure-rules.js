@@ -54,3 +54,14 @@ export function readRustCopyClosureLiteralResultError(kind,negative,typed,result
 /** Lexical scope frames supply actual binder identity; spelling alone is not global identity.
  * @param {string[]} path @param {string} name @returns {boolean} */
 export function testRustCopyClosureResultBinding(path,name){return path.length===1&&path[0]===name;}
+
+/** Reference-pattern tokens retain their actual immutable layer count.
+ * @param {string} token @returns {number} */
+export function readRustCopyClosureReferencePatternDepth(token){return token==='&'?1:token==='&&'?2:0;}
+/** Copy scalar destructuring retains the callable parameter's full signature.
+ * @param {number} depth @param {number} layers @param {boolean} references
+ * @param {boolean} parameter @returns {string} */
+export function readRustCopyClosureReferencePatternError(depth,layers,references,parameter){
+ if(depth===0)return '';
+ return Number.isInteger(depth)&&depth>=1&&depth<=256&&Number.isInteger(layers)&&layers>=depth&&layers<=256&&references&&parameter?'':'a closure reference pattern needs its actual immutable Copy scalar reference layers';
+}
