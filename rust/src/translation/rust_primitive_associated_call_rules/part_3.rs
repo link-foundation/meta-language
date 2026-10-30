@@ -1,12 +1,235 @@
 // Generated from complete js/src/translation/rust-primitive-associated-call-rules.js. Do not edit by hand.
-use super::accept_rust_integer_bit_method;
 use super::accept_rust_primitive_selection_receiver;
-use super::accept_rust_wrapping_shift_method;
 use super::ml_array;
 use super::ml_string;
-use super::read_rust_checked_integer_arity;
-use super::read_rust_integer_magnitude_arity;
 use super::read_rust_primitive_owner_path;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_message_source_error(
+    consumer: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    storage: &self::ml_string::Text,
+    layers: f64,
+    known: bool,
+    references: bool,
+) -> self::ml_string::Text {
+    if ((*consumer) != (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116])))
+        || ((((((*kind)
+            == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])))
+            && (((*storage)
+                == (self::ml_string::Text::from_units(vec![
+                    115, 116, 114, 105, 110, 103, 32, 115, 108, 105, 99, 101,
+                ])))
+                || ((*storage)
+                    == (self::ml_string::Text::from_units(vec![
+                        111, 119, 110, 101, 100, 32, 115, 116, 114, 105, 110, 103,
+                    ])))))
+            && (layers >= 1f64))
+            && known)
+            && references)
+    {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        self::ml_string::Text::from_units(vec![
+            101, 120, 112, 101, 99, 116, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97,
+            99, 116, 117, 97, 108, 32, 105, 109, 109, 117, 116, 97, 98, 108, 101, 32, 115, 116, 97,
+            110, 100, 97, 114, 100, 32, 115, 116, 114, 32, 109, 101, 115, 115, 97, 103, 101, 32,
+            115, 111, 117, 114, 99, 101,
+        ])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_option_panic_consumer(consumer: &self::ml_string::Text) -> bool {
+    ((*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112])))
+        || ((*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116])))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_option_panic_message(
+    consumer: &self::ml_string::Text,
+    message: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if (*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112])) {
+        self::ml_string::Text::from_units(vec![
+            99, 97, 108, 108, 101, 100, 32, 96, 79, 112, 116, 105, 111, 110, 58, 58, 117, 110, 119,
+            114, 97, 112, 40, 41, 96, 32, 111, 110, 32, 97, 32, 96, 78, 111, 110, 101, 96, 32, 118,
+            97, 108, 117, 101,
+        ])
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116]))
+    {
+        message.clone()
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_arity(method: &self::ml_string::Text, ordinary: bool) -> f64 {
+    if ordinary {
+        if self::ml_array::includes(
+            &vec![
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 97, 100, 100,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 115, 117, 98,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 109, 117, 108,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 114,
+                ]),
+            ],
+            method,
+            0f64,
+            false,
+            |a, b| a == b,
+        ) {
+            1f64
+        } else if self::ml_array::includes(
+            &vec![
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 110, 101, 103,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 97, 98, 115,
+                ]),
+            ],
+            method,
+            0f64,
+            false,
+            |a, b| a == b,
+        ) {
+            0f64
+        } else {
+            -1f64
+        }
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_checked_integer_receiver(
+    method: &self::ml_string::Text,
+    kind: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
+    signed: bool,
+    owner: &self::ml_string::Text,
+    path: &self::ml_string::Text,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((((self::read_rust_checked_integer_arity(method, true)) >= 0f64)
+        && ((*kind) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
+        && (((*method)
+            != (self::ml_string::Text::from_units(vec![
+                99, 104, 101, 99, 107, 101, 100, 95, 97, 98, 115,
+            ])))
+            || signed))
+        && self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_consumer_arity(consumer: &self::ml_string::Text) -> f64 {
+    if ((((*consumer)
+        == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])))
+        || ((*consumer)
+            == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101]))))
+        || ((*consumer)
+            == (self::ml_string::Text::from_units(vec![
+                117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
+            ]))))
+        || ((*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112])))
+    {
+        0f64
+    } else if ((*consumer)
+        == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
+        || ((*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116])))
+    {
+        1f64
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {
+        2f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_argument_owner(
+    method: &self::ml_string::Text,
+    receiver: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*method)
+        == (self::ml_string::Text::from_units(vec![
+            99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
+        ])))
+        || ((*method)
+            == (self::ml_string::Text::from_units(vec![
+                99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 114,
+            ])))
+    {
+        self::ml_string::Text::from_units(vec![117, 51, 50])
+    } else {
+        receiver.clone()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_argument_reason(
+    method: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*method)
+        == (self::ml_string::Text::from_units(vec![
+            99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
+        ])))
+        || ((*method)
+            == (self::ml_string::Text::from_units(vec![
+                99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 114,
+            ])))
+    {
+        self::ml_string::Text::from_units(vec![
+            116, 104, 101, 32, 97, 99, 116, 117, 97, 108, 32, 115, 104, 105, 102, 116, 32, 99, 111,
+            117, 110, 116, 32, 109, 117, 115, 116, 32, 114, 101, 116, 97, 105, 110, 32, 115, 116,
+            97, 110, 100, 97, 114, 100, 32, 117, 51, 50, 32, 111, 119, 110, 101, 114, 115, 104,
+            105, 112,
+        ])
+    } else {
+        self::ml_string::Text::from_units(vec![
+            116, 104, 101, 32, 97, 99, 116, 117, 97, 108, 32, 97, 114, 103, 117, 109, 101, 110,
+            116, 32, 109, 117, 115, 116, 32, 114, 101, 116, 97, 105, 110, 32, 116, 104, 101, 32,
+            114, 101, 99, 101, 105, 118, 101, 114, 32, 116, 121, 112, 101, 32, 97, 110, 100, 32,
+            115, 111, 117, 114, 99, 101, 32, 111, 119, 110, 101, 114,
+        ])
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -206,7 +429,7 @@ pub fn plan_rust_checked_integer_condition(
                             ];
                             {
                                 let signs = {
-                                    let source_ml_source1_concat_value37 = vec![
+                                    let source_ml_source2_concat_value37 = vec![
                                         self::ml_string::Text::from_units(vec![
                                             111, 112, 101, 114, 97, 110, 100,
                                         ]),
@@ -219,12 +442,12 @@ pub fn plan_rust_checked_integer_condition(
                                         self::ml_string::Text::from_units(vec![103, 116]),
                                     ];
                                     {
-                                        let source_ml_source1_concat_value38 = positive_positive;
+                                        let source_ml_source2_concat_value38 = positive_positive;
                                         {
-                                            let source_ml_source1_concat_value39 =
+                                            let source_ml_source2_concat_value39 =
                                                 positive_negative;
                                             {
-                                                let source_ml_source1_concat_value40 = vec![
+                                                let source_ml_source2_concat_value40 = vec![
                                                     self::ml_string::Text::from_units(vec![
                                                         105, 102,
                                                     ]),
@@ -239,13 +462,13 @@ pub fn plan_rust_checked_integer_condition(
                                                     ]),
                                                 ];
                                                 {
-                                                    let source_ml_source1_concat_value41 =
+                                                    let source_ml_source2_concat_value41 =
                                                         negative_positive;
                                                     {
-                                                        let source_ml_source1_concat_value42 =
+                                                        let source_ml_source2_concat_value42 =
                                                             negative_negative;
                                                         {
-                                                            let source_ml_source1_concat_value43 = vec![
+                                                            let source_ml_source2_concat_value43 = vec![
                                                                 self::ml_string::Text::from_units(
                                                                     vec![105, 102],
                                                                 ),
@@ -253,7 +476,7 @@ pub fn plan_rust_checked_integer_condition(
                                                                     vec![105, 102],
                                                                 ),
                                                             ];
-                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source1_concat_value37), source_ml_source1_concat_value38), source_ml_source1_concat_value39), source_ml_source1_concat_value40), source_ml_source1_concat_value41), source_ml_source1_concat_value42), source_ml_source1_concat_value43)
+                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value37), source_ml_source2_concat_value38), source_ml_source2_concat_value39), source_ml_source2_concat_value40), source_ml_source2_concat_value41), source_ml_source2_concat_value42), source_ml_source2_concat_value43)
                                                         }
                                                     }
                                                 }
@@ -262,7 +485,7 @@ pub fn plan_rust_checked_integer_condition(
                                     }
                                 };
                                 {
-                                    let source_ml_source1_concat_value44 = vec![
+                                    let source_ml_source2_concat_value44 = vec![
                                         self::ml_string::Text::from_units(vec![
                                             111, 112, 101, 114, 97, 110, 100,
                                         ]),
@@ -277,9 +500,9 @@ pub fn plan_rust_checked_integer_condition(
                                         self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
                                     ];
                                     {
-                                        let source_ml_source1_concat_value45 = signs;
+                                        let source_ml_source2_concat_value45 = signs;
                                         {
-                                            let source_ml_source1_concat_value46 = vec![
+                                            let source_ml_source2_concat_value46 = vec![
                                                 self::ml_string::Text::from_units(vec![105, 102]),
                                                 self::ml_string::Text::from_units(vec![105, 102]),
                                             ];
@@ -287,11 +510,11 @@ pub fn plan_rust_checked_integer_condition(
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<self::ml_string::Text>::new(),
-                                                        source_ml_source1_concat_value44,
+                                                        source_ml_source2_concat_value44,
                                                     ),
-                                                    source_ml_source1_concat_value45,
+                                                    source_ml_source2_concat_value45,
                                                 ),
-                                                source_ml_source1_concat_value46,
+                                                source_ml_source2_concat_value46,
                                             )
                                         }
                                     }
@@ -302,7 +525,7 @@ pub fn plan_rust_checked_integer_condition(
                 }
             } else {
                 {
-                    let source_ml_source1_concat_value34 = vec![
+                    let source_ml_source2_concat_value34 = vec![
                         self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
                         self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
                         self::ml_string::Text::from_units(vec![101, 113]),
@@ -313,9 +536,9 @@ pub fn plan_rust_checked_integer_condition(
                         self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
                     ];
                     {
-                        let source_ml_source1_concat_value35 = positive_positive;
+                        let source_ml_source2_concat_value35 = positive_positive;
                         {
-                            let source_ml_source1_concat_value36 = vec![
+                            let source_ml_source2_concat_value36 = vec![
                                 self::ml_string::Text::from_units(vec![105, 102]),
                                 self::ml_string::Text::from_units(vec![105, 102]),
                             ];
@@ -323,11 +546,11 @@ pub fn plan_rust_checked_integer_condition(
                                 self::ml_array::append(
                                     self::ml_array::append(
                                         Vec::<self::ml_string::Text>::new(),
-                                        source_ml_source1_concat_value34,
+                                        source_ml_source2_concat_value34,
                                     ),
-                                    source_ml_source1_concat_value35,
+                                    source_ml_source2_concat_value35,
                                 ),
-                                source_ml_source1_concat_value36,
+                                source_ml_source2_concat_value36,
                             )
                         }
                     }
@@ -499,6 +722,26 @@ pub fn plan_rust_checked_integer_consumer(
             self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
             self::ml_string::Text::from_units(vec![110, 111, 116]),
         ]
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112]))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![
+                117, 110, 119, 114, 97, 112, 32, 109, 101, 115, 115, 97, 103, 101,
+            ]),
+            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116]))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
+            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
     } else if (*consumer)
         == (self::ml_string::Text::from_units(vec![
             117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
@@ -537,12 +780,13 @@ pub fn read_rust_checked_integer_result_owner(
             == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101])))
     {
         self::ml_string::Text::from_units(vec![98, 111, 111, 108])
-    } else if ((*consumer)
+    } else if (((*consumer)
         == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
         || ((*consumer)
             == (self::ml_string::Text::from_units(vec![
                 117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
-            ])))
+            ]))))
+        || self::test_rust_option_panic_consumer(consumer)
     {
         receiver.clone()
     } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {
@@ -561,257 +805,4 @@ pub fn read_rust_primitive_associated_owner(
     absolute: bool,
 ) -> self::ml_string::Text {
     self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_associated_arity(
-    owner: &self::ml_string::Text,
-    method: &self::ml_string::Text,
-) -> f64 {
-    if (self::ml_array::includes(
-        &vec![
-            self::ml_string::Text::from_units(vec![98, 111, 111, 108]),
-            self::ml_string::Text::from_units(vec![105, 56]),
-            self::ml_string::Text::from_units(vec![117, 56]),
-            self::ml_string::Text::from_units(vec![105, 49, 54]),
-            self::ml_string::Text::from_units(vec![117, 49, 54]),
-            self::ml_string::Text::from_units(vec![105, 51, 50]),
-            self::ml_string::Text::from_units(vec![117, 51, 50]),
-            self::ml_string::Text::from_units(vec![105, 54, 52]),
-            self::ml_string::Text::from_units(vec![117, 54, 52]),
-            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
-            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
-            self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
-            self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
-        ],
-        owner,
-        0f64,
-        false,
-        |a, b| a == b,
-    )) {
-        if ((*method) == (self::ml_string::Text::from_units(vec![109, 105, 110])))
-            || ((*method) == (self::ml_string::Text::from_units(vec![109, 97, 120])))
-        {
-            2f64
-        } else if (*owner) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])) {
-            -1f64
-        } else {
-            {
-                let magnitude = self::read_rust_integer_magnitude_arity(method, true);
-                if (magnitude >= 0f64)
-                    && (((*method)
-                        != (self::ml_string::Text::from_units(vec![
-                            117, 110, 115, 105, 103, 110, 101, 100, 95, 97, 98, 115,
-                        ])))
-                        || owner.starts_with(&self::ml_string::Text::from_units(vec![105])))
-                {
-                    magnitude + 1f64
-                } else if self::accept_rust_wrapping_shift_method(method) {
-                    2f64
-                } else if self::accept_rust_integer_bit_method(method) {
-                    1f64
-                } else {
-                    {
-                        let checked = self::read_rust_checked_integer_arity(method, true);
-                        if (checked >= 0f64)
-                            && (((*method)
-                                != (self::ml_string::Text::from_units(vec![
-                                    99, 104, 101, 99, 107, 101, 100, 95, 97, 98, 115,
-                                ])))
-                                || owner.starts_with(&self::ml_string::Text::from_units(vec![105])))
-                        {
-                            checked + 1f64
-                        } else if self::ml_array::includes(
-                            &vec![
-                                self::ml_string::Text::from_units(vec![
-                                    115, 97, 116, 117, 114, 97, 116, 105, 110, 103, 95, 97, 100,
-                                    100,
-                                ]),
-                                self::ml_string::Text::from_units(vec![
-                                    115, 97, 116, 117, 114, 97, 116, 105, 110, 103, 95, 115, 117,
-                                    98,
-                                ]),
-                                self::ml_string::Text::from_units(vec![
-                                    115, 97, 116, 117, 114, 97, 116, 105, 110, 103, 95, 109, 117,
-                                    108,
-                                ]),
-                                self::ml_string::Text::from_units(vec![
-                                    119, 114, 97, 112, 112, 105, 110, 103, 95, 97, 100, 100,
-                                ]),
-                                self::ml_string::Text::from_units(vec![
-                                    119, 114, 97, 112, 112, 105, 110, 103, 95, 115, 117, 98,
-                                ]),
-                            ],
-                            method,
-                            0f64,
-                            false,
-                            |a, b| a == b,
-                        ) {
-                            2f64
-                        } else if (*method)
-                            == (self::ml_string::Text::from_units(vec![
-                                119, 114, 97, 112, 112, 105, 110, 103, 95, 110, 101, 103,
-                            ]))
-                        {
-                            1f64
-                        } else if (owner.starts_with(&self::ml_string::Text::from_units(vec![105])))
-                        {
-                            if self::ml_array::includes(
-                                &vec![
-                                    self::ml_string::Text::from_units(vec![
-                                        105, 115, 95, 110, 101, 103, 97, 116, 105, 118, 101,
-                                    ]),
-                                    self::ml_string::Text::from_units(vec![
-                                        105, 115, 95, 112, 111, 115, 105, 116, 105, 118, 101,
-                                    ]),
-                                    self::ml_string::Text::from_units(vec![
-                                        115, 105, 103, 110, 117, 109,
-                                    ]),
-                                    self::ml_string::Text::from_units(vec![
-                                        115, 97, 116, 117, 114, 97, 116, 105, 110, 103, 95, 110,
-                                        101, 103,
-                                    ]),
-                                    self::ml_string::Text::from_units(vec![
-                                        115, 97, 116, 117, 114, 97, 116, 105, 110, 103, 95, 97, 98,
-                                        115,
-                                    ]),
-                                    self::ml_string::Text::from_units(vec![
-                                        119, 114, 97, 112, 112, 105, 110, 103, 95, 97, 98, 115,
-                                    ]),
-                                ],
-                                method,
-                                0f64,
-                                false,
-                                |a, b| a == b,
-                            ) {
-                                1f64
-                            } else {
-                                -1f64
-                            }
-                        } else {
-                            -1f64
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        -1f64
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_primitive_associated_literal(
-    expected: &self::ml_string::Text,
-    form: &self::ml_string::Text,
-    typed: bool,
-) -> bool {
-    ((((*expected) != (self::ml_string::Text::from_units(vec![])))
-        && ((*expected) != (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))))
-        && !typed)
-        && (((*form)
-            == (self::ml_string::Text::from_units(vec![110, 117, 109, 101, 114, 97, 108])))
-            || ((*form)
-                == (self::ml_string::Text::from_units(vec![
-                    110, 101, 103, 97, 116, 105, 118, 101, 32, 110, 117, 109, 101, 114, 97, 108,
-                ]))))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn accept_rust_primitive_associated_receiver(
-    expected: &self::ml_string::Text,
-    kind: &self::ml_string::Text,
-    bits: &self::ml_string::Text,
-    signed: bool,
-    owner: &self::ml_string::Text,
-    path: &self::ml_string::Text,
-    children: f64,
-    proven: bool,
-    layers: f64,
-) -> bool {
-    ((*expected) == (*path))
-        && self::accept_rust_primitive_selection_receiver(
-            kind, bits, signed, owner, path, children, proven, layers,
-        )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_plan_rust_integer_bits_loop3(
-    mut plan: Vec<f64>,
-    bindings: &[f64],
-    mut index: f64,
-    mut body: f64,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at >= 0f64 {
-            {
-                let plan_2 = {
-                    let source_ml_source1_concat_value47 = plan;
-                    {
-                        let source_ml_source1_concat_value48 = vec![
-                            18f64,
-                            (self::ml_array::optional_at(
-                                bindings,
-                                self::ml_array::number_index(at),
-                            ))
-                            .unwrap_or_else(|| -1f64),
-                            (self::ml_array::optional_at(
-                                bindings,
-                                self::ml_array::number_index(at + 1f64),
-                            ))
-                            .unwrap_or_else(|| -1f64),
-                            body,
-                            0f64,
-                        ];
-                        self::ml_array::append(
-                            self::ml_array::append(
-                                Vec::<f64>::new(),
-                                source_ml_source1_concat_value47,
-                            ),
-                            source_ml_source1_concat_value48,
-                        )
-                    }
-                };
-                {
-                    let body_2 = index;
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            let at_2 = at - 2f64;
-                            {
-                                (plan, index, body, at) = (plan_2, index_2, body_2, at_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { plan };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustIntegerBitsJoin2 {
-    MlTemporaryPlanRustIntegerBitsJoin2Next(Vec<f64>, f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustIntegerBitsLoop1Result {
-    MlTemporaryPlanRustIntegerBitsLoop1Done(Vec<f64>, Vec<f64>, f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryPlanRustIntegerBitsJoin4 {
-    MlTemporaryPlanRustIntegerBitsJoin4Next(Vec<f64>, f64, f64, f64),
 }

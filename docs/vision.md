@@ -10885,3 +10885,15 @@ Unsuffixed result literals and diverging callback bodies inherit that context;
 unknown defaults continue to infer from the callback's actual result. This
 retains one standard Result output type and does not authorize pointer-owner
 coercions or fabricate a type for an unconstrained source expression.
+
+Checked integer Option consumers now have a source draft for immediate `unwrap`
+and computed-message `expect`, across supported checked arithmetic and shifts.
+Shared guard plans keep invalid arithmetic unreachable; inputs and eager str
+messages retain source order. A canonical Option panic-message definition is
+shared with array lookups through preserved forwarding entry points. Failures
+raise the original message through the existing common panic operation. The
+prior negative unwrap-arity control retains its input and former expectation,
+with an explicit standard-library reference documenting why zero is correct.
+Independent interval and shift originals, eager message controls and transport/
+native checks are authored for CI; none is execution evidence. Stored Option
+values, lazy consumers and unrestricted source translation remain required.

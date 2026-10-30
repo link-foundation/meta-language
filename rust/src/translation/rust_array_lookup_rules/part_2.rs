@@ -1,8 +1,37 @@
 // Generated from complete js/src/translation/rust-array-lookup-rules.js. Do not edit by hand.
+use super::accept_rust_array_lookup_presence_consumer;
 use super::accept_rust_primitive_from_source;
+use super::read_rust_option_panic_message;
 use super::read_rust_panic_message_source_error;
 use super::read_rust_scalar_array_index_receiver_error;
-use super::test_rust_array_lookup_lazy_fallback;
+use super::test_rust_option_panic_consumer;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f64 {
+    if self::accept_rust_array_lookup_presence_consumer(consumer) {
+        0f64
+    } else if copied && ((consumer == "map_or") || (consumer == "map_or_else")) {
+        2f64
+    } else if copied
+        && (((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
+            || self::test_rust_array_lookup_predicate_consumer(consumer))
+    {
+        1f64
+    } else if copied && ((consumer == "unwrap_or_default") || (consumer == "unwrap")) {
+        0f64
+    } else if copied && (consumer == "expect") {
+        1f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_array_lookup_lazy_fallback(consumer: &str) -> bool {
+    (consumer == "unwrap_or_else") || (consumer == "map_or_else")
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -252,7 +281,7 @@ pub fn plan_rust_array_lookup_consumer(consumer: &str) -> Vec<String> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn test_rust_array_lookup_panic_consumer(consumer: &str) -> bool {
-    (consumer == "unwrap") || (consumer == "expect")
+    self::test_rust_option_panic_consumer(consumer)
 }
 
 /// Execute the checked shared source algorithm.
@@ -270,13 +299,7 @@ pub fn read_rust_array_lookup_panic_message_error(consumer: &str, kind: &str) ->
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_array_lookup_panic_message(consumer: &str, message: &str) -> String {
-    if consumer == "unwrap" {
-        String::from("called `Option::unwrap()` on a `None` value")
-    } else if consumer == "expect" {
-        message.to_owned()
-    } else {
-        String::new()
-    }
+    self::read_rust_option_panic_message(consumer, message)
 }
 
 /// Execute the checked shared source algorithm.

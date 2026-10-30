@@ -118,6 +118,134 @@ pub mod ml_array {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_panic_value_operation() -> String {
+    String::from("raiseRustPanicValue")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_rust_panic_value(kind: &str, operation: &str) -> bool {
+    (kind == "math") && (operation == (self::read_rust_panic_value_operation()))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_value_argument_error(
+    language: &str,
+    count: f64,
+    spread: bool,
+    kind: &str,
+) -> String {
+    if (((language == "Rust") && (count == 1f64)) && !spread) && (kind == "string") {
+        String::new()
+    } else {
+        String::from("a Rust panic value needs one checked source String message")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_rust_panic_value_expression(target: &str, message: &str) -> String {
+    if target == "JavaScript" {
+        format!(
+            "((ml_message)=>{{throw new Error(ml_message);}})({})",
+            message.to_owned()
+        )
+    } else if target == "Rust" {
+        format!("panic!(\"{{}}\", {})", message.to_owned())
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_macro(name: &str, ordinary: bool) -> bool {
+    ordinary
+        && ((((name == "panic") || (name == "unreachable")) || (name == "unimplemented"))
+            || (name == "todo"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_value(
+    name: &str,
+    ordinary: bool,
+    kind: &str,
+    count: f64,
+    braces: bool,
+) -> bool {
+    (self::accept_rust_panic_formatting_macro(name, ordinary) && (count > 0f64))
+        && ((count > 1f64) || ((kind == "str") && braces))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_formatting_prefix(name: &str) -> String {
+    if name == "unreachable" {
+        String::from("internal error: entered unreachable code: ")
+    } else if name == "unimplemented" {
+        String::from("not implemented: ")
+    } else if name == "todo" {
+        String::from("not yet implemented: ")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_completion_kind(kind: &str, operation: &str) -> String {
+    if self::accept_linked_rust_panic_value(kind, operation) {
+        String::from("abort")
+    } else {
+        kind.to_owned()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_message_source_error(
+    consumer: &str,
+    kind: &str,
+    storage: &str,
+    layers: f64,
+    known: bool,
+    references: bool,
+) -> String {
+    if (consumer != "expect")
+        || (((((kind == "string")
+            && ((storage == "string slice") || (storage == "owned string")))
+            && (layers >= 1f64))
+            && known)
+            && references)
+    {
+        String::new()
+    } else {
+        String::from("expect needs its actual immutable standard str message source")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_option_panic_consumer(consumer: &str) -> bool {
+    (consumer == "unwrap") || (consumer == "expect")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_option_panic_message(consumer: &str, message: &str) -> String {
+    if consumer == "unwrap" {
+        String::from("called `Option::unwrap()` on a `None` value")
+    } else if consumer == "expect" {
+        message.to_owned()
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_source_signature_model(model: &str) -> bool {
     ((model).is_empty()) || (model == "Rust source function signature 1")
 }
@@ -363,9 +491,11 @@ pub fn accept_rust_checked_integer_receiver(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
-    if ((consumer == "is_some") || (consumer == "is_none")) || (consumer == "unwrap_or_default") {
+    if (((consumer == "is_some") || (consumer == "is_none")) || (consumer == "unwrap_or_default"))
+        || (consumer == "unwrap")
+    {
         0f64
-    } else if consumer == "unwrap_or" {
+    } else if (consumer == "unwrap_or") || (consumer == "expect") {
         1f64
     } else if consumer == "map_or" {
         2f64
@@ -732,6 +862,22 @@ pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
         vec![String::from("condition")]
     } else if consumer == "is_none" {
         vec![String::from("condition"), String::from("not")]
+    } else if consumer == "unwrap" {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("unwrap message"),
+            String::from("raise"),
+            String::from("if"),
+        ]
+    } else if consumer == "expect" {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("fallback"),
+            String::from("raise"),
+            String::from("if"),
+        ]
     } else if consumer == "unwrap_or_default" {
         vec![
             String::from("condition"),
@@ -748,23 +894,5 @@ pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
         ]
     } else {
         Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_result_owner(
-    consumer: &str,
-    receiver: &str,
-    mapper: &str,
-) -> String {
-    if (consumer == "is_some") || (consumer == "is_none") {
-        String::from("bool")
-    } else if (consumer == "unwrap_or") || (consumer == "unwrap_or_default") {
-        receiver.to_owned()
-    } else if consumer == "map_or" {
-        mapper.to_owned()
-    } else {
-        String::new()
     }
 }

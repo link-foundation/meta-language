@@ -1,4 +1,4 @@
-import {readRustPanicMessageSourceError} from './rust-panic-value-rules.js';
+import {readRustPanicMessageSourceError,testRustOptionPanicConsumer,readRustOptionPanicMessage} from './rust-panic-value-rules.js';
 import {readRustScalarArrayIndexReceiverError} from './rust-array-index-rules.js';
 import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 /** @param {string} method @param {boolean} ordinary @returns {number} */
@@ -54,12 +54,12 @@ export function planRustArrayLookupIndex(method){return method==='get'?['index']
 export function planRustArrayLookupConsumer(consumer){return consumer==='is_some'?['condition']:consumer==='is_none'?['condition','not']:consumer==='is_some_and'?['condition','predicate','false','if']:consumer==='is_none_or'?['condition','predicate','true','if']:consumer==='unwrap'||consumer==='expect'||consumer==='unwrap_or'||consumer==='unwrap_or_else'||consumer==='unwrap_or_default'||consumer==='map_or'||consumer==='map_or_else'?['condition','selected','fallback','if']:[];}
 
 /** @param {string} consumer @returns {boolean} */
-export function testRustArrayLookupPanicConsumer(consumer){return consumer==='unwrap'||consumer==='expect';}
+export function testRustArrayLookupPanicConsumer(consumer){return testRustOptionPanicConsumer(consumer);}
 /** @param {string} consumer @param {string} kind @returns {string} */
 export function readRustArrayLookupPanicMessageError(consumer,kind){return consumer==='expect'&&kind!=='str'?'expect needs its complete literal str panic message; computed messages need a dynamic panic payload':'';}
 /** Literal panic messages do not perform formatting; braces and NUL survive.
  * @param {string} consumer @param {string} message @returns {string} */
-export function readRustArrayLookupPanicMessage(consumer,message){return consumer==='unwrap'?'called `Option::unwrap()` on a `None` value':consumer==='expect'?message:'';}
+export function readRustArrayLookupPanicMessage(consumer,message){return readRustOptionPanicMessage(consumer,message);}
 
 /** @param {string} consumer @param {string} kind @param {string} storage
  * @param {number} layers @param {boolean} known @param {boolean} references

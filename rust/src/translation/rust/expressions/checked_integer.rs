@@ -4,6 +4,7 @@ use super::{
     BOOL, BinaryOp, FLOAT, Options, Result, RustParser, SExpr, SNode, Span, Token, TokenKind, Type,
     UnaryOp, rust_fixed_type, type_error, unsupported,
 };
+use crate::translation::rust_panic_value_rules as panic_rules;
 use crate::translation::{
     rust_checked_integer_rules as rules, rust_primitive_from_rules as from_rules,
     rust_primitive_selection_rules as arguments, rust_saturating_integer_rules as bounds,
@@ -117,6 +118,23 @@ impl Terms {
                             value
                         },
                     );
+                }
+                "unwrap message" => stack.push(SExpr::new(
+                    SNode::Str {
+                        value: panic_rules::read_rust_option_panic_message("unwrap", ""),
+                    },
+                    range,
+                )),
+                "raise" => {
+                    let message = pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::Math {
+                            op: panic_rules::read_rust_panic_value_operation(),
+                            name: "Rust checked integer Option panic message".to_owned(),
+                            args: vec![super::SArrayItem::new(message, false)],
+                        },
+                        range,
+                    ));
                 }
                 "true" | "false" => stack.push(SExpr::new(
                     SNode::Bool {
@@ -400,26 +418,46 @@ impl RustParser {
             bits: *bits,
             signed: *signed,
         };
+        let panicking = panic_rules::test_rust_option_panic_consumer(&consumer.value);
         if consumer_arity > 0.0 {
             let actual = facts(self, &defaults[0], path);
             let (result_bits, result_signed) = match &result_type {
                 Type::Fixed { bits, signed } => (bits.to_string(), *signed),
                 _ => (String::new(), false),
             };
-            if !arguments::accept_rust_primitive_selection_argument(
-                result_type.kind(),
-                &result_bits,
-                result_signed,
-                &result_owner,
-                &actual.kind,
-                &actual.bits,
-                actual.signed,
-                &actual.path(),
-                count(actual.origin.wrappers.len()),
-                actual.origin.proven,
-                actual.admitted(),
-                literal(&defaults[0]),
-            ) {
+            if panicking {
+                let error = panic_rules::read_rust_panic_message_source_error(
+                    &consumer.value,
+                    &actual.kind,
+                    actual.origin.text_source_model.unwrap_or(""),
+                    count(actual.origin.wrappers.len()),
+                    actual.origin.proven,
+                    actual
+                        .origin
+                        .wrappers
+                        .iter()
+                        .all(|layer| layer == "reference"),
+                );
+                if !error.is_empty() {
+                    return Err(unsupported("Rust checked integer message", &error, range));
+                }
+            }
+            if !panicking
+                && !arguments::accept_rust_primitive_selection_argument(
+                    result_type.kind(),
+                    &result_bits,
+                    result_signed,
+                    &result_owner,
+                    &actual.kind,
+                    &actual.bits,
+                    actual.signed,
+                    &actual.path(),
+                    count(actual.origin.wrappers.len()),
+                    actual.origin.proven,
+                    actual.admitted(),
+                    literal(&defaults[0]),
+                )
+            {
                 return Err(unsupported(
                     "Rust checked integer default",
                     "the actual default must retain the selected result type and source owner",
@@ -433,10 +471,24 @@ impl RustParser {
                 },
                 defaults[0].span.or(range),
             );
-            self.origins
-                .mark(&node, origin(result_type.clone(), &result_owner, path));
+            self.origins.mark(
+                &node,
+                if panicking {
+                    actual.origin.clone()
+                } else {
+                    origin(result_type.clone(), &result_owner, path)
+                },
+            );
             terms.fallback = Some(node);
-            captures.push((name, result_type.clone(), defaults.remove(0)));
+            captures.push((
+                name,
+                if panicking {
+                    super::STRING
+                } else {
+                    result_type.clone()
+                },
+                defaults.remove(0),
+            ));
         }
         terms.condition = Some(terms.project(
             &rules::plan_rust_checked_integer_condition(&method.value, source.signed),

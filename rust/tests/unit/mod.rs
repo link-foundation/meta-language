@@ -639,3 +639,5 @@ mod translation_rust_source_versions;
 mod translation_rust_primitive_try_from_predicates;
 
 mod translation_rust_primitive_try_from_mappers;
+
+mod translation_rust_checked_integer_panics;

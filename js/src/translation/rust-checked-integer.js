@@ -1,5 +1,6 @@
+import {readRustPanicValueOperation,readRustPanicMessageSourceError,testRustOptionPanicConsumer,readRustOptionPanicMessage} from './rust-panic-value-rules.js';
 // Actual tokens, source types and origin transport; algorithms are shared data.
-import {BOOL,FLOAT,rustFixedType} from './types.js';
+import {BOOL,FLOAT,STRING,rustFixedType} from './types.js';
 import {TranslationError,unsupported} from './diagnostics.js';
 import {readRustCheckedIntegerArity,readRustCheckedIntegerArgumentOwner,readRustCheckedIntegerArgumentReason,readRustCheckedIntegerShiftOperation,acceptRustCheckedIntegerReceiver,readRustCheckedIntegerConsumerArity,planRustCheckedIntegerCondition,planRustCheckedIntegerSuccess,planRustCheckedIntegerConsumer,readRustCheckedIntegerResultOwner} from './rust-checked-integer-rules.js';
 import {acceptRustPrimitiveInherentCopy} from './rust-primitive-inherent-copy-rules.js';
@@ -31,7 +32,12 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
  const captures=[receiver,...args].map((value,index)=>({name:parser.freshProductBinding(),type:index===0?source.type:argumentType,value}));
  const owned=(type,name)=>({...parser.origins.typeOrigin(type,path),sourceOwner:{kind:'primitive',path:[name],arguments:[]}});
  const local=(capture,origin)=>parser.origins.mark({k:'name',path:[capture.name],span:capture.value.span??range},origin);
- if(consumerArity>0){const actual=readRustPrimitiveConversionFacts(parser,defaults[0],path);if(!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal(defaults[0]))))throw unsupported('Rust checked integer default','the actual default must retain the selected result type and source owner',range);captures.push({name:parser.freshProductBinding(),type:resultType,value:defaults[0]});}
+ const panicking=testRustOptionPanicConsumer(consumer.value);
+ if(consumerArity>0){const actual=readRustPrimitiveConversionFacts(parser,defaults[0],path);
+  if(panicking){const error=readRustPanicMessageSourceError(consumer.value,actual.kind,actual.origin.textSourceModel??'',actual.origin.wrappers.length,actual.origin.proven===true,actual.origin.wrappers.every(layer=>layer==='reference'));if(error)throw unsupported('Rust checked integer message',error,range);}
+  else if(!acceptRustPrimitiveSelectionArgument(resultType.kind,String(resultType.bits??''),resultType.signed===true,resultOwner,actual.kind,actual.bits,actual.signed,actual.owner?.path.join('::')??'',actual.origin.wrappers.length,actual.origin.proven===true,admitted(actual),Boolean(literal(defaults[0]))))throw unsupported('Rust checked integer default','the actual default must retain the selected result type and source owner',range);
+  captures.push({name:parser.freshProductBinding(),type:panicking?STRING:resultType,value:defaults[0]});}
+
  const number=value=>({k:'num',value,type:source.type,span:range});
  function project(plan,values={}){const stack=[],pop=()=>{if(!stack.length)throw new TypeError('the checked source plan lost an earlier term');return stack.pop();};for(const term of plan){
   if(term==='operand'||term==='right'){const capture=captures[term==='operand'?0:1];stack.push(local(capture,owned(capture.type,term==='operand'?owner:argumentOwner)));}
@@ -40,6 +46,8 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
   else if(readRustCheckedIntegerShiftOperation(term)){const right=pop(),left=pop();stack.push({k:'math',op:readRustCheckedIntegerShiftOperation(term),name:'Rust primitive shift',args:[{value:left,spread:false},{value:right,spread:false}],span:range});}
   else if(term==='negative unit')stack.push({k:'unary',op:'neg',arg:number('1'),span:range});
   else if(term==='minimum'||term==='maximum'){const value=number(readRustSaturatingIntegerBoundMagnitude(term,source.type.bits,source.signed));stack.push(acceptRustSaturatingIntegerBoundNegative(term,source.signed)?{k:'unary',op:'neg',arg:value,span:range}:value);}
+  else if(term==='unwrap message')stack.push({k:'str',value:readRustOptionPanicMessage(consumer.value,''),span:range});
+  else if(term==='raise')stack.push({k:'math',op:readRustPanicValueOperation(),name:'Rust checked integer Option panic message',args:[{value:pop(),spread:false}],span:range});
   else if(term==='true'||term==='false')stack.push({k:'bool',value:term==='true',span:range});
   else if(term==='condition'||term==='success'||term==='fallback'){if(!values[term])throw new TypeError('the checked source plan lost its actual consumer value');stack.push(values[term]);}
   else if(['lt','gt','eq','ne','le','ge','add','sub','mul','div','rem'].includes(term)){const right=pop(),left=pop();stack.push({k:'binary',op:term,left,right,span:range});}
@@ -52,7 +60,7 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
  // inside the success branch, after the complete guard and eager captures.
  let success=parser.origins.mark(project(planRustCheckedIntegerSuccess(method.value,source.signed)),owned(source.type,owner));
  if(consumer.value==='map_or')success=projectRustPrimitiveFrom(parser,success,mapperOwner,range,path);
- const fallback=consumerArity>0?local(captures.at(-1),owned(resultType,resultOwner)):null;
+ const fallback=consumerArity>0?local(captures.at(-1),panicking?parser.origins.origin(defaults[0],path):owned(resultType,resultOwner)):null;
  let body=project(planRustCheckedIntegerConsumer(consumer.value),{condition,success,fallback});
  for(let at=captures.length-1;at>=0;at-=1){const capture=captures[at];body={k:'let',name:capture.name,type:capture.type,value:capture.value,body,span:range};}
  return parser.origins.mark(body,owned(resultType,resultOwner));

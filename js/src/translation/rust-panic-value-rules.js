@@ -27,3 +27,9 @@ export function readRustPanicCompletionKind(kind,operation){return acceptLinkedR
  * @param {number} layers @param {boolean} known @param {boolean} references
  * @returns {string} */
 export function readRustPanicMessageSourceError(consumer,kind,storage,layers,known,references){return consumer!=='expect'||kind==='string'&&(storage==='string slice'||storage==='owned string')&&layers>=1&&known&&references?'':'expect needs its actual immutable standard str message source';}
+
+/** @param {string} consumer @returns {boolean} */
+export function testRustOptionPanicConsumer(consumer){return consumer==='unwrap'||consumer==='expect';}
+/** Option expect uses the actual message without formatting or Debug suffixes.
+ * @param {string} consumer @param {string} message @returns {string} */
+export function readRustOptionPanicMessage(consumer,message){return consumer==='unwrap'?'called `Option::unwrap()` on a `None` value':consumer==='expect'?message:'';}

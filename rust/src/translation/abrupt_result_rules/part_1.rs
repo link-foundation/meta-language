@@ -228,6 +228,24 @@ pub fn read_rust_panic_message_source_error(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn test_rust_option_panic_consumer(consumer: &str) -> bool {
+    (consumer == "unwrap") || (consumer == "expect")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_option_panic_message(consumer: &str, message: &str) -> String {
+    if consumer == "unwrap" {
+        String::from("called `Option::unwrap()` on a `None` value")
+    } else if consumer == "expect" {
+        message.to_owned()
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_source_exception_operation(name: &str) -> String {
     if name == "Error" {
         String::from("raiseJavaScriptError")
