@@ -60,6 +60,9 @@ impl SourceOrigins {
                 .is_some_and(|layer| layer == "reference")
             {
                 origin.wrappers.remove(0);
+                if !origin.source_lifetimes.is_empty() {
+                    origin.source_lifetimes.remove(0);
+                }
             } else {
                 if !self.collecting && origin.proven {
                     return Err(unsupported(

@@ -32,7 +32,7 @@ import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
-const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null,callableParameters:origin.callableParameters?.map(clone)??null,callableResult:clone(origin.callableResult)??null });
+const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, ...(origin.sourceLifetimes?{sourceLifetimes:[...origin.sourceLifetimes]}:{}), wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null,callableParameters:origin.callableParameters?.map(clone)??null,callableResult:clone(origin.callableResult)??null });
 
 export class RustSourceOrigins {
   constructor(catalog = null, arrayResultModel = '',localValueStateModel='',sharedArrayHandleSourceModel='') {
@@ -424,7 +424,7 @@ export class RustSourceOrigins {
         if (!this.collecting && origin.proven) throw unsupported('source pattern', 'a reference pattern requires a proven reference source type', sourceSpan);
         origin = unknown(true);
       }
-      else origin.wrappers.shift();
+      else {origin.wrappers.shift();origin.sourceLifetimes?.shift();}
     }
     if (!this.collecting && !['wild', 'bind', 'bindOrCtor'].includes(pattern.k) && origin.wrappers.includes('box')) {
       throw unsupported('source pattern', 'an owned Box requires an explicit dereference before a constructor or literal pattern', sourceSpan);

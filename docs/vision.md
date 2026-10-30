@@ -11011,3 +11011,14 @@ shadowing does not invent captures. Independent originals retain argument effect
 order, contextual/written types, nested captures and record provenance. Borrowed
 structural patterns, mutable/non-Copy ownership, all inference and full language
 coverage remain obligations; the source controls have not executed.
+
+Reference types and ordinary match/conditional patterns share one contextual
+compound-token rule. A joint `&&` splits into its two exact `&` occurrences only
+inside these source contexts, retaining byte spans and original concrete text;
+Boolean expression conjunction keeps its original token. Pattern projections
+remove matching wrapper and lifetime positions together. JavaScript origin
+copies own their lifetime arrays, preserving the original source through a
+projection just as native vectors do. Deferred originals cover one through four
+reference layers, fixed/pointer owners, literal/wildcard/guard/or patterns and
+conditional chains. General pattern macros, mutable/non-Copy interpretation,
+escaping regions and full-language support remain obligations.

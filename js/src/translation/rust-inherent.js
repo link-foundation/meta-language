@@ -1,3 +1,4 @@
+import {readRustReferenceTokenParts} from './rust-type-token-rules.js';
 // Tokens and source origins are transported into ordinary module/function terms.
 import{unsupported}from'./diagnostics.js';
 import{prepareRustRecordMethodNamespace}from'./rust-records.js';
@@ -8,9 +9,8 @@ import{acceptRustInherentSourceProfiles,readRustInherentReceiverLayerMode,planRu
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
 export function splitRustReferenceToken(parser){
- const c=parser.cursor;if(!c.is('&&'))return;
- const token=c.peek();
- c.tokens.splice(c.index,1,{...token,value:'&',raw:'&',end:token.start+1},{...token,value:'&',raw:'&',start:token.start+1});
+ const c=parser.cursor,token=c.peek(),parts=readRustReferenceTokenParts(token.value);if(parts.length===0)return;
+ let offset=token.start;const tokens=parts.map(value=>{const start=offset;offset+=value.length;return {...token,value,raw:value,start,end:offset};});c.tokens.splice(c.index,1,...tokens);
 }
 
 export function readRustInherentItem(parser,path){

@@ -12,3 +12,13 @@ pub fn read_rust_type_closing_token_parts(token: &str) -> Vec<String> {
         Vec::<String>::new()
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_reference_token_parts(token: &str) -> Vec<String> {
+    if token == "&&" {
+        vec![String::from("&"), String::from("&")]
+    } else {
+        Vec::<String>::new()
+    }
+}

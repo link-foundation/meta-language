@@ -27,20 +27,30 @@ pub(super) struct InherentMethod {
 
 impl RustParser {
     pub(super) fn split_reference_type_token(&mut self) {
-        if !self.cursor.is("&&") {
+        let token = self.cursor.peek().clone();
+        let parts = crate::translation::rust_type_token_rules::read_rust_reference_token_parts(
+            &token.value,
+        );
+        if parts.is_empty() {
             return;
         }
-        let mut first = self.cursor.peek().clone();
-        let mut second = first.clone();
-        first.value = "&".to_owned();
-        first.raw = "&".to_owned();
-        first.end = first.start + 1;
-        second.value = "&".to_owned();
-        second.raw = "&".to_owned();
-        second.start += 1;
+        let mut offset = token.start;
+        let tokens = parts
+            .into_iter()
+            .map(|value| {
+                let mut part = token.clone();
+                part.start = offset;
+                offset += value.len();
+                part.end = offset;
+                part.raw = value.clone();
+                part.value = value;
+                part
+            })
+            .collect::<Vec<_>>();
         let index = self.cursor.index;
-        self.cursor.tokens.splice(index..index + 1, [first, second]);
+        self.cursor.tokens.splice(index..index + 1, tokens);
     }
+
     pub(super) fn inherent_item(&mut self, path: &[String]) -> Result<SModule> {
         let start = self.cursor.advance();
         let models = [

@@ -479,6 +479,7 @@ impl RustParser {
         path: &[String],
         aliases: &mut Vec<Alias>,
     ) -> Result<SPattern> {
+        self.split_reference_type_token();
         let token = self.peek();
         if self.cursor.eat("&").is_some() {
             let pattern = self.pattern(path, aliases)?;

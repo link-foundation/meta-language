@@ -1824,6 +1824,7 @@ class RustParser {
 
   /** Patterns: `_`, bindings, literals, `Enum::Variant(p, …)`, `&p` and `name @ p`. */
   pattern(path, aliases) {
+    splitRustReferenceToken(this);
     const c = this.cursor;
     const token = c.peek();
     if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
