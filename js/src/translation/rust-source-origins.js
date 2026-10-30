@@ -52,6 +52,7 @@ export class RustSourceOrigins {
   }
 
   copy(origin){return clone(origin);}
+  unknownOrigin(path){return {...unknown(true),path:[...path]};}
 
   enter(scope = this.scope) {
     const previous = this.scope;

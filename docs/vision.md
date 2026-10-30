@@ -10953,3 +10953,18 @@ Standard From mappings keep their trait checks. Deferred originals cover
 factories, guarded arithmetic, type changes and source order. Unconstrained
 callback inference, mutable/non-Copy environments, escaping sums and all full
 source/grammar/concept-space obligations remain required.
+
+Callback source parsing can retain an unresolved return as explicitly unknown
+syntax while checking the actual parameter header and immutable Copy captures.
+It does not invent a unit or integer result proof. For checked `map_or_else`, a
+known sibling mapper result then completes the original fallback lambda,
+preserving its span, identity, captures and body before typing or transport.
+This supports unsuffixed integer literals, blocks and divergence without an
+eager guessed default type. Shared policies distinguish integer literal
+contexts from floating/Boolean contexts and reject unsigned unary negation.
+Result-context traversal follows actual lexical bindings, branches and match
+rows with memoized scope/node identities. Ordinary closure admission remains
+strict when no contextual deferral is requested. Deferred originals cover all
+integer/pointer owners, forward result constraints, source order and negative
+literal contexts. Simultaneously unconstrained siblings, whole-expression
+inference, generics, ownership and the full grammar/concept scope remain required.

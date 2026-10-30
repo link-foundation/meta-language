@@ -1,5 +1,6 @@
+import {readRustCopyClosureDeferredSourceError} from './rust-copy-closure-rules.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
-import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
+import {readRustExpectedCopyClosure,finishRustDeferredCopyClosure} from './rust-copy-closures.js';
 import {testRustCheckedIntegerLazyFallback,readRustCheckedIntegerFallbackError,testRustCheckedIntegerPredicateConsumer,readRustCheckedIntegerPredicateError,testRustCheckedIntegerLazyMapper,testRustCheckedIntegerMappingConsumer,readRustCheckedIntegerMappedFallbackError} from './rust-checked-integer-rules.js';
 import {readRustPanicValueOperation,readRustPanicMessageSourceError,testRustOptionPanicConsumer,readRustOptionPanicMessage} from './rust-panic-value-rules.js';
 // Actual tokens, source types and origin transport; algorithms are shared data.
@@ -22,12 +23,13 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
  const consumer=c.next(),consumerArity=readRustCheckedIntegerConsumerArity(consumer.value);
  if(consumerArity<0)throw unsupported('Rust checked integer Option','the actual Option needs an immediate admitted standard consumer',range);
  c.expect('(','checked integer consumer');const defaults=[];let mapperOwner='',mapperCallback=null,mapperOrigin=null;
- let lazyOrigin=null;
+ let lazyOrigin=null,deferredFallback=false;
  if(consumerArity>0){
   if(testRustCheckedIntegerLazyMapper(consumer.value)){
    const expected={...parser.origins.typeOrigin({kind:'function',params:[],ret:UNIT},path),copyEvidence:true,callableParameters:[],callableResult:null};
-   defaults.push(readRustExpectedCopyClosure(parser,path,expected,true));lazyOrigin=parser.origins.origin(defaults[0],path);
-   const owner=readRustPrimitiveScalarResultOwner(lazyOrigin.callableResult),error=readRustCheckedIntegerMappedFallbackError(lazyOrigin.type?.kind??'',lazyOrigin.type?.params?.length??-1,lazyOrigin.wrappers.length,owner,owner);if(error)throw unsupported('Rust checked integer mapped fallback',error,defaults[0].span);
+   defaults.push(readRustExpectedCopyClosure(parser,path,expected,true,true));lazyOrigin=parser.origins.origin(defaults[0],path);
+   const value=defaults[0];deferredFallback=value.k==='lambda'&&value.ret==null&&lazyOrigin.type===null;
+   const owner=readRustPrimitiveScalarResultOwner(lazyOrigin.callableResult),error=deferredFallback?readRustCopyClosureDeferredSourceError(value.k,value.params.length,lazyOrigin.wrappers.length,Boolean(lazyOrigin.copyClosureSpan)&&lazyOrigin.copyClosureSpan.start===value.span?.start&&lazyOrigin.copyClosureSpan.end===value.span?.end):readRustCheckedIntegerMappedFallbackError(lazyOrigin.type?.kind??'',lazyOrigin.type?.params?.length??-1,lazyOrigin.wrappers.length,owner,owner);if(error)throw unsupported('Rust checked integer mapped fallback',error,value.span);
   }else if(testRustCheckedIntegerLazyFallback(consumer.value)||testRustCheckedIntegerPredicateConsumer(consumer.value)){
    const receiverSource=readRustPrimitiveConversionFacts(parser,receiver,path),owner=receiverSource.owner?.path.join('::')??'',type=rustFixedType(owner);
    if(!type)throw unsupported('Rust checked integer arithmetic','a proven standard integer receiver with the actual signed operation is required',range);
@@ -48,6 +50,7 @@ export function readRustCheckedInteger(parser,receiver,method,args,range,path){
  if(arity>0){const right=readRustPrimitiveConversionFacts(parser,args[0],path);if(!acceptRustPrimitiveSelectionArgument(argumentType.kind,String(argumentType.bits),argumentType.signed,argumentOwner,right.kind,right.bits,right.signed,right.owner?.path.join('::')??'',right.origin.wrappers.length,right.origin.proven===true,admitted(right),Boolean(literal(args[0]))))throw unsupported('Rust checked integer argument',readRustCheckedIntegerArgumentReason(method.value),range);}
  if(testRustCheckedIntegerMappingConsumer(consumer.value)&&!mapperCallback&&!planRustPrimitiveFrom(mapperOwner,owner))throw unsupported('Rust checked integer mapper','the actual standard primitive From implementation must exist for the successful value',range);
  const resultOwner=readRustCheckedIntegerResultOwner(consumer.value,owner,mapperOwner),resultType=resultOwner==='bool'?BOOL:resultOwner==='f64'?FLOAT:rustFixedType(resultOwner);
+ if(deferredFallback){const result={...parser.origins.typeOrigin(resultType,path),sourceOwner:{kind:'primitive',path:[resultOwner],arguments:[]}};defaults[0]=finishRustDeferredCopyClosure(parser,defaults[0],result,path);lazyOrigin=parser.origins.origin(defaults[0],path);}
  if(testRustCheckedIntegerLazyMapper(consumer.value)){const error=readRustCheckedIntegerMappedFallbackError(lazyOrigin.type?.kind??'',lazyOrigin.type?.params?.length??-1,lazyOrigin.wrappers.length,readRustPrimitiveScalarResultOwner(lazyOrigin.callableResult),resultOwner);if(error)throw unsupported('Rust checked integer mapped fallback',error,defaults[0].span);}
  const captures=[receiver,...args].map((value,index)=>({name:parser.freshProductBinding(),type:index===0?source.type:argumentType,value}));
  const owned=(type,name)=>({...parser.origins.typeOrigin(type,path),sourceOwner:{kind:'primitive',path:[name],arguments:[]}});

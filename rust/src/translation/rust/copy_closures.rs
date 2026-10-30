@@ -7,6 +7,115 @@ use crate::translation::rust_contextual_closure_rules as contextual;
 use crate::translation::rust_copy_closure_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 
+fn result_context_error(node: &SExpr, result: &SourceOrigin) -> String {
+    let mut pending = vec![(node, None)];
+    let mut scopes: Vec<(&str, &SExpr, Option<usize>)> = Vec::new();
+    let mut visited = std::collections::HashSet::new();
+    let kind = result.ty.as_ref().map_or("", Type::kind);
+    let signed = matches!(result.ty, Some(Type::Fixed { signed: true, .. }));
+    while let Some((value, scope)) = pending.pop() {
+        if !visited.insert((std::ptr::from_ref(value), scope)) {
+            continue;
+        }
+        let negative = matches!(
+            &value.node,
+            SNode::Unary {
+                op: super::UnaryOp::Neg,
+                ..
+            }
+        );
+        let typed = matches!(&value.node, SNode::Num { ty: Some(_), .. });
+        let error = rules::read_rust_copy_closure_literal_result_error(
+            value.node.kind(),
+            negative,
+            typed,
+            kind,
+            signed,
+        );
+        if !error.is_empty() {
+            return error;
+        }
+        let operation = match &value.node {
+            SNode::Unary {
+                op: super::UnaryOp::Neg,
+                ..
+            } => "neg",
+            SNode::Binary { op, .. } => op.name(),
+            _ => "",
+        };
+        match rules::read_rust_copy_closure_result_context_role(value.node.kind(), operation)
+            .as_str()
+        {
+            "binding" => {
+                if let SNode::Let {
+                    name,
+                    value: initializer,
+                    body,
+                    ..
+                } = &value.node
+                {
+                    let frame = scopes.len();
+                    scopes.push((name.as_str(), initializer, scope));
+                    pending.push((body, Some(frame)))
+                } else {
+                    unreachable!("actual source binding context")
+                }
+            }
+            "name" => {
+                if let SNode::Name { path } = &value.node {
+                    let mut frame = scope;
+                    while let Some(index) = frame {
+                        let (name, initializer, parent) = scopes[index];
+                        if rules::test_rust_copy_closure_result_binding(path, name) {
+                            pending.push((initializer, parent));
+                            break;
+                        }
+                        frame = parent;
+                    }
+                } else {
+                    unreachable!("actual source name context")
+                }
+            }
+            "branches" => {
+                if let SNode::If {
+                    then, otherwise, ..
+                } = &value.node
+                {
+                    pending.push((then, scope));
+                    pending.push((otherwise, scope))
+                } else {
+                    unreachable!("actual source branch contexts")
+                }
+            }
+            "rows" => {
+                if let SNode::Match { rows, .. } = &value.node {
+                    pending.extend(rows.iter().map(|row| (&row.body, scope)))
+                } else {
+                    unreachable!("actual source row contexts")
+                }
+            }
+            "operand" => {
+                if let SNode::Unary { arg, .. } = &value.node {
+                    pending.push((arg, scope))
+                } else {
+                    unreachable!("actual source operand context")
+                }
+            }
+            "operands" => {
+                if let SNode::Binary { left, right, .. } = &value.node {
+                    pending.push((left, scope));
+                    pending.push((right, scope))
+                } else {
+                    unreachable!("actual source operand contexts")
+                }
+            }
+            "leaf" => {}
+            _ => return "unknown shared closure result context role".to_owned(),
+        }
+    }
+    String::new()
+}
+
 impl RustParser {
     pub(super) fn copy_pointer_result_block(
         &mut self,
@@ -123,6 +232,22 @@ impl RustParser {
         expected: Option<&SourceOrigin>,
         parameters_only: bool,
     ) -> Result<SExpr> {
+        self.read_expected_copy_closure_result_options(path, expected, parameters_only, false)
+    }
+    pub(super) fn read_expected_copy_closure_deferred_result(
+        &mut self,
+        path: &[String],
+        expected: Option<&SourceOrigin>,
+    ) -> Result<SExpr> {
+        self.read_expected_copy_closure_result_options(path, expected, true, true)
+    }
+    fn read_expected_copy_closure_result_options(
+        &mut self,
+        path: &[String],
+        expected: Option<&SourceOrigin>,
+        parameters_only: bool,
+        defer_result: bool,
+    ) -> Result<SExpr> {
         if let Some(value) = self.read_primitive_function_value(path, expected)? {
             return Ok(value);
         }
@@ -137,7 +262,7 @@ impl RustParser {
             expected.is_some_and(SourceOrigin::direct_copy_value),
             role,
         ) {
-            self.read_copy_closure_with_expected(path, expected, parameters_only)
+            self.read_copy_closure_with_expected(path, expected, parameters_only, defer_result)
         } else {
             if expected.is_some_and(|origin| {
                 origin.direct_copy_value() && matches!(origin.ty, Some(Type::Function { .. }))
@@ -161,8 +286,12 @@ impl RustParser {
                             crate::translation::frontend_rules::ml_array::number_index(depth)
                                 .expect("actual source parenthesis count");
                         self.cursor.index += depth;
-                        let node =
-                            self.read_copy_closure_with_expected(path, expected, parameters_only)?;
+                        let node = self.read_copy_closure_with_expected(
+                            path,
+                            expected,
+                            parameters_only,
+                            defer_result,
+                        )?;
                         for _ in 0..depth {
                             self.cursor.expect(")", Some("contextual closure"))?;
                         }
@@ -178,13 +307,14 @@ impl RustParser {
         }
     }
     pub(super) fn read_copy_closure(&mut self, path: &[String]) -> Result<SExpr> {
-        self.read_copy_closure_with_expected(path, None, false)
+        self.read_copy_closure_with_expected(path, None, false, false)
     }
     fn read_copy_closure_with_expected(
         &mut self,
         path: &[String],
         expected: Option<&SourceOrigin>,
         parameters_only: bool,
+        defer_result: bool,
     ) -> Result<SExpr> {
         let start = self.peek();
         self.cursor.eat("move");
@@ -322,31 +452,54 @@ impl RustParser {
                 result_origin = Some(origin);
             }
             if !written {
-                let reason = contextual::read_rust_contextual_copy_closure_header_error(
-                    self.ordinary_completion_context(),
-                    &names,
-                    &copies,
+                let deferred = rules::test_rust_copy_closure_deferred_result(
+                    defer_result,
+                    written,
                     ret.is_some(),
-                    result_origin
-                        .as_ref()
-                        .is_some_and(SourceOrigin::direct_copy_value),
                 );
+                let reason = if deferred {
+                    rules::read_rust_copy_closure_parameter_header_error(
+                        self.ordinary_completion_context(),
+                        &names,
+                        &copies,
+                    )
+                } else {
+                    contextual::read_rust_contextual_copy_closure_header_error(
+                        self.ordinary_completion_context(),
+                        &names,
+                        &copies,
+                        ret.is_some(),
+                        result_origin
+                            .as_ref()
+                            .is_some_and(SourceOrigin::direct_copy_value),
+                    )
+                };
                 if !reason.is_empty() {
                     return Err(unsupported("Rust Copy closure", reason, Some(start.span())));
                 }
             }
-            self.origins.argument(
-                &self.origins.origin(&body, path),
-                result_origin
-                    .as_ref()
-                    .expect("actual resolved source result"),
-                body.span,
-            )?;
+            if ret.is_some() {
+                let error = result_context_error(
+                    &body,
+                    result_origin
+                        .as_ref()
+                        .expect("actual resolved result context"),
+                );
+                if !error.is_empty() {
+                    return Err(unsupported("Rust Copy closure", &error, body.span));
+                }
+                self.origins.argument(
+                    &self.origins.origin(&body, path),
+                    result_origin
+                        .as_ref()
+                        .expect("actual resolved source result"),
+                    body.span,
+                )?;
+            }
             Ok(body)
         })();
         self.origins.scope = outer.clone();
         let body = read?;
-        let ret = ret.expect("actual resolved source result");
         let statements = serde_json::json!([{"s":"return", "expr":&body}]);
         let facts = create_surface_reference_facts(&statements);
         let plan = crate::translation::callable_source_rules::plan_callable_statement_captures(
@@ -385,13 +538,6 @@ impl RustParser {
                 Some(start.span()),
             ));
         }
-        let ty = Type::Function {
-            params: params
-                .iter()
-                .map(|param| param.ty.clone().expect("actual written type"))
-                .collect(),
-            ret: Box::new(ret.clone()),
-        };
         let span = Some(Span::new(
             start.start,
             self.cursor.tokens[self.cursor.index - 1].end,
@@ -400,20 +546,91 @@ impl RustParser {
         let node = SExpr::new(
             SNode::Lambda {
                 params,
-                ret: Some(ret),
+                ret: ret.clone(),
                 captures,
                 assigned_captures: None,
                 body: Box::new(body),
             },
             span,
         );
-        let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
+        let mut origin = if let Some(ret) = ret {
+            SourceOrigin::with_type(
+                Type::Function {
+                    params: origins
+                        .iter()
+                        .map(|value| value.ty.clone().expect("actual parameter type"))
+                        .collect(),
+                    ret: Box::new(ret),
+                },
+                path,
+                Vec::new(),
+            )
+        } else {
+            let mut value = SourceOrigin::unknown();
+            value.path = path.to_vec();
+            value.uncertain = true;
+            value
+        };
         origin.copy_closure_identity = span;
         origin.copy_closure_capture_count = Some(capture_count);
         origin.callable_parameters = Some(origins);
         origin.callable_result = result_origin.map(Box::new);
         self.origins.mark(&node, origin);
         Ok(node)
+    }
+
+    pub(super) fn finish_deferred_copy_closure(
+        &mut self,
+        node: SExpr,
+        result: &SourceOrigin,
+        path: &[String],
+    ) -> Result<SExpr> {
+        let prior = self.origins.origin(&node, path);
+        let pending = matches!(&node.node, SNode::Lambda { ret: None, .. })
+            && prior.ty.is_none()
+            && prior.copy_closure_identity.is_some()
+            && prior.copy_closure_identity == node.span;
+        let error = rules::read_rust_copy_closure_deferred_result_error(
+            if matches!(&node.node, SNode::Lambda { .. }) {
+                "lambda"
+            } else {
+                ""
+            },
+            pending,
+            result.proven && result.ty.is_some(),
+            result.direct_copy_value(),
+        );
+        if !error.is_empty() {
+            return Err(unsupported("Rust Copy closure", &error, node.span));
+        }
+        let SNode::Lambda { params, body, .. } = &node.node else {
+            unreachable!("shared deferred closure source contract")
+        };
+        let context_error = result_context_error(body, result);
+        if !context_error.is_empty() {
+            return Err(unsupported("Rust Copy closure", &context_error, body.span));
+        }
+        self.origins
+            .argument(&self.origins.origin(body, path), result, body.span)?;
+        let ret = result.ty.clone().expect("actual inferred result context");
+        let ty = Type::Function {
+            params: params
+                .iter()
+                .map(|value| value.ty.clone().expect("actual parameter type"))
+                .collect(),
+            ret: Box::new(ret.clone()),
+        };
+        let mut finished = node.clone();
+        if let SNode::Lambda { ret: written, .. } = &mut finished.node {
+            *written = Some(ret);
+        }
+        let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
+        origin.copy_closure_identity = prior.copy_closure_identity;
+        origin.copy_closure_capture_count = prior.copy_closure_capture_count;
+        origin.callable_parameters = prior.callable_parameters;
+        origin.callable_result = Some(Box::new(result.clone()));
+        self.origins.mark(&finished, origin);
+        Ok(finished)
     }
 
     pub(super) fn read_copy_closure_call(

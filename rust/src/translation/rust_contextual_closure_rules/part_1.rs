@@ -240,6 +240,249 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_copy_closure_parameter_form(role: &str) -> String {
+    if role == "_" {
+        String::from("wildcard")
+    } else if role == "binding" {
+        String::from("binding")
+    } else {
+        String::from("unsupported")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_header_error(
+    ordinary: bool,
+    names: &[String],
+    copies: &[bool],
+    result_written: bool,
+    result_copy: bool,
+) -> String {
+    {
+        let error = self::read_rust_copy_closure_parameter_header_error(ordinary, names, copies);
+        if error.is_empty() {
+            if result_written {
+                if result_copy {
+                    String::new()
+                } else {
+                    String::from("the closure result requires a direct immutable Copy source type")
+                }
+            } else {
+                String::from("the closure result requires its actual explicit type")
+            }
+        } else {
+            error
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_capture_error(
+    collecting: bool,
+    copies: &[bool],
+    assigned: f64,
+) -> String {
+    {
+        let ml_library_inequality_1 = assigned != 0f64;
+        if ml_library_inequality_1 {
+            String::from("mutable closure captures require their shared ownership interpretation")
+        } else {
+            {
+                let source_ml_source1_s2 = if collecting {
+                    self::MlTemporaryReadRustCopyClosureCaptureErrorJoin1::MlTemporaryReadRustCopyClosureCaptureErrorJoin1Next
+                } else {
+                    {
+                        let index = 0f64;
+                        {
+                            let source_ml_source1_s3 = self::source_ml_temporary_read_rust_copy_closure_capture_error_loop2(copies, index);
+                            match source_ml_source1_s3 {
+                            self::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Result::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Done => {
+                                self::MlTemporaryReadRustCopyClosureCaptureErrorJoin1::MlTemporaryReadRustCopyClosureCaptureErrorJoin1Next
+                            }
+                            self::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Result::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Return(source_ml_temporary_result2) => {
+                                self::MlTemporaryReadRustCopyClosureCaptureErrorJoin1::MlTemporaryReadRustCopyClosureCaptureErrorJoin1Return(source_ml_temporary_result2)
+                            }
+                        }
+                        }
+                    }
+                };
+                match source_ml_source1_s2 {
+                self::MlTemporaryReadRustCopyClosureCaptureErrorJoin1::MlTemporaryReadRustCopyClosureCaptureErrorJoin1Next => {
+                    String::new()
+                }
+                self::MlTemporaryReadRustCopyClosureCaptureErrorJoin1::MlTemporaryReadRustCopyClosureCaptureErrorJoin1Return(source_ml_temporary_result1) => {
+                    source_ml_temporary_result1
+                }
+            }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_copy_closure_invocation(kind: &str) -> bool {
+    kind == "function"
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_join_error(first: bool, second: bool, same: bool) -> String {
+    if (first || second) && !same {
+        String::from("distinct anonymous closure types require an actual source coercion")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_parameter_header_error(
+    ordinary: bool,
+    names: &[String],
+    copies: &[bool],
+) -> String {
+    if ordinary {
+        if ((names.len() as f64) != (copies.len() as f64)) || ((names.len() as f64) > 1024f64) {
+            String::from("the complete typed closure header exceeds its source budget")
+        } else {
+            {
+                let index = 0f64;
+                {
+                    let source_ml_source1_s4 = self::source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop3(names, copies, index);
+                    match source_ml_source1_s4 {
+                        self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Done => {
+                            String::new()
+                        }
+                        self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Return(source_ml_temporary_result3) => {
+                            source_ml_temporary_result3
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        String::from("closure ownership requires its separate active source profile")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn test_rust_copy_closure_deferred_result(
+    requested: bool,
+    written: bool,
+    known: bool,
+) -> bool {
+    (requested && !written) && !known
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_deferred_source_error(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    identity: bool,
+) -> String {
+    if (((kind == "lambda") && (parameters == 0f64)) && (layers == 0f64)) && identity {
+        String::new()
+    } else {
+        String::from(
+            "a deferred fallback needs its actual zero-argument closure source and identity",
+        )
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_deferred_result_error(
+    kind: &str,
+    pending: bool,
+    known: bool,
+    copy: bool,
+) -> String {
+    if (((kind == "lambda") && pending) && known) && copy {
+        String::new()
+    } else {
+        String::from("a deferred closure needs its actual complete immutable Copy result context")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_result_context_role(kind: &str, operation: &str) -> String {
+    if kind == "let" {
+        String::from("binding")
+    } else if kind == "name" {
+        String::from("name")
+    } else if kind == "if" {
+        String::from("branches")
+    } else if kind == "match" {
+        String::from("rows")
+    } else if (kind == "unary") && (operation == "neg") {
+        String::from("operand")
+    } else if (kind == "binary")
+        && self::ml_array::includes(
+            &vec![
+                String::from("add"),
+                String::from("sub"),
+                String::from("mul"),
+                String::from("div"),
+                String::from("rem"),
+            ],
+            &operation.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        )
+    {
+        String::from("operands")
+    } else {
+        String::from("leaf")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_literal_result_error(
+    kind: &str,
+    negative: bool,
+    typed: bool,
+    result: &str,
+    signed: bool,
+) -> String {
+    if (negative && (result == "fixed")) && !signed {
+        String::from("an unsigned Rust result cannot use unary negation")
+    } else if ((kind == "num") && !typed) && (result != "fixed") {
+        String::from("an unsuffixed Rust integer literal needs an actual integer result context")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_copy_closure_result_binding(path: &[String], name: &str) -> bool {
+    ((path.len() as f64) == 1f64) && {
+        let source_ml_source1_comparison_operand5 =
+            self::ml_array::optional_at(path, self::ml_array::number_index(0f64));
+        {
+            let source_ml_source1_comparison_operand6 = name.to_owned();
+            match (
+                source_ml_source1_comparison_operand5,
+                source_ml_source1_comparison_operand6,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_rust_contextual_copy_closure(kind: &str, copy: bool, token: &str) -> bool {
     ((kind == "function") && copy) && (((token == "|") || (token == "||")) || (token == "move"))
 }
@@ -253,33 +496,21 @@ pub fn read_rust_contextual_copy_closure_header_error(
     known: bool,
     result_copy: bool,
 ) -> String {
-    if ordinary {
-        if ((names.len() as f64) != (copies.len() as f64)) || ((names.len() as f64) > 1024f64) {
-            String::from("the complete typed closure header exceeds its source budget")
-        } else {
-            {
-                let index = 0f64;
-                {
-                    let source_ml_source1_s1 = self::source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop1(names, copies, index);
-                    match source_ml_source1_s1 {
-                        self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Done => {
-                            if known {if result_copy {
-                                    String::new()
-                                } else {
-                                    String::from("the closure result requires a direct immutable Copy source type")
-                                }} else {
-                                String::from("the closure result requires its actual explicit type")
-                            }
-                        }
-                        self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Return(source_ml_temporary_result1) => {
-                            source_ml_temporary_result1
-                        }
-                    }
+    {
+        let error = self::read_rust_copy_closure_parameter_header_error(ordinary, names, copies);
+        if error.is_empty() {
+            if known {
+                if result_copy {
+                    String::new()
+                } else {
+                    String::from("the closure result requires a direct immutable Copy source type")
                 }
+            } else {
+                String::from("the closure result requires its actual explicit type")
             }
+        } else {
+            error
         }
-    } else {
-        String::from("closure ownership requires its separate active source profile")
     }
 }
 
@@ -289,16 +520,16 @@ pub fn find_rust_contextual_closure_parenthesis_count(syntax: &[String]) -> f64 
     {
         let index = 0f64;
         {
-            let source_ml_source1_s2 =
-                self::source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop3(
+            let source_ml_source1_s7 =
+                self::source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop5(
                     syntax, index,
                 );
-            match source_ml_source1_s2 {
-                self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Done => {
+            match source_ml_source1_s7 {
+                self::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Done => {
                     -2f64
                 }
-                self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Return(source_ml_temporary_result3) => {
-                    source_ml_temporary_result3
+                self::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Return(source_ml_temporary_result5) => {
+                    source_ml_temporary_result5
                 }
             }
         }
@@ -319,30 +550,68 @@ pub fn accept_rust_contextual_copy_pointer_result_block(
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result {
-    MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Done,
-    MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Return(String),
+pub enum MlTemporaryReadRustCopyClosureCaptureErrorJoin1 {
+    MlTemporaryReadRustCopyClosureCaptureErrorJoin1Next,
+    MlTemporaryReadRustCopyClosureCaptureErrorJoin1Return(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result {
-    MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Done,
-    MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Return(String),
+pub enum MlTemporaryReadRustCopyClosureCaptureErrorLoop2Result {
+    MlTemporaryReadRustCopyClosureCaptureErrorLoop2Done,
+    MlTemporaryReadRustCopyClosureCaptureErrorLoop2Return(String),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop2(
+pub fn source_ml_temporary_read_rust_copy_closure_capture_error_loop2(
+    copies: &[bool],
+    mut index: f64,
+) -> self::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Result {
+    loop {
+        return if index < (copies.len() as f64) {
+            if (self::read_required_boolean_fact(copies, index)) {
+                {
+                    let index_2 = index + 1f64;
+                    {
+                        index = index_2;
+                        continue;
+                    }
+                }
+            }
+            {
+                self::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Result::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Return(String::from("closure captures require proven direct immutable Copy source values"))
+            }
+        } else {
+            self::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Result::MlTemporaryReadRustCopyClosureCaptureErrorLoop2Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result {
+    MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Done,
+    MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Return(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result {
+    MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Done,
+    MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Return(String),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop4(
     names: &[String],
     mut index: f64,
     mut before: f64,
-) -> self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result {
+) -> self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result {
     loop {
         return if before < index {
             if (self::read_required_text_fact(names, before))
                 == (self::read_required_text_fact(names, index))
             {
-                self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Return(String::from("closure parameters require distinct actual bindings"))
+                self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Return(String::from("closure parameters require distinct actual bindings"))
             } else {
                 {
                     let before_2 = before + 1f64;
@@ -353,27 +622,27 @@ pub fn source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop2(
                 }
             }
         } else {
-            self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Done
+            self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Done
         };
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop1(
+pub fn source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop3(
     names: &[String],
     copies: &[bool],
     mut index: f64,
-) -> self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result {
+) -> self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result {
     loop {
         return if index < (names.len() as f64) {
             if (self::read_required_boolean_fact(copies, index)) {
                 {
                     let before = 0f64;
                     {
-                        let source_ml_source1_s3 = self::source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop2(names, index, before);
-                        match source_ml_source1_s3 {
-                            self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Done => {
+                        let source_ml_source1_s8 = self::source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop4(names, index, before);
+                        match source_ml_source1_s8 {
+                            self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Done => {
                                 {
                                     let index_2 = index + 1f64;
                                     {
@@ -382,33 +651,33 @@ pub fn source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop1(
                                     }
                                 }
                             }
-                            self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Return(source_ml_temporary_result2) => {
-                                self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Return(source_ml_temporary_result2)
+                            self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Return(source_ml_temporary_result4) => {
+                                self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Return(source_ml_temporary_result4)
                             }
                         }
                     }
                 }
             } else {
-                self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Return(String::from("closure parameters require direct immutable Copy source types"))
+                self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Return(String::from("closure parameters require direct immutable Copy source types"))
             }
         } else {
-            self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Done
+            self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Done
         };
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result {
-    MlTemporaryFindRustContextualClosureParenthesisCountLoop3Done,
-    MlTemporaryFindRustContextualClosureParenthesisCountLoop3Return(f64),
+pub enum MlTemporaryFindRustContextualClosureParenthesisCountLoop5Result {
+    MlTemporaryFindRustContextualClosureParenthesisCountLoop5Done,
+    MlTemporaryFindRustContextualClosureParenthesisCountLoop5Return(f64),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop3(
+pub fn source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop5(
     syntax: &[String],
     mut index: f64,
-) -> self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result {
+) -> self::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Result {
     loop {
         return if index < (syntax.len() as f64) {
             {
@@ -423,7 +692,7 @@ pub fn source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop3(
                     }
                 }
                 {
-                    self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Return(if (index > 0f64) && (((token == "|") || (token == "||")) || (token == "move")) {
+                    self::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Return(if (index > 0f64) && (((token == "|") || (token == "||")) || (token == "move")) {
                         index
                     } else {
                         -1f64
@@ -431,7 +700,7 @@ pub fn source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop3(
                 }
             }
         } else {
-            self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Done
+            self::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop5Done
         };
     }
 }

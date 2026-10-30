@@ -651,3 +651,5 @@ mod translation_rust_checked_integer_predicates;
 mod translation_rust_checked_integer_mappers;
 
 mod translation_rust_checked_integer_lazy_mappers;
+
+mod translation_rust_deferred_closures;

@@ -1,0 +1,1 @@
+Draft contextual fallback inference from the sibling mapper while retaining actual unresolved source syntax, identity and checked captures. Preserve integer literal domains and lexical result bindings through shared rules automatically translated to Rust. All behavioral controls remain deferred.

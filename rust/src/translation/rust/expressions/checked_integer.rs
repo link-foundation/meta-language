@@ -271,6 +271,7 @@ impl RustParser {
         let mut mapper_owner = String::new();
         let mut mapper_callback = None;
         let mut lazy_origin = None;
+        let mut deferred_fallback = false;
         if consumer_arity > 0.0 {
             if rules::test_rust_checked_integer_lazy_mapper(&consumer.value) {
                 let mut expected = super::SourceOrigin::with_type(
@@ -285,7 +286,7 @@ impl RustParser {
                 expected.callable_parameters = Some(Vec::new());
                 expected.callable_result = None;
                 let callback =
-                    self.read_expected_copy_closure_result_mode(path, Some(&expected), true)?;
+                    self.read_expected_copy_closure_deferred_result(path, Some(&expected))?;
                 let callable = self.origins.origin(&callback, path);
                 let owner = callable
                     .callable_result
@@ -295,13 +296,23 @@ impl RustParser {
                     Some(Type::Function { params, .. }) => count(params.len()),
                     _ => -1.0,
                 };
-                let error = rules::read_rust_checked_integer_mapped_fallback_error(
-                    callable.ty.as_ref().map_or("", Type::kind),
-                    parameters,
-                    count(callable.wrappers.len()),
-                    &owner,
-                    &owner,
-                );
+                deferred_fallback = matches!(&callback.node, SNode::Lambda { ret: None, .. })
+                    && callable.ty.is_none();
+                let error = if deferred_fallback {
+                    let parameter_count = match &callback.node {
+                        SNode::Lambda { params, .. } => count(params.len()),
+                        _ => -1.0,
+                    };
+                    crate::translation::rust_copy_closure_rules::read_rust_copy_closure_deferred_source_error("lambda",parameter_count,count(callable.wrappers.len()),callable.copy_closure_identity.is_some()&&callable.copy_closure_identity==callback.span)
+                } else {
+                    rules::read_rust_checked_integer_mapped_fallback_error(
+                        callable.ty.as_ref().map_or("", Type::kind),
+                        parameters,
+                        count(callable.wrappers.len()),
+                        &owner,
+                        &owner,
+                    )
+                };
                 if !error.is_empty() {
                     return Err(unsupported(
                         "Rust checked integer mapped fallback",
@@ -579,6 +590,13 @@ impl RustParser {
                 range,
             ));
         };
+        if deferred_fallback {
+            let result = origin(result_type.clone(), &result_owner, path);
+            let unfinished = defaults.remove(0);
+            let finished = self.finish_deferred_copy_closure(unfinished, &result, path)?;
+            lazy_origin = Some(self.origins.origin(&finished, path));
+            defaults.insert(0, finished);
+        }
         if rules::test_rust_checked_integer_lazy_mapper(&consumer.value) {
             let callable = lazy_origin.as_ref().unwrap();
             let owner = callable
