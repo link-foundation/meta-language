@@ -254,36 +254,48 @@ fn main(){println!("{}",selected("π"));println!("{}",selected("😀"));println!
 }
 
 #[test]
-fn unsupported_patterns_and_source_owners_preserve_explicit_refusals_and_const_boundary() {
-    for pattern in [
-        "",
-        "_",
-        "binding",
-        "\"a\" if true",
-        "\"a\" | _",
-        "\"a\"..=\"z\"",
-        "(\"a\")",
-        "Some(\"a\")",
-        "\"a\",\"b\"",
-        "\"a\" || \"b\"",
-        "\"a\"|",
+fn standard_pattern_inputs_retain_correct_admission_and_source_owner_refusals() {
+    // Source Rust >=1.90.0 <1.100.0, edition 2024; standard matches! uses
+    // ordinary match patterns/guards. Preceding complete tests stay in history.
+    for pattern in ["_", "binding", "\"a\" if true", "\"a\" | _", "(\"a\")"] {
+        let source =
+            format!("fn selected(value:&str)->bool{{matches!(value,{pattern})}}fn main(){{}}");
+        assert!(
+            parse_rust(&source)
+                .and_then(|surface| check_program(&surface))
+                .is_ok(),
+            "{source}"
+        );
+    }
+    for (pattern, kind) in [
+        ("", ErrorKind::Unsupported),
+        ("\"a\"..=\"z\"", ErrorKind::Syntax),
+        ("Some(\"a\")", ErrorKind::Type),
+        ("\"a\",\"b\"", ErrorKind::Syntax),
+        ("\"a\" || \"b\"", ErrorKind::Syntax),
+        ("\"a\"|", ErrorKind::Syntax),
     ] {
         let source =
             format!("fn selected(value:&str)->bool{{matches!(value,{pattern})}}fn main(){{}}");
         let error = parse_rust(&source)
             .and_then(|surface| check_program(&surface))
             .unwrap_err();
+        assert_eq!(error.kind, kind, "{source}: {error}");
+    }
+    for source in [
+        "fn selected(value:&&str)->bool{matches!(value,\"a\")}fn main(){}",
+        "enum str{Value} mod nested{fn str()->bool{true}fn selected()->bool{matches!(\"a\",\"a\")}}fn main(){}",
+    ] {
         assert!(
-            error.kind == ErrorKind::Unsupported || error.kind == ErrorKind::Syntax,
-            "{source}: {error}"
+            create_typed_program_links(source, "Rust").is_ok(),
+            "{source}"
         );
     }
+
     for source in [
         "fn selected(value:String)->bool{matches!(value,\"a\")}fn main(){}",
         "fn selected(value:bool)->bool{matches!(value,\"a\")}fn main(){}",
-        "fn selected(value:&&str)->bool{matches!(value,\"a\")}fn main(){}",
         "enum str{Value} fn selected(value:&str)->bool{matches!(value,\"a\")}fn main(){}",
-        "enum str{Value} mod nested{fn str()->bool{true}fn selected()->bool{matches!(\"a\",\"a\")}}fn main(){}",
         "fn selected(value:&str)->bool{other!(value,\"a\")}fn main(){}",
         "const fn selected(value:&str)->bool{matches!(value,\"a\")}fn main(){}",
     ] {

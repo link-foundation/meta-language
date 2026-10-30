@@ -11022,3 +11022,22 @@ projection just as native vectors do. Deferred originals cover one through four
 reference layers, fixed/pointer owners, literal/wildcard/guard/or patterns and
 conditional chains. General pattern macros, mutable/non-Copy interpretation,
 escaping regions and full-language support remain obligations.
+
+The ordinary standard `matches!` macro has a shared expansion draft for every
+pattern/guard form already admitted by the ordinary match reader. Its receiver
+is parsed once. A JavaScript-defined Links plan retains each original pattern
+and guard token and supplies true/false arms; native source is generated from
+that same policy. Host adapters pass the actual receiver to the existing match
+reader in a temporary token window and restore the caller's complete stream.
+They reuse all existing type, binding, guard, ownership, alias and failure checks.
+The original complete borrowed-str literal policy remains available and its
+supported fast path stays intact. Foreign macro owners still refuse.
+
+Independent originals span scalar owners, nested references, tuples, records,
+nominal variants, all macro delimiters, nested macros, guards and source effect
+order. Previously rejected standard wildcard, binding, guarded and parenthesized
+patterns now retain positive controls. Complete preceding tests are archived,
+with explicit Rust >=1.90 <1.100 edition-2024 assertion revisions and standard
+macro references. No originals or gate obligations are removed. Existing range,
+mutable/non-Copy, arbitrary macro/trait, ownership and full-language obligations
+remain; the expansion and controls are unexecuted drafts.

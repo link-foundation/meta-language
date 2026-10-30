@@ -5,6 +5,7 @@ mod completions;
 pub(in crate::translation::rust) mod conditional_chains;
 mod conditional_patterns;
 mod literal_matches;
+mod pattern_matches;
 
 use super::{
     Alias, Options, Result, RustParser, SArrayItem, SExpr, SNode, SPattern, SPatternNode, SRow,
@@ -291,6 +292,15 @@ impl RustParser {
                 no_struct: true,
             },
         )?;
+        self.match_from_scrutinee(path, &token, scrutinee)
+    }
+
+    pub(in crate::translation::rust) fn match_from_scrutinee(
+        &mut self,
+        path: &[String],
+        token: &Token,
+        scrutinee: SExpr,
+    ) -> Result<SExpr> {
         self.cursor.expect("{", Some("match"))?;
         let mut rows = Vec::new();
         let ownership_base = self.origins.snapshot_owned_bindings();
@@ -380,7 +390,7 @@ impl RustParser {
             return Err(unsupported(
                 "empty match",
                 "uninhabited types are outside the portable core",
-                span(&token, self.cursor.peek()),
+                span(token, self.cursor.peek()),
             ));
         }
         let mut ownership_joined = std::collections::HashMap::new();
@@ -400,7 +410,7 @@ impl RustParser {
                 scrutinee,
                 guarded_arms,
                 path,
-                span(&token, self.cursor.peek()),
+                span(token, self.cursor.peek()),
             );
         }
         let origins = rows
@@ -413,7 +423,7 @@ impl RustParser {
                 scrutinees: vec![scrutinee],
                 rows,
             },
-            span(&token, self.cursor.peek()),
+            span(token, self.cursor.peek()),
         );
         self.origins.mark(&result, origin);
         self.origins.transfer_owned_result(&result, path)?;

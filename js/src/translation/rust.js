@@ -1771,10 +1771,10 @@ class RustParser {
     const result={ k: 'if', cond, then, else: otherwise, span: span(token, c.peek()) };this.origins.transferOwnedResult(result,path);return result;
   }
 
-  match(path) {
+  match(path,provided=null) {
     const c = this.cursor;
-    const token = c.next();
-    const scrutinee = this.expr(path, { noStruct: true });
+    const token = provided?.token??c.next();
+    const scrutinee = provided?.scrutinee??this.expr(path, { noStruct: true });
     c.expect('{', 'match');
     const rows = [],guardedArms=[],ownershipBase=this.origins.snapshotOwnedBindings(),ownershipArms=[];
     while (!c.is('}')) {

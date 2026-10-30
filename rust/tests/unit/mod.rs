@@ -663,3 +663,5 @@ mod translation_rust_closure_reference_patterns;
 mod translation_rust_closure_product_patterns;
 
 mod translation_rust_reference_patterns;
+
+mod translation_rust_pattern_matches;

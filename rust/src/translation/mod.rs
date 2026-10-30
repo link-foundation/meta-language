@@ -181,6 +181,7 @@ mod rust_integer_magnitude_rules;
 pub(crate) mod rust_literal_match_rules;
 pub(crate) mod rust_module_value_rules;
 pub(crate) mod rust_named_formatting_rules;
+pub(crate) mod rust_pattern_match_rules;
 pub(crate) mod rust_pointer_integer_owner_rules;
 pub(crate) mod rust_primitive_associated_call_rules;
 pub(crate) mod rust_primitive_bitwise;
