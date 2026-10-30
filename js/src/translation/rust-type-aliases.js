@@ -1,3 +1,4 @@
+import {readRustConstantPrimitiveAliasOwner} from './rust-constant-integer-rules.js';
 // Token/type/source-origin transport. Alias lookup and bounds are shared rules.
 import {unsupported} from './diagnostics.js';
 import {readRustTypeAliasDeclarationPlan,readRustTypeAliasLookupKeys,readRustTypeAliasExpansionError,readRustTypeAliasCloneError,readRustTypeAliasAccessPrefixLengths,acceptRustTypeAliasNominalAccess,readRustTypeAliasNamespaceDisposition,readRustTypeAliasValueConstructorError} from './rust-type-alias-rules.js';
@@ -79,6 +80,10 @@ export function resolveRustTypeAliasPath(parser,segments,path,role){
    if(disposition==='block')return segments;
    if(disposition!=='alias')continue;
    const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return segments;
+   if(role==='associated integer constant'){
+    const source=origin.expandedSourceOwner??origin.sourceOwner,primitive=readRustConstantPrimitiveAliasOwner(origin.type?.kind??'',source?.kind??'',source?.path.join('::')??'',source?.arguments.length??-1,origin.wrappers.length,String(origin.type?.bits??''),origin.type?.signed===true);
+    if(primitive)return [primitive,...segments.slice(length)];
+   }
    const owner=origin.type?.kind==='named'?sourceDataOwner(parser,parser.resolve(origin.type.path,origin.path),origin.path):null;
    if(!owner||!acceptRustTypeAliasNominalAccess(origin.type?.kind??'',origin.wrappers.length,segments.length-length,role,parser.namedRecords.get(owner)?.syntax??''))return segments;
    return ['crate',...owner.split('.'),...segments.slice(length)];

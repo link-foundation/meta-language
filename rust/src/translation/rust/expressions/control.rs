@@ -4,6 +4,7 @@ mod completion_panic;
 mod completions;
 pub(in crate::translation::rust) mod conditional_chains;
 mod conditional_patterns;
+mod constant_patterns;
 mod integer_ranges;
 mod literal_matches;
 mod pattern_matches;
@@ -517,14 +518,14 @@ impl RustParser {
             ));
         }
         if self.ordinary_completion_context() && (self.cursor.is("..") || self.cursor.is("..=")) {
-            return self.integer_range_pattern(&token, None);
+            return self.integer_range_pattern(path, &token, None);
         }
         if self.cursor.is("-") && self.cursor.is_kind_at(TokenKind::Number, 1) {
             self.cursor.advance();
             let number = self.cursor.advance();
             let pattern = self.numeric_pattern(&number, &token, true)?;
             return if self.ordinary_completion_context() {
-                self.integer_range_pattern(&token, Some(pattern))
+                self.integer_range_pattern(path, &token, Some(pattern))
             } else {
                 Ok(pattern)
             };
@@ -533,7 +534,7 @@ impl RustParser {
             self.cursor.advance();
             let pattern = self.numeric_pattern(&token, &token, false)?;
             return if self.ordinary_completion_context() {
-                self.integer_range_pattern(&token, Some(pattern))
+                self.integer_range_pattern(path, &token, Some(pattern))
             } else {
                 Ok(pattern)
             };
@@ -553,7 +554,7 @@ impl RustParser {
                 span: span(&token, &token),
             };
             return if self.ordinary_completion_context() {
-                self.integer_range_pattern(&token, Some(pattern))
+                self.integer_range_pattern(path, &token, Some(pattern))
             } else {
                 Ok(pattern)
             };
@@ -627,6 +628,9 @@ impl RustParser {
                 node: SPatternNode::Tuple { args, rest },
                 span: span(&token, self.cursor.peek()),
             });
+        }
+        if let Some(pattern) = self.primitive_constant_pattern(path)? {
+            return self.integer_range_pattern(path, &token, Some(pattern));
         }
         if token.kind != TokenKind::Identifier {
             return Err(unsupported(

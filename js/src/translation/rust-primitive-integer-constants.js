@@ -1,3 +1,4 @@
+import {resolveRustTypeAliasPath} from './rust-type-aliases.js';
 // Source paths/types and exact shared bound magnitudes into existing ASTs.
 import {unsupported} from './diagnostics.js';
 import {rustFixedType} from './types.js';
@@ -7,8 +8,9 @@ export function readRustPrimitiveIntegerConstant(parser,path){
  const c=parser.cursor,start=c.peek(),absolute=c.is('::');let offset=absolute?1:0;const segments=[];
  while(c.peek(offset).kind==='identifier'&&segments.length<16){segments.push(c.peek(offset).value);offset+=1;if(!c.is('::',offset))break;if(c.peek(offset+1).kind!=='identifier')return null;offset+=1;}
  if(segments.length<2)return null;
- const resolved=absolute?segments:parser.resolve(segments,path),root=segments[0],target=resolved[0];
- const shadowed=!absolute&&Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.origins.lookup([target],path)||parser.origins.scope.has(target));
+ const expanded=!absolute&&parser.ordinaryCompletionContext()?resolveRustTypeAliasPath(parser,segments,path,'associated integer constant'):segments;
+ const resolved=absolute?expanded:parser.resolve(expanded,path),root=segments[0],target=resolved[0];
+ const shadowed=!absolute&&Boolean(expanded===segments&&(parser.origins.lookup([root],path)||parser.origins.scope.has(root))||parser.origins.lookup([target],path)||parser.origins.scope.has(target));
  const owner=readRustPrimitiveIntegerConstantOwner(resolved,parser.ordinaryCompletionContext(),shadowed,absolute),term=readRustPrimitiveIntegerConstantTerm(resolved.at(-1)??'');
  if(!owner||!term)return null;
  const range={start:start.start,end:c.peek(offset-1).end};

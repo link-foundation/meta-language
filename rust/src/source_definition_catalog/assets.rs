@@ -242,6 +242,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-checked-integer-program.lino" => {
             Some(include_str!("../data/rust-checked-integer-program.lino"))
         }
+        "rust-constant-integer-program.lino" => {
+            Some(include_str!("../data/rust-constant-integer-program.lino"))
+        }
         "rust-constructed-string-interface-program.lino" => Some(include_str!(
             "../data/rust-constructed-string-interface-program.lino"
         )),

@@ -673,3 +673,5 @@ mod translation_javascript_fresh_array_slices;
 mod translation_rust_nominal_copies;
 
 mod translation_rust_integer_ranges;
+
+mod translation_rust_constant_patterns;

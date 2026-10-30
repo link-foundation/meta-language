@@ -406,6 +406,25 @@ impl RustParser {
                 let Some(origin) = self.source_type_aliases.cache.get(&key) else {
                     return names.to_vec();
                 };
+                if role == "associated integer constant" {
+                    let owner = origin
+                        .expanded_source_owner
+                        .as_ref()
+                        .or(origin.source_owner.as_ref());
+                    let (bits, signed) = match origin.ty.as_ref() {
+                        Some(Type::Fixed { bits, signed }) => (bits.to_string(), *signed),
+                        _ => (String::new(), false),
+                    };
+                    let count =
+                        |value: usize| u32::try_from(value).map_or(f64::INFINITY, f64::from);
+                    let primitive=crate::translation::rust_constant_integer_rules::read_rust_constant_primitive_alias_owner(origin.ty.as_ref().map_or("",Type::kind),owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|count(owner.arguments.len())),count(origin.wrappers.len()),&bits,signed);
+                    if !primitive.is_empty() {
+                        return std::iter::once(primitive)
+                            .chain(names[prefix..].iter().cloned())
+                            .collect();
+                    }
+                }
+
                 let Some(Type::Named { path: target, .. }) = origin.ty.as_ref() else {
                     return names.to_vec();
                 };

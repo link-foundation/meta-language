@@ -1,3 +1,4 @@
+import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
 import {readRustIntegerRangePattern} from './rust-integer-ranges.js';
 import {registerRustNominalCopyDeclaration,finishRustNominalCopies} from './rust-nominal-copies.js';
@@ -1840,10 +1841,10 @@ class RustParser {
     if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
     if (c.eat('_')) return this.recordPatternDepth?{k:'wild',span:{start:token.start,end:token.end}}:{k:'wild'};
     if (c.is('ref') || c.is('mut')) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
-    if(this.ordinaryCompletionContext()&&(c.is('..')||c.is('..=')))return readRustIntegerRangePattern(this,token);
-    if(c.is('-')&&c.isKind('number',1)){c.next();const pattern=this.numericPattern(c.next(),token,true);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,token,pattern):pattern;}
-    if(token.kind==='number'){c.next();const pattern=this.numericPattern(token,token,false);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,token,pattern):pattern;}
-    if(acceptRustSourceBytePatternToken(token.kind)){c.next();const pattern={k:'byteLit',value:token.value,span:span(token,token)};return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,token,pattern):pattern;}
+    if(this.ordinaryCompletionContext()&&(c.is('..')||c.is('..=')))return readRustIntegerRangePattern(this,path,token);
+    if(c.is('-')&&c.isKind('number',1)){c.next();const pattern=this.numericPattern(c.next(),token,true);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,path,token,pattern):pattern;}
+    if(token.kind==='number'){c.next();const pattern=this.numericPattern(token,token,false);return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,path,token,pattern):pattern;}
+    if(acceptRustSourceBytePatternToken(token.kind)){c.next();const pattern={k:'byteLit',value:token.value,span:span(token,token)};return this.ordinaryCompletionContext()?readRustIntegerRangePattern(this,path,token,pattern):pattern;}
     if (token.kind === 'char' || token.kind === 'byteChar') throw unsupported('character pattern', 'characters are outside the portable core', span(token, token));
     if(acceptRustSourceStringPatternToken(token.kind)){c.next();return{k:'strLit',value:token.value,span:span(token,token)};}
     if (c.is('true') || c.is('false')) {
@@ -1866,6 +1867,7 @@ class RustParser {
       }finally{this.recordPatternDepth-=1;}
       return args.length===1&&rest===null&&!comma?args[0]:{k:'tuple',args,...(rest===null?{}:{rest}),span:span(token,c.peek())};
     }
+    const constant=readRustPrimitiveConstantPattern(this,path);if(constant)return readRustIntegerRangePattern(this,path,token,constant);
     if (token.kind !== 'identifier') throw unsupported('pattern', `${describe(token)} is outside the portable pattern language`, span(token, token));
     const segments = this.pathSegments('pattern');
     const constantPatternError=readRustSourceConstantPatternError(this.origins.lookup(readRustSourceValueName(this,segments,path),path)?.k??'');if(constantPatternError)throw unsupported('Rust constant pattern',constantPatternError,span(token,c.peek()));

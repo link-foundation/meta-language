@@ -11119,3 +11119,28 @@ unexecuted. Float/character/constant-path bounds, complete irrefutable parameter
 bindings, ownership/traits and all full-language/grammar/shared-concept
 requirements remain active. The range contract follows the
 [Rust Reference](https://doc.rust-lang.org/reference/patterns.html#range-patterns).
+
+Primitive integer constants are valid ordinary literal patterns and range
+endpoints only through their actual standard owner and checked value. Existing
+primitive constant construction supplies MIN/MAX/BITS, including the distinct
+u32 owner of BITS and the signed minimum's negative magnitude. Both parsers
+retain actual spans and reuse numeric pattern validation and full-domain range
+compilation. Primitive type aliases use the shared source-signature admission
+for a direct, unwrapped actual integer owner. Alias/module spellings do not
+replace that identity, and absolute standard paths keep their own namespace.
+Closed source interpretations retain the preceding admissions.
+
+Exact constant integer operation definitions use arbitrary-precision integers
+and canonical decimal text, generating the same Rust policy from JavaScript
+Links. They validate actual width/domain bounds, signed overflow (including
+MIN/-1 division and remainder), zero division, unary and bit operations, shift
+counts and fixed-width shifted/cast results. Comparison/Boolean operations and
+short-circuit demand are separate shared decisions. A source evaluation budget
+reports cycles and excessive depth/work. These definitions prepare a bounded
+source constant evaluator; arbitrary constant initializers and constant-function
+evaluation are still requirements, not established by the primitive-pattern
+adapter. Independent originals and operation facts, codecs, four emissions and
+native products remain unexecuted. Complete structural aggregate constants,
+traits, ownership, full-language grammars and global concept proofs remain
+required. Constant evaluation follows the
+[Rust Reference](https://doc.rust-lang.org/reference/const_eval.html).

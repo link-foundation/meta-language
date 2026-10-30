@@ -4,6 +4,7 @@ use crate::translation::rust_integer_range_rules as rules;
 impl RustParser {
     pub(super) fn integer_range_pattern(
         &mut self,
+        path: &[String],
         first: &Token,
         lower: Option<SPattern>,
     ) -> Result<SPattern> {
@@ -27,7 +28,7 @@ impl RustParser {
                 span: Some(value.span()),
             })
         } else {
-            None
+            self.primitive_constant_pattern(path)?
         };
         let span = Some(Span {
             start: first.start,

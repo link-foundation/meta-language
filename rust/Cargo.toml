@@ -198,6 +198,7 @@ include = [
     "src/data/rust-byte-string-program.lino",
     "src/data/rust-callable-owner-program.lino",
     "src/data/rust-checked-integer-program.lino",
+    "src/data/rust-constant-integer-program.lino",
     "src/data/rust-constructed-string-interface-program.lino",
     "src/data/rust-contextual-closure-program.lino",
     "src/data/rust-copy-closure-parameter-program.lino",

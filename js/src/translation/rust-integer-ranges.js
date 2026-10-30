@@ -1,13 +1,15 @@
+import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 // Actual tokens and checked literal values into the shared interval compiler.
 import {readRustIntegerRangeSourceError,readRustIntegerRangeSuccessor,readRustIntegerRangeBoundsError,readRustIntegerRangeCuts,planRustIntegerRangeRows} from './rust-integer-range-rules.js';
 import {fixedBounds} from './types.js';
 import {unsupported,typeError} from './diagnostics.js';
-export function readRustIntegerRangePattern(parser,first,lower=null){
+export function readRustIntegerRangePattern(parser,path,first,lower=null){
  const c=parser.cursor;if(!c.is('..')&&!c.is('..='))return lower;
  const operation=c.next();let upper=null;
  if(c.is('-')&&c.isKind('number',1)){const sign=c.next();upper=parser.numericPattern(c.next(),sign,true);}
  else if(c.isKind('number')){const token=c.next();upper=parser.numericPattern(token,token,false);}
  else if(c.isKind('byteChar')){const token=c.next();upper={k:'byteLit',value:token.value,span:{start:token.start,end:token.end}};}
+ else upper=readRustPrimitiveConstantPattern(parser,path);
  const where={start:first.start,end:upper?.span?.end??operation.end};
  const error=readRustIntegerRangeSourceError(parser.ordinaryCompletionContext(),operation.value,Boolean(lower),Boolean(upper));if(error)throw unsupported('range pattern',error,where);
  return {k:'integerRange',lower,upper,inclusive:operation.value==='..=',span:where};

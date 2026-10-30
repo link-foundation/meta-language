@@ -29,16 +29,23 @@ impl RustParser {
         if segments.len() < 2 {
             return Ok(None);
         }
-        let resolved = if absolute {
-            segments.clone()
+        let expanded = if !absolute && self.ordinary_completion_context() {
+            self.resolve_type_alias_path(&segments, path, "associated integer constant")
         } else {
-            self.resolve(&segments, path)
+            segments.clone()
+        };
+        let source_alias = expanded != segments;
+        let resolved = if absolute {
+            expanded
+        } else {
+            self.resolve(&expanded, path)
         };
         let root = segments.first().cloned().unwrap_or_default();
         let target = resolved.first().cloned().unwrap_or_default();
         let shadowed = !absolute
-            && (self.origins.lookup(&[root.clone()], path).is_some()
-                || self.origins.scope.contains_key(&root)
+            && ((!source_alias
+                && (self.origins.lookup(&[root.clone()], path).is_some()
+                    || self.origins.scope.contains_key(&root)))
                 || self.origins.lookup(&[target.clone()], path).is_some()
                 || self.origins.scope.contains_key(&target));
         let owner = rules::read_rust_primitive_integer_constant_owner(
