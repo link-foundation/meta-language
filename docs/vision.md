@@ -10999,3 +10999,15 @@ same path, including borrowed iterator maps and filters. Independent originals
 cover one/two layers and width/sign/pointer, Boolean, floating and unit owners.
 Mutable/non-Copy/structural patterns, escaping references and full Rust ownership
 remain requirements; these source controls have not executed.
+
+Closure product parameters reuse the existing irrefutable product/nominal binding
+pipeline. Every incoming argument keeps one actual callable parameter; tuple,
+unit and record patterns project lexical bindings through existing shared field
+plans and ordinary lets or matches. Original declaration identity, field order,
+rest positions and selected type owners remain explicit. Duplicate source names
+are checked across every parameter and nested pattern by a shared source policy.
+Projected locals participate in capture analysis as actual local bindings, so
+shadowing does not invent captures. Independent originals retain argument effect
+order, contextual/written types, nested captures and record provenance. Borrowed
+structural patterns, mutable/non-Copy ownership, all inference and full language
+coverage remain obligations; the source controls have not executed.

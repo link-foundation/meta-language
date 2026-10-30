@@ -323,6 +323,8 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
 pub fn read_rust_copy_closure_parameter_form(role: &str) -> String {
     if role == "_" {
         String::from("wildcard")
+    } else if role == "(" {
+        String::from("product")
     } else if role == "binding" {
         String::from("binding")
     } else {
@@ -597,6 +599,32 @@ pub fn read_rust_copy_closure_reference_pattern_error(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_copy_closure_pattern_binding_error(names: &[String]) -> String {
+    if (names.len() as f64) > 1024f64 {
+        String::from("the complete typed closure header exceeds its source budget")
+    } else {
+        {
+            let index = 0f64;
+            {
+                let source_ml_source1_s7 =
+                    self::source_ml_temporary_read_rust_copy_closure_pattern_binding_error_loop5(
+                        names, index,
+                    );
+                match source_ml_source1_s7 {
+                    self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Done => {
+                        String::new()
+                    }
+                    self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Return(source_ml_temporary_result5) => {
+                        source_ml_temporary_result5
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryReadRustCopyClosureCaptureErrorJoin1 {
     MlTemporaryReadRustCopyClosureCaptureErrorJoin1Next,
@@ -688,8 +716,8 @@ pub fn source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop3(
                 {
                     let before = 0f64;
                     {
-                        let source_ml_source1_s7 = self::source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop4(names, index, before);
-                        match source_ml_source1_s7 {
+                        let source_ml_source1_s8 = self::source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop4(names, index, before);
+                        match source_ml_source1_s8 {
                             self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop4Done => {
                                 {
                                     let index_2 = index + 1f64;
@@ -710,6 +738,80 @@ pub fn source_ml_temporary_read_rust_copy_closure_parameter_header_error_loop3(
             }
         } else {
             self::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Result::MlTemporaryReadRustCopyClosureParameterHeaderErrorLoop3Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Result {
+    MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Done,
+    MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Return(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Result {
+    MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Done,
+    MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Return(String),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_rust_copy_closure_pattern_binding_error_loop6(
+    names: &[String],
+    mut index: f64,
+    mut before: f64,
+) -> self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Result {
+    loop {
+        return if before < index {
+            if (self::read_required_text_fact(names, before))
+                == (self::read_required_text_fact(names, index))
+            {
+                self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Return(String::from("closure parameters require distinct actual bindings"))
+            } else {
+                {
+                    let before_2 = before + 1f64;
+                    {
+                        before = before_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_rust_copy_closure_pattern_binding_error_loop5(
+    names: &[String],
+    mut index: f64,
+) -> self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Result {
+    loop {
+        return if index < (names.len() as f64) {
+            {
+                let before = 0f64;
+                {
+                    let source_ml_source1_s9 = self::source_ml_temporary_read_rust_copy_closure_pattern_binding_error_loop6(names, index, before);
+                    match source_ml_source1_s9 {
+                        self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Done => {
+                            {
+                                let index_2 = index + 1f64;
+                                {
+                                    index = index_2;
+                                    continue;
+                                }
+                            }
+                        }
+                        self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop6Return(source_ml_temporary_result6) => {
+                            self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Return(source_ml_temporary_result6)
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Result::MlTemporaryReadRustCopyClosurePatternBindingErrorLoop5Done
         };
     }
 }

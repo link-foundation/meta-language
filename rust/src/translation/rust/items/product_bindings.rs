@@ -124,7 +124,9 @@ impl RustParser {
     }
 
     /// Read irrefutable positional patterns without introducing a pattern core.
-    pub(super) fn product_binding_pattern(&mut self) -> Result<ProductBindingPattern> {
+    pub(in crate::translation::rust) fn product_binding_pattern(
+        &mut self,
+    ) -> Result<ProductBindingPattern> {
         let token = self.peek();
         if self.cursor.eat("(").is_some() {
             if let Some(close) = self.cursor.eat(")") {
@@ -249,7 +251,7 @@ impl RustParser {
         }
     }
 
-    pub(super) fn lower_product_binding(
+    pub(in crate::translation::rust) fn lower_product_binding(
         &mut self,
         pattern: ProductBindingPattern,
         value: SExpr,

@@ -659,3 +659,5 @@ mod translation_rust_array_lookup_contexts;
 mod translation_rust_scalar_default_contexts;
 
 mod translation_rust_closure_reference_patterns;
+
+mod translation_rust_closure_product_patterns;

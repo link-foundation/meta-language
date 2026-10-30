@@ -1,7 +1,7 @@
 import {readRequiredBooleanFact,readRequiredTextFact} from './fact-column-rules.js';
 /** Actual syntax roles only; a wildcard consumes a value without a binding.
  * @param {string} role @returns {string} */
-export function readRustCopyClosureParameterForm(role){return role==='_'?'wildcard':role==='binding'?'binding':'unsupported';}
+export function readRustCopyClosureParameterForm(role){return role==='_'?'wildcard':role==='('?'product':role==='binding'?'binding':'unsupported';}
 /** A distinct ordinary immutable source profile, with no inferred ownership.
  * @param {boolean} ordinary @param {string[]} names @param {boolean[]} copies
  * @param {boolean} resultWritten @param {boolean} resultCopy @returns {string} */
@@ -64,4 +64,12 @@ export function readRustCopyClosureReferencePatternDepth(token){return token==='
 export function readRustCopyClosureReferencePatternError(depth,layers,references,parameter){
  if(depth===0)return '';
  return Number.isInteger(depth)&&depth>=1&&depth<=256&&Number.isInteger(layers)&&layers>=depth&&layers<=256&&references&&parameter?'':'a closure reference pattern needs its actual immutable Copy scalar reference layers';
+}
+
+/** Complete actual source bindings include names introduced by product patterns.
+ * @param {string[]} names @returns {string} */
+export function readRustCopyClosurePatternBindingError(names){
+ if(names.length>1024)return 'the complete typed closure header exceeds its source budget';
+ for(let index=0;index<names.length;index+=1)for(let before=0;before<index;before+=1)if(readRequiredTextFact(names,before)===readRequiredTextFact(names,index))return 'closure parameters require distinct actual bindings';
+ return '';
 }

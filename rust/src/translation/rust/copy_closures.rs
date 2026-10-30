@@ -1,7 +1,7 @@
 //! Original types, scopes and expressions into the existing callable nodes.
 use super::{
-    Result, RustParser, SExpr, SNode, SParam, SourceDeclaration, SourceOrigin, Span, Type,
-    unsupported,
+    ProductBindingPattern, Result, RustParser, SExpr, SNode, SParam, SourceDeclaration,
+    SourceOrigin, Span, Type, unsupported,
 };
 use crate::translation::rust_contextual_closure_rules as contextual;
 use crate::translation::rust_copy_closure_rules as rules;
@@ -321,6 +321,8 @@ impl RustParser {
         let mut params = Vec::new();
         let mut origins = Vec::new();
         let mut bindings = Vec::new();
+        let mut patterns = Vec::new();
+        let mut pattern_names = Vec::new();
         if self.cursor.eat("||").is_none() {
             self.cursor.expect("|", Some("closure"))?;
             while !self.cursor.is("|") {
@@ -335,11 +337,16 @@ impl RustParser {
                     reference_depth += depth as usize;
                     self.cursor.advance();
                 }
-                let role = ["mut", "ref", "&", "_"]
+                let nominal = self.nominal_binding_pattern()?;
+                let role = ["mut", "ref", "&", "_", "("]
                     .into_iter()
                     .find(|value| self.cursor.is(value))
                     .unwrap_or("binding");
-                let form = rules::read_rust_copy_closure_parameter_form(role);
+                let form = if nominal.is_some() {
+                    "product".to_owned()
+                } else {
+                    rules::read_rust_copy_closure_parameter_form(role)
+                };
                 if form == "unsupported" {
                     return Err(unsupported(
                         "Rust closure parameter",
@@ -347,7 +354,14 @@ impl RustParser {
                         Some(token.span()),
                     ));
                 }
-                let name = if form == "wildcard" {
+                let mut pattern = None;
+                let name = if form == "product" {
+                    pattern = Some(match nominal {
+                        Some(value) => ProductBindingPattern::Nominal(value),
+                        None => self.product_binding_pattern()?,
+                    });
+                    self.fresh_product_binding()
+                } else if form == "wildcard" {
                     self.cursor.advance();
                     self.fresh_product_binding()
                 } else {
@@ -355,6 +369,41 @@ impl RustParser {
                     self.require_nonconstant_binding(&name, path, Some(token.span()))?;
                     name
                 };
+                let mut source_names = Vec::new();
+                if let Some(value) = &pattern {
+                    let mut pending = vec![value];
+                    while let Some(current) = pending.pop() {
+                        match current {
+                            ProductBindingPattern::Name(token) => {
+                                source_names.push((token.value.clone(), Some(token.span())))
+                            }
+                            ProductBindingPattern::Tuple { items, .. } => {
+                                pending.extend(items.iter())
+                            }
+                            ProductBindingPattern::Nominal(value) => {
+                                source_names.extend(self.nominal_binding_names(value, false)?)
+                            }
+                            ProductBindingPattern::Wildcard(_)
+                            | ProductBindingPattern::Unit { .. } => {}
+                        }
+                    }
+                } else {
+                    source_names.push((name.clone(), Some(token.span())));
+                }
+                for (source_name, range) in source_names {
+                    self.require_nonconstant_binding(&source_name, path, range)?;
+                    pattern_names.push(source_name);
+                }
+                let binding_error =
+                    rules::read_rust_copy_closure_pattern_binding_error(&pattern_names);
+                if !binding_error.is_empty() {
+                    return Err(unsupported(
+                        "Rust Copy closure",
+                        binding_error,
+                        Some(token.span()),
+                    ));
+                }
+                patterns.push(pattern);
                 let (ty, origin) = if self.cursor.eat(":").is_some() {
                     let ty = self.parse_type()?;
                     (ty, self.origins.current_type.clone())
@@ -466,7 +515,27 @@ impl RustParser {
             self.origins.scope.insert(parameter.name.clone(), origin);
         }
         let read: Result<SExpr> = (|| {
-            let body = if written || self.cursor.is("{") {
+            let mut projections = Vec::new();
+            for (index, pattern) in patterns.into_iter().enumerate() {
+                if let Some(pattern) = pattern {
+                    let parameter = &params[index];
+                    let reference = SExpr::new(
+                        SNode::Name {
+                            path: vec![parameter.name.clone()],
+                        },
+                        parameter.span,
+                    );
+                    projections.extend(self.lower_product_binding(
+                        pattern,
+                        reference,
+                        parameter.ty.clone(),
+                        None,
+                        path,
+                        parameter.span,
+                    )?);
+                }
+            }
+            let mut body = if written || self.cursor.is("{") {
                 if let Some(body) = self.copy_pointer_result_block(path, result_origin.as_ref())? {
                     body
                 } else if let (Some(ret), Some(origin)) = (&ret, &result_origin)
@@ -529,6 +598,19 @@ impl RustParser {
                     body.span,
                 )?;
             }
+            let body_origin = self.origins.origin(&body, path);
+            for projection in projections.into_iter().rev() {
+                body = SExpr::new(
+                    SNode::Let {
+                        name: projection.name,
+                        ty: projection.ty.map(Into::into),
+                        value: Box::new(projection.value),
+                        body: Box::new(body),
+                    },
+                    projection.span,
+                );
+            }
+            self.origins.mark(&body, body_origin);
             Ok(body)
         })();
         self.origins.scope = outer.clone();
