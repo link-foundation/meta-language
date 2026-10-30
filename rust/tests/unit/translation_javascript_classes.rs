@@ -1,4 +1,6 @@
 //! CI-only complete source/frontend/native product controls, never run locally.
+#[path = "../../src/translation/javascript_class_source_rules.rs"]
+mod public_field_rules;
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::translation::{
     check::check_program, emit_javascript::emit_javascript, emit_rust::emit_rust,
@@ -163,5 +165,55 @@ fn closed_javascript_classes_keep_both_frontends_and_generated_products() {
                 assert_eq!(observed.stderr, "");
             }
         }
+    }
+}
+
+#[test]
+fn public_field_definitions_keep_initializer_boundaries_and_constructor_continuations() {
+    super::unsigned_source_documents::require_versions();
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/javascript-closed-classes.lino"
+    ))
+    .unwrap();
+    assert_eq!(
+        fixture["sourceModelVersion"], 4,
+        "uncovered class source fixture model"
+    );
+    for row in fixture["fieldDocumentation"].as_array().unwrap() {
+        assert_eq!(
+            public_field_rules::render_java_script_closed_class_field_documentation(
+                &public_field_rules::ml_string::Text::from_text(row["value"].as_str().unwrap())
+            )
+            .to_string(),
+            row["expected"].as_str().unwrap()
+        );
+    }
+    for row in fixture["fieldEnds"].as_array().unwrap() {
+        let values = row["values"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| public_field_rules::ml_string::Text::from_text(value.as_str().unwrap()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            public_field_rules::find_java_script_closed_class_field_end(
+                &values,
+                row["first"].as_f64().unwrap(),
+                row["last"].as_f64().unwrap()
+            ),
+            row["expected"].as_f64().unwrap()
+        );
+    }
+    for row in fixture["fieldPrefixEnds"].as_array().unwrap() {
+        let values = row["row"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            public_field_rules::read_java_script_closed_class_prefix_end(&values),
+            row["expected"].as_f64().unwrap()
+        );
     }
 }

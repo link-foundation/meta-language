@@ -56,6 +56,22 @@ add('mutable constructor preparation runs once before initial fields','class Mut
 add('constructor helper effects retain their original field values','class PreparedHelper { constructor(value){const prepared=prepareConstructorValue(value);this.value=prepared;} read(){return this.value;} }','return new PreparedHelper(8).read();',12,'number','function prepareConstructorValue(value){return value+4;}');
 add('all statements of a receiver-free constructor stay in order','class ReceiverFree { constructor(value){if(value<0){throw new RangeError("negative");}const prepared=value+1;} read(){return 9;} }','return new ReceiverFree(8).read();',9);
 add('constructor guards and method calls keep one initialized instance','class GuardedRemainder { constructor(value){if(value<0){throw new RangeError("negative");}this.value=value;this.increment();} increment(){this.value+=1;return this.value;} read(){return this.value;} }','return new GuardedRemainder(8).read();',9);
+add('public field declarations initialize without an explicit constructor','class DeclaredField { value=12; read(){return this.value;} }','return new DeclaredField().read();',12);
+add('declarations after methods still initialize before constructor code','class LaterField { read(){return this.value;} constructor(value){this.other=value;} value=12; }','const object=new LaterField(3);return object.read()+object.other;',15);
+add('constructor assignment may replace a declared initial value','class ReplacedField { value=2; constructor(value){this.value=value;} read(){return this.value;} }','return new ReplacedField(13).read();',13);
+add('an uninitialized public field exists before its constructor assignment','class InitiallyUndefined { value; constructor(value){this.value=value;} read(){return this.value;} }','return new InitiallyUndefined(13).read();',13);
+add('an uninitialized field retains undefined when never assigned','class UndefinedField { value; read(){return this.value===undefined;} }','return new UndefinedField().read();',true,'boolean');
+add('public field initializers use their module environment rather than constructor parameters','class FieldParameterScope { value=readFieldModule(); constructor(readFieldModule){this.other=readFieldModule;} read(){return this.value+this.other;} }','return new FieldParameterScope(5).read();',35,'number','function readFieldModule(){return 30;}');
+add('constructor locals cannot become field initializer bindings','class FieldLocalScope { value=readFieldLocalModule(); constructor(value){const readFieldLocalModule=value+1;this.other=readFieldLocalModule;} read(){return this.value+this.other;} }','return new FieldLocalScope(5).read();',36,'number','function readFieldLocalModule(){return 30;}');
+add('public array initializers allocate independently per instance','class FreshFieldArray { items=[]; read(){return this.items;} }','const first=new FreshFieldArray();const second=new FreshFieldArray();return first.items!==second.items;',true,'boolean');
+add('public record initializers preserve independent nested state','class FreshFieldRecord { data={value:1}; read(){return this.data.value;} }','const first=new FreshFieldRecord();const second=new FreshFieldRecord();first.data.value=9;return first.read()+second.read();',10);
+add('declared field aliases and method writes share one instance','class DeclaredAlias { value=1; add(amount){this.value+=amount;return this.value;} }','const first=new DeclaredAlias();const alias=first;alias.add(4);return first.value;',5);
+add('field documentation carries its declared return type into the initializer helper','class DocumentedField { /** @type {string} */ text="value"; /** @returns {string} */ read(){return this.text;} }','return new DocumentedField().read();','value','string');
+add('public field values retain complete Unicode scalar strings','class UnicodeField { text="é中😀"; read(){return this.text;} }','return new UnicodeField().read();','é中😀','string');
+add('field literal contents are not class syntax','class FieldLiteral { text="{ this ; class }"; read(){return this.text;} }','return new FieldLiteral().read();','{ this ; class }','string');
+add('field initializer static calls retain actual class owners','class StaticField { value=StaticField.make(4); static make(value){return value+1;} read(){return this.value;} }','return new StaticField().read();',5);
+add('field initializers and constructor effects run in source order','class FieldOrder { first=trackFieldOrder(1); second=trackFieldOrder(2); constructor(){trackFieldOrder(3);this.third=trackFieldOrder(4);} read(){return this.first+this.second+this.third;} }','new FieldOrder();return fieldOrderTrace.join(",");','1,2,3,4','string','const fieldOrderTrace=[];function trackFieldOrder(value){fieldOrderTrace.push(value);return value;}');
+add('overwriting a field retains its initializer effects and constructor write order','class FieldOverwriteOrder { value=trackFieldOverwrite(1); other=trackFieldOverwrite(2); constructor(value){trackFieldOverwrite(3);this.value=trackFieldOverwrite(value);this.extra=trackFieldOverwrite(5);} read(){return this.value+this.other+this.extra;} }','new FieldOverwriteOrder(4);return fieldOverwriteTrace.join(",");','1,2,3,4,5','string','const fieldOverwriteTrace=[];function trackFieldOverwrite(value){fieldOverwriteTrace.push(value);return value;}');
 const counter='class Refusal { constructor(value){this.value=value;} read(){return this.value;} }\n';
 const refusals=[
  ['a constructor cannot be called as an ordinary function',counter+'function compute(){return Refusal(1).read();}'],
@@ -93,6 +109,13 @@ const refusals=[
  ['an object property with a class spelling cannot acquire its static owner','class ActualOwner { static create(){return 1;} } function compute(){const object={ActualOwner:{create:()=>2}};return object.ActualOwner.create();}'],
  ['constructor parameters cannot invent free method bindings','class UnboundMethod { constructor(hidden){this.value=hidden;} read(){return hidden;} } function compute(){return new UnboundMethod(7).read();}'],
 ].map(([name,source])=>({name,source,kind:'unsupported'}));
+refusals.push(...[
+ ['receiver-dependent public fields keep their complete instance initialization model','class ReceiverField { first=1; second=this.first+1; } function compute(){return new ReceiverField().second;}'],
+ ['public arrow fields retain their actual inferred function names and receiver environment','class ArrowField { value=()=>1; } function compute(){return new ArrowField().value();}'],
+ ['duplicate public fields retain all descriptor and effect obligations','class DuplicateField { value=1; value=2; } function compute(){return new DuplicateField().value;}'],
+ ['a public field cannot silently replace a prototype method in the closed model','class ShadowedMethod { value=1; value(){return 2;} } function compute(){return new ShadowedMethod().value;}'],
+ ['field ASI needs its complete source boundary model','class FieldAutomaticSemicolon { value=1\nread(){return this.value;} } function compute(){return new FieldAutomaticSemicolon().read();}'],
+].map(([name,source])=>({name,source,kind:'unsupported'})));
 const malformed=[
  {name:'a class body must close at its actual source boundary',source:'class Broken { constructor(){this.value=1;} function compute(){return 1;}'},
  {name:'a method parameter group must close before its body',source:'class Broken { method(value {return value;} } function compute(){return 1;}'},
@@ -103,6 +126,36 @@ const errors=[
  {name:'a failing constructor guard retains RangeError and every message unit',source:'class RangeGuard { constructor(value){if(value<0){throw new RangeError("negative");}this.value=value;} } function compute(){return new RangeGuard(-1).value;}',errorClass:'RangeError',messageUnits:[110,101,103,97,116,105,118,101],messagePresent:true,resultType:'error'},
  {name:'a failing constructor guard retains absent message ownership',source:'class NoMessageGuard { constructor(value){if(value<0){throw TypeError();}this.value=value;} } function compute(){return new NoMessageGuard(-1).value;}',errorClass:'TypeError',messageUnits:[],messagePresent:false,resultType:'error'},
  {name:'constructor errors retain isolated UTF16 units without scalar replacement',source:'class SurrogateGuard { constructor(value){if(value<0){throw Error("\\ud800");}this.value=value;} } function compute(){return new SurrogateGuard(-1).value;}',errorClass:'Error',messageUnits:[55296],messagePresent:true,resultType:'error'},
+];
+errors.push(
+ {name:'public field exceptions precede constructor exceptions',source:'class FieldAbrupt { value=raisePublicField(); constructor(){throw new RangeError("constructor");} } function raisePublicField(){throw new TypeError("field");} function compute(){new FieldAbrupt();return 0;}',errorClass:'TypeError',messageUnits:[102,105,101,108,100],messagePresent:true,resultType:'error'},
+ {name:'public field exceptions precede failing constructor guards',source:'class FieldBeforeGuard { value=raiseFieldBeforeGuard(); constructor(value){if(value<0){throw new RangeError("negative");}this.other=value;} } function raiseFieldBeforeGuard(){throw new TypeError("field");} function compute(){return new FieldBeforeGuard(-1).other;}',errorClass:'TypeError',messageUnits:[102,105,101,108,100],messagePresent:true,resultType:'error'},
+);
+const fieldDocumentation=[
+ {value:'/** @type {string} */',expected:'/** @returns {string} */'},
+ {value:'/** @typedef {number} Count */',expected:'/** @typedef {number} Count */'},
+ {value:'/** @type{number} prose @types keep */',expected:'/** @returns{number} prose @types keep */'},
+ {value:'mail@type example',expected:'mail@type example'},
+];
+const fieldEnds=[
+ {values:['#12',';'],first:0,last:2,expected:1},
+ {values:[';'],first:0,last:1,expected:0},
+ {values:['[','#this',']',';'],first:0,last:4,expected:3},
+ {values:['this','.','other',';'],first:0,last:4,expected:-1},
+ {values:['(',')','=>','#1',';'],first:0,last:5,expected:-1},
+ {values:['#1'],first:0,last:1,expected:-1},
+ {values:['#1',';'],first:-1,last:2,expected:-1},
+ {values:['#1',';'],first:0.5,last:2,expected:-1},
+ {values:['#1',';'],first:0,last:3,expected:-1},
+ {values:['(','#1',',','#2',')',';'],first:0,last:6,expected:5},
+];
+const fieldPrefixEnds=[
+ {row:[],expected:-1},
+ {row:[0,40,1,2,3,4,30,-1,5],expected:-1},
+ {row:[0,40,1,2,3,4,30,1,5],expected:-1},
+ {row:[0,40,-1,-1,-1,-1,-1,1,-1,-4,5,7],expected:-1},
+ {row:[0,40,1,2,3,4,30,1,5,-35,36,38],expected:5},
+ {row:[0,40,1,2,3,4,30,2,5,-8,9,10,12,14,15],expected:16},
 ];
 const source=cases.map(row=>row.classSource).join('\n')+'\n'+cases.map(row=>row.helpers+'\nfunction '+row.entry+'(){'+row.body+'}').join('\n');
 const history=['js/src/translation/javascript.js','js/src/self-translation.js','rust/src/translation/javascript.rs','rust/src/self_translation.rs','rust/src/translation/mod.rs'].map(path=>{
@@ -126,8 +179,14 @@ for(const [path,name]of [['js/src/data/javascript-class-source-program.lino','ja
  else writeFileSync(target,bytes,{flag:'wx'});
  predecessors.push({path,revision:execFileSync('git',['rev-parse',revision],{encoding:'utf8'}).trim(),retained,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
 }
-writeProjectData(new URL('../../parity/fixtures/javascript-closed-classes.lino',import.meta.url),{schemaVersion:1,source,cases,errors,refusals,malformed,history,predecessors,
+for(const [path,name]of [['js/src/data/javascript-class-source-program.lino','javascript-class-source-constructor-prologues-program.lino'],['parity/self-translation/javascript-class-source-rules-native.lino','javascript-class-source-constructor-prologues-native.lino'],['parity/fixtures/javascript-closed-classes.lino','javascript-closed-classes-constructor-prologues.lino']]){
+ const revision='637b9390',bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:16*1024*1024}),retained='parity/fixtures/history/'+name,target=new URL('../../'+retained,import.meta.url);
+ if(existsSync(target)){if(!lstatSync(target).isFile()||lstatSync(target).isSymbolicLink()||!readFileSync(target).equals(bytes))throw new TypeError('the complete retained constructor-prologue class predecessor changed: '+retained);}else writeFileSync(target,bytes,{flag:'wx'});
+ predecessors.push({path,revision:execFileSync('git',['rev-parse',revision],{encoding:'utf8'}).trim(),retained,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+}
+writeProjectData(new URL('../../parity/fixtures/javascript-closed-classes.lino',import.meta.url),{schemaVersion:1,sourceModelVersion:4,source,cases,errors,refusals,malformed,history,predecessors,fieldEnds,fieldPrefixEnds,fieldDocumentation,
  versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
- assertions:['ordinaryNewCallsPreserveConstructorArgumentsAndFieldInitializationOrder','sharedInstanceAliasesPreserveExternalAndMethodFieldWrites','methodCallsRetainTheirActualReceiverAndArgumentEvaluationOrder','freshInstancesAndEmptyClassesRetainDistinctReferenceIdentity','allOriginalDocumentationSignaturesAndSourceIntervalsRemainRepresented','literalContentsNeverBecomeGrammarDelimitersOrIdentifierOwners','bothFrontendsAndBothCodecsPreserveTheCompleteCheckedSource','originalJavaScriptAndBothGeneratedNativeProductsRetainEveryDeclaredValue','reflectivePrototypeDetachedMethodAndExternalInterfaceGapsRefuse','literalDefaultsRemainInInvocationScopesAndAllocateFreshAggregates','staticFactoryCallsPreserveActualClassMemberOwners','constructorBindingsCannotCaptureMethodModuleBindings','initialQualifiedSourceDefinitionsAndRecipesRemainExact','allRootSourceAndExpandedOutputBudgetsRemainExplicit','constructorProloguesKeepCompleteStatementBoundariesAndLocalScopes','constructorExceptionsPreserveClassUnitsAndMessagePresence'],
- boundary:'Unexecuted source/data draft. Ordinary closed base classes use shared own-field records and installed receiver-capturing callables. Literal parameter defaults retain their original source and call-time initialization, including fresh empty aggregate defaults. Direct receiver-independent static methods/factories preserve actual member owners and argument evaluation order. Dependent/effectful/instance-reading defaults, patterns, inheritance, public field declaration syntax, private fields, accessors, static state/this and method escape, instance method escape/replacement, this as a returned value, constructor replacement, arbitrary module consumers, full object/prototype descriptors, target cycle collection and complete own-codebase translation remain obligations. Strong shared receiver cycles require the target lifecycle model before arbitrary long-running workloads can claim resource parity. No normalizer/fixture/product/oracle/test/compiler was executed by this author.'});
+ assertions:['ordinaryNewCallsPreserveConstructorArgumentsAndFieldInitializationOrder','sharedInstanceAliasesPreserveExternalAndMethodFieldWrites','methodCallsRetainTheirActualReceiverAndArgumentEvaluationOrder','freshInstancesAndEmptyClassesRetainDistinctReferenceIdentity','allOriginalDocumentationSignaturesAndSourceIntervalsRemainRepresented','literalContentsNeverBecomeGrammarDelimitersOrIdentifierOwners','bothFrontendsAndBothCodecsPreserveTheCompleteCheckedSource','originalJavaScriptAndBothGeneratedNativeProductsRetainEveryDeclaredValue','reflectivePrototypeDetachedMethodAndExternalInterfaceGapsRefuse','literalDefaultsRemainInInvocationScopesAndAllocateFreshAggregates','staticFactoryCallsPreserveActualClassMemberOwners','constructorBindingsCannotCaptureMethodModuleBindings','initialQualifiedSourceDefinitionsAndRecipesRemainExact','allRootSourceAndExpandedOutputBudgetsRemainExplicit','constructorProloguesKeepCompleteStatementBoundariesAndLocalScopes','constructorExceptionsPreserveClassUnitsAndMessagePresence','publicFieldDeclarationsPreserveLexicalScopeFreshAllocationAndInitializationOrder','declaredFieldOverridesKeepEveryInitializerEffectAndOriginalFieldKeyOrder'],
+ references:['https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ecmascript-function-objects-construct-argumentslist-newtarget','https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classfielddefinitionevaluation'],
+ boundary:'Unexecuted source/data draft. Ordinary closed base classes use shared own-field records and installed receiver-capturing callables. Public declaration fields retain module-scope initializer helpers, per-instance captures, declaration-before-constructor timing, distinct own field insertion order and constructor overrides. Field type comments relocate automatically to initializer return comments. Literal parameter defaults retain their original source and call-time initialization, including fresh empty aggregate defaults. Direct receiver-independent static methods/factories preserve actual member owners and argument evaluation order. Dependent/effectful/instance-reading defaults, patterns, inheritance, receiver-dependent/ASI/computed/anonymous-callable public fields, private fields, accessors, static state/this and method escape, instance method escape/replacement, this as a returned value, constructor replacement, arbitrary module consumers, full object/prototype descriptors, target cycle collection and complete own-codebase translation remain obligations. Strong shared receiver cycles require the target lifecycle model before arbitrary long-running workloads can claim resource parity. No normalizer/fixture/product/oracle/test/compiler was executed by this author.'});
 process.stdout.write('Authored '+cases.length+' closed class source programs and '+refusals.length+' refusal controls.\n');

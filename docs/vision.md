@@ -11381,3 +11381,50 @@ graphs. Both codecs and all four emissions of the editable policy are retained.
 No represented graphs, behavioral controls, native compilation or CI feedback
 run during this authoring phase. Every remaining whole-language, grammar union,
 full exact-ID, shared-concept and dynamic-extension obligation remains active.
+
+
+### Ordinary JavaScript public instance fields draft
+
+The shared ordinary-class source lowering now drafts semicolon-terminated
+public instance field declarations, including omitted initializers, alongside
+its existing constructor assignments and receiver-preserving methods. Directory
+rows retain actual field token positions: negative name coordinates distinguish
+public declarations from constructor assignments without changing prior row
+header/method offsets. Constructor continuation comes from actual assignments,
+not the last declaration's location; declarations may appear after methods or
+the constructor and still initialize in their original declaration order.
+
+Initializer helpers retain the class's enclosing module scope, outside constructor
+parameter/local scopes. Each construction captures every public initializer
+before constructor-body preparation, then captures the admitted leading
+constructor assignments in order. A constructor overwrite retains the earlier
+initializer's effects and the original field key position. Fresh aggregate
+initializers remain per-instance allocations. Field type comments relocate only
+actual `@type` tags to initializer return contracts; typedef and other comment
+text stays intact. Actual source intervals and documentation remain linked to
+the complete original class. The existing exact scalar/type/span sharing profile
+reduces the prepared rule graph; binding and expression occurrences remain
+separate, so it does not share runtime instance allocations.
+
+The language contract follows
+[ECMAScript 2025 construction](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ecmascript-function-objects-construct-argumentslist-newtarget)
+and [field definition evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classfielddefinitionevaluation).
+The current closed profile already bounds defaults to receiver-independent
+literals and excludes observable prototypes, descriptor reflection and unproved
+external consumers. Receiver-dependent fields, ASI/computed/anonymous-callable
+field initialization, private elements, accessors, inheritance, general external
+class interfaces and target lifecycle behavior still require their full models.
+The public-field draft preserves those obligations and existing refusal controls;
+it establishes no complete class or own-codebase translation claim.
+
+New independent unexecuted originals cover implicit constructors, late declaration
+positions, undefined initialization, constructor overwrites, module/local
+shadowing, fresh array/record values, aliases, documentation and Unicode,
+static helper calls, initializer/constructor effect order and exception order.
+Additional primitive controls cover exact initializer boundaries and constructor
+continuations. Both frontends, codecs, semantic self-translation and generated
+native products remain the same deferred control paths. Fixture source model4
+retains all six preceding artifacts and three exact constructor-prologue
+predecessors, with independent hashes/byte counts; the active assertion now
+requires all nine and reports unsupported fixture models. No original control
+or source program is removed, and no behavioral execution is claimed.

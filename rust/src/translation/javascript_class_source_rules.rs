@@ -34,3 +34,6 @@ pub use part_6::*;
 #[path = "javascript_class_source_rules/part_7.rs"]
 mod part_7;
 pub use part_7::*;
+#[path = "javascript_class_source_rules/part_8.rs"]
+mod part_8;
+pub use part_8::*;

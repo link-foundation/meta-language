@@ -95,11 +95,50 @@ export function findJavaScriptClosedClassInitializationStart(values, first, last
   return last;
 }
 
+/** A field initializer keeps AssignmentExpression boundaries and its own
+ * lexical environment. Receiver-dependent definitions retain their full model.
+ * @param {string[]} values @param {number} first @param {number} last @returns {number} */
+export function findJavaScriptClosedClassFieldEnd(values,first,last){
+ if(!Number.isSafeInteger(first)||!Number.isSafeInteger(last)||first<0||last<first||last>values.length||values.length>8192)return -1;
+ for(let at=first;at<last;at+=1){const value=values[at]??'';
+  if(value===';')return at;
+  if(value===','||value==='this'||value==='super'||value==='arguments'||value==='await'||value==='yield'||value==='=>'||value==='class')return -1;
+  if(value==='('||value==='['||value==='{'){
+   const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>=last)return -1;
+   for(let inner=at+1;inner<end;inner+=1){const token=values[inner]??'';if(['this','super','arguments','await','yield','=>','class'].includes(token))return -1;}
+   at=end;
+  }
+ }
+ return -1;
+}
+/** Retain comment text while relocating only an actual field type tag to
+ * the generated initializer return contract; typedef/other tags stay exact.
+ * @param {string} comment @returns {string} */
+export function renderJavaScriptClosedClassFieldDocumentation(comment){
+ let result='',previous=0,at=comment.indexOf('@type');
+ while(at>=0){const before=at===0?' ':comment.charAt(at-1),after=comment.charAt(at+5);
+  if([' ','\t','\r','\n','*'].includes(before)&&[' ','\t','\r','\n','{',''].includes(after)){result+=comment.slice(previous,at)+'@returns';previous=at+5;}
+  at=comment.indexOf('@type',at+5);
+ }
+ return result+comment.slice(previous);
+}
+/** Public declaration fields use -(name token+1); assignment fields retain
+ * their nonnegative actual constructor name token. Existing row offsets stay.
+ * @param {number[]} row @returns {number} */
+export function readJavaScriptClosedClassPrefixEnd(row){
+ let end=row[8]??-1;const fields=row[7]??0;
+ if(row.length<9||!Number.isSafeInteger(fields)||fields<0||fields>8192||9+3*fields>row.length)return -1;
+ for(let at=9;at<9+fields*3;at+=3)if((row[at]??-1)>=0)end=(row[at+2]??0)+1;
+ return end;
+}
+/** @param {string[]} values @param {number[]} row @param {string} name @returns {number} */
+function readJavaScriptClosedClassAssignedFieldPosition(values,row,name){for(let at=9;at<9+3*(row[7]??0);at+=3)if((row[at]??-1)>=0&&(values[row[at]??0]??'')===name)return at;return -1;}
 /** A directory row is [class token, end, constructor name/parameters/body,
  * field count, initialization start, then field-name/value-start/value-end triples, then method
  * name/parameter-open/parameter-close/body-open/body-close quintuples].
  * A static member stores -(name token + 1); its actual token coordinate is
  * retained without changing any constructor/field/member interval.
+ * A public declaration field similarly stores -(name token+1).
  * Offsets refer to actual tokens, never reconstructed identifier spellings.
  * @param {string[]} values @param {string[]} kinds @param {number} first
  * @returns {number[]} */
@@ -119,6 +158,13 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
     const position = staticMember ? at + 1 : at;
     const name = values[position] ?? '';
     const owner = (staticMember ? 'static:' : 'instance:') + name;
+    const field=(values[position+1]??'')==='='||(values[position+1]??'')===';';
+    if(!staticMember&&field&&(kinds[position]??'')==='identifier'){
+      if(['constructor','__proto__','prototype','$'].includes(name)||names.includes('instance:'+name))return [-2,position];
+      const initial=(values[position+1]??'')==='='?position+2:position+1;
+      const finish=findJavaScriptClosedClassFieldEnd(values,initial,end);if(finish<0||(values[position+1]??'')==='='&&finish===initial)return [-10,initial];
+      fields=fields.concat([-position-1,initial,finish]);names=names.concat(['instance:'+name]);at=finish+1;continue;
+    }
     if ((kinds[position] ?? '') !== 'identifier' || name === 'static' || name === 'get'
       || name === 'set' || name === 'async' || name === '__proto__'
       || name === 'prototype' || name === '$' || staticMember && name === 'constructor'
@@ -142,9 +188,10 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
     && (values[cursor + 1] ?? '') === '.' && (kinds[cursor + 2] ?? '') === 'identifier'
     && (values[cursor + 3] ?? '') === '=') {
     const name = values[cursor + 2] ?? '';
-    if (name === '$' || names.includes('instance:' + name)) return [-4, cursor + 2];
+    let declaration=false;for(let field=0;field<fields.length;field+=3)if((fields[field]??0)<0&&(values[-(fields[field]??0)-1]??'')===name)declaration=true;
+    if (name === '$' || names.includes('instance:' + name)&&!declaration) return [-4, cursor + 2];
     for (let previous = 0; previous < fields.length; previous += 3)
-      if ((values[fields[previous] ?? 0] ?? '') === name) return [-4, cursor + 2];
+      if ((fields[previous]??-1)>=0&&(values[fields[previous] ?? 0] ?? '') === name) return [-4, cursor + 2];
     const start = cursor + 4;
     let finish = start;
     for (; finish < bodyEnd; finish += 1) {
@@ -172,13 +219,14 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
 /** @param {number} code @returns {string} */
 export function readJavaScriptClosedClassRefusal(code) {
   if (code === -1) return 'a closed class needs an ordinary named base-class declaration and balanced source groups';
-  if (code === -2) return 'class fields, accessors, private names, inheritance, static initialization and duplicate member owners need their full descriptor model';
+  if (code === -2) return 'accessors, private names, inheritance, static initialization and duplicate member owners need their full descriptor model';
   if (code === -3) return 'this class profile requires ordinary fixed identifier parameters with literal defaults; patterns and dependent or instance-reading defaults need their complete parameter environment';
   if (code === -4) return 'initial own fields must be distinct and cannot replace a prototype method';
   if (code === -5) return 'initial own fields need a complete semicolon-terminated assignment prefix without instance escape or reads before allocation';
   if (code === -6) return 'constructor return overrides need their complete object replacement semantics';
   if (code === -7) return 'class values, reflective operations, detached methods, method replacement and observable prototypes need the full object model';
   if (code === -8) return 'closed class authoring exceeds its explicit source, token, nesting or class-count budget';
+  if (code === -10) return 'public fields need complete semicolon-terminated initializers with proven lexical receivers and function naming';
   if (code === -9) return 'class construction, receiver and member modifier keywords require their actual unescaped ECMAScript source spelling';
   return '';
 }
@@ -293,11 +341,20 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
   const parameterFirst = (row[3] ?? -1) + 1;
   const parameterLast = row[4] ?? -1;
   const parameters = parameterLast < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends, parameterFirst, parameterLast, '', classNames, staticCalls);
-  let stubs = '';
+  let stubs = '', initializations='', constructorFields='', fieldNames=[];
   let fields = brand + ': (void 0)';
   for (let at = 9; at < methods; at += 3) {
-    const field = values[row[at] ?? 0] ?? '';
-    const value = renderJavaScriptClosedClassRange(source, values, starts, ends, row[at + 1] ?? 0, row[at + 2] ?? 0, '', classNames, staticCalls);
+    const position=row[at]??0,field=values[position<0?-position-1:position]??'';
+    let value=(row[at+1]??0)===(row[at+2]??0)?'(void 0)':renderJavaScriptClosedClassRange(source, values, starts, ends, row[at + 1] ?? 0, row[at + 2] ?? 0, '', classNames, staticCalls);
+    if(position<0){
+      const initializer=prefix+'initialize_class_field_'+String(ordinal)+'_'+String(at),capture=prefix+'class_field_value_'+String(ordinal)+'_'+String(at);
+      const documentation=renderJavaScriptClosedClassFieldDocumentation(source.slice(ends[-position-2]??0,starts[-position-1]??0));
+      stubs+='\n'+documentation+'\nfunction '+initializer+'() { return ('+value+'); }\n';
+      initializations+='const '+capture+' = '+initializer+'();\n';value=capture;
+      const assigned=readJavaScriptClosedClassAssignedFieldPosition(values,row,field);if(assigned>=0)value=prefix+'class_assigned_field_value_'+String(ordinal)+'_'+String(assigned);
+    }
+    if(position>=0){const capture=prefix+'class_assigned_field_value_'+String(ordinal)+'_'+String(at);constructorFields+='const '+capture+' = ('+value+');\n';value=capture;}
+    if(fieldNames.includes(field))continue;fieldNames=fieldNames.concat([field]);
     fields += ', ' + field + ': (' + value + ')';
   }
   let assignments = '';
@@ -330,10 +387,10 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
   const prologue = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
     constructorBody + 1, initialization, '', classNames, staticCalls);
   const remainder = constructorBody < 0 ? '' : renderJavaScriptClosedClassRange(source, values, starts, ends,
-    fieldCount === 0 ? initialization : (row[methods - 1] ?? 0) + 1, constructorEnd, receiver, classNames, staticCalls);
+    readJavaScriptClosedClassPrefixEnd(row), constructorEnd, receiver, classNames, staticCalls);
   const constructorName = row[2] ?? -1;
   const documentation = constructorName < 0 ? '' : source.slice(ends[constructorName - 1] ?? 0, starts[constructorName] ?? 0);
-  return stubs + '\n' + documentation + '\nfunction ' + name + '(' + parameters + ') {\n' + prologue + '\nconst ' + receiver + ' = { ' + fields + ' };\n'
+  return stubs + '\n' + documentation + '\nfunction ' + name + '(' + parameters + ') {\n' + initializations + prologue + '\n' + constructorFields + 'const ' + receiver + ' = { ' + fields + ' };\n'
     + assignments + remainder + '\nreturn ' + receiver + ';\n}\n';
 }
 

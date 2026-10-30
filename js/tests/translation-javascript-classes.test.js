@@ -11,7 +11,7 @@ import {selfTranslate} from '../src/self-translation.js';
 import {encodeTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {lowerJavaScriptClosedClassSource,acceptJavaScriptClosedClassSourceSize} from '../src/translation/javascript-class-source-rules.js';
+import {lowerJavaScriptClosedClassSource,acceptJavaScriptClosedClassSourceSize,findJavaScriptClosedClassFieldEnd,readJavaScriptClosedClassPrefixEnd,renderJavaScriptClosedClassFieldDocumentation} from '../src/translation/javascript-class-source-rules.js';
 import {tokenize} from '../src/translation/lexer.js';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -70,7 +70,8 @@ test('unproved external class consumers retain a precise composition obligation'
 });
 test('every complete preceding source graph native recipe and fixture stays exact',()=>{
   assert.equal(fixture.predecessors.filter(prior=>prior.revision==='eae050126c3df59af868552f7d1c764d968c5550').length,3);
-  assert.equal(fixture.predecessors.length,6);
+  assert.equal(fixture.sourceModelVersion,4,'uncovered closed class fixture source model');
+  assert.equal(fixture.predecessors.length,9);
   for(const prior of fixture.predecessors){
     assert.match(prior.revision,/^[a-f0-9]{40}$/u);
     const bytes=readFileSync(new URL('../../'+prior.retained,import.meta.url));
@@ -78,3 +79,8 @@ test('every complete preceding source graph native recipe and fixture stays exac
     assert.equal(createHash('sha256').update(bytes).digest('hex'),prior.sha256);
   }
 });
+
+for(const [index,row]of fixture.fieldEnds.entries())test('public class field boundary '+index,()=>assert.equal(findJavaScriptClosedClassFieldEnd(row.values,row.first,row.last),row.expected));
+for(const [index,row]of fixture.fieldPrefixEnds.entries())test('public fields retain actual constructor continuation '+index,()=>assert.equal(readJavaScriptClosedClassPrefixEnd(row.row),row.expected));
+
+for(const [index,row]of fixture.fieldDocumentation.entries())test('public class field comment contract '+index,()=>assert.equal(renderJavaScriptClosedClassFieldDocumentation(row.value),row.expected));
