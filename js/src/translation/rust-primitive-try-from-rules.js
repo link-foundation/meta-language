@@ -1,3 +1,4 @@
+import {readRustIntegerConversionErrorDebugModel} from './rust-source-version-rules.js';
 import {readRustPrimitiveIntegerConstantOwner} from './rust-primitive-integer-constant-rules.js';
 import {acceptRustPrimitiveFromSource,acceptRustPrimitiveFromMethod} from './rust-primitive-from-rules.js';
 /** @param {string[]} segments @param {boolean} ordinary @param {boolean} shadowed
@@ -36,7 +37,7 @@ export function readRustPrimitiveTryFromResultOwner(method,target,mapper){return
 export function testRustPrimitiveTryFromPanicConsumer(consumer){return consumer==='unwrap'||consumer==='expect';}
 /** Debug payloads changed in Rust1.97; this snapshot matches CI Rust1.99.
  * @param {string} direction @returns {string} */
-export function readRustPrimitiveTryFromFailureDebug(direction){return direction==='negative error'?'TryFromIntError(NegOverflow)':direction==='positive error'?'TryFromIntError(PosOverflow)':'';}
+export function readRustPrimitiveTryFromFailureDebug(direction){return readRustPrimitiveTryFromVersionedFailureDebug(direction,99);}
 /** @param {number} guards @returns {string[]} */
 export function planRustPrimitiveTryFromFailureDebug(guards){if(![0,1,2,3].includes(guards))return [];return guards===1||guards===3?['input','minimum','ge','positive error','negative error','if']:['positive error'];}
 /** @param {string} consumer @returns {string} */
@@ -44,3 +45,11 @@ export function readRustPrimitiveTryFromPanicPrefix(consumer){return consumer===
 
 /** @returns {string} */
 export function readRustPrimitiveTryFromPanicVersionRange(){return ">=1.97.0 <1.100.0";}
+
+/** The choice is resolved in common terms before target emission.
+ * @param {string} direction @param {number} minor @returns {string} */
+export function readRustPrimitiveTryFromVersionedFailureDebug(direction,minor){
+ if(direction!=='negative error'&&direction!=='positive error')return '';
+ const model=readRustIntegerConversionErrorDebugModel(minor);
+ return model==='unit payload'?'TryFromIntError(())':model==='overflow kind'?(direction==='negative error'?'TryFromIntError(NegOverflow)':'TryFromIntError(PosOverflow)'):'';
+}

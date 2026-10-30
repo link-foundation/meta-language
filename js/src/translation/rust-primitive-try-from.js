@@ -1,6 +1,6 @@
 import {STRING} from './types.js';
 import {readRustPanicValueOperation,readRustPanicMessageSourceError} from './rust-panic-value-rules.js';
-import {testRustPrimitiveTryFromPanicConsumer,readRustPrimitiveTryFromFailureDebug,readRustPrimitiveTryFromPanicPrefix} from './rust-primitive-try-from-rules.js';
+import {testRustPrimitiveTryFromPanicConsumer,readRustPrimitiveTryFromVersionedFailureDebug,readRustPrimitiveTryFromPanicPrefix} from './rust-primitive-try-from-rules.js';
 // Actual token/type/origin transport into shared standard Result plans.
 import {BOOL,FLOAT,rustFixedType} from './types.js';
 import {TranslationError,unsupported} from './diagnostics.js';
@@ -49,7 +49,7 @@ export function readRustPrimitiveTryFrom(parser,path){
  for(const term of plan){
   if(term==='input')stack.push(inputValue());
   else if(term==='minimum'||term==='maximum'){const magnitude=readRustSaturatingIntegerBoundMagnitude(term,target.bits,target.signed),number={k:'num',value:magnitude,type:source.type,span:range};stack.push(acceptRustSaturatingIntegerBoundNegative(term,target.signed)?{k:'unary',op:'neg',arg:number,span:range}:number);}
-  else if(term==='positive error'||term==='negative error')stack.push({k:'str',value:readRustPrimitiveTryFromFailureDebug(term),span:range});
+  else if(term==='positive error'||term==='negative error')stack.push({k:'str',value:readRustPrimitiveTryFromVersionedFailureDebug(term,parser.sourceVersionMinor),span:range});
   else if(term==='panic prefix')stack.push({k:'str',value:readRustPrimitiveTryFromPanicPrefix(consumer.value),span:range});
   else if(term==='message')stack.push(local(captures[1],parser.origins.origin(defaults[0],path)));
   else if(term==='concat'){const right=pop(),left=pop();stack.push({k:'binary',op:'concat',left,right,span:range});}

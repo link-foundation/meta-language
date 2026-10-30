@@ -63,6 +63,7 @@ mod scalar_parameters;
 mod shared_array_handles;
 mod source_constants;
 mod source_origins;
+pub(crate) mod source_versions;
 mod string_byte_lengths;
 mod type_aliases;
 pub(crate) mod type_namespaces;
@@ -134,6 +135,7 @@ pub use source_profiles::{
     parse_rust_with_scalar_loop_model, parse_rust_with_shared_array_handle_source_model,
     parse_rust_with_source_models, parse_rust_with_source_profiles,
     parse_rust_with_source_signature_model, parse_rust_with_source_type_owners,
+    parse_rust_with_source_type_owners_and_version, parse_rust_with_source_version,
     parse_rust_with_type_namespace_model,
 };
 
@@ -177,6 +179,7 @@ pub fn parse_rust_with_const_function_model(
 
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
+    source_version: &'a str,
     retain_source_type_owners: bool,
     shared_array_handle_source: &'a str,
     const_function: &'a str,
@@ -195,7 +198,9 @@ fn parse_rust_with_selected_profiles(
     source: &str,
     profiles: SourceProfiles<'_>,
 ) -> Result<SProgram> {
+    let source_version_minor = source_versions::minor(profiles.source_version)?;
     let SourceProfiles {
+        source_version: _,
         shared_array_handle_source: shared_array_handle_source_model,
         const_function: const_function_model,
         array_result: array_result_model,
@@ -393,6 +398,7 @@ fn parse_rust_with_selected_profiles(
         true,
         original_source.clone(),
     );
+    declarations.source_version_minor = source_version_minor;
     declarations.header_discovery = declarations.ordinary_completion_context();
     declarations.file()?;
     let mut origins = std::mem::replace(
@@ -410,6 +416,7 @@ fn parse_rust_with_selected_profiles(
         false,
         original_source.clone(),
     );
+    syntax.source_version_minor = source_version_minor;
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     syntax.named_records = declarations.named_records;
@@ -428,6 +435,7 @@ fn parse_rust_with_selected_profiles(
         false,
         original_source,
     );
+    parser.source_version_minor = source_version_minor;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
@@ -468,6 +476,7 @@ struct Binding {
 }
 
 struct RustParser {
+    source_version_minor: f64,
     retain_source_type_owners: bool,
     source_type_aliases: type_aliases::SourceTypeAliases,
     header_discovery: bool,
@@ -552,6 +561,7 @@ impl RustParser {
         origins.owned_binding_excluded =
             !profiles.scalar_loop.is_empty() || !profiles.const_function.is_empty();
         Self {
+            source_version_minor: 0.0,
             retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),
             header_discovery: false,

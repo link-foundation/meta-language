@@ -1,6 +1,63 @@
 // Generated from complete js/src/translation/rust-primitive-try-from-rules.js. Do not edit by hand.
 use super::ml_array;
-use super::read_rust_primitive_try_from_consumer_arity;
+use super::read_rust_integer_conversion_error_debug_model;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_consumer_arity(method: &str) -> f64 {
+    if (((method == "is_ok") || (method == "is_err")) || (method == "unwrap_or_default"))
+        || (method == "unwrap")
+    {
+        0f64
+    } else if (method == "unwrap_or") || (method == "expect") {
+        1f64
+    } else if method == "map_or" {
+        2f64
+    } else {
+        -1f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_guards(
+    source_bits: f64,
+    source_signed: bool,
+    target_bits: f64,
+    target_signed: bool,
+) -> f64 {
+    if !(self::ml_array::includes(
+        &vec![8f64, 16f64, 32f64, 64f64, 128f64],
+        &source_bits,
+        0f64,
+        false,
+        |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
+    )) || !(self::ml_array::includes(
+        &vec![8f64, 16f64, 32f64, 64f64, 128f64],
+        &target_bits,
+        0f64,
+        false,
+        |a: &f64, b: &f64| a == b || (a.is_nan() && b.is_nan()),
+    )) {
+        -1f64
+    } else {
+        {
+            let lower = source_signed && (!target_signed || (source_bits > target_bits));
+            {
+                let upper = if target_signed {
+                    if source_signed {
+                        source_bits > target_bits
+                    } else {
+                        source_bits >= target_bits
+                    }
+                } else {
+                    source_bits > target_bits
+                };
+                (if lower { 1f64 } else { 0f64 } + if upper { 2f64 } else { 0f64 })
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -209,13 +266,7 @@ pub fn test_rust_primitive_try_from_panic_consumer(consumer: &str) -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_rust_primitive_try_from_failure_debug(direction: &str) -> String {
-    if direction == "negative error" {
-        String::from("TryFromIntError(NegOverflow)")
-    } else if direction == "positive error" {
-        String::from("TryFromIntError(PosOverflow)")
-    } else {
-        String::new()
-    }
+    self::read_rust_primitive_try_from_versioned_failure_debug(direction, 99f64)
 }
 
 /// Execute the checked shared source algorithm.
@@ -261,4 +312,27 @@ pub fn read_rust_primitive_try_from_panic_prefix(consumer: &str) -> String {
 #[must_use]
 pub fn read_rust_primitive_try_from_panic_version_range() -> String {
     String::from(">=1.97.0 <1.100.0")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_versioned_failure_debug(direction: &str, minor: f64) -> String {
+    if (direction != "negative error") && (direction != "positive error") {
+        String::new()
+    } else {
+        {
+            let model = self::read_rust_integer_conversion_error_debug_model(minor);
+            if model == "unit payload" {
+                String::from("TryFromIntError(())")
+            } else if model == "overflow kind" {
+                if direction == "negative error" {
+                    String::from("TryFromIntError(NegOverflow)")
+                } else {
+                    String::from("TryFromIntError(PosOverflow)")
+                }
+            } else {
+                String::new()
+            }
+        }
+    }
 }

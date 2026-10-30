@@ -913,3 +913,25 @@ pub fn emit_typed_program_links_with_options(
         theorems: emitted.theorems,
     })
 }
+
+/// Import Rust with a selected source std version and separate user provenance.
+///
+/// # Errors
+/// Refuses uncovered source contexts, invalid source and malformed typed graphs.
+pub fn create_typed_program_links_with_rust_source_version(
+    source: &str,
+    version: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    let surface = crate::translation::rust::parse_rust_with_source_version(source, version)
+        .map_err(|error| TypedProgramLinksError {
+            message: error.to_string(),
+        })?;
+    let program = crate::translation::check::check_program(&surface).map_err(|error| {
+        TypedProgramLinksError {
+            message: error.to_string(),
+        }
+    })?;
+    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSourceVersion":crate::translation::rust::source_versions::canonical(version).map_err(|error|TypedProgramLinksError{message:error.to_string()})?},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}

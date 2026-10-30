@@ -379,6 +379,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-source-owner-retention-program.lino" => Some(include_str!(
             "../data/rust-source-owner-retention-program.lino"
         )),
+        "rust-source-version-program.lino" => {
+            Some(include_str!("../data/rust-source-version-program.lino"))
+        }
         "rust-standard-owned-call-program.lino" => Some(include_str!(
             "../data/rust-standard-owned-call-program.lino"
         )),
@@ -456,6 +459,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         )),
         "source-project-archive-program.lino" => {
             Some(include_str!("../data/source-project-archive-program.lino"))
+        }
+        "source-version-column-program.lino" => {
+            Some(include_str!("../data/source-version-column-program.lino"))
         }
         "string-array-sort-program.lino" => {
             Some(include_str!("../data/string-array-sort-program.lino"))

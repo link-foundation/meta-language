@@ -1948,9 +1948,46 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
+  rust-source-versions:
+    name: Rust Source Version (${{ matrix.version }})
+    needs: [js]
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        version: ['1.90.0', '1.96.0', '1.97.0', '1.99.0']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.22.0
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.version }}
+      - name: Install JavaScript dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+      - name: Compare original std with the explicitly selected source interpretation
+        run: node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/rust-source-versions/native-matrix.mjs --version ${{ matrix.version }}
+      - name: Preserve source-version observations
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-source-version-${{ matrix.version }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-source-versions/
+          if-no-files-found: error
+      - name: Clean project caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --project-owned-only --no-preflight --no-docker
+
   acceptance:
     name: Full Requirements Aggregate
-    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
+    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery, rust-source-versions]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -1967,6 +2004,14 @@ jobs:
     # reports that as one gate error naming the failed JavaScript jobs, not one
     # per stage or requirement.
     steps:
+      - name: Require every original source-version comparison
+        if: ${{ github.event_name != 'release' && needs.js.result == 'success' && needs.candidates.result == 'success' && needs.rust-source-versions.result != 'success' }}
+        env:
+          SOURCE_VERSIONS_RESULT: ${{ needs.rust-source-versions.result }}
+        run: |
+          echo "::error::Rust source-version comparisons finished as '$SOURCE_VERSIONS_RESULT'"
+          exit 1
+
       - name: Require delivery candidates
         if: ${{ needs.candidates.result != 'success' }}
         env:

@@ -936,6 +936,7 @@ export function createTypedProgramLinks(
     /** Imports one explicitly selected standard Rust shared-array source domain. */
     rustSharedArrayHandleSourceModel?: 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
+    rustSourceVersion?: string;
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
     rustConstFunctionModel?: 'closed pure Rust const predicates 1' | 'closed Boolean Rust const decision trees 1';
@@ -970,7 +971,7 @@ export function acceptLinkAllocationCapacity(
 ): boolean;
 export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
 /** Complete ordinary Rust headers retained under source signature version two. */
-export function createRustSourceOwnerProgramLinks(source: string): TypedProgramLinks;
+export function createRustSourceOwnerProgramLinks(source: string, options?: { sourceVersion?: string }): TypedProgramLinks;
 export interface RustSourceProjectSource { path:string; source:string }
 export interface RustSourceProjectOptions {
   library?:boolean; retainSourceTypeOwners?:boolean; provenance?:unknown;

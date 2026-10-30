@@ -391,7 +391,10 @@ pub use project_translation::{draft_project_translation, project_translation_dra
 mod rust_project_source_rules;
 mod rust_source_owner_program;
 mod rust_source_project;
-pub use rust_source_owner_program::create_rust_source_owner_program_links;
+pub use rust_source_owner_program::{
+    create_rust_source_owner_program_links,
+    create_rust_source_owner_program_links_with_source_version,
+};
 mod rust_source_project_cli;
 mod source_project_archive;
 mod source_project_archive_rules;
@@ -520,6 +523,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_source_models,
     create_typed_program_links_with_rust_source_profiles,
     create_typed_program_links_with_rust_source_signature_model,
+    create_typed_program_links_with_rust_source_version,
     create_typed_program_links_with_rust_type_namespace_model,
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
     emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,

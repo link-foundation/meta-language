@@ -1,3 +1,4 @@
+import {readRustSourceVersion} from './rust-source-versions.js';
 import {readRustFormattedPanic} from './rust-panic-values.js';
 import {acceptRustPanicFormattingMacro,readRustPanicCompletionKind} from './rust-panic-value-rules.js';
 import {readRustStringByteView} from './rust-string-byte-views.js';
@@ -123,7 +124,8 @@ const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
 export function parseRustWithSourceTypeOwners(source,options={}){return parseRust(source,{...options,retainSourceTypeOwners:true});}
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='',retainSourceTypeOwners=false } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='',retainSourceTypeOwners=false,sourceVersion='' } = {}) {
+  readRustSourceVersion(sourceVersion);
   if(typeof retainSourceTypeOwners!=='boolean')throw new TypeError('retainSourceTypeOwners must be Boolean');
   if(retainSourceTypeOwners&&(runtimeShellModel||sharedArrayHandleSourceModel))throw unsupported('Rust source owner retention','runtime shells and shared handle signatures need an independent owner composition');
   if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the legacy model or standard Rust shared array identity handles 1');
@@ -146,11 +148,12 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   if(sharedArrayHandleSourceModel)requireRustSharedArrayHandleSourceText(source);
   const { tokens } = tokenize(source, 'Rust');
-  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel, sharedArrayHandleSourceModel,retainSourceTypeOwners }, source);
+  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel, sharedArrayHandleSourceModel,retainSourceTypeOwners,sourceVersion }, source);
 }
 
 // Internal complete-token entry; public source parsing validates options and lexes first.
-export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '',retainSourceTypeOwners=false } = {}, source = null) {
+export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '',retainSourceTypeOwners=false,sourceVersion='' } = {}, source = null) {
+  const sourceVersionFacts=readRustSourceVersion(sourceVersion);
   if(typeof retainSourceTypeOwners!=='boolean')throw new TypeError('retainSourceTypeOwners must be Boolean');
   if(retainSourceTypeOwners&&sharedArrayHandleSourceModel)throw unsupported('Rust source owner retention','runtime shells and shared handle signatures need an independent owner composition');
   if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the installed source model');
@@ -161,11 +164,13 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
     tokens=tokenize(source,'Rust').tokens;
   }
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
+  declarations.sourceVersionMinor=sourceVersionFacts.minor;
   declarations.retainSourceTypeOwners=retainSourceTypeOwners;
   declarations.headerDiscovery=declarations.ordinaryCompletionContext();
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
+  syntax.sourceVersionMinor=sourceVersionFacts.minor;
   syntax.retainSourceTypeOwners=retainSourceTypeOwners;
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
@@ -179,6 +184,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
     if(!sharedArrayHandleSourceModel)return surface;
   }
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
+  parser.sourceVersionMinor=sourceVersionFacts.minor;
   parser.retainSourceTypeOwners=retainSourceTypeOwners;
   parser.aliases = syntax.aliases;
   parser.namedRecords = new Map(syntax.namedRecords);

@@ -227,3 +227,34 @@ pub fn parse_rust_with_pure_unit_call_model(source: &str, model: &str) -> Result
         },
     )
 }
+
+/// Read ordinary Rust under an explicitly selected stable source std version.
+///
+/// # Errors
+/// Refuses noncanonical, prerelease and uncovered source versions or constructs.
+pub fn parse_rust_with_source_version(source: &str, version: &str) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            source_version: version,
+            ..SourceProfiles::default()
+        },
+    )
+}
+/// Retain source type owners under an explicit stable source std version.
+///
+/// # Errors
+/// Refuses uncovered source versions, invalid owners and unsupported constructs.
+pub fn parse_rust_with_source_type_owners_and_version(
+    source: &str,
+    version: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            source_version: version,
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
+}

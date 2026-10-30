@@ -410,3 +410,7 @@ pub mod rust_string_byte_kernel;
 pub mod rust_string_byte_view_rules;
 
 pub mod rust_panic_value_rules;
+
+pub mod rust_source_version_rules;
+
+pub mod source_version_column_rules;

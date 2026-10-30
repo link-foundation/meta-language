@@ -475,7 +475,10 @@ impl RustParser {
                 }
                 "positive error" | "negative error" => stack.push(SExpr::new(
                     SNode::Str {
-                        value: rules::read_rust_primitive_try_from_failure_debug(&term),
+                        value: rules::read_rust_primitive_try_from_versioned_failure_debug(
+                            &term,
+                            self.source_version_minor,
+                        ),
                     },
                     range,
                 )),

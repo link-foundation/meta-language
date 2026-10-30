@@ -10821,10 +10821,40 @@ standard error spelling is version-sensitive: Rust1.90–1.96 uses a unit payloa
 whereas Rust1.97–1.99 exposes NegOverflow or PosOverflow. The current prepared
 source interpretation matches the pinned CI std snapshot (Rust1.99); its panic
 assertions are explicitly bounded to >=1.97 <1.100 and report other versions as
-uncovered. Explicit source-version selection and the earlier Debug interpretation
-remain requirements. This bound does not change existing non-panic conversion
+uncovered. Explicit source-version selection now retains the earlier Debug interpretation
+through resolved common terms and structured Links provenance; the default stays
+with the current CI snapshot. This bound does not change existing non-panic conversion
 coverage. An independent fixed-integer matrix covers every width/sign pair,
 zero and source extrema. A shared immutable str message predicate serves both
 Option and Result expect, with the old Option entry point retained as a wrapper.
 Error escape, custom Debug implementations, generic Result control and all
 previous whole-source/grammar obligations remain binding.
+
+#### Explicit Rust source std version selection
+
+Ordinary Rust imports accept an explicit canonical stable source version from
+1.90.0 through 1.99.x; the prepared default is 1.99.0. JavaScript exposes
+`parseRust(..., {sourceVersion})`, the same option on
+`createRustSourceOwnerProgramLinks`, and `rustSourceVersion` on
+`createTypedProgramLinks`. Native parser and Links factories expose corresponding
+version entry points. Explicit contexts use the existing structured Links
+provenance field and survive both codecs; imports without a selection keep their
+original root shape. Empty explicit selections record the resolved default.
+
+A common canonical three-column unsigned decimal reader is defined once in
+JavaScript and automatically translated to Rust. Both hosts transport text into
+that definition and apply the shared Rust source-range policy. Unknown ranges,
+prereleases, noncanonical spellings and excess text are refused before parsing
+the source program. Source std changes are resolved into ordinary common terms:
+integer conversion Debug uses its unit payload before1.97 and its overflow kind
+from1.97. Generated code therefore replays the selected source behavior even
+when the target compiler uses another std snapshot. The explicit context does
+not claim complete version-specific syntax or std coverage for every construct.
+
+Deferred controls cover both std models, invalid inputs, all target emissions,
+provenance and transport, and native replay on the current target compiler.
+CI additionally runs independent original/generated comparisons with matching
+Rust1.90,1.96,1.97 and1.99 compilers after JavaScript succeeds, at most two in
+parallel. It preserves source-version receipts and keeps the full requirements
+aggregate dependent on these comparisons. No new gate is an execution result.
+All broader grammar, ownership, semantics and source-context obligations remain.
