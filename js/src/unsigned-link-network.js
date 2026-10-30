@@ -1,8 +1,10 @@
 // Explicit exact-ID profile. Existing Number-profile APIs retain their own
 // input domain. Dense bridges are reversible coordinate changes, never new
 // global concept identities or semantic-equivalence certificates.
-import {LinkId,LinkMetadata,LinkType} from './primitives.js';
+import {LinkId,LinkMetadata,LinkType,ParseConfiguration} from './primitives.js';
 import {LinkNetwork} from './network.js';
+import {acceptNetworkProjection,acceptNetworkProjectionLink} from './network-projection-rules.js';
+import {allocateUnsignedSourceIdentities,readUnsignedSourceAllocationError} from './unsigned-source-document-rules.js';
 import {parseLinoStatements,decodeCanonicalStatements,hasMetaSublinks} from './lino-serialization.js';
 import {encodeLinkStatement} from './lino-serialization-write.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary,BinaryLinksError} from './link-network-binary.js';
@@ -55,6 +57,15 @@ export class UnsignedLink {
  * allocator and selected-syntax cache, including after deletion/exhaustion. */
 export class UnsignedLinkNetwork {
  _links=new Map();_terms=new Map();_conceptSyntax=new Map();_nextIdentity=UnsignedLinkId.from(1);
+ static parse(text,language,configuration=ParseConfiguration.default(),options={}){return createUnsignedSourceDocumentLinks(text,language,configuration,options).network;}
+ static parseWithRegistry(registry,text,language,configuration=ParseConfiguration.default(),options={}){return rebaseUnsignedLinkNetwork(LinkNetwork.parseWithRegistry(registry,text,language,configuration),options.firstIdentity??1,options).network;}
+ reconstructText(options={}){return createDenseUnsignedLinkNetwork(this,options).network.reconstructText();}
+ reconstructBytes(options={}){return createDenseUnsignedLinkNetwork(this,options).network.reconstructBytes();}
+ projectedLinks(projection='ConcreteSyntax'){
+  if(typeof projection!=='string'||!acceptNetworkProjection(projection))throw new TypeError('a network projection must be Lossless, ConcreteSyntax, AbstractSyntax or Semantic');
+  return this.links().filter(link=>acceptNetworkProjectionLink(projection,link.metadata().linkType??''));
+ }
+ projected_links(projection='ConcreteSyntax'){return this.projectedLinks(projection);}
  get nextIdentity(){return this._nextIdentity;}
  len(){return this._links.size;}
  links(){return [...this._links.values()].sort((first,second)=>first.id().compare(second.id()));}
@@ -122,6 +133,34 @@ export class UnsignedLinkNetwork {
   }
   return graph;
  }
+}
+
+/** A fresh, separate coordinate assignment. Complete inverse IDs are explicit;
+ * neither the source graph nor concept identities are silently merged. */
+export function rebaseUnsignedLinkNetwork(source,firstIdentity=1,options={}){
+ const bounds=limits(options),first=UnsignedLinkId.from(firstIdentity);
+ let exact=source;
+ if(source instanceof LinkNetwork){
+  if(source.len()>bounds.recordLimit)throw new BinaryLinksError('record resource limit exceeded');
+  exact=new UnsignedLinkNetwork();
+  for(const link of source.links())exact.insertLinkWithOptionalId(link.id(),link.references(),link.metadata().clone());
+  exact._terms=new Map([...source._terms].map(([term,id])=>[term,UnsignedLinkId.from(id)]));exact._conceptSyntax=new Map(source._conceptSyntax);
+ }
+ const view=createDenseUnsignedLinkNetwork(exact,bounds),reason=readUnsignedSourceAllocationError(first.words(),view.directory.length,bounds.recordLimit);
+ if(reason!=='')throw new BinaryLinksError(reason);
+ const plan=allocateUnsignedSourceIdentities(first.words(),view.directory.length,bounds.recordLimit),identities=[];
+ for(let at=3;at<plan.length;at+=2)identities.push(UnsignedLinkId.from(renderUnsignedLinkIdentity([plan[at],plan[at+1]])));
+ const nextIdentity=plan[1]===-1?null:UnsignedLinkId.from(renderUnsignedLinkIdentity([plan[1],plan[2]]));
+ return {network:restoreDenseUnsignedLinkNetwork(view.network,identities,nextIdentity,bounds),sourceIdentities:view.directory,identities};
+}
+/** Registered source grammars use the same dispatch before exact allocation. */
+export function createUnsignedSourceDocumentLinksWithRegistry(registry,text,language,configuration=ParseConfiguration.default(),options={}){
+ return rebaseUnsignedLinkNetwork(LinkNetwork.parseWithRegistry(registry,text,language,configuration),options.firstIdentity??1,options);
+}
+/** Default ordinary parsing produces a CST; optional projections keep the full
+ * exact source network available. All original source configuration is passed. */
+export function createUnsignedSourceDocumentLinks(text,language,configuration=ParseConfiguration.default(),options={}){
+ return rebaseUnsignedLinkNetwork(LinkNetwork.parse(text,language,configuration),options.firstIdentity??1,options);
 }
 
 function limits(options){

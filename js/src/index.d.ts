@@ -2059,7 +2059,21 @@ export class UnsignedLink {
   setMetadata(metadata: LinkMetadata): void;
   clone(): UnsignedLink;
 }
+export interface UnsignedSourceDocumentOptions extends BinaryLinksOptions {
+  firstIdentity?: UnsignedLinkIdValue;
+}
+export interface RebasedUnsignedLinkNetwork {
+  network: UnsignedLinkNetwork;
+  sourceIdentities: UnsignedLinkId[];
+  identities: UnsignedLinkId[];
+}
 export class UnsignedLinkNetwork {
+  static parse(text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): UnsignedLinkNetwork;
+  static parseWithRegistry(registry: ParserRegistry, text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): UnsignedLinkNetwork;
+  reconstructText(options?: BinaryLinksOptions): string;
+  reconstructBytes(options?: BinaryLinksOptions): Uint8Array;
+  projectedLinks(projection?: NetworkProjectionValue): UnsignedLink[];
+  projected_links(projection?: NetworkProjectionValue): UnsignedLink[];
   readonly nextIdentity: UnsignedLinkId | null;
   len(): number;
   links(): UnsignedLink[];
@@ -2082,10 +2096,20 @@ export interface DenseUnsignedLinkNetwork {
   directory: UnsignedLinkId[];
   nextIdentity: UnsignedLinkId | null;
 }
+export function rebaseUnsignedLinkNetwork(source: LinkNetwork | UnsignedLinkNetwork, firstIdentity?: UnsignedLinkIdValue, options?: BinaryLinksOptions): RebasedUnsignedLinkNetwork;
+export function createUnsignedSourceDocumentLinks(text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): RebasedUnsignedLinkNetwork;
+export function createUnsignedSourceDocumentLinksWithRegistry(registry: ParserRegistry, text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): RebasedUnsignedLinkNetwork;
 export function createDenseUnsignedLinkNetwork(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): DenseUnsignedLinkNetwork;
 export function restoreDenseUnsignedLinkNetwork(dense: LinkNetwork, directory: UnsignedLinkIdValue[], nextIdentity: UnsignedLinkIdValue | null, options?: BinaryLinksOptions): UnsignedLinkNetwork;
 export function encodeUnsignedLinkNetworkBinary(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): Uint8Array;
 export function decodeUnsignedLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export interface RebasedUnsignedTypedProgramLinks extends RebasedUnsignedLinkNetwork {
+  root: UnsignedLinkId;
+}
+export function rebaseUnsignedTypedProgramLinks(packet: { network: LinkNetwork | UnsignedLinkNetwork; root: UnsignedLinkIdValue }, firstIdentity?: UnsignedLinkIdValue, options?: BinaryLinksOptions): RebasedUnsignedTypedProgramLinks;
+export function createUnsignedTypedProgramLinks(source: string, language: string, sourceOptions?: Parameters<typeof createTypedProgramLinks>[2], identityOptions?: UnsignedSourceDocumentOptions): RebasedUnsignedTypedProgramLinks;
+export function createUnsignedRustSourceOwnerProgramLinks(source: string, sourceOptions?: {sourceVersion?: string}, identityOptions?: UnsignedSourceDocumentOptions): RebasedUnsignedTypedProgramLinks;
+export function emitUnsignedTypedProgramLinks(network: UnsignedLinkNetwork, root: UnsignedLinkIdValue, target: string, emissionOptions?: TypedProgramLinksEmissionOptions, identityOptions?: BinaryLinksOptions): TypedProgramLinksEmission;
 export function createUnsignedLinkIdentityProgramLinks(): TypedProgramLinks;
 
 export type MetaLanguageArchiveKind = 'concrete syntax' | 'abstract syntax' | 'grammar'

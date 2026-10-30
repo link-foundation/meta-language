@@ -11225,3 +11225,76 @@ constant interpretation. The source interface follows the
 [standard str byte-length contract](https://doc.rust-lang.org/std/primitive.str.html#method.len),
 which records const availability since Rust 1.39.0; the controls remain bounded
 to the declared Rust profile.
+
+
+### Exact unsigned source document identities draft
+
+Source document factories now have a draft for explicit unsigned 64-bit link
+identities in both packages. Ordinary source parsing, including registered
+parser dispatch and its original configuration, produces the complete source
+network before an explicit fresh coordinate assignment. All ordered links and
+references, including dangling references, repeated edges and cycles, retain a
+complete old-to-new directory. The shared JavaScript allocation definition
+performs exact limb arithmetic and is automatically emitted to Rust. It refuses
+invalid first identities, exceeded directory bounds and insufficient remaining
+identity space before creating any replacement graph. The largest actual
+identity remains usable; exhaustion has its distinct cursor representation.
+The input graph and its original allocation history remain unchanged.
+
+`createUnsignedSourceDocumentLinks` / `create_unsigned_source_document_links`
+and their registered-parser variants expose the complete inverse directory.
+`rebaseUnsignedLinkNetwork` / `rebase_unsigned_link_network` apply the same
+transport to an already parsed graph. JavaScript's explicit exact graph also
+provides ordinary and registered parse methods, text/byte reconstruction and
+original-link projections. Native graphs use the corresponding existing graph
+methods. Source/CST data is the default; optional AST and semantic selections
+return original exact links while the complete concrete network remains
+available. A projection never substitutes newly numbered or rewritten nodes.
+
+This operation allocates a separate graph's coordinates. It does not silently
+append to an existing global space, merge concepts by name, or prove two
+concepts equal in meaning. Exact source integration must preserve that boundary
+when shared global spaces are extended. Remaining schema, CLI, transformation
+and concept APIs still need direct exact-ID integration throughout their full
+scope. The existing safe-Number profile and its original refusals remain.
+
+Both packages retain complete metadata, term registrations and selected syntax
+through the reversible dense bridge and existing exact snapshot codec.
+Independent unexecuted controls include exact limb carries, neighbors above the
+Number boundary, the final identities, exhaustion without partial mutation,
+repeated/dangling/cyclic edges, complete metadata/cache transport, registry
+selection, byte documents and original JavaScript, Rust, TypeScript, Markdown,
+JSON and Python source documents. Native controls compare actual future
+JavaScript snapshots and exact identities. The editable allocation definition
+has text/binary and four-emission controls. Source authors only serialize these
+fixture declarations; they do not parse or execute the represented documents.
+No runtime parity, whole-language coverage or completion evidence is claimed.
+
+
+Exact coordinate transport also extends into the checked semantic program
+pipeline. `createUnsignedTypedProgramLinks` and
+`createUnsignedRustSourceOwnerProgramLinks` retain the original parser/checker
+choices and complete semantic root, with matching native factories and an
+explicit native source-version variant. `rebaseUnsignedTypedProgramLinks` /
+`rebase_unsigned_typed_program_links` transport any existing typed packet with
+its actual stored root. Every inverse source identity remains available; a
+missing or merely referenced root refuses. These helpers allocate separate
+coordinates and preserve original graph contents and source-owner provenance.
+
+`emitUnsignedTypedProgramLinks` / `emit_unsigned_typed_program_links` use an
+explicit reversible local view of the complete current exact graph and its
+actual root. They delegate scope, type, semantic and target checks to the
+existing emitter, with explicit emission choices passed unchanged. They never
+restore a saved original source or accept a previously cached emission as the
+meaning of an edited graph. JavaScript, Rust, Lean and Rocq outputs keep the
+same existing contract and remaining language-coverage obligations.
+
+Deferred controls now carry independently specified JavaScript and Rust source
+programs through exact typed import, text/binary transport and all four targets,
+including actual source owners and the scalar const-call draft. They compare
+original checked-packet emissions with the exact graph's current emissions,
+retain future JavaScript result checks, compare actual future native/JavaScript
+graphs and emitted code, refuse deleted roots, and retain source versions and
+invalid emission-choice checks. No control or represented source runs during
+authoring. This code draft does not establish complete translation semantics,
+full exact-ID integration or any remaining requirement's execution evidence.

@@ -125,6 +125,8 @@ mod typed_program_links;
 mod unsigned_link_identity_program;
 mod unsigned_link_identity_rules;
 mod unsigned_link_network;
+mod unsigned_source_document_rules;
+mod unsigned_typed_program_links;
 pub use link_allocation_program::create_link_allocation_program_links;
 pub use link_allocation_rules::{accept_link_allocation_capacity, accept_link_allocation_word};
 pub use record_property_order::{
@@ -532,9 +534,17 @@ pub use typed_program_links::{
 };
 pub use unsigned_link_identity_program::create_unsigned_link_identity_program_links;
 pub use unsigned_link_network::{
-    DenseUnsignedLinkNetwork, UnsignedLinksError, create_dense_unsigned_link_network,
-    decode_unsigned_link_network_binary, encode_unsigned_link_network_binary,
+    DenseUnsignedLinkNetwork, RebasedUnsignedLinkNetwork, UnsignedLinksError,
+    create_dense_unsigned_link_network, create_unsigned_source_document_links,
+    create_unsigned_source_document_links_with_registry, decode_unsigned_link_network_binary,
+    encode_unsigned_link_network_binary, rebase_unsigned_link_network,
     restore_dense_unsigned_link_network,
+};
+pub use unsigned_typed_program_links::{
+    RebasedUnsignedTypedProgramLinks, create_unsigned_rust_source_owner_program_links,
+    create_unsigned_rust_source_owner_program_links_with_source_version,
+    create_unsigned_typed_program_links, emit_unsigned_typed_program_links,
+    emit_unsigned_typed_program_links_with_options, rebase_unsigned_typed_program_links,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 

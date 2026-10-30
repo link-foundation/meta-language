@@ -503,6 +503,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "unsigned-link-identity-program.lino" => {
             Some(include_str!("../data/unsigned-link-identity-program.lino"))
         }
+        "unsigned-source-document-program.lino" => Some(include_str!(
+            "../data/unsigned-source-document-program.lino"
+        )),
         "utf16-method-emission-program.lino" => {
             Some(include_str!("../data/utf16-method-emission-program.lino"))
         }

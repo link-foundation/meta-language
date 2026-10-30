@@ -27,7 +27,8 @@ export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './
 export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 export { UnsignedLinkId, UnsignedLink, UnsignedLinkNetwork, createDenseUnsignedLinkNetwork,
   restoreDenseUnsignedLinkNetwork, encodeUnsignedLinkNetworkBinary,
-  decodeUnsignedLinkNetworkBinary } from './unsigned-link-network.js';
+  decodeUnsignedLinkNetworkBinary, rebaseUnsignedLinkNetwork, createUnsignedSourceDocumentLinks, createUnsignedSourceDocumentLinksWithRegistry } from './unsigned-link-network.js';
+export {rebaseUnsignedTypedProgramLinks,createUnsignedTypedProgramLinks,createUnsignedRustSourceOwnerProgramLinks,emitUnsignedTypedProgramLinks} from './unsigned-typed-program-links.js';
 export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,
   readMetaLanguageArchiveNetworkText,
   readMetaLanguageArchiveText, metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary,

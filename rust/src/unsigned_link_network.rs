@@ -211,6 +211,96 @@ pub fn restore_dense_unsigned_link_network(
     Ok(graph)
 }
 
+/// An explicit fresh coordinate assignment and its complete inverse mapping.
+/// The source network is unchanged; this supplies no concept equivalence proof.
+#[derive(Clone, Debug)]
+pub struct RebasedUnsignedLinkNetwork {
+    /// Source, syntax, concepts, metadata and registrations under exact new IDs.
+    pub network: LinkNetwork,
+    /// Original ID at each local directory position, including dangling refs.
+    pub source_identities: Vec<LinkId>,
+    /// New ID at the same local directory position.
+    pub identities: Vec<LinkId>,
+}
+
+/// Allocate fresh exact coordinates while retaining complete graph contents.
+/// # Errors
+/// Refuses zero IDs, exceeded graph/directory bounds and unsigned exhaustion.
+pub fn rebase_unsigned_link_network(
+    source: &LinkNetwork,
+    first_identity: LinkId,
+    options: BinaryLinksOptions,
+) -> Result<RebasedUnsignedLinkNetwork, UnsignedLinksError> {
+    let view = create_dense_unsigned_link_network(source, options)?;
+    let first = words(first_identity)?;
+    let count = u32::try_from(view.directory.len()).map_or(f64::INFINITY, f64::from);
+    let limit = u32::try_from(options.record_limit).map_or(9_007_199_254_740_991.0, f64::from);
+    let reason = crate::unsigned_source_document_rules::read_unsigned_source_allocation_error(
+        &first, count, limit,
+    );
+    if !reason.is_empty() {
+        return Err(fail(reason));
+    }
+    let plan = crate::unsigned_source_document_rules::allocate_unsigned_source_identities(
+        &first, count, limit,
+    );
+    if plan.len() != 3 + 2 * view.directory.len() {
+        return Err(fail("source graph allocation lost its complete directory"));
+    }
+    let identities = plan[3..]
+        .chunks_exact(2)
+        .map(|pair| identity(pair[0], pair[1]))
+        .collect::<Result<Vec<_>, _>>()?;
+    let next_identity = if plan[1] < 0.0 {
+        None
+    } else {
+        Some(identity(plan[1], plan[2])?)
+    };
+    let network = restore_dense_unsigned_link_network(
+        &DenseUnsignedLinkNetwork {
+            network: view.network,
+            directory: identities.clone(),
+            next_identity,
+        },
+        options,
+    )?;
+    Ok(RebasedUnsignedLinkNetwork {
+        network,
+        source_identities: view.directory,
+        identities,
+    })
+}
+
+/// Parse an ordinary concrete source document into a fresh exact-ID graph.
+/// Optional AST/semantic selection uses the complete resulting source network.
+/// # Errors
+/// Returns source graph allocation and graph/directory resource errors.
+pub fn create_unsigned_source_document_links(
+    text: &str,
+    language: &str,
+    configuration: crate::ParseConfiguration,
+    first_identity: LinkId,
+    options: BinaryLinksOptions,
+) -> Result<RebasedUnsignedLinkNetwork, UnsignedLinksError> {
+    let source = LinkNetwork::parse(text, language, configuration);
+    rebase_unsigned_link_network(&source, first_identity, options)
+}
+
+/// Preserve registered parser dispatch before assigning exact source IDs.
+/// # Errors
+/// Returns source graph allocation and graph/directory resource errors.
+pub fn create_unsigned_source_document_links_with_registry(
+    registry: &crate::ParserRegistry,
+    text: &str,
+    language: &str,
+    configuration: crate::ParseConfiguration,
+    first_identity: LinkId,
+    options: BinaryLinksOptions,
+) -> Result<RebasedUnsignedLinkNetwork, UnsignedLinksError> {
+    let source = registry.parse(text, language, configuration);
+    rebase_unsigned_link_network(&source, first_identity, options)
+}
+
 /// Encode all u64 identities, original allocator and complete network state.
 /// # Errors
 /// Returns malformed graph, metadata, cache or resource errors.
