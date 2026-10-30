@@ -16,6 +16,7 @@ impl RustParser {
             close.end,
         ));
         let actual = self.origins.origin(&object, path);
+        self.origins.check_owned_origin(&actual, range)?;
         let receiver = actual
             .static_byte_array_read_view()
             .unwrap_or_else(|| actual.clone());
@@ -97,6 +98,11 @@ impl RustParser {
             .source_binding_identity
             .clone()
             .or(actual.source_place_binding_identity.clone());
+        origin.source_place_loan_binding_identities =
+            crate::translation::rust_owned_binding_rules::project_rust_owned_loan_bindings(
+                actual.source_binding_identity.as_deref().unwrap_or(""),
+                &actual.source_loan_binding_identities,
+            );
         self.origins.mark(&result, origin);
         Ok(result)
     }

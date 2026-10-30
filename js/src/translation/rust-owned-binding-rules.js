@@ -28,6 +28,27 @@ export function expireRustOwnedBindingState(state){return state==='available'||s
  * @param {boolean} transferred @param {boolean} fresh @returns {boolean} */
 export function acceptRustOwnedResultTransfer(binding,available,transferred,fresh){return binding?available:transferred||fresh;}
 
-/** @param {boolean} tracked @param {boolean} borrowed @param {boolean} named
+/** Legacy boundary when no explicit loan-union provenance is supplied.
+ * @param {boolean} tracked @param {boolean} borrowed @param {boolean} named
  * @param {boolean} same @returns {string} */
 export function readRustOwnedBorrowJoinError(tracked,borrowed,named,same){return tracked&&borrowed&&named&&!same?'alternative borrowed owners need their complete loan union proof':'';}
+
+/** Canonical loan identities are actual source bindings, never type names.
+ * @param {string[]} left @param {string[]} right @returns {string[]} */
+export function mergeRustOwnedLoanBindings(left,right){
+ let result=left.slice(0,0);
+ for(const identity of left)if(!result.includes(identity))result=[...result,identity];
+ for(const identity of right)if(!result.includes(identity))result=[...result,identity];
+ return result;
+}
+/** @param {string} identity @param {string[]} loans @returns {string[]} */
+export function projectRustOwnedLoanBindings(identity,loans){return mergeRustOwnedLoanBindings(identity===''?[]:[identity],loans);}
+/** Error precedence is independent of host map/parameter enumeration order.
+ * @param {string[]} states @returns {string} */
+export function readRustOwnedLoanReadError(states){
+ if(states.includes('dropped'))return readRustOwnedBindingReadError('dropped');
+ if(states.includes('moved'))return readRustOwnedBindingReadError('moved');
+ if(states.includes('possibly moved'))return readRustOwnedBindingReadError('possibly moved');
+ for(const state of states)if(state!=='available')return readRustOwnedBindingReadError('');
+ return '';
+}

@@ -776,6 +776,7 @@ impl RustParser {
             .expire_owned_bindings(&ownership_before, &origin);
         if origin.wrappers.is_empty() && !matches!(origin.ty, Some(Type::Array { .. })) {
             origin.source_place_binding_identity = None;
+            origin.source_place_loan_binding_identities.clear();
         }
         self.origins.mark(&result, origin);
         self.origins.scope = previous;

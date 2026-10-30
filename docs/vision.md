@@ -10627,6 +10627,24 @@ controls, with independent executable originals. Explicit legacy array-result
 profiles remain separate. All controls are still unexecuted drafts.
 
 Borrowed vector temporaries receive source identities too, and owning match
-bindings expire on arm exit. Conditional loans with different source owners
-require their full loan-union proof before admission; they are not silently
-merged into an ownerless reference. The shared policy records that boundary.
+bindings expire on arm exit. Conditional loans with different source owners retain an explicit union of
+all returning owners. They are never merged into an ownerless reference.
+The earlier diagnostic remains available when union provenance is absent.
+
+
+Borrowed branch results retain a canonical union of actual binding identities,
+including nested branches and match arms. Every later loan read checks all
+possible owners. Source admission therefore refuses if one possible owner was
+moved, becomes possibly moved or leaves its scope. Shared rules deduplicate
+identities and choose a deterministic unavailable-owner diagnostic independent
+of host map iteration order. The source type and the set of possible owners
+remain separate facts.
+
+Indexed loans and scalar dereference/reborrow operations preserve this union.
+A scalar copied into a value binding drops its loan provenance; an immediately
+borrowed source place retains it. Declared reference annotations copy the actual
+loan identities, and vector copies begin with independent ownership facts.
+Source index reads validate receiver ownership after evaluating their index.
+The unchanged earlier alternative-loan refusal has independent positive and
+negative original controls. These controls and generated policy assets remain
+unexecuted until full requirement drafting finishes.

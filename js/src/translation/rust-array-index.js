@@ -1,3 +1,5 @@
+import {projectRustOwnedLoanBindings} from './rust-owned-binding-rules.js';
+import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {projectRustStaticByteArrayReadOrigin} from './rust-byte-string-expressions.js';
 // Actual source ownership facts into the shared scalar read admission policy.
 import {unsupported} from './diagnostics.js';
@@ -8,6 +10,7 @@ import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners
 export function readRustScalarArrayIndex(parser,object,path){
  const open=parser.cursor.next(),index=parser.expr(path),close=parser.cursor.expect(']','array index');
  const span={start:object.span?.start??open.start,end:close.end},actual=parser.origins.origin(object,path),receiver=projectRustStaticByteArrayReadOrigin(actual)??actual;
+ checkRustOwnedOrigin(parser.origins,actual,span);
  const element=receiver.type?.kind==='array'?receiver.type.element:null;
  const receiverError=readRustScalarArrayIndexReceiverError(receiver.type?.kind??'',element?.kind??'',receiver.arraySourceModel??'',receiver.proven===true,receiver.wrappers.every(layer=>layer==='reference'||layer==='box'),receiver.arrayElementCopyEvidence===true);
  if(receiverError)throw unsupported('Rust scalar array index',receiverError,span);
@@ -19,5 +22,5 @@ export function readRustScalarArrayIndex(parser,object,path){
  const result={k:'index',object,index:position,span};
  const origin=element?parser.origins.typeOrigin(element,path):{type:null,path:[...path],wrappers:[],fields:null,textSourceModel:null,copyEvidence:true,proven:true,diverging:false,uncertain:false};
  const owner=readRustPointerIntegerContractOwner(receiver.sourceOwner,receiver.integerSourceOwnerConstraint??'');
- return parser.origins.mark(result,{...(owner?{...origin,sourceOwner:{kind:'primitive',path:[owner],arguments:[]}}:origin),sourcePlaceBindingIdentity:actual.sourceBindingIdentity??actual.sourcePlaceBindingIdentity??null});
+ return parser.origins.mark(result,{...(owner?{...origin,sourceOwner:{kind:'primitive',path:[owner],arguments:[]}}:origin),sourcePlaceBindingIdentity:actual.sourceBindingIdentity??actual.sourcePlaceBindingIdentity??null,sourcePlaceLoanBindingIdentities:projectRustOwnedLoanBindings(actual.sourceBindingIdentity??'',actual.sourceLoanBindingIdentities??[])});
 }

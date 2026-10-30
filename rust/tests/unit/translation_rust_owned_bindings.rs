@@ -36,6 +36,17 @@ fn owned_vector_bindings_preserve_consumption_and_unavailable_reads() {
     for row in data["premises"].as_array().unwrap() {
         let args = &row["args"];
         let actual = match row["operation"].as_str().unwrap() {
+            "mergeRustOwnedLoanBindings" => json!(rules::merge_rust_owned_loan_bindings(
+                &strings(args, 0),
+                &strings(args, 1)
+            )),
+            "projectRustOwnedLoanBindings" => json!(rules::project_rust_owned_loan_bindings(
+                text(args, 0),
+                &strings(args, 1)
+            )),
+            "readRustOwnedLoanReadError" => {
+                json!(rules::read_rust_owned_loan_read_error(&strings(args, 0)))
+            }
             "readRustOwnedBorrowJoinError" => json!(rules::read_rust_owned_borrow_join_error(
                 boolean(args, 0),
                 boolean(args, 1),

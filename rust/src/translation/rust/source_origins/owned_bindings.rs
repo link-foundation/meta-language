@@ -29,14 +29,20 @@ impl SourceOrigins {
         if !self.track_owned_bindings() {
             return Ok(());
         }
-        let Some(id) = origin.source_binding_identity.as_ref() else {
-            return Ok(());
-        };
-        let error = rules::read_rust_owned_binding_read_error(
-            self.source_binding_states
-                .get(id)
-                .map_or("", String::as_str),
+        let identities = rules::project_rust_owned_loan_bindings(
+            origin.source_binding_identity.as_deref().unwrap_or(""),
+            &origin.source_loan_binding_identities,
         );
+        let states = identities
+            .iter()
+            .map(|id| {
+                self.source_binding_states
+                    .get(id)
+                    .cloned()
+                    .unwrap_or_default()
+            })
+            .collect::<Vec<_>>();
+        let error = rules::read_rust_owned_loan_read_error(&states);
         if !error.is_empty() {
             return Err(unsupported("Rust owned binding", &error, span));
         }
@@ -51,6 +57,8 @@ impl SourceOrigins {
             self.next_source_binding_identity += 1;
             origin.source_binding_identity = Some(id.clone());
             origin.source_place_binding_identity = None;
+            origin.source_loan_binding_identities.clear();
+            origin.source_place_loan_binding_identities.clear();
             self.source_binding_states
                 .insert(id, "available".to_owned());
         }
