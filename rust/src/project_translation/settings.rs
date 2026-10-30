@@ -18,6 +18,14 @@ pub(super) fn apply(target: &mut SelfTranslationOptions, value: &Value) -> Resul
                 target.module_directory = serde_json::from_value(value.clone())
                     .map_err(|_| fail("invalid module directory"))?
             }
+            "rustSourceVersion" => {
+                target.rust_source_version = Some(
+                    value
+                        .as_str()
+                        .ok_or_else(|| fail("Rust sourceVersion must be a string"))?
+                        .to_owned(),
+                );
+            }
             "rustSharedArrayHandleSourceModel" => {
                 target.rust_shared_array_handle_source_model = value
                     .as_str()

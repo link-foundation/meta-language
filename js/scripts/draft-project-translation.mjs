@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import {analyzeSourceModuleRequests} from '../src/source-module-requests.js';
 import {createProjectTranslationArchive} from '../src/project-translation-archive.js';
 import {metaLanguageArchiveToText} from '../src/meta-language-archive.js';
+import {readRustSourceVersion} from '../src/translation/rust-source-versions.js';
 import { draftProjectTranslation } from '../src/project-translation.js';
 
 const languages = new Map([['.js', 'JavaScript'], ['.mjs', 'JavaScript'], ['.cjs', 'JavaScript'], ['.jsx','JavaScript'],
@@ -18,7 +19,8 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 /** Full tracked-file inventory. No dependency clones, installs, generated
  * scratch directories or language compiler processes are created.
  */
-export function materializeProjectTranslationInputs(project, { byteLimit = 128 * 1024 * 1024 } = {}) {
+export function materializeProjectTranslationInputs(project, { byteLimit = 128 * 1024 * 1024, rustSourceVersion } = {}) {
+  const selectedVersion=rustSourceVersion===undefined?undefined:readRustSourceVersion(rustSourceVersion).spelling;
   const root = realpathSync(project);
   const git = args => execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
   const revision = git(['rev-parse', 'HEAD']).trim();
@@ -39,6 +41,7 @@ export function materializeProjectTranslationInputs(project, { byteLimit = 128 *
     if (totalBytes > byteLimit) throw new TypeError('the complete project source inventory exceeds its byte budget');
     const source = decoder.decode(bytes);
     inputs.push({ identifier, language, source, imports: {}, options: {
+      ...(language==='Rust'&&selectedVersion!==undefined?{rustSourceVersion:selectedVersion}:{}),
       moduleDirectory: dirname(identifier) === '.' ? [] : dirname(identifier).split('/'),
     } });
     files.push({ identifier, indexObject: header[1], mode: header[0], bytes: bytes.length, sourceSha256: hash(bytes) });
@@ -91,12 +94,12 @@ export function draftTrackedProjectTranslationArchive(project,options={}){
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const options = {}, args = process.argv.slice(2);
   for (let index = 0; index < args.length; index += 1) {
-    if (!['--project', '--to', '--out'].includes(args[index]) || index + 1 >= args.length) throw new TypeError('usage: draft-project-translation.mjs --project <directory> --to <language> --out <links-file>');
+    if (!['--project', '--to', '--out', '--rust-source-version'].includes(args[index]) || index + 1 >= args.length) throw new TypeError('usage: draft-project-translation.mjs --project <directory> --to <language> --out <links-file> [--rust-source-version <version>]');
     const name = args[index].slice(2);
     if (Object.hasOwn(options, name)) throw new TypeError(`duplicate --${name}`);
     options[name] = args[++index];
   }
   if (!options.project || !options.to || !options.out) throw new TypeError('project, target language and Links output are required');
-  const packet=draftTrackedProjectTranslationArchive(options.project,{targetLanguage:options.to});
+  const packet=draftTrackedProjectTranslationArchive(options.project,{targetLanguage:options.to,...(options['rust-source-version']===undefined?{}:{rustSourceVersion:options['rust-source-version']})});
   writeFileSync(resolve(options.out),metaLanguageArchiveToText(packet,{nodeLimit:1000000,referenceLimit:4000000,byteLimit:128*1024*1024}));
 }

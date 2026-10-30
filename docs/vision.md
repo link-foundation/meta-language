@@ -11473,3 +11473,16 @@ shared version definitions rather than reimplementing std behavior. Deferred
 controls retain original narrowing-conversion inputs and independent expected
 error meanings across every declared std snapshot, both translation modes,
 diagnostics, complete signatures and single-read selectors; no controls have run.
+
+
+The ordinary translation command and tracked-project authoring commands expose
+`--rust-source-version`. This is a source interpretation selector, transported to
+the existing shared version rules; the native project worklist accepts the same
+per-module `rustSourceVersion` option as JavaScript. A mixed tracked inventory
+applies the source snapshot to Rust entries only, preserving each JavaScript and
+TypeScript entry's interpretation. Per-module project options retain their normal
+precedence over shared translation options. Archives keep complete original CSTs,
+selected module configuration and emitted products independently. Missing or
+repeated CLI selector values refuse, as do unsupported snapshots; no compiler
+version is inferred from the emitted target or a saved original source envelope.
+The draft and its deferred controls do not establish full project translation.

@@ -14,6 +14,7 @@ fn selected_source_std_reaches_every_self_translation_interpretation() {
             .arg("../experiments/self-translation-source-versions/products.mjs"));
     assert!(product.ok, "{}", product.stderr);
     let product = read_structured_data_lino(&product.stdout).unwrap();
+    check_project_source_contexts(&product);
     let directory = TemporaryDirectory::new("self-translation-source-std");
     let exported = regex::Regex::new(r"export \{ (\w+) as result \};").unwrap();
     let mut driver = String::new();
@@ -123,6 +124,32 @@ fn invalid_or_wrong_language_std_selectors_cannot_publish_a_translation() {
                     .message,
                 "Rust source version requires Rust source"
             );
+        }
+    }
+}
+
+fn check_project_source_contexts(product: &Value) {
+    for row in product["projectRows"].as_array().unwrap() {
+        let packet =
+            meta_language::create_project_translation_archive(&row["inputs"], &row["options"])
+                .unwrap();
+        for network in [
+            meta_language::LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+            meta_language::decode_link_network_binary(
+                &meta_language::encode_link_network_binary(
+                    &packet.network,
+                    meta_language::BinaryLinksOptions::default(),
+                )
+                .unwrap(),
+                meta_language::BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            let view =
+                meta_language::read_project_translation_archive(&network, packet.root, &json!({}))
+                    .unwrap();
+            assert_eq!(view.draft, row["draft"]);
+            assert_eq!(view.configuration, row["configuration"]);
         }
     }
 }

@@ -108,6 +108,9 @@ enum Command {
         /// Translate actual emitted code without restoring saved originals.
         #[arg(long)]
         semantic: bool,
+        /// Stable Rust source std snapshot, independent of the emitted target.
+        #[arg(long)]
+        rust_source_version: Option<String>,
     },
     /// Parse text into a lossless token network and verify it is clean.
     Verify {
@@ -378,7 +381,15 @@ fn main() {
             to,
             items,
             semantic,
-        } => translate(&file, from.as_deref(), &to, items, semantic),
+            rust_source_version,
+        } => translate(
+            &file,
+            from.as_deref(),
+            &to,
+            items,
+            semantic,
+            rust_source_version,
+        ),
         Command::Verify { language, text } => verify(&language, &text),
         Command::Infer {
             examples,
@@ -412,7 +423,14 @@ fn grammar(args: &[String]) {
     std::process::exit(output.exit_code);
 }
 
-fn translate(file: &Path, from: Option<&str>, to: &str, items: bool, semantic: bool) {
+fn translate(
+    file: &Path,
+    from: Option<&str>,
+    to: &str,
+    items: bool,
+    semantic: bool,
+    rust_source_version: Option<String>,
+) {
     let extension = file.extension().and_then(|extension| extension.to_str());
     let Some(from) = from.or_else(|| extension.and_then(self_translation_language)) else {
         eprintln!(
@@ -427,6 +445,7 @@ fn translate(file: &Path, from: Option<&str>, to: &str, items: bool, semantic: b
     });
     let options = meta_language::SelfTranslationOptions {
         semantic_translation: semantic,
+        rust_source_version,
         ..meta_language::SelfTranslationOptions::default()
     };
     match meta_language::self_translate_with(&source, from, to, &options) {

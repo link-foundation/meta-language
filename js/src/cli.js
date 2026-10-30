@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {TranslationError} from './translation/diagnostics.js';
 import { runGrammarCommand } from './grammar-interchange.js';
 import { SelfTranslationError, selfTranslate, selfTranslationLanguage } from './self-translation.js';
 import { runMetaLanguageArchiveCommand } from './meta-language-archive-cli.js';
@@ -29,7 +30,7 @@ const USAGE = 'usage: meta-language grammar <command> [options]; run meta-langua
   + '       meta-language exact-graph <file> [--input-binary] [--binary | --to <target>] [--root <decimal>] [--rebase <decimal>]\n'
   + '       meta-language exact-source <file> --language <language> [--first-id <decimal>] [--typed | --rust-source-owners] [--to <target> | --binary]\n'
   + '       meta-language translate --to <language> [--from <language>] [--items] <file>\n';
-const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] [--semantic] <file>\n'
+const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] [--semantic] [--rust-source-version <version>] <file>\n'
   + 'Translates a module between JavaScript, TypeScript and Rust; --from defaults to the file\'s extension\n'
   + 'and --items prints each top-level item\'s status instead of the translation.\n';
 
@@ -41,6 +42,10 @@ function runTranslateCommand(args, { readFile }) {
     if (arg === '--help' || arg === '-h') return { exitCode: 0, stdout: TRANSLATE_USAGE, stderr: '' };
     if (arg === '--items') options.items = true;
     else if (arg === '--semantic') options.semantic = true;
+    else if(arg==='--rust-source-version'){
+      if(options.rustSourceVersion!==undefined||index+1>=args.length||args[index+1].startsWith('-'))return {exitCode:2,stdout:'',stderr:'error: an explicit unique --rust-source-version value is required\n'+TRANSLATE_USAGE};
+      options.rustSourceVersion=args[++index];
+    }
     else if ((arg === '--from' || arg === '--to') && index + 1 < args.length) options[arg.slice(2)] = args[++index];
     else if (!arg.startsWith('--') && options.file === null) options.file = arg;
     else return { exitCode: 2, stdout: '', stderr: `error: unexpected argument ${arg}\n${TRANSLATE_USAGE}` };
@@ -49,13 +54,13 @@ function runTranslateCommand(args, { readFile }) {
   const from = options.from ?? selfTranslationLanguage(options.file.split('.').pop());
   if (from === null) return { exitCode: 2, stdout: '', stderr: `error: pass --from; the extension of ${options.file} names no language\n` };
   try {
-    const result = selfTranslate(readFile(options.file), from, options.to, { semanticTranslation: options.semantic });
+    const result = selfTranslate(readFile(options.file), from, options.to, { semanticTranslation: options.semantic, rustSourceVersion:options.rustSourceVersion });
     const stdout = options.items
       ? result.items.map(({ term, start, end, status, reason }) => `${start}..${end} ${term} ${status}${reason ? ` (${reason})` : ''}\n`).join('')
       : result.code;
     return { exitCode: 0, stdout, stderr: '' };
   } catch (error) {
-    if (!(error instanceof SelfTranslationError)) throw error;
+    if (!(error instanceof SelfTranslationError)&&!(error instanceof TranslationError)) throw error;
     return { exitCode: 1, stdout: '', stderr: `error: ${error.message}\n` };
   }
 }
