@@ -10858,3 +10858,12 @@ Rust1.90,1.96,1.97 and1.99 compilers after JavaScript succeeds, at most two in
 parallel. It preserves source-version receipts and keeps the full requirements
 aggregate dependent on these comparisons. No new gate is an execution result.
 All broader grammar, ownership, semantics and source-context obligations remain.
+
+Immediate standard integer Result predicates now have a source draft for
+`is_ok_and`: actual target integer owners provide the callback context, callable
+construction is eager after the conversion input, and invocation happens only
+on successful conversion. Shared Links-backed JavaScript decisions generate
+Rust automatically. Deferred originals cover interval boundaries, immutable
+Copy captures, named predicates, function-pointer factories and panic order.
+These are authored controls, not execution evidence. Escaping Result values,
+error callbacks, general mapping and complete ownership remain obligations.

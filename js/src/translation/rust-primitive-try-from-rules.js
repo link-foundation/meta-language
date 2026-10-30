@@ -11,7 +11,7 @@ export function acceptRustPrimitiveTryFromImport(path,ordinary,shadowed){return 
  * @param {boolean} proven @param {number} layers @returns {boolean} */
 export function acceptRustPrimitiveTryFromSource(kind,bits,signed,owner,path,children,proven,layers){return kind==='fixed'&&acceptRustPrimitiveFromMethod(path,'from')&&acceptRustPrimitiveFromSource(kind,bits,signed,owner,path,children,proven,layers);}
 /** @param {string} method @returns {number} */
-export function readRustPrimitiveTryFromConsumerArity(method){return method==='is_ok'||method==='is_err'||method==='unwrap_or_default'||method==='unwrap'?0:method==='unwrap_or'||method==='expect'?1:method==='map_or'?2:-1;}
+export function readRustPrimitiveTryFromConsumerArity(method){return method==='is_ok'||method==='is_err'||method==='unwrap_or_default'||method==='unwrap'?0:method==='unwrap_or'||method==='expect'||method==='is_ok_and'?1:method==='map_or'?2:-1;}
 /** Exact range tests; construct only bounds representable in the input domain.
  * @param {number} sourceBits @param {boolean} sourceSigned
  * @param {number} targetBits @param {boolean} targetSigned @returns {number} */
@@ -28,10 +28,10 @@ export function planRustPrimitiveTryFromConsumer(method,guards){
  const lower=['input','minimum','ge'],upper=['input','maximum','le'];
  const condition=guards===0?['true']:guards===1?lower:guards===2?upper:lower.concat(upper,['and']);
  const failure=method==='unwrap'?['panic prefix'].concat(planRustPrimitiveTryFromFailureDebug(guards),['concat','raise']):method==='expect'?['message','panic prefix'].concat(planRustPrimitiveTryFromFailureDebug(guards),['concat','concat','raise']):[];
- return testRustPrimitiveTryFromPanicConsumer(method)?condition.concat(['success'],failure,['if']):method==='is_ok'?condition:method==='is_err'?condition.concat(['not']):condition.concat(['success',method==='unwrap_or_default'?'default':'fallback','if']);
+ return testRustPrimitiveTryFromPanicConsumer(method)?condition.concat(['success'],failure,['if']):method==='is_ok'?condition:method==='is_err'?condition.concat(['not']):method==='is_ok_and'?condition.concat(['predicate','false','if']):condition.concat(['success',method==='unwrap_or_default'?'default':'fallback','if']);
 }
 /** @param {string} method @param {string} target @param {string} mapper @returns {string} */
-export function readRustPrimitiveTryFromResultOwner(method,target,mapper){return method==='is_ok'||method==='is_err'?'bool':method==='unwrap_or'||method==='unwrap_or_default'||testRustPrimitiveTryFromPanicConsumer(method)?target:method==='map_or'?mapper:'';}
+export function readRustPrimitiveTryFromResultOwner(method,target,mapper){return method==='is_ok'||method==='is_err'||method==='is_ok_and'?'bool':method==='unwrap_or'||method==='unwrap_or_default'||testRustPrimitiveTryFromPanicConsumer(method)?target:method==='map_or'?mapper:'';}
 
 /** @param {string} consumer @returns {boolean} */
 export function testRustPrimitiveTryFromPanicConsumer(consumer){return consumer==='unwrap'||consumer==='expect';}
@@ -53,3 +53,8 @@ export function readRustPrimitiveTryFromVersionedFailureDebug(direction,minor){
  const model=readRustIntegerConversionErrorDebugModel(minor);
  return model==='unit payload'?'TryFromIntError(())':model==='overflow kind'?(direction==='negative error'?'TryFromIntError(NegOverflow)':'TryFromIntError(PosOverflow)'):'';
 }
+
+/** Actual callback signature, not its spelling, determines admission.
+ * @param {string} kind @param {number} parameters @param {number} layers
+ * @param {boolean} parameter @param {boolean} result @returns {string} */
+export function readRustPrimitiveTryFromPredicateError(kind,parameters,layers,parameter,result){return kind==='function'&&parameters===1&&layers===0&&parameter&&result?'':'a Result predicate needs a direct one-argument callable with its actual integer parameter and Boolean result';}

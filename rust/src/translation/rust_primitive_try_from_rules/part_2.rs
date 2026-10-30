@@ -9,7 +9,7 @@ pub fn read_rust_primitive_try_from_consumer_arity(method: &str) -> f64 {
         || (method == "unwrap")
     {
         0f64
-    } else if (method == "unwrap_or") || (method == "expect") {
+    } else if ((method == "unwrap_or") || (method == "expect")) || (method == "is_ok_and") {
         1f64
     } else if method == "map_or" {
         2f64
@@ -207,11 +207,29 @@ pub fn plan_rust_primitive_try_from_consumer(method: &str, guards: f64) -> Vec<S
                                     )
                                 }
                             }
-                        } else {
+                        } else if method == "is_ok_and" {
                             {
                                 let source_ml_concat_value32 = condition;
                                 {
                                     let source_ml_concat_value33 = vec![
+                                        String::from("predicate"),
+                                        String::from("false"),
+                                        String::from("if"),
+                                    ];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<String>::new(),
+                                            source_ml_concat_value32,
+                                        ),
+                                        source_ml_concat_value33,
+                                    )
+                                }
+                            }
+                        } else {
+                            {
+                                let source_ml_concat_value34 = condition;
+                                {
+                                    let source_ml_concat_value35 = vec![
                                         String::from("success"),
                                         if method == "unwrap_or_default" {
                                             String::from("default")
@@ -223,9 +241,9 @@ pub fn plan_rust_primitive_try_from_consumer(method: &str, guards: f64) -> Vec<S
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<String>::new(),
-                                            source_ml_concat_value32,
+                                            source_ml_concat_value34,
                                         ),
-                                        source_ml_concat_value33,
+                                        source_ml_concat_value35,
                                     )
                                 }
                             }
@@ -244,7 +262,7 @@ pub fn read_rust_primitive_try_from_result_owner(
     target: &str,
     mapper: &str,
 ) -> String {
-    if (method == "is_ok") || (method == "is_err") {
+    if ((method == "is_ok") || (method == "is_err")) || (method == "is_ok_and") {
         String::from("bool")
     } else if ((method == "unwrap_or") || (method == "unwrap_or_default"))
         || self::test_rust_primitive_try_from_panic_consumer(method)
@@ -334,5 +352,24 @@ pub fn read_rust_primitive_try_from_versioned_failure_debug(direction: &str, min
                 String::new()
             }
         }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_try_from_predicate_error(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> String {
+    if ((((kind == "function") && (parameters == 1f64)) && (layers == 0f64)) && parameter) && result
+    {
+        String::new()
+    } else {
+        String::from(
+            "a Result predicate needs a direct one-argument callable with its actual integer parameter and Boolean result",
+        )
     }
 }

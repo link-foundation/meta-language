@@ -214,7 +214,61 @@ impl RustParser {
             .expect("(", Some("primitive TryFrom consumer"))?;
         let mut defaults = Vec::new();
         let mut mapper_owner = String::new();
-        if arity > 0.0 {
+        let mut predicate = None;
+        if consumer.value == "is_ok_and" {
+            let parameter = origin(
+                rust_fixed_type(&owner).ok_or_else(|| {
+                    type_error("the Result predicate needs its target type", None)
+                })?,
+                &owner,
+                path,
+            );
+            let result = origin(BOOL, "bool", path);
+            let mut expected = SourceOrigin::with_type(
+                Type::Function {
+                    params: vec![parameter.ty.clone().unwrap()],
+                    ret: Box::new(BOOL),
+                },
+                path,
+                Vec::new(),
+            );
+            expected.copy_evidence = Some(());
+            expected.callable_parameters = Some(vec![parameter.clone()]);
+            expected.callable_result = Some(Box::new(result.clone()));
+            let callback =
+                self.read_expected_copy_closure_result_mode(path, Some(&expected), false)?;
+            let callable = self.origins.origin(&callback, path);
+            let actual = callable
+                .callable_parameters
+                .as_ref()
+                .and_then(|values| values.first());
+            let output = callable.callable_result.as_deref();
+            let parameters = match &callable.ty {
+                Some(Type::Function { params, .. }) => count(params.len()),
+                _ => -1.0,
+            };
+            let error = rules::read_rust_primitive_try_from_predicate_error(
+                callable.ty.as_ref().map_or("", Type::kind),
+                parameters,
+                count(callable.wrappers.len()),
+                actual.is_some_and(SourceOrigin::copy_closure_parameter),
+                output.is_some_and(|value| {
+                    value.proven && value.ty == Some(BOOL) && value.wrappers.is_empty()
+                }),
+            );
+            if !error.is_empty() {
+                return Err(unsupported(
+                    "Rust primitive TryFrom predicate",
+                    &error,
+                    callback.span,
+                ));
+            }
+            self.origins
+                .argument(actual.unwrap(), &parameter, callback.span)?;
+            self.origins
+                .argument(output.unwrap(), &result, callback.span)?;
+            predicate = Some((callback, callable));
+        } else if arity > 0.0 {
             defaults.push(self.expr(path, Options::default())?);
             if arity == 2.0 {
                 self.cursor.expect(",", Some("primitive TryFrom mapper"))?;
@@ -347,7 +401,7 @@ impl RustParser {
         let mut captures = vec![(first, source_type.clone(), input)];
         let mut fallback = None;
         let panicking = rules::test_rust_primitive_try_from_panic_consumer(&consumer.value);
-        if arity > 0.0 {
+        if arity > 0.0 && predicate.is_none() {
             let actual = facts(self, &defaults[0], path);
             let literal = matches!(defaults[0].node, SNode::Num { ty: None, .. })
                 || matches!(&defaults[0].node,SNode::Unary{op:UnaryOp::Neg,arg}if matches!(arg.node,SNode::Num{ty:None,..}));
@@ -409,6 +463,26 @@ impl RustParser {
                 defaults.remove(0),
             ));
         }
+        let predicate_local = if let Some((callback, callable)) = predicate {
+            let name = self.fresh_product_binding();
+            let node = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                callback.span.or(range),
+            );
+            self.origins.mark(&node, callable.clone());
+            captures.push((
+                name,
+                callable.ty.ok_or_else(|| {
+                    type_error("the Result predicate lost its callable type", range)
+                })?,
+                callback,
+            ));
+            Some(node)
+        } else {
+            None
+        };
         let Type::Fixed {
             bits: source_bits, ..
         } = source_type
@@ -508,6 +582,16 @@ impl RustParser {
                     let message = pop(&mut stack, range)?;
                     stack.push(SExpr::new(SNode::Math{op:crate::translation::rust_panic_value_rules::read_rust_panic_value_operation(),name:"Rust primitive conversion panic message".to_owned(),args:vec![super::SArrayItem{value:message,spread:false}]},range));
                 }
+                "predicate" => stack.push(SExpr::new(
+                    SNode::App {
+                        func: Box::new(predicate_local.clone().ok_or_else(|| {
+                            type_error("the Result predicate capture is required", range)
+                        })?),
+                        args: vec![converted.clone()],
+                    },
+                    range,
+                )),
+                "false" => stack.push(SExpr::new(SNode::Bool { value: false }, range)),
                 "true" => stack.push(SExpr::new(SNode::Bool { value: true }, range)),
                 "success" => stack.push(converted.clone()),
                 "default" => stack.push(SExpr::new(
