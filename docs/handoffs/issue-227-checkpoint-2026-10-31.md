@@ -5,6 +5,26 @@ a check point with handoff document updated, everything must be committed and
 pushed and stop.” Resume only on user instruction. This checkpoint is not a
 completion claim; the full requirements draft remains unfinished and unverified.
 
+## Detailed remaining-work plan
+
+The user subsequently requested detailed planning of every undrafted and unfinished
+requirement. See [the continuation plan](issue-227-remaining-work-plan-2026-10-31.md)
+for ordered milestones, dependencies, 13 work packages and a complete requirement
+index. Its linked appendices contain individual checklists for all
+[80 unmapped requirements](issue-227-unmapped-requirements-2026-10-31.md) and
+[393 mapped requirements needing full-scope review](issue-227-mapped-requirements-review-2026-10-31.md),
+including all 1,017 declared verification cells, exact scopes, assertions, fixtures,
+implementation references and future evidence paths.
+
+These are planning classifications, not an audit proving full drafting. Mapped
+requirements are not marked done; missing mappings may hide existing code that
+must be found before creating duplicates. The plan preserves all current manifest
+rows and makes the next action explicit: statically audit full-scope code/control
+coverage, then select complete batches by the own-code construct inventory.
+Implementation remains paused. No tests, compilation or CI feedback were used to
+produce this documentation update. The plan is based on checkpoint `9405c25f` and
+the manifest hash recorded in its header; it does not replace the vision.
+
 ## Authoritative state
 
 - Repository: link-foundation/meta-language.
