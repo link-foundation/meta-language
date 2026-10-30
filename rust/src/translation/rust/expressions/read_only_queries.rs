@@ -170,7 +170,11 @@ impl RustParser {
         if segments.len() < 2 || segments.last().is_none_or(|name| name != "new") {
             return Ok(None);
         }
-        let owner = self.named_source_type_owner(&segments[..segments.len() - 1], Vec::new());
+        let owner = self
+            .type_alias_string_member_owner(segments, path)
+            .unwrap_or_else(|| {
+                self.named_source_type_owner(&segments[..segments.len() - 1], Vec::new())
+            });
         if owner.kind != "library"
             || !accept_rust_read_only_query_owner(
                 "string empty",

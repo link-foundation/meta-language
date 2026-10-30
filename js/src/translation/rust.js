@@ -1,3 +1,4 @@
+import {readRustTypeAliasStringMemberOwner} from './rust-type-aliases.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
@@ -1728,8 +1729,8 @@ class RustParser {
         this.origins.box(segments.slice(0, -1), resolvedOwner, path, range);
         return this.origins.wrap(args[0], path, 'box');
       }
-      if (name === 'String::from') {
-        if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), name)) throw unsupported('Rust type namespace body constructor', 'String::from requires a separate actual owner and argument proof', range);
+      if (name === 'String::from'||segments.at(-1)==='from'&&readRustTypeAliasStringMemberOwner(this,segments,path)) {
+        if (!acceptRustTypeNamespaceBodyConstructor(Boolean(this.typeNamespaceModel), 'String::from')) throw unsupported('Rust type namespace body constructor', 'String::from requires a separate actual owner and argument proof', range);
         if (args.length !== 1) throw new TranslationError('type', 'String::from expects 1 argument', range);
         const expression = this.origins.conversion({ k: 'toString', arg: args[0], span: range }, path);
         if (this.localValueStateModel) this.origins.mark(expression, {

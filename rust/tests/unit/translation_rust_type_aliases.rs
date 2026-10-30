@@ -119,3 +119,26 @@ fn primitive_alias_members_require_complete_matching_owner_facts() {
         );
     }
 }
+
+#[test]
+fn owned_string_alias_members_keep_the_actual_library_owner() {
+    super::unsigned_source_documents::require_versions();
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-type-aliases.lino"
+    ))
+    .unwrap();
+    for row in fixture["stringMembers"].as_array().unwrap() {
+        assert_eq!(
+            alias_rules::accept_rust_type_alias_owned_string_member(
+                row["kind"].as_str().unwrap(),
+                row["ownerKind"].as_str().unwrap(),
+                row["owner"].as_str().unwrap(),
+                row["children"].as_f64().unwrap(),
+                row["proven"].as_bool().unwrap(),
+                row["layers"].as_f64().unwrap(),
+                row["member"].as_str().unwrap()
+            ),
+            row["expected"].as_bool().unwrap()
+        );
+    }
+}

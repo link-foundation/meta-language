@@ -550,3 +550,45 @@ impl RustParser {
         Vec::new()
     }
 }
+
+impl RustParser {
+    pub(super) fn type_alias_string_member_owner(
+        &self,
+        names: &[String],
+        path: &[String],
+    ) -> Option<crate::translation::source_signatures::SourceOwner> {
+        if !self.ordinary_completion_context() || names.len() < 2 {
+            return None;
+        }
+        let resolved = self.resolve(&names[..names.len() - 1], path);
+        for key in rules::read_rust_type_alias_lookup_keys(&resolved, path) {
+            let disposition = rules::read_rust_type_alias_namespace_disposition(
+                self.source_type_aliases.declarations.contains_key(&key),
+                self.alias_namespace_kind(&key),
+            );
+            if disposition == "block" {
+                return None;
+            }
+            if disposition != "alias" {
+                continue;
+            }
+            let origin = self.source_type_aliases.cache.get(&key)?;
+            let owner = origin
+                .expanded_source_owner
+                .as_ref()
+                .or(origin.source_owner.as_ref())?;
+            let count = |value: usize| u32::try_from(value).map_or(f64::INFINITY, f64::from);
+            return rules::accept_rust_type_alias_owned_string_member(
+                origin.ty.as_ref().map_or("", Type::kind),
+                &owner.kind,
+                &owner.path.join("::"),
+                count(owner.arguments.len()),
+                origin.proven,
+                count(origin.wrappers.len()),
+                names.last().unwrap(),
+            )
+            .then(|| owner.clone());
+        }
+        None
+    }
+}

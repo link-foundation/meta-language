@@ -102,3 +102,10 @@ export function readRustTypeAliasValueConstructorError(local,value,alias){return
 export function readRustTypeAliasPrimitiveMemberOwner(kind,bits,signed,ownerKind,owner,children,proven,layers,suffix){
  return suffix===1?readRustPrimitiveTryFromMapperOwner(kind,bits,signed,ownerKind,owner,children,proven,layers):'';
 }
+
+/** @param {string} kind @param {string} ownerKind @param {string} owner
+ * @param {number} children @param {boolean} proven @param {number} layers
+ * @param {string} member @returns {boolean} */
+export function acceptRustTypeAliasOwnedStringMember(kind,ownerKind,owner,children,proven,layers,member){
+ return kind==='string'&&ownerKind==='library'&&owner==='std::string::String'&&children===0&&proven&&layers===0&&(member==='new'||member==='from');
+}

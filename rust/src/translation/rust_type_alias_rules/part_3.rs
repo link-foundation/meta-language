@@ -73,6 +73,24 @@ pub fn read_rust_type_alias_primitive_member_owner(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_type_alias_owned_string_member(
+    kind: &str,
+    owner_kind: &str,
+    owner: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+    member: &str,
+) -> bool {
+    ((((((kind == "string") && (owner_kind == "library")) && (owner == "std::string::String"))
+        && (children == 0f64))
+        && proven)
+        && (layers == 0f64))
+        && ((member == "new") || (member == "from"))
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlTemporaryGroupAfterLoop1Result {
     MlTemporaryGroupAfterLoop1Done,

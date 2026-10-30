@@ -251,8 +251,13 @@ impl RustParser {
             self.origins.wrap(&result, path, "box")?;
             return Ok(result);
         }
-        if name == "String::from" {
-            self.require_type_namespace_body_constructor(&name, range)?;
+        if name == "String::from"
+            || segments.last().is_some_and(|member| member == "from")
+                && self
+                    .type_alias_string_member_owner(&segments, path)
+                    .is_some()
+        {
+            self.require_type_namespace_body_constructor("String::from", range)?;
             if args.len() != 1 {
                 return Err(type_error("String::from expects 1 argument", range));
             }

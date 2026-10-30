@@ -11503,3 +11503,20 @@ The source draft adds independent defaults/conversions across every admitted
 scalar owner, alias chains/imports/callbacks and checked/wrapping calls, plus
 namespace and forged-owner controls. Existing native/JavaScript source products,
 all codecs and previous original inputs remain deferred and unexecuted.
+
+
+Checked direct aliases of the actual standard owned String also reach its
+existing empty `new` and `from` constructions. Alias chains and imported module
+owners use the same complete cached definitions as scalar aliases; the shared
+admission rule requires the exact library path, proved String type and no
+wrapper or generic children. The existing conversion path checks source string
+ownership, immutable references and consumption; the alias changes no operation
+semantics, type-namespace restrictions or constructor source coordinates.
+Caller-local String datatypes and same-spelled value bindings cannot replace
+the checked definition owner. This follows the
+[standard String contract](https://doc.rust-lang.org/std/string/struct.String.html)
+and supplies no arbitrary library alias, allocator identity, capacity, generic
+or trait implementation model. Deferred originals include Unicode/byte lengths,
+empty/owned/borrowed construction, forward/imported aliases and namespace owners;
+independent owner controls reject forged, wrapped and unrelated members. All
+previous original inputs and full translation obligations remain required.
