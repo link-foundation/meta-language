@@ -490,3 +490,63 @@ impl RustParser {
         }
     }
 }
+
+impl RustParser {
+    pub(super) fn primitive_type_alias_member_path(
+        &self,
+        names: &[String],
+        path: &[String],
+        absolute: bool,
+    ) -> Vec<String> {
+        if absolute || !self.ordinary_completion_context() || names.len() < 2 {
+            return Vec::new();
+        }
+        let resolved = self.resolve(&names[..names.len() - 1], path);
+        for key in rules::read_rust_type_alias_lookup_keys(&resolved, path) {
+            let disposition = rules::read_rust_type_alias_namespace_disposition(
+                self.source_type_aliases.declarations.contains_key(&key),
+                self.alias_namespace_kind(&key),
+            );
+            if disposition == "block" {
+                return Vec::new();
+            }
+            if disposition != "alias" {
+                continue;
+            }
+            let Some(origin) = self.source_type_aliases.cache.get(&key) else {
+                return Vec::new();
+            };
+            let owner = origin
+                .expanded_source_owner
+                .as_ref()
+                .or(origin.source_owner.as_ref());
+            let (bits, signed) = match origin.ty.as_ref() {
+                Some(Type::Fixed { bits, signed }) => (bits.to_string(), *signed),
+                _ => (String::new(), false),
+            };
+            let count = |value: usize| u32::try_from(value).map_or(f64::INFINITY, f64::from);
+            let selected = rules::read_rust_type_alias_primitive_member_owner(
+                origin.ty.as_ref().map_or("", Type::kind),
+                &bits,
+                signed,
+                owner.map_or("", |value| value.kind.as_str()),
+                &owner.map(|value| value.path.join("::")).unwrap_or_default(),
+                owner.map_or(-1.0, |value| count(value.arguments.len())),
+                origin.proven,
+                count(origin.wrappers.len()),
+                1.0,
+            );
+            return if selected.is_empty() {
+                Vec::new()
+            } else {
+                vec![
+                    "core".to_owned(),
+                    "primitive".to_owned(),
+                    selected,
+                    names.last().unwrap().clone(),
+                ]
+            };
+        }
+        Vec::new()
+    }
+}

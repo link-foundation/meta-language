@@ -1,0 +1,1 @@
+Draft associated primitive operations and callable values through checked transparent Rust scalar aliases, using the existing shared operation and ownership rules. Preserve original source coordinates and definition ownership across caller-local names.

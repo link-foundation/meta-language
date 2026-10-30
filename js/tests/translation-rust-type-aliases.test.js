@@ -1,3 +1,4 @@
+import {readRustTypeAliasPrimitiveMemberOwner} from '../src/translation/rust-type-alias-rules.js';
 // Deferred source, declaration-plan and public-interface controls.
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -21,3 +22,5 @@ for(const row of fixture.publications)test(row.name,async()=>{
  for(const check of row.checks){const value=check.call===null?module[check.name]:module[check.name](...check.call.map(argument=>BigInt(argument.slice(0,-1))));assert.equal(String(value),check.value);const signature=signatures.find(row=>row.name===check.name);assert.equal(signature.k,check.name==='read'?'fn':'const');if(check.name==='read'){assert.deepEqual(signature.ret,{kind:'fixed',bits:64,signed:true});assert.deepEqual(signature.params[0].type,signature.ret);}}
 });
 test('an unused invalid alias cannot publish a valid-looking public function',()=>assert.throws(()=>selfTranslationSignatures('type Hidden=Absent;pub fn observe()->i64{7}','Rust',{semanticTranslation:true})));
+
+for(const [index,row]of fixture.primitiveOwners.entries())test('checked primitive alias owner '+index,()=>assert.equal(readRustTypeAliasPrimitiveMemberOwner(row.kind,row.bits,row.signed,row.ownerKind,row.owner,row.children,row.proven,row.layers,row.suffix),row.expected));

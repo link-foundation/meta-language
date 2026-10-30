@@ -1,9 +1,4 @@
 // Generated from complete js/src/translation/rust-type-alias-rules.js. Do not edit by hand.
-use super::MlTemporaryReadRustTypeAliasLookupKeysJoin4;
-use super::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6;
-use super::source_ml_temporary_read_rust_type_alias_declaration_plan_loop2;
-use super::source_ml_temporary_read_rust_type_alias_lookup_keys_loop5;
-
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
     /// ECMAScript `Number::toString`: the shortest decimal that reads back as
@@ -104,6 +99,86 @@ pub mod ml_number {
             digits
         };
         (digits, exponent.parse::<i32>().expect("exponent") + 1)
+    }
+}
+
+/// The Math functions that Rust's f64 methods do not share with JavaScript.
+pub mod ml_math {
+    /// Math.round: the nearest integer, the one towards +Infinity on a tie,
+    /// with the sign of a zero result from the argument.
+    #[must_use]
+    pub fn round(x: f64) -> f64 {
+        if !x.is_finite() || x == 0.0 {
+            return x;
+        }
+        if x > 0.0 && x < 0.5 {
+            return 0.0;
+        }
+        if (-0.5..0.0).contains(&x) {
+            return -0.0;
+        }
+        let floor = x.floor();
+        if x - floor >= 0.5 { floor + 1.0 } else { floor }
+    }
+
+    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.
+    #[must_use]
+    pub fn sign(x: f64) -> f64 {
+        if x > 0.0 {
+            1.0
+        } else if x < 0.0 {
+            -1.0
+        } else {
+            x
+        }
+    }
+
+    /// Math.max of two Numbers: NaN when either is, and 0 above -0.
+    #[must_use]
+    pub fn max(a: f64, b: f64) -> f64 {
+        if a > b {
+            a
+        } else if b > a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() { b } else { a }
+        } else {
+            f64::NAN
+        }
+    }
+
+    /// Math.min of two Numbers: NaN when either is, and -0 below 0.
+    #[must_use]
+    pub fn min(a: f64, b: f64) -> f64 {
+        if a < b {
+            a
+        } else if b < a {
+            b
+        } else if a == b {
+            if a.is_sign_negative() { a } else { b }
+        } else {
+            f64::NAN
+        }
+    }
+
+    #[must_use]
+    pub fn max_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))
+    }
+
+    #[must_use]
+    pub fn min_of(values: &[f64]) -> f64 {
+        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))
+    }
+
+    #[must_use]
+    pub fn is_integer(x: f64) -> bool {
+        x.is_finite() && x.trunc() == x
+    }
+
+    #[must_use]
+    pub fn is_safe_integer(x: f64) -> bool {
+        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0
     }
 }
 
@@ -255,494 +330,556 @@ pub mod ml_source_exception {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn refuse_required_number_fact() -> f64 {
-    (self::ml_source_exception::SourceException {
-        class_name: String::from("RangeError"),
-        message_units: (String::from("missing required Number fact column value"))
-            .encode_utf16()
-            .collect(),
-        message_present: true,
-    })
-    .raise()
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_text_fact() -> String {
-    (self::ml_source_exception::SourceException {
-        class_name: String::from("RangeError"),
-        message_units: (String::from("missing required text fact column value"))
-            .encode_utf16()
-            .collect(),
-        message_present: true,
-    })
-    .raise()
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_boolean_fact() -> bool {
-    (self::ml_source_exception::SourceException {
-        class_name: String::from("RangeError"),
-        message_units: (String::from("missing required Boolean fact column value"))
-            .encode_utf16()
-            .collect(),
-        message_present: true,
-    })
-    .raise()
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        (self::ml_source_exception::SourceException {
-            class_name: String::from("RangeError"),
-            message_units: (String::from("invalid required Number fact column position"))
-                .encode_utf16()
-                .collect(),
-            message_present: true,
-        })
-        .raise()
-    } else {
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(self::refuse_required_number_fact)
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        (self::ml_source_exception::SourceException {
-            class_name: String::from("RangeError"),
-            message_units: (String::from("invalid required text fact column position"))
-                .encode_utf16()
-                .collect(),
-            message_present: true,
-        })
-        .raise()
-    } else {
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(self::refuse_required_text_fact)
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
-        (self::ml_source_exception::SourceException {
-            class_name: String::from("RangeError"),
-            message_units: (String::from("invalid required Boolean fact column position"))
-                .encode_utf16()
-                .collect(),
-            message_present: true,
-        })
-        .raise()
-    } else {
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(self::refuse_required_boolean_fact)
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn group_after(kinds: &[String], values: &[String], position: f64) -> f64 {
-    {
-        let open = self::read_required_text_fact(values, position);
-        {
-            let stack = vec![if open == "{" {
-                String::from("}")
-            } else if open == "[" {
-                String::from("]")
-            } else {
-                String::from(")")
-            }];
-            {
-                let at = position + 1f64;
-                {
-                    let source_ml_source1_s1 =
-                        self::source_ml_temporary_group_after_loop1(kinds, values, stack, at);
-                    match source_ml_source1_s1 {
-                        self::MlTemporaryGroupAfterLoop1Result::MlTemporaryGroupAfterLoop1Done => {
-                            -1f64
-                        }
-                        self::MlTemporaryGroupAfterLoop1Result::MlTemporaryGroupAfterLoop1Return(source_ml_temporary_result1) => {
-                            source_ml_temporary_result1
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_type_alias_declaration_plan(kinds: &[String], values: &[String]) -> Vec<String> {
-    {
-        let ml_library_inequality_1 = (kinds.len() as f64) != (values.len() as f64);
-        if ml_library_inequality_1 {
-            vec![
-                String::from("error"),
-                String::from("unaligned source type alias columns"),
-            ]
-        } else {
-            {
-                let result = vec![String::from("aliases")];
-                {
-                    let names = Vec::<String>::new();
-                    {
-                        let owners = Vec::<String>::new();
-                        {
-                            let closes = Vec::<f64>::new();
-                            {
-                                let position = 0f64;
-                                {
-                                    let source_ml_source1_s2 = self::source_ml_temporary_read_rust_type_alias_declaration_plan_loop2(kinds, values, result, names, owners, closes, position);
-                                    match source_ml_source1_s2 {
-                                    self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Result::MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Done(result_2) => {
-                                        result_2
-                                    }
-                                    self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Result::MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Return(source_ml_temporary_result2) => {
-                                        source_ml_temporary_result2
-                                    }
-                                }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_type_alias_lookup_keys(segments: &[String], context: &[String]) -> Vec<String> {
-    {
-        let names = segments.to_vec();
-        {
-            let start = context.to_vec();
-            {
-                let source_ml_source1_s3 = if ((self::ml_array::optional_at(
-                    &names,
-                    self::ml_array::number_index(0f64),
-                ))
-                .unwrap_or_else(|| String::new()))
-                    == "crate"
-                {
-                    {
-                        let names_2 = self::ml_array::slice(&names, 1f64, f64::INFINITY);
-                        {
-                            let start_2 = Vec::<String>::new();
-                            self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_2, start_2)
-                        }
-                    }
-                } else if ((self::ml_array::optional_at(
-                    &names,
-                    self::ml_array::number_index(0f64),
-                ))
-                .unwrap_or_else(|| String::new()))
-                    == "self"
-                {
-                    {
-                        let names_3 = self::ml_array::slice(&names, 1f64, f64::INFINITY);
-                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_3, start)
-                    }
-                } else if ((self::ml_array::optional_at(
-                    &names,
-                    self::ml_array::number_index(0f64),
-                ))
-                .unwrap_or_else(|| String::new()))
-                    == "super"
-                {
-                    {
-                        let count = 0f64;
-                        {
-                            let count_2 =
-                                self::source_ml_temporary_read_rust_type_alias_lookup_keys_loop5(
-                                    &(names),
-                                    count,
-                                );
-                            if count_2 > (start.len() as f64) {
-                                self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(Vec::<String>::new())
-                            } else {
-                                {
-                                    let names_4 =
-                                        self::ml_array::slice(&names, count_2, f64::INFINITY);
-                                    {
-                                        let start_3 = self::ml_array::slice(
-                                            &start,
-                                            0f64,
-                                            ((start.len() as f64) - count_2),
-                                        );
-                                        self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_4, start_3)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names, start)
-                };
-                match source_ml_source1_s3 {
-                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Next(names_5, start_4) => {
-                        if (names_5.len() as f64) == 0f64 {
-                            Vec::<String>::new()
-                        } else {
-                            vec![({ let (ml_append_right, ml_append_left) = (names_5, start_4); self::ml_array::append(ml_append_left, ml_append_right) }).join((String::from(".")).as_str())]
-                        }
-                    }
-                    self::MlTemporaryReadRustTypeAliasLookupKeysJoin4::MlTemporaryReadRustTypeAliasLookupKeysJoin4Return(source_ml_temporary_result4) => {
-                        source_ml_temporary_result4
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_type_alias_expansion_error(
-    depth: f64,
-    expansions: f64,
-    recursive: bool,
-) -> String {
-    if recursive {
-        String::from("recursive source type alias")
-    } else if depth >= 128f64 {
-        String::from("source type alias depth limit exceeded")
-    } else if expansions >= 4096f64 {
-        String::from("source type alias expansion limit exceeded")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_type_alias_clone_error(current: f64, needed: f64) -> String {
-    if needed > (262_144f64 - current) {
-        String::from("source type alias materialization limit exceeded")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_type_alias_access_prefix_lengths(count: f64, bare: bool) -> Vec<f64> {
-    {
-        let result = Vec::<f64>::new();
-        {
-            let length = if bare { count } else { count - 1f64 };
-            {
-                self::source_ml_temporary_read_rust_type_alias_access_prefix_lengths_loop6(
-                    result, length,
-                )
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_type_alias_nominal_access(
+pub fn accept_rust_scalar_predicate(
     kind: &str,
-    wrappers: f64,
-    suffix: f64,
-    role: &str,
-    syntax: &str,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
 ) -> bool {
-    ((kind == "named") && (wrappers == 0f64))
-        && (((suffix > 0f64) || (role == "implementation owner"))
-            || ((role == "braced record") && (syntax == "named")))
+    ((((kind == "function") && (parameters == 1f64)) && (layers == 0f64)) && parameter) && result
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_type_alias_namespace_disposition(alias: bool, owner: &str) -> String {
-    if alias {
-        String::from("alias")
-    } else if ((owner == "data") || (owner == "module")) || (owner == "externalCrate") {
-        String::from("block")
-    } else {
-        String::new()
-    }
+pub fn accept_rust_scalar_fallback(kind: &str, parameters: f64, layers: f64, result: bool) -> bool {
+    (((kind == "function") && (parameters == 0f64)) && (layers == 0f64)) && result
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_type_alias_value_constructor_error(
-    local: bool,
-    value: bool,
-    alias: bool,
+pub fn read_rust_source_version_default() -> String {
+    String::from("1.99.0")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_source_version_error(
+    major: f64,
+    minor: f64,
+    patch: f64,
+    canonical: bool,
 ) -> String {
-    if (!local && !value) && alias {
-        String::from("a source type alias has no independent value constructor")
+    if ((((((canonical && (major == 1f64)) && self::ml_math::is_integer(minor))
+        && (minor >= 90f64))
+        && (minor < 100f64))
+        && self::ml_math::is_integer(patch))
+        && (patch >= 0f64))
+        && (patch <= 4_294_967_295f64)
+    {
+        String::new()
+    } else {
+        String::from("select a canonical stable Rust source version from 1.90.0 through 1.99.x")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_integer_conversion_error_debug_model(minor: f64) -> String {
+    if (self::ml_math::is_integer(minor) && (minor >= 90f64)) && (minor < 97f64) {
+        String::from("unit payload")
+    } else if (self::ml_math::is_integer(minor) && (minor >= 97f64)) && (minor < 100f64) {
+        String::from("overflow kind")
     } else {
         String::new()
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryGroupAfterLoop1Result {
-    MlTemporaryGroupAfterLoop1Done,
-    MlTemporaryGroupAfterLoop1Return(f64),
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_source_version_text_limit() -> f64 {
+    15f64
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_group_after_loop1(
-    kinds: &[String],
-    values: &[String],
-    mut stack: Vec<String>,
-    mut at: f64,
-) -> self::MlTemporaryGroupAfterLoop1Result {
-    loop {
-        return if at < (values.len() as f64) {
-            if (self::read_required_text_fact(kinds, at)) != "punct" {
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        at = at_2;
-                        continue;
-                    }
-                }
-            }
+pub fn read_rust_primitive_owner_path(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    if !ordinary || shadowed {
+        String::new()
+    } else {
+        {
+            let owner = String::new();
             {
-                {
-                    let value = self::read_required_text_fact(values, at);
-                    if ((value == "{") || (value == "[")) || (value == "(") {
-                        {
-                            let stack_2 = {
-                                let (ml_append_right, ml_append_left) = (
-                                    vec![if value == "{" {
-                                        String::from("}")
-                                    } else if value == "[" {
-                                        String::from("]")
-                                    } else {
-                                        String::from(")")
-                                    }],
-                                    stack,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                let at_3 = at + 1f64;
-                                {
-                                    (stack, at) = (stack_2, at_3);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
+                let owner_4 = if ((segments.len() as f64) == 2f64) && !absolute {
                     {
-                        if ((value == "}") || (value == "]")) || (value == ")") {
-                            if value
-                                == (self::read_required_text_fact(
-                                    &(stack),
-                                    ((stack.len() as f64) - 1f64),
-                                ))
-                            {
-                                {
-                                    let stack_3 = self::ml_array::slice(&stack, 0f64, -1f64);
-                                    if (stack_3.len() as f64) == 0f64 {
-                                        self::MlTemporaryGroupAfterLoop1Result::MlTemporaryGroupAfterLoop1Return(at + 1f64)
-                                    } else {
-                                        {
-                                            let at_4 = at + 1f64;
-                                            {
-                                                (stack, at) = (stack_3, at_4);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                self::MlTemporaryGroupAfterLoop1Result::MlTemporaryGroupAfterLoop1Return(-1f64)
-                            }
-                        } else {
-                            {
-                                let at_5 = at + 1f64;
-                                {
-                                    at = at_5;
-                                    continue;
-                                }
-                            }
-                        }
+                        (self::ml_array::optional_at(segments, self::ml_array::number_index(0f64)))
+                            .unwrap_or_else(|| String::new())
                     }
-                }
-            }
-        } else {
-            self::MlTemporaryGroupAfterLoop1Result::MlTemporaryGroupAfterLoop1Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Result {
-    MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Done(Vec<String>),
-    MlTemporaryReadRustTypeAliasDeclarationPlanLoop2Return(Vec<String>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Result {
-    MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Done(f64),
-    MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Return(Vec<String>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_read_rust_type_alias_declaration_plan_loop3(
-    kinds: &[String],
-    values: &[String],
-    mut end: f64,
-) -> self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Result {
-    loop {
-        return if end < (values.len() as f64) {
-            {
-                let boundary = self::read_required_text_fact(values, end);
-                if ((self::read_required_text_fact(kinds, end)) == "punct") && (boundary == ";") {
-                    self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Result::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Done(end)
-                } else if ((self::read_required_text_fact(kinds, end)) == "punct")
-                    && (((boundary == "{") || (boundary == "[")) || (boundary == "("))
-                {
-                    {
-                        let after = self::group_after(kinds, values, end);
-                        if after < 0f64 {
-                            self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Result::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Return(vec![String::from("error"), String::from("unclosed source type alias group")])
-                        } else {
-                            {
-                                let end_2 = after;
-                                {
-                                    end = end_2;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                } else if ((self::read_required_text_fact(kinds, end)) == "eof")
-                    || (((self::read_required_text_fact(kinds, end)) == "punct")
-                        && (boundary == "}"))
-                {
-                    self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Result::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Return(vec![String::from("error"), String::from("unclosed source type alias declaration")])
                 } else {
-                    {
-                        let end_3 = end + 1f64;
-                        {
-                            end = end_3;
-                            continue;
+                    if (((segments.len() as f64) == 4f64)
+                        && ({
+                            let source_ml_source1_comparison_operand1 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(0f64),
+                            );
+                            {
+                                let source_ml_source1_comparison_operand2 = String::from("std");
+                                match (
+                                    source_ml_source1_comparison_operand1,
+                                    source_ml_source1_comparison_operand2,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        } || {
+                            let source_ml_source1_comparison_operand3 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(0f64),
+                            );
+                            {
+                                let source_ml_source1_comparison_operand4 = String::from("core");
+                                match (
+                                    source_ml_source1_comparison_operand3,
+                                    source_ml_source1_comparison_operand4,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
+                        }))
+                        && {
+                            let source_ml_source1_comparison_operand5 = self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(1f64),
+                            );
+                            {
+                                let source_ml_source1_comparison_operand6 =
+                                    String::from("primitive");
+                                match (
+                                    source_ml_source1_comparison_operand5,
+                                    source_ml_source1_comparison_operand6,
+                                ) {
+                                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                                    _ => false,
+                                }
+                            }
                         }
+                    {
+                        {
+                            (self::ml_array::optional_at(
+                                segments,
+                                self::ml_array::number_index(2f64),
+                            ))
+                            .unwrap_or_else(|| String::new())
+                        }
+                    } else {
+                        owner
                     }
+                };
+                if self::ml_array::includes(
+                    &vec![
+                        String::from("bool"),
+                        String::from("i8"),
+                        String::from("u8"),
+                        String::from("i16"),
+                        String::from("u16"),
+                        String::from("i32"),
+                        String::from("u32"),
+                        String::from("i64"),
+                        String::from("u64"),
+                        String::from("i128"),
+                        String::from("u128"),
+                        String::from("isize"),
+                        String::from("usize"),
+                    ],
+                    &owner_4.clone(),
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                ) {
+                    owner_4.clone()
+                } else {
+                    String::new()
                 }
             }
-        } else {
-            self::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Result::MlTemporaryReadRustTypeAliasDeclarationPlanLoop3Done(end)
-        };
+        }
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_integer_constant_owner(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    {
+        let owner = self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute);
+        if owner == "bool" {
+            String::new()
+        } else {
+            owner
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_integer_constant_term(name: &str) -> String {
+    if name == "MIN" {
+        String::from("minimum")
+    } else if name == "MAX" {
+        String::from("maximum")
+    } else if name == "BITS" {
+        String::from("width")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_integer_constant_result_owner(owner: &str, term: &str) -> String {
+    if term == "width" {
+        String::from("u32")
+    } else if (term == "minimum") || (term == "maximum") {
+        owner.to_owned()
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_model(model: &str) -> bool {
+    ((model).is_empty()) || (model == "Rust source function signature 1")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_wrapper(wrapper: &str) -> bool {
+    (wrapper == "reference") || (wrapper == "box")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_owner_kind(kind: &str) -> bool {
+    (((((kind == "primitive") || (kind == "declaration")) || (kind == "library"))
+        || (kind == "tuple"))
+        || (kind == "unit"))
+        || (kind == "slice")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_catalog_owner(kind: &str) -> bool {
+    (((kind == "data") || (kind == "module")) || (kind == "externalCrate")) || (kind == "ctor")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_source_signature_primitive(
+    kind: &str,
+    path: &str,
+    bits: &str,
+    signed: bool,
+) -> bool {
+    if path == "f64" {
+        kind == "float"
+    } else if path == "bool" {
+        kind == "bool"
+    } else if path == "str" {
+        kind == "string"
+    } else if path == "i8" {
+        ((kind == "fixed") && (bits == "8")) && (signed == (true))
+    } else if path == "u8" {
+        ((kind == "fixed") && (bits == "8")) && (signed == (false))
+    } else if path == "i16" {
+        ((kind == "fixed") && (bits == "16")) && (signed == (true))
+    } else if path == "u16" {
+        ((kind == "fixed") && (bits == "16")) && (signed == (false))
+    } else if path == "i32" {
+        ((kind == "fixed") && (bits == "32")) && (signed == (true))
+    } else if path == "u32" {
+        ((kind == "fixed") && (bits == "32")) && (signed == (false))
+    } else if path == "i64" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (true))
+    } else if path == "u64" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (false))
+    } else if path == "i128" {
+        ((kind == "fixed") && (bits == "128")) && (signed == (true))
+    } else if path == "u128" {
+        ((kind == "fixed") && (bits == "128")) && (signed == (false))
+    } else if path == "usize" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (false))
+    } else if path == "isize" {
+        ((kind == "fixed") && (bits == "64")) && (signed == (true))
+    } else {
+        false
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_selection_call_role(
+    path: &str,
+    ordinary: bool,
+    shadowed: bool,
+) -> String {
+    if ordinary && !shadowed {
+        if path == "std::cmp::min" {
+            String::from("min")
+        } else if path == "std::cmp::max" {
+            String::from("max")
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_selection_comparison(method: &str, ordinary: bool) -> String {
+    if ordinary {
+        if method == "min" {
+            String::from("le")
+        } else if method == "max" {
+            String::from("gt")
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_selection_condition(method: &str, kind: &str) -> String {
+    if kind == "bool" {
+        if method == "min" {
+            String::from("not")
+        } else if method == "max" {
+            String::from("identity")
+        } else {
+            String::new()
+        }
+    } else if kind == "fixed" {
+        self::read_rust_primitive_selection_comparison(method, true)
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_selection_receiver(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((((((kind == "fixed") || (kind == "bool")) && (owner == "primitive")) && (children == 0f64))
+        && proven)
+        && (layers == 0f64))
+        && self::accept_rust_source_signature_primitive(kind, path, bits, signed)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_selection_argument(
+    expected: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    actual: &str,
+    actual_bits: &str,
+    actual_signed: bool,
+    actual_owner: &str,
+    layers: f64,
+    proven: bool,
+    known: bool,
+    literal: bool,
+) -> bool {
+    if layers == 0f64 {
+        if ((literal && (expected == "fixed")) && ((actual).is_empty()))
+            && ((actual_owner).is_empty())
+        {
+            true
+        } else {
+            ((((known && proven) && (expected == actual)) && (bits == actual_bits))
+                && (signed == actual_signed))
+                && (owner == actual_owner)
+        }
+    } else {
+        false
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_primitive_from_method(owner: &str, method: &str) -> bool {
+    (method == "from")
+        && self::ml_array::includes(
+            &vec![
+                String::from("bool"),
+                String::from("i8"),
+                String::from("u8"),
+                String::from("i16"),
+                String::from("u16"),
+                String::from("i32"),
+                String::from("u32"),
+                String::from("i64"),
+                String::from("u64"),
+                String::from("i128"),
+                String::from("u128"),
+                String::from("isize"),
+                String::from("usize"),
+                String::from("f64"),
+            ],
+            &owner.to_owned(),
+            0f64,
+            false,
+            |a, b| a == b,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_from_owner(
+    segments: &[String],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> String {
+    if !ordinary || shadowed {
+        String::new()
+    } else if ((((segments.len() as f64) == 2f64) && !absolute) && {
+        let source_ml_source1_comparison_operand7 =
+            self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+        {
+            let source_ml_source1_comparison_operand8 = String::from("f64");
+            match (
+                source_ml_source1_comparison_operand7,
+                source_ml_source1_comparison_operand8,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            }
+        }
+    }) || (((((segments.len() as f64) == 4f64)
+        && ({
+            let source_ml_source1_comparison_operand9 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source1_comparison_operand10 = String::from("std");
+                match (
+                    source_ml_source1_comparison_operand9,
+                    source_ml_source1_comparison_operand10,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        } || {
+            let source_ml_source1_comparison_operand11 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source1_comparison_operand12 = String::from("core");
+                match (
+                    source_ml_source1_comparison_operand11,
+                    source_ml_source1_comparison_operand12,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        }))
+        && {
+            let source_ml_source1_comparison_operand13 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(1f64));
+            {
+                let source_ml_source1_comparison_operand14 = String::from("primitive");
+                match (
+                    source_ml_source1_comparison_operand13,
+                    source_ml_source1_comparison_operand14,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
+        && {
+            let source_ml_source1_comparison_operand15 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(2f64));
+            {
+                let source_ml_source1_comparison_operand16 = String::from("f64");
+                match (
+                    source_ml_source1_comparison_operand15,
+                    source_ml_source1_comparison_operand16,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
+    {
+        String::from("f64")
+    } else {
+        self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_from_literal_owner(form: &str, typed: bool, kind: &str) -> String {
+    if (form != "numeral") && (form != "negative numeral") {
+        String::new()
+    } else if kind == "float" {
+        String::from("f64")
+    } else if typed {
+        String::new()
+    } else {
+        String::from("i32")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_from_source(
+    kind: &str,
+    bits: &str,
+    signed: bool,
+    owner: &str,
+    path: &str,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    ((((((((kind == "float") && ((bits).is_empty())) && !signed) && (owner == "primitive"))
+        && (path == "f64"))
+        && (children == 0f64))
+        && proven)
+        && (layers == 0f64))
+        || self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
 }

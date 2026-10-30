@@ -1,3 +1,4 @@
+import {readRustTypeAliasPrimitiveMemberOwner} from './rust-type-alias-rules.js';
 import {readRustConstantPrimitiveAliasOwner} from './rust-constant-integer-rules.js';
 // Token/type/source-origin transport. Alias lookup and bounds are shared rules.
 import {unsupported} from './diagnostics.js';
@@ -97,4 +98,22 @@ export function requireRustTypeAliasValueConstructor(parser,segments,path,where)
  const value=keys.some(key=>['fn','const','ctor'].includes(parser.origins.catalog.get(key)?.k??'')),alias=keys.some(key=>parser.sourceTypeAliases.has(key));
  const message=readRustTypeAliasValueConstructorError(local,value,alias);
  if(message)throw unsupported('Rust type alias value constructor',message,where);
+}
+
+/** Canonical primitive coordinates are backed by the complete cached alias
+ * origin. Caller-local primitive spellings cannot reinterpret that origin.
+ * Original token offsets/spellings remain in the actual source head.
+ */
+export function readRustTypeAliasPrimitiveMemberPath(parser,segments,path,absolute){
+ if(absolute||!parser.ordinaryCompletionContext()||segments.length<2)return [];
+ const resolved=parser.resolve(segments.slice(0,-1),path);
+ for(const key of readRustTypeAliasLookupKeys(resolved,path)){
+  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.catalog.get(key)?.k??'');
+  if(disposition==='block')return [];if(disposition!=='alias')continue;
+  const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return [];
+  const type=origin.type,owner=origin.expandedSourceOwner??origin.sourceOwner;
+  const selected=readRustTypeAliasPrimitiveMemberOwner(type?.kind??'',String(type?.bits??''),type?.signed===true,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,origin.wrappers.length,1);
+  return selected?['core','primitive',selected,segments[segments.length-1]]:[];
+ }
+ return [];
 }

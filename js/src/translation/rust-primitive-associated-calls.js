@@ -1,3 +1,4 @@
+import {readRustPrimitiveConversionHead} from './rust-primitive-try-from.js';
 import {readRustIntegerMagnitudes} from './rust-integer-magnitudes.js';
 import {readRustWrappingShifts} from './rust-wrapping-shifts.js';
 import {readRustIntegerBits} from './rust-integer-bits.js';
@@ -14,12 +15,8 @@ export function readRustPrimitiveAssociatedImport(parser,segments,path){
  return Boolean(readRustPrimitiveAssociatedOwner([...segments,'min'],parser.ordinaryCompletionContext(),shadowed,false)||readRustPrimitiveFromOwner([...segments,'from'],parser.ordinaryCompletionContext(),shadowed,false));
 }
 export function readRustPrimitiveAssociatedCall(parser,path){
- const c=parser.cursor,start=c.peek(),absolute=c.is('::');let offset=absolute?1:0;
- const segments=[];
- while(c.peek(offset).kind==='identifier'&&segments.length<16){segments.push(c.peek(offset).value);offset+=1;if(!c.is('::',offset))break;if(c.peek(offset+1).kind!=='identifier')return null;offset+=1;}
- if(segments.length<2)return null;
- const resolved=absolute?segments:parser.resolve(segments,path),root=segments[0]??'',target=resolved[0]??'';
- const shadowed=!absolute&&Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.origins.lookup([target],path)||parser.origins.scope.has(target));
+ const c=parser.cursor,head=readRustPrimitiveConversionHead(parser,path);if(!head)return null;
+ const {start,absolute,offset,resolved,shadowed}=head;
  const owner=(resolved.at(-1)==='from'?readRustPrimitiveFromOwner(resolved,parser.ordinaryCompletionContext(),shadowed,absolute):readRustPrimitiveAssociatedOwner(resolved,parser.ordinaryCompletionContext(),shadowed,absolute)),method=resolved.at(-1)??'',conversion=acceptRustPrimitiveFromMethod(owner,method),arity=conversion?1:readRustPrimitiveAssociatedArity(owner,method);
  if(arity<0)return null;
  if(!c.is('(',offset))throw unsupported('Rust primitive associated call','a primitive associated function value needs its own callable interpretation',{start:start.start,end:c.peek(offset).end});

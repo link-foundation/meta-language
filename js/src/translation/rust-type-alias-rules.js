@@ -1,3 +1,4 @@
+import {readRustPrimitiveTryFromMapperOwner} from './rust-primitive-try-from-rules.js';
 import {readRequiredTextFact,readRequiredNumberFact} from './fact-column-rules.js';
 /** @param {string[]} kinds @param {string[]} values @param {number} position @returns {number} */
 function groupAfter(kinds,values,position){
@@ -91,3 +92,13 @@ export function acceptRustTypeAliasNominalAccess(kind,wrappers,suffix,role,synta
 export function readRustTypeAliasNamespaceDisposition(alias,owner){return alias?'alias':owner==='data'||owner==='module'||owner==='externalCrate'?'block':'';}
 /** @param {boolean} local @param {boolean} value @param {boolean} alias @returns {string} */
 export function readRustTypeAliasValueConstructorError(local,value,alias){return !local&&!value&&alias?'a source type alias has no independent value constructor':'';}
+
+/** Resolve only a fully checked direct scalar alias and one actual member.
+ * The existing primitive rules still decide each operation and signature.
+ * @param {string} kind @param {string} bits @param {boolean} signed
+ * @param {string} ownerKind @param {string} owner @param {number} children
+ * @param {boolean} proven @param {number} layers @param {number} suffix
+ * @returns {string} */
+export function readRustTypeAliasPrimitiveMemberOwner(kind,bits,signed,ownerKind,owner,children,proven,layers,suffix){
+ return suffix===1?readRustPrimitiveTryFromMapperOwner(kind,bits,signed,ownerKind,owner,children,proven,layers):'';
+}

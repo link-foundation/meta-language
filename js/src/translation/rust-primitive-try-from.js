@@ -1,3 +1,4 @@
+import {readRustTypeAliasPrimitiveMemberPath} from './rust-type-aliases.js';
 import {readRustExpectedCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
 import {readRustPrimitiveTryFromPredicateError,readRustPrimitiveTryFromMapperError,readRustPrimitiveTryFromMapperOwner} from './rust-primitive-try-from-rules.js';
@@ -16,8 +17,8 @@ export function readRustPrimitiveConversionHead(parser,path){
  const c=parser.cursor,start=c.peek(),absolute=c.is('::');let offset=absolute?1:0;const segments=[];
  while(c.peek(offset).kind==='identifier'&&segments.length<16){segments.push(c.peek(offset).value);offset+=1;if(!c.is('::',offset))break;if(c.peek(offset+1).kind!=='identifier')return null;offset+=1;}
  if(segments.length<2)return null;
- const resolved=absolute?segments:parser.resolve(segments,path),root=segments[0],target=resolved[0],shadowed=!absolute&&Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.origins.lookup([target],path)||parser.origins.scope.has(target));
- return {start,absolute,offset,segments,resolved,shadowed};
+ const alias=readRustTypeAliasPrimitiveMemberPath(parser,segments,path,absolute),resolved=alias.length?alias:absolute?segments:parser.resolve(segments,path),root=segments[0],target=resolved[0],shadowed=!alias.length&&!absolute&&Boolean(parser.origins.lookup([root],path)||parser.origins.scope.has(root)||parser.origins.lookup([target],path)||parser.origins.scope.has(target));
+ return {start,absolute:absolute||alias.length>0,offset,segments,resolved,shadowed};
 }
 export function readRustPrimitiveOriginFacts(origin){const type=origin.type,owner=origin.sourceOwner??(type?.kind==='float'&&origin.floatSourceModel==='binary64 scalar'?{kind:'primitive',path:['f64'],arguments:[]}:null);return {origin,type,owner,kind:type?.kind??'',bits:String(type?.bits??''),signed:type?.signed===true};}
 export function readRustPrimitiveConversionFacts(parser,value,path){const actual=parser.origins.origin(value,path),origin=value.k==='bool'&&actual.proven&&actual.wrappers.length===0&&!actual.sourceOwner?{...actual,sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}}:actual;return readRustPrimitiveOriginFacts(origin);}

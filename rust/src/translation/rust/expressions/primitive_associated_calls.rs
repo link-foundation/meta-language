@@ -1,7 +1,7 @@
 //! Actual path, literal, type and origin projection into shared method rules.
 use super::{
-    Result, RustParser, SExpr, SNode, SourceOrigin, Span, TokenKind, Type, UnaryOp,
-    rust_fixed_type, type_error, unsupported,
+    Result, RustParser, SExpr, SNode, SourceOrigin, Span, Type, UnaryOp, rust_fixed_type,
+    type_error, unsupported,
 };
 use crate::translation::rust_primitive_associated_call_rules as rules;
 use crate::translation::source_signatures::SourceOwner;
@@ -38,36 +38,16 @@ impl RustParser {
         &mut self,
         path: &[String],
     ) -> Result<Option<SExpr>> {
-        let start = self.peek();
-        let absolute = self.cursor.is("::");
-        let mut offset = usize::from(absolute);
-        let mut segments = Vec::new();
-        while self.cursor.peek_at(offset).kind == TokenKind::Identifier && segments.len() < 16 {
-            segments.push(self.cursor.peek_at(offset).value.clone());
-            offset += 1;
-            if !self.cursor.is_at("::", offset) {
-                break;
-            }
-            if self.cursor.peek_at(offset + 1).kind != TokenKind::Identifier {
-                return Ok(None);
-            }
-            offset += 1;
-        }
-        if segments.len() < 2 {
+        let Some(head) = self.primitive_try_head(path) else {
             return Ok(None);
-        }
-        let resolved = if absolute {
-            segments.clone()
-        } else {
-            self.resolve(&segments, path)
         };
-        let root = segments.first().cloned().unwrap_or_default();
-        let target = resolved.first().cloned().unwrap_or_default();
-        let shadowed = !absolute
-            && (self.origins.lookup(&[root.clone()], path).is_some()
-                || self.origins.scope.contains_key(&root)
-                || self.origins.lookup(&[target.clone()], path).is_some()
-                || self.origins.scope.contains_key(&target));
+        let super::primitive_try_from::Head {
+            start,
+            absolute,
+            offset,
+            resolved,
+            shadowed,
+        } = head;
         let method = resolved.last().cloned().unwrap_or_default();
         let owner = if method == "from" {
             crate::translation::rust_primitive_from_rules::read_rust_primitive_from_owner(

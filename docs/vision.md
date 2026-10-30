@@ -11486,3 +11486,20 @@ selected module configuration and emitted products independently. Missing or
 repeated CLI selector values refuse, as do unsupported snapshots; no compiler
 version is inferred from the emitted target or a saved original source envelope.
 The draft and its deferred controls do not establish full project translation.
+
+
+Checked transparent Rust scalar aliases also resolve associated member calls
+and function values through their complete cached definition origins. The shared
+alias rule admits only a proved direct primitive owner, its exact width/sign and
+one actual member suffix. Canonical primitive coordinates carry that checked
+origin into the existing Default, From, TryFrom, method and callable rules; they
+are not reinterpreted as new caller-local source spellings. Caller-local value
+bindings or datatypes named like primitives cannot change the alias's meaning.
+Actual tokens, offsets, original alias definitions and CSTs remain intact.
+Nominal declarations continue through their original path, and wrapper/generic,
+trait/namespace, import and other unsupported alias forms keep their obligations.
+This follows the [Rust type namespace contract](https://doc.rust-lang.org/reference/items/type-aliases.html).
+The source draft adds independent defaults/conversions across every admitted
+scalar owner, alias chains/imports/callbacks and checked/wrapping calls, plus
+namespace and forged-owner controls. Existing native/JavaScript source products,
+all codecs and previous original inputs remain deferred and unexecuted.

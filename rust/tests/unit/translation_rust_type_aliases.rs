@@ -94,3 +94,28 @@ fn shipped_alias_declaration_rules_match_independent_lexers_and_source_owners() 
         }
     }
 }
+
+#[test]
+fn primitive_alias_members_require_complete_matching_owner_facts() {
+    super::unsigned_source_documents::require_versions();
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-type-aliases.lino"
+    ))
+    .unwrap();
+    for row in fixture["primitiveOwners"].as_array().unwrap() {
+        assert_eq!(
+            alias_rules::read_rust_type_alias_primitive_member_owner(
+                row["kind"].as_str().unwrap(),
+                row["bits"].as_str().unwrap(),
+                row["signed"].as_bool().unwrap(),
+                row["ownerKind"].as_str().unwrap(),
+                row["owner"].as_str().unwrap(),
+                row["children"].as_f64().unwrap(),
+                row["proven"].as_bool().unwrap(),
+                row["layers"].as_f64().unwrap(),
+                row["suffix"].as_f64().unwrap()
+            ),
+            row["expected"].as_str().unwrap()
+        );
+    }
+}

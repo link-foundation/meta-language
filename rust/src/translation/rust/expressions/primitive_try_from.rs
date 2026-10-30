@@ -270,6 +270,16 @@ impl RustParser {
         } else {
             self.resolve(&segments, path)
         };
+        let alias = self.primitive_type_alias_member_path(&segments, path, absolute);
+        if !alias.is_empty() {
+            return Some(Head {
+                start,
+                absolute: true,
+                offset,
+                resolved: alias,
+                shadowed: false,
+            });
+        }
         let root = segments.first().cloned().unwrap_or_default();
         let target = resolved.first().cloned().unwrap_or_default();
         let shadowed = !absolute
