@@ -20,7 +20,7 @@ impl RustParser {
                 SourceDeclaration::Data | SourceDeclaration::Constructor { .. }
             )
         });
-        if !["::", "(", "{"].contains(&self.cursor.peek_at(1).value.as_str()) && !known {
+        if !["::", "(", "{", "@"].contains(&self.cursor.peek_at(1).value.as_str()) && !known {
             return Ok(None);
         }
         let mut aliases = Vec::new();
@@ -44,6 +44,15 @@ impl RustParser {
         pattern: &SPattern,
         validate: bool,
     ) -> Result<Vec<(String, Option<Span>)>> {
+        if let SPatternNode::Alias {
+            name,
+            pattern: inner,
+        } = &pattern.node
+        {
+            let mut names = vec![(name.clone(), pattern.span)];
+            names.extend(self.nominal_binding_names(inner, validate)?);
+            return Ok(names);
+        }
         let (kind, entry, args) = match &pattern.node {
             SPatternNode::Ctor { path, args } => (
                 "ctor",

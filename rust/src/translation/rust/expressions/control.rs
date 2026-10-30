@@ -636,7 +636,17 @@ impl RustParser {
             if segments.len() != 1 {
                 return Err(Self::fail("expected a binding before @", &token));
             }
+            self.require_nonconstant_binding(&segments[0], path, Some(token.span()))?;
             let inner = self.pattern(path, aliases)?;
+            if self.ordinary_completion_context() {
+                return Ok(SPattern {
+                    node: SPatternNode::Alias {
+                        name: segments[0].clone(),
+                        pattern: Box::new(inner),
+                    },
+                    span: span(&token, self.cursor.peek()),
+                });
+            }
             let value = pattern_value(&inner, span(&token, self.cursor.peek()))?;
             self.origins.alias_literal_pattern(&inner, &value);
             aliases.push(Alias {

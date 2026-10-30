@@ -177,9 +177,13 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             Some(include_str!("../data/optional-policy-program.lino"))
         }
         "optional-value-program.lino" => Some(include_str!("../data/optional-value-program.lino")),
+        "owned-array-allocation-program.lino" => {
+            Some(include_str!("../data/owned-array-allocation-program.lino"))
+        }
         "owned-array-reader-domain-program.lino" => Some(include_str!(
             "../data/owned-array-reader-domain-program.lino"
         )),
+        "pattern-alias-program.lino" => Some(include_str!("../data/pattern-alias-program.lino")),
         "project-translation-archive-program.lino" => Some(include_str!(
             "../data/project-translation-archive-program.lino"
         )),

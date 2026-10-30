@@ -35,6 +35,8 @@ pub(crate) mod borrowed_call_interface_rules;
 pub(crate) mod callable_emission_rules;
 pub(crate) mod callable_source_program;
 pub(crate) mod callable_source_rules;
+pub(crate) mod pattern_alias_rules;
+pub(crate) mod owned_array_allocation_rules;
 pub mod check;
 pub(crate) mod collection_access_rules;
 pub(crate) mod collection_construction_rules;

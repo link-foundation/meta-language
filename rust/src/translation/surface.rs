@@ -333,6 +333,11 @@ pub struct SPattern {
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum SPatternNode {
     Wild,
+    /// Bind the actual matched column before testing its nested pattern.
+    Alias {
+        name: String,
+        pattern: Box<SPattern>,
+    },
     Tuple {
         args: Vec<SPattern>,
         #[serde(default, skip_serializing_if = "Option::is_none")]

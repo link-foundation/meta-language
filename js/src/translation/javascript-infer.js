@@ -1276,6 +1276,7 @@ class Inference {
 
   pattern(pattern, type, scope, where) {
     switch (pattern.k) {
+      case 'alias':scope.set(pattern.name,type);this.pattern(pattern.pattern,type,scope,where);return;
       case 'ctor': {
         const [name, tag] = pattern.path.slice(-2);
         this.unify(type, { kind: 'data', name }, where);

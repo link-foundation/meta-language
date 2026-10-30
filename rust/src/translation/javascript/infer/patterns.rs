@@ -11,6 +11,13 @@ impl Inference {
         place: Option<Span>,
     ) -> Result<()> {
         match &pattern.node {
+            SPatternNode::Alias {
+                name,
+                pattern: inner,
+            } => {
+                scope.insert(name.clone(), ty.clone());
+                self.pattern(inner, ty, scope, place)
+            }
             SPatternNode::Ctor { path, args } => {
                 let (name, tag) = match path.as_slice() {
                     [.., name, tag] => (name.clone(), tag.clone()),

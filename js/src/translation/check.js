@@ -1,3 +1,4 @@
+import {projectPatternAliasRow} from './pattern-aliases.js';
 import {acceptLinkedRustPanicValue,readRustPanicValueArgumentError} from './rust-panic-value-rules.js';
 import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
 import {readRustSourceBytePatternTypeError} from './rust-byte-pattern-rules.js';
@@ -1756,7 +1757,7 @@ class Checker {
   compileMatch(node, env, path) {
     const lets = [];
     const columns = node.scrutinees.map((source,column) => {
-      const owners=node.rows.map(row=>row.patterns[column]?.k==='byteLit'?'u8':row.patterns[column]?.k==='typedNumLit'?row.patterns[column].owner:'');
+      const owners=node.rows.map(row=>{let pattern=row.patterns[column];while(pattern?.k==='alias')pattern=pattern.pattern;return pattern?.k==='byteLit'?'u8':pattern?.k==='typedNumLit'?pattern.owner:'';});
       const inferenceError=readRustSourceNumericPatternInferenceError(this.language,source.k,Boolean(source.type),owners);if(inferenceError)throw typeError(inferenceError,source.span??node.span);
       const inferred=readRustSourceNumericPatternInference(this.language,source.k,Boolean(source.type),owners);
       const scrutinee=inferred?{...source,type:inferred==='f64'?FLOAT:rustFixedType(inferred)}:source;
@@ -1783,10 +1784,10 @@ class Checker {
 
   compileRows(columns, rows, span) {
     if (!rows.length) throw typeError('non-exhaustive match', span);
-    const normalised = rows.map((row) => ({
+    const normalised = rows.map((row) => projectPatternAliasRow({
       ...row,
       patterns: row.patterns.map((pattern, index) => this.normalisePattern(pattern, columns[index].type, span)),
-    }));
+    },columns,span));
     const [first] = normalised;
     const refutable = first.patterns.findIndex((pattern) => pattern.k !== 'wild' && pattern.k !== 'bind');
     if (refutable < 0) {
@@ -1896,6 +1897,7 @@ class Checker {
   normalisePattern(pattern, type, span) {
     const natural = type.kind === 'nat';
     switch (pattern.k) {
+      case 'alias':return {k:'alias',name:pattern.name,pattern:this.normalisePattern(pattern.pattern,type,pattern.span??span)};
       case 'wild':
       case 'bind':
       case 'nat':

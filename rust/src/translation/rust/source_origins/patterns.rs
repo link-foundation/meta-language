@@ -120,6 +120,20 @@ impl SourceOrigins {
             }
         }
         match &pattern.node {
+            SPatternNode::Alias {
+                name,
+                pattern: inner,
+            } => {
+                if result.contains_key(name) {
+                    return Err(unsupported(
+                        "duplicate source pattern binding",
+                        "each pattern binds a source name at most once",
+                        source_span,
+                    ));
+                }
+                result.insert(name.clone(), origin.clone());
+                self.pattern(inner, &origin, path, result, inner.span.or(source_span))?;
+            }
             SPatternNode::Tuple { args, rest } => {
                 let fields = origin.fields.as_deref().unwrap_or_default();
                 let count = |value| {

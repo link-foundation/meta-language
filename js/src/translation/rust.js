@@ -1861,10 +1861,10 @@ class RustParser {
 
     if (c.eat('@')) {
       if (segments.length !== 1) throw this.fail('expected a binding before @', token);
-      const inner = this.pattern(path, aliases);
-      const value=patternValue(inner,span(token,c.peek()));this.origins.aliasLiteralPattern(inner,value);
-      aliases.push({ name: segments[0], value });
-      return inner;
+      requireRustNonconstantBinding(this,segments[0],path,token);
+      const inner=this.pattern(path,aliases);
+      if(this.ordinaryCompletionContext())return {k:'alias',name:segments[0],pattern:inner,span:span(token,c.peek())};
+      const value=patternValue(inner,span(token,c.peek()));this.origins.aliasLiteralPattern(inner,value);aliases.push({name:segments[0],value});return inner;
     }
     if (c.is('{')) return readRustRecordPattern(this,segments,path,aliases,token);
     const resolved = readRustRecordValuePath(this,segments,path,c.is('('))??this.resolve(resolveRustTypeAliasPath(this,segments,path,'associated value'), path);

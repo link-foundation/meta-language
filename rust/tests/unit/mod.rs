@@ -665,3 +665,7 @@ mod translation_rust_closure_product_patterns;
 mod translation_rust_reference_patterns;
 
 mod translation_rust_pattern_matches;
+
+mod translation_rust_pattern_aliases;
+
+mod translation_javascript_fresh_array_slices;

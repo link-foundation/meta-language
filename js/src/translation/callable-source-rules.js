@@ -195,6 +195,23 @@ function callableParameterNames(texts, starts, counts, labels, targets, paramete
   return names;
 }
 
+/** Names bound by complete source patterns are local to their actual row.
+ * @param {string[]} texts @param {number[]} starts @param {number[]} counts
+ * @param {string[]} labels @param {number[]} targets @param {number} node
+ * @returns {string[]} */
+export function readCallableSourcePatternNames(texts,starts,counts,labels,targets,node){
+ if(node<0)return [];
+ const kind=callableTag(texts,starts,counts,labels,targets,node,'k');
+ let names=[];
+ if(kind==='alias'||kind==='bind'||kind==='bindOrCtor')names.push(callableTag(texts,starts,counts,labels,targets,node,'name'));
+ if(kind==='alias'||kind==='natAdd')return names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,kind==='alias'?'pattern':'inner')));
+ if(kind==='ctor'||kind==='tuple'){
+  const args=callableField(starts,counts,labels,targets,node,'args');let at=0;
+  while(args>=0&&at<readRequiredNumberFact(counts,args)){names=names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableElement(starts,counts,targets,args,at)));at+=1;}
+ }
+ return names;
+}
+
 /**
  * Surface references retain the original first-use order. Lambda and let
  * binders suppress only their own body references, never initializer uses.
@@ -222,6 +239,17 @@ export function readCallableFreeReferences(forms, texts, starts, counts, labels,
     const value = readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, node, 'value'), bound, checked);
     const name = callableTag(texts, starts, counts, labels, targets, node, 'name');
     return value.concat(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, node, 'body'), bound.concat([name]), checked));
+  }
+  if(!checked&&kind==='match'){
+    let references=readCallableFreeReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'scrutinees'),bound,checked);
+    const rows=callableField(starts,counts,labels,targets,node,'rows');let at=0;
+    while(rows>=0&&at<readRequiredNumberFact(counts,rows)){
+      const row=callableElement(starts,counts,targets,rows,at),patterns=callableField(starts,counts,labels,targets,row,'patterns');let index=0,names=[];
+      while(patterns>=0&&index<readRequiredNumberFact(counts,patterns)){names=names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableElement(starts,counts,targets,patterns,index)));index+=1;}
+      references=references.concat(readCallableFreeReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'guard'),bound.concat(names),checked));
+      references=references.concat(readCallableFreeReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'body'),bound.concat(names),checked));at+=1;
+    }
+    return references;
   }
   if (checked && kind === 'match') {
     let references = readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, node, 'scrutinee'), bound, checked);
@@ -286,6 +314,17 @@ function callableReadEvents(references) {
 function callableAssignedExpressionReferences(forms, texts, starts, counts, labels, targets, node, bound) {
   if (node < 0 || readRequiredTextFact(forms, node) !== 'object' && readRequiredTextFact(forms, node) !== 'array') return [];
   const kind = callableTag(texts, starts, counts, labels, targets, node, 'k');
+  if(kind==='match'){
+    let references=callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'scrutinees'),bound);
+    const rows=callableField(starts,counts,labels,targets,node,'rows');let at=0;
+    while(rows>=0&&at<readRequiredNumberFact(counts,rows)){
+      const row=callableElement(starts,counts,targets,rows,at),patterns=callableField(starts,counts,labels,targets,row,'patterns');let index=0,names=[];
+      while(patterns>=0&&index<readRequiredNumberFact(counts,patterns)){names=names.concat(readCallableSourcePatternNames(texts,starts,counts,labels,targets,callableElement(starts,counts,targets,patterns,index)));index+=1;}
+      references=references.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'guard'),bound.concat(names)));
+      references=references.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,row,'body'),bound.concat(names)));at+=1;
+    }
+    return references;
+  }
   if (kind === 'let') {
     const value = callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'value'),bound);
     return value.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'body'),bound.concat([callableTag(texts,starts,counts,labels,targets,node,'name')])));

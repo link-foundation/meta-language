@@ -3,6 +3,7 @@
 
 use super::callables::number;
 use super::{CaseTest, HashMap, HashSet, ROOT, SArrayItem, SExpr, SFn, SNode, SParam, Span, Stmt};
+use crate::translation::owned_array_allocation_rules as allocation_rules;
 use crate::translation::owned_array_append_rules as rules;
 use crate::translation::owned_array_reader_domain_rules as reader_rules;
 use serde_json::Value;
@@ -13,17 +14,19 @@ pub(super) type IterationSources = HashSet<(Span, String, String)>;
 enum Owner {
     Allocation(usize),
     Iteration(usize),
+    ArrayParameter(usize),
 }
 impl Owner {
-    const fn allocation(self) -> usize {
+    const fn allocation(self) -> Option<usize> {
         match self {
-            Self::Allocation(at) | Self::Iteration(at) => at,
+            Self::Allocation(at) | Self::Iteration(at) => Some(at),
+            Self::ArrayParameter(_) => None,
         }
     }
     const fn owned(self) -> Option<usize> {
         match self {
             Self::Allocation(at) => Some(at),
-            Self::Iteration(_) => None,
+            Self::Iteration(_) | Self::ArrayParameter(_) => None,
         }
     }
 }
@@ -402,6 +405,7 @@ struct Escape {
 
 struct Allocation {
     name: String,
+    array_known: bool,
     loops: Vec<f64>,
     escapes: Vec<Escape>,
     borrows: Vec<(f64, Option<f64>)>,
@@ -421,6 +425,7 @@ struct Occurrences {
     appends: Vec<Append>,
     position: usize,
     next_loop: usize,
+    known_parameters: Vec<bool>,
 }
 
 impl Occurrences {
@@ -449,11 +454,42 @@ impl Occurrences {
             Use::default(),
             None,
             &mut |name, allowed| {
-                if !allowed && let Some(Some(allocation)) = scope.get(name) {
-                    self.escape(allocation.allocation(), loops);
+                if !allowed && let Some(Some(owner)) = scope.get(name).copied() {
+                    if let Owner::ArrayParameter(index) = owner {
+                        self.known_parameters[index] = false;
+                    } else if let Some(allocation) = owner.allocation() {
+                        self.allocations[allocation].array_known = false;
+                        self.escape(allocation, loops);
+                    }
                 }
             },
         );
+    }
+
+    fn fresh_slice_source(&self, value: &SExpr, scope: &Scope) -> bool {
+        let (operation, receiver, count) = match &value.node {
+            SNode::CopySlice { object } => ("", Some(object.as_ref()), 0),
+            SNode::Method { object, op, args } => (op.as_str(), Some(object.as_ref()), args.len()),
+            _ => ("", None, 0),
+        };
+        let actual = receiver
+            .and_then(SExpr::simple_name)
+            .and_then(|name| scope.get(name))
+            .copied()
+            .flatten();
+        let known = match actual {
+            Some(Owner::ArrayParameter(index)) => self.known_parameters[index],
+            Some(Owner::Allocation(index)) => self.allocations[index].array_known,
+            _ => false,
+        };
+        allocation_rules::accept_owned_array_fresh_slice_source(
+            value.node.kind(),
+            operation,
+            receiver.map_or("", |value| value.node.kind()),
+            number(usize::from(receiver.and_then(SExpr::simple_name).is_some())),
+            number(count),
+            known,
+        )
     }
 
     /// Source statements supply lexical owners, actual loop ancestry and occurrence order.
@@ -490,10 +526,13 @@ impl Occurrences {
                         continue;
                     }
                     self.read(value, scope, loops, readers);
-                    let allocation = if matches!(value.node, SNode::Array { .. }) {
+                    let allocation = if matches!(value.node, SNode::Array { .. })
+                        || self.fresh_slice_source(value, scope)
+                    {
                         let id = self.allocations.len();
                         self.allocations.push(Allocation {
                             name: name.clone(),
+                            array_known: true,
                             loops: loops.to_vec(),
                             escapes: Vec::new(),
                             borrows: Vec::new(),
@@ -553,12 +592,16 @@ impl Occurrences {
                 }
                 Stmt::Assign { name, value, .. } => {
                     self.read(value, scope, loops, readers);
-                    if let Some(Some(owner)) = scope.get(name) {
-                        let allocation = owner.allocation();
-                        if owner.owned().is_none()
-                            || !self_slice_rebinding(name, value, scope, allocation)
-                        {
-                            self.escape(allocation, loops);
+                    if let Some(Some(owner)) = scope.get(name).copied() {
+                        if let Owner::ArrayParameter(index) = owner {
+                            self.known_parameters[index] = false;
+                        } else if let Some(allocation) = owner.allocation() {
+                            if owner.owned().is_none()
+                                || !self_slice_rebinding(name, value, scope, allocation)
+                            {
+                                self.allocations[allocation].array_known = false;
+                                self.escape(allocation, loops);
+                            }
                         }
                     }
                 }
@@ -757,10 +800,22 @@ pub(super) fn lower_owned_array_appends(
     readers: &Readers,
     iterations: &IterationSources,
 ) -> Vec<Span> {
-    let mut occurrences = Occurrences::default();
+    let mut occurrences = Occurrences {
+        known_parameters: parameters
+            .iter()
+            .map(|parameter| matches!(parameter.ty, Some(super::Type::Array { .. })))
+            .collect(),
+        ..Occurrences::default()
+    };
     let mut scope = parameters
         .iter()
-        .map(|parameter| (parameter.name.clone(), None))
+        .enumerate()
+        .map(|(index, parameter)| {
+            (
+                parameter.name.clone(),
+                occurrences.known_parameters[index].then_some(Owner::ArrayParameter(index)),
+            )
+        })
         .collect();
     occurrences.list(statements, &mut scope, &[], readers, iterations, None);
     let mut selected = HashMap::new();

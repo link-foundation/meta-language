@@ -210,7 +210,7 @@ export function readRustNominalBindingPattern(parser){
  const c=parser.cursor;
  if(c.peek().kind!=='identifier')return null;
  const candidate=parser.origins.lookup(parser.resolve([c.peek().value],parser.modulePath),parser.modulePath);
- if(!['::','(','{'].includes(c.peek(1).value)&&candidate?.k!=='ctor'&&candidate?.k!=='data')return null;
+ if(!['::','(','{','@'].includes(c.peek(1).value)&&candidate?.k!=='ctor'&&candidate?.k!=='data')return null;
  const aliases=[];parser.recordPatternDepth+=1;
  let pattern;
  try{pattern=parser.pattern(parser.modulePath,aliases);}finally{parser.recordPatternDepth-=1;}
@@ -221,6 +221,7 @@ export function readRustNominalBindingPattern(parser){
 export function rustNominalBindingNames(parser,pattern,validate=false){
  const names=[];
  const visit=node=>{
+  if(node.k==='alias'){names.push({name:node.name,span:node.span});visit(node.pattern);return;}
   const entry=node.k==='ctor'?parser.origins.lookup(node.path,parser.modulePath,['ctor']):node.k==='bindOrCtor'?parser.origins.lookup([node.name],parser.modulePath,['ctor']):null;
   const kind=entry?'ctor':node.k==='bindOrCtor'?'bind':node.k;
   const variants=entry?[...parser.origins.catalog.values()].filter(item=>item.k==='ctor'&&item.owner===entry.owner).length:0;

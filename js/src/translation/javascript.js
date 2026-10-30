@@ -2784,7 +2784,7 @@ function collectNames(node, names) {
     return;
   }
   if (node.k === 'name' && node.path.length === 1) names.add(node.path[0]);
-  if (node.k === 'let' || node.k === 'bind' || node.k === 'bindOrCtor') names.add(node.name);
+  if (node.k === 'let' || node.k === 'bind' || node.k === 'bindOrCtor' || node.k === 'alias') names.add(node.name);
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'span' && key !== 'type') collectNames(value, names);
   }
@@ -2805,7 +2805,7 @@ function collectBinders(node, names) {
     for (const item of node) collectBinders(item, names);
     return;
   }
-  if (node.k === 'let' || node.k === 'bind' || node.k === 'bindOrCtor') names.add(node.name);
+  if (node.k === 'let' || node.k === 'bind' || node.k === 'bindOrCtor' || node.k === 'alias') names.add(node.name);
   for (const [key, value] of Object.entries(node)) {
     if (key !== 'span' && key !== 'type') collectBinders(value, names);
   }

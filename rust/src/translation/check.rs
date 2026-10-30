@@ -71,6 +71,7 @@ mod object_rest;
 mod optional_callables;
 mod optional_policies;
 mod optional_values;
+mod pattern_aliases;
 mod primitive_methods;
 mod record_formal_defaults;
 pub(super) mod record_order_operations;
@@ -442,6 +443,7 @@ const NAT_PATTERN_UNFOLD: i128 = 16;
 #[derive(Clone, Debug)]
 enum NPat {
     Surface(SPattern),
+    Alias { name: String, pattern: Box<Self> },
     Wild,
     Bind(String),
     Nat { succ: bool, args: Vec<Self> },

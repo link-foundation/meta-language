@@ -743,6 +743,13 @@ pub(super) fn tag_row(
 /// The names patterns bind.
 pub(super) fn pattern_names(pattern: &SPattern, names: &mut HashSet<String>) {
     match &pattern.node {
+        SPatternNode::Alias {
+            name,
+            pattern: inner,
+        } => {
+            names.insert(name.clone());
+            pattern_names(inner, names);
+        }
         SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
             names.insert(name.clone());
         }

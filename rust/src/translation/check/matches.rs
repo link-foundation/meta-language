@@ -26,13 +26,21 @@ impl Checker {
         for (column, source) in scrutinees.iter().enumerate() {
             let owners = rows
                 .iter()
-                .map(
-                    |row| match row.patterns.get(column).map(|pattern| &pattern.node) {
+                .map(|row| {
+                    let mut pattern = row.patterns.get(column);
+                    while let Some(value) = pattern {
+                        if let SPatternNode::Alias { pattern: inner, .. } = &value.node {
+                            pattern = Some(inner.as_ref());
+                        } else {
+                            break;
+                        }
+                    }
+                    match pattern.map(|value| &value.node) {
                         Some(SPatternNode::ByteLit { .. }) => "u8".to_owned(),
                         Some(SPatternNode::TypedNumLit { owner, .. }) => owner.clone(),
                         _ => String::new(),
-                    },
-                )
+                    }
+                })
                 .collect::<Vec<_>>();
             let (kind, typed) = match &source.node {
                 SNode::Num { ty, .. } => ("num", ty.is_some()),
@@ -115,7 +123,11 @@ impl Checker {
                 };
                 patterns.push(self.normalise_pattern(pattern, &column.ty, span)?);
             }
-            normalised.push(Row { patterns, ..row });
+            normalised.push(super::pattern_aliases::project_pattern_alias_row(
+                Row { patterns, ..row },
+                columns,
+                span,
+            )?);
         }
         let first = &normalised[0];
         let Some(refutable) = first
@@ -367,6 +379,13 @@ impl Checker {
             args: Vec::new(),
         };
         match pattern.node {
+            SPatternNode::Alias {
+                name,
+                pattern: inner,
+            } => Ok(NPat::Alias {
+                name,
+                pattern: Box::new(self.normalise_pattern(NPat::Surface(*inner), ty, at)?),
+            }),
             SPatternNode::Wild => Ok(NPat::Wild),
             SPatternNode::Tuple { args, rest } => {
                 let width = match ty {

@@ -11041,3 +11041,37 @@ with explicit Rust >=1.90 <1.100 edition-2024 assertion revisions and standard
 macro references. No originals or gate obligations are removed. Existing range,
 mutable/non-Copy, arbitrary macro/trait, ownership and full-language obligations
 remain; the expansion and controls are unexecuted drafts.
+
+Ordinary whole-value pattern aliases have an explicit recursive surface node.
+They bind the actual matched column before its inner pattern, retaining source
+owners and reference layers; no wildcard, ignored field or partial constructor
+is used to reconstruct another value. Shared JavaScript Links plans select the
+inner columns and alias bindings, and generate native policy source. Existing
+match compilation lowers those bindings to ordinary lets, preserving structural
+recursion, arm order and guards. Nested tuple/constructor aliases become local
+only when their actual field column is selected. Closed source interpretations
+retain their preceding limited alias behavior.
+
+Source pattern origins and irrefutable binding readers retain both whole-value
+and nested bindings. Callable reference analysis now gives each source match
+row its own pattern scope: scrutinees use the enclosing scope, while body and
+guard reads/writes use the row's bindings. This prevents spelling collisions
+from inventing outer captures. Independent originals cover wildcard/rest/nested
+aliases, source owners, borrowed values, conditionals, macros, closures and
+source effects. Their text/binary and four-target/native controls remain
+unexecuted; ranges, complete ownership/ergonomics and all full-language,
+grammar and concept-space obligations remain active.
+
+The private-array construction proof recognizes a fresh standard slice container
+from an actually typed array parameter or a still-known literal/slice owner.
+The parameter itself is an unowned input and never becomes an append owner.
+Source declarations and lexical shadows supply those facts; unknown receivers
+and unsafe rebinding remove them conservatively. Each source allocation keeps
+its own escape, loop and borrow history. Existing append/escape proofs still
+apply to the copy, with no assumption of deep element ownership. JavaScript
+admission generates the native rule; host scopes transport the same facts.
+This supports source-defined algorithms that copy an input then build a private
+result. Independent JavaScript originals cover bounds, unchanged inputs, copies,
+loops, shadows and source failure order. Custom/proxy/species behavior, all
+inferred receiver domains, element ownership and full-language coverage remain
+requirements; these controls have not executed.

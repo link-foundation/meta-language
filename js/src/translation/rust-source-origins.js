@@ -432,7 +432,10 @@ export class RustSourceOrigins {
     for(const alias of this.literalPatternAliases.get(pattern)??[])this.mark(alias,origin);
     if(pattern.k==='typedNumLit'){const actual=readRustPointerIntegerContractOwner(origin.expandedSourceOwner??origin.sourceOwner,origin.integerSourceOwnerConstraint??''),error=readRustSourceNumericPatternOwnerError(actual,pattern.owner,Boolean(origin.type),this.collecting);if(error)throw unsupported('Rust numeric pattern',error,sourceSpan);}
     if(pattern.k==='strLit'){const owner=origin.sourceOwner,error=readRustSourceStringPatternError(origin.type?.kind??'',origin.textSourceModel??'',origin.proven,origin.wrappers.length,origin.wrappers.every(layer=>layer==='reference'),owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,this.collecting);if(error)throw unsupported('Rust string pattern',error,sourceSpan);}
-    if (pattern.k === 'bindOrCtor' || pattern.k === 'bind') {
+    if(pattern.k==='alias'){
+      if(result.has(pattern.name))throw unsupported('duplicate source pattern binding','each pattern binds a source name at most once',sourceSpan);
+      result.set(pattern.name,origin);this.pattern(pattern.pattern,origin,path,result,pattern.pattern.span??sourceSpan);
+    } else if (pattern.k === 'bindOrCtor' || pattern.k === 'bind') {
       if (!this.lookup([pattern.name], path)?.fields) {
         if(result.has(pattern.name))throw unsupported('duplicate source pattern binding','each pattern binds a source name at most once',sourceSpan);
         result.set(pattern.name, origin);
