@@ -36,6 +36,11 @@ fn owned_vector_bindings_preserve_consumption_and_unavailable_reads() {
     for row in data["premises"].as_array().unwrap() {
         let args = &row["args"];
         let actual = match row["operation"].as_str().unwrap() {
+            "readRustOwnedPlaceMoveError" => json!(rules::read_rust_owned_place_move_error(
+                boolean(args, 0),
+                boolean(args, 1),
+                boolean(args, 2)
+            )),
             "readRustOwnedTemporaryDisposition" => {
                 json!(rules::read_rust_owned_temporary_disposition(
                     boolean(args, 0),

@@ -42,6 +42,7 @@ pub(super) struct SourceOrigin {
     pub(super) source_place_loan_binding_identities: Vec<String>,
     pub(super) source_owned_result_proof: bool,
     pub(super) source_byte_iterator: bool,
+    pub(super) source_borrowed_place: bool,
     pub(super) source_extending_temporary_bindings: Vec<String>,
     pub(super) ty: Option<Type>,
     /// Explicit primitive f64 annotation or literal evidence, never fallback inference.
@@ -146,6 +147,7 @@ impl SourceOrigin {
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
             source_byte_iterator: false,
+            source_borrowed_place: false,
             source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
             expanded_source_owner: None,
@@ -200,6 +202,7 @@ impl SourceOrigin {
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
             source_byte_iterator: false,
+            source_borrowed_place: false,
             source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
             expanded_source_owner: None,
@@ -1012,6 +1015,7 @@ impl SourceOrigins {
                 source_extending_temporary_bindings,
                 source_loan_binding_identities,
                 source_place_loan_binding_identities: Vec::new(),
+                source_borrowed_place: returning.iter().any(|origin| origin.source_borrowed_place),
                 source_owned_result_proof: returning
                     .iter()
                     .all(|origin| origin.source_owned_result_proof),
@@ -1175,6 +1179,7 @@ impl SourceOrigins {
         origin.source_extending_temporary_bindings.clear();
         origin.source_loan_binding_identities.clear();
         origin.source_place_loan_binding_identities.clear();
+        origin.source_borrowed_place = false;
         origin.source_owned_result_proof =
             crate::translation::rust_owned_binding_rules::accept_rust_owned_binding_value(
                 origin.ty.as_ref().map_or("", Type::kind),
@@ -1193,6 +1198,7 @@ impl SourceOrigins {
         origin.source_loan_binding_identities.clear();
         origin.source_place_loan_binding_identities.clear();
         origin.source_extending_temporary_bindings.clear();
+        origin.source_borrowed_place = false;
         self.mark(node, origin);
     }
 
@@ -1309,6 +1315,9 @@ impl SourceOrigins {
         if !origin.wrappers.is_empty() {
             origin.wrappers.remove(0);
         }
+        if lifetime {
+            origin.source_borrowed_place = true;
+        }
         if lifetime && !origin.source_lifetimes.is_empty() {
             origin.source_lifetimes.remove(0);
         }
@@ -1355,7 +1364,7 @@ impl SourceOrigins {
         if let Some(declared) = declared {
             self.argument(&actual, declared, node.span)?;
         }
-        if self.available_owned_binding(&actual) {
+        if self.owned_binding_value(&actual) {
             self.consume_owned_binding(&actual, node.span)?;
         }
         let mut binding = declared.cloned().unwrap_or_else(|| actual.clone());

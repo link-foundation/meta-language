@@ -79,11 +79,27 @@ impl SourceOrigins {
                 .is_empty()
             })
     }
+    pub(in super::super) fn check_owned_place_move(
+        &self,
+        origin: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        let error = rules::read_rust_owned_place_move_error(
+            self.track_owned_bindings(),
+            origin.source_borrowed_place,
+            self.owned_binding_value(origin),
+        );
+        if !error.is_empty() {
+            return Err(unsupported("Rust owned binding", &error, span));
+        }
+        Ok(())
+    }
     pub(in super::super) fn consume_owned_binding(
         &mut self,
         origin: &SourceOrigin,
         span: Option<Span>,
     ) -> Result<bool> {
+        self.check_owned_place_move(origin, span)?;
         if !self.owned_binding_value(origin) || origin.source_binding_identity.is_none() {
             return Ok(false);
         }
@@ -111,6 +127,7 @@ impl SourceOrigins {
         path: &[String],
     ) -> Result<SourceOrigin> {
         let origin = self.origin(node, path);
+        self.check_owned_place_move(&origin, node.span)?;
         if !self.owned_binding_value(&origin)
             || !rules::accept_rust_owned_result_transfer(
                 origin.source_binding_identity.is_some(),
@@ -137,7 +154,10 @@ impl SourceOrigins {
         self.source_temporary_bindings.clone()
     }
     pub(in super::super) fn capture_owned_borrow(&mut self, origin: SourceOrigin) -> SourceOrigin {
-        if !self.owned_binding_value(&origin) || origin.source_binding_identity.is_some() {
+        if !self.owned_binding_value(&origin)
+            || origin.source_binding_identity.is_some()
+            || origin.source_borrowed_place
+        {
             return origin;
         }
         let result = self.register_owned_binding(origin);

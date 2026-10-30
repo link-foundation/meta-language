@@ -733,6 +733,16 @@ pub fn read_rust_owned_temporary_disposition(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_owned_place_move_error(tracked: bool, borrowed: bool, owned: bool) -> String {
+    if (tracked && borrowed) && owned {
+        String::from("an owned source value cannot move out of a borrowed place")
+    } else {
+        String::new()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryAcceptRustOwnedBindingGuardLoop1Result {
     MlTemporaryAcceptRustOwnedBindingGuardLoop1Done,

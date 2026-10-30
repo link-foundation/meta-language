@@ -72,3 +72,9 @@ export function acceptRustStringSliceCloneReference(method,kind,storage,layers){
  * @param {boolean} framed @param {boolean} extended @param {boolean} escaping
  * @returns {string} */
 export function readRustOwnedTemporaryDisposition(framed,extended,escaping){return framed||escaping?'leave':extended?'extend':'expire';}
+
+/** Value context cannot move an owned payload out of a shared reference.
+ * Copy projection and explicit clone/borrow contexts remain distinct.
+ * @param {boolean} tracked @param {boolean} borrowed @param {boolean} owned
+ * @returns {string} */
+export function readRustOwnedPlaceMoveError(tracked,borrowed,owned){return tracked&&borrowed&&owned?'an owned source value cannot move out of a borrowed place':'';}

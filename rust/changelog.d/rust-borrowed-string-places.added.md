@@ -1,0 +1,1 @@
+Draft shared source-place admission for standard Rust String dereferences: preserve explicit copies, queries and reborrows while rejecting owned moves through shared references. JavaScript owns the automatically translated policy; native controls and original Rust oracle cases are deferred.

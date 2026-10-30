@@ -10732,3 +10732,16 @@ four-target emissions and all kernel/decision controls remain unexecuted drafts.
 Zero-copy/pointer/allocator ABI observables, mutable and non-Copy place-use
 proofs, all extending syntax categories, general returned borrow regions,
 escaping iterator state and full source-language support remain obligations.
+
+#### Borrowed places and owned values
+
+Source indirection preserves the distinction between a borrowed place and an
+owned value. A shared-reference dereference may be reborrowed, queried or copied
+explicitly; it cannot supply an owned String to a binding, result, argument,
+constructor, container or consuming conversion. The shared Links policy for
+this boundary is automatically translated from JavaScript, and both frontends
+supply actual source-place facts. Explicit constructors and clones establish
+fresh value provenance. Scalar Copy projections retain their existing behavior.
+This follows the [Rust place-expression rules](https://doc.rust-lang.org/reference/expressions.html#moving-out-of-a-place-expression).
+General field moves, resource ownership and Box extraction still require their
+complete source contracts; this source draft does not claim their completion.
