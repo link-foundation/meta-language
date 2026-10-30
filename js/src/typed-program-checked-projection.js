@@ -4,13 +4,15 @@ import {acceptProgramStringRepresentationFlag} from './translation/program-strin
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
 import {checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
-import { checkProgram } from './translation/check.js';
+import {checkRustDataTypeFieldSignatureProgramContainers} from './translation/rust-data-type-field-signatures.js';
+import { checkProjectedProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
 import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
 import { readProgramDeclarationTypeProjectionField, readProgramExpressionProjection, readProgramNeutralFieldDefault, readProgramPropositionOperandFields, readProgramPropositionBindingForm } from './typed-program-link-rules.js';
 
 export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
+  checkRustDataTypeFieldSignatureProgramContainers(program);
   if(checkRustConstFunctionContainers(program))wholeProgram=true;
   if(checkRustRuntimeShell(program))return program;
   const rootedNamespace = checkRustTypeNamespaceRecordShapes(program);
@@ -42,7 +44,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   // shared native projection boundary. Explicit product qualifiers always
   // require whole-program rechecking, including after a true-to-false edit.
   if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;
-  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true});
+  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true, sourceLanguage: program.sourceLanguage});
   function projectType(value) {
     if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };
     if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };
@@ -71,6 +73,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
         fields: constructor.fields.map(field => ({ name: field.name, type: projectType(field.type) })),
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
+      ...(entry.sourceFieldSignatures!==undefined?{sourceFieldSignatures:entry.sourceFieldSignatures}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
     const annotation = readProgramDeclarationTypeProjectionField(entry.k, 'annotation');
@@ -112,7 +115,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     ...(program.referenceSemantics !== undefined ? { referenceSemantics: program.referenceSemantics } : {}),
     ...(program.sourcePureUnitCalls!==undefined?{sourcePureUnitCalls:program.sourcePureUnitCalls}:{}),
   };
-  const checked = checkProgram(surface);
+  const checked = checkProjectedProgram(surface);
   if (Object.hasOwn(program, 'utf16Strings')) {
     if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, true)) throw new TypeError('a program string representation flag must be an explicit boolean');
     checked.utf16Strings = program.utf16Strings;

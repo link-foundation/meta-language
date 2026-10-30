@@ -1,0 +1,1 @@
+Draft explicit Rust source-version transport through multi-file source translation, library normalization, retained source owners, CLI inventories and Links provenance. Reuse the shared version policy and retain omitted-selector behavior.

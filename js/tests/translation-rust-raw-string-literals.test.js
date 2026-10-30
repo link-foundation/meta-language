@@ -131,10 +131,17 @@ test('truncated or mismatched raw delimiters and isolated carriage returns refus
   }
 });
 
-test('raw identifiers, byte and C literals and other languages retain their previous token paths', () => {
+test('raw identifiers, byte and C literals retain their declared lexical profiles and typed refusals', () => {
+  // Rust Reference lex.token.str-byte-raw; original sources and all inputs:
+  // parity/fixtures/rust-byte-string-assertion-history.lino.
+  const profile=readProjectData(new URL('../../parity/fixtures/rust-byte-string-literals.lino',import.meta.url));
   for (const text of fixture.unchangedPrefixes) {
     assert.equal(decodeRustRawString(units(text), 0).$, 'notRaw', text);
-    assert.equal(tokenize(text, 'Rust').tokens[0].kind, 'identifier', text);
+    const expectation=profile.legacyRawPrefixExpectations.find(row=>row.source===text);
+    assert.ok(expectation,'uncovered Rust source profile '+text+'; '+profile.versions.Rust);
+    const token=tokenize(text,'Rust').tokens[0];
+    assert.equal(token.kind,expectation.kind,text);
+    if(expectation.kind==='byteString'){assert.equal(token.raw,text);assert.equal(token.value,'76616c7565');assert.equal(token.suffix,'');}
     assert.throws(() => createTypedProgramLinks(sourceFor(text), 'Rust'), text);
   }
   for (const language of ['JavaScript', 'Lean', 'Rocq']) {

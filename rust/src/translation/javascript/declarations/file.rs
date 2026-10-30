@@ -20,7 +20,10 @@ impl JavaScriptParser {
             tdz: self.block_declarations(self.cursor.index, ScanEnd::File),
             mutable: HashSet::new(),
         };
-        self.global_binding_names.clone_from(&self.scope.tdz);
+        // Keep actual outer module owners supplied before parsing this item.
+        // Replacing the set loses carried class/constant shadowing evidence.
+        self.global_binding_names
+            .extend(self.scope.tdz.iter().cloned());
         for name in &self.scope.tdz {
             self.lexical.binding(name, None);
         }
@@ -139,7 +142,7 @@ impl JavaScriptParser {
             if exported {
                 for entry in &entries {
                     if let SEffect::Let { name, .. } = entry
-                        && !name.starts_with("ml_")
+                        && !name.starts_with(&self.generated_prefix)
                     {
                         self.exported_names.insert(name.clone());
                     }

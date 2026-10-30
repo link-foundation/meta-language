@@ -88,10 +88,16 @@ pub fn thread_output_for_target<'a>(source: &'a Program, target: &str) -> Result
             .iter()
             .any(|effect| effect_operand_any(effect, &aborting))
     });
+    let names = serde_json::to_value(&program).expect("checked output source retains actual names");
+    let private_prefix = super::source_identifiers::read_source_identifier_supply(
+        super::source_identifiers::collect_source_identifier_texts(&names),
+    );
     Threader {
         source: &program,
         effectful,
         can_abort,
+        source_exceptions: can_abort && program.source_language == super::Language::JavaScript,
+        private_prefix,
         pairs: Vec::new(),
         count: 0,
     }
@@ -196,6 +202,8 @@ struct Threader<'p> {
     source: &'p Program,
     effectful: HashSet<String>,
     can_abort: bool,
+    source_exceptions: bool,
+    private_prefix: String,
     /// The generated pairs with the keys of their value types, in order.
     pairs: Vec<(String, DataDecl)>,
     count: usize,
@@ -207,7 +215,7 @@ impl Threader<'_> {
         for entry in &self.source.declarations {
             let entry = match entry {
                 Decl::Fn(function) if self.effectful.contains(&function.full_name) => {
-                    let out = "ml_out";
+                    let out = format!("{}out", self.private_prefix);
                     let mut params = function.params.clone();
                     params.push(Param {
                         name: out.to_owned(),
@@ -274,7 +282,11 @@ impl Threader<'_> {
 
     fn fresh(&mut self, prefix: &str) -> String {
         self.count += 1;
-        format!("ml_{prefix}{}", self.count)
+        super::source_identifiers::render_source_generated_identifier(
+            &self.private_prefix,
+            prefix,
+            self.count,
+        )
     }
 
     /// The generated data type pairing the lines printed so far with a value
@@ -287,7 +299,7 @@ impl Threader<'_> {
         if let Some((_, entry)) = self.pairs.iter().find(|(candidate, _)| *candidate == key) {
             return entry.full_name.clone();
         }
-        let name = format!("ml_io{}", self.pairs.len() + 1);
+        let name = format!("{}io{}", self.private_prefix, self.pairs.len() + 1);
         let mut ctors = vec![Ctor {
             name: format!("{name}_mk"),
             fields: vec![
@@ -316,6 +328,18 @@ impl Threader<'_> {
                 ],
             });
         }
+        if self.source_exceptions {
+            ctors[1].fields.extend([
+                Field {
+                    name: "className".to_owned(),
+                    ty: STRING,
+                },
+                Field {
+                    name: "messagePresent".to_owned(),
+                    ty: BOOL,
+                },
+            ]);
+        }
         self.pairs.push((
             key,
             DataDecl {
@@ -327,6 +351,7 @@ impl Threader<'_> {
                 generated: true,
                 output: true,
                 source_unit_clone_derivation: None,
+                source_field_signatures: None,
             },
         ));
         name
@@ -358,19 +383,47 @@ impl Threader<'_> {
 
     /// The abort with `message` after the lines `out`, as a pair of a `ty` value.
     fn fail(&mut self, out: Expr, message: Expr, ty: &Type) -> Expr {
+        self.fail_exception(
+            out,
+            message,
+            ty,
+            literal(STRING, "Error"),
+            Expr::lit(BOOL, LitValue::Bool(true)),
+        )
+    }
+
+    fn fail_exception(
+        &mut self,
+        out: Expr,
+        message: Expr,
+        ty: &Type,
+        class_name: Expr,
+        present: Expr,
+    ) -> Expr {
         let name = self.pair(ty);
+        let mut args = vec![out, message];
+        if self.source_exceptions {
+            args.extend([class_name, present]);
+        }
         Expr::new(
             Node::Ctor {
                 ctor: format!("{name}_abort"),
                 data: name.clone(),
-                args: vec![out, message],
+                args,
                 frozen: false,
             },
             data(name),
         )
     }
 
-    fn reraise(&self, out: Expr, message: Expr, pair_type: &Type) -> Expr {
+    fn reraise(
+        &self,
+        out: Expr,
+        message: Expr,
+        pair_type: &Type,
+        class_name: Option<Expr>,
+        present: Option<Expr>,
+    ) -> Expr {
         let entry = match pair_type {
             Type::Data { name } => self
                 .pairs
@@ -380,11 +433,18 @@ impl Threader<'_> {
             _ => None,
         };
         let entry = entry.expect("an abort passes on only as a pair");
+        let mut args = vec![out, message];
+        if self.source_exceptions {
+            args.extend([
+                class_name.expect("checked exception class"),
+                present.expect("checked exception presence"),
+            ]);
+        }
         Expr::new(
             Node::Ctor {
                 data: entry.full_name.clone(),
                 ctor: format!("{}_abort", entry.full_name),
-                args: vec![out, message],
+                args,
                 frozen: false,
             },
             pair_type.clone(),
@@ -427,15 +487,29 @@ impl Threader<'_> {
             let message = self.fresh("m");
             let out = Expr::var(lines.clone(), Type::Output);
             let text = Expr::var(message.clone(), STRING);
+            let class_name = self
+                .source_exceptions
+                .then(|| self.fresh("exception_class"));
+            let present = self
+                .source_exceptions
+                .then(|| self.fresh("exception_present"));
+            let mut binds = vec![Some(lines), Some(message)];
+            let class_value = class_name
+                .as_ref()
+                .map(|name| Expr::var(name.clone(), STRING));
+            let present_value = present.as_ref().map(|name| Expr::var(name.clone(), BOOL));
+            if self.source_exceptions {
+                binds.extend([class_name, present]);
+            }
             let handled = match failure {
                 Some(failure) => failure(out, text),
-                None => self.reraise(out, text, &ty),
+                None => self.reraise(out, text, &ty, class_value, present_value),
             };
             cases.push(Case {
                 pattern: Pattern::Ctor {
                     data: frame.data.clone(),
                     ctor: format!("{}_abort", frame.data),
-                    binds: vec![Some(lines), Some(message)],
+                    binds,
                 },
                 body: handled,
             });
@@ -490,6 +564,44 @@ impl Threader<'_> {
     fn complete(&mut self, out: Expr, e: Expr) -> Expr {
         if !aborts(&e) {
             return self.make(out, e);
+        }
+        if let Node::Math { op, args } = &e.node {
+            if super::rust_panic_value_rules::accept_linked_rust_panic_value("math", op) {
+                return self.fail(out, args[0].clone(), &e.ty);
+            }
+            if super::source_exception_rules::accept_linked_java_script_source_exception("math", op)
+            {
+                let class =
+                    super::source_exception_rules::read_java_script_source_exception_class(op);
+                return self.fail_exception(
+                    out,
+                    args[0].clone(),
+                    &e.ty,
+                    literal(STRING, &class),
+                    args[1].clone(),
+                );
+            }
+            let message = super::string_number_rules::read_java_script_number_conversion_failure(
+                op,
+                args[0].ty.kind(),
+            );
+            let body = self.fail_exception(
+                out,
+                literal(STRING, &message),
+                &e.ty,
+                literal(STRING, "TypeError"),
+                Expr::lit(BOOL, LitValue::Bool(true)),
+            );
+            let ty = body.ty.clone();
+            let name = self.fresh("numeric_argument");
+            return Expr::new(
+                Node::Let {
+                    name,
+                    value: Box::new(args[0].clone()),
+                    body: Box::new(body),
+                },
+                ty,
+            );
         }
         let mut operands: Vec<(String, Expr)> = Vec::new();
         let mut name = |this: &mut Self, value: Expr| -> Expr {

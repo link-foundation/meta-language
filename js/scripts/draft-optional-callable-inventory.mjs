@@ -1,0 +1,17 @@
+// Author source locations, immutable definition assets and future controls only.
+import {readFileSync,writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readProjectData,writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const revision='bab148f9',originalPath='js/src/data/whole-parameter-default-program.lino',asset='whole-parameter-default-bab148f9-program.lino';
+const bytes=execFileSync('git',['show',revision+':'+originalPath],{maxBuffer:16*1024*1024});
+for(const runtime of ['js','rust'])writeFileSync(new URL('../../'+runtime+'/src/data/'+asset,import.meta.url),bytes);
+writeProjectData(new URL('../../parity/self-translation/optional-callable-definition-history.lino',import.meta.url),{schemaVersion:1,revision,originalPath,asset,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),boundary:'Complete immutable predecessor definition graph. Its availability proves no equivalence with the expanded current context domain.'});
+const file=new URL('../../parity/language-features.lino',import.meta.url),value=readProjectData(file),id='javascript-optional-callable-arguments-and-callback-bridges';
+const common=['parity/fixtures/optional-callables.lino','parity/self-translation/optional-callable-rules-native.lino','parity/self-translation/optional-callable-definition-history.lino'];
+const row={id,required:true,javascript:{status:'implemented',evidence:['js/src/translation/optional-callable-rules.js','js/src/translation/optional-callables.js','js/src/translation/javascript-infer.js','js/src/translation/check.js','js/src/translation/whole-parameter-default-rules.js','js/tests/translation-optional-callables.test.js','js/tests/translation-source-exceptions.test.js','experiments/javascript-program/optional-callables.mjs',...common]},rust:{status:'implemented',evidence:['rust/src/translation/optional_callable_rules.rs','rust/src/translation/check/optional_callables.rs','rust/src/translation/check/callables.rs','rust/src/translation/check/array_callbacks.rs','rust/src/translation/javascript/infer/callables/optional_arguments.rs','rust/src/translation/javascript/infer/methods.rs','rust/tests/unit/translation_javascript_optional_callables.rs',...common]}};
+const at=value.features.findIndex(prior=>prior.id===id);if(at<0)value.features.push(row);else value.features[at]=row;writeProjectData(file,value);
+const matrixFile=new URL('../tests/translation-source-exceptions.test.js',import.meta.url);let matrix=readFileSync(matrixFile,'utf8');const addition="['optional-callables',()=>createSourceDefinitionProgramLinks('meta-language/source-program/optional-callable-program')],",anchor="['whole-parameter-defaults',()=>createSourceDefinitionProgramLinks('meta-language/source-program/whole-parameter-default-program')],";
+if(!matrix.includes(addition)){if(matrix.split(anchor).length!==2)throw new TypeError('the optional-callable source matrix needs its unique actual anchor');matrix=matrix.replace(anchor,()=>anchor+addition);writeFileSync(matrixFile,matrix);}
+const modulesFile=new URL('../../rust/tests/unit/mod.rs',import.meta.url);let modules=readFileSync(modulesFile,'utf8');if(!modules.includes('mod translation_javascript_optional_callables;')){modules+='\nmod translation_javascript_optional_callables;\n';writeFileSync(modulesFile,modules);}

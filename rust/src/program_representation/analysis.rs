@@ -6,6 +6,7 @@ use super::{
 mod declarations;
 mod extents;
 mod javascript_hoist;
+mod parameters;
 mod resolution;
 
 use declarations::{declare_javascript, declare_proof_language, declare_rust};
@@ -25,6 +26,22 @@ struct Declaration {
     kind: String,
     scope: usize,
     visibility: Visibility,
+}
+struct JavaScriptFunctionScope {
+    private_scope: Option<usize>,
+    parameter_scope: usize,
+    body_start: Option<usize>,
+    simple: bool,
+    parameter_interval: Option<(usize, usize)>,
+}
+struct JavaScriptFunctionStart {
+    range: ProgramRange,
+    head: usize,
+    named: bool,
+    declaration: bool,
+    body_start: Option<usize>,
+    simple: bool,
+    parameter_interval: Option<(usize, usize)>,
 }
 
 pub(super) fn syntax_facts(network: &LinkNetwork) -> Vec<ProgramSourceMapping> {
@@ -47,7 +64,7 @@ pub(super) fn semantic_tokens(
     language: &str,
     syntax: &[ProgramSourceMapping],
 ) -> Vec<SemanticToken> {
-    let mut mask = code_mask(source, language);
+    let mut mask = code_mask(source, language, syntax);
     if language == "JavaScript" {
         for fact in syntax
             .iter()
@@ -57,6 +74,22 @@ pub(super) fn semantic_tokens(
         }
     }
     unmask_interpolations(&mut mask, source, language, syntax);
+    let identifiers = if language == "JavaScript" {
+        syntax
+            .iter()
+            .filter(|fact| {
+                matches!(
+                    fact.term.as_str(),
+                    "identifier"
+                        | "shorthand_property_identifier"
+                        | "shorthand_property_identifier_pattern"
+                )
+            })
+            .map(|fact| (fact.range.start, fact.range.end))
+            .collect::<BTreeSet<_>>()
+    } else {
+        BTreeSet::new()
+    };
     let mut result = Vec::new();
     let mut offset = 0;
     while offset < source.len() {
@@ -76,7 +109,12 @@ pub(super) fn semantic_tokens(
                 offset += next.len_utf8();
             }
             let text = &source[start..offset];
-            let kind = if is_keyword(language, text) {
+            let keyword = if language == "JavaScript" {
+                crate::translation::source_library_binding_rules::test_java_script_source_keyword_role(identifiers.contains(&(start,offset)),is_keyword(language,text)||crate::translation::javascript_identifier_rules::accept_java_script_reserved_identifier(text))
+            } else {
+                is_keyword(language, text)
+            };
+            let kind = if keyword {
                 TokenKind::Keyword
             } else {
                 TokenKind::Identifier
@@ -109,6 +147,7 @@ pub(super) fn resolve_bindings(
     syntax: &[ProgramSourceMapping],
     source_len: usize,
     language: &str,
+    module_bindings: &[f64],
 ) -> (Vec<ProgramScope>, Vec<ProgramBinding>, Vec<ProgramFact>) {
     let mut tokens = input.to_vec();
     let mut scopes = vec![ProgramScope {
@@ -120,6 +159,112 @@ pub(super) fn resolve_bindings(
     let mut stack = vec![0_usize];
     let mut brace_scopes = BTreeMap::new();
     let mut brace_kinds = Vec::new();
+    let mut function_starts: BTreeMap<usize, Vec<JavaScriptFunctionStart>> = BTreeMap::new();
+    let mut expression_scopes = BTreeMap::new();
+    let mut virtual_scopes = BTreeSet::new();
+    let token_positions = if language == "JavaScript" {
+        input
+            .iter()
+            .enumerate()
+            .map(|(index, token)| (token.range.start, index))
+            .collect::<BTreeMap<_, _>>()
+    } else {
+        BTreeMap::new()
+    };
+    if language == "JavaScript" {
+        for fact in syntax {
+            let form=crate::translation::source_library_binding_rules::read_java_script_source_function_scope_form(&fact.term);
+            if form.is_empty() {
+                continue;
+            }
+            let method = form == "method definition";
+            let first = token_positions.get(&fact.range.start).copied().or_else(|| {
+                if method {
+                    input.iter().position(|token| {
+                        token.range.start >= fact.range.start && token.range.start < fact.range.end
+                    })
+                } else {
+                    None
+                }
+            });
+            let Some(first) = first else {
+                continue;
+            };
+            let arrow = form == "arrow function";
+            let head = first + usize::from(!arrow && !method && input[first].text == "async");
+            if !arrow
+                && !method
+                && !input
+                    .get(head)
+                    .is_some_and(|token| token.text == "function")
+            {
+                continue;
+            }
+            let name =
+                head + 1 + usize::from(input.get(head + 1).is_some_and(|token| token.text == "*"));
+            let named=!arrow&&!method&&input.get(name).is_some_and(|token|crate::translation::source_library_binding_rules::accept_java_script_source_function_head_name(if token.kind==TokenKind::Identifier{"identifier"}else{""}));
+            let body = syntax.iter().find(|node| {
+                node.term == "statement_block"
+                    && node.range.start >= fact.range.start
+                    && node.range.end == fact.range.end
+            });
+            let parameters = body.and_then(|body| {
+                syntax
+                    .iter()
+                    .filter(|node| {
+                        node.term == "formal_parameters"
+                            && node.range.start >= fact.range.start
+                            && node.range.end <= body.range.start
+                            && (!method
+                                || !syntax.iter().any(|key| {
+                                    key.term == "computed_property_name"
+                                        && key.range.start <= node.range.start
+                                        && node.range.end <= key.range.end
+                                }))
+                    })
+                    .min_by_key(|node| node.range.start)
+            });
+            if method && parameters.is_none() {
+                continue;
+            }
+            let parameter_interval = parameters.and_then(|parameters| {
+                let open =
+                    input.partition_point(|token| token.range.start < parameters.range.start);
+                let close = input
+                    .partition_point(|token| token.range.start < parameters.range.end)
+                    .checked_sub(1)?;
+                (input.get(open).is_some_and(|token| {
+                    token.text == "(" && token.range.end <= parameters.range.end
+                }) && input[close].text == ")"
+                    && input[close].range.start >= parameters.range.start)
+                    .then_some((open + 1, close))
+            });
+            if method && parameter_interval.is_none() {
+                continue;
+            }
+            let scope_start = if method {
+                input[parameter_interval.expect("actual method delimiters").0 - 1]
+                    .range
+                    .start
+            } else {
+                fact.range.start
+            };
+            let simple=parameters.is_none_or(|parameters|crate::translation::source_library_binding_rules::accept_java_script_source_simple_parameter_list(&syntax.iter().filter(|node|node.range.start>=parameters.range.start&&node.range.end<=parameters.range.end).map(|node|node.term.clone()).collect::<Vec<_>>()));
+            let rows = function_starts.entry(scope_start).or_default();
+            if !rows.iter().any(|row| row.range.end == fact.range.end) {
+                rows.push(JavaScriptFunctionStart {
+                    range: ProgramRange::new(scope_start, fact.range.end),
+                    head,
+                    named,
+                    declaration: form == "function declaration",
+                    body_start: body.map(|body| body.range.start + 1),
+                    simple,
+                    parameter_interval,
+                });
+            }
+            rows.sort_by_key(|row| std::cmp::Reverse(row.range.end));
+        }
+    }
     let scoped_braces = syntax
         .iter()
         .filter(|fact| {
@@ -130,7 +275,75 @@ pub(super) fn resolve_bindings(
         })
         .map(|fact| fact.range.start)
         .collect::<BTreeSet<_>>();
+    let mut lexical_starts: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
+    if language == "JavaScript" {
+        for node in syntax.iter().filter(|node| {
+            crate::translation::source_library_binding_rules::test_java_script_source_loop_scope_term(&node.term)
+                || crate::translation::source_library_binding_rules::test_java_script_source_catch_scope_term(&node.term)
+                || crate::translation::source_library_binding_rules::test_java_script_source_class_expression_term(&node.term)
+        }) {
+            let rows = lexical_starts.entry(node.range.start).or_default();
+            if !rows.contains(&node.range.end) { rows.push(node.range.end); }
+            rows.sort_by_key(|end| std::cmp::Reverse(*end));
+        }
+    }
     for (index, token) in tokens.iter_mut().enumerate() {
+        while stack.len() > 1
+            && virtual_scopes.contains(stack.last().expect("root scope"))
+            && scopes[*stack.last().expect("root scope")].range.end <= token.range.start
+        {
+            stack.pop();
+        }
+        if let Some(ends) = lexical_starts.get(&token.range.start) {
+            for end in ends {
+                let parent = *stack.last().expect("root scope");
+                let index = scopes.len();
+                scopes.push(ProgramScope {
+                    id: format!("scope:{index}"),
+                    parent: Some(scopes[parent].id.clone()),
+                    range: ProgramRange::new(token.range.start, *end),
+                    depth: stack.len(),
+                });
+                stack.push(index);
+                virtual_scopes.insert(index);
+            }
+        }
+        if let Some(entries) = function_starts.get(&token.range.start) {
+            for entry in entries {
+                let outer = *stack.last().expect("root scope");
+                let mut create = || {
+                    let parent = *stack.last().expect("root scope");
+                    let index = scopes.len();
+                    scopes.push(ProgramScope {
+                        id: format!("scope:{index}"),
+                        parent: Some(scopes[parent].id.clone()),
+                        range: entry.range,
+                        depth: stack.len(),
+                    });
+                    stack.push(index);
+                    virtual_scopes.insert(index);
+                    index
+                };
+                let private_scope = if entry.declaration {
+                    Some(outer)
+                } else if entry.named {
+                    Some(create())
+                } else {
+                    None
+                };
+                let parameter_scope = create();
+                expression_scopes.insert(
+                    entry.head,
+                    JavaScriptFunctionScope {
+                        private_scope,
+                        parameter_scope,
+                        body_start: entry.body_start,
+                        simple: entry.simple,
+                        parameter_interval: entry.parameter_interval,
+                    },
+                );
+            }
+        }
         token.scope = *stack.last().expect("root scope");
         if token.text == "{" {
             let creates_scope =
@@ -161,14 +374,28 @@ pub(super) fn resolve_bindings(
             &tokens,
             syntax,
             &brace_scopes,
+            &expression_scopes,
             &mut declarations,
             &mut declared,
         );
     }
-    declare_syntax_binders(&tokens, syntax, language, &mut declarations, &mut declared);
+    declare_syntax_binders(
+        &tokens,
+        syntax,
+        language,
+        &expression_scopes,
+        &mut declarations,
+        &mut declared,
+    );
     match language {
         "JavaScript" => {
-            javascript_hoist::hoist_var_declarations(&mut declarations, &tokens, syntax, &scopes);
+            javascript_hoist::hoist_var_declarations(
+                &mut declarations,
+                &tokens,
+                syntax,
+                &scopes,
+                &expression_scopes,
+            );
         }
         "Rust" => declare_rust(
             &tokens,
@@ -181,8 +408,14 @@ pub(super) fn resolve_bindings(
     }
     apply_binding_extents(&mut declarations, &tokens, syntax, language, &brace_scopes);
     declarations.sort_by_key(|declaration| tokens[declaration.token].range.start);
-    let (references, unresolved) =
-        resolution::resolve_references(&tokens, syntax, language, &scopes, &declarations);
+    let (references, unresolved) = resolution::resolve_references(
+        &tokens,
+        syntax,
+        language,
+        &scopes,
+        &declarations,
+        module_bindings,
+    );
     let bindings = declarations
         .into_iter()
         .zip(references)
@@ -201,8 +434,22 @@ pub(super) fn resolve_bindings(
     (scopes, bindings, unresolved)
 }
 
-fn code_mask(source: &str, language: &str) -> Vec<bool> {
+fn code_mask(source: &str, language: &str, syntax: &[ProgramSourceMapping]) -> Vec<bool> {
     let mut mask = vec![true; source.len()];
+    let mut opaque = BTreeMap::new();
+    for fact in syntax {
+        let accepted = if language == "Rust" {
+            crate::translation::source_library_binding_rules::test_rust_source_opaque_literal_term(
+                &fact.term,
+            )
+        } else {
+            language=="JavaScript"&&crate::translation::source_library_binding_rules::test_java_script_source_opaque_literal_term(&fact.term)
+        };
+        if accepted && fact.range.end > fact.range.start && fact.range.end <= source.len() {
+            let end = opaque.entry(fact.range.start).or_insert(fact.range.end);
+            *end = (*end).max(fact.range.end);
+        }
+    }
     let line_comment = match language {
         "Lean" => Some("--"),
         "Rocq" => None,
@@ -215,7 +462,10 @@ fn code_mask(source: &str, language: &str) -> Vec<bool> {
     };
     let mut offset = 0;
     while offset < source.len() {
-        if line_comment.is_some_and(|comment| source[offset..].starts_with(comment)) {
+        if let Some(end) = opaque.get(&offset).copied() {
+            mark(&mut mask, offset, end, false);
+            offset = end;
+        } else if line_comment.is_some_and(|comment| source[offset..].starts_with(comment)) {
             let end = source[offset..]
                 .find('\n')
                 .map_or(source.len(), |end| offset + end);
@@ -225,11 +475,10 @@ fn code_mask(source: &str, language: &str) -> Vec<bool> {
             offset = mask_nested(source, &mut mask, offset, block_open, block_close);
         } else {
             let character = char_at(source, offset);
-            if character == '"' || (matches!(language, "JavaScript" | "Rust") && character == '\'')
-            {
+            if character == '"' || (language == "JavaScript" && character == '\'') {
                 offset = mask_quoted(source, &mut mask, offset, character);
             } else if language == "JavaScript" && character == '`' {
-                offset = mask_template(source, &mut mask, offset);
+                offset = mask_template(source, &mut mask, offset, &opaque);
             } else {
                 offset += character.len_utf8();
             }
@@ -281,7 +530,12 @@ fn mask_nested(source: &str, mask: &mut [bool], start: usize, open: &str, close:
     offset
 }
 
-fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
+fn mask_template(
+    source: &str,
+    mask: &mut [bool],
+    start: usize,
+    opaque: &BTreeMap<usize, usize>,
+) -> usize {
     let mut offset = start;
     mask[offset] = false;
     offset += 1;
@@ -295,7 +549,7 @@ fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
             break;
         } else if source[offset..].starts_with("${") {
             mark(mask, offset, offset + 2, false);
-            offset = mask_template_expression(source, mask, offset + 2);
+            offset = mask_template_expression(source, mask, offset + 2, opaque);
         } else {
             let character = char_at(source, offset);
             mark(mask, offset, offset + character.len_utf8(), false);
@@ -305,11 +559,19 @@ fn mask_template(source: &str, mask: &mut [bool], start: usize) -> usize {
     offset
 }
 
-fn mask_template_expression(source: &str, mask: &mut [bool], start: usize) -> usize {
+fn mask_template_expression(
+    source: &str,
+    mask: &mut [bool],
+    start: usize,
+    opaque: &BTreeMap<usize, usize>,
+) -> usize {
     let mut offset = start;
     let mut depth = 1_usize;
     while offset < source.len() && depth > 0 {
-        if source[offset..].starts_with("//") {
+        if let Some(end) = opaque.get(&offset).copied() {
+            mark(mask, offset, end, false);
+            offset = end;
+        } else if source[offset..].starts_with("//") {
             let end = source[offset..]
                 .find('\n')
                 .map_or(source.len(), |end| offset + end);
@@ -321,7 +583,7 @@ fn mask_template_expression(source: &str, mask: &mut [bool], start: usize) -> us
             let character = char_at(source, offset);
             match character {
                 '"' | '\'' => offset = mask_quoted(source, mask, offset, character),
-                '`' => offset = mask_template(source, mask, offset),
+                '`' => offset = mask_template(source, mask, offset, opaque),
                 '{' => {
                     depth += 1;
                     offset += 1;
@@ -349,7 +611,13 @@ pub(super) fn validate_identifier(
         .next()
         .is_some_and(|character| identifier_start(character, language))
         && characters.all(|character| identifier_continue(character, language))
-        && !is_keyword(language, identifier);
+        && !(if language == "JavaScript" {
+            crate::translation::javascript_identifier_rules::accept_java_script_reserved_identifier(
+                identifier,
+            ) || matches!(identifier, "eval" | "arguments")
+        } else {
+            is_keyword(language, identifier)
+        });
     if valid {
         Ok(())
     } else {

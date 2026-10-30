@@ -11,32 +11,35 @@ impl JavaScriptParser {
     /// `let a = 1n, b = a;` declares assignable locals; omission starts with undefined.
     pub(super) fn let_declarations(&mut self) -> Result<Vec<Stmt>> {
         let start = self.cursor.advance();
-        if self.cursor.is("{") {
-            return Err(unsupported(
-                "let destructuring",
-                "declare each binding with its own let",
-                Some(self.to_here(&start)),
-            ));
-        }
         let mut statements = Vec::new();
         let mut names = HashSet::new();
         loop {
-            if self.cursor.is("[") {
+            if self.cursor.is("[") && !self.has_advanced_array_binding(self.cursor.index) {
                 statements.extend(self.mutable_array_declaration(&start, &mut names)?);
                 if self.cursor.eat(",").is_none() {
                     return Ok(statements);
                 }
                 continue;
             }
-            if self.cursor.is("{") {
-                return Err(unsupported(
-                    "let destructuring",
-                    "declare each binding with its own let",
-                    Some(self.to_here(&start)),
-                ));
+            if self.cursor.is("{") || self.cursor.is("[") {
+                let syntax = self.object_binding_declaration(&start, "let")?;
+                for token in syntax.bindings {
+                    if !names.insert(token.value.clone()) {
+                        return Err(TranslationError::syntax(
+                            format!("duplicate lexical binding {}", token.value),
+                            Some(token.span()),
+                        ));
+                    }
+                }
+                statements.extend(syntax.statements);
+                if self.cursor.eat(",").is_none() {
+                    return Ok(statements);
+                }
+                continue;
             }
             let name = self.cursor.identifier(Some("let"))?;
             reserved(&name)?;
+            self.lexical.declaration(&name.value, name.span(), 1);
             if !names.insert(name.value.clone()) {
                 return Err(TranslationError::syntax(
                     format!("duplicate lexical binding {}", name.value),
@@ -95,10 +98,8 @@ impl JavaScriptParser {
         let start = self.peek();
         let prefix = (self.cursor.is("++") || self.cursor.is("--")).then(|| self.cursor.advance());
         let target = self.cursor.identifier(Some("assignment"))?;
-        let op = match prefix {
-            Some(prefix) => prefix.value,
-            None => self.cursor.advance().value,
-        };
+        let operator = prefix.unwrap_or_else(|| self.cursor.advance());
+        let op = operator.value.clone();
         let place = self.to_here(&start);
         self.lexical.read(&target, true, place);
         if self.scope.tdz.contains(&target.value) {
@@ -128,6 +129,14 @@ impl JavaScriptParser {
             },
             span(&target, &target),
         );
+        if op == "??=" {
+            let expr =
+                self.scalar_assignment_expression(read, &operator, false, Some(Self::expr))?;
+            return Ok(Stmt::Expr {
+                expr,
+                span: self.to_here(&start),
+            });
+        }
         let binary = |op, left: SExpr, right: SExpr, place| {
             node(
                 SNode::Binary {
@@ -162,6 +171,18 @@ impl JavaScriptParser {
             let right = self.expr()?;
             let whole = joined(&read, &right, &start);
             binary(*compound, read, right, whole)
+        } else if op=="**=" {
+            let right=self.expr()?;
+            let whole=joined(&read,&right,&start);
+            node(SNode::Math{op:"exponentiateJavaScriptNumericValue".to_owned(),name:op,args:vec![super::SArrayItem::new(read,false),super::SArrayItem::new(right,false)]},whole)
+        } else if !crate::translation::number_bitwise_rules::read_java_script_number_bitwise_assignment(&op).is_empty() {
+            let right = self.expr()?;
+            let whole = joined(&read, &right, &start);
+            node(SNode::Math {
+                op: crate::translation::number_bitwise_rules::read_java_script_number_bitwise_assignment(&op),
+                name: op,
+                args: vec![super::SArrayItem::new(read, false), super::SArrayItem::new(right, false)],
+            }, whole)
         } else {
             return Err(unsupported(
                 &format!("{op} assignment"),
@@ -187,7 +208,7 @@ impl JavaScriptParser {
     pub(super) fn while_statement(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
         self.cursor.expect("(", Some("while"))?;
-        let cond = self.expr()?;
+        let cond = self.sequence()?;
         self.cursor.expect(")", Some("while"))?;
         let body = self.loop_body()?;
         Ok(Stmt::While {
@@ -202,7 +223,7 @@ impl JavaScriptParser {
         let body = self.loop_body()?;
         self.cursor.expect("while", Some("do"))?;
         self.cursor.expect("(", Some("do"))?;
-        let cond = self.expr()?;
+        let cond = self.sequence()?;
         self.cursor.expect(")", Some("do"))?;
         self.cursor.eat(";");
         Ok(Stmt::DoWhile {
@@ -268,7 +289,15 @@ impl JavaScriptParser {
         let mut init = Vec::new();
         if self.cursor.is("let") {
             init.extend(self.let_declarations()?);
-        } else if self.cursor.is("const") || self.cursor.is("var") {
+        } else if self.cursor.is("const") {
+            let binding = self.const_declarations(false, false)?;
+            match binding {
+                Stmt::Block {
+                    body, inline: true, ..
+                } => init.extend(body),
+                binding => init.push(binding),
+            }
+        } else if self.cursor.is("var") {
             let token = self.peek();
             return Err(unsupported(
                 &format!("for with {}", token.value),
@@ -276,37 +305,20 @@ impl JavaScriptParser {
                 Some(span(&token, &token)),
             ));
         } else {
-            while !self.cursor.is(";") {
-                if !self.starts_assignment() {
-                    return Err(self.fail_here("expected an assignment in the for initialiser"));
-                }
-                init.push(self.assignment()?);
-                if self.cursor.eat(",").is_none() {
-                    break;
-                }
+            if !self.cursor.is(";") {
+                init.extend(self.expression_statements()?);
             }
         }
         self.cursor.expect(";", Some("for"))?;
         let cond = if self.cursor.is(";") {
             None
         } else {
-            Some(self.expr()?)
+            Some(self.sequence()?)
         };
         self.cursor.expect(";", Some("for"))?;
         let mut update = Vec::new();
-        while !self.cursor.is(")") {
-            if !self.starts_assignment() {
-                let token = self.peek();
-                return Err(unsupported(
-                    "for update",
-                    "the update of a for loop is a list of assignments",
-                    Some(span(&token, &token)),
-                ));
-            }
-            update.push(self.assignment()?);
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
+        if !self.cursor.is(")") {
+            update.extend(self.expression_statements()?);
         }
         self.cursor.expect(")", Some("for"))?;
         let body = self.loop_body()?;
@@ -353,16 +365,24 @@ impl JavaScriptParser {
         );
         self.cursor.expect(")", Some("for"))?;
         self.generated_count += 1;
-        let values = format!("ml_values{}", self.generated_count);
-        let index = format!("ml_index{}", self.generated_count);
+        let values = format!(
+            "{}temporary_values{}",
+            self.generated_prefix, self.generated_count
+        );
+        let index = format!(
+            "{}temporary_index{}",
+            self.generated_prefix, self.generated_count
+        );
         let outer = self.scope.clone();
         if let Some(bindings) = &bindings {
             for binding in bindings {
+                self.lexical.declaration(&binding.name, binding.span, 1);
                 self.declare_local(&binding.name, mutable);
                 self.lexical
                     .binding(&binding.name, Some(self.cursor.peek().start));
             }
         } else if let Some(name) = &name {
+            self.lexical.declaration(&name.value, name.span(), 1);
             self.declare_local(&name.value, mutable);
             self.lexical
                 .binding(&name.value, Some(self.cursor.peek().start));
@@ -418,7 +438,10 @@ impl JavaScriptParser {
             place,
         );
         let mut declarations = if let Some(bindings) = bindings {
-            let element_name = format!("ml_element{}", self.generated_count);
+            let element_name = format!(
+                "{}temporary_element{}",
+                self.generated_prefix, self.generated_count
+            );
             let mut declarations = vec![Stmt::Const {
                 name: element_name.clone(),
                 value: element,
@@ -525,14 +548,7 @@ impl JavaScriptParser {
     }
 }
 
-/// Local names with the translator's `ml_` prefix could meet the names it makes up.
+/// Source binding roles retain the ECMAScript early errors.
 pub(super) fn reserved(token: &Token) -> Result<()> {
-    if token.value.starts_with("ml_") {
-        return Err(unsupported(
-            "reserved identifier",
-            &format!("{} uses the translator's reserved ml_ prefix", token.value),
-            Some(span(token, token)),
-        ));
-    }
-    Ok(())
+    crate::translation::lexer::require_java_script_identifier_role(token, true)
 }

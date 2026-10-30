@@ -1,0 +1,56 @@
+// Literal construction only. No original source is parsed or evaluated here.
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const encoder=new TextEncoder(),cases=[];
+const item=(text,kind,specifier,units)=>({text,kind,specifier,units});
+function add(name,language,pieces,tsx=false){
+ let offset=0;const expected=[];
+ for(const piece of pieces){const end=offset+encoder.encode(piece.text).length;if(piece.kind)expected.push({kind:piece.kind,specifier:piece.specifier,specifierUnits:piece.units??(piece.specifier===null?null:Array.from({length:piece.specifier.length},(_,index)=>piece.specifier.charCodeAt(index))),start:offset,end});offset=end;}
+ cases.push({name,language,tsx,source:pieces.map(piece=>piece.text).join(''),expected});
+}
+add('named import keeps its complete concrete owner','JavaScript',[item('import {value as renamed} from "./a.js";','module import','./a.js')]);
+add('namespace import is still a source dependency','JavaScript',[item('import * as values from "./a.js";','module import','./a.js')]);
+add('default import keeps its source name','JavaScript',[item('import value from "./a.js";','module import','./a.js')]);
+add('side effect imports remain distinct occurrences','JavaScript',[item('import "./a.js";','module import','./a.js'),item('\n'),item('import "./a.js";','module import','./a.js')]);
+add('named reexports add actual dependency edges','JavaScript',[item('export {value as renamed} from "./a.js";','module export','./a.js')]);
+add('star reexports keep the provider','JavaScript',[item('export * from "./a.js";','module export','./a.js')]);
+add('namespace reexports keep their concrete provider','JavaScript',[item('export * as values from "./a.js";','module export','./a.js')]);
+add('string named exports do not confuse the module specifier','JavaScript',[item('export {"from" as "renamed"} from "./a.js";','module export','./a.js')]);
+add('Unicode byte spans differ from UTF16 offsets','JavaScript',[item('// 😀 π\n'),item('import value from "./π😀.js";','module import','./π😀.js')]);
+add('escaped module names retain decoded units and original source','JavaScript',[item(String.raw`import value from "\u002e/a.js";`,'module import','./a.js')]);
+add('unpaired specifier units remain exact without a fabricated scalar name','JavaScript',[item(String.raw`import "\uD800";`,'module import',null,[55296])]);
+add('import attributes do not replace the source string','JavaScript',[item('import data from "./data.json" with {type:"json"};','module import','./data.json')]);
+add('dynamic literal imports retain their phase','JavaScript',[item('async function load(){return await '),item('import("./a.js")','dynamic module import','./a.js'),item(';}')]);
+add('computed imports remain explicit unknown edges','JavaScript',[item('function load(name){return '),item('import("./"+name)','dynamic module import',null),item(';}')]);
+add('dynamic import options do not change the first argument','JavaScript',[item('const load=()=>'),item('import("./data.json",{with:{type:"json"}})','dynamic module import','./data.json'),item(';')]);
+add('template argument interpretation remains explicit','JavaScript',[item('const load=()=>'),item('import(`./a.js`)','dynamic module import',null),item(';')]);
+add('requests in nested template substitutions come from CST owners','JavaScript',[item('const value=`outer ${`inner ${'),item('import("./a.js")','dynamic module import','./a.js'),item('}`}`;')]);
+add('requests inside JSX do not require lexing a JSX file body','JavaScript',[item('const view=<main>{'),item('import("./a.js")','dynamic module import','./a.js'),item('}</main>;')]);
+add('a parent call does not duplicate its imported callee request','JavaScript',[item('import("./a.js")','dynamic module import','./a.js'),item('();')]);
+add('comments strings and ordinary import properties are not requests','JavaScript',[item(String.raw`// import "./fake.js";
+const text='export * from "./fake.js"';const pattern=/import\("fake"\)/;const object={import(value){return value;}};object.import("./fake.js");`)]);
+add('ordinary export values do not invent external providers','JavaScript',[item('export default "./not-a-provider.js";')]);
+add('local export clauses have no external module request','JavaScript',[item('const value=7;export {value};')]);
+add('type imports retain their explicit phase','TypeScript',[item('import type {Value} from "./a.js";','type module import','./a.js')]);
+add('type reexports retain their explicit phase','TypeScript',[item('export type {Value} from "./a.js";','type module export','./a.js')]);
+add('a default binding named type is a value import','TypeScript',[item('import type from "./a.js";','module import','./a.js')]);
+add('a mixed import with default binding type remains a value request','TypeScript',[item('import type,{value} from "./a.js";','module import','./a.js')]);
+add('external import equals uses its actual source field','TypeScript',[item('import value = require("./a.js");','module import','./a.js')]);
+add('type import equals keeps its source and phase','TypeScript',[item('import type Value = require("./a.js");','type module import','./a.js')]);
+add('type query imports are not runtime import calls','TypeScript',[item('type Module=typeof '),item('import("./a.js")','type module import','./a.js'),item(';')]);
+add('annotation imports retain the enclosing type context','TypeScript',[item('interface Box{value:typeof '),item('import("./a.js")','type module import','./a.js'),item('.value;}')]);
+add('ambient imports keep their declared type context','TypeScript',[item('declare module "external"{'),item('import {Value} from "other";','type module import','other'),item('}')]);
+add('namespace aliases do not invent external module requests','TypeScript',[item('namespace N{export const value=7;}import Alias=N;')]);
+add('TSX uses its actual native grammar','TypeScript',[item('const view=<main>{'),item('import("./a.js")','dynamic module import','./a.js'),item('}</main>;')],true);
+const roles=[{term:'import_statement',expected:true},{term:'export_statement',expected:true},{term:'call_expression',expected:true},{term:'string',expected:false},{term:'comment',expected:false}];
+const scopes=['type_alias_declaration','type_annotation','type_arguments','type_parameters','interface_declaration','type_query','ambient_declaration'].map(term=>({term,expected:true}));scopes.push({term:'statement_block',expected:false},{term:'internal_module',expected:false});
+const codes=[{language:'JavaScript',term:'import_statement',second:'type',third:'Value',context:false,expected:1},{language:'TypeScript',term:'import_statement',second:'type',third:'Value',context:false,expected:4},{language:'TypeScript',term:'import_statement',second:'type',third:'from',context:false,expected:1},{language:'TypeScript',term:'import_statement',second:'type',third:',',context:false,expected:1},{language:'TypeScript',term:'export_statement',second:'type',third:'{',context:false,expected:5},{language:'TypeScript',term:'call_expression',second:'',third:'',context:true,expected:4},{language:'JavaScript',term:'call_expression',second:'',third:'',context:false,expected:3},{language:'TypeScript',term:'identifier',second:'',third:'',context:false,expected:0}];
+const literals=[{term:'string',expected:true},{term:'template_string',expected:false},{term:'binary_expression',expected:false}];
+const callees=[{term:'import',expected:true},{term:'member_expression',expected:false},{term:'call_expression',expected:false}];
+const grammars=[{language:'JavaScript',tsx:false,expected:'JavaScript'},{language:'TypeScript',tsx:false,expected:'TypeScript'},{language:'TypeScript',tsx:true,expected:'tsx'},{language:'Rust',tsx:false,expected:''}];
+const kinds=[{code:0,expected:''},{code:1,expected:'module import'},{code:2,expected:'module export'},{code:3,expected:'dynamic module import'},{code:4,expected:'type module import'},{code:5,expected:'type module export'},{code:6,expected:''}];
+const commands=[{args:[],expected:[-2]},{args:['--help'],expected:[-1]},{args:['file.js'],expected:[0,1,0,0]},{args:['file.ts'],expected:[0,2,0,0]},{args:['file.tsx','--binary'],expected:[0,2,1,1]},{args:['--language','ts','file.mjs'],expected:[2,2,0,0]},{args:['--tsx','file.js'],expected:[1,2,1,0]},{args:['--language','js','--tsx','file.js'],expected:[-2]},{args:['--binary','--binary','file.js'],expected:[-2]},{args:['file.js','other.js'],expected:[-2]},{args:['--','--file.js'],expected:[1,1,0,0]},{args:['--language','unknown','file.js'],expected:[-2]},{args:['--language'],expected:[-2]}];
+const grammarProfiles=['javascript','typescript','tsx'].map(name=>{const path='parity/grammars/native/'+name+'.lino',bytes=readFileSync(new URL('../../'+path,import.meta.url));return{path,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/source-module-requests.lino',import.meta.url),{schemaVersion:1,model:'actual source module requests 1',cases,roles,scopes,codes,literals,callees,grammars,kinds,commands,grammarProfiles,versions:{node:'>=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',rust:'>=1.90.0 <1.100.0; edition 2024',grammar:'exact native grammar revisions recorded in grammarProfiles'},boundary:'Unexecuted literal controls. Byte intervals come from explicitly constructed source pieces, never from parsing the represented originals. Every request remains a relation to its actual CST owner and exact UTF-16 sequence in the complete concrete graph. This discovers source requests, not complete module loading/effects, computed-specifier evaluation or full translation. Namespace/default imports and reexports retain their independent translation obligations.'});

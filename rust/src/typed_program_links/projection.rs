@@ -18,6 +18,33 @@ use serde_json::{Map, Value, json};
 mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
+    if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result(
+        value["k"].as_str().unwrap_or_default(),
+        value["type"]["kind"].as_str().unwrap_or_default(),
+        value["type"]["bits"].as_f64().unwrap_or_default(),
+        value["type"]["signed"] == true,
+        value["array"]["type"]["kind"].as_str().unwrap_or_default(),
+    ) {
+        let mut result = json!({"k":"cast","arg":{"k":"length","object":expression(&value["array"],program)?,"integer":true},"to":value["type"],"flavor":"exact"});
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
+    if value["k"] == "binary"
+        && crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
+            program.source_language.as_str(), value["op"].as_str().unwrap_or_default(),
+            value["domain"]["kind"].as_str().unwrap_or_default(), value["domain"]["reference"] == true,
+        ) == "referenceIdentity"
+    {
+        let mut result = Map::new();
+        result.insert("k".to_owned(), Value::String("referenceIdentity".to_owned()));
+        result.insert("op".to_owned(), value["op"].clone());
+        result.insert("left".to_owned(), expression(&value["left"], program)?);
+        result.insert("right".to_owned(), expression(&value["right"], program)?);
+        if let Some(span) = value.get("span") { result.insert("span".to_owned(), span.clone()); }
+        return Ok(Value::Object(result));
+    }
     if value["k"].as_str() == Some("record")
         && value.as_object().is_some_and(|fields| {
             fields
@@ -140,6 +167,12 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     .map(|item| expression(item, program))
                     .collect::<Result<_>>()?,
             ),
+            "optional-expression" => {
+                if child.is_null() {
+                    continue;
+                }
+                expression(child, program)?
+            }
             "nullable-expressions" => Value::Array(
                 child
                     .as_array()

@@ -1,4 +1,21 @@
+import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
+import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
+import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
+import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation} from './translation/javascript-enumeration-rules.js';
+import {readRecordOrderRoleType} from './translation/record-order-operations.js';
+import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
+import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './translation/big-integer-conversion-rules.js';
+import {acceptJavaScriptNumberConversionType} from './translation/javascript-number-conversion.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './translation/javascript-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './translation/string-construction-rules.js';
+import { acceptLinkedRustPrimitiveBitwiseOperation, readRustPrimitiveBitwiseArity, acceptRustPrimitiveBitwiseType } from './translation/rust-primitive-bitwise-rules.js';
+import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
+import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
+import {acceptRustStringByteLengthOperation,readRustStringByteLengthArgumentError} from './translation/rust-string-byte-length-rules.js';
 import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
 import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
@@ -6,6 +23,7 @@ import {checkRustPureUnitCalls} from './translation/rust-pure-unit-calls.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
 import {checkRustEmptyOptionProof} from './translation/rust-empty-options.js';
 import {checkRustSourceSignature} from './translation/rust-source-signatures.js';
+import {checkRustDataTypeFieldSignatures,checkRustDataTypeFieldSignatureProgramContainers} from './translation/rust-data-type-field-signatures.js';
 import {validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes} from './translation/rust-type-namespace.js';
 import {checkRustUnitCloneDerivations} from './translation/rust-unit-clone.js';
 import {validateSourceSpans} from './source-spans.js';
@@ -29,6 +47,7 @@ const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'ou
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
 
 export function validateLinkedTypedProgram(program, references = new WeakMap(), { graphPatterns = false, patternScopes = new WeakMap() } = {}) {
+  checkRustDataTypeFieldSignatureProgramContainers(program);
   checkRustConstFunctionContainers(program);
   checkRustRuntimeShell(program);
   checkRustTypeNamespaceRecordShapes(program);
@@ -97,7 +116,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         || Object.keys(value).some(field => !acceptUnionTypeField(field))) throw new TypeError('a linked union type has a malformed ordered alternative layout');
       for (const alternative of value.alternatives) type(alternative);
     }
-    else if (value.kind === 'record') value.fields.forEach((field) => type(field.type));
+    else if (value.kind === 'record') {
+      if(value.ordered!==undefined&&typeof value.ordered!=='boolean')throw new TypeError('a linked record ordered facet must be a boolean');
+      value.fields.forEach((field) => type(field.type));
+    }
     else if (value.kind === 'map') { type(value.key); type(value.value); }
     else if (value.kind === 'function') { value.params.forEach(type); type(value.ret); }
     else throw new TypeError(`the linked program contains unsupported type ${value.kind}`);
@@ -130,6 +152,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
           fields.add(field.name); type(field.type);
         }
       }
+      if (Object.hasOwn(entry,'sourceFieldSignatures')) {
+        checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,program.sourceLanguage,name);
+        for(const constructor of entry.sourceFieldSignatures.ctors)for(const field of constructor.fields)type(field.type);
+      }
     }
   }
   const same = (left, right, detail) => {
@@ -144,7 +170,22 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError(
         ['tuple', 'tupleIndex'].includes(node.k) ? 'a linked tuple expression has an unrecognized projection field'
           : 'a linked expression contains an unrecognized semantic field');
-    if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
+    if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op) && !acceptLinkedNumberBitwiseOperation(node.k,node.op)
+    && !acceptLinkedStringArrayCopySort(node.k,node.op,node.object?.type?.kind??'',node.object?.type?.element?.kind??'',node.object?.type?.reference===true,node.args?.length??-1)
+      && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
+      && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
+      && !acceptLinkedBigIntegerBitwiseOperation(node.k, node.op)
+      && !acceptLinkedJavaScriptNumberConversion(node.k,node.op)
+      && !acceptLinkedJavaScriptSourceException(node.k,node.op)
+      && !acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)
+      && !acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)
+      && !acceptLinkedJavaScriptStringConstruction(node.k,node.op)
+      && !(node.k==='math'&&readJavaScriptRecordOrderKernelArity(node.op??''))
+      && !acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object?.type?.kind??'',node.object?.type?.ordered===true,node.object?.type?.reference===true)
+      && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
+      && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
+      && !acceptLinkedRustCheckedShift(node.k,node.op)
+      && !acceptRustStringByteLengthOperation(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.k === 'none') {
@@ -288,18 +329,84 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       if (refusal) throw new TypeError(`Rust Float display: ${refusal}`);
     }
     if (node.k === 'math') {
-      const spread = node.op === 'maxOf' || node.op === 'minOf';
-      const variadic = node.op === 'max' || node.op === 'min';
-      if (!Array.isArray(node.args) || (!variadic && node.args.length !== 1)) throw new TypeError('a linked math operation has the wrong number of arguments');
-      for (const argument of node.args) same(argument.type, spread ? { kind: 'array', element: { kind: 'float' } } : { kind: 'float' }, 'math argument type');
-      same(node.type, { kind: acceptProgramExpressionOperation('optionalPredicate', node.op) ? 'bool' : 'float' }, 'math result type');
+      const rustArity = readRustPrimitiveBitwiseArity(node.op);
+      if(acceptRustStringByteLengthOperation(node.k,node.op)){
+        if(!Array.isArray(node.args))throw new TypeError('a byte count needs one actual String operand');
+        const reason=readRustStringByteLengthArgumentError(program.sourceLanguage,program.utf16Strings===true,node.args.length,false,node.args[0]?.type?.kind??'');if(reason)throw new TypeError(reason);
+        same(node.args[0].type,{kind:'string'},'Rust byte count operand type');same(node.type,{kind:'fixed',bits:64,signed:false},'Rust byte count result type');
+      }else if(node.op==='reorderJavaScriptRecordPropertyValues'){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[0].type.kind!=='array'||node.args[0].type.reference===true)throw new TypeError('record value ordering needs its actual owned value array');
+        same(node.args[1].type,{kind:'array',element:{kind:'float'}},'record value ordering positions');
+        same(node.type,node.args[0].type,'record value ordering result');
+      }else if(node.op===readJavaScriptObjectEntryPairingOperation()){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[1].type.kind!=='array'||node.args[1].type.reference===true)throw new TypeError('own entry pairing needs its actual owned value array');
+        same(node.args[0].type,{kind:'array',element:{kind:'string'}},'own entry pairing keys');
+        same(node.type,{kind:'array',element:{kind:'tuple',elements:[{kind:'string'},node.args[1].type.element]}},'own entry pairing result');
+      }else if(readJavaScriptRecordOrderKernelArity(node.op??'')){
+        const count=readJavaScriptRecordOrderKernelArity(node.op);
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==count)throw new TypeError('an ordinary record order operation needs every owned source operand');
+        for(const [index,argument]of node.args.entries())same(argument.type,readRecordOrderRoleType(readJavaScriptRecordOrderKernelParameter(node.op,index)),'record order operand type');
+        same(node.type,readRecordOrderRoleType(readJavaScriptRecordOrderKernelResult(node.op)),'record order result type');
+      }else if(acceptLinkedJavaScriptStringConstruction(node.k,node.op)){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1)throw new TypeError('a JavaScript string construction needs one complete Number column');
+        same(node.args[0].type,{kind:'array',element:{kind:'float'}},'string construction Number column type');
+        same(node.type,readJavaScriptStringConstructionForm(node.op)==='points'?{kind:'array',element:{kind:'float'}}:{kind:'string'},'string construction result type');
+      }else if(acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1||node.args[0].k!=='array')throw new TypeError('a JavaScript UTF16 literal needs its explicit unit column');
+        const units=node.args[0];
+        same(units.type,{kind:'array',element:{kind:'float'}},'UTF16 literal unit column type');
+        same(node.type,{kind:'string'},'UTF16 literal type');
+        if(units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw new TypeError('a JavaScript UTF16 literal needs complete integral code units');
+      }else if(acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)){
+        const kinds=readJavaScriptBigIntegerIntrinsicOperandKinds(node.op),result=readJavaScriptBigIntegerIntrinsicResultKind(node.op);
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==kinds.length)throw new TypeError('a numeric intrinsic needs its complete owned operands');
+        for(const [index,argument] of node.args.entries())same(argument.type,{kind:kinds[index]},'numeric intrinsic operand type');
+        same(node.type,result==='array-integer'?{kind:'array',element:{kind:'int'}}:{kind:result},'numeric intrinsic result type');
+      } else if(acceptLinkedJavaScriptSourceException(node.k,node.op)){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2)throw new TypeError('a source exception needs its checked message and property presence');
+        same(node.args[0].type,{kind:'string'},'source exception message type');
+        same(node.args[1].type,{kind:'bool'},'source exception message presence type');
+      } else if(acceptLinkedJavaScriptNumberConversion(node.k,node.op)){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1||node.args[0].type.kind==='option'||!acceptJavaScriptNumberConversionType(node.args[0].type))throw new TypeError('a linked JavaScript Number conversion needs one actual primitive operand');
+        same(node.type,{kind:'float'},'JavaScript Number conversion result type');
+      } else if (acceptLinkedRustCheckedShift(node.k, node.op)) {
+        if (program.sourceLanguage !== 'Rust' || !Array.isArray(node.args) || node.args.length !== 2
+          || node.type.kind !== 'option' || node.type.absence !== 'undefined' || node.type.element?.kind !== 'fixed'
+          || node.args[1]?.type?.kind !== 'fixed' || !acceptRustPrimitiveBitwiseType('fixed', node.type.element.bits)
+          || !acceptRustPrimitiveBitwiseType('fixed', node.args[1].type.bits)) throw new TypeError('a linked checked shift has inconsistent integer owners, result or arity');
+        same(node.args[0].type, node.type.element, 'checked shift value owner');
+      } else if (rustArity) {
+        if (program.sourceLanguage !== 'Rust' || !Array.isArray(node.args) || node.args.length !== rustArity
+          || !acceptRustPrimitiveBitwiseType(node.type.kind, node.type.bits ?? 0)) throw new TypeError('a linked Rust bit operation has inconsistent primitive owners or arity');
+        for (const argument of node.args) same(argument.type, node.type, 'Rust bitwise operand type');
+      } else {
+        const integerArity=readBigIntegerBitwiseArity(node.op);
+        const arity=readJavaScriptNumberBitwiseArity(node.op)||integerArity;
+        const spread = node.op === 'maxOf' || node.op === 'minOf';
+        const variadic = node.op === 'max' || node.op === 'min';
+        if (!Array.isArray(node.args) || (!variadic && node.args.length !== (arity||1))) throw new TypeError('a linked math operation has the wrong number of arguments');
+        for (const argument of node.args) same(argument.type, spread ? { kind: 'array', element: { kind: 'float' } } : { kind: integerArity ? 'int' : 'float' }, 'math argument type');
+        same(node.type, { kind: integerArity ? 'int' : acceptProgramExpressionOperation('optionalPredicate', node.op) ? 'bool' : 'float' }, 'math result type');
+      }
     }
     if (node.k === 'stringMap' || node.k === 'stringTest') {
       same(node.string.type, { kind: 'string' }, 'string operation receiver type');
       if (node.k === 'stringTest') same(node.search.type, { kind: 'string' }, 'string search type');
       same(node.type, { kind: node.k === 'stringMap' ? 'string' : 'bool' }, 'string operation result type');
     }
-    if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)) throw new TypeError('a linked method has an unsupported receiver type');
+    if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)
+      && !acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object.type?.kind??'',node.object.type?.ordered===true,node.object.type?.reference===true)
+      && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)
+      && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)
+      && !acceptLinkedArrayStateMethod(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)) throw new TypeError('a linked method has an unsupported receiver type');
+    if(node.k==='method'&&node.op==='readJavaScriptRecordPropertyOrder'){
+      if(!acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object.type?.kind??'',node.object.type?.ordered===true,node.object.type?.reference===true)||!Array.isArray(node.args)||node.args.length)throw new TypeError('own-field order projection needs one actual owned ordered record');
+      same(node.type,{kind:'array',element:{kind:'float'}},'record order projection type');
+    }
+    if(node.k==='method'&&node.op==='toSorted'){
+      if(!acceptLinkedStringArrayCopySort(node.k,node.op,node.object.type.kind,node.object.type.element?.kind??'',node.object.type.reference===true,node.args.length))throw new TypeError('copying sort needs its exact primitive string array domain');
+      same(node.type,node.object.type,'copying sort result type');
+    }
     if (node.k === 'optionalPredicate') {
       if (node.arg.type?.kind !== 'option') throw new TypeError('a linked optional predicate requires an optional value');
       same(node.type, { kind: 'bool' }, 'optional predicate result type');
@@ -332,7 +439,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       if (node.rounding !== undefined && !acceptProgramDivisionRounding(node.rounding)) throw new TypeError('a linked division has an unsupported rounding policy');
       same(node.left.type, node.right.type, 'binary operand types');
       if (node.domain) same(node.domain, node.left.type, 'binary operation domain');
-      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), node.domain !== undefined, node.domain?.reference === true, node.domain !== undefined && sameType(node.domain, node.left.type));
+      const domainPresent = node.domain !== undefined && node.domain !== null;
+      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), domainPresent, node.domain?.reference === true, domainPresent && sameType(node.domain, node.left.type));
       if (referenceError) throw new TypeError(referenceError);
       const comparison = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'].includes(node.op);
       if (comparison && node.type.kind !== 'bool') throw new TypeError('a linked comparison does not return a boolean');

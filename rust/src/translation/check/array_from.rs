@@ -112,8 +112,15 @@ impl Checker {
         } else {
             None
         };
-        let callback =
-            self.expr_with_callable_expectation(mapper, env, path, &params, ret.as_ref())?;
+        let callback_env = self.own_key_callback_environment(&args[0], mapper, "map", env);
+        let callback = self.expr_with_callable_expectation(
+            mapper,
+            &callback_env,
+            path,
+            &params,
+            ret.as_ref(),
+        )?;
+        let callback = self.optional_callback_bridge(callback, &params, span)?;
         let Type::Function { ret, .. } = &callback.ty else {
             return Err(type_error("Array.from mapper has no function result", span));
         };
@@ -161,6 +168,7 @@ impl Checker {
             &params,
             None,
         )?;
+        let callback = self.optional_callback_bridge(callback, &params, span)?;
         let value = json!({"callback":callback.ty,"params":params});
         let facts = create_surface_reference_facts(&value);
         let child = |name| {

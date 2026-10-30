@@ -69,6 +69,7 @@ impl SourceOrigins {
                     SourceDeclaration::Data => "data",
                     SourceDeclaration::Constructor { .. } => "ctor",
                     SourceDeclaration::Function { .. } => "fn",
+                    SourceDeclaration::Constant { .. } => "const",
                 };
                 if (!type_owner || crate::translation::source_signature_rules::accept_rust_source_signature_catalog_owner(kind)) && catalog_owner.is_none_or(|accept| accept(kind)) {
                     return Some(SourceLookup { declaration: declaration.clone(), full_name });

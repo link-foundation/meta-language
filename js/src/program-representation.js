@@ -1,3 +1,8 @@
+import { readModuleBindingFields } from './module-binding-fields.js';
+import {acceptJavaScriptSourceFunctionHeadName,readJavaScriptSourceFunctionScopeForm,acceptJavaScriptSourceSimpleParameterList,testJavaScriptSourceKeywordRole,testJavaScriptSourceParameterVariableDependency,testJavaScriptSourceVariableRedeclaration,testJavaScriptSourceLoopScopeTerm,testJavaScriptSourceCatchScopeTerm,testJavaScriptSourceClassExpressionTerm,testJavaScriptSourceVariableEnvironmentTerm,testRustSourceOpaqueLiteralTerm,testJavaScriptSourceOpaqueLiteralTerm} from './translation/source-library-binding-rules.js';
+import {acceptJavaScriptReservedIdentifier} from './translation/javascript-identifier-rules.js';
+import {readJavaScriptSourceParameterBindings,readJavaScriptSourceVariableBindings} from './program-parameter-bindings.js';
+import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
 import {
@@ -86,7 +91,7 @@ export class ProgramRepresentation {
 
     const syntax = decorateSyntaxFacts(syntaxFacts(this.network, this.source), this.source, options.decorators);
     const tokens = semanticTokens(this.source, this.language, syntax);
-    const resolution = resolveBindings(tokens, syntax, this.source, this.language);
+    const resolution = resolveBindings(tokens, syntax, this.source, this.language, readModuleBindingFields(this.network,syntax,this.language));
     this.scopes = Object.freeze(resolution.scopes.map(freezeRecord));
     this.bindings = Object.freeze(resolution.bindings.map(freezeBinding));
     this.unresolvedReferences = Object.freeze(resolution.unresolved.map(freezeRecord));
@@ -191,6 +196,13 @@ export class ProgramRepresentation {
     if (binding.name === replacement) {
       return this;
     }
+    if(this.language==='JavaScript')for(const other of this.bindings){
+      if(other.id===binding.id||other.name!==binding.name)continue;
+      const parameter=binding.kind==='parameter'?binding:other,variable=binding.kind==='var'?binding:other;
+      const body=scopeFor(this.scopes,variable.scope);
+      const parent=body.parent===parameter.scope&&this.sourceMappings.some(node=>node.term==='statement_block'&&node.start+1===body.start&&node.end-1===body.end);
+      if(testJavaScriptSourceParameterVariableDependency(binding.kind,other.kind,parent))throw new BindingRenameError('rename would change parameter/var initialization for '+binding.name+' at '+other.declaration.start);
+    }
     const bindingScope = scopeFor(this.scopes, binding.scope);
     const conflicting = this.bindings.find((candidate) =>
       candidate.id !== binding.id &&
@@ -215,11 +227,14 @@ export class ProgramRepresentation {
       );
     }
 
+    const moduleBindings = readModuleBindingFields(this.network,this.sourceMappings,this.language);
     const edits = [binding.declaration, ...binding.references]
       .map(({ start, end }) => {
         const shorthand = this.sourceMappings.some(({ term, start: termStart, end: termEnd }) =>
           termStart === start && termEnd === end && SHORTHAND_TERMS[this.language]?.has(term));
-        return { start, end, text: shorthand ? `${binding.name}: ${replacement}` : replacement };
+        const role = readSourceModuleBindingRangeRole(moduleBindings,start,end);
+        const [prefix,suffix] = readSourceBindingRenameAffixes(role,Boolean(shorthand),binding.name);
+        return {start,end,text:prefix+replacement+suffix,replacementOffset:prefix.length};
       })
       .sort((left, right) => right.start - left.start);
     let edited = this.source;
@@ -297,7 +312,7 @@ function firstResolutionChange(original, renamed, binding, replacement, edits) {
     edit.end <= offset ? total + edit.text.length - (edit.end - edit.start) : total, offset);
   const moved = ({ start, end }) => {
     const edit = edits.find((candidate) => candidate.start === start && candidate.end === end);
-    const from = shift(start) + (edit ? edit.text.length - replacement.length : 0);
+    const from = shift(start) + (edit ? edit.replacementOffset : 0);
     return { start: from, end: from + (edit ? replacement.length : end - start) };
   };
   const expected = [
@@ -362,7 +377,7 @@ function decorateSyntaxFacts(facts, source, decorators) {
 }
 
 function semanticTokens(source, language, syntax) {
-  const mask = codeMask(source, language);
+  const mask = codeMask(source, language, syntax);
   for (const fact of syntax) {
     if (/regex/u.test(fact.term) && language === 'JavaScript') {
       mark(mask, fact.start, fact.end, false);
@@ -370,6 +385,7 @@ function semanticTokens(source, language, syntax) {
   }
   unmaskInterpolations(mask, source, language, syntax);
   const keywords = KEYWORDS[language];
+  const identifiers=language==='JavaScript'?new Set(syntax.filter(fact=>fact.term==='identifier'||fact.term==='shorthand_property_identifier'||fact.term==='shorthand_property_identifier_pattern').map(fact=>fact.start+':'+fact.end)):null;
   const tokens = [];
   for (let offset = 0; offset < source.length;) {
     const character = codePointAt(source, offset);
@@ -386,8 +402,9 @@ function semanticTokens(source, language, syntax) {
         offset += next.length;
       }
       const text = source.slice(start, offset);
+      const keyword=identifiers?testJavaScriptSourceKeywordRole(identifiers.has(start+':'+offset),keywords.has(text)||acceptJavaScriptReservedIdentifier(text)):keywords.has(text);
       tokens.push({
-        kind: keywords.has(text) ? 'keyword' : 'identifier',
+        kind: keyword ? 'keyword' : 'identifier',
         text,
         start,
         end: offset,
@@ -402,18 +419,48 @@ function semanticTokens(source, language, syntax) {
   return tokens;
 }
 
-function resolveBindings(tokens, syntax, source, language) {
+function resolveBindings(tokens, syntax, source, language, moduleBindings = []) {
   const scopes = [{ id: 'scope:0', parent: null, start: 0, end: source.length, depth: 0 }];
   const stack = [scopes[0]];
   const braceScopes = new Map();
   const braceKinds = [];
+  const functionStarts=new Map(),expressionScopes=new Map(),virtualScopes=new Set();
+  const tokenPositions=language==='JavaScript'?new Map(tokens.map((token,index)=>[token.start,index])):new Map();
+  if(language==='JavaScript')for(const fact of syntax){
+    const form=readJavaScriptSourceFunctionScopeForm(fact.term);if(!form)continue;
+    const method=form==='method definition';let first=tokenPositions.get(fact.start);
+    if(first===undefined&&method){const at=tokens.findIndex(token=>token.start>=fact.start&&token.start<fact.end);if(at>=0)first=at;}
+    const head=first+(form!=='arrow function'&&!method&&tokens[first]?.text==='async'?1:0);
+    if(first===undefined||form!=='arrow function'&&!method&&tokens[head]?.text!=='function')continue;
+    const name=head+1+(tokens[head+1]?.text==='*'?1:0),named=!method&&form!=='arrow function'&&acceptJavaScriptSourceFunctionHeadName(tokens[name]?.kind??'');
+    const body=syntax.find(node=>node.term==='statement_block'&&node.start>=fact.start&&node.end===fact.end);
+    const parameters=body&&syntax.filter(node=>node.term==='formal_parameters'&&node.start>=fact.start&&node.end<=body.start&&(!method||!syntax.some(key=>key.term==='computed_property_name'&&key.start<=node.start&&node.end<=key.end))).sort((left,right)=>left.start-right.start)[0];
+    if(method&&!parameters)continue;
+    const opening=parameters?tokens.findIndex(token=>token.start>=parameters.start&&token.end<=parameters.end):-1,closing=parameters?tokens.findLastIndex(token=>token.start>=parameters.start&&token.end<=parameters.end):-1;
+    const open=opening>=0&&tokens[opening].text==='('?opening:undefined,close=closing>=0&&tokens[closing].text===')'?closing:undefined;
+    if(method&&(open===undefined||close===undefined))continue;
+    const simple=parameters?acceptJavaScriptSourceSimpleParameterList(syntax.filter(node=>node.start>=parameters.start&&node.end<=parameters.end).map(node=>node.term)):true;
+    const scopeStart=method?tokens[open].start:fact.start,rows=functionStarts.get(scopeStart)??[];
+    if(!rows.some(row=>row.end===fact.end))rows.push({end:fact.end,head,named,form,bodyStart:body?body.start+1:null,simple,parameterFirst:open===undefined?undefined:open+1,parameterLast:close});
+    rows.sort((left,right)=>right.end-left.end);functionStarts.set(scopeStart,rows);
+  }
   const scopedBraces = new Set(syntax
     .filter(({ term }) => ['statement_block', 'class_body', 'switch_body'].includes(term))
     .map(({ start }) => start));
-  const propertyNames = new Set(syntax
-    .filter(({ term }) => term === 'property_identifier' || term === 'private_property_identifier')
-    .map(({ start, end }) => `${start}:${end}`));
+  const propertyRanges=syntax.filter(({term})=>term==='property_identifier'||term==='private_property_identifier');
+  const propertyNames=new Set(tokens.filter(token=>propertyRanges.some(node=>node.start<=token.start&&token.end<=node.end)).map(({start,end})=>`${start}:${end}`));
+  const lexicalStarts=new Map();
+  if(language==='JavaScript')for(const node of syntax){if(!testJavaScriptSourceLoopScopeTerm(node.term)&&!testJavaScriptSourceCatchScopeTerm(node.term)&&!testJavaScriptSourceClassExpressionTerm(node.term))continue;const rows=lexicalStarts.get(node.start)??[];if(!rows.includes(node.end))rows.push(node.end);rows.sort((left,right)=>right-left);lexicalStarts.set(node.start,rows);}
   for (const [index, token] of tokens.entries()) {
+    while(stack.length>1&&virtualScopes.has(stack.at(-1).id)&&token.start>=stack.at(-1).end)stack.pop();
+    for(const end of lexicalStarts.get(token.start)??[]){const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);}
+    for(const fact of functionStarts.get(token.start)??[]){
+      const create=()=>{const scope={id:'scope:'+scopes.length,parent:stack.at(-1).id,start:token.start,end:fact.end,depth:stack.length};scopes.push(scope);stack.push(scope);virtualScopes.add(scope.id);return scope.id;};
+      // A named expression's immutable private environment encloses its
+      // parameter environment, including defaults and the entire body.
+      const privateScope=fact.form==='function declaration'?stack.at(-1).id:fact.named?create():null,parameterScope=create();
+      expressionScopes.set(fact.head,{privateScope,parameterScope,bodyStart:fact.bodyStart,simple:fact.simple,parameterFirst:fact.parameterFirst,parameterLast:fact.parameterLast});
+    }
     token.scope = stack.at(-1).id;
     if (token.text === '{') {
       const createsScope = language !== 'JavaScript' || scopedBraces.has(token.start);
@@ -445,9 +492,9 @@ function resolveBindings(tokens, syntax, source, language) {
     declarations.push({ tokenIndex: index, kind, scope });
   };
   if (language === 'JavaScript') {
-    declareJavaScript(tokens, syntax, braceScopes, declare);
-    declareSyntaxBinders(tokens, syntax, language, declare);
-    hoistJavaScriptVars(declarations, tokens, syntax, scopes);
+    declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare);
+    declareSyntaxBinders(tokens, syntax, language, declare,expressionScopes);
+    hoistJavaScriptVars(declarations, tokens, syntax, scopes,expressionScopes);
   } else if (language === 'Rust') {
     declareSyntaxBinders(tokens, syntax, language, declare);
     declareRust(tokens, syntax, braceScopes, declare);
@@ -523,7 +570,7 @@ function resolveBindings(tokens, syntax, source, language) {
 
   const unresolved = [];
   for (const [index, token] of tokens.entries()) {
-    if (token.kind !== 'identifier' || byToken.has(index) || ignored.has(`${token.start}:${token.end}`)) continue;
+    if (token.kind !== 'identifier' || byToken.has(index) || ignored.has(`${token.start}:${token.end}`) || readSourceModuleBindingRangeRole(moduleBindings,token.start,token.end) === 3) continue;
     if (language === 'Rust' && tokens[index - 1]?.text === '::') {
       // Qualified paths resolve through module bodies; paths into external
       // crates or types are outside the analyzed program.
@@ -544,29 +591,39 @@ function resolveBindings(tokens, syntax, source, language) {
   };
 }
 
-function hoistJavaScriptVars(declarations, tokens, syntax, scopes) {
-  const functionTerms = new Set([
-    'function_declaration', 'function_expression', 'generator_function_declaration',
-    'generator_function', 'arrow_function', 'method_definition',
-  ]);
+function hoistJavaScriptVars(declarations, tokens, syntax, scopes,functionScopes) {
   const functionBodies = new Set(syntax
-    .filter(({ term }) => functionTerms.has(term))
+    .filter(({ term }) => testJavaScriptSourceVariableEnvironmentTerm(term))
     .flatMap(({ start, end }) => syntax
       .filter((fact) => fact.term === 'statement_block' && fact.start >= start && fact.end === end)
       .map((fact) => fact.start + 1)));
   const byId = new Map(scopes.map((scope) => [scope.id, scope]));
+  const environments=new Map([...functionScopes.values()].filter(scope=>scope.bodyStart!==null).map(scope=>[scope.bodyStart,scope]));
   for (const declaration of declarations) {
     if (declaration.kind !== 'var') continue;
     let scope = byId.get(tokens[declaration.tokenIndex].scope);
     while (scope?.parent && !functionBodies.has(scope.start)) scope = byId.get(scope.parent);
-    declaration.scope = scope?.id ?? 'scope:0';
+    const environment=scope&&environments.get(scope.start);
+    declaration.scope = environment?.simple?environment.parameterScope:scope?.id??'scope:0';
   }
+  // Redeclaration aliases are reference occurrences of the same binding, not
+  // fresh cells. Non-simple parameter environments retain their separate cells.
+  const cells=new Set(declarations.filter(row=>row.kind==='parameter').map(row=>row.scope+'\0'+tokens[row.tokenIndex].text));
+  const retained=declarations.filter(row=>{if(row.kind!=='var')return true;const key=row.scope+'\0'+tokens[row.tokenIndex].text;if(testJavaScriptSourceVariableRedeclaration(row.kind,cells.has(key)))return false;cells.add(key);return true;});
+  declarations.splice(0,declarations.length,...retained);
 }
 
-function declareJavaScript(tokens, syntax, braceScopes, declare) {
+function declareJavaScript(tokens, syntax, braceScopes, expressionScopes, declare) {
+  const properties=syntax.filter(node=>node.term==='property_identifier'||node.term==='private_property_identifier');
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
-    if (['const', 'let', 'var', 'class'].includes(token.text)) {
+    if(token.kind!=='keyword'||properties.some(node=>node.start<=token.start&&token.end<=node.end))continue;
+    if(['const','let','var'].includes(token.text)){
+      const positions=readJavaScriptSourceVariableBindings(tokens,syntax,index);
+      if(positions!==null){for(const at of positions)declare(at,token.text);continue;}
+    }
+    if(token.text==='class'){if(acceptJavaScriptSourceFunctionHeadName(tokens[index+1]?.kind??''))declare(index+1,'class');continue;}
+    if (['const', 'let', 'var'].includes(token.text)) {
       const pattern = token.text === 'class' ? undefined : syntax.find(({ term, start }) =>
         term === 'object_pattern' && start === tokens[index + 1]?.start);
       if (pattern) {
@@ -588,22 +645,25 @@ function declareJavaScript(tokens, syntax, braceScopes, declare) {
       }
     }
     if (token.text === 'function') {
-      const name = nextIdentifier(tokens, index + 1);
-      declare(name, 'function');
-      const open = findToken(tokens, name + 1, '(');
+      const head=index+1+(tokens[index+1]?.text==='*'?1:0);
+      const name=acceptJavaScriptSourceFunctionHeadName(tokens[head]?.kind??'')?head:-1;
+      const expression=expressionScopes.get(index);
+      if(name>=0)declare(name, 'function',expression?.privateScope??tokens[name].scope);
+      const open = tokens[name>=0?name+1:head]?.text==='('?name>=0?name+1:head:-1;
       const close = matchingDelimiter(tokens, open, '(', ')');
       const body = findToken(tokens, close + 1, '{');
-      const scope = braceScopes.get(body) ?? tokens[name]?.scope;
-      declareDelimitedParameters(tokens, open, close, scope, declare);
+      const scope = expression?.parameterScope??braceScopes.get(body)??token.scope;
+      declareDelimitedParameters(tokens, syntax, open, close, scope, declare);
     }
     if (token.text === 'catch') {
-      const open = findToken(tokens, index + 1, '(');
-      const close = matchingDelimiter(tokens, open, '(', ')');
-      const body = findToken(tokens, close + 1, '{');
-      declareDelimitedParameters(tokens, open, close, braceScopes.get(body), declare);
+      const fact=syntax.find(node=>testJavaScriptSourceCatchScopeTerm(node.term)&&node.start===token.start);
+      const open=fact&&tokens[index+1]?.text==='('?index+1:-1;
+      const close=open<0?-1:matchingDelimiter(tokens,open,'(',')');
+      if(close>=0&&tokens[close].end<=fact.end)declareDelimitedParameters(tokens,syntax,open,close,tokens[open].scope,declare);
     }
     if (token.text === 'import') {
-      const from = findToken(tokens, index + 1, 'from');
+      const statement=syntax.find(fact=>fact.term==='import_statement'&&fact.start===token.start);
+      const from = tokens.findIndex((candidate,at)=>at>index&&candidate.kind==='keyword'&&candidate.text==='from'&&(!statement||candidate.end<=statement.end));
       const end = from < 0 ? findToken(tokens, index + 1, ';') : from;
       for (let cursor = index + 1; cursor >= 0 && cursor < end; cursor += 1) {
         if (tokens[cursor].kind !== 'identifier') continue;
@@ -661,16 +721,9 @@ function declareProofLanguage(tokens, language, declare) {
   }
 }
 
-function declareDelimitedParameters(tokens, open, close, scope, declare) {
+function declareDelimitedParameters(tokens, syntax, open, close, scope, declare) {
   if (open < 0 || close < 0) return;
-  let segmentStart = open + 1;
-  for (let index = open + 1; index <= close; index += 1) {
-    if (index === close || tokens[index].text === ',') {
-      const candidate = nextIdentifier(tokens, segmentStart);
-      if (candidate >= 0 && candidate < index) declare(candidate, 'parameter', scope);
-      segmentStart = index + 1;
-    }
-  }
+  for(const index of readJavaScriptSourceParameterBindings(tokens,syntax,open+1,close))declare(index,'parameter',scope);
 }
 
 function moduleFacts(tokens, syntax, source, language, project, projectResult) {
@@ -860,22 +913,26 @@ function effectEvidence(program) {
   return uniqueFacts(evidence);
 }
 
-function codeMask(source, language) {
+function codeMask(source, language, syntax) {
   const mask = new Array(source.length).fill(true);
+  const opaque=new Map();
+  for(const fact of syntax){const accepted=language==='Rust'?testRustSourceOpaqueLiteralTerm(fact.term):language==='JavaScript'&&testJavaScriptSourceOpaqueLiteralTerm(fact.term);if(accepted&&fact.end>fact.start&&fact.end<=source.length)opaque.set(fact.start,Math.max(opaque.get(fact.start)??0,fact.end));}
   const lineComment = language === 'Lean' ? '--' : language === 'Rocq' ? null : '//';
   const blockOpen = language === 'Lean' ? '/-' : language === 'Rocq' ? '(*' : '/*';
   const blockClose = language === 'Lean' ? '-/' : language === 'Rocq' ? '*)' : '*/';
   for (let offset = 0; offset < source.length;) {
-    if (lineComment && source.startsWith(lineComment, offset)) {
+    const literalEnd=opaque.get(offset);
+    if(literalEnd!==undefined){mark(mask,offset,literalEnd,false);offset=literalEnd;}
+    else if (lineComment && source.startsWith(lineComment, offset)) {
       const end = source.indexOf('\n', offset);
       mark(mask, offset, end < 0 ? source.length : end, false);
       offset = end < 0 ? source.length : end;
     } else if (source.startsWith(blockOpen, offset)) {
       offset = maskNested(source, mask, offset, blockOpen, blockClose);
-    } else if (source[offset] === '"' || ((language === 'JavaScript' || language === 'Rust') && source[offset] === "'")) {
+    } else if (source[offset] === '"' || (language === 'JavaScript' && source[offset] === "'")) {
       offset = maskQuoted(source, mask, offset, source[offset]);
     } else if (language === 'JavaScript' && source[offset] === '`') {
-      offset = maskTemplate(source, mask, offset);
+      offset = maskTemplate(source, mask, offset, opaque);
     } else {
       offset += codePointAt(source, offset).length;
     }
@@ -919,7 +976,7 @@ function maskNested(source, mask, start, open, close) {
   return offset;
 }
 
-function maskTemplate(source, mask, start) {
+function maskTemplate(source, mask, start, opaque) {
   let offset = start;
   mask[offset++] = false;
   while (offset < source.length) {
@@ -931,7 +988,7 @@ function maskTemplate(source, mask, start) {
       break;
     } else if (source.startsWith('${', offset)) {
       mark(mask, offset, offset + 2, false);
-      offset = maskTemplateExpression(source, mask, offset + 2);
+      offset = maskTemplateExpression(source, mask, offset + 2, opaque);
     } else {
       mask[offset++] = false;
     }
@@ -939,11 +996,13 @@ function maskTemplate(source, mask, start) {
   return offset;
 }
 
-function maskTemplateExpression(source, mask, start) {
+function maskTemplateExpression(source, mask, start, opaque) {
   let offset = start;
   let depth = 1;
   while (offset < source.length && depth > 0) {
-    if (source.startsWith('//', offset)) {
+    const literalEnd=opaque.get(offset);
+    if(literalEnd!==undefined){mark(mask,offset,literalEnd,false);offset=literalEnd;}
+    else if (source.startsWith('//', offset)) {
       const end = source.indexOf('\n', offset);
       mark(mask, offset, end < 0 ? source.length : end, false);
       offset = end < 0 ? source.length : end;
@@ -952,7 +1011,7 @@ function maskTemplateExpression(source, mask, start) {
     } else if (source[offset] === '"' || source[offset] === "'") {
       offset = maskQuoted(source, mask, offset, source[offset]);
     } else if (source[offset] === '`') {
-      offset = maskTemplate(source, mask, offset);
+      offset = maskTemplate(source, mask, offset, opaque);
     } else if (source[offset] === '{') {
       depth += 1;
       offset += 1;
@@ -996,7 +1055,7 @@ function validateIdentifier(identifier, language) {
     characters.length === 0 ||
     !identifierStart(characters[0], language) ||
     !characters.slice(1).every((character) => identifierContinue(character, language)) ||
-    KEYWORDS[language].has(value)
+    (language==='JavaScript'?acceptJavaScriptReservedIdentifier(value)||value==='eval'||value==='arguments':KEYWORDS[language].has(value))
   ) {
     throw new BindingRenameError(`${JSON.stringify(value)} is not a valid ${language} identifier`);
   }

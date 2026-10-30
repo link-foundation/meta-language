@@ -58,7 +58,16 @@ test('explicit string order models retain operand evaluation order and recheck t
     const operations=runInNewContext(emitTypedProgramLinks(network,packet.root,'JavaScript').code+';({before,atMost,after,atLeast});');
     assert.equal(operations.before('😀','\ue000'),true);assert.equal(operations.atMost('a','a'),true);assert.equal(operations.after('aa','a'),true);
   }
-  for(const emit of [emitLean,emitRocq])assert.throws(()=>emit(checkProgram(parseJavaScript(source))),/UTF-16 operational string encoding for lexical comparison/u);
+  // The complete unit representation supersedes the preceding
+  // /UTF-16 operational string encoding for lexical comparison/u refusal.
+  // Retain the same source and every independent value/unit oracle above.
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
+  for(const emit of [emitLean,emitRocq]){
+    const formal=emit(checkProgram(parseJavaScript(source)));
+    assert.ok(formal.encodings.some(row=>row.id==='utf16-formal-strings'));
+    assert.ok(formal.text.includes('MLUtf16Text.compare'));
+  }
   const nativeSource='fn before(left: String,right: String)->bool {left<right}';
   assert.throws(()=>parseRust(nativeSource),/needs fn main/u,'retain the original incomplete program and its actual parser boundary');
   assert.throws(()=>checkProgram(parseRust(nativeSource+' fn main() {}')),/ordering on string/u,'native UTF8 String order remains a distinct unsupported source model');

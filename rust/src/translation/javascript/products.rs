@@ -140,7 +140,9 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
             values
         }
         SNode::StringTest { object, search, .. } => vec![object, search],
-        SNode::Binary { left, right, .. } | SNode::Coalesce { left, right } => vec![left, right],
+        SNode::ReferenceIdentity { left, right, .. }
+        | SNode::Binary { left, right, .. }
+        | SNode::Coalesce { left, right } => vec![left, right],
         SNode::Let { value, body, .. }
         | SNode::Print {
             expr: value, body, ..
@@ -457,6 +459,11 @@ impl<'a> Facts<'a> {
             });
         let potential = matches!(ty, Some(Type::Tuple { .. }));
         let id = self.fact(ty, Some(node));
+        if let SNode::Math{op,args,..}=&node.node
+            && op==&crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string()
+            && args.len()==1&&!args[0].spread {
+            let value=self.expression(&args[0].value,env,context);self.edge(id,value,potential);return id;
+        }
         match &node.node {
             SNode::Tuple {
                 items,
@@ -816,7 +823,8 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                 walk(object, admitted);
                 walk(search, admitted);
             }
-            SNode::Binary { left, right, .. }
+            SNode::ReferenceIdentity { left, right, .. }
+            | SNode::Binary { left, right, .. }
             | SNode::Coalesce { left, right }
             | SNode::Let {
                 value: left,

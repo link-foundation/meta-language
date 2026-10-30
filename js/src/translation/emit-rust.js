@@ -1,4 +1,33 @@
+import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
+import {acceptRustScalarMathematicalInterfaceModel,readRustScalarMathematicalEncoding,readRustScalarMathematicalStatement} from './rust-scalar-mathematical-interface-rules.js';
+import {acceptRustTextualSourceInterfaceModel,readRustTextualSourceEncoding,readRustTextualSourceStatement} from './rust-textual-source-interface-rules.js';
+import {acceptRustStringPredicateInterfaceModel,readRustStringPredicateEncoding,readRustStringPredicateStatement} from './rust-string-predicate-interface-rules.js';
+import {acceptRustConstructedStringInterfaceModel,readRustConstructedStringEncoding,readRustConstructedStringStatement} from './rust-constructed-string-interface-rules.js';
+import {acceptRustDisplayedStringInterfaceModel,readRustDisplayedStringEncoding,readRustDisplayedStringStatement} from './rust-displayed-string-interface-rules.js';
+import {renderStringArrayCopySort,requireStringArrayCopySortUnits} from './string-array-sort-rules.js';
+import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
+import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
+import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
+import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
+import {UNICODE_CASE_PRELUDE} from './unicode-case-runtime.js';
+import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_PRELUDE} from './utf16-text-runtime.js';
 import {rustEscape,rustString} from './rust-string-literals.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
+import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, readRecordFieldWriteStatement, readRecordFieldWriteSuffix } from './record-write-rules.js';
+import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
+import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
+import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
+import { readArrayCallbackResultForm } from './array-callback-rules.js';
+import { acceptLinkedArrayStateMethod, readArrayStateMethodArgumentProfile, readArrayStateMethodSuffix,
+  renderArrayStateMethodExpression, readArrayStateMethodIdentity, readArrayStateMethodStatement } from './array-state-method-rules.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
@@ -13,11 +42,30 @@ import {requireStringOrderUnits,renderStringOrderExpression} from './string-orde
 // `--ml-check-theorems`, while the proof stays discharged by the source kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import {readJavaScriptNumberBitwiseOperationCode,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
+import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
+import {STRING_NUMBER_PRELUDE} from './string-number-runtime.js';
+import {SOURCE_EXCEPTION_PRELUDE} from './source-exception-runtime.js';
+import {BIG_INTEGER_CONVERSION_PRELUDE} from './big-integer-conversion-runtime.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
+import {acceptLinkedJavaScriptNumberConversion,requireJavaScriptNumberConversionUnits} from './string-number-rules.js';
+import {emitRustJavaScriptNumberConversion} from './javascript-number-conversion.js';
+import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
+import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
+import { acceptRustNamedConstructorFields, renderRustConstructorFields, renderRustDataFieldEncoding, renderRustFunctionCall } from './rust-record-rules.js';
+import {emitNominalArrayProjectionLoan} from './nominal-array-loans.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';
 import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
+import { emitReferenceArrayProjection } from './reference-array-projections.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
 import { readCallableCapturedBindings } from './callable-source.js';
@@ -41,9 +89,12 @@ import { acceptTupleCopyType, renderTupleProjection, renderTupleValue } from './
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { readRustSourceHeaderEmission, renderRustSourceHeaderEmission } from './rust-source-header-emission.js';
 import { RUST_BORROWED_CALL_INTERFACE_POLICY, readRustBorrowedCallInterface, renderRustBorrowedCall } from './rust-borrowed-call-interface.js';
+import {readRustScalarSourceInterface,renderRustScalarSourceHeader,renderRustScalarSourceCall} from './rust-scalar-source-interface.js';
+import {acceptRustScalarSourceInterfaceModel,readRustScalarSourceArgumentName,readRustScalarSourceTargetGuard,readRustScalarSourceEncoding,readRustScalarSourceStatement} from './rust-scalar-source-interface-rules.js';
 import { acceptRustBorrowedCallInterfaceModel, renderRustBorrowedCallHeaderReference } from './rust-borrowed-call-interface-rules.js';
 
 const KEYWORDS = new Set([
+  'ml_unicode_case', 'ml_utf16_text',
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
   'let', 'loop', 'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'self', 'Self', 'static', 'struct', 'super',
   'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while', 'async', 'await', 'dyn', 'abstract', 'become', 'box',
@@ -51,7 +102,7 @@ const KEYWORDS = new Set([
   // Names the emitted code relies on.
   'ml', 'main', 'std', 'core', 'alloc', 'String', 'Vec', 'Box', 'Option', 'Some', 'None', 'Ok', 'Err', 'Result',
   'bool', 'str', 'char', 'u8', 'u16', 'u32', 'u64', 'u128', 'usize', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
-  'f32', 'f64', 'Big', 'Clone', 'Debug', 'PartialEq', 'Eq', 'ToString', 'ml_main', 'ml_check_theorems', 'ml_number',
+  'f32', 'f64', 'Big', 'Clone', 'Debug', 'PartialEq', 'Eq', 'ToString', 'ml_main', 'ml_check_theorems', 'ml_number', 'ml_record_property_order',
 ]);
 
 const PRELUDE = `/// Unbounded integers for the portable core's naturals and integers.
@@ -643,12 +694,20 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  program=prepareOrderedRecordValues(program);
   validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
   checkRustOwnedLocalStateProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
   if(runtimeShell){if(options.sourceHeaderModel!==undefined)refuseRustRuntimeShellComposition('target header changes require an independent runtime composition proof');return emitRustRuntimeShell(program,runtimeShell);}
-  const borrowedCalls = acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
+  const displayedInterface = acceptRustDisplayedStringInterfaceModel(options.sourceHeaderModel);
+  const constructedInterface = displayedInterface || acceptRustConstructedStringInterfaceModel(options.sourceHeaderModel);
+  const predicateInterface = constructedInterface || acceptRustStringPredicateInterfaceModel(options.sourceHeaderModel);
+  const textualInterface = predicateInterface || acceptRustTextualSourceInterfaceModel(options.sourceHeaderModel);
+  const mathematicalInterface = acceptRustScalarMathematicalInterfaceModel(options.sourceHeaderModel);
+  const scalarInterface = textualInterface || mathematicalInterface || acceptRustScalarSourceInterfaceModel(options.sourceHeaderModel);
+  const scalarHeaders = scalarInterface ? readRustScalarSourceInterface(program, options.sourceHeaderModel) : null;
+  const borrowedCalls = scalarHeaders ? {headers:scalarHeaders,targets:scalarHeaders} : acceptRustBorrowedCallInterfaceModel(options.sourceHeaderModel) ? readRustBorrowedCallInterface(program, options.sourceHeaderModel) : null;
   const sourceHeaders = borrowedCalls?.headers ?? (options.sourceHeaderModel === undefined ? null : readRustSourceHeaderEmission(program, options.sourceHeaderModel));
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data',
@@ -661,7 +720,13 @@ export function emitRust(program, options = {}) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true).file();
+  if(scalarInterface)state.encode(readRustScalarSourceEncoding(),readRustScalarSourceStatement());
+  if(mathematicalInterface)state.encode(readRustScalarMathematicalEncoding(),readRustScalarMathematicalStatement());
+  if(textualInterface)state.encode(readRustTextualSourceEncoding(),readRustTextualSourceStatement());
+  if(predicateInterface)state.encode(readRustStringPredicateEncoding(),readRustStringPredicateStatement());
+  if(constructedInterface)state.encode(readRustConstructedStringEncoding(),readRustConstructedStringStatement());
+  if(displayedInterface)state.encode(readRustDisplayedStringEncoding(),readRustDisplayedStringStatement());
+  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true, scalarInterface).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
@@ -683,6 +748,7 @@ export function readRustExternalTargets(program) {
  * for a program with declarations or other effects.
  */
 export function emitRustConstants(program) {
+  program=prepareOrderedRecordValues(program);
   const effects = program.main?.effects ?? [];
   const effect = effects[0];
   const legalName = typeof effect?.name === 'string' && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
@@ -702,16 +768,28 @@ export function emitRustConstants(program) {
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
     ...(emitter.usesMath ? [MATH_PRELUDE] : []),
     ...(emitter.usesArray ? [readRustArrayPrelude(emitter.usesStandardArray)] : []),
+    ...(emitter.utf16Strings ? [STRING_PRELUDE] : []),
+    ...(emitter.usesOptional ? [OPTIONAL_PRELUDE] : []),
+    ...(emitter.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
+    ...(emitter.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
+    ...(emitter.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
+    ...(emitter.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
+    ...(emitter.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
+    ...(emitter.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
+    ...(emitter.usesUnicodeCase ? [UNICODE_CASE_PRELUDE] : []),
+    ...(emitter.usesRecordPropertyOrder ? [RECORD_PROPERTY_ORDER_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
 
 class RustEmitter {
-  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false) {
+  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false, scalarSourceInterface = false) {
     this.program = program;
+    this.namedConstructorFields = program.sourceLanguage === 'Rust' && [...program.declarations.values()].some(entry=>entry.k==='data'&&entry.ctors.some(ctor=>acceptRustNamedConstructorFields(program.sourceLanguage,ctor.fields.map(field=>field.name??''))));
     this.state = state;
     this.definitionOwnership = recordDefinitionOwnership ? { schemaVersion: 1, blocks: [], externalTargets: [] } : null;
     this.sourceHeaders = sourceHeaders;
+    this.scalarSourceInterface = scalarSourceInterface;
     this.borrowedCallTargets = borrowedCallTargets;
     // Historical low-level profiles keep copies; ordinary source and Links
     // translation explicitly select final binding consumption.
@@ -726,10 +804,22 @@ class RustEmitter {
     this.usesArray = false;
     this.usesStandardArray = false;
     this.usesMath = false;
+    this.usesNumberBitwise = false;
+    this.usesBigIntegerBitwise = false;
+    this.usesStringNumber = false;
+    this.usesSourceException = false;
+    this.usesBigIntegerConversion = false;
+    this.usesUtf16Text=false;
+    this.usesUnicodeCase=false;
+    this.usesRecordPropertyOrder=false;
     this.usesOptional = false;
     const needsUnits = (node) => {
+      if(requireStringArrayCopySortUnits(node?.k??'',node?.op??''))return true;
+      if(acceptLinkedJavaScriptStringConstruction(node?.k??'',node?.op??'')&&readJavaScriptStringConstructionForm(node.op)==='characters')return true;
       if (!node || typeof node !== 'object') return false;
-      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;
+      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')||acceptLinkedJavaScriptStringUnitConstruction(node.k??'',node.op??'')) return true;
+      if(requireJavaScriptNumberConversionUnits(node.k??'',node.op??'',node.args?.[0]?.type?.kind??''))return true;
+      if(acceptLinkedJavaScriptBigIntegerResult(node.k??'',node.op??'')&&['string','string-compare'].includes(readJavaScriptBigIntegerResultOperation(node.op)))return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
@@ -755,22 +845,40 @@ class RustEmitter {
       `// Translated from ${this.program.sourceLanguage} by meta-language: portable core, Rust target.`,
       '#![allow(unused, unreachable_patterns, non_snake_case, non_camel_case_types, invalid_nan_comparisons)]',
       '',
+      ...(this.scalarSourceInterface ? [readRustScalarSourceTargetGuard(), ''] : []),
       ...(this.usesBig ? [PRELUDE, ''] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE, ''] : []),
       ...(this.usesMath ? [MATH_PRELUDE, ''] : []),
       ...(this.usesArray ? [readRustArrayPrelude(this.usesStandardArray), ''] : []),
       ...(this.utf16Strings ? [STRING_PRELUDE, ''] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE, ''] : []),
+      ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE, ''] : []),
+      ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE, ''] : []),
+      ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE, ''] : []),
+      ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE, ''] : []),
+      ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE, ''] : []),
+    ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE, ''] : []),
+      ...(this.usesUnicodeCase ? [UNICODE_CASE_PRELUDE, ''] : []),
+      ...(this.usesRecordPropertyOrder ? [RECORD_PROPERTY_ORDER_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
     const preludes = [
+      ...(this.scalarSourceInterface ? [readRustScalarSourceTargetGuard()] : []),
       ...(this.usesBig ? [PRELUDE] : []),
       ...(this.usesNumber ? [NUMBER_PRELUDE] : []),
       ...(this.usesMath ? [MATH_PRELUDE] : []),
       ...(this.usesArray ? [readRustArrayPrelude(this.usesStandardArray)] : []),
       ...(this.utf16Strings ? [STRING_PRELUDE] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE] : []),
+      ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
+      ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
+      ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
+      ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
+      ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
+      ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
+      ...(this.usesUnicodeCase ? [UNICODE_CASE_PRELUDE] : []),
+      ...(this.usesRecordPropertyOrder ? [RECORD_PROPERTY_ORDER_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -860,8 +968,10 @@ class RustEmitter {
         return renderRustCompoundType('option', type.absence, [this.type(type.element)]);
       case 'tuple':
         return renderRustCompoundType('tuple', '', type.elements.map((element) => this.type(element)));
-      case 'record':
-        return renderRustCompoundType('record', '', type.fields.map((field) => this.type(field.type)));
+      case 'record': {
+        const payload=renderRustCompoundType('record', '', type.fields.map((field) => this.type(field.type)));
+        return type.ordered?renderOrderedRecordType('Rust',payload,this.type({kind:'array',element:{kind:'float'}})):payload;
+      }
       case 'function':
         return renderRustCompoundType('function', this.type(type.ret), type.params.map((param) => this.type(param)));
       case 'set':
@@ -892,11 +1002,10 @@ class RustEmitter {
     if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own identity, debug and equality encodings before this target derives structural traits', entry.span);
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    this.state.encode('data', 'a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally');
+    this.state.encode('data', renderRustDataFieldEncoding(this.namedConstructorFields));
     const variants = entry.ctors.map((ctor) => {
       const local = this.state.ctorLocal(entry.fullName, ctor.name);
-      if (!ctor.fields.length) return `    ${local},`;
-      return `    ${local}(${ctor.fields.map((field) => this.fieldType(field.type)).join(', ')}),`;
+      return `    ${renderRustConstructorFields(this.program.sourceLanguage,local,ctor.fields.map(field=>field.name??''),ctor.fields.map(field=>this.fieldType(field.type)))},`;
     });
     // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
     const derives = this.holdsFloat(entry.fullName) ? 'Clone, Debug, PartialEq' : 'Clone, Debug, PartialEq, Eq';
@@ -933,6 +1042,7 @@ class RustEmitter {
         this.borrowedCallScope = new Scope(snake, reserved);
         const text = this.expr(body);
         this.borrowedCallScope = null;
+        if(this.scalarSourceInterface)return renderRustScalarSourceHeader(sourceHeader,params,name,text,indent);
         return renderRustSourceHeaderEmission(sourceHeader, params, name, text, indent, renderRustBorrowedCallHeaderReference);
       }
       return renderRustSourceHeaderEmission(sourceHeader, params, name, this.expr(body), indent);
@@ -1025,7 +1135,7 @@ class RustEmitter {
           const names = ctor.fields.map((_, index) => `f${index}`);
           const args = ctor.fields.map((field, index) => (field.type.kind === 'data' ? `Box::new(${names[index]}.clone())` : `${names[index]}.clone()`));
           const head = `crate::${this.state.ctorRef(entry.fullName, ctor.name, '::')}`;
-          let statement = `values.push(${args.length ? `${head}(${args.join(', ')})` : head});`;
+          let statement = `values.push(${renderRustConstructorFields(this.program.sourceLanguage,head,ctor.fields.map(field=>field.name??''),args)});`;
           for (let index = ctor.fields.length - 1; index >= 0; index -= 1) {
             const field = ctor.fields[index];
             statement = `for ${names[index]} in ${this.domain(field.type, field.type.kind === 'data' ? depth - 1 : 1)} {\n${indent(statement, 1)}\n}`;
@@ -1079,6 +1189,7 @@ class RustEmitter {
 
   /** An expression whose value is only read: variables are borrowed, not cloned. */
   borrow(e) {
+    const loan=emitNominalArrayProjectionLoan(this,e);if(loan!==null)return loan;
     if (e.type?.kind === 'float') return this.expr(e);
     return e.k === 'var' ? `&${e.name}` : `&${this.expr(e)}`;
   }
@@ -1135,10 +1246,23 @@ class RustEmitter {
   }
 
   method(e) {
+    if(e.op==='toSorted')return renderStringArrayCopySort('Rust',this.expr(e.object),this.utf16Strings);
+    const order=emitOrderedRecordOrderRead(this,e,'Rust');if(order!==null)return order;
+    if (e.object.k === 'referenceRead' && e.object.reference.type.reference && readArrayCallbackResultForm(e.op)) {
+      const callback = e.args[0];
+      if (!callback || !acceptSnapshotCallbackParameters(e.op, callback.type.params.length)
+        || !acceptReadOnlyReferenceCallback(callback, this.program.declarations)) {
+        throw unsupported('shared array callback', 'this callback needs live array slots, effects and the original receiver identity rather than a snapshot', e.span);
+      }
+    }
     if (e.object.type.kind === 'string') {
       const object = this.receiver(e.object);
       const argumentsText = e.args.map((arg, index) => renderPrimitiveMethodArgument('Rust', 'string', e.op, index, arg === null,
         arg === null ? 'None' : arg.type.kind === 'string' ? this.borrow(arg) : this.expr(arg)));
+      if (acceptUtf16TextMethod(e.k, 'string', e.op)) {
+        this.usesUtf16Text = true;
+        return renderUtf16TextMethod('Rust', e.op, object, argumentsText.join(', '));
+      }
       return renderPrimitiveMethodExpression('Rust', 'string', e.op, object, argumentsText.join(', '));
     }
     if (e.object.type.kind === 'array') {
@@ -1184,7 +1308,42 @@ class RustEmitter {
   }
 
   expr(e) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Rust',this.borrow(copy));}
+    const projection = emitReferenceArrayProjection(this, e);
+    if (projection !== null) return projection;
+    if (e.k === 'method' && acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+      this.temporaries += 1;
+      const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
+      const profiles = e.args.map(argument => readArrayStateMethodArgumentProfile(argument.type.kind, argument.type.element?.kind ?? '', argument.type.absence ?? ''));
+      const types = e.args.map(argument => this.type(argument.type));
+      this.temporaries = readArrayStateMethodSuffix(this.temporaries, receiver, args);
+      this.state.encode(readArrayStateMethodIdentity(e.op), readArrayStateMethodStatement());
+      return renderArrayStateMethodExpression('Rust', e.op, receiver, args, profiles, types, String(this.temporaries));
+    }
+    if (e.k === 'method' && acceptLinkedRecordFieldWrite(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+      this.temporaries += 1;
+      const initial = this.temporaries, receiver = this.expr(e.object);
+      const index = e.object.type.fields.findIndex(field => field.name === readRecordFieldWriteName(e.op));
+      if (index < 0) throw unsupported('shared record field assignment', 'the actual field owner is missing', e.span);
+      const args = e.args.map(argument => this.expr(argument));
+      this.temporaries = readRecordFieldWriteSuffix(Math.max(initial, this.temporaries), receiver, args);
+      const suffix = String(this.temporaries);
+      this.state.encode('write-record-field', readRecordFieldWriteStatement());
+      return renderRecordFieldWrite('Rust', readRecordFieldWriteOperator(e.op), receiver, '', (e.object.type.ordered?'0.':'')+String(index), args, suffix);
+    }
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
+    if (e.k === 'method' && e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
+      this.temporaries += 1;
+      const suffix = String(this.temporaries), receiver = this.expr(e.object);
+      const args = e.args.map(argument => {
+        if (argument === null) throw unsupported('shared collection method argument', 'every source argument needs its actual expression', e.span);
+        return this.expr(argument);
+      });
+      const key = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+      this.state.encode(readReferenceMethodIdentity(e.object.type.kind, e.op), readReferenceMethodStatement());
+      return renderReferenceMethodExpression('Rust', e.object.type.kind, e.op, receiver, args, key.kind === 'float', suffix);
+    }
     const statefulReceiver = e.array?.type.reference || e.object?.type.reference;
     const referenceOperation = readSurfaceReferenceEmissionOperation(e.k, Boolean(statefulReceiver), Boolean(e.type?.reference));
     if (referenceOperation) throw unsupported(referenceOperation, readSurfaceReferenceEmissionRefusal(referenceOperation), e.span);
@@ -1199,11 +1358,12 @@ class RustEmitter {
         if (this.borrowedCallTargets) {
           const signature = this.borrowedCallTargets.get(e.fn);
           const values = e.args.map(argument => this.expr(argument));
-          const names = values.map(() => this.borrowedCallScope.fresh(RUST_BORROWED_CALL_INTERFACE_POLICY.argumentName));
+          const names = values.map(() => this.borrowedCallScope.fresh(this.scalarSourceInterface ? readRustScalarSourceArgumentName() : RUST_BORROWED_CALL_INTERFACE_POLICY.argumentName));
+          if(this.scalarSourceInterface)return renderRustScalarSourceCall(signature,`crate::${this.state.ref(e.fn, '::')}`,values,names,indent);
           return renderRustBorrowedCall(signature, `crate::${this.state.ref(e.fn, '::')}`, values, names, indent);
         }
         if (this.externals.has(e.fn)) return this.external(e, this.externals.get(e.fn));
-        return `crate::${this.state.ref(e.fn, '::')}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
+        return renderRustFunctionCall('crate::'+this.state.ref(e.fn,'::'),e.args.map(arg=>this.expr(arg)));
       case 'functionRef':
         return renderCallableFunctionReference('Rust', `crate::${this.state.ref(e.fn, '::')}`);
       case 'apply':
@@ -1213,7 +1373,7 @@ class RustEmitter {
       case 'method':
         return this.method(e);
       case 'record':
-        return renderRecordValue('Rust', [], e.entries.map(entry => this.expr(entry.value)));
+        return emitOrderedRecordValue(this,e,'Rust')??renderRecordValue('Rust', [], e.entries.map(entry => this.expr(entry.value)));
       case 'cellAllocate':
         return renderCallableCellOperation('Rust', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':
@@ -1232,7 +1392,7 @@ class RustEmitter {
         return renderSurfaceReferenceOperation('Rust', e.k, this.receiver(e.reference), value);
       }
       case 'recordField':
-        return renderRecordField('Rust', this.expr(e.object), '', String(e.index));
+        return renderRecordField('Rust', (e.object.type.ordered?renderOrderedRecordPayload('Rust',this.expr(e.object)):this.expr(e.object)), '', String(e.index));
       case 'tuple':
         if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('Rust', e.items.map((item) => this.expr(item)), e.frozen === true);
@@ -1279,7 +1439,7 @@ class RustEmitter {
         return renderOptionalCoalescing('Rust', e.left.type.absence, e.left.type.absence === 'both' ? this.expr(e.left) : '', e.left.type.absence === 'both' ? '' : this.receiver(e.left), this.expr(e.right));
       case 'optionalField': {
         if (e.object.type.absence === 'both') this.usesOptional = true;
-        return renderOptionalProjection('Rust', e.object.type.absence, e.object.type.absence === 'both' ? this.expr(e.object) : '', e.object.type.absence === 'both' ? '' : this.receiver(e.object), 'ml_record', `ml_record.${e.index}`, '');
+        return renderOptionalProjection('Rust', e.object.type.absence, e.object.type.absence === 'both' ? this.expr(e.object) : '', e.object.type.absence === 'both' ? '' : this.receiver(e.object), 'ml_record', `${e.object.type.element.ordered?'ml_record.0':'ml_record'}.${e.index}`, '');
       }
       case 'optionalProject': {
         const element = e.object.type.element;
@@ -1304,12 +1464,10 @@ class RustEmitter {
         return renderCollectionConstruction('Rust', e.k, key.kind, values, '', '', '');
       }
       case 'collectionSize':
-        return `(${this.receiver(e.object)}.len() as f64)`;
+        return renderCollectionSizeExpression('Rust', this.receiver(e.object));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
-        const equal = keyType.kind === 'float' ? '(ml_key == &ml_search || (ml_key.is_nan() && ml_search.is_nan()))' : 'ml_key == &ml_search';
-        const binds = e.object.type.kind === 'map' ? '(ml_key, ml_value)' : 'ml_key';
-        return `{ let ml_collection = ${this.expr(e.object)}; let ml_search = ${this.expr(e.key)}; ml_collection.iter().${e.op === 'get' ? `find_map(|${binds}| if ${equal} { Some(ml_value.clone()) } else { None })` : `any(|${binds}| ${equal})`} }`;
+        return renderCollectionReadExpression('Rust', e.object.type.kind, e.op, this.expr(e.object), this.expr(e.key), keyType.kind === 'float', '', '', '');
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';
@@ -1322,7 +1480,7 @@ class RustEmitter {
         const head = `crate::${this.state.ctorRef(e.data, e.ctor, '::')}`;
         if (!e.args.length) return head;
         const args = e.args.map((arg, index) => (ctor.fields[index].type.kind === 'data' ? `Box::new(${this.expr(arg)})` : this.expr(arg)));
-        return `${head}(${args.join(', ')})`;
+        return renderRustConstructorFields(this.program.sourceLanguage,head,ctor.fields.map(field=>field.name??''),args);
       }
       case 'unary':
         if (e.op === 'not') return `!${this.receiver(e.arg)}`;
@@ -1351,6 +1509,7 @@ class RustEmitter {
         }
         return renderPrimitiveStringRepresentation(this.utf16Strings, 'text', `${this.receiver(e.arg)}.to_string()`, '', '');
       case 'stringMap':
+        if(this.program.sourceLanguage==='JavaScript'&&acceptUnicodeCaseMappingOperation(e.op)){this.usesUnicodeCase=true;this.state.encode('unicode-default-case-16',readUnicodeCaseEncodingStatement());return renderUnicodeCaseStringMap('Rust',e.op,this.utf16Strings,this.expr(e.string));}
         if (this.utf16Strings) {
           return renderPrimitiveStringRepresentation(true, 'map', this.receiver(e.string), '', e.op);
         }
@@ -1385,6 +1544,11 @@ class RustEmitter {
         return `crate::ml_array::at(${this.borrow(e.array)}, ${index})`;
       }
       case 'length':
+        {const loan=emitNominalArrayProjectionLoan(this,e.array);if(loan!==null){
+          if(e.type.kind==='float')return '('+loan+'.len() as f64)';
+          if(e.type.kind==='int'||e.type.kind==='nat'){this.usesBig=true;return 'crate::ml::Big::from_u128('+loan+'.len() as u128)';}
+        }}
+        if(acceptRustExactArrayLengthResult(e.k,e.type.kind,e.type.bits??0,e.type.signed===true,e.array.type.kind))return renderRustExactArrayLength('Rust',this.receiver(e.array));
         if (e.array.type.kind === 'string') return this.utf16Strings ? renderPrimitiveStringRepresentation(true, 'length', this.receiver(e.array), '', '') : renderStringLengthExpression('Rust', this.receiver(e.array));
         if (e.type.kind === 'float') return `(${this.receiver(e.array)}.len() as f64)`;
         this.usesBig = true;
@@ -1406,7 +1570,39 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    const byteLength=emitRustStringByteLength(this,e,'Rust',value=>this.receiver(value));if(byteLength!==null)return byteLength;
+    if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.usesUtf16Text=true;return renderJavaScriptStringConstruction('Rust',e.op,this.expr(e.args[0]));}
+    if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('Rust',this.expr(e.args[0]));
+    if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+      this.usesBig=true;this.usesBigIntegerConversion=true;
+      if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.expr(e.args[1]),this.utf16Strings);
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+          return renderJavaScriptBigIntegerResultExpression('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.utf16Strings);
+    }
+    if(acceptLinkedRustPanicValue(e.k,e.op))return renderRustPanicValueExpression('Rust',this.expr(e.args[0]));
+        if(acceptLinkedJavaScriptSourceException(e.k,e.op)){
+      this.usesSourceException=true;
+      return renderJavaScriptSourceExceptionExpression('Rust',e.op,this.expr(e.args[0]),this.expr(e.args[1]),this.utf16Strings);
+    }
+    if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return emitRustJavaScriptNumberConversion(this,e);
+    if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rust',e,argument=>this.expr(argument));
+    if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rust', e, argument => this.expr(argument));
+    if (readBigIntegerBitwiseArity(e.op)) {
+      this.usesBig = true; this.usesBigIntegerBitwise = true;
+      const text = renderBigIntegerBitwiseExpression('Rust', e.op, e.args.map(argument => this.expr(argument)));
+      if (!text) throw unsupported('BigInt bitwise arity', 'the operation requires its exact checked operand inventory', e.span);
+      this.state.encode('big-integer-bitwise', readBigIntegerBitwiseStatement());
+      return text;
+    }
     this.floats();
+    const bitwiseCode=readJavaScriptNumberBitwiseOperationCode(e.op);
+    if(bitwiseCode>=0){
+      if(e.args.length!==readJavaScriptNumberBitwiseArity(e.op))throw unsupported('Number bitwise arity','the operation requires its exact checked operand inventory',e.span);
+      this.usesNumberBitwise=true;
+      return `crate::ml_number_bitwise::${snake(e.op)}(${e.args.map(arg=>this.expr(arg)).join(', ')})`;
+    }
     const [arg] = e.args;
     switch (e.op) {
       case 'abs':
@@ -1469,7 +1665,8 @@ class RustEmitter {
 
   binary(e) {
     const sameDomain = sameType(e.left.type, e.right.type);
-    const refusal = readReferenceIdentityComparisonError(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain, e.domain !== undefined, e.domain?.reference === true, e.domain !== undefined && sameType(e.domain, e.left.type));
+    const domainPresent = e.domain !== undefined && e.domain !== null;
+    const refusal = readReferenceIdentityComparisonError(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain, domainPresent, e.domain?.reference === true, domainPresent && sameType(e.domain, e.left.type));
     if (refusal) throw unsupported('reference comparison', refusal, e.span);
     if (acceptReferenceIdentityComparison(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain)) {
       return renderReferenceIdentityComparison(e.op, this.borrow(e.left), this.borrow(e.right));
@@ -1556,7 +1753,7 @@ class RustEmitter {
         const unbox = pattern.binds
           .map((bind, index) => (bind && ctor.fields[index].type.kind === 'data' ? `let ${bind} = *${bind};` : null))
           .filter(Boolean);
-        const text = binds.length ? `${head}(${binds.join(', ')})` : head;
+        const text = renderRustConstructorFields(this.program.sourceLanguage,head,ctor.fields.map(field=>field.name??''),binds);
         return `${text} => ${block([...unbox, this.expr(kase.body)].join('\n'))}`;
       });
       return `match ${this.expr(e.scrutinee)} {\n${indent(arms.join('\n'), 1)}\n}`;
@@ -1594,6 +1791,13 @@ class RustEmitter {
 
   cast(e) {
     const arg = this.expr(e.arg);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('Rust', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     if (e.from.kind === 'fixed' && e.to.kind === 'fixed') return `${typeKey(e.to)}::from(${arg})`;
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `crate::ml::clamp_nat(${arg})`;

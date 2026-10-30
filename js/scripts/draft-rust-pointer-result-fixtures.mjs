@@ -1,0 +1,35 @@
+// Future source results and exact predecessor contexts, never executed here.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[];
+function add(name,factory,body='let read=make();read(6)',value='7',ret='i64'){cases.push({name,module:'pointer_result_case_'+cases.length,source:'pub fn result()->'+ret+'{'+body+'}'+factory,value,abort:null});}
+add('an actual declared function pointer result supplies the closure domain','fn make()->fn(i64)->i64{|value|value+1}');
+add('a terminal return supplies the same actual pointer context','fn make()->fn(i64)->i64{return |value|value+1;}');
+add('a terminal return without a semicolon retains its actual context','fn make()->fn(i64)->i64{return |value|value+1}');
+add('empty statements after a terminal return remain empty statements','fn make()->fn(i64)->i64{return |value|value+1;;; }');
+add('a written parameter remains an independent source constraint','fn make()->fn(i64)->i64{|value:i64|value+1}');
+add('a written closure result still requires its block','fn make()->fn(i64)->i64{|value|->i64{value+1}}');
+add('a closure block retains its source result context','fn make()->fn(i64)->i64{|value|{value+1}}');
+add('a move closure without captures retains its pointer coercion','fn make()->fn(i64)->i64{move |value|value+1}');
+add('parenthesized result closures retain their source context','fn make()->fn(i64)->i64{(|value|value+1)}');
+add('several parenthesized result layers retain their delimiters','fn make()->fn(i64)->i64{(((|value|value+1)))}');
+add('a parenthesized returned closure retains its source context','fn make()->fn(i64)->i64{return (|value|value+1);}');
+add('a zero argument result retains its actual scalar domain','fn make()->fn()->i64{||7}','let read=make();read()');
+add('a zero argument move result retains its actual call','fn make()->fn()->i64{move ||7}','let read=make();read()');
+add('a returned Unit pointer retains its actual discard invocation','fn make()->fn(){||{}}','let step=make();step();7');
+add('a returned Boolean pointer retains its actual domains','fn make()->fn(bool)->bool{|value|!value}','let read=make();if read(false){7}else{8}');
+add('a returned narrower pointer keeps its source width','fn make()->fn(i32)->i32{|value|value+1}','let read=make();read(6) as i64');
+add('a returned unsigned pointer keeps its source sign','fn make()->fn(u64)->u64{|value|value+1}','let read=make();read(6)','7','u64');
+add('a returned binary64 pointer keeps its actual arithmetic','fn make()->fn(f64)->f64{|value|value+1.0}','let read=make();read(6.0)','7','f64');
+add('a returned pointer keeps each argument position','fn make()->fn(i64,i64)->i64{|first,last|first+last}','let read=make();read(3,4)');
+add('a factory result can be called immediately','fn make()->fn(i64)->i64{|value|value+1}','make()(6)');
+add('an explicit closure factory can return a contextual pointer','','let make=||->fn(i64)->i64{|value|value+1};let read=make();read(6)');
+add('a terminal closure factory can return a contextual pointer','','let make=||->fn(i64)->i64{return |value|value+1;};let read=make();read(6)');
+add('a nested factory retains each actual function-pointer result','fn make()->fn()->fn(i64)->i64{||->fn(i64)->i64{|value|value+1}}','let factory=make();let read=factory();read(6)');
+add('a returned free function value keeps its qualified owner','fn make()->fn(i64)->i64{return known;}fn known(value:i64)->i64{value+1}');
+add('a returned raw keyword function name stays a function reference','fn make()->fn(i64)->i64{return r#move;}fn r#move(value:i64)->i64{value+1}');
+const refusals=[{name:'a capturing result cannot acquire function pointer identity',source:'fn make(offset:i64)->fn(i64)->i64{|value|value+offset}fn main(){}',kind:'unsupported',reason:'Rust function pointer coercion: capturing closures cannot coerce to function pointers'}];
+const revision='c34ac291',history=['js/src/translation/rust.js','js/src/translation/rust-copy-closures.js','js/src/translation/rust-contextual-closure-rules.js','rust/src/translation/rust/copy_closures.rs','rust/src/translation/rust/items/functions.rs','rust/src/translation/rust_contextual_closure_rules.rs','rust/src/translation/rust_contextual_closure_rules/part_1.rs'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/rust-pointer-results.lino',import.meta.url),{schemaVersion:1,model:'ordinary Rust terminal function pointer result contexts 1',cases,refusals,history,source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},references:['https://doc.rust-lang.org/reference/expressions/closure-expr.html','https://doc.rust-lang.org/reference/types/function-pointer.html'],assertions:['actualDeclaredPointerResultContextOnly','terminalReturnAndTailRemainDistinctFromDiscardedValues','writtenAnnotationsKeepIndependentConstraints','sourceCapturePointerCoercionAndQualifiedOwnersPreserved','nestedFactoriesRetainActualApplications','completePredecessorsBothCodecsFourEmissionsNativeProducts'],boundary:'Unexecuted future controls. Covers direct terminal pointer-result expressions and their parentheses; every real capture and pointer coercion remains checked. Context propagation through preceding bindings, arbitrary branches, generics, borrowed/owned closures, full source constant distinctions, generated runtime reimport and all earlier requirements remain obligations.'});

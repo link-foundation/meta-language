@@ -7,9 +7,16 @@ import { acceptRecordTypeBoundary, acceptRecordTypeOptionalName, readRecordTypeF
 import { readNullableTypeAbsence, readNullableTypeSyntax } from './nullable-type-syntax-rules.js';
 import { constructCallableSurfaceParameters, readCallableClosureConflicts, readCallableClosureScope, readCallableStatementCaptures } from './callable-source.js';
 import { planCallableTypeSyntax, readCallableClosureParameterError, readCallableClosurePrefixError, readCallableSurfaceConstructor, requireCallableAssignedCaptureField } from './callable-source-rules.js';
-import { acceptJavaScriptArrayBindingName, planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
+import { planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
+import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import {readJavaScriptRecordClosureParameters} from './javascript-record-parameters.js';
+import {readJavaScriptArrayFormalParameters,readJavaScriptOrdinaryPatternParameterBody} from './array-formal-parameters.js';
+import {readJavaScriptRecordClosureContext} from './record-closure-parameter-rules.js';
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
+import {readJavaScriptRecursiveObjectPlan} from './recursive-object-bindings.js';
+import {containsJavaScriptAdvancedArrayBinding,readJavaScriptRecursiveObjectBindingPositions} from './recursive-binding-rules.js';
 
 export function readClosure(parser, method = false) {
   const c = parser.cursor;
@@ -18,24 +25,28 @@ export function readClosure(parser, method = false) {
   const prefixError = readCallableClosurePrefixError(expression, c.peek().kind, c.peek().value);
   if (prefixError === 'named function expression') throw unsupported(prefixError, 'the function name needs a recursive local binding', c.peek());
   if (prefixError === 'generator function') throw unsupported(prefixError, 'generators require a suspended execution state', c.peek());
-  const tokens = c.eat('(') ? parser.parameters('closure') : [c.identifier('closure parameter')];
+  let records=null;
+  const tokens=c.eat('(')?((records=readJavaScriptArrayFormalParameters(parser,readJavaScriptRecordClosureContext(method,expression),null,false)??readJavaScriptRecordClosureParameters(parser,method,expression))?[]:parser.parameters('closure')):[c.identifier('closure parameter')];
   if (!expression) c.expect('=>', 'closure');
-  const names = tokens.map((token) => token.value);
-  const parameterError = readCallableClosureParameterError(names, tokens.map(token => Boolean(token.defaultValue)));
+  const names = records?records.parameters.map(parameter=>parameter.name):tokens.map((token) => token.value);
+  const parameterError = readCallableClosureParameterError(names, records?names.map(()=>false):tokens.map(token => Boolean(token.defaultValue)));
   if (parameterError === 'duplicate closure parameter') throw typeError(parameterError, start);
   if (parameterError === 'closure parameter default') throw unsupported(parameterError, 'a function value needs a callable default-argument signature', start);
   for (const name of names) parser.lexicalParameter(name);
-  const params = constructCallableSurfaceParameters(tokens);
+  const params = records?records.parameters:constructCallableSurfaceParameters(tokens);
   const outer = parser.scope;
   const outerJumps = parser.jumps;
   const outerTop = parser.topLevel;
   const outerAsync = parser.inAsync;
-  parser.scope = readCallableClosureScope(outer, tokens);
+  // Scope facts name actual logical binders. They are not source tokens and
+  // assert no identifier spelling or token interval for a generated argument.
+  parser.scope = readCallableClosureScope(outer, records?params.map(parameter=>({value:parameter.name})):tokens);
   parser.jumps = { loops: 0, switches: 0 };
   parser.topLevel = false;
   parser.inAsync = false;
   try {
-    const statements = c.is('{') ? parser.blockStatements() : [{ s: 'return', expr: parser.expr(), span: start }];
+    const readBody=()=>c.is('{')?parser.blockStatements():[{s:'return',expr:parser.expr(),span:start}];
+    const statements=records?readJavaScriptOrdinaryPatternParameterBody(parser,records,readBody):readBody();
     const where = { start: start.start, end: c.peek().start };
     const { assignedCaptures, captures } = readCallableStatementCaptures(statements, names, outer.locals);
     if (assignedCaptures.length && !parser.referenceSemantics) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);
@@ -58,6 +69,8 @@ export function validateClosureCaptures(statements, references = false) {
 // Declaration discovery and parsing use the same actual token positions. A
 // malformed plan stays with the ordinary parser for its precise syntax error.
 export function arrayBindingNames(parser, start) {
+  const syntax=readJavaScriptRecursiveObjectPlan(parser,start);
+  if(containsJavaScriptAdvancedArrayBinding(syntax.plan))return readJavaScriptRecursiveObjectBindingPositions(syntax.plan).map(position=>syntax.tokens[position]);
   const tokens = parser.cursor.tokens;
   const plan = planJavaScriptArrayBindingNames(tokens.map(token => token.kind), tokens.map(token => token.value), start);
   return plan[0] < 0 ? [] : plan.slice(1).map(position => tokens[position]);
@@ -79,7 +92,8 @@ export function readArrayBinding(parser, path = [], state = null) {
   if (root) {
     const names = new Set();
     for (const token of arrayBindingNames(parser, c.index)) {
-      if (!acceptJavaScriptArrayBindingName(token.kind, token.value, names.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
+      requireJavaScriptIdentifierRole(token, true);
+      if (!acceptJavaScriptSourceBindingName(token.kind, token.value, names.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
         throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
       }
       names.add(token.value);
@@ -103,7 +117,7 @@ export function readArrayBinding(parser, path = [], state = null) {
         continue;
       }
       const token = c.identifier('array binding');
-      if (!acceptJavaScriptArrayBindingName(token.kind, token.value, state.seen.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
+      if (!acceptJavaScriptSourceBindingName(token.kind, token.value, state.seen.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
         throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
       }
       state.seen.add(token.value);

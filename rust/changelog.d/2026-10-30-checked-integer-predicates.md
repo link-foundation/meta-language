@@ -1,0 +1,1 @@
+Draft checked-integer Option predicates `is_some_and` and `is_none_or` with eager callable capture, presence-only invocation and actual integer owner contexts. Reuse the shared Result predicate contract and automatically generate Rust. Behavioral controls remain deferred.

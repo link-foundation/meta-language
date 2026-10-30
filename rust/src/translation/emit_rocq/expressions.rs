@@ -8,6 +8,19 @@ use super::{
 
 impl RocqEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                e,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.expr(copy)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("Rocq",&value));
+        }
+        if let Some(text) = crate::translation::formal_unit_strings::expression(self, e, 0)? {
+            return Ok(text);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&e.node, Node::Ctor { frozen: true, .. })
         {
@@ -45,7 +58,7 @@ impl RocqEmitter<'_> {
             }
         }
         match &e.node {
-            Node::Record { entries } => self.record_value(entries),
+            Node::Record { entries, order } => self.record_value(entries, order.as_deref(), matches!(&e.ty, Type::Record { ordered: true, .. })),
             Node::RecordField { object, index, .. } => self.record_field(object, *index),
             Node::ReferenceAllocate { .. } | Node::ReferenceRead { .. } | Node::CellAllocate { .. } | Node::CellRead { .. } | Node::CellWrite { .. } => Err(unsupported(
                 "mutable structural value",
@@ -180,6 +193,10 @@ impl RocqEmitter<'_> {
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
             Node::Method { object, op, args } => {
+                if op == "toSorted" {
+                    return Err(unsupported("array copying sort", "this target needs an explicit UTF-16 string ordering interpretation", e.span));
+                }
+                if op=="readJavaScriptRecordPropertyOrder"{let rendered=self.expr(object)?;return crate::translation::ordered_record_values::order_read("Rocq",e,&rendered);}
                 if matches!(object.ty, Type::Array { .. }) && op == "map" {
                     let callback = args.first().and_then(Option::as_ref).expect("the checked map has its actual callback");
                     let Type::Function { params, .. } = &callback.ty else {
@@ -235,6 +252,7 @@ impl RocqEmitter<'_> {
                 self.array_expr(e)
             }
             Node::Math { .. } => self.math(e),
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => self.array_expr(e),
         }
     }
 
@@ -293,10 +311,20 @@ impl RocqEmitter<'_> {
             Type::Nat | Type::Fixed { signed: false, .. } => "0%N".to_owned(),
             Type::Int | Type::Fixed { signed: true, .. } => "0%Z".to_owned(),
             Type::Bool => "false".to_owned(),
-            Type::String => "EmptyString".to_owned(),
+            Type::String => if self.utf16_strings {
+                "(@nil N)"
+            } else {
+                "EmptyString"
+            }
+            .to_owned(),
             Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
-            Type::Output => "(@nil string)".to_owned(),
+            Type::Output => if self.utf16_strings {
+                "(@nil (list N))"
+            } else {
+                "(@nil string)"
+            }
+            .to_owned(),
             Type::Array { element, .. } => format!("(@nil {})", self.ty(element)?),
             Type::Tuple { elements } => {
                 let mut parts = Vec::new();
@@ -431,6 +459,16 @@ impl RocqEmitter<'_> {
         left: &str,
         right: &str,
     ) -> Result<String> {
+        if self.utf16_strings && *domain == Type::String {
+            return Ok(
+                crate::translation::formal_string_unit_rules::render_formal_string_unit_comparison(
+                    "Rocq",
+                    op.name(),
+                    left,
+                    right,
+                ),
+            );
+        }
         let module = match domain {
             Type::Bool => "Bool",
             Type::String => "String",
@@ -526,6 +564,27 @@ impl RocqEmitter<'_> {
     }
 
     pub(super) fn text_of(&mut self, arg: &Expr, console: bool) -> Result<String> {
+        if !self.utf16_strings {
+            return self.scalar_text_of(arg, console);
+        }
+        if arg.ty == Type::String {
+            return self.expr(arg);
+        }
+        if arg.ty == Type::Unit {
+            return Ok(crate::translation::formal_unit_strings::literal(
+                "Rocq",
+                "undefined",
+            ));
+        }
+        let text = self.scalar_text_of(arg, console)?;
+        Ok(
+            crate::translation::formal_string_unit_rules::render_formal_string_units_from_scalar(
+                "Rocq", &text,
+            ),
+        )
+    }
+
+    fn scalar_text_of(&mut self, arg: &Expr, console: bool) -> Result<String> {
         let text = self.expr(arg)?;
         match &arg.ty {
             Type::String => Ok(text),
@@ -576,6 +635,42 @@ impl RocqEmitter<'_> {
         flavor: Flavor,
     ) -> Result<String> {
         let arg = self.expr(arg)?;
+        if flavor == Flavor::Wrapping {
+            let (
+                Type::Fixed {
+                    signed: source_signed,
+                    ..
+                },
+                Type::Fixed { bits, signed },
+            ) = (from, to)
+            else {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "requires actual fixed integer source and target types",
+                    None,
+                ));
+            };
+            let code =
+                crate::translation::fixed_integer_cast_rules::render_wrapping_fixed_integer_cast(
+                    "Rocq",
+                    &arg,
+                    f64::from(*bits),
+                    *signed,
+                    *source_signed,
+                );
+            if code.is_empty() {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "the integer width needs an exact target encoding",
+                    None,
+                ));
+            }
+            self.state.encode(
+                "fixed integer casts",
+                &crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_statement(),
+            );
+            return Ok(code);
+        }
         let module = |ty: &Type| match ty {
             Type::Fixed { signed, .. } => {
                 if *signed {
@@ -609,6 +704,11 @@ impl RocqEmitter<'_> {
         if aborts {
             self.helpers.insert(Helper::Emit);
         }
+        let source_exceptions =
+            crate::translation::source_exception_observation::has_output(self.program);
+        if source_exceptions {
+            self.helpers.insert(Helper::SourceExceptionObservation);
+        }
         let body = self.build(&effects, 0, &mut assertion, &mut theorems)?;
         if main.sequential_async {
             self.state.encode(
@@ -637,7 +737,22 @@ impl RocqEmitter<'_> {
         } else {
             "list string"
         };
-        theorems.push(format!("Definition main : {result} :=\n  {body}."));
+        if source_exceptions {
+            self.state.encode("source-exception-observation",&crate::translation::source_exception_rules::read_source_exception_observation_statement());
+            let ty = self.ty(&Type::String)?;
+            let message = if self.utf16_strings {
+                crate::translation::formal_string_unit_rules::render_formal_string_scalar_display(
+                    "Rocq",
+                    "(snd (fst ml_error))",
+                )
+            } else {
+                "(snd (fst ml_error))".to_owned()
+            };
+            theorems.push(format!("Definition ml_source_exception_observation : (list string * option ({ty} * {ty} * bool)%type)%type :=\n  {body}."));
+            theorems.push(format!("Definition main : list string * option string :=\n  let ml_result := ml_source_exception_observation in (fst ml_result, match snd ml_result with None => None | Some ml_error => Some {message} end)."));
+        } else {
+            theorems.push(format!("Definition main : {result} :=\n  {body}."));
+        }
         Ok(theorems.join("\n\n"))
     }
 
@@ -655,8 +770,15 @@ impl RocqEmitter<'_> {
         };
         let mk = self.state.ctor_ref(data, &ctors[0], ".");
         let abort = self.state.ctor_ref(data, &ctors[1], ".");
+        let suffix = if crate::translation::source_exception_observation::has_payload(
+            self.program.data(data),
+        ) {
+            " ml_class ml_present".to_owned()
+        } else {
+            crate::translation::source_exception_observation::pattern_suffix(self.program, data)
+        };
         Ok(format!(
-            "match {} with {mk} _ {name} => {made} | {abort} _ {bind} => {body} end",
+            "match {} with {mk} _ {name} => {made} | {abort} _ {bind}{suffix} => {body} end",
             self.expr(pair)?
         ))
     }
@@ -670,23 +792,41 @@ impl RocqEmitter<'_> {
         theorems: &mut Vec<String>,
     ) -> Result<String> {
         let aborts = self.program.aborts_threaded;
+        let source_exceptions =
+            crate::translation::source_exception_observation::has_output(self.program);
+        let emit_output = if source_exceptions {
+            "ml_emit_source_exception"
+        } else {
+            "ml_emit"
+        };
         let Some(effect) = effects.get(index) else {
             return Ok(if aborts { "(nil, None)" } else { "nil" }.to_owned());
         };
         match effect {
             Effect::Print { expr, .. } => {
                 let expr = self.expr(expr)?;
+                let expr = if self.utf16_strings {
+                    crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq",&expr)
+                } else {
+                    expr
+                };
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
                 Ok(if aborts {
-                    format!("ml_emit ({expr} :: nil)\n  ({rest})")
+                    format!("{emit_output} ({expr} :: nil)\n  ({rest})")
                 } else {
                     format!("{expr} ::\n  {rest}")
                 })
             }
             Effect::Output { expr, .. } => {
-                let head = if aborts { "ml_emit" } else { "app" };
+                let head = if aborts { emit_output } else { "app" };
                 let expr = self.expr(expr)?;
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
+                if self.utf16_strings {
+                    let line=crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq","ml_line");
+                    return Ok(format!(
+                        "{head} (List.map (fun ml_line => {line}) (List.rev {expr}))\n  ({rest})"
+                    ));
+                }
                 Ok(format!("{head} (List.rev {expr})\n  ({rest})"))
             }
             Effect::Let { name, value, .. } => {
@@ -696,10 +836,14 @@ impl RocqEmitter<'_> {
             }
             Effect::Unwrap { .. } => {
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
-                Ok(format!(
-                    "({})",
-                    self.arms(effect, &rest, "ml_m", "(nil, Some ml_m)")?
-                ))
+                let message = if source_exceptions {
+                    "(nil, Some (ml_class, ml_m, ml_present))".to_owned()
+                } else if self.utf16_strings {
+                    format!("(nil, Some {})",crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq","ml_m"))
+                } else {
+                    "(nil, Some ml_m)".to_owned()
+                };
+                Ok(format!("({})", self.arms(effect, &rest, "ml_m", &message)?))
             }
             Effect::Assert { prop, .. } => {
                 *assertion += 1;

@@ -13,8 +13,9 @@
 
 import { TranslationError, unsupported } from './diagnostics.js';
 import { mutableClosureCells } from './javascript-cells.js';
-import { readCallableCellLowering, renderCallableCellParameterName } from './callable-source-rules.js';
-import { renameCallableSourceExpression } from './callable-source.js';
+import { readCallableCellLowering } from './callable-source-rules.js';
+import { renderSourceCellParameter } from './source-identifier-rules.js';
+import { renameCallableSourceExpression, readCallableStatementUsage } from './callable-source.js';
 import { requireJavaScriptBranchContinuation } from './frontend-rules.js';
 import { acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
   readJavaScriptValueSwitchPosition } from './javascript-surface-rules.js';
@@ -41,74 +42,7 @@ export function imperative(statements, parser) {
  * without declaring them first, so the ones they share with their context.
  */
 export function statementUses(statements, declared = new Set()) {
-  const uses = { free: new Set(), assigned: new Set() };
-  useList(statements, new Set(declared), uses);
-  return uses;
-}
-
-function useList(statements, scope, uses) {
-  for (const statement of statements) useStatement(statement, scope, uses);
-}
-
-function useStatement(statement, scope, uses) {
-  const read = (expr) => {
-    const names = new Set();
-    references(expr, names);
-    for (const name of names) if (!scope.has(name)) uses.free.add(name);
-  };
-  switch (statement.s) {
-    case 'const':
-    case 'let':
-      read(statement.value);
-      scope.add(statement.name);
-      return;
-    case 'assign':
-      read(statement.value);
-      if (!scope.has(statement.name)) {
-        uses.free.add(statement.name);
-        uses.assigned.add(statement.name);
-      }
-      return;
-    case 'assignReference':
-      read(statement.object);
-      if (statement.index) read(statement.index);
-      read(statement.value);
-      return;
-    case 'return':
-    case 'expr':
-    case 'print':
-      read(statement.expr);
-      return;
-    case 'block':
-      useList(statement.body, statement.inline ? scope : new Set(scope), uses);
-      return;
-    case 'if':
-      read(statement.cond);
-      useList(statement.then, new Set(scope), uses);
-      if (statement.else) useList(statement.else, new Set(scope), uses);
-      return;
-    case 'switch':
-      read(statement.discriminant);
-      for (const clause of statement.clauses) useList(clause.body, new Set(scope), uses);
-      return;
-    case 'while':
-    case 'doWhile':
-      read(statement.cond);
-      useList(statement.body, new Set(scope), uses);
-      return;
-    case 'for': {
-      const inner = new Set(scope);
-      useList(statement.init, inner, uses);
-      if (statement.cond) {
-        const names = new Set();
-        references(statement.cond, names);
-        for (const name of names) if (!inner.has(name)) uses.free.add(name);
-      }
-      useList([...statement.update, { s: 'block', body: statement.body }], inner, uses);
-      return;
-    }
-    default:
-  }
+  return readCallableStatementUsage(statements,declared);
 }
 
 /** Local variables an expression reads. */
@@ -165,11 +99,11 @@ export function lowerImperative(parser, name, params, statements, where, externa
   const captured = new Set([...externalCells, ...externalBindings]);
   const scope = [...captured].filter((name) => !params.some((param) => param.name === name))
     .map((name) => ({ source: name, ir: name, ...(externalCells.has(name) && { reference: true }) }));
-  for (const param of params) scope.push({ source: param.name, ir: renderCallableCellParameterName(param.name, cells.has(param.name)), ...(cells.has(param.name) && { reference: true }) });
+  for (const param of params) scope.push({ source: param.name, ir: renderSourceCellParameter(parser.generatedPrefix, param.name, cells.has(param.name)), ...(cells.has(param.name) && { reference: true }) });
   let body = lowering.seq(flat(statements), 0, ctx, scope);
   for (const param of [...params].reverse()) {
     const allocation = readCallableCellLowering('declare', cells.has(param.name));
-    if (allocation) body = { k: 'let', name: renderCallableCellParameterName(param.name, true), value: { k: allocation, value: named(param.name, where), span: where }, body, span: where };
+    if (allocation) body = { k: 'let', name: renderSourceCellParameter(parser.generatedPrefix, param.name, true), value: { k: allocation, value: named(param.name, where), span: where }, body, span: where };
   }
   return body;
 }
@@ -269,7 +203,7 @@ class Lowering {
 
   /** A declaration in scope; one that shadows a variable in scope gets a new name. */
   declare(scope, source) {
-    const ir = lookup(scope, source) ? `ml_${source}_${++this.renames}` : source;
+    const ir = lookup(scope, source) ? `${this.parser.generatedPrefix}shadow_${source}_${++this.renames}` : source;
     return [...scope, { source, ir, ...(this.cells.has(source) && { reference: true }) }];
   }
 
@@ -316,7 +250,7 @@ class Lowering {
       case 'return':
         return ctx.ret(this.renamed(statement.expr, scope));
       case 'throw':
-        return { k: 'abort', message: statement.message, span: statement.span };
+        return statement.exception?this.renamed(statement.exception,scope):{ k: 'abort', message: statement.message, span: statement.span };
       case 'break':
         return ctx.brk();
       case 'continue':
@@ -531,7 +465,7 @@ class Lowering {
     const inner = { ...ctx, fall: () => next.make(current()) };
     const rows = [next.row];
     if (exits.ret) {
-      const result = `ml_result${this.parser.generatedCount}`;
+      const result = `${this.parser.generatedPrefix}temporary_result${this.parser.generatedCount}`;
       const returned = alternative('return', [result], ctx.ret(named(result, where)));
       inner.ret = (value) => returned.make([value]);
       rows.push(returned.row);
@@ -552,7 +486,7 @@ class Lowering {
 
   generatedName(kind) {
     this.parser.generatedCount += 1;
-    return `ml_${this.fn}_${kind}${this.parser.generatedCount}`;
+    return `${this.parser.generatedPrefix}temporary_${this.fn}_${kind}${this.parser.generatedCount}`;
   }
 
   /**
@@ -601,7 +535,7 @@ class Lowering {
         span: where,
       });
       if (returns) {
-        const value = `ml_result${this.parser.generatedCount}`;
+        const value = `${this.parser.generatedPrefix}temporary_result${this.parser.generatedCount}`;
         const returned = { name: `${name}_return`, fields: [{ name: value, type: null }] };
         ctors.push(returned);
         give = (result) => ({ k: 'ctorObject', tag: returned.name, fields: { [value]: result }, span: where });
@@ -621,9 +555,11 @@ class Lowering {
     const again = (inner) => (loop.s === 'for' && loop.update.length
       ? this.seq(loop.update, 0, { fall: call, ret: give, brk: finish, cont: finish, ...lives }, inner)
       : call());
-    const test = (inner, then, otherwise) => (loop.cond && !infinite(loop)
-      ? { k: 'if', cond: this.renamed(loop.cond, inner), then, else: otherwise(), span: where }
-      : then);
+    const test = (inner, then, otherwise) => {
+      if(!loop.cond||infinite(loop))return then;
+      const cond=this.renamed(loop.cond,inner),other=otherwise(),tag=this.parser.tagCondition(cond);
+      return tag?this.parser.lowerTagIf(tag,then,other,where):{k:'if',cond,then,else:other,span:where};
+    };
     const lowered = new Lowering(this.parser, this.fn, this.cells);
     lowered.renames = this.renames;
     let fnBody;

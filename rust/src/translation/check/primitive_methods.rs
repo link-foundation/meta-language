@@ -9,12 +9,28 @@ use crate::translation::primitive_method_rules as rules;
 impl Checker {
     pub(super) fn copy_slice(
         &mut self,
-        object: &SExpr,
+        subject: (&SExpr, Option<&Type>),
         env: &Env,
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        let (object, expected) = subject;
         let value = self.expr(object, env, path, None, false)?;
+        if !self.checked_projection
+            && let Some(result) = self.javascript_nullish_access(
+                (&value, object),
+                super::javascript_nullish_fields::JavaScriptPropertyAccess::Method("slice", &[]),
+                env,
+                path,
+                expected,
+                span,
+            )?
+        {
+            return Ok(result);
+        }
+        if crate::translation::javascript_nullish_field_rules::require_java_script_slice_reference_copy(self.language.as_str(),value.ty.kind(),value.ty.is_reference()){
+            return self.primitive_method_on_checked_receiver(Self::reference_value(value),"slice",&[],env,path,span);
+        }
         match rules::read_primitive_copy_slice_form(value.ty.kind()).as_str() {
             "identity" => Ok(value),
             "method" => {
@@ -38,7 +54,69 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
-        let object = self.expr(object, env, path, None, false)?;
+        self.primitive_method_with_context((object, None), operation, args, env, path, span)
+    }
+
+    pub(super) fn primitive_method_with_context(
+        &mut self,
+        subject: (&SExpr, Option<&Type>),
+        operation: &str,
+        args: &[Option<SExpr>],
+        env: &Env,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        let (source, expected) = subject;
+        let object = self.expr(source, env, path, None, false)?;
+        if !self.checked_projection
+            && let Some(value) = self.javascript_nullish_access(
+                (&object, source),
+                super::javascript_nullish_fields::JavaScriptPropertyAccess::Method(operation, args),
+                env,
+                path,
+                expected,
+                span,
+            )?
+        {
+            return Ok(value);
+        }
+        if operation == "toSorted" {
+            return self
+                .primitive_method_on_checked_receiver(object, operation, args, env, path, span);
+        }
+        if crate::translation::array_state_method_rules::accept_linked_array_state_method(
+            "method",
+            operation,
+            object.ty.kind(),
+            object.ty.is_reference(),
+        ) {
+            return self.check_array_state_method(object, operation, args, env, path, span);
+        }
+        if !crate::translation::record_write_source_interfaces::read_record_field_write_operator(
+            operation,
+        )
+        .is_empty()
+        {
+            return self.check_record_field_write(object, operation, args, env, path, span);
+        }
+        if object.ty.is_reference() {
+            let refusal = crate::translation::reference_method_rules::read_reference_method_refusal(
+                object.ty.kind(),
+                operation,
+            );
+            if !refusal.is_empty() {
+                return Err(unsupported("mutable collection iteration", &refusal, span));
+            }
+        }
+        if object.ty.is_reference()
+            && !crate::translation::reference_method_rules::read_reference_method_result(
+                object.ty.kind(),
+                operation,
+            )
+            .is_empty()
+        {
+            return self.check_reference_method(object, operation, args, env, path, span);
+        }
         let object = Self::reference_value(object);
         self.primitive_method_on_checked_receiver(object, operation, args, env, path, span)
     }
@@ -52,9 +130,44 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        if operation == "readJavaScriptRecordPropertyOrder" {
+            return Self::ordered_record_order_read(object, operation, args.len(), span);
+        }
+        if operation == "toSorted"
+            && let Type::Array { element, reference } = &object.ty
+        {
+            if !crate::translation::string_array_sort_rules::accept_linked_string_array_copy_sort(
+                "method",
+                operation,
+                "array",
+                element.kind(),
+                *reference,
+                serde_json::Number::from(args.len())
+                    .as_f64()
+                    .expect("actual argument count"),
+            ) {
+                return Err(unsupported(
+                    "array copying sort",
+                    "the default copying sort needs an immutable dense primitive string array and no comparator or extra arguments",
+                    span,
+                ));
+            }
+            let result_type = object.ty.clone();
+            return Ok(Expr::new(
+                Node::Method {
+                    object: Box::new(object),
+                    op: operation.to_owned(),
+                    args: Vec::new(),
+                },
+                result_type,
+            ));
+        }
         if matches!(object.ty, Type::Record { .. }) {
             return self
                 .checked_record_method_application(object, operation, args, env, path, span);
+        }
+        if matches!(object.ty, Type::Map { .. } | Type::Set { .. }) {
+            return self.checked_collection_access(object, operation, args, env, path, span);
         }
         if matches!(object.ty, Type::Array { .. }) && operation == "map" {
             return self.array_map_on_checked_receiver(object, args, env, path, span);
@@ -159,6 +272,18 @@ impl Checker {
                 }
             }
         }
+        self.materialize_primitive_method(object, operation, values, path, span)
+    }
+
+    pub(super) fn materialize_primitive_method(
+        &mut self,
+        object: Expr,
+        operation: &str,
+        values: Vec<Option<Expr>>,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        let receiver = object.ty.kind();
         let lowering = rules::read_primitive_method_lowering_form(receiver, operation);
         if lowering == "relative-element-template" {
             let Type::Array { element, .. } = &object.ty else {

@@ -61,7 +61,8 @@ impl Checker {
         } else {
             None
         };
-        let items = self.expr(items, env, path, expected_items.as_ref(), false)?;
+        let items =
+            Self::reference_value(self.expr(items, env, path, expected_items.as_ref(), false)?);
         let value =
             serde_json::to_value(&items.ty).expect("a checked collection input is serializable");
         let facts = create_surface_reference_facts(&value);

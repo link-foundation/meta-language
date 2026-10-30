@@ -24,6 +24,10 @@ pub fn accept_reference_identity_comparison(
     clippy::too_many_arguments,
     reason = "checked source arguments and captured continuation state retain their original order"
 )]
+#[expect(
+    clippy::fn_params_excessive_bools,
+    reason = "independent checked source facts retain their ordered Boolean interface"
+)]
 pub fn read_reference_identity_comparison_error(
     operation: &str,
     left_kind: &str,

@@ -1,0 +1,1 @@
+Draft source-proven nominal Rust Copy handling for records, enum variants and nested products in ordinary closure parameters and captures. The shared JavaScript dependency rule generates Rust source; originals and parity controls await execution after the complete requirements draft.

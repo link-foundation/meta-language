@@ -1,0 +1,1 @@
+Draft primitive integer constant literal/range patterns with actual owner and alias checks. Add automatically translated exact constant-operation definitions for later general source constant evaluation. Originals and parity controls remain unexecuted until the complete requirements draft.

@@ -67,27 +67,23 @@ pub fn ml_read_declaration_deferred_binding_loop61(
                                         }
                                     }
                                 }
+                            } else if (part == "statement_block") && (field == "body") {
                                 {
-                                    self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
-                                }
-                            } else {
-                                if (part == "statement_block") && (field == "body") {
+                                    let method_body_2 = method_body + 1f64;
                                     {
-                                        let method_body_2 = method_body + 1f64;
+                                        let ml_index52_4 =
+                                            ml_index52.add(&self::ml::Big::from_i128(1));
                                         {
-                                            let ml_index52_4 =
-                                                ml_index52.add(&self::ml::Big::from_i128(1));
-                                            {
-                                                (method_body, ml_index52) =
-                                                    (method_body_2, ml_index52_4);
-                                                continue;
-                                            }
+                                            (method_body, ml_index52) =
+                                                (method_body_2, ml_index52_4);
+                                            continue;
                                         }
                                     }
                                 }
-                                {
-                                    self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
-                                }
+                            }
+
+                            {
+                                self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Return(Vec::<f64>::new())
                             }
                         }
                     }
@@ -145,15 +141,15 @@ pub fn ml_read_declaration_deferred_binding_loop60(
                                                 {
                                                     let ml_index52 = self::ml::Big::from_i128(0);
                                                     {
-                                                        let ml_s42 = self::ml_read_declaration_deferred_binding_loop61(terms, fields, parents, texts, method_name, parameters, method_body, &(ml_values52), ml_index52);
-                                                        match ml_s42 {
+                                                        let ml_s4422 = self::ml_read_declaration_deferred_binding_loop61(terms, fields, parents, texts, method_name, parameters, method_body, &(ml_values52), ml_index52);
+                                                        match ml_s4422 {
                                                         self::MlReadDeclarationDeferredBindingLoop61Result::MlReadDeclarationDeferredBindingLoop61Done(method_name_2, parameters_2, method_body_2) => {
                                                             if ((method_name_2 < 0f64) || (parameters_2 != 1f64)) || (method_body_2 != 1f64) {
                                                                 self::MlReadDeclarationDeferredBindingLoop60Result::MlReadDeclarationDeferredBindingLoop60Return(Vec::<f64>::new())
                                                             } else {
                                                                 {
                                                                     let text = self::read_required_text_fact(texts, method_name_2);
-                                                                    if ((text.encode_utf16().count() as f64) == 0f64) || text.contains("\\") {
+                                                                    if ((text.encode_utf16().count() as f64) == 0f64) || text.contains('\\') {
                                                                         self::MlReadDeclarationDeferredBindingLoop60Result::MlReadDeclarationDeferredBindingLoop60Return(Vec::<f64>::new())
                                                                     } else {
                                                                         {

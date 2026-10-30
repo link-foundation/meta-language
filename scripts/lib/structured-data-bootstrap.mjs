@@ -4,7 +4,7 @@ import { Link, LinkMetadata, LinkType } from '../../js/src/primitives.js';
 import { StructuredDataNetwork } from '../../js/src/structured-data-encode.js';
 import { decodeStructuredDataLinks, structuredDataGraphCost } from '../../js/src/structured-data-graph.js';
 import { percentDecode, percentEncode } from '../../js/src/lino-serialization-write.js';
-import { limitsOf, encoder, terms } from '../../js/src/structured-data-model.js';
+import { limitsOf, terms } from '../../js/src/structured-data-model.js';
 import { namespacePattern } from '../../js/src/structured-data-record-model.js';
 import { acceptStructuredDataRecordField } from '../../js/src/structured-data-link-rules.js';
 export { structuredDataToLino } from '../../js/src/structured-data-encode.js';
@@ -17,7 +17,7 @@ const frameFields = ' (meta: (t: semantic) (n: 1) (term: structured%20data%20rec
 
 function textLimit(source, options) {
   const limits = limitsOf(options);
-  if (typeof source !== 'string' || encoder.encode(source).length > limits.byteLimit) fail('input byte resource limit exceeded');
+  if (typeof source !== 'string' || Buffer.byteLength(source, 'utf8') > limits.byteLimit) fail('input byte resource limit exceeded');
   return limits;
 }
 
@@ -39,6 +39,9 @@ function graph(source, namespace, options, expectedRoot = null) {
   const id = `${prefix}[1-9][0-9]*`;
   const statement = new RegExp(`\\((${id}):((?: ${id})*)${fields}`, 'y');
   const network = new StructuredDataNetwork();
+  // This owned graph never escapes: only decoded values and costs are returned.
+  // Reuse equal immutable metadata, retaining every link and validation charge.
+  const containerMetadata = new Map();
   const roots = [];
   let cursor = 0;
   let previous = 0;
@@ -54,8 +57,16 @@ function graph(source, namespace, options, expectedRoot = null) {
     const term = canonicalString(match[3]);
     const definition = match[4] === undefined ? undefined : canonicalString(match[4]);
     const language = canonicalString(match[5]);
-    let metadata = LinkMetadata.new().withLinkType(LinkType.Semantic).withNamed(true).withTerm(term).withLanguage(language);
-    if (definition !== undefined) metadata = metadata.withDefinition(definition);
+    let metadata = definition === undefined ? containerMetadata.get(term)?.get(language) : undefined;
+    if (!metadata) {
+      metadata = LinkMetadata.new().withLinkType(LinkType.Semantic).withNamed(true).withTerm(term).withLanguage(language);
+      if (definition !== undefined) metadata = metadata.withDefinition(definition);
+      else {
+        Object.freeze(metadata.flags); Object.freeze(metadata);
+        if (!containerMetadata.has(term)) containerMetadata.set(term, new Map());
+        containerMetadata.get(term).set(language, metadata);
+      }
+    }
     network._links.set(number, new Link(number, references, metadata));
     if (term === terms.root) roots.push(number);
     cursor = statement.lastIndex;
@@ -93,7 +104,7 @@ export function readBootstrapStructuredDataRecords(source, options = {}) {
     if (!prefix || !namespacePattern.test(prefix[1]) || namespaces.has(prefix[1]) || !line.endsWith(frameFields)) fail('invalid or duplicate record namespace');
     if (namespaces.size >= limits.nodeLimit) fail('record resource limit exceeded');
     namespaces.add(prefix[1]);
-    serializedBytes += encoder.encode(line).length;
+    serializedBytes += Buffer.byteLength(line, 'utf8');
     if (serializedBytes > limits.byteLimit) fail('record byte resource limit exceeded');
     const sourceGraph = line.slice(prefix[0].length, -frameFields.length);
     const { value, cost } = graph(sourceGraph, prefix[1], limits, identity(prefix[2]));

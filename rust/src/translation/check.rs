@@ -26,25 +26,71 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed, fixed_bounds};
 use super::{Language, Span};
 
+mod abrupt_results;
+mod absence_conversions;
+mod absent_record_properties;
 mod array_bindings;
 mod array_callbacks;
 mod array_from;
 mod array_relative_element_template;
+mod array_source_operands;
+mod array_state_methods;
 mod arrays;
+mod big_integer_conversions;
+mod binding_defaults;
+mod boolean_conversion;
+mod callable_constants;
 mod callables;
+mod collection_access;
 mod collections;
+mod comparisons;
+mod conditional_chains;
+mod excess_arguments;
 mod expectation;
+mod exponentiation;
 mod expressions;
 mod externals;
+mod integer_ranges;
 mod items;
+mod javascript_concatenation;
+mod javascript_data_fields;
+mod javascript_indexed_properties;
+mod javascript_nominal_spreads;
+mod javascript_nullish_fields;
+mod javascript_object_enumeration;
+mod javascript_optional_calls;
+mod javascript_optional_chains;
+mod javascript_own_properties;
+mod javascript_property_calls;
 mod matches;
 mod math;
+mod named_default_callables;
+mod number_bitwise;
+mod number_conversions;
+mod numeric_failures;
+mod object_rest;
+mod optional_callables;
+mod optional_policies;
 mod optional_values;
+mod pattern_aliases;
 mod primitive_methods;
+mod record_formal_defaults;
+pub(super) mod record_order_operations;
+mod record_writes;
 mod records;
 mod recursion;
+mod recursive_binding_iterables;
+mod reference_methods;
+mod rust_primitive_bitwise;
+mod rust_shifts;
+mod source_exceptions;
 mod string_code_unit_template;
+mod string_construction;
+mod string_ranges;
+mod string_search;
+mod string_unit_calls;
 mod strings;
+mod tuple_patterns;
 mod type_queries;
 pub use self::recursion::*;
 
@@ -53,9 +99,24 @@ pub use self::recursion::*;
 /// # Errors
 /// On name, type and exhaustiveness errors, and on constructs outside the portable core.
 pub fn check_program(surface: &SProgram) -> Result<Program> {
+    check_surface_program(surface, false)
+}
+
+// Internal graph reconstruction retains normalized primitive operations. Core
+// type/arity/ownership/proof checks remain identical to ordinary checking.
+pub(crate) fn check_projected_program(surface: &SProgram) -> Result<Program> {
+    check_surface_program(surface, true)
+}
+fn check_surface_program(surface: &SProgram, checked_projection: bool) -> Result<Program> {
+    let (prepared, ordered_record_source) =
+        super::javascript_record_order_profile::prepare(surface)?;
+    let surface = prepared.as_ref();
     super::source_diagnostic_attributes::validate_surface(surface)?;
     super::source_unit_clone_derivations::validate_surface_unit_clone_derivations(surface)?;
-    Checker::new(surface.language, surface.externals.clone()).program(surface)
+    let mut checker = Checker::new(surface.language, surface.externals.clone());
+    checker.checked_projection = checked_projection;
+    checker.ordered_record_source = ordered_record_source;
+    checker.program(surface)
 }
 
 /// Reuse checked pattern semantics at the source-free graph boundary.
@@ -127,11 +188,8 @@ pub fn coerce(
     if value.ty.same(ty) {
         return Ok(value);
     }
-    if matches!(value.node, Node::Abort { .. }) {
-        return Ok(Expr {
-            ty: ty.clone(),
-            ..value
-        });
+    if let Some(abrupt) = abrupt_results::coerce_abrupt_result(&value, ty) {
+        return Ok(abrupt);
     }
     let absence = match &value.node {
         Node::None { absence } => absence.as_str(),
@@ -196,6 +254,12 @@ pub fn coerce(
         }
         _ => {}
     }
+    if let Some(converted) = absence_conversions::convert_absence_only_value(&value, ty, language) {
+        return Ok(converted);
+    }
+    if let Some(converted) = optional_policies::widen_optional_policy(&value, ty, language, span)? {
+        return Ok(converted);
+    }
     if language == Language::JavaScript && value.ty == Type::Nat && *ty == Type::Int {
         return cast_to(value, &INT, Flavor::Exact, span);
     }
@@ -209,7 +273,38 @@ pub fn coerce(
 }
 
 fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<Expr> {
+    cast_to_in_language(arg, to, flavor, span, "")
+}
+
+fn cast_to_in_language(
+    mut arg: Expr,
+    to: &Type,
+    flavor: Flavor,
+    span: Option<Span>,
+    language: &str,
+) -> Result<Expr> {
     if arg.ty.same(to) {
+        return Ok(arg);
+    }
+    let (bits, signed) = match to {
+        Type::Fixed { bits, signed } => (*bits, *signed),
+        _ => (0, false),
+    };
+    let operand = match &arg.node {
+        Node::Length { array } => array.ty.kind(),
+        _ => "",
+    };
+    if flavor == Flavor::Exact
+        && arg.ty == Type::Int
+        && crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result(
+            arg.node.kind(),
+            to.kind(),
+            f64::from(bits),
+            signed,
+            operand,
+        )
+    {
+        arg.ty = to.clone();
         return Ok(arg);
     }
     let from = arg.ty.clone();
@@ -246,8 +341,17 @@ fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<E
         ) => {
             let (source_min, source_max) = fixed_bounds(*from_bits, *from_signed);
             let (target_min, target_max) = fixed_bounds(*bits, *signed);
-            if source_min >= target_min && source_max <= target_max {
+            let selected =
+                crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_flavor(
+                    language,
+                    source_min >= target_min && source_max <= target_max,
+                    flavor.as_str(),
+                );
+            if selected == "exact" {
                 return Ok(cast(arg, Flavor::Exact));
+            }
+            if selected == "wrapping" {
+                return Ok(cast(arg, Flavor::Wrapping));
             }
             Err(unsupported(
                 "narrowing integer cast",
@@ -298,6 +402,9 @@ struct Env {
     vars: HashMap<String, Type>,
     known: HashMap<String, Fact>,
     immutable_products: HashMap<String, bool>,
+    own_properties: Vec<(String, String)>,
+    nominal_spread_absences: Vec<(String, String)>,
+    own_key_callback: Option<guarded_record_indices::OwnKeyCallbackOrigin>,
 }
 
 impl Env {
@@ -309,6 +416,10 @@ impl Env {
     fn bind_local(&mut self, name: &str, ty: Type) {
         self.vars.insert(name.to_owned(), ty);
         self.immutable_products.remove(name);
+        self.nominal_spread_absences
+            .retain(|(binder, _)| binder != name);
+        self.own_properties
+            .retain(|(object, key)| object != name && key != name);
         self.known.retain(|variable, fact| {
             variable != name && !fact.binds.iter().any(|bind| bind == name)
         });
@@ -332,11 +443,14 @@ const NAT_PATTERN_UNFOLD: i128 = 16;
 /// A match-compilation pattern: surface patterns are normalised against their column type.
 #[derive(Clone, Debug)]
 enum NPat {
+    Interval { lower: String, upper: String },
     Surface(SPattern),
+    Alias { name: String, pattern: Box<Self> },
     Wild,
     Bind(String),
     Nat { succ: bool, args: Vec<Self> },
     Data { ctor: String, args: Vec<Self> },
+    Tuple { args: Vec<Self> },
     Lit { value: Box<SExpr>, key: String },
 }
 
@@ -355,7 +469,7 @@ impl NPat {
 
     fn args(&self) -> &[Self] {
         match self {
-            Self::Nat { args, .. } | Self::Data { args, .. } => args,
+            Self::Nat { args, .. } | Self::Data { args, .. } | Self::Tuple { args } => args,
             _ => &[],
         }
     }
@@ -447,14 +561,17 @@ fn surface_let(name: &str, value: &str, body: SExpr, span: Option<Span>) -> SExp
 }
 
 struct Checker {
+    ordered_record_source: bool,
     language: Language,
     reference_semantics: bool,
+    checked_projection: bool,
     /// Declaration full names in declaration order.
     order: Vec<String>,
     decls: HashMap<String, Decl>,
     /// Functions whose parameter and result types are resolved.
     signatures: HashSet<String>,
     fresh: usize,
+    generated_prefix: String,
     modules: HashMap<String, Scope>,
     /// The other items of the module, in scope after the program's own.
     externals: Vec<External>,
@@ -465,18 +582,28 @@ impl Checker {
         let mut modules = HashMap::new();
         modules.insert(String::new(), Scope::default());
         Self {
+            ordered_record_source: false,
             language,
             reference_semantics: false,
+            checked_projection: false,
             order: Vec::new(),
             decls: HashMap::new(),
             signatures: HashSet::new(),
             fresh: 0,
+            generated_prefix: "ml_".to_owned(),
             modules,
             externals,
         }
     }
 
     fn program(mut self, surface: &SProgram) -> Result<Program> {
+        self.generated_prefix = {
+            let facts = serde_json::to_value(surface)
+                .expect("a typed surface program has serializable source facts");
+            super::source_identifiers::read_source_identifier_supply(
+                super::source_identifiers::collect_source_identifier_texts(&facts),
+            )
+        };
         self.reference_semantics =
             super::surface_raw_metadata_rules::select_surface_reference_semantics(
                 surface
@@ -684,3 +811,5 @@ fn arithmetic_semantics(
         Some(ByZero::Total),
     )
 }
+
+mod guarded_record_indices;

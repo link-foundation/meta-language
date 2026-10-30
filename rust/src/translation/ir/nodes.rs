@@ -192,6 +192,9 @@ pub enum Node {
     },
     Record {
         entries: Vec<RecordEntry>,
+        /// Actual own-field order, independent of the canonical field layout.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        order: Option<Box<Expr>>,
     },
     RecordField {
         object: Box<Expr>,
@@ -246,6 +249,16 @@ pub enum Node {
     CollectionItems {
         object: Box<Expr>,
         op: String,
+    },
+    /// Number of entries in the actual insertion-order collection payload.
+    CollectionSize {
+        object: Box<Expr>,
+    },
+    /// SameValueZero primitive-key membership or optional map lookup.
+    CollectionRead {
+        object: Box<Expr>,
+        op: String,
+        key: Box<Expr>,
     },
     /// The number of elements of `array`, as a Number or an integer.
     Length {
@@ -327,6 +340,8 @@ impl Node {
             Self::OptionalIndexNumber { .. } => "optionalIndexNumber",
             Self::StringPoints { .. } => "stringPoints",
             Self::CollectionItems { .. } => "collectionItems",
+            Self::CollectionSize { .. } => "collectionSize",
+            Self::CollectionRead { .. } => "collectionRead",
             Self::Length { .. } => "length",
             Self::ReferenceAllocate { .. } => "referenceAllocate",
             Self::ReferenceRead { .. } => "referenceRead",

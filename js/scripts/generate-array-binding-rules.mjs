@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from '../src/translation/array-binding-policy.js';
-import { accepted, refused } from '../tests/fixtures/array-binding-cases.mjs';
+import { accepted, refused, correctedBindingRefusals, bindingAssertionCorrectionBasis } from '../tests/fixtures/array-binding-cases.mjs';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 
 export function readArrayBindingSourceModule(source = readFileSync(new URL('../src/translation/array-binding-rules.js', import.meta.url), 'utf8')) {
@@ -28,7 +28,7 @@ export async function generateArrayBindingRules({ check = false, javascriptOnly 
   const file = new URL('../src/translation/data/array-bindings.lino', import.meta.url);
   if (check) checkProjectData(file, policy);
   else writeProjectData(file, policy);
-  const fixtures = { schemaVersion: 1, model: policy.model, accepted, refused };
+  const fixtures = { schemaVersion: 1, model: policy.model, accepted, refused, correctedBindingRefusals, bindingAssertionCorrectionBasis };
   const fixtureFile = new URL('../../parity/fixtures/javascript-array-bindings.lino', import.meta.url);
   if (check) checkProjectData(fixtureFile, fixtures);
   else writeProjectData(fixtureFile, fixtures);

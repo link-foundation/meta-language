@@ -8,6 +8,9 @@ use super::{
 };
 use crate::translation::array_binding_rules::{self as rules, ml_string::Text};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::source_identifier_rules::{
+    self as source_rules, ml_string::Text as SourceText,
+};
 
 pub(super) struct ArrayBinding {
     pub(super) name: String,
@@ -17,8 +20,8 @@ pub(super) struct ArrayBinding {
     default_value: Option<SExpr>,
 }
 
-fn reserved_names() -> &'static [Text] {
-    static NAMES: OnceLock<Vec<Text>> = OnceLock::new();
+fn reserved_names() -> &'static [SourceText] {
+    static NAMES: OnceLock<Vec<SourceText>> = OnceLock::new();
     NAMES.get_or_init(|| {
         let policy =
             crate::read_structured_data_lino(include_str!("../../data/array-bindings.lino"))
@@ -27,7 +30,7 @@ fn reserved_names() -> &'static [Text] {
             .as_array()
             .expect("reserved bindings are ordered names")
             .iter()
-            .map(|value| Text::from_text(value.as_str().expect("a reserved binding is text")))
+            .map(|value| SourceText::from_text(value.as_str().expect("a reserved binding is text")))
             .collect()
     })
 }
@@ -43,6 +46,17 @@ const fn kind(token: &Token) -> &'static str {
 
 impl JavaScriptParser {
     pub(super) fn array_binding_names(&self, start: usize) -> Vec<Token> {
+        let syntax = self.recursive_object_plan(start);
+        if crate::translation::recursive_binding_rules::contains_java_script_advanced_array_binding(
+            &syntax.plan,
+        ) {
+            return super::recursive_object_bindings::binding_positions(&syntax.plan)
+                .iter()
+                .map(|position| {
+                    syntax.tokens[super::recursive_object_bindings::index(*position)].clone()
+                })
+                .collect();
+        }
         let kinds: Vec<Text> = self
             .cursor
             .tokens
@@ -75,9 +89,10 @@ impl JavaScriptParser {
     pub(super) fn read_array_binding(&mut self) -> Result<Vec<ArrayBinding>> {
         let mut names = HashSet::new();
         for token in self.array_binding_names(self.cursor.index) {
-            if !rules::accept_java_script_array_binding_name(
-                &Text::from_text(kind(&token)),
-                &Text::from_text(&token.value),
+            crate::translation::lexer::require_java_script_identifier_role(&token, true)?;
+            if !source_rules::accept_java_script_source_binding_name(
+                &SourceText::from_text(kind(&token)),
+                &SourceText::from_text(&token.value),
                 names.contains(&token.value),
                 reserved_names(),
             ) {
@@ -130,9 +145,9 @@ impl JavaScriptParser {
                 bindings.extend(self.read_array_binding_path(&position, seen)?);
             } else {
                 let token = self.cursor.identifier(Some("array binding"))?;
-                if !rules::accept_java_script_array_binding_name(
-                    &Text::from_text(kind(&token)),
-                    &Text::from_text(&token.value),
+                if !source_rules::accept_java_script_source_binding_name(
+                    &SourceText::from_text(kind(&token)),
+                    &SourceText::from_text(&token.value),
                     seen.contains(&token.value),
                     reserved_names(),
                 ) {
@@ -303,7 +318,10 @@ impl JavaScriptParser {
         }
         let whole = self.to_here(start);
         self.generated_count += 1;
-        let name = format!("ml_binding{}", self.generated_count);
+        let name = format!(
+            "{}temporary_binding{}",
+            self.generated_prefix, self.generated_count
+        );
         let object = node(
             SNode::Name {
                 path: vec![name.clone()],
@@ -317,6 +335,7 @@ impl JavaScriptParser {
                     Some(binding.span),
                 ));
             }
+            self.lexical.declaration(&binding.name, binding.span, 1);
             self.declare_local(&binding.name, true);
             self.lexical
                 .binding(&binding.name, Some(self.cursor.peek().start));
@@ -356,7 +375,10 @@ impl JavaScriptParser {
         let value = self.array_binding_initializer(&bindings)?;
         let whole = self.to_here(start);
         self.generated_count += 1;
-        let name = format!("ml_binding{}", self.generated_count);
+        let name = format!(
+            "{}temporary_binding{}",
+            self.generated_prefix, self.generated_count
+        );
         let object = node(
             SNode::Name {
                 path: vec![name.clone()],
@@ -364,6 +386,7 @@ impl JavaScriptParser {
             whole,
         );
         for binding in &bindings {
+            self.lexical.declaration(&binding.name, binding.span, 1);
             self.declare_local(&binding.name, false);
         }
         let mut body = vec![Stmt::Const {

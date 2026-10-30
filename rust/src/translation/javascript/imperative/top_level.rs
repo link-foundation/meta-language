@@ -21,6 +21,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
 ) -> Result<Vec<SEffect>> {
     let mut lowering = Lowering {
         function: "main".to_owned(),
+        prefix: parser.generated_prefix.clone(),
         renames: 0,
         generated: std::mem::take(&mut parser.generated),
         count: parser.generated_count,
@@ -116,6 +117,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
                     span: Some(place),
                     generated: true,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 }));
                 let whole = format!("{data}_value");
                 let names: Vec<String> = carried.iter().map(|entry| entry.ir.clone()).collect();

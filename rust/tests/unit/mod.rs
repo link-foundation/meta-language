@@ -164,6 +164,7 @@ mod native_recovery_records;
 mod native_text_grammars;
 mod natural_language_grammar;
 mod network_projection;
+mod ordered_record_values;
 mod parity_corpora;
 mod parity_manifest;
 mod parse_scaling;
@@ -177,15 +178,21 @@ mod query_algebra;
 mod query_matching;
 mod query_plan;
 mod query_transform;
+mod record_property_order;
 mod recursive_embedded_regions;
+mod regular_grammar_inference;
+mod resource_description_addresses;
 mod resource_description_graphs;
 mod resource_description_ntriples;
 mod rust_codec;
 mod rust_const_branch_functions;
 mod self_description;
 mod self_translation;
+mod self_translation_inert_module_bindings;
+mod self_translation_number_bitwise;
 mod self_translation_recursive_declaration_groups;
 mod self_translation_scope;
+mod self_translation_source_ownership;
 mod shared_numeric_function_links;
 mod source_generation;
 mod source_points;
@@ -195,8 +202,11 @@ mod structured_data_links;
 mod structured_data_records;
 mod substitution;
 mod translation;
+mod translation_array_state_methods;
 mod translation_arrays;
 mod translation_ascii_text_predicates;
+mod translation_big_integer_bitwise;
+mod translation_collection_access;
 mod translation_concrete_program_graphs;
 mod translation_console_format;
 mod translation_constructor_tags;
@@ -222,6 +232,8 @@ mod translation_optional_values;
 mod translation_primitive_values;
 mod translation_printing;
 mod translation_prototype_definitions;
+mod translation_record_writes;
+mod translation_reference_methods;
 mod translation_rocq;
 mod translation_rules;
 mod translation_rust_anchored_type_owners;
@@ -238,20 +250,24 @@ mod translation_rust_float_operations;
 mod translation_rust_float_predicates;
 mod translation_rust_frontend;
 mod translation_rust_indirection;
+mod translation_rust_inherent;
 mod translation_rust_lexical_rules;
 mod translation_rust_lifetimes;
 mod translation_rust_literal_matches;
 mod translation_rust_owned_local_state;
 mod translation_rust_owned_tuple_calls;
+mod translation_rust_primitive_bitwise;
 mod translation_rust_primitive_owners;
 mod translation_rust_products;
 mod translation_rust_pure_unit_calls;
 mod translation_rust_raw_string_literals;
 mod translation_rust_read_only_queries;
+mod translation_rust_records;
 mod translation_rust_runtime_shell;
 mod translation_rust_scalar_loop_declarations;
 mod translation_rust_scalar_loops;
 mod translation_rust_scalar_parameters;
+mod translation_rust_shifts;
 mod translation_rust_source_header_emission;
 mod translation_rust_source_signatures;
 mod translation_rust_string_continuations;
@@ -269,6 +285,7 @@ mod typed_program_source_spans;
 mod typescript_erasure;
 mod typescript_portable_typing;
 mod unicode_input_chunks;
+mod unsigned_link_network;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;
@@ -316,6 +333,7 @@ mod translation_array_from;
 mod translation_product_unit;
 mod translation_reference_identity;
 mod translation_rust_floating_literals;
+mod translation_rust_shared_array_handles;
 mod translation_schema_second_projections;
 mod translation_surface_array_items;
 mod translation_surface_binding_type_annotations;
@@ -326,6 +344,7 @@ mod typed_program_tuples;
 
 mod issue_195_grammar_profile_ruby;
 
+mod big_integer_conversion;
 mod grammar_attribute_order;
 mod grammar_composition;
 mod grammar_included_range_selection;
@@ -333,17 +352,338 @@ mod grammar_included_range_transport;
 mod grammar_lexer_transport;
 mod grammar_output_equality;
 mod grammar_recursive_selection;
+mod link_allocation;
 mod link_foundation;
+mod program_module_binding_roles;
+mod regular_grammar_inference_refinement;
 mod root_types;
 mod translation_array_relative_element;
+mod translation_big_integer_source;
 mod translation_callable_expected_context;
 mod translation_complete_declaration_ranges;
 mod translation_guarded_private_array_writes;
 mod translation_javascript_array_bindings;
+mod translation_javascript_array_formals;
+mod translation_javascript_property_calls;
 mod translation_javascript_record_parameters;
+mod translation_javascript_string_units;
 mod translation_owned_array_append;
 mod translation_owned_array_moves;
 mod translation_primitive_methods;
 mod translation_record_values;
+mod translation_reference_array_projections;
+mod translation_scalar_assignments;
+mod translation_source_exceptions;
+mod translation_source_identifiers;
+mod translation_string_construction;
+mod translation_string_number;
+mod translation_unicode_identifiers;
 mod typed_program_number_projection;
 mod typed_program_record_projection;
+
+mod translation_javascript_lexical_declarations;
+
+mod translation_javascript_object_entries;
+
+mod translation_javascript_guarded_record_indices;
+
+mod translation_javascript_record_formal_defaults;
+
+mod translation_javascript_object_binding_declarations;
+
+mod translation_javascript_object_rest;
+
+mod translation_javascript_object_rest_formals;
+
+mod translation_javascript_recursive_object_bindings;
+
+mod translation_javascript_recursive_bindings;
+
+mod translation_rust_conditional_chains;
+
+mod translation_rust_match_guards;
+
+mod translation_javascript_sequential_parameter_defaults;
+
+mod translation_javascript_whole_parameter_defaults;
+
+mod translation_javascript_optional_callables;
+
+mod translation_javascript_absent_record_properties;
+
+mod translation_javascript_excess_arguments;
+
+mod translation_javascript_typed_omitted_arguments;
+
+mod translation_rust_let_else_completions;
+
+mod translation_javascript_absence_conversions;
+
+mod translation_javascript_scalar_closure_defaults;
+
+mod translation_javascript_named_default_callables;
+
+mod translation_javascript_binding_initialization;
+
+mod translation_javascript_missing_arguments;
+
+mod translation_rust_copy_closures;
+
+mod translation_rust_function_pointers;
+
+mod translation_rust_array_lengths;
+
+mod translation_rust_string_byte_lengths;
+
+mod translation_rust_contextual_closures;
+
+mod translation_rust_contextual_calls;
+
+mod translation_rust_pointer_results;
+
+mod translation_rust_source_constants;
+
+mod translation_rust_module_values;
+
+mod translation_abrupt_results;
+
+mod rust_source_project;
+
+mod source_project_archive;
+
+mod translation_rust_function_qualifiers;
+
+mod translation_rust_type_aliases;
+
+mod translation_rust_fresh_vector_arguments;
+
+mod grammar_composition_batch;
+
+mod translation_string_array_copy_sort;
+
+mod translation_rust_fresh_vector_results;
+
+mod translation_rust_array_indices;
+
+mod translation_rust_usize_index_expressions;
+
+mod translation_rust_pointer_integer_owners;
+
+mod translation_rust_source_owner_retention;
+
+mod translation_rust_scalar_source_interface;
+
+mod translation_rust_fresh_vector_call_results;
+
+mod translation_rust_scalar_vector_copies;
+
+mod translation_rust_data_type_field_signatures;
+
+mod translation_rust_scalar_mathematical_interface;
+
+mod translation_rust_textual_source_interface;
+
+mod translation_rust_standard_owned_calls;
+
+mod translation_rust_standard_string_views;
+
+mod translation_rust_string_predicate_interface;
+
+mod translation_rust_constructed_string_interface;
+
+mod translation_rust_string_addition;
+
+mod translation_rust_displayed_string_interface;
+
+mod translation_rust_named_formatting;
+
+mod translation_rust_primitive_selection;
+
+mod translation_rust_selection_imports;
+
+mod translation_rust_signed_integer_property;
+
+mod translation_rust_saturating_integer;
+
+mod translation_rust_saturating_multiplication;
+
+mod translation_rust_wrapping_integer;
+
+mod translation_rust_primitive_associated_call;
+
+mod translation_rust_primitive_inherent_copy;
+
+mod translation_rust_primitive_from;
+
+mod translation_rust_primitive_integer_constant;
+
+mod translation_rust_integer_float_plan;
+
+mod translation_rust_primitive_expression;
+
+mod translation_rust_primitive_try_from;
+
+mod translation_rust_checked_integer;
+
+mod translation_rust_primitive_default;
+
+mod translation_rust_integer_bit;
+
+mod translation_rust_checked_shift;
+
+mod translation_rust_wrapping_shift;
+
+mod translation_rust_integer_magnitude;
+
+mod translation_rust_primitive_owner_path;
+
+mod translation_rust_callable_owner;
+
+mod callable_profile_products;
+
+mod translation_rust_primitive_function_value;
+
+mod translation_rust_contextual_from_function_value;
+
+mod translation_rust_array_lookup;
+
+mod translation_rust_array_cloned_lookup;
+
+mod translation_rust_byte_ascii;
+
+mod translation_javascript_classes;
+
+mod translation_javascript_data_fields;
+
+mod translation_javascript_property_descriptors;
+
+mod translation_javascript_ordinary_heap;
+
+mod translation_javascript_descriptor_conversion;
+
+mod translation_rust_source_render_interfaces;
+
+mod translation_javascript_primitive_conversion;
+
+mod translation_javascript_property_key_conversion;
+
+mod translation_javascript_property_definition;
+
+mod translation_javascript_nominal_spreads;
+
+mod translation_javascript_call_machine;
+
+mod typed_program_value_sharing;
+
+mod translation_javascript_call_source;
+
+mod translation_javascript_call_source_machine;
+
+mod typed_program_record_shapes;
+
+mod boolean_constructor_match;
+
+mod translation_javascript_string_arguments;
+
+mod translation_javascript_fixed_integer_casts;
+
+mod translation_javascript_call_natural_source;
+
+mod conditional_constructor_sharing;
+mod utf16_text_expansion;
+
+mod translation_rust_array_lookup_lazy;
+
+mod translation_rust_canonical_discovery;
+
+mod source_library_bindings;
+
+mod source_parameter_bindings;
+
+mod source_rust_literal_masking;
+
+mod translation_rust_string_patterns;
+
+mod translation_rust_byte_patterns;
+
+mod translation_rust_numeric_patterns;
+
+mod source_module_requests;
+
+mod project_dependency_gaps;
+
+mod project_translation_archive;
+
+mod translation_rust_byte_string_expressions;
+
+mod translation_rust_iterator_reductions;
+
+mod translation_rust_iterator_pipelines;
+
+mod translation_rust_iterator_arithmetic;
+
+mod translation_rust_owned_bindings;
+
+mod translation_rust_owned_strings;
+
+mod translation_rust_string_byte_views;
+
+mod translation_rust_array_lookup_panics;
+
+mod translation_rust_formatted_panics;
+
+mod translation_rust_primitive_try_from_panics;
+
+mod translation_rust_source_versions;
+
+mod translation_rust_primitive_try_from_predicates;
+
+mod translation_rust_primitive_try_from_mappers;
+
+mod translation_rust_checked_integer_panics;
+
+mod translation_rust_checked_euclidean;
+
+mod translation_rust_checked_integer_lazy;
+
+mod translation_rust_checked_integer_predicates;
+
+mod translation_rust_checked_integer_mappers;
+
+mod translation_rust_checked_integer_lazy_mappers;
+
+mod translation_rust_deferred_closures;
+
+mod translation_rust_array_lookup_contexts;
+
+mod translation_rust_scalar_default_contexts;
+
+mod translation_rust_closure_reference_patterns;
+
+mod translation_rust_closure_product_patterns;
+
+mod translation_rust_reference_patterns;
+
+mod translation_rust_pattern_matches;
+
+mod translation_rust_pattern_aliases;
+
+mod translation_javascript_fresh_array_slices;
+
+mod translation_rust_nominal_copies;
+
+mod translation_rust_integer_ranges;
+
+mod translation_rust_constant_patterns;
+
+mod translation_rust_source_constant_evaluation;
+
+mod translation_rust_const_function_evaluation;
+
+mod unsigned_source_documents;
+
+mod unsigned_source_command;
+
+mod unsigned_graph_command;
+
+mod self_translation_source_versions;

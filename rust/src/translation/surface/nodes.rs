@@ -126,6 +126,8 @@ pub enum SNode {
         ty: Option<Type>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         prototype_definition: Option<ConstructorPrototypeDefinition>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        property_order: Option<Box<SExpr>>,
     },
     TypeOf {
         arg: Box<SExpr>,
@@ -136,6 +138,14 @@ pub enum SNode {
     Unary {
         op: UnaryOp,
         arg: Box<SExpr>,
+    },
+    /// Explicit source pointer identity; ordinary Rust Binary remains value syntax.
+    ReferenceIdentity {
+        op: BinaryOp,
+        left: Box<SExpr>,
+        right: Box<SExpr>,
+        #[serde(flatten)]
+        extra: std::collections::BTreeMap<String, serde_json::Value>,
     },
     Binary {
         op: BinaryOp,
@@ -358,6 +368,7 @@ impl SNode {
             Self::ArrayIsArray { .. } => "arrayIsArray",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
+            Self::ReferenceIdentity { .. } => "referenceIdentity",
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",

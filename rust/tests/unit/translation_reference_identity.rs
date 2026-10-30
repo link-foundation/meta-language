@@ -134,12 +134,21 @@ fn reference_identity_keeps_actual_aliases_distinct_allocations_order_and_both_c
 
 #[test]
 fn reference_identity_keeps_every_explicit_surface_refusal() {
+    versions();
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let policy = policy();
     for row in policy["refusals"].as_array().unwrap() {
         let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
-console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.argv[2]))));
+import {structuredDataToLino} from './js/src/structured-data-links.js';
+import {TranslationError} from './js/src/translation/diagnostics.js';
+let result;
+try{result={surface:parseJavaScript(process.argv[1],JSON.parse(process.argv[2]))};}
+catch(error){
+ if(!(error instanceof TranslationError)||error.kind!=='type')throw error;
+ result={diagnostic:{kind:error.kind,reason:error.reason,span:error.span??null}};
+}
+process.stdout.write(structuredDataToLino(result));
 ";
         let source = row["source"].as_str().unwrap();
         let output = run(Command::new("node").current_dir(root).args([
@@ -150,8 +159,27 @@ console.log(JSON.stringify(parseJavaScript(process.argv[1],JSON.parse(process.ar
             &row["options"].to_string(),
         ]));
         assert!(output.ok, "{}", output.stderr);
-        let surface = serde_json::from_str(&output.stdout).unwrap();
-        assert!(check_program(&surface).is_err(), "{}", row["name"]);
+        let result = read_structured_data_lino(&output.stdout).unwrap();
+        if let Some(surface) = result.get("surface") {
+            let surface = serde_json::from_value(surface.clone()).unwrap();
+            assert!(check_program(&surface).is_err(), "{}", row["name"]);
+        } else {
+            // The same original input can fail during frontend inference before
+            // a Surface exists. Both implementations must actually reject it.
+            assert_eq!(result["diagnostic"]["kind"], "type");
+            assert!(
+                result["diagnostic"]["reason"]
+                    .as_str()
+                    .is_some_and(|reason| !reason.is_empty())
+            );
+            assert!(
+                parse_javascript(source)
+                    .and_then(|surface| check_program(&surface))
+                    .is_err(),
+                "{}",
+                row["name"]
+            );
+        }
     }
 }
 

@@ -9,6 +9,7 @@ import {readStructuredDataLino,structuredDataToLino} from '../../js/src/structur
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {readRustLibraryItems} from '../../js/scripts/rust-library-packaging.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
+import {restoreRawArchiveReceiptText} from '../../js/scripts/raw-archive-receipt-history.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH} from './raw-emission-producer-applicability.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
@@ -252,7 +253,11 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
   const currentArtifact=artifact;
   const currentDecisionSources=decisionSources(readFileSync);
   assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'actual current producer decision sources changed');
-  const snapshotArtifact={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync))};
+  const snapshotCandidate={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync))};
+  // Both actual complete codec replays above precede this exact historical
+  // snapshot view. The returned currentArtifact retains real archive metadata.
+  const snapshotArtifact=readStructuredDataLino(restoreRawArchiveReceiptText(
+    structuredDataToLino(snapshotCandidate),'experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino'));
   verifyOriginalLinkRawConsumingConservation(snapshotArtifact);
   if(check)checkProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,snapshotArtifact);
   return {artifact:snapshotArtifact,currentArtifact,currentDecisionSources,rust:emitted,profile:{profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,
@@ -260,7 +265,7 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     sourceArtifact,declarationNames:artifact.declarationNames,definitionCount:106,
     proof:{artifactSha256:sha256(structuredDataToLino(snapshotArtifact)),predecessor,
       predecessorConservation:snapshotArtifact.predecessorConservation,decisionSources:snapshotArtifact.decisionSources,
-      options:artifact.options,archive:artifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
+      options:artifact.options,archive:snapshotArtifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
       boundary:'Actual emitted token sites and existing checked final-use decision source pins; not an internal graph-fact inventory or native performance observation.'}}};
 }
 

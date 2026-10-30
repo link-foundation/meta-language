@@ -3,6 +3,7 @@
 import { unsupported } from './diagnostics.js';
 import { solveProductSourceFacts } from './product-source-rules.js';
 import { sameType } from './types.js';
+import {readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';
 
 const scalar = type => ['bool', 'float', 'fixed', 'unit'].includes(type?.kind);
 const copyTuple = type => type?.kind === 'tuple' && type.elements.length > 0
@@ -81,6 +82,7 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
   const expression = (node, env, context) => {
     const type = types?.get(node) ?? node.type;
     const id = fact(type, node);
+    if(node.k==='math'&&node.op===readJavaScriptArrayFormalIterableOperation()&&node.args.length===1&&!node.args[0].spread){edge(id,expression(node.args[0].value,env,context),type?.kind==='tuple');return id;}
     switch (node.k) {
       case 'tuple':
         if (node.productModel === 'immutable value product') {

@@ -159,19 +159,29 @@ impl Expr {
             | Node::OptionalIndexNumber { arg }
             | Node::StringPoints { object: arg }
             | Node::CollectionItems { object: arg, .. }
+            | Node::CollectionSize { object: arg }
             | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
             | Node::TupleIndex { object: arg, .. }
             | Node::RecordField { object: arg, .. }
             | Node::Length { array: arg } => vec![arg],
-            Node::Record { entries } => entries.iter().map(|entry| &entry.value).collect(),
+            Node::Record { entries, order } => entries
+                .iter()
+                .map(|entry| &entry.value)
+                .chain(order.iter().map(AsRef::as_ref))
+                .collect(),
             Node::Method { object, args, .. } => std::iter::once(object.as_ref())
                 .chain(args.iter().flatten())
                 .collect(),
             Node::StringTest {
                 string: left,
                 search: right,
+                ..
+            }
+            | Node::CollectionRead {
+                object: left,
+                key: right,
                 ..
             }
             | Node::Binary { left, right, .. }
@@ -234,7 +244,7 @@ impl Expr {
             Node::Map { entries } => Node::Map {
                 entries: Box::new(visit(entries)),
             },
-            Node::Record { entries } => Node::Record {
+            Node::Record { entries, order } => Node::Record {
                 entries: entries
                     .iter()
                     .map(|entry| RecordEntry {
@@ -242,6 +252,7 @@ impl Expr {
                         value: visit(&entry.value),
                     })
                     .collect(),
+                order: order.as_ref().map(|value| Box::new(visit(value))),
             },
             Node::RecordField {
                 object,
@@ -349,6 +360,14 @@ impl Expr {
             Node::CollectionItems { object, op } => Node::CollectionItems {
                 object: Box::new(visit(object)),
                 op: op.clone(),
+            },
+            Node::CollectionSize { object } => Node::CollectionSize {
+                object: Box::new(visit(object)),
+            },
+            Node::CollectionRead { object, op, key } => Node::CollectionRead {
+                object: Box::new(visit(object)),
+                op: op.clone(),
+                key: Box::new(visit(key)),
             },
             Node::Length { array } => Node::Length {
                 array: Box::new(visit(array)),
@@ -860,11 +879,18 @@ impl<'a> Scope<'a> {
     }
 
     pub fn fresh(&mut self, name: &str) -> String {
+        let name = crate::translation::source_identifiers::render_source_target_identifier(name);
         // A suffixed name is legal on its own: `end_2` needs none of the quoting of Lean's `«end»`.
-        let mut candidate = (self.ident)(name);
+        let mut candidate = crate::translation::source_identifiers::render_source_target_identifier(
+            &(self.ident)(&name),
+        );
         let mut index = 2;
         while self.used.contains(&candidate) {
-            candidate = (self.ident)(&format!("{name}_{index}"));
+            candidate =
+                crate::translation::source_identifiers::render_source_target_identifier(&(self
+                    .ident)(
+                    &format!("{name}_{index}"),
+                ));
             index += 1;
         }
         self.used.insert(candidate.clone());

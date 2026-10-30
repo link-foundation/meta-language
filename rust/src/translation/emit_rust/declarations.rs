@@ -1,5 +1,8 @@
 //! Modules, data, functions, theorem runners and propositions.
 
+use crate::translation::rust_source_render_interfaces::{
+    render_rust_constructor_fields, render_rust_data_field_encoding,
+};
 use crate::translation::structured_type_rules::{
     read_rust_optional_prelude, render_rust_compound_type, render_rust_reference_type,
 };
@@ -55,7 +58,7 @@ impl<'p> RustEmitter<'p> {
                 .to_owned(),
             String::new(),
         ];
-        let preludes: Vec<String> = self
+        let mut preludes: Vec<String> = self
             .preludes
             .iter()
             .map(|prelude| match prelude {
@@ -65,8 +68,27 @@ impl<'p> RustEmitter<'p> {
                 Prelude::Array => read_array_prelude(self.standard_array).to_owned(),
                 Prelude::String => crate::self_translation::representation::string_prelude(),
                 Prelude::Optional => read_rust_optional_prelude(),
+                Prelude::NumberBitwise => include_str!("../runtime/number-bitwise.rs").to_owned(),
+                Prelude::BigIntegerBitwise => {
+                    include_str!("../runtime/big-integer-bitwise.rs").to_owned()
+                }
+                Prelude::StringNumber => include_str!("../runtime/string-number.rs").to_owned(),
+                Prelude::Utf16Text => include_str!("../runtime/utf16-text.rs").to_owned(),
+                Prelude::UnicodeCase => include_str!("../runtime/unicode-case.rs").to_owned(),
+                Prelude::RecordPropertyOrder => {
+                    include_str!("../runtime/record-property-order.rs").to_owned()
+                }
+                Prelude::SourceException => {
+                    include_str!("../runtime/source-exception.rs").to_owned()
+                }
+                Prelude::BigIntegerConversion => {
+                    include_str!("../runtime/big-integer-conversion.rs").to_owned()
+                }
             })
             .collect();
+        if self.scalar_source_interface {
+            preludes.insert(0, crate::translation::rust_scalar_source_interface_rules::read_rust_scalar_source_target_guard());
+        }
         for prelude in &preludes {
             lines.push(prelude.clone());
             lines.push(String::new());
@@ -95,23 +117,23 @@ impl<'p> RustEmitter<'p> {
         for entry in &node.items {
             let mapping_start = self.state.mappings.len();
             let definition = self.declaration(entry)?;
-            if path.is_empty() {
-                if let Some(ownership) = &mut self.definition_ownership {
-                    let targets = self.state.mappings[mapping_start..]
-                        .iter()
-                        .map(|mapping| mapping.target.clone())
-                        .collect();
-                    ownership.blocks.push(super::OwnedDefinitionBlock {
-                        source: entry.full_name().to_owned(),
-                        kind: entry.kind(),
-                        source_span: entry.span(),
-                        definition_index: self.program.imports.len() + blocks.len(),
-                        definition: definition.clone(),
-                        mapping_start,
-                        mapping_end: self.state.mappings.len(),
-                        targets,
-                    });
-                }
+            if path.is_empty()
+                && let Some(ownership) = &mut self.definition_ownership
+            {
+                let targets = self.state.mappings[mapping_start..]
+                    .iter()
+                    .map(|mapping| mapping.target.clone())
+                    .collect();
+                ownership.blocks.push(super::OwnedDefinitionBlock {
+                    source: entry.full_name().to_owned(),
+                    kind: entry.kind(),
+                    source_span: entry.span(),
+                    definition_index: self.program.imports.len() + blocks.len(),
+                    definition: definition.clone(),
+                    mapping_start,
+                    mapping_end: self.state.mappings.len(),
+                    targets,
+                });
             }
             blocks.push(definition);
         }
@@ -184,12 +206,23 @@ impl<'p> RustEmitter<'p> {
                     .collect::<Result<Vec<_>>>()?;
                 render_rust_compound_type("tuple", "", &children)
             }
-            Type::Record { fields, .. } => {
+            Type::Record {
+                fields, ordered, ..
+            } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
                     .collect::<Result<Vec<_>>>()?;
-                render_rust_compound_type("record", "", &children)
+                let payload = render_rust_compound_type("record", "", &children);
+                if *ordered {
+                    crate::translation::ordered_record_layout_rules::render_ordered_record_type(
+                        "Rust",
+                        &payload,
+                        &self.ty(&crate::translation::types::array(Type::Float))?,
+                    )
+                } else {
+                    payload
+                }
             }
             Type::Set { element, .. } => render_rust_compound_type("set", "", &[self.ty(element)?]),
             Type::Map { key, value, .. } => {
@@ -250,7 +283,7 @@ impl<'p> RustEmitter<'p> {
         self.state.map(entry, &name);
         self.state.encode(
             "data",
-            "a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally",
+            &render_rust_data_field_encoding(self.named_constructor_fields),
         );
         // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
         let derives = if self.holds_float(&data.full_name, &mut BTreeSet::new()) {
@@ -267,16 +300,25 @@ impl<'p> RustEmitter<'p> {
                 .state
                 .ctor_local(&data.full_name, &ctor.name)
                 .to_owned();
-            if ctor.fields.is_empty() {
-                lines.push(format!("    {local},"));
-                continue;
-            }
             let fields: Vec<String> = ctor
                 .fields
                 .iter()
                 .map(|field| self.field_type(&field.ty))
                 .collect::<Result<_>>()?;
-            lines.push(format!("    {local}({}),", fields.join(", ")));
+            let names = ctor
+                .fields
+                .iter()
+                .map(|field| field.name.clone())
+                .collect::<Vec<_>>();
+            lines.push(format!(
+                "    {},",
+                render_rust_constructor_fields(
+                    self.program.source_language.as_str(),
+                    &local,
+                    &names,
+                    &fields
+                )
+            ));
         }
         lines.push("}".to_owned());
         Ok(lines.join("\n"))
@@ -313,6 +355,9 @@ impl<'p> RustEmitter<'p> {
                     Some(crate::translation::ir::Scope::new(&snake, &reserved));
                 let rendered = self.expr(&body);
                 self.borrowed_call_scope = None;
+                if self.scalar_source_interface {
+                    return crate::translation::scalar_source_interface::render_rust_scalar_source_header(&signature, &params, &name, &rendered?);
+                }
                 return Ok(crate::translation::source_header_emission::render_rust_source_header_emission_with_reference(
                     &signature, &params, &name, &rendered?,
                     crate::translation::borrowed_call_interface_rules::render_rust_borrowed_call_header_reference,
@@ -389,6 +434,14 @@ impl<'p> RustEmitter<'p> {
     }
 
     fn type_contains(&self, ty: &Type, kind: &str, seen: &mut BTreeSet<String>) -> bool {
+        if kind == "float"
+            && crate::translation::ordered_record_layout_rules::accept_ordered_record_number_storage(
+                ty.kind(),
+                matches!(ty, Type::Record { ordered: true, .. }),
+            )
+        {
+            return true;
+        }
         if ty.kind() == kind {
             return true;
         }
@@ -583,11 +636,20 @@ impl<'p> RustEmitter<'p> {
                         "crate::{}",
                         self.state.ctor_ref(&entry.full_name, &ctor.name, "::")
                     );
-                    let mut statement = if args.is_empty() {
-                        format!("values.push({head});")
-                    } else {
-                        format!("values.push({head}({}));", args.join(", "))
-                    };
+                    let fields = ctor
+                        .fields
+                        .iter()
+                        .map(|field| field.name.clone())
+                        .collect::<Vec<_>>();
+                    let mut statement = format!(
+                        "values.push({});",
+                        render_rust_constructor_fields(
+                            self.program.source_language.as_str(),
+                            &head,
+                            &fields,
+                            &args
+                        )
+                    );
                     for (field, name) in ctor.fields.iter().zip(&names).rev() {
                         let inner_depth = if matches!(field.ty, Type::Data { .. }) {
                             depth - 1
@@ -659,6 +721,9 @@ impl<'p> RustEmitter<'p> {
 
     /// An expression whose value is only read: variables are borrowed, not cloned.
     pub(super) fn borrow(&mut self, expr: &Expr) -> Result<String> {
+        if let Some(loan) = self.nominal_array_projection_loan(expr)? {
+            return Ok(loan);
+        }
         if expr.ty.is_float() {
             return self.expr(expr);
         }

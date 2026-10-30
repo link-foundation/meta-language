@@ -16,16 +16,25 @@ mod array_from;
 mod arrays;
 mod callables;
 mod collections;
+mod enumerations;
 mod expressions;
+mod fields;
 mod methods;
 mod numbers;
+mod numeric_intrinsics;
+mod object_rest;
+mod optional_calls;
+mod optional_chains;
 mod optional_values;
 mod patterns;
 mod products;
+mod record_formal_defaults;
 mod records;
+mod recursive_binding_iterables;
 mod solver;
 mod term_facts;
 mod term_types;
+mod values;
 
 pub(super) use products::{infer_javascript_product_types, infer_javascript_types};
 
@@ -150,9 +159,12 @@ struct RecordTerm {
 
 #[derive(Clone)]
 struct Signature {
+    constant_value: bool,
     params: Vec<Term>,
     defaults: Vec<bool>,
     optional_params: Vec<bool>,
+    invocation_defaults: Vec<bool>,
+    guarded_inputs: Vec<bool>,
     ret: Term,
     declared_ret: Option<Term>,
 }
@@ -183,6 +195,7 @@ struct Join {
     place: Option<Span>,
 }
 struct Arithmetic {
+    operation: String,
     left: Term,
     right: Option<Term>,
     result: Term,
@@ -190,7 +203,6 @@ struct Arithmetic {
 }
 
 struct Equality {
-    operation: BinaryOp,
     left: Term,
     right: Term,
     place: Option<Span>,
@@ -212,17 +224,25 @@ struct FieldOf {
 
 struct IndexOf {
     object: Term,
+    property: Option<String>,
     index: f64,
     literal: bool,
     optional: bool,
     proven_in_bounds: bool,
     result: Term,
     place: Option<Span>,
+    record_name_key: bool,
 }
 
 struct IterableOf {
     object: Term,
     mapper: Option<Term>,
+    result: Term,
+    place: Option<Span>,
+}
+struct ComputedCall {
+    function: Term,
+    arguments: Vec<Term>,
     result: Term,
     place: Option<Span>,
 }
@@ -236,6 +256,8 @@ struct Inference {
     plus: Vec<Plus>,
     coalesces: Vec<Coalescing>,
     array_binding_defaults: Vec<array_bindings::DefaultBinding>,
+    record_formal_fields: Vec<record_formal_defaults::FieldRead>,
+    object_rest_fields: Vec<object_rest::RestFields>,
     joins: Vec<Join>,
     results: Vec<FunctionResult>,
     calls: Vec<CallArguments>,
@@ -243,11 +265,15 @@ struct Inference {
     arithmetic: Vec<Arithmetic>,
     equalities: Vec<Equality>,
     methods: Vec<methods::Method>,
+    property_methods: HashMap<*const SExpr, String>,
     includes: Vec<methods::Includes>,
     array_includes: HashSet<*const SExpr>,
     fields: Vec<FieldOf>,
     indices: Vec<IndexOf>,
     iterables: Vec<IterableOf>,
+    array_formal_iterables: Vec<IterableOf>,
+    recursive_binding_iterables: Vec<IterableOf>,
+    computed_calls: Vec<ComputedCall>,
     collections: HashMap<*const SExpr, (Term, Option<Span>)>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
@@ -259,6 +285,8 @@ struct Inference {
     empty_arrays: HashMap<*const SExpr, (Term, Option<Span>)>,
     records: HashMap<*const SExpr, Term>,
     record_spreads: Vec<records::RecordSpread>,
+    nominal_spreads: Vec<records::PendingNominalSpread>,
+    enumerations: Vec<enumerations::Enumeration>,
     expression_terms: HashMap<*const SExpr, (Term, Option<Span>)>,
     lambdas: HashMap<*const SExpr, Term>,
     lambda_places: HashMap<*const SExpr, (Option<Span>, Vec<Option<Span>>)>,
@@ -285,6 +313,8 @@ impl Inference {
             plus: Vec::new(),
             coalesces: Vec::new(),
             array_binding_defaults: Vec::new(),
+            record_formal_fields: Vec::new(),
+            object_rest_fields: Vec::new(),
             joins: Vec::new(),
             results: Vec::new(),
             calls: Vec::new(),
@@ -292,11 +322,15 @@ impl Inference {
             arithmetic: Vec::new(),
             equalities: Vec::new(),
             methods: Vec::new(),
+            property_methods: HashMap::new(),
             includes: Vec::new(),
             array_includes: HashSet::new(),
             fields: Vec::new(),
             indices: Vec::new(),
             iterables: Vec::new(),
+            array_formal_iterables: Vec::new(),
+            recursive_binding_iterables: Vec::new(),
+            computed_calls: Vec::new(),
             collections: HashMap::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
@@ -304,6 +338,8 @@ impl Inference {
             empty_arrays: HashMap::new(),
             records: HashMap::new(),
             record_spreads: Vec::new(),
+            nominal_spreads: Vec::new(),
+            enumerations: Vec::new(),
             expression_terms: HashMap::new(),
             lambdas: HashMap::new(),
             lambda_places: HashMap::new(),
@@ -497,8 +533,8 @@ impl Inference {
         if !force && (matches!(a, Term::Var(_)) || matches!(b, Term::Var(_))) {
             return Ok(false);
         }
-        let left = self.numeric_value(&constraint.left);
-        let right = self.numeric_value(&constraint.right);
+        let left = self.numeric_addition_value(&constraint.left);
+        let right = self.numeric_addition_value(&constraint.right);
         if self.resolve(&left) == Term::Known(STRING) || self.resolve(&right) == Term::Known(STRING)
         {
             return Err(type_error(
@@ -506,76 +542,17 @@ impl Inference {
                 constraint.place,
             ));
         }
-        self.unify(&left, &right, constraint.place)?;
-        self.unify(&constraint.result, &left, constraint.place)?;
-        Ok(true)
-    }
-
-    fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
-        if let Term::Record(owner) = self.resolve(&constraint.object) {
-            return self.record_field_constraint(
-                &owner,
-                &constraint.field,
-                &constraint.result,
-                constraint.place,
-            );
-        }
-        if constraint.field == "size"
-            && matches!(
-                self.resolve(&constraint.object),
-                Term::Map { .. } | Term::Set { .. }
-            )
+        if !crate::translation::source_exception_rules::read_java_script_numeric_operation_failure(
+            "plus",
+            optional_values::kind(&self.resolve(&left)),
+            optional_values::kind(&self.resolve(&right)),
+        )
+        .is_empty()
         {
-            self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
             return Ok(true);
         }
-        let name = match self.resolve(&constraint.object) {
-            Term::Known(Type::Data { name }) => name,
-            Term::Array(_) | Term::Tuple(_) | Term::Known(Type::String)
-                if constraint.field == "length" =>
-            {
-                self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
-                return Ok(true);
-            }
-            other => {
-                let owners: Vec<&String> = self
-                    .data
-                    .iter()
-                    .filter(|(_, ctors)| {
-                        ctors.iter().any(|ctor| {
-                            ctor.fields.iter().any(|field| {
-                                field.name.as_deref() == Some(constraint.field.as_str())
-                            })
-                        })
-                    })
-                    .map(|(name, _)| name)
-                    .collect();
-                if !matches!(other, Term::Var(_)) || owners.len() != 1 {
-                    return Ok(false);
-                }
-                let owner = Term::Known(Type::Data {
-                    name: owners[0].clone(),
-                });
-                self.unify(&constraint.object, &owner, constraint.place)?;
-                return self.field_step(constraint);
-            }
-        };
-        let declared = self
-            .data
-            .iter()
-            .find(|(data, _)| *data == name)
-            .and_then(|(_, ctors)| {
-                ctors.iter().find_map(|ctor| {
-                    ctor.fields
-                        .iter()
-                        .position(|field| field.name.as_deref() == Some(constraint.field.as_str()))
-                        .map(|index| (ctor.name.clone(), index))
-                })
-            });
-        if let Some((ctor, index)) = declared {
-            let term = self.field(&name, &ctor, index);
-            self.unify(&constraint.result, &term, constraint.place)?;
-        }
+        self.unify(&left, &right, constraint.place)?;
+        self.unify(&constraint.result, &left, constraint.place)?;
         Ok(true)
     }
 
@@ -598,295 +575,6 @@ impl Inference {
                 .insert(std::ptr::from_ref(expr), (term.clone(), expr.span));
         }
         Ok(term)
-    }
-
-    fn expr_inner(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {
-        match &expr.node {
-            // The 1 of `x++` has the type of `x`, a Number or a BigInt.
-            SNode::Num { unit: true, .. } => Ok(self.fresh(false)),
-            SNode::Num { ty, .. } => Ok(match ty {
-                Some(ty) => self.declared(Some(ty)),
-                None => self.fresh(true),
-            }),
-            SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. } => {
-                self.array_binding_expr(expr, env, None)
-            }
-            SNode::Bool { .. } => Ok(Term::Known(BOOL)),
-            SNode::Str { .. } => Ok(Term::Known(STRING)),
-            SNode::Unit => Ok(Term::Known(UNIT)),
-            SNode::None { .. }
-            | SNode::Some { .. }
-            | SNode::FlattenOption { .. }
-            | SNode::Coalesce { .. }
-            | SNode::OptionalField { .. } => self.optional_expr(expr, env, None),
-            SNode::Name { path } => {
-                if let [name] = path.as_slice()
-                    && let Some(term) = env.get(name)
-                {
-                    return Ok(term.clone());
-                }
-                self.call(path, &[], env, expr.span)
-            }
-            SNode::App { func, args } => self.callable_application(func, args, env, expr.span),
-            SNode::Record { entries, .. } => self.record_expr(expr, entries, env, None),
-            SNode::FunctionValue { .. }
-            | SNode::Lambda { .. }
-            | SNode::CellAllocate { .. }
-            | SNode::CellRead { .. }
-            | SNode::CellWrite { .. } => self.callable_expr(expr, env, None),
-            SNode::Field { object, field } => {
-                let object = self.expr(object, env)?;
-                let result = self.fresh(false);
-                self.fields.push(FieldOf {
-                    object,
-                    field: field.clone(),
-                    result: result.clone(),
-                    place: expr.span,
-                });
-                Ok(result)
-            }
-            SNode::Unary { op, arg } => {
-                let arg = self.expr(arg, env)?;
-                if *op == UnaryOp::Not {
-                    self.product_condition(&arg, expr.span);
-                    return Ok(Term::Known(BOOL));
-                }
-                let result = self.fresh(false);
-                self.arithmetic.push(Arithmetic {
-                    left: arg,
-                    right: None,
-                    result: result.clone(),
-                    place: expr.span,
-                });
-                Ok(result)
-            }
-            SNode::Binary {
-                op, left, right, ..
-            } => self.binary(*op, left, right, expr.span, env),
-            SNode::If { .. } => self.infer_conditional_expression(expr, env),
-            SNode::Let { .. } => self.infer_binding_expression(expr, env),
-            SNode::Match { .. } => self.infer_match_expression(expr, env),
-            SNode::StringMap { object, .. } => {
-                let value = self.expr(object, env)?;
-                self.unify(&value, &Term::Known(STRING), object.span)?;
-                Ok(Term::Known(STRING))
-            }
-            SNode::CopySlice { object } => self.expr(object, env),
-            SNode::ArrayFrom { args, .. } => self.array_from(expr, args, env, None),
-            SNode::Set { items, .. } | SNode::Map { entries: items, .. } => {
-                self.collection_construction(expr, items, env, None)
-            }
-            SNode::Method { object, op, args } => self.method(object, op, args, env, expr.span),
-            SNode::StringTest { op, object, search } if op == "includes" => {
-                self.includes(expr, object, search, env)
-            }
-            SNode::StringTest { object, search, .. } => {
-                let object_type = self.expr(object, env)?;
-                self.unify(&object_type, &Term::Known(STRING), expr.span)?;
-                let search_type = self.expr(search, env)?;
-                self.unify(&search_type, &Term::Known(STRING), expr.span)?;
-                Ok(Term::Known(BOOL))
-            }
-            SNode::ArrayIsArray { arg } => {
-                self.expr(arg, env)?;
-                Ok(Term::Known(BOOL))
-            }
-            SNode::TypeOf { arg } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
-                self.expr(arg, env)?;
-                Ok(Term::Known(STRING))
-            }
-            SNode::CtorObject {
-                tag,
-                fields,
-                prototype_definition,
-                ..
-            } => {
-                if let Some(definition) = prototype_definition {
-                    self.expr(&definition.value, env)?;
-                }
-                self.ctor_object(tag, fields, expr.span, env)
-            }
-            SNode::Print { expr, body, .. } => {
-                self.expr(expr, env)?;
-                self.expr(body, env)
-            }
-            SNode::Array { items, .. } => {
-                let element = self.fresh(false);
-                self.empty_arrays.insert(
-                    std::ptr::from_ref::<SExpr>(expr),
-                    (element.clone(), expr.span),
-                );
-                for item in items {
-                    let value = self.expr(&item.value, env)?;
-                    let want = if item.spread {
-                        Term::Array(Box::new(element.clone()))
-                    } else {
-                        element.clone()
-                    };
-                    self.unify(&value, &want, item.value.span.or(expr.span))?;
-                    // Match the existing expected-array optional owner update.
-                    let contained = if item.spread {
-                        match self.resolve(&value) {
-                            Term::Array(element) => Some(*element),
-                            _ => None,
-                        }
-                    } else {
-                        Some(self.resolve(&value))
-                    };
-                    if let Some(contained) = contained
-                        && matches!(self.resolve(&contained), Term::Option { .. })
-                        && let Term::Var(variable) = &element
-                    {
-                        self.bindings[*variable] = Some(self.resolve(&contained));
-                    }
-                }
-                Ok(Term::Array(Box::new(element)))
-            }
-            SNode::Tuple { items, .. } => Ok(Term::Tuple(
-                items
-                    .iter()
-                    .map(|item| self.expr(item, env))
-                    .collect::<Result<Vec<_>>>()?,
-            )),
-            SNode::Math { op, args, .. } => {
-                // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
-                for item in args {
-                    let ty = self.expr(&item.value, env)?;
-                    let ty = self.resolve(&ty);
-                    let unknown = match &ty {
-                        Term::Var(_) => true,
-                        Term::Array(element) => {
-                            item.spread && matches!(self.resolve(element), Term::Var(_))
-                        }
-                        Term::Known(_)
-                        | Term::Tuple(_)
-                        | Term::Record(_)
-                        | Term::Union(_)
-                        | Term::Map { .. }
-                        | Term::Set { .. }
-                        | Term::Option { .. }
-                        | Term::Function { .. }
-                        | Term::Cell(_) => false,
-                    };
-                    if unknown && crate::translation::number_predicate_rules::read_number_predicate_argument_form("JavaScript", op, "", "").is_empty() {
-                        let want = if item.spread {
-                            Term::Array(Box::new(Term::Known(FLOAT)))
-                        } else {
-                            Term::Known(FLOAT)
-                        };
-                        self.unify(&ty, &want, item.value.span.or(expr.span))?;
-                    }
-                }
-                let predicate = ["isInteger", "isSafeInteger", "isFinite", "isNaN"];
-                Ok(Term::Known(if predicate.contains(&op.as_str()) {
-                    BOOL
-                } else {
-                    FLOAT
-                }))
-            }
-            SNode::ForOfIterable { object, .. } => {
-                let object = self.expr(object, env)?;
-                let actual = self.resolve(&object);
-                if self.array_from_iterable_is_array(&actual) {
-                    self.collections
-                        .insert(std::ptr::from_ref(expr), (object.clone(), expr.span));
-                    return Ok(object);
-                }
-                let result = Term::Array(Box::new(self.fresh(false)));
-                self.iterables.push(IterableOf {
-                    object,
-                    mapper: None,
-                    result: result.clone(),
-                    place: expr.span,
-                });
-                self.collections
-                    .insert(std::ptr::from_ref(expr), (result.clone(), expr.span));
-                Ok(result)
-            }
-            SNode::StringPoints { object } => {
-                let value = self.expr(object, env)?;
-                self.unify(&value, &Term::Known(STRING), expr.span)?;
-                Ok(Term::Array(Box::new(Term::Known(STRING))))
-            }
-            SNode::ReferenceWrite {
-                object,
-                index,
-                value,
-                ..
-            } => {
-                self.expr(object, env)?;
-                if let Some(index) = index {
-                    self.expr(index, env)?;
-                }
-                if let Some(value) = value {
-                    self.expr(value, env)?;
-                }
-                Ok(Term::Known(UNIT))
-            }
-            SNode::Index {
-                object,
-                index,
-                optional,
-                proven_in_bounds,
-            } => {
-                let element = self.fresh(false);
-                let object_type = self.expr(object, env)?;
-                self.expr(index, env)?;
-                let position = super::products::read_javascript_product_index(index);
-                let literal = matches!(index.node, SNode::Num { .. })
-                    || matches!(&index.node, SNode::Unary { op: UnaryOp::Neg, arg } if matches!(arg.node, SNode::Num { .. }));
-                self.indices.push(IndexOf {
-                    object: object_type,
-                    index: position,
-                    literal,
-                    optional: optional
-                        .as_ref()
-                        .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
-                        == Some(true),
-                    proven_in_bounds: proven_in_bounds
-                        .as_ref()
-                        .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
-                        == Some(true),
-                    result: element.clone(),
-                    place: object.span.or(expr.span),
-                });
-                Ok(element)
-            }
-            SNode::TupleIndex { object, index } => {
-                let element = self.fresh(false);
-                let object_type = self.expr(object, env)?;
-                #[allow(clippy::cast_precision_loss)]
-                let position = *index as f64;
-                self.indices.push(IndexOf {
-                    object: object_type,
-                    index: position,
-                    literal: true,
-                    optional: false,
-                    proven_in_bounds: true,
-                    result: element.clone(),
-                    place: object.span.or(expr.span),
-                });
-                Ok(element)
-            }
-            SNode::Length { object, integer } => {
-                let array = self.expr(object, env)?;
-                if matches!(self.resolve(&array), Term::Tuple(_)) {
-                    return Ok(if *integer {
-                        self.fresh(true)
-                    } else {
-                        Term::Known(FLOAT)
-                    });
-                }
-                let element = self.fresh(false);
-                self.unify(&array, &Term::Array(Box::new(element)), expr.span)?;
-                Ok(if *integer {
-                    self.fresh(true)
-                } else {
-                    Term::Known(FLOAT)
-                })
-            }
-            _ => Ok(self.fresh(false)),
-        }
     }
 
     fn ctor_object(

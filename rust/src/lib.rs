@@ -7,11 +7,17 @@ mod concept_distinctions;
 mod concept_ontology;
 mod concept_records;
 pub mod configuration;
+mod decorator_data;
 pub mod decorators;
 mod discovered_concept_links;
 mod discovered_concept_rules;
 pub mod document_formatting;
 mod docx_parser;
+mod dynamic_language_cli;
+mod dynamic_language_command_program;
+mod dynamic_language_command_rules;
+mod dynamic_meta_language;
+mod dynamic_meta_language_rules;
 mod embedded_region_parser;
 mod formal_concept_definition;
 mod formal_function_links;
@@ -21,7 +27,22 @@ mod global_concept_identity_rules;
 mod global_concept_rules;
 mod global_concept_space;
 pub mod grammar;
+mod grammar_composition_batch;
+mod grammar_composition_batch_rules;
+pub use grammar_composition_batch::{
+    GrammarCompositionBatch, GrammarCompositionPolicy, create_grammar_composition_batch_links,
+    read_grammar_composition_batch_links,
+};
 mod grammar_concepts;
+mod grammar_inference;
+mod grammar_inference_refinement_rules;
+mod grammar_inference_rules;
+pub use grammar_inference::{
+    RegularGrammarInference, RegularGrammarInferenceOptions, RegularGrammarInferenceParameters,
+    accept_inferred_grammar_symbols, create_regular_grammar_inference_program_links,
+    infer_regular_grammar, read_refined_regular_grammar_inference_links,
+    read_regular_grammar_inference_links, refine_regular_grammar_inference,
+};
 pub mod graphql_adapter;
 mod incremental;
 pub mod language_catalog;
@@ -31,6 +52,8 @@ pub mod language_parser;
 pub mod language_profile;
 pub mod language_support;
 mod line_index;
+mod link_allocation_program;
+mod link_allocation_rules;
 pub mod link_flags;
 pub mod link_network;
 mod link_network_binary;
@@ -39,6 +62,8 @@ mod link_network_binary_rules;
 mod lino_grammar;
 mod lino_parser;
 pub mod lino_serialization;
+mod meta_language_archive;
+mod meta_language_archive_rules;
 pub mod mixed_regions;
 mod natural_language;
 mod natural_language_grammar;
@@ -51,14 +76,19 @@ mod pdf_parser;
 pub mod program_representation;
 pub mod program_translation;
 pub mod project_data;
+mod project_translation;
+mod project_translation_rules;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
+mod record_property_order;
+mod resource_description_address_rules;
 mod resource_description_graphs;
 mod resource_description_ntriples;
 mod resource_description_ntriples_rules;
 mod resource_description_rules;
+mod rust_byte_string_program;
 pub mod rust_codec;
 mod self_translation;
 mod semantic_translation;
@@ -68,6 +98,16 @@ mod shared_numeric_function_model;
 mod shared_numeric_function_rules;
 pub mod snapshots;
 pub mod source;
+mod source_definition_catalog;
+mod source_definition_catalog_rules;
+mod source_definition_cli;
+pub use source_definition_catalog::{
+    SourceDefinitionCatalogLimits, SourceDefinitionEntry,
+    create_source_definition_formal_function_links, create_source_definition_program_links,
+    create_source_definition_program_links_with_limits, source_definition_catalog,
+    source_definition_entry,
+};
+pub use source_definition_cli::run_source_definition_command;
 mod source_generation;
 pub mod sql_adapter;
 pub mod storage;
@@ -76,10 +116,55 @@ pub mod structured_data_links;
 pub mod structured_data_records;
 mod structured_text_parser;
 pub mod substitution;
+mod syntax_projection;
+mod syntax_projection_rules;
 pub mod transform;
 pub mod translation;
 pub mod translation_rules;
 mod typed_program_links;
+mod unsigned_graph_cli;
+mod unsigned_graph_command_rules;
+mod unsigned_link_identity_program;
+mod unsigned_link_identity_rules;
+mod unsigned_link_network;
+mod unsigned_source_cli;
+mod unsigned_source_command_rules;
+mod unsigned_source_document_rules;
+mod unsigned_typed_program_links;
+pub use link_allocation_program::create_link_allocation_program_links;
+pub use link_allocation_rules::{accept_link_allocation_capacity, accept_link_allocation_word};
+pub use record_property_order::{
+    RecordPropertyOrderError, accept_java_script_record_order_names,
+    accept_java_script_record_order_permutation, accept_java_script_record_property_order,
+    create_java_script_record_property_order, merge_java_script_record_property_order,
+    read_java_script_record_property_keys, rebase_java_script_record_property_order,
+};
+pub use translation::array_state_method_program::create_array_state_method_program_links;
+pub use translation::big_integer_bitwise_program::create_big_integer_bitwise_program_links;
+pub use translation::callable_source_program::create_callable_source_program_links;
+pub use translation::fixed_integer_cast_program::create_fixed_integer_cast_program_links;
+pub use translation::javascript_identifier_program::create_java_script_identifier_program_links;
+pub use translation::javascript_literal_property_program::create_java_script_literal_property_program_links;
+pub use translation::javascript_nullish_field_program::create_java_script_nullish_field_program_links;
+pub use translation::javascript_optional_call_program::create_java_script_optional_call_program_links;
+pub use translation::javascript_optional_chain_program::create_java_script_optional_chain_program_links;
+pub use translation::javascript_own_property_program::create_java_script_own_property_program_links;
+pub use translation::javascript_property_call_program::create_java_script_property_call_program_links;
+pub use translation::javascript_record_order_program::create_java_script_record_order_program_links;
+pub use translation::javascript_record_parameter_program::create_javascript_record_parameter_program_links;
+pub use translation::lexer::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
+pub use translation::module_binding_program::create_module_binding_program_links;
+pub use translation::number_bitwise_program::create_number_bitwise_program_links;
+pub use translation::record_write_program::create_record_field_write_program_links;
+pub use translation::reference_array_projection_program::create_reference_array_projection_program_links;
+pub use translation::reference_method_program::create_reference_method_program_links;
+pub use translation::rust_inherent_program::create_rust_inherent_program_links;
+pub use translation::rust_primitive_bitwise_program::create_rust_primitive_bitwise_program_links;
+pub use translation::rust_record_program::create_rust_record_program_links;
+pub use translation::rust_shift_program::create_rust_shift_program_links;
+pub use translation::scalar_assignment_program::create_scalar_assignment_program_links;
+pub use translation::source_identifier_program::create_source_identifier_program_links;
+pub use translation::unicode_scalar_program::create_unicode_scalar_program_links;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
@@ -122,6 +207,12 @@ pub use document_formatting::{
     docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
     parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
     render_pdf_document,
+};
+pub use dynamic_language_cli::{DynamicLanguageCommandOutput, run_dynamic_language_command};
+pub use dynamic_language_command_program::create_dynamic_language_command_program_links;
+pub use dynamic_meta_language::{
+    DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult,
+    create_dynamic_meta_language,
 };
 pub use formal_concept_definition::{
     FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
@@ -264,6 +355,13 @@ pub use link_network_binary::{
 };
 pub use lino_parser::LinksNotationReading;
 pub use lino_serialization::LinoSerializationError;
+pub use meta_language_archive::{
+    LoadedMetaLanguageArchive, MetaLanguageArchive, MetaLanguageArchiveEntry,
+    MetaLanguageArchiveLimits, ReconstructedMetaLanguageArchive, create_meta_language_archive,
+    extend_meta_language_archive, meta_language_archive_to_binary, meta_language_archive_to_text,
+    read_meta_language_archive, read_meta_language_archive_binary,
+    read_meta_language_archive_network_text, read_meta_language_archive_text,
+};
 pub use mixed_regions::{
     EmbeddedRegion, detect_embedded_regions, detect_embedded_regions_in_tree, script_language,
     sniff_language,
@@ -295,6 +393,17 @@ pub use project_data::{
     ProjectDataFormat, read_project_data_file, read_project_data_file_with_format,
     read_project_file_bytes, resolve_project_data_path, resolve_project_data_path_with_format,
 };
+pub use project_translation::{draft_project_translation, project_translation_draft_to_links};
+mod rust_project_source_rules;
+mod rust_source_owner_program;
+mod rust_source_project;
+pub use rust_source_owner_program::{
+    create_rust_source_owner_program_links,
+    create_rust_source_owner_program_links_with_source_version,
+};
+mod rust_source_project_cli;
+mod source_project_archive;
+mod source_project_archive_rules;
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
     QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
@@ -320,15 +429,28 @@ pub use resource_description_ntriples::{
     ResourceDescriptionNTriplesOutput, emit_resource_description_ntriples,
     import_resource_description_ntriples, read_resource_description_ntriples_source,
 };
+pub use rust_byte_string_program::create_rust_byte_string_program_links;
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
 };
+pub use rust_source_project::{
+    RustSourceProjectConcreteGraph, compose_rust_source_project,
+    create_rust_source_project_program_links, parse_rust_source_project,
+    read_rust_source_project_concrete_graphs,
+};
+pub use rust_source_project_cli::{
+    RustSourceProjectCommandOutput, run_rust_source_project_command,
+};
 pub use self_translation::{
-    ErasedTypeScript, Erasure, SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError,
-    SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature, erase_type_script,
-    project_type_script_typing, self_translate, self_translate_decorated, self_translate_with,
-    self_translation_language, self_translation_signatures,
+    CheckedDeclarationEmission, DeclarationTranslationContext, ErasedTypeScript, Erasure,
+    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationDiagnosticReport,
+    SelfTranslationError, SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature,
+    accept_declaration_owned_emission, check_and_emit_declaration_with_ownership,
+    erase_type_script, project_type_script_typing, read_inert_module_binding,
+    read_intrinsic_module_initializer_binding, self_translate, self_translate_decorated,
+    self_translate_with, self_translate_with_diagnostics, self_translation_language,
+    self_translation_signatures,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,
@@ -338,6 +460,10 @@ pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
 pub use shared_numeric_function_links::encode_shared_numeric_function_definition;
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};
 pub use source::{ByteRange, Point, SourceSpan};
+pub use source_project_archive::{
+    SourceProjectArchiveSource, SourceProjectArchiveView, create_source_project_archive,
+    extend_source_project_archive, read_source_project_archive,
+};
 pub use sql_adapter::{
     SQL_DIALECT_PROFILES, SqlAdapterError, SqlAdapterErrorKind, SqlDialectProfile,
     SqlRelationMapping, SqlSchemaRegistry, lower_sql, lower_sql_cst,
@@ -349,10 +475,11 @@ pub use structured_data_links::{
     StructuredDataLinks, StructuredDataLinksLimits, StructuredDataValue,
     decode_structured_data_links, decode_structured_data_links_ordered,
     decode_structured_data_links_ordered_with_limits, decode_structured_data_links_with_limits,
-    encode_structured_data_links, encode_structured_data_links_ordered, read_structured_data_lino,
-    read_structured_data_lino_ordered, read_structured_data_lino_ordered_with_limits,
-    read_structured_data_lino_with_limits, structured_data_to_lino,
-    structured_data_to_lino_ordered,
+    encode_structured_data_links, encode_structured_data_links_ordered,
+    encode_structured_data_links_ordered_with_limits, encode_structured_data_links_with_limits,
+    read_structured_data_lino, read_structured_data_lino_ordered,
+    read_structured_data_lino_ordered_with_limits, read_structured_data_lino_with_limits,
+    structured_data_to_lino, structured_data_to_lino_ordered,
 };
 pub use structured_data_records::{
     read_structured_data_records, read_structured_data_records_ordered,
@@ -365,10 +492,17 @@ pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,
 };
+pub use syntax_projection::{
+    AbstractSyntaxChild, AbstractSyntaxLinks, AbstractSyntaxNode, AbstractSyntaxOptions,
+    ReadAbstractSyntaxLinks, SyntaxProjectionLimits, create_abstract_syntax_links,
+    read_abstract_syntax_links,
+};
 pub use transform::{
     QuasiquoteError, QuasiquoteTemplate, ReplacementReport, ReplacementRule,
     SourceTextPredicateHost, TextReplacement,
 };
+pub use translation::intrinsic_initializer_rules::accept_intrinsic_module_initializer_scope;
+pub use translation::record_closure_parameter_program::create_java_script_record_closure_parameter_program_links;
 pub use translation::source_text_bytes::{
     read_source_text_byte, read_source_text_byte_length, read_source_text_units,
     slice_source_text_bytes,
@@ -391,16 +525,90 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_pure_unit_call_model,
     create_typed_program_links_with_rust_runtime_shell_model,
     create_typed_program_links_with_rust_scalar_loop_model,
+    create_typed_program_links_with_rust_shared_array_handle_source_model,
     create_typed_program_links_with_rust_source_models,
     create_typed_program_links_with_rust_source_profiles,
     create_typed_program_links_with_rust_source_signature_model,
+    create_typed_program_links_with_rust_source_version,
     create_typed_program_links_with_rust_type_namespace_model,
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
     emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
+    encode_typed_program_links_with_record_shapes, encode_typed_program_links_with_value_sharing,
     read_typed_program_binding_identities, typed_program_links_schema,
+};
+pub use unsigned_graph_cli::{
+    UnsignedGraphCommandOutput, read_unsigned_graph_snapshot_binary,
+    read_unsigned_graph_snapshot_text, run_unsigned_graph_command,
+    select_unsigned_typed_program_root,
+};
+pub use unsigned_link_identity_program::create_unsigned_link_identity_program_links;
+pub use unsigned_link_network::{
+    DenseUnsignedLinkNetwork, RebasedUnsignedLinkNetwork, UnsignedLinksError,
+    create_dense_unsigned_link_network, create_unsigned_source_document_links,
+    create_unsigned_source_document_links_with_registry, decode_unsigned_link_network_binary,
+    encode_unsigned_link_network_binary, rebase_unsigned_link_network,
+    restore_dense_unsigned_link_network,
+};
+pub use unsigned_source_cli::{UnsignedSourceCommandOutput, run_unsigned_source_command};
+pub use unsigned_typed_program_links::{
+    RebasedUnsignedTypedProgramLinks, create_unsigned_rust_source_owner_program_links,
+    create_unsigned_rust_source_owner_program_links_with_source_version,
+    create_unsigned_typed_program_links, emit_unsigned_typed_program_links,
+    emit_unsigned_typed_program_links_with_options, rebase_unsigned_typed_program_links,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod native_grammar_parser;
 mod self_description;
 mod tree_sitter_adapter;
+
+pub use translation::string_number::{
+    convert_javascript_string_number, convert_javascript_string_number_units,
+};
+pub use translation::string_number_program::create_string_number_program_links;
+
+pub use translation::big_integer_conversion::{
+    JavaScriptBigInteger, JavaScriptBigIntegerArithmeticError, JavaScriptBigIntegerConversionError,
+    convert_javascript_boolean_big_integer, convert_javascript_number_big_integer,
+    convert_javascript_string_big_integer, convert_javascript_string_big_integer_units,
+    divide_javascript_big_integer, power_javascript_big_integer, power_javascript_number,
+};
+pub use translation::big_integer_conversion_program::create_big_integer_conversion_program_links;
+
+pub use translation::formal_string_unit_program::create_formal_string_unit_program_links;
+pub use translation::javascript_string_unit_program::create_java_script_string_unit_program_links;
+pub use translation::source_exception_program::create_source_exception_program_links;
+pub use translation::string_construction_program::create_string_construction_program_links;
+pub use translation::utf16_text_program::create_utf16_text_program_links;
+
+pub use translation::array_binding_program::create_array_binding_program_links;
+pub use translation::javascript_comparison_program::create_java_script_comparison_program_links;
+
+pub use translation::javascript_string_range_program::create_java_script_string_range_program_links;
+
+pub use translation::optional_value_program::create_optional_value_program_links;
+
+pub use translation::unicode_case_program::create_unicode_case_program_links;
+pub use translation::unicode_case_rules::map_unicode_case_utf16_text;
+
+pub use translation::rust_unit_value_program::create_rust_unit_value_program_links;
+
+pub use translation::array_formal_parameter_program::create_java_script_array_formal_parameter_program_links;
+pub use translation::record_callable_parameter_program::create_java_script_record_callable_parameter_program_links;
+pub use translation::rust_formatting_program::create_rust_formatting_program_links;
+
+mod source_module_requests;
+pub use source_module_requests::{
+    SourceModuleRequest, SourceModuleRequestCommandOutput, SourceModuleRequestLimits,
+    SourceModuleRequests, analyze_source_module_requests,
+    analyze_source_module_requests_with_limits, run_source_module_request_command,
+};
+
+mod project_translation_archive;
+mod project_translation_archive_rules;
+pub use project_translation_archive::{
+    ProjectTranslationArchiveCommandOutput, ProjectTranslationArchiveView,
+    RestoredProjectTranslationArchiveInputs, create_project_translation_archive,
+    extend_project_translation_archive, read_project_translation_archive,
+    restore_project_translation_archive_inputs, run_project_translation_archive_command,
+};

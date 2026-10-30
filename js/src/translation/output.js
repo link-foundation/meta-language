@@ -1,3 +1,4 @@
+import {acceptLinkedRustPanicValue} from './rust-panic-value-rules.js';
 // Output and aborts as values, for the targets whose programs are pure. Rust
 // and JavaScript print where the source prints and abort where it aborts; in
 // Lean and Rocq a function that prints or may abort, directly or through a
@@ -14,6 +15,10 @@ import { readOptionalOutputAbsences } from './optional-value-rules.js';
 import { acceptCallableCreationEffectTraversal, readCallableOutputTargetRefusal } from './callable-emission-rules.js';
 import { readCallableOutputAnalysis } from './callable-emission.js';
 import { unsupported } from './diagnostics.js';
+import {readJavaScriptNumberConversionFailure} from './string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException,readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
+import {collectSourceIdentifierTexts,readSourceIdentifierSupply} from './source-identifiers.js';
+import {renderSourceGeneratedIdentifier} from './source-identifier-rules.js';
 import { BOOL, INT, NAT, OUTPUT, STRING, data, fixedBounds, typeKey } from './types.js';
 import { readProgramExpressionEntryOperandField } from '../typed-program-link-rules.js';
 
@@ -32,6 +37,8 @@ function integerLiteral(node) {
 /** True when the node itself, apart from its operands, may abort. */
 export function aborts(node) {
   switch (node.k) {
+    case 'math':
+      return acceptLinkedRustPanicValue(node.k,node.op)||acceptLinkedJavaScriptSourceException(node.k,node.op)||Boolean(readJavaScriptNumberConversionFailure(node.op,node.args[0]?.type.kind??''));
     case 'abort':
       return true;
     case 'cast': {
@@ -169,6 +176,8 @@ class Threader {
     this.effectful = effectful;
     this.effects = effects;
     this.canAbort = canAbort;
+    this.sourceExceptions=canAbort&&source.sourceLanguage==='JavaScript';
+    this.privatePrefix=readSourceIdentifierSupply(collectSourceIdentifierTexts(source));
     this.pairs = new Map();
     this.byName = new Map();
     this.count = 0;
@@ -178,7 +187,7 @@ class Threader {
     const declarations = new Map();
     for (const [name, entry] of this.source.declarations) {
       if (entry.k === 'fn' && this.effectful.has(name)) {
-        const out = 'ml_out';
+        const out = this.privatePrefix+'out';
         declarations.set(name, {
           ...entry,
           params: [...entry.params, { name: out, type: OUTPUT, guard: null }],
@@ -202,7 +211,7 @@ class Threader {
 
   fresh(prefix) {
     this.count += 1;
-    return `ml_${prefix}${this.count}`;
+    return renderSourceGeneratedIdentifier(this.privatePrefix,prefix,this.count);
   }
 
   /**
@@ -214,9 +223,10 @@ class Threader {
     const type = representation(source);
     const key = typeKey(type);
     if (!this.pairs.has(key)) {
-      const name = `ml_io${this.pairs.size + 1}`;
+      const name = `${this.privatePrefix}io${this.pairs.size + 1}`;
       const ctors = [{ name: `${name}_mk`, fields: [{ name: 'output', type: OUTPUT }, { name: 'value', type }] }];
       if (this.canAbort) ctors.push({ name: `${name}_abort`, fields: [{ name: 'output', type: OUTPUT }, { name: 'message', type: STRING }] });
+      if(this.sourceExceptions)ctors[1].fields.push({name:'className',type:STRING},{name:'messagePresent',type:BOOL});
       const entry = { k: 'data', name, fullName: name, modulePath: [], ctors, generated: true, output: true };
       this.pairs.set(key, entry);
       this.byName.set(name, entry);
@@ -235,9 +245,11 @@ class Threader {
   }
 
   /** The abort with `message` after the lines `out`, as a pair of a `type` value. */
-  fail(out, message, type) {
+  fail(out, message, type,className=undefined,present=undefined) {
     const entry = this.pair(type);
-    return { k: 'ctor', data: entry.fullName, ctor: entry.ctors[1].name, args: [out, message], type: data(entry.fullName) };
+    const args=[out,message];
+    if(this.sourceExceptions)args.push(className??literal(STRING,'Error'),present??{k:'lit',value:true,type:BOOL});
+    return { k: 'ctor', data: entry.fullName, ctor: entry.ctors[1].name, args, type: data(entry.fullName) };
   }
 
   /**
@@ -254,18 +266,20 @@ class Threader {
     if (this.canAbort) {
       const lines = this.fresh('o');
       const message = this.fresh('m');
+      const className=this.sourceExceptions?this.fresh('exception_class'):undefined;
+      const present=this.sourceExceptions?this.fresh('exception_present'):undefined;
       const handled = failure
         ? failure(variable(lines, OUTPUT), variable(message, STRING))
-        : this.reraise(variable(lines, OUTPUT), variable(message, STRING), inner.type);
-      cases.push({ pattern: { k: 'ctor', data: entry.fullName, ctor: entry.ctors[1].name, binds: [lines, message] }, body: handled });
+        : this.reraise(variable(lines, OUTPUT), variable(message, STRING), inner.type,className?variable(className,STRING):undefined,present?variable(present,BOOL):undefined);
+      cases.push({ pattern: { k: 'ctor', data: entry.fullName, ctor: entry.ctors[1].name, binds: [lines, message,...(this.sourceExceptions?[className,present]:[])] }, body: handled });
     }
     return { k: 'match', scrutinee: pair, cases, type: inner.type };
   }
 
-  reraise(out, message, pairType) {
+  reraise(out, message, pairType,className,present) {
     const entry = pairType.kind === 'data' && this.byName.get(pairType.name);
     if (!entry) throw new Error('an abort passes on only as a pair');
-    return { k: 'ctor', data: entry.fullName, ctor: entry.ctors[1].name, args: [out, message], type: pairType };
+    return { k: 'ctor', data: entry.fullName, ctor: entry.ctors[1].name, args: [out, message,...(this.sourceExceptions?[className,present]:[])], type: pairType };
   }
 
   /** `e` run after the lines `out`, a variable: its value paired with the lines printed by then, or its abort. */
@@ -359,6 +373,12 @@ class Threader {
    */
   complete(out, e) {
     if (!aborts(e)) return this.make(out, e);
+    if(e.k==='math'){
+      if(acceptLinkedRustPanicValue(e.k,e.op))return this.fail(out,e.args[0],e.type);
+      if(acceptLinkedJavaScriptSourceException(e.k,e.op))return this.fail(out,e.args[0],e.type,literal(STRING,readJavaScriptSourceExceptionClass(e.op)),e.args[1]);
+      const body=this.fail(out,literal(STRING,readJavaScriptNumberConversionFailure(e.op,e.args[0].type.kind)),e.type,literal(STRING,'TypeError'));
+      return{k:'let',name:this.fresh('numeric_argument'),value:e.args[0],body,type:body.type};
+    }
     const operands = [];
     const name = (value) => {
       if (value.k === 'var' || value.k === 'lit') return value;

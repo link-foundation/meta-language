@@ -16,10 +16,14 @@ use super::representation_rules::{
 };
 
 #[derive(Default)]
-pub(super) struct Context {
-    pub(super) module: ModuleContext,
-    pub(super) utf16_strings: bool,
-    pub(super) module_binding_scope: Option<crate::translation::javascript::ModuleBindingScope>,
+pub struct Context {
+    /// Selected stable Rust source std version; empty retains the default.
+    pub rust_source_version: String,
+    pub module: ModuleContext,
+    pub utf16_strings: bool,
+    /// Keep one selected shared heap representation across sibling items.
+    pub reference_semantics: bool,
+    pub(crate) module_binding_scope: Option<crate::translation::javascript::ModuleBindingScope>,
 }
 
 fn policy() -> &'static Value {

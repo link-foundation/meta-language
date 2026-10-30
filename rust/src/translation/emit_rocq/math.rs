@@ -45,6 +45,86 @@ impl RocqEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation("math",op) {
+            crate::translation::rust_string_byte_lengths::validate_with_scalar_bridge(e,self.program.source_language,self.utf16_strings,"Rocq")?;
+            let mut value=crate::translation::rust_string_byte_view_rules::render_rust_string_byte_scalar_bridge("Rocq",&self.expr(&args[0])?,self.utf16_strings);
+            if self.utf16_strings{self.helpers.insert("utf16Text");value=crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq",&value);}
+            return Ok(crate::translation::rust_string_byte_length_rules::render_rust_string_byte_length("Rocq",&value));
+        }
+        if crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
+            self.floats();self.helpers.insert(super::Helper::Utf16Text);
+            let value=self.expr(&args[0])?;
+            return Ok(crate::translation::string_construction_rules::render_java_script_string_construction("Rocq",op,&value));
+        }
+        if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
+            self.floats();self.helpers.insert(super::Helper::BigIntegerConversion);
+            let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
+            let value=self.expr(&args[0])?;
+            if form=="number-compare"||form=="string-compare" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_comparison("Rocq",&form,&value,&right,false));
+            }
+            if form=="number-power" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_number_power("Rocq",&value,&right));
+            }
+            if form=="power" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_power("Rocq",&value,&right));
+            }
+            if form=="division" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_division("Rocq",&value,&right));
+            }
+            return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_result_expression("Rocq",&form,&value,false));
+        }
+        if crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
+            "math", op,
+        ) {
+            self.floats();
+            if matches!(args[0].ty.kind(), "string" | "int" | "nat") {
+                self.helpers.insert(super::Helper::StringNumber);
+            }
+            let value = self.expr(&args[0])?;
+            let text = crate::translation::string_number_rules::render_java_script_number_scalar_conversion("Rocq", op, args[0].ty.kind(), &value, false);
+            if text.is_empty() {
+                return Err(super::unsupported(
+                    "numeric conversion operand",
+                    "the checked conversion must retain its total value or threaded abort",
+                    e.span,
+                ));
+            }
+            return Ok(text);
+        }
+        if crate::translation::rust_shift_rules::accept_linked_rust_checked_shift("math", op) {
+            let values = args
+                .iter()
+                .map(|argument| self.expr(argument))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(crate::translation::rust_shifts::emit_rust_checked_shift(
+                "Rocq", e, &values,
+            ));
+        }
+        if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op)
+            > 0.0
+        {
+            let values = args
+                .iter()
+                .map(|argument| self.expr(argument))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(
+                crate::translation::rust_primitive_bitwise::emit_rust_primitive_bitwise(
+                    "Rocq", e, &values,
+                ),
+            );
+        }
+        if crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(op) > 0.0 {
+            let values = args
+                .iter()
+                .map(|argument| self.expr(argument))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(crate::translation::big_integer_bitwise_rules::render_big_integer_bitwise_expression("Rocq", op, &values));
+        }
         self.floats();
         let mut texts = Vec::with_capacity(args.len());
         for arg in args {

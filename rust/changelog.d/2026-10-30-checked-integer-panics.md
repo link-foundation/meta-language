@@ -1,0 +1,1 @@
+Draft immediate checked integer `unwrap` and computed-message `expect` translation across arithmetic and shifts, preserving eager source order and guarded failures. Share canonical Option panic messages with lookup consumers. Original boundary and transport controls remain deferred.

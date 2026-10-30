@@ -8,6 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {generateTranslationWorkflowHistory} from '../scripts/generate-translation-workflow-history.mjs';
+import {restoreCiTestPartitionWorkflow} from '../scripts/ci-test-partition-history.mjs';
 import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';
 import {captureTranslationTestFeedbackPartition,mergeTranslationTestFeedbackPartitions} from '../scripts/translation-test-feedback.mjs';
 import {readProjectData,writeProjectData} from '../scripts/project-data.mjs';
@@ -23,7 +24,9 @@ test('six bounded translation partitions retain every previous file once and pre
     assert.equal(restoreTranslationWorkflowHistory(current),row.sourceText);
     assert.equal(restoreTranslationWorkflowHistory(current+'\n# changed\n'),current+'\n# changed\n');
   }
-  const workflow=read('.github/workflows/js.yml');
+  // Retain the exact six-cell historical scope; current twelve-cell tests
+  // independently retain the complete current matrix and every original file.
+  const workflow=restoreCiTestPartitionWorkflow(read('.github/workflows/js.yml'));
   const tests=parseWorkflow(workflow).find(job=>job.id==='tests');
   assert.match(tests.header,/timeout-minutes: 15/u);assert.match(tests.header,/fail-fast: false/u);
   const entries=[...tests.header.matchAll(/\{group: translation, partition: ([0-9]+), shards: ([0-9]+)\}/gu)]

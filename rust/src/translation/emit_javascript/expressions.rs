@@ -1,5 +1,9 @@
 //! Complete expression emission, separated without changing its decisions.
 
+use crate::translation::external_emission_rules::{
+    ml_string::Text, render_java_script_external_call,
+};
+
 use super::{
     Expr, Helper, JavaScriptEmitter, Node, Result, Type, UnaryOp, ctor_object, indent, json_string,
     literal, negate, unsupported,
@@ -7,11 +11,25 @@ use super::{
 
 impl JavaScriptEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                e,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.expr(copy)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("JavaScript",&value));
+        }
         if e.ty.is_float() {
             self.uses_float = true;
         }
         match &e.node {
-            Node::Record { entries } => self.record_value(entries),
+            Node::Record { entries, order } => self.record_value(
+                entries,
+                order.as_deref(),
+                matches!(&e.ty, Type::Record { ordered: true, .. }),
+            ),
             Node::RecordField { object, field, .. } => self.record_field(object, field),
             Node::Lit { value } => literal(&e.ty, value),
             Node::None { .. }
@@ -113,9 +131,6 @@ impl JavaScriptEmitter<'_> {
                         crate::translation::surface::External::Constant { .. } => "const",
                     };
                     let args = self.exprs(args)?.join(", ");
-                    use crate::translation::external_emission_rules::{
-                        ml_string::Text, render_java_script_external_call,
-                    };
                     let rendered = render_java_script_external_call(
                         &Text::from_text(kind),
                         &Text::from_text(func),
@@ -178,6 +193,95 @@ impl JavaScriptEmitter<'_> {
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
             Node::Method { object, op, args } => {
+                if op == "toSorted" {
+                    let receiver = self.expr(object)?;
+                    return Ok(
+                        crate::translation::string_array_sort_rules::render_string_array_copy_sort(
+                            "JavaScript",
+                            &receiver,
+                            false,
+                        ),
+                    );
+                }
+                if op == "readJavaScriptRecordPropertyOrder" {
+                    let rendered = self.expr(object)?;
+                    return crate::translation::ordered_record_values::order_read(
+                        "JavaScript",
+                        e,
+                        &rendered,
+                    );
+                }
+                if crate::translation::array_state_method_rules::accept_linked_array_state_method(
+                    "method",
+                    op,
+                    object.ty.kind(),
+                    object.ty.is_reference(),
+                ) {
+                    let receiver = self.expr(object)?;
+                    let mut arguments = Vec::new();
+                    for argument in args {
+                        let value = argument.as_ref().ok_or_else(|| {
+                            unsupported(
+                                "shared array range argument",
+                                "each actual source argument needs its expression",
+                                e.span,
+                            )
+                        })?;
+                        arguments.push(self.expr(value)?);
+                    }
+                    self.state.encode(&crate::translation::array_state_method_rules::read_array_state_method_identity(op),&crate::translation::array_state_method_rules::read_array_state_method_statement());
+                    return Ok(crate::translation::array_state_method_rules::render_array_state_method_expression("JavaScript",op,&receiver,&arguments,&[],&[],""));
+                }
+                if crate::translation::record_write_source_interfaces::accept_linked_record_field_write(
+                    "method",
+                    op,
+                    object.ty.kind(),
+                    object.ty.is_reference(),
+                ) {
+                    let receiver = self.expr(object)?;
+                    let mut arguments = Vec::new();
+                    for argument in args {
+                        let value = argument.as_ref().ok_or_else(|| {
+                            unsupported(
+                                "shared record field assignment",
+                                "the actual operand is missing",
+                                e.span,
+                            )
+                        })?;
+                        arguments.push(self.expr(value)?);
+                    }
+                    self.state.encode(
+                        "write-record-field",
+                        &crate::translation::record_write_source_interfaces::read_record_field_write_statement(
+                        ),
+                    );
+                    return Ok(crate::translation::record_write_source_interfaces::render_record_field_write("JavaScript",
+                        &crate::translation::record_write_source_interfaces::read_record_field_write_operator(op), &receiver,
+                        &json_string(&crate::translation::record_write_source_interfaces::read_record_field_write_name(op)), "", &arguments, ""));
+                }
+                if object.ty.is_reference()
+                    && !crate::translation::reference_method_rules::read_reference_method_result(
+                        object.ty.kind(),
+                        op,
+                    )
+                    .is_empty()
+                {
+                    let receiver = self.expr(object)?;
+                    let mut arguments = Vec::new();
+                    for argument in args {
+                        let value = argument.as_ref().ok_or_else(|| {
+                            unsupported(
+                                "shared collection method argument",
+                                "every source argument needs its actual expression",
+                                e.span,
+                            )
+                        })?;
+                        arguments.push(self.expr(value)?);
+                    }
+                    self.state.encode(&crate::translation::reference_method_rules::read_reference_method_identity(object.ty.kind(), op),
+                        &crate::translation::reference_method_rules::read_reference_method_statement());
+                    return Ok(crate::translation::reference_method_rules::render_reference_method_expression("JavaScript", object.ty.kind(), op, &receiver, &arguments, false, ""));
+                }
                 if op == "map"
                     && let [Some(callback)] = args.as_slice()
                 {
@@ -193,6 +297,7 @@ impl JavaScriptEmitter<'_> {
                         ),
                     );
                 }
+                let receiver_kind = object.ty.kind();
                 let object = self.expr(object)?;
                 let mut values = Vec::with_capacity(args.len());
                 for (index, argument) in args.iter().enumerate() {
@@ -214,6 +319,21 @@ impl JavaScriptEmitter<'_> {
                         ),
                     );
                 }
+                if crate::translation::utf16_method_emission_rules::accept_utf16_text_method(
+                    "method",
+                    receiver_kind,
+                    op,
+                ) {
+                    self.helpers.insert(Helper::Utf16Text);
+                    return Ok(
+                        crate::translation::utf16_method_emission_rules::render_utf16_text_method(
+                            "JavaScript",
+                            op,
+                            &object,
+                            &values.join(", "),
+                        ),
+                    );
+                }
                 Ok(
                     crate::translation::primitive_method_rules::render_primitive_method_expression(
                         "JavaScript",
@@ -225,6 +345,13 @@ impl JavaScriptEmitter<'_> {
                 )
             }
             Node::StringMap { op, string } => {
+                if self.program.source_language == crate::translation::Language::JavaScript
+                    && crate::translation::unicode_case_emission_rules::accept_unicode_case_mapping_operation(op) {
+                    self.helpers.insert(Helper::UnicodeCase);
+                    self.state.encode("unicode-default-case-16",&crate::translation::unicode_case_emission_rules::read_unicode_case_encoding_statement());
+                    let value = self.expr(string)?;
+                    return Ok(crate::translation::unicode_case_emission_rules::render_unicode_case_string_map("JavaScript",op,false,&value));
+                }
                 let value = self.expr(string)?;
                 let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
                     value
@@ -283,10 +410,12 @@ impl JavaScriptEmitter<'_> {
             }
             Node::Cast {
                 arg,
+                from,
+                to,
                 flavor,
                 message,
                 ..
-            } => self.cast(arg, *flavor, message.as_deref()),
+            } => self.cast(arg, from, to, *flavor, message.as_deref()),
             Node::Abort { message } => {
                 self.helpers.insert(Helper::Abort);
                 Ok(format!("ml_abort({})", json_string(message)))
@@ -300,6 +429,7 @@ impl JavaScriptEmitter<'_> {
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
             | Node::CollectionItems { .. } => self.array_expr(e),
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => self.array_expr(e),
             Node::Math { .. } => self.math(e),
         }
     }

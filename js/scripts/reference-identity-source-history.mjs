@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource} from './collection-size-projection-schema.mjs';
 import {restoreRawConsumingSnapshotSource} from './raw-consuming-snapshot-source-profile.mjs';
 import {truthyProjectionHostPins,restoreTruthyProjectionHistoricalSource} from './truthy-projection-schema.mjs';
+import {restoreSharedArrayNativeFrontendSource} from './shared-array-native-frontend-history.mjs';
 const validator='js/src/typed-program-links-validation.js',checker='js/src/translation/check.js';
 const changes=[
   {
@@ -12,7 +13,7 @@ const changes=[
   },
   {
     "before": "      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');\n      const comparison =",
-    "after": "      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');\n      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), node.domain !== undefined, node.domain?.reference === true, node.domain !== undefined && sameType(node.domain, node.left.type));\n      if (referenceError) throw new TypeError(referenceError);\n      const comparison ="
+    "after": "      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');\n      const domainPresent = node.domain !== undefined && node.domain !== null;\n      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), domainPresent, node.domain?.reference === true, domainPresent && sameType(node.domain, node.left.type));\n      if (referenceError) throw new TypeError(referenceError);\n      const comparison ="
   }
 ];
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
@@ -37,6 +38,7 @@ export function deriveReferenceIdentityValidationSource(previous){return deriveW
 /** Live runtime/codec/checker use never invokes this scoped historical adapter. */
 export function restoreReferenceIdentityHistoricalSource(source,file,scope){
  assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof scope,'string');
+ if(scope==='collection size projection'&&['rust/src/typed_program_links/projection.rs','js/src/typed-program-expression-projection.js'].includes(file))source=restoreSharedArrayNativeFrontendSource(source,file);
   // This finite whole-source successor adds inferred optional-tuple syntax.
   // Restore its exact predecessor before the existing independently certified
   // nullable-array source chain; unknown source bytes retain the old refusal.

@@ -11,6 +11,13 @@ impl Inference {
         place: Option<Span>,
     ) -> Result<()> {
         match &pattern.node {
+            SPatternNode::Alias {
+                name,
+                pattern: inner,
+            } => {
+                scope.insert(name.clone(), ty.clone());
+                self.pattern(inner, ty, scope, place)
+            }
             SPatternNode::Ctor { path, args } => {
                 let (name, tag) = match path.as_slice() {
                     [.., name, tag] => (name.clone(), tag.clone()),
@@ -41,6 +48,17 @@ impl Inference {
                 let literal = self.fresh(true);
                 self.unify(ty, &literal, place)
             }
+            SPatternNode::TypedNumLit {
+                ty: literal_type, ..
+            } => self.unify(ty, &Term::Known(literal_type.clone()), place),
+            SPatternNode::ByteLit { .. } => self.unify(
+                ty,
+                &Term::Known(Type::Fixed {
+                    bits: 8,
+                    signed: false,
+                }),
+                place,
+            ),
             SPatternNode::BoolLit { .. } => self.unify(ty, &Term::Known(BOOL), place),
             SPatternNode::StrLit { .. } => self.unify(ty, &Term::Known(STRING), place),
             _ => Ok(()),

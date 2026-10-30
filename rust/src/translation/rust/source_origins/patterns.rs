@@ -6,6 +6,20 @@ use super::super::{Result, SExpr, SPattern, SPatternNode, Span, Type, unsupporte
 use super::{SourceDeclaration, SourceLookup, SourceOrigin, SourceOrigins};
 
 impl SourceOrigins {
+    pub(in super::super) fn alias_literal_pattern(&mut self, pattern: &SPattern, node: &SExpr) {
+        let form = match pattern.node {
+            SPatternNode::StrLit { .. } => "strLit",
+            SPatternNode::ByteLit { .. } => "byteLit",
+            SPatternNode::TypedNumLit { .. } => "typedNumLit",
+            _ => "",
+        };
+        if (crate::translation::rust_byte_pattern_rules::accept_rust_source_literal_pattern_alias(form)
+            || crate::translation::rust_numeric_pattern_rules::accept_rust_source_numeric_pattern_alias(form))
+            && let Some(span)=pattern.span {
+            self.literal_pattern_aliases.entry(span).or_default().push(node.clone());
+        }
+    }
+
     pub(in super::super) fn reference_pattern(&mut self, pattern: &SPattern) {
         if let Some(span) = pattern.span {
             *self.pattern_references.entry(span).or_default() += 1;
@@ -28,8 +42,9 @@ impl SourceOrigins {
         result: &mut HashMap<String, SourceOrigin>,
         source_span: Option<Span>,
     ) -> Result<()> {
+        self.pointer_integer_argument(origin, &SourceOrigin::value(), source_span)?;
         let mut origin = origin.clone();
-        let references = if matches!(pattern.node, SPatternNode::Wild) {
+        let references = if matches!(pattern.node, SPatternNode::Wild) && pattern.span.is_none() {
             self.wildcard_references.pop_front().unwrap_or_default()
         } else {
             pattern
@@ -45,6 +60,9 @@ impl SourceOrigins {
                 .is_some_and(|layer| layer == "reference")
             {
                 origin.wrappers.remove(0);
+                if !origin.source_lifetimes.is_empty() {
+                    origin.source_lifetimes.remove(0);
+                }
             } else {
                 if !self.collecting && origin.proven {
                     return Err(unsupported(
@@ -69,7 +87,98 @@ impl SourceOrigins {
                 source_span,
             ));
         }
+        if let Some(aliases) = pattern
+            .span
+            .and_then(|span| self.literal_pattern_aliases.get(&span))
+            .cloned()
+        {
+            for alias in aliases {
+                self.mark(&alias, origin.clone());
+            }
+        }
+        if let SPatternNode::TypedNumLit { owner, .. } = &pattern.node {
+            let mut contract = origin.clone();
+            if let Some(expanded) = origin.expanded_source_owner.as_ref() {
+                contract.source_owner = Some(expanded.clone());
+            }
+            let actual = contract.pointer_integer_owner();
+            let error=crate::translation::rust_numeric_pattern_rules::read_rust_source_numeric_pattern_owner_error(&actual,owner,origin.ty.is_some(),self.collecting);
+            if !error.is_empty() {
+                return Err(unsupported("Rust numeric pattern", &error, source_span));
+            }
+        }
+        if matches!(pattern.node, SPatternNode::StrLit { .. }) {
+            let owner = origin.source_owner.as_ref();
+            let owner_path = owner.map(|owner| owner.path.join("::")).unwrap_or_default();
+            let count = |value: usize| {
+                f64::from(u32::try_from(value).expect("source column count fits the source limit"))
+            };
+            let error=crate::translation::rust_string_pattern_rules::read_rust_source_string_pattern_error(
+                if origin.ty==Some(super::super::STRING){"string"}else{""},origin.text_source_model.unwrap_or(""),origin.proven,count(origin.wrappers.len()),origin.wrappers.iter().all(|layer|layer=="reference"),owner.map_or("",|owner|owner.kind.as_str()),&owner_path,owner.map_or(-1.0,|owner|count(owner.arguments.len())),self.collecting);
+            if !error.is_empty() {
+                return Err(unsupported("Rust string pattern", &error, source_span));
+            }
+        }
         match &pattern.node {
+            SPatternNode::IntegerRange { lower, upper, .. } => {
+                for endpoint in [lower, upper].into_iter().flatten() {
+                    self.pattern(
+                        endpoint,
+                        &origin,
+                        path,
+                        result,
+                        endpoint.span.or(source_span),
+                    )?;
+                }
+            }
+            SPatternNode::Alias {
+                name,
+                pattern: inner,
+            } => {
+                if result.contains_key(name) {
+                    return Err(unsupported(
+                        "duplicate source pattern binding",
+                        "each pattern binds a source name at most once",
+                        source_span,
+                    ));
+                }
+                result.insert(name.clone(), origin.clone());
+                self.pattern(inner, &origin, path, result, inner.span.or(source_span))?;
+            }
+            SPatternNode::Tuple { args, rest } => {
+                let fields = origin.fields.as_deref().unwrap_or_default();
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source tuple width fits the shared array limit"),
+                    )
+                };
+                let plan =
+                    crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
+                        count(fields.len()),
+                        count(args.len()),
+                        rest.map_or(-1.0, count),
+                    );
+                let borrowed = !origin.wrappers.is_empty()
+                    && origin.wrappers.iter().all(|layer| layer == "reference");
+                for (index, item) in args.iter().enumerate() {
+                    let position = if plan.first() == Some(&0.0) {
+                        plan.iter()
+                            .skip(1)
+                            .position(|actual| *actual == count(index))
+                    } else {
+                        None
+                    };
+                    let mut field = position
+                        .and_then(|position| fields.get(position))
+                        .cloned()
+                        .unwrap_or_else(SourceOrigin::unknown);
+                    if borrowed && position.is_some() {
+                        field.wrappers.insert(0, "reference".to_owned());
+                    }
+                    self.pattern(item, &field, path, result, item.span.or(source_span))?;
+                }
+            }
             SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
                 if !self
                     .lookup(std::slice::from_ref(name), path)
@@ -77,6 +186,13 @@ impl SourceOrigins {
                         matches!(entry.declaration, SourceDeclaration::Constructor { .. })
                     })
                 {
+                    if result.contains_key(name) {
+                        return Err(unsupported(
+                            "duplicate source pattern binding",
+                            "each pattern binds a source name at most once",
+                            source_span,
+                        ));
+                    }
                     result.insert(name.clone(), origin);
                 }
             }
@@ -183,7 +299,15 @@ impl SourceOrigins {
                         span,
                     ));
                 }
-                scope.insert(name.clone(), self.join(&candidates));
+                let mut binding = self.join(&candidates);
+                binding.source_extending_temporary_bindings.clear();
+                if self.owned_binding_value(&binding) {
+                    self.consume_owned_binding(&binding, span)?;
+                    let binding = self.register_owned_binding(binding);
+                    scope.insert(name.clone(), binding);
+                } else {
+                    scope.insert(name.clone(), binding);
+                }
             }
         }
         Ok(scope)

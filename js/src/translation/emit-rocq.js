@@ -1,5 +1,27 @@
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
+import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal-runtime.js';
+import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
+import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
+import {UNICODE_CASE_ROCQ_PRELUDE} from './unicode-case-formal-runtime.js';
+import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
+import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
+import {hasSourceExceptionOutput,hasSourceExceptionPayload,sourceExceptionPatternSuffix} from './source-exception-observation.js';
+import {readSourceExceptionObservationStatement,readSourceExceptionRocqOutputPrelude} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_ROCQ_PRELUDE} from './utf16-text-formal-runtime.js';
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
+import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
+import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -9,6 +31,10 @@ import {readStringOrderRefusal} from './string-order-rules.js';
 // so assertions about Numbers are still theorems closed by computation.
 
 import { typeError, unsupported } from './diagnostics.js';
+import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
+import {STRING_NUMBER_ROCQ_PRELUDE} from './string-number-formal-runtime.js';
+import {BIG_INTEGER_CONVERSION_ROCQ_PRELUDE} from './big-integer-conversion-formal-runtime.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
 import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
@@ -25,6 +51,8 @@ import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-common.js';
 
 const KEYWORDS = new Set([
+  'MLStringNumber',
+  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase','MLRecordPropertyOrder',
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
   'wf', 'Definition', 'Fixpoint', 'Function', 'Theorem', 'Lemma', 'Proof', 'Qed', 'Defined', 'Module', 'End',
@@ -267,7 +295,7 @@ function ident(name) {
 }
 
 export function emitRocq(source) {
-  const program = threadOutput(source, 'Rocq');
+  const program = threadOutput(prepareOrderedRecordValues(source), 'Rocq');
   const state = new EmitState(program, 'Rocq', ident, KEYWORDS, {
     ctorStyle: 'module',
     // Rocq derives these from inductives and Functions in the same namespace.
@@ -288,6 +316,8 @@ function injection(index, count, text) {
 class RocqEmitter {
   constructor(program, state) {
     this.program = program;
+    this.target='Rocq';
+    this.utf16Strings=requireFormalUnitStrings(program);
     this.state = state;
     this.helpers = new Set(['tactics']);
     this.natFunctions = new Map();
@@ -296,6 +326,7 @@ class RocqEmitter {
   }
 
   file() {
+    prepareFormalUnitStrings(this);
     const blocks = [];
     const order = orderDeclarations(this.program, { requireContiguousModules: true });
     let openModules = [];
@@ -328,6 +359,12 @@ class RocqEmitter {
       ...(this.usesFloat ? FLOAT_PRELUDE : ROCQ_PRELUDE),
       '',
       ...helperText.flatMap((helper) => [helper, '']),
+      ...(this.helpers.has('stringNumber')?[STRING_NUMBER_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('utf16Text')?[UTF16_TEXT_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('unicodeCase')?[UNICODE_CASE_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('recordPropertyOrder')?[RECORD_PROPERTY_ORDER_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('sourceExceptionObservation')?[readSourceExceptionRocqOutputPrelude(),'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
     ].join('\n');
@@ -358,11 +395,11 @@ class RocqEmitter {
       case 'bool':
         return 'bool';
       case 'string':
-        return 'string';
+        return this.utf16Strings?readFormalStringUnitType('Rocq'):'string';
       case 'unit':
         return 'unit';
       case 'output':
-        return 'list string';
+        return this.utf16Strings?'list (list N)':'list string';
       case 'data':
         return this.state.ref(type.name);
       case 'array':
@@ -372,8 +409,10 @@ class RocqEmitter {
         return type.absence === 'both' ? `(option (option ${this.type(type.element)}))` : `(option ${this.type(type.element)})`;
       case 'tuple':
         return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' * ')})%type` : 'unit';
-      case 'record':
-        return renderRecordType('Rocq', type.fields.map(field => this.type(field.type)));
+      case 'record': {
+        const payload=renderRecordType('Rocq', type.fields.map(field => this.type(field.type)));
+        return type.ordered?renderOrderedRecordType('Rocq',payload,this.type({kind:'array',element:{kind:'float'}})):payload;
+      }
       case 'function':
         return renderCallableFunctionType('Rocq', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
@@ -631,6 +670,10 @@ class RocqEmitter {
   }
 
   expr(e) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Rocq',this.expr(copy));}
+    const units=readFormalUnitStringExpression(this,e,0);
+    if(units!==null)return units;
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
       if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
@@ -678,9 +721,9 @@ class RocqEmitter {
       case 'lambda':
         return renderCallableLambda('Rocq', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body), []);
       case 'record':
-        return renderRecordValue('Rocq', [], e.entries.map(entry => this.expr(entry.value)));
+        return emitOrderedRecordValue(this,e,'Rocq')??renderRecordValue('Rocq', [], e.entries.map(entry => this.expr(entry.value)));
       case 'recordField':
-        return renderRecordProductField('Rocq', this.expr(e.object), e.index, e.object.type.fields.length);
+        return renderRecordProductField('Rocq', (e.object.type.ordered?renderOrderedRecordPayload('Rocq',this.expr(e.object)):this.expr(e.object)), e.index, e.object.type.fields.length);
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
         let value = this.expr(e.object);
@@ -727,7 +770,7 @@ class RocqEmitter {
         return renderOptionalCoalescing('Rocq', e.left.type.absence, this.expr(e.left), '', this.expr(e.right));
       case 'optionalField': {
         const count = e.object.type.element.fields.length;
-        let field = 'ml_record';
+        let field = e.object.type.element.ordered?renderOrderedRecordPayload('Rocq','ml_record'):'ml_record';
         for (let index = count - 1; index > e.index; index -= 1) field = `(fst ${field})`;
         if (e.index > 0) field = `(snd ${field})`;
         return renderOptionalProjection('Rocq', e.object.type.absence, this.expr(e.object), '', 'ml_record', field, '');
@@ -743,6 +786,7 @@ class RocqEmitter {
         return renderOptionalArrayRead('Rocq', e.index.type.kind, this.expr(e.array), index);
       }
       case 'method':
+        if(e.op==='toSorted')throw unsupported('array copying sort','this target needs an explicit UTF-16 string ordering interpretation',e.span);
         return this.method(e);
       case 'stringPoints':
         throw unsupported('string iteration', 'this target needs a Unicode code-point iterator over its UTF-8 string encoding', e.span);
@@ -759,14 +803,13 @@ class RocqEmitter {
       }
       case 'collectionSize':
         this.floats();
-        return `(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ${this.expr(e.object)}))))`;
+        return renderCollectionSizeExpression('Rocq', this.expr(e.object));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
         const key = e.object.type.kind === 'map' ? '(fst ml_value)' : 'ml_value';
-        let equal = this.comparison('eq', keyType, key, 'ml_search');
-        if (keyType.kind === 'float') equal = `(orb ${equal} (andb (PrimFloat.is_nan ${key}) (PrimFloat.is_nan ml_search)))`;
-        const result = e.op === 'get' ? `(option_map (@snd ${this.type(e.object.type.key)} ${this.type(e.object.type.value)}) (List.find (fun ml_value => ${equal}) ml_values))` : `(List.existsb (fun ml_value => ${equal}) ml_values)`;
-        return `(let ml_values := ${this.expr(e.object)} in let ml_search := ${this.expr(e.key)} in ${result})`;
+        const equal = this.comparison('eq', keyType, key, 'ml_search');
+        const first = e.op === 'get' ? this.type(e.object.type.key) : '', second = e.op === 'get' ? this.type(e.object.type.value) : '';
+        return renderCollectionReadExpression('Rocq', e.object.type.kind, e.op, this.expr(e.object), this.expr(e.key), keyType.kind === 'float', equal, first, second);
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';
@@ -820,6 +863,7 @@ class RocqEmitter {
         return `(ml_list_at ${this.expr(e.array)} ${index} ${this.inhabitant(e.type)})`;
       }
       case 'length': {
+        if(acceptRustExactArrayLengthResult(e.k,e.type.kind,e.type.bits??0,e.type.signed===true,e.array.type.kind))return renderRustExactArrayLength('Rocq',this.expr(e.array));
         if (e.array.type.kind === 'string') {
           this.floats();
           return renderStringLengthExpression('Rocq', this.expr(e.array));
@@ -838,6 +882,7 @@ class RocqEmitter {
 
   /** Math and Number functions: PrimFloat's where they agree with JavaScript, the math helpers otherwise. */
   method(e) {
+    const order=emitOrderedRecordOrderRead(this,e,'Rocq');if(order!==null)return order;
     if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', e.object.type.kind, e.op), e.span);
     if (e.op === 'join') {
       const text = (name, type) => {
@@ -873,6 +918,7 @@ class RocqEmitter {
   truthy(arg) {
     if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
     const value = this.expr(arg);
+    if(this.utf16Strings&&arg.type.kind==='string')return formalUnitTruth(this,value);
     if (arg.type.kind === 'float') this.floats();
     return renderOptionalPrimitiveTruth('Rocq', arg.type.kind, value, '', false, Boolean(arg.type.signed));
   }
@@ -885,6 +931,26 @@ class RocqEmitter {
   }
 
   math(e) {
+    const byteLength=emitRustStringByteLength(this,e,'Rocq',value=>this.expr(value));if(byteLength!==null)return byteLength;
+    if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Rocq',e.op,this.expr(e.args[0]));}
+    if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+      this.floats();this.helpers.add('bigIntegerConversion');
+      if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('Rocq',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.expr(e.args[1]),false);
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
+          return renderJavaScriptBigIntegerResultExpression('Rocq',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
+    }
+    if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
+      this.floats();
+      if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');
+      const text=renderJavaScriptNumberScalarConversion('Rocq',e.op,e.args[0].type.kind,this.expr(e.args[0]),false);
+      if(!text)throw unsupported('numeric conversion operand','the checked conversion must retain its total value or threaded abort',e.span);
+      return text;
+    }
+    if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rocq',e,argument=>this.expr(argument));
+    if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rocq', e, argument => this.expr(argument));
+    if (readBigIntegerBitwiseArity(e.op)) return renderBigIntegerBitwiseExpression('Rocq', e.op, e.args.map(argument => this.expr(argument)));
     this.floats();
     const args = e.args.map((arg) => this.expr(arg));
     const native = { abs: 'PrimFloat.abs', sqrt: 'PrimFloat.sqrt', isNaN: 'PrimFloat.is_nan' }[e.op];
@@ -939,13 +1005,13 @@ class RocqEmitter {
       case 'bool':
         return 'false';
       case 'string':
-        return 'EmptyString';
+        return this.utf16Strings?'(@nil N)':'EmptyString';
       case 'float':
         return '0%float';
       case 'unit':
         return 'tt';
       case 'output':
-        return '(@nil string)';
+        return this.utf16Strings?'(@nil (list N))':'(@nil string)';
       case 'array':
         return `(@nil ${this.type(type.element)})`;
       case 'option':
@@ -992,6 +1058,7 @@ class RocqEmitter {
   }
 
   comparison(op, domain, left, right) {
+    if(this.utf16Strings&&domain.kind==='string')return renderFormalStringUnitComparison('Rocq',op,left,right);
     let module;
     if (domain.kind === 'bool') module = 'Bool';
     else if (domain.kind === 'string') module = 'String';
@@ -1070,7 +1137,14 @@ class RocqEmitter {
     return `(match ${subject} with ${arms.join(' ')} end)`;
   }
 
-  toText(arg, console = false) {
+  toText(arg,console=false){
+    if(!this.utf16Strings)return this.scalarText(arg,console);
+    if(arg.type.kind==='string')return this.expr(arg);
+    if(arg.type.kind==='unit')return formalUnitLiteral(this,'undefined');
+    return formalScalarUnits(this,this.scalarText(arg,console));
+  }
+
+  scalarText(arg, console = false) {
     const text = this.expr(arg);
     switch (arg.type.kind) {
       case 'string':
@@ -1099,6 +1173,13 @@ class RocqEmitter {
 
   cast(e) {
     const arg = this.expr(e.arg);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('Rocq', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     const from = e.from.kind === 'fixed' ? (e.from.signed ? 'Z' : 'N') : (e.from.kind === 'nat' ? 'N' : 'Z');
     const to = e.to.kind === 'fixed' ? (e.to.signed ? 'Z' : 'N') : (e.to.kind === 'nat' ? 'N' : 'Z');
     if (e.flavor === 'checked') throw unthreaded('a checked conversion to a natural');
@@ -1113,22 +1194,28 @@ class RocqEmitter {
     const theorems = [];
     // A program that may abort is the lines it prints and the message of the abort that stops it, if one does.
     const aborts = this.program.abortsThreaded;
+    const sourceExceptions=hasSourceExceptionOutput(this.program);
+    if(sourceExceptions)this.helpers.add('sourceExceptionObservation');
+    const emitOutput=sourceExceptions?'ml_emit_source_exception':'ml_emit';
     if (aborts) this.helpers.add('emit');
     const arms = (effect, made, aborted) => {
       const [mk, abort] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
-      return `match ${this.expr(effect.pair)} with ${mk} _ ${effect.name} => ${made} | ${abort} _ ${aborted.bind} => ${aborted.body} end`;
+      const rich=hasSourceExceptionPayload(this.program.declarations.get(effect.data));
+      return `match ${this.expr(effect.pair)} with ${mk} _ ${effect.name} => ${made} | ${abort} _ ${aborted.bind}${rich?' ml_class ml_present':sourceExceptionPatternSuffix(this.program,effect.data)} => ${aborted.body} end`;
     };
     const build = (index) => {
       if (index >= effects.length) return aborts ? '(nil, None)' : 'nil';
       const effect = effects[index];
       if (effect.k === 'print') {
+        if(this.utf16Strings){const text=formalUnitDisplay(this,this.expr(effect.expr));return aborts?`${emitOutput} (${text} :: nil)\n  (${build(index+1)})`:`${text} ::\n  ${build(index+1)}`;}
         return aborts ? `ml_emit (${this.expr(effect.expr)} :: nil)\n  (${build(index + 1)})` : `${this.expr(effect.expr)} ::\n  ${build(index + 1)}`;
       }
       if (effect.k === 'output') {
+        if(this.utf16Strings){const lines=`(List.map (fun ml_line => ${formalUnitDisplay(this,'ml_line')}) (List.rev ${this.expr(effect.expr)}))`;return `${aborts?emitOutput:'app'} ${lines}\n  (${build(index+1)})`;}
         return `${aborts ? 'ml_emit' : 'app'} (List.rev ${this.expr(effect.expr)})\n  (${build(index + 1)})`;
       }
       if (effect.k === 'let') return `let ${effect.name} := ${this.expr(effect.value)} in\n  ${build(index + 1)}`;
-      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: '(nil, Some ml_m)' })})`;
+      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: sourceExceptions?'(nil, Some (ml_class, ml_m, ml_present))':this.utf16Strings?'(nil, Some '+formalUnitDisplay(this,'ml_m')+')':'(nil, Some ml_m)' })})`;
       assertion += 1;
       // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
       const statement = effects.slice(0, index).reduceRight((rest, item) => {
@@ -1147,6 +1234,12 @@ class RocqEmitter {
     this.state.encode('program-output', 'main is the list of lines the source program prints, in order; evaluating it with vm_compute runs the program');
     if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main lists the lines of each step in the order they were printed');
     if (aborts) this.state.encode('abort-threading', 'a function that may abort, directly or through a function it calls, returns the source\'s abort message with the lines printed before it in the generated ml_io data type; main is the pair of the lines printed and Some message when the program aborts, None when it does not');
+    if(sourceExceptions){
+      this.state.encode('source-exception-observation',readSourceExceptionObservationStatement());
+      const type=this.type({kind:'string'}),message=this.utf16Strings?formalUnitDisplay(this,'(snd (fst ml_error))'):'(snd (fst ml_error))';
+      return [...theorems,`Definition ml_source_exception_observation : (list string * option (${type} * ${type} * bool)%type)%type :=\n  ${body}.`,
+       `Definition main : list string * option string :=\n  let ml_result := ml_source_exception_observation in (fst ml_result, match snd ml_result with None => None | Some ml_error => Some ${message} end).`].join('\n\n');
+    }
     return [...theorems, `Definition main : ${aborts ? 'list string * option string' : 'list string'} :=\n  ${body}.`].join('\n\n');
   }
 }

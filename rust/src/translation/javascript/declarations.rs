@@ -30,6 +30,7 @@ enum Body {
     Block,
     Arrow,
     RecordParameters(Box<super::record_parameters::RecordParameters>),
+    RecordArrowParameters(Box<super::record_parameters::RecordParameters>),
 }
 
 impl JavaScriptParser {
@@ -82,6 +83,7 @@ impl JavaScriptParser {
                     span: None,
                     generated: false,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 });
                 items.push(SItem::Data(SData {
                     name,
@@ -89,6 +91,7 @@ impl JavaScriptParser {
                     span: Some(range),
                     generated: false,
                     source_unit_clone_derivation: None,
+                    source_field_signatures: None,
                 }));
             }
         }
@@ -125,6 +128,7 @@ impl JavaScriptParser {
                             Some(range),
                         ));
                     }
+                    self.require_scalar_string_token(&value, "datatype constructor tag")?;
                     tag = Some(value.value);
                 } else {
                     let mut ty = c.identifier(Some("field type"))?.value;
@@ -256,6 +260,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("function"))?;
         global(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 0);
         self.function_rest(start, &name, is_async, true)
     }
 
@@ -269,20 +274,34 @@ impl JavaScriptParser {
     ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
-        if named_record_parameters
-            && let Some(records) = self.read_named_record_parameters(doc.as_ref(), is_async)?
-        {
+        let arrays = self.read_array_formal_parameters(
+            if named_record_parameters {
+                "ordinary named function declaration"
+            } else {
+                "ordinary namespace object method"
+            },
+            doc.as_ref(),
+            is_async,
+        )?;
+        let records = if arrays.is_some() {
+            arrays
+        } else if named_record_parameters {
+            self.read_named_record_parameters(doc.as_ref(), is_async)?
+        } else {
+            self.read_record_namespace_parameters(doc.as_ref(), is_async)?
+        };
+        if let Some(records) = records {
             return self.function_body(
                 doc_token,
                 name_token,
                 doc,
                 &[],
-                Body::RecordParameters(Box::new(records)),
+                &Body::RecordParameters(Box::new(records)),
                 is_async,
             );
         }
         let tokens = self.parameters(&name_token.value)?;
-        self.function_body(doc_token, name_token, doc, &tokens, Body::Block, is_async)
+        self.function_body(doc_token, name_token, doc, &tokens, &Body::Block, is_async)
     }
 
     /// `const name = (…) => …` or `const name = function (…) { … }` before any
@@ -293,6 +312,8 @@ impl JavaScriptParser {
         self.cursor.expect("const", Some("function"))?;
         let name_token = self.cursor.identifier(Some("function"))?;
         global(&name_token)?;
+        self.lexical
+            .declaration(&name_token.value, name_token.span(), 1);
         self.cursor.expect("=", Some("function"))?;
         self.scope.tdz.remove(&name_token.value);
         let is_async = self.cursor.is("async") && !self.cursor.is_at("=>", 1);
@@ -322,16 +343,45 @@ impl JavaScriptParser {
                 self.cursor.advance();
             }
             self.cursor.expect("(", Some(&name_token.value))?;
-            let tokens = self.parameters(&name_token.value)?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Block, is_async)?
-        } else {
-            let tokens = if self.cursor.eat("(").is_some() {
+            let context=crate::translation::record_callable_parameter_rules::read_java_script_record_constant_context(true).to_string();
+            let arrays = self.read_array_formal_parameters(&context, doc.as_ref(), is_async)?;
+            let records = if arrays.is_some() {
+                arrays
+            } else {
+                self.read_record_constant_parameters(doc.as_ref(), is_async, true)?
+            };
+            let tokens = if records.is_some() {
+                Vec::new()
+            } else {
                 self.parameters(&name_token.value)?
+            };
+            let body = records.map_or(Body::Block, |records| {
+                Body::RecordParameters(Box::new(records))
+            });
+            self.function_body(start, &name_token, doc, &tokens, &body, is_async)?
+        } else {
+            let mut records = None;
+            let tokens = if self.cursor.eat("(").is_some() {
+                let context=crate::translation::record_callable_parameter_rules::read_java_script_record_constant_context(false).to_string();
+                let arrays = self.read_array_formal_parameters(&context, doc.as_ref(), is_async)?;
+                records = if arrays.is_some() {
+                    arrays
+                } else {
+                    self.read_record_constant_parameters(doc.as_ref(), is_async, false)?
+                };
+                if records.is_some() {
+                    Vec::new()
+                } else {
+                    self.parameters(&name_token.value)?
+                }
             } else {
                 vec![(self.cursor.identifier(Some("parameter"))?, None)]
             };
             self.cursor.expect("=>", Some(&name_token.value))?;
-            self.function_body(start, &name_token, doc, &tokens, Body::Arrow, is_async)?
+            let body = records.map_or(Body::Arrow, |records| {
+                Body::RecordArrowParameters(Box::new(records))
+            });
+            self.function_body(start, &name_token, doc, &tokens, &body, is_async)?
         };
         self.cursor.eat(";");
         Ok(function)
@@ -385,6 +435,9 @@ impl JavaScriptParser {
         let Some(mut token) = tokens.get(index) else {
             return false;
         };
+        if token.kind == TokenKind::Identifier
+            && !crate::translation::javascript_identifier_rules::accept_java_script_source_keyword_token(&token.value, &token.raw)
+            && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>") { return false; }
         let mut index = index;
         if token.kind == TokenKind::Identifier
             && token.value == "async"
@@ -418,6 +471,28 @@ impl JavaScriptParser {
     pub(super) fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
         let mut tokens: Vec<(Token, Option<SExpr>)> = Vec::new();
         let binding_names = self.parameter_binding_names();
+        let start = self.cursor.index;
+        let close = self.matching(start.saturating_sub(1));
+        let source = self.cursor.tokens[start..=close].to_vec();
+        let ordinary_kinds = source
+            .iter()
+            .map(|token| super::record_parameters::token_kind(token).to_owned())
+            .collect::<Vec<_>>();
+        let ordinary_values = source
+            .iter()
+            .map(|token| token.value.clone())
+            .collect::<Vec<_>>();
+        let census=crate::translation::sequential_parameter_default_rules::plan_ordinary_parameter_binding_positions(&ordinary_kinds,&ordinary_values,0.0);
+        let positions = census.get(1..).unwrap_or_default();
+        let bound_names = positions
+            .iter()
+            .map(|at| {
+                source[crate::translation::frontend_rules::ml_array::number_index(*at)
+                    .expect("actual ordinary binder")]
+                .value
+                .clone()
+            })
+            .collect::<Vec<_>>();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -436,7 +511,7 @@ impl JavaScriptParser {
             }
             let param = self.cursor.identifier(Some("parameter"))?;
             let default_value = if self.cursor.eat("=").is_some() {
-                let remaining = &self.cursor.tokens[self.cursor.index..];
+                let remaining = &self.cursor.tokens[self.cursor.index..start + source.len()];
                 let kinds = remaining
                     .iter()
                     .map(|token| {
@@ -455,29 +530,63 @@ impl JavaScriptParser {
                     .collect();
                 let reference = find_default_parameter_reference(kinds, values, parameters);
                 if reference >= 0.0 {
-                    // The generated rule returns an index into the token input.
-                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                    let token = &remaining[reference as usize];
-                    return Err(unsupported(
-                        &format!("default reading parameter {}", token.value),
-                        "a call fills in a default where it leaves the argument out, so a default reads no parameter",
-                        Some(token.span()),
-                    ));
+                    use crate::translation::array_formal_parameter_rules::{
+                        self as rules, ml_string::Text,
+                    };
+                    use crate::translation::frontend_rules::ml_array::number_index;
+                    let first = self.cursor.index - start;
+                    let kinds = ordinary_kinds
+                        .iter()
+                        .map(|text| Text::from_text(text))
+                        .collect::<Vec<_>>();
+                    let values = ordinary_values
+                        .iter()
+                        .map(|text| Text::from_text(text))
+                        .collect::<Vec<_>>();
+                    let first_number = serde_json::Number::from(first)
+                        .as_f64()
+                        .expect("actual initializer token");
+                    let last =
+                        number_index(rules::find_java_script_pattern_default_expression_end(
+                            &kinds,
+                            &values,
+                            first_number,
+                            &Text::from_text(")"),
+                        ))
+                        .ok_or_else(|| {
+                            unsupported(
+                                "ordinary parameter default transport",
+                                "the actual initializer needs its complete source interval",
+                                Some(param.span()),
+                            )
+                        })?;
+                    let binding = source
+                        .iter()
+                        .position(|token| token.start == param.start && token.end == param.end)
+                        .expect("actual ordinary binding token");
+                    let binding = serde_json::Number::from(binding)
+                        .as_f64()
+                        .expect("actual binding position");
+                    let value = self.read_formal_initializer(
+                        &source,
+                        super::formal_initializers::FormalInitializer {
+                            interval_positions: (first, last, start),
+                            binding_positions: positions,
+                            binding,
+                            bound_names: &bound_names,
+                            context: "ordinary named function declaration",
+                            profile: "ordinary parameter default",
+                        },
+                    )?;
+                    self.cursor.index = start + last;
+                    Some(value)
+                } else {
+                    let outer_tdz = self.scope.tdz.clone();
+                    self.scope.tdz.extend(binding_names.iter().cloned());
+                    let value = self.with_lexical_scope(&[], 2, Self::expr);
+                    self.scope.tdz = outer_tdz;
+                    Some(value?)
                 }
-                let outer_tdz = self.scope.tdz.clone();
-                self.scope.tdz.extend(binding_names.iter().cloned());
-                let value = self.with_lexical_scope(&[], 2, Self::expr);
-                self.scope.tdz = outer_tdz;
-                Some(value?)
-            } else if tokens
-                .last()
-                .is_some_and(|(_, default_value)| default_value.is_some())
-            {
-                return Err(unsupported(
-                    &format!("parameter {} after a default", param.value),
-                    "a call fills in trailing defaults only; give it a default too",
-                    Some(param.span()),
-                ));
             } else {
                 None
             };
@@ -499,7 +608,7 @@ impl JavaScriptParser {
         name_token: &Token,
         doc: Option<JsDoc>,
         tokens: &[(Token, Option<SExpr>)],
-        body: Body,
+        body: &Body,
         is_async: bool,
     ) -> Result<SFn> {
         let name = name_token.value.clone();
@@ -507,8 +616,10 @@ impl JavaScriptParser {
             self.sequential_async = true;
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
-        let records = match &body {
-            Body::RecordParameters(records) => Some(records.as_ref()),
+        let records = match body {
+            Body::RecordParameters(records) | Body::RecordArrowParameters(records) => {
+                Some(records.as_ref())
+            }
             _ => None,
         };
         let mut params = records.map_or_else(Vec::new, |records| records.parameters.clone());
@@ -630,7 +741,7 @@ impl JavaScriptParser {
                     super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
                 );
             }
-            match &body {
+            match body {
                 Body::Arrow if !parser.cursor.is("{") => {
                     let token = parser.peek();
                     let expr = if is_async {
@@ -646,6 +757,20 @@ impl JavaScriptParser {
                     })
                 }
                 Body::RecordParameters(records) => parser.read_named_record_parameter_body(records),
+                Body::RecordArrowParameters(records) => {
+                    parser.read_record_parameter_body_with(records, |parser| {
+                        if parser.cursor.is("{") {
+                            parser.block_statements()
+                        } else {
+                            let token = parser.peek();
+                            let expr = parser.expr()?;
+                            Ok(vec![Stmt::Return {
+                                expr,
+                                span: parser.to_here(&token),
+                            }])
+                        }
+                    })
+                }
                 _ => parser.block_statements(),
             }
         });
@@ -719,7 +844,12 @@ impl JavaScriptParser {
         let body = if imperative(tail) {
             lower_imperative(self, &name, &params, tail, place)?
         } else {
-            lower(tail, place, &mut self.generated_count)?
+            lower(
+                tail,
+                place,
+                &mut self.generated_count,
+                &self.generated_prefix,
+            )?
         };
         let declaration = SFn {
             semantic_ret: None,
@@ -757,6 +887,7 @@ impl JavaScriptParser {
         self.cursor.expect("const", Some("namespace"))?;
         let name = self.cursor.identifier(Some("namespace"))?;
         global(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 1);
         self.cursor.expect("=", Some("namespace"))?;
         self.scope.tdz.remove(&name.value);
         let module = self.namespace_body(name.value, start)?;
@@ -878,14 +1009,8 @@ impl JavaScriptParser {
             if c.peek().kind == TokenKind::Identifier {
                 collect(c.peek().value.clone());
             } else if c.is("{") {
-                let mut offset = 1;
-                while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
-                    if c.peek_at(offset).kind == TokenKind::Identifier
-                        && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
-                    {
-                        collect(c.peek_at(offset).value.clone());
-                    }
-                    offset += 1;
+                for token in self.object_binding_names(c.index) {
+                    collect(token.value);
                 }
             } else if c.is("[") {
                 for token in self.array_binding_names(c.index) {

@@ -1,4 +1,32 @@
+import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
+import {renderStringArrayCopySort} from './string-array-sort-rules.js';
+import {RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE} from './record-property-order-javascript-runtime.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
+import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
+import {UNICODE_CASE_JAVASCRIPT_PRELUDE} from './unicode-case-javascript-runtime.js';
+import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_JAVASCRIPT_PRELUDE} from './utf16-text-javascript-runtime.js';
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
+import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, readRecordFieldWriteStatement } from './record-write-rules.js';
+import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
+import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
+import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
+import {BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE} from './big-integer-conversion-javascript-runtime.js';
+import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
+import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
+import { acceptLinkedArrayStateMethod, renderArrayStateMethodExpression,
+  readArrayStateMethodIdentity, readArrayStateMethodStatement } from './array-state-method-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
@@ -32,20 +60,28 @@ import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rus
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from './external-emission-rules.js';
 import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 
 const KEYWORDS = new Set([
+  'ml_unicode_case', 'ml_utf16_text',
+  'TypeError','SyntaxError','ReferenceError','URIError','EvalError',
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
   'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null',
   'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
   'await', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'arguments',
-  'eval', 'undefined', 'NaN', 'Infinity', 'globalThis', 'console', 'process', 'BigInt', 'String', 'Object', 'Error',
-  'RangeError', 'Math', 'Number', 'Array', 'JSON', 'Symbol', 'main', '__proto__', 'constructor', 'prototype', 'of',
+  'eval', 'undefined', 'NaN', 'Infinity', 'globalThis', 'console', 'process', 'BigInt', 'String', 'Object', 'Error', 'encodeURIComponent',
+  'ml_record_property_order', 'Object', 'RangeError', 'Math', 'Number', 'Array', 'JSON', 'Symbol', 'main', '__proto__', 'constructor', 'prototype', 'of',
   'async', 'get', 'set',
 ]);
 
 const HELPERS = {
+  recordPropertyOrder:RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE,
+  utf16Text:UTF16_TEXT_JAVASCRIPT_PRELUDE,
+  unicodeCase:UNICODE_CASE_JAVASCRIPT_PRELUDE,
+  bigIntegerConversion: BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE,
   ownedTextInput: renderRustOwnedLocalTextInput(),
   natSub: `function ml_natSub(a, b) {
   return a > b ? a - b : 0n;
@@ -118,6 +154,7 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  program=prepareOrderedRecordValues(program);
   const targetIdentifier=readJavaScriptIdentifierModel(options.identifierModel,ident);
   if(options.identifierModel!==undefined&&options.scopedBindingModel!==undefined)throw unsupported('JavaScript identifier model composition','the original narrow scoped-binding model requires a separate composition proof');
   validateRustTypeNamespace(program);
@@ -169,7 +206,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion','utf16Text','unicodeCase','recordPropertyOrder'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -444,6 +481,8 @@ class JavaScriptEmitter {
   }
 
   expr(e) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('JavaScript',this.expr(copy));}
     if (e.type?.kind === 'float') this.usesFloat = true;
     switch (e.k) {
       case 'lit':
@@ -466,11 +505,39 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if(e.op==='toSorted')return renderStringArrayCopySort('JavaScript',this.expr(e.object),false);
+        if(e.op==='readJavaScriptRecordPropertyOrder')return emitOrderedRecordOrderRead(this,e,'JavaScript');
+        if (acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+          const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
+          this.state.encode(readArrayStateMethodIdentity(e.op), readArrayStateMethodStatement());
+          return renderArrayStateMethodExpression('JavaScript', e.op, receiver, args, [], [], '');
+        }
+        if (acceptLinkedRecordFieldWrite(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+          const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
+          this.state.encode('write-record-field', readRecordFieldWriteStatement());
+          return renderRecordFieldWrite('JavaScript', readRecordFieldWriteOperator(e.op), receiver,
+            JSON.stringify(readRecordFieldWriteName(e.op)), '', args, '');
+        }
+        if (e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
+          const receiver = this.expr(e.object);
+          const args = e.args.map(argument => {
+            if (argument === null) throw unsupported('shared collection method argument', 'every source argument needs its actual expression', e.span);
+            return this.expr(argument);
+          });
+          this.state.encode(readReferenceMethodIdentity(e.object.type.kind, e.op), readReferenceMethodStatement());
+          return renderReferenceMethodExpression('JavaScript', e.object.type.kind, e.op, receiver, args, false, '');
+        }
         if (e.op === 'map' && e.args.length === 1 && e.args[0] !== null) return renderArrayFromMapping('JavaScript', this.expr(e.object), this.expr(e.args[0]), 0, '');
+        if (acceptUtf16TextMethod(e.k, e.object.type.kind, e.op)) {
+          this.helpers.add('utf16Text');
+          const object = this.expr(e.object);
+          const values = e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg)));
+          return renderUtf16TextMethod('JavaScript', e.op, object, values.join(', '));
+        }
         return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
           e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
       case 'record':
-        return renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
+        return emitOrderedRecordValue(this,e,'JavaScript')??renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
       case 'cellAllocate':
         return renderCallableCellOperation('JavaScript', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':
@@ -524,9 +591,9 @@ class JavaScriptEmitter {
       case 'map':
         return renderCollectionConstruction('JavaScript', e.k, '', this.expr(e.k === 'set' ? e.items : e.entries), '', '', '');
       case 'collectionSize':
-        return `(${this.expr(e.object)}).size`;
+        return renderCollectionSizeExpression('JavaScript', this.expr(e.object));
       case 'collectionRead':
-        return `(${this.expr(e.object)}).${e.op}(${this.expr(e.key)})`;
+        return renderCollectionReadExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object), this.expr(e.key), false, '', '', '');
       case 'collectionItems':
         return renderCollectionIteration('JavaScript', e.object.type.kind === 'map', e.op, this.expr(e.object), '', '');
       case 'ctor': {
@@ -553,6 +620,7 @@ class JavaScriptEmitter {
         }
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
       case 'stringMap': {
+        if(this.program.sourceLanguage==='JavaScript'&&acceptUnicodeCaseMappingOperation(e.op)){this.helpers.add('unicodeCase');this.state.encode('unicode-default-case-16',readUnicodeCaseEncodingStatement());return renderUnicodeCaseStringMap('JavaScript',e.op,false,this.expr(e.string));}
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
         if (e.op === 'rustTrim') return `${string}.replace(/^\\p{White_Space}+|\\p{White_Space}+$/gu, '')`;
         if (e.op === 'rustTrimStart') return `${string}.replace(/^\\p{White_Space}+/u, '')`;
@@ -582,7 +650,33 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        const byteLength=emitRustStringByteLength(this,e,'JavaScript',value=>this.expr(value));if(byteLength!==null)return byteLength;
+        if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('JavaScript',e.op,this.expr(e.args[0]));}
+        if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('JavaScript',this.expr(e.args[0]));
+        if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+          this.helpers.add('bigIntegerConversion');
+          if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.expr(e.args[1]),false);
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
+          return renderJavaScriptBigIntegerResultExpression('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
+        }
+        if(acceptLinkedRustPanicValue(e.k,e.op))return renderRustPanicValueExpression('JavaScript',this.expr(e.args[0]));
+        if(acceptLinkedJavaScriptSourceException(e.k,e.op))return renderJavaScriptSourceExceptionExpression('JavaScript',e.op,this.expr(e.args[0]),this.expr(e.args[1]),false);
+        if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return renderJavaScriptNumberScalarConversion('JavaScript',e.op,'float',this.expr(e.args[0]),false);
+        if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('JavaScript',e,argument=>this.expr(argument));
+        if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('JavaScript', e, argument => this.expr(argument));
+        if (readBigIntegerBitwiseArity(e.op)) {
+          const text = renderBigIntegerBitwiseExpression('JavaScript', e.op, e.args.map(argument => this.expr(argument)));
+          if (!text) throw unsupported('BigInt bitwise arity', 'the operation requires its exact checked operand inventory', e.span);
+          return text;
+        }
         const args = e.args.map((arg) => this.expr(arg));
+        const bitwise=readJavaScriptNumberBitwiseSymbol(e.op);
+        if(bitwise){
+          if(args.length!==readJavaScriptNumberBitwiseArity(e.op))throw unsupported('Number bitwise arity','the operation requires its exact checked operand inventory',e.span);
+          return args.length===1?`(${bitwise}${args[0]})`:`(${args[0]} ${bitwise} ${args[1]})`;
+        }
         if (e.op === 'maxOf' || e.op === 'minOf') return `Math.${e.op.slice(0, 3)}(...${args[0]})`;
         return `${e.type.kind === 'bool' ? 'Number' : 'Math'}.${e.op}(${args.join(', ')})`;
       }
@@ -675,6 +769,13 @@ class JavaScriptEmitter {
 
   cast(e) {
     const arg = this.expr(e.arg);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('JavaScript', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `((value) => (value < 0n ? 0n : value))(${arg})`;
     this.helpers.add('toNatChecked');

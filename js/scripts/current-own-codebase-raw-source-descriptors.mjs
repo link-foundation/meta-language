@@ -7,6 +7,7 @@ import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readCurrentRawPredecessorHistory,readCurrentRawPredecessorPacket} from './current-own-codebase-raw-source-history.mjs';
+import {restoreTypedSourceDescriptorHostSource} from './typed-source-descriptor-host-history.mjs';
 const root=new URL('../../',import.meta.url);
 const policySha256='26646438286157ed8250c4a8e631521ceb39281d95c8766700235d6cc62b6553';
 const revision='a8a789afb0ed569340d9079279f534f0bf7c4e72';
@@ -150,7 +151,7 @@ export function verifyCurrentOwnCodebaseRawDescriptorRefresh(packet){
     assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.current.sourceText,'normal refresh uses exact actual current source bytes');
   }
   assert.deepEqual(packet.adapters,previous.adapters,'the complete three original adapter recipes remain exact');
-  for(const row of packet.adapters)assert.equal(readFileSync(new URL(row.file,root),'utf8'),deriveCurrentOwnCodebaseRawDescriptorSource(row));
+  for(const row of packet.adapters)assert.equal(restoreTypedSourceDescriptorHostSource(readFileSync(new URL(row.file,root),'utf8'),row.file),deriveCurrentOwnCodebaseRawDescriptorSource(row));
   assert.equal(packet.edge.changes.length,previous.edge.changes.length,'all ten logical descriptor fields remain represented');
   return packet;
 }

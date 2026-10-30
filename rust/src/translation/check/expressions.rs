@@ -5,11 +5,12 @@ use super::expectation::ExpectedType;
 use super::{
     BOOL, BinaryOp, Checker, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
     Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp, arithmetic_semantics,
-    binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
-    text_lit, type_error, unsupported,
+    binary_node, cast_to_in_language, coerce, comparison, fixed_bounds, negate_number, op_name,
+    plain_binary, text_lit, type_error, unsupported,
 };
 use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
 use crate::translation::rust_character_rules::accept_rust_numeric_literal_negation;
+use crate::translation::rust_panic_value_rules as rust_panic_rules;
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
@@ -167,7 +168,11 @@ impl Checker {
             | SNode::OptionalField { .. } => self.optional_expr(node, env, path, expected),
             SNode::Name { path: segments } => {
                 if let Some(name) = env.local(node) {
-                    return Ok(Expr::var(name, env.vars[name].clone()));
+                    return Ok(self.guarded_nominal_optional(
+                        node,
+                        Expr::var(name, env.vars[name].clone()),
+                        env,
+                    ));
                 }
                 if let Some(reference) = self.callable_reference(node, segments, path, context)? {
                     return Ok(reference);
@@ -180,9 +185,20 @@ impl Checker {
             | SNode::CellRead { .. }
             | SNode::CellWrite { .. } => self.callable_expression(node, env, path, context),
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
-            SNode::App { func, args } => self.application(func, args, env, path, expected, span),
+            SNode::App { func, args } => {
+                let head =
+                    self.capture_callable_constant_application_head(func, env, path, span)?;
+                self.application(
+                    head.as_ref().unwrap_or(func.as_ref()),
+                    args,
+                    env,
+                    path,
+                    expected,
+                    span,
+                )
+            }
             SNode::Field { field, object } => {
-                self.record_source_field(object, field, env, path, span)
+                self.record_source_field(object, field, env, path, expected, span)
             }
             SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::ArrayIsArray { arg } => {
@@ -222,7 +238,24 @@ impl Checker {
                 op: UnaryOp::Not,
                 arg,
             } => {
-                let arg = self.expr(arg, env, path, None, false)?;
+                let arg = self.expr(
+                    arg,
+                    env,
+                    path,
+                    if self.language == Language::Rust {
+                        expected
+                    } else {
+                        None
+                    },
+                    false,
+                )?;
+                if self.language == Language::Rust && matches!(arg.ty, Type::Fixed { .. }) {
+                    let ty = arg.ty.clone();
+                    return Ok(Expr::new(Node::Math {
+                        op: crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_operation("!"),
+                        args: vec![arg],
+                    }, ty));
+                }
                 let arg = self.boolean_value(arg, span)?;
                 Ok(Expr::new(
                     Node::Unary {
@@ -321,6 +354,46 @@ impl Checker {
                     ty,
                 ))
             }
+            SNode::ReferenceIdentity {
+                op,
+                left,
+                right,
+                extra,
+            } => {
+                if !extra.is_empty()
+                    || node.parenthesized.is_some()
+                    || node.block
+                    || node.tag_test.is_some()
+                {
+                    return Err(type_error(
+                        "explicit reference identity needs its closed owned operands",
+                        span,
+                    ));
+                }
+                let (left, right) = self.operands(left, right, env, path, span)?;
+                let form = crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
+                    self.language.as_str(), op_name(*op), left.ty.kind(), left.ty.is_reference(),
+                );
+                if !self.reference_semantics || form != "referenceIdentity"
+                    || !crate::translation::reference_identity_rules::accept_reference_identity_comparison(
+                        op_name(*op), left.ty.kind(), right.ty.kind(), left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,
+                    ) {
+                    return Err(unsupported("explicit Rust array identity", "only the owned array reference domain admits this operation", span));
+                }
+                let domain = left.ty.clone();
+                Ok(Expr::new(
+                    binary_node(
+                        *op,
+                        Box::new(left),
+                        Box::new(right),
+                        Some(domain),
+                        None,
+                        None,
+                        None,
+                    ),
+                    BOOL,
+                ))
+            }
             SNode::Binary {
                 op,
                 left,
@@ -351,12 +424,34 @@ impl Checker {
                 self.match_cases(scrutinee, cases, span, env, path, context)
             }
             SNode::StringMap { .. } => self.string_map(node, env, path),
-            SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
+            SNode::CopySlice { object } => self.copy_slice((object, expected), env, path, span),
             SNode::Method { object, op, args } => {
+                let callback_env = args
+                    .first()
+                    .and_then(Option::as_ref)
+                    .map(|callback| self.own_key_callback_environment(object, callback, op, env));
+                let env = callback_env.as_ref().unwrap_or(env);
+                if !self.checked_projection
+                    && let Some(value) =
+                        self.source_property_call((object, expected), op, args, env, path, span)?
+                {
+                    return Ok(value);
+                }
                 let form =
                     crate::translation::array_callback_rules::read_array_callback_result_form(op);
                 if form.is_empty() || form == "mapped array" {
-                    self.primitive_method(object, op, args, env, path, span)
+                    if expected.is_none() {
+                        self.primitive_method(object, op, args, env, path, span)
+                    } else {
+                        self.primitive_method_with_context(
+                            (object, expected),
+                            op,
+                            args,
+                            env,
+                            path,
+                            span,
+                        )
+                    }
                 } else {
                     self.array_callback_method(node, env, path, context, &form)
                 }
@@ -411,7 +506,7 @@ impl Checker {
             } => {
                 let to = self.resolve_type(Some(to), path, span)?;
                 let arg = self.expr(arg, env, path, from.as_ref(), false)?;
-                cast_to(arg, &to, *flavor, span)
+                cast_to_in_language(arg, &to, *flavor, span, self.language.as_str())
             }
             SNode::Abort { message } => {
                 let Some(expected) = expected else {
@@ -480,6 +575,8 @@ impl Checker {
                 entries,
                 record_projection,
                 prototype_definition,
+                property_order,
+                ty,
                 ..
             } => {
                 if let Some(definition) = prototype_definition {
@@ -491,7 +588,11 @@ impl Checker {
                 }
                 self.record_literal(
                     entries,
-                    record_projection.as_ref(),
+                    (
+                        record_projection.as_ref(),
+                        property_order.as_deref(),
+                        ty.as_ref(),
+                    ),
                     env,
                     path,
                     expected,
@@ -554,16 +655,80 @@ impl Checker {
                     crate::translation::types::array(STRING),
                 ))
             }
-            SNode::ReferenceWrite { .. } => Err(unsupported(
-                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
-                    "feature",
-                ),
-                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
-                    "reason",
-                ),
+            SNode::ReferenceWrite {
+                object,
+                index,
+                field,
+                value,
+                op,
+            } => self.source_record_field_write(
+                object,
+                index.as_deref(),
+                field.as_deref(),
+                value.as_deref(),
+                op,
+                env,
+                path,
                 span,
-            )),
-            SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
+            ),
+            SNode::Math { op, name, args } => {
+                if crate::translation::conditional_chain_rules::accept_conditional_chain_operation(
+                    op,
+                ) {
+                    return self.conditional_chain_value(op, args, span, env, path, expected);
+                }
+                if op == "reorderJavaScriptRecordPropertyValues" {
+                    return self.record_value_order_operation(args, env, path, span, expected);
+                }
+                if !crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op).is_empty(){return self.javascript_object_enumeration(op,args,span,env,path,expected);}
+                if op == "exponentiateJavaScriptNumericValue" {
+                    return self.javascript_exponentiation(args, span, env, path, expected);
+                }
+                if crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(
+                    op,
+                ) > 0.0
+                    || crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(
+                        op,
+                    ) > 0.0
+                {
+                    return self.check_number_bitwise_operands(op, args, span, env, path, expected);
+                }
+                if rust_panic_rules::accept_linked_rust_panic_value("math", op) {
+                    let value = if args.len() == 1 && !args[0].spread {
+                        Some(self.expr(&args[0].value, env, path, Some(&super::STRING), false)?)
+                    } else {
+                        None
+                    };
+                    let error = rust_panic_rules::read_rust_panic_value_argument_error(
+                        self.language.as_str(),
+                        args.len() as f64,
+                        args.iter().any(|item| item.spread),
+                        value.as_ref().map_or("", |value| value.ty.kind()),
+                    );
+                    if !error.is_empty() {
+                        return Err(type_error(error, span));
+                    }
+                    return Ok(Expr::new(
+                        Node::Math {
+                            op: op.clone(),
+                            args: vec![value.expect("checked panic message")],
+                        },
+                        expected.cloned().unwrap_or(super::UNIT),
+                    ));
+                }
+                if !crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty(){return self.javascript_source_exception(op,args,span,env,path,expected);}
+                if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op) {
+                    return self.javascript_source_exception_value(op,args,span,env,path,expected);
+                }
+                if !crate::translation::rust_shift_rules::read_rust_shift_checked_operation(op)
+                    .is_empty()
+                {
+                    return self.rust_shift(op, args, env, path, expected, span);
+                }
+                if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op) > 0.0 {
+                    self.rust_primitive_bitwise(op, args, env, path, expected, span)
+                } else { self.math(op, name, args, span, env, path) }
+            }
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
                 span,
@@ -586,8 +751,19 @@ impl Checker {
     ) -> Result<Expr> {
         match op {
             BinaryOp::And | BinaryOp::Or => {
+                let (then_env, else_env) = self.own_property_branch_environments(left, env);
                 let left = self.expr(left, env, path, None, false)?;
-                let right = self.expr(right, env, path, None, false)?;
+                let right = self.expr(
+                    right,
+                    if op == BinaryOp::And {
+                        &then_env
+                    } else {
+                        &else_env
+                    },
+                    path,
+                    None,
+                    false,
+                )?;
                 self.logical_values(op, left, right, span)
             }
             BinaryOp::Concat => {
@@ -608,6 +784,11 @@ impl Checker {
                     if checked_right.ty.is_literal() {
                         checked_right =
                             self.expr(right, env, path, Some(&self.default_number()), false)?;
+                    }
+                    if let Some(value) =
+                        self.primitive_comparison(op, &checked_left, &checked_right)?
+                    {
+                        return Ok(value);
                     }
                     if let Some(value) =
                         self.optional_comparison(op, checked_left, checked_right, span)?
@@ -868,9 +1049,17 @@ impl Checker {
             left = widen(left)?;
             right = widen(right)?;
         }
+        if let Some(failure) =
+            self.materialize_numeric_failure(op.name(), &[left.clone(), right.clone()], expected)
+        {
+            return Ok(failure);
+        }
         let (left, right) = self.unify(left, right, span)?;
         if !left.ty.is_ordered() {
             return Err(type_error(format!("arithmetic on {}", left.ty.key()), span));
+        }
+        if let Some(division) = self.materialize_big_integer_division(op, &left, &right) {
+            return Ok(division);
         }
         let ty = left.ty.clone();
         let (semantics, rounding, by_zero) = arithmetic_semantics(self.language, op, &ty, rounding);

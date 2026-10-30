@@ -19,13 +19,41 @@ export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
-export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 227]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 228]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
 // rewrites an earlier live source, capture, timestamp or ledger mapping.
 export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
+  {
+    id: 'continue-bulk-draft-without-tests-or-compilation-2026-10-27',
+    key: 'draftWithoutTestsOrCompilationRequest',
+    title: 'Continue bulk implementation drafting without tests or compilation',
+    role: 'The user explicitly reiterates that remaining handoff work requires continued code drafting, with no code-test execution or local compilation during this phase; retain all inherited implementation and later verification obligations.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'I195-WORKFLOW-DRAFT-WITHOUT-COMPILATION'],
+  },
+  {
+    id: 'full-requirements-drafting-until-finished-2026-10-25',
+    key: 'fullRequirementsDraftUntilFinishedRequest',
+    title: 'Continue every implementation draft until the entire requirement scope is drafted',
+    role: 'Successive direct user continuations explicitly require drafting all undrafted requirements without stopping before the complete inherited implementation scope is drafted; the existing test and CI feedback phase restrictions remain binding.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING', 'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK'],
+  },
+  {
+    id: 'complete-draft-before-ci-feedback-2026-10-25',
+    key: 'completeDraftBeforeCiFeedbackRequest',
+    title: 'Complete every implementation draft before addressing CI feedback',
+    role: 'Latest direct user messages authorize draft commits and pushes for later feedback while explicitly postponing all CI feedback investigation and repairs until the entire inherited implementation scope is drafted; retain the code-test prohibition and all later verification obligations.',
+    ledgerCoverage: ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK'],
+  },
+  {
+    id: 'continue-complete-requirements-draft-2026-10-25',
+    key: 'continueCompleteRequirementsDraftRequest',
+    title: 'Continue drafting until every inherited requirement has its complete code draft',
+    role: 'Direct user continuation of the complete-draft obligation, retaining the prohibition on code tests before all requirements are drafted and every inherited scope and delivery requirement.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING'],
+  },
   {
     id: 'modern-javascript-parity-expectations-2026-10-16',
     key: 'modernJavaScriptParityRequest',
@@ -81,6 +109,41 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     title: 'Finish all existing agents and continue the current phase alone',
     role: 'Latest direct user instruction supersedes the earlier three-agent allowance for this task phase: allow existing agents to finish and continue as coordinator without spawning or reactivating agents.',
     ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
+  },
+  {
+    id: 'checkpoint-merge-and-continuation-issue-2026-10-22',
+    key: 'checkpointMergeRequest',
+    title: 'Merge the meaningful checkpoint and preserve every remaining requirement in a continuation issue',
+    role: 'Explicit one-time authorization to merge PR 226 at a meaningful step and create issue 227 without dropping unfinished requirements; subsequent checks and full-delivery obligations remain binding.',
+    ledgerCoverage: ['I195-WORKFLOW-BULK-EXACT-SCOPE', 'I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS'],
+  },
+  {
+    id: 'development-acceleration-2026-10-23',
+    key: 'developmentAccelerationRequest',
+    title: 'Minimize repeated actions through shared automation and continue the complete translator in the next pull request',
+    role: 'Direct user request to improve development speed by maximizing useful changes per action, deliver a fully working translator and every remaining requirement, and continue in the next pull request.',
+    ledgerCoverage: ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
+  },
+  {
+    id: 'continuous-requirement-delivery-2026-10-23',
+    key: 'continuousRequirementDeliveryRequest',
+    title: 'Continue implementing requirements rather than stopping after a draft or status update',
+    role: 'Latest direct user correction requires persistent implementation and CI repair in the current continuation; drafting, opening a pull request or reporting CI status does not satisfy delivery.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
+  },
+  {
+    id: 'bulk-draft-before-testing-2026-10-23',
+    key: 'bulkDraftBeforeTestingRequest',
+    title: 'Draft the complete remaining scope before testing the integrated batch',
+    role: 'Direct user correction requires drafting all outstanding requirements first, then testing the complete draft; avoid repeated incremental test cycles and metadata refreshes while retaining all verification obligations.',
+    ledgerCoverage: ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING'],
+  },
+  {
+    id: 'draft-entire-scope-without-code-tests-2026-10-24',
+    key: 'draftEntireScopeWithoutCodeTestsRequest',
+    title: 'Continue until every requirement has code, without executing code tests first',
+    role: 'The current user instruction permits drafting only and prohibits code tests until exactly every requirement has an implementation draft. All inherited obligations remain, fixtures may be authored, and validation is deferred rather than removed.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT'],
   },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
@@ -299,9 +362,18 @@ export function refreshRegister(register, { issue, issues = [], comments }) {
     if (!current) return entry;
     return { ...entry, ...revisionOf(current), title: entry.title || sourceTitle(current.body) };
   };
+  const requirementSources = register.requirementSources.map(refresh);
+  const continuation = issues.find(source => source.number === 227);
+  if (continuation && !requirementSources.some(source => source.id === 227)) {
+    requirementSources.push({id:227,key:'checkpointContinuationIssue',kind:'issue',
+      url:'https://github.com/link-foundation/meta-language/issues/227',
+      title:'Continue every inherited requirement after the PR 226 checkpoint',
+      role:'Complete continuation of all original ledger obligations, CI repairs and preserved drafts; the priority is complete JavaScript and Rust parsing, emission and bidirectional own-codebase translation.',
+      ledgerCoverage:['I195-'],...revisionOf(continuation)});
+  }
   return {
     ...register,
-    requirementSources: register.requirementSources.map(refresh),
+    requirementSources,
     statusReports: register.statusReports.map(refresh),
   };
 }

@@ -2,6 +2,23 @@
 //! Public reexports preserve the frontend API and shared parser implementation.
 use super::{Result, SProgram, SourceProfiles, parse_rust_with_selected_profiles};
 
+/// Read actual standard shared-array handles under their independent source model.
+///
+/// # Errors
+/// Refuses unknown selectors, unproved ownership and unsupported compositions.
+pub fn parse_rust_with_shared_array_handle_source_model(
+    source: &str,
+    model: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            shared_array_handle_source: model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 /// Read a complete emitted Rust runtime under its independent owned interpretation.
 ///
 /// # Errors
@@ -16,6 +33,19 @@ pub fn parse_rust_with_runtime_shell_model(source: &str, model: &str) -> Result<
 /// On syntax errors and on constructs outside the portable core.
 pub fn parse_rust(source: &str) -> Result<SProgram> {
     parse_rust_with_array_result_model(source, "")
+}
+/// Read ordinary Rust while retaining its actual type owners as linked facets.
+///
+/// # Errors
+/// Refuses invalid source, unsupported constructs and unrepresentable owners.
+pub fn parse_rust_with_source_type_owners(source: &str) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
 }
 
 /// Read Rust under an explicit versioned scalar vector result admission model.
@@ -193,6 +223,56 @@ pub fn parse_rust_with_pure_unit_call_model(source: &str, model: &str) -> Result
         source,
         SourceProfiles {
             pure_unit_call: model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
+/// Read ordinary Rust under an explicitly selected stable source std version.
+///
+/// # Errors
+/// Refuses noncanonical, prerelease and uncovered source versions or constructs.
+pub fn parse_rust_with_source_version(source: &str, version: &str) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            source_version: version,
+            ..SourceProfiles::default()
+        },
+    )
+}
+/// Retain source type owners under an explicit stable source std version.
+///
+/// # Errors
+/// Refuses uncovered source versions, invalid owners and unsupported constructs.
+pub fn parse_rust_with_source_type_owners_and_version(
+    source: &str,
+    version: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            source_version: version,
+            retain_source_type_owners: true,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
+/// Read shared handles using the selected source std snapshot.
+///
+/// # Errors
+/// Refuses invalid selectors, ownership or unsupported source constructs.
+pub fn parse_rust_with_shared_array_handle_source_model_and_version(
+    source: &str,
+    model: &str,
+    version: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            shared_array_handle_source: model,
+            source_version: version,
             ..SourceProfiles::default()
         },
     )

@@ -87,6 +87,16 @@ export interface SelfTranslationItem {
   readonly end: number;
   readonly status: SelfTranslationStatus;
   readonly reason: string | null;
+  readonly diagnostic?: SelfTranslationDiagnostic;
+}
+
+export interface SelfTranslationDiagnostic {
+  readonly kind: 'syntax' | 'type' | 'unsupported';
+  readonly reason: string;
+  readonly message: string;
+  readonly span: { start: number; end: number } | null;
+  readonly details: Record<string, unknown>;
+  readonly sourceRange: { start: number; end: number };
 }
 
 export interface SelfTranslation {
@@ -113,6 +123,10 @@ export type SelfTranslationSignature =
   | { readonly k: 'const'; readonly name: string; readonly type: SelfTranslationType; readonly literal: boolean };
 
 export interface SelfTranslationOptions {
+  /** Reparse actual emitted code; saved originals never restore semantics. */
+  readonly semanticTranslation?: boolean;
+  /** Selects an independently checked standard Rust shared-array source interpretation. */
+  readonly rustSharedArrayHandleSourceModel?: '' | 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
   /** Uses one UTF-16 string representation across all emitted module items. */
   readonly utf16Strings?: boolean;
   /** Forces shared reference values across module items; observable identity and mutation also select them automatically. */
@@ -145,6 +159,9 @@ export function projectTypeScriptTyping(source: string): string;
  * relative named import becomes a `use crate::…` declaration.
  */
 export function selfTranslate(source: string, from: string, to: string, options?: SelfTranslationOptions): SelfTranslation;
+export function selfTranslateWithDiagnostics(source: string, from: string, to: string, options?: SelfTranslationOptions): {
+  translation: SelfTranslation; diagnostics: Array<SelfTranslationDiagnostic | null>;
+};
 
 /**
  * The signatures of the exported items of a JavaScript or TypeScript module
@@ -889,7 +906,7 @@ export interface CheckedTypedProgram {
 }
 export interface TypedProgramLinksEmission {
   readonly code: string;
-  readonly language: 'JavaScript' | 'Rust';
+  readonly language: 'JavaScript' | 'Rust' | 'Lean' | 'Rocq';
   readonly mappings: readonly TranslationMapping[];
   readonly assumptions: readonly TranslationAssumption[];
   readonly encodings: readonly TranslationEncoding[];
@@ -898,7 +915,7 @@ export interface TypedProgramLinksEmission {
 /** Selects supported emission models from validated owned program facts. */
 export interface TypedProgramLinksEmissionOptions {
   /** Preserves selected immutable-reference Rust headers and closed call interfaces. */
-  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1';
+  readonly rustSourceHeaderEmissionModel?: 'primitive borrowed Rust function header 1' | 'closed primitive borrowed Rust call interface 1' | 'retained scalar Rust function interface 1' | 'retained mathematical Rust function interface 1' | 'retained textual Rust function interface 1' | 'retained string predicate Rust function interface 1' | 'retained constructed Rust string function interface 1' | 'retained displayed Rust string function interface 1';
   /** Allocates JavaScript aliases from actual checked local binding owners. */
   readonly javaScriptScopedBindingEmissionModel?: 'owned JavaScript scoped bindings 1';
 }
@@ -916,7 +933,10 @@ export function createTypedProgramLinks(
   source: string,
   language: string,
   options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
+    /** Imports one explicitly selected standard Rust shared-array source domain. */
+    rustSharedArrayHandleSourceModel?: 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
+    rustSourceVersion?: string;
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
     rustConstFunctionModel?: 'closed pure Rust const predicates 1' | 'closed Boolean Rust const decision trees 1';
@@ -938,8 +958,90 @@ export function createTypedProgramLinks(
 ): TypedProgramLinks;
 export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
-  options?: { provenance?: unknown },
+  options?: { provenance?: unknown; valueSharing?: 'exact scalars, types and source spans 1'; recordShapes?: 'ordered typed program record fields 1' },
 ): TypedProgramLinks;
+export function encodeTypedProgramLinksWithValueSharing(program:CheckedTypedProgram,provenance:unknown,profile:string):TypedProgramLinks;
+export function encodeTypedProgramLinksWithRecordShapes(program:CheckedTypedProgram,provenance:unknown,profile:string):TypedProgramLinks;
+export const SOURCE_IDENTIFIER_UNICODE_VERSION: '17.0.0';
+export function normalizeUnicodeText(source: string): string;
+export function acceptLinkAllocationWord(value: number): boolean;
+export function acceptLinkAllocationCapacity(
+  first: number, second: number, third: number, fourth: number,
+  exhausted: boolean, count: number,
+): boolean;
+export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
+/** Complete ordinary Rust headers retained under source signature version two. */
+export function createRustSourceOwnerProgramLinks(source: string, options?: { sourceVersion?: string }): TypedProgramLinks;
+export interface RustSourceProjectSource { path:string; source:string }
+export interface RustSourceProjectOptions {
+  library?:boolean; retainSourceTypeOwners?:boolean; provenance?:unknown;
+  fileLimit?:number; byteLimit?:number; tokenLimit?:number; depthLimit?:number;
+  expansionLimit?:number; outputUnitLimit?:number; nodeLimit?:number;
+  referenceLimit?:number;
+}
+export interface RustSourceProjectMapping {
+  path:string; start:number; end:number; startUnit:number; endUnit:number;
+  module:string; provider:string;
+}
+export interface RustSourceProjectComposition {
+  schemaVersion:1; model:'complete Rust source module composition 1';
+  entry:string; source:string;
+  files:(RustSourceProjectSource & {sourceBytes:number;sourceSha256:string})[];
+  modules:RustSourceProjectMapping[];
+  mappings:(RustSourceProjectMapping & {kind:string;outputStart:number;outputEnd:number})[];
+  unusedSources:string[];
+}
+export function composeRustSourceProject(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):RustSourceProjectComposition;
+export function parseRustSourceProject(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):{composition:RustSourceProjectComposition;surface:unknown;entryNormalization:string};
+export function createRustSourceProjectProgramLinks(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):TypedProgramLinks;
+export function readRustSourceProjectConcreteGraphs(network:LinkNetwork,root:LinkIdValue,options?:RustSourceProjectOptions):{path:string;source:string;network:LinkNetwork}[];
+export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
+export function createReferenceMethodProgramLinks(): TypedProgramLinks;
+export function createRecordFieldWriteProgramLinks(): TypedProgramLinks;
+export function createBigIntegerBitwiseProgramLinks(): TypedProgramLinks;
+export function createRustPrimitiveBitwiseProgramLinks(): TypedProgramLinks;
+export function createArrayStateMethodProgramLinks(): TypedProgramLinks;
+export function createRustShiftProgramLinks(): TypedProgramLinks;
+export function createRustRecordProgramLinks(): TypedProgramLinks;
+export function createJavaScriptOptionalCallProgramLinks(): TypedProgramLinks;
+export function createJavaScriptOptionalChainProgramLinks(): TypedProgramLinks;
+export function createJavaScriptNullishFieldProgramLinks(): TypedProgramLinks;
+export function createJavaScriptRecordOrderProgramLinks(): TypedProgramLinks;
+export function acceptJavaScriptRecordOrderNames(names: number[][]): boolean;
+export function acceptJavaScriptRecordOrderPermutation(count: number, order: number[]): boolean;
+export function acceptJavaScriptRecordPropertyOrder(names: number[][], order: number[]): boolean;
+export function createJavaScriptRecordPropertyOrder(names: number[][], insertion: number[]): number[];
+export function mergeJavaScriptRecordPropertyOrder(names: number[][], chunks: number[][]): number[];
+export function rebaseJavaScriptRecordPropertyOrder(target: number[][], source: number[][], order: number[]): number[];
+export function readJavaScriptRecordPropertyKeys(names: number[][], order: number[]): number[][];
+export function createJavaScriptOwnPropertyProgramLinks(): TypedProgramLinks;
+export function createJavaScriptLiteralPropertyProgramLinks(): TypedProgramLinks;
+export function createJavaScriptPropertyCallProgramLinks(): TypedProgramLinks;
+export function createLinkAllocationProgramLinks(): TypedProgramLinks;
+export function createRustInherentProgramLinks(): TypedProgramLinks;
+export function createUnicodeScalarProgramLinks(): TypedProgramLinks;
+export function createJavaScriptRecordParameterProgramLinks(): TypedProgramLinks;
+export function createModuleBindingProgramLinks(): TypedProgramLinks;
+export function createCallableSourceProgramLinks(): TypedProgramLinks;
+export function createScalarAssignmentProgramLinks(): TypedProgramLinks;
+export function createSourceIdentifierProgramLinks(): TypedProgramLinks;
+export function createReferenceArrayProjectionProgramLinks(): TypedProgramLinks;
+export function createJavaScriptIdentifierProgramLinks(): TypedProgramLinks;
+export function createRegularGrammarInferenceProgramLinks(): TypedProgramLinks;
+export interface RegularGrammarInferenceOptions {
+  strategy?: 'rpni' | 'edsm' | 'alergia'; alpha?: number;
+  stateLimit?: number; pairLimit?: number; attemptLimit?: number;
+  symbolLimit?: number; byteLimit?: number;
+  identifier?: string; language?: string; edition?: string;
+}
+export interface RegularGrammarInference extends TypedProgramLinks {
+  grammar: Grammar; source: GlobalConceptSource; alphabet: string[]; table: number[];
+}
+export function inferRegularGrammar(positives: readonly (readonly string[])[], negatives?: readonly (readonly string[])[], options?: RegularGrammarInferenceOptions): RegularGrammarInference;
+export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: LinkId | number): RegularGrammarInference;
+export function refineRegularGrammarInference(network:LinkNetwork,root:LinkIdValue,positives?:readonly (readonly string[])[],negatives?:readonly (readonly string[])[],options?:{identifier?:string}):RegularGrammarInference;
+export function readRefinedRegularGrammarInferenceLinks(network:LinkNetwork,root:LinkIdValue):RegularGrammarInference;
+export function acceptInferredGrammarSymbols(model: RegularGrammarInference, symbols: readonly string[]): boolean;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,
@@ -1175,6 +1277,7 @@ export class LinkNetwork {
   importConceptOntology(source: LinkNetwork): ConceptOntologyImportReport;
   linksNotationReading(id: LinkId): LinksNotationReading;
   linksNotationText(ids: LinkId[]): string;
+  setLinkMetadata(id: LinkIdValue, metadata: LinkMetadata): boolean;
   link(id: LinkId | number): Link | undefined;
   links(): Link[];
   /** Original links; omission selects concrete syntax. Resolve provenance through this complete network. */
@@ -1933,6 +2036,195 @@ export class BinaryLinksError extends TypeError { constructor(message: string) }
 export function encodeLinkNetworkBinary(network: LinkNetwork, options?: BinaryLinksOptions): Uint8Array;
 export function decodeLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): LinkNetwork;
 
+/** Explicit complete positive u64 profile. Number inputs must already be safe;
+ * JSON uses exact decimal text. The existing LinkId profile is unchanged. */
+export type UnsignedLinkIdValue = UnsignedLinkId | LinkIdValue | bigint;
+export class UnsignedLinkId {
+  constructor(value: UnsignedLinkIdValue);
+  static from(value: UnsignedLinkIdValue): UnsignedLinkId;
+  static fromU64(value: bigint | number | string): UnsignedLinkId;
+  words(): number[];
+  asU64(): bigint;
+  equals(other: UnsignedLinkIdValue): boolean;
+  compare(other: UnsignedLinkIdValue): number;
+  toString(): string;
+  toJSON(): string;
+  valueOf(): bigint;
+}
+export class UnsignedLink {
+  constructor(id: UnsignedLinkIdValue, references?: UnsignedLinkIdValue[], metadata?: LinkMetadata);
+  id(): UnsignedLinkId;
+  references(): UnsignedLinkId[];
+  metadata(): LinkMetadata;
+  setReferences(references: UnsignedLinkIdValue[]): void;
+  setMetadata(metadata: LinkMetadata): void;
+  clone(): UnsignedLink;
+}
+export interface UnsignedSourceDocumentOptions extends BinaryLinksOptions {
+  firstIdentity?: UnsignedLinkIdValue;
+}
+export interface RebasedUnsignedLinkNetwork {
+  network: UnsignedLinkNetwork;
+  sourceIdentities: UnsignedLinkId[];
+  identities: UnsignedLinkId[];
+}
+export class UnsignedLinkNetwork {
+  setLinkMetadata(id: UnsignedLinkIdValue, metadata: LinkMetadata): boolean;
+  static parse(text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): UnsignedLinkNetwork;
+  static parseWithRegistry(registry: ParserRegistry, text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): UnsignedLinkNetwork;
+  reconstructText(options?: BinaryLinksOptions): string;
+  reconstructBytes(options?: BinaryLinksOptions): Uint8Array;
+  projectedLinks(projection?: NetworkProjectionValue): UnsignedLink[];
+  projected_links(projection?: NetworkProjectionValue): UnsignedLink[];
+  readonly nextIdentity: UnsignedLinkId | null;
+  len(): number;
+  links(): UnsignedLink[];
+  link(id: UnsignedLinkIdValue): UnsignedLink | undefined;
+  findTerm(term: string): UnsignedLinkId | undefined;
+  insertLink(references?: UnsignedLinkIdValue[], metadata?: LinkMetadata): UnsignedLinkId;
+  insertLinkWithOptionalId(preferred?: UnsignedLinkIdValue, references?: UnsignedLinkIdValue[], metadata?: LinkMetadata): UnsignedLinkId;
+  insertTypedPoint(type: LinkTypeValue, term: string, definition?: string): UnsignedLinkId;
+  insertPoint(term: string): UnsignedLinkId;
+  insertObject(term: string): UnsignedLinkId;
+  insertField(term: string): UnsignedLinkId;
+  insertFieldRelation(parent: UnsignedLinkIdValue, label: string, child: UnsignedLinkIdValue): UnsignedLinkId;
+  deleteLink(id: UnsignedLinkIdValue): void;
+  clone(): UnsignedLinkNetwork;
+  toLino(): string;
+  static fromLino(text: string): UnsignedLinkNetwork;
+}
+export interface DenseUnsignedLinkNetwork {
+  network: LinkNetwork;
+  directory: UnsignedLinkId[];
+  nextIdentity: UnsignedLinkId | null;
+}
+export function rebaseUnsignedLinkNetwork(source: LinkNetwork | UnsignedLinkNetwork, firstIdentity?: UnsignedLinkIdValue, options?: BinaryLinksOptions): RebasedUnsignedLinkNetwork;
+export function createUnsignedSourceDocumentLinks(text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): RebasedUnsignedLinkNetwork;
+export function createUnsignedSourceDocumentLinksWithRegistry(registry: ParserRegistry, text: string, language: string, configuration?: ParseConfiguration, options?: UnsignedSourceDocumentOptions): RebasedUnsignedLinkNetwork;
+export function createDenseUnsignedLinkNetwork(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): DenseUnsignedLinkNetwork;
+export function restoreDenseUnsignedLinkNetwork(dense: LinkNetwork, directory: UnsignedLinkIdValue[], nextIdentity: UnsignedLinkIdValue | null, options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function encodeUnsignedLinkNetworkBinary(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): Uint8Array;
+export function decodeUnsignedLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function readUnsignedGraphSnapshot(source: string | Uint8Array | readonly number[], encoding?: 'text' | 'binary', options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function selectUnsignedTypedProgramRoot(network: UnsignedLinkNetwork, requested?: UnsignedLinkIdValue, options?: {recordLimit?: number}): UnsignedLinkId;
+export function runUnsignedGraphCommand(args: string[], io: {readFile(path: string): string; readBytes?(path: string): Uint8Array | readonly number[]}): {exitCode: number; stdout: string | Uint8Array; stderr: string};
+export function runUnsignedSourceCommand(args: string[], io: {readFile(path: string): string}): {exitCode: number; stdout: string | Uint8Array; stderr: string};
+export interface RebasedUnsignedTypedProgramLinks extends RebasedUnsignedLinkNetwork {
+  root: UnsignedLinkId;
+}
+export function rebaseUnsignedTypedProgramLinks(packet: { network: LinkNetwork | UnsignedLinkNetwork; root: UnsignedLinkIdValue }, firstIdentity?: UnsignedLinkIdValue, options?: BinaryLinksOptions): RebasedUnsignedTypedProgramLinks;
+export function createUnsignedTypedProgramLinks(source: string, language: string, sourceOptions?: Parameters<typeof createTypedProgramLinks>[2], identityOptions?: UnsignedSourceDocumentOptions): RebasedUnsignedTypedProgramLinks;
+export function createUnsignedRustSourceOwnerProgramLinks(source: string, sourceOptions?: {sourceVersion?: string}, identityOptions?: UnsignedSourceDocumentOptions): RebasedUnsignedTypedProgramLinks;
+export function emitUnsignedTypedProgramLinks(network: UnsignedLinkNetwork, root: UnsignedLinkIdValue, target: string, emissionOptions?: TypedProgramLinksEmissionOptions, identityOptions?: BinaryLinksOptions): TypedProgramLinksEmission;
+export function createUnsignedLinkIdentityProgramLinks(): TypedProgramLinks;
+
+export type MetaLanguageArchiveKind = 'concrete syntax' | 'abstract syntax' | 'grammar'
+  | 'language configuration'
+  | 'global concept space' | 'formal concept definition' | 'ontology' | 'taxonomy'
+  | 'resource description graph' | 'resource description dataset' | 'typed program'
+  | 'discovered concepts' | 'decorators' | 'grammar inference';
+export interface MetaLanguageArchiveEntry {
+  identifier: string;
+  kind: MetaLanguageArchiveKind;
+  network: LinkNetwork;
+  root: LinkIdValue;
+}
+export interface MetaLanguageArchiveLimits {
+  nodeLimit?: number;
+  referenceLimit?: number;
+  byteLimit?: number;
+}
+export interface MetaLanguageArchive { network: LinkNetwork; root: LinkId; }
+export interface ReconstructedMetaLanguageArchive {
+  entries: MetaLanguageArchiveEntry[];
+  networks: LinkNetwork[];
+}
+export interface LoadedMetaLanguageArchive extends MetaLanguageArchive, ReconstructedMetaLanguageArchive {}
+export function createMetaLanguageArchive(entries: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive;
+export function readMetaLanguageArchive(network: LinkNetwork, root: LinkIdValue, options?: MetaLanguageArchiveLimits): ReconstructedMetaLanguageArchive;
+export function metaLanguageArchiveToText(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): string;
+export function readMetaLanguageArchiveNetworkText(text: string, options?: MetaLanguageArchiveLimits): LinkNetwork;
+export function readMetaLanguageArchiveText(text: string, options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
+export function metaLanguageArchiveToBinary(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): Uint8Array;
+export function readMetaLanguageArchiveBinary(bytes: Uint8Array | readonly number[], options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
+export function extendMetaLanguageArchive(archive: MetaLanguageArchive, additions: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits & { replace?: boolean; remove?: string[] }): MetaLanguageArchive;
+
+export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {
+  depthLimit?: number;
+  records?: ConceptRecord[];
+  formalDefinitions?: Record<string, FormalConceptArchive>;
+  equivalences?: [string, string][];
+  entries?: MetaLanguageArchiveEntry[];
+}
+export class DynamicMetaLanguage {
+  constructor(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits);
+  readonly archive: MetaLanguageArchive;
+  readonly entries: MetaLanguageArchiveEntry[];
+  readonly sources: GlobalConceptSource[];
+  readonly space: GlobalConceptSpace;
+  readonly formalDefinitions: Record<string, FormalConceptArchive>;
+  readonly configuration: { schemaVersion: 1; records: ConceptRecord[]; equivalences: [string, string][] };
+  readonly limits: Required<MetaLanguageArchiveLimits> & { depthLimit: number };
+  parser(sourceIdentifier: string, options?: Record<string, unknown>): {
+    parse(input: string, overrides?: Record<string, unknown>): unknown;
+    parseTree(input: string, overrides?: Record<string, unknown>): unknown;
+  };
+  parse(sourceIdentifier: string, input: string, options?: Record<string, unknown>): unknown;
+  extend(additions: GlobalConceptSource[], options?: DynamicMetaLanguageOptions & { replace?: boolean }): DynamicMetaLanguage;
+}
+export function createDynamicMetaLanguage(sources: GlobalConceptSource[], options?: DynamicMetaLanguageOptions): DynamicMetaLanguage;
+export interface DynamicLanguageCommandOutput { exitCode: number; stdout: string | Uint8Array; stderr: string }
+export function runDynamicLanguageCommand(args: string[], host: {
+  readFile(path: string): string;
+  readBytes(path: string): Uint8Array;
+}): DynamicLanguageCommandOutput;
+export function createDynamicLanguageCommandProgramLinks(): TypedProgramLinks;
+export function createRustByteStringProgramLinks(): TypedProgramLinks;
+/** Actual binding name and required owner (0=intrinsics,1=Map,2=Set,3=Object). */
+export function readIntrinsicModuleInitializerBinding(source: string): [string, number] | null;
+export function acceptIntrinsicModuleInitializerScope(forms: string[], owners: number[], bindings: string[]): boolean;
+export function createJavaScriptRecordClosureParameterProgramLinks(): TypedProgramLinks;
+
+export interface SyntaxProjectionLimits extends MetaLanguageArchiveLimits { depthLimit?: number }
+export interface AbstractSyntaxOptions extends SyntaxProjectionLimits {
+  treePath?: string[];
+  decorators?: DecoratorInput;
+}
+export interface AbstractSyntaxLinks { network: LinkNetwork; root: LinkId; concreteRoot: LinkId }
+export interface AbstractSyntaxNode {
+  id: LinkId;
+  origin: LinkId;
+  properties: Record<string, string>;
+  children: Array<{ role: string; container: LinkId; index: number; node: AbstractSyntaxNode }>;
+}
+export interface ReadAbstractSyntaxLinks {
+  concreteRoot: LinkId;
+  tree: AbstractSyntaxNode | null;
+  settings: { schemaVersion: 1; treePath: string[]; decorators: Decorator[] };
+}
+export function createAbstractSyntaxLinks(network: LinkNetwork | StructuredDataLinksArchive['network'],
+  root: LinkIdValue, options?: AbstractSyntaxOptions): AbstractSyntaxLinks;
+export function readAbstractSyntaxLinks(network: LinkNetwork, root: LinkIdValue,
+  options?: SyntaxProjectionLimits): ReadAbstractSyntaxLinks;
+
+export interface ProjectTranslationSource {
+  identifier: string;
+  language: string;
+  source: string;
+  imports?: Record<string, string>;
+  options?: SelfTranslationOptions;
+}
+export interface ProjectTranslationDraftOptions {
+  targetLanguage: string;
+  translationOptions?: SelfTranslationOptions;
+  externalImports?: Record<string, Record<string, SelfTranslationSignature[]>>;
+  moduleLimit?: number;
+  byteLimit?: number;
+  refinementLimit?: number;
+}
+export function draftProjectTranslation(inputs: ProjectTranslationSource[], options: ProjectTranslationDraftOptions): StructuredDataValue;
+export function projectTranslationDraftToLinks(draft: StructuredDataValue, options?: StructuredDataLinksLimits): StructuredDataLinksArchive;
+
 /** Structured RDF 1.1 terms; syntax import and OWL entailment are separate operations. */
 export type ResourceDescriptionTerm =
   | { kind: 'identifier'; value: string }
@@ -2446,3 +2738,53 @@ export class LanguageProfileViolation extends Error {
 }
 
 // --- query algebra (link rules) ---
+
+/** Complete editable source-derived JavaScript numeric conversion definitions. */
+export function createStringNumberProgramLinks(): TypedProgramLinks;
+/** ECMAScript StringNumericLiteral conversion, preserving binary64 signed zero. */
+export function convertJavaScriptStringNumber(text: string): number;
+
+/** Complete source-derived exact BigInt conversion definitions. */
+export function createBigIntegerConversionProgramLinks(): TypedProgramLinks;
+export function convertJavaScriptStringBigInteger(text: string): bigint;
+export function convertJavaScriptStringBigIntegerUnits(units: number[]): bigint;
+export function convertJavaScriptNumberBigInteger(value: number): bigint;
+
+export function convertJavaScriptBooleanBigInteger(value: boolean): bigint;
+
+/** Complete source exception constructor, class, message and presence definitions. */
+export function createSourceExceptionProgramLinks(): TypedProgramLinks;
+/** Complete editable UTF-16 literal, escape and unit construction definitions. */
+export function createJavaScriptStringUnitProgramLinks(): TypedProgramLinks;
+/** Complete editable source constructor and UTF-16 text operation definitions. */
+export function createStringConstructionProgramLinks(): TypedProgramLinks;
+export function createUtf16TextProgramLinks(): TypedProgramLinks;
+export function createFormalStringUnitProgramLinks(): TypedProgramLinks;
+
+/** Complete source-derived primitive comparison decisions. */
+export function createJavaScriptComparisonProgramLinks(): TypedProgramLinks;
+/** Complete source-derived represented binding initializer decisions. */
+export function createArrayBindingProgramLinks(): TypedProgramLinks;
+/** Complete source-derived String range checked-operator plans. */
+export function createJavaScriptStringRangeProgramLinks(): TypedProgramLinks;
+
+/** Complete shared optional-value and Boolean owner definitions. */
+export function createOptionalValueProgramLinks(): TypedProgramLinks;
+
+/** Full Unicode 16 default case conversion over UTF16 units. */
+export function mapUnicodeCaseUtf16Text(text: readonly number[], upper: boolean): number[];
+export function createUnicodeCaseProgramLinks(): TypedProgramLinks;
+
+export function createRustUnitValueProgramLinks(): TypedProgramLinks;
+
+export function createRustFormattingProgramLinks(): TypedProgramLinks;
+/** One complete artifact identity; a digest does not prove equal meaning. */
+export interface SourceDefinitionEntry { identifier:string; asset:string; bytes:number; sha256:string; root:string; definitionIdentity:string }
+export interface SourceDefinitionCatalogLimits { byteLimit?:number; nodeLimit?:number; depthLimit?:number }
+export function sourceDefinitionCatalog(): SourceDefinitionEntry[];
+export function sourceDefinitionEntry(identifier:string): SourceDefinitionEntry|undefined;
+export function createSourceDefinitionProgramLinks(identifier:string,options?:SourceDefinitionCatalogLimits): {network:LinkNetwork;root:LinkId};
+export function createSourceDefinitionFormalFunctionLinks(identifier:string,declaration:string|LinkId,options?:SourceDefinitionCatalogLimits): ReturnType<typeof encodeFormalFunctionDefinition>;
+export function runSourceDefinitionCommand(args:string[]): {exitCode:number;stdout:string|Uint8Array;stderr:string};
+export function createJavaScriptRecordCallableParameterProgramLinks(): TypedProgramLinks;
+export function createJavaScriptArrayFormalParameterProgramLinks():TypedProgramLinks;

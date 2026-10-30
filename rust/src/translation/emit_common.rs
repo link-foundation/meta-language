@@ -225,6 +225,7 @@ impl<'p> EmitState<'p> {
     }
 
     fn claim(&mut self, space: &str, name: &str) -> String {
+        let name = crate::translation::source_identifiers::render_source_target_identifier(name);
         if !self.taken.contains_key(space) {
             // Root declarations may not redeclare the target's prelude (`root_reserved`).
             let mut used: HashSet<String> = self.reserved.iter().cloned().collect();
@@ -681,6 +682,7 @@ fn mentions_float(node: &impl Serialize) -> bool {
             serde_json::Value::Array(items) => items.iter().any(visit),
             serde_json::Value::Object(fields) => {
                 fields.get("kind").and_then(serde_json::Value::as_str) == Some("float")
+                    || crate::translation::ordered_record_layout_rules::accept_ordered_record_number_storage(value["kind"].as_str().unwrap_or_default(),value["ordered"]==true)
                     || fields.values().any(visit)
             }
             _ => false,

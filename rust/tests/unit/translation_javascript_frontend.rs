@@ -104,6 +104,7 @@ fn documented_collections_preserve_nested_type_arguments_and_exact_arities() {
                 }],
                 open: false,
                 reference: false,
+                ordered: false,
             },
         ),
     ] {

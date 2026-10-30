@@ -32,15 +32,22 @@ use super::types::Type;
 
 mod arrays;
 mod callables;
+mod casts;
 mod helpers;
 mod main;
 mod math;
 mod optional_values;
 mod records;
 mod types;
+mod unit_strings;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
+    "MLStringNumber",
+    "MLBigIntegerConversion",
+    "MLUtf16Text",
+    "MLUnicodeCase",
+    "MLRecordPropertyOrder",
     "abbrev",
     "at",
     "attribute",
@@ -187,7 +194,10 @@ fn generated(name: &str) -> Vec<String> {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_lean(source: &Program) -> Result<Emitted> {
+    let prepared = super::ordered_record_preparation::prepare(source)?;
+    let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Lean")?;
+    let utf16_strings = super::formal_unit_strings::requires(program);
     let state = EmitState::new(
         program,
         Language::Lean,
@@ -203,7 +213,12 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
     LeanEmitter {
         program,
         state,
-        helpers: HashSet::new(),
+        helpers: if utf16_strings {
+            HashSet::from(["utf16Text"])
+        } else {
+            HashSet::new()
+        },
+        utf16_strings,
         successors: HashMap::new(),
         uses_number: Dependence::numbers(program),
         uses_partial: Dependence::partial(program),
@@ -212,6 +227,7 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
 }
 
 struct LeanEmitter<'p> {
+    utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
     helpers: HashSet<&'static str>,
@@ -224,6 +240,9 @@ struct LeanEmitter<'p> {
 
 impl LeanEmitter<'_> {
     fn file(mut self) -> Result<Emitted> {
+        if self.utf16_strings {
+            self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
+        }
         let mut blocks = Vec::new();
         let mut open: Vec<String> = Vec::new();
         let groups = mutual_groups(self.program);
@@ -263,6 +282,26 @@ impl LeanEmitter<'_> {
                 });
                 lines.push(String::new());
             }
+        }
+        if self.helpers.contains("stringNumber") {
+            lines.push(include_str!("runtime/string-number.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("bigIntegerConversion") {
+            lines.push(include_str!("runtime/big-integer-conversion.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("utf16Text") {
+            lines.push(include_str!("runtime/utf16-text.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("unicodeCase") {
+            lines.push(include_str!("runtime/unicode-case.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("recordPropertyOrder") {
+            lines.push(include_str!("runtime/record-property-order.lean").to_owned());
+            lines.push(String::new());
         }
         for block in blocks {
             lines.push(block);
@@ -515,6 +554,19 @@ impl LeanEmitter<'_> {
     }
 
     fn expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                e,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.expr(copy, depth)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("Lean",&value));
+        }
+        if let Some(text) = super::formal_unit_strings::expression(self, e, depth)? {
+            return Ok(text);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&e.node, Node::Ctor { frozen: true, .. })
         {
@@ -552,7 +604,12 @@ impl LeanEmitter<'_> {
             }
         }
         Ok(match &e.node {
-            Node::Record { entries } => self.record_value(entries, depth)?,
+            Node::Record { entries, order } => self.record_value(
+                entries,
+                order.as_deref(),
+                matches!(&e.ty, Type::Record { ordered: true, .. }),
+                depth,
+            )?,
             Node::RecordField { object, index, .. } => self.record_field(object, *index, depth)?,
             Node::ReferenceAllocate { .. }
             | Node::ReferenceRead { .. }
@@ -671,6 +728,19 @@ impl LeanEmitter<'_> {
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
             Node::Method { object, op, args } => {
+                if op == "toSorted" {
+                    return Err(unsupported(
+                        "array copying sort",
+                        "this target needs an explicit UTF-16 string ordering interpretation",
+                        e.span,
+                    ));
+                }
+                if op == "readJavaScriptRecordPropertyOrder" {
+                    let rendered = self.expr(object, depth)?;
+                    return crate::translation::ordered_record_values::order_read(
+                        "Lean", e, &rendered,
+                    );
+                }
                 if matches!(object.ty, Type::Array { .. }) && op == "map" {
                     let callback = args
                         .first()
@@ -740,6 +810,9 @@ impl LeanEmitter<'_> {
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
             | Node::CollectionItems { .. } => self.array_expr(e, depth)?,
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => {
+                self.array_expr(e, depth)?
+            }
             Node::Math { .. } => self.math(e, depth)?,
             // Output threading leaves no `print` node.
             Node::Print { .. } => {
@@ -761,29 +834,6 @@ impl LeanEmitter<'_> {
             parts.push(self.expr(arg, depth)?);
         }
         Ok(format!("({})", parts.join(" ")))
-    }
-
-    fn text_of(&mut self, arg: &Expr, depth: usize, console: bool) -> Result<String> {
-        if matches!(arg.ty, Type::Data { .. } | Type::Unit) {
-            return Err(unsupported(
-                "output of structured values",
-                &format!("a {} value has no portable textual form", arg.ty.kind()),
-                arg.span,
-            ));
-        }
-        if arg.ty.is_float() {
-            self.helpers.insert("jsNumber");
-            if console {
-                self.helpers.insert("jsConsole");
-            }
-            let function = if console {
-                "ml_js_console"
-            } else {
-                "ml_js_number"
-            };
-            return Ok(format!("({function} {})", self.expr(arg, depth)?));
-        }
-        Ok(format!("(toString {})", self.expr(arg, depth)?))
     }
 
     fn binary(&mut self, e: &Expr, depth: usize) -> Result<String> {
@@ -909,29 +959,6 @@ impl LeanEmitter<'_> {
             arms.push(format!("{}| {text} => {}", pad(depth + 1), body?));
         }
         Ok(format!("(match {subject} with\n{})", arms.join("\n")))
-    }
-
-    fn cast(
-        &mut self,
-        arg: &Expr,
-        from: &Type,
-        to: &Type,
-        flavor: Flavor,
-        depth: usize,
-    ) -> Result<String> {
-        let arg = self.expr(arg, depth)?;
-        let natural_from = from.is_natural();
-        let natural_to = to.is_natural();
-        if natural_from == natural_to {
-            return Ok(arg);
-        }
-        if natural_from {
-            return Ok(format!("(Int.ofNat {arg})"));
-        }
-        if flavor == Flavor::Checked {
-            unthreaded("a checked conversion to a natural");
-        }
-        Ok(format!("(Int.toNat {arg})"))
     }
 }
 

@@ -302,7 +302,13 @@ impl FeatureGrammarParser {
         source: &[u8],
         options: &FeatureParseOptions,
     ) -> Result<ParseOutcome, GrammarRuntimeError> {
-        let options = options.over(&self.options);
+        // The immutable parser owns the already validated context. Empty
+        // overrides can borrow it without cloning the complete concept graph.
+        let options = if options == &FeatureParseOptions::default() {
+            std::borrow::Cow::Borrowed(&self.options)
+        } else {
+            std::borrow::Cow::Owned(options.over(&self.options))
+        };
         let program = &self.compiled.programs[self.compiled.main];
         let start_name = options
             .start_rule

@@ -120,6 +120,8 @@ pub fn emit_javascript_with_options(
     program: &Program,
     options: JavaScriptEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     let target_identifier = identifier_model::select(options.identifier_model)?;
     if options.identifier_model.is_some() && options.scoped_binding_model.is_some() {
         return Err(unsupported(
@@ -737,7 +739,51 @@ impl<'p> JavaScriptEmitter<'p> {
         })
     }
 
-    fn cast(&mut self, arg: &Expr, flavor: Flavor, message: Option<&str>) -> Result<String> {
+    fn cast(
+        &mut self,
+        arg: &Expr,
+        from: &Type,
+        to: &Type,
+        flavor: Flavor,
+        message: Option<&str>,
+    ) -> Result<String> {
+        if flavor == Flavor::Wrapping {
+            let (
+                Type::Fixed {
+                    signed: source_signed,
+                    ..
+                },
+                Type::Fixed { bits, signed },
+            ) = (from, to)
+            else {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "requires actual fixed integer source and target types",
+                    arg.span,
+                ));
+            };
+            let argument = self.expr(arg)?;
+            let code =
+                crate::translation::fixed_integer_cast_rules::render_wrapping_fixed_integer_cast(
+                    "JavaScript",
+                    &argument,
+                    f64::from(*bits),
+                    *signed,
+                    *source_signed,
+                );
+            if code.is_empty() {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "the integer width needs an exact target encoding",
+                    arg.span,
+                ));
+            }
+            self.state.encode(
+                "fixed integer casts",
+                &crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_statement(),
+            );
+            return Ok(code);
+        }
         let arg = self.expr(arg)?;
         Ok(match flavor {
             Flavor::Exact => arg,
@@ -748,6 +794,9 @@ impl<'p> JavaScriptEmitter<'p> {
                     "ml_toNatChecked({arg}, {})",
                     json_string(cast_message(message))
                 )
+            }
+            Flavor::Wrapping => {
+                unreachable!("wrapping casts return their checked fixed representation above")
             }
         })
     }

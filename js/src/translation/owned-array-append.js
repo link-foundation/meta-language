@@ -1,16 +1,18 @@
+import {acceptOwnedArrayFreshSliceSource} from './owned-array-allocation-rules.js';
 // Source occurrence transport for the shared fresh-local construction proof.
 // Every accepted reader refers to an inspected declaration, never its spelling.
 import {
   acceptOwnedArrayAppendShape, acceptOwnedArrayRemovalShape, readOwnedArrayRemovalSliceBounds, acceptOwnedArrayAppendUses, acceptOwnedArrayRead,
-  acceptOwnedArrayReaderResult, acceptOwnedArraySelfSliceRebinding,
+  acceptOwnedArraySelfSliceRebinding,
   acceptOwnedArrayIterationBorrowShape, acceptOwnedArrayBorrowedAppend,
 } from './owned-array-append-rules.js';
 import { FLOAT } from './types.js';
+import {acceptOwnedArrayReaderDomain} from './owned-array-reader-domain-rules.js';
 
 export function readOwnedArrayReaderParameters(declaration, readers, statements = null) {
-  if (!acceptOwnedArrayReaderResult(declaration.ret?.kind ?? '')) return new Set();
   const admitted = new Set();
   for (const [index, parameter] of declaration.params.entries()) {
+    if(!acceptOwnedArrayReaderDomain(declaration.ret?.kind??'',declaration.ret?.element?.kind??'',parameter.type?.kind??'',parameter.type?.element?.kind??''))continue;
     let safe = true;
     const visit = (value, context = '', operation = '', reader = false, captured = false, locals = new Set(declaration.params.map(param => param.name))) => {
       if (!value || typeof value !== 'object') return;
@@ -130,7 +132,9 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
     if (value.k === 'name' && value.path.length === 1) {
       const entry = scope.get(value.path[0]);
       const allocation = entry?.borrowOf ?? entry;
-      if (allocation && (captured || !acceptOwnedArrayRead(context, operation, reader))) escape(allocation, loops);
+      if(allocation&&(captured||!acceptOwnedArrayRead(context,operation,reader))){
+        allocation.arrayKnown=false;if(allocation.source)escape(allocation,loops);
+      }
       return;
     }
     if (value.k === 'app') {
@@ -169,13 +173,15 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
           continue;
         }
         read(statement.value, scope, loops);
-        if (statement.value?.k === 'array') {
-          const allocation = { id: allocations.length, name: statement.name, literal: statement.value, loops: [...loops], position: advance(), escapes: [], borrows: [] };
+        const value=statement.value,receiver=value?.object,entry=receiver?.k==='name'&&receiver.path.length===1?scope.get(receiver.path[0]):null;
+        const freshSlice=acceptOwnedArrayFreshSliceSource(value?.k??'',value?.op??'',receiver?.k??'',receiver?.path?.length??0,value?.k==='copySlice'?0:value?.args?.length??-1,Boolean(entry&&!entry.borrowOf&&entry.arrayKnown));
+        if (statement.value?.k === 'array'||freshSlice) {
+          const allocation = { id: allocations.length, name: statement.name, source:statement.value,...(statement.value.k==='array'?{literal:statement.value}:{}),arrayKnown:true, loops: [...loops], position: advance(), escapes: [], borrows: [] };
           allocations.push(allocation); scope.set(statement.name, allocation);
         } else scope.set(statement.name, null);
       } else if (statement.s === 'expr' && (acceptOwnedArrayAppendShape(statement.s, statement.expr.k, statement.expr.op ?? '', statement.expr.object?.k ?? '', statement.expr.object?.path?.length ?? 0, statement.expr.args?.length ?? 0)
         || acceptOwnedArrayRemovalShape(statement.s, statement.expr.k, statement.expr.op ?? '', statement.expr.object?.k ?? '', statement.expr.object?.path?.length ?? 0, statement.expr.args?.length ?? 0))) {
-        const allocation = scope.get(statement.expr.object.path[0]);
+        const entry = scope.get(statement.expr.object.path[0]),allocation=entry?.arrayParameter?null:entry;
         if (allocation?.borrowOf) read(statement.expr, scope, loops);
         else {
           statement.expr.args.forEach(argument => read(argument, scope, loops));
@@ -184,7 +190,8 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
       } else if (statement.s === 'assign') {
         read(statement.value, scope, loops);
         const allocation = scope.get(statement.name);
-        if (allocation?.borrowOf) escape(allocation.borrowOf, loops);
+        if(allocation?.arrayParameter)allocation.arrayKnown=false;
+        else if (allocation?.borrowOf) escape(allocation.borrowOf, loops);
         else if (allocation) {
           const value = statement.value;
           const receiver = value?.object;
@@ -193,9 +200,10 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
           // The complete RHS walk above retains unsafe argument reads and
           // every earlier escape. No allocation or escape history is reset.
           if (!acceptOwnedArraySelfSliceRebinding(value?.k ?? '', value?.op ?? '', receiver?.k ?? '',
-            receiver?.path?.length ?? 0, sameOwner, value?.k === 'copySlice' ? 0 : value?.args?.length ?? -1)) escape(allocation, loops);
+            receiver?.path?.length ?? 0, sameOwner, value?.k === 'copySlice' ? 0 : value?.args?.length ?? -1)){allocation.arrayKnown=false;escape(allocation, loops);}
         }
       } else if (statement.s === 'return' || statement.s === 'throw' || statement.s === 'break' || statement.s === 'continue') {
+        if(statement.s==='throw'&&statement.exception)read(statement.exception,scope,loops);
         // No owner reaches another construction after this control transfer.
         break;
       } else if (statement.s === 'block') {
@@ -207,7 +215,7 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
         const allocation = receiver?.k === 'name' && receiver.path.length === 1 ? scope.get(receiver.path[0]) : null;
         const admitted = acceptOwnedArrayIterationBorrowShape(statement.s, statement.inline === true, statement.body.length,
           binding?.s ?? '', expression?.k ?? '', receiver?.k ?? '', receiver?.path?.length ?? 0,
-          loop?.s ?? '', parserOwned, Boolean(allocation && !allocation.borrowOf));
+          loop?.s ?? '', parserOwned, Boolean(allocation?.source && !allocation.borrowOf));
         list(statement.body, statement.inline ? scope : new Map(scope), loops, admitted ? binding : null);
       }
       else if (statement.s === 'if') {
@@ -225,12 +233,12 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
     }
     for (const borrow of closing) borrow.end = advance();
   };
-  list(statements, new Map(parameters.map(parameter => [parameter.name, null])), []);
+  list(statements, new Map(parameters.map(parameter => [parameter.name,parameter.type?.kind==='array'?{arrayParameter:true,arrayKnown:true}:null])), []);
   return appends.filter(append => {
     const loops = [], starts = [], counts = [], positions = [];
     for (const entry of append.allocation.escapes) { starts.push(loops.length); counts.push(entry.loops.length); loops.push(...entry.loops); positions.push(entry.position); }
     return acceptOwnedArrayAppendUses(append.allocation.loops, append.loops, loops, starts, counts, positions, append.position)
       && acceptOwnedArrayBorrowedAppend(append.position, append.allocation.borrows.map(borrow => borrow.start), append.allocation.borrows.map(borrow => borrow.end));
-  }).map(append => ({ statement: append.statement, allocation: append.allocation.literal, name: append.allocation.name,
+  }).map(append => ({ statement: append.statement, allocation: append.allocation.source, name: append.allocation.name,
     facts: { allocationLoops: append.allocation.loops, appendLoops: append.loops, escapeLoops: append.allocation.escapes.map(escape => escape.loops), escapePositions: append.allocation.escapes.map(escape => escape.position), appendPosition: append.position } }));
 }

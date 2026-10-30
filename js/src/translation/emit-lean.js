@@ -1,5 +1,31 @@
+import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
+import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
+import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal-runtime.js';
+import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
+import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
+import {UNICODE_CASE_LEAN_PRELUDE} from './unicode-case-formal-runtime.js';
+import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
+import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
+import {hasSourceExceptionOutput,hasSourceExceptionPayload,sourceExceptionPatternSuffix} from './source-exception-observation.js';
+import {readSourceExceptionObservationStatement} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_LEAN_PRELUDE} from './utf16-text-formal-runtime.js';
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
+import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
+import {STRING_NUMBER_LEAN_PRELUDE} from './string-number-formal-runtime.js';
+import {BIG_INTEGER_CONVERSION_LEAN_PRELUDE} from './big-integer-conversion-formal-runtime.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
+import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
+import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -26,6 +52,8 @@ import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
+  'MLStringNumber',
+  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase','MLRecordPropertyOrder',
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
   'export', 'extends', 'for', 'from', 'fun', 'have', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'local',
   'match', 'mut', 'mutual', 'namespace', 'noncomputable', 'open', 'partial', 'private', 'protected', 'return',
@@ -178,7 +206,7 @@ function ident(name) {
 }
 
 export function emitLean(source) {
-  const program = threadOutput(source, 'Lean');
+  const program = threadOutput(prepareOrderedRecordValues(source), 'Lean');
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',
     generated: (name) => [`${name}.eq_1`],
@@ -190,6 +218,8 @@ export function emitLean(source) {
 class LeanEmitter {
   constructor(program, state) {
     this.program = program;
+    this.target='Lean';
+    this.utf16Strings=requireFormalUnitStrings(program);
     this.state = state;
     this.helpers = new Set();
     // Inside \`| p + 1 =>\` of a match on \`x\`, \`x\` is written \`p + 1\`: Lean's
@@ -200,6 +230,7 @@ class LeanEmitter {
   }
 
   file() {
+    prepareFormalUnitStrings(this);
     const blocks = [];
     let open = [];
     const moveTo = (path) => {
@@ -234,6 +265,11 @@ class LeanEmitter {
       'set_option linter.constructorNameAsVariable false',
       '',
       ...['jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat', 'stringIncludes'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
+      ...(this.helpers.has('stringNumber')?[STRING_NUMBER_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('utf16Text')?[UTF16_TEXT_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('unicodeCase')?[UNICODE_CASE_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('recordPropertyOrder')?[RECORD_PROPERTY_ORDER_LEAN_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -264,11 +300,11 @@ class LeanEmitter {
       case 'bool':
         return 'Bool';
       case 'string':
-        return 'String';
+        return this.utf16Strings?readFormalStringUnitType('Lean'):'String';
       case 'unit':
         return 'Unit';
       case 'output':
-        return 'List String';
+        return this.utf16Strings?'List (Array Nat)': 'List String';
       case 'data':
         return this.state.ref(type.name);
       case 'array':
@@ -278,8 +314,10 @@ class LeanEmitter {
         return type.absence === 'both' ? `(Option (Option ${this.type(type.element)}))` : `(Option ${this.type(type.element)})`;
       case 'tuple':
         return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' × ')})` : 'Unit';
-      case 'record':
-        return renderRecordType('Lean', type.fields.map(field => this.type(field.type)));
+      case 'record': {
+        const payload=renderRecordType('Lean', type.fields.map(field => this.type(field.type)));
+        return type.ordered?renderOrderedRecordType('Lean',payload,this.type({kind:'array',element:{kind:'float'}})):payload;
+      }
       case 'function':
         return renderCallableFunctionType('Lean', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
@@ -412,6 +450,10 @@ class LeanEmitter {
   }
 
   expr(e, depth) {
+    const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
+    if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Lean',this.expr(copy,depth));}
+    const units=readFormalUnitStringExpression(this,e,depth);
+    if(units!==null)return units;
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
       if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
@@ -446,9 +488,9 @@ class LeanEmitter {
       case 'lambda':
         return renderCallableLambda('Lean', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body, depth), []);
       case 'record':
-        return renderRecordValue('Lean', [], e.entries.map(entry => this.expr(entry.value, depth)));
+        return emitOrderedRecordValue(this,e,'Lean',depth)??renderRecordValue('Lean', [], e.entries.map(entry => this.expr(entry.value, depth)));
       case 'recordField':
-        return renderRecordProductField('Lean', this.expr(e.object, depth), e.index, e.object.type.fields.length);
+        return renderRecordProductField('Lean', (e.object.type.ordered?renderOrderedRecordPayload('Lean',this.expr(e.object, depth)):this.expr(e.object, depth)), e.index, e.object.type.fields.length);
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
         return count === 1 ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)})${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
@@ -491,7 +533,8 @@ class LeanEmitter {
         return renderOptionalCoalescing('Lean', e.left.type.absence, this.expr(e.left, depth), '', this.expr(e.right, depth));
       case 'optionalField': {
         const count = e.object.type.element.fields.length;
-        const field = count === 1 ? 'ml_record' : `ml_record${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
+        const payload=e.object.type.element.ordered?renderOrderedRecordPayload('Lean','ml_record'):'ml_record';
+        const field = count === 1 ? payload : `${payload}${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
         return renderOptionalProjection('Lean', e.object.type.absence, this.expr(e.object, depth), '', 'ml_record', field, '');
       }
       case 'optionalProject': {
@@ -504,6 +547,7 @@ class LeanEmitter {
         return renderOptionalArrayRead('Lean', e.index.type.kind, value, index);
       }
       case 'method':
+        if(e.op==='toSorted')throw unsupported('array copying sort','this target needs an explicit UTF-16 string ordering interpretation',e.span);
         return this.method(e, depth);
       case 'stringPoints':
         return renderStringPointIteration('Lean', false, this.expr(e.object, depth));
@@ -515,13 +559,10 @@ class LeanEmitter {
         return renderCollectionConstruction('Lean', e.k, keyType.kind, values, this.type(e.type), '', '');
       }
       case 'collectionSize':
-        return `(Float.ofNat ${this.expr(e.object, depth)}.size)`;
+        return renderCollectionSizeExpression('Lean', this.expr(e.object, depth));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
-        const key = e.object.type.kind === 'map' ? 'ml_value.1' : 'ml_value';
-        const equal = keyType.kind === 'float' ? `(${key} == ml_search || (${key}.isNaN && ml_search.isNaN))` : `(${key} == ml_search)`;
-        const result = e.op === 'get' ? `((ml_values.toList.find? (fun ml_value => ${equal})).map (fun ml_pair => ml_pair.2))` : `(ml_values.any (fun ml_value => ${equal}))`;
-        return `(let ml_values := ${this.expr(e.object, depth)}; let ml_search := ${this.expr(e.key, depth)}; ${result})`;
+        return renderCollectionReadExpression('Lean', e.object.type.kind, e.op, this.expr(e.object, depth), this.expr(e.key, depth), keyType.kind === 'float', '', '', '');
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';
@@ -576,9 +617,13 @@ class LeanEmitter {
         return `(ml_array_at ${values} ${e.index.type.kind === 'nat' ? `(Int.ofNat ${index})` : index})`;
       }
       case 'length':
+        if(acceptRustExactArrayLengthResult(e.k,e.type.kind,e.type.bits??0,e.type.signed===true,e.array.type.kind))return renderRustExactArrayLength('Lean',this.expr(e.array,depth));
         if (e.array.type.kind === 'string') return renderStringLengthExpression('Lean', this.expr(e.array, depth));
         return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
       case 'math':
+        if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Lean',e,argument=>this.expr(argument,depth));
+        if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Lean', e, argument => this.expr(argument, depth));
+        if (readBigIntegerBitwiseArity(e.op)) return renderBigIntegerBitwiseExpression('Lean', e.op, e.args.map(argument => this.expr(argument, depth)));
         return this.math(e, depth);
       default:
         throw new Error(`no Lean expression for ${e.k}`);
@@ -587,6 +632,7 @@ class LeanEmitter {
 
   /** Math and Number functions: Float's where they agree with JavaScript, the math helpers otherwise. */
   method(e, depth) {
+    const order=emitOrderedRecordOrderRead(this,e,'Lean',depth);if(order!==null)return order;
     if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', e.object.type.kind, e.op), e.span);
     const object = this.expr(e.object, depth);
     if (e.op === 'join') {
@@ -621,6 +667,7 @@ class LeanEmitter {
   truthy(arg, depth) {
     if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }, depth), 'false', 'false', depth);
     const value = this.expr(arg, depth);
+    if(this.utf16Strings&&arg.type.kind==='string')return formalUnitTruth(this,value);
     return renderOptionalPrimitiveTruth('Lean', arg.type.kind, value, '', false, Boolean(arg.type.signed));
   }
 
@@ -632,6 +679,22 @@ class LeanEmitter {
   }
 
   math(e, depth) {
+    const byteLength=emitRustStringByteLength(this,e,'Lean',value=>this.expr(value,depth));if(byteLength!==null)return byteLength;
+    if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Lean',e.op,this.expr(e.args[0],depth));}
+    if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+      this.helpers.add('bigIntegerConversion');
+      if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('Lean',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0],depth),this.expr(e.args[1],depth),false);
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Lean',this.expr(e.args[0],depth),this.expr(e.args[1],depth));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('Lean',this.expr(e.args[0],depth),this.expr(e.args[1],depth));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Lean',this.expr(e.args[0],depth),this.expr(e.args[1],depth));
+          return renderJavaScriptBigIntegerResultExpression('Lean',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0],depth),false);
+    }
+    if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
+      if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');
+      const text=renderJavaScriptNumberScalarConversion('Lean',e.op,e.args[0].type.kind,this.expr(e.args[0],depth),false);
+      if(!text)throw unsupported('numeric conversion operand','the checked conversion must retain its total value or threaded abort',e.span);
+      return text;
+    }
     const args = e.args.map((arg) => this.expr(arg, depth));
     const native = { abs: 'Float.abs', floor: 'Float.floor', ceil: 'Float.ceil', sqrt: 'Float.sqrt', isFinite: 'Float.isFinite', isNaN: 'Float.isNaN' }[e.op];
     if (native) return `(${native} ${args[0]})`;
@@ -669,15 +732,19 @@ class LeanEmitter {
   }
 
   toText(arg, depth, console = false) {
+    if(this.utf16Strings&&arg.type.kind==='string')return this.expr(arg,depth);
+    if(this.utf16Strings&&arg.type.kind==='unit')return formalUnitLiteral(this,'undefined');
     if (arg.type.kind === 'data' || arg.type.kind === 'unit') {
       throw unsupported('output of structured values', `a ${arg.type.kind} value has no portable textual form`, arg.span);
     }
     if (arg.type.kind === 'float') {
       this.helpers.add('jsNumber');
       if (console) this.helpers.add('jsConsole');
-      return `(${console ? 'ml_js_console' : 'ml_js_number'} ${this.expr(arg, depth)})`;
+      const text=`(${console ? 'ml_js_console' : 'ml_js_number'} ${this.expr(arg, depth)})`;
+      return this.utf16Strings?formalScalarUnits(this,text):text;
     }
-    return `(toString ${this.expr(arg, depth)})`;
+    const text=`(toString ${this.expr(arg, depth)})`;
+    return this.utf16Strings?formalScalarUnits(this,text):text;
   }
 
   binary(e, depth) {
@@ -758,6 +825,13 @@ class LeanEmitter {
 
   cast(e, depth) {
     const arg = this.expr(e.arg, depth);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('Lean', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     const naturalFrom = e.from.kind === 'nat' || (e.from.kind === 'fixed' && !e.from.signed);
     const naturalTo = e.to.kind === 'nat' || (e.to.kind === 'fixed' && !e.to.signed);
     if (naturalFrom === naturalTo) return arg;
@@ -771,14 +845,18 @@ class LeanEmitter {
     const lines = [];
     const theorems = [];
     let assertion = 0;
+    const sourceExceptions=hasSourceExceptionOutput(this.program);
     effects.forEach((effect, index) => {
-      if (effect.k === 'print') lines.push(`  IO.println ${this.expr(effect.expr, 1)}`);
-      else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ml_line`);
+      if (effect.k === 'print') lines.push(`  IO.println ${this.utf16Strings?formalUnitDisplay(this,this.expr(effect.expr,1)):this.expr(effect.expr, 1)}`);
+      else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ${this.utf16Strings?formalUnitDisplay(this,'ml_line'):'ml_line'}`);
       else if (effect.k === 'let') lines.push(`  let ${effect.name} := ${this.expr(effect.value, 1)}`);
       else if (effect.k === 'unwrap') {
         // The value of a step, or the source's abort: its message, uncaught, ends main.
         const [made, aborted] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
-        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m => throw (IO.userError ml_m))`);
+        const rich=sourceExceptions&&hasSourceExceptionPayload(this.program.declarations.get(effect.data));
+        const message=this.utf16Strings?formalUnitDisplay(this,'ml_m'):'ml_m';
+        const failure=rich?'throw (ml_class, ml_m, ml_present)':`throw (IO.userError ${message})`;
+        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m${rich?' ml_class ml_present':sourceExceptionPatternSuffix(this.program,effect.data)} => ${failure})`);
       } else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
         // The kernel cannot evaluate Float or unfold a partial def, so the assertion runs where the source's does.
         assertion += 1;
@@ -793,7 +871,7 @@ class LeanEmitter {
           if (item.k === 'let') return `let ${item.name} := ${this.expr(item.value, 1)}; ${rest}`;
           if (item.k !== 'unwrap') return rest;
           const [made, aborted] = item.ctors.map((ctor) => this.state.ctorRef(item.data, ctor));
-          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _ => ${threaded ? 'true' : 'True'})`;
+          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _${sourceExceptionPatternSuffix(this.program,item.data)} => ${threaded ? 'true' : 'True'})`;
         }, threaded ? `decide (${this.prop(effect.prop)})` : this.prop(effect.prop));
         const statement = threaded ? `(${body}) = true` : body;
         const name = `ml_assertion_${assertion}`;
@@ -805,6 +883,12 @@ class LeanEmitter {
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with IO.println');
     if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main prints the lines of each step in the order they were printed');
     if (this.program.abortsThreaded) this.state.encode('abort-threading', 'a function that may abort, directly or through a function it calls, returns the source\'s abort message with the lines printed before it in the generated ml_io data type; main prints those lines and throws IO.userError with the message, which lean --run reports as "uncaught exception: <message>" with exit code 1');
+    if(sourceExceptions){
+      this.state.encode('source-exception-observation',readSourceExceptionObservationStatement());
+      const type=this.type({kind:'string'}),message=this.utf16Strings?formalUnitDisplay(this,'ml_error.2.1'):'ml_error.2.1';
+      return [...theorems,`def ml_source_exception_observation : ExceptT (${type} × ${type} × Bool) IO Unit := do\n${[...lines,'  pure ()'].join('\n')}`,
+        `def main : IO Unit := do\n  let ml_result ← ml_source_exception_observation.run\n  match ml_result with\n  | .ok _ => pure ()\n  | .error ml_error => throw (IO.userError ${message})`].join('\n\n');
+    }
     return [...theorems, `def main : IO Unit := do\n${lines.length ? lines.join('\n') : '  pure ()'}`].join('\n\n');
   }
 

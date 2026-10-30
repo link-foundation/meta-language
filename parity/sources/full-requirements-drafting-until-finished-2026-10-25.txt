@@ -1,0 +1,7 @@
+Capture provenance: direct user messages in the meta-language issue/PR task,
+captured 2026-10-25. The conversation exposes no message revision time.
+The following successive continuation instructions are preserved verbatim.
+
+Continue drafting of all undrafted requirements.
+
+Continue full requirements drafting, don't stop until fully drafted.

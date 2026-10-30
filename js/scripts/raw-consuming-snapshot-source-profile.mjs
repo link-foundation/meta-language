@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreReviewedOverlayProviderModuleSource} from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 const root=new URL('../../',import.meta.url);
 export const RAW_CONSUMING_SNAPSHOT_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const RAW_CONSUMING_SNAPSHOT_OUTPUT='parity/self-translation/raw-consuming-snapshot-source-profile.lino';
@@ -17,7 +18,7 @@ export const RAW_CONSUMING_SNAPSHOT_FILES=Object.freeze([
   Object.freeze({file:'js/src/translation/owned-array-append-rules.js',bytes:4830,sha256:'eb349133f29d2e5944ace3b96975d508a92d265231518ac2b99a604129c7b48a'}),
 ]);
 export const RAW_CONSUMING_SNAPSHOT_BOUNDARY='Five complete source identities serve only the frozen raw consuming artifact and its historical consumers. Three original source certificates are projected automatically from existing archives; only the missing consuming host and checker are captured once. Complete stored source certificates make later freshness independent of those archives. The current producer retains its physical source metadata separately and must reproduce every complete original semantic artifact field and both codecs before snapshot comparison. Source conservation is not general semantic equivalence or native execution evidence.';
-const packetSha256='b5bac26859e7b6b2e51c4e845e9ab5a1f2b7376f2d83d71904e45cd13e4bd04e';
+const packetSha256='2f0dda9dbc5ffbca0836384be6edb6ee7790732ca08dafa94d1381f686fb7c3d';
 export const pinRawConsumingSnapshotSource=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const keys=(value,names)=>assert.deepEqual(Object.keys(value).sort(),[...names].sort());
 let cached;
@@ -111,5 +112,10 @@ export function restoreRawConsumingSnapshotSource(bytes,file,currentOnly=false){
 }
 export function rawConsumingSnapshotSourceReader(read){
   const selected=new Map(RAW_CONSUMING_SNAPSHOT_FILES.map(row=>[String(new URL(row.file,root)),row.file]));
-  return file=>{const bytes=read(file),path=selected.get(String(file));return path?restoreRawConsumingSnapshotSource(bytes,path):bytes;};
+  const providers=new Map(['js/src/typed-program-links.js','js/src/typed-program-checked-projection.js'].map(file=>[String(new URL(file,root)),file]));
+  return file=>{
+    const bytes=read(file),path=selected.get(String(file)),provider=providers.get(String(file));
+    if(provider)return Buffer.from(restoreReviewedOverlayProviderModuleSource(bytes.toString('utf8'),provider,'f73a10b22f8d0bcfbf4707621bcc9edd6989533d'));
+    return path?restoreRawConsumingSnapshotSource(bytes,path):bytes;
+  };
 }

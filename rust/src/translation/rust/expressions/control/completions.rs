@@ -192,10 +192,10 @@ impl RustParser {
         let otherwise =
             self.completion_continuation(otherwise, &action, terminated, path, open, &token)?;
         let kind = read_rust_completion_kind(&action, &then.kind, &otherwise.kind);
-        let origin = self.origins.join(&[
+        let origin = self.origins.checked_join(&[
             self.origins.origin(&then.expression, path),
             self.origins.origin(&otherwise.expression, path),
-        ]);
+        ])?;
         let expression = SExpr::new(
             SNode::If {
                 cond: Box::new(cond),

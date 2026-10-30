@@ -322,6 +322,31 @@ pub(crate) fn encode_structured_data_links_ordered_with_container_aliases(
     value: &StructuredDataValue,
     aliases: &[(&StructuredDataValue, &StructuredDataValue)],
 ) -> Result<StructuredDataLinks, String> {
+    encode_ordered_with_aliases_and_limits(value, aliases, StructuredDataLinksLimits::default())
+}
+
+/// Encode ordered values under explicit caller-selected structural limits.
+///
+/// # Errors
+/// Refuses invalid limits and the same value/profile violations as the default.
+pub fn encode_structured_data_links_ordered_with_limits(
+    value: &StructuredDataValue,
+    limits: StructuredDataLinksLimits,
+) -> Result<StructuredDataLinks, String> {
+    encode_ordered_with_aliases_and_limits(value, &[], limits)
+}
+
+fn encode_ordered_with_aliases_and_limits(
+    value: &StructuredDataValue,
+    aliases: &[(&StructuredDataValue, &StructuredDataValue)],
+    limits: StructuredDataLinksLimits,
+) -> Result<StructuredDataLinks, String> {
+    if [limits.node_limit, limits.depth_limit, limits.byte_limit]
+        .into_iter()
+        .any(|value| value == 0 || value as u128 > 9_007_199_254_740_991)
+    {
+        return Err(fail("invalid structural resource limit"));
+    }
     let mut container_aliases = HashMap::new();
     for (alias, target) in aliases {
         if !matches!(
@@ -339,10 +364,10 @@ pub(crate) fn encode_structured_data_links_ordered_with_container_aliases(
         }
         // Canonical encoding authenticates ordered keys, UTF-16 units, finite
         // Numbers and negative zero. Equality never nominates an alias.
-        if encode_structured_data_links_ordered(alias)?
+        if encode_structured_data_links_ordered_with_limits(alias, limits)?
             .network
             .to_lino()
-            != encode_structured_data_links_ordered(target)?
+            != encode_structured_data_links_ordered_with_limits(target, limits)?
                 .network
                 .to_lino()
         {
@@ -351,7 +376,7 @@ pub(crate) fn encode_structured_data_links_ordered_with_container_aliases(
     }
     let mut encoder = Encoder {
         network: LinkNetwork::new(),
-        limits: StructuredDataLinksLimits::default(),
+        limits,
         bytes: 0,
         scalars: HashMap::new(),
         container_aliases,
@@ -556,7 +581,19 @@ pub fn decode_structured_data_links_ordered_with_limits(
 }
 
 pub(crate) fn from_json(value: &Value, depth: usize) -> Result<StructuredDataValue, String> {
-    if depth > StructuredDataLinksLimits::default().depth_limit {
+    from_json_with_depth_limit(
+        value,
+        depth,
+        StructuredDataLinksLimits::default().depth_limit,
+    )
+}
+
+pub(crate) fn from_json_with_depth_limit(
+    value: &Value,
+    depth: usize,
+    limit: usize,
+) -> Result<StructuredDataValue, String> {
+    if depth > limit {
         return Err(fail("the value exceeds its structural resource limit"));
     }
     Ok(match value {
@@ -591,14 +628,17 @@ pub(crate) fn from_json(value: &Value, depth: usize) -> Result<StructuredDataVal
         Value::Array(values) => StructuredDataValue::Array(
             values
                 .iter()
-                .map(|value| from_json(value, depth + 1))
+                .map(|value| from_json_with_depth_limit(value, depth + 1, limit))
                 .collect::<Result<_, _>>()?,
         ),
         Value::Object(entries) => StructuredDataValue::Object(
             entries
                 .iter()
                 .map(|(key, value)| {
-                    Ok((key.encode_utf16().collect(), from_json(value, depth + 2)?))
+                    Ok((
+                        key.encode_utf16().collect(),
+                        from_json_with_depth_limit(value, depth + 2, limit)?,
+                    ))
                 })
                 .collect::<Result<_, String>>()?,
         ),
@@ -639,6 +679,20 @@ pub(crate) fn into_json_number(value: f64) -> Result<Number, String> {
 /// Encode a JSON-compatible value; ordered encoding retains insertion order.
 pub fn encode_structured_data_links(value: &Value) -> Result<StructuredDataLinks, String> {
     encode_structured_data_links_ordered(&from_json(value, 1)?)
+}
+
+/// Encode JSON interoperability data under explicit caller-selected limits.
+///
+/// # Errors
+/// Refuses invalid values or an exceeded structural/byte budget.
+pub fn encode_structured_data_links_with_limits(
+    value: &Value,
+    limits: StructuredDataLinksLimits,
+) -> Result<StructuredDataLinks, String> {
+    encode_structured_data_links_ordered_with_limits(
+        &from_json_with_depth_limit(value, 1, limits.depth_limit)?,
+        limits,
+    )
 }
 
 /// Decode a JSON-compatible value; use the ordered API to retain key order.

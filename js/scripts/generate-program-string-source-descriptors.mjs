@@ -7,6 +7,7 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData,writeProjectData,checkProjectData} from './project-data.mjs';
 import {restoreOwnCodebaseRawDescriptorText} from './own-codebase-raw-source-descriptors.mjs';
+import {restoreReviewedOverlayProviderModuleSource} from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 const root=new URL('../../',import.meta.url),revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const artifactFile='experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino';
 const registerFile='parity/self-translation/complete-declaration-receipts.lino';
@@ -19,7 +20,7 @@ const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').up
 /** Append one exact current-source edge; all older fields and bytes remain. */
 export function generateProgramStringSourceDescriptors({check=false}={}) {
   const original=file=>{const{blob,certificate}=captureGitArtifactCertificate(revision,file);return{file,commit:revision,...pin(blob),sourceText:blob.toString('utf8'),certificate};};
-  const artifact=original(artifactFile),register=original(registerFile),loan=original(loanFile),sourceOwner={...original(sourceFile),current:pin(readFileSync(new URL(sourceFile,root)))};
+  const artifact=original(artifactFile),register=original(registerFile),loan=original(loanFile),sourceOwner={...original(sourceFile),current:pin(restoreReviewedOverlayProviderModuleSource(readFileSync(new URL(sourceFile,root),'utf8'),sourceFile,'f73a10b22f8d0bcfbf4707621bcc9edd6989533d'))};
   const value=readStructuredDataLino(artifact.sourceText),changes=[];
   const owner=value.decisionSources[11];assert.equal(owner.file,sourceFile);
   assert.deepEqual(owner,{file:sourceFile,bytes:sourceOwner.bytes,sha256:sourceOwner.sha256});

@@ -1,0 +1,44 @@
+// Future scalar-string products and complete source history; execute none.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[],normCases=[];
+const literal=text=>JSON.stringify(text).replace(/\\u([0-9a-f]{4})/giu,(_,digits)=>'\\u{'+digits+'}');
+function add(name,body,value,prefix=''){cases.push({name,module:'string_byte_length_case_'+cases.length,source:prefix+'pub fn result()->usize{'+body+'}',value,abort:null});}
+function scalar(name,text,value){normCases.push({name,text,units:Array.from({length:text.length},(_,index)=>text.charCodeAt(index)),value});add(name,literal(text)+'.len()',value);}
+scalar('empty scalar text has zero UTF8 bytes','','0');
+scalar('ASCII scalar bytes retain their ordinary count','plain','5');
+scalar('two-byte scalar text differs from its UTF16 unit count','é','2');
+scalar('the standard Rust fancy f example keeps four bytes','ƒoo','4');
+scalar('three-byte scalar text keeps its UTF8 count','€','3');
+scalar('a supplementary scalar requires four bytes','😀','4');
+scalar('combining marks remain separate scalar encodings','e\u0301','3');
+scalar('non-Latin scalar text counts its actual bytes','中文','6');
+scalar('mixed scalar widths remain additive','Aé€😀','10');
+scalar('a percent character does not become three bytes','%','1');
+scalar('reserved URI punctuation remains ordinary scalar bytes',' /?#&+','6');
+scalar('unescaped URI punctuation remains one byte each',"-_.!~*'()",'9');
+scalar('a scalar NUL is one UTF8 byte','\0','1');
+scalar('line and tab scalars retain their byte counts','\n\t\r','3');
+scalar('the largest single-byte scalar has one byte','\u007f','1');
+scalar('the first two-byte scalar has two bytes','\u0080','2');
+scalar('the largest two-byte scalar has two bytes','\u07ff','2');
+scalar('the first three-byte scalar has three bytes','\u0800','3');
+scalar('the scalar preceding surrogates keeps three bytes','\ud7ff','3');
+scalar('the scalar following surrogates keeps three bytes','\ue000','3');
+scalar('the largest Unicode scalar keeps four bytes','\u{10ffff}','4');
+add('an owned String retains its byte count','let text=String::from("😀");text.len()','4');
+add('a standard String parameter supplies its byte count','let text=String::from("é");read(text)','2','fn read(text:String)->usize{text.len()}');
+add('a readonly str parameter supplies its byte count','read("Aé€😀")','10','fn read(text:&str)->usize{text.len()}');
+add('a readonly String parameter supplies its byte count','let text=String::from("€");read(&text)','3','fn read(text:&String)->usize{text.len()}');
+add('a fresh standard String retains its empty count','String::new().len()','0');
+add('a temporary String is measured without a second construction','String::from("é").len()','2');
+add('a returned scalar String is measured through its original owner','make().len()','4','fn make()->String{String::from("😀")}');
+add('a byte count participates in exact usize arithmetic','"é".len()+"😀".len()+1','7');
+add('a byte count remains an immutable Copy capture','let count="😀".len();let read=||->usize{count+3};read()','7');
+add('a Rust function named like the target URI intrinsic cannot shadow it','encodeURIComponent(3)+"😀".len()','7','fn encodeURIComponent(value:usize)->usize{value}');
+const invalidUnits=[[-1],[65536],[0.5],[55296],[56320],[55296,65],[65,56320],[55296,55296],[55296,56320,56320]];
+for(const runtime of ['js','rust'])writeProjectData(new URL('../../'+runtime+'/src/data/rust-string-byte-length-controls.lino',import.meta.url),{schemaVersion:1,normCases,invalidUnits,versions:{Rust:'>=1.90.0 <1.100.0; edition 2024'},boundary:'Unexecuted independent scalar counts and invalid encoding controls; no observations.'});
+const revision='87f89973',history=['js/src/translation/rust.js','js/src/translation/check.js','js/src/typed-program-expression-projection.js','js/src/translation/emit-javascript.js','js/src/translation/emit-rust.js','js/src/translation/emit-lean.js','js/src/translation/emit-rocq.js','rust/src/translation/rust/expressions.rs','rust/src/translation/check/math.rs','rust/src/translation/emit_javascript/math.rs','rust/src/translation/emit_javascript/names.rs','rust/src/translation/emit_rust/math.rs','rust/src/translation/emit_lean/math.rs','rust/src/translation/emit_rocq/math.rs','rust/src/typed_program_links/checked.rs'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/rust-string-byte-lengths.lino',import.meta.url),{schemaVersion:1,model:'ordinary Rust Unicode scalar String UTF8 byte length 1',cases,refusals:[],normCases,invalidUnits,history,source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024; source target_pointer_width=64'},references:['https://doc.rust-lang.org/std/primitive.str.html#method.len','https://tc39.es/ecma262/2025/multipage/global-object.html#sec-encode-1'],assertions:['actualStandardScalarStringSourceOwners','UTF8ByteCountDistinctFromUTF16UnitsAndGraphemes','exactUnsigned64ResultsAndSingleOperandEvaluation','completeSharedScalarCountingAlgorithmAndNativePort','malformedUnitSequencesRefuseInTheNormativeDefinition','sourceLanguageRepresentationAndIntrinsicNamesRemainExplicit','completePredecessorsBothCodecsFourEmissionsNativeProducts'],boundary:'Unexecuted future controls. Covers ordinary valid Rust scalar str/String values with the existing 64-bit usize model. Standard target UTF8 measures are declared bindings; no cross-language semantic equivalence certificate is claimed. The formal UTF16 representation, invalid target values outside the source domain, other target widths, mutable/String ownership composition and full source environments remain obligations.'});

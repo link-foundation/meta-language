@@ -41,7 +41,8 @@ impl Checker {
                 )?;
             }
             let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
-            if name.starts_with("ml_") && !generated && !owned_loop {
+            if self.language != "JavaScript" && name.starts_with("ml_") && !generated && !owned_loop
+            {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -75,6 +76,7 @@ impl Checker {
                     span,
                     generated: data.generated,
                     output: false,
+                    source_field_signatures: None,
                     source_unit_clone_derivation: data
                         .source_unit_clone_derivation
                         .as_deref()
@@ -187,8 +189,22 @@ impl Checker {
                     fields,
                 });
             }
+            let source_fields = if let Some(signature) = item.source_field_signatures.as_deref() {
+                Some(Box::new(
+                    crate::translation::source_data_field_signatures::check(
+                        signature,
+                        &ctors,
+                        self.language.as_str(),
+                        &full(path, &item.name),
+                        |ty| self.resolve_type(Some(ty), path, item.span),
+                    )?,
+                ))
+            } else {
+                None
+            };
             if let Some(Decl::Data(entry)) = self.decls.get_mut(&full(path, &item.name)) {
                 entry.ctors = ctors;
+                entry.source_field_signatures = source_fields;
             }
         }
         for (item, path) in &flat {
@@ -266,6 +282,9 @@ impl Checker {
                             .collect(),
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
+                        own_properties: Vec::new(),
+                        nominal_spread_absences: Vec::new(),
+                        own_key_callback: None,
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
                     let body = self.coerce(body, &ret, item.span)?;
@@ -306,6 +325,9 @@ impl Checker {
                             .collect(),
                         known: HashMap::new(),
                         immutable_products: HashMap::new(),
+                        own_properties: Vec::new(),
+                        nominal_spread_absences: Vec::new(),
+                        own_key_callback: None,
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;
                     // `theorem t : ∀ n, P n` and `theorem t (n) : P n` state the same
@@ -737,7 +759,11 @@ impl Checker {
 
     pub(super) fn fresh_name(&mut self, prefix: &str) -> String {
         self.fresh += 1;
-        format!("{prefix}{}", self.fresh)
+        crate::translation::source_identifiers::render_source_generated_identifier(
+            &self.generated_prefix,
+            prefix,
+            self.fresh,
+        )
     }
 
     pub(super) fn unify(
@@ -784,13 +810,11 @@ impl Checker {
         if then.ty.same(&otherwise.ty) {
             return Ok((then, otherwise));
         }
-        if matches!(then.node, Node::Abort { .. }) {
-            let ty = otherwise.ty.clone();
-            return Ok((Expr { ty, ..then }, otherwise));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&then, &otherwise.ty) {
+            return Ok((abrupt, otherwise));
         }
-        if matches!(otherwise.node, Node::Abort { .. }) {
-            let ty = then.ty.clone();
-            return Ok((then, Expr { ty, ..otherwise }));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&otherwise, &then.ty) {
+            return Ok((then, abrupt));
         }
         if let Some(expected) = expected {
             let then = coerce(then, expected, self.language, span, None)?;

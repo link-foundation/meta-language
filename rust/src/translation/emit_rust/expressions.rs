@@ -6,9 +6,55 @@ use super::{
     own, rename_main, rounding_text, rust_string, snake, unsupported,
 };
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
+use crate::translation::rust_source_render_interfaces::{
+    render_rust_constructor_fields, render_rust_function_call,
+};
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
+        if let Some(copy) =
+            crate::translation::scalar_vector_copy::read_rust_scalar_vector_copy_value(
+                self.program.source_language.as_str(),
+                expr,
+            )
+        {
+            self.state.encode(&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_encoding(),&crate::translation::rust_scalar_vector_copy_rules::read_rust_scalar_vector_copy_statement());
+            let value = self.borrow(copy)?;
+            return Ok(crate::translation::rust_scalar_vector_copy_rules::render_rust_scalar_vector_copy_value("Rust",&value));
+        }
+        if let Some(projection) = self.reference_array_projection(expr)? {
+            return Ok(projection);
+        }
+        if let Node::Method { object, op, .. } = &expr.node
+            && crate::translation::array_state_method_rules::accept_linked_array_state_method(
+                "method",
+                op,
+                object.ty.kind(),
+                object.ty.is_reference(),
+            )
+        {
+            return self.array_state_method(expr);
+        }
+        if let Node::Method { object, op, .. } = &expr.node
+            && crate::translation::record_write_source_interfaces::accept_linked_record_field_write(
+                "method",
+                op,
+                object.ty.kind(),
+                object.ty.is_reference(),
+            )
+        {
+            return self.record_field_write(expr);
+        }
+        if let Node::Method { object, op, .. } = &expr.node
+            && object.ty.is_reference()
+            && !crate::translation::reference_method_rules::read_reference_method_result(
+                object.ty.kind(),
+                op,
+            )
+            .is_empty()
+        {
+            return self.reference_method(expr);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&expr.node, Node::Ctor { frozen: true, .. })
         {
@@ -25,6 +71,8 @@ impl RustEmitter<'_> {
             Node::RecordField { object, .. }
             | Node::TupleIndex { object, .. }
             | Node::Method { object, .. }
+            | Node::CollectionSize { object }
+            | Node::CollectionRead { object, .. }
             | Node::CollectionItems { object, .. } => object.ty.is_reference(),
             _ => false,
         };
@@ -42,7 +90,11 @@ impl RustEmitter<'_> {
             ));
         }
         match &expr.node {
-            Node::Record { entries } => self.record_value(entries),
+            Node::Record { entries, order } => self.record_value(
+                entries,
+                order.as_deref(),
+                matches!(&expr.ty, Type::Record { ordered: true, .. }),
+            ),
             Node::RecordField { object, index, .. } => self.record_field(object, *index),
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
@@ -191,21 +243,24 @@ impl RustEmitter<'_> {
                 for argument in args {
                     values.push(self.expr(argument)?);
                 }
+                let argument_name = if self.scalar_source_interface {
+                    crate::translation::rust_scalar_source_interface_rules::read_rust_scalar_source_argument_name()
+                } else {
+                    crate::translation::borrowed_call_interface::borrowed_call_policy()["argumentName"].as_str().unwrap().to_owned()
+                };
                 let names = values
                     .iter()
                     .map(|_| {
                         self.borrowed_call_scope
                             .as_mut()
                             .expect("a direct call owns its hygienic function scope")
-                            .fresh(
-                                crate::translation::borrowed_call_interface::borrowed_call_policy()
-                                    ["argumentName"]
-                                    .as_str()
-                                    .unwrap(),
-                            )
+                            .fresh(&argument_name)
                     })
                     .collect::<Vec<_>>();
                 let head = format!("crate::{}", self.state.reference(func, "::"));
+                if self.scalar_source_interface {
+                    return crate::translation::scalar_source_interface::render_rust_scalar_source_call(&signature, &head, &values, &names);
+                }
                 Ok(
                     crate::translation::borrowed_call_interface::render_rust_borrowed_call(
                         &signature, &head, &values, &names,
@@ -249,7 +304,7 @@ impl RustEmitter<'_> {
                 for arg in args {
                     texts.push(self.expr(arg)?);
                 }
-                Ok(format!("{head}({})", texts.join(", ")))
+                Ok(render_rust_function_call(&head, &texts))
             }
             Node::Ctor {
                 data, ctor, args, ..
@@ -274,7 +329,17 @@ impl RustEmitter<'_> {
                         text
                     });
                 }
-                Ok(format!("{head}({})", texts.join(", ")))
+                let fields = declared
+                    .fields
+                    .iter()
+                    .map(|field| field.name.clone())
+                    .collect::<Vec<_>>();
+                Ok(render_rust_constructor_fields(
+                    self.program.source_language.as_str(),
+                    &head,
+                    &fields,
+                    &texts,
+                ))
             }
             Node::Unary { op, arg, .. } => {
                 if *op == UnaryOp::Not {
@@ -312,6 +377,13 @@ impl RustEmitter<'_> {
             Node::Match { .. } => self.match_expr(expr),
             Node::Method { .. } => self.primitive_method(expr),
             Node::StringMap { op, string } => {
+                if self.program.source_language == crate::translation::Language::JavaScript
+                    && crate::translation::unicode_case_emission_rules::accept_unicode_case_mapping_operation(op) {
+                    self.preludes.insert(Prelude::UnicodeCase);
+                    self.state.encode("unicode-default-case-16",&crate::translation::unicode_case_emission_rules::read_unicode_case_encoding_statement());
+                    let value = self.expr(string)?;
+                    return Ok(crate::translation::unicode_case_emission_rules::render_unicode_case_string_map("Rust",op,self.utf16_strings,&value));
+                }
                 let object = self.receiver(string)?;
                 if self.utf16_strings {
                     return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "map", &object, "", op));
@@ -386,6 +458,7 @@ impl RustEmitter<'_> {
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
             | Node::CollectionItems { .. } => self.array_expr(expr),
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => self.array_expr(expr),
             Node::Math { .. } => self.math(expr),
         }
     }
@@ -679,9 +752,9 @@ impl RustEmitter<'_> {
                             .find(|candidate| candidate.name == *ctor)
                             .expect("the checker resolves every constructor");
                         let head = format!("crate::{}", self.state.ctor_ref(data, ctor, "::"));
-                        let names: Vec<&str> = binds
+                        let names: Vec<String> = binds
                             .iter()
-                            .map(|bind| bind.as_deref().unwrap_or("_"))
+                            .map(|bind| bind.clone().unwrap_or_else(|| "_".to_owned()))
                             .collect();
                         let mut lines: Vec<String> = binds
                             .iter()
@@ -694,11 +767,17 @@ impl RustEmitter<'_> {
                             })
                             .collect();
                         lines.push(self.expr(&kase.body)?);
-                        let text = if names.is_empty() {
-                            head
-                        } else {
-                            format!("{head}({})", names.join(", "))
-                        };
+                        let fields = declared
+                            .fields
+                            .iter()
+                            .map(|field| field.name.clone())
+                            .collect::<Vec<_>>();
+                        let text = render_rust_constructor_fields(
+                            self.program.source_language.as_str(),
+                            &head,
+                            &fields,
+                            &names,
+                        );
                         format!("{text} => {}", block(&lines.join("\n")))
                     }
                     Pattern::NatZero | Pattern::NatSucc { .. } => {
@@ -804,6 +883,42 @@ impl RustEmitter<'_> {
             unreachable!("a cast")
         };
         let arg = self.expr(arg)?;
+        if *flavor == Flavor::Wrapping {
+            let (
+                Type::Fixed {
+                    signed: source_signed,
+                    ..
+                },
+                Type::Fixed { bits, signed },
+            ) = (from, to)
+            else {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "requires actual fixed integer source and target types",
+                    expr.span,
+                ));
+            };
+            let code =
+                crate::translation::fixed_integer_cast_rules::render_wrapping_fixed_integer_cast(
+                    "Rust",
+                    &arg,
+                    f64::from(*bits),
+                    *signed,
+                    *source_signed,
+                );
+            if code.is_empty() {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "the integer width needs an exact target encoding",
+                    expr.span,
+                ));
+            }
+            self.state.encode(
+                "fixed integer casts",
+                &crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_statement(),
+            );
+            return Ok(code);
+        }
         if matches!(from, Type::Fixed { .. }) && matches!(to, Type::Fixed { .. }) {
             return Ok(format!("{}::from({arg})", to.key()));
         }
@@ -814,6 +929,9 @@ impl RustEmitter<'_> {
                 "crate::ml::to_nat_checked({arg}, {})",
                 rust_string(cast_message(message.as_deref()))
             )),
+            Flavor::Wrapping => {
+                unreachable!("wrapping casts return their checked fixed representation above")
+            }
         }
     }
 

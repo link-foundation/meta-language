@@ -5,6 +5,25 @@ use super::{
     negate_number, text_lit, type_error,
 };
 
+fn needs_branch_result_context(node: &SExpr, depth: usize) -> bool {
+    if depth > 256 {
+        return false;
+    }
+    match &node.node {
+        SNode::Abort { .. } => true,
+        SNode::Let { body, .. } | SNode::Print { body, .. } | SNode::CellWrite { body, .. } => {
+            needs_branch_result_context(body, depth + 1)
+        }
+        SNode::If {
+            then, otherwise, ..
+        } => {
+            needs_branch_result_context(then, depth + 1)
+                && needs_branch_result_context(otherwise, depth + 1)
+        }
+        _ => false,
+    }
+}
+
 impl Checker {
     #[allow(clippy::too_many_lines)]
     pub(super) fn check_literal_expression(
@@ -127,10 +146,26 @@ impl Checker {
                 then,
                 otherwise,
             } => {
+                let (then_env, else_env) = self.own_property_branch_environments(cond, env);
+                let then_env = self.nominal_spread_branch_environments(cond, &then_env).0;
+                let else_env = self.nominal_spread_branch_environments(cond, &else_env).1;
                 let checked = self.expr(cond, env, path, None, false)?;
                 let cond = self.boolean_value(checked, span)?;
+                if crate::translation::semantic_input_rules::accept_semantic_branch_context_reordering(
+                    !matches!(context, ExpectedType::Concrete(None)),
+                    needs_branch_result_context(then, 0), needs_branch_result_context(otherwise, 0),
+                ) {
+                    let mut else_expr = self.expr(otherwise, &else_env, path, None, allow_literal)?;
+                    if else_expr.ty.is_literal() {
+                        else_expr = self.expr(otherwise, &else_env, path, Some(&self.default_number()), false)?;
+                    }
+                    let then_expr = self.expr(then, &then_env, path, Some(&else_expr.ty), allow_literal)?;
+                    let (then_expr, else_expr) = self.unify_branches(then_expr, else_expr, expected, span)?;
+                    let ty = then_expr.ty.clone();
+                    return Ok(Expr::new(Node::If { cond: Box::new(cond), then: Box::new(then_expr), otherwise: Box::new(else_expr) }, ty));
+                }
                 let mut then_expr =
-                    self.expr_with_context(then, env, path, context, allow_literal)?;
+                    self.expr_with_context(then, &then_env, path, context, allow_literal)?;
                 let else_expected = expected
                     .cloned()
                     .or_else(|| (!then_expr.ty.is_literal()).then(|| then_expr.ty.clone()));
@@ -139,14 +174,21 @@ impl Checker {
                 } else {
                     ExpectedType::Concrete(else_expected.as_ref())
                 };
-                let mut else_expr =
-                    self.expr_with_context(otherwise, env, path, else_context, allow_literal)?;
+                let mut else_expr = self.expr_with_context(
+                    otherwise,
+                    &else_env,
+                    path,
+                    else_context,
+                    allow_literal,
+                )?;
                 if then_expr.ty.is_literal() && !else_expr.ty.is_literal() {
-                    then_expr = self.expr(then, env, path, Some(&else_expr.ty), false)?;
+                    then_expr = self.expr(then, &then_env, path, Some(&else_expr.ty), false)?;
                 }
                 if then_expr.ty.is_literal() {
-                    then_expr = self.expr(then, env, path, Some(&self.default_number()), false)?;
-                    else_expr = self.expr(otherwise, env, path, Some(&then_expr.ty), false)?;
+                    then_expr =
+                        self.expr(then, &then_env, path, Some(&self.default_number()), false)?;
+                    else_expr =
+                        self.expr(otherwise, &else_env, path, Some(&then_expr.ty), false)?;
                 }
                 let (then_expr, else_expr) =
                     self.unify_branches(then_expr, else_expr, expected, span)?;

@@ -17,12 +17,34 @@ use super::indirection_rules::{
 };
 use super::product_rules::{accept_rust_immutable_product_type, accept_rust_product_origin};
 use super::{Result, SExpr, SNode, Span, Type, unsupported};
+use crate::translation::rust_array_index_rules::accept_rust_scalar_array_index_element;
+use crate::translation::rust_byte_string_expression_rules::ml_string::Text as ByteStringText;
+use crate::translation::rust_fresh_vector_argument_rules::{
+    accept_rust_fresh_owned_vector_argument, read_rust_fresh_vector_argument_form,
+};
+use crate::translation::rust_fresh_vector_result_rules::accept_rust_known_fresh_vector_call;
+use crate::translation::rust_pointer_integer_owner_rules::{
+    accept_rust_pointer_integer_owner_child, read_rust_pointer_integer_owner_error,
+    read_rust_pointer_integer_owner_join_error, select_rust_pointer_integer_result_owner,
+};
 
+mod callable_owners;
+mod nominal_copies;
+mod owned_bindings;
 mod patterns;
+mod primitive_expressions;
 mod type_owners;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SourceOrigin {
+    pub(super) source_binding_identity: Option<String>,
+    pub(super) source_place_binding_identity: Option<String>,
+    pub(super) source_loan_binding_identities: Vec<String>,
+    pub(super) source_place_loan_binding_identities: Vec<String>,
+    pub(super) source_owned_result_proof: bool,
+    pub(super) source_byte_iterator: bool,
+    pub(super) source_borrowed_place: bool,
+    pub(super) source_extending_temporary_bindings: Vec<String>,
     pub(super) ty: Option<Type>,
     /// Explicit primitive f64 annotation or literal evidence, never fallback inference.
     pub(super) float_source_model: Option<&'static str>,
@@ -36,16 +58,75 @@ pub(super) struct SourceOrigin {
     pub(super) fields: Option<Vec<Self>>,
     pub(super) text_source_model: Option<&'static str>,
     pub(super) array_source_model: Option<&'static str>,
+    /// Element Copy facts are independent of vector ownership or freshness.
+    pub(super) array_element_copy_evidence: bool,
     /// Constructor or actual call source evidence; cleared on local binding.
     pub(super) fresh_array_value: Option<Span>,
+    /// Closed source result postcondition; all declaration bodies must discharge it.
+    pub(super) fresh_vector_result_contract: bool,
+    pub(super) copy_closure_identity: Option<Span>,
+    pub(super) copy_closure_capture_count: Option<usize>,
+    pub(super) callable_parameters: Option<Vec<Self>>,
+    pub(super) callable_result: Option<Box<Self>>,
+    pub(super) callable_source_owner_error: Option<String>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
+    /// Checked transparent alias owner, before retaining the source spelling.
+    pub(super) expanded_source_owner: Option<super::super::source_signatures::SourceOwner>,
+    pub(super) integer_source_owner_conflict: bool,
+    pub(super) integer_source_owner_constraint: Option<String>,
     pub(super) primitive_owner_position: Option<serde_json::Value>,
     pub(super) namespace_spelling: Vec<String>,
 }
 
 impl SourceOrigin {
+    /// Actual immutable scalar-reference parameter facts; source wrappers survive.
+    pub(super) fn copy_closure_parameter(&self) -> bool {
+        let owner = self
+            .expanded_source_owner
+            .as_ref()
+            .or(self.source_owner.as_ref());
+        let primitive = if let (Some(owner), Some(ty)) = (owner, self.ty.as_ref()) {
+            let (bits, signed) = match ty {
+                Type::Fixed { bits, signed } => (bits.to_string(), *signed),
+                _ => (String::new(), false),
+            };
+            owner.arguments.is_empty() && (owner.kind == "unit" && owner.path.is_empty() && ty.kind() == "unit" || owner.kind == "primitive" && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed))
+        } else {
+            false
+        };
+        let mut base = self.clone();
+        base.wrappers.clear();
+        crate::translation::rust_copy_closure_parameter_rules::accept_rust_copy_closure_parameter_source(self.proven,base.direct_copy_value(),self.wrappers.len() as f64,self.wrappers.iter().all(|value| value == "reference"),primitive)
+    }
+
+    /// Standard readonly view from actual static u8 array facts; no owner mutation.
+    pub(super) fn static_byte_array_read_view(&self) -> Option<Self> {
+        let element = match &self.ty {
+            Some(Type::Array { element, .. }) => Some(element.as_ref()),
+            _ => None,
+        };
+        let (bits, signed) = match element {
+            Some(Type::Fixed { bits, signed }) => (*bits, *signed),
+            _ => (0, false),
+        };
+        let owner = self.source_owner.as_ref();
+        let child = owner.and_then(|owner| owner.arguments.first());
+        if !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_read_view(&ByteStringText::from_text(self.array_source_model.unwrap_or("")),&ByteStringText::from_text(self.ty.as_ref().map_or("",Type::kind)),&ByteStringText::from_text(element.map_or("",Type::kind)),f64::from(bits),signed,self.proven,self.wrappers.len() as f64,self.wrappers.iter().all(|layer|layer=="reference"),&ByteStringText::from_text(owner.map_or("",|owner|owner.kind.as_str())),owner.map_or(0,|owner|owner.arguments.len()) as f64,&ByteStringText::from_text(child.map_or("",|child|child.kind.as_str())),&ByteStringText::from_text(&child.map(|child|child.path.join("::")).unwrap_or_default())){return None;}
+        let mut view = self.clone();
+        view.wrappers = vec!["reference".to_owned()];
+        view.source_lifetimes = vec![Some("static".to_owned())];
+        view.array_source_model = Some("immutable slice");
+        view.source_owner = Some(super::super::source_signatures::SourceOwner {
+            kind: "slice".to_owned(),
+            path: Vec::new(),
+            arguments: vec![child?.clone()],
+        });
+        view.expanded_source_owner = None;
+        Some(view)
+    }
+
     pub(super) const fn unknown() -> Self {
         Self {
             ty: None,
@@ -59,11 +140,29 @@ impl SourceOrigin {
             fields: None,
             text_source_model: None,
             array_source_model: None,
+            array_element_copy_evidence: false,
             source_lifetimes: Vec::new(),
+            source_binding_identity: None,
+            source_place_binding_identity: None,
+            source_loan_binding_identities: Vec::new(),
+            source_place_loan_binding_identities: Vec::new(),
+            source_owned_result_proof: false,
+            source_byte_iterator: false,
+            source_borrowed_place: false,
+            source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
+            expanded_source_owner: None,
+            integer_source_owner_conflict: false,
+            integer_source_owner_constraint: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            fresh_vector_result_contract: false,
+            copy_closure_identity: None,
+            copy_closure_capture_count: None,
+            callable_parameters: None,
+            callable_result: None,
+            callable_source_owner_error: None,
         }
     }
 
@@ -83,6 +182,7 @@ impl SourceOrigin {
         let copy_evidence = accept_rust_immutable_product_type(ty.kind(), children_accepted, false);
         let text_source_model = (ty == super::STRING).then_some("owned string");
         let array_source_model = matches!(ty, Type::Array { .. }).then_some("owned vector");
+        let array_element_copy_evidence = matches!(&ty, Type::Array { element, .. } if accept_rust_scalar_array_index_element(element.kind()));
         Self {
             float_source_model: (ty == super::FLOAT).then_some("binary64 scalar"),
             ty: Some(ty),
@@ -95,11 +195,29 @@ impl SourceOrigin {
             fields,
             text_source_model,
             array_source_model,
+            array_element_copy_evidence,
             source_lifetimes: Vec::new(),
+            source_binding_identity: None,
+            source_place_binding_identity: None,
+            source_loan_binding_identities: Vec::new(),
+            source_place_loan_binding_identities: Vec::new(),
+            source_owned_result_proof: false,
+            source_byte_iterator: false,
+            source_borrowed_place: false,
+            source_extending_temporary_bindings: Vec::new(),
             source_owner: None,
+            expanded_source_owner: None,
+            integer_source_owner_conflict: false,
+            integer_source_owner_constraint: None,
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            fresh_vector_result_contract: false,
+            copy_closure_identity: None,
+            copy_closure_capture_count: None,
+            callable_parameters: None,
+            callable_result: None,
+            callable_source_owner_error: None,
         }
     }
 
@@ -107,6 +225,37 @@ impl SourceOrigin {
         Self {
             proven: true,
             ..Self::unknown()
+        }
+    }
+    pub(super) fn pointer_integer_owner(&self) -> String {
+        let mut owner = self.source_owner.as_ref();
+        for _ in 0..128 {
+            let Some(current) = owner else {
+                return self
+                    .integer_source_owner_constraint
+                    .clone()
+                    .unwrap_or_default();
+            };
+            if current.kind == "primitive" {
+                return current.path.join("::");
+            }
+            if !accept_rust_pointer_integer_owner_child(
+                &current.kind,
+                &current.path.join("::"),
+                serde_json::Number::from(current.arguments.len())
+                    .as_f64()
+                    .expect("actual source owner argument count"),
+            ) {
+                return String::new();
+            }
+            owner = current.arguments.first();
+        }
+        String::new()
+    }
+    fn integer_conflict() -> Self {
+        Self {
+            integer_source_owner_conflict: true,
+            ..Self::uncertain()
         }
     }
 
@@ -168,6 +317,9 @@ pub(super) enum SourceDeclaration {
         parameters: Vec<SourceOrigin>,
         result: SourceOrigin,
     },
+    Constant {
+        result: SourceOrigin,
+    },
 }
 
 pub(super) struct SourceLookup {
@@ -176,11 +328,20 @@ pub(super) struct SourceLookup {
 }
 
 pub(super) struct SourceOrigins {
+    pub(super) shared_array_handles: bool,
     pub(super) array_result_model: String,
     pub(super) owned_local_values: bool,
     fresh_calls: HashSet<Span>,
+    fresh_vector_constructors: HashSet<Span>,
+    pub(super) owned_binding_excluded: bool,
+    source_binding_states: HashMap<String, String>,
+    next_source_binding_identity: usize,
+    owned_argument_transfers: HashSet<Span>,
+    source_temporary_bindings: HashSet<String>,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
+    pub(super) nominal_copy_derivations: HashMap<String, nominal_copies::NominalCopyDerivation>,
+    pub(super) nominal_copy_owners: HashSet<String>,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
     pub(super) scope: HashMap<String, SourceOrigin>,
     pub(super) current_type: SourceOrigin,
@@ -189,22 +350,33 @@ pub(super) struct SourceOrigins {
     // successive wraps and dereferences update the same source evidence.
     expressions: HashMap<Span, SourceOrigin>,
     pattern_references: HashMap<Span, usize>,
+    literal_pattern_aliases: HashMap<Span, Vec<SExpr>>,
     wildcard_references: VecDeque<usize>,
 }
 
 impl SourceOrigins {
     pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>, model: &str) -> Self {
         Self {
+            shared_array_handles: false,
             array_result_model: model.to_owned(),
             owned_local_values: false,
             fresh_calls: HashSet::new(),
+            fresh_vector_constructors: HashSet::new(),
             collecting: catalog.is_none(),
+            owned_binding_excluded: false,
+            source_binding_states: HashMap::new(),
+            next_source_binding_identity: 0,
+            owned_argument_transfers: HashSet::new(),
+            source_temporary_bindings: HashSet::new(),
             catalog: catalog.unwrap_or_default(),
             unit_clone_facts: HashMap::new(),
+            nominal_copy_derivations: HashMap::new(),
+            nominal_copy_owners: HashSet::new(),
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
             pattern_references: HashMap::new(),
+            literal_pattern_aliases: HashMap::new(),
             wildcard_references: VecDeque::new(),
         }
     }
@@ -214,11 +386,24 @@ impl SourceOrigins {
         scope: Option<HashMap<String, SourceOrigin>>,
     ) -> HashMap<String, SourceOrigin> {
         let next = scope.unwrap_or_else(|| self.scope.clone());
+        let next = next
+            .into_iter()
+            .map(|(name, origin)| {
+                let origin = if origin.source_binding_identity.is_none() {
+                    self.register_owned_binding(origin)
+                } else {
+                    origin
+                };
+                (name, origin)
+            })
+            .collect();
         std::mem::replace(&mut self.scope, next)
     }
 
     pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
-        self.current_type = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        let mut origin = SourceOrigin::with_type(ty.clone(), path, wrappers);
+        self.retain_nominal_copy_origin(&mut origin);
+        self.current_type = origin;
         ty
     }
 
@@ -320,9 +505,10 @@ impl SourceOrigins {
         &mut self,
         name: &str,
         path: &[String],
-        entry: SourceDeclaration,
+        mut entry: SourceDeclaration,
     ) -> Result<()> {
         if self.collecting {
+            self.retain_nominal_copy_declaration(&mut entry);
             let mut full_path = path.to_vec();
             full_path.push(name.to_owned());
             let key = full_path.join(".");
@@ -347,20 +533,41 @@ impl SourceOrigins {
     where
         F: FnMut(&[String], &[String]) -> Vec<String>,
     {
-        let mut resolve_origin = |origin: &mut SourceOrigin| {
+        fn resolve_origin<F>(origin: &mut SourceOrigin, resolve: &mut F)
+        where
+            F: FnMut(&[String], &[String]) -> Vec<String>,
+        {
             if let Some(Type::Named { path, .. }) = &mut origin.ty {
                 *path = resolve(path, &origin.path);
             }
-        };
+            if let Some(fields) = &mut origin.fields {
+                for field in fields {
+                    resolve_origin(field, resolve);
+                }
+            }
+            if let Some(fields) = &mut origin.callable_parameters {
+                for field in fields {
+                    resolve_origin(field, resolve);
+                }
+            }
+            if let Some(result) = &mut origin.callable_result {
+                resolve_origin(result, resolve);
+            }
+        }
         for declaration in self.catalog.values_mut() {
             match declaration {
                 SourceDeclaration::Function { parameters, result } => {
-                    parameters.iter_mut().for_each(&mut resolve_origin);
-                    resolve_origin(result);
+                    parameters
+                        .iter_mut()
+                        .for_each(|parameter| resolve_origin(parameter, &mut resolve));
+                    resolve_origin(result, &mut resolve);
                 }
+                SourceDeclaration::Constant { result } => resolve_origin(result, &mut resolve),
                 SourceDeclaration::Constructor { fields, result, .. } => {
-                    fields.iter_mut().for_each(&mut resolve_origin);
-                    resolve_origin(result);
+                    fields
+                        .iter_mut()
+                        .for_each(|field| resolve_origin(field, &mut resolve));
+                    resolve_origin(result, &mut resolve);
                 }
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module
@@ -436,11 +643,18 @@ impl SourceOrigins {
 
     /// Compare retained source types by their existing declaration identities.
     pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_callable_owner_rules::accept_rust_callable_owner_descriptors_equal(&callable_owners::descriptor(left),&callable_owners::descriptor(right)){return false;}
+        self.compare_origin_structure(left, right)
+    }
+    fn compare_origin_structure(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_owner_equality(&ByteStringText::from_text(left.array_source_model.unwrap_or("")),&ByteStringText::from_text(left.source_owner.as_ref().map_or("",|owner|owner.kind.as_str())),&ByteStringText::from_text(&left.source_owner.as_ref().map(|owner|owner.path.join("::")).unwrap_or_default()),&ByteStringText::from_text(right.source_owner.as_ref().map_or("",|owner|owner.kind.as_str())),&ByteStringText::from_text(&right.source_owner.as_ref().map(|owner|owner.path.join("::")).unwrap_or_default())){return false;}
+
         if left.proven != right.proven
             || left.diverging != right.diverging
             || left.uncertain != right.uncertain
             || left.wrappers != right.wrappers
             || left.copy_evidence != right.copy_evidence
+            || left.copy_closure_identity != right.copy_closure_identity
             || left.float_source_model != right.float_source_model
             || left.text_source_model != right.text_source_model
             || left.array_source_model != right.array_source_model
@@ -453,8 +667,31 @@ impl SourceOrigins {
                     || !left
                         .iter()
                         .zip(right)
-                        .all(|(left, right)| self.same_origin(left, right))
+                        .all(|(left, right)| self.compare_origin_structure(left, right))
                 {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
+        }
+        match (&left.callable_parameters, &right.callable_parameters) {
+            (Some(left), Some(right)) => {
+                if left.len() != right.len()
+                    || !left
+                        .iter()
+                        .zip(right)
+                        .all(|(left, right)| self.compare_origin_structure(left, right))
+                {
+                    return false;
+                }
+            }
+            (None, None) => {}
+            _ => return false,
+        }
+        match (&left.callable_result, &right.callable_result) {
+            (Some(left), Some(right)) => {
+                if !self.compare_origin_structure(left, right) {
                     return false;
                 }
             }
@@ -504,10 +741,15 @@ impl SourceOrigins {
             match entry.declaration {
                 SourceDeclaration::Function { mut result, .. } => {
                     result.fresh_array_value = node.span.filter(|span| {
-                        result.fresh_array_value.is_some() && self.fresh_calls.contains(span)
+                        crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_call(
+                            node.kind(), result.array_source_model.unwrap_or(""),
+                            u32::try_from(result.wrappers.len()).map_or(f64::INFINITY, f64::from),
+                            result.fresh_array_value.is_some(), result.fresh_vector_result_contract, self.fresh_calls.contains(span),
+                        )
                     });
                     return result;
                 }
+                SourceDeclaration::Constant { result } => return result,
                 SourceDeclaration::Constructor { result, .. } => return result,
                 SourceDeclaration::ExternalCrate
                 | SourceDeclaration::Module
@@ -520,7 +762,13 @@ impl SourceOrigins {
             && super::rust_fixed_type(&names[0]).is_some()
             && ["MIN", "MAX"].contains(&names[1].as_str())
         {
-            return SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
+            let mut origin = SourceOrigin::scalar_copy_value(super::rust_fixed_type(&names[0]));
+            origin.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "primitive".to_owned(),
+                path: vec![names[0].clone()],
+                arguments: Vec::new(),
+            });
+            return origin;
         }
         if let SNode::If {
             then, otherwise, ..
@@ -537,7 +785,15 @@ impl SourceOrigins {
             "value" => match &node.node {
                 SNode::Num { ty, .. } => SourceOrigin::scalar_copy_value(ty.clone()),
                 SNode::Bool { .. } => SourceOrigin::scalar_copy_value(Some(super::BOOL)),
-                SNode::Unit => SourceOrigin::scalar_copy_value(Some(super::UNIT)),
+                SNode::Unit => {
+                    let mut origin = SourceOrigin::scalar_copy_value(Some(super::UNIT));
+                    origin.source_owner = Some(super::super::source_signatures::SourceOwner {
+                        kind: "unit".to_owned(),
+                        path: Vec::new(),
+                        arguments: Vec::new(),
+                    });
+                    origin
+                }
                 _ => SourceOrigin::value(),
             },
             "diverging" => SourceOrigin {
@@ -563,6 +819,12 @@ impl SourceOrigins {
                     .iter()
                     .map(|operand| self.origin(operand, path))
                     .collect();
+                if operands
+                    .iter()
+                    .any(|operand| operand.integer_source_owner_conflict)
+                {
+                    return SourceOrigin::integer_conflict();
+                }
                 if operands.iter().any(|operand| !operand.proven) {
                     let uncertain = operands.iter().any(|operand| {
                         operand.uncertain
@@ -597,15 +859,65 @@ impl SourceOrigins {
                 }
                 if form == "derived-value" {
                     if matches!(node.node, SNode::StringTest { .. }) {
-                        return SourceOrigin::scalar_copy_value(Some(super::BOOL));
+                        return SourceOrigin {
+                            source_owner: Some(
+                                crate::translation::source_signatures::SourceOwner {
+                                    kind: "primitive".to_owned(),
+                                    path: vec!["bool".to_owned()],
+                                    arguments: Vec::new(),
+                                },
+                            ),
+                            ..SourceOrigin::scalar_copy_value(Some(super::BOOL))
+                        };
                     }
-                    return SourceOrigin::text_value();
+                    return SourceOrigin {
+                        source_owned_result_proof: true,
+                        ..SourceOrigin::text_value()
+                    };
                 }
+                let owners = operands
+                    .iter()
+                    .map(SourceOrigin::pointer_integer_owner)
+                    .collect::<Vec<_>>();
+                if (form == "primitive-operation" || form == "comparison")
+                    && !read_rust_pointer_integer_owner_join_error(&owners).is_empty()
+                {
+                    return SourceOrigin::integer_conflict();
+                }
+                let owner = if form == "primitive-operation" {
+                    select_rust_pointer_integer_result_owner(&owners)
+                } else {
+                    String::new()
+                };
+                let primitive = if form == "primitive-operation" {
+                    primitive_expressions::select_primitive_expression_origin(
+                        operation, &nodes, &operands,
+                    )
+                } else {
+                    None
+                };
+                let boolean = crate::translation::rust_primitive_expression_rules::accept_rust_primitive_boolean_result(
+                    &form, operation,
+                    operands.len() == 1 && operands[0].ty == Some(super::BOOL)
+                        && operands[0].proven && operands[0].wrappers.is_empty(),
+                );
                 let ty = match &node.node {
                     SNode::Cast { to, .. } => Some(to.clone()),
-                    _ if form == "comparison" || form == "boolean-operation" => Some(super::BOOL),
+                    _ if boolean => Some(super::BOOL),
                     _ if operation == "concat" => Some(super::STRING),
-                    _ => None,
+                    _ => {
+                        if let Some(value) = &primitive {
+                            value.ty.clone()
+                        } else if owner.is_empty() {
+                            None
+                        } else {
+                            operands
+                                .iter()
+                                .zip(&owners)
+                                .find(|(_, candidate)| *candidate == &owner)
+                                .and_then(|(origin, _)| origin.ty.clone())
+                        }
+                    }
                 };
                 let copy_evidence = form != "primitive-operation"
                     || (operation != "concat"
@@ -614,6 +926,30 @@ impl SourceOrigins {
                             .all(|operand| operand.copy_evidence.is_some()));
                 SourceOrigin {
                     ty,
+                    float_source_model: primitive
+                        .as_ref()
+                        .filter(|origin| origin.ty == Some(Type::Float))
+                        .map(|_| "binary64 scalar"),
+                    source_owner: if boolean {
+                        Some(crate::translation::source_signatures::SourceOwner {
+                            kind: "primitive".to_owned(),
+                            path: vec!["bool".to_owned()],
+                            arguments: Vec::new(),
+                        })
+                    } else {
+                        primitive
+                            .as_ref()
+                            .and_then(|origin| origin.source_owner.clone())
+                            .or_else(|| {
+                                (!owner.is_empty()).then(|| {
+                                    crate::translation::source_signatures::SourceOwner {
+                                        kind: "primitive".to_owned(),
+                                        path: vec![owner],
+                                        arguments: Vec::new(),
+                                    }
+                                })
+                            })
+                    },
                     copy_evidence: copy_evidence.then_some(()),
                     text_source_model: (operation == "concat").then_some("owned string"),
                     ..SourceOrigin::value()
@@ -631,16 +967,91 @@ impl SourceOrigins {
                 ..SourceOrigin::value()
             };
         };
+        if let Some(error) = returning
+            .iter()
+            .find_map(|origin| origin.callable_source_owner_error.clone())
+        {
+            return SourceOrigin {
+                callable_source_owner_error: Some(error),
+                ..SourceOrigin::uncertain()
+            };
+        }
+        let callable_rows = returning
+            .iter()
+            .flat_map(|origin| callable_owners::descriptor(origin))
+            .collect::<Vec<_>>();
+        let callable_error =
+            crate::translation::rust_callable_owner_rules::read_rust_callable_owner_join_error(
+                &callable_rows,
+            );
+        if !callable_error.is_empty() {
+            return SourceOrigin {
+                callable_source_owner_error: Some(callable_error),
+                ..SourceOrigin::uncertain()
+            };
+        }
+        let owners = returning
+            .iter()
+            .map(|origin| origin.pointer_integer_owner())
+            .collect::<Vec<_>>();
+        if returning
+            .iter()
+            .any(|origin| origin.integer_source_owner_conflict)
+            || !read_rust_pointer_integer_owner_join_error(&owners).is_empty()
+        {
+            return SourceOrigin::integer_conflict();
+        }
+        let source_extending_temporary_bindings =
+            returning.iter().fold(Vec::new(), |ids, origin| {
+                crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(
+                    &ids,
+                    &origin.source_extending_temporary_bindings,
+                )
+            });
+        let source_loan_binding_identities = if first.wrappers.is_empty() {
+            Vec::new()
+        } else {
+            returning.iter().fold(Vec::new(), |loans, origin| {
+                crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(
+                    &loans,
+                    &crate::translation::rust_owned_binding_rules::project_rust_owned_loan_bindings(
+                        origin.source_binding_identity.as_deref().unwrap_or(""),
+                        &origin.source_loan_binding_identities,
+                    ),
+                )
+            })
+        };
         if returning
             .iter()
             .all(|origin| self.same_origin(origin, first))
         {
             return SourceOrigin {
+                integer_source_owner_constraint: Some(select_rust_pointer_integer_result_owner(
+                    &owners,
+                )),
+                array_element_copy_evidence: returning
+                    .iter()
+                    .all(|origin| origin.array_element_copy_evidence),
                 fresh_array_value: if returning
                     .iter()
                     .all(|origin| origin.fresh_array_value.is_some())
                 {
                     first.fresh_array_value
+                } else {
+                    None
+                },
+                source_extending_temporary_bindings,
+                source_loan_binding_identities,
+                source_place_loan_binding_identities: Vec::new(),
+                source_borrowed_place: returning.iter().any(|origin| origin.source_borrowed_place),
+                source_owned_result_proof: returning
+                    .iter()
+                    .all(|origin| origin.source_owned_result_proof),
+                source_binding_identity: if returning
+                    .iter()
+                    .all(|origin| origin.source_binding_identity == first.source_binding_identity)
+                {
+                    first.source_binding_identity.clone()
                 } else {
                     None
                 },
@@ -653,6 +1064,9 @@ impl SourceOrigins {
         {
             return SourceOrigin {
                 array_source_model: Some("unproved array"),
+                integer_source_owner_constraint: Some(select_rust_pointer_integer_result_owner(
+                    &owners,
+                )),
                 ..SourceOrigin::uncertain()
             };
         }
@@ -689,6 +1103,7 @@ impl SourceOrigins {
                 .all(|origin| origin.text_source_model == first.text_source_model)
                 .then_some(first.text_source_model)
                 .flatten();
+            let integer_owner = select_rust_pointer_integer_result_owner(&owners);
             return SourceOrigin {
                 wrappers: first.wrappers.clone(),
                 copy_evidence: returning
@@ -696,7 +1111,14 @@ impl SourceOrigins {
                     .all(|origin| origin.copy_evidence.is_some())
                     .then_some(()),
                 fields,
-                ty: text_source_model.map(|_| super::STRING),
+                ty: text_source_model
+                    .map(|_| super::STRING)
+                    .or_else(|| super::rust_fixed_type(&integer_owner)),
+                integer_source_owner_constraint: (!integer_owner.is_empty())
+                    .then_some(integer_owner),
+                source_extending_temporary_bindings,
+                source_loan_binding_identities,
+                source_place_loan_binding_identities: Vec::new(),
                 text_source_model,
                 ..SourceOrigin::value()
             };
@@ -711,6 +1133,27 @@ impl SourceOrigins {
         }
     }
 
+    pub(super) fn checked_join(&self, origins: &[SourceOrigin]) -> Result<SourceOrigin> {
+        let returning = origins
+            .iter()
+            .filter(|origin| !origin.diverging)
+            .collect::<Vec<_>>();
+        if let Some(first) = returning.first() {
+            for origin in &returning {
+                let error =
+                    crate::translation::rust_copy_closure_rules::read_rust_copy_closure_join_error(
+                        first.copy_closure_identity.is_some(),
+                        origin.copy_closure_identity.is_some(),
+                        first.copy_closure_identity == origin.copy_closure_identity,
+                    );
+                if !error.is_empty() {
+                    return Err(unsupported("Rust closure source join", error, None));
+                }
+            }
+        }
+        Ok(self.join(origins))
+    }
+
     pub(super) fn mark(&mut self, node: &SExpr, mut origin: SourceOrigin) {
         if !self.array_result_model.is_empty()
             && let SNode::Array { items, .. } = &node.node
@@ -722,6 +1165,20 @@ impl SourceOrigins {
                         !item.spread && self.origin(&item.value, &origin.path).direct_copy_value()
                     })
             });
+        }
+        if origin.wrappers.is_empty()
+            && !matches!(origin.ty, Some(Type::Array { .. }))
+            && !self.owned_binding_value(&origin)
+        {
+            origin.source_place_binding_identity = origin
+                .source_place_binding_identity
+                .or(origin.source_binding_identity.take());
+            origin.source_place_loan_binding_identities =
+                crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(
+                    &origin.source_place_loan_binding_identities,
+                    &origin.source_loan_binding_identities,
+                );
+            origin.source_loan_binding_identities.clear();
         }
         if let Some(span) = node.span {
             self.expressions.insert(span, origin);
@@ -744,6 +1201,95 @@ impl SourceOrigins {
         )
     }
 
+    pub(super) fn mark_owned_string_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
+        origin.source_binding_identity = None;
+        origin.source_place_binding_identity = None;
+        origin.source_extending_temporary_bindings.clear();
+        origin.source_loan_binding_identities.clear();
+        origin.source_place_loan_binding_identities.clear();
+        origin.source_borrowed_place = false;
+        origin.source_owned_result_proof =
+            crate::translation::rust_owned_binding_rules::accept_rust_owned_binding_value(
+                origin.ty.as_ref().map_or("", Type::kind),
+                origin.text_source_model.unwrap_or(""),
+                origin.wrappers.len() as f64,
+                origin.proven,
+            );
+        self.mark(node, origin);
+    }
+    pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
+        if let Some(span) = node.span {
+            self.fresh_vector_constructors.insert(span);
+        }
+        origin.source_binding_identity = None;
+        origin.source_place_binding_identity = None;
+        origin.source_loan_binding_identities.clear();
+        origin.source_place_loan_binding_identities.clear();
+        origin.source_extending_temporary_bindings.clear();
+        origin.source_borrowed_place = false;
+        self.mark(node, origin);
+    }
+
+    pub(super) fn fresh_vector_argument(
+        &self,
+        node: &SExpr,
+        path: &[String],
+        allow_calls: bool,
+    ) -> bool {
+        let origin = self.origin(node, path);
+        if matches!(origin.ty, Some(Type::Array { .. }))
+            && origin.source_owned_result_proof
+            && self.available_owned_binding(&origin)
+        {
+            return true;
+        }
+        if crate::translation::rust_scalar_vector_copy_rules::accept_rust_scalar_vector_copy_occurrence(node.kind(),origin.array_source_model.unwrap_or(""),u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY,f64::from),node.span.is_some_and(|span|self.fresh_vector_constructors.contains(&span))){return true;}
+        if allow_calls
+            && accept_rust_known_fresh_vector_call(
+                node.node.kind(),
+                origin.array_source_model.unwrap_or(""),
+                serde_json::Number::from(origin.wrappers.len())
+                    .as_f64()
+                    .expect("actual wrapper count"),
+                origin.fresh_array_value.is_some(),
+            )
+        {
+            return true;
+        }
+        let form = read_rust_fresh_vector_argument_form(
+            node.node.kind(),
+            origin.diverging,
+            origin.array_source_model.unwrap_or(""),
+            serde_json::Number::from(origin.wrappers.len())
+                .as_f64()
+                .expect("actual wrapper count"),
+            node.span
+                .is_some_and(|span| self.fresh_vector_constructors.contains(&span)),
+        );
+        match (form.as_str(), &node.node) {
+            ("diverging" | "constructor", _) => true,
+            ("body", SNode::Let { body, .. } | SNode::Print { body, .. }) => {
+                self.fresh_vector_argument(body, path, allow_calls)
+            }
+            (
+                "alternatives",
+                SNode::If {
+                    then, otherwise, ..
+                },
+            ) => {
+                self.fresh_vector_argument(then, path, allow_calls)
+                    && self.fresh_vector_argument(otherwise, path, allow_calls)
+            }
+            ("rows", SNode::Match { rows, .. }) => {
+                !rows.is_empty()
+                    && rows
+                        .iter()
+                        .all(|row| self.fresh_vector_argument(&row.body, path, allow_calls))
+            }
+            _ => false,
+        }
+    }
+
     pub(super) fn certify_array_result(&mut self, name: &str, path: &[String], span: Option<Span>) {
         if self.collecting {
             let full_name = path
@@ -760,10 +1306,15 @@ impl SourceOrigins {
         }
     }
 
-    pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) {
+    pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) -> Result<()> {
         let mut origin = self.origin(node, path);
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&origin.source_place_binding_identity.is_some(){origin.source_binding_identity=origin.source_place_binding_identity.clone();}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_loan_binding_identities=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_loan_binding_identities,&origin.source_place_loan_binding_identities);}
         origin.wrappers.insert(0, layer.to_owned());
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_lifetimes.insert(0,None);}
         self.mark(node, origin);
+        Ok(())
     }
 
     pub(super) fn dereference(
@@ -788,8 +1339,15 @@ impl SourceOrigins {
                 span,
             ));
         }
+        let lifetime=crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer);
         if !origin.wrappers.is_empty() {
             origin.wrappers.remove(0);
+        }
+        if lifetime {
+            origin.source_borrowed_place = true;
+        }
+        if lifetime && !origin.source_lifetimes.is_empty() {
+            origin.source_lifetimes.remove(0);
         }
         self.mark(node, origin);
         Ok(())
@@ -803,6 +1361,14 @@ impl SourceOrigins {
         declared: Option<&SourceOrigin>,
     ) -> Result<()> {
         let actual = self.origin(node, path);
+        self.pointer_integer_argument(&actual, &SourceOrigin::value(), node.span)?;
+        if self.shared_array_handles && !self.collecting && matches!(actual.ty, Some(Type::Array {..}))
+            && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(
+                actual.array_source_model.unwrap_or(""), actual.array_source_model.unwrap_or(""),
+                f64::from(u32::try_from(actual.wrappers.len()).unwrap_or(u32::MAX)), f64::from(u32::try_from(actual.wrappers.len()).unwrap_or(u32::MAX)),
+            ) {
+            return Err(unsupported("Rust shared array handle source", "a binding requires an actual owned shared handle, not its vector payload", node.span));
+        }
         if !self.collecting && actual.array_source_model.is_some() && actual.uncertain {
             return Err(unsupported(
                 "source array join",
@@ -815,6 +1381,7 @@ impl SourceOrigins {
             && actual.wrappers.is_empty()
             && !matches!(node.node, SNode::Array { .. })
             && actual.fresh_array_value.is_none()
+            && !self.available_owned_binding(&actual)
         {
             return Err(unsupported(
                 "owned vector binding",
@@ -825,12 +1392,60 @@ impl SourceOrigins {
         if let Some(declared) = declared {
             self.argument(&actual, declared, node.span)?;
         }
-        let mut binding = declared.cloned().unwrap_or(actual);
+        if self.owned_binding_value(&actual) {
+            self.consume_owned_binding(&actual, node.span)?;
+        }
+        let mut binding = declared.cloned().unwrap_or_else(|| actual.clone());
+        if !actual.wrappers.is_empty() {
+            binding.source_binding_identity = actual.source_binding_identity.clone();
+            binding.source_loan_binding_identities = actual.source_loan_binding_identities.clone();
+        }
+        binding.source_extending_temporary_bindings.clear();
+        binding.source_place_binding_identity = None;
+        binding.source_place_loan_binding_identities.clear();
         binding.fresh_array_value = None;
+        binding.fresh_vector_result_contract = false;
+        let binding = self.register_owned_binding(binding);
         self.scope.insert(name.to_owned(), binding);
         Ok(())
     }
 
+    pub(super) fn pointer_integer_argument(
+        &self,
+        actual: &SourceOrigin,
+        expected: &SourceOrigin,
+        span: Option<Span>,
+    ) -> Result<()> {
+        if self.collecting || actual.diverging {
+            return Ok(());
+        }
+        if let Some(error) = &actual.callable_source_owner_error {
+            return Err(unsupported("Rust callable source owner", error, span));
+        }
+        let error = if actual.integer_source_owner_conflict {
+            read_rust_pointer_integer_owner_error("usize", "u64")
+        } else {
+            read_rust_pointer_integer_owner_error(
+                &actual.pointer_integer_owner(),
+                &expected.pointer_integer_owner(),
+            )
+        };
+        if error.is_empty() {
+            Ok(())
+        } else {
+            Err(unsupported("Rust integer source owner", &error, span))
+        }
+    }
+    pub(super) fn pointer_integer_expression(
+        &mut self,
+        node: &SExpr,
+        path: &[String],
+    ) -> Result<()> {
+        let origin = self.origin(node, path);
+        self.pointer_integer_argument(&origin, &SourceOrigin::value(), node.span)?;
+        self.mark(node, origin);
+        Ok(())
+    }
     pub(super) fn argument(
         &self,
         actual: &SourceOrigin,
@@ -842,6 +1457,41 @@ impl SourceOrigins {
         }
         if actual.diverging {
             return Ok(());
+        }
+        if !actual.wrappers.is_empty() {
+            self.check_owned_origin(actual, span)?;
+        }
+        self.pointer_integer_argument(actual, expected, span)?;
+        let callable_error =
+            crate::translation::rust_callable_owner_rules::read_rust_callable_owner_error(
+                &callable_owners::descriptor(actual),
+                &callable_owners::descriptor(expected),
+            );
+        if !callable_error.is_empty() {
+            return Err(unsupported(
+                "Rust callable source owner",
+                &callable_error,
+                span,
+            ));
+        }
+        let pointer_error = crate::translation::rust_function_pointer_rules::read_rust_function_pointer_coercion_error(
+            matches!(expected.ty, Some(Type::Function { .. })) && expected.copy_evidence.is_some(),
+            actual.ty.as_ref().map_or("", Type::kind), actual.copy_closure_identity.is_some(),
+            actual.copy_closure_capture_count.map_or(-1.0, |count| serde_json::Number::from(count).as_f64().expect("actual capture count")), actual.proven,
+        );
+        if !pointer_error.is_empty() {
+            return Err(unsupported(
+                "Rust function pointer coercion",
+                pointer_error,
+                span,
+            ));
+        }
+        if self.shared_array_handles && (matches!(actual.ty, Some(Type::Array {..})) || matches!(expected.ty, Some(Type::Array {..})))
+            && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(
+                actual.array_source_model.unwrap_or(""), expected.array_source_model.unwrap_or(""),
+                f64::from(u32::try_from(actual.wrappers.len()).unwrap_or(u32::MAX)), f64::from(u32::try_from(expected.wrappers.len()).unwrap_or(u32::MAX)),
+            ) {
+            return Err(unsupported("Rust shared array handle source", "call and return ownership must preserve actual shared handles without borrowed payload coercion", span));
         }
         if !actual.proven
             && !actual.uncertain
@@ -866,7 +1516,7 @@ impl SourceOrigins {
         let borrowed = actual.first().is_some_and(|layer| layer == "reference")
             && want.first().is_some_and(|layer| layer == "reference");
         if let (Some(actual_model), Some(expected_model)) = (actual_model, expected_model)
-            && !accept_rust_source_array_coercion(actual_model, expected_model, borrowed)
+            && !accept_rust_source_array_coercion(actual_model, expected_model, borrowed) && !crate::translation::rust_byte_string_expression_rules::accept_rust_static_byte_array_coercion(&ByteStringText::from_text(actual_model),&ByteStringText::from_text(expected_model),borrowed)
         {
             return Err(unsupported(
                 "source array coercion",
@@ -901,25 +1551,38 @@ impl SourceOrigins {
         self.argument(&self.origin(node, path), &SourceOrigin::value(), span)
     }
 
-    pub(super) fn conversion(&mut self, node: &SExpr, path: &[String]) {
+    pub(super) fn conversion(&mut self, node: &SExpr, path: &[String]) -> Result<()> {
         let SNode::ToString { arg } = &node.node else {
-            return;
+            return Ok(());
         };
         let operand = self.origin(arg, path);
+        self.check_owned_origin(&operand, node.span)?;
+        if operand.ty == Some(super::STRING) {
+            self.consume_owned_binding(&operand, node.span)?;
+        }
         let form = read_rust_source_expression_origin(node.node.kind(), "from");
-        let result = if !self.collecting
+        if !self.collecting
             && form == "unboxed-conversion"
             && operand.wrappers.iter().any(|layer| layer == "box")
         {
-            SourceOrigin::uncertain()
-        } else if operand.proven {
+            self.mark(node, SourceOrigin::uncertain());
+            return Ok(());
+        }
+        if !self.collecting {
+            let error=crate::translation::rust_owned_binding_rules::read_rust_owned_string_construction_error(operand.ty.as_ref().map_or("",Type::kind),operand.text_source_model.unwrap_or(""),operand.wrappers.len() as f64,operand.proven,operand.wrappers.iter().all(|layer|layer=="reference"));
+            if !error.is_empty() {
+                return Err(unsupported("Rust string construction", error, node.span));
+            }
+        }
+        let result = if operand.proven {
             SourceOrigin::text_value()
         } else if operand.uncertain {
             SourceOrigin::uncertain()
         } else {
             SourceOrigin::unknown()
         };
-        self.mark(node, result);
+        self.mark_owned_string_constructor(node, result);
+        Ok(())
     }
 
     pub(super) fn call(
@@ -928,6 +1591,17 @@ impl SourceOrigins {
         args: &[SExpr],
         path: &[String],
         span: Option<Span>,
+    ) -> Result<()> {
+        self.call_with_fresh_vector_arguments(segments, args, path, span, false)
+    }
+
+    pub(super) fn call_with_fresh_vector_arguments(
+        &mut self,
+        segments: &[String],
+        args: &[SExpr],
+        path: &[String],
+        span: Option<Span>,
+        ordinary: bool,
     ) -> Result<()> {
         if let Some(span) = span {
             self.fresh_calls.insert(span);
@@ -946,14 +1620,49 @@ impl SourceOrigins {
         // References can coerce through Box; owned Box cannot become its owned
         // inner value until the source explicitly dereferences it.
         for (argument, expected) in args.iter().zip(&expected) {
-            if expected.array_source_model == Some("owned vector") && expected.wrappers.is_empty() {
+            let element = match expected.ty.as_ref() {
+                Some(Type::Array { element, .. }) => element.kind(),
+                _ => "",
+            };
+            let mut actual = self.origin(argument, path);
+            let transferred = argument
+                .span
+                .is_some_and(|place| self.owned_argument_transfers.contains(&place));
+            if !transferred {
+                self.check_owned_origin(&actual, span)?;
+            }
+            let consumable = transferred || self.available_owned_binding(&actual);
+            let fresh = expected.array_source_model == Some("owned vector")
+                && expected.wrappers.is_empty()
+                && accept_rust_fresh_owned_vector_argument(
+                    ordinary,
+                    "owned vector",
+                    0.0,
+                    element,
+                    self.fresh_vector_argument(argument, path, true),
+                );
+            if expected.array_source_model == Some("owned vector")
+                && expected.wrappers.is_empty()
+                && !fresh
+                && !consumable
+            {
                 return Err(unsupported(
                     "owned vector argument",
                     "passing a vector by value needs an explicit consumption proof",
                     span,
                 ));
             }
-            self.argument(&self.origin(argument, path), expected, span)?;
+
+            if fresh {
+                actual.proven = true;
+                actual.uncertain = false;
+                actual.wrappers.clear();
+                actual.array_source_model = Some("owned vector");
+            }
+            self.argument(&actual, expected, span)?;
+            if !transferred && self.owned_binding_value(expected) {
+                self.consume_owned_binding(&actual, span)?;
+            }
         }
         Ok(())
     }

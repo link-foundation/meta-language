@@ -1,11 +1,28 @@
+import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
+import {acceptLinkedNumberBitwiseOperation} from './translation/number-bitwise-rules.js';
+import {readRustSharedArrayHandleComparisonProjection} from './translation/rust-shared-array-handle-rules.js';
 import { acceptProgramExpressionField, acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
 import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
 import { readRecordProjection, readRecordProjectionError } from './translation/record-value-rules.js';
 import { readLinkedProgramNumberOperand } from './typed-program-number-projection.js';
 import { readSurfaceReferenceProjectionForm, readSurfaceReferencePayloadOperand } from './translation/surface-reference-analysis-rules.js';
+import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
+import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
+import { acceptLinkedBigIntegerBitwiseOperation } from './translation/big-integer-bitwise-rules.js';
+import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult} from './translation/big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptStringUnitConstruction} from './translation/javascript-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction} from './translation/string-construction-rules.js';
+import {readJavaScriptRecordOrderKernelArity,acceptLinkedOrderedRecordOrderRead} from './translation/javascript-enumeration-rules.js';
+import { acceptLinkedRustPrimitiveBitwiseOperation } from './translation/rust-primitive-bitwise-rules.js';
+import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
+import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
+import {acceptRustExactArrayLengthResult} from './translation/rust-array-length-rules.js';
+import {acceptRustStringByteLengthOperation} from './translation/rust-string-byte-length-rules.js';
 
 /** Restore identities from actual declarations after independent namespace validation. */
 export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
@@ -17,14 +34,31 @@ export function projectLinkedProgramDeclarationPath(name, declarations, rooted =
   return ['crate', ...actual];
 }
 
-export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false} = {}) {
+export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false, sourceLanguage = ''} = {}) {
+  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics, sourceLanguage});
+  if(acceptRustExactArrayLengthResult(value?.k??'',value?.type?.kind??'',value?.type?.bits??0,value?.type?.signed===true,value?.array?.type?.kind??''))return {k:'cast',arg:{k:'length',object:project(value.array),integer:true},to:value.type,flavor:'exact',...(value.span!==undefined?{span:value.span}:{})};
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
   if (['tuple', 'tupleIndex'].includes(value?.k)
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
   if (value?.k === 'record'
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked record expression has an unrecognized projection field');
   if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
-    && !acceptProgramExpressionOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
+    && !acceptProgramExpressionOperation(value.k, value.op) && !acceptLinkedNumberBitwiseOperation(value.k,value.op)
+    && !acceptLinkedStringArrayCopySort(value.k,value.op,value.object?.type?.kind??'',value.object?.type?.element?.kind??'',value.object?.type?.reference===true,value.args?.length??-1)
+    && !acceptLinkedReferenceMethodOperation(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
+    && !acceptLinkedRecordFieldWrite(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
+    && !acceptLinkedBigIntegerBitwiseOperation(value.k, value.op)
+    && !acceptLinkedJavaScriptNumberConversion(value.k,value.op)
+    && !acceptLinkedJavaScriptSourceException(value.k,value.op)
+    && !acceptLinkedJavaScriptBigIntegerResult(value.k,value.op)
+    && !acceptLinkedJavaScriptStringUnitConstruction(value.k,value.op)
+    && !acceptLinkedJavaScriptStringConstruction(value.k,value.op)
+    && !(value.k==='math'&&readJavaScriptRecordOrderKernelArity(value.op??''))
+    && !acceptLinkedOrderedRecordOrderRead(value.k,value.op,value.object?.type?.kind??'',value.object?.type?.ordered===true,value.object?.type?.reference===true)
+    && !acceptLinkedRustPrimitiveBitwiseOperation(value.k, value.op)
+    && !acceptLinkedArrayStateMethod(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
+    && !acceptLinkedRustCheckedShift(value.k,value.op)
+    && !acceptRustStringByteLengthOperation(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
   const alternatives = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives;
   for (const alternative of alternatives && Object.hasOwn(alternatives, key) ? alternatives[key] : []) {
@@ -41,7 +75,12 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
-  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics});
+  // This domain already states identity semantics in checked IR. Reconstruct
+  // its explicit operation, never ordinary Rust value-equality syntax.
+  const identity = value.k === 'binary' ? readRustSharedArrayHandleComparisonProjection(sourceLanguage,
+    value.op, value.domain?.kind ?? '', value.domain?.reference === true) : '';
+  if (identity) return { k: identity, op: value.op, left: project(value.left), right: project(value.right),
+    ...(value.span !== undefined ? { span: value.span } : {}) };
   const referenceForm = readSurfaceReferenceProjectionForm(value.k, value.type?.kind ?? '', value.type?.reference === true, referenceSemantics);
   if (plan.construct === 'operand') {
     let projected = project(value[plan.operand]);
@@ -55,6 +94,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     const child = value[source];
     if (mode === 'copy') { if (child !== undefined) result[target] = child; }
     else if (mode === 'expression') result[target] = project(readLinkedProgramNumberOperand(value, source, child));
+    else if (mode === 'optional-expression') { if(child!==undefined&&child!==null)result[target]=project(child); }
     else if (mode === 'expressions') result[target] = child.map(project);
     else if (mode === 'nullable-expressions') result[target] = child.map(value => value === null ? null : project(value));
     else if (mode === 'name-path') result[target] = [child];

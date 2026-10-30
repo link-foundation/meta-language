@@ -84,11 +84,46 @@ fixtures.
 
 ### Global concept space
 
+Exact graph identity includes every positive unsigned 64-bit identifier. The
+JavaScript `UnsignedLinkId`/`UnsignedLinkNetwork` profile keeps this domain
+explicit, alongside the original safe-Number profile. Identity arithmetic and
+decimal/byte conversions use inspectable shared limb definitions, automatically
+translated to Rust. The exhausted allocator is distinct from the largest link.
+`MLU64N01` snapshots preserve original identifiers, repeated and cyclic edges,
+metadata, exact term registrations, selected syntax and allocator history. A
+strictly ordered exact-ID directory reversibly changes coordinates for the
+existing complete `MLDSNP02` metadata/cache codec; it is not a new upstream
+binary standard. Dense views let existing graph algorithms process these
+coordinates while their complete inverse directory stays explicit. This proves
+neither concept meaning nor semantic equivalence. New dense nodes require
+explicit original-ID allocation; direct exact-ID integration throughout every
+parser, schema and CLI remains an obligation. The source draft and deferred
+fixtures do not establish runtime parity or completion.
+
 All grammars of all languages inhabit **one global concept space**. It includes
 programming languages, grammar-description languages, document formats and
 natural languages, together with the translation rules over their concepts.
 An unshared concept belongs to this same space; it retains its own identity and
 qualified language provenance until an equivalence proof permits reuse.
+
+The regular-grammar refinement draft retains each preceding complete model,
+decision table, grammar and concept source graph in a flat history directory.
+The complete original learner and the actual refinement-validation definition
+appear once as shared typed Links. The journal preserves added positive and
+negative observations in order, including duplicates and statistical multiplicity.
+Source-generated decisions check exact corpus prefixes, selected settings and
+distinct source identities. Reload revalidates every recorded learner decision
+and grammar against its actual supported algorithm, then checks continuity.
+Changed definitions, lost observations, unreferenced history and reused source
+identities refuse. Historical groups retain their original local identities;
+deterministic reruns establish no semantic equivalence certificate. Old and
+refined sources can inhabit one dynamic session, whose default remains CST.
+This version relearns deterministically from the retained corpus under the
+existing RPNI/EDSM/ALERGIA-style profile. It establishes neither modern discovery,
+unknown-language completeness, asymptotically incremental performance nor semantic
+equivalence. Eight journal steps and finite graph/learner budgets bound actual
+reconstruction; exhaustion refuses instead of dropping history. These checkpoints
+and their deferred text/binary/native controls remain unexecuted code drafts.
 
 The automated translation and import pipeline first copies every concept and
 its recursive links into this space without losing rules, aliases, occurrence
@@ -306,6 +341,20 @@ Documentation defaults do not supply runtime initializers. Provided arguments
 evaluate once in source order before applicable lazy defaults, which retain
 their callee scope and initializer order through source-free rechecking.
 Known record, tuple, Map and Set bindings have JavaScript `typeof` tag `object`.
+The evaluated-query extension captures calls, field reads, constructed values
+and other represented operands before yielding their statically known tag.
+Unit results produce `undefined` only after evaluating their actual operand.
+Pure bound/literal queries keep their earlier constant representation. Shared
+source rules select these cases and automatically generate native definitions;
+unknown value kinds still refuse. The two former refusals (`typeof fail()` and
+`typeof [1]`) retain their exact source inputs and gain translation plus actual
+abrupt/normal-output assertions in both runtime controls. This correction follows
+[ECMAScript 2025 13.5.3.1](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-typeof-operator-runtime-semantics-evaluation),
+which evaluates the operand and gets its value before returning a tag. Deferred
+controls retain heap effects, getter calls, abrupt Error requests, void effects,
+complete typed codecs and four target emissions. No control has run locally.
+Unresolvable names, temporal dead zones, symbols, proxies and HTMLDDA remain
+separate source/environment obligations, rather than inferred from a type tag.
 An optional query requires a known nonempty present-value tag and retains its
 null and undefined alternatives without discarding operand effects or
 exceptions. A raw JavaScript mixed array in an actual `Option<Tuple>` context
@@ -438,6 +487,51 @@ the existing String paths with their original source intervals. Closed models
 that select fixed decoded runtime strings retain those values and actual
 operation owners; the explicitly raw-excluding generated namespace model keeps
 its refusal.
+Cooked and raw Rust byte strings have a separate lexical representation. Shared
+source rules retain all eight-bit escapes, ASCII content, literal raw delimiters,
+CRLF normalization, continuations and original source spans. Identifier suffixes
+remain part of their actual lexical token; they do not acquire typed expression
+meaning. The byte payload has a canonical hexadecimal transport rather than a
+host text encoding. Unicode byte escapes, non-ASCII source, isolated carriage
+returns and malformed delimiters refuse. The complete dependency closure is
+editable typed Links and generates native decisions automatically. Earlier raw
+text decoder controls retain every input and their `notRaw` expectations; the
+full lexer now recognizes actual raw byte strings under the explicit byte-string
+profile. Complete earlier assertion sources and the Rust Reference basis for this
+correction remain available.
+The ordinary byte-string expression draft decodes that canonical transport into
+actual `u8` array elements, including an explicitly typed empty array. Source
+origins retain the fixed byte count and static shared-reference ownership;
+different fixed lengths remain distinct before an explicit slice view. Standard
+immutable element reads reuse the existing checked array/slice bounds operation.
+Explicit `as_slice` views and valid borrowed argument unsizing reuse existing
+immutable slice operations, including copied lookups and fresh `to_vec` results.
+Direct static-array `get`/`first`/`last` consumers and `to_vec` also derive a
+local standard readonly view from the actual proven array, unsigned eight-bit
+element, immutable reference layers and primitive `u8` owner. Original fixed
+length, source owner and operand identity stay intact. Lookup callback inference,
+standard widening conversions, byte predicates and fresh vector result contracts
+reuse the same slice operations. Unknown owners and nonbyte/refutable source
+facts supply no view. This read admission does not assign owned-vector clone or
+`to_owned` meaning to a static array reference.
+The complete decoder, view, owner and admission decisions are editable typed Links
+and automatically generate Rust. Runtime adapters transport actual tokens and
+source origins. Identifier suffixes stay lexically valid data but cannot acquire
+expression meaning. This is an immutable value projection: physical static
+allocation and pointer identity, fixed-array interfaces, byte-string patterns,
+general lifetime/unsizing inference and Unicode `char` remain required work.
+Original/generated products, complete byte arrays, CST/codecs, all four emissions
+and every decision premise remain unexecuted controls in this drafting phase.
+
+The former `fn bytes(){ b"value" }` input remains a refusal. Its implicit unit
+result cannot receive the actual static array reference. The obsolete byte-string
+unsupported expectation now names the precise source-indirection boundary, with
+the exact input, all other assertions and complete hashed predecessor test source
+retained. The Rust Reference defines the
+[static byte-array type](https://doc.rust-lang.org/reference/expressions/literal-expr.html#byte-string-literal-expressions)
+and [implicit unit result](https://doc.rust-lang.org/reference/items/functions.html#function-return-type).
+Assertions are bounded to the recorded Node/Rust ranges; no execution observation
+or full literal-domain completion follows from source construction alone.
 The bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
 UTF-8 length, individual bytes and scalar-boundary slices in both packages.
 Shared numeric rules generate the native byte decisions; thin host adapters
@@ -456,9 +550,773 @@ NaN, infinities and signed zero retain the primitive comparison behavior.
 Five shared source cases and eighteen exact refusals cover both runtimes.
 General range values, iterators, custom comparison owners and unsupported
 ownership layers require separate interpretations.
+
+Direct standard fixed integers and Booleans now have an ordinary source draft
+for min/max methods and qualified std::cmp::min/max calls. A declared
+or aliased std namespace keeps its separate source interpretation. Function
+values retain their callable obligation. Shared decisions require the actual
+owner, width, sign, proven direct receiver and independently matching operand.
+Unsuffixed integer syntax receives the actual receiver's type context; full
+checking still rejects invalid literals. Pointer-sized and fixed-width owners
+remain distinct even when their representations coincide. Every receiver and
+argument evaluates once in source order before existing conditional operations
+select the result. Integer minimum keeps the first equal value; maximum keeps
+the second. Boolean selection uses existing Boolean conditions in false-before-
+true order. These choices follow [Ord](https://doc.rust-lang.org/std/cmp/trait.Ord.html).
+
+Complete shared definitions generate Rust source and typed Links. Native hosts
+transport actual source facts and build the existing AST forms, without a
+second primitive selection algorithm. Sixty-nine original programs retain
+all fixed widths and boundary values, Boolean truth tables, contextual literals,
+calls, recursive selection, independently specified native function types,
+complete output traces and both generated products. Every shared premise and
+actual source refusal remains a deferred control, together with both Links
+transports and all target emissions. This establishes no runtime evidence.
+Borrowed Ord results, generic/custom trait resolution, floating-point NaN/zero
+semantics, clamp/panic behavior and unsupported literal receiver origins remain
+separate obligations.
+
+Explicit standard min/max imports now reuse that same selection definition.
+Ordinary use declarations record only an actually admitted standard comparison
+owner in the existing module-local alias map. Calls resolve the actual alias
+before shared role admission; local source bindings prevent interception.
+Grouped, renamed, raw-keyword and Unicode aliases retain their source identities.
+An alias in one module cannot change an independently declared function in
+another. Six complete original programs, independent native types and exact
+values, both generated products, both Links transports and all target emissions
+remain deferred controls. This source draft supplies neither general standard
+imports/reexports, glob imports, function values nor a new trait interpretation.
+
+Direct standard signed integers now have source drafts for is_negative,
+is_positive and signum. Shared postfix plans express the complete result using
+existing typed constants, comparisons and conditional nodes. Every plan operand
+refers to one captured receiver; even the signed minimum requires no absolute
+value or overflowing negation. Predicates return a standard Boolean; signum
+retains the original signed width and pointer-sized source owner. Both source
+adapters project the same generated plan into the existing AST algebra. These
+rules follow the standard [signed integer methods](https://doc.rust-lang.org/std/primitive.i128.html#method.signum).
+
+Ninety-five complete source programs retain all signed widths and exact
+minimum/maximum/negative/zero/positive controls, chained properties, Boolean
+selection, pointer owners and actual receiver calls. Complete original and
+both generated native products retain independent signatures, values and output
+traces. Method, receiver, plan/result and unsupported-domain controls, both Links
+transports and all target emissions remain deferred. No product or compiler
+executed. Floating-point sign/NaN/signed-zero behavior, borrowed receivers,
+custom methods and abs/build-overflow behavior remain separate obligations.
+
+Ordinary direct fixed integers now have source drafts for saturating_add and
+saturating_sub; signed integers additionally support saturating_neg and
+saturating_abs. Their shared postfix plans place conditional guards before
+potentially overflowing arithmetic. Signed minima saturate to the exact maximum
+for unary negation/absolute value. Every actual operand evaluates once in source
+order before any plan occurrence reads its captured value. Actual widths,
+signedness and usize/u64 or isize/i64 owners remain separate premises. Exact
+decimal bound magnitudes reuse the existing power-of-two definitions and shared
+digit operations; full integer bounds never pass through binary64. These rules
+follow the [signed](https://doc.rust-lang.org/std/primitive.i128.html#method.saturating_add)
+and [unsigned](https://doc.rust-lang.org/std/primitive.u128.html#method.saturating_add)
+standard operations.
+
+The source adapters share one generic AST-plan projector with the preceding
+signed properties. Four hundred sixty-eight original boundary-matrix programs
+and five integration programs retain independent mathematical expected values,
+actual receiver/argument calls, contextual counters and borrowed text byte
+lengths. Complete original and both generated native products retain independent
+types, exact results and output traces. Every arity, receiver, bound magnitude,
+bound sign and source refusal, both Links transports and all emissions remain
+deferred controls. The fixture author computes numeric constants independently
+without invoking a project operation or executing a fixture. This draft supplies
+no behavior evidence. Other saturating/checked/wrapping operations, borrowed or
+mutable receiver profiles, build-dependent ordinary overflow and complete
+own-codebase translation remain obligations.
+
+Saturating multiplication has an independent shared source plan over the same
+exact integer domain. Both operands are captured before any threshold decision.
+Zero guards dominate division; signed thresholds divide MIN only by a positive
+value and MAX by the appropriate nonzero value. Every sign quadrant uses Rust's
+truncation toward zero before deciding whether the product is representable.
+The actual multiply appears only in a safe conditional branch. Source adapters
+reuse the generic AST projector with existing division/multiplication nodes;
+there is no native replacement algorithm. The preceding four-operation
+saturation definition and its unknown-multiplication controls stay unchanged.
+This follows the [standard multiplication operation](https://doc.rust-lang.org/std/primitive.i128.html#method.saturating_mul).
+
+Four hundred fifty-three original source programs retain all widths/signs,
+zero and minimum/maximum pairs, the exact safe and first overflowing thresholds
+in every sign quadrant, contextual factors, operand calls and text byte lengths.
+Independent fixture math authors expected numeric literals without invoking a
+project operation. Complete original and both generated native products retain
+independent function types, exact values and output traces. Every method,
+receiver and refusal, both Links transports and all target emissions remain
+deferred controls. Neither these source drafts nor the retained preceding
+definition establish runtime observations or broader arithmetic coverage.
+
+Standard integer TryFrom calls now have a scoped immediate Result-consumer
+source draft. All fixed/pointer integer pairs retain input-representable lower
+and upper tests, followed by is_ok/is_err, an eager unwrap_or default, or map_or
+with an actual admitted primitive From function item. Successful casts stay
+behind their complete range condition. Inputs and defaults are captured once
+in original order, including successful conversions whose eager default still
+runs. Mapper qualification, aliases, target/default source owners, ordinary
+literal defaults and explicit std/core TryFrom imports remain checked. Shared
+plans select existing comparison/Boolean/conditional/cast terms and reuse the
+existing From definitions, including exact binary64 decomposition. Native
+hosts only project actual syntax, types and those shared terms.
+
+Seven hundred thirty complete original sources declare independent interval
+expectations for every integer pair, boundary predicates/defaults, standard
+mappers, complete types, aliases/imports and output traces. The repository
+counter pattern `u32::try_from(value).map_or(f64::INFINITY, f64::from)` retains
+its endpoint and observable overflow classification in deferred controls.
+Every guard/consumer/source/import/result premise, malformed/refused source,
+original and both generated native product, codec and four-language emission
+remains unexecuted. This follows the standard
+[TryFrom](https://doc.rust-lang.org/std/convert/trait.TryFrom.html) and
+[Result consumers](https://doc.rust-lang.org/std/result/enum.Result.html).
+Private error payloads cannot escape this elimination scope. General Result
+values, error observation/formatting, arbitrary or lazy mappers, other source
+domains, generic traits and complete own-codebase translation remain obligations.
+
+Standard checked integer arithmetic has a shared source draft for checked_add,
+checked_sub, checked_mul, checked_div, checked_rem, checked_neg and signed
+checked_abs. Twelve fixed/pointer owners retain their exact ranges. Lazy
+conditional source terms guard every threshold and every successful arithmetic
+operation, including zero divisors and signed MIN with negative one. Unsigned
+checked_neg succeeds only at zero. No wider host integer or native replacement
+algorithm supplies the operation. Immediate Option is_some/is_none, eager
+unwrap_or and map_or through admitted standard primitive From function items
+reuse these complete guards. Original operands and eager defaults are captured
+once in source order, including successful operations. Immutable Copy receiver
+adjustment and exact qualified/aliased associated calls preserve actual owners;
+explicit associated arguments retain their original direct-value obligations.
+
+Immutable scalar array/slice get, first and last copied/cloned lookups also
+draft immediate map_or through actual standard primitive From function items.
+The existing shared From relation determines trait availability and exact
+result ownership, including Boolean identity, signed widening, portable pointer
+implementations and exact floating conversion. Receiver, index and eager
+default evaluate once in source order; the guarded selected element and its
+conversion remain inside the present branch. Equal machine widths never
+authorize a missing trait implementation. Known direct Copy closures and
+function items also retain their actual one-element parameter and complete
+result contracts. Contextual parameters come from the proven selected element;
+result hints come from the actual default value, independently of that element.
+Custom functions named `from` retain their own source owners rather than being
+replaced with standard conversions.
+
+The same lookup profile drafts map_or_else with a direct zero-argument fallback
+and a one-argument mapper. Both callable expressions are captured eagerly in
+source order; exactly the selected callback is invoked. The absent default is
+not assumed to return the element type. Complete FnOnce/FnMut, non-Copy captures
+and results, mutable lookups and escaping Option values remain obligations.
+Deferred originals and independent effect
+traces follow [Option::map_or](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or);
+[Option::map_or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.map_or_else)
+retains its separate lazy-default contract. Source construction establishes no
+execution evidence or runtime parity.
+
+Four thousand one hundred forty-six complete original programs retain
+independent BigInt interval expectations across seven operations, all owners,
+boundaries, zero divisors, signed overflow, consumers, exact mapper values,
+source types and output traces. Both runtimes, both Links transports, all four
+emissions, actual original/native products and every admission/refusal remain
+deferred controls. The previous complete associated-call fixture remains an
+exact hashed archive: its checked_add arity input is retained with the actual
+receiver-plus-operand expectation and version-bounded correction rationale.
+General Option values, arbitrary/lazy mappers, other checked operations and
+complete own-codebase translation remain obligations. This follows the
+[standard signed integer operations](https://doc.rust-lang.org/std/primitive.i64.html),
+[unsigned checked negation](https://doc.rust-lang.org/std/primitive.u64.html#method.checked_neg)
+and [Option consumers](https://doc.rust-lang.org/std/option/enum.Option.html).
+These are unexecuted code drafts, without behavioral or compilation evidence.
+
+Supported scalar Default calls now have shared source definitions for fourteen
+primitive owners: false, exact integer zero and positive binary64 zero. Bare,
+std/core-qualified, absolute and module-local primitive aliases preserve actual
+owners; explicit standard Default trait imports are recognized with namespace
+and trait-shadowing premises. The actual primitive Default function has zero
+arguments. Integer TryFrom and checked arithmetic now admit immediate
+unwrap_or_default through shared conditional plans. Only the selected failed
+branch contributes zero; original operands still evaluate once, without an
+invented eager default call. Previously guarded binary64 predicates retain
+the actual owned standard Boolean result for downstream From, comparison and
+Display, after the original receiver proof has passed.
+
+Nine hundred forty-five complete original sources retain independent defaults,
+positive-zero observation, all integer conversion pairs, checked success and
+failure boundaries, original operand effects, full types and predicate-result
+composition. Both runtime parsers, original and both generated native products,
+both codecs, four emissions and every namespace/consumer/refusal control remain
+deferred. This follows [standard Default](https://doc.rust-lang.org/std/default/trait.Default.html),
+[Option defaults](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_default)
+and [Result defaults](https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap_or_default).
+Contextual Default::default, derived/custom defaults, char/f32/aggregate/string/
+container defaults and general Option/Result values remain obligations. No
+source draft or authoring receipt establishes behavioral execution or parity.
+
+Standard integer bit queries now have shared finite source recurrences for
+count_ones/count_zeros, leading_ones/leading_zeros, trailing_ones/trailing_zeros
+and reverse_bits across all twelve supported fixed/pointer owners. Existing
+wrapping cast definitions expose the exact unsigned bit pattern and restore the
+original signed result after reversal. Positive-two quotient/remainder, bounded
+u32 counters, Boolean conditions and width-bounded reversal prefixes supply the
+entire operation. A represented integer never passes through binary64. Every
+input and recurrence state has an actual source binding. Both hosts project
+shared five-cell source terms into existing typed ASTs; no native bit algorithm
+or target-specific replacement semantics supplies missing behavior.
+
+All six counts retain actual u32 ownership; reversal retains the original
+primitive owner, including isize/usize identity. Exact associated calls, module
+aliases and immutable Copy receiver adjustment retain their original premises.
+The shared plan budget is 16,384 numeric source cells and 513 binding slots;
+coordinates retain the existing finite integral metadata reader. 1,096 complete
+original programs author independent fixed-width bit-string expectations for
+zeros, ones, limits, alternating/middle patterns, signed complements, reversal,
+source types, call capture and printed effects. Both runtimes, both codecs,
+four emissions, original/generated native products, all plan/premise controls
+and malformed/refused inputs remain unexecuted. These follow the standard
+[integer bit queries](https://doc.rust-lang.org/std/primitive.i128.html#method.count_ones)
+and [bit reversal](https://doc.rust-lang.org/std/primitive.i128.html#method.reverse_bits).
+Other bit operations, shifts/rotations, complete integer APIs and full codebase
+translation remain obligations; authoring establishes no runtime evidence.
+
+Standard checked_shl/checked_shr now reuse the complete existing source shift
+semantics under shared count guards. Their actual argument owner is standard
+u32, independently of the receiver width or pointer identity. Actual captures
+therefore retain separate receiver and count types. The guard checks count
+against the receiver bit width; valid left shifts may discard high value bits,
+and signed right shifts retain arithmetic sign extension. Immediate is_some,
+is_none, unwrap_or, unwrap_or_default and admitted standard From map_or reuse
+the existing Option elimination. No out-of-range shift branch is evaluated;
+actual operands and eager defaults retain one source-order capture.
+
+1,995 complete original programs author independent fixed-width expectations
+for all twelve owners, zero/last-valid/width/larger/maximum u32 counts, signed
+limits, all five consumers, qualified aliases, immutable receivers, exact types
+and full eager effects. Shared count-owner/diagnostic/operation/guard controls,
+both runtimes/codecs, four emissions and original/generated native products
+remain deferred. This follows the standard
+[checked left shift](https://doc.rust-lang.org/std/primitive.i128.html#method.checked_shl)
+and [checked right shift](https://doc.rust-lang.org/std/primitive.u128.html#method.checked_shr).
+Other shift/rotation methods and full codebase translation remain obligations;
+these source drafts establish no execution or parity evidence.
+
+Standard wrapping_shl/wrapping_shr and rotate_left/rotate_right now have shared
+source plans for every supported integer owner. Actual counts retain standard
+u32 identity and are reduced modulo the receiver width. Rotations use unsigned
+bit patterns and restore the original signed/pointer owner after combining the
+two disjoint shifted parts. Both normalized counts are below the actual width,
+including zero. Existing complete shift, bitwise and wrapping-cast definitions
+supply target behavior; hosts only project those terms and capture each actual
+operand once in original order. Signed wrapping right shifts preserve arithmetic
+sign extension. No handwritten native replacement algorithm is introduced.
+
+2,139 complete original programs author independent integer formulas for all
+four methods, twelve owners, zero/width/last-valid/larger/maximum u32 counts,
+signed patterns, qualification, aliases, immutable receivers, inverse rotations,
+source types and printed effects. Both runtimes, both codecs, four emissions,
+original plus both generated native products and every source/operation/plan/
+refusal premise remain unexecuted. These follow standard
+[wrapping shifts](https://doc.rust-lang.org/std/primitive.i128.html#method.wrapping_shl)
+and [rotations](https://doc.rust-lang.org/std/primitive.u128.html#method.rotate_left).
+Other integer APIs and full own-codebase translation remain obligations; source
+authoring supplies no runtime observation or parity claim.
+
+Signed unsigned_abs and signed/unsigned abs_diff now have shared guarded source
+plans with their complete unsigned result domains. Negative magnitude adds one
+before signed negation, casts the resulting nonnegative value, then adds one in
+the unsigned domain. A signed minimum is never negated. Absolute difference
+orders the original source values and computes the selected unsigned modular
+difference through representable guarded arithmetic. The complete MIN-to-MAX
+distance therefore fits the matching unsigned width without a larger host
+integer. isize results retain usize identity; other actual widths retain their
+matching uN owner. Original operands are captured once, and exact associated
+aliases/immutable Copy receivers retain their source signatures.
+
+927 complete original programs author independent mathematical magnitudes,
+every boundary pair, signed minima, the complete u128 result range, pointer
+owners, aliases, following operations, call capture and printed effects. Both
+runtimes/codecs, four emissions, original plus both generated native products
+and every arity/source/result/plan/refusal premise remain deferred. These follow
+[unsigned absolute value](https://doc.rust-lang.org/std/primitive.i128.html#method.unsigned_abs)
+and [absolute difference](https://doc.rust-lang.org/std/primitive.i128.html#method.abs_diff).
+Other integer APIs and full codebase translation remain obligations. Neither
+source authoring nor retained controls establish execution or equivalence.
+
+Primitive expression source facts now close under the existing standard numeric
+arithmetic operations when actual direct primitive owners agree, or literal
+syntax receives a compatible known peer's context. Integer syntax does not
+become floating syntax, negative integer literals do not gain unsigned context,
+and pointer/source identities remain distinct. Shared decisions select an
+actual operand's complete source type and owner; the existing checked operator
+semantics and indirection/conflict guards remain authoritative. Comparison,
+Boolean and proven standard text-predicate results retain the owned primitive
+Boolean identity. Existing guarded binary64 constants retain their already
+proved primitive owner, and arithmetic retains its binary64 source model.
+
+One hundred eighty-five complete original sources declare independent values
+for all fixed/pointer owners, contextual literals, arithmetic/method composition,
+Boolean consumers, binary64 predicates and classifications, borrowed text,
+constant/From composition, full types and operand traces. Independent future
+compiler controls retain every invalid mixed owner/width/literal input. Shared
+origin/context/selection/result premises, original and both generated native
+products, both codecs and four emissions remain deferred. This is a source
+metadata draft, without observations or a new arithmetic implementation.
+General traits, custom aliases/reference arithmetic, build-mode overflow,
+float sign/payload semantics and full source translation remain obligations.
+
+The six standard exact integer-to-binary64 From domains now have a complete
+shared source-term decomposition draft. Signed remainders select the sign of
+each power-of-two contribution; quotient steps divide only by positive two.
+No integer minimum is negated. Floating weights and sums remain exact integers
+of magnitude below 2^32. Explicit hygienic bindings evaluate the actual input
+once and retain every intermediate. A closed seventeen-operation source
+vocabulary uses existing literal, reference, comparison, arithmetic, conditional
+and binding ASTs; native code only projects the same shared plan. No unsupported
+fixed-to-float core cast or host numeric conversion substitutes for this rule.
+At width 32 the source plan has 490 terms and 99 bindings, under explicit
+coordinate, binding and plan-size bounds.
+
+Four hundred seventy complete original sources declare independently authored
+boundaries and every admitted bit-power neighbour, positive-zero observation,
+full source types, one actual operand call and complete output traces. Shared
+operation/width controls, original and both generated native products, both
+Links codecs and four emissions remain deferred. The preceding From inputs
+remain intact. Float sign predicates, signed-NaN handling, wider rounding
+domains, other numeric casts and complete own-codebase translation still need
+their source drafts; no executed evidence is claimed here.
+
+Integer associated constants now have a source draft for MIN, MAX and BITS
+on every fixed/pointer integer owner. Bare, std/core, absolute and actual local
+alias paths retain exact namespace resolution. Existing shared bound definitions
+supply complete integer magnitudes; no binary64 rounding chooses a limit.
+BITS retains its standard u32 result owner, independently of the primitive it
+describes. Source readers preserve each path separator and refuse call syntax
+for a constant. Native hosts only project actual source paths, types and
+shared bound terms into the existing AST. The constant domains follow Rust's
+[integer limits](https://doc.rust-lang.org/std/primitive.i128.html#associatedconstant.MIN)
+and [width result type](https://doc.rust-lang.org/std/primitive.usize.html#associatedconstant.BITS).
+
+One hundred eighty-eight complete original sources declare independent exact
+limits and widths, five path forms, aliases, owned pointer results, arithmetic
+and conversion composition, complete native types and output traces. Expected
+limits use independent power-of-two data authoring. Deferred controls preserve
+both Links transports, four emissions, original and both generated native
+products, every owner/term/result premise, constant-call refusals and malformed
+paths. No behavior evidence is claimed. Floating/generic constants, arbitrary
+type aliases and other pointer-width profiles remain obligations.
+
+Primitive From calls now have a shared exact conversion draft. The supported
+primitive pair domain includes reflexive Boolean/integer/binary64 conversions,
+Boolean-to-integer conversions, declared lossless integer widening, portable
+pointer destinations and exact integer-to-binary64 implementations. Matching
+machine widths alone do not establish a trait implementation. Bare, qualified,
+absolute and local alias calls retain actual standard source/destination owners.
+Unconstrained integer literal arguments use the ordinary i32 fallback; floating
+literal syntax retains f64. Explicit argument references receive no method
+receiver adjustment. Shared plans select existing identity, Boolean conditional
+or integer cast terms, with the explicit shared decomposition above for exact
+floating conversion, one actual argument capture and an owned result.
+The supported relation follows the standard library's
+[numeric conversion definitions](https://doc.rust-lang.org/src/core/convert/num.rs.html)
+and [reflexive From implementation](https://doc.rust-lang.org/std/convert/trait.From.html).
+
+Two hundred forty-three complete original sources declare independent exact
+boundary values, full source function types, five path forms, aliases, ordinary
+literal defaults, pointer-owner composition, argument traces and observable
+negative-zero preservation. An independent mathematical domain calculation,
+using the portable minimum pointer width, authors all 196 primitive pair
+controls. Deferred native controls require each unavailable pair to have its
+own primary standard-library trait diagnostic; a failed batch alone cannot
+discharge another pair. Original and both generated positive products retain
+independent types, values, codecs and all four emissions. None executed.
+Generic conversion inference, f32, characters, custom traits/owners, borrowed
+arguments and full own-codebase translation remain obligations. The preceding
+nonordinary source interpretations remain explicit; ordinary calls cannot fall
+back to an unchecked numeric cast after owner admission refuses.
+
+Immutable reference chains to actual standard Copy integer primitives now have
+a source draft for the twelve existing inherent sign, saturation and wrapping
+methods. A shared admission rule excludes Ord selection, mutable/custom
+indirection, unproven source owners and non-Copy values. Hosts project only the
+admitted receiver facts to the direct Copy value consumed by the existing plan;
+the original input signature retains every reference and lifetime layer. The
+operation result is owned. Other arguments keep their original checks, and
+explicit associated calls receive no implicit argument dereference. This narrow
+rule follows Rust's [method receiver lookup](https://doc.rust-lang.org/reference/expressions/method-call-expr.html);
+it does not implement arbitrary trait or ownership resolution.
+
+Six hundred fifty-two complete original sources declare independent values,
+source signatures at reference depths one, two and four, exact fixed/pointer
+owners, temporary receiver calls and complete output traces. Four preceding
+borrowed-integer refusal inputs are retained verbatim as positive type/value
+coverage, with their old complete fixtures archived and the correction basis
+recorded. Direct receiver-rule negative premises remain unchanged. Immutable
+predecessor saturation data remains byte-identical in its explicit history
+location; its original digest guard is retained. All product/codec/emission
+controls are deferred, without behavior evidence. Ord reference results,
+mutable loans, custom wrappers, Box ownership and the full source language
+remain obligations.
+
+Primitive associated-call syntax reuses the same fourteen shared min/max,
+signed-property, saturating and wrapping method interpretations. Bare primitive
+paths, std/core primitive reexports, absolute external-crate paths and actual
+module-local primitive import aliases retain their distinct source resolution.
+Lexically shadowed roots cannot acquire standard meanings. Only untyped actual
+integer literal receivers receive the explicitly selected primitive context;
+every other receiver must independently retain that exact source owner, width,
+sign and direct value interpretation. Existing argument checks still apply.
+Hosts transport paths, tokens and types into the existing shared method
+projectors; they introduce no replacement arithmetic or general trait resolver.
+The path and primitive-namespace rules follow the Rust
+[Reference](https://doc.rust-lang.org/reference/paths.html) and
+[standard library](https://doc.rust-lang.org/std/primitive/index.html).
+
+Five hundred eighty complete original sources declare independent boundary
+values across all fixed/pointer owners and Boolean ordering, qualified and
+absolute paths, local aliases, contextual signed minima, borrowed text
+measurements, and complete operand output traces. Deferred controls retain
+source owners, explicit function types, original and both generated native
+products, both Links transports and all four emissions. These are code/data
+drafts, without executed observations. Associated callable values, generic or
+custom traits, reference/mutation methods, the remaining standard library and
+complete own-codebase translation remain obligations.
+
+Direct fixed integers now have wrapping_add/sub/neg source drafts, with
+wrapping_abs for signed types. Shared conditional plans reconstruct modular
+results using only representable intermediate arithmetic, including signed
+minimum negation/absolute value and unsigned nonzero negation. The actual
+operands are captured once in source order. Exact source widths, signedness,
+primitive owners and pointer-sized distinctions remain checked premises.
+Both source adapters reuse the existing generic AST-plan projection and bound
+definitions. These plans follow the standard
+[signed](https://doc.rust-lang.org/std/primitive.i128.html#method.wrapping_add)
+and [unsigned](https://doc.rust-lang.org/std/primitive.u128.html#method.wrapping_neg)
+modular operations rather than ordinary build-dependent overflow.
+
+Four hundred ninety-one complete original programs retain every boundary pair
+and sign, unary zero/minimum/maximum behavior, contextual counters, actual
+operand calls and exact borrowed text byte lengths. Independent fixture modulo
+math authors expected numeric constants without invoking a project operation.
+Original and both generated native products retain independent types, complete
+values and traces. Arity/receiver/source-refusal controls, both Links transports
+and all target emissions remain deferred. These source drafts supply no runtime
+observations; other wrapping/checked operations, reference/mutation profiles,
+custom methods and full own-codebase translation remain requirements.
+
 The explicit fresh scalar vector result profile admits owned constructor tails
 and preserves its source profile and caller provenance through typed links.
-Existing default-profile refusals remain available. The independently selected
+Earlier default-profile result refusals remain authenticated as historical
+inputs. Ordinary source functions now admit fresh owned scalar vector results
+with constructor tails, scoped bodies, complete conditional/match alternatives
+and diverging branches. Known actual calls to these checked result declarations
+can supply fresh arguments; local names clear that evidence. Result bodies do
+not infer interprocedural freshness from declarations alone. Named moves,
+partial-return carriers and borrowed outlives remain separate proofs.
+Closed ordinary scalar vector declarations now carry a source result contract.
+Every complete source body must discharge that contract with constructors,
+owned declaration calls or existing diverging tails before a valid program is
+returned. In a finite returning evaluation, forwarded results eventually reach
+a constructor; recursive cycles alone introduce no returning allocation.
+Header inventory therefore supports forward, reverse, recursive, mutually
+recursive, module and inherent calls without treating provisional contracts as
+execution evidence. Actual source call occurrences and direct scalar Copy
+element facts are required. Local bindings clear call freshness; named moves
+and returned parameters remain separate consumption proofs. The existing
+explicit result profile retains its constructor-only domain. The complete
+preceding call-tail refusal remains as a historical input with stronger
+same-input value, allocation, codec and original-native controls. The unchanged earlier vector-return input, two exact length
+inputs and scalar indexing input have explicit positive corrections retaining every
+old diagnostic, source byte and complete predecessor context. Active Node and
+Rust version/pointer-width ranges bound the paired controls, including each
+original caller, text/binary reload and four-target emission. The preserved
+older fixture is a historical document; its corrected current view executes
+positive assertions rather than presenting those old throw expectations as
+present behavior. The independent explicit result profile keeps its original
+premises and refusal inputs. These are code drafts with no execution evidence.
+Ordinary standard scalar vector copies use actual source receiver and direct
+Copy-element facts. Direct owned `clone` and `to_owned`, and `to_vec` through
+known immutable vector/slice reference layers, lower to the existing complete
+full-slice operation. At most 256 immutable layers are admitted. A recorded
+actual copy occurrence can produce a fresh result or argument; binding its value
+to a name clears that production evidence. Reference-clone overloads, boxes,
+non-Copy elements, arbitrary traits, allocators and complete ownership remain
+separate interpretations. Full Rust scalar-copy values have shared source-derived
+selection and rendering across all four emitters. Rust invokes the actual
+standard `Clone` operation on one borrowed receiver without floating-point
+length coordinates. JavaScript creates an independent dense scalar array;
+Lean and Rocq retain the immutable list value. This does not extend arbitrary
+slice ranges or erase another language's independent slice interpretation.
+Future controls compare complete original/native products and exact special
+floating-point values, independent results, retained input values, every declared
+decision and both source-free codecs. The exact earlier borrowed-slice clone
+input and its refusal metadata remain unchanged. No new execution evidence or
+completed ownership/aggregate-ABI claim follows from this source draft.
+Ordinary vector and immutable-slice indexing uses shared source admission rules,
+automatically translated to native Rust. The actual standard receiver, immutable
+dereference layers and direct scalar Copy element facts remain explicit; these
+facts do not make a vector itself Copy or certify a move. Source `usize` owners
+remain distinct from equal-width `u64`. Unsuffixed integer indices are checked
+directly in the unsigned 64-bit domain before exact conversion to the existing
+arbitrary-precision index operation. Actual usize literals, parameters, declared
+results and cast targets retain their source owner. Bounds checks remain active;
+the draft never marks a source read proven in bounds. Every original source,
+decision, full native product, codec and four-target control is deferred.
+The separate contextual usize interpretation checks the complete actual source
+expression, including numeric arithmetic and all conditional/match alternatives.
+An explicit ancestry table has one root and earlier parents, at most 4096 nodes
+and depth 128. Every atom needs actual usize owner evidence or an unsuffixed
+integer constrained by the index context. Exact array lengths supply that owner;
+fully checked transparent nongeneric aliases preserve the underlying owner while
+retaining their source spelling. Every operand is checked in the existing exact
+unsigned 64-bit arithmetic domain before index conversion. Append-only decisions
+bound storage and visit at most 8386560 child-directory pairs; no unrepresented
+shared array write supplies a proof. Complete originals authenticate the preceding
+atomic interpreter. Its unchanged `0+0` refusal input now receives explicit
+positive assertions and joins the complete original Rust product matrix.
+General index traits, fixed arrays, subslices, mutable element places, non-Copy
+moves, general local inference, full primitive source-type checking, generic
+aliases and exact platform panic payloads remain required interpretations.
+Within the explicit 64-bit profile, actual `usize`/`u64` and `isize`/`i64`
+source owners stay distinct even when their lowered bit widths coincide.
+Shared automatically translated rules check source arguments, typed bindings,
+results, arithmetic, comparisons, branch joins and known vector elements.
+Actual signed negation, literal suffixes, primitive constants and cast targets
+retain their owners. Known arithmetic/branch constraints can propagate to local
+indices and element reads. Projection crosses only the actual standard vector,
+Box and slice owners, with a bounded source-owner traversal. Fresh result
+certification checks element constraints before replacing tail provenance.
+Explicit casts retain their own exact-conversion profile; general Rust numeric
+cast saturation/wrapping remains separate. Future independent Rust compilation
+requires a primary type-error span in every unchanged invalid source, in one
+bounded batch. Original source products, codecs and every shared decision remain
+deferred. These constraints do not implement every primitive distinction,
+unconstrained numeric inference, arbitrary coercion, trait resolution or complete
+Rust source type checking.
+`createRustSourceOwnerProgramLinks` and its native counterpart retain complete
+ordinary function type-owner facets in the existing typed Links graph. The
+orthogonal source-owner mode keeps ordinary body admission while selecting
+`Rust source function signature 2`. It adds recursively owned direct function
+interfaces, including an implicit Unit result; model one retains its original
+function-type refusal. Primitive, alias, nominal, Self/receiver, pointer interface,
+wrapper and lifetime facts remain attached through text/binary reload. Equal
+64-bit value representations do not erase distinct source type meaning from
+formal comparison. The independent whole-module semantic Rust path uses this
+same retained-header parser. Source-project inventories can select
+`retainSourceTypeOwners: true`, including through existing Links CLI options;
+every original concrete graph remains available. Runtime shells, shared-handle
+composition, all partial-item semantic paths, native public ABI reconstruction,
+const and other missing qualifiers, full inference and generic/trait resolution
+still require their own implementations. Retained type facts are not evidence
+of those capabilities or of successful execution.
+
+The same opt-in source-owner mode retains `Rust data type field signatures 1`
+on each actual datatype declaration. It records the fully qualified datatype,
+every constructor in order, and every original field type, recursive owner,
+pointer layer and represented lifetime. Validation resolves those positions
+against the complete actual constructor layout using source type model two;
+missing, inconsistent, malformed or unrepresented positions refuse. Recursive
+nominal fields reference the actual owned datatype links instead of unfolding
+their definitions infinitely. Source-free validation, checked projection and
+text/binary reload preserve this facet. Equal portable field layouts and equal
+function headers therefore cannot erase distinct field meanings such as
+`usize`/`u64`, `isize`/`i64` or boxed/direct nominal positions from complete formal
+definitions. Plain parsing retains its independent omission behavior. This
+records admitted field types; it establishes neither Rust aggregate ABI/layout
+reconstruction, generic or named-lifetime datatype contexts, arbitrary traits,
+ownership/coercions, callable-field target encodings nor semantic equivalence.
+All future original-source, codec, target and meaning controls remain deferred
+until the complete requirements draft.
+
+The explicit `retained scalar Rust function interface 1` emission model
+reconstructs canonical native scalar endpoint types from these actual
+version-two owners. It retains Boolean, binary64, Unit, fixed integer and
+pointer-sized primitive meanings, plus immutable-reference input layers and
+their represented lifetime binders. Closed owned functions may call each other
+across modules and recursively inside scalar expressions. Every actual call
+target and ordered argument type is checked before changing any interface.
+Borrowed inputs are copied into core scalar values; ordered hygienic temporaries
+convert arguments into the target's source types before recreating references.
+Returned source values convert back into core values at the call boundary.
+Only the pointer-sized scalar representation needs an extra numeric conversion;
+the emitted library refuses other pointer widths with a compile-time guard.
+The actual checked scalar graph has at most 100000 queued expression references,
+including repeated edges; distinct nodes are checked once.
+Automatically translated shared decisions and syntax supply both runtimes;
+native adapters project owned IR instead of duplicating the algorithm.
+Existing portable, leaf-header and borrowed-call profiles retain independent
+contracts. Non-scalar headers, borrowed results, static copied call borrows,
+imports, generated functions, runtime effects, source-loop facets and additional
+qualifiers require their own compositions. This mode establishes neither stable
+foreign ABI layout nor complete public visibility, source syntax identity,
+primitive source typing or full own-codebase translation. Complete original
+sources and typed function assignments are future independent native controls;
+no execution evidence follows from the source draft or its retained history.
+
+The independent `retained mathematical Rust function interface 1` model reuses
+those complete scalar headers, conversions and closed-call obligations while
+admitting checked primitive Rust bit operations and binary64 absolute value,
+floor, ceiling, truncation and predicates. Every mathematical operand remains
+inside the same scalar graph and resource budget. Actual operand typing and
+integer/Boolean/IEEE interpretations stay with the existing core checker and
+emitters; shared automatically translated rules select the admitted operations,
+arity and result kinds. Ordered argument materialization, immutable borrowed
+inputs, pointer-sized boundaries, module and recursive calls retain their full
+earlier checks. The earlier interface still refuses mathematical expressions.
+Other mathematics, approximate transcendental parity, random effects, aggregate
+or callable interfaces, checked-shift optional results, source loops, borrowed
+outputs and additional qualifiers remain separate obligations. Complete original
+programs, independent native function types, both generated native products,
+both codecs and four-target controls are authored, unexecuted definitions.
+
+The independent `retained textual Rust function interface 1` model adds actual
+standard owned `String` endpoints and immutable `String`/`str` inputs to the
+same checked scalar call graph. Every original reference layer and lifetime
+remains in its header. Borrowed string referents are copied into the owned core
+Unicode value through the actual standard `ToOwned` operation. Calls materialize
+each complete argument once, then recreate `str` borrows through standard
+`String::as_str`, or recreate the represented `String` reference layers. Owned
+string results, exact UTF-8 byte lengths, string equality, scalar expressions
+and admitted mathematical operations compose under their existing meanings.
+The source-free boundary checks byte-count language, representation, complete
+arity and unsigned 64-bit result type in both packages. Earlier source interfaces
+retain their string refusals. General string transformations and ordering,
+borrowed outputs, pointer/capacity/allocation observations, arbitrary ownership,
+mutation, custom string traits and aggregate interfaces remain separate required
+work. This value interpretation does not assert allocation identity, complete
+native ABI fidelity or full own-source translation. Original/native products,
+independent function types and codec/target controls remain deferred drafts.
+
+The separately selected `retained string predicate Rust function interface 1`
+adds complete Unicode scalar string prefix, suffix and substring tests to that
+textual interface. Its shared JavaScript definition admits only a Boolean
+result, two actual String operands and the existing starts/ends/includes
+operations. Both complete operands remain in the checked scalar graph, with
+the original expression fields, reference headers, source owners, lifetime
+binders, call ordering, static-borrow restriction and resource budgets. The
+existing common operations supply all four target emissions; the native
+adapter receives the same automatically generated admission rules. Earlier
+interface models retain their predicate refusals. These meanings follow the
+standard [string predicates](https://doc.rust-lang.org/std/primitive.str.html#method.contains).
+Independent original/generated/native values, exact function types, Unicode
+and empty-pattern cases, text/binary reload, source-free edits and reimport of
+the actual emitted textual predicates are deferred controls. Unknown raw
+fields must reach the Links decoder before a native host DTO can discard them.
+No character or closure patterns, normalization, locale behavior, arbitrary
+transformations, UTF-16 offsets, borrowed outputs, general ABI or ownership
+completion follows from this draft.
+
+The additional `retained constructed Rust string function interface 1` admits
+complete scalar String concatenation within that same checked interface graph.
+Its shared rules require the operation's fixed implicit String domain, or an
+explicit matching String domain, a String result and two complete String
+operands. Other binary operations keep their required domain records. The
+existing formatter supplies string-valued fields, literal braces,
+named and repeated positional fields, with each actual explicit argument
+captured once before field assembly. Existing calls, predicate operations,
+source owners, lifetimes, byte measures and graph budgets retain their checks.
+Both adapters reuse the automatically translated decisions and the existing
+four-target concatenation operation. Native product controls compare actual
+returned strings directly, avoiding any dependence on Rust Debug escaping.
+Both codecs and independent values/types are required after reparsing the
+actual emitted formatting definitions. Earlier models retain concatenation
+refusals. General Display conversions, formatting traits/specifiers, arbitrary
+macros, borrowed results, string ordering, allocation identity and full
+ownership or source-language completeness remain required work. All these
+controls are unexecuted source drafts.
+
+The independent `retained displayed Rust string function interface 1` adds
+ordinary fixed-width integer and Boolean Display to the same complete string
+graph. The actual operand remains a checked fixed-width value or Boolean, the
+result is String, and console representations refuse. Every operand is visited
+under the existing graph budget. Source width, signedness, primitive owner,
+reference layers, lifetime binders, ordered captures and checked calls remain
+explicit. The existing primitive conversion and concatenation definitions supply
+all four targets; no handwritten native display algorithm is introduced.
+These meanings follow the standard [Display contract](https://doc.rust-lang.org/std/fmt/trait.Display.html)
+and [formatting syntax](https://doc.rust-lang.org/std/fmt/index.html).
+Earlier interface models retain the identical original Boolean refusal input.
+Independent minimum/maximum/zero values, complete original/generated products,
+native function types, both codecs and actual emitted-definition reparse are
+deferred controls. Floating-point and unbounded-integer formatting, custom
+traits, radix/precision/locale specifiers, borrowed outputs, general ownership
+and full own-codebase support remain requirements.
+
+Actual standard String clone/ToOwned results and one borrowed str ToOwned
+result retain a standard owned String source owner, no borrowed lifetime and
+no Copy evidence. Shared source rules select only the real standard owner and
+supported zero/one-reference cases before adapters update those facts. This
+corrects stale str ownership in emitted-literal reimport without changing the
+existing value operation or claiming a complete reference-method resolver.
+Multiple-reference results, custom owners and the remaining borrow/move domain
+retain their separate obligations.
+
+Ordinary Rust source addition has an additional standard String value draft.
+An actual owned standard String on the left and one immutable standard str or
+String reference on the right project to the existing complete concatenation
+operation. Shared JavaScript decisions check actual source owners, kinds,
+models, reference layers and proven immutable facts; those decisions generate
+the native rules and Links definition. The right String remains borrowed, and
+each intermediate result keeps its actual standard owned String origin.
+Declaration collection stays provisional until actual bodies are re-read.
+Selected const, local-state, type-namespace and scalar-loop profiles keep their
+separate interpretations. This value projection follows
+[String addition](https://doc.rust-lang.org/std/string/struct.String.html#impl-Add%3C%26str%3E-for-String);
+it does not prove complete source move/loan validity, allocator identity,
+custom trait dispatch or additional reference coercions. Original and both
+generated products, source-free reload, four emissions and retained constructed
+interfaces have unexecuted controls. Full own-codebase support remains required.
+
+Ordinary source parsing also recognizes scope-checked qualified standard
+`Clone::clone` and `ToOwned::to_owned` calls. Relative and leading-`::` standard
+paths select shared source rules only in an unambiguous standard namespace.
+Actual primitive Copy, String/str and direct scalar vector/slice facts check one
+immutable receiver reference before lowering to the existing value or complete
+copy projection. Real standard vector-copy occurrences retain their fresh owned
+result/argument evidence. The declaration collection pass keeps a provisional
+call only until every actual body can be re-read against complete source facts.
+User-owned `std` namespaces retain ordinary resolution. No general trait/UFCS
+dispatch, standard function values, general borrowed-result
+flow, deep String/nested vector ownership, all namespace contexts or full emitted
+runtime parsing follows from this draft. A portable single-copy definition has
+deferred emit/reparse controls under the existing core value meaning basis;
+that comparison is not a certificate of complete Rust source ABI equivalence.
+
+The additional `immediate standard Rust string views 1` source interpretation
+admits the actual qualified `String::as_str` call only as a complete argument of
+a checked named function. Its input must have nonstatic immutable `str`
+references, and its result must be an actual owned standard String or a known
+primitive scalar. The original standard String receiver has exactly one
+immutable reference. Each argument owns a bounded context, restored even when
+parsing fails; parentheses and extra reference layers retain the complete
+original view span and the exact expected source depth. A derived expression
+cannot inherit permission merely because it contains a view. Shared JavaScript
+decisions generate the native source and editable Links definition. These
+constraints preserve the limited immediate borrow meaning described by
+[String::as_str](https://doc.rust-lang.org/std/string/struct.String.html#method.as_str)
+and [temporary scopes](https://doc.rust-lang.org/reference/destructors.html#temporary-scopes).
+Complete retained textual definitions have deferred emitted-source reparse,
+independent value and native function-type controls in both packages. They
+retain actual emitted ToOwned/as_str source rather than restoring an original
+body. Additional value copies do not prove graph isomorphism. Stored/escaping
+views, static consumers, borrowed/aggregate/callable results, unknown/dynamic
+consumers, general loans, moves and ownership remain required implementation
+work. No behavioral control, native compilation or parity execution has run
+for this draft.
+
+The ordinary
+source call interpretation additionally admits fresh scalar `vec!`
+arguments. Actual macro source intervals supply constructor evidence, separate
+from the explicit result profile and local binding evidence. Scoped body tails,
+all returning conditional/match rows and diverging branches form a recursive
+consumption proof. Actual parameter element typing remains with the existing
+checker. Named moves, borrowed values, non-scalar element parameters and
+unproved associated constructors retain explicit refusals. Shared inspectable
+JavaScript definitions generate the native decisions and Links source; full
+original-Rust, codec, four-emitter and decision controls remain unexecuted drafts.
+General vector ownership and remaining source call forms remain required.
+The independently selected
 `closed guarded function returns 1` profile admits direct function returns and
 closed conditional guards with proved direct value ownership. Shared completion
 decisions lower them into the existing conditional, binding and abort model,
@@ -566,6 +1424,20 @@ captures in either source order. Parameters and constant shadows retain their
 existing checks. These parser-local records add no fields to checked programs or
 saved Links. Native hooks transport the same facts to the generated rule; native
 compilation and executable parity remain CI checks.
+
+Ordinary arrow/function-expression callbacks also admit flat required object
+parameters through an explicit closure context. They reuse the complete original
+required-pattern rules, actual bound names and body entry bindings. Ordinary
+method closures retain the existing receiver-independent restriction. Generated
+logical arguments are existing semantic parameter records with actual pattern
+origins; scope facts do not fabricate source identifier tokens or spans. Alias
+bindings, positional arguments, outer shadows, captured values and local writes
+retain the normal callable/cell behavior. Strict directives still check the
+actual body. Named declarations keep their separate profile; defaults, nested,
+rest and computed patterns, async/generator closures and complete receiver
+semantics remain requirements. Shared context/pattern definitions and their
+dependencies serialize as editable typed Links and generate native decisions.
+The new deferred source/product controls establish no execution evidence.
 
 The independently selected `closed empty primitive Rust option 1` source model
 admits flat zero-argument standard `Option<f64>` functions whose complete body
@@ -807,6 +1679,70 @@ ABI equivalence. Ordinary source models retain their existing contracts, and
 complete generated runtime wrappers still need an independently proved
 composition. Native library support and production selection remain separate
 obligations.
+The independently selected `standard Rust shared array identity handles 1`
+source profile reads complete flat libraries and programs with actual unshadowed
+`std::rc::Rc<std::cell::RefCell<Vec<scalar>>>` owners. Fresh nonempty scalar
+vectors allocate handles; explicit `.clone()` preserves alias identity; actual
+`std::rc::Rc::ptr_eq` checks two immutable borrowed handles. Ordinary Rust value
+equality remains a separate payload operation. Bare vectors, moves, escaping
+borrows, payload observations and unproved profile compositions refuse.
+Source input is bounded to 65,536 UTF-16 units before tokenization. The complete
+JavaScript admission decisions generate the native rule library automatically;
+native hosts supply actual lexer, binding and concrete visibility facts.
+An explicit source identity operation lowers to the existing checked reference
+domain and rechecks after both Links codecs without depending on source text.
+Whole-module publication binds forward and private functions together and
+exports only functions whose actual concrete visibility is `pub`. Original
+source bytes remain available for exact reverse translation. Full emitted
+executable runner shells still require an independent composition proof; this
+profile does not silently remove their runtime or invent an entry point. The
+registered native parity controls compile and execute only in CI. This finite
+profile advances the JavaScript/Rust baseline without claiming full language or
+own-codebase translation coverage.
+The generated shared-array fixture matrix retains the three original Boolean
+cases and adds alias, equal-payload distinct allocation and repeated fresh-call
+cases for numeric and Unicode-string arrays. Both runtimes consume the same
+nine cases. JavaScript controls additionally compare every fresh payload cell,
+including signed zero and Unicode text, after actual Rust parsing and text/binary
+Links reloads. Full native execution and emitted-field parity remain CI checks.
+
+The additive `standard Rust shared array identity handles 2` source profile also
+admits fully qualified `std::rc::Rc::clone(&value)`. The actual standard owner,
+one immutable source borrow and the complete shared scalar-array domain must
+be proved. Nested clones retain alias identity; borrowed call operands evaluate
+once in source order. The operation creates no new payload allocation, following
+the [standard Rc clone contract](https://doc.rust-lang.org/std/rc/struct.Rc.html#impl-Clone-for-Rc%3CT,+A%3E).
+Mutable or escaping borrows, alternate owners and wrong argument counts refuse.
+The first profile and its original admission declaration keep their exact domain;
+two additive source-qualified decisions select the new interpretation and its
+borrowed clone. The original sixteen operation records and source bindings stay
+an unchanged prefix. Both runtimes use the same generated decisions and scalar
+fixtures, with full native compilation and emitted-field parity required in CI.
+Source-free text and binary reloads and exact source restoration remain required.
+Public self-translation and semantic graph options declare both selected source
+models. Ten shared refusal inputs exercise parsing, whole-module publication
+and signature discovery in each runtime.
+The JavaScript token entry point validates all supplied entries, then parses an
+owned stream lexed from the complete immutable source. Later caller getters or
+token mutations cannot replace an authenticated occurrence. Initially forged
+tokens still refuse, and ordinary complete inputs retain the same result.
+
+An additive complete-CST scope interpretation recognizes a constant whose
+initializer allocates an empty standard `Map` or `Set`, with or without argument
+parentheses. Every actual module binder must leave the required standard owner
+unshadowed. Evaluated arguments, computed owners, additional eager statements,
+malformed trees and unproved owner bindings refuse. A neighboring unsupported
+deferred function keeps its own obligation while independently checked functions
+can translate. The original literal-binding decisions remain unchanged. Shared
+JavaScript decisions generate the Rust implementation and both checked Links
+archives; six source fixtures retain comments, UTF-8 coordinates and exact
+reverse source restoration. The initializer itself still requires executable
+translation. Native parity and independent generated execution run in CI.
+The standard constructors return before reading an iterator when their iterable
+argument is absent, as specified for
+[Map](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-map-iterable)
+and [Set](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-set-iterable).
+
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including
 keyword spellings, in complete source tokens. It derives temporary parser
@@ -1124,6 +2060,206 @@ do not enter this function-specific meaning. The default function-definition
 model retains public names, source language, types and executable operators as
 meaning premises. Captured externals, non-flat declarations and broader
 equivalence require separate proofs.
+
+The complete qualified source-program catalog inventories every existing
+`*-program.lino` definition asset, with its exact paired package bytes, SHA256
+and original local typed root. A qualified selector plus artifact digest names
+that preserved definition revision; it never proves equal meaning or authorizes
+concept deduplication. The automatically constructed catalog and native literal
+asset table reuse the complete original graphs without copying their bodies
+into per-entry factories. Loading authenticates one selected asset within
+explicit byte/node/depth bounds and statically rechecks its actual typed root;
+it does not eagerly load every source program. Returned metadata and graphs have
+independent ownership. The library can then select an actual owned function and
+its complete recursive dependencies through the existing formal-definition
+model, retaining every unsupported context and proof obligation. The
+`definition list`, `definition program` and `definition function` commands expose
+these same operations and complete text/binary archives. No source-language
+alias, spelling match, digest equality or catalog entry alone merges concepts.
+The catalog, command transport and deferred controls are code drafts, not
+execution evidence or full formal coverage of every concept.
+
+Source catalog authoring streams every original Links statement through the
+existing canonical metadata decoder, retaining its actual unique root and an
+identity/reference census without allocating a second complete graph. It checks
+all original bytes and paired asset equality, refuses duplicates or dangling
+references and retains finite byte/node/reference bounds. The later catalog
+validation gate keeps its complete-network reader, and runtime loading still
+authenticates and statically rechecks the complete selected program. Neither a
+cached root nor metadata declarations supply behavioral evidence.
+
+Source-library construction parses the actual assembled ECMAScript module
+before translating its body. The bounded Node/V8 compiler phase creates a
+module without linking, resolving imports or evaluating source statements.
+This prevents syntax rejected by the source language, including duplicate
+lexical declarations, from acquiring an invented translated interpretation.
+The construction record names the supported explicit Node range and parser
+phase; generated artifacts do not vary with the machine's version string.
+The compiler subprocess receives exact UTF16LE code units, preserving isolated
+units rather than replacing them during a UTF8 stdin conversion.
+This is a source-generation parser phase, not product/fixture execution.
+
+Ordinary required flat record parameters now have distinct authored context
+definitions for constant arrow/function expressions and namespace object
+methods, alongside the separate named declaration and nested closure profiles.
+The actual parser supplies each role; it never labels an expression or method
+as a named declaration to bypass an admission guard. Complete original pattern
+decisions and body-entry binding operations generate their native definitions.
+Expression arrows retain their actual expression bodies; ordinary block
+directive, duplicate BoundName and lexical redeclaration rules still apply.
+Aliases, ordered logical arguments and local binding writes use the existing
+typed function representation, with no fabricated identifier tokens or extra
+provenance facets. Async/generator and parameter-documentation interpretations,
+defaults, nested/rest/computed patterns, receivers and general object effects
+remain separate obligations. The three former const/namespace refusal inputs
+are preserved with their complete predecessor assertion sources and corrected
+syntax/value controls, following the [ECMAScript formal parameter grammar](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-function-definitions),
+[arrow definitions](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-arrow-function-definitions)
+and [ordinary methods](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-method-definitions).
+Their original named-only operation assertions and every unrelated refusal
+remain intact. These are code and future-control drafts without executions.
+
+The ordinary array-formal draft has a separate actual token/context plan for
+named functions, nested closures, constant functions and namespace methods.
+It preserves distinct source BoundNames, elisions, final named rest and actual
+argument order. Private logical arguments retain complete pattern-origin spans
+without fabricating source Token records. Each pattern selects its represented
+iterator once before its ordered entry bindings. Dense array positions retain
+undefined when absent; string iterators produce Unicode points while preserving
+isolated code units. Rest reuses the existing fresh shallow array operation.
+Binding writes affect local cells independently of the original array slots.
+An internal source wrapper selects the existing array/string/immutable collection
+operations and positional tuple value model, then disappears before typed
+archive encoding. It introduces no Core constructor or source-facet exemption.
+Existing tuple ownership/caller proofs remain binding, with exact source-term
+identity through inference. The complete syntax/domain/inference and original
+iterable decisions are source-generated and available through the shared catalog.
+A separate default-enabled plan now retains complete initializer token intervals
+and every actual BoundName. The ordinary parser consumes exactly each original
+expression interval, with the actual callable/closure boundary and a guarded
+parameter initialization environment. Body-entry bindings reuse the existing
+indexed undefined-only default operation: null, false, zero and empty text do
+not select the initializer, while an absent/undefined position selects it lazily.
+No invented index or extra Core constructor substitutes for a source value.
+The original required-only plan retains its full syntax/refusal contract.
+The former whole-parser default refusal input and complete predecessor
+assertion sources remain hashed in the fixture, beside new syntax/value controls.
+This correction follows [IteratorBindingInitialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-iteratorbindinginitialization)
+and [formal parameters](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-formal-parameters).
+An additional shared plan partitions the original BoundName token positions at
+each initializer. Earlier names are initialized and visible; self and later
+names remain unavailable. Both parser adapters install that actual parameter
+environment while consuming the exact initializer interval, independently of
+body declarations. Existing ordered body-entry bindings retain the lazy
+undefined-only evaluation. Actual assignment observations refuse writes to
+parameter bindings during initialization until their shared mutable environment
+is represented. The earlier-parameter refusal input remains exact in a hashed
+predecessor archive and gains positive original/emitted/native controls, following
+[FunctionDeclarationInstantiation](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation)
+and [IteratorBindingInitialization](https://tc39.es/ecma262/2025/multipage/syntax-directed-operations.html#sec-runtime-semantics-iteratorbindinginitialization).
+These controls remain unexecuted. Self/later reads, initialization writes,
+whole-parameter defaults, record defaults with
+missing-field typing, nested/mixed object patterns, arbitrary or live iterators,
+descriptors, missing tuple positions, heterogeneous tuple rest and complete
+async/generator semantics remain implementation obligations. Future required
+and default values and exact refusals cover complete source/definition graphs,
+both codecs, four emissions and native products; none has executed.
+
+The record-formal default draft uses a distinct default-enabled syntax plan;
+the original required-only record operations keep their original token columns
+and refusals. Each actual binding retains its original property/name roles and
+complete initializer interval. Array and record adapters share the same ordered
+initializer scope transport and source-defined punctuation/BoundName decisions.
+Named functions, constants, namespace methods and nested closures retain their
+separate context admission. Original field access and original initializer
+expressions then enter the existing undefined-only default checker and inference
+constraints. The source wrapper disappears into ordinary typed IR before both
+codecs and four emissions; no forged index or new Core node is introduced.
+Present represented fields, including undefined/null payload distinctions and
+local binding writes, use their existing field/type protocol. An additional
+shared field-domain decision admits undefined for a missing normal name on an
+ordinary closed record. Both inference solvers retain actual owner/field terms
+until that decision resolves; open missing shapes keep waiting. Both checkers
+capture the actual receiver before a missing field selects its lazy initializer.
+An absent own field with a standard or compatibility Object prototype spelling
+retains an explicit inherited-property obligation. Its actual own-field shadow
+continues through the normal field protocol. This follows
+[Object prototype properties](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object)
+and [compatibility properties](https://tc39.es/ecma262/2025/multipage/additional-ecmascript-features-for-web-browsers.html#sec-additional-properties-of-the-object.prototype-object).
+Arbitrary prototype/getter/proxy domains, whole-parameter defaults and the remaining
+initialization environments remain obligations. Thirty-four future values,
+nine refusals and the exact former closure default-refusal input have deferred
+original/emitted/native controls and full predecessor assertion sources. Nothing
+in this draft establishes execution evidence or complete language support.
+
+A guarded dynamic record-index draft uses actual positive `Object.hasOwn`
+conditions over local closed-record/String functional binders. An actual unary
+negation places the same fact in the other branch, including early-return
+continuations. Logical and/or supply a fact only to the actual right-operand
+branch selected by their short-circuit condition. Binding either operand again forgets the fact. Source cells,
+aliased/different keys and extra/effectful guard operands supply no stronger
+premise. The source-defined exact UTF16 key search selects canonical named
+projections; the adapters retain receiver-before-key evaluation and existing
+optional/nullish payload semantics. The checker facts do not become trusted
+source facets or replace runtime conditions. The resulting ordinary typed IR
+retains the guard and selected source operation through both codecs and four
+emissions. Unchecked dynamic reads retain their inherited-property obligation;
+heterogeneous value unions, mutable key cells, broader control-flow/alias proofs
+and exotic property protocols remain requirements.
+
+The immediate actual `Object.keys(localRecord)` producer can also supply this
+membership fact to its inline callback's actual element binder. The complete
+existing array callback role definitions determine that binder, including the
+second `reduce` parameter; `Array.from` mappers use their existing mapper role.
+Both checkers identify the original callback node, install the fact only after
+its parameters bind, and reject owner shadowing or exposure of the live key
+array. A receiver parameter could replace later keys and therefore supplies no
+membership guarantee. Saved key arrays, key aliases and indirect callbacks need
+their own origin/alias interpretation. This context is private checker state;
+it disappears into the same ordinary guarded lookup IR. Complete source rules,
+including the callback role dependency, generate the native decisions. Thirty-six
+future source values, twelve exact refusals and scope/node/role invalidation
+controls are drafted without execution.
+The own-membership distinction follows [Object.hasOwn](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.hasown).
+
+The own-entry read draft extends the same actual argument capture and own-field
+order used by keys/values. Closed ordered records and represented indexed or
+primitive receivers select their original keys and homogeneous payloads only
+after every argument has evaluated. An ordinary source function pairs exact
+ordered keys with opaque wrapped payloads, explicitly checks their lengths and
+retains nullish payloads independently of absent slots. The complete original
+source generates native code and its editable definition. A specialization
+changes only the declared opaque payload type; ordinary checking validates
+both the original ordering entry and the new pair entry and constructors.
+Adapters project those declared entries into the existing positional tuple
+value domain before emission. Both runtime checkers and linked archive
+validation check exact key/value/result types, and both preparation passes
+lower pairing through the same complete source. This adds fixed-position entry
+reads and local parameter writes, not pair mutation or reference comparison;
+existing tuple obligations remain. Heterogeneous dynamic values and the full
+own-property descriptor/getter/proxy/Symbol protocol remain separate requirements.
+Future controls cover insertion/numeric order, spreads, extra-argument effects,
+nullish coercions/payloads, UTF16 String properties and exact errors, along with
+codecs, four emissions and original/native products. None has executed. See
+[Object.entries](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.entries)
+and [EnumerableOwnProperties](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-enumerableownproperties).
+
+The runtime JavaScript frontend also collects actual parsed declarations and
+BoundNames, with original source spans, independently of predeclaration
+lookahead. Its shared early-error definition rejects same-frame lexical
+collisions, lexical/function collisions and lexical declarations that redeclare
+parameters in the immediate callable body. Nested blocks, sibling blocks and
+loop-head/body scopes remain separate. Native parsing projects the same actual
+scope and parameter facts into the source-generated decision. It runs before
+the existing temporal-read validation and type inference. It does not replace
+existing directive, mutable-pattern or temporal guards. Script/Module-dependent
+ordinary-function duplicates, var/import/class bindings, Annex B and scalar-loop
+shortcut admission retain their separate obligations. Future paired controls
+cover accepted shadowing, exact syntax refusals, decoded escaped names, complete
+definition codecs and four emissions; none has executed. The shared rule follows
+[block early errors](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-block-static-semantics-early-errors)
+and [function early errors](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-function-definitions-static-semantics-early-errors).
+
 The opt-in `closed binary floating point function` model gives closed Rust and
 JavaScript functions a declared common abstract value interpretation. It guards
 flat function declarations with binary64 and Boolean parameters and results,
@@ -1298,6 +2434,45 @@ Full reconstruction records latency and resource use on pinned inputs, with the
 representation, input size and execution environment attached to the measurements.
 Lazy loading and token-only envelopes do not count as a measured complete rebuild;
 the qualitative speed requirement does not invent a numeric deadline.
+The complete-graph JavaScript and Rust archive drafts copy actual networks in two
+passes, retaining cycles, disconnected members, original source identities,
+exact registrations, selected syntax and allocator state. An explicit linked
+descriptor selects the source groups and entry roots. Entries using the same
+source network retain shared identities; independent networks keep separate
+identities. Text and binary operations reload the whole graph eagerly, and
+extensions select replacements and removals explicitly. Canonical text loading
+is streamed under node, reference and byte limits and retains exact supported
+parse flags. The public archive CLI packs, lists, selects and
+extends these graphs. The dynamic session draft uses archived discovered
+grammars and formal premises with the existing native compiler and common
+concept verifier. Its default parse product is the complete concrete tree,
+including mapped source planes and recursive grammar provenance. An optional
+abstract projection retains that concrete product. Both runtimes retain private
+linked session snapshots; exported views cannot mutate their grammar context.
+Derived parser caches may be discarded without losing authoritative data.
+Saved concrete products pin complete historical definition and configuration
+roots, parser options and decorator records. Replacing a grammar creates a new
+context while retaining older products and their source selections. Fingerprints
+bind these exact contexts without asserting semantic equivalence. Snapshot
+replacement is explicit, and structured encoders use the caller's finite budgets.
+Shared archive and snapshot policies are generated automatically from JavaScript;
+native adapters copy actual graph structures and invoke the existing compiler
+and concept verifier. Formal definitions for the remaining concepts, language
+specific semantic abstractions, link-cli workload integration and reconstruction
+measurements remain implementation obligations. These drafts have no execution
+evidence.
+The dynamic `language` CLI delegates preparation, extension, parsing, inventory
+and native grammar export to these same library operations in both packages.
+Source grammars carry explicit source identity, language and edition; configuration
+and formal premises enter as Links data. Parsing writes a complete archive with
+CST as the default. Explicit AST selection keeps its original CST. Text and binary
+reloads resolve recursive grammar references from the archive, and replacements
+retain the pinned contexts of earlier documents. Shared source definitions own
+option admission and projection selection; generated native adapters only transport
+files, arguments and graph values. Rejections retain their diagnostics and a
+nonzero exit code, including when a recovered concrete archive is available.
+This command draft and its deferred controls do not establish catalog completeness,
+reconstruction performance, link-cli integration or execution evidence.
 The current binary graph primitive writes a versioned meta-language archive of
 actual link identities, references, supported metadata, exact term-map keys,
 selected syntax and the next allocation identity. Shared framing rules are
@@ -1342,6 +2517,37 @@ The lexical inference, state merging, context-free discovery, structural priors,
 active learning and minimization already present in the Rust inference modules
 and their closed issues are audited and extended, with matching JavaScript
 behavior. Closed issues do not supply current implementation evidence.
+
+A new shared source draft supplies labelled prefix-tree construction, red/blue
+RPNI selection, evidence-driven selection and an ALERGIA-style compatibility
+worklist in both runtimes. First-observed symbol and state order explicitly
+break ties. The compatibility bound uses a versioned, finite binary64 logarithm
+series; it is not asserted identical to the older native implementation's
+transcendental library decisions. Historical native APIs remain intact. The
+algorithm follows the state-merging families described in the
+[Abbadingo paper](https://mural.maynoothuniversity.ie/id/eprint/10250/) and
+[Carrasco and Oncina's stochastic grammar paper](https://www.dlsi.ua.es/~carrasco/papers/RAIRO99.pdf).
+Its public wrappers retain duplicate observations, contradictory-label refusal,
+explicit limits and actual transition/final frequencies. Without a separate
+lexer definition, token texts must be nonempty, well-formed and prefix-free;
+Unicode character examples satisfy that condition. Missing transitions reject.
+The resulting right-linear grammar uses the normal full CST parser path.
+
+The complete typed algorithm, declared inputs, selected parameters, actual model,
+recursive candidate grammar and common concept definitions serialize together
+in a complete-network archive. Reload checks the exact versioned algorithm
+definition and recomputes its model decisions before comparing the candidate
+grammar. The source view can extend a dynamic language session; no language-pair
+dispatch table is added. Training observations and this internal reconstruction
+are not independent evidence of the unknown language's meaning. Learned
+similarity never permits global identity deduplication without its separate
+formal certificate. Worklist, merge and sample budgets return explicit linked
+failure values rather than truncating inference silently. Native source is
+generated automatically from JavaScript. Formatter repair and all behavioral
+checks remain deferred under the current whole-scope draft instruction.
+Context-free inference, active learning, semantic induction, lexical inference,
+minimization and the modern research obligations still require the remaining
+paired implementation work; these regular learners do not discharge them.
 
 ### Critical conversation requirements
 
@@ -1740,6 +2946,30 @@ Concrete syntax is the default for every supported language and every nested
 region. Abstract syntax is an explicitly selected projection or mode with
 provenance to the complete concrete tree; omitting that selection always keeps
 the full concrete representation.
+
+The paired generic AST draft projects complete structured CST graphs through
+shared automatically translated membership policies. Every abstract node points
+directly to its actual concrete object. Each child records the original concrete
+container and reference position; embedding roots, physical source children and
+all alternative roots retain distinct relationship roles. Original concrete links
+and identities remain present. Default projection removes marked trivia while
+retaining every other token, including operators, and every error/missing record.
+Inspectable `cst-to-ast` decorators may explicitly change or drop projected
+records. Their complete records and tree-selection path stay linked in the
+artifact; dynamic sessions save concrete and abstract roots in the same source
+group. No host callback supplies the default abstraction.
+
+Projection readers accept editable abstract relationships with explicit source
+provenance, check actual original child origins, reject cycles and preserve shared
+node identities. Finite node/reference/byte, materialized-property and actual
+depth limits cover reconstruction, including cached subgraphs. Exact UTF-16
+property strings remain structured values. The native decorator host transports
+each code unit bijectively to one private scalar before invoking the existing
+equality/replacement algorithm, then restores the original units. This changes
+no public source or stored decorator data. Native decorator declarations still
+need the existing exact supported text profile; broader declared-value profiles
+remain explicit work. These source drafts have no behavioral observations and
+do not establish language-specific semantic abstraction or full translation.
 
 An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
 supported grammar definitions recursively through the same algorithms and
@@ -2368,6 +3598,14 @@ Positive and negative fixtures include deliberately abbreviated, ambiguous and
 duplicate names. A letters-only regular expression or a hand-picked example list
 does not establish readability or semantic uniqueness.
 
+The technical vocabulary supplements WordNet only with defined, sourced terms.
+The unabbreviated nouns `codebase` and `frontend` follow the primary definitions
+in [The Twelve-Factor App](https://12factor.net/codebase) and the
+[Clang manual](https://clang.llvm.org/docs/UsersManual.html#terminology).
+Their normal Links author retains every preceding vocabulary and fixture byte;
+positive names and misspellings exercise the existing gate. Canonical identities,
+source bindings, abbreviation rules and WordNet 3.1 remain unchanged.
+
 Source binding records are shared Links data in
 [`source-bindings.lino`](../parity/naming/source-bindings.lino), produced by
 `js/scripts/generate-naming-source-bindings.mjs`. The automatic migration retains
@@ -2409,6 +3647,874 @@ expanding unrelated language profiles. This ordering leaves every other critical
 requirement binding. Carried source, item counts and generated Rust alone do not
 establish whole-module semantic translation or native execution.
 
+Development batches prioritize shared semantic operations by the actual complete
+CI report inventory: affected modules, source bytes and exact retained reasons.
+The existing blocker analyzer and replay planner retain the original denominator,
+hashes, decorators and unresolved items. Counts from overlapping groups are not
+added as coverage; a missing shard remains unreported. A correction must remove
+the underlying source-language distinction through a checked operation, rather
+than merely remove its diagnostic. Current reports identify class/object
+representation, complete module/global ownership, collections, regular
+expressions and parameter patterns as broad recurring blockers. Their exact
+priority is recomputed from each complete report cohort.
+
+The efficient implementation unit is one shared Links semantic operation with
+its source admission, binding/type/effect constraints, both emitters, automatic
+native generation and complete round-trip/runtime fixtures delivered together.
+Frontends map source constructs to that common representation; backends emit
+it without separate pairwise translation algorithms. Class/object identity,
+closure environments, collection references and error effects must be modeled
+explicitly before dependent constructs can be supported faithfully. Support for
+unrelated functions beside an untranslated class is not class translation.
+Full JavaScript/Rust project translation remains the first working baseline;
+the rest of the language and ontology contract remains binding.
+
+The closed ordinary JavaScript class draft lowers complete local base-class
+scopes through one shared source transformation, automatically emitted to Rust
+and editable typed Links. Constructor argument effects and an initial ordered
+own-field assignment prefix precede the constructor remainder. Instances use
+shared records with distinct private class identities; installed callables retain
+their actual receiver through aliases, field writes and calls between methods.
+Original JSDoc signatures remain on the corresponding source declarations.
+Generated source intervals conservatively retain each complete original class;
+they do not invent exact point locations for synthesized syntax. The original
+concrete source and translation provenance remain available. Semantic module
+translation publishes the complete closed scope together, retaining every
+ordinary source item and no provisional external class signature.
+
+This profile admits fixed identifier parameters, literal defaults and semicolon-terminated initial
+field assignments whose values cannot read or expose the unallocated instance.
+A constructor may first validate inputs and prepare locals in a receiver-free
+prologue. Only a complete top-level assignment boundary starts initial fields;
+nested or earlier receiver use preserves the whole-body path, so conditional
+field creation and incomplete statements are never hoisted. Prologue exceptions
+retain their actual class, UTF-16 message units and own-message presence through
+the existing shared source-exception operation.
+Defaults retain their complete original source and execute through the existing
+parameter environment at invocation; fresh empty aggregate defaults stay distinct
+between calls. Dependent, effectful and instance-reading default expressions need
+their full initialization scope. Separate module-scoped method environment
+factories capture only the explicit receiver, so constructor parameters and
+locals cannot shadow a method's original free bindings or default expressions.
+Direct receiver-independent static methods and
+factories retain distinct static/instance owners and ordinary argument order.
+Static constructor-object reads, detached factories, constructability, mutable
+static state and reflective interfaces remain separate obligations. The complete
+initial source graph, native generation recipe and fixtures remain exact Links
+predecessors; admitting this new domain establishes no equivalence certificate.
+It refuses inheritance, field declaration syntax, private members, accessors,
+static initialization, constructor return overrides, reflective own-property or
+prototype observations, detached/replaced methods, returned `this`, class value
+escape and unproved external consumers. Literal contents never serve as syntax
+delimiters or identifier owners. Checked receiver facts also refuse method
+detachment through destructuring and computed property lookup; spelling alone
+cannot authorize a class operation. Source, token, nesting and class-count budgets
+refuse explicitly. Strong receiver-capture cycles retain a target lifecycle
+obligation; arbitrary long-running workloads cannot claim collection/resource
+parity from this encoding. Complete descriptors, prototypes, recursive class
+interfaces, cross-module classes and the full own-codebase baseline remain
+binding requirements. Deferred original-source, frontend, codec, formal-target
+and generated native product controls establish no execution evidence yet.
+The relevant source semantics are the [ECMAScript 2025 class definitions](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-class-definitions).
+
+Number bitwise conjunction, disjunction, exclusive disjunction, complement and
+the three shifts use qualified shared operations with complete checked
+JavaScript definitions. Their ordinary typed Links program contains the
+normalization and recursive loop helpers, and generates the native library
+and emitted runtime. Public reconstruction returns a fresh editable definition
+graph; text and binary reload use ordinary whole-program validation. Number
+coercion, modulo-32 shift counts, signed and unsigned results, nonfinite values
+and positive zero remain explicit. This profile does not discharge BigInt,
+other primitive coercions, property compound assignments or arbitrary Rust integer
+bitwise semantics. The immutable base operation inventory remains intact;
+the additional qualified operations have their own admission and arity rules.
+The six corresponding Number compound assignments to mutable local bindings
+reuse those same checked operations, preserving the read before the right
+operand and the final write. Constant, temporal-dead-zone, property and BigInt
+assignment semantics keep their separate admission obligations.
+
+Scalar assignment expressions now have a source draft over the existing shared
+cell algebra. A JavaScript definition constructs a complete topological plan of
+source terms; both frontend adapters only materialize those terms with actual
+operands, source spans and fresh binders. Simple assignments evaluate the RHS
+once. Compound assignments capture the previous value before the RHS; logical
+and nullish assignments select their write continuation lazily. Prefix/postfix
+updates preserve their different returned values, using double numeric negation
+to perform the supported ToNumeric conversion before retaining the old result.
+The source parser retains right associativity, conditional precedence and the
+postfix no-LineTerminator boundary after the actual last consumed token, including
+parenthesized targets. Mutable local nullish assignment statements use the same
+plan. Function-local writable targets select shared cells; generalized property,
+constant short-circuit, module-state and coercion domains still require code.
+These decisions follow the [assignment algorithms](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-assignment-operators)
+and [update algorithms](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-update-expressions).
+
+The callable source definition now tracks expression writes through actual let
+and lambda scopes, captures assigned outer owners and selects their shared
+cells. JavaScript liveness uses the same existing fact-plan adapter as native
+liveness. Both complete dependency closures generate Rust and public editable
+Links definitions. Forty-one future values/aborts cover sequencing, nested
+writes, argument order, captures, loop conditions, lexical shadowing, nullish
+values, Number/BigInt operations and prefix/postfix conversion. Exact paired
+program/definition graphs, both codecs and four emissions remain required; no
+controls ran. General primitive coercions, errors, property/index assignment
+expressions, exponentiation, top-level cell composition, historical generated
+snapshots and all broader language requirements remain source work.
+
+The next shared primitive draft distinguishes actual Number and BigInt operand
+domains during inference and checking, with no binary64 conversion of integers.
+Exact conjunction, disjunction, exclusive disjunction, complement and signed
+shifts use a complete checked JavaScript arithmetic definition. Infinite sign
+extension, negative shift reversal, large counts and arithmetic right-shift
+saturation remain explicit. Its native library and complete emitted runtime are
+generated from that definition. The runtime reuses the ordinary integer owner;
+lexical relocation preserves every literal and records its actual source edits,
+declarations and supporting preludes. Both packages expose the full editable
+typed definition graph. Source operators and local compound assignments select
+this qualified profile only for actual integer operands; linked reload checks
+the exact arity, integer owners and result through the existing whole checker.
+JavaScript uses its native operators. Lean constructs signed operations through
+the core natural bitwise definitions, and Rocq uses its integer operations.
+These mappings follow the [ECMAScript BigInt model](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-bigintbitwiseop),
+[Lean core bitwise definitions](https://github.com/leanprover/lean4/blob/v4.19.0/src/Init/Data/Nat/Bitwise/Basic.lean)
+and [Rocq integer operations](https://rocq-prover.org/doc/V9.0.0/stdlib/Stdlib.ZArith.BinIntDef.html).
+The target definitions and native controls are drafts, not checked equivalence
+certificates. Future controls retain every declared sign/limb-boundary product,
+compound assignment, huge right shift, both codecs and complete four-target
+emission. Rust and proof-assistant execution belongs to CI. Mixed Number/BigInt
+errors, unsupported primitive coercions, unsigned BigInt shifts, host resource
+error equivalence and independent Rust source admission remain separate
+implementation obligations. The earlier Number profile and every original
+assertion/input remain available for later evidence-based reconciliation.
+
+Independent Rust parsing now has a source draft for eager `&`, `|` and `^`
+on Booleans and fixed integers, and integer `!`. The three precedence levels
+sit between arithmetic and comparison as specified by the
+[Rust precedence table](https://doc.rust-lang.org/reference/expressions.html#expression-precedence).
+Actual primitive type owners, matching widths, signedness and contextual literal
+types survive checking and linked reload. Source selection and all target
+construction rules are JavaScript translated automatically into native source,
+with complete editable typed definitions in both packages. JavaScript represents
+fixed integers as BigInt, with bounded complement; Boolean arguments are eager
+before the logical operation. Lean and Rocq reuse the common signed integer
+construction and explicit unsigned projection. These are drafts without target
+equivalence certificates. Future controls cover every represented signed and
+unsigned width, Booleans, all four operations, precedence, contextual literals,
+eager Boolean failure, both codecs and paired complete four-target emission.
+Native controls compare original Rust and emitted Rust with JavaScript over the
+complete declared input product. Shifts with their overflow modes, trait
+overloads, compound Rust state and the remaining full Rust grammar/library/
+ownership semantics remain separate implementation obligations.
+
+The dense shared-array range draft supplies `splice`, `fill` and `copyWithin`
+through one automatically translated JavaScript rule library. Actual receiver
+and argument expressions evaluate once in order before storage borrowing.
+Typed local bindings retain optional generic owners. Bounds follow Number
+integer conversion and clamping before native narrowing; omitted, undefined,
+null and NaN retain their distinct meanings. Boolean and optional primitive
+indices use their declared conversion profile. Copy ranges follow the specified
+target/start/end order and overlap direction. Fill retains element references,
+and splice creates a fresh shared removed array while mutating existing aliases.
+Complete source definitions and their recursive typed programs ship in both
+packages. Additive linked operation rows keep every predecessor definition;
+source reference selection and mutation-sensitive callbacks include the new
+operations. This profile follows the [ECMAScript range operations](https://tc39.es/ecma262/2025/multipage/indexed-collections.html#sec-array.prototype.splice).
+Twenty-four source controls and two conversion refusal controls are authored,
+including both codecs, actual builtin observations, paired full emission and a
+native CI product. None has run. Sparse slots, array subclasses and descriptors,
+object or string index coercions, missing fill values outside the represented
+element type, live callback mutation and the remaining state model still need
+their implementation drafts.
+
+The checked Rust shift draft separates a total optional-result operation from
+the source operator's explicit abort continuation. Actual source `<<`/`>>`
+retains its precedence between addition and bitwise conjunction. The left
+integer width/signedness and the independently typed count remain exact; no
+count narrows before its negative/width guards. Valid left shifts truncate bits,
+and signed right shifts extend the sign. The checked leaf remains an inspectable
+qualified operation; ordinary coalescing with an abort represents overflow in
+the graph and participates in existing effect processing and rechecking.
+This profile selects `-C overflow-checks=on`, following the
+[Rust overflow contract](https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow).
+The complete arithmetic definition and four target constructors are JavaScript
+translated automatically into native source, with editable typed programs in
+both packages. Future controls cover every represented left width, six count
+types, both directions and every declared value/count pair, including failures.
+One native CI product compares original Rust, emitted Rust and JavaScript;
+codec controls compare the complete four-target emissions. None ran. Unchecked
+release profiles, overloaded shifts and the remaining source/ownership effects
+remain implementation obligations. The source author preserves complete
+unstylized native output after a numeric-style producer refused duplicate
+formatter text in distinct modules. The refusal log, original assertion and CI
+gates remain intact; scope-aware style repair is deferred rather than reported
+as complete.
+
+The nominal Rust record source draft represents named, tuple and unit structs
+through the existing owned datatype, constructor and exhaustive match algebra.
+Original concrete source remains in the default CST; field names and qualified
+owners remain in the semantic data declaration. A derived parser index joins
+actual source origins to those declarations across all discovery passes; it is
+reconstructed from source rather than an opaque authoritative meaning store.
+Source-order bindings evaluate each supplied field once before arranging the
+constructor's declared field order. Fresh names exclude every source identifier.
+Aliases, nested projections, borrowed nominal owners, numeric tuple fields and
+zero-field constructor distinctions retain their represented source ownership.
+The [Rust struct contract](https://doc.rust-lang.org/reference/items/structs.html)
+and [struct expression rules](https://doc.rust-lang.org/reference/expressions/struct-expr.html)
+govern that interpretation. Shared field admission, ordering and binding rules
+are JavaScript translated automatically to Rust and shipped as complete editable
+typed Links definitions in both packages. Future controls compare sixteen valid
+or abort cases, eight exact refusals, complete graphs, text/binary reload and
+all four emissions, then compile original and emitted Rust once in CI. None ran.
+Generic owners, traits, destructors, layout/FFI, mutable fields, functional
+update, complete namespace composition and irrefutable let patterns remain obligations;
+this draft does not establish full Rust data-model support. Existing closed
+source profiles retain their guards. Static review also added the required
+empty main to previously authored primitive-bitwise and shift control inputs,
+preserving their functions, boundary values and every assertion.
+
+The following record draft adds named enum variants and named constructor
+patterns, including shorthand fields, reordered/nested patterns, numeric tuple
+fields and explicit rest. They reuse the same ordered constructor algebra and
+shared field plan. Existing unit/tuple enum constructors also retain brace
+construction and brace patterns through their actual positional definitions.
+Source wildcards inside the new named patterns keep their own spans, so field
+reordering cannot transfer a reference count to another wildcard; preceding
+patterns retain their original representation. Explicit source-field types on
+construction bindings preserve contextual fixed-width literals. Named children
+are qualified through their actual declaring module, including nested tuple
+and array annotations. The shared pattern plan generates Rust automatically and
+ships in the same complete typed Links program. Thirty-eight future value/abort
+cases and twelve exact refusals now cover these paths, preserving every earlier
+input and assertion. None ran. Irrefutable let patterns, remaining reference and
+alias-pattern forms, functional update and the other recorded Rust obligations
+still require their implementation drafts.
+
+The inherent Rust source draft lowers same-module inherent implementations to
+ordinary modules sharing their datatype owner, and lowers methods to ordinary
+typed functions with an explicit receiver. Associated constructors and `Self`
+retain the actual qualified datatype. Unqualified, `self::` and `super::` paths
+inside those functions resolve in their original Rust module, independently of
+the normalized owner namespace. Actual source method metadata is rederived
+across discovery passes; dispatch requires the same nominal owner and the
+represented owned `self` or single immutable `&self` receiver. Receiver and
+argument evaluation remain the existing ordered function application. All four
+emitters consume those ordinary terms. Shared admission, receiver mode,
+borrowing and source-parent traversal rules are JavaScript automatically
+translated into native source and complete typed Links definitions.
+The [inherent implementation rules](https://doc.rust-lang.org/reference/items/implementations.html#inherent-implementations)
+and [method lookup rules](https://doc.rust-lang.org/reference/expressions/method-call-expr.html)
+define the source interpretation. Twenty-two future value/abort cases and
+eleven exact refusals cover constructors, methods, aliases, forward declarations,
+multiple blocks, actual module paths, enum methods, contextual fields and first
+failure order. They reuse the complete paired graph/codec/four-target and
+original/emitted Rust product controls without dropping preceding assertions.
+None ran. Generic/trait dispatch, mutable/boxed/multiple-reference and arbitrary
+receivers, named region models, implementation placement in another module,
+associated constants/types/macros and closed source-profile composition remain
+separate implementation obligations. No method is admitted by merely sharing
+its spelling with another type's method.
+
+The functional record-update draft evaluates supplied fields in source order,
+then evaluates the base once. One ordinary constructor match reads all remaining
+fields together, avoiding repeated whole-base projections. Typed field and base
+bindings retain contextual literals and the actual qualified struct owner;
+syntactically distinct enum updates and borrowed bases refuse. Source struct
+metadata is rederived from its declaration and is not inferred from shape.
+The shared partial-field and owner rules generate native source automatically
+and remain editable typed Links data in both packages. This follows the
+[functional update contract](https://doc.rust-lang.org/reference/expressions/struct-expr.html#functional-update-syntax)
+and the [Rust 1.90 compiler lowering](https://github.com/rust-lang/rust/blob/1.90.0/compiler/rustc_mir_build/src/builder/expr/into.rs#L508-L550).
+Fifty-one future value/abort cases and sixteen exact refusals now cover named,
+tuple, empty, nested, aliased and contextual updates, base/field failure order
+and binding hygiene. The earlier update-refusal input stays byte for byte at
+the beginning of the full source and gains an additive caller, all codecs and
+original/emitted Rust value assertions. Its old expected refusal is retained
+as a documented correction, rather than executed as the current contract.
+No control ran. Complete move/drop/resource behavior, borrowed or partially
+moved base proofs, mutable fields, generic owners and the remaining Rust scope
+still require implementation and verification; the existing value encoding is
+not a complete Rust ownership checker.
+
+The named-constructor emission draft keeps nonempty ordinary ASCII Rust field
+names in enum declarations, constructor applications, match patterns and value
+enumeration. One shared renderer supplies every form in both runtime packages;
+its complete definitions generate native source and ship as typed Links. Field
+types and recursive boxing remain the existing checked values. Positional
+constructors retain positional syntax. A single program-wide layout decision
+keeps mixed-layout encoding metadata correct without rescanning all declarations
+for each emitted type. Existing JavaScript/Rocq/Lean source profiles retain their
+previous Rust data layout. A shared independent layout fixture now checks actual
+named syntax, mixed positional/named metadata, complete paired graphs, both
+codecs, all four emissions and original/emitted Rust values in CI. It reuses
+the complete control driver without removing any preceding assertion. None ran.
+Raw and Unicode identifiers, zero-field source-form provenance and unrestricted
+reimport of emitted helpers/clone operations remain implementation obligations;
+this improvement does not establish complete source round-trip fidelity.
+
+The ASCII raw-identifier draft gives both lexers a distinct `r#` source path.
+Tokens keep their full spelling and UTF-16 offsets while exposing the actual
+unescaped identifier name. Cursor keyword decisions retain that distinction:
+raw `match` and `true` are names, while raw non-keywords remain usable where
+an ordinary identifier is expected. Raw macros retain their macro token kind;
+raw strings remain strings. Raw unqualified pattern names are explicit binders
+unless actual source resolution identifies a constructor. Shared reserved-name,
+keyword and field rendering rules generate native source and complete typed
+Links definitions. Constructor fields whose names require escaping emit `r#`
+consistently in declarations, applications, patterns and enumeration. This
+follows the [Rust identifier rules](https://doc.rust-lang.org/reference/identifiers.html)
+and [edition-qualified keyword rules](https://doc.rust-lang.org/reference/keywords.html).
+Fourteen future value/abort cases, four complete token/cursor cases, five exact
+lexical refusals and five complete-program refusals cover those paths in both
+runtimes. They also retain full graphs, both codecs, four emissions and original/
+emitted Rust execution. None ran. Unicode XID/NFC, older edition profiles,
+raw lifetime/generic/trait forms, zero-field provenance and complete generated
+source reimport still need their implementation drafts.
+
+The Unicode identifier draft extends the portable JavaScript and Rust lexers
+to complete scalar property ranges from pinned Unicode 17 declarations. Rust
+uses `XID_Start`/`XID_Continue` and canonical NFC; JavaScript uses
+`ID_Start`/`ID_Continue`, its additional dollar/underscore/joiner rules, and
+keeps canonically equivalent spellings distinct. Raw Rust names, macro names
+and type namespace catalogs use the same actual identifier decisions. Original
+spellings and UTF-16 source intervals remain intact, including astral scalars.
+One JavaScript scalar/decomposition/order/composition definition automatically
+generates Rust and complete editable typed Links; native glue only transports
+source units, shared data and errors. The public `normalizeUnicodeText` /
+`normalize_unicode_text` entry points expose the same bounded Unicode NFC.
+Canonical decomposition is recursive and bounded; stable combining ordering,
+composition blocking, full composition exclusions and algorithmic Hangul remain
+explicit. Compatibility mappings are not canonical equivalences.
+
+An automatic importer converts official UnicodeData, DerivedCoreProperties and
+DerivedNormalizationProps into shared Links tables, retaining source URLs,
+byte counts, hashes and the Unicode license. Raw downloaded inputs remain in
+temporary storage. This follows the
+[Rust identifier contract](https://doc.rust-lang.org/reference/identifiers.html),
+[ECMAScript identifier contract](https://tc39.es/ecma262/2025/multipage/ecmascript-language-lexical-grammar.html#sec-names-and-keywords)
+and [Unicode 17 normalization specification](https://www.unicode.org/reports/tr15/tr15-57.html).
+Rust's [1.94 release](https://doc.rust-lang.org/releases.html#version-1940-2026-03-05)
+adopts Unicode 17; the new original-compiler fixtures use characters shared
+with Unicode 16 across their declared Rust 1.90–1.99 range. Twelve Rust values,
+eight JavaScript values, ten exact token/cursor sequences, thirteen NFC cases
+and eleven scalar-name cases have future paired graph/codec/four-emission and
+independent original-language controls. Separate JavaScript and native runners
+cover every column of the authenticated temporary official normalization
+corpus. None ran. Older configurable Unicode/edition profiles, fully faithful emitted-source
+reimport and the inherited broader language requirements still require drafts.
+
+The following source draft adds JavaScript identifier escapes and Rust Unicode
+lifetimes. A separate complete shared definition decodes each fixed or braced
+identifier escape as one scalar, admits arbitrary leading zeroes within the
+source bound, rejects surrogate escapes and checks the actual ID property.
+Raw spelling and UTF-16 intervals remain unchanged. Reserved/contextual keyword
+selection retains escaped spelling; reference and strict module binding roles
+have distinct errors, while IdentifierName properties remain admitted. Function,
+closure, array, object and named record parameter adapters carry actual binding
+tokens to that definition. Regex/division and control/body lexical goals use
+the same distinction. Numeric boundaries reject following identifier starts,
+digits or backslashes, retaining complete astral diagnostic intervals.
+These decisions follow the
+[identifier lexical rules](https://tc39.es/ecma262/2025/multipage/ecmascript-language-lexical-grammar.html#sec-names-and-keywords)
+and [strict module early errors](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-identifiers-static-semantics-early-errors).
+
+Rust lifetime recognition uses actual XID scalar boundaries before character
+decoding, retaining ordinary character literals and NFC-normalized names with
+their original spans. This follows the
+[lifetime token grammar](https://doc.rust-lang.org/reference/tokens.html#lifetimes-and-loop-labels).
+Twenty-two future JavaScript values, thirteen exact syntax refusals, nine token
+sequences and twelve lexical errors join five Rust lifetime values and six
+lifetime/character token sequences. Future native controls preserve every
+preceding input and execute independent Node module syntax observations for
+every newly declared syntax refusal, as well as program/definition graphs,
+both codecs and four emissions. None ran. Script/sloppy/generator roles and a
+Unicode variant of the separately selected ASCII source-header profile still
+need their source drafts.
+
+The source identifier draft admits ordinary JavaScript `ml_` bindings instead
+of reserving a prefix absent from ECMAScript's reserved words. A complete shared
+JavaScript definition generates native source and editable typed Links for
+canonical namespace ordinals, first-unused namespace selection, generated
+binders, cell parameters and escaped target spellings. Actual source tokens,
+comment/type spellings and complete surface/typed declaration names supply the
+census. Parser temporaries, lexical shadows and mutable parameter cells use
+separate generated families. Checker temporaries and natural recursion splits
+also select a namespace disjoint from the actual input. Target local and global
+allocators escape private spellings after target normalization, then retain
+ordinary uniqueness allocation and reference mappings. Top-level source effects
+are distinguished using the selected generated namespace, rather than dropping
+all valid source names beginning with `ml_`.
+
+Fifteen future source values retain the original projection hygiene input and
+cover namespace gaps, large/noncanonical ordinals, escaped identifiers, target
+snake-case collisions, nested shadowing, captured mutable bindings, cell
+parameters, loop binders and global declaration collisions. Two retained old
+refusal inputs gain positive independent Node/emitted/native controls according
+to the identifier specification. Complete paired definition/program graphs,
+both codecs and four target emissions remain required. None ran. Historical
+refusal assertions elsewhere, generated-name snapshots, selected closed pattern
+and scalar-loop profiles, other frontend symbol supplies and full emitted-source
+reimport still need reconciliation; this draft does not declare them complete.
+
+Source array and required-record patterns now use ordinary hygienic BoundNames.
+The original closed array/record binding operations keep their prefix refusals;
+an additional ordinary record-plan entry point shares the complete syntax
+algorithm while selecting the new binding operation. Both source adapters carry
+actual token roles, duplicate-name facts and the complete reserved-word column.
+The original array-rest prefix-refusal input is retained with a corrected
+independent original/emitted value assertion. Five additional future cases cover
+array defaults, rest, mutable bindings, object declarations and record parameters.
+No control ran.
+
+The source-only library author can automatically capture an exact relative
+named-function dependency closure. It reads every whole module, checks actual
+exported owners, rejects duplicate imported bindings and aliases/unknown imports
+in this closed authoring profile and records the original source, hash and exact removed import spans.
+Symlink resolution stays inside the actual project. Modules and source bytes
+have explicit bounds; dependency cycles retain each module once. Original module
+ranges own every source/generated declaration, and calls can reference another
+module only through its actual imports. Complete bodies remain available to the
+checker for ownership/effect analysis; signature-only imports cannot establish
+those facts. Module initialization effects and unrepresented owners refuse in
+this closed authoring profile. The complete record-parameter closure now generates native source and one editable typed
+Links definition through this path. Independent generators/receipts, broader
+module imports, all remaining source profiles and metadata still need their
+separate reconciliation before testing begins.
+
+The struct-constructor namespace draft preserves the distinction between a
+source struct's value constructor and an associated item sharing its spelling.
+Before collecting that function, its synthetic constructor moves to a fresh
+owner-qualified value name; subsequent discovery passes derive the same name
+from the actual method register. The shared hygiene plan excludes every source
+identifier. Source constructor and method references therefore retain separate
+definitions instead of allowing a catalog overwrite or selecting a constructor
+for a method call. Host code transports those actual catalog entries; the name
+selection definition generates native source and complete typed Links.
+The source distinction follows the [Rust namespace rules](https://doc.rust-lang.org/reference/names/namespaces.html)
+and [associated item paths](https://doc.rust-lang.org/reference/items/associated-items.html).
+The inherent matrix now has twenty-nine future values/aborts and twelve exact
+refusals, including same-name functions/methods, forward blocks, occupied value
+names and unit/tuple structs. Independent value assertions distinguish method
+execution from an accidental constructor call. None ran. Enum constructor
+homographs refuse until their full associated-item resolution is supplied;
+general type/value namespace composition remains an implementation obligation.
+
+The immutable inherent-receiver draft now reads explicit `self: Self`, standard
+`Box` and nested immutable reference types, plus declared receiver lifetimes.
+One shared layer planner selects actual receiver candidates by dereference and
+autoborrow while forbidding an owned move through a reference. Token adapters
+split `&&` only in type positions and preserve both source intervals. The
+ordinary typed function application still evaluates the receiver before its
+arguments. JavaScript generates the native planner and full typed Links.
+The [receiver grammar](https://doc.rust-lang.org/reference/items/associated-items.html#associated-functions-and-methods)
+and [candidate ordering](https://doc.rust-lang.org/reference/expressions/method-call-expr.html)
+justify three corrected refusal expectations. Each exact former input and
+expectation remains in a separate future product with an independent value
+assertion. Together the inherent controls declare forty-three values/aborts and
+eleven refusals, complete paired graphs, both codecs, four emissions and
+original/emitted Rust execution. None ran. Mutable/custom dereference, full
+move/drop/Copy reasoning, Rc/Arc/Pin and escaping-region behavior remain
+implementation obligations; immutable value encoding does not establish them.
+
+Irrefutable nominal local bindings now use that same constructor/pattern
+algebra. Recursive admission requires one actual constructor per nominal owner,
+matching arity, immutable binders and irrefutable children. The source initializer
+is bound once, one match returns the bound values, and internal projections
+carry each actual field origin into later source operations. Fresh internal
+names exclude source identifiers; source scopes retain ordinary shadowing.
+No new checked term or target runtime is introduced. The shared admission
+definition generates native source and typed Links. The
+[let statement rules](https://doc.rust-lang.org/reference/statements.html#let-statements)
+and [refutability rules](https://doc.rust-lang.org/reference/patterns.html#refutability)
+define this interpretation. Twenty future values/aborts and four exact refusals
+cover named/tuple/unit records, nested records, single-variant enums, aliases,
+annotations, strings, borrowed fields, hygiene and initializer failure order.
+Complete paired graphs, both codecs, four emissions and original/emitted Rust
+controls remain unexecuted. Nominal fields containing tuple patterns, ref/mut/@
+bindings and broader move/borrow/drop semantics still need source work.
+
+Tuple match patterns now normalize into positional columns and ordinary
+projections before the existing literal/constructor match compiler. Grouping,
+unit and one-field patterns, nested tuple/record patterns and any single `..`
+position use one shared field plan; native source and typed Links are generated
+from JavaScript. Borrowed fields retain their reference origins. Column names
+exclude actual pattern/body names, and duplicate source binders refuse. The
+[tuple rules](https://doc.rust-lang.org/reference/patterns.html#tuple-patterns)
+and [rest rules](https://doc.rust-lang.org/reference/patterns.html#rest-patterns)
+define the source interpretation. Twenty future values/aborts and five refusals
+exercise these paths. Two additional products retain exact former tuple-struct
+and tuple-match refusal inputs and historical expectations with independent
+value assertions. All complete paired graph/codec/four-emission/original-Rust
+controls remain unexecuted. No new checked term or target runtime is needed.
+Tuple-struct rest, ref/mut/@ forms and full ownership/drop remain obligations.
+
+Tuple-local and tuple-constructor rest patterns now reuse the same field plan.
+Local patterns retain the existing recursively immutable source-product guard;
+constructor patterns obtain their width from the actual source constructor and
+insert explicit wildcard intervals for omitted fields. Initializer order and
+field origins stay unchanged. Duplicate rest positions and excess fields
+refuse. Raw `r#true` and `r#false` local bindings retain identifier semantics.
+The nominal-binding matrix now declares thirty-eight values/aborts and eight
+refusals, including tuple/constructor prefix, middle, suffix and empty rest,
+nested patterns, borrowed fields and exact initializer failures. The full
+paired graph/codec/four-emission/original-Rust controls remain unexecuted.
+Ref/mut/@ and full ownership/drop still require their source drafts.
+
+Ordinary value-returning `if let` now transports source alternatives, aliases
+and scrutinee evaluation into the existing exhaustive match representation.
+The matched branch gets its pattern scope; `else` is parsed in the original
+outer scope. Source field/borrow origins and result joins remain explicit.
+The [conditional pattern rules](https://doc.rust-lang.org/reference/expressions/if-expr.html#if-let-patterns)
+define the interpretation. Fifteen future values/aborts and three refusals add
+complete paired graph, codec, four-emission and original/emitted Rust controls;
+none ran. Chained conditions require additional short-circuit scope lowering,
+particularly when a matched name shadows an outer name used by `else`.
+Missing-else unit/effect statements, let-else, loops and complete ownership
+remain source obligations, without a fallback that assumes those meanings.
+
+The let-else draft now uses the same one-initializer match/binding path for
+refutable local patterns. Only the successful arm publishes new bindings; the
+fallback is parsed in the outer scope and must have represented divergence.
+The shared JavaScript initializer grammar guard generates native source and
+complete typed Links, preserving the required parentheses around a lazy
+Boolean or block-ending initializer. The
+[let statement rules](https://doc.rust-lang.org/reference/statements.html#let-statements)
+define these restrictions. Fifteen future values/aborts and three exact
+refusals retain full paired graphs, both codecs, four emissions and independent
+original/emitted Rust controls. None ran. General early return, resource/drop
+effects, outlives and divergence inference, loops and source-profile composition
+remain obligations. The latest instruction to continue until every code draft
+is complete is captured verbatim in
+[`parity/sources/continue-complete-draft-2026-10-24.txt`](../parity/sources/continue-complete-draft-2026-10-24.txt).
+Source registration and ledger regeneration stay deferred with the other
+validation gates until all actual code requirements have their drafts.
+
+JavaScript property-call normalization now selects the actual inferred receiver
+before treating string predicates, case/trim maps or `toString` as builtins.
+A record's callable field keeps its own arity and return type. Actual record
+method signatures constrain arguments and results; unresolved receiver defaults
+wait until ordinary call/field constraints stop making progress. Proven string
+calls recover the preceding canonical predicate/map surface forms, preserving
+their existing assertions. Hosts transport actual inferred owners and source
+operands; shared JavaScript selection rules generate native source and complete
+editable typed Links through `createJavaScriptPropertyCallProgramLinks`.
+The [ECMAScript call rules](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-function-calls)
+define this distinction. Twenty future values/aborts and two refusals retain
+independent original Node, emitted JavaScript and native Rust behavior, exact
+paired program/definition graphs, both codecs and all four emissions. No
+control ran. The common future native product helper retains every preceding
+Rust-source control and adds explicit JavaScript-source products. Dynamic
+`this`, prototype/accessor behavior, classes/inheritance, concat ownership,
+remaining coercions and complete errors still require implementation drafts.
+
+Concatenation now dispatches by the actual record, string or array receiver.
+Dense homogeneous arrays capture the receiver handle and every argument value
+before reading any payload. Existing ordered lets, reference reads and appends
+then construct a distinct result, so argument-side mutations of the receiver or
+earlier array arguments remain observable. Scalars become individual elements;
+array arguments spread once. Primitive string arguments use the existing text
+conversion and concatenation terms. Actual callable record fields retain their
+own signatures. Shared source role/default rules generate native source and
+typed Links; no new checked node or target runtime is introduced. The
+[array concatenation rules](https://tc39.es/ecma262/2025/multipage/indexed-collections.html#sec-array.prototype.concat)
+and [string concatenation rules](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.concat)
+define this interpretation. The future property-call matrix now declares
+thirty-eight values/aborts and three refusals, preserving every earlier input
+and original Node/emitted JavaScript/native Rust, graph, codec and four-emission
+control. None ran. Sparse arrays, species and Symbol overrides, heterogeneous
+or nullable widening, length limits, ToPrimitive effects and the other broader
+source requirements still need implementation drafts.
+
+Native identifier allocation now keeps a `u128` cursor for all `u64` identities
+and the distinct `2^64` exhausted marker. Each actual allocation passes a shared
+JavaScript capacity definition generated into native source and typed Links;
+native glue supplies exact sixteen-bit words without per-allocation arrays.
+Text import, storage restoration, concept/view copies and incremental remapping
+retain that marker instead of overflowing or saturating into a reusable ID.
+Object identities use the same allocator. Field insertion reserves its one or
+two actual slots before interning labels or changing links. New named points
+also check capacity before interning definitions. Infallible network insertion
+retains a clear panic on exhaustion; fallible storage creation returns
+`StorageError::IdentifierSpaceExhaustion`, including the doublets backend.
+Sixteen future capacity cases, three actual near-maximum text graph fixtures,
+and full graph/codec/four-emission definition controls remain unexecuted. The
+native controls exercise `u64::MAX`, self-link objects, final-slot consumption,
+two-slot field admission and unchanged graphs/caches/allocators after refusal.
+These are source drafts, not native execution evidence. JavaScript's current
+safe-Number identifier profile and the shared Number binary/archive limits stay
+explicit; complete exact-u64 JavaScript and matching interchange profiles still
+require code. Public policy/definition entry points expose this same capacity
+meaning in both packages.
+
+Shared-array source reads now have an ordered-capture draft: evaluate and
+retain the actual receiver, evaluate the complete key once, then read the
+current payload and element. A key that extends, shrinks or updates the array
+affects that lookup; rebinding its source variable keeps the captured receiver.
+Receiver/key failures keep their order. Existing typed lets and read nodes
+represent this meaning, following
+[ECMAScript property evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-property-accessors).
+The source-capture decision is shared JavaScript, automatically translated to
+Rust and complete typed Links; native glue transports actual operands only.
+
+The same shared definition drafts borrowed Rust projections for array length
+and scalar element reads when the remaining typed key has no effects. It
+evaluates the receiver once, retains the original array bounds/Number/BigInt/
+absence behavior and clones only a returned ownership-bearing element. It
+releases the borrow before returning the value, preserving subsequent writes
+and shallow reference identity. Numeric literal/variable/arithmetic/cast/math
+keys require recursively pure operands. Effectful typed keys keep their
+existing native payload-copy path. Fresh names exclude every actual operand.
+The Unicode kernel is regenerated through this emitter, avoiding whole-table
+copies for those projections. This is a source change, not a measured runtime
+improvement. Twenty-two future original Node/emitted JavaScript/native Rust
+value/abort cases, exact graphs, both codecs and four emissions remain
+unexecuted. Shared future JavaScript product-oracle code retains every preceding
+property-call and Unicode fixture. Full source languages, arbitrary typed
+snapshot parity, other state operations and inherited requirements still need
+their remaining drafts; all metadata/check execution remains deferred.
+
+Collection construction consumes the checked iterable value through the shared
+reference-read operation. It preserves input evaluation order and creates a
+separate collection identity. Item parsing retains supplied outer module owners
+when adding local declarations, so a carried class or constant cannot silently
+become a standard builtin. Record-parameter coordinates include their complete
+actual delimiters and binding tokens. Imported external signatures survive
+typed-program reload and pass the ordinary checker before emission; imports
+and effect-threaded programs retain their separate admission obligations.
+
+Reference and binding resource accounting counts owning records, matching the
+JavaScript traversal. Primitive fields cannot own semantic references and array
+containers only order children. Native structural decoding retains its separate
+100,000-value and 256-level defaults; no numeric resource ceiling is increased.
+The complete three-node dependency graph product remains a required native
+archive workload, with all 512 graph inputs and their independent observations.
+
+The shared own-field state draft admits assignments to existing fields of
+closed reference records. Direct assignments retain their actual field type;
+Number compound arithmetic and statement increments retain the preceding read
+before the right operand. Receiver identity, right operand evaluation, alias
+visibility, signed zero, NaN and source order remain explicit. Native storage
+borrows end before the right operand runs. Target temporary names reserve the
+complete emitted operands to prevent capture. The qualified operation carries
+its actual property name; it is admitted only against the real closed shared
+record and rechecked field, arity and value type during typed Links reload.
+Complete checked JavaScript definitions automatically generate native source and
+ship as editable Links programs. Mutation-sensitive callback admission includes
+these field writes. This follows the [ECMAScript assignment order](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-assignment-operators-runtime-semantics-evaluation).
+The compound source extension additionally admits JavaScript BigInt arithmetic
+and statement increments, plus string `+=`, through the existing checked binary
+and exponentiation operations. Receiver and previous field values are captured
+once before the actual right operand. The resulting ordinary assignment reuses
+exact integer arithmetic, truncating division, standard source exceptions and
+UTF-16 concatenation; it adds no handwritten native arithmetic. Mechanically
+constructed source/schema interfaces call the generated rules using checked
+Unicode scalar transport; runtime text values retain their lossless UTF-16
+representation. The original
+Number renderer keeps its original domain checks. The former string-refusal
+source is retained as a success input because the new checked concatenation
+path supplies its previously missing operation. Deferred controls include exact
+integers, aliases, negative division, exponentiation, mixed-domain and zero-divisor
+failures without writeback, right-hand mutations and isolated UTF-16 units.
+These source and refusal controls have been authored and have not run. Field creation, descriptors, prototype setters, arbitrary coercions,
+indexed slots and the rest of full project translation remain obligations.
+
+The current development sequence drafts the complete outstanding batch before
+running its tests. Draft the shared behavior, both runtime adapters, automatic
+translation, fixtures and all known CI repairs together. Integrate generated
+histories and manifests once after that draft, then run the applicable targeted
+JavaScript validation and one complete CI feedback cycle. Continue drafting
+independent remaining work while existing CI executes. A draft is not verified
+implementation: preserve every unresolved obligation and failing observation.
+This sequence follows the [direct bulk instruction](../parity/sources/bulk-draft-before-testing-2026-10-23.txt).
+The [current explicit prohibition](../parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt)
+defers every code test and validation run until every requirement has an
+implementation draft. Authoring fixtures, test drivers and generators belongs
+to drafting; executing their assertions or behavioral comparisons belongs to
+the later validation phase. Source generation can parse, type-check and format
+its input while writing code; it runs no fixture, product, behavioral replay or
+oracle. Missing implementations remain visible. Source
+presence, stubs, carried originals and a source inventory cannot establish that
+the complete behavior has been drafted. Existing CI observations retain their
+original commits and cannot validate the new draft.
+The [latest direct instruction](../parity/sources/complete-draft-before-ci-feedback-2026-10-25.txt)
+permits commits and coherent batch pushes to collect later feedback, but defers
+addressing any CI feedback until this entire implementation draft is complete.
+Do not inspect failure logs or repair feedback during this drafting phase.
+Existing check gates remain in place for subsequent verification. This phase
+supersedes the earlier requirement to repair preceding CI errors before a new
+batch push; terminal run status may still be read to coordinate one push.
+Independent semantic translation is now an explicit source-level option:
+`semanticTranslation` in JavaScript and `semantic_translation` in Rust, exposed
+as `translate --semantic` in both CLI drafts. Actual emitted declarations and
+runtime preludes enter the ordinary frontend. Saved source comments supply
+provenance, while carried blocks remain unresolved source-language gaps. The
+grouping algorithm is shared JavaScript with automatically generated Rust;
+complete source and mechanical ownership styles are retained as Links data.
+Ordinary lossless source restoration remains available through the existing
+default. Full emitted-runtime interpretation and executable parity still
+require implementation and later CI evidence.
+The paired project translation draft APIs process complete supplied module inventories
+with source hashes, bounded dependency-signature refinement and explicit failure
+ranges. Only ordinary translated declarations supply import signatures. Its
+tracked-project author inventories every tracked JavaScript, TypeScript and
+Rust source, retains unresolved imports and writes the products and diagnostics
+as Links Notation. It executes no products. This orchestration exposes remaining
+language, library and independent Rust signature-discovery gaps; the complete
+own-codebase translator remains a critical delivery requirement.
+Module-request discovery uses the complete JavaScript, TypeScript or TSX CST,
+including original field relationships, as its source of truth. Imports,
+reexports, dynamic imports and type-only requests become semantic links to their
+actual concrete owners in that same network. Exact UTF-16 specifier units remain
+ordered links, including isolated surrogates; scalar filesystem names are
+exposed only when representable without replacement. Computed specifiers remain
+explicit unresolved concepts, never evaluated during discovery. All request
+coordinates are UTF-8 byte intervals in the complete preserved original source.
+The public module-request API and CLI retain this complete network in text or
+binary Links. Native selection and command planning are generated from shared
+JavaScript; adapters transport actual CST fields, bytes and filesystem effects.
+Tracked-project discovery includes JSX, TSX, MTS and CTS source files and retains
+request kinds, spans and unresolved dependencies. Discovery does not establish
+module-loading semantics, type/value erasure, evaluation order, binding
+composition or executable translation. Those remain required translation work.
+Byte and graph-work budgets bound discovery; this does not establish an
+independent bound on all existing parser work. Original-source, codec, CLI and
+tracked-project controls remain unexecuted drafts in this phase.
+
+The complete project-translation archive draft combines the unchanged project
+report and explicit global/per-module configuration with every full original
+concrete source graph through the existing
+source-project and meta-language archive mechanisms. Both public runtimes and
+`project-translation <inventory.lino> --to <language>` retain partial products,
+all diagnostics, term registrations, syntax state and original graph identities.
+CST remains the default; an optional AST view retains the same complete concrete
+storage. TypeScript files with the TSX extension select the actual TSX grammar
+for the concrete archive, without claiming executable TSX translation.
+Reload reconstructs all source graphs from links without original files,
+reparsing or consulting a current grammar catalog. Shared source-generated
+admission compares ordered source identities, language profiles, byte counts,
+digests, import directories and duplicate inventory issues against both the
+report, its module rows and retained configuration. Concrete source/type options
+remain structured Links data; settings outside that portable data domain refuse.
+Source inventory diagnostics cannot disappear on
+reload. A product with unresolved gaps cannot become an executable output;
+draft hashes and any exposed product must agree. These checks establish byte
+preservation and directory consistency, not semantic correctness. Qualified
+concrete islands preserve their own concepts; equal labels or hashes authorize
+no concept deduplication. Existing graph/byte limits also bound CLI serialization.
+Source-free input restoration also reconstructs every portable translator input
+from the stored concrete graph and retained settings. It preserves actual
+source text, source language, per-module options, ordered issue multiplicity,
+dependency providers and global options. It runs no parser or translator.
+Dependency names must be unique within each import directory and every provider
+must belong to the complete archived source inventory. Multiple distinct
+specifiers may select the same provider. Unknown or duplicate dependencies
+refuse instead of disappearing during directory reconstruction. Restored values
+are detached from archived graph storage. Future rebuild controls compare the
+entire draft, configuration and complete source graph binary state; they remain
+unexecuted and establish no present semantic or replay evidence.
+Persistent project-archive extension appends new source identities using the
+existing complete source-archive extension. Every preceding concrete graph keeps
+its actual identifiers, term registrations, selected syntax and allocator state;
+its input snapshot remains unchanged. The complete restored input/configuration
+inventory then supplies a fresh project translation, with explicit selected
+option overrides and all current failures retained. Fresh translation uses
+current frontends and may parse source; it is distinct from parser-free archive
+reload and input restoration. Existing identities cannot be silently replaced,
+and empty extensions refuse. Adding sources and retaining trees establishes no
+new semantic equivalence, execution evidence or historical compiler replay.
+Independent append, changed-target/AST, original-snapshot and complete original
+source-state controls remain deferred.
+The tracked-project source author defaults to this complete archive and retains
+its revision, file inventory and unresolved request provenance as linked settings.
+Original-source, text/binary, AST, parser-free reload, changed-directory/product
+and CLI controls remain unexecuted drafts in this phase.
+
+Complete project drafts retain source-inventory issues as well as individual
+translation failures. A shared, source-generated reverse dependency traversal
+withholds executable output for every dependent of an unresolved module,
+including cyclic components. Each added dependency gap names its immediate
+provider and original failing source; original diagnostics, source identities,
+draft code and hashes remain intact. Discovery issues enter this same path from
+the tracked-project importer. Separate unaffected modules retain their original
+result. An explicit dependency-work budget counts edge visits and directory
+searches; exhaustion withholds every uncertified executable without discarding
+its draft. This is a conservative failure boundary, not a module-loading or
+semantic equivalence proof. Its independent graph, public-project and codec
+controls remain unexecuted during drafting.
+
+Shared project worklist and item-admission rules are generated from JavaScript,
+including its exact UTF-16 identifier ordering. Changed providers select only
+their actual dependent sources for the next refinement pass. Actual compiler
+diagnostics can be retained beside their unchanged original source owners in
+both runtimes, without executing generated products. Detailed native signature
+error transport remains an implementation gap.
+The native module adapter now drafts the same whole-module reference selection
+already used by JavaScript. It retains actual shared selector decisions,
+successful complete-source ownership rewrites, imported reference types and
+inferred identity observations. One selected representation reaches sibling
+items, recursive components, owned emission captures and scope retries. Explicit
+`referenceSemantics: true` and Rust `reference_semantics: true` force this same
+context; false retains automatic selection. The existing independent shared-array
+source interpretation keeps its separate composition restrictions. This source
+draft does not establish native execution or complete heap/class semantics.
+The independent signature draft now also checks complete ordinary Rust modules
+through the existing frontend, checker and JavaScript emitter before exposing
+unrestricted public free-function signatures. Attribute-prefix and visibility
+selection uses a shared automatically translated policy on actual concrete
+function items. Private siblings participate in the whole-source check; private
+and restricted declarations supply no public signature. External signature
+assumptions retain a separate namespace-composition obligation. Original default
+signature behavior and the selected shared-array interpretation remain intact.
+This extension is a code draft with execution deferred.
+Under independent semantic translation, ordinary flat Rust free-function
+libraries also check and emit as one scope. Actual concrete owners must account
+for every checked declaration with no duplicate names. Private and forward
+dependencies remain actual translated functions; only unrestricted public
+functions receive export aliases using the emitter's real source/target mapping.
+Effectful entry points, other source items and unsupported interpretations retain
+their ordinary item diagnostics. Whole-module source checking and source
+generation do not establish native execution or complete project translation.
+Project-relative directory metadata does not disable this flat source-module
+path: the admitted source has no external namespace assumptions, and every
+function owner is checked within its actual complete module. Directory metadata
+continues to bind relative JavaScript imports, and the separate shared-array
+source interpretation keeps its existing composition requirements.
+
+Finalize each semantic batch before refreshing its generated source histories,
+naming bindings and requirement manifest. The normal authors remain the only
+writers. The [serial batch runner](../experiments/development-batch/README.md)
+records their dependency order as generated Links data, runs fresh bounded
+JavaScript processes and stops dependent generation when an author fails.
+Immutable source epochs and their full inverses remain preserved. Future
+generic source-history hosts should select independently certified complete
+epochs as data, without adding handwritten semantic inverses for every feature.
+Unknown, ambiguous or forged epochs still refuse under the existing gates.
+Author invocation receipts are drafting diagnostics, never execution evidence
+for a requirement. Local controls remain targeted; full native workloads run
+in CI while the next complete batch is drafted.
+
+CI report generation uses at most two independent measurement workers per
+shard; local report controls remain serial. Every complete selected module is
+measured once, with its real import context, both emitter comparisons and
+original inventory. Publication retains source order, and a failed context or
+worker remains a failure while the other measurements finish. Shard counts,
+deadlines and completeness gates remain unchanged.
+
+Historical raw snapshots may retain separately certified archive metadata when
+the complete current producer artifact matches an independently captured CI
+digest. The current artifact retains the real archive lengths and hashes, and
+both complete codec replays execute before the historical view is available.
+Only explicitly recorded metadata fields can be inverted; every owner, source,
+binding, emitted field, record census, limit and replay remains exact. Unknown
+whole artifacts refuse. The physical historical snapshot and its dependent
+receipts retain their original bytes. Source and metadata conservation do not
+establish native execution or requirement completion.
+
+Canonical Links escaping flattens bounded byte chunks, preserving the exact
+UTF-8 escaping alphabet and malformed UTF-16 replacement behavior. Large source
+archives must not retain a separate string fragment for every encoded byte.
+This changes resource use without changing the text or binary data contract.
+
 Declaration dependencies use one shared source algorithm to partition actual
 module bindings into recursive groups. A group publishes signatures atomically
 only after checking all complete original bodies together and rechecking each
@@ -2420,6 +4526,32 @@ constant function initializer or a named class containing only deferred plain
 methods and constructors. It checks complete syntax, exact names and unique
 owners; heritage, decorators, fields, static or computed members and eager
 initializers receive no such proof. Deferred class bodies remain untranslated.
+A separate complete-CST scope proof admits one actual constant binding of fresh
+literal arrays or objects, a root standard `new Map`/`new Set` with literal
+entries, or root `Object.freeze` on a literal container. All nested values must
+be literal data. Actual module and import owners must leave each required
+standard name unshadowed. Calls inside values, getters, computed keys, spreads,
+holes, destructuring, multiple declarators and unknown forms refuse. The shared
+JavaScript decisions generate native rules and both checked Links archives.
+This admits independently checked neighboring functions; the original constant
+initializer remains concrete source provenance and is not claimed as translated
+or executed. Complete module initialization and class translation remain required.
+An additional intrinsic-initialization interpretation admits literal regular
+expressions and fresh containers of deferred function/method bodies. It checks
+the complete native CST and keeps a distinct source classification. Computed
+keys, spreads, property reads, eager calls, classes with eager initialization and
+unknown constructors still refuse. Selected root `Map`, `Set` and `Object.freeze`
+forms retain the same required-owner and shadowing checks. Literal regular
+expression creation uses the intrinsic constructor; this fact does not validate
+complete regular-expression behavior or remove its possible abrupt completion.
+The [ECMAScript creation operation](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-regexpcreate)
+is the basis for separating that allocation from a source callback. The preceding
+classifier and its refusal inputs retain their own interpretation. Initializers
+remain untranslated source unless independently checked and emitted, and receive
+no invented signature. The public binding/scope inspectors and source-generated
+native decisions establish no execution evidence or complete module translation.
+The proof bounds are 65,536 UTF-8 source bytes and 4,096 CST nodes; exceeding them
+keeps the ordinary complete-module path and never supplies a partial proof.
 Other wider module forms require the real complete-module check. Unknown
 scope cannot select standard builtins by spelling. Generated auxiliary
 composition requires an independent closed profile: every complete function or
@@ -2500,6 +4632,51 @@ product model. This bounded support does not establish the complete twelve-way
 translation or project-wide semantics contract.
 
 ## Structured transformation and binding safety
+
+Automatic source dependency generation now has an explicit CST alias profile.
+It reads each actual imported/exported name, gives aliased or colliding dependency
+functions unused lexical names and rewrites only resolved declarations and
+references. Imported references are substituted as one batch before removing
+imports, so multiple aliases keep one provider identity without introducing
+duplicate local declarations. Root declaration names remain stable. The compiler retains every
+original module, import spelling, hash and interval alongside transformed source,
+actual removed imports, declaration correspondences and rename hash steps. The
+full typed Links definition carries this provenance directly. Source-owner checks
+still reject cross-module capture or initialization effects; unsupported module
+forms retain their original source. The actual scalar-assignment definition uses
+this automatic path for a real aliased dependency, without handwritten native
+replacement semantics. The source profile bounds binding rewrites to 1024 and
+retains the existing module/source limits. Broader imports, live module state,
+contextual/escaped semantic token handling and full module translation remain
+required work. Public TypeScript declarations now include the seventeen added
+source-definition factories, Unicode version/normalization and allocation rules;
+no type or behavior checks have run.
+
+
+The module binding draft reads actual `name`, `alias` and `source` CST field
+links. Imported/exported external names do not become lexical references merely
+because a local binding has the same spelling. Named import shorthand expands
+to an explicit local alias during renaming; local export shorthand retains its
+public export spelling. Existing import/export aliases, default/namespace imports,
+reexports and namespace exports keep their respective source roles. The shared
+JavaScript definition generates native Rust and an editable typed Links program;
+host adapters only transport actual syntax nodes, field relations and source
+coordinates. Rename edits retain the new identifier's explicit offset within
+their generated prefix/suffix, preserving both UTF-16 and UTF-8 correspondence.
+This follows the [ECMAScript import entries](https://tc39.es/ecma262/2025/multipage/ecmascript-language-scripts-and-modules.html#sec-imports)
+and [export entries](https://tc39.es/ecma262/2025/multipage/ecmascript-language-scripts-and-modules.html#sec-exports).
+
+Twelve future module controls retain exact original/renamed sources, independent
+Node namespace observations, lexical shadowing, comments/string spellings and
+Unicode rename offsets. Native controls execute the actual native-produced
+JavaScript artifact. Both codecs and all four emissions retain the complete
+shared definition; none ran. The existing native formatter reported an internal
+trailing-whitespace failure while authoring this definition. Complete generated
+source is retained under an explicit preserve-format selection; that failure,
+its log and the original formatting gate remain unresolved. Dependency alias
+composition, contextual/escaped semantic token analysis, full module state and
+all inherited semantic translation requirements still need drafts.
+
 
 Parse → links → structured transform → emit or translate is one path. Along it,
 the following work end to end on the common representation:
@@ -2696,6 +4873,885 @@ the applicable dependency problems are repaired. An unavailable registry cannot
 be presented as a current audit.
 
 ## Acceptance and evidence
+
+The source-project snapshot draft reuses the existing complete graph archive
+for registered source languages. It stores every original concrete node,
+field, token, trivia, span, recovery flag and disconnected graph member, plus
+the original term directory, selected syntax state and allocator state. Explicit
+source roots reference every original outer Syntax root, including separately
+attached views. A source directory binds paths, selected languages and original
+byte digests. Equal names or source bytes establish no concept equivalence.
+
+Concrete syntax remains the default. Selecting an abstract view retains the
+complete original concrete graph and resolves view references against it.
+Reload invokes neither a parser nor current-catalog dispatch. Append extension
+reuses every preceding complete graph and refuses replacement of an existing
+source identity. New sources parse under their declared current definitions;
+old graph definitions and cached state remain exact. Rust semantic project
+packets now reuse this storage; their preceding concrete layout keeps its own
+reader and complete historical source context.
+
+Six future projects cover the priority source languages, JSON, empty trees,
+Unicode paths and escapes, recovery nodes and language aliases. Two append
+controls retain deliberately selected syntax and allocator gaps that reparsing
+cannot recreate. Eight refusals, complete binary state comparisons, native
+products, three root-selection controls and full predecessors at 4f946613 remain
+unexecuted. A snapshot preserves its selected parser graph. It does not establish
+complete native grammar coverage, production parser independence, every concept's
+formal meaning, exact-ID parser integration or complete source translation;
+all those requirements remain mandatory.
+
+Supplied Rust source projects now have a composition draft shared by both
+packages. The complete lexical module plan skips unrelated bodies and macro
+token trees, preserves actual inline parents and resolves the ordinary `.rs`
+and `mod.rs` layouts. Literal outer module paths now resolve within the supplied
+inventory, including inline directories and root-like ownership for path-loaded
+files. The shared definition tracks the outstanding ordinary-file stem
+separately from the physical directory. Parent components may stay within the
+inventory; portable source identities never select absolute host paths.
+Interpreted attributes retain explicit zero-output source intervals and their
+complete original CSTs. Arbitrary supplied filenames remain Rust source when
+selected by an actual module path. These decisions follow the
+[Rust 1.90 module resolver](https://github.com/rust-lang/rust/blob/1.90.0/compiler/rustc_expand/src/module.rs).
+Missing or ambiguous files, recursive file expansion, uninterpreted
+configuration, inner/duplicate path attributes and exceeded budgets refuse. The
+original headers and bodies remain exact; replacing a module semicolon with
+explicit braces records every synthetic boundary and both UTF16 and UTF8 source
+coordinates. Module inner attributes retain their actual source attachment.
+This follows the [Rust module contract](https://doc.rust-lang.org/reference/items/modules.html).
+
+Ordinary admitted `const fn` declarations and inherent methods now enter the
+existing runtime function interpretation. Associated constants use their actual
+datatype namespace, source value origin and existing constant-read construction;
+callable constants remain values applied through their real signatures. Closed
+const-predicate proofs still require their independently selected complete model.
+Runtime admission never creates those proofs. Complete source snapshots retain
+the original qualifiers, attributes and concrete definitions. This follows the
+[runtime behavior of const functions](https://doc.rust-lang.org/reference/const_eval.html#const-functions);
+it does not supply full const-context validation, compile-time evaluation or a
+const-capable emitted provider interface. Generic, trait, async, unsafe, privacy
+and complete source construct coverage remain required. The added source draft
+and deferred controls establish no execution evidence or overall completion.
+
+Ordinary nongeneric module type aliases now unfold through the existing checked
+Rust source type and ownership interpretation. Complete declaration discovery
+precedes use; definition contexts retain their actual imports and nominal
+owners, including forward references. Eager reconstruction checks unused aliases
+before a public runtime interface can be published. Cycles, missing owners,
+namespace conflicts, elided item reference lifetimes and expansion budgets stay
+explicit. Source offsets survive the frontend's reference-token splitting.
+Bounded node accounting precedes copies so a compact doubling definition cannot
+authorize exponential materialization. Alias names and complete definitions stay
+in original CST archives; runtime exports retain only actual source values.
+Transparent typing follows the [Rust type-alias contract](https://doc.rust-lang.org/reference/items/type-aliases.html)
+and supplies no cross-language equivalence certificate. Generic, constrained,
+local and associated aliases, all constructor/inherent paths through aliases,
+complete namespace/privacy rules and arbitrary lifetimes remain obligations.
+The source draft and all new controls remain unexecuted.
+
+Direct nominal aliases also reach the actual datatype's named-record syntax,
+enum variants, patterns, associated functions, constants and receivers. Inherent
+implementations through an alias keep the underlying datatype owner. Checked
+namespace views are prepared before bodies; original constructor evaluation and
+ownership stay with the existing frontend. Type items do not acquire independent
+tuple/unit value constructors, and value bindings retain their separate
+namespace. Alias lookup observes actual module boundaries: outer items require
+explicit paths, as specified by [Rust item scopes](https://doc.rust-lang.org/reference/names/scopes.html#item-scopes).
+Preceding complete source definitions remain separate historical inputs.
+Wrapper/primitive/generic access, remaining record forms, local/associated type
+aliases, complete import namespace rules and every broader obligation remain
+required. Deferred products include the actual shipped planning source compiled
+in CI against independent JavaScript/native lexers; no local control has run.
+
+The ordinary frontend checks the composed source. Library mode explicitly
+records an empty frontend entry only when the source has no main. The checked
+program archive also retains each complete original CST as a source-qualified
+graph, with explicit members, registered points and original byte digests. Both
+codecs reload those concrete graphs without original files or a parser call;
+the source hash checks reconstructed tokens rather than a saved input shortcut.
+Copied graph coordinates and equal labels establish no concept equivalence.
+The installed `source-project` command uses the shared argument definition and
+defaults to complete semantic and concrete Links output; target source and
+binary graph output are explicit selections. The tracked-source drafting tool
+reuses the existing complete Git inventory without clones, installs or compilers.
+
+Known source raises and aborts can take the actual result domain of their
+continuation. Shared result-role definitions preserve constructor arguments,
+terminal lets, prints and both branches of a wholly nonreturning conditional.
+Returning Unit values, unknown calls and only partially throwing conditionals
+cannot supply this proof. The rule follows the
+[ECMAScript throw completion](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-throw-statement).
+
+Twenty future multi-file products, seventeen refusal inputs, a macro-planning
+control and twelve ordinary source exception controls retain complete preceding
+hosts at cd3e4be5. Original multi-file Rust compiler oracles, native products,
+CLI selections, both codecs and all four emissions are deferred controls.
+No control has executed. Complete Rust privacy, configuration, include/macro
+semantics, Cargo and dependency interfaces, original-file diagnostic projection,
+native grammar independence, all source constructs and every preceding global
+concept, knowledge and discovery requirement remain mandatory.
+
+Ordinary flat Rust module publication now derives interfaces from the complete
+checked source owners, including private dependencies. Public constants export
+their actual values; callable constants retain constant signatures. Public
+function signatures retain their actual parameters and results. Restricted
+visibility stays private, raw and Unicode names retain their normalized source
+identity, and generated export bindings avoid every emitted identifier. Imported
+callable constants enter the existing computed-application path, retaining local
+shadows, extra-argument effects and the distinction between a constant read and
+a zero-input source call. Checked graph projections keep their own read form.
+Twenty future publication controls and eight consumer controls, including two
+effect traces, retain complete predecessors at 21af9724, native products, both
+codecs and four emissions. They remain unexecuted. Original native provider ABI
+bridges, imported Rust namespace composition, complete module interfaces,
+constant evaluation and every earlier translation requirement remain mandatory;
+these value interfaces do not establish those broader contracts.
+
+Rust source constants now retain an actual constant declaration kind during
+source resolution. Their values remain distinct from free function items even
+when an expected type is callable. A shared construction captures the existing
+checked zero-input value read once before using it; actual function-pointer
+constant values then use the ordinary checked Apply path. Callback argument
+contexts come from the constant value's real pointer signature. Source-qualified
+owners, imports, raw identifiers and local value shadows remain explicit.
+Scalar constants cannot be called as their internal lowering functions.
+Unqualified ordinary module values belong to their actual current module; parent
+items require explicit paths or imports. Local values retain their own scope.
+Zero-argument source calls remain actual applications when a pointer result is
+expected; they cannot be reinterpreted as function-item references.
+Unrepresented constant patterns report a gap instead of becoming binders,
+consistent with the [Rust constant-pattern contract](https://doc.rust-lang.org/reference/patterns.html#constant-patterns).
+Forty-one future values, invalid-call and pattern controls, complete source
+predecessors, both codecs, four emissions and native products remain unexecuted.
+This restores the source value distinction in the preceding constant lowering;
+it does not supply complete [compile-time evaluation](https://doc.rust-lang.org/reference/const_eval.html).
+Cycles, constant overflow/error diagnostics, full contexts, value/type-correct
+constant patterns, promotions, statics and associated/generic constants remain
+obligations alongside complete grammar and translation support.
+
+Direct terminal Rust function-pointer result blocks now reuse the actual
+function or explicitly typed closure result as their missing annotation
+context. Tail expressions and terminal returns remain distinct from discarded
+values; trailing source work cannot be dropped. Parentheses, move keywords,
+written types, qualified function owners, nested factories and source capture
+coercions retain their preceding checks. Twenty-five future values, capture
+refusals, discarded-tail and unreachable-work controls, complete predecessors,
+both codecs, four emissions and native products remain unexecuted. Contexts
+through preceding bindings and arbitrary branches, full source constant
+meanings, generics, ownership and generated runtime reimport remain obligations.
+
+The ordinary Rust source draft collects complete actual declaration headers
+before inferring callback bodies. A shared balanced lexical-group algorithm
+keeps strings, raw strings and comments atomic and grows source windows on
+demand. This private inventory supplies signatures only; its temporary tree is
+discarded. Every final original body still passes through the complete existing
+syntax, type and source-ownership passes before a program can be returned.
+Actual named, computed, local and qualified callable signatures now supply
+closure argument annotations. Local shadows retain their independent source
+owners, and raw `move` identifiers are not treated as capture keywords.
+Contextual parenthesized closures retain their original delimiters and real
+signature constraints. Module item visibility follows the
+[Rust scope reference](https://doc.rust-lang.org/reference/names/scopes.html).
+Thirty-three future values, capture refusals, nine lexical-group and eight
+parenthesis controls, complete predecessors, both codecs, four emissions and
+original/native products remain unexecuted. Generic trait callbacks, contextual
+return propagation, arbitrary contextual expressions, out-of-line modules and
+complete ownership remain obligations. Header discovery supplies no replacement
+body semantics and establishes no complete Rust grammar or translator claim.
+
+Ordinary Rust Copy closure annotations may additionally come from an actual
+direct function pointer initializer type. Written annotations retain their own
+checked constraints; missing parameters retain their original positions and
+missing results use the actual declared result. Without a pointer context, an
+already concrete proven Copy body may supply its missing result annotation.
+Expression bodies are admitted when the source omits its result annotation;
+written results still require blocks, as specified by the
+[Rust closure reference](https://doc.rust-lang.org/reference/expressions/closure-expr.html).
+Capture selection, anonymous identities and noncapturing pointer coercion retain
+their existing independent checks. Thirty-six future values, retained refusal
+inputs and complete predecessors cover scalar domains, ordinary completions,
+Unit, captures, both codecs, four emissions and original/native products. They
+remain unexecuted. General inference from later uses, contextual callback
+arguments and returns, parenthesized contexts, traits, async and complete
+ownership remain obligations. A result without a concrete source domain keeps
+its preceding explicit-type diagnostic; no invented default type is assigned.
+
+Ordinary standard Rust scalar `str`/`String` byte lengths have a distinct
+checked operation with the existing unsigned 64-bit usize domain. They preserve
+UTF-8 byte counts rather than JavaScript UTF-16 units or grapheme counts. Actual
+source owners, readonly reference layers, source language and String
+representation remain checked. The complete scalar-count algorithm is shared
+Links source and automatically generated native code. Target bindings use their
+standard UTF-8 measures; this declares bindings, not a cross-language semantic
+equivalence certificate. JavaScript reserves its URI intrinsic against source
+name shadowing and measures each actual operand once. The
+[Rust string contract](https://doc.rust-lang.org/std/primitive.str.html#method.len)
+and [ECMAScript URI encoding](https://tc39.es/ecma262/2025/multipage/global-object.html#sec-encode-1)
+define the byte and scalar boundaries. Thirty-one future source values,
+twenty-one independent scalar counts, nine invalid-unit sequences and complete
+predecessor sources cover readonly/owned parameters, temporaries, captures,
+codecs, four emissions and native products. These controls remain unexecuted.
+The UTF-16 representation, other source widths, mutable ownership composition
+and complete source environments remain separate obligations.
+
+Ordinary Rust vector/slice lengths also have an exact source path in the
+existing 64-bit usize model. The same Length primitive has an explicit unsigned
+64-bit codomain; this is not a general permission to narrow arbitrary integers.
+Projection reconstructs an exact length conversion before rechecking, and the
+four renderers preserve the integer representation. The receiver is read once.
+Existing explicit `as f64`, empty queries and nonordinary source profiles keep
+their preceding routes. Twenty-one future values and complete predecessor
+sources cover locals, comparisons, readonly parameters, Copy captures, both
+codecs, all emissions and original/native products. None executed. Other target
+widths report an uncovered profile; full usize arithmetic and complete
+collection ownership remain obligations.
+
+The ordinary Rust pointer draft reads safe `fn` signatures over direct immutable
+Copy domains, including implicit Unit results and optional parameter labels.
+Free function values retain their complete qualified declaration owners and are
+distinct from zero-argument calls. The existing callable representation carries
+parameters, results, returned pointers, local aliases and invocations. Actual
+noncapturing closure evidence licenses coercion at typed bindings and both
+named and computed callback arguments; a matching signature alone cannot do so.
+Pointer values remain Copy source captures. Physical identity/address casts and
+Display behavior refuse until their real source representation is available.
+The [Rust pointer reference](https://doc.rust-lang.org/reference/types/function-pointer.html)
+defines the bare signatures and function-item/noncapturing-closure coercions.
+Twenty-five future values, nine refusals, full predecessor sources, native
+products, both codecs and four emissions remain unexecuted. Unsafe/extern/
+variadic conventions, lifetime and owned domains, complete source inference,
+generated runtime wrappers and observable pointer representation remain required.
+
+The ordinary Rust source draft maps explicitly typed closures onto existing
+Lambda and Apply nodes. Parameters, results and actual free captures require
+proven direct immutable Copy source meanings. The same source capture walker
+retains lexical shadows and actual outer variable owners. Optional `move` copies
+only these admitted values. Local aliases, zero-argument applications and
+parenthesized invocations retain real calls; ordinary completion construction is
+reused inside the actual closure body. Distinct anonymous source identities
+cannot merge merely because their callable signatures agree. Equal-owner joins
+remain possible; other coercions require their own checked source proof.
+The [Rust closure reference](https://doc.rust-lang.org/reference/expressions/closure-expr.html)
+defines the explicit block result syntax, anonymous types and capture choices.
+Twenty-four future values, eight source refusals, full predecessor history,
+both codecs and four emissions remain unexecuted. Contextual type inference,
+pattern parameters, owned/mutable/reference captures and results, escaping
+lifetimes, trait coercions, generated Rc wrappers, async and complete ownership
+and drop behavior remain obligations.
+
+Recursive callable source contracts now retain each actual parameter and result
+origin through pointers, Copy closures, returned callables, immutable tuples and
+module type aliases. Bounded structural projections carry original source owner
+atoms into shared checks. Pointer-sized/fixed-width collisions cannot disappear
+inside a signature or a join; missing facts and exhausted projections refuse.
+These are typing checks, not certificates that function bodies have equal meaning.
+Actual Boolean, binary64 and byte-character literals supply their own source
+owners; ordinary characters retain their separate unsupported domain.
+
+379 complete future programs retain independent source types, recursive source
+owner trees, values, traces and invalid source contracts. Canonical Rust emission
+uses the existing Rc/dyn Fn value encoding and canonical 64-bit pointer integer
+types. Independent assertions check both that emitted interface and every
+original source interface. The initial 376-program unexecuted draft remains
+complete hashed Links history: its incorrect selection of the scalar-only source
+interface model is corrected without removing inputs or original assertions.
+That existing scalar model still rejects function domains. Exact source callable
+ABI emission, generated wrapper reimport, all broader ownership and whole-source
+translation obligations remain required. Neither these controls nor the
+represented source programs have executed.
+
+Standard primitive scalar operations also have a function-value source draft.
+Shared signature rules select actual parameter/result owners; the frontend
+projects their existing complete method definitions into the common callable
+representation. Selection, signed properties, saturating/wrapping arithmetic,
+bit queries, shifts/rotations, unsigned magnitudes and scalar defaults therefore
+reuse their original implementations in pointers, callbacks and returned values.
+Shift counts remain u32, bit counts return u32, and pointer-sized identities
+remain distinct. Synthetic binders cannot capture source names or conflate
+parameter origins. Ordinary path resolution and Default-trait ownership remain
+mandatory. This follows the [Rust function-item contract](https://doc.rust-lang.org/reference/types/function-item.html).
+
+The two preceding unsupported function-value inputs remain complete positive
+native-product controls; full original fixtures are hashed history. Every
+unaffected field, input, assertion and version scope stays intact. Shared
+deferred product controls retain original and canonical signatures, recursive
+owner trees, both codecs, four targets, exact values and ordered effects.
+Generic From function values, escaping Option/Result signatures, exact source
+callable ABI, generated runtime reimport and full source translation remain
+obligations. This is a source draft without executed observations.
+
+Expected function-pointer signatures now also select generic primitive From
+function values. The actual expected parameter's complete primitive source
+origin selects an existing standard conversion relation; the explicit associated
+destination keeps its own result domain and is checked independently against
+the expected result. Typed bindings, named/computed callback positions and direct
+returned-pointer contexts reuse the same source construction. Missing contexts,
+borrowed/nonprimitive inputs and unimplemented standard relations refuse.
+Every original conversion implementation and its input evaluation remain shared.
+Deferred controls retain the complete source/destination matrix, independent
+boundary values, recursive source contracts and original/generated native
+products. The corrected preceding callable refusal remains a complete positive
+input; its full fixture and generation recipe remain authenticated history.
+Later-call inference, general traits, Into/TryInto and complete project coverage
+remain obligations, without tests or execution evidence from this draft.
+
+Immediate standard vector/slice get, first and last lookups have shared lazy
+source plans. Exact usize indices and unsigned lengths govern presence; empty
+last subtraction and absent element reads remain inside the selected success
+branch. Presence checks retain non-Copy elements without moving them. Copied
+scalar unwrap_or and unwrap_or_default results retain complete primitive owners,
+including pointer widths, positive floating zero and Unit. Receiver, index and
+eager fallback expressions run once in original order. Both runtime adapters
+only transport original source facts and existing AST operations. Deferred
+original/generated products retain independent values, traces, source contracts,
+both codecs, all targets and valid-but-unsupported versus invalid-source
+distinctions. Escaping Options/references, ranges, arbitrary mappers, mutable
+lookups, custom indexing, complete ownership and whole-project semantics remain
+required; these controls supply no executed observations.
+
+The same lookup plans draft `unwrap_or_else` after admitted copied/cloned value
+consumers. Source adapters retain the complete callable expression in an eager
+binding and place only its zero-argument invocation in the absent branch. Shared
+admission checks require an actual known, unborrowed callable result; its full
+source owner must match the selected element, including pointer-sized integer
+distinctions. Existing immutable Copy closure/callable rules retain capture and
+result restrictions. Neither a matching function type nor a name substitutes
+for that source result. Callable creation is separate from invocation, following
+[Option::unwrap_or_else](https://doc.rust-lang.org/std/option/enum.Option.html#method.unwrap_or_else).
+Independent originals cover selected/absent values, signed zero, Unit, captures,
+unused failing fallbacks, extreme indices, slices and complete effect traces.
+They remain unexecuted under the Node22.15/24, Rust1.90–1.99 and 64-bit pointer
+profiles. General FnOnce/FnMut, non-Copy captures/results and earlier lookup,
+ownership, allocation and project obligations retain their full scope.
+
+Presence-selected scalar lookup predicates use the same captured callable path.
+`is_some_and` returns false on absence; `is_none_or` returns true. On presence,
+only the selected value reaches the predicate once. Shared plans retain those
+different defaults; admission checks require an actual one-argument callable,
+complete parameter/result origins and a Boolean result. The selected primitive
+owner is checked against the parameter owner, preserving usize versus u64 even
+on a 64-bit target. Closure captures, evaluation order and source scopes retain
+the same immutable profile. Their documented
+[Option predicates](https://doc.rust-lang.org/std/option/enum.Option.html#method.is_none_or)
+fit the selected Rust1.90–1.99 range. Original/generated value, trace, codec,
+target and native controls are drafted and unexecuted; general borrowed/non-Copy
+predicates, mutable captures and preceding full ownership obligations remain.
+Lookup discovery also constructs this same canonical source projection before
+the ordinary semantic check. It never substitutes an unresolved free function
+named after a method. Final source-owner validation remains required.
+
+Actual standard scalar lookup receivers and terminal element owners can supply
+context for omitted closure annotations. Shared context selection chooses the
+zero-argument fallback or one-argument Boolean predicate signature; the normal
+Copy closure reader retains explicit source types, captures, spans and anonymous
+closure identity. The context is a callback signature, not authority to coerce
+a captured closure into a source function pointer. Unknown receiver/element
+ownership supplies no context, and explicit usize/u64 distinctions and literal
+overflow still pass through the ordinary checks.
+
+Copy closure parameters may also use a
+[wildcard pattern](https://doc.rust-lang.org/reference/patterns.html#wildcard-pattern).
+A hygienic internal argument retains its type and arity without making `_` an
+expression binding or shadowing an outer source name. Repeated wildcards remain
+separate arguments, and every actual call argument still evaluates in order.
+Source spans retain the original pattern. This applies only to the existing
+direct immutable Copy parameter/capture/result profile; general destructuring,
+mutable patterns, non-Copy moves and drop behavior keep their full obligations.
+Inferred, partly annotated, wildcard and standard-function-item originals,
+malformed inputs, source-owner controls and traces remain drafted and unexecuted.
+
+The canonical discovery requirement also applies to byte ASCII classification,
+checked integers, integer bits/magnitudes, primitive associated calls and
+TryFrom, primitive selections, standard owned calls, wrapping shifts and checked
+nonescaping String views. Their existing shared projections construct the real
+source operations during discovery. Synthetic method-name free calls and
+unregistered standard trait-function calls cannot stand in for those operations
+before `checkProgram(surface)`. Arity, actual receiver/argument owners, borrow
+consumers and the final source-origin pass remain required; the check itself is
+unchanged. Deferred cross-family originals retain matching-name decoys, forward
+siblings, eager effect order, complete source contracts, both codecs, four
+targets and independently compiled products. This source repair supplies no
+executed observations and does not establish full trait or grammar coverage.
+
+The lookup draft also admits cloned values for the supported scalar domains and
+actual standard owned Strings. Shared source-owner rules govern that choice;
+bounded projections cross only registered standard containers and retain each
+complete terminal owner. The existing owned string value encoding supplies the
+selected value; the original vector remains available. Shared default terms
+retain empty owned strings separately from borrowed str and primitive defaults.
+The preceding copied-String refusal remains intact. Full scalar predecessors,
+Unicode text, UTF8 measurements, signed-zero choices, eager operand traces and
+original/canonical signatures have deferred controls. Flat fixture directories
+retain every deep owner edge without increasing the data codec's depth budget.
+Custom Clone effects, capacity/pointer/allocation observations, mutable aliases,
+complete borrow/drop behavior and escaping Options remain separate obligations.
+Neither this value encoding nor source history establishes semantic equivalence
+between unrelated owner definitions or executed verification.
+
+Eleven stable u8 ASCII method predicates have complete shared source plans over
+the actual byte domain. Typed aliases, immutable reference/Box layers and byte
+literals retain their standard primitive owner. Each receiver is captured once;
+result values retain the actual Boolean owner. Classification distinguishes
+every range boundary and non-ASCII byte, including the exclusion of vertical
+tab from Rust's [ASCII whitespace](https://doc.rust-lang.org/std/primitive.u8.html#method.is_ascii_whitespace).
+495 complete deferred source programs retain independent regular-language
+expectations, native source oracles, both codecs and four targets. String/char
+ASCII APIs, nightly octal predicates, explicit borrowed associated signatures,
+mutable transformations and full project coverage remain obligations. Source
+generation and these declarations establish no executed verification.
+
+Omitted JavaScript inputs to inferred callable parameters enter inference as
+actual undefined terms with fresh present domains. A shared source plan selects
+only original variable owners without written initializers. Declared domains
+and existing default initialization retain their independent constraints. Named,
+computed and record-method transports reuse the original optional call-binding
+worklist, preserving original parameter owners and supplied-argument evaluation.
+Both runtimes generate their slot decisions from the same source definition.
+Twenty-six future values, three effect traces, declared-domain refusals and
+complete predecessor source history remain unexecuted. Unsupported coercions,
+general variance/unions, source reflection and full callable environments remain
+obligations; an inferred optional domain establishes no runtime result by itself.
+
+Nameless array binding defaults retain a real initialization boundary: their
+actual pattern opening when no descendant BoundName exists. This partitions the
+original ordered binding positions without inventing a source variable. Earlier
+parameters remain available and later parameters remain uninitialized. Existing
+binder partitions retain their exact checks. Whole-formal and nested recursive
+adapters use the same generated source rule in both runtimes, then reuse the
+existing lazy defaults, ordered body entries and represented iterable operations.
+Empty object destructibility, arbitrary iterator effects/closing and full
+parameter environments remain separate obligations. Twenty future values, four
+effect traces, a later-name refusal and complete predecessor sources remain
+unexecuted; source generation and both codec/emission controls establish no
+behavior or completion.
+
+Lexical object binding declarations now share the actual object-pattern planner
+with formal parameters. Flat IdentifierName properties retain aliases and exact
+initializer intervals. Required fields keep their original field projections,
+including tagged-constructor substitution; defaulted fields reuse the existing
+lazy undefined-only field protocol. The actual right-hand side is evaluated
+once before ordered initializers. Both `const` and mutable `let` retain their
+actual bound names, lexical scope and temporal initialization order. Earlier
+initialized names are available without inventing a function boundary; self,
+later and initialization writes still need broader environment interpretation.
+The source name census uses the same plan, so names read inside an initializer
+cannot become invented declarations. Native syntax decisions and both complete
+editable Links libraries are generated from JavaScript.
+
+The obsolete refusal for the exact source
+`function selected(values){let {first}={first:1};return 0;}` is replaced by a
+same-input parse/value control; all preceding assertion sources are retained
+with their hashes at `51140898`. The
+[lexical declaration rules](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-let-and-const-declarations)
+and [keyed binding initialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-keyedbindinginitialization)
+define the correction. Thirty-three future values and eight refusals declare
+original Node, translated JavaScript/native Rust, both codecs and all four
+emissions under explicit language/runtime ranges. None executed. Nested,
+computed and string-key patterns, inherited/getter/proxy protocols and full
+initialization environments remain obligations.
+
+Readonly array-helper admission also retains its complete actual-body proof
+when the declared result is an array of a disjoint primitive domain. A numeric
+result cannot retain a String-array identity, for example. Integer refinements
+remain one domain; optional, compound, unknown and same-domain results gain no
+new admission. Every occurrence, alias, capture, rebinding and unknown-call
+check remains, followed by complete type checking. The source decision and its
+entire native implementation are generated together. Four future independent
+source products and direct body/refusal controls are drafted, without execution.
+Forward unavailable helper summaries remain an obligation.
+
+Final lexical object-rest bindings have a separate source profile. Older
+required/default-only planners retain their exact rest refusals. The new plan
+retains actual spread/local token positions, excludes the original property
+names rather than their local aliases, and requires the rest binding to be
+final without an initializer or trailing comma. Both inference engines wait
+for the complete closed record shape, then transport shared selected field
+positions and their independent types. The checked copy projects the actual
+runtime property order into its complete remaining layout. It allocates one
+fresh outer record through the existing reference model while preserving
+shallow field references. Empty copies and repeated exclusions retain their
+ordinary meanings. No new checked constructor is introduced.
+
+This follows [RestBindingInitialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-restbindinginitialization).
+Twenty future original/emitted/native source products cover values, runtime
+order, mutable bindings, fresh identity, shallow sharing, effects and the exact
+former rest-refusal input. The entire preceding fixture, writer and assertions
+at `62160f11` remain in hashed Links history. Five syntax/domain refusals retain
+the incomplete boundaries; both codecs, all four emissions and explicit runtime
+ranges remain required. None executed. Full Symbol/getter/proxy/inherited and
+primitive ToObject behavior and recursive/computed/string-key patterns remain
+separate code obligations. These source drafts establish neither
+language completeness nor runtime parity.
+
+Object rest in the existing synchronous formal contexts now reuses that exact
+closed own-field copy operation. Named declarations, constant arrows/function
+expressions, namespace methods and callback closures retain distinct source
+contexts. The formal planner preserves each actual argument slot, ordered
+property exclusions and bound name. Defaults precede the copy; the rest binder
+is unavailable to earlier initializers and remains an ordinary mutable source
+parameter binding afterward. The shared source form constructs the same copy
+node for lexical and formal adapters. Every preceding required-only and
+default-only exported planner keeps its original rest refusals.
+
+Twenty additional future source products and six refusals cover these contexts,
+multi-pattern slots, actual order, empty copies, captures, local rebinding,
+fresh identity and shared children. The exact formerly refused callback source
+is retained as a positive value case; the entire preceding fixture and assertion
+sources at `2c5f652e` remain as hashed Links history. Complete source definitions,
+both codecs, four emissions and explicit runtime ranges remain deferred.
+Whole-parameter defaults, mixed recursive patterns, async/generator environments
+and complete property protocols remain implementation obligations.
+
+The recursive object-pattern source now represents every selected parent with
+an explicit owner edge. One automatically translated plan supplies original
+property/binding token positions, complete nested initializer intervals and
+each rest copy's actual exclusions. A parent is selected once before its
+descendants; its default runs before those descendant bindings. Initializer
+scope partitions at the first actual descendant binding, retaining earlier
+names and the existing self/later/write restrictions. Lexical name discovery
+uses the same complete tree. Both runtime adapters consume this plan for
+declarations and the existing synchronous formal contexts, keeping required
+fields on their original projection path. No new checked constructor or
+fabricated source token is introduced. Flat formal routes and all earlier
+exported flat planners retain their original contracts.
+
+Thirty-one future full source products and eight refusals cover nested aliases,
+mutable bindings, defaults, separate inner/outer rest order, original captures,
+named/constant/namespace/callback contexts and thirty-two levels of nesting.
+The shared depth limit is explicit source data and exhaustion refuses. Complete
+paired definitions, text/binary codecs, four emissions and native products
+remain unexecuted. The exact formerly refused lexical nested-record source is
+retained as a positive value control. A second unchanged historical callback
+uses a Number as its nested receiver: it still requires a complete primitive
+property protocol, so the future negative control now expects the existing
+field-access diagnostic after syntax admission. Its original source/value and
+all preceding assertions at `a8114383` remain independently retained; this
+diagnostic prediction comes from the unchanged property checker, not executed
+evidence. These meanings follow the same linked keyed-binding initialization
+specification above. Empty pattern coercibility, mixed arrays/iterators,
+computed/String keys, full primitive/prototype protocols, whole-parameter
+defaults and complete parameter environments remain implementation obligations.
+
+The mixed recursive binding draft extends the same eight-column owner plan with
+array roots, elements, rest and elisions. Array positions count only preceding
+rows owned by that immediate array; nested descendants never advance its index.
+Object-to-array, array-to-object and alternating recursion use one source
+algorithm. The complete preceding object-only definitions remain separately
+available, with their unchanged refusal contracts and source graph. Copying a
+definition is not a proof of equivalent meaning. The current generic definitions
+are automatically translated together and published as a distinct Links source
+program in both packages.
+
+Adapters retain original token intervals and logical formal slots. Selected
+iterables and nested parents are captured once. Existing index/default/rest,
+record projection and own-field copy operations implement the selected values;
+no new checked constructor is introduced. Existing simple flat array routes
+remain separate. Newly admitted mutable default/rest/elision/nested inputs and
+mixed formal inputs retain their exact source and independent future value
+controls; full preceding assertion and fixture sources at `1b0f00b2` are retained
+as hashed Links history. Future controls include thirty-two alternating levels,
+immediate-owner indexing, lexical initialization order, mutable bound cells,
+fresh rest arrays and all existing synchronous callable contexts.
+
+The supported iterator representation remains finite homogeneous arrays,
+positional tuples, strings and immutable collections. Tuple rest still requires
+an array representation. Nullable iterator guards are source drafts; exact error
+text depends on the original source callsite and Node/V8 version, and has no
+recorded observations. Empty object coercibility, missing nested receiver
+protocols, heterogeneous mutable unions, custom/live iterators and IteratorClose,
+whole-parameter defaults and complete initialization environments still require
+implementation. The future full source products, both codecs, four emissions
+and native parity checks remain unexecuted during the full-draft phase.
+
+The latest full-draft continuation is preserved verbatim in
+[`full-requirements-drafting-until-finished-2026-10-25.txt`](../parity/sources/full-requirements-drafting-until-finished-2026-10-25.txt).
+It reinforces the existing critical full-scope rows and changes no requirement,
+fixture, runtime, assertion or later verification obligation.
+The [October 27 continuation](../parity/sources/continue-bulk-draft-without-tests-or-compilation-2026-10-27.txt)
+explicitly requires continued implementation drafting while work remains in the
+handoff, without local tests or build compilation. Source-only code generation
+writes the draft; it executes no represented source program and produces no
+executable build artifact. Every later compilation and verification obligation
+remains binding, and recorded handoff work does not replace continuing it.
+
+Conditional Rust pattern chains now have a shared source plan over actual
+ordered operands. Pattern scopes extend into later conditions and the selected
+body. Each Boolean or pattern failure short-circuits all later operands.
+The outer `else` is parsed and checked in its original scope. A failed inner
+condition cannot capture an outer name shadowed by a matched pattern.
+
+The lowering uses existing products, optional values and lazy coalescing.
+Success carries a one-field product around its complete payload; failure carries
+only absence. This distinguishes even a successful Unit or nullish payload from
+failure. The final continuation selects the actual outer fallback lazily and
+projects the original result. There is no new checked constructor, target-only
+execution engine or replacement native algorithm. Shared selection/layer rules
+are automatically translated; both hosts transport actual patterns, scopes,
+types, operands and checked terms.
+
+These future controls are bounded to Rust `>=1.90.0 <1.100.0`, edition2024,
+and the existing Node22/24 oracle profiles. The source interpretation follows the
+[Rust Reference's condition order and binding scope](https://doc.rust-lang.org/reference/expressions/if-expr.html#chains-of-conditions)
+and [edition restriction](https://doc.rust-lang.org/edition-guide/rust-2024/let-chains.html).
+The exact former chain refusal and all preceding fixtures/assertions at
+`1afe9c54` remain in Links history and gain independent positive controls.
+The stage budget is explicit. Full drop/temporary/move/borrow protocols,
+missing-else effect statements, while chains and complete own-project source
+semantics remain obligations. No behavioral verification has run in this phase.
+
+The same packet lowering now drafts Boolean Rust match guards. The actual
+scrutinee is captured once. Each original alternative retains its own pattern
+bindings and guard; a false guard proceeds to the next actual alternative,
+including another `|` alternative in the same source arm. A selected body runs
+only after its guard succeeds. Every continuation to later arms is checked
+outside earlier arm scopes, preserving outer names and lazy failures.
+
+Unguarded source arms retain a separate ordinary match that must pass the
+existing exhaustiveness checker. Guarded arms never count toward that coverage;
+adding failure packets cannot admit a non-exhaustive source match. The complete
+old guarded input and predecessor assertions remain in Links history. Future
+controls include an or-pattern whose first binding fails its guard and whose
+second binding succeeds, scope shadows, constructor fields, actual abort order,
+Unit payloads and source block boundaries. This follows the
+[Rust guard ordering and alternative behavior](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards)
+for the declared Boolean-guard version profile. Full guard borrowing/moves,
+drop/temporary behavior, interior mutable state, arm attributes and guard let
+chains still require their complete source meanings. All products, codec cycles,
+emissions and native controls remain unexecuted until the full draft is complete.
+
+Conditional pattern stages also feed the existing ordinary function-completion
+tree. The true completion is parsed with its actual pattern bindings; the
+alternative and following statements keep their outer scope. Existing shared
+completion rules retain early-return, abort and Unit-fallthrough distinctions.
+Lowering then uses the same packet traversal over either ordinary values or
+the existing generated completion carrier. Source-only controls cover completed
+pattern returns, two-stage bindings, outer shadows and a Unit branch before a
+terminal return. This composes two existing representations rather than adding
+a target-specific control engine. Full effects, temporary/drop order and the
+remaining ownership and loop obligations still require implementation.
+
+Ordinary JavaScript parameter initialization now has a shared source plan for
+earlier-parameter references and defaults before required parameters. The
+original trailing closed-default route remains separate. A conservative census
+of actual default source names selects the stronger route; inner lexical
+shadowing remains with the existing checker. Original ordinary binder positions
+and initializer intervals drive the same scope partition used by patterns.
+Earlier names are available, while self/later references and initializer writes
+retain explicit restrictions. Type inference uses that progressive environment.
+
+Both runtime adapters capture every supplied argument before any initializer,
+then bind parameter values in source order in the callee's environment. Caller
+names cannot capture those defaults. Existing undefined-only binding-default
+operations retain null, false, zero and empty text. Guards remain after parameter
+initialization. The original required-argument admission is retained: missing
+required arguments, defaulted dynamic function-value invocation, full parameter
+environments and guard refinements still need their complete source meanings.
+This follows
+[ECMAScript function declaration instantiation](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation).
+
+Future controls retain every former default refusal input and whole predecessor
+assertion source at `b9da646f`, with explicit Node22/24 and Rust1.90–1.99 ranges.
+Independent traces check supplied-argument order before initialization. The
+complete source definition, text/binary cycles, four emissions, original values
+and native products remain deferred; this is no claim of verification or full
+JavaScript function coverage.
+
+The whole-formal default draft retains original ordinary and pattern slots,
+complete recursive trees and actual initializer intervals in a separate shared
+plan. Earlier exported planners and their refusal meanings stay unchanged.
+Named declarations, constant arrows/function expressions and namespace methods
+reuse existing logical parameter defaults and recursive binding entries. Whole
+defaults may read earlier ordinary and pattern bindings through the same scope
+partition and ordered entries; self/later names remain unavailable.
+
+Defaulted logical arguments carry an absent marker at calls. Their actual
+initializers execute in the callee's ordered entry sequence, interleaved with
+field/element defaults and iteration. Earlier ordinary and pattern bindings are
+available at their proper point. Failure therefore occurs in its original order,
+and a later default cannot move before an earlier pattern's binding effects.
+A retained source predicate still describes when call-site initialization would
+commute; the body-entry implementation does not rely on that restriction.
+Independent future controls retain both earlier binding failure and later
+default failure after a successful pattern. Empty whole patterns retain a
+separate explicit obligation.
+
+Future whole-default products retain object/array/nested/rest boundaries,
+ordinary and pattern dependencies, represented callable contexts and lazy
+failures. The exact former whole-record input gains positive controls; complete
+predecessor assertions at `93180d37` remain hashed Links history. Both codecs,
+four emissions and native products are deferred. Nullish destructibility and
+its complete source diagnostics, full parameter environments and every earlier
+source-language requirement remain unfinished.
+
+Optional callable arguments now have a shared source plan. A missing trailing
+argument is constructed as undefined only when its actual parameter type admits
+that absence. Required domains and null-only optional domains retain their arity
+errors. Both inference and checking use the same slots. Computed signatures wait
+for their actual function or record-field owner before selecting missing slots;
+an otherwise unresolved function retains the original inference fallback.
+
+Whole-default body entries also admit the existing synchronous closure and
+object-method contexts. Their raw optional parameter domain stays distinct from
+the type of a supplied iterable element. A callback bridge captures the actual
+callee once and explicitly wraps only matching present arguments before applying
+it. Existing typed function, optional and lambda operations express the complete
+bridge. Exact parameters, ordinal and accumulator roles stay unchanged; unsupported
+conversions remain errors. The default expression stays in the callee entry
+sequence, retaining original captures and failure order.
+
+The complete preceding whole-default definition graph from `bab148f9` remains a
+separate published source-program asset in both packages. Its expanded current
+context domain receives no equivalence claim. Future controls cover local,
+returned, higher-order and record-method invocations, optional map/filter/reduce
+callbacks and original evaluation traces. The former callback context input is
+retained with its original value obligation; missing/inherited property protocols
+remain a separate implementation scope. Extra arguments, missing required
+arguments, general function variance/polymorphism and full JavaScript function
+semantics remain obligations. No runtime observation or test has run in this phase.
+
+Closed ordinary JavaScript record reads reuse the existing complete field
+selection definition from the record-parameter library. A missing non-inherited
+name becomes undefined; actual own fields keep their projection and own-key
+membership. The receiver still evaluates once before that result, including all
+of its initializer effects. Dot access, literal bracket access and the existing
+required binding field terms share this route. Checked core projections and
+other source languages retain their original field requirements. An absent
+standard inherited spelling is not assigned a fabricated undefined value.
+This represented closed ordinary-object profile follows
+[OrdinaryGet](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinaryget)
+and [GetV](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-getv);
+prototype mutation, accessors and proxies require their complete separate models.
+
+JavaScript Unit denotes undefined. A value whose only represented possibilities
+are Unit, null or undefined selects the actual right operand of nullish
+coalescing, after retaining the left operand's effects. A separately qualified
+shared definition selects that case in both checkers and inference transports.
+The fallback retains its own complete type rather than being coerced to the
+absence-only placeholder. Existing present-value coalescing stays lazy. Native
+source is automatically translated. Future controls cover real receiver/fallback
+traces, own membership, required and defaulted bindings, both codecs and all four
+emissions. Map and Array.from use the same explicit optional callback bridge,
+including callback factory capture. Arbitrary differing record-shape joins,
+open and inherited fields, full dynamic property protocols and every earlier
+requirement remain unfinished. These are source drafts without observations.
+
+Extra ordinary JavaScript arguments use a separate shared capture plan, bounded
+to 1024 supplied arguments. Every actual input remains represented and evaluated
+in order. Computed calls capture their actual callee before the first input;
+record methods capture the selected function and its original receiver evaluation.
+Only the consumed prefix reaches the existing fixed-arity core application.
+Static named calls similarly capture all inputs before the existing complete
+default/guard route. Explicit literal undefined retains its default-selection
+role. A discarded value can still print, mutate or abort before the body starts.
+Inference checks all supplied expressions but only consumed values constrain
+the callable's signature. This follows
+[argument list evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-argumentlistevaluation)
+and [function instantiation](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation).
+Both runtimes transport actual terms through Let and Apply/Call; the source rule
+generates native decisions and a separately qualified editable Links definition.
+Exact calls, other languages and projected core arity retain their prior route.
+Future controls retain callee/argument/default/body ordering, discarded failures,
+mutable callee bindings, zero-parameter calls and complete predecessor sources.
+Missing required inputs, spread and rest parameters, arguments objects, arbitrary
+receiver protocols and every earlier requirement remain unfinished. No product
+or behavioral control has executed during this draft.
+
+Named JavaScript calls now reuse the computed-call omission definition: an
+actual resolved optional domain admitting undefined permits the missing value,
+alongside existing written defaults and documented optional parameters. The
+ordinary and sequential default routes share this admission, retaining original
+initializer order and declared parameter metadata. Inference preserves the real
+known result and constraints on every supplied prefix term before body solving
+determines missing-slot admission. It does not invent a fresh unrelated result
+for a known incomplete call. Unsupported missing nonoptional values retain their
+checking obligation rather than gaining a fabricated present argument. Future
+controls cover inferred optional Number/String/Boolean and record/array domains,
+mixed ordinary defaults, forward declarations, lazy fallback effects and falsy
+present values. Both runtimes use the unchanged source-generated optional-slot
+rule. General missing-argument inference and full function environments remain
+required; these source drafts establish no observed behavior.
+
+Rust let-else fallbacks containing actual return keywords compose with the
+existing ordinary completion tree and conditional pattern packets. A shared
+source scanner distinguishes real keywords from raw identifiers and opaque text;
+bounded prefix growth stops at the actual statement or fallback boundary. Existing
+abort-only and ordinary let bindings retain their preceding route. The initializer
+is captured once with its written type and origin. The fallback parses outside
+the new pattern bindings; the successful continuation parses inside their scope
+through the end of the enclosing sequence. Existing name uniqueness, annotation,
+pattern, ownership and initializer restrictions still apply. Every fallback must
+have represented completed return/abort alternatives, following
+[Rust let statements](https://doc.rust-lang.org/reference/statements.html#let-statements).
+No new core control constructor is added: existing function carriers and packet
+lowering retain the chosen completion and lazy continuation. Native scanner rules
+and complete editable Links definitions are generated from JavaScript. Deferred
+controls cover constructor, tuple and record patterns, shadows, borrowed payloads,
+annotations, multiple bindings, initializer failures, early returns and Unit.
+Arbitrary divergence, loops, complete move/borrow/temporary/drop effects and full
+statement environments remain obligations. No behavioral observations are claimed.
+
+Stored JavaScript absence-only values can convert to an optional target only
+when it represents every source nullish possibility. A shared source definition
+selects undefined-only conversion or an explicit null-versus-undefined branch.
+Both transports capture the actual operand once and use existing Let, If,
+StrictEqual and None constructors, without constructing a present payload. A
+present JavaScript Unit denotes undefined; null-only targets therefore require
+stronger variant evidence when that present constructor is possible. Other
+languages keep their distinct Unit/optional meanings. Missing ordinary record
+fields use fresh contextual inference variables for their uninhabited present
+domain, following the existing absent-literal inference rule. This permits
+compatible call and array contexts without unifying a real present value with
+Unit. Concrete absence constructors remain explicit in checking and emission.
+Full predecessor sources remain preserved. Future stored-null/missing/undefined,
+optional scalar/record/array, policy rejection and effect controls are unexecuted.
+General union refinements, complete environments and all earlier requirements
+remain unfinished.
+
+Ordinary defaults in synchronous arrow, function-expression and object-method
+closures reuse the complete existing whole-formal plan and ordered callee entry
+construction. A separate source-generated selector admits scalar-only default
+plans in those contexts; named and constant scalar routes and existing pattern
+routes retain their preceding consumers. Raw logical arguments use the existing
+optional absent marker. Actual defaults stay in the body sequence, preserving
+earlier parameter dependencies, outer captures, undefined-only selection and
+lazy failures. Existing callable completion and explicit callback bridges carry
+their real optional interfaces into calls, map/filter/reduce and Array.from.
+Strict directives and duplicate/self/later binding boundaries keep the existing
+checks. Future controls include independent array defaults, ordinal arguments,
+returned closures and actual callee/argument/initializer/body traces. No new core
+constructor or handwritten native semantic rule is introduced. Full parameter
+environments, arbitrary present-type unions, implicit this/arguments, async,
+generators and every earlier requirement remain obligations; controls are deferred.
+
+Named checked JavaScript functions with real defaults expose a separate callable
+initialization interface when passed as values. Shared source rules distinguish
+those initializers from defaults already implemented by ordered body entries.
+Only references needing initialization become typed lambdas; their bodies reuse
+the actual declaration's complete existing sequential default/guard checker.
+All supplied arguments precede defaults and guards. Guarded BigInt inputs keep
+their original integer domain before the guard converts them to naturals.
+References without real defaults retain their preceding form. Computed, returned,
+higher-order and record calls and existing explicit callback bridges use the
+actual optional interface. Source initialization expressions stay in their
+original module and earlier-parameter environment, with no evaluation when the
+reference itself is created. Native interface decisions are generated from
+JavaScript; adapters construct existing typed Lambda, Let and Call nodes.
+
+An optional absence policy may widen from null-only or undefined-only to both
+only when the complete present element types are identical. Existing presence
+operations distinguish absent receivers from zero, false and empty text without
+comparing function payloads. The actual operand evaluates once; its present
+payload or its original absence tag reaches the broader target unchanged. The
+separate absence-only conversion remains available when no present payload is
+inhabited. Other languages and policy narrowing retain their own requirements.
+
+Projected core calls already carry initialized, guarded arguments. Rechecking
+them validates their actual signature without repeating source initialization
+from retained default metadata. Source calls keep their preceding routes.
+Future original/native values, initializer/guard traces and text/binary emission
+controls retain complete predecessor sources. General function variance, arbitrary
+present-type unions, reflection/identity/this/arguments, asynchronous execution
+and full parameter environments remain obligations. These are unexecuted drafts.
 
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
@@ -3076,6 +6132,22 @@ patterns still refuse explicitly. Bounded JavaScript checks cover complete
 programs and checked text/binary Links replay; native compilation and execution
 remain pending CI verification.
 
+The next source draft represents fixed integer casts at 8, 16, 32, 64 and 128
+bits with an explicit wrapping flavor where Rust truncates or reinterprets
+the sign. Widening stays exact. One JavaScript definition supplies the modular
+operation, native generation and all four target renderers, following the
+[Rust integer cast rules](https://doc.rust-lang.org/reference/expressions/operator-expr.html#numeric-cast).
+No value passes through binary64. The complete typed operation definitions are
+editable Links data in both packages. Ordinary unshadowed `BigInt.asIntN` and
+`BigInt.asUintN` calls with these constant Number widths lower through the same
+generated construction plan to existing integer terms. The operand is bound
+once and the result retains JavaScript's unbounded BigInt domain; subsequent
+addition does not acquire a machine-width overflow check. Actual module,
+lexical and supplied context owners determine builtin admission. Dynamic and
+other widths and non-BigInt conversion domains remain separate obligations.
+This batch is a code draft: no behavioral execution or verification claim is
+made while the complete-scope testing prohibition applies.
+
 JavaScript constructor selection uses the actual receiver
 datatype and nearest lexical binding to resolve repeated tag names, while
 unknown, optional or shadowed owners retain their existing refusals. Both rule
@@ -3182,6 +6254,81 @@ linked slot operations are implemented. Signature discovery and importing
 report contexts retain that obligation and the complete carried source rather
 than failing with an internal exception; this does not establish native
 execution of unsupported mutation.
+
+The shared collection method source draft now admits dense array
+`push`, `pop`, `shift`, `unshift` and `reverse`, Set `add`, `delete`, `clear`
+and `has`, and Map `set`, `delete`, `clear`, `get` and `has` when the actual
+receiver has the shared reference representation. Primitive keys keep
+SameValueZero equality, NaN membership and canonical positive zero; replacement
+keeps insertion order. Mutations change the same allocation and return the
+declared length, optional value, Boolean, undefined or receiver identity.
+The native emitter binds the receiver and every actual argument in source order
+before borrowing mutable storage, including evaluated unused extra arguments.
+Array growth keeps its declared length bound. The construction follows the
+[ECMAScript array operations](https://tc39.es/ecma262/2025/multipage/indexed-collections.html#sec-array.prototype.push)
+and [keyed collection operations](https://tc39.es/ecma262/2025/multipage/keyed-collections.html#sec-map.prototype.set).
+The shared JavaScript rules automatically generate the native target builder;
+host adapters only allocate checked operands and target source. Full typed
+definitions ship as editable Links in both packages, with the existing linked
+reference-operation identities retained in target encoding contracts.
+
+The checked Links boundary has an additive method profile tied to the actual
+receiver kind and reference facet. It reuses ordinary checked method nodes and
+rechecks the full result and operands; the earlier operation union and all
+unknown-operation refusals remain intact. Single-spread copies retain a distinct
+allocation. Shared collection iterators continue to refuse until their live
+ordered entries and tombstones are represented. Dynamic spreads, missing
+undefined arguments, nonprimitive keys, indexed/field writes, callbacks that
+observe mutations, custom prototypes and the independent parsing of complete
+generated Rust runtimes still require their remaining implementation work.
+The existing snapshot callback backend is admitted only after traversing the
+actual checked callback and every reachable known function body under a common
+expression budget. Writes, unknown indirect/external calls and a callback
+receiver parameter retain the live-state obligation. Pure callbacks with the
+element and index parameters retain their previous behavior; an unproved
+callback cannot silently receive stale array contents or a copied identity.
+Lean and Rocq retain their explicit state-model obligations. The new methods
+have future builtin, codec, runtime-parity and native product controls; none
+has executed during the complete draft phase. Their declarations are not
+evidence, and they do not establish full JavaScript or Rust translation.
+
+The next native parity draft adds the existing checked `collectionSize` and
+`collectionRead` forms to the native algebra, including traversal, reconstruction
+and all four emitters. Native checking now binds immutable Map/Set membership,
+lookup, keys, values, entries and size to their actual collection types.
+Inference uses the same shared result/argument selectors for mutable arrays and
+collections as JavaScript, including optional reads. The complete constructor
+library is generated from JavaScript into Rust and stored as typed Links data.
+Its four target renderers retain the existing JavaScript output spellings,
+ordered operand evaluation and primitive key rules. Live mutable iteration and
+unsupported key domains retain their separate obligations.
+
+Typed Links emission now drafts all four existing portable targets: JavaScript,
+Rust, Lean and Rocq. Every path decodes and statically rechecks the same actual
+linked program. Rust header models and JavaScript binding models remain confined
+to their selected targets, with explicit refusals elsewhere. This connects the
+existing backend implementations; it does not claim new support for previously
+unsupported state, ownership or dependent-language constructs. Future controls
+cover readonly collections, four-target codec replay, paired source emission
+and one native product. No such control has run in the complete draft phase.
+
+The RDF identifier draft also composes a source-generated IP-literal grammar
+with the existing scheme, Unicode, userinfo, port, path, query and fragment
+rules. It follows [RFC 3987 section 2.2](https://www.rfc-editor.org/rfc/rfc3987#section-2.2)
+and its [RFC 3986 address productions](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2):
+full and compressed IPv6, an optional final IPv4 tail, and IPvFuture version
+and address syntax. The temporary host projection is only a validation premise;
+the actual linked IRI and every source token retain their original spelling.
+No address normalization or dereferencing is performed. Zone identifiers and
+other extensions outside this selected RFC grammar do not become admitted by
+accepting arbitrary bracketed text. The frozen original lexical kernel remains
+unchanged; the additional grammar is a separate complete typed Links definition.
+Graph and N-Triples adapters consume the same generated decisions in both
+packages. Earlier unsupported-address expectations need their explicit profile
+reconciliation in the deferred metadata/assertion batch, retaining all inputs
+and evidence. Future normative, codec and exact runtime-graph controls have been
+authored. Formatter repair and behavioral checks remain deferred; this expansion
+does not establish complete RDF/OWL/import/conversion support.
 
 CI keeps its pinned Lean version when the upstream release index is
 unavailable. A Linux x64 GitHub Actions fallback downloads the same official
@@ -3327,6 +6474,37 @@ identity-only results retain their existing behavior. Native compilation and
 runtime parity require CI verification.
 This opt-in hook does not establish complete Markdown or other priority-language
 coverage, and does not resolve scanner or imported semantic obligations.
+
+The source-qualified composition batch draft binds ordered requests to exact
+existing normal rules across one complete archived grammar inventory. A shared
+sorted directory validates source/rule ownership, collisions and explicit text
+and count bounds without a host/child language-pair table. The existing decorator
+engine alone materializes each validated any/all template. The batch retains
+four separate Links entries: the complete original discovery graph, the complete
+composed discovery graph, ordered source-qualified requests and the actual typed
+binding-decision definition. Reload eagerly reconstructs both inventories,
+rederives compositions from the original context and compares the full current
+graph, registrations, allocator history and selected decision definition.
+Unselected grammars remain in the current common concept space. Original proof
+contexts remain in their complete predecessor entry; changed definitions obtain
+no correspondence merely from matching names. Existing source-view profiles and
+parse budgets remain exact. The finite source controls return to an earlier
+grammar through three source planes, with both text and binary reconstruction.
+They are unexecuted drafts over explicit control grammars and establish neither
+full catalog grammars nor new scanner, inference or equivalence capabilities.
+
+The copying-sort draft adds dense immutable primitive-string `toSorted()` with
+no comparator or extra arguments. It preserves the input, creates an independent
+ordered result, and uses exact UTF-16 lexical order including isolated surrogates.
+Both checkers and editable Links reload enforce the same operand/result domain;
+JavaScript and Rust emitters use their stable standard sorting operations with
+explicit unit comparison. This operation also supplies the composition batch's
+shared sorted directories. The model follows
+[ECMAScript copying sort](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.tosorted)
+and [Rust stable comparison sorting](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_by).
+Independent primitive-source, complete graph/codec and native controls remain
+unexecuted. General mutating sort, comparator effects, sparse/shared arrays,
+non-string coercions and Lean/Rocq UTF-16 ordering remain required work.
 
 Grammar work runs in bulk through the automated pipeline: import, merging and
 transformation of every catalog language in one batch, adjustments recorded as
@@ -3812,7 +6990,77 @@ to execute cycles under every other real grammar tool. Development oracle
 corrections build in CI and keep their original source hashes and a separately
 identified correction, so the native runtime remains independent of the oracle.
 
+Module scope may additionally admit a constant initializer whose complete CST
+contains only Number literals, arithmetic operators and parentheses. Its actual
+lexical name still participates in standard-owner shadowing. Calls, references,
+BigInt, coercion from other values, assignments and eager sibling effects refuse.
+Shared JavaScript decisions generate the native classifier and both checked
+Links archives. Classification neither folds nor translates the initializer and
+never supplies a callable signature for a carried binding. Both host adapters
+retain the actual CST binder when the portable lexer lacks its Unicode spelling;
+this ownership transport does not establish general Unicode translation. Strict
+module arithmetic excludes legacy leading-zero spellings. This admits ordinary
+size constants such as `128 * 1024 * 1024` while retaining separate translation
+and native execution obligations.
+
+An independently translated pure Number module initializer may supply its actual
+checked scalar static signature to a sibling. Complete CST ownership, a matching
+name, the existing unique-owner/module-scope proof and a successfully emitted
+initializer are required. The ordinary emitter retains the original arithmetic
+and reads its existing lazy static; no alternate evaluator or copied semantics
+are introduced. Containers, calls, BigInt and unsupported operators do not gain
+this interpretation. TypeScript ownership scans use the same real erasure path
+as its ordinary frontend and native binder. Source restoration remains exact;
+independent Number behavior and whole-result parity require execution in CI.
+
+The borrowed JavaScript function-body host retains its preceding scoped-iteration
+source through complete Git-certified Links data and seven exact borrowing edits.
+Only the existing historical readers request that predecessor. Current source
+bytes, unknown-edit refusals, original packets and both source codecs retain
+independent checks; source conservation supplies no native execution evidence.
+
+Compiler-host source succession also retains the complete preceding crate root,
+Boolean hosts and ASCII native artifact as independently certified Links data.
+Every checked program, interface, source definition and replay field of the ASCII
+artifact stays exact; only its certified generated native files differ. Historical
+Boolean author modes preserve current physical hosts. The active crate-root
+receipt adds this source succession while keeping its whole earlier recipe and
+all actual current reexports; native CST owner proofs inspect the complete current
+root, including the newly public constructor. Older root receipts remain valid
+for their original bytes, and unknown source edits still refuse.
+Crate fixture packaging similarly retains both complete certified manifests and
+the exact two-entry inverse. Historical tooling capture selects its original
+manifest only through that proof; actual packaging checks keep the current one.
+Operation registration preserves the published order when new declarations are
+added to an existing source module, appending new identities after every old row.
+The operation extractor reads the complete formal parameter list before locating
+its body, so destructured/default parameters cannot masquerade as a definition.
+Two earlier parameter fragments are corrected from the same complete original
+Git-certified modules, registration receipt and codec profile. The proof retains
+both original fragments, every identity and unchanged implementation/import
+context; the exact field inverse preserves the old metadata scope. Unknown
+source contexts or definition edits refuse. Declaration offsets in this profile
+use UTF-16 code units, as the original JavaScript source lexer and string slices
+do. Both Links codecs preserve complete original/current definition fields.
+This metadata correction does not claim program equivalence between changed
+implementations or complete recursive semantic definitions for every concept.
+
+Historical naming storage rereads every complete document before selecting its
+cached immutable text. Only equal scalar strings share storage; returned index,
+document and decoded containers remain detached. One actual root and its five
+registered paths bound the cache. Every whole-file hash, source certificate,
+serializer comparison and final reread remains mandatory, including page edits
+behind an unchanged index and distinct copied roots. Decoder and memory limits
+remain unchanged.
+
 ## Resource limits
+
+Source integration can stage every generated Rust module part directly from its
+complete Links generation recipe with `js/scripts/stage-source-library-files.mjs`.
+The helper bounds recipe size and file count, requires actual regular project
+paths and exact recorded source bytes, and preserves unrelated staged changes.
+Edited/stale outputs and symlink/path escapes refuse. This source-membership
+review supplies no behavior, compilation or semantic-equivalence evidence.
 
 Grammar test files run exactly once across six required JavaScript cells. Their
 commands, assertions, fail-fast setting and fifteen-minute deadline remain exact.
@@ -3844,6 +7092,41 @@ define these compiler options.
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
 
+Optional source-catalog authoring can reuse an authored root coordinate after
+every complete current asset digest and byte count matches its snapshot entry.
+The actual asset name, qualified identifier and root shape must also match.
+The incremental command is `npm run draft:source-definition-catalog:incremental`
+in js. Both package twins are still read and compared, regular-file and source
+size bounds remain, and changed graphs use the original streaming metadata
+reader. Cached root coordinates establish neither graph validation nor concept
+equivalence. The author cache reads Links snapshots up to four MiB and otherwise
+uses the complete authoring path. Default --draft still reads every graph;
+--check always ignores cache entries and retains the original whole-network
+reader. No scoped/cached check mode is accepted. Complete preceding tool source
+and independent cache/fallback/gate controls remain retained and deferred.
+
+Primitive owner-path resolution is a separate shared source module from method
+registration and arithmetic plans. Associated calls delegate to that exact
+path domain; From and integer constants import it directly, with From retaining
+its separate explicit binary64 extension. This keeps unrelated operation
+implementations out of conversion/constant/expression/default source libraries.
+The factoring draft retains seven complete original generation recipes before
+emission. An obsolete generated native part is removed only when its path is
+absent from the new recipe and its complete checkout bytes equal the recorded
+original recipe and committed source. Its full old source remains reconstructible
+from the retained recipe; unknown edits refuse removal. Receipts record paths,
+original hashes and byte counts without claiming behavioral equivalence.
+
+Five JavaScript typed-definition graphs shrink from 12,145,773 to 3,766,359
+bytes; the Rust twins carry the same source change. These are source artifact
+sizes, not runtime performance measurements. 548 exhaustive path-domain controls
+retain ordinary/shadow/absolute/qualification premises, all primitive owners,
+malformed paths and From's separate f64 scope. 190 complete retained programs
+cover all preceding integer-constant sources plus explicit Boolean/binary64
+defaults. Both runtimes/codecs, four emissions, original/native products and
+predecessor reconstruction remain deferred controls. This source factoring
+establishes no concept-meaning identity or executed runtime evidence.
+
 Live cleanup fixtures use the existing JavaScript runtime at their original
 fixture and tool paths, with the same lifetime and retention/removal assertions.
 Hard links avoid duplicating its binary; only a cross-device failure permits a
@@ -3863,6 +7146,53 @@ ownership disjoint, serialize resource-heavy local checks and Git index writes,
 and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
+CI 39937987715 exceeded the unchanged ten-minute package deadline while replaying
+three complete Rust sources. Source preparation now proceeds serially while each
+ready source starts its existing archive worker. All three text and binary CST
+replays and successful worker exits still precede fixture/matrix allocation.
+Every factory and worker settles before publication or aggregate failure. The
+coordinator owns the factory inventory and reserves an extra GiB when selecting
+capacity; the original CPU, explicit job-count and one-GiB worker bounds remain.
+Tiny injected scheduling tests establish ordering and retention, not improved
+whole-source timing. Corrected timing requires CI; full raw workloads stay there.
+The subsequent raw job in CI 39951766736 still exceeded ten minutes after all
+three complete archive replays and matrix construction. One invocation now
+shares its actual checked program between the ordinary current and consuming
+emission helpers, instead of repeating parse/check/current emission. Every
+original source pin, 106-owner comparison, consuming codec replay and final
+profile assertion remains. The temporary checked graph is released after
+consuming preparation, including failure; it is never retained across plans.
+This removes repeated preparation, without claiming corrected CI timing.
+CI 39960718444 still exceeded that deadline just after plan construction.
+Complete stored source candidates now start every available archive worker
+before fresh compiler preparation begins. Candidates supply no compiler or
+profile authority: their entire text must equal each freshly generated source,
+and the original complete source, owner, profile and codec checks still run.
+Every worker and fresh validation settles before aggregate failure or
+publication; fixtures and the observation matrix wait for both phases. The
+original three complete CST text/binary replays, CPU/heap bounds and ten-minute
+deadline remain. Worker diagnostics record elapsed time at their source so
+buffered output cannot conceal the phase durations. Whole-workload timing
+remains a CI observation.
+Historical naming selection preflights every selected current source's complete
+bytes and digest before running its historical extractors. It keeps a private
+per-invocation read map, checks every selected epoch's pin and discards the map
+afterward. All original per-view reads, hash assertions, extractor calls and
+current-name exclusions still execute after successful preflight. Unknown edits
+therefore refuse before expensive unrelated extraction without acquiring any
+historical authority. This addresses the tooling shard in CI 39960718444 that
+passed all 173 tests but exceeded its existing fifteen-minute job deadline.
+The corrected timing still requires CI.
+That run also exposed an obsolete refusal for the retained `const LIMIT = 1 + 2`
+fixture. The expected translation now reflects the actual source-owned Number
+static support. Every old input and round-trip assertion remains; an additional
+control requires JavaScript and generated Rust to execute the original source's
+result of three. Active Node versions are bounded to `>=22.15 <23` or `>=24 <25`,
+and native execution to Rust `>=1.90 <1.100`; uncovered versions refuse.
+The serial final verification also runs the existing JavaScript crate-input
+package check after all seventeen preceding checks. Generated native unit
+fixtures live in the crate data directory with identical shared Links inputs
+and explicit package entries; the check does not invoke Cargo.
 
 Report modules retain eight required jobs; general grammar tests retain six.
 Their complete current source inventories are scheduled using source-bound
@@ -3873,6 +7203,158 @@ native and historical modulo partitions keep their existing ownership rules.
 Job counts, commands, coverage assertions and deadlines remain unchanged.
 These samples and scheduling estimates establish no requirement observation;
 only the next CI execution can confirm actual timing and results.
+
+CI 39839936265 reached the existing fifteen-minute deadline in four translation
+cells and one conformance cell. The current physical schedule splits each of
+the six logical translation cohorts into two measured subsets and each of the
+four logical conformance cohorts into two subsets. Each pair preserves its
+complete original file inventory exactly once. All twelve translation feedback
+partitions must retain their exact commit and file scope before merging; missing
+or foreign partitions still fail. Execution remains serial within each runner,
+and commands, assertions, native checks and the fifteen-minute deadline retain
+their existing obligations. The complete earlier workflow and its finite inverse
+remain authenticated separately. These scheduling controls establish no passing
+test observations; CI must verify the actual workloads.
+
+The twenty complete report, grammar and translation job logs of CI 39644810104 add a
+second source-bound timing cohort. The newest matching complete source wins;
+an older matching source remains available when the newer cohort has no sample.
+Only the eight report cells, six general grammar cells and six translation
+cells use these costs.
+Other report geometries retain their original byte-balance contract. No required
+job, complete module, assertion or deadline is removed or relaxed. GitHub's
+thirty-minute report deadline remains mandatory, including checkout time.
+The cancelled fifth report completed only part of its assigned source inventory;
+its partial progress never supplies a complete report or passing observation.
+
+CI 39848242758 published all eight complete report artifacts, but GitHub marked
+the fifth job cancelled for exceeding its thirty-minute job deadline, including
+checkout and teardown. The completed report steps do not override that failed
+gate. Complete bounded logs from all eight jobs supply a new advisory cohort
+for every one of their 345 source modules. Only the eight report cells select
+these newest source-bound costs; older grammar and translation samples retain
+their current selection. Missing or changed source uses the existing estimate.
+Every current module still runs exactly once, with unchanged commands, complete
+report assertions and the thirty-minute deadline. Further CI must confirm timing.
+
+CI 39857274367 also produced all eight complete reports; its second job exceeded
+the same deadline. Its 347 complete, source-bound samples form a further advisory
+report cohort. Both earlier cohorts and their controls remain available. The
+selected costs affect ownership only; they confer no completion or execution
+authority, and all eight jobs, full module coverage and deadlines remain required.
+The two report workers reuse whichever slot finishes first. A slow preceding
+measurement does not leave the other worker idle. Context resolution and final
+publication retain their original source order; failures and complete module
+coverage remain mandatory. The worker count and thirty-minute deadline are
+unchanged. A controlled slow-first regression checks this scheduling boundary;
+complete report timing still requires CI.
+
+CI 39872149597 passed seven report cells, while the second exceeded the same
+thirty-minute limit before completing its module inventory. Each of the original
+eight logical report cells now runs as two physical parts. The source-bound
+scheduler partitions complete modules within each logical cell; their disjoint
+union must equal that cell exactly. Both workflows publish distinct artifacts
+for all sixteen physical parts. The existing aggregate still requires every
+current source module exactly once, matching commit and source hashes, both
+translation comparisons and every report assertion. No partial report counts as
+success. The thirty-minute job deadline and two-worker limit remain unchanged;
+the original eight-cell command remains supported. Actual timing requires CI.
+CI 39878097119 passed all sixteen physical report jobs. Complete certified
+workflow predecessors keep the older evidence-partition conservation control
+on its exact original bytes. Both committed workflow versions and every report
+edit are independently checked; unknown successor bytes receive no historical
+view. Actual current report coverage still uses the sixteen-part controls.
+
+Source-only package checks run alongside the JavaScript test matrix. They use
+fresh checkouts and consume no test or report artifacts; the final JavaScript
+aggregate still requires tests, reports, every package check and merged compiler
+feedback. Rust and acceptance keep their complete JavaScript prerequisites.
+The scheduling change retains both independently committed complete workflows
+and an exact one-line forward/inverse proof. Unknown successors receive no
+historical view, and all previous workflow conservation assertions remain.
+
+Reviewed compiler feedback corrects generated library styles through the normal
+Links decorators. Complete original Git-certified source files and the original
+rendered diagnostic log remain separate from machine-applicable suggestions.
+Corrections preserve lexical references, source strings and comments; Boolean
+normalization retains operand order, NaN and signed zero. Independent Boolean
+facts and complete ordered CST columns retain their shared interfaces through
+specific lint expectations that must remain fulfilled. The strict compiler and
+lint gates continue to run in CI. Formatting, source replay and JavaScript
+controls do not establish native execution.
+
+The raw-oracle runner may reuse a successfully verified base emission profile
+within one process only after comparing every complete historical/current
+artifact, rule source and causal producer input byte again. Input names and order
+also match. Changed, omitted, reordered or added inputs invoke the original
+complete verifier; failures and mutation during verification never enter the
+cache. Returned values have independent ownership. Consuming/borrowed profile
+checks and complete transport source authentication still run around each actual
+or injected invocation. This avoids repeatedly decoding unchanged large Links
+artifacts; it does not replace source replay, native execution or fixture checks.
+
+Serial metadata authoring refreshes both packaged canonical concept catalogs
+before final naming verification, and retains the separate evidence-translation
+naming and source archives after CI source repairs. Catalog authority still
+requires exact canonical data and actual tooling owners. Lower peak allocation
+changes evaluation order only; every foundation rejection and source assertion
+remains mandatory.
+Canonical tooling counts exact UTF-8 input bytes without allocating complete
+encoded copies. UTF-16 surrogate replacement and every existing physical and
+expanded byte limit retain their original behavior. Boundary controls compare
+the active UTF-8 encoder, including paired and unpaired surrogates.
+The repository's serial development driver also provides a final `verification`
+phase. Seventeen read-only checks reconcile live requirement sources before ledger
+access, then check dependency/scope/export inventories, documentation, test
+ownership, generated native rules, source histories and both concept catalogs.
+Its separate registration phase invokes the normal append-only operation,
+complete binding and codec-epoch authors in order before catalog generation.
+A failed author retains its receipt and prevents dependent registration.
+The final source-history check validates all indexed naming documents, their
+source certificates, every current source pin and exact serialization.
+Missing or stale data stops the phase without refreshing it. This consolidates
+the existing bounded checks; full suites, reports and native execution remain
+separate CI obligations. Invocation receipts are not requirement observations.
+
+Complete workflow and scheduling test successors, and the crate manifest, are independently certified at
+8f2f6c48, with their complete predecessors certified at 8bc0ef97. Historical
+tooling and scheduling guards select only those exact byte inverses. Current
+checkout provenance, current measured scheduling and their new controls execute
+separately. Unknown source successors still refuse.
+
+The normal supplemental naming author generates and verifies its complete
+output in fresh serial processes. The author receipt binds every output byte;
+the unchanged authenticated reader validates every source certificate and its
+normal serialization must reproduce that digest before the command succeeds.
+Equal immutable source strings may share storage; independent ordered rows,
+certificates and containers retain their identities. This keeps the same checks
+within the existing local heap budget without reducing inventories or gates.
+The normal author derives supplemental views with the same inventory extractors
+in a disposable JavaScript worker capped at 352 MiB. It waits for one result and
+successful worker exit before encoding the full output. Every source epoch,
+ordered inventory, current source pin, extracted name and record mapping remains
+mandatory; the exported check path retains its complete in-process comparison.
+The extraction heap expires before serialization so their largest graphs do not
+overlap. The existing process-tree resource guard still bounds the entire task.
+
+Supplemental historical naming sources use an explicit Links index once their
+combined data outgrows one closed graph. Four independently closed documents
+retain the complete ordered source epochs at the registered revisions. The index
+records every path, revision, byte count, digest and source/view count. Every
+document's complete bytes are checked before cache reuse; every decoded source
+still passes its independent Git certificate. Legacy single-graph input retains
+its original decoder and limits. Each indexed document uses those same limits;
+the combined history is not presented as one graph that passed the old budget.
+Normal verification reproduces every page and index byte, preserves source/view
+order and refuses a container alias that would cross documents. Cache results
+retain independent containers while sharing only immutable scalar storage.
+
+The canonical bootstrap reader may share equal immutable metadata inside its
+private graph, which never escapes. It still allocates every original data link,
+distinguishes independent containers, preserves actual aliases, and charges every
+original stored/expanded node and byte. Language, shape, reachability, cycle and
+other validation rules remain unchanged. This reduces peak allocation without
+raising the task or codec limits.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;
@@ -4282,6 +7764,16 @@ relative-meta-logic and formal-ai. Candidate builds, or a publication workflow
 that has not run, do not prove that users can install the delivered
 capabilities.
 
+The native package allowlist is extended automatically from literal `include_str!`
+and `include_bytes!` operands in its actual Rust source tokens. Included text,
+byte programs and formal target preludes retain exact rooted paths. The author
+retains original explicit patterns and appends only uncovered assets, with source
+owners and hashes as Links data. Comments, source strings and byte-string contents
+cannot invent dependencies. Computed macro operands, symlinked source paths and
+outside-crate assets require a separately represented packaging interpretation.
+Source closure construction neither compiles Rust nor proves package size or
+clean-consumer behavior; those remain CI obligations.
+
 Release publication verifies the release tag, checked-out commit, package
 versions and lockfiles before either registry write. A registry preflight fails
 closed when existing publication state cannot be established. The release then
@@ -4341,10 +7833,16 @@ gaps against the target above:
   Carrying
   the entire native unsigned 64-bit domain needs a broader exact representation
   and a separately versioned binary profile; that support is not established.
-  Actual native endpoint capture also needs checked identifier exhaustion: the
-  current native text importer and allocator still increment identifiers without
-  a checked transition at `u64::MAX`. Synthetic word-vector checks establish
-  neither an actual maximum-identifier graph import nor allocator safety.
+  An explicit exact-ID JavaScript graph and matching native binary adapter now
+  have a source draft, with reversible dense views and full shared limb/framing
+  definitions. Default safe-Number boundaries and their original refusals stay
+  exact. Direct integration throughout source/CST/concept APIs, schemas and
+  CLI commands, plus all deferred runtime controls, still needs delivery.
+  The native endpoint source draft now retains a distinct exhausted cursor,
+  checks real allocation capacity before mutation and imports `u64::MAX`
+  without increment overflow. It includes actual graph/API endpoint controls;
+  neither those controls nor native compilation have run. The new explicit
+  binary profile requires its deferred native/JavaScript execution evidence.
 
 Archive-backed parser checks execute recursive grammars after discarding the
 original grammar maps, and compare one shipped JavaScript grammar against its
@@ -4487,3 +7985,3557 @@ assertion remain intact; snapshots are not shared across unrelated builds.
 Provenance-only refresh updates selected native provider digests while refusing
 changed source identities, provider versions or independent oracle receipts.
 It retains all expected trees; CI still recomputes the complete fixture checks.
+
+### Exact JavaScript primitive numeric conversion draft
+
+`Number`, global `isFinite` and global `isNaN` share an inspectable source
+definition with distinct explicit and implicit BigInt conversion. The complete
+StringNumericLiteral grammar reads actual UTF-16 units, trims ECMAScript white
+space and line terminators, accepts decimal and unsigned radix forms, preserves
+signed zero, and rejects trailing syntax as NaN. Exact integer arithmetic and
+binary long division round once to binary64, including ties to even, subnormals
+and overflow. No host decimal parser or intermediate decimal rounding supplies
+the algorithm. Input length has no artificial semantic cutoff. A total UTF-8
+transport definition supports targets whose strings are byte sequences.
+
+The same JavaScript definitions generate native Rust and editable typed Links,
+plus complete namespaced Rust, Lean and Rocq source runtimes. Stable formal entry
+aliases derive from actual emitter binding mappings. Primitive and optional
+conversion adapters retain evaluated arguments, null versus undefined, lazy
+absence branches and implicit BigInt aborts. Global predicates convert their
+input; `Number.isFinite` and `Number.isNaN` retain their non-coercing behavior.
+Extra arguments run in order before conversion. String conversion requires the
+UTF-16 representation in the Rust emitter, including constant emission. Shared
+ECMAScript whitespace also serves callable type syntax through its old API.
+
+The public string conversion and complete-definition entry points, source
+fixtures, unit transport controls, independent original-Node producers, native
+controls and codec/emission controls are authored but unexecuted. They are not
+evidence. Numeric controls retain their original source and add actual source
+`String` observation wrappers rather than relying on Rust Display spellings.
+Object and Symbol conversion, iterator spreads, non-value UTF-16 names,
+all remaining language constructs and
+deferred ledger/source/naming/dependency/parity registration remain obligations.
+The existing formatter failed internally on this generated library; its author
+preserves complete output and records the formatting debt without changing gates.
+
+The same primitive definitions also serve unary plus, numeric negation,
+arithmetic and Number bitwise operands. ToNumeric keeps BigInt identity; unary
+plus uses ToNumber and therefore retains its BigInt error. Inference converts
+primitive Boolean, String and Undefined operand domains to Number without
+changing the operands' declared source types. Addition still distinguishes a
+present string and concatenation; nullable string addition/ordering needs its
+own dynamic lexical branch and must not silently select numeric conversion.
+Unspread supported Math calls convert primitive operands, apply missing-argument
+behavior and evaluate ignored extra arguments. Captured arguments precede any
+conversion that can throw, including later argument errors and NaN followed by
+BigInt in max/min. Original Math.floor(BigInt) and extra-argument refusal inputs
+remain with cited corrected assertions and future independent behavior controls.
+Unannotated Math parameters retain constraints from actual primitive call sites;
+coercion does not prematurely bind them to Number. Unknown spread operands keep
+their array shape constraint without forcing the element domain.
+These additions are source drafts, not execution evidence. Iterator spreads,
+dynamic type-changing cells, mixed Number/BigInt errors and broader comparisons
+remain required alongside the previously named gaps.
+
+### Lossless JavaScript source literal unit draft
+
+JavaScript cooked string and template literals preserve every UTF-16 unit,
+including isolated surrogates, through their actual tokens and typed Links.
+Tokens expose a separate complete unit column when scalar text cannot represent
+the value; their scalar display projection never supplies the source meaning.
+The shared escape decoder reads complete fixed or braced syntax, accepts
+arbitrarily long leading zeroes, and rejects code points above 0x10FFFF as syntax
+errors. Rust and Lean scalar escape profiles retain their separate definitions.
+This follows [ECMAScript 2025 StringLiteral SV](https://tc39.es/ecma262/2025/multipage/ecmascript-language-lexical-grammar.html#sec-literals-string-literals).
+
+Source values that require unit transport lower to a checked unit-construction
+intrinsic with explicit integral units. JavaScript builds the exact string and
+Rust uses its existing UTF-16 Text representation. Rechecking retains every
+unit and rejects unproven dynamic columns. Both source frontends preserve
+literal and template chunks, numeric conversion inputs and exception messages.
+Non-value property/module/datatype names still need a complete unit-identity
+representation; their current source adapters refuse rather than accepting the
+scalar display as a name. Formal targets use the shared unit representation
+described below.
+
+Automatic source-library composition captures actual constant-bound arrow and
+function initializers alongside named function declarations. The parser and
+capture reader share callable-start syntax; grouped parameter/default syntax
+does not introduce accidental module declarations. Alias composition selects
+the actual declaration kind and lexical owner, retaining complete original
+source bytes, hashes and ownership in the typed Links provenance. Binding and
+export admission are shared inspectable definitions translated automatically
+to Rust. Named expressions receive a private name environment enclosing a
+separate parameter environment, spanning defaults and the entire body in both
+CST binding adapters. Their private name is not a module declaration; later
+parameters can shadow it without exposing it outside the expression. Alias
+composition selects the actual private binding and uses the existing checked
+rename operation to normalize its name with the compiled constant function.
+Every capture and resolution guard remains mandatory. Capture-conflicting
+normalizations, reflective function observations, general module data and
+effects remain separate obligations. Anonymous expressions use the immediate
+function head:
+the first parameter or a later declaration never supplies a fabricated name.
+Their import aliases and duplicate private helpers retain independent lexical
+owners. Head-name admission is itself a shared translated definition.
+Ordinary named functions, function expressions and arrows draft complete
+parameter-environment intervals, including defaults. Arrow parameters cannot
+capture earlier source reads or leak into neighboring arrows. Simple parameter
+lists share their actual binding with matching var redeclarations; repeated
+var declarations retain one binding and explicit source occurrences. Non-simple
+parameter lists retain a separate body environment and its name-dependent
+initialization. Single-binding renames that would disconnect that dependency
+refuse; Rust exposes BindingDependency for the same refusal. Function forms,
+simple-list admission, redeclaration and dependency rules are shared translated
+definitions. Literal true/false/null words do not fabricate unresolved reads.
+Binding discovery now uses one shared CST census for named functions, arrows,
+catch patterns and ordinary const/let/var declarations. Actual identifier and
+shorthand pattern roles select candidates. Inner default intervals become
+opaque before outer defaults; computed property keys and complete initializers
+remain source reads, including commas in templates and regular expressions.
+Nested object/array patterns, rest names and declaration lists reuse this
+definition rather than separate token scans. Property ranges retain their
+separate namespace, including private names whose spans contain multiple
+semantic tokens. Both runtimes consume the automatically translated rule and
+retain the original concrete tree, exact source and rename capture checks.
+Method parameter environments begin at their actual formal list, after any
+computed name evaluation, and enclose defaults and the complete body. Formal
+lists inside computed names retain their own function owner. Quoted and numeric
+method names do not require a semantic word token at the method's first byte.
+Ordinary, static, private, constructor, accessor and generator methods reuse the
+same CST census and parameter/var rules in both runtime adapters. Their shared
+scope-form definition is automatically translated; original/renamed Node and
+snapshot controls remain deferred. Full class/object execution and implicit
+binding semantics remain obligations.
+Full method/class semantics, additional binding contexts and initialization-
+preserving rewrites remain language obligations. Deferred original Node,
+exact-rename and snapshot controls establish no execution evidence.
+CST identifier intervals also distinguish contextual binding words from actual
+keywords in both runtime analyzers. A shared Boolean role definition retains
+names such as async, as and from; import scanning selects the actual module
+specifier keyword within its complete import statement. Strict module rename
+admission reuses the existing reserved-identifier definition, admits contextual
+words and refuses reserved words, eval and arguments. Actual production source
+uses an async-named parameter and its target spelling is generated normally.
+Other script goals, escaped identifier reconstruction and complete binding
+forms retain their independent language obligations.
+Capture also retains exported asynchronous named functions and their exact
+qualifier/comment source. A shared declaration-offset definition admits the
+`async function` head only without an intervening line terminator, including
+terminators inside comments. Deferred composition controls retain original
+Promise results and awaited imported calls. This extends source capture, not
+the existing sequential async translation profile into general scheduling.
+Deferred controls include duplicate private helpers, aliases, both codecs and
+all four emission targets. Source construction is not execution evidence.
+
+Automatic source-library composition also retains declared documentation
+datatypes, attached to their actual complete source comment and module owner.
+It does not relabel user declarations as generated data or infer ownership from
+spelling alone. Future exhaustive unit-decoder controls and original-source,
+token, codec, emission and native controls are declarations only. Corrected
+surrogate assertions retain their original inputs, former diagnostics and
+independent expected values under explicit runtime version profiles. No tests,
+behavioral oracles or validation gates have run in the current draft phase.
+
+### Exact BigInt conversion definitions and error transport draft
+
+Source builtin lowering uses the same complete conversion definitions for
+primitive strings, Numbers, Booleans, BigInts and optional absence. Inputs and
+ignored extra arguments evaluate once in source order before conversion.
+String parsing returns an explicit success column; its empty failure cannot
+be confused with the valid integer zero. Complete generated JavaScript, Rust,
+Lean and Rocq runtimes retain actual entry identities. Their UTF-8 decoder is
+one shared definition, with an explicit invalid-unit sentinel before conversion.
+Source error messages retain their version-qualified runtime profile separately
+from the language conversion algorithm.
+
+Ordinary source Error, TypeError, RangeError, SyntaxError, ReferenceError,
+URIError and EvalError throws retain a computed primitive message, its exact
+UTF-16 units, class and independent own-property presence. Standard constructor
+calls with and without `new` share their source owner check. All arguments
+evaluate before message conversion, including ignored arguments; undefined
+message absence remains distinct from an explicitly empty message. Existing
+literal generic Error nodes retain their historical representation. Checked
+exception operations hold normalized message and presence separately from raw
+source constructor operations, so Links rechecking never converts them twice.
+The existing serialized `math` container is a compatibility spelling for a
+typed intrinsic operation; its operation identity selects the full shared
+definition, rather than limiting it to JavaScript Math methods.
+
+Native exception transport carries the universal class/message-unit/presence
+tuple, including across separately embedded generated modules. Implicit BigInt
+ToNumber failures use the same TypeError transport. Future controls declare
+all three error fields and original-source argument order. Formal output pairs
+now draft the complete exception payload through nested calls. The structured
+`ml_source_exception_observation` entry retains class, exact message units and
+own-property presence; ordinary `main` projects the message for process display.
+Historical two-field pairs retain their actual fields without inventing class
+or property facts from their message. Native uncaught process/stack behavior
+remains required. Arbitrary
+thrown values, error objects/cause, catch/finally, AggregateError and complete
+non-value UTF-16 names remain obligations. These are code drafts;
+no behavior, test, oracle, compilation or validation gate has run in this phase.
+
+The shared BigInt conversion definition parses the complete StringIntegerLiteral
+grammar directly into unbounded integers, including unsigned radix forms,
+signed decimal forms, white space and empty input. It never passes through
+Number and has no semantic input-length cap. Integral binary64 input converts
+by exact binary decomposition; nonintegral and nonfinite input retains its
+RangeError obligation. Boolean conversion and syntax/type/range error identities
+belong to the same editable definition. Numeric digit and whitespace concepts
+are actual shared source dependencies of both numeric conversion libraries.
+
+One source-runtime author now emits complete native libraries, Rust runtime
+bodies, formal runtimes and typed Links. Runtime parameter loans derive from the
+actual emitted function declarations and calls, retaining their source actions.
+This fixes the numeric runtime's owning-vector/borrowed-call mismatch through
+automatic interface adaptation. Formal namespace aliases derive from actual
+binding mappings. Complete bodies, declarations and transport are retained.
+
+JavaScript APIs expose exact string, UTF-16, Number and Boolean conversion. Rust
+adapts actual UTF-16/Number/Boolean values to the generated integer type and
+returns structured source errors. Error constructor identity and every UTF-16
+message unit survive isolated surrogates; Display alone performs the UTF-8
+replacement needed for console output. V8 message expectations have explicit
+Node version ranges and are separate from the ECMAScript conversion algorithms.
+Future independent built-in BigInt controls cover values, errors, both runtime
+APIs and complete definition graph codecs/emissions. They have not executed.
+
+The source integration above is a draft and supplies no execution evidence.
+All previously named translation gaps and deferred source/ledger/naming metadata
+remain required.
+
+### Shared UTF-16 operations and formal string representation draft
+
+One complete portable JavaScript definition operates on code-unit columns for
+slicing, substring selection, characters, relative characters, code points,
+iteration, searches, prefix/suffix tests, lexical comparison, joining, trimming,
+character/code-point construction and scalar display transport. The same source
+generates native Rust, JavaScript, Lean and Rocq runtime bodies and full editable
+Links definitions. Actual emitted binding identities supply runtime entry aliases.
+The shared relative slice bound also serves arrays of every element type.
+Runtime authors include an integer dependency only when the actual source needs
+one; generated native module wrappers never import a nonexistent integer owner.
+
+JavaScript String types select full code-unit representation in formal output,
+including parameters, results, nested products and optional values. Lean stores
+arrays of natural numbers; Rocq stores lists of binary N values, avoiding unary
+allocation proportional to each code-unit value. The represented input domain
+is ordered units 0..65535. Checked literal construction and generated operations
+preserve that invariant. Bridges convert units to the complete generated
+numeric kernels without losing isolated surrogates. Generic array slicing keeps
+its element representation and uses the same exact relative-bound definition.
+
+Formal emission retains unit columns through literals, concatenation, optional
+text/type/length projections, predicates, String operations, collection joins,
+numeric conversion, BigInt parsing, function calls and threaded output. Scalar
+display alone replaces isolated surrogates and encodes Unicode characters or
+UTF-8 bytes. The original Rust-source scalar profile remains distinct. Native
+Rust emission already selects its Text profile for unit-sensitive operations;
+its complete default public JavaScript String parameter domain still needs
+review alongside explicit scalar-library interfaces. Complete source arithmetic
+error identities, all remaining String methods and stateful features
+remain requirements. This representation draft supplies no native observations.
+
+Unshadowed String.fromCharCode and String.fromCodePoint source calls lower through
+the shared Number conversion and UTF-16 kernels in both checked runtimes. All
+argument expressions evaluate before builtin conversion. Code-point validation
+happens immediately after each primitive conversion and before converting the
+next argument; errors therefore retain the source order. Character construction
+uses ToUint16 and canonicalizes zero. Surrogate code points remain valid String
+units. Code-point errors retain class, message units and property presence in
+the existing exception transport. Iterator spreads and object/Symbol conversion
+remain required. These rules follow
+[ECMAScript String.fromCharCode](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.fromcharcode)
+and [String.fromCodePoint](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.fromcodepoint).
+
+Future controls declare complete original source, argument/error ordering,
+direct unit algorithms, all program/definition codecs and emissions, and native
+execution. Corrected former formal-order refusals retain their original inputs,
+diagnostics and independent value/unit controls. No behavior tests, native
+compilation, validation gates, CI or push have run in this draft phase.
+
+Output threading uses the existing shared source-name census and private-name
+supply for pair declarations, output parameters and local bindings. Source
+names such as `ml_io1` and `ml_out` therefore retain their identities through
+formal effect lowering. Future controls declare nested standard errors with
+absent messages and deliberate private-name collisions. Full source arithmetic
+errors, assertion payloads and effectful callable values remain obligations.
+
+### Shared BigInt division draft
+
+The complete signed integer division definition returns quotient and remainder
+or an explicit zero-divisor result. It uses binary long division over unbounded
+integers and a nonzero literal primitive, without floating intermediates or a
+semantic input-width limit. Source lowering preserves both operand evaluations
+before inspecting the result, then raises the original RangeError with exact
+message units and property presence. Checked canonical nonzero literals keep
+their direct primitive form. The same complete source generates every runtime
+and editable definition graph; actual host adapters only construct typed IR or
+transport values. Public JavaScript and Rust APIs expose both results and the
+source error. These rules follow
+[ECMAScript BigInt division](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-divide)
+and [remainder](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-remainder).
+
+Future controls retain independent operators, both signs, zero, large bit widths,
+argument capture, exact errors and complete program/definition codecs/emissions.
+No behavior has executed. Formal general-recursion fuel remains an explicit
+obligation for inputs beyond the existing evaluation budget; generated source
+alone does not prove unbounded formal evaluation. Mixed numeric type errors,
+exponentiation, unsigned shifts and every preceding gap remain requirements.
+
+### Numeric operation failure draft
+
+Mixed Number/BigInt arithmetic and bitwise operations, and unsigned BigInt
+shifts, preserve their actual TypeError after evaluating both operands.
+Primitive ToNumeric conversion remains distinct from String addition. Shared
+source rules select the failure and version-profiled message; actual checker
+adapters construct existing typed exception operations. Inference leaves a
+statically failing operation's result unconstrained, so it can inhabit its
+actual contextual return type without inventing a successful numeric value.
+Operand evaluation and earlier exceptions still precede the selected error.
+
+The original mixed/unsigned bitwise refusal sources and old assertion are
+retained beside the corrected runtime-error expectations, independent original
+source observations and complete codec/emission/native controls. This follows
+[ApplyStringOrNumericBinaryOperator](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator),
+[BigInt unsigned shift](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-unsignedRightShift)
+and [V8 message declarations](https://github.com/nodejs/node/blob/main/deps/v8/src/common/message-template.h).
+Assertions select explicit Node version ranges and refuse uncovered runtimes.
+These controls are authored only. Object/Symbol conversion, mixed numeric
+ordering, optional dynamic numeric domains, exponentiation and every remaining
+requirement still need implementation. No code tests or validation gates ran.
+
+### Exponentiation and formal membership draft
+
+Both source frontends now draft right-associative `**` and local `**=` through
+the actual shared assignment construction plan. Unparenthesized unary bases
+remain syntax errors; parenthesized bases and unary right operands keep their
+source grouping. Primitive ToNumeric selects Number or BigInt, retains mixed
+type errors and evaluates arguments before arithmetic validation.
+
+BigInt powers use complete unbounded repeated squaring and retain the source
+RangeError for a negative exponent. Number powers have a complete canonical
+dyadic algorithm: exact binary decomposition, independently normalized directed
+integer interval endpoints, integer square roots and repeated squaring. Exact
+rational conversion rounds both endpoints to binary64; precision increases
+until they agree. Exponents remain unbounded integers while significands stay
+bounded by the selected precision. No host pow/log/exp, floating intermediate
+approximation or semantic precision ceiling supplies the result. Special cases
+retain NaN, infinities, signed zero, negative bases, overflow and subnormals.
+The actual source generates native libraries, all runtime bodies and editable
+definition graphs. Public JavaScript and Rust APIs expose the same definitions.
+
+ECMAScript permits implementation-approximated Number exponentiation. The new
+canonical algorithm is a source draft; correct-rounding proofs, exact V8
+approximation parity over the required source domains, resource behavior and
+formal general-recursion budgets remain obligations. Existing exact original
+source oracles are not relaxed. Neither an authored algorithm nor generated
+source establishes that those obligations pass. The syntax and arithmetic
+follow [exponentiation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-exp-operator)
+and [the numeric definitions](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-exponentiate).
+
+The source-runtime author also exposed the missing formal array membership
+path. Both formal hosts now draft includes for admitted primitive and optional
+elements, with SameValueZero at NaN and signed zero, distinct absence tags,
+exact unit-string equality and shared relative-position bounds. Receiver,
+search and start values bind once in order. Structured-object searches retain
+their identity obligation. Future original values/errors/grouping/syntax,
+primitive membership, program/definition codecs and four-emission controls are
+authored only. No code tests, oracles or validation gates ran.
+
+Math.pow uses the same canonical Number power definition through its separate
+ToNumber argument path. Missing arguments become NaN, both selected conversions
+run in order, and every ignored extra expression evaluates before conversion.
+BigInt rejection therefore differs from the exponentiation operator's BigInt
+domain. Future controls retain missing values, primitive strings, ignored
+BigInts, captured inputs and an extra-argument error preceding conversion.
+This is a source draft with the same approximation/parity and execution
+obligations as the underlying Number power definition.
+
+### Primitive comparison draft
+
+Both checked source hosts now draft strict primitive equality and relational
+comparisons across Number, BigInt, String, Boolean, null and undefined, including
+their declared optional domains. Raw operands bind once in source order before
+primitive conversion. Same-domain operations retain their existing encoding;
+new shared decisions select mixed domains and optional branches. Inference waits
+for actual call-site types and keeps known, distinct primitive domains separate.
+
+Number/BigInt ordering compares exact unbounded integers against the finite
+Number's exact integral floor and fractional distinction, with separate NaN
+and infinity cases. String/BigInt ordering uses the complete StringIntegerLiteral
+definition without a Number intermediate. Invalid integer strings remain
+unordered; every ordering operator then returns false. Nullable String/String
+ordering selects lexical UTF-16 comparison only when both values are strings;
+the absent branches retain numeric conversion. Strict equality keeps language
+type distinctions and separate null/undefined tags. Shared intrinsic signatures
+now select every operand and result type in both recheckers and inference hosts.
+These rules follow [IsLessThan](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islessthan)
+and [IsStrictlyEqual](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-isstrictlyequal).
+
+Complete comparison decisions, exact numeric kernels and runtime renderers are
+source-derived definitions. Future independent controls retain large integer
+boundaries, fractional Numbers, radices, invalid strings, isolated units, null,
+undefined, NaN, signed zero, argument capture and every program/definition codec
+and target emission. They have not executed. Object/Symbol conversion,
+heterogeneous dynamic unions and all inherited requirements remain.
+
+Primitive loose equality (`==`/`!=`) uses the same captured operand and exact
+mixed-domain machinery. Shared decisions retain same-type strict equality,
+Boolean/Number conversion, StringNumericLiteral or StringIntegerLiteral as
+selected by the other operand, and null/undefined equivalence. Null does not
+become zero merely because it is compared loosely with a Number. Declared
+optional domains branch with their actual absence tags before conversion.
+Both parsers, inference hosts and checked adapters carry this operation; the
+result uses existing inspectable typed operations. These rules follow
+[IsLooselyEqual](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islooselyequal).
+
+The owned `Object.is` source builtin drafts SameValue through a shared checked
+operator plan. Numbers retain NaN equality and distinguish positive and negative
+zero; other admitted primitives retain their actual strict identity and BigInt
+subdomains retain one integer domain. Nullable values branch with separate
+absence tags. Every argument evaluates once in source order, including ignored
+extras, before selection; missing arguments supply undefined. This follows
+[Object.is](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.is).
+Source rules generate native rules and complete editable Links. Future controls
+are declared without execution. Object/Symbol identity, iterator spreads and
+the remaining translation requirements still need implementation.
+
+### Represented binding initializer draft
+
+JavaScript array binding initializers now use undefined-only selection over
+represented primitive and structured present domains. The selected element
+evaluates once; null survives, a present value skips its initializer, and a
+missing/undefined value evaluates that initializer in binding order. Result
+types retain the union of surviving null and initializer absence tags. Shared
+inference plans collapse nested optional wrappers while retaining original
+base-term identities; source adapters build only existing typed links.
+
+Complete JavaScript decisions generate native rules and editable program
+graphs. The two previous nullable/structured refusal inputs and assertions
+remain recorded; their active controls now require their original source
+results, supported by the normative
+[binding initialization algorithms](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-iteratorbindinginitialization).
+All other refusal inputs and existing independent outputs remain. New future
+controls include lazy effects, signed zero, NaN, absence fallbacks and
+structured values in both runtimes and every complete codec/emission. None
+executed. Arbitrary iterators, nested pattern protocols, heterogeneous present
+value unions, and every earlier source/grammar requirement remain obligations.
+
+### Primitive text and positioned string search draft
+
+The actual String owner now drafts primitive conversion with missing arguments,
+ignored extras and complete argument evaluation before conversion. Shared text
+classification retains exact strings, Number/Boolean/BigInt text, Unit as
+undefined, and nullable tags. String concat reuses that classification.
+
+String includes/startsWith/endsWith/indexOf/lastIndexOf now retain raw receiver
+and arguments once before search text and position conversions in that order.
+Shared windows/defaults retain nonnegative clamping, missing/undefined end
+positions, fractional and nonfinite values, UTF-16 code-unit positions and
+lastIndexOf's distinct NaN rule. Existing checked operations and complete
+UTF-16 definitions supply the behavior; own record methods keep their actual
+callable meanings. String maps evaluate ignored arguments. These drafts
+follow the [String algorithms](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-properties-of-the-string-prototype-object).
+
+Complete source decisions generate native rules and editable Links; future
+original/native/full-codec/emission controls remain unexecuted. Objects,
+Symbols/RegExp hooks, generic method receivers, method lookup/accessors, iterator
+spreads, full Unicode case mapping and every earlier obligation remain.
+
+### String range source draft
+
+Both actual source hosts now draft slice/substring/Annex B substr over String
+receivers through one complete checked-operator plan. Raw arguments evaluate
+once before sequential primitive numeric conversions; undefined end/length
+values retain their distinct defaults. Substring normalizes NaN before
+nonnegative endpoint ordering; substr retains relative starts and nonnegative
+lengths. Existing exact UTF-16 slice operations retain selected surrogate units.
+Own record methods retain actual callable dispatch. The plans follow
+[substring](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.substring)
+and [the Node-supported Annex B substr profile](https://tc39.es/ecma262/2025/multipage/additional-ecmascript-features-for-web-browsers.html#sec-string.prototype.substr).
+
+Complete JavaScript rules generate native rules and public editable definition
+graphs in both packages. Future original/native/full-codec/emission controls
+are declared without execution, with explicit Node ranges. TypeScript
+declarations include these factories and the preceding comparison/binding
+factories. Object conversions, generic receivers, method lookup/accessors and
+all earlier requirements remain.
+
+### Boolean conversion and builtin owner draft
+
+The shared source owner rule now includes actual unshadowed BigInt and Boolean
+bindings. BigInt reaches the already represented exact primitive conversion
+path; local, module, imported and unknown-context shadows still retain their
+actual owners. Boolean captures every argument once, ignores extra values
+after their effects, supplies false when missing and uses the existing
+shared truth operation for every represented primitive/optional/object value.
+ToBoolean does not invoke object primitive conversion. The rules follow
+[ToBoolean](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-toboolean)
+and [Boolean conversion](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-boolean-constructor-boolean-value).
+
+Both runtime adapters, actual shared source rules and public complete optional
+value graphs are drafted. Future source/owner/native/codec/emission controls
+include falsy primitives, nullable tags, UTF-16 strings, truthy objects and
+ignored argument effects. None executed. Host exotic values, arbitrary
+iterators, wrappers/new Boolean, full source constructs and every earlier
+requirement remain. Native inference observation transport moved to its
+existing child module to retain the root size limit.
+
+### Ordinary Rust Unit values and call statements draft
+
+The ordinary source frontend now drafts implicit Unit function results, empty
+blocks, terminal Unit returns at the function boundary, inert semicolons and
+ordered direct Unit expression/call statements. Named call results use the
+complete actual declaration catalog: collecting passes defer direct calls;
+the final pass requires proven direct Unit ownership. Existing hygienic
+bindings preserve each call before its continuation, including ordinary main
+statements and Unit tails. This follows the Rust Reference's
+[implicit result](https://doc.rust-lang.org/reference/items/functions.html#items.fn.implicit-return),
+[block value](https://doc.rust-lang.org/reference/expressions/block-expr.html#expr.block.value-no-trailing-expr)
+and [return](https://doc.rust-lang.org/reference/expressions/return-expr.html) rules.
+
+The two obsolete default-frontend refusal inputs and their exact original
+assertions/span remain recorded beside active value/call/graph controls. Full
+emitted wrapper inputs retain their next actual standard-library obligation;
+selected closed Unit proof profiles retain all of their original guards.
+General nonlocal returns and discarded non-Unit values/destructor effects
+remain required. An unrepresented unreachable continuation cannot move a Unit
+call before an abort. Shared source selection rules generate native code and
+editable Links; all new original/native/codec/emission controls remain
+unexecuted, with explicit Rust and Node ranges.
+
+The owned Array.isArray builtin now drafts the complete argument-evaluation
+shape around the existing represented-kind classification: missing input
+returns false, ignored extras still evaluate, and the first actual value is
+captured before later arguments. Optional arrays retain actual presence
+independently of length. Both source hosts and generated owner rules preserve
+lexical/module shadow guards. Future source/native/codec/emission controls
+remain unexecuted. Proxy/exotic and unrepresented dynamic union domains retain
+their complete operational obligations.
+
+### Written record parameter bindings draft
+
+Actual writes to named record-parameter bindings now select the existing
+ordinary mutable-local initialization, while unwritten bindings retain their
+ordinary immutable-local projection. Parameters bind before the original body;
+assignments update their local cells and preserve captured/per-invocation
+identity without writing the caller's property. Mixed ordinary parameters
+retain the same ordinary function lowering. The historical read-only profile
+predicate retains its original contract; the current body initialization uses
+its own actual lexical assignment facts. This follows
+[mutable formal parameter bindings](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation).
+
+Both actual hosts and source-generated native rules are drafted. Three former
+write-refusal inputs and their exact previous assertion remain recorded beside
+active original-source, source-free graph and native value controls. Var
+redeclarations and lexical/directive/owner guards retain their own existing
+boundaries. Future controls include alias names, captured writes, per-call
+cells and nested shadows; none executed. General parameter patterns/defaults,
+var environments, getters/proxies, complete formal mutable-cell execution and
+all earlier requirements remain required.
+
+
+### Ordered JavaScript comma values draft
+
+Comma expressions now lower through a shared source construction plan over the
+existing binding algebra: evaluate and GetValue the left operand once, then
+evaluate and return the right value. Both source hosts distinguish Expression
+from AssignmentExpression, admitting commas in returns, parentheses, conditions,
+computed indexes, template substitutions and value switch tests while retaining
+argument, initializer, array and conditional-branch separators. Existing CST
+retains every original token and source interval. The meaning follows the
+[ECMAScript comma operator](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-comma-operator).
+
+Statement and for expression lists use ordered ordinary statements, including
+existing assignment/print paths; arbitrary represented expressions can appear
+in a for initializer or update. Hygienic source bindings share the actual
+module-wide supply with assignment temporaries. The complete scalar/sequence
+source closure generates native code and editable Links graphs. Declared
+original-source, native, codec and four-target controls retain argument/list
+separation, lazy branches, abrupt completion and nested effects without running
+them. General reference receivers/this, direct eval, unresolvable-reference
+operations, arbitrary throws, dynamic unions and all earlier requirements remain.
+Private ordinary Rust Unit statement bindings omit absent type annotations,
+matching native source serialization without changing value semantics.
+
+
+### JavaScript void values and constant for bindings draft
+
+The shared source construction algebra now defines void by capturing the actual
+operand once and returning its explicit undefined absence value. Both source
+hosts preserve operand effects, abrupt completions, unary precedence and the
+module-wide hygienic name supply; no conversion or reference to a shadowed
+undefined binding is introduced. Existing exponentiation-base restrictions
+remain. This follows [void evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-void-operator).
+Ordinary for headers admit const initializers through the same lexical binding
+reader as ordinary statements, retaining header semicolons and ordered
+declarators. The declaration belongs to the loop's lexical scope.
+
+The old scalar-plan refusal for **= contradicted the earlier exponentiation
+draft. Its exact operator/input/assertion and predecessor remain in the Links
+fixture beside the normative correction; active controls require the original
+input's complete ordered plan and Number/BigInt source values. Future void,
+constant-for, shadow and abrupt-completion controls remain unexecuted. General
+reference operations, throw/completion behavior, complete lexical iteration
+environments, dynamic unions and every preceding requirement retain scope.
+
+
+### Shared Unicode default case conversion draft
+
+JavaScript-source lower/upper case emission now uses a complete Unicode 16.0.0
+source definition across JavaScript, Rust, Lean and Rocq. Official UnicodeData,
+SpecialCasing and DerivedCoreProperties declarations are automatically converted
+to compact inspectable Links tables and source array declarations, retaining
+source URLs, hashes, license and conditional mapping declarations. Source files
+are downloaded into a temporary task directory; numeric declarations and
+algorithms are generated automatically, without deriving expected values from
+a local host case implementation.
+
+The shared algorithm decodes the original UTF16 units, preserves unpaired
+surrogates, applies full mappings and multi-point expansions, then encodes the
+result back to units. Binary searches select compressed stride/delta ranges
+and explicit expansions; expansions take precedence over gaps inside ranges.
+Contextual final sigma reads the original string, with forward/backward context
+passes and the possessive Case_Ignorable rule, including its overlap with Cased.
+This follows [Unicode default casing](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G33992)
+and [ECMAScript case conversion](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.tolowercase).
+
+Public UTF16-unit and full editable definition-graph entry points expose this
+explicit Unicode 16 profile. Target contracts name the same profile. Actual
+text/unit adapters only transport values around the generated algorithms; no
+host character mapping supplies their meaning. Ordinary Rust-source scalar
+case behavior retains its existing separate standard-library version scope;
+explicit formal unit-string casing selects the declared shared profile.
+Alternate Unicode releases, locale-specific casing, complete Rust library
+profiles, generic receivers and the inherited full default UTF16 input-domain
+requirement remain required. The column algorithm also takes actual data
+arguments for independently declared additional profiles.
+
+Future controls retain scalar, expansion, final-sigma/ignorable overlap,
+supplementary, isolated-unit, owner and argument-order cases. Both archives and
+four emissions retain complete source definitions. An exhaustive original-Node
+comparison over every code point is CI-only, reusing imported tables within
+that run; it selects Node >=24 <25 with actual Unicode 16.0 and refuses uncovered
+versions. Native products use generated data instead of the Rust host's case
+tables. No new control or oracle executed in the complete draft phase.
+
+
+### Ordinary terminal Rust return values draft
+
+The ordinary source frontend now projects an actual terminal function-boundary
+return to the same result expression used by its tail-value form. Existing
+source ownership/result checks still apply, and no closed-completion proof is
+invented. A shared source decision inspects actual punctuation, balanced
+delimiters and the absence of any continuation before that function block
+closes. Both adapters supply progressively larger token windows, avoiding a
+whole-module column allocation for each function. Literal string contents
+cannot supply delimiters. Earlier and nested returns retain their existing
+completion obligations; direct Unit continuation diagnostics remain exact.
+This follows [Rust return expressions](https://doc.rust-lang.org/reference/expressions/return-expr.html).
+
+The original default terminal-return refusal source, kind, reason and span
+remain historical declarations in the original completion fixture and the new
+Links correction fixture. Current controls require admission and actual values
+for that same input, retaining all unsafe/escaping and return-expression
+refusals. Future source/native/codec/four-emission cases include returned
+conditionals, structures, tuples, strings, forward calls and long expressions.
+The full current source decisions are available as editable typed Links in
+both packages. None of these controls executed. General completions, lexical
+continuations, drop/borrow effects and every preceding requirement remain.
+
+
+### Ordinary Rust function output and Display source plans draft
+
+Ordinary functions and nested blocks now lower println statements and Unit
+tails through the existing Print/binding algebra. The original formatting
+reader receives the actual module path and lexical source context. Calls keep
+output order through the existing four-target output translation, including
+printing before a terminal return. The original module-wrapped terminal-return
+fixture can therefore retain its complete println main declaration.
+
+Plain Display formatting now uses a complete shared source plan over literal
+UTF16 units, actual positional operands and captured source identifiers. Escaped
+braces, independent implicit/explicit positions, trailing placeholder whitespace,
+missing/unused operands and unsupported specs remain explicit decisions.
+Captured names reuse ordinary Rust identifier admission and normalization,
+including Unicode and raw-keyword bindings; a bare underscore refuses. Every
+raw explicit operand is evaluated once in source order before any repeated or
+reordered formatting occurrence reads its hygienic binding. The actual standard
+format construction owns its String result. These rules follow
+[Rust formatting](https://doc.rust-lang.org/std/fmt/) and
+[println](https://doc.rust-lang.org/std/macro.println.html).
+
+Complete source decisions generate native code and editable typed definitions.
+The native parser transports actual text/value/name terms instead of maintaining
+a second formatting grammar. Unused-argument detection merges used positions
+without changing the occurrence plan, avoiding a repeated membership scan per
+argument. The original handwritten grammar remains available at its preceding
+Git revision; no historical input, assertion or fixture is overwritten to claim
+new behavior. Source/ledger/history reconciliation remains deferred.
+
+Fifteen source trace declarations retain each entire original input inside a
+composed module, with invocation facades and trace markers. Future controls
+compare original Rust, translated JavaScript and native Rust complete traces,
+actual source ASTs, both program/definition codecs and all four emissions.
+Native compilers run only in CI and enforce explicit version ranges. No such
+control executed during the complete draft. Full format specs,
+custom Display/borrow effects, complete macro namespaces
+and every earlier source/architecture requirement remain required.
+
+Explicit named operands now have an additional source draft for format! and
+println!. Actual identifier = expression operands retain their original source
+order; normalized names resolve shared grammar terms to their actual operand
+positions before any Display conversion. An explicit name overrides a lexical
+capture, while unprovided names retain their existing lexical lookup. Indexed
+fields keep their original positions and do not advance the implicit cursor.
+Repeated fields reuse the same captured argument. Duplicate names, positional
+arguments following named arguments, unused operands and unsupported specifiers
+remain observable errors. Names use the existing Unicode source normalization
+and raw-identifier projection. The original positional-only planner and unused
+position diagnosis remain available without the new named-profile bounds.
+
+Both adapters delegate resolution and argument-sequence admission to complete
+automatically translated definitions. The named profile permits at most one
+hundred thousand operands/terms and one million name-comparison steps; exhaustion
+refuses. Thirteen complete source programs, original native function types,
+output traces, independent plan/refusal controls, both Links transports and
+both generated native products remain deferred. These source drafts establish
+no runtime observations, equivalence proof or complete macro/format coverage.
+
+
+### Ordinary guarded Rust function completions draft
+
+An ordinary function's actual return keyword now selects source control-flow
+lowering without a selected-profile declaration. Keyword-aware punctuation
+windows stop at the owning function boundary; literal text and raw identifiers
+cannot select control flow. Existing explicit source/completion profiles keep
+their original guards and paths. Actual source ownership/result checks still
+apply after the ordinary body is read.
+
+Shared source decisions lower terminal block returns, ordered immutable/Unit
+bindings, prints, guarded return/abort continuations, complete returned
+alternatives and terminal mixed returned/value alternatives through existing
+If/Let terms. Implicit Unit alternatives retain ordinary Rust result checking.
+Branch scopes are restored before reading a continuation. Private mixed exits
+remain distinct from ordinary values. An else-if may consume an outer
+continuation only when the preceding alternative cannot fall through.
+General joins of mixed exits and fallthrough require their complete completion
+carrier; refusal does not fulfill that remaining requirement. This follows
+[Rust if expressions](https://doc.rust-lang.org/reference/expressions/if-expr.html)
+and [return expressions](https://doc.rust-lang.org/reference/expressions/return-expr.html).
+
+New future values/abort controls retain guard ordering, branch shadows, owned
+strings, nominal constructors, complete nested exits, raw return identifiers
+and literal keyword text. Added complete output traces retain prints before
+guards, selected Unit returns and implicit Unit fallthrough. Both native/source
+adapters and full editable definition graphs are drafted; no control executed.
+General completion carriers, nested expression returns, pattern control, loops,
+mutable/drop/borrow effects, explicit profile composition and every earlier
+requirement remain required.
+
+
+### Shared literal UTF16 splitting draft
+
+Typed String split now uses one complete source column algorithm in JavaScript,
+Rust, Lean and Rocq. Literal separator matching is nonoverlapping; empty
+separators split code units, preserving isolated surrogate halves. ToUint32
+normalizes the limit before missing-separator selection. Missing and empty
+separators remain distinct, as do no fields and one empty field. This follows
+[String split](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.split).
+
+JavaScript/native emitters use thin string/column transport, evaluate normalized
+operands once and reserve the runtime helper name. Rust borrows receiver and
+separator through an immediately called closure, including temporary strings.
+The formal bridge maps actual unit columns directly. All runtimes and complete
+editable definition graphs are source-generated. An automatically copied, fully
+hashed ToUint32 declaration retains a qualified identity beside its original
+definition until complete equivalence permits deduplication; no generated
+arithmetic is maintained by hand.
+
+Future controls declare limits, empty/leading/trailing fields, overlap, surrogate
+halves, ownership and name hygiene, both codecs and all targets. None executed.
+Raw primitive argument coercions/effects, RegExp and Symbol.split protocols,
+generic receivers, formal termination and every preceding requirement remain.
+
+
+### Primitive source string unit calls draft
+
+Actual resolved String split/charAt/charCodeAt/codePointAt/at calls capture their
+receiver and every raw argument once, in source order. Ignored extras preserve
+effects before primitive conversions. Number positions use the shared ToNumber
+transport; omitted and undefined split limits select the full unsigned range.
+Split preserves missing versus text separators, including optional absence,
+while Number/Boolean/BigInt/null text separators use shared primitive ToString.
+The limit conversion precedes separator text conversion. Source inference keeps
+actual argument domains instead of forcing primitive positions to Number types.
+Record-owned methods continue through their own callable field. Generic objects,
+Symbols, protocols and dynamic unions remain required.
+
+Both checker adapters reuse the same existing checked method materializer and
+character templates. Complete source decisions generate native code and public
+editable definitions. Future controls retain original source effects, values,
+exception fields, codecs and all emissions. Complete preceding assertion files
+are retained with hashes in Links; obsolete primitive-position/extra-argument
+refusals become same-input source, translated and native value controls. The
+original BigInt position becomes a runtime TypeError control. These corrections
+follow [String unit methods](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.charat)
+under explicit Node22.15/24 and Rust1.90–1.99 future control ranges. No code
+controls executed. Broader source domains and every earlier requirement remain.
+
+
+### Shared literal UTF16 replacement draft
+
+Literal replace/replaceAll now use a complete shared source substitution plan
+and unit-column executor across JavaScript, Rust, Lean and Rocq. Template dollar,
+matched-text, original-prefix and original-suffix roles read the unchanged
+original text. Capture-looking templates remain literal when the actual search
+has no captures. Matching is nonoverlapping; empty all-search advances one code
+unit through the final boundary, preserving surrogate halves. Template parsing
+runs once, followed by ordered output-unit construction without repeatedly
+copying the whole input for every segment. This follows
+[GetSubstitution](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-getsubstitution).
+
+Actual String source calls capture receiver and all arguments before primitive
+search/template conversion. Omitted operands convert to undefined text; ignored
+extras retain effects. Own record methods keep their callable meaning. Target
+bridges transport strings/columns and borrowed temporaries; generated runtimes
+and full editable definitions own the algorithm. Existing legacy Text helper
+definitions are retained as separate source contexts, without an equivalence
+or deduplication claim.
+
+Future declarations retain template roles, original context, empty boundaries,
+UTF16 units, primitive conversion, argument order and name hygiene. Both codecs,
+all emissions and native products are drafted but unexecuted. This domain uses
+literal searches, primitive templates and successful allocation. Callable
+replacements, RegExp/Symbol.replace, generic receivers/unions, complete resource
+limits/failures and every preceding requirement remain required.
+
+The registered call source also drafts string repetition and start/end padding
+through `utf16-text-expansion-rules.js`, automatically translated Rust and paired
+editable Links definitions. Repetition applies ToIntegerOrInfinity semantics;
+negative counts and positive infinity request an actual realm RangeError even
+for empty input. Padding applies ToLength semantics, preserves unchanged text
+when the target is shorter or the filler is empty, and truncates repeated filler
+by code units, including surrogate halves. Bounds and dense registered input
+vectors establish constructor indices. Original receiver, used arguments and
+ignored extra argument effects retain the ordinary source checker order. See
+[repeat and StringPad](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.repeat).
+
+The profile limits constructed output to 1,048,576 units before allocation.
+Larger required outputs are explicit resource refusals, separate from language
+exceptions. An empty filler or finite repetition of empty input avoids allocation
+without iterating over a huge requested length. Source repetition captures its
+numeric bound before testing the shared invalid-count predicate, then builds the
+RangeError from the original primitive argument. This preserves whitespace and
+noncanonical numeric text in V8 count diagnostics rather than substituting the
+converted or truncated Number, following its
+[repeat implementation](https://raw.githubusercontent.com/v8/v8/main/src/builtins/string-repeat.tq),
+with future assertions bounded to Node22.15/24 and Rust1.90–1.99. Independent
+literal controls, native kernel controls and actual source-call controls are
+drafted but unexecuted. Generic receivers, Object/Symbol coercion and complete
+allocation-failure semantics remain required.
+
+
+### Normalized method reconstruction boundary draft
+
+Source calls and normalized typed operations have distinct checker entry paths.
+The internal graph reconstruction path preserves the already represented
+primitive method while running the same core type, operation, arity, binding,
+ownership, source-proof and complete-program comparison checks. It does not
+repeat source property-call desugaring, introduce new captures or interpret a
+missing typed split separator as a missing raw source argument. The ordinary
+source entry keeps all raw argument normalization. Both runtimes make this
+distinction in ephemeral checker state; no serialized trust/completion flag is
+accepted and the Links schema is unchanged.
+
+Future controls retain exact complete rechecks after both codecs and all four
+emissions for split, ranges, searches, replacements and character templates.
+Forged operations, excess arity and false result types must still fail. These
+controls remain unexecuted. Other checked source projections and all earlier
+source, grammar, proof and resource obligations retain their full scope.
+
+
+### Ordinary Rust completion carriers draft
+
+Ordinary source functions now parse a private control tree before constructing
+core terms. Shared source decisions distinguish function results, statement
+fallthrough, bindings, conditionals and sequenced joins. A join reads its first
+statement through an explicit FunctionResult/StatementContinuation sum and
+places the single continuation in its sibling match arm, outside every branch's
+local bindings. Else-if parsing never consumes an enclosing continuation.
+False, zero, empty strings and Unit returned values remain distinct from
+fallthrough; no truthiness or absence sentinel represents completion.
+
+Carrier datatypes are generated lazily with hygienic names and the actual
+function return type, then installed in their owning module. Source leaf origins
+are retained while their lexical scopes are live. Every actual return/tail
+keeps the existing source ownership/result checks; aggregate source evidence
+comes from those actual leaves. Target AST assembly transports the shared
+construction decisions. All four emitters use the existing datatype/match
+algebra; no runtime callback or duplicated tail is required. Private type
+instantiations retain qualified identities pending complete contextual
+equivalence, while their construction definition is shared editable Links data.
+The source CST continues to retain its original tokens and spans independently.
+
+Selection uses actual return keywords or panic macro tokens, never literal
+keyword text, under the ordinary source context. Explicit source/completion
+profiles retain their original paths and composition obligations. Statement
+fallthrough currently needs actual direct Unit source evidence. General
+discarded value joins, nested expression returns, pattern control, loops,
+mutable/borrow/drop contexts and complete profile composition remain required.
+
+Two exact preceding mixed-exit/continuing-else-if refusal sources and all prior
+reader/assertion bytes remain in Links correction history. Current future
+controls require their admission, complete original/translated/native traces,
+source AST parity, both program/definition codecs and all four emissions. New
+values and aborts retain branch shadows, multiple joins, Boolean/zero results,
+owned and nominal payloads, nested modules and source name collisions. None
+executed; source/metadata regeneration and all earlier requirements remain.
+
+
+### Ordinary Rust statement values draft
+
+Ordinary semicolon statements can now discard represented direct primitive
+results, preserving actual evaluation and its output/abort order through core
+Let terms. The original direct-Unit decision remains separate for selected
+source profiles and statement-completion branches. Calls, explicit fixed
+values, Boolean values and owned standard strings retain their actual source
+types; this extension does not infer a default type for an unknown numeral.
+
+An ordinary expression-with-block followed by more statements can omit its
+semicolon when its actual result is direct Unit. Its generated discarded
+binding carries an explicit Unit type constraint, so the core checker enforces
+the source rule even during forward declaration collection. Final source facts
+retain indirection checks. Both regular blocks and ordinary completion trees
+transport these shared decisions. This follows
+[Rust expression statements](https://doc.rust-lang.org/reference/statements.html#expression-statements).
+
+Future values, original/native output traces, invalid non-Unit blocks, source
+AST equality, complete definition/program codecs and all four emissions are
+declared and unexecuted. General nominal/reference discards, default numeric
+inference and overflow, mixed value joins, custom destructor/borrow/mutable
+contexts and every preceding requirement remain required.
+
+
+### Lexical JavaScript optional callable draft
+
+Lexical/value optional calls now capture their actual callee once before any
+argument can change its binding. Absent callees produce undefined without
+evaluating arguments. Present callees use the existing checked fixed callable
+signature and ordered argument coercion. Direct calls preserve their ordinary
+result; guarded calls retain returned null, undefined, false, zero and empty
+text independently from receiver absence. Unit callback effects run before
+their result becomes undefined; nested optional results flatten through the
+existing shared absence algebra. Zero-argument factory calls remain calls,
+while actual function references retain their separate source term. This follows
+[optional chains](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-optional-chains).
+
+A private value record stores the actual callee, allowing guards and unwrapping
+to read owned callback values without moving the binding. It never escapes or
+changes the shared reference identity allocator. Its extra private allocation
+uses the existing successful-allocation observation scope. Adapters transport
+actual terms through core record, Let, If, Apply and optional operations;
+complete source rules generate native selections and public editable definition
+graphs in both packages. No new opaque runtime or persisted trust flag is used.
+
+Property references retain their original-this obligation. Continued optional
+chains retain a separate skipped-chain versus returned-value obligation; they
+are not flattened into this closed lexical call result. Dynamic non-callables,
+callable objects/proxies, spread/missing/extra argument protocols, full dead-code/
+TDZ inference, arbitrary effectful callable contexts and every preceding
+requirement remain required. Future original/native values, exception fields,
+source ASTs, both definition/program codecs and four emissions are declared;
+none executed.
+
+
+### Continuous JavaScript optional chain draft
+
+Continuous optional suffixes use a source constructor over one actual lexical
+Let scope: its value is the original receiver, its name binds the present value,
+and its body is the entire remaining suffix. Existing free-reference, capture,
+renaming and loop analyses therefore see the real binding without an invented
+callback or a placeholder value. The constructor lowers to ordinary typed
+record, Let, If, Apply, method, index and optional terms. It is not persisted as
+a trusted operator. Parentheses finish the inner chain before an outer suffix.
+An absent receiver skips the complete continuation, including its arguments,
+computed indices and nested calls. A present receiver evaluates that complete
+continuation, with its own nested optional boundaries; a nullish returned value
+never retroactively turns into a skipped outer chain.
+
+The same construction covers optional property and method receivers, computed
+indices and continued lexical calls within the represented type domains. The
+presence guard observes actual nullish alternatives, retaining false, zero,
+NaN, empty text and zero BigInt values as present. Private captures preserve
+existing reference handles for mutable arrays, records and collections.
+Source-derived selection/inference rules generate the native implementation
+and full editable definitions. Native and JavaScript hosts adapt actual source
+and type operands to the existing algebra. The complete original native
+expression dispatcher moved intact into its own bounded module.
+
+The two earlier lexical-chain refusal inputs now have positive source/value,
+AST, codec, complete definition and native controls, together with their full
+preceding source/fixture/assertion history. Their corrected domain is ECMAScript
+2025 on the declared Node 22/24 ranges. These controls have not run. Ordinary
+access on a nullish returned value still needs its actual runtime TypeError,
+separately from the skipped-chain branch. General this/proxy/accessor protocols,
+dynamic keys/callables and argument protocols, whole-program integration and
+all preceding requirements remain obligations; this draft is not completion.
+
+
+### Ordinary nullish property access draft
+
+A nullable ordinary field read first captures its actual receiver, then reads
+its field in the present branch or raises its source TypeError in the absent
+branch. It never treats that failure as optional-chain skipping. The continuation
+of a present optional call can therefore fail on a returned null/undefined,
+while an absent callee skips that same continuation. Parentheses still finish
+the inner optional chain before a subsequent ordinary read. Present fields
+retain their own nullish, false, zero and empty-text values.
+
+Source construction uses the existing polymorphic exception operation with the
+actual message, TypeError class and message-property presence. Shared definitions
+select the receiver form and diagnostic text; native/JavaScript adapters supply
+actual type and source operands. Present-value field constraints stay in the
+ordinary deferred inference queue. Receiver captures preserve reference handles
+and are evaluated once. Object/function presence uses the truthiness guaranteed
+for those represented types; primitive presence uses its explicit known tag.
+The typeof-object tag alone is never a nullish-presence check.
+
+The TypeError follows [RequireObjectCoercible](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-requireobjectcoercible).
+Its diagnostic spelling uses the property-load template in pinned
+[Node 22.15 V8](https://raw.githubusercontent.com/nodejs/node/v22.15.0/deps/v8/src/common/message-template.h)
+and [Node 24 V8](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/common/message-template.h),
+with the declared Node 22/24 assertion ranges. Other engine wording is uncovered.
+Future source/native/codec controls are unexecuted. Nullable methods, computed
+keys and protocols, unknown fields/prototypes, proxies/accessors, complete
+abrupt/unreachable inference and every earlier requirement remain required.
+
+
+### Nullable method receivers and reference slice draft
+
+Ordinary JavaScript method calls now reuse the nullish property-read branch
+before evaluating any argument. Existing receiver checks in property, concat,
+primitive and callback construction supply their actual value; no additional
+receiver evaluation or speculative callback is introduced. The present branch
+reuses the ordinary checked method with its original arguments and reference
+handle. The absent branch raises the actual property-load TypeError, including
+for a zero-argument slice. Optional-chain skipping remains a separate operation.
+
+Method inference refines the actual present receiver and retains that pending
+constraint. Such a constraint has no source node to rewrite; actual source node
+owners stay explicit. Nullable toString calls therefore remain method calls,
+rather than becoming the distinct optional-value text conversion. String(null)
+and String(undefined) retain their constructor conversion semantics. Receiver
+error paths retain the surrounding expected result type.
+
+Zero-argument slice checks the actual callable property on records and uses its
+actual return type. A live JavaScript Array slice goes through the existing
+slice implementation and allocates a distinct handle; shallow element identity
+is retained. The complete source-derived selector is shared across hosts. Other
+languages keep their separately defined copy profiles. Future controls cover
+receiver/argument errors, null/undefined messages, parenthesized and continuous
+chains, callback and collection methods, Unit results, distinct slice handles,
+slot snapshots and shallow shared elements. All are unexecuted. Arbitrary this,
+accessors/proxies, inherited or unknown properties, dynamic protocols, full
+abrupt/unreachable inference and every prior requirement remain obligations.
+
+
+### Computed property evaluation and diagnostic source profile
+
+Ordinary JavaScript computed reads retain the evaluated receiver and raw key in
+source order. A nullish receiver fails only after the key expression completes;
+it never calls user key coercion. The actual present receiver goes through the
+ordinary index checker. Numeric nullable Array reads therefore retain bounds,
+BigInt indices, shared handles and key side effects before reading a slot.
+Optional chains skip the complete computed suffix; parentheses end that skip.
+Original source flags and literal product indices remain explicit, without
+inventing a bounds witness or replacing actual source owners.
+
+Shared definitions distinguish named and unnamed V8 diagnostics. Primitive
+keys keep their exact source value and null/undefined policy. Actual literal
+record/array/Map/Set provenance controls the side-effect-free object description;
+a structural parameter type does not prove a prototype or constructor. An own
+toString key is not called on a nullish base. Unknown constructor/function/symbol
+protocols require their actual representation before admission.
+
+The diagnostic profile is pinned to Node 22.15–22.x and Node 24.x on x64/arm64.
+Its BigInt description uses magnitude, at most 100 source-engine 64-bit words,
+and the V8 abbreviation beyond that limit. This uses the source architecture,
+not Rust pointer width. Other engines and architectures are uncovered; deferred
+controls explicitly report those profiles. The pinned definitions are
+[Node 22.15 BigInt](https://raw.githubusercontent.com/nodejs/node/v22.15.0/deps/v8/src/objects/bigint.cc),
+[Node 24 BigInt](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/objects/bigint.cc),
+[V8 side-effect-free descriptions](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/objects/objects.cc)
+and [property-load errors](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/execution/messages.cc).
+The evaluation order follows
+[EvaluatePropertyAccessWithExpressionKey](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-evaluatepropertyaccesswithexpressionkey)
+and [GetValue](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-getvalue).
+This is an unexecuted source draft; arbitrary coercions/prototypes, dynamic
+properties, full abrupt/unreachable inference and all prior obligations remain.
+
+
+### Literal bracket properties and indexed String draft
+
+A literal bracket key retains its original source representation. Shared rules
+classify exact UTF16 units and canonical Array indices (0 through 2^32-2);
+leading zeros and arbitrary named properties are not numeric slot witnesses.
+Actual record owners retain their own names, including numeric-looking names.
+Known literal names use the existing checked field path. Actual literal bracket
+calls use the ordinary method owner and arguments. Nullable receiver handling
+precedes every argument, while continuous optional chains keep their skip scope.
+
+Numeric String indexing evaluates the actual receiver and key once in order,
+then returns one UTF16 code unit or undefined. Integer/range predicates precede
+the existing character construction; fractional, negative, infinite and NaN
+indices are not truncated. Explicit BigInt conversion occurs only on the
+captured present key. An absent optional numeric key remains an absent property,
+not numeric zero. The immutable receiver/key capture also retains effects on
+Unit keys. This implements the represented own-index behavior of
+[StringGetOwnProperty](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-stringgetownproperty);
+unknown/inherited properties still need their complete protocol.
+
+Inference queues retain actual literal names until the receiver resolves, then
+use ordinary field or index constraints. Optional refinement keeps this key
+information. The shared classifier has complete editable native/Links programs;
+UTF16 units cross the host boundary explicitly. Future declarations retain
+preceding full source definitions and cover actual Node/native values, source
+ASTs, graphs, codecs and all four emissions. They are unexecuted. Dynamic
+String-key unions/coercion, unknown/prototype properties, accessors/proxies,
+this, descriptors and every earlier requirement remain required.
+
+
+### Represented optional property callable draft
+
+Optional property calls evaluate the actual owner/key and property load before
+testing the loaded callable for absence. The existing complete Function domain
+has explicit arguments and captures, with no hidden this parameter. Its checked
+receiver-independent values use the same application path as ordinary record
+methods. Property and index source heads now enter that path. This does not
+admit a JavaScript this expression or claim arbitrary external callable objects
+have receiver-independent behavior. Those require an explicit receiver protocol.
+
+The loaded function is captured before argument effects; a later field or
+receiver assignment does not replace it. Absent arguments stay lazy. Nullish
+property bases still throw before argument evaluation. Continuous suffixes and
+parentheses keep their existing scopes. The original refused input's complete
+method body does not observe this; it is retained exactly as a positive control,
+with preceding fixture, writer, test and host definitions preserved as Links
+history. Earlier chain-refusal inputs and history also remain. The correction
+is qualified to ECMAScript 2025 and the existing Node 22.15+/24 ranges, under
+[optional-chain evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-optional-chains)
+and [call evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-evaluatecall).
+Future Node/native/graph/codec/emission controls are unexecuted. Dynamic this,
+foreign callable/proxy/accessor protocols, missing record properties, general
+noncallable diagnostics and every preceding obligation remain required.
+
+
+### Closed own-property membership and canonical operand captures draft
+
+The unshadowed Object.hasOwn built-in evaluates all actual arguments, including
+extras, before object coercion. Missing arguments retain JavaScript undefined.
+A nullish object raises its source TypeError before key conversion. Present
+closed records distinguish actual own membership from a property's value and
+from inherited names. Dense arrays/products and primitive Strings retain length
+and canonical own numeric indices; String lengths count UTF16 units. Primitive
+Number/Boolean/BigInt wrappers and represented Map/Set values have no own fields
+in this source domain. Unknown/open/nominal/callable/proxy domains require their
+complete own-property protocol before admission.
+
+Primitive keys use the existing exact conversion definitions, including null,
+undefined, negative zero, BigInt and optional primitive values. Numeric property
+keys require an exact text round trip, integrality, nonnegative bounds and the
+Array index limit where applicable. Leading zeros, whitespace, radix notation
+and scientific spellings cannot become numeric property witnesses. Actual Array
+length is read after argument effects, through the original shared handle.
+The construction follows
+[Object.hasOwn](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.hasown).
+Diagnostic spelling is qualified to the existing Node 22.15+/24 profiles.
+
+Private operand captures preserve source evaluation order and the typed codec's
+canonical UTF16 field order together. Distinct base/key names and zero-padded
+argument ordinals keep layouts canonical even beyond ten arguments. Source
+model four corrects two earlier receiver/key capture layouts; complete preceding
+hosts stay in the new fixture history. Deferred controls inspect every actual
+record and require its entry order to match its actual checked type.
+
+Object enumeration still requires runtime insertion order in addition to the
+canonical structural record layout. A canonical shape alone cannot supply
+Object.keys/values/entries ordering. This information must be carried with the
+value across branches, parameters, shared aliases, codecs and target runtimes;
+no sorted list or declaration-only order can replace it. General key coercion,
+Symbols, descriptors/prototypes, property addition/deletion and all preceding
+translation and architecture obligations remain required. Future source/native,
+graph, codec and four-target controls for this batch are unexecuted.
+
+
+### Independent own-field order values and source definitions draft
+
+The public record-property-order operations keep canonical structural names
+and actual value order as separate inspectable operands. Names are exact UTF16
+unit vectors, including isolated surrogates. Field positions are canonical
+nonnegative finite Number indices, with positive zero. A complete insertion
+permutation creates the property's enumeration order: Array index names come
+first in numeric order, then other String names in first insertion order.
+Replacing an existing value retains that first position. Spread rebasing maps
+the actual source's complete order into its target layout; merge chunks retain
+overwrite positions and require every target field. Missing fields, invalid
+units, noncanonical names and malformed positions produce the source TypeError,
+never fabricated names or replacement fields.
+
+The complete algorithms and error selectors are ordinary JavaScript source,
+automatically translated together into native Rust and full editable typed
+Links programs. Public JavaScript operations throw the actual source error;
+Rust adapters call the same generated admission definitions and return its
+class/message in RecordPropertyOrderError. They contain no replacement ordering
+algorithm. Native and JavaScript expose creation, merge, rebase, validation and
+exact-key projection. The underlying rule graph remains editable through both
+codecs and all four target emitters.
+
+The order rule follows
+[OrdinaryOwnPropertyKeys](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinaryownpropertykeys).
+
+The ordered record value ABI adds an optional Boolean `ordered` facet to the
+record type, defaulting to false for existing structural products. An ordered
+record carries its actual order expression as a separate operand. Its type
+identity includes the facet; an implicit coercion cannot erase it. Rust and
+formal targets store the canonical field payload together with the order
+vector. JavaScript constructs ordinary own enumerable data properties in that
+order. Field projections, optional projections and existing-field writes use
+the payload while retaining the order. Existing structural products keep their
+previous representation.
+
+Before target effect analysis, ordered constructors capture every actual field
+value once and call the complete source-defined order constructor through
+ordinary checked declarations. The source closure and its actual parsed syntax
+are shared Links data. A private module contains all source declarations and
+retains their signatures, recursion and source error operations. Constructor
+errors therefore remain visible to the ordinary formal effect pass; a target
+prelude cannot hide an error or silently supply a replacement order. This first
+source profile uses JavaScript Number and exception semantics. Equivalent
+additional source profiles require explicit implementations.
+
+Both typed codecs retain the order operand and type facet. A finite schema
+successor preserves the complete earlier schema and native type source. The
+historical five-facet source guard and active six-facet guard have separate,
+explicit schema versions; unknown versions and unrecorded whole-source edits
+refuse. Their original receipt inputs and assertions remain available. These
+are source drafts with deferred controls, not observations. Source profile
+propagation, ordered spreads and own-key enumeration follow the protocol below.
+Heterogeneous value domains, mutable Object.entries pairs, descriptors, Symbols
+and all preceding complete-language requirements remain obligations.
+Deferred controls compare every valid case against actual ordinary JavaScript
+objects, plus native results/errors and complete definition graph/codec/emission
+parity. They cover overwrites, spreads, numeric endpoints and noncanonical
+spellings, empty/NUL/astral/isolated-surrogate names and malformed/nonfinite/
+negative-zero positions. No control has executed. Complete-language support is
+not established by these drafts. Symbols, descriptors, dynamic add/delete and
+every preceding requirement remain obligations.
+
+### Own-key source enumeration and ordered spreads draft
+
+Actual unshadowed Object.keys/values/entries source operations select ordered
+record types throughout one complete source program. Local Object bindings
+retain their actual callable meaning. An imported structural record cannot
+silently acquire a new target ABI: its actual foreign signature must already
+carry order. Values keep independent orders across equal shapes, function
+parameters and branches. This selection is not a claim that every enumeration
+operation has been implemented or that separate module interfaces are complete.
+
+The Object.keys draft evaluates every actual argument before object coercion,
+retaining extra-argument effects and source nullish errors. Closed records use
+their actual order; dense arrays/tuples use own indices; Strings use virtual
+UTF16 index names. Primitive Number/Boolean/BigInt and represented Map/Set
+objects have no own enumerable fields in this domain. Names are constructed by
+ordinary source definitions from exact units or dense positions. Order/key
+operations become ordinary checked calls before formal effect analysis, and
+their graph adapters enforce their exact owned operand/result roles.
+
+Ordered spreads capture each actual source field before subsequent field
+expressions execute. Referenced field values remain shallow aliases. The source
+order is rebased into the target's actual canonical layout; ordered chunks are
+merged in source order, with first insertion retained after overwrites and
+numeric keys enumerated first. No declaration-only order substitutes for the
+source value's order. These operations follow
+[Object.keys](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.keys)
+and [EnumerableOwnProperties](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-enumerableownproperties).
+
+Automatic native source placement may recursively extract a complete oversized
+inline module into bounded child files. Function/type bodies remain complete;
+existing file-size gates remain. Parent-relative paths require a separate
+relocation proof and currently refuse this extraction. The full original
+emission and generated files remain in the source receipt.
+
+Deferred controls retain ordinary source observations, dynamic orders and
+spreads, native graph parity, both codecs and all four emissions. A 100-unit
+name remains in the original controls. The current Rocq `ml_fix 64` helper
+doubles its unfolding bound at each level, yielding a finite bound of 2^64
+unfoldings, rather than 64 source iterations. Reading that definition does not
+establish the outcome or cost of these unexecuted controls. Its inhabitant
+fallback beyond the bound remains an unresolved general partial-function
+obligation, not an accepted source-domain restriction or truncation.
+No source/product controls have run. Full value/entry
+domains, mutable pair domains, descriptors/proxies/Symbols, dynamic fields,
+separate module interfaces, all source character domains and all earlier
+requirements remain mandatory.
+
+### Opaque payload source specialization and own values draft
+
+A source template may declare one actual datatype payload field as a type
+parameter in shared Links data. Instantiation changes that owned field's type
+and checks the complete source program in a fresh private module. The wrapper
+stays present. An undefined or null payload is therefore distinct from an
+absent wrapper array entry; treating the payload itself as the array sentinel
+would change meaning. All original source declarations and bodies remain in
+the linked template. Concrete instances retain their qualified identities and
+actual type bindings; this construction does not certify semantic equivalence
+between different concepts or erase source domains.
+
+The own-value draft uses this protocol to reorder canonical field values by
+the actual record order. Complete ordinary source validates the order's length,
+positions, positive zero and uniqueness and returns wrappers in that order.
+The compiler captures both actual operands before applying the internal
+wrapper/unwrapper representation. Pure callbacks only construct or unpack the
+private wrapper; source error behavior stays in ordinary checked declarations
+before formal effect analysis. One instance is reused for each actual payload
+type. Its wrapper is internal and its identity is not a source observation.
+The compiler does not generate a separate selector chain for every record
+shape or replace the source algorithm with native ordering code.
+
+Object.values snapshots closed record fields after all argument effects,
+retains their actual own-field order, and keeps referenced payload aliases.
+Dense Array values form a separate shallow array; String values are individual
+UTF16 units. The homogeneous value domain includes primitive and nullable
+payloads and represented compound types. Heterogeneous fields require the
+shared dynamic value union; a guessed common type cannot replace it. Current
+source inference retains actual value-owner constraints until they resolve.
+The behavior follows
+[Object.values](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.values).
+
+### Normalized semantic values and ordinary descriptor transitions draft
+
+JavaScript semantic operands have one explicit tagged definition: undefined,
+null, Boolean, Number, arbitrary precision integer, ordered UTF16 units, Symbol
+identity and Object identity. References use positive unsigned64 global link
+identities in one checked context. Intrinsic callability comes from that same
+object model; it is not inferred from property names or host callbacks. This
+value encoding does not certify equality between separate identity contexts or
+between concepts with different source definitions.
+
+Ordinary property descriptors retain each attribute's presence separately from
+its payload. Source-defined transitions validate present values and callable
+accessors, complete new descriptors, preserve nonconfigurable restrictions and
+distinguish data/accessor conversion. SameValue retains NaN equivalence, signed
+zero distinction, exact integers, text units and reference identities. These
+operations follow [SameValue](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-samevalue)
+and [ValidateAndApplyPropertyDescriptor](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-validateandapplypropertydescriptor).
+
+The result names rejection, preservation, creation, conversion or update and
+lists the actual attributes to write. Preservation and rejection write nothing.
+Partial updates do not rewrite absent fields. This matters when a current NaN
+and a proposed NaN have different payload bits but satisfy SameValue. The
+frontend/heap must apply only those writes and retain the complete original
+storage of unlisted fields. Descriptor-object conversion, accessor execution,
+proxy traps, exotic objects, prototype traversal, lifecycle/garbage collection
+and complete source integration remain separate required operations; this
+kernel does not claim their implementation.
+
+Actual tagged datatypes may project a common own field only from their complete
+constructor directory and actual resolved checker type identities. Missing own
+fields retain undefined. Different nominal types require a complete union
+representation; inherited fields require the prototype operation. Both
+frontend adapters construct the same ordinary exhaustive match/optional IR
+from shared source decisions. Inference records presence without inventing
+type-equivalence facts before solving actual types. Array projection adapters
+distinguish typed index expressions from numeric record layout coordinates.
+
+The source, native products and typed Links are generated together. Deferred
+controls retain complete descriptor attributes, no-write payload bits, global
+IDs beyond 2^53, BigInts, UTF16 surrogates, text resource boundaries and original
+tagged-field source expressions after loop lifting. Earlier checker/inference
+source bytes remain in qualified immutable Links records. No represented
+operation, fixture, product or native compiler has executed. These drafts do
+not establish whole-language coverage or runtime parity. All broad translation,
+grammar, shared-concept and earlier requirements remain binding.
+
+### Ordinary global-identity heap and prototype transition draft
+
+Ordinary JavaScript objects, their ordered properties and their complete heap
+are separate nominal definitions in the same inspectable source graph. Their
+types reference those definitions instead of repeatedly expanding structural
+records. The existing structural and semantic source-size limits remain
+unchanged. Each snapshot contains strictly ordered unique unsigned64 Object
+and Symbol directories; the two domains cannot reuse an identity. Reference
+values retain the intrinsic callability belonging to that actual identity.
+Prototype edges target declared Objects or null, and ordinary chains are
+acyclic. Property lists retain creation order, exact text/Symbol keys and
+complete descriptors. Missing references, duplicate keys, conflicting callable
+facts and incomplete descriptors refuse instead of creating substitute objects.
+
+Shared ordinary operations draft Get, SetWithOwnDescriptor, DefineOwnProperty,
+Delete, PreventExtensions, SetPrototypeOf and OwnPropertyKeys. Inherited writable
+data creates or updates the actual receiver's own property; an inherited
+readonly property rejects the write. An existing receiver accessor cannot be
+replaced by assigning through a different object's data property. Getter and
+setter lookup retain their original receiver, including primitive receivers.
+Own keys use ascending numeric indices, then other text in creation order,
+then Symbols in creation order. The operations follow the
+[ordinary object internal methods](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinary-object-internal-methods-and-internal-slots).
+
+Accessor operations return an explicit pending call with callee, receiver and
+arguments. A pending setter call is not a completed success. The evaluator must
+execute the call, retain its exception or normal result, and resume against its
+actual latest shared state. Replacing that result with undefined or resuming
+against the earlier snapshot would change behavior. Strict assignment and
+Reflect.set apply their own rules to a completed false result. Callable-code
+execution, continuation resumption, source frontend integration and lifecycle
+remain required work; the snapshot operations do not establish their support.
+
+Transitions return a new selected state; rejected/no-write transitions retain
+the original state and descriptor payloads. Every source alias must resolve
+through one shared state cell during frontend integration. Object insertion
+and Symbol registration consume externally allocated global link identities;
+they never start a competing identity allocator. Prototype and descriptor
+relationships remain explicit shared data. No correspondence between different
+global contexts or recursive concept definitions is inferred from equal IDs.
+
+The present source domain bounds directory sizes at 4096 Objects and 16384
+Symbols, total properties at16384 and each object's properties at4096. Existing
+UTF16 budgets remain. These are explicit snapshot resource limits, not accepted
+restrictions on the required complete language. Binary identity lookup and
+iterative chain traversal are source-defined; total cost and native clone
+behavior remain unverified. General resource-efficient dynamic heaps, garbage
+collection, proxies, exotic objects and complete language integration remain
+obligations.
+
+Source drafting also defers nominal field-owner fallback until actual callback,
+argument and record constraints settle. A shared field name cannot prematurely
+assign a nominal owner to a declared structural record. Both frontends retain
+tagged constructor refinement when lowering while/for conditions and do-while
+continuations through the existing exhaustive match operation. Earlier source
+bytes and all earlier inputs remain available in qualified Links records.
+Superseded task-generated layouts remain exact Links source archives and their
+original files remain in task-owned temporary storage; they are not shipped as
+unused competing definitions. These archives certify bytes, not equivalence.
+
+Deferred controls compare whole normalized states, ordered keys, every property
+attribute, stored Number bits and pending calls against actual ordinary
+JavaScript objects and the automatically generated Rust operations. Text/binary
+source graphs and all four emitters remain required. No heap operation, fixture,
+oracle, product, code test or native compiler has executed. Continue full
+requirements drafting before CI/CD repair; none of these drafts certifies a
+whole-language or whole-project result.
+
+### Immutable nominal array field loans draft
+
+Rust emission may borrow a direct immutable array field from the sole
+constructor of a checked nominal value for a read-only operation. The shared
+selection requires the actual declaration owner, complete single-constructor
+and single-case directories, matching field/binding coordinates and a direct
+case-result binder. The receiver must be an existing variable, and the selected
+array must have no shared mutable-reference facet. Effectful receivers,
+computed case bodies, optional/multiple constructors and conflicting owners
+retain the complete ordinary emission.
+
+Both emitter adapters transport checked facts into the same source-generated
+decision. The ordinary constructor renderer keeps the source's actual tuple or
+named layout. A borrowed Rust match selects a slice without moving or cloning
+the containing nominal value. Array length/index/optional-index reads can use
+that slice; owned-value operations retain their original ownership behavior.
+Native text adapters use the actual constructor renderer's UTF16 transport.
+This target representation change neither merges concepts nor changes their
+qualified definitions.
+
+The complete preceding emitter sources and native heap generation recipe stay
+as immutable Links records. Deferred controls retain every earlier source and
+add a complete single-constructor program, independent field/owner/receiver
+boundaries, both native products, all codecs and all four targets. Actual heap
+sources are regenerated mechanically; generated files are not edited. No
+operation, fixture, native product or test has executed. This removes specific
+source-visible copies by construction; overall heap allocation, complexity,
+runtime parity and complete translation remain unverified obligations.
+
+### Resumable ordinary descriptor conversion draft
+
+ToPropertyDescriptor reads enumerable, configurable, value, writable, get and
+set in the specified order. The pinned field names, positions and kinds are
+Links data. Source generation reads that definition and derives its exact UTF16
+key units automatically; a different field profile refuses instead of silently
+changing the algorithm. The operation follows
+[ToPropertyDescriptor](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-topropertydescriptor).
+
+An ordinary descriptor source can inherit fields or compute them with getters.
+The source-defined conversion returns explicit pending calls and resumes with
+the actual completion and latest supplied global heap. Earlier getter effects
+therefore affect later HasProperty/Get operations, including changed prototypes.
+Already captured fields keep their values. Get/set callable checks happen
+immediately after their own Get, while mixed data/accessor-kind rejection waits
+until all required field reads finish. ToBoolean covers all represented ordinary
+primitive/reference domains, retaining exact integers and UTF16 text. Host
+HTMLDDA and other exotic behavior keep their separate required domain.
+
+Nominal continuation states retain receiver, ordered field ordinal, accumulated
+descriptor and pending marker. The source checks the processed prefix, actual
+identity/callability context and ordinal, including invalid negative zero,
+nonfinite/fractional values and a pending final field. A pending Get cannot be
+stepped again; resumption requires a pending state. Normal completions continue
+the conversion and abrupt values remain exact. The producing call and actual
+completion still belong to the evaluator; accepting a structurally valid state
+is not an execution certificate. This protocol does not execute calls or prove
+that arbitrary caller-constructed continuations came from an earlier run.
+
+TypeError outcomes are intrinsic-error obligations with a reason, rather than
+substitute host Error objects. The evaluator must create the actual Error in
+the correct realm, preserve implementation/version-sensitive observable fields,
+and propagate it through source control flow. Complete evaluator execution,
+Error allocation, frontend Object.defineProperty integration, proxies/exotics
+and general dynamic-language coverage remain required work.
+
+Native model I/O adapters are generated from actual checked declarations,
+constructor layouts and emitted target mappings. A separately qualified Links
+wire rule preserves binary64 value bits; integers use exact decimal strings,
+and semantic text retains its unit arrays. The transport supports the selected
+JavaScript tuple-constructor model, canonical immutable records and well-formed
+schema strings. It implements no descriptor/heap semantics. Changed owners,
+ambiguous keys, unregistered encodings and unsupported layouts refuse. A fast
+authoring path reparses and types actual normative source, verifies unchanged
+complete native source/mappings, and rewrites only model I/O/fixtures/manifests.
+It does not replay an archived program or infer completion from metadata.
+
+Deferred controls retain complete intermediate states/calls/completions and
+compare literal post-call heaps against actual ordinary getter effects. They
+cover inherited fields, value/prototype mutation, getter order, early callable
+errors, late mixed-kind errors, abrupt values, exact Boolean conversion and
+malformed continuations. Every prior ordinary-heap input/assertion remains,
+along with exact preceding oracle source. Native controls compare all modeled
+fields and source codecs/targets remain required. No converter, callback,
+fixture, test, emitted product or native compiler has executed. Complete
+translation and all earlier requirements remain obligations.
+
+Ordered record storage contains a Number position vector even when its named
+fields contain only strings. Target trait derivation and numeric dependence
+must account for that actual representation. This does not make the record a
+numeric operand. Source occurrences keep separate binding scopes during target
+preparation, including occurrences that share a graph record.
+
+All source/native/codec/emission and original controls remain unexecuted. They
+retain undefined/null, false, empty text, negative zero, aliases, argument
+mutation, UTF16 units, malformed positions and full 100-unit inputs. Full
+heterogeneous and mutable entry domains, callable data fields, general heap
+protocols, unlimited faithful formal recursion and every preceding translation,
+grammar and architecture requirement remain mandatory.
+
+### Type-directed native source rendering interfaces draft
+
+An ordinary function call retains its actual head and ordered arguments even
+when its result is nominal data. Constructor expressions alone use the checked
+declaration's actual named, tuple or unit layout. These are distinct IR nodes;
+the emitter does not infer constructor syntax from a function's return shape.
+Both frontends delegate to the same source-defined render operations. Native
+field names are actual String fields of checked declarations, not optional
+syntax-node fields. This follows Rust's distinct
+[call expressions](https://doc.rust-lang.org/reference/expressions/call-expr.html)
+and [struct expressions](https://doc.rust-lang.org/reference/expressions/struct-expr.html).
+
+Source/schema fragments at the Rust host boundary use Unicode scalar strings.
+The generated normative renderer can retain its UTF16 Text representation.
+Qualified Links definitions select actual checked functions; a source generator
+derives their native mappings, operands and results and emits only I/O adapters.
+String and string-array inputs convert without changing spelling; result
+conversion rejects ill-formed UTF16 rather than substituting characters.
+All actual record-rule operations use the same generated source interface,
+including field plans, name/keyword validation, pattern/update ownership and
+fresh binding names. Number coordinates retain their binary64 representation;
+array results retain their complete order and values. The loan renderer also
+uses this checked interface instead of a lossy display conversion.
+Unsupported signatures, owners or unregistered layouts refuse. These source
+interfaces do not convert arbitrary runtime JavaScript text to scalar strings.
+Rendering decisions stay in translated source, with no replacement Rust rules.
+
+Complete preceding sources and generated artifacts remain immutable Links
+records. Deferred controls retain literal call/constructor spellings, Unicode,
+original named/tuple/unit programs, both generated native products, complete
+frontend/emission parity and text/binary source codecs across all four targets.
+No control or product has executed. This corrects specific source-visible
+interfaces; it does not establish whole-language or whole-project translation.
+General module/trait/FFI composition and all earlier requirements remain work.
+
+### Resumable JavaScript primitive conversion draft
+
+ToPrimitive follows its actual well-known Symbol method and preferred-type
+hint; ordinary fallback checks valueOf/toString in the specified hint order.
+The [ECMAScript conversion definitions](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-toprimitive)
+govern missing/noncallable methods, object results and abrupt completion.
+Each Get and Call is distinct. Getters and methods can change the global heap
+before subsequent lookup; captured call targets retain their actual identity.
+Primitive payloads retain Number bits, arbitrary integers, Symbol identities
+and complete UTF16 text, including isolated surrogates.
+
+Nominal continuations distinguish ready Gets, pending getters and pending
+method calls. Invalid phases/hints/context or repeated pending steps refuse.
+Resumption receives the actual completion and latest heap. A structurally valid
+state does not certify execution. The caller must provide the authoritative
+well-known Symbol from the global registry; membership alone does not prove
+its intrinsic role. Error outcomes remain actual realm/allocation obligations.
+The executor, intrinsic registry, exotic internal methods and source frontend
+integration remain required work.
+
+Qualified Links data defines spellings; their ordered UTF16 units are generated
+automatically. Rust semantics and model I/O derive from the actual checked
+JavaScript source. Deferred controls use original built-in coercions, compare
+every getter/method call and post-call heap, and retain complete native traces,
+codecs and all four emission targets. Original heap controls keep their default
+behavior, with an explicit optional intrinsic-Symbol transport for the new
+controls. Their complete preceding source remains immutable Links data. No
+coercion, callback, test, emitted product or native compiler has executed.
+
+### Composed property key conversion draft
+
+ToPropertyKey composes the existing primitive conversion with a string hint.
+Completed Symbols and semantic text retain their exact identity/units; other
+primitives use the existing source String operation and translated formatter.
+The shared runtime retains Number formatting boundaries and arbitrary integer
+digits. The [conversion definition](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-topropertykey)
+remains its normative source.
+
+The source adapter preserves every pending state, call operand and abrupt
+completion, with separate key-result constructors. Step/resume reject a
+continuation with another hint. Native semantics and all transport derive from
+the actual composed source. Deferred controls combine original computed-key
+syntax, independent literal keys, complete primitive call/effect expectations,
+all native transitions and source codecs/targets. Number exponent boundaries,
+infinities, signed zero, BigInt digits, Symbols and isolated UTF16 units remain
+explicit inputs. No operation or control has executed. This semantic component
+does not finish computed-key frontend integration, full dynamic evaluator or
+any earlier requirement.
+
+### Ordinary property definition composition draft
+
+Object.defineProperty composes the source-defined target, key, descriptor and
+ordinary heap operations in their required order. Key effects precede all
+descriptor reads; descriptor effects precede definition against the latest
+target. Success returns that same target with the complete resulting global
+heap and declared storage writes. Specification incompatibility requests an
+actual intrinsic TypeError, while malformed model/resource inputs retain their
+separate invalid result. Earlier callback effects remain in the supplied heap
+even when a later operation throws.
+
+Nominal states retain the actual target and either key-conversion inputs/state
+or the completed key and descriptor-conversion state. Shared call operands and
+exact abrupt values propagate through the composition. The two qualified
+completion algebras use an explicit source-defined constructor/value projection;
+matching names do not establish identity or a global concept proof. Complete
+source composition captures each actual dependency once. No descriptor or key
+algorithm is reimplemented in native code.
+
+Rust semantics and model I/O come from actual checked source. The draft author
+can preserve emitted source style to avoid repeated expensive preparation while
+the full code draft is unfinished. That selection is recorded in its recipe;
+format/lint work remains mandatory, with every existing gate unchanged. It is
+not a claim of source-style correctness, execution or native compilation.
+
+Deferred controls compare original Object.defineProperty, every call/effect,
+complete post-call/result heaps, target identity, readonly no-write behavior,
+rejection precedence and exact abrupt text. Full native traces, source codecs
+and all four targets remain required. The actual evaluator, realms, intrinsic
+authority, exotic targets and source frontend binding remain unfinished along
+with every earlier whole-project and global-concept obligation.
+
+### Closed nominal copies and exact presence proofs draft
+
+Owned single-constructor tagged values can be copied by a leading whole-value
+spread, followed by whole copies of the same actual owner and declared-field
+overrides. Every input and copied field is captured in source order, including
+overwritten values; source expressions evaluate once. Extra fields, changed
+owners/tags, multiple constructors, reordered leading fields and unsupported
+prototype changes refuse. This is a closed nominal representation profile;
+general CopyDataProperties, accessor/exotic sources and arbitrary observable
+property-order layouts retain their separate required interpretation.
+
+Inference waits for actual spread source constraints to resolve, rather than
+choosing a structural record or a nominal owner from field spellings. Optional
+source types provide only candidate field information. Checked code requires
+actual strict absence guards on the unchanged local binder before projecting
+its present payload. Exact null/undefined exclusions remain separate, including
+both-absence domains. Shadowing discards the proof; loose/computed guards do
+not create one. The projection is explicit checked optional IR, not a change
+to a variable's stored type. Both runtime adapters use the same source-generated
+selection rules and existing constructor/match/let operations.
+
+Deferred controls retain complete preceding sources, exact evaluation order,
+original/generated programs, all native products, frontend parity and both
+source codecs/four targets. They include extra/missing fields, incompatible
+owners, union layouts and shadowed optional binders. No source program, fixture
+or emitted product has executed. Partition diagnostics now identify an oversized
+declaration while preserving the same source-size limit; complete function/type
+bodies are never cut to make generation pass.
+
+### Registered ordinary call execution draft
+
+The shared source call machine connects ordinary property protocols to actual
+registered function bodies. Functions use the same global callable Object
+identities as the heap, with explicit source realms, strict or lexical receivers,
+parameter registers, captured values and complete invocation arguments. Mutable
+captured bindings require explicit shared cells in source lowering. An arguments
+vector does not substitute for a language arguments object or sloppy binding.
+
+Checked instruction data provides constants, copies, argument reads, branches,
+jumps, typed Number operations, SameValue, calls, returns, throws and handlers.
+Ordinary Get/Set and key/property-definition operations retain their actual
+pending continuation while registered getters, methods and setters execute on
+the same explicit stack. Return resumes the suspended operation against the
+latest global heap; throw unwinds to the nearest active handler and abandons
+pending operations without losing earlier effects. Intrinsic failures request
+allocation in the actual supplied realm; the external allocator must return the
+real Error identity and updated heap before exception propagation resumes.
+Membership and structural state validation do not prove allocator/realm authority.
+
+Every step is an explicit source transition. Complete program/coordinate/context
+checks and separate resource outcomes retain the selected bounds:4096 functions
+and registers per function,65536 instructions,1024 frames and handlers per frame,
+and1048576 total active register slots and argument slots. These bounds do not establish a time/space
+complexity claim. Unknown code, wrong typed operands, unmodeled receiver binding
+and malformed continuations are not silently executed. Full source lowering,
+finally/arguments/sloppy semantics, allocation services, asynchronous execution,
+exotic objects and complete JavaScript/Rust translation remain required work.
+
+Rust semantics and both JavaScript/native model transports derive from actual
+checked declarations and mappings. Deferred independent source controls compare
+all calls, receivers, arguments, intermediate states/heaps, terminal values,
+UTF16 payloads, lexical this, missing/extra arguments, handlers and actual Error
+allocation requests. Literal instruction programs are independent control inputs,
+not claimed automatic translations of their oracle source. No instruction
+program, callback, behavioral control or native compiler has executed.
+
+### Exact typed value sharing and source module exports draft
+
+An explicit shared Links profile interns identical encoded scalar values and
+complete type/source-coordinate values. Ordered type structure, metadata and
+signed-zero spellings remain in the key; shared child identities avoid expanding
+type DAGs exponentially. Declaration, expression and lexical binder occurrences
+remain separate, with their actual reference edges. Equal spellings never merge
+binding owners. This establishes only exact representation sharing inside the
+qualified schema; general cross-language concept equivalence still needs its
+formal evidence. The default encoding retains its previous selection.
+Shared values are immutable. Editing one occurrence replaces its use edge with
+a new value; it must not mutate a shared value and alter other occurrences.
+
+A source-module graph can retain all actual exports and transitive declarations,
+plus complete declared semantic data types. Reachability follows actual checked
+call/function/type/constructor references, never names guessed from arbitrary
+text. All omitted dependency declarations remain listed, and complete original
+sources/native generation remain in the recipe. Dependency libraries retain
+their own catalog entry points. This source graph projection neither deletes
+requirements nor substitutes placeholders for reachable code. The graph's normal
+recheck, existing100000-node/byte/reference limits and all CI gates remain exact.
+
+Deferred controls compare original sources, both graph codecs, target emissions,
+real parameter owner links and complete preceding source snapshots. Generated
+JavaScript transport shares the checked declaration/wire layout used by native
+transport, instead of a separately hand-maintained field transpose. Full dynamic
+source compilation and every earlier architecture/grammar obligation remain
+unfinished; source construction is not execution evidence.
+
+### Checked source to registered call code draft
+
+Call instruction/function/value declarations have a shared source owner separate
+from the executor. A source compiler lowers actual lexical-owner references,
+immutable local definitions, primitive constants, conditional blocks, typed
+Number operations, SameValue, strict equality and calls into those instructions. Branches have
+separate blocks and explicit join coordinates; operand order stays source order.
+Receiver register zero and actual parameter coordinates remain distinct from
+source lexical-owner identities. Structural, instruction and register budgets
+produce a refusal with no executable partial output. The complete compiler is
+normative JavaScript and automatically translated to Rust.
+
+The frontend bridge transports rechecked JavaScript core functions into this
+compiler, retaining actual binder occurrences and supplied callable/realm links.
+It never allocates substitute identities or derives identity from source names.
+All functions in a supplied module must lower; one unsupported body refuses the
+whole module. The initial bridge accepts primitive expression functions, local
+definitions, branches, Boolean short circuiting and registered calls. Its typed
+operation profile requires invocation operands satisfying the checked signatures;
+it does not establish general untyped JavaScript argument coercion. Complete
+argument coercion/default binding, mutable captures, data/object allocation,
+properties, handlers, loops, main effects, import services and asynchronous
+source lowering remain required. Existing source operations stay available
+through their preceding translation paths; this additional bridge does not
+replace them or narrow the project's language obligations.
+
+Deferred controls start with original source text, parse/check actual functions,
+compile their complete bodies, run shared instructions and compare independent
+original JavaScript observations. The native controls require exact compiler
+output and every resulting native machine transition. Both graph codecs and all
+four source targets remain required. No represented source or instruction body,
+control or native compiler has executed during drafting.
+
+Existing record identities can additionally enter the bridge with their actual
+ordinary heap. Named field reads use ordinary Get with the original object as
+receiver, retaining inherited fields and suspended getter bodies. A call through
+a record field saves the object once, resolves the callee before arguments and
+passes that saved object as receiver. Detached function values retain their
+separate strict call receiver. This adds reads/calls without claiming object
+allocation, writes, exotic objects or general coercions.
+
+The bridge reuses the existing checked tail-loop selection for lifted loop
+functions. Each loop update evaluates and captures every operand before writing
+any parameter register, then jumps to the same function entry. Register and
+frame storage stay fixed across iterations; ordinary recursive source calls
+keep their separate call-stack behavior. This does not choose a new proof of
+loop eligibility or optimize arbitrary source calls. Deferred own-source
+controls retain scalar accumulation, simultaneous state updates, actual heap
+reads, getters and method receivers, plus every prior primitive input.
+
+Strict ordinary field assignments additionally use the shared Set protocol.
+The source bridge reads compound operands before evaluating the right-hand
+expression, performs the write against the latest heap and discards only the
+statement result required by the checked core. Normal setter returns are
+ignored. An explicit write-result instruction requests a real TypeError in the
+executing source function's realm when Set rejects the write; malformed model
+input remains a separate outcome. Error allocation is still an external service
+obligation, not a fabricated Error value. Deferred controls retain exact updated
+heaps, right-hand mutation order, setter calls and readonly rejection requests.
+
+The source bridge also composes greater/non-strict Number comparisons and
+Number NaN/finite predicates from existing strict comparisons and branch
+instructions. Both comparison operands are captured in source order before a
+reversed comparison or repeated test. Optional predicates exclude absent values
+without numeric coercion. Checked source wrappers still evaluate unused extra
+arguments. Number power uses the existing qualified operation and instruction;
+other intrinsic operations retain their explicit missing-lowering diagnostics.
+
+The call compiler and executor also share typed primitive instructions whose
+definitions reuse the existing normative UTF-16 operations. Length, character
+and code-point access, slicing, searches, trimming, concatenation and ordering
+operate on complete unsigned code units, retaining isolated surrogates and
+exact absence results. Checked source substring, substr and character wrappers
+lower their actual bodies and conversions; helper names never substitute for
+those definitions. Number truncation and minimum/maximum preserve their actual
+empty-input, NaN and signed-zero behavior. Source coalescing evaluates its left
+operand once and evaluates the fallback only for its declared absence policy.
+The complete primitive dependency closure is automatically translated with the
+compiler and executor, rather than replaced by handwritten native operations.
+
+Primitive operands must satisfy the checked primitive signatures. General
+dynamic coercions and replacement intrinsics remain required. Text output has
+an explicit 1,048,576-unit budget; search preflights the reused algorithm's
+maximum comparison count against 67,108,864. Exceeding a quota returns a resource
+outcome before the instruction advances; it does not create a language exception
+or a partial successful value. Deferred controls preserve independent original
+source, exact code units and Number bits, invalid operation/arity inputs and
+every preceding control. These drafts do not establish executed parity.
+
+Typed integer primitives reuse the existing exact signed division, repeated
+squaring and infinite two's-complement definitions; Number bit operations reuse
+the existing signed/unsigned32 conversion and masked shift definitions. The
+source bridge connects checked integer arithmetic, comparison and unary
+negation, plus qualified Number/BigInt bit operations. Division/power wrappers
+whose checked core needs intermediate arrays still require array allocation
+lowering; executor support alone does not establish those source paths.
+Division by zero and negative exponents request real RangeError allocation in
+the executing function's realm. They are checked before work quotas, preserving
+their language errors. The selected integer work profile admits4096-bit inputs
+and results, bounds multiplication/exponentiation/growing-shift estimates before
+allocation, and returns an unchanged resource state on refusal. This is an
+explicit execution profile, not a restriction of the integer language domain.
+Complete source dependency composition uses resolved lexical owners to keep
+same-spelled helpers from different modules distinct; original source and
+rename/substitution records remain inspectable in Links data.
+
+An explicit native source-entry profile may emit each actual exported function
+and its entire transitive dependency closure. All original modules are still
+captured and type-checked, and the receipt records retained and omitted
+declarations. All semantic datatype declarations stay represented. This removes
+unused dependency siblings from generated native files without replacing a
+reachable body. If partition counts shrink, the author removes only obsolete
+regular project files whose bytes exactly match its predecessor receipt,
+recording their identities and hashes and refusing edited or symlinked paths.
+Source graph entry selection remains separately explicit. Default authoring
+still emits the complete captured declaration set.
+
+The source bridge also retains optional type queries and ordinary optional
+field reads. It captures each receiver once, skips Get for null/undefined,
+and preserves inherited fields and present zero values. Optional flattening
+keeps the JavaScript value representation; coalescing preserves the conditional
+fallback and its heap effects. Deferred original-source cases distinguish each
+absence, present values and mutation order. General optional array/property
+exotics remain required.
+
+Primitive Number conversion in the call executor reuses exact
+StringNumericLiteral parsing and BigInt-to-binary64 rounding definitions.
+Explicit conversion permits BigInt; implicit ToNumber requests a real TypeError
+for BigInt. Symbol conversion requests its actual TypeError. Undefined, null,
+Boolean and Number operands retain their precise primitive results. The checked
+source wrappers preserve optional conversion and all extra argument effects
+before conversion. The selected work profile bounds text conversion at4096
+code units and explicit integer conversion at the integer work profile; quota
+refusal is distinct from a language error. Object conversion requires its
+resumable ToPrimitive protocol and is not approximated by a primitive helper.
+Original source controls retain rounding ties, subnormal bits, invalid text,
+absence values and real realm allocation requests. They remain unexecuted
+during drafting.
+
+The call primitive profile additionally covers every unary Number operation
+already qualified by the current source frontend: absolute value, floor,
+ceiling, round, sign, square root, and integer/safe-integer predicates. Actual
+normative JavaScript definitions feed automatic native generation, including
+the existing JavaScript halfway-rounding and signed-zero adapters. Optional
+integer predicates exclude absence without conversion. Deferred independent
+originals retain negative-halfway results, negative zero, NaN, infinities,
+safe-integer boundaries, coercing text input and empty extrema. This does not
+claim support for still-unrepresented mathematical intrinsics or executed
+cross-runtime parity.
+
+An explicit source-authoring profile may share repeated literal Boolean arms
+of a closed nominal constructor match. The shared rule requires every actual
+constructor exactly once, the same declared owner throughout and a literal
+Boolean body in every arm. It retains the scrutinee, retains every distinct
+arm in its original order, and appends one wildcard carrying the repeated
+literal. Pattern-bound values cannot affect a literal body. Complete constructor
+coverage makes that default exhaustive for the original datatype; scrutinee
+effects and exceptions still occur once. The receipt retains original patterns,
+literal results, owner, occurrence path and retained indices for each rewrite.
+The finite-inventory rule itself has normative JavaScript, automatically
+translated Rust and an inspectable Links program. This removes repeated
+representation work before encoding/emission; semantic, structural, ownership
+and match-coverage validation retain their existing limits and assertions.
+Deferred controls retain malformed inventories, both Boolean defaults and
+independent original programs with scrutinee heap effects through both codecs,
+alongside every existing executor/native trace control.
+
+The additional closed-source profile applies only to checked JavaScript
+algebraic value models. It may share identical Boolean literals or core aborts
+only with the same result type and exact abort message, retaining every other
+case. It removes unused constructor slots and unused aliases only when the
+initializer is a read of an already bound lexical value; property access,
+allocation, arithmetic and calls remain. Conservative name-use scans retain
+shadowing references. Owner, occurrence path and removed slot/alias records stay
+in the generation receipt. Repeated field projections of a single-constructor
+parameter may bind its used fields once, with fresh, collision-free names;
+reference semantics, shadowed parameters and deferred closures are excluded.
+These are representation optimizations under the explicit value model, not
+permission to deduplicate concepts by labels or change ownership-sensitive
+source behavior. All existing resource, type, ownership and coverage gates stay.
+
+Ordinary Object-to-Number execution additionally composes the existing
+resumable ToPrimitive(number) protocol with exact primitive conversion. Getters
+and methods run as registered source bodies against the latest heap; inherited
+methods retain the original receiver, and ordinary/exotic fallback order stays
+explicit. A two-phase numeric continuation keeps either the actual protocol
+state or its completed primitive. The operation, destination and realm come
+from the suspended source instruction; receiver and well-known Symbol identities
+must match that instruction's context. A completed primitive retained at a quota
+can be retried without replaying conversion effects. Intrinsic errors still
+request actual realm allocation. Frontend/target lowering for arbitrary Object
+conversion, general allocation and the remaining untyped source constructs
+remain required; executor support alone does not establish those source paths.
+
+Deferred original-source controls create actual VM realms corresponding to
+registered realm identities and compare intrinsic Error prototypes with the
+requested realm's constructor. They keep all previous inputs and exact native
+traces. A newly added negative-square-root control distinguishes mathematical
+NaN from its implementation-selected encoding: it requires NaN and compares
+every observed bit with the independent original source and native trace,
+instead of assuming the positive canonical NaN produced by a literal. Other
+exact-bit transport assertions, signed-zero assertions and version bounds stay.
+This correction follows the [Number type definition](https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-ecmascript-language-types-number-type),
+which treats NaN as one language value and distinguishes that from its observed
+buffer representation. These controls remain unexecuted during drafting.
+
+Source construction builds its complete linked model before native emission.
+The receipt hashes the actual paired program asset as well as recording its
+complete original inputs and native outputs. Integration reuse requires all
+of those bytes to match; a native-only emission checkpoint cannot substitute
+for a completed source model. Failed generation receipts and task history stay
+preserved, including source ownership needed to replace obsolete partitions.
+
+### Ordered typed record shapes draft
+
+A qualified layout profile represents a typed record by a shared ordered shape
+link followed by its actual value/reference links. The shape references the
+existing explicit field points in order. Its root selection, shape declarations,
+roles and value coordinates are all inspectable Links. Exact role sequences can
+share storage without merging owning declarations, expression occurrences or
+lexical binders, or asserting cross-language concept equivalence.
+
+The profile is selected while constructing a fresh packet. Existing packets
+retain their representation and identities; text and binary round trips retain
+all identities in the selected layout. Complete source types, spans, ordering,
+binding references and provenance remain present. The decoder requires an exact
+qualified root selection and complete unique field points, refuses mixed direct
+and positional fields, and keeps the preceding node/depth/byte limits. Derived
+role-name projection is additionally bounded to16777216 UTF16 units before
+owned copies, preventing repeated edges from amplifying one stored label. Both
+adapters use structural admission rules generated from normative JavaScript.
+
+Algorithms that explicitly need named field relations receive a lossless view
+with the same owning value and binder identities. Formal meaning selection uses
+that view so storage layout does not become an extra semantic premise or a
+concept-equivalence certificate. Shared shape values are immutable; occurrence
+edits replace value edges. Default packet encoding keeps the preceding format.
+The source author records its explicit selection in each generation recipe.
+Value sharing is a separate selection; layout alone preserves the preceding
+value-alias topology. Source generation explicitly selects both profiles.
+
+Immediately applied checked function bodies can be beta-reduced after capturing
+all actual arguments in source order. Fresh lexical identities preserve each
+parameter and its actual outer immutable bindings, including existing object
+references whose fields can change during argument evaluation. Selection uses
+the complete actual checked body; a name, signature or assumed template meaning
+cannot select a replacement. Escaping function values, mutable lexical cells,
+function-object introspection and unsupported receiver/argument behavior still
+require their own lowering and allocation rather than this pure value profile.
+
+The registered-call source compiler also represents receiver/actual-argument
+reads, arbitrary value throws, and protected bodies with lexical catch owners.
+The protected body cannot reference the catch binding or leak its locals into
+the handler. Normal completion removes its handler; abrupt completion removes
+that handler before evaluating catch, so rethrows reach the enclosing handler.
+Catch bodies may perform a proven function-entry recurrence after their handler
+has been removed. Recurrence through an active protected handler refuses until
+explicit unwinding is represented. These source graph forms do not imply full
+JavaScript frontend support for try/catch/finally or an arguments object.
+
+Registered primitive text conversion preserves UTF16 inputs and uses the existing
+Number and arbitrary-integer formatting definitions for scalar values. Source
+lowering connects checked scalar String conversions and optional text conversion
+to that operation, evaluates the operand once, and distinguishes null/undefined
+from present values. Number negative zero prints as `0`; decimal/exponent
+selection remains the existing ECMAScript formatting model. BigInt conversion
+retains the selected4096-bit work bound separately from language semantics.
+Implicit Symbol conversion requests a source-realm TypeError; explicit
+String(Symbol), Symbol descriptions, Object string-hint ToPrimitive and console
+formatting require their own represented behavior. Source names alone do not
+authorize any of these different conversions.
+
+Object text conversion resumes actual string-hint ToPrimitive getters and
+methods before primitive ToString. Ordinary conversion tries toString before
+valueOf; exotic conversion receives the actual string hint. Returned Symbols
+request TypeError even though explicit String on a Symbol primitive has separate
+description semantics. Numeric and textual adapters share one scalar transition
+definition; their registered source operations still select distinct hints and
+final conversions. Pending states retain actual source instruction, receiver,
+Symbol and realm. Completed primitives survive work refusal without method
+replay. Checked arbitrary-object frontend conversion remains required work.
+
+The qualified constructor sharing profile can also group exact text literals
+and same-type numeric literals with identical retained source spelling. It does
+not identify distinct numeric spellings, signed zero, text units or datatype
+owners. An immutable lexical alias of an already bound value can be substituted
+at its actual uses when neither endpoint is shadowed and no deferred closure
+intervenes. Effectful initializers remain. Scope/occurrence receipts and complete
+original source remain inspectable; the semantic-work limit stays unchanged.
+
+The actual unshadowed String function also uses a shared argument-coordinate
+plan. String() produces empty text; an explicit undefined operand retains its
+own spelling. Every provided argument is evaluated once, in source order,
+before converting the captured first value. Ignored arguments keep effects and
+abrupt completion. Frontend adapters construct ordinary lexical nodes from the
+same source-generated plan and retain call spans. The selected4096-capture
+resource profile refuses oversized plans; spread iteration still needs its
+complete independent semantics.
+
+Mixed primitive comparison in registered source execution reuses the exact
+Number/BigInt and StringIntegerLiteral/BigInt definitions. Large integers never
+pass through Number rounding. The shared unordered result is kept distinct from
+less/equal/greater, so NaN and invalid integer text cannot satisfy an ordered
+comparison. Checked operand capture preserves original evaluation order even
+when the comparison kernel takes operands in a normalized order. Independent
+4096-bit integer-input and4096-unit text-work profiles retain original machine
+state on resource refusal.
+
+Qualified single-constructor projection sharing also applies to actual lexical
+let owners and actual constructor-field binders. It uses their checked type and
+owning scope, after the value exists, and reads only fields actually projected
+in that scope. No synthetic parameter or signature selects a replacement.
+Reference semantics, shadowed bindings and deferred closures retain their reads.
+The complete original initializer and the existing structural/semantic limits
+remain; the source transformation reduces repeated administrative projections.
+
+Source-thrown standard Error, TypeError, RangeError, SyntaxError,
+ReferenceError, URIError and EvalError use explicit allocation requests carrying
+the checked source realm, exact UTF16 message and own-message presence. No-argument
+and undefined messages remain distinct from an explicitly empty message. Pending
+state retains its actual source instruction and prepared operands. An authorized
+allocator creates the actual requested Error and extends the same global heap;
+membership and prototype names alone cannot establish that authority. Resumption
+validates the requested realm and supplied noncallable Object link, then throws
+that value through the existing handler machinery. Cause objects, custom Error
+subclasses, stack behavior and complete frontend try/catch remain required work.
+
+The qualified JavaScript construction profile folds only checked Boolean/text
+literal comparisons and literal Boolean conditions. Boolean identities preserve
+short circuit behavior and every evaluated effectful operand. Short Boolean/text
+literal bindings can be substituted at their actual uses, excluding deferred
+closures and shadowed binders; text propagation is limited to128 UTF16 units to
+avoid expanding large constants. A second bounded rewrite handles exposed literal
+conditions. Numeric comparison, NaN and signed-zero interpretation are excluded
+from this folding. Complete original source and transformation receipts remain;
+the semantic validator and its100000-work limit are unchanged.
+
+Registered primitive BigInt construction reuses the complete existing
+StringIntegerLiteral parser, exact integral binary64 conversion and Boolean
+conversion definitions. Existing BigInt identity conversion performs no
+arithmetic and retains its full value. Parsing uses the selected4096-unit and
+4096-bit work profiles; invalid input requests the actual SyntaxError or
+RangeError, while resource exhaustion stays distinct. Implicit ToBigInt rejects
+Number even when integral. Registered object BigInt conversion uses the existing
+numeric-hint ToPrimitive continuation. The legacy Number pending-state tags
+remain compatible; the actual suspended source instruction selects the complete
+Number or BigInt conversion, which retain distinct meanings. Ordinary/exotic
+getters, calls, receiver, authoritative Symbol, realm and latest heap remain
+checked. A work refusal retains the completed primitive so retry cannot repeat
+method effects. Complete JavaScript frontend object admission and all object
+allocation/closure semantics remain separate requirements.
+
+The frontend-to-call lowering recognizes complete checked integer result-column
+protocols for construction, exponentiation, division and remainder. It checks
+the owning lexical result reference, exact result length/index/fallback,
+operation and operand types, and full error class/message/presence protocol.
+Changed protocols refuse fusion. Actual operands retain their source order and
+single evaluation. This removes administrative transient result arrays without
+substituting a helper based only on its spelling or signature.
+
+Generated model transports retain ordinary Unicode strings in their original
+wire form. Ill-formed UTF16 strings use an explicit, qualified code-unit record
+under `parity/translation/model-text-wire.lino`; this includes implementation
+diagnostic strings, not only semantic text values. Exact units, ordering and
+length remain observable. The transport validates the tag, complete keys, unit
+range and16777216-unit budget. A native scalar-string profile refuses units it
+cannot represent; it never replaces them. Fixture producers convert unpaired
+text expectations to units automatically, preserving the original source inputs
+and comparisons. These code drafts and their controls remain unexecuted.
+
+JavaScript constant-width BigInt casts specialize the preceding complete modular
+construction plan. Both frontends use the same source-generated algorithm:
+constant Number ToIndex truncation, NaN/negative zero, zero width, low-bit
+residue and signed interpretation remain explicit. The selected construction
+profile admits constant widths whose ToIndex is0 through4096. Arbitrary dynamic
+widths and non-BigInt operands still require complete conversion lowering;
+unsupported cases refuse. This does not add Rust primitive integer types.
+Actual Number constant syntax and bounded unary-negation wrappers are transported
+by each frontend; value operands occur once in the shared plan. Runtime work
+limits remain independent of the construction profile. Deferred originals cover
+widths0,1,7,8,24,32,64,128,256, truncation, NaN and mutation. Existing8/16/32/64/128
+plans retain their complete original instruction sequences.
+For calls with ignored arguments, a second shared coordinate plan captures the
+actual value operand and every ignored operand once in source order, before
+the modular operation. Abrupt ignored arguments retain their original exception.
+The construction profile caps the complete argument list at4096; ordinary
+two-argument calls keep their preceding surface shape.
+
+The checked nullable-number node lowers through the existing shared ToNumber
+operation for optional Number, Boolean and unit operands. Null remains zero,
+undefined remains NaN, present values retain their conversions, and the actual
+operand is evaluated once. This connects nullable arithmetic, ordering,
+bitwise coercion and unary negation to the same executor. Negative and positive
+zero stay distinct. Nullable string ordering remains outside this admission
+profile and cannot be silently treated as numeric ordering. Independent source
+originals retain complete native traces and original-source observations when
+the deferred suites execute.
+
+Legacy JavaScript literal Error throws retained as checked abort nodes use the
+same source-realm Error allocation request as newer constructor forms. Their
+complete literal message, including empty text, unpaired UTF16 units and NUL,
+has an own message property. Conditional branches and actual callee frames
+remain observable. This admission is for actual checked JavaScript abort nodes;
+guarded natural-number signatures retain their separate domain and checks.
+
+The guarded-natural adapter admits the checker's typed BigInt domain, ordered
+literal Error guards, exact widening to integers, checked guarded call-site
+conversions, and complete natural-pattern branches. Guard order must be complete
+and distinct; lost or overwritten guard positions refuse. A guarded module uses
+one actual source realm in this profile, so moving a check to a call site cannot
+select another realm's Error. Guard predicates and checked conversions retain
+the existing integer work bounds; out-of-profile input is not evidence of a
+JavaScript exception. Natural predecessors are computed only in the positive
+branch, with one subject evaluation and lexical binder ownership. Arithmetic
+continues to use the checker's JavaScript integer widening, preserving negative
+results. Error stack behavior, arbitrary typed-domain violations and complete
+cross-realm guarded lowering remain separate obligations. Recursive and tail
+recursive originals, guard order, message units and ignored-argument effects
+are retained as deferred controls.
+Checked call-site conversions require their complete source message and guard
+order; erased callable guard policies remain an explicit refusal. Clamping
+casts retain their distinct zero branch.
+Truncated natural subtraction follows its explicit core semantic tag. Ordinary
+JavaScript subtraction continues to widen to integers, including negative
+results, and mixed Number/natural comparisons retain exact BigInt behavior.
+All literal Error paths select their operation through the shared exception
+registry rather than maintaining another operation-name table.
+These admission decisions and expression templates are themselves shared source
+definitions in `javascript-call-natural-source.js`, automatically translated to
+Rust and retained as a complete paired Links program. The adapter transports
+actual checked fields, source scopes and temporary bindings; shared rules own
+guard ordering, realm admission, cast choices, natural branch selection and
+Error/predicate/predecessor/difference construction. Construction and the actual
+source compiler are available within the same nominal generated model. Deferred
+controls cover every declared policy case and compare complete constructed code,
+codecs and compilation across both runtimes. Source-original execution remains
+the independent semantic control; matching generated output alone is not proof
+of equivalence or task completion.
+
+Number negation uses the actual shared unary operation on the original scalar,
+before collecting numbers in any numeric-only array. It is not encoded as
+multiplication by minus one. The bounded bit profile keeps signed zero,
+infinities and selected quiet-NaN sign/payload controls explicit. Upstream
+[Node22.15 unary source](https://github.com/nodejs/node/blob/v22.15.0/deps/v8/src/ic/unary-op-assembler.cc)
+and [Node24 unary source](https://github.com/nodejs/node/blob/v24.0.0/deps/v8/src/ic/unary-op-assembler.cc)
+select floating negation; the corresponding
+[numeric-array source](https://github.com/nodejs/node/blob/v24.0.0/deps/v8/src/objects/fixed-array-inl.h)
+can canonicalize NaNs. The generated `number-negation-profile.lino` retains
+version ranges and upstream blob hashes. This is implementation-source evidence
+for deferred assertions, not a local behavioral observation or a universal NaN
+encoding claim. Original inputs, exact trace comparison and existing assertions
+remain intact.
+The same shared unary-operation selector controls arity and scalar dispatch for
+truncation, absolute value, rounding, sign, square root and Number predicates.
+Those operations also consume their original scalar without a numeric-array
+intermediate; each keeps its own existing operation semantics and diagnostics.
+
+The registered call-source text replacement extension composes string `replace`
+and `replaceAll` with the existing complete literal UTF-16 substitution source.
+Dollar escapes, matched text, original prefixes/suffixes, empty-search code-unit
+boundaries and capture-looking literals reuse that definition. Receiver and
+arguments evaluate in source order, including abrupt completion before later
+arguments. This admits checked string operands, not regexps, function replacers,
+replacement intrinsics or general object coercion. Native implementation and
+both editable Links source programs are automatically generated from actual
+JavaScript definitions. The bounded primitive profile admits at most 1,048,576
+input/search units and 4,096 replacement units, preflights 67,108,864 search work
+and substitution-plan instructions, and a conservative 1,048,576-unit output bound. A conservative refusal can occur
+without an actual match; it is an explicit work refusal, never a language
+exception or an altered result. Deferred original-source and literal instruction
+controls retain all substitution forms, isolated units, argument effects, no
+later effects after a thrown search and the work/refusal boundaries. They have
+not run; the profile establishes neither full String semantics nor runtime parity.
+
+The call-machine source construction shares pending-frame replacement and
+instruction advancement as complete functions. Per-frame validation is separated
+from stack accounting while retaining coordinate/storage checks first, then
+registers, arguments, handlers, pending destinations, source/realm state and
+suspended-parent checks in their original order. Descriptor-field application
+selects converted values and builds its complete descriptor once, preserving
+all presence bits and the existing accessor validation and selected Boolean
+conversion. These are operations over internal checked value records, distinct
+from ordinary user-object property access. The substitution loop uses an explicit
+Boolean continuation and selects each unchanged source range before copying its
+units. All predecessor input/assertion controls remain required. These source
+forms reduce repeated constructor/continuation expansion for automatic Rust and
+editable Links generation; they neither raise the 100,000 semantic-visit gate
+nor establish execution evidence or a completed equivalence certificate.
+
+Source authoring may select the separate `closed value constructor selection 1`
+profile. It resolves every candidate through the actual checked declaration,
+then captures the original condition tree once as a bounded alternative ordinal.
+Compatible occurrences share one complete constructor; every field selects its
+original argument in declaration order. Other constructors and arbitrary leaf
+bodies remain explicit alternatives. Equal source hashes never classify field
+meanings: only the same binding in the unchanged scope, exact literals, absence
+values and actual nullary value constructors form shared atom classes. Unknown
+owners, open/function-bearing values, ordinary references and constructors with
+bare floating fields stay outside this profile. In particular, it assumes no
+new NaN-boxing behavior. Original conditions and selected argument expressions
+remain actual code, including their exceptions and effects.
+
+The transformation keeps only smaller typed structural encodings. Its receipts
+retain original leaf and argument origins, complete field/class/choice tables,
+input/output structural hashes and actual producer input hashes. Fingerprints
+preserve undefined versus missing fields, signed scalar bits and every UTF-16
+unit; they establish source membership, not meaning equivalence. Cyclic type
+references are inspected through their actual nominal declarations using a
+bounded graph walk. Source work, depth, branch count and fingerprint sizes have
+explicit limits in the shared Links profile. No validation/resource gate is
+raised. Both packages ship the automatically translated finite ownership and
+selection definitions; the host source-authoring adapter only builds owned,
+typed terms from those decisions.
+
+Optional Lean and Rocq laws describe default-argument selection and constructor
+congruence under explicit class soundness. They use their selected prover logic,
+not a universal consumer foundation. They do not establish the complete adapter,
+field classification, JavaScript representation or execution trace obligations.
+CI checks those laws after JavaScript using the existing pinned provers. Deferred
+controls retain independent original source, condition and field traces, abrupt
+completion, fresh-name collisions, excluded floating/reference profiles, complete
+typed text/binary reload and four-target emission. Neither those declarations
+nor unexecuted theorem sources are evidence of completed delivery.
+
+
+JavaScript lexical loop environments begin at the actual CST `for_statement`,
+`for_in_statement` or `for_of_statement` and end at its complete source extent.
+Headers, collection reads and bodies share that enclosing lexical environment;
+outside reads retain their enclosing binding. Nested loops keep separate
+identities. `var` still climbs to its existing function environment. Actual
+`for…in`/`for…of` binding roots reuse the same recursive pattern census as
+ordinary declarations, preserving property names, defaults, array holes and
+rest bindings while excluding collection expressions. The loop selector is
+JavaScript source automatically translated to Rust; adapters only transport
+actual CST spans. This structural binding model does not establish per-iteration
+closure execution or complete translation semantics. Nine independent whole
+source originals and exact rename controls cover the new paths, including a
+collection temporal-dead-zone read; execution remains deferred.
+
+
+Catch clauses have their own lexical environment spanning the actual concrete
+clause, including computed property expressions and default initializers in
+recursive binding patterns. Body blocks retain their own child scope. A catch
+parameter is declared in the environment containing its actual opening formal
+delimiter; optional catches never search later source for a parameter list.
+A shared JavaScript source selector is translated automatically to Rust, while
+runtime adapters transport concrete spans. Independent deferred originals cover
+shorthand/property preservation, earlier and captured later parameter references,
+computed keys, optional catches and outside shadowed reads. These definitions
+do not assert that every catch/var redeclaration interaction or full runtime
+abrupt completion semantics has been implemented or verified.
+
+
+A JavaScript class expression owns a private lexical environment spanning its
+actual `class` CST node, including heritage evaluation and method closures.
+Named expressions bind only the immediate identifier after the class keyword;
+anonymous expressions never acquire a declaration from a later method name or
+heritage expression. Outside reads remain outside that private environment.
+Both adapters use an automatically translated shared source term selector. Six
+independent whole-source and exact-rename controls retain recursive self names,
+outer shadowing, anonymous classes and a heritage temporal-dead-zone read. This
+structural draft does not establish immutable class-name assignment behavior,
+class-declaration inner/outer cell equivalence, decorators or full class runtime
+translation; those retain their own obligations and require execution evidence.
+
+
+Variable hoisting chooses its owning environment through one shared JavaScript
+source definition: ordinary/generator functions, arrows, methods and class
+static blocks own var environments; ordinary blocks, loops, catches and class
+bodies do not. The definition is automatically translated to Rust. Static
+blocks use their actual statement-body scope, preserving nested block hoisting,
+separate static-block identities and captured local references. Existing simple
+function parameter/var alias rules remain selected through their own actual
+function environment. Eleven independent term premises and five whole-source
+rename controls retain these distinctions. Static initialization effects and
+complete class translation still require their separate runtime definitions
+and executed controls; construction alone does not establish those outcomes.
+
+
+Rust semantic token masking uses complete actual CST spans for ordinary, byte,
+C, raw and character literals. Their leading prefixes and embedded quote or
+comment markers remain within the literal rather than becoming identifiers or
+masking later code. A shared JavaScript source selector recognizes canonical
+character terms and the retained source alias, then is automatically translated
+to Rust. Runtime adapters only transport source intervals in their own coordinate
+system. A lifetime apostrophe is not treated as a character-literal delimiter.
+Eight independent whole-source and exact-rename controls preserve references
+after literals and lifetime annotations, concrete text and snapshots. Native
+controls compile/run both originals and renames exclusively in CI under the
+explicit Rust version profile. Those controls are currently unexecuted; lifetime
+namespaces, labels, complete macro token handling and full translation remain
+separate obligations.
+
+
+JavaScript token masking similarly transports actual `string` and complete
+`regular_expression` CST spans, including the retained `regex` source alias.
+It applies those same spans inside every recursively nested template
+substitution. Literal quotes, slashes, braces and comment markers therefore
+remain literal contents rather than changing the surrounding source scan.
+Template containers remain open to expression analysis; ordinary division
+remains code. The shared source selector is automatically translated to Rust.
+Seven term premises and eight independent whole-source/exact-rename controls
+retain those distinctions, literal contents, original Node values, snapshots
+and concrete reconstruction. These controls remain unexecuted; the change
+does not establish complete template/tag execution or full-language translation.
+
+
+Rust string literal patterns enter the existing common literal-pattern algebra
+from actual string tokens. Their source check requires a proven immutable
+borrowed str owner, including actual nominal/type-alias resolution; a core
+String alone does not establish that owner. Ordinary arms, alternatives,
+guards, conditional patterns and constructor fields reuse their existing match
+semantics. String aliases retain the actual matched source origin, including
+reference/lifetime and nested field ownership, while their immutable common
+value uses the selected literal. Alias origin records are attached when the
+actual pattern is checked rather than inferred from its spelling.
+
+The token and source-owner decisions are shared JavaScript source translated
+automatically to Rust. Twenty independent original programs retain ordered
+selection, Unicode distinctions, raw text, guard and scrutinee failures, lazy
+branches, borrowed layers, aliases and nested field cases. Four token premises,
+thirteen source-owner premises and two invalid-source controls remain deferred,
+with complete original/generated native products, both graph codecs and four
+target emissions declared for CI. Neither these controls nor source-generation
+receipts establish execution evidence. Full match ergonomics, character/byte/C
+patterns, mutable/interior state and complete Rust translation remain obligations.
+The [Rust literal-pattern rules](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
+and [match guard rules](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards)
+define the independent source-language contract.
+
+
+Rust byte-character patterns retain a distinct typed surface pattern until the
+common match checker validates their actual unsigned eight-bit type. They then
+use existing literal equality, ordered alternatives, exhaustiveness and guard
+semantics. A byte pattern never becomes a literal of a wider/signed/floating
+scrutinee type. A direct unsuffixed numeric scrutinee receives its byte type
+constraint from the actual root column; already typed or named expressions and
+other source languages retain their own types. The constraint and type/alias
+selectors are shared JavaScript source translated automatically to Rust.
+
+Literal aliases retain their actual matched source origin for strings and bytes,
+including borrowed layers and constructor fields. The ordinary JavaScript
+inference adapter also understands the typed byte pattern representation.
+Deferred originals cover all256 byte values with independent selected/fallback
+outputs, guards, actual failures, aliases, references, nested fields and direct
+literal inference. There are271 original programs,48 type-domain premises,
+8 inference premises,4 token premises,4 alias premises and5 typed refusals.
+Original/generated native products, both graph codecs and all four emissions
+remain required execution controls.
+
+The exact two previously rejected byte-pattern inputs remain in the old test
+locations and complete independently captured historical sources. Their obsolete
+blanket rejection expectation now reaches the existing required-main diagnostic;
+all nonbyte character inputs and assertions remain unchanged. This correction
+follows the [byte literal type](https://doc.rust-lang.org/reference/expressions/literal-expr.html#byte-literal-expressions)
+and [literal pattern](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
+rules and is bounded by the declared Node/Rust version ranges. No control has
+executed. General scrutinee constraint propagation, Unicode character patterns,
+range/slice patterns, full match ergonomics and complete translation remain
+requirements; byte support does not establish those capabilities.
+
+
+Rust numeric patterns retain their actual lexical suffix (or floating lexical
+role), primitive type and negation in a typed surface pattern. The original
+primitive source owner is checked before common lowering, including the
+usize/u64 and isize/i64 distinctions at equal representation widths. Numeric
+aliases retain the matched value's actual source ownership, including borrowed
+layers and constructor fields. The common checker validates that the retained
+type agrees with the suffix, rejects unsigned negation even at zero, and uses
+the existing literal equality/guard algebra after admission. Plain integer
+patterns remain integer patterns; they cannot acquire floating meaning from
+a float scrutinee. A floating lexical token cannot carry an integer suffix.
+
+Direct untyped integer scrutinees receive compatible actual integer constraints
+from byte and suffixed numeric patterns in their column. Conflicting owners
+do not produce a guessed type; floating patterns cannot coerce an integer
+scrutinee. Explicitly typed and named expressions keep their existing type,
+and other source languages keep their own inference. Shared JavaScript source
+owns these decisions and the native implementation is translated automatically,
+including the existing primitive-signature policy dependency.
+
+Forty-eight independent original programs retain all twelve integer owner names,
+signed minima, f64 values and zero equality, literal radices, aliases, guards,
+actual failures and nested fields. Fifty-six premise controls and eighteen
+invalid-source controls remain deferred, alongside complete original/generated
+native products, both graph codecs and all four emissions. The integer/float
+invalid input discovered while drafting is retained as a rejection control.
+The [integer literal rules](https://doc.rust-lang.org/reference/expressions/literal-expr.html#integer-literal-expressions)
+and [literal pattern rules](https://doc.rust-lang.org/reference/patterns.html#literal-patterns)
+define the independent source contract. No controls have run. General constraint
+propagation, additional pointer widths, f32 and character semantics, ranges,
+full match ergonomics and complete source translation remain obligations.
+
+### Immediate scalar iterator reductions
+
+Rust standard immutable scalar arrays may lower immediate
+`iter().copied()` and `iter().cloned()` consumers `all`, `any` and `fold` into
+the shared array predicate and reduction terms. Actual source element owners
+and complete callback parameter/result signatures are prerequisites. Common
+numeric width is never proof of equal source ownership: `usize` and `u64`
+remain different. Vector literal owners come from agreeing admitted operand
+owners, including byte, boolean and floating primitives.
+
+The source receiver is captured first. A fold initializer is captured before
+callback construction, and each is evaluated once even on empty input.
+Predicate short circuit and left fold use the common operations. JavaScript
+owns the source admission and capture plans; Rust is generated from that
+source, with native adapters transporting tokens, source facts and terms.
+Immediate borrowed scalar consumers also retain actual immutable reference
+parameters, including explicit dereferences, through the same callable terms.
+Parameter admission requires a known immutable Copy referent and an actual
+matching primitive or unit owner for every immutable reference layer. The
+current source transport profile bounds those layers at256; deeper types
+retain their full requirements. Source reference wrappers and inferred
+lifetimes survive in callable signatures, with each new reference inserting
+its own lifetime slot and each dereference removing that slot. This does not admit mutable references, borrowed
+nonprimitive values, reference captures or escaping reference results. Those semantics, arbitrary
+iterator state, mutable captures, other combinators and general inference
+remain requirements of full translation. Complete independent originals,
+source decision premises, source ownership, CST reconstruction, both graph
+codecs and four target emissions have deferred controls in
+`parity/fixtures/rust-iterator-reductions.lino`. None has executed during the
+complete requirements drafting phase.
+
+Immediate scalar reductions also retain standard double-ended slice/vector
+iteration. Shared adapter state tracks `rev()` direction independently of
+borrowed/copied items, rejects copying already copied items, and composes
+reversals with `rfold`. Right folds retain the same receiver/initializer/callback
+capture order as left folds. A source-owned postfix plan constructs a fresh
+mapped array with reverse indices, using existing common terms for length,
+subtraction, exact natural conversion and lookup. It leaves the original
+receiver unchanged and preserves the direction of predicate short circuit.
+No target-specific reverse implementation or source-text rewrite is needed.
+Independent originals retain cancellation of two reversals, adapters before
+and after copying, right folds, borrowed items, empty input, source preservation
+and reverse short circuit. All execution remains deferred.
+
+### Exact iterator counts and source-typed vector collection
+
+Immediate standard vector or slice iterator `count()` uses the actual receiver length
+and an exact conversion to its `usize` result owner. It evaluates its receiver
+once and requires no callback or reversed temporary array. Borrowed counts do
+not require Copy elements or invent primitive owners: standard owned-string
+and unit vectors/slices can be counted without reading their elements. Invalid
+Copy adapters are still refused. Primitive copied
+and cloned items can also collect through an explicit standard `Vec<T>`
+turbofish. Admission checks the actual type, storage model, library owner,
+generic arity, primitive item owner and type, and reference layers in shared
+source. Equal numeric widths do not establish equal source types.
+
+`Vec<_>` in that collection context infers its scalar item type from the proven
+iterator item, retaining the complete primitive owner and original CST spelling.
+The parser restores this context after success or failure; it supplies no
+inference in item signatures or unrelated type positions. General contextual
+inference, bare `collect()`, other collections and escaping borrowed element
+vectors retain their full requirements. Collection captures the receiver once
+and uses the common fresh copy operation, with the existing source-owned
+reverse-index plan where necessary. Its source constructor evidence can
+establish a fresh vector function result.
+
+Rust compound closing punctuation is split only at actual type closing angles,
+through shared source rules for `>>`, `>=` and `>>=`. Token raw text and spans
+are partitioned exactly; shifts in expressions remain shifts. This supports
+collection turbofish closings and adjacent nested type/assignment syntax.
+Independent complete original programs and type/source-owner/decision controls
+remain unexecuted in `parity/fixtures/rust-iterator-reductions.lino`.
+The [inferred type contract](https://doc.rust-lang.org/reference/types/inferred.html)
+and [iterator contract](https://doc.rust-lang.org/std/iter/trait.Iterator.html)
+are independent sources for the supported draft behavior.
+
+
+Fresh standard owned vectors may enter immediate `into_iter()` pipelines with
+an explicit owned-item state. The existing fresh constructor/result proof and
+zero reference layers are prerequisites. Shared adapter transitions preserve
+owned items through reversals and reject attempts to copy reference-free
+items. Scalar predicates, folds and typed collection reuse their existing
+complete owner checks; fresh owned string vectors can count without extracting
+items. The ordinary owned-vector binding draft below additionally admits
+tracked available named vectors, consuming their source identity. Full move
+and borrow analysis across all source constructs remains required.
+
+
+### Lazy scalar iterator map and filter composition
+
+Immediate scalar iterator pipelines retain every `map` and `filter` callable
+as a source-ordered capture. Parameters use actual iterator item provenance;
+filter adds one immutable reference layer, including the additional layer when
+the item is already borrowed. A mapper can infer its actual scalar result from
+its body or use an explicit result annotation. Its complete result type and
+source owner become the next stage's item context; width alone never supplies
+an owner. Unit literal values retain their actual standard unit owner.
+
+Shared source plans fuse stages into common lets and conditionals inside
+predicate or reduction callbacks. Each mapped value is bound once before its
+continuation. A rejected filter item uses the terminal's inactive term: true
+for all, false for any, or the unchanged accumulator. Predicates therefore
+short circuit without precomputing later items or stage callbacks. Counts with
+stages visit them, and collection preserves stage order and result ownership.
+Reversals and right folds choose the consumed direction before callbacks run.
+Receiver, stage callables, fold initializer and terminal callable are captured
+once in that order, including for empty inputs and failing initializers.
+
+The functional collection draft appends through a fold. Linear allocation
+optimization is a remaining performance obligation, rather than a claim that
+repeated vector copying is optimal. Mutable captures, non-Copy mapper results,
+escaping iterator state, broader reference ownership, generators and async
+iteration retain their full requirements. The independent originals and source
+premises in `parity/fixtures/rust-iterator-pipelines.lino` remain unexecuted.
+The [standard map implementation](https://doc.rust-lang.org/src/core/iter/adapters/map.rs.html)
+and [iterator contract](https://doc.rust-lang.org/std/iter/trait.Iterator.html)
+provide independent source semantics for order and laziness.
+
+
+### Standard numeric iterator sums and products
+
+Standard numeric `sum` and `product` share the existing lazy scalar pipeline
+fold path, including borrowed items, copied/cloned items, fresh owned iteration,
+map/filter stages and reverse consumption. Shared source defines the numeric
+owner admission, terminal add/multiply terms and structured literal identities.
+Floating sum starts from negative zero; floating product starts from positive
+one. Integer operations retain the current checked arithmetic and standard
+failure messages. Zero products do not skip later source callbacks.
+
+An explicit result turbofish must have the same actual primitive type and
+source owner as its item. Equal widths do not equate usize/u64 or isize/i64.
+The isolated item-type context supports `_` in numeric result arguments as
+well as vector element arguments, restoring that context after success or
+failure. The earlier collection-only helper remains an alias; item signatures
+and unrelated inference positions gain no guessed type.
+
+This draft inherits the existing explicit64-bit source pointer model and
+requires overflow checks on for original numeric controls. Other pointer/build
+profiles, other float formats, custom arithmetic traits and wrapped/optional/
+result accumulators remain full requirements. Independent originals include
+all twelve integer owner names, both empty identities, checked overflows,
+callback failures, IEEE signed zero, infinity, NaN and floating visit order.
+They remain unexecuted in `parity/fixtures/rust-iterator-arithmetic.lino`.
+The [Rust1.90 implementation](https://raw.githubusercontent.com/rust-lang/rust/1.90.0/library/core/src/iter/traits/accum.rs)
+and [current standard implementation](https://doc.rust-lang.org/src/core/iter/traits/accum.rs.html)
+are independent contracts, rather than results computed by this translator.
+
+
+### Ordinary owned vector binding identity
+
+Ordinary acyclic Rust function translation tracks each direct standard vector
+binding with a distinct source identity. Assigning that value to another name,
+passing it to an owned parameter, binding an owning match pattern or starting
+an owned immediate iterator consumes the old identity. An owned argument transfers before the next
+argument is parsed, preserving source evaluation order even through nested calls. A new binding receives
+a new identity; shadowing does not revive the old one. Fresh vector copies
+receive independent identities. A wildcard does not consume its matched place.
+
+Immutable loans retain the actual owner identity. Indexed places retain that
+identity for a subsequent borrow; scalar copies lose it when bound as values.
+A later source read checks the recorded state, rather than revalidating earlier
+expressions against a later move. Scoped owners expire unless the owned value
+itself escapes as the block result. A reference cannot outlive its owner.
+
+Branch analysis snapshots and joins actual source states on returning paths.
+An identity consumed on one returning path is unavailable after the join.
+Match alternatives analyze the incoming ownership state independently. Moves
+in guards require their complete fallthrough proof; unproved owned temporary
+borrows refuse. These decisions are authored in JavaScript and translated
+mechanically to Rust; native code supplies identities, source facts and lexical
+snapshots. Links source assets preserve the shared decision program.
+
+The literal controls in `parity/fixtures/rust-owned-bindings.lino` retain source
+versions, valid transfers, invalid reuse, loans, indexed places, branch joins
+and scope exits. Former valid named-argument/iterator refusals retain their
+exact complete inputs, predecessor reasons and added positive controls. These
+are unexecuted drafts. They establish no execution evidence or completion.
+Legacy local-state, shared-handle, scalar-loop and const-function profiles keep
+their independent contracts. Full String/record/Box/resource ownership, mutable
+borrows, backedges, temporary lifetime extension, conditional-pattern paths
+and all other source constructs remain obligations.
+
+
+Owned block and branch results transfer their source owner before joining the
+continuation. Each returning path supplies a constructed value or a tracked
+available owner; the result gets a separate identity. A mixed existing/fresh
+conditional result cannot revive the original owner on the path that moved it.
+The same source proof permits ordinary scalar-vector functions to return their
+parameter or a local binding, including checked interprocedural forwarding.
+This is a consumption proof independent of constructor freshness. Historical
+valid refusals retain their exact inputs and former reasons as admission
+controls, with independent executable originals. Explicit legacy array-result
+profiles remain separate. All controls are still unexecuted drafts.
+
+Borrowed vector temporaries receive source identities too, and owning match
+bindings expire on arm exit. Conditional loans with different source owners retain an explicit union of
+all returning owners. They are never merged into an ownerless reference.
+The earlier diagnostic remains available when union provenance is absent.
+
+
+Borrowed branch results retain a canonical union of actual binding identities,
+including nested branches and match arms. Every later loan read checks all
+possible owners. Source admission therefore refuses if one possible owner was
+moved, becomes possibly moved or leaves its scope. Shared rules deduplicate
+identities and choose a deterministic unavailable-owner diagnostic independent
+of host map iteration order. The source type and the set of possible owners
+remain separate facts.
+
+Indexed loans and scalar dereference/reborrow operations preserve this union.
+A scalar copied into a value binding drops its loan provenance; an immediately
+borrowed source place retains it. Declared reference annotations copy the actual
+loan identities, and vector copies begin with independent ownership facts.
+Source index reads validate receiver ownership after evaluating their index.
+The unchanged earlier alternative-loan refusal has independent positive and
+negative original controls. These controls and generated policy assets remain
+unexecuted until full requirement drafting finishes.
+
+
+### Shared owned string source identities
+
+Ordinary standard owned Strings use the same source identity, move, scope and
+loan-union policies as standard vectors. Actual owned storage, a proven source
+type and zero indirection layers distinguish an owner from a borrowed String or
+str view. Binding moves, returned values, conditional/match results and owned
+call arguments transfer the identity. A view retains its actual owner; a copy
+gets an independent owner and carries no prior loan provenance.
+
+String construction from an owned String consumes that argument. Construction
+from a borrowed view copies its contents. Standard string clone/to_owned,
+qualified standard trait copies and derived text-producing operations record
+new owned-value provenance. String addition consumes its left owner before
+checking the right-hand loan, so borrowing the same transferred String refuses.
+Owned arguments transfer before later arguments are parsed. Legacy explicit
+source profiles retain their own contracts.
+
+Independent complete originals in `parity/fixtures/rust-owned-strings.lino`
+cover moves, copies, calls, forwarding, concatenation, views, conditional loans
+and scope exit. Shared rules generate Rust and paired Links assets; native
+frontends transport the existing source facts. All controls remain deferred.
+Allocation identity/capacity/allocator effects, mutation, nominal field and
+resource ownership, general temporary lifetime extension and complete source
+language translation remain obligations.
+
+The represented String constructor cases require actual owned String or one
+immutable String/str reference; primitive display conversion cannot invent a
+standard `From` implementation. The independent pinned [Rust1.90 source](https://raw.githubusercontent.com/rust-lang/rust/1.90.0/library/alloc/src/string.rs)
+provides the reference-copy contract. Additional standard/custom conversions
+remain explicit source-owner and trait obligations.
+
+Vector macro elements transfer owned string payloads before evaluating later
+elements, using a shared macro-role rule. Formatting macros retain borrowing
+behavior. The container owns the moved payload; retaining a prior view cannot
+make the original string usable after that move. Copied payloads preserve their
+independent source owner.
+
+The `as_str` result carries the actual primitive str owner while retaining its
+loan to the String. Cloning a single shared str reference keeps that reference;
+`to_owned` creates an independent String. The shared reference-shape rule keeps
+those operations distinct, including scope and move checks on a cloned view.
+
+
+### Source-derived Rust string byte views
+
+Standard `str`/`String` byte views and immediate byte iteration use one complete
+JavaScript UTF-8 kernel. Source generation derives a closed callable from that
+actual declaration, stores paired Links templates, translates the complete
+kernel to Rust, and registers both kernel and admission programs. Frontends
+instantiate the shared callable and retain the source operand once; existing
+common flat-map and exact byte casts supply runtime behavior. There is no
+separate handwritten native UTF-8 algorithm. Per-character byte packets flatten
+once instead of repeatedly copying a growing complete output array.
+
+`as_bytes` retains the actual String loan, `into_bytes` consumes an owned String
+and produces a fresh byte vector, and immediate `bytes` pipelines yield copied
+u8 items. Existing map/filter/reverse/reduction/collection rules apply. Receiver
+loans are checked after callback construction too. Literal independent byte
+columns cover the boundaries in [RFC3629](https://www.rfc-editor.org/rfc/rfc3629.html),
+embedded zero, combining text, supplementary scalars and BOM preservation.
+Shared representation rules let scalar-source UTF-8 lengths coexist with the
+operational UTF-16 kernels in Rust, JavaScript, Lean and Rocq. The existing
+unbridged representation guard remains; a selected scalar bridge discharges it.
+
+Full-expression temporary frames preserve temporaries belonging to enclosing
+expressions. Eligible explicit borrow initializers extend actual temporary drop
+scopes through blocks and returning if/match alternatives. Method receivers do
+not acquire initializer extension merely by returning a view. Named local
+owners still expire with their scope. Bound values clear the extending-expression
+marker, preventing a later name read from inventing another extension. The
+[Reference](https://doc.rust-lang.org/reference/destructors.html#temporary-lifetime-extension)
+and [Rust1.79 release](https://blog.rust-lang.org/2024/06/13/Rust-1.79.0/)
+provide independent scope contracts within the supported >=1.90 <1.100 profile.
+Earlier wrong temporary-refusal inputs remain exact positive controls with
+revision/reason/reference history; named-owner escape and short-lived method
+borrow refusals retain coverage.
+
+The source templates, native products, CST reconstruction, both graph codecs,
+four-target emissions and all kernel/decision controls remain unexecuted drafts.
+Zero-copy/pointer/allocator ABI observables, mutable and non-Copy place-use
+proofs, all extending syntax categories, general returned borrow regions,
+escaping iterator state and full source-language support remain obligations.
+
+#### Borrowed places and owned values
+
+Source indirection preserves the distinction between a borrowed place and an
+owned value. A shared-reference dereference may be reborrowed, queried or copied
+explicitly; it cannot supply an owned String to a binding, result, argument,
+constructor, container or consuming conversion. The shared Links policy for
+this boundary is automatically translated from JavaScript, and both frontends
+supply actual source-place facts. Explicit constructors and clones establish
+fresh value provenance. Scalar Copy projections retain their existing behavior.
+This follows the [Rust place-expression rules](https://doc.rust-lang.org/reference/expressions.html#moving-out-of-a-place-expression).
+General field moves, resource ownership and Box extraction still require their
+complete source contracts; this source draft does not claim their completion.
+
+#### Unit consumers and inspection in ordinary Rust iterators
+
+The common iterator pipeline includes `for_each` as a Unit-seeded ordered fold
+and `inspect` as a lazy borrowed-item callback whose Unit result is bound once
+before continuing with the original item. Inspect preserves item ownership and
+reference layers; it receives one additional immutable reference layer. A map's
+result type and an inspection callback's result type are independently retained
+from the following iterator item type. Capture plans preserve receiver, stage
+and terminal callable construction even on empty input. Predicate terminals
+retain short circuiting; count must still execute preceding inspection stages.
+Both runtimes use JavaScript-derived shared Links plans and the existing common
+fold, application, binding and conditional terms. Independent original source
+controls cover Unit callbacks, borrowed and copied items, type-changing maps,
+construction/abort order, empty inputs and reversed visits. Mutable callback
+state and escaping iterators still require their complete ownership model.
+
+#### Ordinary array lookup panic consumers
+
+Immediate standard get/first/last results may pass through copied or cloned to
+unwrap or literal-message expect. Both runtimes use the shared lookup presence
+and index plans; absent branches construct the existing common abort term.
+Unwrap retains its standard Option failure message. Expect retains complete
+literal str message contents, including empty text, braces, newline, NUL and
+non-ASCII scalars, without formatting. Receiver and index evaluate once before
+the failure choice, and their source owners must still be available after all
+operands have been constructed. Cloned String results detach source provenance;
+scalar copies keep actual primitive source owners. Independent original cases
+cover each selected source type and both branches. General Option values,
+borrowed outputs and computed panic payloads remain requirements; the current
+literal-message construction is not evidence that those are implemented.
+
+#### Evaluated Rust panic messages
+
+Rust panic messages may be checked String-valued expressions, represented by a
+shared `raiseRustPanicValue` operation. The source owner, exact operand count and
+message type are checked before emission. The nonreturning result may receive
+its surrounding expected type while retaining its message operand and effects.
+Direct JavaScript and Rust targets evaluate and raise the message once. Formal
+output normalization places that same evaluated message in the existing abort
+sum, allowing Lean and Rocq to retain it without a host-language panic callback.
+Expect evaluates its complete immutable standard str message before choosing
+Some or None, including when Some succeeds. Message calls, named str values and
+borrowed standard Strings use this path. The former literal-only source refusal
+is retained as a positive original with its previous input/reason in history;
+the old literal-only policy remains available to callers selecting that subset.
+General non-string panic payloads and arbitrary panic formatting remain separate
+requirements, along with every previously recorded Option and Result obligation.
+
+#### Formatted Rust panic macros
+
+Ordinary panic, unreachable, unimplemented and todo macros share the existing
+plain Display formatter, including positional, indexed, repeated, named and
+lexically captured operands. Prefixes and source completion roles are shared
+Links policies automatically translated from JavaScript. Formatted messages use
+the evaluated panic operation and stay nonreturning in statement, conditional,
+closure and typed result contexts. Explicit operands evaluate once in source
+order before Display occurrences, even when fields reorder or repeat them.
+Source owner checks cover both explicit operands and synthesized lexical reads.
+Closed completion profiles retain their original selected interpretation. Former
+ordinary-profile refusals retain exact complete source and historical metadata,
+with positive coverage of their present behavior. Snapshot copying is automated
+as Links data; the old fixture is not reinterpreted as new execution evidence.
+All formatting specifiers, custom Display effects, panic hooks and locations,
+non-string payloads and full Rust exception control remain requirements.
+
+#### Standard integer Result panic consumers and std versions
+
+Immediate primitive integer TryFrom results support unwrap and computed-message
+expect through the same shared range guards, successful casts and evaluated
+panic operation. Inputs and eager messages are captured once in source order;
+only failing conversions compute their Debug failure and raise. The complete
+standard error spelling is version-sensitive: Rust1.90–1.96 uses a unit payload,
+whereas Rust1.97–1.99 exposes NegOverflow or PosOverflow. The current prepared
+source interpretation matches the pinned CI std snapshot (Rust1.99); its panic
+assertions are explicitly bounded to >=1.97 <1.100 and report other versions as
+uncovered. Explicit source-version selection now retains the earlier Debug interpretation
+through resolved common terms and structured Links provenance; the default stays
+with the current CI snapshot. This bound does not change existing non-panic conversion
+coverage. An independent fixed-integer matrix covers every width/sign pair,
+zero and source extrema. A shared immutable str message predicate serves both
+Option and Result expect, with the old Option entry point retained as a wrapper.
+Error escape, custom Debug implementations, generic Result control and all
+previous whole-source/grammar obligations remain binding.
+
+#### Explicit Rust source std version selection
+
+Ordinary Rust imports accept an explicit canonical stable source version from
+1.90.0 through 1.99.x; the prepared default is 1.99.0. JavaScript exposes
+`parseRust(..., {sourceVersion})`, the same option on
+`createRustSourceOwnerProgramLinks`, and `rustSourceVersion` on
+`createTypedProgramLinks`. Native parser and Links factories expose corresponding
+version entry points. Explicit contexts use the existing structured Links
+provenance field and survive both codecs; imports without a selection keep their
+original root shape. Empty explicit selections record the resolved default.
+
+A common canonical three-column unsigned decimal reader is defined once in
+JavaScript and automatically translated to Rust. Both hosts transport text into
+that definition and apply the shared Rust source-range policy. Unknown ranges,
+prereleases, noncanonical spellings and excess text are refused before parsing
+the source program. Source std changes are resolved into ordinary common terms:
+integer conversion Debug uses its unit payload before1.97 and its overflow kind
+from1.97. Generated code therefore replays the selected source behavior even
+when the target compiler uses another std snapshot. The explicit context does
+not claim complete version-specific syntax or std coverage for every construct.
+
+Deferred controls cover both std models, invalid inputs, all target emissions,
+provenance and transport, and native replay on the current target compiler.
+CI additionally runs independent original/generated comparisons with matching
+Rust1.90,1.96,1.97 and1.99 compilers after JavaScript succeeds, at most two in
+parallel. It preserves source-version receipts and keeps the full requirements
+aggregate dependent on these comparisons. No new gate is an execution result.
+All broader grammar, ownership, semantics and source-context obligations remain.
+
+Immediate standard integer Result predicates now have a source draft for
+`is_ok_and`: actual target integer owners provide the callback context, callable
+construction is eager after the conversion input, and invocation happens only
+on successful conversion. Shared Links-backed JavaScript decisions generate
+Rust automatically. Deferred originals cover interval boundaries, immutable
+Copy captures, named predicates, function-pointer factories and panic order.
+These are authored controls, not execution evidence. Escaping Result values,
+error callbacks, generic mapping and complete ownership remain obligations.
+
+The immediate primitive integer `map_or` draft also accepts immutable Copy
+closures, named functions and function-pointer factories with independently
+known scalar result owners. It retains standard `From` function items and their
+actual trait-implementation checks. Callback parameters receive the successful
+integer context; inferred scalar result owners constrain eager defaults without
+changing pointer/integer identity. Input, default and callable values are
+captured once in that order; only success invokes the mapper. Deferred originals
+include exact wide endpoints, result-type changes, captures and abort order.
+General Result values, non-scalar/mutable/non-Copy callbacks and unrestricted
+inference remain required; these declarations are not execution evidence.
+
+Known scalar `map_or` defaults also provide the actual callback result context,
+including standard Boolean literals, fixed/pointer integers and binary64.
+Unsuffixed result literals and diverging callback bodies inherit that context;
+unknown defaults continue to infer from the callback's actual result. This
+retains one standard Result output type and does not authorize pointer-owner
+coercions or fabricate a type for an unconstrained source expression.
+
+Checked integer Option consumers now have a source draft for immediate `unwrap`
+and computed-message `expect`, across supported checked arithmetic and shifts.
+Shared guard plans keep invalid arithmetic unreachable; inputs and eager str
+messages retain source order. A canonical Option panic-message definition is
+shared with array lookups through preserved forwarding entry points. Failures
+raise the original message through the existing common panic operation. The
+prior negative unwrap-arity control retains its input and former expectation,
+with an explicit standard-library reference documenting why zero is correct.
+Independent interval and shift originals, eager message controls and transport/
+native checks are authored for CI; none is execution evidence. Stored Option
+values, lazy consumers and unrestricted source translation remain required.
+
+Shared checked-integer plans include Euclidean division and remainder. They
+reuse zero/overflow guards, apply signed corrections only after valid division,
+and avoid taking the absolute value of the minimum signed divisor. Existing
+source adapters interpret these generated common terms without host-specific
+Euclidean algorithms. Deferred mathematical originals derive the nonnegative
+remainder and reconstruct the quotient, covering all sign combinations and
+minimum-integer divisors across fixed/pointer widths. Generic Option flow and
+the full source-translation scope remain obligations.
+
+Immediate checked-integer `unwrap_or_else` now has a shared source draft for
+nonescaping immutable Copy closures, named zero-argument functions and function
+pointer factories. Actual receiver owners provide callback result contexts,
+including unsuffixed literals and diverging bodies. Receiver, arithmetic
+argument and callable construction are captured in source order; invocation is
+inside the failure branch only. A shared callable/result-owner rule keeps
+fixed widths, signedness and pointer identities distinct. The former rejected
+source remains verbatim in a positive original alongside its old rejection;
+version-bounded arity revisions document the standard Option contract.
+Mutable/non-Copy environments, stored Option control and whole-source coverage
+remain obligations; the declared controls are not execution evidence.
+
+Checked-integer Option predicates have a source draft for `is_some_and` and
+`is_none_or`. They reuse the scalar predicate signature contract already shared
+by integer Result consumers. Actual successful integer owners contextually type
+the callback input, and the Boolean result stays explicit. Callable factories
+are captured eagerly after operands; predicate invocation and successful
+arithmetic remain inside the presence branch. Absence returns the selected
+standard Boolean without invoking the predicate. Deferred originals cover
+source-owner widths, checked operations, captures and evaluation order. Stored
+Option/Result control, mutable/non-Copy callbacks and the entire source grammar
+and concept-space scope remain requirements.
+
+Checked-integer `map_or` accepts actual scalar callbacks through the same
+source-origin mapper adapter used by integer TryFrom results. Known eager
+defaults supply result contexts; otherwise actual callback results constrain
+the default. Immutable Copy closures, named functions and pointer factories
+retain complete parameter/result ownership, including Boolean, binary64 and
+fixed/pointer result changes. Standard primitive From items keep their own
+trait checks. Operands, default and mapper are captured once in source order;
+invocation and successful arithmetic stay in the valid branch. Deferred
+originals cover both shared entry points. Generic/non-scalar, mutable/non-Copy
+and escaping Option/Result translation remain required.
+
+Immediate checked-integer `map_or_else` has a source draft for immutable Copy
+scalar fallback and mapper callables with complete actual result origins.
+Both factories are captured after arithmetic operands and in argument order;
+the valid branch invokes the one-argument mapper, while failure invokes only
+the zero-argument fallback. Both callbacks retain the same actual scalar result
+owner, including pointer identity and Boolean/binary64 results. The existing
+scalar mapper adapter accepts the fallback callable's real result origin as
+context, without synthesizing source expressions or hiding function types.
+Standard From mappings keep their trait checks. Deferred originals cover
+factories, guarded arithmetic, type changes and source order. Unconstrained
+callback inference, mutable/non-Copy environments, escaping sums and all full
+source/grammar/concept-space obligations remain required.
+
+Callback source parsing can retain an unresolved return as explicitly unknown
+syntax while checking the actual parameter header and immutable Copy captures.
+It does not invent a unit or integer result proof. For checked `map_or_else`, a
+known sibling mapper result then completes the original fallback lambda,
+preserving its span, identity, captures and body before typing or transport.
+This supports unsuffixed integer literals, blocks and divergence without an
+eager guessed default type. Shared policies distinguish integer literal
+contexts from floating/Boolean contexts and reject unsigned unary negation.
+Result-context traversal follows actual lexical bindings, branches and match
+rows with memoized scope/node identities. Ordinary closure admission remains
+strict when no contextual deferral is requested. Deferred originals cover all
+integer/pointer owners, forward result constraints, source order and negative
+literal contexts. Simultaneously unconstrained siblings, whole-expression
+inference, generics, ownership and the full grammar/concept scope remain required.
+
+Array lookup scalar mapping uses the same deferred source-closure mechanism.
+Actual element owners contextually type the mapper; its known result completes
+an unresolved zero-argument fallback for `map_or_else`. Eager `map_or` defaults
+can likewise inherit the mapper's actual result. Header, capture, identity and
+literal-domain checks stay shared with checked arithmetic. Source factories
+retain receiver/index/default/mapper order, and lookup guards dominate payload
+reads and callback invocation. Deferred originals include fixed/pointer owners,
+Copy scalar clones, Boolean/floating/unit payloads, slices and byte views.
+Unconstrained sibling results, owned/mutable callback environments, escaping
+Option/Result and the whole-source/grammar/concept scope remain required.
+
+Immediate checked-integer and primitive TryFrom eager defaults use the same
+source-node result-context policy as lookup defaults and deferred closures.
+The selected actual scalar owner governs unsuffixed integer literals and unary
+negation; integer syntax cannot silently become binary64, and unsigned negation
+remains invalid even for zero. Existing primitive-owner admission remains an
+additional condition. Typed floating/Boolean defaults and eager effect order
+retain independent source controls. These unexecuted drafts establish neither
+whole-expression inference nor full Option/Result or source-language coverage.
+
+Immutable scalar closure reference patterns retain two distinct origins: the
+callable parameter keeps every actual reference layer, while its lexical binding
+removes exactly the layers written in the pattern. Shared JavaScript policies
+count `&` and `&&` tokens and require complete Copy scalar provenance before
+native generation; wrapper and lifetime projection stays mechanical. Contextual
+and written types, wildcard bindings, shadowing and nested Copy captures use the
+same path, including borrowed iterator maps and filters. Independent originals
+cover one/two layers and width/sign/pointer, Boolean, floating and unit owners.
+Mutable/non-Copy/structural patterns, escaping references and full Rust ownership
+remain requirements; these source controls have not executed.
+
+Closure product parameters reuse the existing irrefutable product/nominal binding
+pipeline. Every incoming argument keeps one actual callable parameter; tuple,
+unit and record patterns project lexical bindings through existing shared field
+plans and ordinary lets or matches. Original declaration identity, field order,
+rest positions and selected type owners remain explicit. Duplicate source names
+are checked across every parameter and nested pattern by a shared source policy.
+Projected locals participate in capture analysis as actual local bindings, so
+shadowing does not invent captures. Independent originals retain argument effect
+order, contextual/written types, nested captures and record provenance. Borrowed
+structural patterns, mutable/non-Copy ownership, all inference and full language
+coverage remain obligations; the source controls have not executed.
+
+Reference types and ordinary match/conditional patterns share one contextual
+compound-token rule. A joint `&&` splits into its two exact `&` occurrences only
+inside these source contexts, retaining byte spans and original concrete text;
+Boolean expression conjunction keeps its original token. Pattern projections
+remove matching wrapper and lifetime positions together. JavaScript origin
+copies own their lifetime arrays, preserving the original source through a
+projection just as native vectors do. Deferred originals cover one through four
+reference layers, fixed/pointer owners, literal/wildcard/guard/or patterns and
+conditional chains. General pattern macros, mutable/non-Copy interpretation,
+escaping regions and full-language support remain obligations.
+
+The ordinary standard `matches!` macro has a shared expansion draft for every
+pattern/guard form already admitted by the ordinary match reader. Its receiver
+is parsed once. A JavaScript-defined Links plan retains each original pattern
+and guard token and supplies true/false arms; native source is generated from
+that same policy. Host adapters pass the actual receiver to the existing match
+reader in a temporary token window and restore the caller's complete stream.
+They reuse all existing type, binding, guard, ownership, alias and failure checks.
+The original complete borrowed-str literal policy remains available and its
+supported fast path stays intact. Foreign macro owners still refuse.
+
+Independent originals span scalar owners, nested references, tuples, records,
+nominal variants, all macro delimiters, nested macros, guards and source effect
+order. Previously rejected standard wildcard, binding, guarded and parenthesized
+patterns now retain positive controls. Complete preceding tests are archived,
+with explicit Rust >=1.90 <1.100 edition-2024 assertion revisions and standard
+macro references. No originals or gate obligations are removed. Existing range,
+mutable/non-Copy, arbitrary macro/trait, ownership and full-language obligations
+remain; the expansion and controls are unexecuted drafts.
+
+Ordinary whole-value pattern aliases have an explicit recursive surface node.
+They bind the actual matched column before its inner pattern, retaining source
+owners and reference layers; no wildcard, ignored field or partial constructor
+is used to reconstruct another value. Shared JavaScript Links plans select the
+inner columns and alias bindings, and generate native policy source. Existing
+match compilation lowers those bindings to ordinary lets, preserving structural
+recursion, arm order and guards. Nested tuple/constructor aliases become local
+only when their actual field column is selected. Closed source interpretations
+retain their preceding limited alias behavior.
+
+Source pattern origins and irrefutable binding readers retain both whole-value
+and nested bindings. Callable reference analysis now gives each source match
+row its own pattern scope: scrutinees use the enclosing scope, while body and
+guard reads/writes use the row's bindings. This prevents spelling collisions
+from inventing outer captures. Independent originals cover wildcard/rest/nested
+aliases, source owners, borrowed values, conditionals, macros, closures and
+source effects. Their text/binary and four-target/native controls remain
+unexecuted; ranges, complete ownership/ergonomics and all full-language,
+grammar and concept-space obligations remain active.
+
+The private-array construction proof recognizes a fresh standard slice container
+from an actually typed array parameter or a still-known literal/slice owner.
+The parameter itself is an unowned input and never becomes an append owner.
+Source declarations and lexical shadows supply those facts; unknown receivers
+and unsafe rebinding remove them conservatively. Each source allocation keeps
+its own escape, loop and borrow history. Existing append/escape proofs still
+apply to the copy, with no assumption of deep element ownership. JavaScript
+admission generates the native rule; host scopes transport the same facts.
+This supports source-defined algorithms that copy an input then build a private
+result. Independent JavaScript originals cover bounds, unchanged inputs, copies,
+loops, shadows and source failure order. Custom/proxy/species behavior, all
+inferred receiver domains, element ownership and full-language coverage remain
+requirements; these controls have not executed.
+
+Nominal Rust Copy admission uses the actual datatype identity and its source
+Copy and Clone derivations. It is never inferred from an unannotated record's
+scalar fields. All fields of every constructor enter one shared dependency
+plan, including nested tuples and forward nominal references. The graph retains
+a complete ordered field partition; unresolved or non-Copy dependencies and
+by-value cycles cannot supply a proof. Shared-reference fields carry the
+separate Rust Copy fact for references, without proving their target Copy.
+
+The complete header catalog supplies these facts before ordinary body parsing.
+Both parser hosts propagate the shared plan into source parameter, result,
+constructor and nested product origins, preserving actual wrappers and source
+owners. Invalid derivations report their actual attribute range. Native policy
+source is generated from the same JavaScript Links definitions. Closed source
+interpretations retain their existing admissions. Independent originals cover
+all fixed/pointer owners, nominal closures and captures, variants, aliases,
+forward/module/tuple dependencies and source failure order; their controls and
+all codec/emission/native products remain unexecuted drafts. General manual
+traits, generic bounds, non-Copy ownership, reference-region composition and
+complete language/grammar/concept obligations remain required. Rust's Copy
+rules are defined by the [Rust Reference](https://doc.rust-lang.org/reference/special-types-and-traits.html#copy).
+
+Ordinary Rust integer range patterns retain their actual lower/upper patterns,
+operator, inclusive flag and source spans. Checked endpoint owners are validated
+against the scrutinee before canonical exact bounds enter a shared domain
+partition. Canonical decimal comparison and successor are source-defined and
+automatically translated to Rust, preserving i128/u128 extrema and the boundary
+after the maximum without binary64 conversion or enumeration. Empty and
+reversed ranges fail; a full integer domain is irrefutable for match coverage.
+
+The shared rule partitions the complete typed domain at every interval/literal
+boundary, retaining all matching source rows in order for each cell. The existing
+match compiler then checks remaining columns and lowers the cell decision tree
+to typed comparisons. This keeps adjacent/overlapping ranges, wildcard/binding
+rows, aliases, guards, products, constructor fields and receiver evaluation in
+the ordinary match algebra. Open ranges inside products are distinguished from
+rest syntax by their actual following token. Closed source interpretations keep
+their existing range refusal. Independent originals and premises cover all
+fixed/pointer integers, exact extrema, negative/zero boundaries, nested ranges,
+source ownership and failure order. Codec/four-emission/native controls remain
+unexecuted. Float/character/constant-path bounds, complete irrefutable parameter
+bindings, ownership/traits and all full-language/grammar/shared-concept
+requirements remain active. The range contract follows the
+[Rust Reference](https://doc.rust-lang.org/reference/patterns.html#range-patterns).
+
+Primitive integer constants are valid ordinary literal patterns and range
+endpoints only through their actual standard owner and checked value. Existing
+primitive constant construction supplies MIN/MAX/BITS, including the distinct
+u32 owner of BITS and the signed minimum's negative magnitude. Both parsers
+retain actual spans and reuse numeric pattern validation and full-domain range
+compilation. Primitive type aliases use the shared source-signature admission
+for a direct, unwrapped actual integer owner. Alias/module spellings do not
+replace that identity, and absolute standard paths keep their own namespace.
+Closed source interpretations retain the preceding admissions.
+
+Exact constant integer operation definitions use arbitrary-precision integers
+and canonical decimal text, generating the same Rust policy from JavaScript
+Links. They validate actual width/domain bounds, signed overflow (including
+MIN/-1 division and remainder), zero division, unary and bit operations, shift
+counts and fixed-width shifted/cast results. Comparison/Boolean operations and
+short-circuit demand are separate shared decisions. A source evaluation budget
+reports cycles and excessive depth/work. These definitions prepare a bounded
+source constant evaluator; arbitrary constant initializers and constant-function
+evaluation are still requirements, not established by the primitive-pattern
+adapter. Independent originals and operation facts, codecs, four emissions and
+native products remain unexecuted. Complete structural aggregate constants,
+traits, ownership, full-language grammars and global concept proofs remain
+required. Constant evaluation follows the
+[Rust Reference](https://doc.rust-lang.org/reference/const_eval.html).
+
+Ordinary Rust source constant patterns retain actual declaration locations and
+their declared primitive source owners. Header discovery records complete
+initializer boundaries; evaluation reparses a needed initializer in an isolated
+module/type scope with the complete declaration catalog. Caller-local bindings
+cannot become constant dependencies. Actual source references are qualified by
+declaration identity, and the existing type checker supplies local, cast and
+operation types before any value evaluation. A constant's zero-argument function
+projection remains separate from its compile-time source interpretation.
+
+The scalar evaluator is a source-defined Links program automatically emitted to
+Rust. Both hosts only transport checked expression facts and materialize the
+resulting typed literal pattern. Named dependencies, immutable locals, integer
+arithmetic/casts/bit operations, Boolean/string literals, lazy Boolean demand and
+selected conditional branches use shared rules. Checked shift option carriers
+keep their actual success/fallback behavior. Source owners survive integer
+erasure, including usize/isize; equal values do not merge distinct declarations.
+Cycle, depth and work limits report errors. General constant functions, mutable
+local state/loops, aggregate structural equality and floating/character constant
+values remain required extensions beyond the scalar call draft below. Complete function bodies still obey the generated
+900-line partition bound; factoring source functions supplies smaller complete
+native functions without editing generated semantics or changing the bound.
+
+Independent original programs, typed fact packets and automatically converted
+fact columns retain exact expected values, dependencies, casts, Boolean demand,
+branch failure order and source ownership. Both codecs, four emissions and native
+products remain deferred controls. The incremental source author can reuse
+policies only when every captured source/dependency digest and byte count, both
+asset twins and their exact digest match their complete generation recipes. This
+is source membership, not behavior or completion evidence. All whole-language,
+grammar, shared-concept and remaining delivery obligations stay active.
+
+
+Actual scalar `const fn` calls now have a source draft in both parser hosts.
+Header discovery retains each function's actual `const` token, declaration
+identity, parameter owners and result owner. Needed bodies are reparsed from the
+complete original token snapshot, including when a pattern is read within a
+macro's temporary token stream. The existing checker supplies the typed body;
+ordinary functions cannot gain a compile-time interpretation by projection.
+
+Shared evaluator definitions bind arguments in source order to fresh callee
+frames, preserve actual parameter/result owners, and allow direct or mutual
+recursion subject to depth and total executed expression work. Constant
+initializer cycles remain separate from function recursion. Remaining work is
+threaded through actual evaluated branches and arguments rather than reserved
+exponentially for unevaluated alternatives. Unit arguments/results have explicit
+structural values alongside integer, Boolean and borrowed text values. Native
+semantics are generated from the JavaScript definitions, not reimplemented in
+host adapters.
+
+Independent, unexecuted original-source and fact-packet controls cover scalar
+calls, every integer owner, module aliases, shadowing, mutual recursion, unit and
+borrowed text, argument evaluation order, owner mismatches, arity, ordinary
+function refusal and resource exhaustion. This is a draft, not verification of
+these behaviors. Mutable/aggregate/float/character evaluation and complete
+methods, traits, lifetimes and whole-language requirements remain obligations.
+
+Numeric source styling retains exact proven function byte ranges even when
+identical function text appears under different module owners. Ambiguous text
+uses a single complete-source decorator context, with every function ownership,
+non-overlap and exact-source guard retained. Distinct module ownership is not
+inferred from text identity. A deferred replay control retains both modules and
+an unrelated integer function. Source generation and manifest refresh supply no
+behavioral observations or completion evidence.
+
+
+Borrowed string byte lengths in scalar constant expressions have a source draft
+that reuses the existing Unicode scalar validation and exact UTF-8 measurement
+rules. The checked operation keeps its actual `usize` source owner even when
+nested in arithmetic or casts; both hosts transport that owner from the original
+math expression. Source evaluation charges string units against remaining work
+before allocating the unit buffer. Invalid scalar text, erased result owners,
+wrong arity and non-string operands refuse explicitly. The shared JavaScript
+operation is automatically translated with the evaluator. Independent original
+programs and fact packets retain empty, ASCII, multibyte and supplementary text,
+plus invalid scalar and source-owner cases. These controls remain unexecuted;
+this extension establishes neither general const string operations nor complete
+constant interpretation. The source interface follows the
+[standard str byte-length contract](https://doc.rust-lang.org/std/primitive.str.html#method.len),
+which records const availability since Rust 1.39.0; the controls remain bounded
+to the declared Rust profile.
+
+
+### Exact unsigned source document identities draft
+
+Source document factories now have a draft for explicit unsigned 64-bit link
+identities in both packages. Ordinary source parsing, including registered
+parser dispatch and its original configuration, produces the complete source
+network before an explicit fresh coordinate assignment. All ordered links and
+references, including dangling references, repeated edges and cycles, retain a
+complete old-to-new directory. The shared JavaScript allocation definition
+performs exact limb arithmetic and is automatically emitted to Rust. It refuses
+invalid first identities, exceeded directory bounds and insufficient remaining
+identity space before creating any replacement graph. The largest actual
+identity remains usable; exhaustion has its distinct cursor representation.
+The input graph and its original allocation history remain unchanged.
+
+`createUnsignedSourceDocumentLinks` / `create_unsigned_source_document_links`
+and their registered-parser variants expose the complete inverse directory.
+`rebaseUnsignedLinkNetwork` / `rebase_unsigned_link_network` apply the same
+transport to an already parsed graph. JavaScript's explicit exact graph also
+provides ordinary and registered parse methods, text/byte reconstruction and
+original-link projections. Native graphs use the corresponding existing graph
+methods. Source/CST data is the default; optional AST and semantic selections
+return original exact links while the complete concrete network remains
+available. A projection never substitutes newly numbered or rewritten nodes.
+
+This operation allocates a separate graph's coordinates. It does not silently
+append to an existing global space, merge concepts by name, or prove two
+concepts equal in meaning. Exact source integration must preserve that boundary
+when shared global spaces are extended. Remaining schema, CLI, transformation
+and concept APIs still need direct exact-ID integration throughout their full
+scope. The existing safe-Number profile and its original refusals remain.
+
+Both packages retain complete metadata, term registrations and selected syntax
+through the reversible dense bridge and existing exact snapshot codec.
+Independent unexecuted controls include exact limb carries, neighbors above the
+Number boundary, the final identities, exhaustion without partial mutation,
+repeated/dangling/cyclic edges, complete metadata/cache transport, registry
+selection, byte documents and original JavaScript, Rust, TypeScript, Markdown,
+JSON and Python source documents. Native controls compare actual future
+JavaScript snapshots and exact identities. The editable allocation definition
+has text/binary and four-emission controls. Source authors only serialize these
+fixture declarations; they do not parse or execute the represented documents.
+No runtime parity, whole-language coverage or completion evidence is claimed.
+
+
+Exact coordinate transport also extends into the checked semantic program
+pipeline. `createUnsignedTypedProgramLinks` and
+`createUnsignedRustSourceOwnerProgramLinks` retain the original parser/checker
+choices and complete semantic root, with matching native factories and an
+explicit native source-version variant. `rebaseUnsignedTypedProgramLinks` /
+`rebase_unsigned_typed_program_links` transport any existing typed packet with
+its actual stored root. Every inverse source identity remains available; a
+missing or merely referenced root refuses. These helpers allocate separate
+coordinates and preserve original graph contents and source-owner provenance.
+
+`emitUnsignedTypedProgramLinks` / `emit_unsigned_typed_program_links` use an
+explicit reversible local view of the complete current exact graph and its
+actual root. They delegate scope, type, semantic and target checks to the
+existing emitter, with explicit emission choices passed unchanged. They never
+restore a saved original source or accept a previously cached emission as the
+meaning of an edited graph. JavaScript, Rust, Lean and Rocq outputs keep the
+same existing contract and remaining language-coverage obligations.
+
+Deferred controls now carry independently specified JavaScript and Rust source
+programs through exact typed import, text/binary transport and all four targets,
+including actual source owners and the scalar const-call draft. They compare
+original checked-packet emissions with the exact graph's current emissions,
+retain future JavaScript result checks, compare actual future native/JavaScript
+graphs and emitted code, refuse deleted roots, and retain source versions and
+invalid emission-choice checks. No control or represented source runs during
+authoring. This code draft does not establish complete translation semantics,
+full exact-ID integration or any remaining requirement's execution evidence.
+
+
+The `exact-source` command has a draft in both runtimes. Its argument policy is
+a shared editable Links definition automatically translated from JavaScript.
+It exports complete concrete source networks by default; `--typed` requests
+checked JavaScript/Rust semantic Links and `--rust-source-owners` retains actual
+Rust owners, with optional explicit source version. `--first-id` selects exact
+positive decimal coordinates. Text uses canonical Links Notation; `--binary`
+uses the existing exact-ID snapshot envelope. `--to` imports checked source and
+emits JavaScript, Rust, Lean or Rocq from the resulting current graph. The
+ordinary frontend's remaining unsupported semantics retain their refusals.
+
+The shared planner validates argument combinations and exact decimal identity
+bounds before any file read. Repeated options, incompatible source modes,
+unsupported typed languages/targets and binary/code-output conflicts refuse;
+help performs no I/O. Process transports only read the chosen file, call the
+existing source/typed/exact factories and return text or binary bytes. Native
+argument strings use the generated UTF-16 representation at that boundary;
+argument interpretation is not handwritten separately in Rust. Explicit source
+and target models remain passed through the existing pipeline.
+
+Independent unexecuted controls cover every declared command plan and identity
+boundary, no-I/O refusals/help, exactly one selected file read, file failures,
+CST text/binary source reconstruction, actual typed roots, four target emissions,
+Rust source-version retention and original JavaScript result checks. Native
+controls compare future actual JavaScript process outputs and invoke the actual
+native command binary on isolated task-owned temporary files. Those temporary
+files are scoped for cleanup. The command definition has independent text/binary
+and four-emission controls. None of these controls or represented sources runs
+during the complete-code drafting phase; CLI availability is not verification
+of the wider whole-language, exact-ID or concept requirements.
+
+
+Saved exact graph processing now has a source draft. `readUnsignedGraphSnapshot`
+and the native text/binary readers load the supplied current Links snapshot.
+Text uses identified flat positive unsigned links and canonical percent-encoded
+metadata; a shared source-defined surface check aligns the two runtimes before
+the existing canonical metadata decoder runs. This snapshot profile is separate
+from parsing arbitrary LiNo source documents into concrete syntax. Empty graphs,
+repeated/dangling references and full unsigned identities remain graph data.
+Shared byte/record and metadata-frame depth bounds precede deeper decoding;
+binary input retains the existing full exact snapshot envelope and its limits.
+
+`selectUnsignedTypedProgramRoot` / `select_unsigned_typed_program_root` consume
+actual stored identity/type/language/term/schema columns. They validate complete
+aligned metadata and canonical identity order under explicit record bounds.
+One declared schema-1 typed root can be inferred; multiple roots require an
+explicit actual input identity. Explicit decimal spellings normalize only their
+coordinates. Invalid, missing and undeclared choices refuse. Root selection does
+not establish typing or semantic validity: emission still performs the existing
+complete current-graph checks. It provides no concept-equivalence or name-based
+merge proof.
+
+`exact-graph` reads a text snapshot or explicit binary input, writes text or
+binary, optionally rebases into a separate exact coordinate space, or emits a
+selected typed graph to JavaScript, Rust, Lean or Rocq. Its shared source-defined
+argument policy generates native Rust. Requested roots use input coordinates;
+rebasing carries the selected actual root through the complete inverse directory.
+Source parsers, source restoration and cached target code are not inputs to graph
+loading. Source-version and owner facts already in the graph remain available to
+the existing semantic emitter. Binary-to-binary transport preserves allocator
+history and selected syntax; text keeps the existing text format's state scope.
+
+Existing-link metadata replacement is public in both runtimes, including the
+explicit JavaScript exact graph. It preserves identity, references, allocator
+and explicit registrations/caches; replacing an absent identity returns false
+without interning unused native metadata. Clone edits retain the original graph.
+Explicit caches retain their existing state semantics and are not new proofs of
+meaning. Independent deferred controls edit a typed scalar from7 to9, retain the
+original source graph and require current emitted behavior to return9, including
+after binary transport and rebasing. Two actual roots sharing one body remain
+separate entry links and require an explicit choice.
+
+Unexecuted controls also retain exact maximum roots, false metadata markers,
+aligned columns, unordered/duplicate facts, resource/surface refusals, all command
+plans, no selected-file reads for help/refusals, each chosen input transport,
+all four target emissions, original-link metadata updates, binary state history,
+source-document parser traps and actual future native/JavaScript process bytes.
+Native integration controls invoke the actual binary on scoped temporary saved
+graphs. Both codecs and all four emissions of the editable policy are retained.
+No represented graphs, behavioral controls, native compilation or CI feedback
+run during this authoring phase. Every remaining whole-language, grammar union,
+full exact-ID, shared-concept and dynamic-extension obligation remains active.
+
+
+### Ordinary JavaScript public instance fields draft
+
+The shared ordinary-class source lowering now drafts semicolon-terminated
+public instance field declarations, including omitted initializers, alongside
+its existing constructor assignments and receiver-preserving methods. Directory
+rows retain actual field token positions: negative name coordinates distinguish
+public declarations from constructor assignments without changing prior row
+header/method offsets. Constructor continuation comes from actual assignments,
+not the last declaration's location; declarations may appear after methods or
+the constructor and still initialize in their original declaration order.
+
+Initializer helpers retain the class's enclosing module scope, outside constructor
+parameter/local scopes. Each construction captures every public initializer
+before constructor-body preparation, then captures the admitted leading
+constructor assignments in order. A constructor overwrite retains the earlier
+initializer's effects and the original field key position. Fresh aggregate
+initializers remain per-instance allocations. Field type comments relocate only
+actual `@type` tags to initializer return contracts; typedef and other comment
+text stays intact. Actual source intervals and documentation remain linked to
+the complete original class. The existing exact scalar/type/span sharing profile
+reduces the prepared rule graph; binding and expression occurrences remain
+separate, so it does not share runtime instance allocations.
+
+The language contract follows
+[ECMAScript 2025 construction](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ecmascript-function-objects-construct-argumentslist-newtarget)
+and [field definition evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-classfielddefinitionevaluation).
+The current closed profile already bounds defaults to receiver-independent
+literals and excludes observable prototypes, descriptor reflection and unproved
+external consumers. Receiver-dependent fields, ASI/computed/anonymous-callable
+field initialization, private elements, accessors, inheritance, general external
+class interfaces and target lifecycle behavior still require their full models.
+The public-field draft preserves those obligations and existing refusal controls;
+it establishes no complete class or own-codebase translation claim.
+
+New independent unexecuted originals cover implicit constructors, late declaration
+positions, undefined initialization, constructor overwrites, module/local
+shadowing, fresh array/record values, aliases, documentation and Unicode,
+static helper calls, initializer/constructor effect order and exception order.
+Additional primitive controls cover exact initializer boundaries and constructor
+continuations. Both frontends, codecs, semantic self-translation and generated
+native products remain the same deferred control paths. Fixture source model4
+retains all six preceding artifacts and three exact constructor-prologue
+predecessors, with independent hashes/byte counts; the active assertion now
+requires all nine and reports unsupported fixture models. No original control
+or source program is removed, and no behavioral execution is claimed.
+
+
+Ordinary class methods whose names are `get`, `set`, `async` or `static`
+use the same checked receiver, parameter and callable representation as other
+fixed identifier methods. Actual following syntax distinguishes a name from
+an accessor, async or static modifier; constructor and instance ownership stay
+separate even when their method spellings coincide. Accessor descriptors,
+promise scheduling, detached receivers and all existing full object-model
+obligations remain required. This source rule follows the
+[ECMAScript 2025 method productions](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-method-definitions).
+Independent unexecuted original programs cover all four names on both owners,
+receiver mutation, synchronous values and a shared owner spelling; additional
+refusals retain the genuinely different modifier and detachment obligations.
+
+
+Multi-file Rust source translation snapshots an explicit `sourceVersion` once
+and passes the same canonical source-std selection through ordinary parsing,
+source-owner retention and library entry normalization. Structured Links
+provenance retains that selection, so saved editable semantic and concrete
+graphs do not depend on the later target compiler's std version. Omitted
+selectors preserve the existing default behavior; malformed and uncovered
+selectors reach the same shared version rules as the single-source API.
+The project CLI consumes this option through its Links inventory. No host
+reimplements the language's version decisions. Independent deferred controls
+include every supported snapshot endpoint with/without retained owners, library
+fallbacks, codec reloads, conversion-error differences, single-read getters and
+invalid selectors through both APIs and commands. Complete Cargo configuration,
+dependency version resolution, alternate editions, target ABI and all earlier
+source-project obligations remain required; this draft supplies no evidence of
+execution or complete project translation.
+
+
+Self-translation also accepts an explicit `rustSourceVersion` (`rust_source_version`
+in native options). The captured canonical source snapshot reaches independent
+whole-module checking and public signature discovery, per-item interpretation,
+binding-scope retries, actual shared-handle source admission and empty library
+entry normalization. Invalid/uncovered versions refuse before any kept or carried
+output; non-Rust source cannot claim a Rust std interpretation. Generated source
+headers retain explicit selections. With no selection, historical output remains
+unchanged. This is source context, not a target toolchain requirement or a proof
+of complete dependency/ABI equivalence. Both runtimes transport into the existing
+shared version definitions rather than reimplementing std behavior. Deferred
+controls retain original narrowing-conversion inputs and independent expected
+error meanings across every declared std snapshot, both translation modes,
+diagnostics, complete signatures and single-read selectors; no controls have run.
+
+
+The ordinary translation command and tracked-project authoring commands expose
+`--rust-source-version`. This is a source interpretation selector, transported to
+the existing shared version rules; the native project worklist accepts the same
+per-module `rustSourceVersion` option as JavaScript. A mixed tracked inventory
+applies the source snapshot to Rust entries only, preserving each JavaScript and
+TypeScript entry's interpretation. Per-module project options retain their normal
+precedence over shared translation options. Archives keep complete original CSTs,
+selected module configuration and emitted products independently. Missing or
+repeated CLI selector values refuse, as do unsupported snapshots; no compiler
+version is inferred from the emitted target or a saved original source envelope.
+The draft and its deferred controls do not establish full project translation.
+
+
+Checked transparent Rust scalar aliases also resolve associated member calls
+and function values through their complete cached definition origins. The shared
+alias rule admits only a proved direct primitive owner, its exact width/sign and
+one actual member suffix. Canonical primitive coordinates carry that checked
+origin into the existing Default, From, TryFrom, method and callable rules; they
+are not reinterpreted as new caller-local source spellings. Caller-local value
+bindings or datatypes named like primitives cannot change the alias's meaning.
+Actual tokens, offsets, original alias definitions and CSTs remain intact.
+Nominal declarations continue through their original path, and wrapper/generic,
+trait/namespace, import and other unsupported alias forms keep their obligations.
+This follows the [Rust type namespace contract](https://doc.rust-lang.org/reference/items/type-aliases.html).
+The source draft adds independent defaults/conversions across every admitted
+scalar owner, alias chains/imports/callbacks and checked/wrapping calls, plus
+namespace and forged-owner controls. Existing native/JavaScript source products,
+all codecs and previous original inputs remain deferred and unexecuted.
+
+
+Checked direct aliases of the actual standard owned String also reach its
+existing empty `new` and `from` constructions. Alias chains and imported module
+owners use the same complete cached definitions as scalar aliases; the shared
+admission rule requires the exact library path, proved String type and no
+wrapper or generic children. The existing conversion path checks source string
+ownership, immutable references and consumption; the alias changes no operation
+semantics, type-namespace restrictions or constructor source coordinates.
+Caller-local String datatypes and same-spelled value bindings cannot replace
+the checked definition owner. This follows the
+[standard String contract](https://doc.rust-lang.org/std/string/struct.String.html)
+and supplies no arbitrary library alias, allocator identity, capacity, generic
+or trait implementation model. Deferred originals include Unicode/byte lengths,
+empty/owned/borrowed construction, forward/imported aliases and namespace owners;
+independent owner controls reject forged, wrapped and unrelated members. All
+previous original inputs and full translation obligations remain required.
+
+
+Checked concrete Rust aliases of standard Vec retain their complete element
+type and source owner in empty `new` construction. The shared rule requires an
+actual proved owned-vector alias, one admitted direct element argument, no source
+wrappers and the real `new` member. It admits no inferred generic argument or
+caller-spelled substitute. Both frontends produce the existing empty typed array
+term and register its actual fresh-constructor origin. Explicit `Vec::<T>::new()`
+uses the same constructor identity; the JavaScript origin also retains the checked
+element's scalar Copy fact, as the native type-origin constructor already does.
+Fresh owned-argument and lookup rules remain responsible for consumption and
+absence. Source original alias definitions, generic element syntax and all actual
+ranges stay in complete CSTs. This follows the
+[standard Vec constructor](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new).
+Unqualified constructors without an actual element proof, arbitrary generic or
+allocator models, capacity/pointer/drop observations and all previous obligations
+remain required. Independent deferred controls cover every admitted scalar/String
+and Unit element, chains/imports/namespaces, fresh arguments, safe empty lookups
+and forged owner/element/wrapper/member premises. No represented controls ran.

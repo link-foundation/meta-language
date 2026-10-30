@@ -53,6 +53,10 @@ impl JavaScriptParser {
                 } else {
                     None
                 };
+                crate::translation::lexer::require_java_script_identifier_role(
+                    alias.as_ref().unwrap_or(&imported),
+                    true,
+                )?;
                 names.push(Named {
                     local: alias
                         .as_ref()
@@ -68,12 +72,17 @@ impl JavaScriptParser {
             self.cursor.expect("}", Some("import"))?;
         } else {
             local = Some(self.cursor.identifier(Some("import"))?);
+            crate::translation::lexer::require_java_script_identifier_role(
+                local.as_ref().unwrap(),
+                true,
+            )?;
         }
         self.cursor.expect("from", Some("import"))?;
         let module = self.cursor.advance();
         if module.kind != TokenKind::String {
             return Err(Self::fail("expected a module name", &module));
         }
+        self.require_scalar_string_token(&module, "module specifier")?;
         self.cursor.eat(";");
         let specifier = module.value.clone();
         let place = Some(span(&start, &module));

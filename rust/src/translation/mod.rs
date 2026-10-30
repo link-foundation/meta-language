@@ -12,19 +12,35 @@
 use serde::{Deserialize, Serialize};
 
 pub mod aborts;
+pub(crate) mod abrupt_result_rules;
+pub(crate) mod absence_conversion_rules;
+pub(crate) mod absence_only_rules;
 pub(crate) mod array_binding_rules;
 pub(crate) mod array_callback_rules;
 pub(crate) mod array_classification_rules;
 pub(crate) mod array_from_rules;
+pub(crate) mod array_state_method_program;
+pub(crate) mod array_state_method_rules;
 pub(crate) mod array_value_rules;
 pub(crate) mod ascii_text_predicate_rules;
+pub(crate) mod big_integer_bitwise_program;
+pub(crate) mod big_integer_bitwise_rules;
+pub(crate) mod big_integer_conversion;
+pub(crate) mod big_integer_conversion_program;
+pub(crate) mod big_integer_conversion_rules;
+pub(crate) mod binding_initialization_rules;
 pub(crate) mod boolean_declaration_value_rules;
 pub(crate) mod borrowed_call_interface;
 pub(crate) mod borrowed_call_interface_rules;
 pub(crate) mod callable_emission_rules;
+pub(crate) mod callable_source_program;
 pub(crate) mod callable_source_rules;
+pub(crate) mod pattern_alias_rules;
+pub(crate) mod owned_array_allocation_rules;
 pub mod check;
+pub(crate) mod collection_access_rules;
 pub(crate) mod collection_construction_rules;
+pub(crate) mod conditional_chain_rules;
 pub mod decimal;
 pub(crate) mod declaration_dependency_rules;
 pub mod diagnostics;
@@ -34,7 +50,13 @@ pub mod emit_javascript;
 pub mod emit_lean;
 pub mod emit_rocq;
 pub mod emit_rust;
+pub(crate) mod excess_argument_rules;
 pub(crate) mod external_emission_rules;
+pub(crate) mod fixed_integer_cast_program;
+mod fixed_integer_cast_rules;
+pub(crate) mod formal_string_unit_program;
+pub mod formal_string_unit_rules;
+mod formal_unit_strings;
 pub(crate) mod frontend_rules;
 pub(crate) mod grammar_attribute_order_rules;
 pub(crate) mod grammar_lexer_rules;
@@ -44,23 +66,66 @@ pub(crate) mod grammar_selection_included_range_rules;
 pub(crate) mod grammar_selection_mapping_rules;
 pub(crate) mod grammar_selection_rules;
 pub(crate) mod guarded_private_array_write_rules;
+pub(crate) mod inert_module_binding_rules;
+pub(crate) mod intrinsic_initializer_rules;
 pub mod ir;
 pub mod javascript;
+pub(crate) mod javascript_class_source_rules;
+pub(crate) mod javascript_comparison_rules;
+pub(crate) mod javascript_data_field_rules;
+pub(crate) mod javascript_enumeration_rules;
+pub(crate) mod javascript_identifier_program;
+pub(crate) mod javascript_identifier_rules;
 mod javascript_line_terminator_rules;
+pub mod javascript_literal_property_program;
+pub(crate) mod javascript_literal_property_rules;
+pub mod javascript_nullish_field_program;
+pub(crate) mod javascript_nullish_field_rules;
+pub(crate) mod javascript_optional_call_program;
+pub(crate) mod javascript_optional_call_rules;
+pub mod javascript_optional_chain_program;
+pub(crate) mod javascript_optional_chain_rules;
+pub mod javascript_own_property_program;
+pub(crate) mod javascript_own_property_rules;
+pub(crate) mod javascript_property_call_program;
+pub(crate) mod javascript_property_call_rules;
+pub(crate) mod javascript_property_descriptors;
+mod javascript_record_order_profile;
+pub mod javascript_record_order_program;
+pub(crate) mod javascript_record_order_rules;
+pub(crate) mod javascript_record_parameter_program;
 pub(crate) mod javascript_record_parameter_rules;
+pub(crate) mod javascript_string_unit_program;
+pub mod javascript_string_unit_rules;
 pub(crate) mod javascript_tag_context_rules;
 pub mod js_number;
 pub mod lean;
 pub mod lean_root_names;
+pub(crate) mod let_else_completion_rules;
 pub mod lexer;
 pub(crate) mod link_network_binary_buffer_rules;
+pub(crate) mod missing_argument_rules;
+pub(crate) mod module_binding_program;
+pub(crate) mod module_binding_rules;
+pub(crate) mod named_default_callable_rules;
 pub(crate) mod network_projection_rules;
 pub(crate) mod nullable_type_syntax_rules;
+pub(crate) mod number_bitwise_program;
+mod number_bitwise_program_data;
+pub(crate) mod number_bitwise_rules;
 mod number_predicate_rules;
+mod object_rest;
+pub(crate) mod object_rest_rules;
+pub(crate) mod optional_callable_rules;
 pub(crate) mod optional_inference_rules;
+pub(crate) mod optional_policy_rules;
 pub(crate) mod optional_value_rules;
+pub(crate) mod ordered_record_layout_rules;
+mod ordered_record_preparation;
+mod ordered_record_values;
 pub mod output;
 pub(crate) mod owned_array_append_rules;
+pub(crate) mod owned_array_reader_domain_rules;
 pub(crate) mod owned_local_state;
 pub(crate) mod parameter_default_rules;
 pub(crate) mod partial_callable_rules;
@@ -71,27 +136,104 @@ pub mod product_emission_rules;
 pub(crate) mod program_number_projection_rules;
 mod program_string_representation_rules;
 pub mod proof;
+pub(crate) mod record_closure_parameter_program;
+pub(crate) mod record_closure_parameter_rules;
 pub(crate) mod record_emission_rules;
+mod record_formal_defaults;
 pub(crate) mod record_type_syntax_rules;
+mod record_value_order_specialization;
 pub(crate) mod record_value_rules;
+pub(crate) mod record_write_program;
+pub(crate) mod record_write_rules;
+pub(crate) mod recursive_binding_rules;
+pub(crate) mod recursive_object_binding_rules;
+pub(crate) mod reference_array_projection_program;
+pub(crate) mod reference_array_projection_rules;
 pub(crate) mod reference_identity_rules;
+pub(crate) mod reference_method_program;
+pub(crate) mod reference_method_rules;
 pub mod rocq;
 pub(crate) mod runtime_shell;
 pub(crate) mod runtime_shell_rules;
 pub mod rust;
+pub(crate) mod rust_array_index_rules;
+pub(crate) mod rust_array_length_rules;
+pub(crate) mod rust_array_lookup_rules;
+pub(crate) mod rust_byte_ascii_rules;
+pub(crate) mod rust_byte_string_rules;
+mod rust_callable_owner_rules;
 pub(crate) mod rust_character_rules;
+mod rust_checked_integer_rules;
 mod rust_const_branch_rules;
+pub(crate) mod rust_contextual_closure_rules;
+pub(crate) mod rust_copy_closure_rules;
+pub(crate) mod rust_declaration_header_rules;
 pub(crate) mod rust_diagnostic_attribute_rules;
+pub(crate) mod rust_formatting_program;
+pub(crate) mod rust_formatting_rules;
+pub(crate) mod rust_fresh_vector_argument_rules;
+pub(crate) mod rust_fresh_vector_result_rules;
+pub(crate) mod rust_function_pointer_rules;
+pub(crate) mod rust_function_qualifier_rules;
+pub(crate) mod rust_inherent_program;
+pub(crate) mod rust_inherent_rules;
+mod rust_integer_bit_rules;
+mod rust_integer_float_plan_rules;
+mod rust_integer_magnitude_rules;
 pub(crate) mod rust_literal_match_rules;
+pub(crate) mod rust_module_value_rules;
+pub(crate) mod rust_named_formatting_rules;
+pub(crate) mod rust_pattern_match_rules;
+pub(crate) mod rust_pointer_integer_owner_rules;
+pub(crate) mod rust_primitive_associated_call_rules;
+pub(crate) mod rust_primitive_bitwise;
+pub(crate) mod rust_primitive_bitwise_program;
+pub(crate) mod rust_primitive_bitwise_rules;
+mod rust_primitive_default_rules;
+mod rust_primitive_expression_rules;
+mod rust_primitive_from_rules;
+pub(crate) mod rust_primitive_function_value_rules;
+mod rust_primitive_inherent_copy_rules;
+mod rust_primitive_integer_constant_rules;
+mod rust_primitive_selection_rules;
+mod rust_primitive_try_from_rules;
+pub(crate) mod rust_record_program;
+pub(crate) mod rust_record_rules;
+pub(crate) mod rust_saturating_integer_rules;
+pub(crate) mod rust_saturating_multiplication_rules;
+pub(crate) mod rust_shared_array_handle_rules;
+pub(crate) mod rust_shift_program;
+pub(crate) mod rust_shift_rules;
+pub(crate) mod rust_shifts;
+pub(crate) mod rust_signed_integer_property_rules;
+pub(crate) mod rust_source_constant_rules;
+pub(crate) mod rust_source_owner_retention_rules;
+pub(crate) mod rust_string_byte_length_rules;
+mod rust_string_byte_lengths;
+pub(crate) mod rust_type_alias_rules;
+pub(crate) mod rust_usize_index_expression_rules;
+pub(crate) mod rust_wrapping_integer_rules;
+mod rust_wrapping_shift_rules;
+pub(crate) mod scalar_assignment_program;
+pub(crate) mod scalar_assignment_rules;
+pub(crate) mod scalar_closure_default_rules;
 pub(crate) mod scalar_loop_rules;
 pub(crate) mod scoped_binding_emission;
 pub(crate) mod scoped_binding_emission_rules;
 pub(crate) mod self_translation_layout_rules;
+pub(crate) mod semantic_input_rules;
+pub(crate) mod sequential_parameter_default_rules;
 pub(crate) mod source_const_functions;
 pub(crate) mod source_diagnostic_attributes;
 pub(crate) mod source_empty_options;
+mod source_exception_observation;
+pub(crate) mod source_exception_program;
+pub(crate) mod source_exception_rules;
 pub(crate) mod source_header_emission;
 pub(crate) mod source_header_emission_rules;
+pub mod source_identifier_program;
+pub(crate) mod source_identifier_rules;
+pub(crate) mod source_identifiers;
 pub mod source_loops;
 pub(crate) mod source_primitive_owners;
 pub(crate) mod source_pure_unit_calls;
@@ -101,6 +243,11 @@ pub(crate) mod source_text_byte_rules;
 pub(crate) mod source_text_bytes;
 pub(crate) mod source_type_namespaces;
 pub(crate) mod source_unit_clone_derivations;
+pub(crate) mod string_construction_program;
+pub mod string_construction_rules;
+pub(crate) mod string_number;
+pub(crate) mod string_number_program;
+pub(crate) mod string_number_rules;
 mod string_order_rules;
 pub mod structured_type_rules;
 pub mod surface;
@@ -111,6 +258,15 @@ pub(crate) mod type_namespace_rules;
 pub(crate) mod type_syntax_rules;
 pub(crate) mod typed_program_link_rules;
 pub mod types;
+pub(crate) mod unicode_case_emission_rules;
+pub(crate) mod unicode_case_program;
+pub(crate) mod unicode_case_rules;
+pub(crate) mod unicode_scalar_program;
+pub(crate) mod unicode_scalar_rules;
+pub(crate) mod utf16_method_emission_rules;
+pub(crate) mod utf16_text_program;
+pub mod utf16_text_rules;
+pub(crate) mod whole_parameter_default_rules;
 
 /// A source range in UTF-16 code units, as JavaScript string offsets count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -155,3 +311,117 @@ impl Language {
             .find(|language| language.as_str() == name)
     }
 }
+
+pub(crate) mod array_binding_program;
+pub(crate) mod javascript_comparison_program;
+
+pub mod array_formal_parameter_program;
+pub mod array_formal_parameter_rules;
+pub(crate) mod javascript_string_range_program;
+pub(crate) mod javascript_string_range_rules;
+pub(crate) mod optional_value_program;
+pub mod record_callable_parameter_program;
+pub mod record_callable_parameter_rules;
+pub(crate) mod rust_unit_value_program;
+pub(crate) mod rust_unit_value_rules;
+
+pub(crate) mod lexical_declaration_rules;
+
+pub(crate) mod object_entry_pair_rules;
+
+pub(crate) mod string_array_sort_rules;
+
+pub(crate) mod rust_scalar_source_interface_rules;
+pub(crate) mod scalar_source_interface;
+
+pub(crate) mod rust_fresh_vector_call_result_rules;
+
+pub(crate) mod rust_scalar_vector_copy_rules;
+
+pub(crate) mod scalar_vector_copy;
+
+pub(crate) mod rust_constructed_string_interface_rules;
+pub(crate) mod rust_data_type_field_signature_rules;
+pub(crate) mod rust_displayed_string_interface_rules;
+pub(crate) mod rust_scalar_mathematical_interface_rules;
+pub(crate) mod rust_standard_owned_call_rules;
+pub(crate) mod rust_standard_string_view_rules;
+pub(crate) mod rust_string_addition_rules;
+pub(crate) mod rust_string_predicate_interface_rules;
+pub(crate) mod rust_textual_source_interface_rules;
+pub mod source_data_field_signatures;
+
+pub(crate) mod javascript_ordinary_heap;
+pub(crate) mod nominal_array_loan_rules;
+
+pub(crate) mod javascript_descriptor_conversion;
+pub(crate) mod rust_source_render_interfaces;
+
+pub(crate) mod javascript_primitive_conversion;
+
+pub(crate) mod javascript_property_key_conversion;
+
+pub(crate) mod javascript_nominal_spread_rules;
+pub(crate) mod javascript_property_definition;
+
+pub(crate) mod javascript_call_machine;
+
+pub(crate) mod javascript_call_source;
+
+pub(crate) mod typed_record_shape_rules;
+
+pub(crate) mod javascript_string_argument_rules;
+
+pub(crate) mod javascript_fixed_integer_cast_plan;
+
+pub(crate) mod javascript_call_natural_source;
+
+pub(crate) mod record_write_source_interfaces;
+
+pub(crate) mod type_query_evaluation_rules;
+
+pub(crate) mod conditional_constructor_sharing_rules;
+pub(crate) mod source_library_binding_rules;
+pub(crate) mod source_library_export_rules;
+pub(crate) mod source_parameter_binding_rules;
+pub(crate) mod utf16_text_expansion_rules;
+
+pub mod rust_string_pattern_rules;
+
+pub mod rust_byte_pattern_rules;
+
+pub mod rust_numeric_pattern_rules;
+
+pub mod source_module_request_rules;
+
+pub mod rust_byte_string_expression_rules;
+
+pub mod rust_array_element_owner_rules;
+pub mod rust_iterator_reduction_rules;
+
+pub mod rust_copy_closure_parameter_rules;
+
+pub mod rust_type_token_rules;
+
+pub mod rust_iterator_pipeline_rules;
+
+pub mod rust_iterator_arithmetic_rules;
+
+pub mod rust_owned_binding_rules;
+
+pub mod rust_string_byte_kernel;
+pub mod rust_string_byte_view_rules;
+
+pub mod rust_panic_value_rules;
+
+pub mod rust_source_version_rules;
+
+pub mod source_version_column_rules;
+
+pub(crate) mod rust_nominal_copy_rules;
+
+pub(crate) mod rust_integer_range_rules;
+
+pub(crate) mod rust_constant_integer_rules;
+
+pub(crate) mod rust_source_constant_evaluation_rules;

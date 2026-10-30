@@ -1,5 +1,4 @@
-// Generated from the complete checked JavaScript source and recorded dependencies.
-// Do not edit by hand.
+// Generated from complete js/src/translation/array-classification-rules.js. Do not edit by hand.
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_array_classification(kind: &str) -> bool {
@@ -31,5 +30,15 @@ pub fn read_java_script_array_classification_plan(kind: &str, element: &str) -> 
         } else {
             Vec::<bool>::new()
         }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_array_classification_builtin_operation(name: &str) -> String {
+    if name == "Array.isArray" {
+        String::from("testJavaScriptArrayValue")
+    } else {
+        String::new()
     }
 }

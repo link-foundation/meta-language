@@ -4,10 +4,10 @@ use super::array_rules::accept_rust_source_array_owner;
 use super::indirection_rules::accept_rust_source_box_owner;
 use super::read_only_query_rules::accept_rust_read_only_query_owner;
 use super::{
-    FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison, SCtor,
-    SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
+    Binding, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison,
+    SCtor, SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
     ShowStyle, SourceDeclaration, SourceOrigin, Token, TokenKind, TranslationError, Type, absolute,
-    format, is_if_or_match, prop_of, span, unsupported,
+    is_if_or_match, prop_of, span, unsupported,
 };
 
 mod attributes;
@@ -19,9 +19,29 @@ mod types;
 
 impl RustParser {
     pub(super) fn file(&mut self) -> Result<SProgram> {
+        self.initialize_type_aliases()?;
+        if !self.header_discovery {
+            self.finish_type_aliases()?;
+        }
         self.inner_attributes()?;
         let mut items = self.items(&[], ItemsEnd::File)?;
-        let Some(main) = self.main.take() else {
+        self.finish_type_aliases()?;
+        self.install_ordinary_completion_declarations(&mut items)?;
+        let main = self.main.take();
+        if !self.shared_array_handle_source_model.is_empty() {
+            self.finish_shared_array_source(&items, main.as_ref())?;
+            return Ok(SProgram {
+                reference_semantics: Some(true.into()),
+                language: Language::Rust,
+                items,
+                main,
+                imports: Vec::new(),
+                externals: Vec::new(),
+                source_pure_unit_calls: None,
+                source_runtime_shell: None,
+            });
+        }
+        let Some(main) = main else {
             return Err(TranslationError::syntax(
                 "a Rust program needs fn main",
                 Some(self.cursor.peek().span()),
@@ -83,12 +103,25 @@ impl RustParser {
                     ),
                 ));
             }
-            if !self.const_function_model.is_empty()
-                && self.cursor.is("const")
-                && self.cursor.is_at("fn", 1)
-            {
+            if crate::translation::rust_function_qualifier_rules::accept_rust_const_function_prefix(
+                self.ordinary_completion_context(),
+                !self.const_function_model.is_empty(),
+                self.cursor.is("const"),
+                self.cursor.is_at("fn", 1),
+            ) {
                 let const_keyword_index = self.cursor.index;
                 self.const_function_keyword = Some(self.cursor.advance());
+                if !crate::translation::rust_function_qualifier_rules::accept_rust_const_function_location(
+                    path.len() as f64,
+                    self.inherent_owner.is_some(),
+                    &self.cursor.peek_at(1).value,
+                ) {
+                    return Err(unsupported(
+                        "Rust const function entry",
+                        "a qualified executable main requires its own entry interpretation",
+                        span(self.const_function_keyword.as_ref().unwrap(), self.cursor.peek_at(1)),
+                    ));
+                }
                 let mut function = self.function(path)?;
                 if !diagnostic_attributes.is_empty() {
                     function.source_diagnostic_attributes =
@@ -105,6 +138,10 @@ impl RustParser {
             self.empty_option_item_guard(path, &start)?;
             self.require_unit_clone_attached_enum(&derivations, &start)?;
             self.require_type_namespace_without_externals(&start)?;
+            if self.cursor.is("type") && self.ordinary_completion_context() {
+                self.read_type_alias_item(path)?;
+                continue;
+            }
             let c = &mut self.cursor;
             if c.is("mod") {
                 c.advance();
@@ -118,6 +155,7 @@ impl RustParser {
                 }
                 c.expect("{", Some("mod"))?;
                 let module_span = span(&start, c.peek());
+                self.inner_attributes()?;
                 self.origins
                     .declaration(&name, path, SourceDeclaration::Module)?;
                 let mut inner = path.to_vec();
@@ -164,6 +202,14 @@ impl RustParser {
             }
             if c.is("enum") {
                 items.push(self.enum_item(path, &derivations)?);
+                continue;
+            }
+            if c.is("struct") {
+                items.push(SItem::Data(self.record_item(path, &derivations)?));
+                continue;
+            }
+            if c.is("impl") {
+                items.push(SItem::Module(self.inherent_item(path)?));
                 continue;
             }
             if c.is("fn") || c.is("const") {
@@ -288,6 +334,10 @@ impl RustParser {
         let standard_primitive = self
             .read_standard_primitive_position(&full, path)?
             .is_some();
+        let standard_selection = !self.primitive_selection_import_role(&full, path).is_empty();
+        let standard_associated = self.primitive_associated_import(&full, path);
+        let standard_try_from = self.primitive_try_from_import(&full, path);
+        let standard_default = self.primitive_default_import(&full, path);
         let c = &mut self.cursor;
         if !self.primitive_owner_model.is_empty() && !standard_primitive {
             return Err(unsupported(
@@ -301,6 +351,10 @@ impl RustParser {
             && !standard_vector
             && !standard_string
             && !standard_primitive
+            && !standard_selection
+            && !standard_associated
+            && !standard_try_from
+            && !standard_default
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -331,7 +385,15 @@ impl RustParser {
                 span(start, c.peek()),
             ));
         }
-        let target = if standard_box || standard_vector || standard_string || standard_primitive {
+        let target = if standard_box
+            || standard_vector
+            || standard_string
+            || standard_primitive
+            || standard_selection
+            || standard_associated
+            || standard_try_from
+            || standard_default
+        {
             full
         } else {
             absolute(&full, path, span(start, c.peek()))?
@@ -354,6 +416,9 @@ impl RustParser {
 
     /// A `use` alias is visible only in the module that declares it.
     pub(super) fn resolve(&self, segments: &[String], path: &[String]) -> Vec<String> {
+        if let Some(inherent) = self.inherent_path(segments, path) {
+            return inherent;
+        }
         self.aliases
             .get(&path.join("."))
             .and_then(|aliases| aliases.get(&segments[0]))
@@ -379,6 +444,7 @@ impl RustParser {
         }
         self.cursor.expect("{", Some("enum"))?;
         let mut ctors = Vec::new();
+        let mut field_groups = Vec::new();
         let owner = path
             .iter()
             .chain(std::iter::once(&name))
@@ -408,11 +474,10 @@ impl RustParser {
                 }
                 self.cursor.expect(")", Some("variant"))?;
             } else if self.cursor.is("{") {
-                return Err(unsupported(
-                    "struct variant",
-                    "use a tuple variant; named fields are outside the Rust frontend",
-                    span(&variant, self.cursor.peek()),
-                ));
+                let (named_fields, named_origins) =
+                    self.named_variant_fields(path, &name, &variant)?;
+                fields.extend(named_fields);
+                source_fields.extend(named_origins);
             } else if self.cursor.is("=") {
                 return Err(unsupported(
                     "explicit discriminant",
@@ -424,6 +489,9 @@ impl RustParser {
             constructor_path.push(name.clone());
             let mut type_path = vec!["crate".to_owned()];
             type_path.extend(constructor_path.iter().cloned());
+            if self.retain_source_type_owners {
+                field_groups.push((variant.value.clone(), source_fields.clone()));
+            }
             self.origins.declaration(
                 &variant.value,
                 &constructor_path,
@@ -449,12 +517,24 @@ impl RustParser {
             }
         }
         self.cursor.expect("}", Some("enum"))?;
+        let source_field_signatures = self.capture_data_field_signatures(
+            &name,
+            path,
+            field_groups
+                .iter()
+                .map(|(name, fields)| (name.as_str(), fields.as_slice())),
+        )?;
+        if self.ordinary_completion_context() {
+            self.origins
+                .register_nominal_copy_declaration(&name, path, derivations);
+        }
         let mut declaration = SData {
             name,
             ctors,
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_unit_clone_derivation: None,
+            source_field_signatures,
         };
         if !self.type_namespace_model.is_empty() {
             let proof =
@@ -491,15 +571,111 @@ impl RustParser {
     /// A block `{ let x = e; …; tail }` is a chain of lets ending in its tail
     /// expression. Statements with effects are not values of the portable core.
     pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
+        self.block_with_context(path, false)
+    }
+    pub(super) fn is_terminal_return(&self) -> bool {
+        let mut count = 64usize;
+        loop {
+            let values = self
+                .cursor
+                .tokens
+                .iter()
+                .skip(self.cursor.index)
+                .take(count)
+                .map(|token| {
+                    if token.kind == TokenKind::Punct {
+                        token.value.clone()
+                    } else {
+                        String::new()
+                    }
+                })
+                .collect::<Vec<_>>();
+            let boundary =
+                crate::translation::rust_unit_value_rules::find_rust_terminal_return_boundary(
+                    &values, 0.0,
+                );
+            if boundary != -2.0 {
+                return boundary >= 0.0;
+            }
+            if count >= self.cursor.tokens.len() - self.cursor.index {
+                return false;
+            }
+            count = count.saturating_mul(2);
+        }
+    }
+    pub(super) fn block_with_context(
+        &mut self,
+        path: &[String],
+        function_body: bool,
+    ) -> Result<SExpr> {
         let open = self.cursor.expect("{", Some("block"))?;
+        let ownership_before = self.origins.snapshot_owned_bindings();
         let previous = self.origins.enter(None);
         let mut lets = Vec::new();
+        let ordinary = self.ordinary_completion_context();
         let mut tail: Option<SExpr> = None;
         while !self.cursor.is("}") {
+            if self.cursor.eat(";").is_some() {
+                continue;
+            }
             let token = self.peek();
+            if tail
+                .as_ref()
+                .is_some_and(|value| super::expressions::source_completion_kind(value) == "abort")
+            {
+                return Err(unsupported(
+                    "unreachable continuation",
+                    "statements after an abort are not removed by this model",
+                    span(&token, &token),
+                ));
+            }
             if self.cursor.is("let") {
                 lets.extend(self.let_statement(path)?);
                 continue;
+            }
+            if token.kind == TokenKind::Macro
+                && crate::translation::rust_unit_value_rules::read_rust_function_macro_disposition(
+                    &token.value,
+                ) == "print"
+            {
+                let printed = self.function_print_value(path)?;
+                let place = printed.span;
+                if self.cursor.eat(";").is_some() {
+                    lets.push(Binding {
+                        name: self.fresh_product_binding(),
+                        ty: None,
+                        value: printed,
+                        span: place,
+                    });
+                    continue;
+                }
+                if !self.cursor.is("}") {
+                    return Err(Self::fail("expected ; or }", self.cursor.peek()));
+                }
+                tail = Some(printed);
+                break;
+            }
+            if function_body
+                && self.cursor.is("return")
+                && (self.cursor.is_at(";", 1)
+                    || self.cursor.is_at("}", 1)
+                    || self.is_terminal_return())
+            {
+                self.cursor.advance();
+                tail = Some(if self.cursor.is(";") || self.cursor.is("}") {
+                    SExpr::new(SNode::Unit, span(&token, &token))
+                } else {
+                    self.expr(path, Options::default())?
+                });
+                while self.cursor.eat(";").is_some() {}
+                if !self.cursor.is("}") {
+                    return Err(unsupported(
+                        "unreachable continuation",
+                        "statements after a completed return are not removed by this model",
+                        span(&token, self.cursor.peek()),
+                    ));
+                }
+                break;
             }
             if self.cursor.is("return") {
                 return Err(unsupported(
@@ -517,6 +693,7 @@ impl RustParser {
                     span(&token, &token),
                 ));
             }
+            let temporary_frame = self.origins.owned_temporary_frame();
             let expr = self.expr(
                 path,
                 Options {
@@ -525,8 +702,32 @@ impl RustParser {
                 },
             )?;
             if self.cursor.eat(";").is_some() {
-                if matches!(expr.node, SNode::Abort { .. }) {
+                self.origins
+                    .finish_owned_expression(&expr, path, &temporary_frame, false);
+                let origin = self.origins.origin(&expr, path);
+                let disposition = (if ordinary {
+                    crate::translation::rust_unit_value_rules::read_rust_ordinary_statement_disposition
+                } else {
+                    crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition
+                })(
+                    &super::expressions::source_completion_kind(&expr),
+                    self.origins.collecting,
+                    origin.proven,
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    !origin.wrappers.is_empty(),
+                );
+                if disposition == "abort" {
                     tail = Some(expr);
+                    continue;
+                }
+                if disposition == "bind" {
+                    self.origins.consume_owned_binding(&origin, expr.span)?;
+                    lets.push(Binding {
+                        name: self.fresh_product_binding(),
+                        ty: None,
+                        span: expr.span,
+                        value: expr,
+                    });
                     continue;
                 }
                 return Err(unsupported(
@@ -534,6 +735,19 @@ impl RustParser {
                     "statements with effects are outside the portable core in function bodies",
                     expr.span,
                 ));
+            }
+            if ordinary {
+                let origin = self.origins.origin(&expr, path);
+                let implicit=crate::translation::rust_unit_value_rules::read_rust_implicit_block_statement_disposition(expr.node.kind(),expr.block,!self.cursor.is("}"),self.origins.collecting,origin.proven,origin.ty.as_ref().map_or("",Type::kind),!origin.wrappers.is_empty());
+                if implicit == "bind" {
+                    lets.push(Binding {
+                        name: self.fresh_product_binding(),
+                        ty: Some(super::UNIT),
+                        span: expr.span,
+                        value: expr,
+                    });
+                    continue;
+                }
             }
             let ends_block_statement = is_if_or_match(&expr);
             let expr_span = expr.span;
@@ -550,14 +764,8 @@ impl RustParser {
             }
         }
         let close = self.cursor.expect("}", Some("block"))?;
-        let Some(tail) = tail else {
-            return Err(unsupported(
-                "block without a value",
-                "the block evaluates to (), which is not a portable result",
-                span(&open, &close),
-            ));
-        };
-        let origin = self.origins.origin(&tail, path);
+        let tail = tail.unwrap_or_else(|| SExpr::new(SNode::Unit, span(&open, &close)));
+        let origin = self.origins.transfer_owned_result(&tail, path)?;
         let result = lets.into_iter().rev().fold(tail, |body, binding| {
             SExpr::new(
                 SNode::Let {
@@ -569,6 +777,14 @@ impl RustParser {
                 binding.span,
             )
         });
+        self.origins.mark(&result, origin);
+        let mut origin = self.origins.transfer_owned_result(&result, path)?;
+        self.origins
+            .expire_owned_bindings(&ownership_before, &origin);
+        if origin.wrappers.is_empty() && !matches!(origin.ty, Some(Type::Array { .. })) {
+            origin.source_place_binding_identity = None;
+            origin.source_place_loan_binding_identities.clear();
+        }
         self.origins.mark(&result, origin);
         self.origins.scope = previous;
         Ok(result)
@@ -589,11 +805,23 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        if self.header_discovery {
+            let close = self.declaration_body_boundary()?;
+            return Ok(SMain {
+                effects: Vec::new(),
+                span: Some(super::Span::new(start.start, close.end)),
+                sequential_async: false,
+                source_runtime_worker: None,
+            });
+        }
         self.module_path = Vec::new();
         let previous = self.origins.enter(Some(std::collections::HashMap::new()));
         self.cursor.expect("{", Some("fn main"))?;
         let mut effects = Vec::new();
         while !self.cursor.is("}") {
+            if self.cursor.eat(";").is_some() {
+                continue;
+            }
             let token = self.peek();
             if self.cursor.is("let") {
                 for binding in self.let_statement(&[])? {
@@ -614,11 +842,39 @@ impl RustParser {
                 self.cursor.expect(";", Some(&token.value))?;
                 continue;
             }
-            return Err(unsupported(
-                "main statement",
-                "main may only print, bind and assert",
-                span(&token, &token),
-            ));
+            let value = self.expr(
+                &[],
+                Options {
+                    statement: true,
+                    no_struct: false,
+                },
+            )?;
+            let origin = self.origins.origin(&value, &[]);
+            if crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition(
+                value.node.kind(),
+                self.origins.collecting,
+                origin.proven,
+                origin.ty.as_ref().map_or("", Type::kind),
+                !origin.wrappers.is_empty(),
+            ) != "bind"
+            {
+                return Err(unsupported(
+                    "main statement",
+                    "main may only print, bind, assert and evaluate direct Unit calls",
+                    span(&token, &token),
+                ));
+            }
+            if self.cursor.eat(";").is_none() && !self.cursor.is("}") {
+                return Err(Self::fail("expected ; or }", self.cursor.peek()));
+            }
+            effects.push(SEffect::Let {
+                name: self.fresh_product_binding(),
+                ty: None,
+                span: value.span,
+                value,
+                constant: false,
+                source_pure_unit_call: None,
+            });
         }
         let close = self.cursor.expect("}", Some("fn main"))?;
         self.origins.scope = previous;
@@ -638,10 +894,43 @@ impl RustParser {
     }
 
     pub(super) fn main_macro(&mut self) -> Result<SEffect> {
+        self.main_macro_with_path(&[])
+    }
+    pub(super) fn function_print_value(&mut self, path: &[String]) -> Result<SExpr> {
+        let SEffect::Print {
+            expr,
+            style,
+            span: place,
+        } = self.main_macro_with_path(path)?
+        else {
+            unreachable!("source print macro disposition")
+        };
+        let unit = SExpr::new(SNode::Unit, place);
+        let origin = self.origins.origin(&unit, path);
+        let printed = SExpr::new(
+            SNode::Print {
+                expr: Box::new(expr),
+                style,
+                body: Box::new(unit),
+            },
+            place,
+        );
+        self.origins.mark(&printed, origin);
+        Ok(printed)
+    }
+    fn main_macro_with_path(&mut self, path: &[String]) -> Result<SEffect> {
         let token = self.cursor.advance();
-        let mut args = self.macro_arguments(&token, &[])?;
+        let (mut args, argument_names) = if token.value == "println" {
+            let (args, names) = self.formatting_arguments(&token, path)?;
+            (args, Some(names))
+        } else {
+            (self.macro_arguments(&token, path)?, None)
+        };
         match token.value.as_str() {
             "println" => {
+                for value in args.iter().skip(1) {
+                    self.refuse_shared_value_observation(value, None, path, value.span)?;
+                }
                 let expr = if args.is_empty() {
                     SExpr::new(
                         SNode::Str {
@@ -650,7 +939,7 @@ impl RustParser {
                         None,
                     )
                 } else {
-                    format(args, &token)?
+                    self.format(args, &token, path, argument_names)?
                 };
                 Ok(SEffect::Print {
                     expr,
@@ -720,7 +1009,9 @@ impl RustParser {
         self.cursor.advance();
         let mut args = Vec::new();
         while !self.cursor.is(close) {
-            args.push(self.expr(path, Options::default())?);
+            let value = self.expr(path, Options::default())?;
+            if crate::translation::rust_owned_binding_rules::accept_rust_owned_macro_argument_transfer(&token.value){let origin=self.origins.origin(&value,path);self.origins.consume_owned_binding(&origin,value.span)?;}
+            args.push(value);
             if self.cursor.eat(",").is_none() {
                 break;
             }
@@ -730,3 +1021,5 @@ impl RustParser {
         Ok(args)
     }
 }
+
+mod data_field_signatures;

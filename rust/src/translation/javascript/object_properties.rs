@@ -61,6 +61,7 @@ impl JavaScriptParser {
                 key.end = close.end;
                 here = Some(span(&key, &key));
             } else {
+                self.require_scalar_string_token(&key, "record property key")?;
                 if !matches!(key.kind, TokenKind::Identifier | TokenKind::String) {
                     return Err(unsupported(
                         &format!("object key {}", describe(&key)),
@@ -103,6 +104,7 @@ impl JavaScriptParser {
                         Some(span(&value, &value)),
                     ));
                 }
+                self.require_scalar_string_token(&value, "datatype constructor tag")?;
                 tag = Some(value.value);
             } else {
                 if duplicate.is_none() && fields.iter().any(|(name, _)| *name == key.value) {
@@ -156,6 +158,7 @@ impl JavaScriptParser {
                     record_projection: None,
                     ty: None,
                     prototype_definition,
+                    property_order: None,
                 },
                 self.to_here(&start),
             ));

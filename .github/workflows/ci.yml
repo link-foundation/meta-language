@@ -105,7 +105,7 @@ jobs:
   # size. It runs beside the JavaScript and Rust workflows; acceptance verifies
   # every published module before recording the reporting assertion.
   self-translation-report:
-    name: Self-Translation Report (${{ matrix.shard }}/8)
+    name: Self-Translation Report (${{ matrix.shard }}/8, part ${{ matrix.part }}/2)
     if: ${{ github.event_name != 'release' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -113,6 +113,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        part: [1, 2]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -133,7 +134,7 @@ jobs:
         env:
           META_LANGUAGE_REPORT_PROGRESS: '1'
         run: |
-          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
+          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --physical-part ${{ matrix.part }}/2 --out-dir ../self-translation-report > /dev/null
           cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
         working-directory: js
 
@@ -141,7 +142,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}
+          name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}-${{ matrix.part }}
           path: self-translation-report
           if-no-files-found: error
 
@@ -1167,6 +1168,30 @@ jobs:
           node js/scripts/check-translation-corpus-native.mjs
           --target "${{ matrix.target }}" --fixture string-length
 
+      - name: Verify exact BigInt bitwise execution
+        if: ${{ !cancelled() }}
+        run: >-
+          node js/scripts/check-big-integer-bitwise-native.mjs
+          --target "${{ matrix.target }}"
+
+      - name: Check constructor selection algebraic laws
+        if: ${{ !cancelled() }}
+        env:
+          CONSTRUCTOR_PROOF_TARGET: ${{ matrix.target }}
+        run: |
+          set -o pipefail
+          proof_work="issue-195-results/work/native/constructor-sharing/${CONSTRUCTOR_PROOF_TARGET}"
+          proof_log="issue-195-results/logs/constructor-sharing-${CONSTRUCTOR_PROOF_TARGET}.log"
+          mkdir -p "$proof_work" issue-195-results/logs
+          printf 'commit: %s\ntarget: %s\n' "$GITHUB_SHA" "$CONSTRUCTOR_PROOF_TARGET" > "$proof_log"
+          if [ "$CONSTRUCTOR_PROOF_TARGET" = lean ]; then
+            cp experiments/constructor-sharing/ConstructorSelection.lean "$proof_work/ConstructorSelection.lean"
+            node scripts/with-cache-cleanup.mjs --event test -- lean "$proof_work/ConstructorSelection.lean" 2>&1 | tee -a "$proof_log"
+          else
+            cp experiments/constructor-sharing/ConstructorSelection.v "$proof_work/ConstructorSelection.v"
+            node scripts/with-cache-cleanup.mjs --event test -- rocq compile -q "$proof_work/ConstructorSelection.v" 2>&1 | tee -a "$proof_log"
+          fi
+
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
       - name: Upload the stage outputs
@@ -1923,9 +1948,46 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
+  rust-source-versions:
+    name: Rust Source Version (${{ matrix.version }})
+    needs: [js]
+    if: ${{ github.event_name != 'release' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        version: ['1.90.0', '1.96.0', '1.97.0', '1.99.0']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.22.0
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.version }}
+      - name: Install JavaScript dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+      - name: Compare original std with the explicitly selected source interpretation
+        run: node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/rust-source-versions/native-matrix.mjs --version ${{ matrix.version }}
+      - name: Preserve source-version observations
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-source-version-${{ matrix.version }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-source-versions/
+          if-no-files-found: error
+      - name: Clean project caches
+        if: ${{ !cancelled() }}
+        run: node scripts/clean-caches.mjs --project-owned-only --no-preflight --no-docker
+
   acceptance:
     name: Full Requirements Aggregate
-    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery]
+    needs: [js, rust, self-translation-report-validation, candidates, consumers, rml-workloads, formal-ai-workloads, javascript-suite-independent, runtime-parity, native-javascript, native-rust, native-translations, javascript-suite, rust-suite, delivery, rust-source-versions]
     # GitHub reports a skipped job as a successful required check. This job
     # always runs and fails itself when there are no candidates to evaluate.
     if: ${{ always() }}
@@ -1942,6 +2004,14 @@ jobs:
     # reports that as one gate error naming the failed JavaScript jobs, not one
     # per stage or requirement.
     steps:
+      - name: Require every original source-version comparison
+        if: ${{ github.event_name != 'release' && needs.js.result == 'success' && needs.candidates.result == 'success' && needs.rust-source-versions.result != 'success' }}
+        env:
+          SOURCE_VERSIONS_RESULT: ${{ needs.rust-source-versions.result }}
+        run: |
+          echo "::error::Rust source-version comparisons finished as '$SOURCE_VERSIONS_RESULT'"
+          exit 1
+
       - name: Require delivery candidates
         if: ${{ needs.candidates.result != 'success' }}
         env:

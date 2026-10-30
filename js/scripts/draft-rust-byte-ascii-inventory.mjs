@@ -1,0 +1,3 @@
+import {draftTranslationProfileInventory} from './draft-translation-profile-inventory.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+draftTranslationProfileInventory({id:'rust-byte-ascii',fixture:'rust-byte-ascii',programAsset:'rust-byte-ascii-program',sourceLanguage:'Rust',experimentPath:'experiments/rust-records/byte-ascii.mjs',nativeTest:'translation_rust_byte_ascii',javascript:['js/src/translation/rust-byte-ascii-rules.js','js/src/translation/rust-byte-ascii.js','js/tests/translation-rust-byte-ascii.test.js'],rust:['rust/src/translation/rust_byte_ascii_rules.rs','rust/src/translation/rust/expressions/byte_ascii.rs','rust/tests/unit/translation_rust_byte_ascii.rs']});

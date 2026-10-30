@@ -1,0 +1,1 @@
+Draft empty standard Vec construction through checked concrete aliases, retaining element types and fresh-constructor provenance. Explicit typed Vec constructors also retain fresh ownership and scalar Copy evidence for existing argument and lookup rules.

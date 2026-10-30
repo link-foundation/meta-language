@@ -30,16 +30,23 @@ use super::types::Type;
 use super::{Language, Span};
 
 mod array_moves;
+mod array_state_methods;
 mod arrays;
 mod callables;
 mod declarations;
 mod expressions;
 mod externals;
 mod math;
+mod nominal_array_loans;
+mod number_conversions;
 mod number_prelude;
 mod optional_values;
 mod primitive_methods;
+mod record_writes;
 mod records;
+mod reference_array_projections;
+mod reference_callbacks;
+mod reference_methods;
 
 use self::arrays::read_array_prelude;
 use self::externals::external_name;
@@ -47,6 +54,8 @@ use self::math::MATH_PRELUDE;
 use self::number_prelude::NUMBER_PRELUDE;
 
 const KEYWORDS: &[&str] = &[
+    "ml_unicode_case",
+    "ml_utf16_text",
     "as",
     "break",
     "const",
@@ -142,6 +151,7 @@ const KEYWORDS: &[&str] = &[
     "ml_main",
     "ml_check_theorems",
     "ml_number",
+    "ml_record_property_order",
 ];
 
 const PRELUDE: &str = r#"/// Unbounded integers for the portable core's naturals and integers.
@@ -606,6 +616,8 @@ fn emit_rust_context_owned(
     array_consumption: bool,
     record_ownership: bool,
 ) -> Result<(Emitted, Option<DefinitionOwnership>)> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
@@ -637,7 +649,61 @@ fn emit_rust_context_owned(
         emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
     }
     if let Some(model) = options.source_header_model {
-        if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(model) {
+        if super::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(
+            model,
+        ) || super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model)
+            || super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+            || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+            || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+            || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+            let headers =
+                super::scalar_source_interface::read_rust_scalar_source_interface(program, model)?;
+            emitter.source_headers = headers.clone();
+            emitter.borrowed_call_targets = Some(headers);
+            emitter.scalar_source_interface = true;
+            emitter.state.encode(
+                &super::rust_scalar_source_interface_rules::read_rust_scalar_source_encoding(),
+                &super::rust_scalar_source_interface_rules::read_rust_scalar_source_statement(),
+            );
+            if super::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_scalar_mathematical_interface_rules::read_rust_scalar_mathematical_encoding(),
+                    &super::rust_scalar_mathematical_interface_rules::read_rust_scalar_mathematical_statement(),
+                );
+            }
+            if super::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+                || super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+                || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+                || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_textual_source_interface_rules::read_rust_textual_source_encoding(),
+                    &super::rust_textual_source_interface_rules::read_rust_textual_source_statement(),
+                );
+            }
+            if super::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+                || super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+                || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_string_predicate_interface_rules::read_rust_string_predicate_encoding(),
+                    &super::rust_string_predicate_interface_rules::read_rust_string_predicate_statement(),
+                );
+            }
+            if super::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+                || super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_constructed_string_interface_rules::read_rust_constructed_string_encoding(),
+                    &super::rust_constructed_string_interface_rules::read_rust_constructed_string_statement(),
+                );
+            }
+            if super::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+                emitter.state.encode(
+                    &super::rust_displayed_string_interface_rules::read_rust_displayed_string_encoding(),
+                    &super::rust_displayed_string_interface_rules::read_rust_displayed_string_statement(),
+                );
+            }
+        } else if super::borrowed_call_interface_rules::accept_rust_borrowed_call_interface_model(
+            model,
+        ) {
             let interface =
                 super::borrowed_call_interface::read_rust_borrowed_call_interface(program, model)?;
             emitter.source_headers = interface.headers;
@@ -675,6 +741,22 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
     }
     RustEmitter {
         program,
+        named_constructor_fields: program.source_language == super::Language::Rust
+            && program.declarations.iter().any(|entry| {
+                let Decl::Data(data) = entry else {
+                    return false;
+                };
+                data.ctors.iter().any(|ctor| {
+                    super::rust_source_render_interfaces::accept_rust_named_constructor_fields(
+                        program.source_language.as_str(),
+                        &ctor
+                            .fields
+                            .iter()
+                            .map(|field| field.name.clone())
+                            .collect::<Vec<_>>(),
+                    )
+                })
+            }),
         state,
         temporaries: 0,
         theorem_checks: Vec::new(),
@@ -683,6 +765,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         source_headers: BTreeMap::new(),
         borrowed_call_targets: None,
         borrowed_call_scope: None,
+        scalar_source_interface: false,
         utf16_strings: false,
         standard_array: false,
         array_final_uses: BTreeSet::new(),
@@ -697,6 +780,8 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
 /// # Errors
 /// On a constant value the target cannot express faithfully.
 pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     let Some(main) = &program.main else {
         return Ok(None);
     };
@@ -725,6 +810,8 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
         return Ok(None);
     }
     let mut emitter = rust_emitter(program);
+    emitter.utf16_strings = program.utf16_strings.unwrap_or(false)
+        || primitive_methods::program_requires_method_units(program);
     let form = constant_binding_form(
         if matches!(value.node, Node::Lit { .. }) {
             "lit"
@@ -752,6 +839,18 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::Array => read_array_prelude(emitter.standard_array).to_owned(),
             Prelude::String => crate::self_translation::representation::string_prelude(),
             Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
+            Prelude::NumberBitwise => include_str!("runtime/number-bitwise.rs").to_owned(),
+            Prelude::BigIntegerBitwise => include_str!("runtime/big-integer-bitwise.rs").to_owned(),
+            Prelude::StringNumber => include_str!("runtime/string-number.rs").to_owned(),
+            Prelude::Utf16Text => include_str!("runtime/utf16-text.rs").to_owned(),
+            Prelude::UnicodeCase => include_str!("runtime/unicode-case.rs").to_owned(),
+            Prelude::RecordPropertyOrder => {
+                include_str!("runtime/record-property-order.rs").to_owned()
+            }
+            Prelude::SourceException => include_str!("runtime/source-exception.rs").to_owned(),
+            Prelude::BigIntegerConversion => {
+                include_str!("runtime/big-integer-conversion.rs").to_owned()
+            }
         })
         .collect();
     let mut output = emitter.state.finish(
@@ -792,35 +891,44 @@ enum Prelude {
     Array,
     String,
     Optional,
+    NumberBitwise,
+    BigIntegerBitwise,
+    StringNumber,
+    SourceException,
+    BigIntegerConversion,
+    Utf16Text,
+    UnicodeCase,
+    RecordPropertyOrder,
 }
 
-/// Optional internal records captured during normal complete block emission.
-/// Not part of Emitted or its serialized/public contract.
+/// Inspectable records captured during normal complete block emission.
+/// Transient validation metadata, separate from the serialized Emitted contract.
 #[derive(Clone, Debug, Default)]
-pub(crate) struct DefinitionOwnership {
-    pub(crate) blocks: Vec<OwnedDefinitionBlock>,
-    pub(crate) external_targets: Vec<OwnedExternalTarget>,
+pub struct DefinitionOwnership {
+    pub blocks: Vec<OwnedDefinitionBlock>,
+    pub external_targets: Vec<OwnedExternalTarget>,
 }
 #[derive(Clone, Debug)]
-pub(crate) struct OwnedDefinitionBlock {
-    pub(crate) source: String,
-    pub(crate) kind: &'static str,
-    pub(crate) source_span: Option<Span>,
-    pub(crate) definition_index: usize,
-    pub(crate) definition: String,
-    pub(crate) mapping_start: usize,
-    pub(crate) mapping_end: usize,
-    pub(crate) targets: Vec<String>,
+pub struct OwnedDefinitionBlock {
+    pub source: String,
+    pub kind: &'static str,
+    pub source_span: Option<Span>,
+    pub definition_index: usize,
+    pub definition: String,
+    pub mapping_start: usize,
+    pub mapping_end: usize,
+    pub targets: Vec<String>,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct OwnedExternalTarget {
-    pub(crate) source: String,
-    pub(crate) kind: &'static str,
-    pub(crate) target: String,
+pub struct OwnedExternalTarget {
+    pub source: String,
+    pub kind: &'static str,
+    pub target: String,
 }
 
 struct RustEmitter<'p> {
     program: &'p Program,
+    named_constructor_fields: bool,
     state: EmitState<'p>,
     definition_ownership: Option<DefinitionOwnership>,
     temporaries: usize,
@@ -836,6 +944,8 @@ struct RustEmitter<'p> {
     borrowed_call_targets: Option<BTreeMap<String, super::source_signatures::SourceSignature>>,
     /// Per-function hygienic names, reserved against every argument and binder.
     borrowed_call_scope: Option<Scope<'p>>,
+    /// Explicit retained scalar header and whole call-graph interpretation.
+    scalar_source_interface: bool,
     /// Internal self-translation representation; actual Text values are guarded.
     utf16_strings: bool,
     /// The JavaScript source selected optional reads or standard array methods.

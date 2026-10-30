@@ -1,3 +1,12 @@
+import {requireCallableConstantApplicationCapture} from './rust-module-value-rules.js';
+import {readJavaScriptNominalSpreadError} from './javascript-nominal-spread-rules.js';
+import {readJavaScriptDataFieldInferenceForm,acceptJavaScriptDataFieldOwnerFallback} from './javascript-data-field-rules.js';
+import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
+import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
+import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
+import {readJavaScriptLiteralPropertyIndex,readJavaScriptLiteralPropertyForm} from './javascript-literal-property-rules.js';
+import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
+import {readJavaScriptStringUnitCallResultForm} from './javascript-property-call-rules.js';
 // Types of JavaScript functions written without JSDoc. A parameter or result
 // without a declared type gets a type variable; the bodies, the calls and the
 // top-level statements constrain the variables by unification, and each
@@ -6,13 +15,30 @@
 // nothing constrains is a Number. Two uses that need different types are a
 // type error: the function would need a declared type for each use.
 
-import { typeError } from './diagnostics.js';
+import { typeError,unsupported } from './diagnostics.js';
+import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './big-integer-conversion-rules.js';
+import {readJavaScriptNumericOperationFailure} from './source-exception-rules.js';
+import {readJavaScriptComparisonInferenceStep,acceptJavaScriptSameValueOperation,acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './string-construction-rules.js';
+import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
+import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
+import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
+import { readBigIntegerBitwiseArity } from './big-integer-bitwise-rules.js';
+import { readArrayStateMethodResult, readArrayStateMethodArgumentRole } from './array-state-method-rules.js';
+import { readReferenceMethodResult } from './reference-method-rules.js';
+import { readCollectionAccessResult } from './collection-access-rules.js';
 import { inferCollectionConstruction } from './collection-construction.js';
 import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
-import { readJavaScriptArrayDefaultConstraints } from './array-binding-inference.js';
+import { readJavaScriptBindingDefaultConstraints } from './array-binding-inference.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { readInferenceTermIdentity, readOptionalAdditionalAbsence, readOptionalCoalescingConstraints, readOptionalFieldInference, readOptionalJoinConstraints, readOptionalTypeConstraints } from './optional-inference.js';
 import { mergeOptionalAbsence } from './structured-type-rules.js';
+import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
+import {completeOptionalCallableTerms} from './optional-callables.js';
+import {planJavaScriptExcessArguments} from './excess-argument-rules.js';
+import {namedCallableDefaultFlags,namedCallableReferenceTerms} from './named-default-callables.js';
+import {completeMissingCallableInference} from './missing-arguments.js';
 import { readOptionalBigIntConstraint, readOptionalCallBinding, readOptionalJoinBinding, readOptionalNumericTerm, requireInferenceJoinAlias, requireOptionalResultBinding } from './optional-value-rules.js';
 import { readRecordFieldInsertionOrder, readRecordFieldPosition, readRecordSpreadRole, readRecordTypeConstraintError, readRecordTypeConstraintStep, readRecordFieldInferenceStep } from './record-value-rules.js';
 import { containsRecordTypeOwner } from './record-type-facts.js';
@@ -25,8 +51,7 @@ import { markSharedReferenceTypes } from './javascript-cells.js';
 import { readJavaScriptProductIndex, requiresJavaScriptProductProof } from './javascript-products.js';
 import { acceptJavaScriptArrayTupleContext } from './product-source-rules.js';
 import { readJavaScriptMethodReceiverKind, readJavaScriptMethodArgumentKind,
-  readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm,
-  readJavaScriptEqualityInferenceStep } from './javascript-surface-rules.js';
+  readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm } from './javascript-surface-rules.js';
 import {readPrimitiveMethodMinimumArguments,readPrimitiveMethodArgumentCount,
   readPrimitiveMethodCheckedArgumentKind,readPrimitiveMethodCheckedResultForm} from './primitive-method-rules.js';
 
@@ -59,6 +84,7 @@ function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
   if (node.k === 'arrayBindingRest' || node.k === 'arrayBindingDefault') return true;
+  if(node.k==='math'&&(node.op===readJavaScriptOptionalChainOperation()||node.op===readJavaScriptOptionalCallOperation()))return true;
   if (requireCallableStructuralInference(node.k ?? '', node.kind ?? '', node.op ?? '')) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -83,12 +109,20 @@ class Inference {
     this.lambdas = new Map();
     this.records = new Map();
     this.methods = [];
+    this.propertyMethods = new Map();
     this.includes = [];
     this.coalesces = [];
     this.arrayBindingDefaults = [];
+    this.recordFormalFields=[];
+    this.objectRestFields=[];
     this.recordSpreads = [];
+    this.nominalSpreads = [];
+    this.enumerations=[];
     this.collections = new Map();
     this.iterables = [];
+    this.arrayFormalIterables=[];
+    this.recursiveBindingIterables=[];
+    this.computedCalls=[];
     this.indices = [];
     this.cells = new Map();
     this.arithmetic = [];
@@ -281,7 +315,7 @@ class Inference {
     for (const external of externals) {
       this.signatures.set(`${ROOT}.${external.name}`, external.k === 'fn'
         ? { params: external.params.map((param) => this.declared(param.type)), defaults: external.params.map(() => false), optionalParams: external.params.map(() => false), ret: this.declared(external.ret) }
-        : { params: [], defaults: [], optionalParams: [], ret: this.declared(external.type) });
+        : { params: [], defaults: [], optionalParams: [], constantValue:true, ret: this.declared(external.type) });
     }
     for (const { path, fn } of functions) {
       const ret = this.fresh();
@@ -291,6 +325,8 @@ class Inference {
         params: fn.params.map((param) => this.declared(param.type)),
         defaults: fn.params.map((param) => Boolean(param.default || param.optional)),
         optionalParams: fn.params.map((param) => Boolean(param.optional)),
+        invocationDefaults:namedCallableDefaultFlags(fn.params),
+        guardedInputs:fn.params.map(param=>Boolean(param.guard)),
         ret,
         declaredRet,
       });
@@ -298,8 +334,10 @@ class Inference {
     for (const { path, fn } of functions) {
       const signature = this.signatures.get(path.join('.'));
       this.context = path.slice(0, -1);
+      const initialization=new Map();
       fn.params.forEach((param, index) => {
-        if (param.default) this.unify(this.expr(param.default, new Map()), signature.params[index], param.span);
+        if (param.default) this.unify(this.expr(param.default, initialization), signature.params[index], param.span);
+        initialization.set(param.name,signature.params[index]);
       });
     }
     for (const { path, fn } of functions) {
@@ -319,6 +357,13 @@ class Inference {
       else if (effect.k === 'assert') this.prop(effect.prop, env);
     }
     this.solve();
+    for(const[node,form]of this.propertyMethods){
+      const object=node.object,args=node.args;
+      delete node.object;delete node.args;
+      if(form==='test'){node.k='stringTest';node.object=object;node.search=args[0];}
+      else if(form==='map'){node.k='stringMap';node.object=object;}
+      else{node.k='toString';node.arg=object;delete node.op;}
+    }
     for (const [node, term] of this.expressionTerms) this.expressionTypes.set(node, this.surface(term, node.span));
     for (const [node] of this.expressionTerms) {
       const value = node.k === 'let' && !node.type ? this.expressionTypes.get(node.value) : null;
@@ -354,6 +399,23 @@ class Inference {
           progress = true;
         }
       }
+      for(const constraint of [...this.recordFormalFields]){
+        const owner=this.resolve(constraint.object),present=owner.fields?.find(field=>field.name===constraint.field);
+        const form=readJavaScriptRecordFormalDefaultFieldForm(owner.kind,owner.open===true,present!==undefined,constraint.field);
+        if(form==='wait')continue;
+        if(form==='prototype')throw unsupported('record formal inherited property','an absent own field cannot replace the actual prototype property '+constraint.field,constraint.where);
+        if(form==='absent')this.unify(constraint.result,{kind:'option',element:UNIT,absence:'undefined'},constraint.where);
+        else if(form==='present')this.unify(constraint.result,present.type,constraint.where);
+        else this.fields.push(constraint);
+        this.recordFormalFields.splice(this.recordFormalFields.indexOf(constraint),1);progress=true;
+      }
+      for(const constraint of [...this.objectRestFields]){
+        const owner=this.resolve(constraint.object),form=readJavaScriptObjectRestOwnerForm(owner.kind,owner.open===true);
+        if(form==='wait')continue;
+        if(form!=='copy')throw unsupported('object rest receiver','every actual enumerable own field and its source order must be represented',constraint.where);
+        this.unify(constraint.result,{kind:'record',fields:selectJavaScriptObjectRestActualFields(owner.fields,constraint.excluded),open:false},constraint.where);
+        this.objectRestFields.splice(this.objectRestFields.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.fields]) {
         if (this.fieldStep(constraint)) {
           this.fields.splice(this.fields.indexOf(constraint), 1);
@@ -380,6 +442,25 @@ class Inference {
         this.coalesces.splice(this.coalesces.indexOf(constraint), 1);
         progress = true;
       }
+      for(const constraint of [...this.arrayFormalIterables]){
+        const object=this.resolve(constraint.object),form=readJavaScriptArrayFormalInferenceForm(object.kind);
+        if(form==='wait')continue;
+        if(form==='identity')this.unify(constraint.result,constraint.object,constraint.where);
+        else if(form==='iterate'){
+          const selection=readArrayFromIterableType(object);if(!selection)throw typeError('an array formal parameter needs a represented iterable',constraint.where);
+          this.unify(constraint.result,{kind:'array',element:selection.element},constraint.where);
+        }else throw typeError('an array formal parameter needs a represented iterable',constraint.where);
+        this.arrayFormalIterables.splice(this.arrayFormalIterables.indexOf(constraint),1);progress=true;
+      }
+      for(const constraint of [...this.recursiveBindingIterables]){
+        let object=this.resolve(constraint.object),form=readJavaScriptRecursiveBindingIterableForm(object.kind,object.element?this.resolve(object.element).kind:'');
+        if(form==='optional'){object=this.resolve(object.element);form=readJavaScriptRecursiveBindingIterableForm(object.kind,'');}
+        if(form==='wait')continue;
+        if(form==='identity')this.unify(constraint.result,object,constraint.where);
+        else if(form==='iterate'){const selection=readArrayFromIterableType(object);if(!selection)throw typeError('a recursive binding needs a represented iterable',constraint.where);this.unify(constraint.result,{kind:'array',element:selection.element},constraint.where);}
+        else throw typeError('a recursive binding needs a represented iterable',constraint.where);
+        this.recursiveBindingIterables.splice(this.recursiveBindingIterables.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.iterables]) {
         const object = this.resolve(constraint.object);
         const element = readArrayFromIterableType(object)?.element;
@@ -392,7 +473,29 @@ class Inference {
       for (const constraint of [...this.indices]) {
         const object = this.resolve(constraint.object);
         if (object.kind === 'var') continue;
-        if (object.kind === 'array') {
+        if(object.kind==='option'){
+          if(this.resolve(object.element).kind!=='unit')this.indices.push({...constraint,object:object.element});
+          this.indices.splice(this.indices.indexOf(constraint),1);progress=true;continue;
+        }
+        if(object.kind==='record'&&constraint.index.k==='name'&&constraint.index.path.length===1){
+          if(object.open)continue;
+          const element=object.fields[0]?.type??this.fresh();for(const field of object.fields)this.unify(element,field.type,constraint.where);
+          const value={kind:'option',element,absence:'undefined'};this.unify(constraint.result,value,constraint.where);
+          if(constraint.result.kind==='var')this.bindings[constraint.result.id]=value;
+          this.indices.splice(this.indices.indexOf(constraint),1);progress=true;continue;
+        }
+        if(constraint.index.k==='str'){
+          const key=constraint.index.value,index=readJavaScriptLiteralPropertyIndex(Array.from({length:key.length},(_,at)=>key.charCodeAt(at)));
+          if(readJavaScriptLiteralPropertyForm(object.kind,index)==='field')this.fields.push({object:constraint.object,field:key,result:constraint.result,where:constraint.where});
+          else this.indices.push({...constraint,index:{k:'num',value:String(index),span:constraint.index.span}});
+          this.indices.splice(this.indices.indexOf(constraint),1);progress=true;continue;
+        }
+        if(object.kind==='string'){
+          const value={kind:'option',element:STRING,absence:'undefined'};
+          this.unify(constraint.result,value,constraint.where);
+          if(constraint.result.kind==='var')this.bindings[constraint.result.id]=value;
+        }
+        else if (object.kind === 'array') {
           const value = constraint.node.provenInBounds ? object.element : { kind: 'option', element: object.element, absence: 'undefined' };
           this.unify(constraint.result, value, constraint.where);
           if (constraint.result.kind === 'var') this.bindings[constraint.result.id] = value;
@@ -406,9 +509,9 @@ class Inference {
         progress = true;
       }
       for (const constraint of [...this.arrayBindingDefaults]) {
-        const plan = readJavaScriptArrayDefaultConstraints(this.resolve(constraint.value), constraint.fallback, constraint.result);
+        const plan = readJavaScriptBindingDefaultConstraints(constraint.value, constraint.fallback, constraint.result,term=>this.resolve(term));
         if (!plan) continue;
-        if (plan.refused) throw typeError('array binding default needs an undefined-only element read', constraint.where);
+        if (plan.refused) throw typeError('array binding default needs actual compatible present domains', constraint.where);
         for (const [left, right] of plan.pairs) this.unify(left, right, constraint.where);
         this.arrayBindingDefaults.splice(this.arrayBindingDefaults.indexOf(constraint), 1);
         progress = true;
@@ -432,6 +535,14 @@ class Inference {
           this.bindings[signature.ret.id] = actual;
           progress = true;
         }
+      }
+      for(const constraint of [...this.computedCalls]){
+        const fn=this.resolve(constraint.fn);if(fn.kind==='var')continue;
+        const args=fn.kind==='function'?this.completeCallableArgumentTerms(fn.params,constraint.args,constraint.where):constraint.args;
+        const candidate=constructCallableFunctionType(args.map(type=>({type})),constraint.result),selected=readCallableApplicationConstraints(fn,args,candidate);
+        for(const pair of selected.pairs)this.unify(...pair,constraint.where);
+        if(selected.ret)this.unify(constraint.result,selected.ret,constraint.where);
+        this.computedCalls.splice(this.computedCalls.indexOf(constraint),1);progress=true;
       }
       for (const { signature, args, where } of this.calls) {
         args.forEach((arg, index) => {
@@ -477,11 +588,26 @@ class Inference {
         this.recordSpreads.splice(this.recordSpreads.indexOf(constraint), 1);
         progress = true;
       }
+      for(const constraint of [...this.nominalSpreads]){
+        const source=this.resolve(constraint.leading),candidate=source.kind==='option'?this.resolve(source.element):source;
+        if(candidate.kind==='var'&&(!constraint.expected||this.resolve(constraint.expected).kind!=='data'))continue;
+        const result=this.record(constraint.node,constraint.env,constraint.expected,constraint.leading,constraint.terms);
+        this.unify(constraint.result,result,constraint.node.span);
+        this.nominalSpreads.splice(this.nominalSpreads.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.equalities]) {
         if (this.equalityStep(constraint, false)) {
           this.equalities.splice(this.equalities.indexOf(constraint), 1);
           progress = true;
         }
+      }
+      for(const constraint of [...this.enumerations]){
+        let object=this.resolve(constraint.object);
+        while(object.kind==='option')object=this.resolve(object.element);
+        if(object.kind==='var'||object.kind==='record'&&object.open)continue;
+        const members=object.kind==='record'?object.fields.map(field=>field.type):object.kind==='tuple'?object.elements:object.kind==='array'?[object.element]:object.kind==='string'?[STRING]:[];
+        for(const member of members)this.unify(constraint.element,member,constraint.where);
+        this.enumerations.splice(this.enumerations.indexOf(constraint),1);progress=true;
       }
       // Preserve the original string default only after actual call arguments,
       // annotations and other constraints have selected the receiver.
@@ -489,7 +615,15 @@ class Inference {
         this.includesStep(this.includes.shift(), true);
         progress = true;
       }
+      if(!progress){
+        const method=this.methods.find(item=>this.resolve(item.object).kind==='var'&&readJavaScriptPropertyCallFallbackKind(item.op,readJavaScriptMethodReceiverKind(item.op))!==''||item.op==='concat'&&item.args.some(arg=>this.resolve(arg).kind==='var'));
+        if(method&&this.methodStep(method,true)){this.methods.splice(this.methods.indexOf(method),1);progress=true;}
+      }
       // `.length` of a value nothing else fixes reads an array.
+      if(!progress){
+        const field=this.fields.find(constraint=>this.resolve(constraint.object).kind==='var'&&this.fieldStep(constraint,true));
+        if(field){this.fields.splice(this.fields.indexOf(field),1);progress=true;}
+      }
       const length = this.fields.find(({ object, field }) => field === 'length' && this.resolve(object).kind === 'var');
       if (!progress && length) {
         this.unify(length.object, { kind: 'array', element: this.fresh() }, length.where);
@@ -505,6 +639,9 @@ class Inference {
         this.unify(...readOptionalCoalescingConstraints(coalesced.left, this.resolve(coalesced.left), coalesced.right, true), coalesced.where);
         progress = true;
       }
+      if(!progress&&this.computedCalls.length){const call=this.computedCalls.find(constraint=>this.resolve(constraint.fn).kind==='var');if(call){this.unify(call.fn,constructCallableFunctionType(call.args.map(type=>({type})),call.result),call.where);progress=true;}}
+      if(!progress&&this.arrayFormalIterables.length){const iterable=this.arrayFormalIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
+      if(!progress&&this.recursiveBindingIterables.length){const iterable=this.recursiveBindingIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
       if (!progress && this.iterables.length) {
         const iterable = this.iterables.find((constraint) => this.resolve(constraint.object).kind === 'var');
         if (iterable) {
@@ -540,7 +677,12 @@ class Inference {
       }
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
+    if(this.nominalSpreads.length)throw typeError('an object spread needs its complete actual source owner; declare its fields with JSDoc',this.nominalSpreads[0].node.span);
+    if(this.recordFormalFields.length)throw typeError('record formal default needs a known represented field domain',this.recordFormalFields[0].where);
+    if(this.objectRestFields.length)throw typeError('object rest needs a known complete own-field domain',this.objectRestFields[0].where);
+    if(this.recursiveBindingIterables.length)throw typeError('a recursive binding needs a represented iterable',this.recursiveBindingIterables[0].where);
     if (this.arrayBindingDefaults.length) throw typeError('array binding default needs a known array element type', this.arrayBindingDefaults[0].where);
+    if(this.enumerations.length)throw typeError('object value enumeration needs its actual complete value domain',this.enumerations[0].where);
   }
 
   plusStep({ left, right, result, where }, force) {
@@ -551,33 +693,36 @@ class Inference {
       return true;
     }
     if (!force && (a.kind === 'var' || b.kind === 'var')) return false;
-    const x = this.numericValue(left);
-    const y = this.numericValue(right);
+    const x = this.numericValue(left,false);
+    const y = this.numericValue(right,false);
     const first = this.resolve(x);
     const second = this.resolve(y);
     if (first.kind === 'string' || second.kind === 'string') throw typeError('nullable string addition needs a string or number result determined by the values', where);
+    if(readJavaScriptNumericOperationFailure('plus',first.kind,second.kind))return true;
     this.unify(x, y, where);
     this.unify(result, x, where);
     return true;
   }
 
-  numericValue(term) {
+  numericValue(term,strings=true) {
     const type = this.resolve(term);
+    if((strings||type.kind!=='string')&&readJavaScriptPrimitiveNumericInferenceKind(type.kind)==='float')return FLOAT;
     const operation = readOptionalNumericTerm(type.kind);
-    return operation === 'element' ? this.numericValue(type.element) : operation === 'float' ? FLOAT : term;
+    return operation === 'element' ? this.numericValue(type.element,strings) : operation === 'float' ? FLOAT : term;
   }
 
-  arithmeticStep({ left, right, result, where }, force) {
+  arithmeticStep({ left, right, result, where,operation='' }, force) {
     const a = this.numericValue(left);
     const b = right ? this.numericValue(right) : a;
     if (!force && (this.resolve(a).kind === 'var' || this.resolve(b).kind === 'var')) return false;
+    if(readJavaScriptNumericOperationFailure(operation,this.resolve(a).kind,this.resolve(b).kind))return true;
     this.unify(a, b, where);
     this.unify(result, a, where);
     return true;
   }
 
-  equalityStep({ operation, left, right, where }, force) {
-    const step = readJavaScriptEqualityInferenceStep(operation, this.resolve(left).kind, this.resolve(right).kind, force);
+  equalityStep({ left, right, where }, force) {
+    const step = readJavaScriptComparisonInferenceStep(this.resolve(left).kind,this.resolve(right).kind,force);
     if (step === 'defer') return false;
     if (step === 'unify') this.unify(left, right, where);
     return true;
@@ -614,13 +759,18 @@ class Inference {
     return plan.additional || plan.pairs.some(([value, expected]) => this.additionalAbsence(value, expected));
   }
 
-  fieldStep({ object, field, result, where }) {
+  fieldStep({ object, field, result, where }, settled = false) {
     const type = this.resolve(object);
+    const form=readJavaScriptNullishFieldForm(type.kind,type.element?this.resolve(type.element).kind:'');
+    if(form==='absent')return true;
+    if(form==='guarded'){this.fields.push({object:type.element,field,result,where});return true;}
     if ((type.kind === 'array' || type.kind === 'string' || type.kind === 'tuple') && field === 'length') {
       this.unify(result, FLOAT, where);
       return true;
     }
     if (type.kind === 'record') {
+      const form=readJavaScriptRecordFormalDefaultFieldForm('record',type.open===true,type.fields.some(item=>item.name===field),field);
+      if(form==='absent'){this.unify(result,{kind:'option',element:this.fresh(),absence:'undefined'},where);return true;}
       const [action, position] = readRecordFieldInferenceStep(recordNameUnits(type.fields), Array.from({ length: field.length }, (_, index) => field.charCodeAt(index)), type.open === true);
       let declared = action === 0 ? type.fields[position] : undefined;
       if (action === 1) {
@@ -636,13 +786,18 @@ class Inference {
     }
     if (type.kind !== 'data') {
       const owners = [...this.data].filter(([, ctors]) => ctors.some((ctor) => ctor.fields.some((candidate) => candidate.name === field)));
-      if (type.kind !== 'var') return false;
-      if (owners.length !== 1) return false;
+      if (!acceptJavaScriptDataFieldOwnerFallback(type.kind,owners.length,settled)) return false;
       this.unify(object, { kind: 'data', name: owners[0][0] }, where);
-      return this.fieldStep({ object, field, result, where });
+      return this.fieldStep({ object, field, result, where }, settled);
     }
-    const declared = (this.data.get(type.name) ?? []).flatMap((ctor) => ctor.fields).find((candidate) => candidate.name === field);
-    if (declared) this.unify(result, this.field(declared), where);
+    const constructors=this.data.get(type.name)??[],positions=constructors.map(ctor=>ctor.fields.findIndex(candidate=>candidate.name===field));
+    const projectionForm=readJavaScriptDataFieldInferenceForm(field,positions);
+    if(projectionForm==='tag'){this.unify(result,STRING,where);return true;}
+    if(projectionForm==='absent'){this.unify(result,option(UNIT,'undefined'),where);return true;}
+    if(projectionForm==='refuse')throw unsupported('datatype property','a datatype property needs its complete bounded constructor directory',where);
+    const declared=constructors.flatMap(ctor=>ctor.fields).find(candidate=>candidate.name===field);
+    if(declared){const term=this.field(declared),resolved=this.resolve(term);this.unify(result,projectionForm==='optional'
+      ?resolved.kind==='option'?{kind:'option',element:resolved.element,absence:mergeOptionalAbsence(resolved.absence,'undefined')}:{kind:'option',element:term,absence:'undefined'}:term,where);}
     return true;
   }
 
@@ -743,14 +898,18 @@ class Inference {
       }
       case 'functionValue': {
         const signature = this.signature(node.path);
-        return signature ? constructCallableFunctionType(signature.params.map(type => ({ type })), signature.ret) : this.fresh();
+        return signature ? constructCallableFunctionType(namedCallableReferenceTerms(signature,type=>this.resolve(type)).map(type => ({ type })), signature.ret) : this.fresh();
       }
       case 'app': {
         const local = node.fn.k === 'name' && node.fn.path.length === 1 ? env.get(node.fn.path[0]) : null;
-        if (requireCallableNamedInference(node.fn.k, node.fn.path?.length ?? 0, Boolean(local))) return this.call(node.fn.path, node.args, env, node.span);
+        const signature=node.fn.k==='name'&&!local?this.signature(node.fn.path):null;
+        const constant=requireCallableConstantApplicationCapture(node.fn.k,Boolean(local),signature?.constantValue===true?'const':'',signature?this.resolve(signature.ret).kind:'');
+        if (requireCallableNamedInference(node.fn.k, node.fn.path?.length ?? 0, Boolean(local))&&!constant) return this.call(node.fn.path, node.args, env, node.span);
         const fn = local ?? this.expr(node.fn, env);
-        const args = node.args.map((arg) => this.expr(arg, env));
+        let args = node.args.map((arg) => this.expr(arg, env));
         const resolved = this.resolve(fn);
+        if(resolved.kind==='var'){const result=this.fresh();this.computedCalls.push({fn,args,result,where:node.span});return result;}
+        if(resolved.kind==='function')args=this.completeCallableArgumentTerms(resolved.params,args,node.span);
         if (acceptCallableApplicationInferenceResult(resolved.kind, resolved.params?.length ?? 0, args.length)) {
           const constraints = readCallableApplicationConstraints(resolved, args, undefined);
           for (const [left, right] of constraints.pairs) this.unify(left, right, node.span);
@@ -806,7 +965,12 @@ class Inference {
         const plan = readCallableLambdaInference(node, want);
         const params = plan.params.map(({ type, declared }) => declared ? this.declared(type) : type ?? this.fresh());
         const scope = new Map(env);
-        node.params.forEach((param, index) => scope.set(param.name, params[index]));
+        node.params.forEach((param, index) => {
+          if(acceptBodyEntryOptionalParameter(param.optional===true,param.default?.k??'',param.default?.absence??'')){
+            const selected=this.resolve(params[index]);params[index]=selected.kind==='option'?{kind:'option',element:selected.element,absence:mergeOptionalAbsence(selected.absence,'undefined')}:{kind:'option',element:params[index],absence:'undefined'};
+          }
+          scope.set(param.name, params[index]);
+        });
         const ret = plan.declaredRet ? this.declared(plan.ret) : plan.ret ?? this.fresh();
         const body = this.expr(node.body, scope, ret);
         this.unify(body, ret, node.span);
@@ -901,14 +1065,17 @@ class Inference {
         const object = this.expr(node.object, env);
         const args = node.args.map((arg) => this.expr(arg, env));
         const result = this.fresh();
-        this.methods.push({ object, args, op: node.op, result, where: node.span });
+        this.methods.push({ node, object, args, op: node.op, result, where: node.span });
         return result;
       }
       case 'stringPoints':
         this.unify(this.expr(node.object, env), STRING, node.span);
         return { kind: 'array', element: STRING };
-      case 'copySlice':
-        return this.expr(node.object, env, expected);
+      case 'copySlice': {
+        const object=this.expr(node.object,env),result=this.fresh();
+        this.methods.push({node:undefined,object,args:[],op:'slice',result,where:node.span});
+        return result;
+      }
       case 'forOfIterable': {
         const object = this.expr(node.object, env);
         // Keep the original array term and its optional-element owner. The
@@ -934,11 +1101,73 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptRecursiveBindingIterableOperation()){
+          if(node.args.length!==1||node.args[0].spread)throw typeError('a recursive binding iterator needs one actual operand',node.span);
+          const object=this.expr(node.args[0].value,env),result=this.fresh();this.recursiveBindingIterables.push({object,result,where:node.span});return result;
+        }
+        if(node.op===readJavaScriptObjectRestOperation()){
+          const operands=readJavaScriptObjectRestOperands(node),object=this.expr(operands.object,env),result=this.fresh();
+          this.objectRestFields.push({object,excluded:operands.excluded,result,where:node.span});return result;
+        }
+        if(node.op===readJavaScriptRecordFormalDefaultOperation()){
+          const operands=readJavaScriptRecordFormalDefaultOperands(node),object=this.expr(operands.value.object,env),value=this.fresh(),fallback=this.expr(operands.fallback,env),result=this.fresh();
+          this.recordFormalFields.push({object,field:operands.value.field,result:value,where:node.span});
+          this.arrayBindingDefaults.push({value,fallback,result,where:node.span});return result;
+        }
+        if(node.op===readJavaScriptArrayFormalIterableOperation()){
+          if(node.args.length!==1||node.args[0].spread)throw typeError('an array formal iterator needs one actual operand',node.span);
+          const object=this.expr(node.args[0].value,env),result=this.fresh();
+          this.arrayFormalIterables.push({object,result,where:node.span});return result;
+        }
+        if(readJavaScriptEnumerationForm(node.op)==='keys'){for(const argument of node.args)this.expr(argument.value,env);return {kind:'array',element:STRING};}
+        if(acceptJavaScriptEnumerationValueDomain(readJavaScriptEnumerationForm(node.op))){
+          const values=node.args.map(argument=>this.expr(argument.value,env)),element=this.fresh();
+          this.enumerations.push({object:values[0]??UNIT,element,where:node.span});return {kind:'array',element:readJavaScriptEnumerationForm(node.op)==='entries'?{kind:'tuple',elements:[STRING,element]}:element};
+        }
+        if(node.op===readJavaScriptOptionalChainOperation())return this.optionalChain(node,env);
+        if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);
+        if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'||node.op==='testJavaScriptOwnedProperty'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
+        if(node.op==='convertJavaScriptPrimitiveText'){for(const argument of node.args)this.expr(argument.value,env);return STRING;}
+        if(acceptJavaScriptSameValueOperation(node.op)){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
+        if(acceptJavaScriptLooseEqualityOperation(node.op)){
+          const values=node.args.map(argument=>this.expr(argument.value,env));
+          if(values.length===2)this.equalities.push({left:values[0],right:values[1],where:node.span});
+          return BOOL;
+        }
+        if(node.op==='constructJavaScriptStringFromCharacterCodes'||node.op==='constructJavaScriptStringFromCodePoints'||acceptLinkedJavaScriptStringConstruction('math',node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return readJavaScriptStringConstructionForm(node.op)==='points'?{kind:'array',element:FLOAT}:STRING;
+        }
+        if(node.op==='createJavaScriptStringFromUnits'){
+          for(const item of node.args)this.expr(item.value,env);
+          return STRING;
+        }
+        if(node.op==='convertJavaScriptBigInteger'||acceptLinkedJavaScriptBigIntegerResult('math',node.op)){
+          const kinds=readJavaScriptBigIntegerIntrinsicOperandKinds(node.op);
+          for(const [index,item] of node.args.entries()){const value=this.expr(item.value,env);if(kinds[index])this.unify(value,{kind:kinds[index]},node.span);}
+          const result=readJavaScriptBigIntegerIntrinsicResultKind(node.op);
+          return node.op==='convertJavaScriptBigInteger'?INT:result==='array-integer'?{kind:'array',element:INT}:{kind:result};
+        }
+        if(acceptLinkedJavaScriptSourceException('math',node.op)||readJavaScriptExceptionConstructorClass(node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return this.fresh();
+        }
+        if(readJavaScriptNumberConversionResult(node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return readJavaScriptNumberConversionResult(node.op)==='bool'?BOOL:FLOAT;
+        }
+        if ((readJavaScriptNumberBitwiseArity(node.op) || readBigIntegerBitwiseArity(node.op)||node.op==='exponentiateJavaScriptNumericValue') && node.args.length > 0) {
+          const values = node.args.map(item => this.expr(item.value, env)), result = this.fresh();
+          this.arithmetic.push({ left: values[0], right: values[1], result, where: node.span,operation:node.op });
+          return result;
+        }
         // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
         for (const item of node.args) {
           const type = this.resolve(this.expr(item.value, env));
           const unknown = item.spread ? type.kind === 'var' || (type.kind === 'array' && this.resolve(type.element).kind === 'var') : type.kind === 'var';
-          if (unknown && !readNumberPredicateArgumentForm('JavaScript', node.op, '', '')) this.unify(type, item.spread ? { kind: 'array', element: FLOAT } : FLOAT, item.value.span ?? node.span);
+          const mathematical=readJavaScriptMathematicalConversionForm('JavaScript',node.op);
+          if(unknown&&mathematical&&item.spread)this.unify(type,{kind:'array',element:this.fresh()},item.value.span??node.span);
+          if (unknown && !mathematical && !readNumberPredicateArgumentForm('JavaScript', node.op, '', '')) this.unify(type, item.spread ? { kind: 'array', element: FLOAT } : FLOAT, item.value.span ?? node.span);
         }
         return ['isInteger', 'isSafeInteger', 'isFinite', 'isNaN'].includes(node.op) ? BOOL : FLOAT;
       case 'tupleIndex':
@@ -957,10 +1186,45 @@ class Inference {
     }
   }
 
+  optionalChain(node,env){
+    const source=node.args[0]?.value;
+    if(node.args.length!==1||source?.k!=='let'||!source.name||source.type!==undefined)throw typeError('an optional chain needs its actual receiver, lexical binding and complete continuation',node.span);
+    const receiver=this.expr(source.value,env),resolved=this.resolve(receiver);
+    const form=readJavaScriptOptionalChainInferenceForm(resolved.kind,resolved.element?this.resolve(resolved.element).kind:'');
+    if(form==='absent')return {kind:'option',element:UNIT,absence:'undefined'};
+    const present=form==='guarded'?resolved.element:form==='unknown'?this.fresh():receiver;
+    if(form==='unknown')this.unify(receiver,{kind:'option',element:present,absence:'both'},node.span);
+    const scope=new Map(env);scope.set(source.name,present);
+    const result=this.expr(source.body,scope);
+    return form==='direct'?result:this.join(result,{kind:'option',element:UNIT,absence:'undefined'},node.span);
+  }
+
+  optionalCall(node,env){
+    if(node.args.length===0)throw typeError('an optional call needs its actual receiver and ordered non-spread arguments',node.span);
+    const receiver=this.expr(node.args[0].value,env);
+    const resolved=this.resolve(receiver);
+    if(resolved.kind==='unit'||resolved.kind==='option'&&this.resolve(resolved.element).kind==='unit')return {kind:'option',element:UNIT,absence:'undefined'};
+    const args=node.args.slice(1).map(argument=>this.expr(argument.value,env)),ret=this.fresh();
+    const candidate=constructCallableFunctionType(args.map(type=>({type})),ret);
+    if(resolved.kind==='var')this.unify(receiver,{kind:'option',element:candidate,absence:'both'},node.span);
+    else this.unify(resolved.kind==='option'?resolved.element:receiver,candidate,node.span);
+    return resolved.kind==='function'?ret:this.join(ret,{kind:'option',element:UNIT,absence:'undefined'},node.span);
+  }
+
+  completeCallableArgumentTerms(parameters,args,where){
+    const actual=completeMissingCallableInference(this,parameters,args,parameters.map(()=>false),where,true);
+    return completeOptionalCallableTerms(parameters.map(param=>this.resolve(param)),actual);
+  }
+
   call(path, args, env, where) {
     const signature = this.signature(path);
-    const argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
-    if (!signature || !acceptArgumentCount(signature.defaults, args.length)) return this.fresh();
+    let argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
+    const excess=signature?planJavaScriptExcessArguments('JavaScript',signature.params.length,args.length):[];
+    if(excess.length)argTypes=excess.slice(1,excess[0]+1).map(index=>argTypes[index]);
+    if(signature)argTypes=completeMissingCallableInference(this,signature.params,argTypes,signature.defaults,where,false);
+    // Resolve omission after body constraints; supplied prefix terms and the
+    // actual declaration result remain valid even before that resolution.
+    if (!signature || !acceptArgumentCount(signature.defaults, argTypes.length)&&argTypes.length>signature.params.length) return this.fresh();
     this.calls.push({ signature, args: argTypes, where });
     argTypes.forEach((type, index) => {
       const param = signature.params[index];
@@ -968,7 +1232,7 @@ class Inference {
       const operation = readParameterDefaultArgumentInference(signature.defaults[index], signature.optionalParams[index], actual.kind, actual.absence ?? '');
       if (operation === 'defer') return;
       const value = operation === 'element' ? actual.element : type;
-      this.unify(value, param, args[index].span ?? where);
+      this.unify(value, param, args[index]?.span ?? where);
       if (param.kind === 'var' && this.resolve(value).kind === 'option') this.bindings[param.id] = this.resolve(value);
     });
     return signature.ret;
@@ -982,8 +1246,7 @@ class Inference {
       return this.join(left, right, node.span);
     }
     if (ORDER.has(node.op)) {
-      if (node.op === 'eq' || node.op === 'ne') this.equalities.push({ operation: node.op, left, right, where: node.span });
-      else this.unify(left, right, node.span);
+      this.equalities.push({ operation: node.op, left, right, where: node.span });
       return BOOL;
     }
     if (ARITHMETIC.has(node.op)) {
@@ -1013,6 +1276,7 @@ class Inference {
 
   pattern(pattern, type, scope, where) {
     switch (pattern.k) {
+      case 'alias':scope.set(pattern.name,type);this.pattern(pattern.pattern,type,scope,where);return;
       case 'ctor': {
         const [name, tag] = pattern.path.slice(-2);
         this.unify(type, { kind: 'data', name }, where);
@@ -1030,6 +1294,10 @@ class Inference {
       case 'numLit':
         this.unify(type, this.fresh(true), where);
         return;
+      case 'typedNumLit':
+        this.unify(type,pattern.type,where);return;
+      case 'byteLit':
+        this.unify(type,{kind:'fixed',bits:8,signed:false},where);return;
       case 'boolLit':
         this.unify(type, BOOL, where);
         return;
@@ -1053,14 +1321,31 @@ class Inference {
     return { kind: 'data', name };
   }
 
-  record(node, env, expected) {
+  record(node, env, expected, leadingTerm, entryTerms) {
     const want = expected && this.resolve(expected);
+    const leading=leadingTerm??(node.entries[0]?.spread?this.expr(node.entries[0].value,env):null);
+    const raw=leading&&this.resolve(leading),source=raw?.kind==='option'?this.resolve(raw.element):raw;
+    if(leading&&source.kind==='var'&&want?.kind!=='data'){
+      const terms=node.entries.map((entry,index)=>index===0?leading:this.expr(entry.value,env));
+      const result=this.fresh();this.nominalSpreads.push({node,env:new Map(env),expected,leading,terms,result});return result;
+    }
+    const nominal=want?.kind==='data'?want:source?.kind==='data'?source:null;
+    if(nominal&&node.entries[0]?.spread){
+      const ctors=this.data.get(nominal.name)??[],ctor=ctors[0],owners=[];
+      for(const [index,entry]of node.entries.entries()){
+        if(entry.spread){const term=entryTerms?.[index]??(index===0?leading:this.expr(entry.value,env)),raw=this.resolve(term),present=raw.kind==='option'?raw.element:term;this.unify(present,nominal,entry.value.span??node.span);const actual=this.resolve(present);owners.push(actual.kind==='data'?actual.name:'');}
+        else{const field=ctor?.fields.find(field=>field.name===entry.name),declared=field?this.field(field):null,value=entryTerms?.[index]??this.expr(entry.value,env,declared);if(declared)this.unify(value,declared,entry.value.span??node.span);owners.push('');}
+      }
+      const error=readJavaScriptNominalSpreadError('JavaScript',ctors.length,ctor?.fields.map(field=>field.name)??[],node.entries.map(entry=>entry.spread?'spread':'field'),node.entries.map(entry=>entry.spread?'':entry.name),owners,nominal.name,node.prototypeDefinition!==undefined);
+      if(error)throw typeError(error,node.span);
+      this.records.set(node,nominal);return nominal;
+    }
     const fields = [];
     const entries = [];
     let unknownSpread = false;
-    for (const entry of node.entries) {
+    for (const [entryIndex,entry] of node.entries.entries()) {
       if (entry.spread) {
-        const type = this.expr(entry.value, env);
+        const type = entryTerms?.[entryIndex]??(entryIndex===0&&leading?leading:this.expr(entry.value, env));
         entries.push({ spread: true, type });
         const source = this.resolve(type);
         const role = readRecordSpreadRole(source.kind);
@@ -1072,7 +1357,7 @@ class Inference {
       } else {
         const expectedPosition = want?.kind === 'record' ? readRecordFieldPosition(recordNameUnits(want.fields), Array.from({ length: entry.name.length }, (_, index) => entry.name.charCodeAt(index))) : -1;
         const declared = expectedPosition < 0 ? undefined : want.fields[expectedPosition].type;
-        const value = this.expr(entry.value, env, declared);
+        const value = entryTerms?.[entryIndex]??this.expr(entry.value, env, declared);
         if (declared) this.unify(value, declared, entry.value.span ?? node.span);
         fields.push({ name: entry.name, type: declared ?? value });
         entries.push({ spread: false, name: entry.name, type: declared ?? value });
@@ -1101,10 +1386,15 @@ class Inference {
     return true;
   }
 
-  methodStep({ object, args, op, result, where }) {
+  methodStep({ node, object, args, op, result, where }, force=false) {
     let receiver = this.resolve(object);
+    const form=readJavaScriptNullishFieldForm(receiver.kind,receiver.element?this.resolve(receiver.element).kind:'');
+    if(form==='absent')return true;
+    if(form==='guarded'){this.methods.push({node:undefined,object:receiver.element,args,op,result,where});return true;}
     if (receiver.kind === 'var') {
-      const kind = readJavaScriptMethodReceiverKind(op);
+      if(!force)return false;
+      const kind = readJavaScriptPropertyCallFallbackKind(op,readJavaScriptMethodReceiverKind(op));
+      if(kind==='scalar'){if(node&&args.length===0)this.propertyMethods.set(node,'text');this.unify(result,STRING,where);return true;}
       if (kind === 'array') {
         this.unify(object, { kind: 'array', element: this.fresh() }, where);
       } else if (kind === 'string') {
@@ -1112,7 +1402,35 @@ class Inference {
       } else return false;
       receiver = this.resolve(object);
     }
+    if(receiver.kind==='record'){
+      const field=receiver.fields.find(field=>field.name===op);
+      if(!field)return true;
+      const callable=this.resolve(field.type);
+      if(callable.kind==='var'){this.computedCalls.push({fn:field.type,args,result,where});return true;}
+      const callArguments=callable.kind==='function'?this.completeCallableArgumentTerms(callable.params,args,where):args;
+      const step=readJavaScriptRecordMethodInferenceStep(callable.kind,callable.params?.length??0,callArguments.length);
+      if(step==='apply'||step==='infer')this.unify(field.type,constructCallableFunctionType(callArguments.map(type=>({type})),result),where);
+      return true;
+    }
+    if(op==='toString'){if(node&&args.length===0)this.propertyMethods.set(node,'text');this.unify(result,STRING,where);return true;}
+    if(receiver.kind==='array'&&op==='concat'){
+      const roles=args.map(arg=>readJavaScriptConcatenationArgumentRole('array',this.resolve(arg).kind,force));
+      if(roles.includes('defer'))return false;
+      args.forEach((arg,index)=>this.unify(arg,roles[index]==='spread'?{kind:'array',element:receiver.element}:receiver.element,where));
+      this.unify(result,receiver,where);return true;
+    }
     if (receiver.kind === 'string') {
+      const selected=readJavaScriptSourcePropertyOperationKind(op);
+      if(selected==='unit'){
+        const form=readJavaScriptStringUnitCallResultForm(op);
+        const output=form==='array-string'?{kind:'array',element:STRING}:form==='float'?FLOAT
+          :form==='optional-float'?{kind:'option',element:FLOAT,absence:'undefined'}:form==='optional-string'?{kind:'option',element:STRING,absence:'undefined'}:STRING;
+        this.unify(result,output,where);return true;
+      }
+      if(selected==='range'){this.unify(result,STRING,where);return true;}
+      if(selected==='index'){this.unify(result,FLOAT,where);return true;}
+      if(selected==='test'){if(node&&args.length===1&&this.resolve(args[0]).kind==='string')this.propertyMethods.set(node,'test');this.unify(result,BOOL,where);return true;}
+      if(node&&(selected==='test'&&args.length===1||selected==='map'&&args.length===0))this.propertyMethods.set(node,selected);
       const primitive = readPrimitiveMethodMinimumArguments(receiver.kind, op) >= 0;
       args.forEach((arg, index) => {
         const kind = primitive && index < readPrimitiveMethodArgumentCount(receiver.kind, op)
@@ -1131,13 +1449,24 @@ class Inference {
       return true;
     }
     if (receiver.kind === 'array') {
-      if (op === 'push' || op === 'unshift') {
+      if (readArrayStateMethodResult(op)) {
+        args.forEach((argument,index) => {
+          const role=readArrayStateMethodArgumentRole(op,index), actual=this.resolve(argument);
+          if(role==='element')this.unify(argument,receiver.element,where);
+          else if(role&&actual.kind==='var')this.unify(argument,FLOAT,where);
+          else if(role&&actual.kind==='option'&&this.resolve(actual.element).kind==='var')this.unify(actual.element,FLOAT,where);
+        });
+        this.unify(result,receiver,where);
+        return true;
+      }
+      const referenceResult = readReferenceMethodResult('array', op);
+      if (referenceResult === 'length') {
         for (const arg of args) {
           this.unify(arg, receiver.element, where);
           if (receiver.element.kind === 'var' && this.resolve(arg).kind === 'option') this.bindings[receiver.element.id] = this.resolve(arg);
         }
         this.unify(result, FLOAT, where);
-      } else if (op === 'pop' || op === 'shift') {
+      } else if (referenceResult === 'optional element') {
         this.unify(result, { kind: 'option', element: receiver.element, absence: 'undefined' }, where);
       } else if (op === 'splice') {
         for (const arg of args.slice(0, 2)) this.unify(arg, FLOAT, where);
@@ -1195,12 +1524,13 @@ class Inference {
         this.unify(args[1], receiver.value, where);
         if (receiver.value.kind === 'var' && this.resolve(args[1]).kind === 'option') this.bindings[receiver.value.id] = this.resolve(args[1]);
       }
-      const output = op === 'get' ? { kind: 'option', element: receiver.value, absence: 'undefined' }
-        : op === 'has' || op === 'delete' ? BOOL
-        : op === 'clear' ? UNIT
-        : op === 'keys' ? { kind: 'array', element: key }
-        : op === 'values' ? { kind: 'array', element: receiver.kind === 'map' ? receiver.value : key }
-        : op === 'entries' ? { kind: 'array', element: { kind: 'tuple', elements: receiver.kind === 'map' ? [receiver.key, receiver.value] : [key, key] } }
+      const form = readReferenceMethodResult(receiver.kind, op) || readCollectionAccessResult(receiver.kind, op);
+      const output = form === 'optional value' ? { kind: 'option', element: receiver.value, absence: 'undefined' }
+        : form === 'boolean' ? BOOL
+        : form === 'unit' ? UNIT
+        : form === 'keys' ? { kind: 'array', element: key }
+        : form === 'values' ? { kind: 'array', element: receiver.kind === 'map' ? receiver.value : key }
+        : form === 'entries' ? { kind: 'array', element: { kind: 'tuple', elements: receiver.kind === 'map' ? [receiver.key, receiver.value] : [key, key] } }
         : receiver;
       this.unify(result, output, where);
       return true;
@@ -1268,3 +1598,10 @@ function describe(type) {
 }
 
 import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
+import {readJavaScriptArrayFormalIterableOperation,readJavaScriptArrayFormalInferenceForm} from './array-formal-parameter-rules.js';
+
+import {readJavaScriptRecordFormalDefaultOperation,readJavaScriptRecordFormalDefaultFieldForm} from './javascript-record-parameter-rules.js';
+import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';
+import {readJavaScriptObjectRestOperation,readJavaScriptObjectRestOwnerForm} from './object-rest-rules.js';
+import {readJavaScriptObjectRestOperands,selectJavaScriptObjectRestActualFields} from './object-rest.js';
+import {readJavaScriptRecursiveBindingIterableOperation,readJavaScriptRecursiveBindingIterableForm} from './recursive-binding-rules.js';

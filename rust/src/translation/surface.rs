@@ -213,6 +213,20 @@ pub enum Flavor {
     Exact,
     Checked,
     Clamp,
+    Wrapping,
+}
+
+impl Flavor {
+    /// The shared serialized operation qualifier.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Exact => "exact",
+            Self::Checked => "checked",
+            Self::Clamp => "clamp",
+            Self::Wrapping => "wrapping",
+        }
+    }
 }
 
 /// A source prototype definition, preserved until the checker refuses it.
@@ -318,7 +332,22 @@ pub struct SPattern {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum SPatternNode {
+    IntegerRange {
+        lower: Option<Box<SPattern>>,
+        upper: Option<Box<SPattern>>,
+        inclusive: bool,
+    },
     Wild,
+    /// Bind the actual matched column before testing its nested pattern.
+    Alias {
+        name: String,
+        pattern: Box<SPattern>,
+    },
+    Tuple {
+        args: Vec<SPattern>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rest: Option<usize>,
+    },
     /// A lone name: a nullary constructor when the scrutinee type has one, else a binder.
     BindOrCtor {
         name: String,
@@ -343,6 +372,21 @@ pub enum SPatternNode {
         negative: bool,
     },
     StrLit {
+        value: String,
+    },
+    /// Explicit numeric suffix type and primitive source owner.
+    TypedNumLit {
+        #[serde(deserialize_with = "numeral")]
+        value: String,
+        #[serde(rename = "type")]
+        ty: Type,
+        owner: String,
+        #[serde(default, skip_serializing_if = "is_false")]
+        negative: bool,
+    },
+    /// A Rust byte-character pattern retains its u8 literal type.
+    ByteLit {
+        #[serde(deserialize_with = "numeral")]
         value: String,
     },
     /// Lean's `n + 2`; `add` holds the numeral's decimal digits.
@@ -558,6 +602,15 @@ pub struct SData {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_unit_clone_derivation: Option<Box<serde_json::Value>>,
+    /// Complete original field-type owners, selected independently of body lowering.
+    #[serde(
+        default,
+        rename = "sourceFieldSignatures",
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::translation::source_data_field_signatures::read_present"
+    )]
+    pub source_field_signatures:
+        Option<Box<crate::translation::source_data_field_signatures::RustDataTypeFieldSignatures>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

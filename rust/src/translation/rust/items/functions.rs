@@ -8,6 +8,7 @@ use super::super::scalar_parameters::read_rust_scalar_parameter_body;
 use super::super::{
     Result, RustParser, SFn, SParam, SourceDeclaration, TokenKind, Type, span, unsupported,
 };
+use crate::translation::rust_fresh_vector_result_rules::accept_rust_ordinary_fresh_vector_result;
 
 impl RustParser {
     pub(in super::super) fn function(&mut self, path: &[String]) -> Result<SFn> {
@@ -75,6 +76,14 @@ impl RustParser {
         let mut mutable_params = Vec::new();
         while !self.cursor.is(")") {
             let param_token = self.peek();
+            if let Some((parameter, origin)) = self.inherent_receiver(&name, path, params.len())? {
+                params.push(parameter);
+                source_params.push(origin);
+                if self.cursor.eat(",").is_none() {
+                    break;
+                }
+                continue;
+            }
             let mutable = self.cursor.eat("mut").is_some();
             if self.cursor.is("self") || self.cursor.is("&") {
                 return Err(unsupported(
@@ -84,6 +93,7 @@ impl RustParser {
                 ));
             }
             let param_name = self.cursor.identifier(Some("parameter"))?.value;
+            self.require_nonconstant_binding(&param_name, path, Some(param_token.span()))?;
             self.cursor.expect(":", Some("parameter"))?;
             let type_token = self.peek();
             let ty = self.parse_type()?;
@@ -110,15 +120,29 @@ impl RustParser {
             }
         }
         self.cursor.expect(")", Some("fn"))?;
-        if self.cursor.eat("->").is_none() {
+        let explicit_result = self.cursor.eat("->").is_some();
+        let ret = if explicit_result {
+            self.parse_type()?
+        } else {
+            self.origins.typed(Type::Unit, path, Vec::new())
+        };
+        let mut source_result = self.origins.current_type.clone();
+        if !explicit_result {
+            source_result.source_owner = Some(crate::translation::source_signatures::SourceOwner {
+                kind: "unit".to_owned(),
+                path: Vec::new(),
+                arguments: Vec::new(),
+            });
+        }
+        if !self.shared_array_handle_source_model.is_empty()
+            && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
+        {
             return Err(unsupported(
-                "function without a result",
-                &format!("{name} returns (); only value-returning functions are portable"),
+                "Rust shared array handle source",
+                "mutable parameters and named lifetime binders need another source profile",
                 span(&start, self.cursor.peek()),
             ));
         }
-        let ret = self.parse_type()?;
-        let mut source_result = self.origins.current_type.clone();
         if !self.const_function_model.is_empty()
             && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
         {
@@ -172,11 +196,21 @@ impl RustParser {
             }
         }
         if let Type::Array { element, .. } = &ret
+            && !self.shared_array_origin(&source_result)
             && !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
                 source_result.array_source_model == Some("owned vector")
                     && source_result.wrappers.is_empty(),
+                true,
+            )
+            && !accept_rust_ordinary_fresh_vector_result(
+                self.ordinary_completion_context(),
+                source_result.array_source_model.unwrap_or(""),
+                serde_json::Number::from(source_result.wrappers.len())
+                    .as_f64()
+                    .expect("actual result wrapper count"),
+                element.kind(),
                 true,
             )
         {
@@ -199,6 +233,12 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        source_result.fresh_vector_result_contract = crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_declaration(
+            self.ordinary_completion_context(), source_result.array_source_model.unwrap_or(""),
+            u32::try_from(source_result.wrappers.len()).map_or(f64::INFINITY, f64::from),
+            if let Type::Array { element, .. } = &ret { element.kind() } else { "" },
+            source_result.array_element_copy_evidence,
+        );
         self.origins.declaration(
             &name,
             path,
@@ -214,6 +254,38 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        if self.ordinary_completion_context() {
+            self.capture_source_constant_function(
+                &name,
+                path,
+                &function_keyword,
+                const_keyword.as_ref(),
+                &source_params,
+                &source_result,
+            );
+        }
+        // Private inventory only; these bodies are never emitted or returned publicly.
+        if self.header_discovery {
+            let close = self.declaration_body_boundary()?;
+            return Ok(SFn {
+                source_diagnostic_attributes: None,
+                semantic_ret: None,
+                name,
+                params,
+                ret: Some(ret),
+                body: super::super::SExpr::new(super::super::SNode::Unit, Some(close.span())),
+                span: Some(super::super::Span::new(start.start, close.end)),
+                generated: false,
+                source_signature: None,
+                source_primitive_owners: None,
+                source_empty_option: None,
+                source_type_namespace: None,
+                source_loop: None,
+                source_pure_unit: None,
+                source_local_state: None,
+                source_const_function: None,
+            });
+        }
         let const_header_end = self.cursor.peek().start;
         let source_signature = self.capture_source_signature(
             &source_params,
@@ -227,9 +299,11 @@ impl RustParser {
             .zip(source_params.iter().cloned())
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
+        let function_ownership = self.origins.snapshot_owned_bindings();
         let previous = self.origins.enter(Some(scope));
         let mut source_loop = None;
         let mut source_local_state = None;
+        let temporary_frame = self.origins.owned_temporary_frame();
         let body = if scalar_loop {
             if !path.is_empty() {
                 return Err(unsupported(
@@ -255,11 +329,17 @@ impl RustParser {
             source_local_state = Some(Box::new(proof));
             body
         } else if self.completion_model.is_empty() {
-            self.block(path)?
+            if let Some(body) = self.copy_pointer_result_block(path, Some(&source_result))? {
+                body
+            } else if self.ordinary_completion_selected() {
+                self.ordinary_function_completion(path, &ret, &source_result)?
+            } else {
+                self.block_with_context(path, true)?
+            }
         } else {
             self.closed_function_completion(path)?
         };
-        let source_const_function = const_keyword.as_ref().map(|keyword| {
+        let source_const_function = const_keyword.as_ref().filter(|_| crate::translation::rust_function_qualifier_rules::require_rust_const_predicate_proof(true, !self.const_function_model.is_empty())).map(|keyword| {
             Box::new(self.create_const_function_proof(
                 &name,
                 keyword,
@@ -267,13 +347,29 @@ impl RustParser {
                 const_header_end,
             ))
         });
-        if let Type::Array { element, .. } = &ret {
+        self.origins
+            .finish_owned_expression(&body, path, &temporary_frame, false);
+        let body_origin = self.origins.origin(&body, path);
+        self.origins
+            .expire_owned_bindings(&function_ownership, &body_origin);
+        self.origins.transfer_owned_result(&body, path)?;
+        if let Type::Array { element, .. } = &ret
+            && !self.shared_array_origin(&source_result)
+        {
             if !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
                 source_result.array_source_model == Some("owned vector")
                     && source_result.wrappers.is_empty(),
                 self.origins.fresh_array_result(&body, path),
+            ) && !accept_rust_ordinary_fresh_vector_result(
+                self.ordinary_completion_context(),
+                source_result.array_source_model.unwrap_or(""),
+                serde_json::Number::from(source_result.wrappers.len())
+                    .as_f64()
+                    .expect("actual result wrapper count"),
+                element.kind(),
+                self.origins.fresh_vector_argument(&body, path, true),
             ) {
                 return Err(unsupported(
                     "fresh Rust array result",
@@ -282,6 +378,11 @@ impl RustParser {
                 ));
             }
             source_result.fresh_array_value = body.span;
+            self.origins.pointer_integer_argument(
+                &self.origins.origin(&body, path),
+                &source_result,
+                body.span,
+            )?;
             self.origins.certify_array_result(&name, path, body.span);
             self.origins.mark(&body, source_result.clone());
         }

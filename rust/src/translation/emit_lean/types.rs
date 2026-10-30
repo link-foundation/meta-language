@@ -27,9 +27,22 @@ impl LeanEmitter<'_> {
                 "Float".to_owned()
             }
             Type::Bool => "Bool".to_owned(),
-            Type::String => "String".to_owned(),
+            Type::String => {
+                if self.utf16_strings {
+                    crate::translation::formal_string_unit_rules::read_formal_string_unit_type(
+                        "Lean",
+                    )
+                } else {
+                    "String".to_owned()
+                }
+            }
             Type::Unit => "Unit".to_owned(),
-            Type::Output => "List String".to_owned(),
+            Type::Output => if self.utf16_strings {
+                "List (Array Nat)"
+            } else {
+                "List String"
+            }
+            .to_owned(),
             Type::Option { element, absence } => {
                 let element = self.ty(element)?;
                 if absence == "both" {
@@ -66,12 +79,25 @@ impl LeanEmitter<'_> {
                     format!("({})", parts.join(" × "))
                 }
             }
-            Type::Record { fields, .. } => {
+            Type::Record {
+                fields, ordered, ..
+            } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
                     .collect::<Result<Vec<_>>>()?;
-                crate::translation::record_emission_rules::render_record_type("Lean", &children)
+                let payload = crate::translation::record_emission_rules::render_record_type(
+                    "Lean", &children,
+                );
+                if *ordered {
+                    crate::translation::ordered_record_layout_rules::render_ordered_record_type(
+                        "Lean",
+                        &payload,
+                        &self.ty(&crate::translation::types::array(Type::Float))?,
+                    )
+                } else {
+                    payload
+                }
             }
             Type::Union { .. } => {
                 return Err(type_error(

@@ -193,6 +193,18 @@ impl Inference {
     }
 
     pub(super) fn coalescing_step(&mut self, constraint: &Coalescing, force: bool) -> Result<bool> {
+        let resolved = self.resolve(&constraint.left);
+        let element = match &resolved {
+            Term::Option { element, .. } => kind(element),
+            _ => "",
+        };
+        if crate::translation::absence_only_rules::require_java_script_absence_only_value(
+            "JavaScript",
+            kind(&resolved),
+            element,
+        ) {
+            return Ok(true);
+        }
         let facts = TermFacts::new(&[
             Some(constraint.left.clone()),
             Some(self.resolve(&constraint.left)),
@@ -365,6 +377,7 @@ impl Inference {
                 progress = true;
             }
         }
+        progress |= self.solve_computed_callable_arguments()?;
         for call in self.calls.clone() {
             for (index, (argument, parameter)) in
                 call.arguments.iter().zip(&call.parameters).enumerate()
@@ -452,13 +465,22 @@ impl Inference {
     }
 
     pub(super) fn numeric_value(&self, term: &Term) -> Term {
+        self.numeric_value_with_strings(term, true)
+    }
+
+    pub(super) fn numeric_addition_value(&self, term: &Term) -> Term {
+        self.numeric_value_with_strings(term, false)
+    }
+
+    fn numeric_value_with_strings(&self, term: &Term, strings: bool) -> Term {
         let resolved = self.resolve(term);
+        if (strings || kind(&resolved) != "string") && crate::translation::string_number_rules::read_java_script_primitive_numeric_inference_kind(kind(&resolved)) == "float" { return Term::Known(FLOAT); }
         match values::read_optional_numeric_term(kind(&resolved)).as_str() {
             "element" => {
                 let Term::Option { element, .. } = resolved else {
                     unreachable!("the generated numeric plan requires Option");
                 };
-                self.numeric_value(&element)
+                self.numeric_value_with_strings(&element, strings)
             }
             "float" => Term::Known(FLOAT),
             _ => term.clone(),

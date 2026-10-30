@@ -10,8 +10,16 @@ import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './
 import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
 import { decodeRustRawString } from './rust-raw-string-rules.js';
 import { decodeRustCharacterLiteral } from './rust-character-rules.js';
+import {decodeRustByteStringLiteral,readRustByteStringLiteralError,renderRustByteStringValue} from './rust-byte-string-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
+import { acceptRustSourceKeywordToken } from './rust-record-rules.js';
+import { readRustSourceRawIdentifierError } from './unicode-scalar-rules.js';
+import { acceptSourceIdentifierAt, normalizeRustSourceIdentifier, readSourceIdentifierWidth, readJavaScriptSourceIdentifier, acceptRustSourceLifetimeAt } from './unicode-identifiers.js';
+import { acceptJavaScriptSourceKeywordToken, acceptJavaScriptBindingIdentifierContext, readJavaScriptSourceTokenGoalValue, acceptJavaScriptNumberIdentifierBoundary } from './javascript-identifier-rules.js';
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import {decodeJavaScriptStringUnicodeEscape,requireJavaScriptStringUnitTransport} from './javascript-string-unit-rules.js';
+export { SOURCE_IDENTIFIER_UNICODE_VERSION } from './unicode-identifiers.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -29,6 +37,7 @@ const COMMENTS = {
   Lean: { line: '--', block: ['/-', '-/'], nested: true },
   Rocq: { line: null, block: ['(*', '*)'], nested: true },
 };
+const javascriptGoalValue = token => readJavaScriptSourceTokenGoalValue(token?.kind ?? '', token?.value ?? '', token?.raw ?? '');
 
 export function tokenize(source, language) {
   return tokenizeRegion(source, language, 0, false, { units: null });
@@ -75,7 +84,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       continue;
     }
     const start = index;
-    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? ''))) {
+    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', javascriptGoalValue(tokens.at(-1))))) {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
       const end = regularExpressionEnd(encoding.units, index);
       if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
@@ -90,6 +99,30 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
+    }
+    if(language==='Rust'&&char==='b'&&(source[index+1]==='"'||source[index+1]==='r')){
+      encoding.units??=Array.from({length:source.length},(_,offset)=>source.charCodeAt(offset));
+      const literal=decodeRustByteStringLiteral(encoding.units,index);
+      if(literal[0]<0)throw new TranslationError('syntax',readRustByteStringLiteralError(literal[0]),{start:literal[1],end:literal[2]});
+      if(literal[0]===1){
+        const literalEnd=literal[1];let end=literalEnd;
+        if(isIdentifierStartAt(source,end,language)&&!(source[end]==='_'&&!isIdentifierPartAt(source,end+1,language))){
+          end+=readSourceIdentifierWidth(source,end);
+          while(end<source.length&&isIdentifierPartAt(source,end,language))end+=readSourceIdentifierWidth(source,end);
+        }
+        tokens.push({kind:'byteString',value:renderRustByteStringValue(literal.slice(2)),suffix:source.slice(literalEnd,end),start,end,raw:source.slice(start,end)});
+        index=end;continue;
+      }
+    }
+    if (language === 'Rust' && source.startsWith('r#', index) && isIdentifierStartAt(source, index + 2, language)) {
+      let end=index+2+readSourceIdentifierWidth(source,index+2);
+      while(end<source.length&&isIdentifierPartAt(source,end,language))end+=readSourceIdentifierWidth(source,end);
+      const name=normalizeRustSourceIdentifier(source.slice(index+2,end),{start,end}),message=readRustSourceRawIdentifierError(name,true);
+      if(message)throw new TranslationError('syntax',message,{start,end});
+      const macro=source[end]==='!'&&source[end+1]!=='=';
+      if(macro)end+=1;
+      tokens.push({kind:macro?'macro':'identifier',value:name,raw:source.slice(index,end),start,end});
+      index=end;continue;
     }
     if (language === 'Rust' && char === 'r') {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
@@ -113,7 +146,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
     }
     // Select only Rust apostrophe/byte-apostrophe prefixes. A notCharacter
     // result consumes nothing, so existing lifetime and label paths stay exact.
-    if (language === 'Rust' && (char === "'" || (char === 'b' && source[index + 1] === "'"))) {
+    if (language === 'Rust' && (char === "'" || (char === 'b' && source[index + 1] === "'")) && !acceptRustSourceLifetimeAt(source, index)) {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
       const literal = decodeRustCharacterLiteral(encoding.units, index);
       if (literal.$ === 'malformed') throw new TranslationError('syntax', 'malformed Rust character literal', { start: literal.at, end: literal.end });
@@ -154,7 +187,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
         const [end, suffixStart, floating] = readRustNumberBounds(encoding.units, index);
         const raw = source.slice(index, end);
         const digits = source.slice(index, suffixStart);
-        if (!acceptRustSourceNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPart(source[end] ?? '', 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
+        if (!acceptRustSourceNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPartAt(source, end, 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
         if (floating && !Number.isFinite(Number(digits.replaceAll('_', '')))) throw new TranslationError('syntax', `floating-point literal out of range ${raw}`, { start, end });
         tokens.push({ kind: 'number', ...(floating && { floating: true }), value: floating ? String(Number(digits.replaceAll('_', ''))) : digits.replaceAll('_', ''), suffix: source.slice(suffixStart, end), raw, start, end });
         index = end;
@@ -175,22 +208,26 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       index += raw.length;
       continue;
     }
-    if (isIdentifierStart(char, language)) {
-      let stop = index + char.length;
+    if (language === 'JavaScript' && (char === '\\' || isIdentifierStartAt(source, index, language))) {
+      const token = readJavaScriptSourceIdentifier(source, index, encoding);
+      tokens.push(token); index = token.end; continue;
+    }
+    if (isIdentifierStartAt(source, index, language)) {
+      let stop = index + (language === 'Rust' || language === 'JavaScript' ? readSourceIdentifierWidth(source, index) : char.length);
       for (;;) {
-        while (stop < source.length && isIdentifierPart(source[stop], language)) stop += 1;
+        while (stop < source.length && isIdentifierPartAt(source, stop, language)) stop += language === 'Rust' || language === 'JavaScript' ? readSourceIdentifierWidth(source, stop) : 1;
         // Lean and Rocq qualified names (`Tree.node`, `Nat.add`) are single tokens.
         const qualified = (language === 'Lean' || language === 'Rocq')
-          && source[stop] === '.' && stop + 1 < source.length && isIdentifierStart(source[stop + 1], language);
+          && source[stop] === '.' && stop + 1 < source.length && isIdentifierStartAt(source, stop + 1, language);
         if (!qualified) break;
         stop += 2;
       }
       if (language === 'Rust' && source[stop] === '!' && source[stop + 1] !== '=') {
-        tokens.push({ kind: 'macro', value: source.slice(index, stop), start, end: stop + 1, raw: source.slice(index, stop + 1) });
+        tokens.push({ kind: 'macro', value: normalizeRustSourceIdentifier(source.slice(index, stop), { start, end: stop }), start, end: stop + 1, raw: source.slice(index, stop + 1) });
         index = stop + 1;
         continue;
       }
-      tokens.push({ kind: 'identifier', value: source.slice(index, stop), start, end: stop, raw: source.slice(index, stop) });
+      tokens.push({ kind: 'identifier', value: language === 'Rust' ? normalizeRustSourceIdentifier(source.slice(index, stop), { start, end: stop }) : source.slice(index, stop), start, end: stop, raw: source.slice(index, stop) });
       index = stop;
       continue;
     }
@@ -200,15 +237,15 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
     if (braced && text === '}') depth -= 1;
     if (language === 'JavaScript') {
       if (text === '(') {
-        const declaration = tokens.at(-2)?.value === 'function' && (tokens.length === 2 || [';', '{', '}', 'export', 'async'].includes(tokens.at(-3)?.value));
-        scopes.push({ control: acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)), declaration });
+        const declaration = javascriptGoalValue(tokens.at(-2)) === 'function' && (tokens.length === 2 || [';', '{', '}', 'export', 'async'].includes(javascriptGoalValue(tokens.at(-3))));
+        scopes.push({ control: acceptControlParenthesis(tokens.at(-1)?.kind ?? '', javascriptGoalValue(tokens.at(-1)), ['.', '?.'].includes(tokens.at(-2)?.value)), declaration });
       }
       if (text === ')') {
         const scope = scopes.pop();
         closed = scope?.control ?? false;
         declarationBody = scope?.declaration ?? false;
       } else if (text === '{') {
-        braces.push(acceptStatementBrace(tokens.at(-1)?.kind ?? (braced ? 'expression' : ''), tokens.at(-1)?.value ?? '', controlClosed, declarationBody));
+        braces.push(acceptStatementBrace(tokens.at(-1)?.kind ?? (braced ? 'expression' : ''), javascriptGoalValue(tokens.at(-1)), controlClosed, declarationBody));
         declarationBody = false;
       } else if (text === '}') closed = braces.pop() ?? false;
       else declarationBody = false;
@@ -238,10 +275,10 @@ function javascriptNumber(source, index) {
   const match = JS_NUMBER.exec(source.slice(index));
   const raw = match?.[0] ?? source[index];
   const end = index + raw.length;
-  const next = source[end] ?? '';
+  const next = end < source.length ? String.fromCodePoint(source.codePointAt(end)) : '';
   const malformed = () => new TranslationError('syntax', `malformed number ${source.slice(index, end + next.length)}`, { start: index, end: end + next.length });
   // `08`, `1_`, `3in` and `1.5n` are SyntaxErrors in JavaScript.
-  if (!match || /[0-9A-Za-z_$]/u.test(next)) throw malformed();
+  if (!match || !acceptJavaScriptNumberIdentifierBoundary(acceptSourceIdentifierAt(source, end, 'JavaScript', true), end < source.length ? source.charCodeAt(end) : -1)) throw malformed();
   const text = raw.replaceAll('_', '');
   if (text.endsWith('n')) {
     if (/[.eE]/u.test(text) && !/^0[xX]/u.test(text)) throw malformed();
@@ -274,8 +311,14 @@ function blockCommentEnd(source, index, comments) {
 
 // A \u escape at `at`: \u{X..} in JavaScript and Rust, and \uXXXX in
 // JavaScript, where a surrogate pair of two such escapes is one code point.
-// A lone surrogate is refused, because Rust strings cannot hold it.
+// JavaScript strings retain isolated surrogate units; Rust requires scalars.
 function unicodeEscape(source, at, language, encoding = { units: null }) {
+  if(language==='JavaScript'){
+    encoding.units??=Array.from({length:source.length},(_,index)=>source.charCodeAt(index));
+    const escape=decodeJavaScriptStringUnicodeEscape(encoding.units,at);
+    if(escape.$==='malformed')throw new TranslationError('syntax','malformed unicode escape',{start:at,end:at+2});
+    return{text:escape.units.map(unit=>String.fromCharCode(unit)).join(''),end:at+escape.end};
+  }
   let escape;
   if (language === 'Rust') {
     encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
@@ -304,7 +347,9 @@ function stringToken(source, index, language, encoding) {
         cursor += 2;
         continue;
       }
-      return { kind: 'string', value, start: index, end: cursor + 1, raw: source.slice(index, cursor + 1) };
+      const stringUnits=Array.from({length:value.length},(_,at)=>value.charCodeAt(at));
+      const transport=language==='JavaScript'&&requireJavaScriptStringUnitTransport(stringUnits);
+      return { kind: 'string', value:transport?value.toWellFormed():value,...(transport?{stringUnits}:{}),start: index, end: cursor + 1, raw: source.slice(index, cursor + 1) };
     }
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
@@ -357,6 +402,11 @@ function stringToken(source, index, language, encoding) {
   throw new TranslationError('syntax', 'unterminated string literal', { start: index, end: source.length });
 }
 
+function javascriptTemplatePart(text) {
+  const stringUnits=Array.from({length:text.length},(_,at)=>text.charCodeAt(at));
+  return requireJavaScriptStringUnitTransport(stringUnits)?{text:text.toWellFormed(),stringUnits}:{text};
+}
+
 function templateToken(source, index, encoding) {
   const parts = [];
   let cursor = index + 1;
@@ -364,7 +414,7 @@ function templateToken(source, index, encoding) {
   while (cursor < source.length) {
     const char = source[cursor];
     if (char === '`') {
-      parts.push({ text });
+      parts.push(javascriptTemplatePart(text));
       return { kind: 'template', parts, start: index, end: cursor + 1, raw: source.slice(index, cursor + 1) };
     }
     if (char === '\\') {
@@ -397,7 +447,7 @@ function templateToken(source, index, encoding) {
     }
     if (source.startsWith('${', cursor)) {
       const close = matchingBrace(source, cursor + 1, encoding);
-      parts.push({ text, expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
+      parts.push({ ...javascriptTemplatePart(text), expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
       text = '';
       cursor = close + 1;
       continue;
@@ -414,13 +464,17 @@ export function matchingBrace(source, open, encoding = { units: null }) {
   throw new TranslationError('syntax', 'unbalanced braces', { start: open, end: source.length });
 }
 
-function isIdentifierStart(char, language) {
+function isIdentifierStartAt(source, index, language) {
+  if (language === 'Rust' || language === 'JavaScript') return acceptSourceIdentifierAt(source, index, language, true);
+  const char = source[index] ?? '';
   if (/[A-Za-z_]/u.test(char)) return true;
   if (language === 'JavaScript' && char === '$') return true;
   return (language === 'Lean' || language === 'Rocq') && /[\p{L}]/u.test(char) && !'∀→∧≤≥≠λ×'.includes(char);
 }
 
-function isIdentifierPart(char, language) {
+function isIdentifierPartAt(source, index, language) {
+  if (language === 'Rust' || language === 'JavaScript') return acceptSourceIdentifierAt(source, index, language, false);
+  const char = source[index] ?? '';
   if (/[A-Za-z0-9_]/u.test(char)) return true;
   if (language === 'JavaScript' && char === '$') return true;
   if (language === 'Rocq' && char === "'") return true;
@@ -448,7 +502,9 @@ export class TokenCursor {
 
   is(value, offset = 0) {
     const token = this.peek(offset);
-    return (token.kind === 'punct' || token.kind === 'identifier') && token.value === value;
+    return (token.kind === 'punct' || token.kind === 'identifier') && token.value === value
+      && (this.language!=='Rust'||acceptRustSourceKeywordToken(token.value,token.raw))
+      && (this.language!=='JavaScript'||acceptJavaScriptSourceKeywordToken(token.value,token.raw));
   }
 
   isKind(kind, offset = 0) {
@@ -475,6 +531,7 @@ export class TokenCursor {
     if (token.kind !== 'identifier') {
       throw new TranslationError('syntax', `expected identifier${context ? ` in ${context}` : ''} but found ${describe(token)}`, token);
     }
+    if (this.language === 'JavaScript' && acceptJavaScriptBindingIdentifierContext(context ?? '')) requireJavaScriptIdentifierRole(token, true);
     return this.next();
   }
 

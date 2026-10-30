@@ -5,6 +5,8 @@
 
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
+import { renderSourceTargetIdentifier } from './source-identifier-rules.js';
+import {acceptOrderedRecordNumberStorage} from './ordered-record-layout-rules.js';
 
 /** Assumption texts are fixed so that contracts compare across runtimes. */
 export const ASSUMPTIONS = {
@@ -51,6 +53,7 @@ export class EmitState {
       return this.taken.get(key);
     };
     const claim = (space, name) => {
+      name = renderSourceTargetIdentifier(name);
       const used = namespace(space);
       let candidate = name;
       for (let index = 2; used.has(candidate) || this.isGenerated(candidate, used); index += 1) candidate = `${name}_${index}`;
@@ -255,6 +258,7 @@ export function typeChildren(type) {
 }
 
 export function typeContains(program, type, kind, seen = new Set()) {
+  if(kind==='float'&&acceptOrderedRecordNumberStorage(type.kind,type.ordered===true))return true;
   if (type.kind === kind) return true;
   if (type.kind === 'data') {
     if (seen.has(type.name)) return false;
@@ -274,7 +278,7 @@ export function numberDependence(program) {
     const visit = (value) => {
       if (found || !value || typeof value !== 'object') return;
       if (Array.isArray(value)) value.forEach(visit);
-      else if (value.kind === 'float') found = true;
+      else if (value.kind === 'float'||acceptOrderedRecordNumberStorage(value.kind??'',value.ordered===true)) found = true;
       else Object.values(value).forEach(visit);
     };
     visit(node);

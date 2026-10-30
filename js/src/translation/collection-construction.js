@@ -43,7 +43,7 @@ export function checkCollectionConstruction(checker, node, env, path, expected) 
   const want = node.type ? checker.resolveType(node.type, path, node.span) : expected;
   const selected = readCollectionConstructionContext(node.k, want);
   const element = selected.form === 1 ? selected.first : { kind: 'tuple', elements: [selected.first, selected.second] };
-  const items = checker.expr(selected.form === 1 ? node.items : node.entries, env, path, selected.context ? array(element) : undefined);
+  const items = checker.referenceValue(checker.expr(selected.form === 1 ? node.items : node.entries, env, path, selected.context ? array(element) : undefined));
   const { facts, columns, identity } = collectionFacts(items.type);
   const plan = planCollectionConstructionChecked(...columns, node.k, identity);
   if (plan[0]) throw typeError(readCollectionConstructionDiagnostic(plan[0], 'message'), node.span);

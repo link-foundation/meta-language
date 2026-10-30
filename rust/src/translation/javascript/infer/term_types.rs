@@ -131,6 +131,7 @@ impl Inference {
                         .collect(),
                     open: record.open,
                     reference: false,
+                    ordered: false,
                 }
             }
             Term::Cell(element) => Type::Cell {

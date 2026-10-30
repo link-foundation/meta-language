@@ -1,6 +1,6 @@
 //! JavaScript arrays, which the portable core never mutates, are Rust `Vec`s.
 
-use super::{Expr, Node, Prelude, Result, RustEmitter};
+use super::{Expr, Node, Prelude, Result, RustEmitter, Type};
 
 // Generated from the JavaScript emitter; source adaptations are performed by
 // its normal pipeline before a runtime string reaches either host adapter.
@@ -18,6 +18,31 @@ impl RustEmitter<'_> {
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr) -> Result<String> {
         match &e.node {
+            Node::CollectionSize { object } => {
+                let value = self.receiver(object)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_size_expression(
+                        "Rust", &value,
+                    ),
+                )
+            }
+            Node::CollectionRead { object, op, key } => {
+                let key_type = match &object.ty {
+                    super::Type::Map { key, .. } | super::Type::Set { element: key, .. } => {
+                        key.as_ref()
+                    }
+                    _ => unreachable!("checked collection access owner"),
+                };
+                let float_key = key_type.is_float();
+                let kind = object.ty.kind();
+                let value = self.expr(object)?;
+                let search = self.expr(key)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_read_expression(
+                        "Rust", kind, op, &value, &search, float_key, "", "", "",
+                    ),
+                )
+            }
             Node::Array { items } => {
                 if items.is_empty() {
                     let element = e.ty.element().expect("an array literal has an array type");
@@ -121,6 +146,22 @@ impl RustEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                if let Some(loan) = self.nominal_array_projection_loan(array)? {
+                    if e.ty.is_float() {
+                        return Ok(format!("({loan}.len() as f64)"));
+                    }
+                    if matches!(e.ty, Type::Int | Type::Nat) {
+                        self.preludes.insert(Prelude::Big);
+                        return Ok(format!("crate::ml::Big::from_u128({loan}.len() as u128)"));
+                    }
+                }
+                let (bits, signed) = match &e.ty {
+                    super::Type::Fixed { bits, signed } => (*bits, *signed),
+                    _ => (0, false),
+                };
+                if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result("length",e.ty.kind(),f64::from(bits),signed,array.ty.kind()) {
+                    return Ok(crate::translation::rust_array_length_rules::render_rust_exact_array_length("Rust", &self.receiver(array)?));
+                }
                 if array.ty == super::Type::String {
                     if self.utf16_strings {
                         let value = self.receiver(array)?;

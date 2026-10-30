@@ -24,6 +24,58 @@ impl RocqEmitter<'_> {
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr) -> Result<String> {
         match &e.node {
+            Node::CollectionSize { object } => {
+                self.floats();
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_size_expression(
+                        "Rocq", &value,
+                    ),
+                )
+            }
+            Node::CollectionRead { object, op, key } => {
+                let (key_type, value_type) = match &object.ty {
+                    super::Type::Map { key, value, .. } => (key.as_ref(), Some(value.as_ref())),
+                    super::Type::Set { element, .. } => (element.as_ref(), None),
+                    _ => unreachable!("checked collection access owner"),
+                };
+                let expression = if object.ty.kind() == "map" {
+                    "(fst ml_value)"
+                } else {
+                    "ml_value"
+                };
+                let equal = self.comparison(
+                    crate::translation::surface::BinaryOp::Eq,
+                    key_type,
+                    expression,
+                    "ml_search",
+                )?;
+                let first = if op == "get" {
+                    self.ty(key_type)?
+                } else {
+                    String::new()
+                };
+                let second = if op == "get" {
+                    self.ty(value_type.expect("map lookup value owner"))?
+                } else {
+                    String::new()
+                };
+                let value = self.expr(object)?;
+                let search = self.expr(key)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_read_expression(
+                        "Rocq",
+                        object.ty.kind(),
+                        op,
+                        &value,
+                        &search,
+                        key_type.is_float(),
+                        &equal,
+                        &first,
+                        &second,
+                    ),
+                )
+            }
             Node::Array { items } => {
                 let mut parts = Vec::with_capacity(items.len() + 1);
                 for item in items {
@@ -119,6 +171,13 @@ impl RocqEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                let (bits, signed) = match &e.ty {
+                    super::Type::Fixed { bits, signed } => (*bits, *signed),
+                    _ => (0, false),
+                };
+                if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result("length",e.ty.kind(),f64::from(bits),signed,array.ty.kind()) {
+                    return Ok(crate::translation::rust_array_length_rules::render_rust_exact_array_length("Rocq", &self.expr(array)?));
+                }
                 if array.ty == super::Type::String {
                     self.floats();
                     return Ok(

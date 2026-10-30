@@ -11,11 +11,45 @@ use super::super::{
 };
 
 impl RustParser {
+    pub(in super::super) fn split_type_closing_token(&mut self) {
+        let token = self.cursor.peek().clone();
+        let parts = crate::translation::rust_type_token_rules::read_rust_type_closing_token_parts(
+            &token.value,
+        );
+        if parts.is_empty() {
+            return;
+        }
+        let mut offset = token.start;
+        let tokens = parts
+            .into_iter()
+            .map(|value| {
+                let mut part = token.clone();
+                part.start = offset;
+                offset += value.len();
+                part.end = offset;
+                part.raw = value.clone();
+                part.value = value;
+                part
+            })
+            .collect::<Vec<_>>();
+        let index = self.cursor.index;
+        self.cursor.tokens.splice(index..index + 1, tokens);
+    }
     /// Types: machine integers, `bool`, `String`, `&str`, `()`, crate types,
     /// and `&T`/`Box<T>`, which denote the value `T` since every portable value
     /// is immutable.
     pub(in super::super) fn parse_type_value(&mut self) -> Result<Type> {
         let token = self.peek();
+        if crate::translation::rust_iterator_reduction_rules::accept_rust_iterator_item_inferred_type(&token.value,self.iterator_item_type_inference_origin.is_some()) {
+            self.cursor.advance();let mut origin=self.iterator_item_type_inference_origin.clone().expect("actual collection item");
+            origin.expanded_source_owner=origin.source_owner.clone();let ty=origin.ty.clone().expect("actual collection item type");self.origins.current_type=origin;return Ok(ty);
+        }
+        if self.cursor.is("fn") {
+            return self.read_function_pointer_type();
+        }
+        if let Some(inherent) = self.inherent_self_type() {
+            return Ok(inherent);
+        }
         if self.cursor.eat("&").is_some() {
             let source_lifetime = if self.cursor.is("'") {
                 self.cursor.advance();
@@ -120,10 +154,12 @@ impl RustParser {
                 .typed(Type::Tuple { elements }, &self.module_path, Vec::new());
             self.origins.current_type.copy_evidence = children_accepted.then_some(());
             self.origins.current_type.fields = Some(fields);
-            if !accept_rust_product_origin(
-                self.origins.current_type.direct_copy_value(),
-                self.origins.owned_local_product(&self.origins.current_type),
-            ) {
+            if !self.header_discovery
+                && !accept_rust_product_origin(
+                    self.origins.current_type.direct_copy_value(),
+                    self.origins.owned_local_product(&self.origins.current_type),
+                )
+            {
                 return Err(unsupported(
                     "immutable Rust tuple product",
                     "every field requires a direct recursively immutable scalar Copy source value",
@@ -135,6 +171,12 @@ impl RustParser {
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
+        if let Some(alias) = self.read_type_alias_value(&segments)? {
+            return Ok(alias);
+        }
+        if let Some(handle) = self.shared_array_type(&segments, &token)? {
+            return Ok(handle);
+        }
         if let Some(empty) = self.read_empty_option_result(&segments, &token)? {
             return Ok(empty);
         }
@@ -181,6 +223,7 @@ impl RustParser {
         if accept_rust_source_array_owner(&name, false)
             || accept_rust_source_array_owner(&resolved.join("::"), false)
         {
+            self.refuse_shared_bare_vector(span(&token, self.cursor.peek()))?;
             self.origins.vector_owner(
                 &segments,
                 &resolved,
@@ -191,6 +234,7 @@ impl RustParser {
             let element_token = self.peek();
             let inner = self.parse_type()?;
             self.array_element(&token, &element_token)?;
+            self.split_type_closing_token();
             self.cursor.expect(">", Some("Vec"))?;
             return Ok(self.origins.typed(
                 Type::Array {
@@ -212,6 +256,7 @@ impl RustParser {
             )?;
             self.cursor.expect("<", Some("Box"))?;
             let inner = self.parse_type()?;
+            self.split_type_closing_token();
             self.cursor.expect(">", Some("Box"))?;
             let origin = self.origins.current_type.clone();
             let mut wrappers = vec!["box".to_owned()];

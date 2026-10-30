@@ -25,6 +25,8 @@ pub enum StorageError {
     Doublets(String),
     /// Stored bytes do not match the meta-language storage schema.
     Corrupt(String),
+    /// The native store cannot allocate another unsigned 64-bit identity.
+    IdentifierSpaceExhaustion,
 }
 
 impl fmt::Display for StorageError {
@@ -34,6 +36,9 @@ impl fmt::Display for StorageError {
             Self::Io(error) => write!(formatter, "storage I/O error: {error}"),
             Self::Doublets(error) => write!(formatter, "doublets storage error: {error}"),
             Self::Corrupt(error) => write!(formatter, "corrupt storage: {error}"),
+            Self::IdentifierSpaceExhaustion => {
+                formatter.write_str("meta-language link identifier space exhausted")
+            }
         }
     }
 }
@@ -43,7 +48,7 @@ impl Error for StorageError {
         match self {
             Self::ReadOnly(error) => Some(error),
             Self::Io(error) => Some(error),
-            Self::Doublets(_) | Self::Corrupt(_) => None,
+            Self::Doublets(_) | Self::Corrupt(_) | Self::IdentifierSpaceExhaustion => None,
         }
     }
 }
@@ -256,6 +261,9 @@ impl LinkStore for LinkNetwork {
         references: &[LinkId],
         metadata: LinkMetadata,
     ) -> Result<LinkId, StorageError> {
+        if !self.has_allocation_capacity(1) {
+            return Err(StorageError::IdentifierSpaceExhaustion);
+        }
         Ok(self.insert_dynamic_link(references, metadata))
     }
 
@@ -306,7 +314,7 @@ fn insert_network_link_with_id(
     if let Some(term) = term {
         network.terms.insert(term, id);
     }
-    network.next_id = network.next_id.max(id.as_u64() + 1);
+    network.observe_identifier(id);
 }
 
 fn replace_network_link(

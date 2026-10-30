@@ -104,6 +104,61 @@ fn observe(source: &str, expected: &str, native: bool) {
     assert_eq!(result.stdout, expected);
 }
 
+// Keep the original unannotated source and actually compile it. Rust 1.99.1
+// reports E0282 for Pattern closures whose method receiver needs a char type.
+// A separately generated type-annotated source supplies the execution oracle;
+// the original source still passes through both semantic archive directions.
+fn observe_inferred_ascii_source(source: &str, expected: &str) {
+    assert_versions();
+    let directory = TemporaryDirectory::new("ascii-original-inference");
+    let file = directory.0.join("original.rs");
+    let binary = directory
+        .0
+        .join(format!("original{}", std::env::consts::EXE_SUFFIX));
+    fs::write(&file, source).unwrap();
+    let mut command = Command::new("rustc");
+    command.args(["--edition", "2024"]);
+    #[cfg(windows)]
+    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+        command.arg("-C").arg(format!("linker={linker}"));
+    }
+    let compiled = run(command.arg(&file).arg("-o").arg(&binary));
+    if compiled.ok {
+        let actual = run(&mut Command::new(binary));
+        assert!(actual.ok, "{}", actual.stderr);
+        assert_eq!(actual.stdout, expected);
+    } else {
+        // The diagnostic expectation is qualified to the exact observed patch
+        // release. A newly uncovered compiler version must be reviewed in CI.
+        let active = run(Command::new("rustc").arg("--version"));
+        assert!(active.ok, "{}", active.stderr);
+        assert_eq!(
+            active.stdout.split_whitespace().nth(1),
+            Some("1.99.1"),
+            "uncovered E0282 profile; expected Rust >=1.99.1 <1.99.2: {}",
+            active.stdout
+        );
+        assert!(
+            compiled.stderr.contains("error[E0282]"),
+            "{}",
+            compiled.stderr
+        );
+        let annotated = source.replace(
+            ".starts_with(|c|",
+            ".starts_with(|c: ::core::primitive::char|",
+        );
+        assert_ne!(
+            annotated, source,
+            "only the original represented ASCII Pattern receiver receives a type annotation"
+        );
+        eprintln!(
+            "original ASCII inference diagnostic at Rust >=1.99.1 <1.99.2: {}",
+            compiled.stderr
+        );
+        observe(&annotated, expected, true);
+    }
+}
+
 fn inputs() -> Vec<String> {
     let mut values = [
         "", "_", "a", "Z", "a0_", "0a", "-a", "a-b", "a\n", "a\r\n", "π", "aπ", "é", "K", "İ",
@@ -197,6 +252,19 @@ fn actual_generated_ascii_methods_match_complete_independent_byte_ranges_and_uni
 #[test]
 fn both_actual_whole_helpers_preserve_sources_cst_native_execution_and_bidirectional_semantic_archives()
  {
+    // One declared CI worker budget for the complete 256-codepoint product.
+    // Every original input, assertion and native execution stays in the worker.
+    let worker = std::thread::Builder::new()
+        .name("complete-ascii-semantic-archives".to_owned())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(check_complete_ascii_semantic_archives)
+        .expect("the bounded CI worker starts");
+    if let Err(failure) = worker.join() {
+        std::panic::resume_unwind(failure);
+    }
+}
+
+fn check_complete_ascii_semantic_archives() {
     assert_versions();
     let fixture = fixture();
     let owners = fixture["originalDeclarations"].as_array().unwrap();
@@ -225,6 +293,7 @@ fn both_actual_whole_helpers_preserve_sources_cst_native_execution_and_bidirecti
             owner["declarationSha256"].as_str().unwrap()
         );
         let concrete_source = format!("// actual owner π: {path}\n{declaration}\n");
+        eprintln!("ASCII archive phase: complete concrete parse {name}");
         let concrete = LinkNetwork::parse(&concrete_source, "Rust", ParseConfiguration::default());
         assert!(
             concrete
@@ -260,6 +329,7 @@ fn both_actual_whole_helpers_preserve_sources_cst_native_execution_and_bidirecti
         }
         source.push('}');
         observe(&source, &output, true);
+        eprintln!("ASCII archive phase: original Rust semantic program {name}");
         let packet = create_typed_program_links(&source, "Rust").unwrap();
         let original_rust = emit_typed_program_links(&packet.network, packet.root, "Rust")
             .unwrap()
@@ -292,6 +362,7 @@ fn both_actual_whole_helpers_preserve_sources_cst_native_execution_and_bidirecti
         }
         observe(&original_rust, &output, true);
         observe(&original_javascript, &output, false);
+        eprintln!("ASCII archive phase: reverse JavaScript semantic program {name}");
         let reverse = create_typed_program_links(&original_javascript, "JavaScript").unwrap();
         for network in archives(&reverse.network) {
             observe(
@@ -331,7 +402,7 @@ fn main(){".to_owned();
         "println!(\"{}\",selected(\"00\",true));println!(\"{}\",selected(\"00\",false));}",
     );
     let expected = "false\ntrue\ntrue\ntrue\ntrue\ntrue\ntrue\nfalse\nfalse\nfalse\nfalse\nfalse\ntrue\nfalse\nfalse\nfalse\ntrue\nfalse\ntrue\nfalse\n";
-    observe(&source, expected, true);
+    observe_inferred_ascii_source(&source, expected);
     let packet = create_typed_program_links(&source, "Rust").unwrap();
     for network in archives(&packet.network) {
         let javascript = emit_typed_program_links(&network, packet.root, "JavaScript")
@@ -415,7 +486,7 @@ fn actual_wrong_owners_aliases_annotations_effects_and_existing_const_boundaries
         let source = format!(
             "{prefix}fn selected(value:&str)->bool{{value.starts_with(|c|c.is_ascii_digit())}}fn main(){{println!(\"{{}}\",selected(\"0\"));println!(\"{{}}\",selected(\"π\"));}}"
         );
-        observe(&source, "true\nfalse\n", true);
+        observe_inferred_ascii_source(&source, "true\nfalse\n");
         let packet = create_typed_program_links(&source, "Rust").unwrap();
         observe(
             &emit_typed_program_links(&packet.network, packet.root, "JavaScript")

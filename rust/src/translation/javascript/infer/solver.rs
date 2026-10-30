@@ -17,8 +17,14 @@ impl Inference {
         for external in &program.externals {
             let (params, ret) = external.signature();
             let signature = Signature {
+                constant_value: matches!(
+                    external,
+                    crate::translation::surface::External::Constant { .. }
+                ),
                 defaults: vec![false; params.len()],
                 optional_params: vec![false; params.len()],
+                invocation_defaults: vec![false; params.len()],
+                guarded_inputs: vec![false; params.len()],
                 params: params
                     .into_iter()
                     .map(|ty| self.declared(Some(ty)))
@@ -48,9 +54,15 @@ impl Inference {
             self.signatures.insert(
                 path.join("."),
                 Signature {
+                    constant_value: false,
                     params,
                     defaults,
                     optional_params: function.params.iter().map(|param| param.optional).collect(),
+                    invocation_defaults:function.params.iter().map(|param|{
+                        let (kind,absence)=param.default_value.as_ref().map_or(("",""),|value|match &value.node{super::SNode::None{absence}=>("none",absence.as_str()),_=>(value.node.kind(),"")});
+                        crate::translation::named_default_callable_rules::require_named_callable_default_initialization(param.default_value.is_some(),param.optional,kind,absence)
+                    }).collect(),
+                    guarded_inputs:function.params.iter().map(|param|param.guard.is_some()).collect(),
                     ret,
                     declared_ret,
                 },
@@ -59,11 +71,13 @@ impl Inference {
         for (path, function) in functions {
             let signature = self.signatures[&path.join(".")].clone();
             self.context = path[..path.len() - 1].to_vec();
+            let mut initialization = Env::new();
             for (param, term) in function.params.iter().zip(&signature.params) {
                 if let Some(default_value) = &param.default_value {
-                    let value = self.expr_expected(default_value, &Env::new(), Some(term))?;
+                    let value = self.expr_expected(default_value, &initialization, Some(term))?;
                     self.unify(&value, term, param.span)?;
                 }
+                initialization.insert(param.name.clone(), term.clone());
             }
         }
         for (path, function) in functions {
@@ -152,21 +166,36 @@ impl Inference {
                     waiting.push(constraint);
                 }
             }
+            // Field refinement appends its actual present-value constraint,
+            // just as the JavaScript snapshot iteration retains appended rows.
+            waiting.extend(std::mem::take(&mut self.fields));
             self.fields = waiting;
             progress |= self.solve_methods()?;
             progress |= self.solve_includes(false)?;
             progress |= self.solve_optional()?;
+            progress |= self.solve_array_formal_iterables()?;
+            progress |= self.solve_recursive_binding_iterables()?;
+            progress |= self.solve_record_formal_fields()?;
+            progress |= self.solve_object_rest_fields()?;
             progress |= self.solve_iterables()?;
             progress |= self.solve_product_indices()?;
             progress |= self.solve_array_binding_defaults()?;
             progress |= self.solve_arithmetic(false)?;
             progress |= self.solve_joins_and_results()?;
             progress |= self.solve_record_spreads()?;
+            progress |= self.solve_nominal_spreads()?;
             progress |= self.solve_equalities(false)?;
+            progress |= self.solve_enumerations()?;
             if !progress && !self.includes.is_empty() {
                 progress |= self.solve_includes(true)?;
             }
+            if !progress {
+                progress |= self.force_method_owner()?;
+            }
             // `.length` of a value nothing else fixes reads an array.
+            if !progress {
+                progress |= self.force_data_field_owner()?;
+            }
             let length = self.fields.iter().find(|constraint| {
                 constraint.field == "length"
                     && matches!(self.resolve(&constraint.object), Term::Var(_))
@@ -183,9 +212,14 @@ impl Inference {
                 progress = true;
             }
             if !progress {
+                progress |= self.settle_unknown_computed_callable()?;
+            }
+            if !progress {
                 let unknown = self
-                    .iterables
+                    .array_formal_iterables
                     .iter()
+                    .chain(self.recursive_binding_iterables.iter())
+                    .chain(self.iterables.iter())
                     .find(|constraint| matches!(self.resolve(&constraint.object), Term::Var(_)));
                 if let Some(iterable) = unknown {
                     let object = iterable.object.clone();
@@ -236,9 +270,39 @@ impl Inference {
                 constraint.place,
             ));
         }
+        if let Some(constraint) = self.nominal_spreads.first() {
+            return Err(super::type_error(
+                "an object spread needs its complete actual source owner; declare its fields with JSDoc",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.record_formal_fields.first() {
+            return Err(super::type_error(
+                "record formal default needs a known represented field domain",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.recursive_binding_iterables.first() {
+            return Err(super::type_error(
+                "a recursive binding needs a represented iterable",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.object_rest_fields.first() {
+            return Err(super::type_error(
+                "object rest needs a known complete own-field domain",
+                constraint.place,
+            ));
+        }
         if let Some(constraint) = self.array_binding_defaults.first() {
             return Err(super::type_error(
                 "array binding default needs a known array element type",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.enumerations.first() {
+            return Err(super::type_error(
+                "object value enumeration needs its actual complete value domain",
                 constraint.place,
             ));
         }

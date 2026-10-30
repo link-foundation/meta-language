@@ -1,0 +1,20 @@
+// Deferred scalar-domain and representation controls. No observations here.
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {readProjectData} from '../src/project-data-files.js';
+import {measureRustUtf8ByteLength} from '../src/translation/rust-string-byte-length-rules.js';
+import {parseRust} from '../src/translation/rust.js';
+import {checkProgram} from '../src/translation/check.js';
+import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {emitRust} from '../src/translation/emit-rust.js';
+import {emitLean} from '../src/translation/emit-lean.js';
+import {emitRocq} from '../src/translation/emit-rocq.js';
+import {createSourceDefinitionProgramLinks} from '../src/source-definition-catalog.js';
+import {emitTypedProgramLinks} from '../src/typed-program-links.js';
+import {LinkNetwork} from '../src/network.js';
+import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+const controls=readProjectData(new URL('../src/data/rust-string-byte-length-controls.lino',import.meta.url));
+test('the complete scalar measure agrees with independent literal byte counts',()=>{for(const row of controls.normCases){assert.equal(String(measureRustUtf8ByteLength(row.units)),row.value,row.name);assert.equal(String(new TextEncoder().encode(row.text).length),row.value,row.name);}});
+test('invalid units never acquire a fabricated Unicode scalar interpretation',()=>{for(const units of [...controls.invalidUnits,[NaN],[Infinity],[-Infinity]])assert.throws(()=>measureRustUtf8ByteLength(units),TypeError);});
+test('an actual source operation cannot be emitted under another String representation',()=>{const checked=checkProgram(parseRust('pub fn result()->usize{"😀".len()}fn main(){}'));for(const emit of [emitJavaScript,emitRust,emitLean,emitRocq]){assert.throws(()=>emit({...checked,utf16Strings:true}),/Unicode scalar String representation/u);assert.throws(()=>emit({...checked,sourceLanguage:'JavaScript'}),/Unicode scalar String representation/u);}});
+test('the complete byte-count definition survives both codecs and all emissions',()=>{const packet=createSourceDefinitionProgramLinks('meta-language/source-program/rust-string-byte-length-program');for(const target of ['JavaScript','Rust','Lean','Rocq']){const expected=emitTypedProgramLinks(packet.network,packet.root,target);for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);}});

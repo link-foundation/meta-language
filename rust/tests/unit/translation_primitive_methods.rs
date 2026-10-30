@@ -308,7 +308,29 @@ fn code_unit_parameters_keep_lone_surrogates_pair_halves_and_unusual_positions_i
 
 #[test]
 fn code_unit_conversion_keeps_unrepresented_source_and_internal_domains_explicit() {
-    for index in ["true", "false", "'1'", "{}", "[1]"] {
+    // Former complete assertions are retained in string-unit-calls.lino.
+    for (index, expected) in [
+        ("true", "66\n"),
+        ("false", "65\n"),
+        ("'1'", "66\n"),
+        ("0,1", "65\n"),
+    ] {
+        let source = format!("console.log('ABC'.charCodeAt({index}));");
+        let checked = check_program(&parse_javascript(&source).unwrap()).unwrap();
+        assert_eq!(javascript(&source), expected);
+        assert_eq!(
+            javascript(&emit_javascript(&checked).unwrap().text),
+            expected
+        );
+        assert_eq!(
+            rust(
+                &emit_rust(&checked).unwrap().text,
+                "coerced-code-unit-position"
+            ),
+            expected
+        );
+    }
+    for index in ["{}", "[1]"] {
         let source = format!("console.log('ABC'.charCodeAt({index}));");
         assert!(
             parse_javascript(&source)
@@ -316,18 +338,14 @@ fn code_unit_conversion_keeps_unrepresented_source_and_internal_domains_explicit
                 .is_err()
         );
     }
-    let extra = "console.log('ABC'.charCodeAt(0,1));";
-    let failure = parse_javascript(extra)
-        .and_then(|surface| check_program(&surface))
-        .unwrap_err();
-    assert!(failure.reason.contains("0 to 1 arguments"));
     let escaped = r"console.log('\ud800'.charCodeAt(0));";
     assert_eq!(javascript(escaped), "55296\n");
-    assert!(
-        parse_javascript(escaped)
-            .unwrap_err()
-            .reason
-            .contains("not a scalar value")
+    // ECMAScript 2025 StringLiteral SV replaces the preceding
+    // "not a scalar value" refusal while retaining its original source.
+    let literal = check_program(&parse_javascript(escaped).unwrap()).unwrap();
+    assert_eq!(
+        javascript(&emit_javascript(&literal).unwrap().text),
+        "55296\n"
     );
     let annotated = "/** @returns {string} */function receiver(){console.log('receiver');return 'A😀B';}\n/** @returns {number} */function index(){console.log('index');return 1.9;}\n/** @returns {undefined} */function absent(){console.log('absent');return undefined;}\nconsole.log(receiver().charCodeAt(index()));\nconsole.log(receiver().charCodeAt(absent()));\nconsole.log(receiver().charCodeAt());";
     assert_eq!(
@@ -679,14 +697,36 @@ fn relative_character_keeps_default_order_complete_archives_and_lossless_source(
             .code,
         source
     );
-    for position in ["true", "false", "'1'", "{}", "[1]", "1n"] {
+    for (position, expected) in [
+        ("true", "B\n"),
+        ("false", "A\n"),
+        ("'1'", "B\n"),
+        ("0,1", "A\n"),
+    ] {
+        let source = format!("console.log('ABC'.at({position}));");
+        let checked = check_program(&parse_javascript(&source).unwrap()).unwrap();
+        assert_eq!(javascript(&source), expected);
+        assert_eq!(
+            javascript(&emit_javascript(&checked).unwrap().text),
+            expected
+        );
+        assert_eq!(
+            rust(
+                &emit_rust(&checked).unwrap().text,
+                "coerced-relative-position"
+            ),
+            expected
+        );
+    }
+    // The same original BigInt input is now admitted and throws ToNumber at runtime.
+    assert!(check_program(&parse_javascript("console.log('ABC'.at(1n));").unwrap()).is_ok());
+    for position in ["{}", "[1]"] {
         assert!(
             parse_javascript(&format!("console.log('ABC'.at({position}));"))
                 .and_then(|surface| check_program(&surface))
                 .is_err()
         );
     }
-    assert!(check_program(&parse_javascript("console.log('ABC'.at(0,1));").unwrap()).is_err());
 }
 
 fn assert_unicode_order_fixture_observations(cases: &[serde_json::Value], observations: &str) {
@@ -736,18 +776,21 @@ fn explicit_unicode_order_matches_every_shared_case_and_every_single_code_unit()
     let expected = javascript(&(source.to_owned() + &driver));
     assert_unicode_order_fixture_observations(cases, &expected);
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
-    assert!(
-        meta_language::translation::emit_lean::emit_lean(&program)
-            .unwrap_err()
-            .reason
-            .contains("UTF-16 operational string encoding for lexical comparison")
-    );
-    assert!(
-        meta_language::translation::emit_rocq::emit_rocq(&program)
-            .unwrap_err()
-            .reason
-            .contains("UTF-16 operational string encoding for lexical comparison")
-    );
+    // Shared formal unit semantics replace the preceding "UTF-16 operational
+    // string encoding for lexical comparison" refusal. Keep every source,
+    // fixture and native/original-value assertion in this complete test.
+    for formal in [
+        meta_language::translation::emit_lean::emit_lean(&program).unwrap(),
+        meta_language::translation::emit_rocq::emit_rocq(&program).unwrap(),
+    ] {
+        assert!(
+            formal
+                .encodings
+                .iter()
+                .any(|entry| entry.id == "utf16-formal-strings")
+        );
+        assert!(formal.text.contains("MLUtf16Text.compare"));
+    }
     let native_source = "fn before(left: String,right: String)->bool {left<right} fn main() {}";
     let refusal = meta_language::translation::rust::parse_rust(native_source)
         .and_then(|surface| check_program(&surface))

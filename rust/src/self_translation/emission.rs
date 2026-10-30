@@ -10,8 +10,8 @@ use crate::translation::emit_common::Emitted;
 use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::{emit_rust_constants, emit_rust_with_representation};
 use crate::translation::ir::Program;
-use crate::translation::javascript::parse_javascript_bound_in_with_module_scope;
-use crate::translation::rust::parse_rust;
+use crate::translation::javascript::parse_javascript_bound_in_with_module_representation;
+use crate::translation::rust::parse_rust_with_source_version;
 use crate::translation::surface::{External, SExpr};
 
 /// The item emitted by the portable core with the signatures it gives the
@@ -28,13 +28,13 @@ pub(super) fn emit_item(
 }
 
 /// The exact program and emission already produced by the normal item path.
-pub(super) struct CheckedItem {
-    pub(super) program: Program,
-    pub(super) emitted: Emitted,
-    pub(super) signatures: Vec<External>,
-    pub(super) definition_ownership: Option<crate::translation::emit_rust::DefinitionOwnership>,
-    pub(super) source: String,
-    pub(super) source_language: String,
+pub struct CheckedItem {
+    pub program: Program,
+    pub emitted: Emitted,
+    pub signatures: Vec<External>,
+    pub definition_ownership: Option<crate::translation::emit_rust::DefinitionOwnership>,
+    pub source: String,
+    pub source_language: String,
 }
 
 pub(super) fn check_and_emit_item(
@@ -47,7 +47,11 @@ pub(super) fn check_and_emit_item(
     check_and_emit_item_profile(text, from, to, context, literal_bindings, false)
 }
 
-pub(super) fn check_and_emit_item_with_ownership(
+/// Check a complete declaration and retain its actual emission ownership.
+///
+/// # Errors
+/// Returns the ordinary frontend, checking or emission diagnostic.
+pub fn check_and_emit_item_with_ownership(
     text: &str,
     from: &str,
     to: &str,
@@ -68,26 +72,31 @@ fn check_and_emit_item_profile(
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
         if RUST_MAIN.is_match(text) {
-            parse_rust(text)?
+            parse_rust_with_source_version(text, &context.rust_source_version)?
         } else {
-            parse_rust(&format!("{text}\nfn main() {{}}\n"))?
+            parse_rust_with_source_version(
+                &format!("{text}\nfn main() {{}}\n"),
+                &context.rust_source_version,
+            )?
         }
     } else {
         if from == "TypeScript" {
-            parse_javascript_bound_in_with_module_scope(
+            parse_javascript_bound_in_with_module_representation(
                 &project_type_script_typing(text)?,
                 &context.module,
                 literal_bindings,
                 family(to) == "Rust",
                 context.module_binding_scope.as_ref(),
+                context.reference_semantics,
             )?
         } else {
-            parse_javascript_bound_in_with_module_scope(
+            parse_javascript_bound_in_with_module_representation(
                 text,
                 &context.module,
                 literal_bindings,
                 family(to) == "Rust",
                 context.module_binding_scope.as_ref(),
+                context.reference_semantics,
             )?
         }
     };

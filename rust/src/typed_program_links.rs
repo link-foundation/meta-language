@@ -28,6 +28,7 @@ mod codec;
 pub mod program_numeric_metadata;
 pub mod program_numeric_metadata_rules;
 mod projection;
+mod record_shapes;
 pub mod source_span_rules;
 pub mod source_spans;
 
@@ -185,6 +186,51 @@ pub fn encode_typed_program_links_with_provenance(
 ) -> Result<TypedProgramLinks> {
     checked::validate(program)?;
     codec::encode(program, provenance)
+}
+/// Encode exact scalar/type/source-span value sharing. Declaration, expression
+/// and lexical binder identities remain independently represented.
+///
+/// # Errors
+/// Refuses unknown profiles and every existing checked-program defect.
+pub fn encode_typed_program_links_with_value_sharing(
+    program: &Program,
+    provenance: Option<&Value>,
+    profile: &str,
+) -> Result<TypedProgramLinks> {
+    let definition =
+        crate::read_structured_data_lino(include_str!("data/typed-program-value-sharing.lino"))
+            .map_err(|failure| error(failure.to_string()))?;
+    if definition["model"].as_str() != Some(profile)
+        || definition["schemaVersion"] != serde_json::json!(1)
+        || definition["scalarValues"] != serde_json::json!(true)
+        || definition["typeRecords"] != serde_json::json!(true)
+        || definition["sourceSpans"] != serde_json::json!(true)
+        || definition["occurrences"] != serde_json::json!(false)
+    {
+        return Err(error("unregistered typed program value sharing profile"));
+    }
+    checked::validate(program)?;
+    codec::encode_values(program, provenance)
+}
+/// Encode inspectable ordered record shapes, retaining existing value aliases.
+/// Owning records and lexical binders remain separate occurrences.
+///
+/// # Errors
+/// Refuses unknown layout profiles and every existing semantic/structural defect.
+pub fn encode_typed_program_links_with_record_shapes(
+    program: &Program,
+    provenance: Option<&Value>,
+    profile: &str,
+) -> Result<TypedProgramLinks> {
+    record_shapes::validate_selection(profile)?;
+    checked::validate(program)?;
+    record_shapes::compact(codec::encode(program, provenance)?, profile)
+}
+pub(crate) fn expand_typed_program_record_shapes(
+    network: &LinkNetwork,
+    root: LinkId,
+) -> Result<LinkNetwork> {
+    record_shapes::expand(network, root)
 }
 /// Decode and recheck a graph with the default structural bounds.
 ///
@@ -401,6 +447,29 @@ pub fn create_typed_program_links_with_rust_runtime_shell_model(
         .map_err(|failure| error(failure.to_string()))?;
     let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustRuntimeShellModel":model},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
+/// Import actual standard Rust shared-array handles through the checked link model.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown models and unproved handle operations.
+pub fn create_typed_program_links_with_rust_shared_array_handle_source_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error(
+            "a Rust shared array handle source model requires Rust source",
+        ));
+    }
+    let surface =
+        crate::translation::rust::parse_rust_with_shared_array_handle_source_model(source, model)
+            .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSharedArrayHandleSourceModel":model},"userProvenance":provenance});
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 
@@ -734,8 +803,15 @@ pub fn emit_typed_program_links_with_options(
             model,
         )
         .map_err(|failure| error(failure.to_string()))?;
-        crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network, root)
-            .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+        if !crate::translation::rust_scalar_source_interface_rules::accept_rust_scalar_source_interface_model(model)
+            && !crate::translation::rust_scalar_mathematical_interface_rules::accept_rust_scalar_mathematical_interface_model(model)
+            && !crate::translation::rust_textual_source_interface_rules::accept_rust_textual_source_interface_model(model)
+            && !crate::translation::rust_string_predicate_interface_rules::accept_rust_string_predicate_interface_model(model)
+            && !crate::translation::rust_constructed_string_interface_rules::accept_rust_constructed_string_interface_model(model)
+            && !crate::translation::rust_displayed_string_interface_rules::accept_rust_displayed_string_interface_model(model) {
+            crate::shared_numeric_function_model::validate_shared_numeric_origin_context(network, root)
+                .map_err(|failure| error(format!("Rust source header emission: {failure}")))?;
+        }
     }
     if matches!(
         target.to_ascii_lowercase().as_str(),
@@ -804,9 +880,26 @@ pub fn emit_typed_program_links_with_options(
                 },
             )
         }
+        "lean" | "rocq" => {
+            if source_header_model.is_some() {
+                return Err(error(
+                    "a Rust source header emission model requires Rust target",
+                ));
+            }
+            if options.java_script_scoped_binding_emission_model.is_some() {
+                return Err(error(
+                    "a JavaScript scoped binding emission model requires JavaScript target",
+                ));
+            }
+            if target.eq_ignore_ascii_case("lean") {
+                crate::translation::emit_lean::emit_lean(&program)
+            } else {
+                crate::translation::emit_rocq::emit_rocq(&program)
+            }
+        }
         _ => {
             return Err(error(
-                "typed linked emission currently writes JavaScript and Rust",
+                "typed linked emission writes JavaScript, Rust, Lean and Rocq",
             ));
         }
     }
@@ -819,4 +912,26 @@ pub fn emit_typed_program_links_with_options(
         encodings: emitted.encodings,
         theorems: emitted.theorems,
     })
+}
+
+/// Import Rust with a selected source std version and separate user provenance.
+///
+/// # Errors
+/// Refuses uncovered source contexts, invalid source and malformed typed graphs.
+pub fn create_typed_program_links_with_rust_source_version(
+    source: &str,
+    version: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    let surface = crate::translation::rust::parse_rust_with_source_version(source, version)
+        .map_err(|error| TypedProgramLinksError {
+            message: error.to_string(),
+        })?;
+    let program = crate::translation::check::check_program(&surface).map_err(|error| {
+        TypedProgramLinksError {
+            message: error.to_string(),
+        }
+    })?;
+    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSourceVersion":crate::translation::rust::source_versions::canonical(version).map_err(|error|TypedProgramLinksError{message:error.to_string()})?},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
 }

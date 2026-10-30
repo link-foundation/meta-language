@@ -1,8 +1,8 @@
 //! Irrefutable positional bindings lower to ordinary ordered value bindings.
 
 use super::super::{
-    Binding, Options, ProductBindingPattern, Result, RustParser, SExpr, SNode, SourceOrigin, Span,
-    Type, UNIT, span, type_error, unsupported,
+    Binding, ProductBindingPattern, Result, RustParser, SExpr, SNode, SourceOrigin, Span, Type,
+    UNIT, span, type_error, unsupported,
 };
 
 impl RustParser {
@@ -15,9 +15,13 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        let pattern = self.product_binding_pattern()?;
+        let pattern = if let Some(pattern) = self.let_else_pattern(path)? {
+            ProductBindingPattern::Nominal(pattern)
+        } else {
+            self.product_binding_pattern()?
+        };
         let mut names = std::collections::HashSet::new();
-        Self::validate_product_binding_names(&pattern, &mut names)?;
+        self.validate_product_binding_names(&pattern, &mut names)?;
         let ty = if self.cursor.eat(":").is_some() {
             Some(self.parse_type()?)
         } else {
@@ -31,17 +35,56 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        let value = self.expr(path, Options::default())?;
+        let initializer_start = self.cursor.index;
+        let temporary_frame = self.origins.owned_temporary_frame();
+        let value = self.read_expected_copy_closure(path, source_type.as_ref())?;
         if self.cursor.is("else") {
-            return Err(unsupported(
-                "let-else",
-                "refutable bindings are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
+            let tokens = &self.cursor.tokens[initializer_start..self.cursor.index];
+            let kinds = tokens
+                .iter()
+                .map(|token| {
+                    if token.kind == super::super::TokenKind::Punct {
+                        "punct".to_owned()
+                    } else {
+                        "atom".to_owned()
+                    }
+                })
+                .collect::<Vec<_>>();
+            let spellings = tokens
+                .iter()
+                .map(|token| token.value.clone())
+                .collect::<Vec<_>>();
+            let reason =
+                crate::translation::rust_source_render_interfaces::read_rust_let_else_initializer_error(
+                    &kinds, &spellings,
+                );
+            if !reason.is_empty() {
+                return Err(unsupported(
+                    "Rust let-else initializer",
+                    &reason,
+                    span(&start, self.cursor.peek()),
+                ));
+            }
         }
+        let fallback = if self.cursor.eat("else").is_some() {
+            let body = self.block(path)?;
+            if !self.origins.origin(&body, path).diverging {
+                return Err(unsupported(
+                    "Rust let-else fallback",
+                    "the fallback needs a represented diverging completion",
+                    body.span,
+                ));
+            }
+            Some(body)
+        } else {
+            None
+        };
         self.cursor.expect(";", Some("let"))?;
+        self.origins
+            .finish_owned_expression(&value, path, &temporary_frame, true);
         let range = span(&start, self.cursor.peek());
         if let ProductBindingPattern::Name(token) = pattern {
+            self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;
             self.origins
                 .bind(&token.value, &value, path, source_type.as_ref())?;
             return Ok(vec![Binding {
@@ -51,11 +94,39 @@ impl RustParser {
                 span: range,
             }]);
         }
+        if let Some(fallback) = fallback {
+            let ProductBindingPattern::Nominal(pattern) = pattern else {
+                return Err(unsupported(
+                    "let-else",
+                    "refutable bindings are outside the portable core",
+                    range,
+                ));
+            };
+            let name = self.fresh_product_binding();
+            self.origins
+                .bind(&name, &value, path, source_type.as_ref())?;
+            let reference = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                range,
+            );
+            let mut bindings = vec![Binding {
+                name,
+                ty,
+                value,
+                span: range,
+            }];
+            self.lower_nominal_binding(pattern, reference, path, &mut bindings, Some(fallback))?;
+            return Ok(bindings);
+        }
         self.lower_product_binding(pattern, value, ty, source_type.as_ref(), path, range)
     }
 
     /// Read irrefutable positional patterns without introducing a pattern core.
-    pub(super) fn product_binding_pattern(&mut self) -> Result<ProductBindingPattern> {
+    pub(in crate::translation::rust) fn product_binding_pattern(
+        &mut self,
+    ) -> Result<ProductBindingPattern> {
         let token = self.peek();
         if self.cursor.eat("(").is_some() {
             if let Some(close) = self.cursor.eat(")") {
@@ -63,21 +134,34 @@ impl RustParser {
                     span: Some(Span::new(token.start, close.end)),
                 });
             }
-            let first = self.product_binding_pattern()?;
-            if self.cursor.eat(",").is_none() {
-                self.cursor.expect(")", Some("parenthesised binding"))?;
-                return Ok(first);
-            }
-            let mut items = vec![first];
+            let mut items = Vec::new();
+            let mut rest = None;
+            let mut comma = false;
             while !self.cursor.is(")") {
-                items.push(self.product_binding_pattern()?);
+                if self.cursor.eat("..").is_some() {
+                    if rest.is_some() {
+                        return Err(unsupported(
+                            "tuple rest binding",
+                            "a tuple binding has at most one rest position",
+                            span(&token, self.cursor.peek()),
+                        ));
+                    }
+                    rest = Some(items.len());
+                } else {
+                    items.push(self.product_binding_pattern()?);
+                }
                 if self.cursor.eat(",").is_none() {
                     break;
                 }
+                comma = true;
             }
             let close = self.cursor.expect(")", Some("tuple binding"))?;
+            if items.len() == 1 && rest.is_none() && !comma {
+                return Ok(items.remove(0));
+            }
             return Ok(ProductBindingPattern::Tuple {
                 items,
+                rest,
                 span: Some(Span::new(token.start, close.end)),
             });
         }
@@ -95,8 +179,11 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
+        if let Some(pattern) = self.nominal_binding_pattern()? {
+            return Ok(ProductBindingPattern::Nominal(pattern));
+        }
         let name = self.cursor.identifier(Some("let"))?;
-        if name.value == "true" || name.value == "false" {
+        if !name.raw.starts_with("r#") && (name.value == "true" || name.value == "false") {
             return Err(unsupported(
                 "refutable product binding",
                 "only immutable names, ignored fields and anonymous tuple products are admitted",
@@ -118,7 +205,8 @@ impl RustParser {
         })
     }
 
-    pub(super) fn validate_product_binding_names(
+    pub(in crate::translation::rust) fn validate_product_binding_names(
+        &self,
         pattern: &ProductBindingPattern,
         names: &mut std::collections::HashSet<String>,
     ) -> Result<()> {
@@ -134,10 +222,21 @@ impl RustParser {
             }
             ProductBindingPattern::Tuple { items, .. } => {
                 for item in items {
-                    Self::validate_product_binding_names(item, names)?;
+                    self.validate_product_binding_names(item, names)?;
                 }
             }
             ProductBindingPattern::Wildcard(_) | ProductBindingPattern::Unit { .. } => {}
+            ProductBindingPattern::Nominal(pattern) => {
+                for (name, range) in self.nominal_binding_names(pattern, false)? {
+                    if !names.insert(name) {
+                        return Err(unsupported(
+                            "duplicate tuple binding",
+                            "each name occurs only once in a destructuring pattern",
+                            range,
+                        ));
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -152,7 +251,7 @@ impl RustParser {
         }
     }
 
-    pub(super) fn lower_product_binding(
+    pub(in crate::translation::rust) fn lower_product_binding(
         &mut self,
         pattern: ProductBindingPattern,
         value: SExpr,
@@ -162,6 +261,18 @@ impl RustParser {
         range: Option<Span>,
     ) -> Result<Vec<Binding>> {
         let name = self.fresh_product_binding();
+        if matches!(pattern, ProductBindingPattern::Wildcard(_)) {
+            if let Some(expected) = source_type {
+                let actual = self.origins.origin(&value, path);
+                self.origins.argument(&actual, expected, range)?;
+            }
+            return Ok(vec![Binding {
+                name,
+                ty,
+                value,
+                span: range,
+            }]);
+        }
         self.origins.bind(&name, &value, path, source_type)?;
         let origin = self.origins.scope[&name].clone();
         let mut bindings = vec![Binding {
@@ -184,7 +295,11 @@ impl RustParser {
         bindings: &mut Vec<Binding>,
     ) -> Result<()> {
         match pattern {
+            ProductBindingPattern::Nominal(pattern) => {
+                self.lower_nominal_binding(pattern, value, path, bindings, None)?;
+            }
             ProductBindingPattern::Name(token) => {
+                self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;
                 self.origins.bind(&token.value, &value, path, None)?;
                 bindings.push(Binding {
                     name: token.value.clone(),
@@ -205,20 +320,40 @@ impl RustParser {
                     ));
                 }
             }
-            ProductBindingPattern::Tuple { items, span } => {
+            ProductBindingPattern::Tuple { items, rest, span } => {
                 self.origins.require_product_origin(origin, span)?;
-                if !self.origins.collecting
-                    && origin
-                        .fields
-                        .as_ref()
-                        .is_none_or(|fields| fields.len() != items.len())
-                {
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source tuple width fits the shared array limit"),
+                    )
+                };
+                let width = origin.fields.as_ref().map_or(items.len(), Vec::len);
+                let plan =
+                    crate::translation::rust_source_render_interfaces::plan_tuple_pattern_fields(
+                        count(width),
+                        count(items.len()),
+                        rest.map_or(-1.0, count),
+                    );
+                if !self.origins.collecting && plan.first() != Some(&0.0) {
                     return Err(type_error(
                         "tuple binding has the wrong number of fields",
                         span,
                     ));
                 }
-                for (index, item) in items.into_iter().enumerate() {
+                let mut positions = (0..items.len()).collect::<Vec<_>>();
+                if !self.origins.collecting {
+                    for (position, index) in plan.into_iter().skip(1).enumerate() {
+                        if index >= 0.0 {
+                            let index = index.to_string().parse::<usize>().map_err(|_| {
+                                type_error("tuple binding plan has an invalid source index", span)
+                            })?;
+                            positions[index] = position;
+                        }
+                    }
+                }
+                for (source, item) in items.into_iter().enumerate() {
+                    let index = positions[source];
                     let range = item.source_span();
                     let projection = SExpr::new(
                         SNode::TupleIndex {

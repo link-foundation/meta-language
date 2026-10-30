@@ -16,11 +16,19 @@ pub(super) enum Helper {
     At,
     Forall,
     Domains,
+    BigIntegerConversion,
+    Utf16Text,
+    UnicodeCase,
+    RecordPropertyOrder,
 }
 
 impl Helper {
     pub(super) fn text(self) -> &'static str {
         match self {
+            Self::Utf16Text=>include_str!("../runtime/utf16-text.js"),
+            Self::UnicodeCase=>include_str!("../runtime/unicode-case.js"),
+            Self::RecordPropertyOrder=>include_str!("../runtime/record-property-order.js"),
+            Self::BigIntegerConversion => include_str!("../runtime/big-integer-conversion.js"),
             Self::OwnedTextInput => {
                 static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
                 TEXT.get_or_init(crate::translation::rust::owned_local_state_rules::render_rust_owned_local_text_input)

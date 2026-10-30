@@ -6,7 +6,7 @@ import {rustCompletionPanicFixture} from '../scripts/generate-rust-completion-pa
 import {parseRust} from '../src/translation/rust.js';
 import {checkProgram} from '../src/translation/check.js';
 import {LinkNetwork} from '../src/network.js';
-import {emitTypedProgramLinks} from '../src/typed-program-links.js';
+import {createTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {acceptRustCompletionPanicArguments} from '../src/translation/rust-completion-rules.js';
 
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-completion-panic.lino',import.meta.url));
@@ -24,10 +24,15 @@ test('the exact canonical panic form keeps braces, escapes and empty Unicode mes
   assert.deepEqual(JSON.parse(JSON.stringify(parseRust(entry.source,{completionModel:fixture.completionModel}))),entry.surface);
  }
 });
-test('dynamic Display, other templates and legacy formatted panic keep their precise original refusals',()=>{
+test('closed-profile Display boundaries retain refusals and ordinary historical inputs gain coverage',()=>{
  assert.equal(fixture.invalid.length,10);
  for(const entry of fixture.invalid)refused(entry,true);
- refused(fixture.defaultCanonical,false);refused(fixture.legacy,false);refused(fixture.legacy,true);
+ refused(fixture.legacy,true);
+ for(const [entry,args,message]of [[fixture.defaultCanonical,[],'literal'],[fixture.legacy,[7n],'a 7']]){
+  const packet=createTypedProgramLinks(entry.source,'Rust'),emission=emitTypedProgramLinks(packet.network,packet.root,'JavaScript'),name=emission.mappings.find(row=>row.kind==='function'&&row.source==='f').target;
+  const observed=observe(emission.code.replace(/^export /gmu,''));assert.deepEqual(observed.output,['x']);
+  assert.throws(()=>observed.context[name](...args),error=>error.message===message);
+ }
  assert.equal(fixture.legacy.id,'frontend-rust/frontend-rust-panicArguments');
  assert.equal(fixture.legacy.reason,'panic! arguments: only a literal message is portable');
  assert.deepEqual(fixture.legacy.span,{start:24,end:42});
