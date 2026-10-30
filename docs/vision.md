@@ -10878,3 +10878,10 @@ captured once in that order; only success invokes the mapper. Deferred originals
 include exact wide endpoints, result-type changes, captures and abort order.
 General Result values, non-scalar/mutable/non-Copy callbacks and unrestricted
 inference remain required; these declarations are not execution evidence.
+
+Known scalar `map_or` defaults also provide the actual callback result context,
+including standard Boolean literals, fixed/pointer integers and binary64.
+Unsuffixed result literals and diverging callback bodies inherit that context;
+unknown defaults continue to infer from the callback's actual result. This
+retains one standard Result output type and does not authorize pointer-owner
+coercions or fabricate a type for an unconstrained source expression.

@@ -322,19 +322,51 @@ impl RustParser {
                         &owner,
                         path,
                     );
+                    let fallback = facts(self, &defaults[0], path);
+                    let context_owner = rules::read_rust_primitive_try_from_mapper_owner(
+                        &fallback.kind,
+                        &fallback.bits,
+                        fallback.signed,
+                        fallback
+                            .owner
+                            .as_ref()
+                            .map_or("", |value| value.kind.as_str()),
+                        &fallback.path(),
+                        fallback
+                            .owner
+                            .as_ref()
+                            .map_or(-1.0, |value| count(value.arguments.len())),
+                        fallback.origin.proven,
+                        count(fallback.origin.wrappers.len()),
+                    );
+                    let result = if context_owner.is_empty() {
+                        None
+                    } else {
+                        let mut value = fallback.origin;
+                        value.source_owner = fallback.owner;
+                        Some(value)
+                    };
                     let mut expected = SourceOrigin::with_type(
                         Type::Function {
                             params: vec![parameter.ty.clone().unwrap()],
-                            ret: Box::new(super::UNIT),
+                            ret: Box::new(
+                                result
+                                    .as_ref()
+                                    .and_then(|value| value.ty.clone())
+                                    .unwrap_or(super::UNIT),
+                            ),
                         },
                         path,
                         Vec::new(),
                     );
                     expected.copy_evidence = Some(());
                     expected.callable_parameters = Some(vec![parameter.clone()]);
-                    expected.callable_result = None;
-                    let callback =
-                        self.read_expected_copy_closure_result_mode(path, Some(&expected), true)?;
+                    expected.callable_result = result.clone().map(Box::new);
+                    let callback = self.read_expected_copy_closure_result_mode(
+                        path,
+                        Some(&expected),
+                        result.is_none(),
+                    )?;
                     let callable = self.origins.origin(&callback, path);
                     let actual = callable
                         .callable_parameters

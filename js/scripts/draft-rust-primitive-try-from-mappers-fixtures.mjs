@@ -19,6 +19,15 @@ add('eager fallback is evaluated even on successful conversion','u8::try_from(7u
 add('callable factory is eager even on conversion failure','u8::try_from(256u16).map_or(9u8,factory())==9u8','mapper factory','pub fn factory()->fn(u8)->u8{panic!("mapper factory")}');
 add('input precedes fallback and mapper factory','u8::try_from(input()).map_or(fallback(),factory())==0u8','input first','pub fn input()->u16{panic!("input first")}pub fn fallback()->u8{panic!("fallback second")}pub fn factory()->fn(u8)->u8{panic!("factory third")}');
 add('fallback precedes mapper factory','u8::try_from(256u16).map_or(fallback(),factory())==0u8','fallback first','pub fn fallback()->u8{panic!("fallback first")}pub fn factory()->fn(u8)->u8{panic!("factory second")}');
+for(const owner of ['u8','i8','u16','i16','u32','i32','u64','i64','u128','i128','usize','isize']){
+ add(owner+' typed fallback provides an unsuffixed literal result context',owner+'::try_from(7u128).map_or(9'+owner+',|_|1)==1'+owner);
+ add(owner+' typed fallback provides a zero literal result context',owner+'::try_from(7u128).map_or(9'+owner+',|_|0)==0'+owner);
+ add(owner+' typed fallback provides a diverging success result context',owner+'::try_from(7u128).map_or(9'+owner+',|_|panic!("contextual mapper"))==0'+owner,'contextual mapper');
+}
+add('Boolean fallback provides the result context for a literal Boolean mapper','u8::try_from(7u16).map_or(false,|_|true)');
+add('Boolean fallback provides the result context for a diverging mapper','u8::try_from(7u16).map_or(false,|_|panic!("Boolean mapper"))','Boolean mapper');
+add('binary64 fallback provides a literal floating result context','u8::try_from(7u16).map_or(-1.5f64,|_|0.5)==0.5f64');
+add('typed source default does not coerce a named mapper parameter owner','u8::try_from(7u16).map_or(1u64,mapper)==7u64',null,'pub fn mapper(value:u8)->u64{u64::from(value)}');
 const reason='a Result mapper needs a direct one-argument callable with its actual integer parameter and scalar result';
 for(const args of [['function',1,0,true,true],['function',0,0,true,true],['function',2,0,true,true],['function',1,1,true,true],['function',1,0,false,true],['function',1,0,true,false],['fixed',1,0,true,true]])premises.push({operation:'readRustPrimitiveTryFromMapperError',args,expected:args[0]==='function'&&args[1]===1&&args[2]===0&&args[3]&&args[4]?'':reason});
 for(const [args,expected]of [[['fixed','8',false,'primitive','u8',0,true,0],'u8'],[['bool','',false,'primitive','bool',0,true,0],'bool'],[['float','',false,'primitive','f64',0,true,0],'f64'],[['fixed','8',false,'primitive','u16',0,true,0],''],[['fixed','8',false,'primitive','u8',0,true,1],''],[['fixed','8',false,'primitive','u8',0,false,0],''],[['string','',false,'library','std::string::String',0,true,0],'']])premises.push({operation:'readRustPrimitiveTryFromMapperOwner',args,expected});
