@@ -771,8 +771,10 @@ pub fn read_rust_array_lookup_consumer_arity(consumer: &str, copied: bool) -> f6
             || self::test_rust_array_lookup_predicate_consumer(consumer))
     {
         1f64
-    } else if copied && (consumer == "unwrap_or_default") {
+    } else if copied && ((consumer == "unwrap_or_default") || (consumer == "unwrap")) {
         0f64
+    } else if copied && (consumer == "expect") {
+        1f64
     } else {
         -1f64
     }

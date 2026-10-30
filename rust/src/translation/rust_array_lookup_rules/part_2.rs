@@ -123,7 +123,9 @@ pub fn plan_rust_array_lookup_consumer(consumer: &str) -> Vec<String> {
             String::from("true"),
             String::from("if"),
         ]
-    } else if ((((consumer == "unwrap_or") || (consumer == "unwrap_or_else"))
+    } else if ((((((consumer == "unwrap") || (consumer == "expect"))
+        || (consumer == "unwrap_or"))
+        || (consumer == "unwrap_or_else"))
         || (consumer == "unwrap_or_default"))
         || (consumer == "map_or"))
         || (consumer == "map_or_else")
@@ -136,5 +138,35 @@ pub fn plan_rust_array_lookup_consumer(consumer: &str) -> Vec<String> {
         ]
     } else {
         Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_array_lookup_panic_consumer(consumer: &str) -> bool {
+    (consumer == "unwrap") || (consumer == "expect")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_panic_message_error(consumer: &str, kind: &str) -> String {
+    if (consumer == "expect") && (kind != "str") {
+        String::from(
+            "expect needs its complete literal str panic message; computed messages need a dynamic panic payload",
+        )
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_array_lookup_panic_message(consumer: &str, message: &str) -> String {
+    if consumer == "unwrap" {
+        String::from("called `Option::unwrap()` on a `None` value")
+    } else if consumer == "expect" {
+        message.to_owned()
+    } else {
+        String::new()
     }
 }

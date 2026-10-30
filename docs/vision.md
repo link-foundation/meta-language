@@ -10761,3 +10761,18 @@ fold, application, binding and conditional terms. Independent original source
 controls cover Unit callbacks, borrowed and copied items, type-changing maps,
 construction/abort order, empty inputs and reversed visits. Mutable callback
 state and escaping iterators still require their complete ownership model.
+
+#### Ordinary array lookup panic consumers
+
+Immediate standard get/first/last results may pass through copied or cloned to
+unwrap or literal-message expect. Both runtimes use the shared lookup presence
+and index plans; absent branches construct the existing common abort term.
+Unwrap retains its standard Option failure message. Expect retains complete
+literal str message contents, including empty text, braces, newline, NUL and
+non-ASCII scalars, without formatting. Receiver and index evaluate once before
+the failure choice, and their source owners must still be available after all
+operands have been constructed. Cloned String results detach source provenance;
+scalar copies keep actual primitive source owners. Independent original cases
+cover each selected source type and both branches. General Option values,
+borrowed outputs and computed panic payloads remain requirements; the current
+literal-message construction is not evidence that those are implemented.

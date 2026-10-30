@@ -537,7 +537,22 @@ impl RustParser {
                 .clone()
                 .expect("complete shared mapper result type");
         }
-        if let Some(default) = defaults.first() {
+        self.origins.check_owned_origin(&source, range)?;
+        let message_error = rules::read_rust_array_lookup_panic_message_error(
+            &consumer.value,
+            defaults.first().map_or("", |node| node.node.kind()),
+        );
+        if !message_error.is_empty() {
+            return Err(unsupported(
+                "Rust array lookup panic",
+                &message_error,
+                range,
+            ));
+        }
+        if let Some(default) = defaults
+            .first()
+            .filter(|_| !rules::test_rust_array_lookup_panic_consumer(&consumer.value))
+        {
             let lazy = rules::test_rust_array_lookup_lazy_fallback(&consumer.value);
             let fallback_origin = self.origins.origin(default, path);
             if rules::test_rust_array_lookup_predicate_consumer(&consumer.value) {
@@ -654,12 +669,13 @@ impl RustParser {
             ));
         }
         if let Some(default) = defaults.first() {
-            let default_type =
-                if predicate || rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
-                    self.origins.origin(default, path).ty
-                } else {
-                    Some(result_type.clone())
-                };
+            let default_type = if rules::test_rust_array_lookup_panic_consumer(&consumer.value) {
+                Some(super::super::STRING)
+            } else if predicate || rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
+                self.origins.origin(default, path).ty
+            } else {
+                Some(result_type.clone())
+            };
             captures.push((self.fresh_product_binding(), default_type, default.clone()));
         }
         if let Some(mapper) = defaults.get(1) {
@@ -716,7 +732,27 @@ impl RustParser {
                 result_type.kind(),
                 result_type == super::super::STRING && element_owner.is_some(),
             );
-            let fallback = if !defaults.is_empty() {
+            let fallback = if rules::test_rust_array_lookup_panic_consumer(&consumer.value) {
+                let message = defaults
+                    .first()
+                    .and_then(|node| {
+                        if let SNode::Str { value } = &node.node {
+                            Some(value.as_str())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or("");
+                SExpr::new(
+                    SNode::Abort {
+                        message: rules::read_rust_array_lookup_panic_message(
+                            &consumer.value,
+                            message,
+                        ),
+                    },
+                    range,
+                )
+            } else if !defaults.is_empty() {
                 let value = local(captures.len() - if defaults.len() == 2 { 2 } else { 1 });
                 if rules::test_rust_array_lookup_lazy_fallback(&consumer.value) {
                     SExpr::new(
