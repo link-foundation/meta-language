@@ -1,5 +1,6 @@
 //! Existing constant-item adapter, separated to bound the item module.
 use super::super::SFn;
+use super::super::{SExpr, SNode};
 use super::{Result, RustParser, SourceDeclaration, Type, span, unsupported};
 
 impl RustParser {
@@ -26,10 +27,20 @@ impl RustParser {
             },
         )?;
         self.cursor.expect("=", Some("const"))?;
-        let body = self.read_expected_copy_closure(path, Some(&source_result))?;
-        self.origins
-            .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
-        self.cursor.expect(";", Some("const"))?;
+        if self.ordinary_completion_context() {
+            self.capture_source_constant_initializer(&name, path, &start, &source_result)?;
+        }
+        let header = self.header_discovery && self.ordinary_completion_context();
+        let body = if header {
+            SExpr::new(SNode::Unit, None)
+        } else {
+            self.read_expected_copy_closure(path, Some(&source_result))?
+        };
+        if !header {
+            self.origins
+                .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
+            self.cursor.expect(";", Some("const"))?;
+        }
         Ok(SFn {
             source_diagnostic_attributes: None,
             semantic_ret: None,

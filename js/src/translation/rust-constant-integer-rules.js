@@ -54,11 +54,11 @@ export function evaluateRustConstantIntegerOperation(operation,left,right,minimu
 /** @param {string} operation @param {boolean} left @param {boolean} right
  * @returns {string[]} */
 export function evaluateRustConstantBooleanOperation(operation,left,right){
- if(operation==='not')return ['boolean',left?'false':'true'];
- if(operation==='and')return ['boolean',left&&right?'true':'false'];
- if(operation==='or')return ['boolean',left||right?'true':'false'];
+ if(operation==='not'||operation==='bitnot')return ['boolean',left?'false':'true'];
+ if(operation==='and'||operation==='bitand')return ['boolean',left&&right?'true':'false'];
+ if(operation==='or'||operation==='bitor')return ['boolean',left||right?'true':'false'];
  if(operation==='eq')return ['boolean',left===right?'true':'false'];
- if(operation==='ne')return ['boolean',left!==right?'true':'false'];
+ if(operation==='ne'||operation==='bitxor')return ['boolean',left!==right?'true':'false'];
  return ['error','the constant Boolean operation needs its source interpretation'];
 }
 /** @param {string} operation @param {boolean} left @returns {boolean} */

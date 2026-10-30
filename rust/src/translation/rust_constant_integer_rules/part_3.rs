@@ -451,7 +451,9 @@ pub fn evaluate_rust_constant_boolean_operation(
     left: bool,
     right: bool,
 ) -> Vec<self::ml_string::Text> {
-    if (*operation) == (self::ml_string::Text::from_units(vec![110, 111, 116])) {
+    if ((*operation) == (self::ml_string::Text::from_units(vec![110, 111, 116])))
+        || ((*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 110, 111, 116])))
+    {
         vec![
             self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110]),
             if left {
@@ -460,7 +462,9 @@ pub fn evaluate_rust_constant_boolean_operation(
                 self::ml_string::Text::from_units(vec![116, 114, 117, 101])
             },
         ]
-    } else if (*operation) == (self::ml_string::Text::from_units(vec![97, 110, 100])) {
+    } else if ((*operation) == (self::ml_string::Text::from_units(vec![97, 110, 100])))
+        || ((*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 97, 110, 100])))
+    {
         vec![
             self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110]),
             if left && right {
@@ -469,7 +473,9 @@ pub fn evaluate_rust_constant_boolean_operation(
                 self::ml_string::Text::from_units(vec![102, 97, 108, 115, 101])
             },
         ]
-    } else if (*operation) == (self::ml_string::Text::from_units(vec![111, 114])) {
+    } else if ((*operation) == (self::ml_string::Text::from_units(vec![111, 114])))
+        || ((*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 111, 114])))
+    {
         vec![
             self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110]),
             if left || right {
@@ -487,7 +493,9 @@ pub fn evaluate_rust_constant_boolean_operation(
                 self::ml_string::Text::from_units(vec![102, 97, 108, 115, 101])
             },
         ]
-    } else if (*operation) == (self::ml_string::Text::from_units(vec![110, 101])) {
+    } else if ((*operation) == (self::ml_string::Text::from_units(vec![110, 101])))
+        || ((*operation) == (self::ml_string::Text::from_units(vec![98, 105, 116, 120, 111, 114])))
+    {
         vec![
             self::ml_string::Text::from_units(vec![98, 111, 111, 108, 101, 97, 110]),
             if left != right {

@@ -28,7 +28,10 @@ impl RustParser {
                 span: Some(value.span()),
             })
         } else {
-            self.primitive_constant_pattern(path)?
+            match self.primitive_constant_pattern(path)? {
+                Some(value) => Some(value),
+                None => self.read_source_constant_pattern(path)?,
+            }
         };
         let span = Some(Span {
             start: first.start,

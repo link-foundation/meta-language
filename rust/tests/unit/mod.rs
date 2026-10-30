@@ -675,3 +675,5 @@ mod translation_rust_nominal_copies;
 mod translation_rust_integer_ranges;
 
 mod translation_rust_constant_patterns;
+
+mod translation_rust_source_constant_evaluation;

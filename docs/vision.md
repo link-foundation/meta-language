@@ -11144,3 +11144,34 @@ native products remain unexecuted. Complete structural aggregate constants,
 traits, ownership, full-language grammars and global concept proofs remain
 required. Constant evaluation follows the
 [Rust Reference](https://doc.rust-lang.org/reference/const_eval.html).
+
+Ordinary Rust source constant patterns retain actual declaration locations and
+their declared primitive source owners. Header discovery records complete
+initializer boundaries; evaluation reparses a needed initializer in an isolated
+module/type scope with the complete declaration catalog. Caller-local bindings
+cannot become constant dependencies. Actual source references are qualified by
+declaration identity, and the existing type checker supplies local, cast and
+operation types before any value evaluation. A constant's zero-argument function
+projection remains separate from its compile-time source interpretation.
+
+The scalar evaluator is a source-defined Links program automatically emitted to
+Rust. Both hosts only transport checked expression facts and materialize the
+resulting typed literal pattern. Named dependencies, immutable locals, integer
+arithmetic/casts/bit operations, Boolean/string literals, lazy Boolean demand and
+selected conditional branches use shared rules. Checked shift option carriers
+keep their actual success/fallback behavior. Source owners survive integer
+erasure, including usize/isize; equal values do not merge distinct declarations.
+Cycle, depth and work limits report errors. Constant functions, mutable local
+state/loops, aggregate structural equality and floating/character constant values
+remain required extensions. Complete function bodies still obey the generated
+900-line partition bound; factoring source functions supplies smaller complete
+native functions without editing generated semantics or changing the bound.
+
+Independent original programs, typed fact packets and automatically converted
+fact columns retain exact expected values, dependencies, casts, Boolean demand,
+branch failure order and source ownership. Both codecs, four emissions and native
+products remain deferred controls. The incremental source author can reuse
+policies only when every captured source/dependency digest and byte count, both
+asset twins and their exact digest match their complete generation recipes. This
+is source membership, not behavior or completion evidence. All whole-language,
+grammar, shared-concept and remaining delivery obligations stay active.

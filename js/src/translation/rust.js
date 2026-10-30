@@ -1,3 +1,4 @@
+import {captureRustSourceConstantInitializer,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
 import {readRustIntegerRangePattern} from './rust-integer-ranges.js';
@@ -89,7 +90,7 @@ import { readStringMapOperation, readStringTestOperation } from './frontend-rule
 // Everything else is rejected with a precise obligation.
 
 import { rustMacroMessage } from './aborts.js';
-import { TranslationError, unsupported } from './diagnostics.js';
+import { TranslationError, unsupported, typeError } from './diagnostics.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, STRING, UNIT, array, rustFixedType, tuple } from './types.js';
 import { RustSourceOrigins } from './rust-source-origins.js';
@@ -180,6 +181,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   syntax.origins.collecting = true;
   syntax.origins.nominalCopyOwners=new Set(declarations.origins.nominalCopyOwners);
   syntax.origins.nominalCopyDerivations=new Map(declarations.origins.nominalCopyDerivations);
+  syntax.sourceConstantInitializers=new Map(declarations.sourceConstantInitializers);
   syntax.aliases = declarations.aliases;
   syntax.namedRecords = new Map(declarations.namedRecords);
   syntax.inherentMethods = new Map(declarations.inherentMethods);
@@ -196,6 +198,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   parser.retainSourceTypeOwners=retainSourceTypeOwners;
   parser.origins.nominalCopyOwners=new Set(syntax.origins.nominalCopyOwners);
   parser.origins.nominalCopyDerivations=new Map(syntax.origins.nominalCopyDerivations);
+  parser.sourceConstantInitializers=new Map(syntax.sourceConstantInitializers);
   parser.aliases = syntax.aliases;
   parser.namedRecords = new Map(syntax.namedRecords);
   parser.inherentMethods = new Map(syntax.inherentMethods);
@@ -206,6 +209,7 @@ class RustParser {
   constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',source=null,sharedArrayHandleSourceModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     this.headerDiscovery=false;
+    this.sourceConstantInitializers=new Map();this.sourceConstantReadStack=new Set();
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
@@ -830,10 +834,27 @@ class RustParser {
     if (ret.kind === 'array') throw unsupported('Rust array constant', 'vector allocation and slice constants require a separate constant evaluation model', span(start, c.peek()));
     this.origins.declaration(name, path, { k: 'const', result: sourceResult });
     c.expect('=', 'const');
+    if(this.ordinaryCompletionContext()){captureRustSourceConstantInitializer(this,name,path,start,sourceResult);if(this.headerDiscovery)return{k:'fn',name,params:[],ret,body:{k:'unit'},span:span(start,c.peek())};}
     const body = readRustExpectedCopyClosure(this,path,sourceResult);
     this.origins.argument(this.origins.origin(body, path), sourceResult, body.span);
     c.expect(';', 'const');
     return { k: 'fn', name, params: [], ret, body, span: span(start, c.peek()) };
+  }
+
+  readSourceConstantInitializer(row){
+    if(this.sourceConstantReadStack.has(row.owner))throw typeError('Rust source constant pattern: a constant pattern dependency cannot evaluate itself recursively');
+    this.sourceConstantReadStack.add(row.owner);
+    try{
+      const reader=new RustParser(this.cursor.tokens,this.origins.catalog);
+      reader.source=this.source;reader.sourceVersionMinor=this.sourceVersionMinor;reader.retainSourceTypeOwners=this.retainSourceTypeOwners;
+      reader.aliases=this.aliases;reader.namedRecords=new Map(this.namedRecords);reader.inherentMethods=new Map(this.inherentMethods);
+      reader.origins.nominalCopyOwners=new Set(this.origins.nominalCopyOwners);reader.origins.nominalCopyDerivations=new Map(this.origins.nominalCopyDerivations);
+      reader.sourceConstantInitializers=new Map(this.sourceConstantInitializers);reader.sourceConstantReadStack=this.sourceConstantReadStack;
+      initializeRustTypeAliases(reader);finishRustTypeAliases(reader);reader.modulePath=[...row.path];reader.cursor.index=reader.cursor.tokens.findIndex(token=>token.start===row.keyword);
+      if(reader.cursor.index<0)throw reader.fail('the constant initializer needs its actual source declaration');
+      const declaration=reader.constItem(row.path),result=reader.sourceConstantInitializers.get(row.owner).result;
+      return{declaration,reader,result};
+    }finally{this.sourceConstantReadStack.delete(row.owner);}
   }
 
   /**
@@ -1868,6 +1889,7 @@ class RustParser {
       return args.length===1&&rest===null&&!comma?args[0]:{k:'tuple',args,...(rest===null?{}:{rest}),span:span(token,c.peek())};
     }
     const constant=readRustPrimitiveConstantPattern(this,path);if(constant)return readRustIntegerRangePattern(this,path,token,constant);
+    const sourceConstant=readRustSourceConstantPattern(this,path);if(sourceConstant)return readRustIntegerRangePattern(this,path,token,sourceConstant);
     if (token.kind !== 'identifier') throw unsupported('pattern', `${describe(token)} is outside the portable pattern language`, span(token, token));
     const segments = this.pathSegments('pattern');
     const constantPatternError=readRustSourceConstantPatternError(this.origins.lookup(readRustSourceValueName(this,segments,path),path)?.k??'');if(constantPatternError)throw unsupported('Rust constant pattern',constantPatternError,span(token,c.peek()));

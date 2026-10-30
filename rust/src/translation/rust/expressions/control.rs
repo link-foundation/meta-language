@@ -632,6 +632,9 @@ impl RustParser {
         if let Some(pattern) = self.primitive_constant_pattern(path)? {
             return self.integer_range_pattern(path, &token, Some(pattern));
         }
+        if let Some(pattern) = self.read_source_constant_pattern(path)? {
+            return self.integer_range_pattern(path, &token, Some(pattern));
+        }
         if token.kind != TokenKind::Identifier {
             return Err(unsupported(
                 "pattern",

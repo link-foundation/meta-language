@@ -47,6 +47,7 @@ for(const [op,a,b,domain,expected] of [
  ['unknown','1','1',unsigned,['error','the constant integer operation needs its source interpretation']],
 ])premise('evaluateRustConstantIntegerOperation',[op,a,b,...domain],expected);
 for(const [op,a,b,expected]of [['not',true,false,['boolean','false']],['and',true,false,['boolean','false']],['or',false,true,['boolean','true']],['eq',true,true,['boolean','true']],['ne',true,false,['boolean','true']],['unknown',true,false,['error','the constant Boolean operation needs its source interpretation']]])premise('evaluateRustConstantBooleanOperation',[op,a,b],expected);
+for(const [op,a,b,expected] of [['bitnot',false,false,'true'],['bitand',true,false,'false'],['bitor',false,true,'true'],['bitxor',true,true,'false']])premise('evaluateRustConstantBooleanOperation',[op,a,b],['boolean',expected]);
 for(const [op,left,expected]of [['and',false,false],['and',true,true],['or',false,true],['or',true,false],['eq',false,true]])premise('requireRustConstantBooleanRight',[op,left],expected);
 for(const [args,expected]of [[[256,65536,false],''],[[257,0,false],'constant pattern evaluation exceeds its source resource budget'],[[0,65537,false],'constant pattern evaluation exceeds its source resource budget'],[[0,0,true],'a constant pattern dependency cannot evaluate itself recursively']])premise('readRustConstantPatternEvaluationError',args,expected);
 for(const [args,expected]of [
