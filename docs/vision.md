@@ -10906,3 +10906,15 @@ Euclidean algorithms. Deferred mathematical originals derive the nonnegative
 remainder and reconstruct the quotient, covering all sign combinations and
 minimum-integer divisors across fixed/pointer widths. Generic Option flow and
 the full source-translation scope remain obligations.
+
+Immediate checked-integer `unwrap_or_else` now has a shared source draft for
+nonescaping immutable Copy closures, named zero-argument functions and function
+pointer factories. Actual receiver owners provide callback result contexts,
+including unsuffixed literals and diverging bodies. Receiver, arithmetic
+argument and callable construction are captured in source order; invocation is
+inside the failure branch only. A shared callable/result-owner rule keeps
+fixed widths, signedness and pointer identities distinct. The former rejected
+source remains verbatim in a positive original alongside its old rejection;
+version-bounded arity revisions document the standard Option contract.
+Mutable/non-Copy environments, stored Option control and whole-source coverage
+remain obligations; the declared controls are not execution evidence.

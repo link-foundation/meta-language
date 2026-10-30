@@ -56,6 +56,14 @@ pub fn plan_rust_checked_integer_consumer(
             self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116]),
             self::ml_string::Text::from_units(vec![105, 102]),
         ]
+    } else if self::test_rust_checked_integer_lazy_fallback(consumer) {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
+            self::ml_string::Text::from_units(vec![99, 97, 108, 108, 32, 122, 101, 114, 111]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
     } else if ((*consumer)
         == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
         || ((*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])))
@@ -83,19 +91,84 @@ pub fn read_rust_checked_integer_result_owner(
             == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101])))
     {
         self::ml_string::Text::from_units(vec![98, 111, 111, 108])
-    } else if (((*consumer)
+    } else if ((((*consumer)
         == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
         || ((*consumer)
             == (self::ml_string::Text::from_units(vec![
                 117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
             ]))))
-        || self::test_rust_option_panic_consumer(consumer)
+        || self::test_rust_option_panic_consumer(consumer))
+        || self::test_rust_checked_integer_lazy_fallback(consumer)
     {
         receiver.clone()
     } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {
         mapper.clone()
     } else {
         self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_checked_integer_lazy_fallback(consumer: &self::ml_string::Text) -> bool {
+    (*consumer)
+        == (self::ml_string::Text::from_units(vec![
+            117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 101, 108, 115, 101,
+        ]))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_rust_checked_integer_fallback_error(
+    kind: &self::ml_string::Text,
+    parameters: f64,
+    layers: f64,
+    result: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
+    signed: bool,
+    owner_kind: &self::ml_string::Text,
+    owner: &self::ml_string::Text,
+    children: f64,
+    proven: bool,
+    result_layers: f64,
+    expected_bits: &self::ml_string::Text,
+    expected_signed: bool,
+    expected_owner: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((((((((*kind)
+        == (self::ml_string::Text::from_units(vec![102, 117, 110, 99, 116, 105, 111, 110])))
+        && (parameters == 0f64))
+        && (layers == 0f64))
+        && ((*result) == (self::ml_string::Text::from_units(vec![102, 105, 120, 101, 100]))))
+        && ((*bits) == (*expected_bits)))
+        && (signed == expected_signed))
+        && ((*owner) == (*expected_owner)))
+        && self::accept_rust_primitive_selection_receiver(
+            result,
+            bits,
+            signed,
+            owner_kind,
+            owner,
+            children,
+            proven,
+            result_layers,
+        )
+    {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        self::ml_string::Text::from_units(vec![
+            97, 32, 99, 104, 101, 99, 107, 101, 100, 32, 105, 110, 116, 101, 103, 101, 114, 32,
+            102, 97, 108, 108, 98, 97, 99, 107, 32, 110, 101, 101, 100, 115, 32, 97, 32, 100, 105,
+            114, 101, 99, 116, 32, 122, 101, 114, 111, 45, 97, 114, 103, 117, 109, 101, 110, 116,
+            32, 99, 97, 108, 108, 97, 98, 108, 101, 32, 119, 105, 116, 104, 32, 116, 104, 101, 32,
+            97, 99, 116, 117, 97, 108, 32, 114, 101, 99, 101, 105, 118, 101, 114, 32, 114, 101,
+            115, 117, 108, 116, 32, 111, 119, 110, 101, 114,
+        ])
     }
 }
 

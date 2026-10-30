@@ -2,6 +2,7 @@
 use super::accept_rust_primitive_selection_receiver;
 use super::ml_array;
 use super::ml_string;
+use super::test_rust_checked_integer_lazy_fallback;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -175,9 +176,10 @@ pub fn read_rust_checked_integer_consumer_arity(consumer: &self::ml_string::Text
         || ((*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112])))
     {
         0f64
-    } else if ((*consumer)
+    } else if (((*consumer)
         == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
-        || ((*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116])))
+        || ((*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116]))))
+        || self::test_rust_checked_integer_lazy_fallback(consumer)
     {
         1f64
     } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {

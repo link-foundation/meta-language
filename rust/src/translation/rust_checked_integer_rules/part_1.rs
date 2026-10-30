@@ -1,4 +1,6 @@
 // Generated from complete js/src/translation/rust-checked-integer-rules.js. Do not edit by hand.
+use super::test_rust_checked_integer_lazy_fallback;
+
 /// Reads of JavaScript arrays, which the portable core never mutates.
 pub mod ml_array {
     #[must_use]
@@ -497,7 +499,9 @@ pub fn read_rust_checked_integer_consumer_arity(consumer: &str) -> f64 {
         || (consumer == "unwrap")
     {
         0f64
-    } else if (consumer == "unwrap_or") || (consumer == "expect") {
+    } else if ((consumer == "unwrap_or") || (consumer == "expect"))
+        || self::test_rust_checked_integer_lazy_fallback(consumer)
+    {
         1f64
     } else if consumer == "map_or" {
         2f64

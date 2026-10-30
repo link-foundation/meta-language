@@ -1,4 +1,5 @@
 // Generated from complete js/src/translation/rust-checked-integer-rules.js. Do not edit by hand.
+use super::accept_rust_primitive_selection_receiver;
 use super::ml_array;
 use super::test_rust_option_panic_consumer;
 
@@ -213,6 +214,14 @@ pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
             String::from("default"),
             String::from("if"),
         ]
+    } else if self::test_rust_checked_integer_lazy_fallback(consumer) {
+        vec![
+            String::from("condition"),
+            String::from("success"),
+            String::from("fallback"),
+            String::from("call zero"),
+            String::from("if"),
+        ]
     } else if (consumer == "unwrap_or") || (consumer == "map_or") {
         vec![
             String::from("condition"),
@@ -234,13 +243,67 @@ pub fn read_rust_checked_integer_result_owner(
 ) -> String {
     if (consumer == "is_some") || (consumer == "is_none") {
         String::from("bool")
-    } else if ((consumer == "unwrap_or") || (consumer == "unwrap_or_default"))
-        || self::test_rust_option_panic_consumer(consumer)
+    } else if (((consumer == "unwrap_or") || (consumer == "unwrap_or_default"))
+        || self::test_rust_option_panic_consumer(consumer))
+        || self::test_rust_checked_integer_lazy_fallback(consumer)
     {
         receiver.to_owned()
     } else if consumer == "map_or" {
         mapper.to_owned()
     } else {
         String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn test_rust_checked_integer_lazy_fallback(consumer: &str) -> bool {
+    consumer == "unwrap_or_else"
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_rust_checked_integer_fallback_error(
+    kind: &str,
+    parameters: f64,
+    layers: f64,
+    result: &str,
+    bits: &str,
+    signed: bool,
+    owner_kind: &str,
+    owner: &str,
+    children: f64,
+    proven: bool,
+    result_layers: f64,
+    expected_bits: &str,
+    expected_signed: bool,
+    expected_owner: &str,
+) -> String {
+    if (((((((kind == "function") && (parameters == 0f64)) && (layers == 0f64))
+        && (result == "fixed"))
+        && (bits == expected_bits))
+        && (signed == expected_signed))
+        && (owner == expected_owner))
+        && self::accept_rust_primitive_selection_receiver(
+            result,
+            bits,
+            signed,
+            owner_kind,
+            owner,
+            children,
+            proven,
+            result_layers,
+        )
+    {
+        String::new()
+    } else {
+        String::from(
+            "a checked integer fallback needs a direct zero-argument callable with the actual receiver result owner",
+        )
     }
 }

@@ -119,6 +119,16 @@ impl Terms {
                         },
                     );
                 }
+                "call zero" => {
+                    let function = pop(&mut stack, range)?;
+                    stack.push(SExpr::new(
+                        SNode::App {
+                            func: Box::new(function),
+                            args: Vec::new(),
+                        },
+                        range,
+                    ));
+                }
                 "unwrap message" => stack.push(SExpr::new(
                     SNode::Str {
                         value: panic_rules::read_rust_option_panic_message("unwrap", ""),
@@ -248,8 +258,78 @@ impl RustParser {
         self.cursor.expect("(", Some("checked integer consumer"))?;
         let mut defaults = Vec::new();
         let mut mapper_owner = String::new();
+        let mut lazy_origin = None;
         if consumer_arity > 0.0 {
-            defaults.push(self.expr(path, Options::default())?);
+            if rules::test_rust_checked_integer_lazy_fallback(&consumer.value) {
+                let source = facts(self, &receiver, path);
+                let owner = source.path();
+                let ty=rust_fixed_type(&owner).ok_or_else(||unsupported("Rust checked integer arithmetic","a proven standard integer receiver with the actual signed operation is required",range))?;
+                let result = origin(ty.clone(), &owner, path);
+                let mut expected = super::SourceOrigin::with_type(
+                    Type::Function {
+                        params: Vec::new(),
+                        ret: Box::new(ty.clone()),
+                    },
+                    path,
+                    Vec::new(),
+                );
+                expected.copy_evidence = Some(());
+                expected.callable_parameters = Some(Vec::new());
+                expected.callable_result = Some(Box::new(result.clone()));
+                let callback =
+                    self.read_expected_copy_closure_result_mode(path, Some(&expected), false)?;
+                let callable = self.origins.origin(&callback, path);
+                let output = callable.callable_result.as_deref();
+                let output_type = output.and_then(|value| value.ty.as_ref());
+                let output_owner = output.and_then(|value| value.source_owner.as_ref());
+                let parameters = match &callable.ty {
+                    Some(Type::Function { params, .. }) => count(params.len()),
+                    _ => -1.0,
+                };
+                let (bits, signed) = match output_type {
+                    Some(Type::Fixed { bits, signed }) => (bits.to_string(), *signed),
+                    _ => (String::new(), false),
+                };
+                let Type::Fixed {
+                    bits: expected_bits,
+                    signed: expected_signed,
+                } = &ty
+                else {
+                    return Err(type_error(
+                        "the checked fallback requires an actual integer result",
+                        range,
+                    ));
+                };
+                let error = rules::read_rust_checked_integer_fallback_error(
+                    callable.ty.as_ref().map_or("", Type::kind),
+                    parameters,
+                    count(callable.wrappers.len()),
+                    output_type.map_or("", Type::kind),
+                    &bits,
+                    signed,
+                    output_owner.map_or("", |value| value.kind.as_str()),
+                    &output_owner.map_or_else(String::new, |value| value.path.join("::")),
+                    output_owner.map_or(-1.0, |value| count(value.arguments.len())),
+                    output.is_some_and(|value| value.proven),
+                    output.map_or(-1.0, |value| count(value.wrappers.len())),
+                    &expected_bits.to_string(),
+                    *expected_signed,
+                    &owner,
+                );
+                if !error.is_empty() {
+                    return Err(unsupported(
+                        "Rust checked integer fallback",
+                        &error,
+                        callback.span,
+                    ));
+                }
+                self.origins
+                    .argument(output.unwrap(), &result, callback.span)?;
+                defaults.push(callback);
+                lazy_origin = Some(callable);
+            } else {
+                defaults.push(self.expr(path, Options::default())?);
+            }
             if consumer_arity == 2.0 {
                 self.cursor.expect(",", Some("checked integer mapper"))?;
                 let mapper = self
@@ -419,7 +499,7 @@ impl RustParser {
             signed: *signed,
         };
         let panicking = panic_rules::test_rust_option_panic_consumer(&consumer.value);
-        if consumer_arity > 0.0 {
+        if consumer_arity > 0.0 && lazy_origin.is_none() {
             let actual = facts(self, &defaults[0], path);
             let (result_bits, result_signed) = match &result_type {
                 Type::Fixed { bits, signed } => (bits.to_string(), *signed),
@@ -489,6 +569,25 @@ impl RustParser {
                 },
                 defaults.remove(0),
             ));
+        }
+        if let Some(callable) = lazy_origin {
+            let callback = defaults.remove(0);
+            let name = self.fresh_product_binding();
+            let node = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                callback.span.or(range),
+            );
+            self.origins.mark(&node, callable.clone());
+            captures.push((
+                name,
+                callable.ty.ok_or_else(|| {
+                    type_error("the checked fallback lost its callable type", range)
+                })?,
+                callback,
+            ));
+            terms.fallback = Some(node);
         }
         terms.condition = Some(terms.project(
             &rules::plan_rust_checked_integer_condition(&method.value, source.signed),
