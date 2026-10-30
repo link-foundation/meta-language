@@ -2,7 +2,6 @@
 use super::accept_rust_primitive_selection_receiver;
 use super::ml_array;
 use super::ml_string;
-use super::read_rust_primitive_owner_path;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -87,6 +86,14 @@ pub fn read_rust_checked_integer_arity(method: &self::ml_string::Text, ordinary:
                 ]),
                 self::ml_string::Text::from_units(vec![
                     99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108, 105,
+                    100,
+                ]),
+                self::ml_string::Text::from_units(vec![
+                    99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109, 95, 101, 117, 99, 108, 105,
+                    100,
                 ]),
                 self::ml_string::Text::from_units(vec![
                     99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
@@ -557,13 +564,21 @@ pub fn plan_rust_checked_integer_condition(
                 }
             }
         }
-    } else if ((*method)
+    } else if ((((*method)
         == (self::ml_string::Text::from_units(vec![
             99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118,
         ])))
         || ((*method)
             == (self::ml_string::Text::from_units(vec![
                 99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109,
+            ]))))
+        || ((*method)
+            == (self::ml_string::Text::from_units(vec![
+                99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108, 105, 100,
+            ]))))
+        || ((*method)
+            == (self::ml_string::Text::from_units(vec![
+                99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109, 95, 101, 117, 99, 108, 105, 100,
             ])))
     {
         if signed {
@@ -603,6 +618,182 @@ pub fn plan_rust_checked_integer_success(
     signed: bool,
 ) -> Vec<self::ml_string::Text> {
     if ((*method)
+        == (self::ml_string::Text::from_units(vec![
+            99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108, 105, 100,
+        ])))
+        || ((*method)
+            == (self::ml_string::Text::from_units(vec![
+                99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109, 95, 101, 117, 99, 108, 105, 100,
+            ])))
+    {
+        {
+            let quotient = vec![
+                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
+                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
+                self::ml_string::Text::from_units(vec![100, 105, 118]),
+            ];
+            {
+                let remainder = vec![
+                    self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
+                    self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
+                    self::ml_string::Text::from_units(vec![114, 101, 109]),
+                ];
+                if signed {
+                    {
+                        let positive = if (*method)
+                            == (self::ml_string::Text::from_units(vec![
+                                99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117,
+                                99, 108, 105, 100,
+                            ])) {
+                            {
+                                let source_ml_source2_concat_value47 = quotient.clone();
+                                {
+                                    let source_ml_source2_concat_value48 = vec![
+                                        self::ml_string::Text::from_units(vec![
+                                            110, 101, 103, 97, 116, 105, 118, 101, 32, 117, 110,
+                                            105, 116,
+                                        ]),
+                                        self::ml_string::Text::from_units(vec![97, 100, 100]),
+                                    ];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<self::ml_string::Text>::new(),
+                                            source_ml_source2_concat_value47,
+                                        ),
+                                        source_ml_source2_concat_value48,
+                                    )
+                                }
+                            }
+                        } else {
+                            {
+                                let source_ml_source2_concat_value49 = remainder.clone();
+                                {
+                                    let source_ml_source2_concat_value50 = vec![
+                                        self::ml_string::Text::from_units(vec![
+                                            114, 105, 103, 104, 116,
+                                        ]),
+                                        self::ml_string::Text::from_units(vec![97, 100, 100]),
+                                    ];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<self::ml_string::Text>::new(),
+                                            source_ml_source2_concat_value49,
+                                        ),
+                                        source_ml_source2_concat_value50,
+                                    )
+                                }
+                            }
+                        };
+                        {
+                            let negative = if (*method)
+                                == (self::ml_string::Text::from_units(vec![
+                                    99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101,
+                                    117, 99, 108, 105, 100,
+                                ])) {
+                                {
+                                    let source_ml_source2_concat_value51 = quotient.clone();
+                                    {
+                                        let source_ml_source2_concat_value52 = vec![
+                                            self::ml_string::Text::from_units(vec![
+                                                110, 101, 103, 97, 116, 105, 118, 101, 32, 117,
+                                                110, 105, 116,
+                                            ]),
+                                            self::ml_string::Text::from_units(vec![115, 117, 98]),
+                                        ];
+                                        self::ml_array::append(
+                                            self::ml_array::append(
+                                                Vec::<self::ml_string::Text>::new(),
+                                                source_ml_source2_concat_value51,
+                                            ),
+                                            source_ml_source2_concat_value52,
+                                        )
+                                    }
+                                }
+                            } else {
+                                {
+                                    let source_ml_source2_concat_value53 = remainder.clone();
+                                    {
+                                        let source_ml_source2_concat_value54 = vec![
+                                            self::ml_string::Text::from_units(vec![
+                                                114, 105, 103, 104, 116,
+                                            ]),
+                                            self::ml_string::Text::from_units(vec![115, 117, 98]),
+                                        ];
+                                        self::ml_array::append(
+                                            self::ml_array::append(
+                                                Vec::<self::ml_string::Text>::new(),
+                                                source_ml_source2_concat_value53,
+                                            ),
+                                            source_ml_source2_concat_value54,
+                                        )
+                                    }
+                                }
+                            };
+                            {
+                                let source_ml_source2_concat_value55 = remainder.clone();
+                                {
+                                    let source_ml_source2_concat_value56 = vec![
+                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
+                                        self::ml_string::Text::from_units(vec![108, 116]),
+                                        self::ml_string::Text::from_units(vec![
+                                            114, 105, 103, 104, 116,
+                                        ]),
+                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
+                                        self::ml_string::Text::from_units(vec![103, 116]),
+                                    ];
+                                    {
+                                        let source_ml_source2_concat_value57 = positive;
+                                        {
+                                            let source_ml_source2_concat_value58 = negative;
+                                            {
+                                                let source_ml_source2_concat_value59 =
+                                                    vec![self::ml_string::Text::from_units(vec![
+                                                        105, 102,
+                                                    ])];
+                                                {
+                                                    let source_ml_source2_concat_value60 =
+                                                        if (*method)
+                                                            == (self::ml_string::Text::from_units(
+                                                                vec![
+                                                                    99, 104, 101, 99, 107, 101,
+                                                                    100, 95, 100, 105, 118, 95,
+                                                                    101, 117, 99, 108, 105, 100,
+                                                                ],
+                                                            ))
+                                                        {
+                                                            quotient
+                                                        } else {
+                                                            remainder
+                                                        };
+                                                    {
+                                                        let source_ml_source2_concat_value61 = vec![
+                                                            self::ml_string::Text::from_units(
+                                                                vec![105, 102],
+                                                            ),
+                                                        ];
+                                                        self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value55), source_ml_source2_concat_value56), source_ml_source2_concat_value57), source_ml_source2_concat_value58), source_ml_source2_concat_value59), source_ml_source2_concat_value60), source_ml_source2_concat_value61)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (*method)
+                    == (self::ml_string::Text::from_units(vec![
+                        99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108,
+                        105, 100,
+                    ]))
+                {
+                    quotient
+                } else {
+                    remainder
+                }
+            }
+        }
+    } else if ((*method)
         == (self::ml_string::Text::from_units(vec![
             99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
         ])))
@@ -704,105 +895,4 @@ pub fn plan_rust_checked_integer_success(
             }
         }
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_consumer(
-    consumer: &self::ml_string::Text,
-) -> Vec<self::ml_string::Text> {
-    if (*consumer) == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])) {
-        vec![self::ml_string::Text::from_units(vec![
-            99, 111, 110, 100, 105, 116, 105, 111, 110,
-        ])]
-    } else if (*consumer)
-        == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101]))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
-            self::ml_string::Text::from_units(vec![110, 111, 116]),
-        ]
-    } else if (*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112]))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
-            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
-            self::ml_string::Text::from_units(vec![
-                117, 110, 119, 114, 97, 112, 32, 109, 101, 115, 115, 97, 103, 101,
-            ]),
-            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101]),
-            self::ml_string::Text::from_units(vec![105, 102]),
-        ]
-    } else if (*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116]))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
-            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
-            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
-            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101]),
-            self::ml_string::Text::from_units(vec![105, 102]),
-        ]
-    } else if (*consumer)
-        == (self::ml_string::Text::from_units(vec![
-            117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
-        ]))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
-            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
-            self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116]),
-            self::ml_string::Text::from_units(vec![105, 102]),
-        ]
-    } else if ((*consumer)
-        == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
-        || ((*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
-            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
-            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
-            self::ml_string::Text::from_units(vec![105, 102]),
-        ]
-    } else {
-        Vec::<self::ml_string::Text>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_checked_integer_result_owner(
-    consumer: &self::ml_string::Text,
-    receiver: &self::ml_string::Text,
-    mapper: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if ((*consumer) == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])))
-        || ((*consumer)
-            == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101])))
-    {
-        self::ml_string::Text::from_units(vec![98, 111, 111, 108])
-    } else if (((*consumer)
-        == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
-        || ((*consumer)
-            == (self::ml_string::Text::from_units(vec![
-                117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
-            ]))))
-        || self::test_rust_option_panic_consumer(consumer)
-    {
-        receiver.clone()
-    } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {
-        mapper.clone()
-    } else {
-        self::ml_string::Text::from_units(vec![])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_primitive_associated_owner(
-    segments: &[self::ml_string::Text],
-    ordinary: bool,
-    shadowed: bool,
-    absolute: bool,
-) -> self::ml_string::Text {
-    self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
 }

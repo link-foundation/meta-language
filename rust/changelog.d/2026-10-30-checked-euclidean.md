@@ -1,0 +1,1 @@
+Draft checked Euclidean integer division and remainder through shared source definitions automatically translated to Rust. Retain zero/overflow guards and avoid absolute-value overflow for minimum signed divisors. Independent mathematical originals and native/transport controls remain deferred.

@@ -3,7 +3,7 @@ import {acceptRustPrimitiveSelectionReceiver} from './rust-primitive-selection-r
 /** @param {string} method @param {boolean} ordinary @returns {number} */
 export function readRustCheckedIntegerArity(method,ordinary){
  if(!ordinary)return -1;
- return ['checked_add','checked_sub','checked_mul','checked_div','checked_rem','checked_shl','checked_shr'].includes(method)?1:['checked_neg','checked_abs'].includes(method)?0:-1;
+ return ['checked_add','checked_sub','checked_mul','checked_div','checked_rem','checked_div_euclid','checked_rem_euclid','checked_shl','checked_shr'].includes(method)?1:['checked_neg','checked_abs'].includes(method)?0:-1;
 }
 /** @param {string} method @param {string} kind @param {string} bits
  * @param {boolean} signed @param {string} owner @param {string} path
@@ -43,12 +43,20 @@ export function planRustCheckedIntegerCondition(method,signed){
   const signs=['operand','zero','gt','right','zero','gt'].concat(positivePositive,positiveNegative,['if','right','zero','gt'],negativePositive,negativeNegative,['if','if']);
   return ['operand','zero','eq','true','right','zero','eq','true'].concat(signs,['if','if']);
  }
- if(method==='checked_div'||method==='checked_rem')return signed?['right','zero','eq','false','operand','minimum','eq','right','negative unit','ne','true','if','if']:['right','zero','ne'];
+ if(method==='checked_div'||method==='checked_rem'||method==='checked_div_euclid'||method==='checked_rem_euclid')return signed?['right','zero','eq','false','operand','minimum','eq','right','negative unit','ne','true','if','if']:['right','zero','ne'];
  return [];
 }
 /** Successful arithmetic appears only within its complete condition's branch.
  * @param {string} method @param {boolean} signed @returns {string[]} */
 export function planRustCheckedIntegerSuccess(method,signed){
+ if(method==='checked_div_euclid'||method==='checked_rem_euclid'){
+  const quotient=['operand','right','div'],remainder=['operand','right','rem'];
+  if(!signed)return method==='checked_div_euclid'?quotient:remainder;
+  // Avoid abs(MIN), which cannot be represented in the signed source domain.
+  const positive=method==='checked_div_euclid'?quotient.concat(['negative unit','add']):remainder.concat(['right','add']);
+  const negative=method==='checked_div_euclid'?quotient.concat(['negative unit','sub']):remainder.concat(['right','sub']);
+  return remainder.concat(['zero','lt','right','zero','gt'],positive,negative,['if'],method==='checked_div_euclid'?quotient:remainder,['if']);
+ }
  if(method==='checked_shl'||method==='checked_shr')return ['operand','right',method==='checked_shl'?'shift left':'shift right'];
  if(method==='checked_neg')return signed?['operand','neg']:['zero'];
  if(method==='checked_abs')return signed?['operand','zero','lt','operand','neg','operand','if']:[];

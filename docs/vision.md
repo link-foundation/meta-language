@@ -10897,3 +10897,12 @@ with an explicit standard-library reference documenting why zero is correct.
 Independent interval and shift originals, eager message controls and transport/
 native checks are authored for CI; none is execution evidence. Stored Option
 values, lazy consumers and unrestricted source translation remain required.
+
+Shared checked-integer plans include Euclidean division and remainder. They
+reuse zero/overflow guards, apply signed corrections only after valid division,
+and avoid taking the absolute value of the minimum signed divisor. Existing
+source adapters interpret these generated common terms without host-specific
+Euclidean algorithms. Deferred mathematical originals derive the nonnegative
+remainder and reconstruct the quotient, covering all sign combinations and
+minimum-integer divisors across fixed/pointer widths. Generic Option flow and
+the full source-translation scope remain obligations.

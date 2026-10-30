@@ -438,6 +438,8 @@ pub fn read_rust_checked_integer_arity(method: &str, ordinary: bool) -> f64 {
                 String::from("checked_mul"),
                 String::from("checked_div"),
                 String::from("checked_rem"),
+                String::from("checked_div_euclid"),
+                String::from("checked_rem_euclid"),
                 String::from("checked_shl"),
                 String::from("checked_shr"),
             ],
@@ -769,7 +771,10 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                 }
             }
         }
-    } else if (method == "checked_div") || (method == "checked_rem") {
+    } else if (((method == "checked_div") || (method == "checked_rem"))
+        || (method == "checked_div_euclid"))
+        || (method == "checked_rem_euclid")
+    {
         if signed {
             vec![
                 String::from("right"),
@@ -793,105 +798,6 @@ pub fn plan_rust_checked_integer_condition(method: &str, signed: bool) -> Vec<St
                 String::from("ne"),
             ]
         }
-    } else {
-        Vec::<String>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_success(method: &str, signed: bool) -> Vec<String> {
-    if (method == "checked_shl") || (method == "checked_shr") {
-        vec![
-            String::from("operand"),
-            String::from("right"),
-            if method == "checked_shl" {
-                String::from("shift left")
-            } else {
-                String::from("shift right")
-            },
-        ]
-    } else if method == "checked_neg" {
-        if signed {
-            vec![String::from("operand"), String::from("neg")]
-        } else {
-            vec![String::from("zero")]
-        }
-    } else if method == "checked_abs" {
-        if signed {
-            vec![
-                String::from("operand"),
-                String::from("zero"),
-                String::from("lt"),
-                String::from("operand"),
-                String::from("neg"),
-                String::from("operand"),
-                String::from("if"),
-            ]
-        } else {
-            Vec::<String>::new()
-        }
-    } else {
-        {
-            let operation = if method == "checked_add" {
-                String::from("add")
-            } else if method == "checked_sub" {
-                String::from("sub")
-            } else if method == "checked_mul" {
-                String::from("mul")
-            } else if method == "checked_div" {
-                String::from("div")
-            } else if method == "checked_rem" {
-                String::from("rem")
-            } else {
-                String::new()
-            };
-            if operation.is_empty() {
-                Vec::<String>::new()
-            } else {
-                vec![String::from("operand"), String::from("right"), operation]
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_consumer(consumer: &str) -> Vec<String> {
-    if consumer == "is_some" {
-        vec![String::from("condition")]
-    } else if consumer == "is_none" {
-        vec![String::from("condition"), String::from("not")]
-    } else if consumer == "unwrap" {
-        vec![
-            String::from("condition"),
-            String::from("success"),
-            String::from("unwrap message"),
-            String::from("raise"),
-            String::from("if"),
-        ]
-    } else if consumer == "expect" {
-        vec![
-            String::from("condition"),
-            String::from("success"),
-            String::from("fallback"),
-            String::from("raise"),
-            String::from("if"),
-        ]
-    } else if consumer == "unwrap_or_default" {
-        vec![
-            String::from("condition"),
-            String::from("success"),
-            String::from("default"),
-            String::from("if"),
-        ]
-    } else if (consumer == "unwrap_or") || (consumer == "map_or") {
-        vec![
-            String::from("condition"),
-            String::from("success"),
-            String::from("fallback"),
-            String::from("if"),
-        ]
     } else {
         Vec::<String>::new()
     }

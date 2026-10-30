@@ -6,6 +6,109 @@ use super::ml_array;
 use super::ml_string;
 use super::read_rust_checked_integer_arity;
 use super::read_rust_integer_magnitude_arity;
+use super::read_rust_primitive_owner_path;
+use super::test_rust_option_panic_consumer;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_checked_integer_consumer(
+    consumer: &self::ml_string::Text,
+) -> Vec<self::ml_string::Text> {
+    if (*consumer) == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])) {
+        vec![self::ml_string::Text::from_units(vec![
+            99, 111, 110, 100, 105, 116, 105, 111, 110,
+        ])]
+    } else if (*consumer)
+        == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101]))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![110, 111, 116]),
+        ]
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112]))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![
+                117, 110, 119, 114, 97, 112, 32, 109, 101, 115, 115, 97, 103, 101,
+            ]),
+            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![101, 120, 112, 101, 99, 116]))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
+            self::ml_string::Text::from_units(vec![114, 97, 105, 115, 101]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
+    } else if (*consumer)
+        == (self::ml_string::Text::from_units(vec![
+            117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
+        ]))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
+    } else if ((*consumer)
+        == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
+        || ((*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])))
+    {
+        vec![
+            self::ml_string::Text::from_units(vec![99, 111, 110, 100, 105, 116, 105, 111, 110]),
+            self::ml_string::Text::from_units(vec![115, 117, 99, 99, 101, 115, 115]),
+            self::ml_string::Text::from_units(vec![102, 97, 108, 108, 98, 97, 99, 107]),
+            self::ml_string::Text::from_units(vec![105, 102]),
+        ]
+    } else {
+        Vec::<self::ml_string::Text>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_checked_integer_result_owner(
+    consumer: &self::ml_string::Text,
+    receiver: &self::ml_string::Text,
+    mapper: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*consumer) == (self::ml_string::Text::from_units(vec![105, 115, 95, 115, 111, 109, 101])))
+        || ((*consumer)
+            == (self::ml_string::Text::from_units(vec![105, 115, 95, 110, 111, 110, 101])))
+    {
+        self::ml_string::Text::from_units(vec![98, 111, 111, 108])
+    } else if (((*consumer)
+        == (self::ml_string::Text::from_units(vec![117, 110, 119, 114, 97, 112, 95, 111, 114])))
+        || ((*consumer)
+            == (self::ml_string::Text::from_units(vec![
+                117, 110, 119, 114, 97, 112, 95, 111, 114, 95, 100, 101, 102, 97, 117, 108, 116,
+            ]))))
+        || self::test_rust_option_panic_consumer(consumer)
+    {
+        receiver.clone()
+    } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {
+        mapper.clone()
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_primitive_associated_owner(
+    segments: &[self::ml_string::Text],
+    ordinary: bool,
+    shadowed: bool,
+    absolute: bool,
+) -> self::ml_string::Text {
+    self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -200,9 +303,9 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop3(
         if at >= 0f64 {
             {
                 let plan_2 = {
-                    let source_ml_source2_concat_value47 = plan;
+                    let source_ml_source2_concat_value62 = plan;
                     {
-                        let source_ml_source2_concat_value48 = vec![
+                        let source_ml_source2_concat_value63 = vec![
                             18f64,
                             (self::ml_array::optional_at(
                                 bindings,
@@ -220,9 +323,9 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop3(
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<f64>::new(),
-                                source_ml_source2_concat_value47,
+                                source_ml_source2_concat_value62,
                             ),
-                            source_ml_source2_concat_value48,
+                            source_ml_source2_concat_value63,
                         )
                     }
                 };
@@ -293,9 +396,9 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                             let next_active = 5f64 + (bit * 3f64);
                             {
                                 let plan_2 = {
-                                    let source_ml_source2_concat_value49 = plan;
+                                    let source_ml_source2_concat_value64 = plan;
                                     {
-                                        let source_ml_source2_concat_value50 = vec![
+                                        let source_ml_source2_concat_value65 = vec![
                                             8f64,
                                             current,
                                             0f64,
@@ -320,9 +423,9 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                         self::ml_array::append(
                                             self::ml_array::append(
                                                 Vec::<f64>::new(),
-                                                source_ml_source2_concat_value49,
+                                                source_ml_source2_concat_value64,
                                             ),
-                                            source_ml_source2_concat_value50,
+                                            source_ml_source2_concat_value65,
                                         )
                                     }
                                 };
@@ -333,13 +436,13 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                         {
                                             let next_active_term = 7f64;
                                             {
-                                                let source_ml_source2_s59 = if reverse {
+                                                let source_ml_source2_s74 = if reverse {
                                                     {
                                                         let plan_3 = {
-                                                            let source_ml_source2_concat_value60 =
+                                                            let source_ml_source2_concat_value75 =
                                                                 plan_2;
                                                             {
-                                                                let source_ml_source2_concat_value61 = vec![
+                                                                let source_ml_source2_concat_value76 = vec![
                                                                     16f64,
                                                                     (at + 1f64),
                                                                     3f64,
@@ -351,7 +454,7 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                                     0f64,
                                                                     0f64,
                                                                 ];
-                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value60), source_ml_source2_concat_value61)
+                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value75), source_ml_source2_concat_value76)
                                                             }
                                                         };
                                                         {
@@ -367,10 +470,10 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                         let match_ = index_2;
                                                         {
                                                             let plan_4 = {
-                                                                let source_ml_source2_concat_value62 =
+                                                                let source_ml_source2_concat_value77 =
                                                                     plan_2;
                                                                 {
-                                                                    let source_ml_source2_concat_value63 = vec![
+                                                                    let source_ml_source2_concat_value78 = vec![
                                                                         11f64,
                                                                         (at + 3f64),
                                                                         if ones {
@@ -386,7 +489,7 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                                         0f64,
                                                                         0f64,
                                                                     ];
-                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value62), source_ml_source2_concat_value63)
+                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value77), source_ml_source2_concat_value78)
                                                                 }
                                                             };
                                                             {
@@ -396,10 +499,10 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                                         let next_flag = index_4;
                                                                         {
                                                                             let plan_5 = {
-                                                                                let source_ml_source2_concat_value64 =
+                                                                                let source_ml_source2_concat_value79 =
                                                                                     plan_4;
                                                                                 {
-                                                                                    let source_ml_source2_concat_value65 = vec![
+                                                                                    let source_ml_source2_concat_value80 = vec![
                                                                                         17f64,
                                                                                         (at + 2f64),
                                                                                         match_,
@@ -412,7 +515,7 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                                                         (at + 1f64),
                                                                                         0f64,
                                                                                     ];
-                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value64), source_ml_source2_concat_value65)
+                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value79), source_ml_source2_concat_value80)
                                                                                 }
                                                                             };
                                                                             {
@@ -436,10 +539,10 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                                             index_4;
                                                                         {
                                                                             let plan_6 = {
-                                                                                let source_ml_source2_concat_value66 =
+                                                                                let source_ml_source2_concat_value81 =
                                                                                     plan_4;
                                                                                 {
-                                                                                    let source_ml_source2_concat_value67 = vec![
+                                                                                    let source_ml_source2_concat_value82 = vec![
                                                                                         17f64,
                                                                                         match_,
                                                                                         (match_
@@ -451,7 +554,7 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                                                         },
                                                                                         0f64,
                                                                                     ];
-                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value66), source_ml_source2_concat_value67)
+                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value81), source_ml_source2_concat_value82)
                                                                                 }
                                                                             };
                                                                             {
@@ -466,36 +569,36 @@ pub fn source_ml_source1_temporary_plan_rust_integer_bits_loop1(
                                                         }
                                                     }
                                                 };
-                                                match source_ml_source2_s59 {
+                                                match source_ml_source2_s74 {
                                                     self::MlSource1TemporaryPlanRustIntegerBitsJoin4::MlSource1TemporaryPlanRustIntegerBitsJoin4Next(plan_7, index_7, next_count_term_5, next_active_term_3) => {
                                                         {
                                                             let quotient = index_7;
                                                             {
                                                                 let plan_8 = {
-                                                                    let source_ml_source2_concat_value68 = plan_7;
+                                                                    let source_ml_source2_concat_value83 = plan_7;
                                                                     {
-                                                                        let source_ml_source2_concat_value69 = vec![13f64, at, 3f64, 0f64, 0f64];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value68), source_ml_source2_concat_value69)
+                                                                        let source_ml_source2_concat_value84 = vec![13f64, at, 3f64, 0f64, 0f64];
+                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value83), source_ml_source2_concat_value84)
                                                                     }
                                                                 };
                                                                 {
                                                                     let index_8 = index_7 + 1f64;
                                                                     {
                                                                         let bindings_2 = {
-                                                                            let source_ml_source2_concat_value70 = bindings;
+                                                                            let source_ml_source2_concat_value85 = bindings;
                                                                             {
-                                                                                let source_ml_source2_concat_value71 = vec![next_current, quotient, next_count, next_count_term_5];
-                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value70), source_ml_source2_concat_value71)
+                                                                                let source_ml_source2_concat_value86 = vec![next_current, quotient, next_count, next_count_term_5];
+                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value85), source_ml_source2_concat_value86)
                                                                             }
                                                                         };
                                                                         {
                                                                             let bindings_4 = if trailing {
                                                                                 {
                                                                                     {
-                                                                                        let source_ml_source2_concat_value72 = bindings_2;
+                                                                                        let source_ml_source2_concat_value87 = bindings_2;
                                                                                         {
-                                                                                            let source_ml_source2_concat_value73 = vec![next_active, next_active_term_3];
-                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value72), source_ml_source2_concat_value73)
+                                                                                            let source_ml_source2_concat_value88 = vec![next_active, next_active_term_3];
+                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value87), source_ml_source2_concat_value88)
                                                                                         }
                                                                                     }
                                                                                 }
