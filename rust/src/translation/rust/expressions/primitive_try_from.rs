@@ -55,30 +55,16 @@ pub(super) fn origin(ty: Type, owner: &str, path: &[String]) -> SourceOrigin {
     });
     value
 }
-pub(super) fn facts(parser: &RustParser, node: &SExpr, path: &[String]) -> Facts {
-    let origin = parser.origins.origin(node, path);
-    let owner = origin
-        .source_owner
-        .clone()
-        .or_else(|| {
-            (matches!(&node.node, SNode::Bool { .. })
-                && origin.proven
-                && origin.wrappers.is_empty())
-            .then(|| SourceOwner {
+pub(super) fn origin_facts(origin: SourceOrigin) -> Facts {
+    let owner = origin.source_owner.clone().or_else(|| {
+        (origin.ty == Some(FLOAT) && origin.float_source_model == Some("binary64 scalar")).then(
+            || SourceOwner {
                 kind: "primitive".to_owned(),
-                path: vec!["bool".to_owned()],
+                path: vec!["f64".to_owned()],
                 arguments: Vec::new(),
-            })
-        })
-        .or_else(|| {
-            (origin.ty == Some(FLOAT) && origin.float_source_model == Some("binary64 scalar")).then(
-                || SourceOwner {
-                    kind: "primitive".to_owned(),
-                    path: vec!["f64".to_owned()],
-                    arguments: Vec::new(),
-                },
-            )
-        });
+            },
+        )
+    });
     let (bits, signed) = match &origin.ty {
         Some(Type::Fixed { bits, signed }) => (bits.to_string(), *signed),
         _ => (String::new(), false),
@@ -91,6 +77,38 @@ pub(super) fn facts(parser: &RustParser, node: &SExpr, path: &[String]) -> Facts
         owner,
     }
 }
+pub(super) fn facts(parser: &RustParser, node: &SExpr, path: &[String]) -> Facts {
+    let mut origin = parser.origins.origin(node, path);
+    if matches!(&node.node, SNode::Bool { .. })
+        && origin.proven
+        && origin.wrappers.is_empty()
+        && origin.source_owner.is_none()
+    {
+        origin.source_owner = Some(SourceOwner {
+            kind: "primitive".to_owned(),
+            path: vec!["bool".to_owned()],
+            arguments: Vec::new(),
+        });
+    }
+    origin_facts(origin)
+}
+pub(super) fn scalar_result_owner(origin: &SourceOrigin) -> String {
+    let value = origin_facts(origin.clone());
+    rules::read_rust_primitive_try_from_mapper_owner(
+        &value.kind,
+        &value.bits,
+        value.signed,
+        value.owner.as_ref().map_or("", |owner| owner.kind.as_str()),
+        &value.path(),
+        value
+            .owner
+            .as_ref()
+            .map_or(-1.0, |owner| count(owner.arguments.len())),
+        value.origin.proven,
+        count(value.origin.wrappers.len()),
+    )
+}
+
 fn pop(stack: &mut Vec<SExpr>, range: Option<Span>) -> Result<SExpr> {
     stack.pop().ok_or_else(|| {
         type_error(
@@ -107,6 +125,16 @@ impl RustParser {
         path: &[String],
         feature: &str,
     ) -> Result<(SExpr, SourceOrigin, String)> {
+        self.primitive_scalar_mapper_with_result(owner, fallback, path, feature, None)
+    }
+    pub(super) fn primitive_scalar_mapper_with_result(
+        &mut self,
+        owner: &str,
+        fallback: &SExpr,
+        path: &[String],
+        feature: &str,
+        fallback_result: Option<&SourceOrigin>,
+    ) -> Result<(SExpr, SourceOrigin, String)> {
         let parameter = origin(
             rust_fixed_type(owner).ok_or_else(|| {
                 unsupported(
@@ -118,7 +146,10 @@ impl RustParser {
             owner,
             path,
         );
-        let fallback = facts(self, fallback, path);
+        let fallback = fallback_result.map_or_else(
+            || facts(self, fallback, path),
+            |value| origin_facts(value.clone()),
+        );
         let context_owner = rules::read_rust_primitive_try_from_mapper_owner(
             &fallback.kind,
             &fallback.bits,

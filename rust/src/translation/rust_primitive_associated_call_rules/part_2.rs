@@ -4,6 +4,7 @@ use super::MlSource1TemporaryPlanRustIntegerBitsLoop1Result;
 use super::accept_rust_primitive_selection_receiver;
 use super::ml_array;
 use super::ml_string;
+use super::read_rust_primitive_owner_path;
 use super::source_ml_source1_temporary_plan_rust_integer_bits_loop1;
 use super::source_ml_source1_temporary_plan_rust_integer_bits_loop3;
 
@@ -737,160 +738,147 @@ pub fn plan_rust_integer_bits(method: &self::ml_string::Text, bits: f64) -> Vec<
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_scalar_predicate(
-    kind: &self::ml_string::Text,
-    parameters: f64,
-    layers: f64,
-    parameter: bool,
-    result: bool,
+pub fn accept_rust_primitive_from_method(
+    owner: &self::ml_string::Text,
+    method: &self::ml_string::Text,
 ) -> bool {
-    (((((*kind)
-        == (self::ml_string::Text::from_units(vec![102, 117, 110, 99, 116, 105, 111, 110])))
-        && (parameters == 1f64))
-        && (layers == 0f64))
-        && parameter)
-        && result
+    ((*method) == (self::ml_string::Text::from_units(vec![102, 114, 111, 109])))
+        && self::ml_array::includes(
+            &vec![
+                self::ml_string::Text::from_units(vec![98, 111, 111, 108]),
+                self::ml_string::Text::from_units(vec![105, 56]),
+                self::ml_string::Text::from_units(vec![117, 56]),
+                self::ml_string::Text::from_units(vec![105, 49, 54]),
+                self::ml_string::Text::from_units(vec![117, 49, 54]),
+                self::ml_string::Text::from_units(vec![105, 51, 50]),
+                self::ml_string::Text::from_units(vec![117, 51, 50]),
+                self::ml_string::Text::from_units(vec![105, 54, 52]),
+                self::ml_string::Text::from_units(vec![117, 54, 52]),
+                self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+                self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
+                self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
+                self::ml_string::Text::from_units(vec![102, 54, 52]),
+            ],
+            owner,
+            0f64,
+            false,
+            |a, b| a == b,
+        )
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_panic_value_operation() -> self::ml_string::Text {
-    self::ml_string::Text::from_units(vec![
-        114, 97, 105, 115, 101, 82, 117, 115, 116, 80, 97, 110, 105, 99, 86, 97, 108, 117, 101,
-    ])
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_linked_rust_panic_value(
-    kind: &self::ml_string::Text,
-    operation: &self::ml_string::Text,
-) -> bool {
-    ((*kind) == (self::ml_string::Text::from_units(vec![109, 97, 116, 104])))
-        && ((*operation) == (self::read_rust_panic_value_operation()))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_panic_value_argument_error(
-    language: &self::ml_string::Text,
-    count: f64,
-    spread: bool,
-    kind: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if ((((*language) == (self::ml_string::Text::from_units(vec![82, 117, 115, 116])))
-        && (count == 1f64))
-        && !spread)
-        && ((*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])))
-    {
-        self::ml_string::Text::from_units(vec![])
-    } else {
-        self::ml_string::Text::from_units(vec![
-            97, 32, 82, 117, 115, 116, 32, 112, 97, 110, 105, 99, 32, 118, 97, 108, 117, 101, 32,
-            110, 101, 101, 100, 115, 32, 111, 110, 101, 32, 99, 104, 101, 99, 107, 101, 100, 32,
-            115, 111, 117, 114, 99, 101, 32, 83, 116, 114, 105, 110, 103, 32, 109, 101, 115, 115,
-            97, 103, 101,
-        ])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_rust_panic_value_expression(
-    target: &self::ml_string::Text,
-    message: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if (*target)
-        == (self::ml_string::Text::from_units(vec![74, 97, 118, 97, 83, 99, 114, 105, 112, 116]))
-    {
-        ((self::ml_string::Text::from_units(vec![
-            40, 40, 109, 108, 95, 109, 101, 115, 115, 97, 103, 101, 41, 61, 62, 123, 116, 104, 114,
-            111, 119, 32, 110, 101, 119, 32, 69, 114, 114, 111, 114, 40, 109, 108, 95, 109, 101,
-            115, 115, 97, 103, 101, 41, 59, 125, 41, 40,
-        ]))
-        .concat(message))
-        .concat(&self::ml_string::Text::from_units(vec![41]))
-    } else if (*target) == (self::ml_string::Text::from_units(vec![82, 117, 115, 116])) {
-        ((self::ml_string::Text::from_units(vec![
-            112, 97, 110, 105, 99, 33, 40, 34, 123, 125, 34, 44, 32,
-        ]))
-        .concat(message))
-        .concat(&self::ml_string::Text::from_units(vec![41]))
-    } else {
-        self::ml_string::Text::from_units(vec![])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_panic_formatting_macro(name: &self::ml_string::Text, ordinary: bool) -> bool {
-    ordinary
-        && (((((*name) == (self::ml_string::Text::from_units(vec![112, 97, 110, 105, 99])))
-            || ((*name)
-                == (self::ml_string::Text::from_units(vec![
-                    117, 110, 114, 101, 97, 99, 104, 97, 98, 108, 101,
-                ]))))
-            || ((*name)
-                == (self::ml_string::Text::from_units(vec![
-                    117, 110, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101, 100,
-                ]))))
-            || ((*name) == (self::ml_string::Text::from_units(vec![116, 111, 100, 111]))))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_panic_formatting_value(
-    name: &self::ml_string::Text,
+pub fn read_rust_primitive_from_owner(
+    segments: &[self::ml_string::Text],
     ordinary: bool,
-    kind: &self::ml_string::Text,
-    count: f64,
-    braces: bool,
-) -> bool {
-    (self::accept_rust_panic_formatting_macro(name, ordinary) && (count > 0f64))
-        && ((count > 1f64)
-            || (((*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114]))) && braces))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_panic_formatting_prefix(name: &self::ml_string::Text) -> self::ml_string::Text {
-    if (*name)
-        == (self::ml_string::Text::from_units(vec![
-            117, 110, 114, 101, 97, 99, 104, 97, 98, 108, 101,
-        ]))
-    {
-        self::ml_string::Text::from_units(vec![
-            105, 110, 116, 101, 114, 110, 97, 108, 32, 101, 114, 114, 111, 114, 58, 32, 101, 110,
-            116, 101, 114, 101, 100, 32, 117, 110, 114, 101, 97, 99, 104, 97, 98, 108, 101, 32, 99,
-            111, 100, 101, 58, 32,
-        ])
-    } else if (*name)
-        == (self::ml_string::Text::from_units(vec![
-            117, 110, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101, 100,
-        ]))
-    {
-        self::ml_string::Text::from_units(vec![
-            110, 111, 116, 32, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101, 100, 58, 32,
-        ])
-    } else if (*name) == (self::ml_string::Text::from_units(vec![116, 111, 100, 111])) {
-        self::ml_string::Text::from_units(vec![
-            110, 111, 116, 32, 121, 101, 116, 32, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101,
-            100, 58, 32,
-        ])
-    } else {
+    shadowed: bool,
+    absolute: bool,
+) -> self::ml_string::Text {
+    if !ordinary || shadowed {
         self::ml_string::Text::from_units(vec![])
+    } else if ((((segments.len() as f64) == 2f64) && !absolute) && {
+        let source_ml_source2_comparison_operand34 =
+            self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+        {
+            let source_ml_source2_comparison_operand35 =
+                self::ml_string::Text::from_units(vec![102, 54, 52]);
+            match (
+                source_ml_source2_comparison_operand34,
+                source_ml_source2_comparison_operand35,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            }
+        }
+    }) || (((((segments.len() as f64) == 4f64)
+        && ({
+            let source_ml_source2_comparison_operand36 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source2_comparison_operand37 =
+                    self::ml_string::Text::from_units(vec![115, 116, 100]);
+                match (
+                    source_ml_source2_comparison_operand36,
+                    source_ml_source2_comparison_operand37,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        } || {
+            let source_ml_source2_comparison_operand38 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(0f64));
+            {
+                let source_ml_source2_comparison_operand39 =
+                    self::ml_string::Text::from_units(vec![99, 111, 114, 101]);
+                match (
+                    source_ml_source2_comparison_operand38,
+                    source_ml_source2_comparison_operand39,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        }))
+        && {
+            let source_ml_source2_comparison_operand40 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(1f64));
+            {
+                let source_ml_source2_comparison_operand41 =
+                    self::ml_string::Text::from_units(vec![
+                        112, 114, 105, 109, 105, 116, 105, 118, 101,
+                    ]);
+                match (
+                    source_ml_source2_comparison_operand40,
+                    source_ml_source2_comparison_operand41,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
+        && {
+            let source_ml_source2_comparison_operand42 =
+                self::ml_array::optional_at(segments, self::ml_array::number_index(2f64));
+            {
+                let source_ml_source2_comparison_operand43 =
+                    self::ml_string::Text::from_units(vec![102, 54, 52]);
+                match (
+                    source_ml_source2_comparison_operand42,
+                    source_ml_source2_comparison_operand43,
+                ) {
+                    (Some(ml_left), ml_right) => ml_left == ml_right,
+                    _ => false,
+                }
+            }
+        })
+    {
+        self::ml_string::Text::from_units(vec![102, 54, 52])
+    } else {
+        self::read_rust_primitive_owner_path(segments, ordinary, shadowed, absolute)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_rust_panic_completion_kind(
+pub fn read_rust_primitive_from_literal_owner(
+    form: &self::ml_string::Text,
+    typed: bool,
     kind: &self::ml_string::Text,
-    operation: &self::ml_string::Text,
 ) -> self::ml_string::Text {
-    if self::accept_linked_rust_panic_value(kind, operation) {
-        self::ml_string::Text::from_units(vec![97, 98, 111, 114, 116])
+    if ((*form) != (self::ml_string::Text::from_units(vec![110, 117, 109, 101, 114, 97, 108])))
+        && ((*form)
+            != (self::ml_string::Text::from_units(vec![
+                110, 101, 103, 97, 116, 105, 118, 101, 32, 110, 117, 109, 101, 114, 97, 108,
+            ])))
+    {
+        self::ml_string::Text::from_units(vec![])
+    } else if (*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116])) {
+        self::ml_string::Text::from_units(vec![102, 54, 52])
+    } else if typed {
+        self::ml_string::Text::from_units(vec![])
     } else {
-        kind.clone()
+        self::ml_string::Text::from_units(vec![105, 51, 50])
     }
 }

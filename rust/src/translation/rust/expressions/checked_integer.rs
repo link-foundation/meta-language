@@ -1,5 +1,5 @@
 //! Token/type/origin projection into shared checked arithmetic and Option plans.
-use super::primitive_try_from::{facts, origin};
+use super::primitive_try_from::{facts, origin, scalar_result_owner};
 use super::{
     BOOL, BinaryOp, FLOAT, Options, Result, RustParser, SExpr, SNode, Span, Token, TokenKind, Type,
     UnaryOp, rust_fixed_type, type_error, unsupported,
@@ -272,7 +272,46 @@ impl RustParser {
         let mut mapper_callback = None;
         let mut lazy_origin = None;
         if consumer_arity > 0.0 {
-            if rules::test_rust_checked_integer_lazy_fallback(&consumer.value)
+            if rules::test_rust_checked_integer_lazy_mapper(&consumer.value) {
+                let mut expected = super::SourceOrigin::with_type(
+                    Type::Function {
+                        params: Vec::new(),
+                        ret: Box::new(super::UNIT),
+                    },
+                    path,
+                    Vec::new(),
+                );
+                expected.copy_evidence = Some(());
+                expected.callable_parameters = Some(Vec::new());
+                expected.callable_result = None;
+                let callback =
+                    self.read_expected_copy_closure_result_mode(path, Some(&expected), true)?;
+                let callable = self.origins.origin(&callback, path);
+                let owner = callable
+                    .callable_result
+                    .as_deref()
+                    .map_or_else(String::new, scalar_result_owner);
+                let parameters = match &callable.ty {
+                    Some(Type::Function { params, .. }) => count(params.len()),
+                    _ => -1.0,
+                };
+                let error = rules::read_rust_checked_integer_mapped_fallback_error(
+                    callable.ty.as_ref().map_or("", Type::kind),
+                    parameters,
+                    count(callable.wrappers.len()),
+                    &owner,
+                    &owner,
+                );
+                if !error.is_empty() {
+                    return Err(unsupported(
+                        "Rust checked integer mapped fallback",
+                        &error,
+                        callback.span,
+                    ));
+                }
+                defaults.push(callback);
+                lazy_origin = Some(callable);
+            } else if rules::test_rust_checked_integer_lazy_fallback(&consumer.value)
                 || rules::test_rust_checked_integer_predicate_consumer(&consumer.value)
             {
                 let source = facts(self, &receiver, path);
@@ -412,12 +451,20 @@ impl RustParser {
                     }
                 } else {
                     let source_owner = facts(self, &receiver, path).path();
-                    let (callback, callable, result_owner) = self.primitive_scalar_mapper(
-                        &source_owner,
-                        &defaults[0],
-                        path,
-                        "Rust checked integer mapper",
-                    )?;
+                    let (callback, callable, result_owner) = self
+                        .primitive_scalar_mapper_with_result(
+                            &source_owner,
+                            &defaults[0],
+                            path,
+                            "Rust checked integer mapper",
+                            if rules::test_rust_checked_integer_lazy_mapper(&consumer.value) {
+                                lazy_origin
+                                    .as_ref()
+                                    .and_then(|value| value.callable_result.as_deref())
+                            } else {
+                                None
+                            },
+                        )?;
                     mapper_owner = result_owner;
                     mapper_callback = Some((callback, callable));
                 }
@@ -503,7 +550,7 @@ impl RustParser {
                 ));
             }
         }
-        if consumer.value == "map_or"
+        if rules::test_rust_checked_integer_mapping_consumer(&consumer.value)
             && mapper_callback.is_none()
             && from_rules::plan_rust_primitive_from(&mapper_owner, &owner).is_empty()
         {
@@ -532,6 +579,31 @@ impl RustParser {
                 range,
             ));
         };
+        if rules::test_rust_checked_integer_lazy_mapper(&consumer.value) {
+            let callable = lazy_origin.as_ref().unwrap();
+            let owner = callable
+                .callable_result
+                .as_deref()
+                .map_or_else(String::new, scalar_result_owner);
+            let parameters = match &callable.ty {
+                Some(Type::Function { params, .. }) => count(params.len()),
+                _ => -1.0,
+            };
+            let error = rules::read_rust_checked_integer_mapped_fallback_error(
+                callable.ty.as_ref().map_or("", Type::kind),
+                parameters,
+                count(callable.wrappers.len()),
+                &owner,
+                &result_owner,
+            );
+            if !error.is_empty() {
+                return Err(unsupported(
+                    "Rust checked integer mapped fallback",
+                    &error,
+                    defaults[0].span,
+                ));
+            }
+        }
         let mut captures = Vec::new();
         let mut locals = Vec::new();
         for (index, value) in std::iter::once(receiver).chain(args).enumerate() {
@@ -690,7 +762,7 @@ impl RustParser {
                 },
                 range,
             )
-        } else if consumer.value == "map_or" {
+        } else if rules::test_rust_checked_integer_mapping_consumer(&consumer.value) {
             self.project_primitive_from(success, &mapper_owner, range, path)?
         } else {
             success

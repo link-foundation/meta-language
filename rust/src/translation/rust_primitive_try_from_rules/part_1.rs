@@ -210,6 +210,12 @@ pub fn accept_rust_scalar_predicate(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_scalar_fallback(kind: &str, parameters: f64, layers: f64, result: bool) -> bool {
+    (((kind == "function") && (parameters == 0f64)) && (layers == 0f64)) && result
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_source_version_default() -> String {
     String::from("1.99.0")
 }

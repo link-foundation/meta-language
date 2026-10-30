@@ -1,9 +1,374 @@
 // Generated from complete js/src/translation/rust-primitive-associated-call-rules.js. Do not edit by hand.
+use super::accept_rust_primitive_from_method;
 use super::accept_rust_primitive_selection_receiver;
 use super::ml_array;
 use super::ml_string;
 use super::test_rust_checked_integer_lazy_fallback;
+use super::test_rust_checked_integer_mapping_consumer;
 use super::test_rust_checked_integer_predicate_consumer;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_rust_primitive_from_source(
+    kind: &self::ml_string::Text,
+    bits: &self::ml_string::Text,
+    signed: bool,
+    owner: &self::ml_string::Text,
+    path: &self::ml_string::Text,
+    children: f64,
+    proven: bool,
+    layers: f64,
+) -> bool {
+    (((((((((*kind) == (self::ml_string::Text::from_units(vec![102, 108, 111, 97, 116])))
+        && ((*bits) == (self::ml_string::Text::from_units(vec![]))))
+        && !signed)
+        && ((*owner)
+            == (self::ml_string::Text::from_units(vec![
+                112, 114, 105, 109, 105, 116, 105, 118, 101,
+            ]))))
+        && ((*path) == (self::ml_string::Text::from_units(vec![102, 54, 52]))))
+        && (children == 0f64))
+        && proven)
+        && (layers == 0f64))
+        || self::accept_rust_primitive_selection_receiver(
+            kind, bits, signed, owner, path, children, proven, layers,
+        )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_primitive_from(
+    target: &self::ml_string::Text,
+    source: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if !(self::accept_rust_primitive_from_method(
+        target,
+        &(self::ml_string::Text::from_units(vec![102, 114, 111, 109])),
+    )) || !(self::accept_rust_primitive_from_method(
+        source,
+        &(self::ml_string::Text::from_units(vec![102, 114, 111, 109])),
+    )) {
+        self::ml_string::Text::from_units(vec![])
+    } else if (*target) == (*source) {
+        self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])
+    } else if (((*source) == (self::ml_string::Text::from_units(vec![98, 111, 111, 108])))
+        && ((*target) != (self::ml_string::Text::from_units(vec![98, 111, 111, 108]))))
+        && ((*target) != (self::ml_string::Text::from_units(vec![102, 54, 52])))
+    {
+        self::ml_string::Text::from_units(vec![
+            98, 111, 111, 108, 101, 97, 110, 32, 105, 110, 116, 101, 103, 101, 114,
+        ])
+    } else if ((*target) == (self::ml_string::Text::from_units(vec![102, 54, 52])))
+        && self::ml_array::includes(
+            &vec![
+                self::ml_string::Text::from_units(vec![105, 56]),
+                self::ml_string::Text::from_units(vec![105, 49, 54]),
+                self::ml_string::Text::from_units(vec![105, 51, 50]),
+                self::ml_string::Text::from_units(vec![117, 56]),
+                self::ml_string::Text::from_units(vec![117, 49, 54]),
+                self::ml_string::Text::from_units(vec![117, 51, 50]),
+            ],
+            source,
+            0f64,
+            false,
+            |a, b| a == b,
+        )
+    {
+        self::ml_string::Text::from_units(vec![
+            102, 108, 111, 97, 116, 105, 110, 103, 32, 101, 120, 97, 99, 116,
+        ])
+    } else {
+        {
+            let admitted = (((((((((*source)
+                == (self::ml_string::Text::from_units(vec![117, 56])))
+                && self::ml_array::includes(
+                    &vec![
+                        self::ml_string::Text::from_units(vec![117, 49, 54]),
+                        self::ml_string::Text::from_units(vec![117, 51, 50]),
+                        self::ml_string::Text::from_units(vec![117, 54, 52]),
+                        self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+                        self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
+                        self::ml_string::Text::from_units(vec![105, 49, 54]),
+                        self::ml_string::Text::from_units(vec![105, 51, 50]),
+                        self::ml_string::Text::from_units(vec![105, 54, 52]),
+                        self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                        self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
+                    ],
+                    target,
+                    0f64,
+                    false,
+                    |a, b| a == b,
+                ))
+                || (((*source) == (self::ml_string::Text::from_units(vec![117, 49, 54])))
+                    && self::ml_array::includes(
+                        &vec![
+                            self::ml_string::Text::from_units(vec![117, 51, 50]),
+                            self::ml_string::Text::from_units(vec![117, 54, 52]),
+                            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+                            self::ml_string::Text::from_units(vec![117, 115, 105, 122, 101]),
+                            self::ml_string::Text::from_units(vec![105, 51, 50]),
+                            self::ml_string::Text::from_units(vec![105, 54, 52]),
+                            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                        ],
+                        target,
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || (((*source) == (self::ml_string::Text::from_units(vec![117, 51, 50])))
+                    && self::ml_array::includes(
+                        &vec![
+                            self::ml_string::Text::from_units(vec![117, 54, 52]),
+                            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+                            self::ml_string::Text::from_units(vec![105, 54, 52]),
+                            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                        ],
+                        target,
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || (((*source) == (self::ml_string::Text::from_units(vec![117, 54, 52])))
+                    && self::ml_array::includes(
+                        &vec![
+                            self::ml_string::Text::from_units(vec![117, 49, 50, 56]),
+                            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                        ],
+                        target,
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || (((*source) == (self::ml_string::Text::from_units(vec![105, 56])))
+                    && self::ml_array::includes(
+                        &vec![
+                            self::ml_string::Text::from_units(vec![105, 49, 54]),
+                            self::ml_string::Text::from_units(vec![105, 51, 50]),
+                            self::ml_string::Text::from_units(vec![105, 54, 52]),
+                            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                            self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
+                        ],
+                        target,
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || (((*source) == (self::ml_string::Text::from_units(vec![105, 49, 54])))
+                    && self::ml_array::includes(
+                        &vec![
+                            self::ml_string::Text::from_units(vec![105, 51, 50]),
+                            self::ml_string::Text::from_units(vec![105, 54, 52]),
+                            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                            self::ml_string::Text::from_units(vec![105, 115, 105, 122, 101]),
+                        ],
+                        target,
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || (((*source) == (self::ml_string::Text::from_units(vec![105, 51, 50])))
+                    && self::ml_array::includes(
+                        &vec![
+                            self::ml_string::Text::from_units(vec![105, 54, 52]),
+                            self::ml_string::Text::from_units(vec![105, 49, 50, 56]),
+                        ],
+                        target,
+                        0f64,
+                        false,
+                        |a, b| a == b,
+                    )))
+                || (((*source) == (self::ml_string::Text::from_units(vec![105, 54, 52])))
+                    && ((*target) == (self::ml_string::Text::from_units(vec![105, 49, 50, 56]))));
+            if admitted {
+                self::ml_string::Text::from_units(vec![
+                    105, 110, 116, 101, 103, 101, 114, 32, 101, 120, 97, 99, 116,
+                ])
+            } else {
+                self::ml_string::Text::from_units(vec![])
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_scalar_predicate(
+    kind: &self::ml_string::Text,
+    parameters: f64,
+    layers: f64,
+    parameter: bool,
+    result: bool,
+) -> bool {
+    (((((*kind)
+        == (self::ml_string::Text::from_units(vec![102, 117, 110, 99, 116, 105, 111, 110])))
+        && (parameters == 1f64))
+        && (layers == 0f64))
+        && parameter)
+        && result
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_scalar_fallback(
+    kind: &self::ml_string::Text,
+    parameters: f64,
+    layers: f64,
+    result: bool,
+) -> bool {
+    ((((*kind)
+        == (self::ml_string::Text::from_units(vec![102, 117, 110, 99, 116, 105, 111, 110])))
+        && (parameters == 0f64))
+        && (layers == 0f64))
+        && result
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_value_operation() -> self::ml_string::Text {
+    self::ml_string::Text::from_units(vec![
+        114, 97, 105, 115, 101, 82, 117, 115, 116, 80, 97, 110, 105, 99, 86, 97, 108, 117, 101,
+    ])
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_rust_panic_value(
+    kind: &self::ml_string::Text,
+    operation: &self::ml_string::Text,
+) -> bool {
+    ((*kind) == (self::ml_string::Text::from_units(vec![109, 97, 116, 104])))
+        && ((*operation) == (self::read_rust_panic_value_operation()))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_value_argument_error(
+    language: &self::ml_string::Text,
+    count: f64,
+    spread: bool,
+    kind: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((((*language) == (self::ml_string::Text::from_units(vec![82, 117, 115, 116])))
+        && (count == 1f64))
+        && !spread)
+        && ((*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])))
+    {
+        self::ml_string::Text::from_units(vec![])
+    } else {
+        self::ml_string::Text::from_units(vec![
+            97, 32, 82, 117, 115, 116, 32, 112, 97, 110, 105, 99, 32, 118, 97, 108, 117, 101, 32,
+            110, 101, 101, 100, 115, 32, 111, 110, 101, 32, 99, 104, 101, 99, 107, 101, 100, 32,
+            115, 111, 117, 114, 99, 101, 32, 83, 116, 114, 105, 110, 103, 32, 109, 101, 115, 115,
+            97, 103, 101,
+        ])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_rust_panic_value_expression(
+    target: &self::ml_string::Text,
+    message: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if (*target)
+        == (self::ml_string::Text::from_units(vec![74, 97, 118, 97, 83, 99, 114, 105, 112, 116]))
+    {
+        ((self::ml_string::Text::from_units(vec![
+            40, 40, 109, 108, 95, 109, 101, 115, 115, 97, 103, 101, 41, 61, 62, 123, 116, 104, 114,
+            111, 119, 32, 110, 101, 119, 32, 69, 114, 114, 111, 114, 40, 109, 108, 95, 109, 101,
+            115, 115, 97, 103, 101, 41, 59, 125, 41, 40,
+        ]))
+        .concat(message))
+        .concat(&self::ml_string::Text::from_units(vec![41]))
+    } else if (*target) == (self::ml_string::Text::from_units(vec![82, 117, 115, 116])) {
+        ((self::ml_string::Text::from_units(vec![
+            112, 97, 110, 105, 99, 33, 40, 34, 123, 125, 34, 44, 32,
+        ]))
+        .concat(message))
+        .concat(&self::ml_string::Text::from_units(vec![41]))
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_macro(name: &self::ml_string::Text, ordinary: bool) -> bool {
+    ordinary
+        && (((((*name) == (self::ml_string::Text::from_units(vec![112, 97, 110, 105, 99])))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    117, 110, 114, 101, 97, 99, 104, 97, 98, 108, 101,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    117, 110, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101, 100,
+                ]))))
+            || ((*name) == (self::ml_string::Text::from_units(vec![116, 111, 100, 111]))))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_panic_formatting_value(
+    name: &self::ml_string::Text,
+    ordinary: bool,
+    kind: &self::ml_string::Text,
+    count: f64,
+    braces: bool,
+) -> bool {
+    (self::accept_rust_panic_formatting_macro(name, ordinary) && (count > 0f64))
+        && ((count > 1f64)
+            || (((*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114]))) && braces))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_formatting_prefix(name: &self::ml_string::Text) -> self::ml_string::Text {
+    if (*name)
+        == (self::ml_string::Text::from_units(vec![
+            117, 110, 114, 101, 97, 99, 104, 97, 98, 108, 101,
+        ]))
+    {
+        self::ml_string::Text::from_units(vec![
+            105, 110, 116, 101, 114, 110, 97, 108, 32, 101, 114, 114, 111, 114, 58, 32, 101, 110,
+            116, 101, 114, 101, 100, 32, 117, 110, 114, 101, 97, 99, 104, 97, 98, 108, 101, 32, 99,
+            111, 100, 101, 58, 32,
+        ])
+    } else if (*name)
+        == (self::ml_string::Text::from_units(vec![
+            117, 110, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101, 100,
+        ]))
+    {
+        self::ml_string::Text::from_units(vec![
+            110, 111, 116, 32, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101, 100, 58, 32,
+        ])
+    } else if (*name) == (self::ml_string::Text::from_units(vec![116, 111, 100, 111])) {
+        self::ml_string::Text::from_units(vec![
+            110, 111, 116, 32, 121, 101, 116, 32, 105, 109, 112, 108, 101, 109, 101, 110, 116, 101,
+            100, 58, 32,
+        ])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_panic_completion_kind(
+    kind: &self::ml_string::Text,
+    operation: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if self::accept_linked_rust_panic_value(kind, operation) {
+        self::ml_string::Text::from_units(vec![97, 98, 111, 114, 116])
+    } else {
+        kind.clone()
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -184,7 +549,7 @@ pub fn read_rust_checked_integer_consumer_arity(consumer: &self::ml_string::Text
         || self::test_rust_checked_integer_predicate_consumer(consumer)
     {
         1f64
-    } else if (*consumer) == (self::ml_string::Text::from_units(vec![109, 97, 112, 95, 111, 114])) {
+    } else if self::test_rust_checked_integer_mapping_consumer(consumer) {
         2f64
     } else {
         -1f64
@@ -267,636 +632,5 @@ pub fn read_rust_checked_integer_shift_operation(
         ])
     } else {
         self::ml_string::Text::from_units(vec![])
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_condition(
-    method: &self::ml_string::Text,
-    signed: bool,
-) -> Vec<self::ml_string::Text> {
-    if ((*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
-        ])))
-        || ((*method)
-            == (self::ml_string::Text::from_units(vec![
-                99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 114,
-            ])))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-            self::ml_string::Text::from_units(vec![119, 105, 100, 116, 104]),
-            self::ml_string::Text::from_units(vec![108, 116]),
-        ]
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 110, 101, 103,
-        ]))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 105, 110, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![110, 101]),
-            ]
-        } else {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![101, 113]),
-            ]
-        }
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 97, 98, 115,
-        ]))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 105, 110, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![110, 101]),
-            ]
-        } else {
-            Vec::<self::ml_string::Text>::new()
-        }
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 97, 100, 100,
-        ]))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![103, 116]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 97, 120, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![115, 117, 98]),
-                self::ml_string::Text::from_units(vec![108, 101]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![108, 116]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 105, 110, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![115, 117, 98]),
-                self::ml_string::Text::from_units(vec![103, 101]),
-                self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-            ]
-        } else {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 97, 120, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![115, 117, 98]),
-                self::ml_string::Text::from_units(vec![108, 101]),
-            ]
-        }
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 115, 117, 98,
-        ]))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![108, 116]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 97, 120, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![97, 100, 100]),
-                self::ml_string::Text::from_units(vec![108, 101]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![103, 116]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 105, 110, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![97, 100, 100]),
-                self::ml_string::Text::from_units(vec![103, 101]),
-                self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-            ]
-        } else {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![103, 101]),
-            ]
-        }
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 109, 117, 108,
-        ]))
-    {
-        {
-            let positive_positive = vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 97, 120, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![100, 105, 118]),
-                self::ml_string::Text::from_units(vec![108, 101]),
-            ];
-            if signed {
-                {
-                    let positive_negative = vec![
-                        self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                        self::ml_string::Text::from_units(vec![109, 105, 110, 105, 109, 117, 109]),
-                        self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                        self::ml_string::Text::from_units(vec![100, 105, 118]),
-                        self::ml_string::Text::from_units(vec![103, 101]),
-                    ];
-                    {
-                        let negative_positive = vec![
-                            self::ml_string::Text::from_units(vec![
-                                111, 112, 101, 114, 97, 110, 100,
-                            ]),
-                            self::ml_string::Text::from_units(vec![
-                                109, 105, 110, 105, 109, 117, 109,
-                            ]),
-                            self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                            self::ml_string::Text::from_units(vec![100, 105, 118]),
-                            self::ml_string::Text::from_units(vec![103, 101]),
-                        ];
-                        {
-                            let negative_negative = vec![
-                                self::ml_string::Text::from_units(vec![
-                                    111, 112, 101, 114, 97, 110, 100,
-                                ]),
-                                self::ml_string::Text::from_units(vec![
-                                    109, 97, 120, 105, 109, 117, 109,
-                                ]),
-                                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                                self::ml_string::Text::from_units(vec![100, 105, 118]),
-                                self::ml_string::Text::from_units(vec![103, 101]),
-                            ];
-                            {
-                                let signs = {
-                                    let source_ml_source2_concat_value37 = vec![
-                                        self::ml_string::Text::from_units(vec![
-                                            111, 112, 101, 114, 97, 110, 100,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                                        self::ml_string::Text::from_units(vec![103, 116]),
-                                        self::ml_string::Text::from_units(vec![
-                                            114, 105, 103, 104, 116,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                                        self::ml_string::Text::from_units(vec![103, 116]),
-                                    ];
-                                    {
-                                        let source_ml_source2_concat_value38 = positive_positive;
-                                        {
-                                            let source_ml_source2_concat_value39 =
-                                                positive_negative;
-                                            {
-                                                let source_ml_source2_concat_value40 = vec![
-                                                    self::ml_string::Text::from_units(vec![
-                                                        105, 102,
-                                                    ]),
-                                                    self::ml_string::Text::from_units(vec![
-                                                        114, 105, 103, 104, 116,
-                                                    ]),
-                                                    self::ml_string::Text::from_units(vec![
-                                                        122, 101, 114, 111,
-                                                    ]),
-                                                    self::ml_string::Text::from_units(vec![
-                                                        103, 116,
-                                                    ]),
-                                                ];
-                                                {
-                                                    let source_ml_source2_concat_value41 =
-                                                        negative_positive;
-                                                    {
-                                                        let source_ml_source2_concat_value42 =
-                                                            negative_negative;
-                                                        {
-                                                            let source_ml_source2_concat_value43 = vec![
-                                                                self::ml_string::Text::from_units(
-                                                                    vec![105, 102],
-                                                                ),
-                                                                self::ml_string::Text::from_units(
-                                                                    vec![105, 102],
-                                                                ),
-                                                            ];
-                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value37), source_ml_source2_concat_value38), source_ml_source2_concat_value39), source_ml_source2_concat_value40), source_ml_source2_concat_value41), source_ml_source2_concat_value42), source_ml_source2_concat_value43)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                };
-                                {
-                                    let source_ml_source2_concat_value44 = vec![
-                                        self::ml_string::Text::from_units(vec![
-                                            111, 112, 101, 114, 97, 110, 100,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                                        self::ml_string::Text::from_units(vec![101, 113]),
-                                        self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                                        self::ml_string::Text::from_units(vec![
-                                            114, 105, 103, 104, 116,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                                        self::ml_string::Text::from_units(vec![101, 113]),
-                                        self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                                    ];
-                                    {
-                                        let source_ml_source2_concat_value45 = signs;
-                                        {
-                                            let source_ml_source2_concat_value46 = vec![
-                                                self::ml_string::Text::from_units(vec![105, 102]),
-                                                self::ml_string::Text::from_units(vec![105, 102]),
-                                            ];
-                                            self::ml_array::append(
-                                                self::ml_array::append(
-                                                    self::ml_array::append(
-                                                        Vec::<self::ml_string::Text>::new(),
-                                                        source_ml_source2_concat_value44,
-                                                    ),
-                                                    source_ml_source2_concat_value45,
-                                                ),
-                                                source_ml_source2_concat_value46,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                {
-                    let source_ml_source2_concat_value34 = vec![
-                        self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                        self::ml_string::Text::from_units(vec![101, 113]),
-                        self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                        self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                        self::ml_string::Text::from_units(vec![101, 113]),
-                        self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                    ];
-                    {
-                        let source_ml_source2_concat_value35 = positive_positive;
-                        {
-                            let source_ml_source2_concat_value36 = vec![
-                                self::ml_string::Text::from_units(vec![105, 102]),
-                                self::ml_string::Text::from_units(vec![105, 102]),
-                            ];
-                            self::ml_array::append(
-                                self::ml_array::append(
-                                    self::ml_array::append(
-                                        Vec::<self::ml_string::Text>::new(),
-                                        source_ml_source2_concat_value34,
-                                    ),
-                                    source_ml_source2_concat_value35,
-                                ),
-                                source_ml_source2_concat_value36,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    } else if ((((*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118,
-        ])))
-        || ((*method)
-            == (self::ml_string::Text::from_units(vec![
-                99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109,
-            ]))))
-        || ((*method)
-            == (self::ml_string::Text::from_units(vec![
-                99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108, 105, 100,
-            ]))))
-        || ((*method)
-            == (self::ml_string::Text::from_units(vec![
-                99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109, 95, 101, 117, 99, 108, 105, 100,
-            ])))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![101, 113]),
-                self::ml_string::Text::from_units(vec![102, 97, 108, 115, 101]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![109, 105, 110, 105, 109, 117, 109]),
-                self::ml_string::Text::from_units(vec![101, 113]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![
-                    110, 101, 103, 97, 116, 105, 118, 101, 32, 117, 110, 105, 116,
-                ]),
-                self::ml_string::Text::from_units(vec![110, 101]),
-                self::ml_string::Text::from_units(vec![116, 114, 117, 101]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-            ]
-        } else {
-            vec![
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![110, 101]),
-            ]
-        }
-    } else {
-        Vec::<self::ml_string::Text>::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_checked_integer_success(
-    method: &self::ml_string::Text,
-    signed: bool,
-) -> Vec<self::ml_string::Text> {
-    if ((*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108, 105, 100,
-        ])))
-        || ((*method)
-            == (self::ml_string::Text::from_units(vec![
-                99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109, 95, 101, 117, 99, 108, 105, 100,
-            ])))
-    {
-        {
-            let quotient = vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                self::ml_string::Text::from_units(vec![100, 105, 118]),
-            ];
-            {
-                let remainder = vec![
-                    self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                    self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                    self::ml_string::Text::from_units(vec![114, 101, 109]),
-                ];
-                if signed {
-                    {
-                        let positive = if (*method)
-                            == (self::ml_string::Text::from_units(vec![
-                                99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117,
-                                99, 108, 105, 100,
-                            ])) {
-                            {
-                                let source_ml_source2_concat_value47 = quotient.clone();
-                                {
-                                    let source_ml_source2_concat_value48 = vec![
-                                        self::ml_string::Text::from_units(vec![
-                                            110, 101, 103, 97, 116, 105, 118, 101, 32, 117, 110,
-                                            105, 116,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![97, 100, 100]),
-                                    ];
-                                    self::ml_array::append(
-                                        self::ml_array::append(
-                                            Vec::<self::ml_string::Text>::new(),
-                                            source_ml_source2_concat_value47,
-                                        ),
-                                        source_ml_source2_concat_value48,
-                                    )
-                                }
-                            }
-                        } else {
-                            {
-                                let source_ml_source2_concat_value49 = remainder.clone();
-                                {
-                                    let source_ml_source2_concat_value50 = vec![
-                                        self::ml_string::Text::from_units(vec![
-                                            114, 105, 103, 104, 116,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![97, 100, 100]),
-                                    ];
-                                    self::ml_array::append(
-                                        self::ml_array::append(
-                                            Vec::<self::ml_string::Text>::new(),
-                                            source_ml_source2_concat_value49,
-                                        ),
-                                        source_ml_source2_concat_value50,
-                                    )
-                                }
-                            }
-                        };
-                        {
-                            let negative = if (*method)
-                                == (self::ml_string::Text::from_units(vec![
-                                    99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101,
-                                    117, 99, 108, 105, 100,
-                                ])) {
-                                {
-                                    let source_ml_source2_concat_value51 = quotient.clone();
-                                    {
-                                        let source_ml_source2_concat_value52 = vec![
-                                            self::ml_string::Text::from_units(vec![
-                                                110, 101, 103, 97, 116, 105, 118, 101, 32, 117,
-                                                110, 105, 116,
-                                            ]),
-                                            self::ml_string::Text::from_units(vec![115, 117, 98]),
-                                        ];
-                                        self::ml_array::append(
-                                            self::ml_array::append(
-                                                Vec::<self::ml_string::Text>::new(),
-                                                source_ml_source2_concat_value51,
-                                            ),
-                                            source_ml_source2_concat_value52,
-                                        )
-                                    }
-                                }
-                            } else {
-                                {
-                                    let source_ml_source2_concat_value53 = remainder.clone();
-                                    {
-                                        let source_ml_source2_concat_value54 = vec![
-                                            self::ml_string::Text::from_units(vec![
-                                                114, 105, 103, 104, 116,
-                                            ]),
-                                            self::ml_string::Text::from_units(vec![115, 117, 98]),
-                                        ];
-                                        self::ml_array::append(
-                                            self::ml_array::append(
-                                                Vec::<self::ml_string::Text>::new(),
-                                                source_ml_source2_concat_value53,
-                                            ),
-                                            source_ml_source2_concat_value54,
-                                        )
-                                    }
-                                }
-                            };
-                            {
-                                let source_ml_source2_concat_value55 = remainder.clone();
-                                {
-                                    let source_ml_source2_concat_value56 = vec![
-                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                                        self::ml_string::Text::from_units(vec![108, 116]),
-                                        self::ml_string::Text::from_units(vec![
-                                            114, 105, 103, 104, 116,
-                                        ]),
-                                        self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                                        self::ml_string::Text::from_units(vec![103, 116]),
-                                    ];
-                                    {
-                                        let source_ml_source2_concat_value57 = positive;
-                                        {
-                                            let source_ml_source2_concat_value58 = negative;
-                                            {
-                                                let source_ml_source2_concat_value59 =
-                                                    vec![self::ml_string::Text::from_units(vec![
-                                                        105, 102,
-                                                    ])];
-                                                {
-                                                    let source_ml_source2_concat_value60 =
-                                                        if (*method)
-                                                            == (self::ml_string::Text::from_units(
-                                                                vec![
-                                                                    99, 104, 101, 99, 107, 101,
-                                                                    100, 95, 100, 105, 118, 95,
-                                                                    101, 117, 99, 108, 105, 100,
-                                                                ],
-                                                            ))
-                                                        {
-                                                            quotient
-                                                        } else {
-                                                            remainder
-                                                        };
-                                                    {
-                                                        let source_ml_source2_concat_value61 = vec![
-                                                            self::ml_string::Text::from_units(
-                                                                vec![105, 102],
-                                                            ),
-                                                        ];
-                                                        self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value55), source_ml_source2_concat_value56), source_ml_source2_concat_value57), source_ml_source2_concat_value58), source_ml_source2_concat_value59), source_ml_source2_concat_value60), source_ml_source2_concat_value61)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (*method)
-                    == (self::ml_string::Text::from_units(vec![
-                        99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118, 95, 101, 117, 99, 108,
-                        105, 100,
-                    ]))
-                {
-                    quotient
-                } else {
-                    remainder
-                }
-            }
-        }
-    } else if ((*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
-        ])))
-        || ((*method)
-            == (self::ml_string::Text::from_units(vec![
-                99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 114,
-            ])))
-    {
-        vec![
-            self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-            self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-            if (*method)
-                == (self::ml_string::Text::from_units(vec![
-                    99, 104, 101, 99, 107, 101, 100, 95, 115, 104, 108,
-                ]))
-            {
-                self::ml_string::Text::from_units(vec![
-                    115, 104, 105, 102, 116, 32, 108, 101, 102, 116,
-                ])
-            } else {
-                self::ml_string::Text::from_units(vec![
-                    115, 104, 105, 102, 116, 32, 114, 105, 103, 104, 116,
-                ])
-            },
-        ]
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 110, 101, 103,
-        ]))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![110, 101, 103]),
-            ]
-        } else {
-            vec![self::ml_string::Text::from_units(vec![122, 101, 114, 111])]
-        }
-    } else if (*method)
-        == (self::ml_string::Text::from_units(vec![
-            99, 104, 101, 99, 107, 101, 100, 95, 97, 98, 115,
-        ]))
-    {
-        if signed {
-            vec![
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![122, 101, 114, 111]),
-                self::ml_string::Text::from_units(vec![108, 116]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![110, 101, 103]),
-                self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                self::ml_string::Text::from_units(vec![105, 102]),
-            ]
-        } else {
-            Vec::<self::ml_string::Text>::new()
-        }
-    } else {
-        {
-            let operation = if (*method)
-                == (self::ml_string::Text::from_units(vec![
-                    99, 104, 101, 99, 107, 101, 100, 95, 97, 100, 100,
-                ])) {
-                self::ml_string::Text::from_units(vec![97, 100, 100])
-            } else if (*method)
-                == (self::ml_string::Text::from_units(vec![
-                    99, 104, 101, 99, 107, 101, 100, 95, 115, 117, 98,
-                ]))
-            {
-                self::ml_string::Text::from_units(vec![115, 117, 98])
-            } else if (*method)
-                == (self::ml_string::Text::from_units(vec![
-                    99, 104, 101, 99, 107, 101, 100, 95, 109, 117, 108,
-                ]))
-            {
-                self::ml_string::Text::from_units(vec![109, 117, 108])
-            } else if (*method)
-                == (self::ml_string::Text::from_units(vec![
-                    99, 104, 101, 99, 107, 101, 100, 95, 100, 105, 118,
-                ]))
-            {
-                self::ml_string::Text::from_units(vec![100, 105, 118])
-            } else if (*method)
-                == (self::ml_string::Text::from_units(vec![
-                    99, 104, 101, 99, 107, 101, 100, 95, 114, 101, 109,
-                ]))
-            {
-                self::ml_string::Text::from_units(vec![114, 101, 109])
-            } else {
-                self::ml_string::Text::from_units(vec![])
-            };
-            if operation.0.is_empty() {
-                Vec::<self::ml_string::Text>::new()
-            } else {
-                vec![
-                    self::ml_string::Text::from_units(vec![111, 112, 101, 114, 97, 110, 100]),
-                    self::ml_string::Text::from_units(vec![114, 105, 103, 104, 116]),
-                    operation.clone(),
-                ]
-            }
-        }
     }
 }

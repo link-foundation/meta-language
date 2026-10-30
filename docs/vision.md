@@ -10940,3 +10940,16 @@ trait checks. Operands, default and mapper are captured once in source order;
 invocation and successful arithmetic stay in the valid branch. Deferred
 originals cover both shared entry points. Generic/non-scalar, mutable/non-Copy
 and escaping Option/Result translation remain required.
+
+Immediate checked-integer `map_or_else` has a source draft for immutable Copy
+scalar fallback and mapper callables with complete actual result origins.
+Both factories are captured after arithmetic operands and in argument order;
+the valid branch invokes the one-argument mapper, while failure invokes only
+the zero-argument fallback. Both callbacks retain the same actual scalar result
+owner, including pointer identity and Boolean/binary64 results. The existing
+scalar mapper adapter accepts the fallback callable's real result origin as
+context, without synthesizing source expressions or hiding function types.
+Standard From mappings keep their trait checks. Deferred originals cover
+factories, guarded arithmetic, type changes and source order. Unconstrained
+callback inference, mutable/non-Copy environments, escaping sums and all full
+source/grammar/concept-space obligations remain required.
