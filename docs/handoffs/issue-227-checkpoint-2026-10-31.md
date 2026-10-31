@@ -19,6 +19,13 @@ generic alias and CST baseline batches. No generator, validation, tests or
 compilation run under this instruction. Generated output and source-register
 refreshes required by subsequent source edits remain explicitly deferred.
 
+Actual JavaScript/native consumer drafting subsequently continued through
+generic templates/construction, standard sums, header finalization, signatures,
+ordered propagation, methods and copied lookup producers. See
+[the current consumer handoff](issue-227-source-consumers-2026-11-01.md).
+The stop-state details below are historical; they do not supersede the resumed
+work or authorize ending it before the complete requirements draft is finished.
+
 ## Detailed remaining-work plan
 
 The user subsequently requested detailed planning of every undrafted and unfinished
@@ -39,7 +46,7 @@ Implementation was paused when that plan snapshot was written. No tests, compila
 produce this documentation update. The plan is based on checkpoint `9405c25f` and
 the manifest hash recorded in its header; it does not replace the vision.
 
-## Authoritative state
+## State at the historical stop
 
 - Repository: link-foundation/meta-language.
 - Branch: `issue-227-translation-continuation-2026-10-22`; continuation PR #228.

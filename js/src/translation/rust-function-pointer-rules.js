@@ -7,6 +7,22 @@ export function readRustFunctionPointerTypeError(ordinary,parameters,result){
  for(let index=0;index<parameters.length;index+=1)if(!readRequiredBooleanFact(parameters,index))return 'function pointer parameters require direct immutable Copy source types';
  return result?'':'function pointer results require direct immutable Copy source types';
 }
+
+/** Private header collection may await completed nominal/sum child origins.
+ * The original domain checker remains the final admission oracle.
+ * @param {boolean} ordinary @param {boolean[]} parameters @param {boolean} result
+ * @param {boolean} header @returns {string} */
+export function readRustFunctionPointerHeaderTypeError(ordinary,parameters,result,header){
+ return header&&ordinary&&parameters.length<=1024?'':readRustFunctionPointerTypeError(ordinary,parameters,result);
+}
+
+/** Safe fn pointers are Copy independently of the signature's value domains.
+ * This leaf is available only to the actual parsed private header inventory.
+ * @param {string} kind @param {number} layers @param {boolean} header
+ * @returns {boolean} */
+export function acceptRustFunctionPointerHeaderCopy(kind,layers,header){
+ return kind==='function'&&layers===0&&header;
+}
 /** Equal callable signatures do not supply a noncapturing-closure witness.
  * @param {boolean} pointer @param {string} actual @param {boolean} closure
  * @param {number} captures @param {boolean} proven @returns {string} */

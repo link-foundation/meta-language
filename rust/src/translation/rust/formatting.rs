@@ -66,7 +66,7 @@ impl RustParser {
             } else {
                 String::new()
             };
-            args.push(self.expr(path, Options::default())?);
+            args.push(self.with_standard_sum_source_context(None,|parser|parser.expr(path,Options::default()))?);
             if args.len() > 1 {
                 names.push(name);
             }

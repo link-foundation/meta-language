@@ -1,4 +1,5 @@
 import {readRustNominalBindingPattern,rustNominalBindingNames} from './rust-records.js';
+import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {readRustCopyClosureParameterHeaderError,testRustCopyClosureDeferredResult,readRustCopyClosureDeferredResultError,readRustCopyClosureResultContextRole,readRustCopyClosureLiteralResultError,testRustCopyClosureResultBinding} from './rust-copy-closure-rules.js';
 import {readRustCopyClosureResultContext} from './rust-copy-closure-parameter-rules.js';
 import {acceptRustCopyClosureParameterOrigin} from './rust-copy-closure-parameter-origins.js';
@@ -31,7 +32,7 @@ export function readRustExpectedCopyClosure(parser,path,expected,parametersOnly=
    if(depth!==-2||tokens.length<count)break;count*=2;
   }
  }
- return parser.expr(path);
+ return withRustStandardSumSourceContext(parser,expected,()=>parser.expr(path));
 }
 export function readRustCopyPointerResultBlock(parser,path,expected){
  const c=parser.cursor,role=['|','||','move','(','return'].find(value=>c.is(value,1))??'';
@@ -82,16 +83,17 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
  const written=Boolean(c.eat('->'));let ret=written?parser.type():readRustCopyClosureResultContext(written,parametersOnly)==='inferred'?null:expected?.type?.ret??null,resultOrigin=written?parser.origins.type:ret?parser.origins.copy(expected?.callableResult)??parser.origins.typeOrigin(ret,path):null;
  if(written){const reason=readRustCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),written,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
  const outer=parser.origins.enter();parameters.forEach((parameter,index)=>parser.origins.scope.set(parameter.name,bindings[index]));
- let body;const projections=[];
+ let body;const projections=[],outerSumReturn=parser.standardSumReturnOrigin;
+ parser.standardSumReturnOrigin=resultOrigin;
  try{
   for(let index=0;index<patterns.length;index+=1)if(patterns[index])parser.lowerProductBinding(patterns[index],{k:'name',path:[parameters[index].name],span:parameters[index].span},path,projections);
-  if(written||c.is('{'))body=readRustCopyPointerResultBlock(parser,path,resultOrigin)??(ret&&parser.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(parser,path,ret,resultOrigin):parser.block(path,true));else body=parser.expr(path);
+  body=withRustStandardSumSourceContext(parser,resultOrigin,()=>written||c.is('{')?readRustCopyPointerResultBlock(parser,path,resultOrigin)??(ret&&parser.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(parser,path,ret,resultOrigin):parser.block(path,true)):parser.expr(path));
   if(!ret){resultOrigin=parser.origins.origin(body,path);ret=resultOrigin.type??null;}
   if(!written){const deferred=testRustCopyClosureDeferredResult(deferResult,written,ret!==null),reason=deferred?readRustCopyClosureParameterHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin))):readRustContextualCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),ret!==null,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
   if(ret){const error=readRustCopyClosureResultContextError(body,resultOrigin);if(error)throw unsupported('Rust Copy closure',error,body.span);parser.origins.argument(parser.origins.origin(body,path),resultOrigin,body.span);}
   const bodyOrigin=parser.origins.origin(body,path);for(const projection of projections.toReversed())body={k:'let',name:projection.name,value:projection.value,...(projection.type?{type:projection.type}:{}),body,span:projection.span};parser.origins.mark(body,bodyOrigin);
  }
- finally{parser.origins.scope=outer;}
+ finally{parser.origins.scope=outer;parser.standardSumReturnOrigin=outerSumReturn;}
  const {captures,assignedCaptures}=readCallableStatementCaptures([{s:'return',expr:body}],parameters.map(param=>param.name),outer.keys());
  const captureError=readRustCopyClosureCaptureError(parser.origins.collecting,captures.map(name=>parser.origins.immutableProduct(outer.get(name))),assignedCaptures.length);if(captureError)throw unsupported('Rust Copy closure',captureError,start);
  const span={start:start.start,end:c.peek(-1).end},node={k:'lambda',params:parameters,ret,captures,body,span};

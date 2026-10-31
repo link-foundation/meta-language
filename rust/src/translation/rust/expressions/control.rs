@@ -237,13 +237,13 @@ impl RustParser {
         if self.cursor.is("let") {
             return self.conditional_pattern_value(path, &token);
         }
-        let cond = self.expr(
+        let cond = self.with_standard_sum_source_context(None, |parser| parser.expr(
             path,
             Options {
                 statement: false,
                 no_struct: true,
             },
-        )?;
+        ))?;
         self.origins.direct(&cond, path, cond.span)?;
         let ownership_base = self.origins.snapshot_owned_bindings();
         let then = self.block(path)?;
@@ -287,13 +287,13 @@ impl RustParser {
 
     pub(in super::super) fn match_expr(&mut self, path: &[String]) -> Result<SExpr> {
         let token = self.cursor.advance();
-        let scrutinee = self.expr(
+        let scrutinee = self.with_standard_sum_source_context(None, |parser| parser.expr(
             path,
             Options {
                 statement: false,
                 no_struct: true,
             },
-        )?;
+        ))?;
         self.match_from_scrutinee(path, &token, scrutinee)
     }
 
@@ -317,7 +317,7 @@ impl RustParser {
             while self.cursor.eat("|").is_some() {
                 alternatives.push(self.pattern(path, &mut aliases)?);
             }
-            let scope = self.origins.cases(&alternatives, &scrutinee, path)?;
+            let scope = self.origins.cases(&mut alternatives, &scrutinee, path)?;
             let previous = self.origins.enter(Some(scope));
             let parsed = (|| {
                 for alias in &aliases {
@@ -325,7 +325,7 @@ impl RustParser {
                 }
                 let ownership_guard = self.origins.snapshot_owned_bindings();
                 let guard = if self.cursor.eat("if").is_some() {
-                    let guard = self.expr(path, Options::default())?;
+                    let guard = self.with_standard_sum_source_context(None, |parser| parser.expr(path, Options::default()))?;
                     self.origins.direct(&guard, path, guard.span)?;
                     Some(guard)
                 } else {
@@ -646,6 +646,9 @@ impl RustParser {
             ));
         }
         let segments = self.path_segments("pattern")?;
+        if let Some(sum) = self.read_standard_sum_source_pattern(&segments, path, &token, aliases)? {
+            return Ok(sum);
+        }
         if self
             .origins
             .lookup(&self.source_value_path(&segments, path), path)

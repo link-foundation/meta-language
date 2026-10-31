@@ -1,6 +1,7 @@
 // Actual source scopes into the shared continuation plan. Packets ensure that
 // failure never evaluates or captures an else expression under a matched binder.
 import {unsupported} from './diagnostics.js';
+import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {findRustConditionalChainPattern,planConditionalChainLayers,readConditionalChainOperation,readConditionalChainStageLimit,planConditionalMatchArms} from './conditional-chain-rules.js';
 const where=(from,to)=>({start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)});
 const operation=(role,values,span)=>({k:'math',op:readConditionalChainOperation(role),name:'',args:values.map(value=>({value,spread:false})),span});
@@ -12,11 +13,11 @@ export function readRustConditionalChainStages(parser,path,start){
    if(c.eat('let')){
     const aliases=[],patterns=[parser.pattern(path,aliases)];while(c.eat('|'))patterns.push(parser.pattern(path,aliases));
     if(patterns.length>1&&aliases.length)throw unsupported('binding in an or-pattern','bind the value in each alternative separately',where(start,c.peek()));
-    c.expect('=','conditional pattern');const scrutinee=parser.comparison(path,{noStruct:true});
+    c.expect('=','conditional pattern');const scrutinee=withRustStandardSumSourceContext(parser,null,()=>parser.comparison(path,{noStruct:true}));
     parser.origins.enter(parser.origins.cases(patterns,scrutinee,path));for(const alias of aliases)parser.origins.bind(alias.name,alias.value,path);
     stages.push({patterns,scrutinee,aliases,span:where(token,c.peek())});forms.push(1);
    }else{
-    const condition=parser.comparison(path,{noStruct:true});parser.origins.direct(condition,path,condition.span);
+    const condition=withRustStandardSumSourceContext(parser,null,()=>parser.comparison(path,{noStruct:true}));parser.origins.direct(condition,path,condition.span);
     stages.push({condition,span:where(token,c.peek())});forms.push(0);
    }
    if(c.is('||'))throw unsupported('Rust conditional pattern disjunction','a let condition requires parentheses around each Boolean disjunction',where(start,c.peek()));

@@ -36,7 +36,7 @@ impl SourceOrigins {
 
     fn pattern(
         &mut self,
-        pattern: &SPattern,
+        pattern: &mut SPattern,
         origin: &SourceOrigin,
         path: &[String],
         result: &mut HashMap<String, SourceOrigin>,
@@ -96,6 +96,7 @@ impl SourceOrigins {
                 self.mark(&alias, origin.clone());
             }
         }
+        self.resolve_standard_sum_source_pattern(pattern, &origin)?;
         if let SPatternNode::TypedNumLit { owner, .. } = &pattern.node {
             let mut contract = origin.clone();
             if let Some(expanded) = origin.expanded_source_owner.as_ref() {
@@ -119,15 +120,16 @@ impl SourceOrigins {
                 return Err(unsupported("Rust string pattern", &error, source_span));
             }
         }
-        match &pattern.node {
+        match &mut pattern.node {
             SPatternNode::IntegerRange { lower, upper, .. } => {
                 for endpoint in [lower, upper].into_iter().flatten() {
+                    let endpoint_span = endpoint.span.or(source_span);
                     self.pattern(
                         endpoint,
                         &origin,
                         path,
                         result,
-                        endpoint.span.or(source_span),
+                        endpoint_span,
                     )?;
                 }
             }
@@ -143,7 +145,8 @@ impl SourceOrigins {
                     ));
                 }
                 result.insert(name.clone(), origin.clone());
-                self.pattern(inner, &origin, path, result, inner.span.or(source_span))?;
+                let inner_span = inner.span.or(source_span);
+                self.pattern(inner, &origin, path, result, inner_span)?;
             }
             SPatternNode::Tuple { args, rest } => {
                 let fields = origin.fields.as_deref().unwrap_or_default();
@@ -161,7 +164,7 @@ impl SourceOrigins {
                     );
                 let borrowed = !origin.wrappers.is_empty()
                     && origin.wrappers.iter().all(|layer| layer == "reference");
-                for (index, item) in args.iter().enumerate() {
+                for (index, item) in args.iter_mut().enumerate() {
                     let position = if plan.first() == Some(&0.0) {
                         plan.iter()
                             .skip(1)
@@ -176,7 +179,8 @@ impl SourceOrigins {
                     if borrowed && position.is_some() {
                         field.wrappers.insert(0, "reference".to_owned());
                     }
-                    self.pattern(item, &field, path, result, item.span.or(source_span))?;
+                    let item_span = item.span.or(source_span);
+                    self.pattern(item, &field, path, result, item_span)?;
                 }
             }
             SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
@@ -219,7 +223,7 @@ impl SourceOrigins {
                     }
                     _ => None,
                 };
-                for (index, argument) in args.iter().enumerate() {
+                for (index, argument) in args.iter_mut().enumerate() {
                     let mut field = fields
                         .as_ref()
                         .and_then(|fields| fields.get(index))
@@ -228,12 +232,13 @@ impl SourceOrigins {
                     if borrowed && fields.is_some() {
                         field.wrappers.insert(0, "reference".to_owned());
                     }
+                    let argument_span = argument.span.or(source_span);
                     self.pattern(
                         argument,
                         &field,
                         path,
                         result,
-                        argument.span.or(source_span),
+                        argument_span,
                     )?;
                 }
             }
@@ -244,21 +249,22 @@ impl SourceOrigins {
 
     pub(in super::super) fn cases(
         &mut self,
-        patterns: &[SPattern],
+        patterns: &mut [SPattern],
         scrutinee: &SExpr,
         path: &[String],
     ) -> Result<HashMap<String, SourceOrigin>> {
         let origin = self.origin(scrutinee, path);
         let maps: Vec<_> = patterns
-            .iter()
+            .iter_mut()
             .map(|pattern| {
                 let mut scope = HashMap::new();
+                let source_span = pattern.span.or(scrutinee.span);
                 self.pattern(
                     pattern,
                     &origin,
                     path,
                     &mut scope,
-                    pattern.span.or(scrutinee.span),
+                    source_span,
                 )?;
                 Ok(scope)
             })

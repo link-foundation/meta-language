@@ -11562,3 +11562,51 @@ full coverage. The authoring tool refuses exceeded file/byte/sample budgets,
 nonordinary index entries, symlinks, invalid source encoding and escaping roots;
 it performs no installs, clones, compilers or source restoration. These boundaries
 and the shared counter have deferred independent controls; none has run locally.
+
+### Source draft for ordinary Rust aliases, sums and propagation
+
+The ordinary frontend source draft expands explicit generic alias applications
+through checked declaration-scoped parameter bindings and complete argument
+origins. Identity, scalar/Unit and tuple templates preserve definition ownership;
+canonical standard sum composition is drafted through the same template path.
+Unused definitions retain eager validation, and recursion and materialization
+remain explicitly bounded. This does not narrow the required general generic,
+trait, lifetime or ownership coverage.
+
+Ordinary standard `Option` and `Result` values use complete named datatypes and
+constructor/match concepts. They preserve nested absence independently of the
+JavaScript optional helper, which flattens its own absence domain. Source owners
+and complete payload signatures remain inspectable through the existing datatype
+field-signature graph representation. Source-free validation resolves actual
+datatype declarations and checks their complete layouts and recursively retained
+payload owners. Equal widths, names or a supplied Boolean never replace those
+structures.
+
+Question-mark source interpretation uses the nearest callable's completion
+algebra, ordered captures and actual constructor alternatives. A residual exits
+that callable; surrounding operands and lazy branches retain source evaluation
+order. The first admitted source policy is direct immutable Copy payloads, with
+the same standard sum family and identical complete error owners for Result.
+Custom Try/FromResidual, error conversions and general ownership remain mandatory
+extensions. Private construction markers must be consumed or explicitly refused
+before checked IR. Shared policies are authored in JavaScript; native source
+adapters transport actual tokens, origins and terms into automatically translated
+policies. Current source integrations and deferred controls are unexecuted drafts;
+new automatic policy products, catalog reconciliation and verification remain
+deferred under the source-edit-only instruction.
+
+The same draft admits concrete generic Vec templates through existing element,
+ownership and freshness decisions. Stored scalar copied lookups construct actual
+Option values while prior immediate-consumer interpretations retain their
+existing route. Sum observers, eager defaults, lazy fallbacks and map/and_then
+use actual callable source origins and ordered captures. Option unwrap/expect
+select the explicit Rust source-std range and existing panic-message operation;
+Result error Debug and other unimplemented trait/ownership domains remain open.
+Private header collection cannot supply final admission or payload Copy proofs.
+
+Source identity construction builds complete structured child projections and
+encodes them once. Shared semantic metadata/count projections bound copying and
+identity materialization independently of source type depth; unsupported or
+exhausted inputs refuse before allocating the complete copy. This resource draft
+and its boundary controls are unexecuted; it supplies no equivalence certificate
+between unrelated definitions or a measured performance claim.

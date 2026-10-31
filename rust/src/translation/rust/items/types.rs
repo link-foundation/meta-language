@@ -180,6 +180,23 @@ impl RustParser {
         if let Some(empty) = self.read_empty_option_result(&segments, &token)? {
             return Ok(empty);
         }
+        if let Some(sum) = self.read_standard_sum_source_type(&segments, &token)? {
+            return Ok(sum);
+        }
+        if self.ordinary_completion_context() {
+            if let Some(declared) = self.origins.lookup_type_owner(&resolved, &self.module_path) {
+                if matches!(declared.declaration, super::super::SourceDeclaration::Data) {
+                    if self.cursor.is("<") {
+                        return Err(unsupported("Rust generic datatype", "an actual user datatype needs its complete parameter interpretation", span(&token, self.cursor.peek())));
+                    }
+                    let actual = std::iter::once("crate".to_owned()).chain(declared.full_name.split('.').map(str::to_owned)).collect();
+                    return Ok(self.origins.typed(Type::Named { path: actual, span: None }, &self.module_path, Vec::new()));
+                }
+            }
+            if self.header_discovery && ["Option", "Result"].contains(&name.as_str()) && !self.cursor.is("<") {
+                return Ok(self.origins.typed(Type::Named { path: resolved.clone(), span: None }, &self.module_path, Vec::new()));
+            }
+        }
         if !self.type_namespace_model.is_empty() {
             super::super::type_namespaces::require_anchor(&segments, &self.module_path)?;
             if let Some(declared) = self.origins.lookup_type_owner(&segments, &self.module_path) {

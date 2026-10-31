@@ -1,5 +1,6 @@
 // Source pattern scopes lower to the existing ordinary exhaustive match algebra.
 import{unsupported}from'./diagnostics.js';
+import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
 export function readRustConditionalPattern(parser,path,start){
@@ -8,7 +9,7 @@ export function readRustConditionalPattern(parser,path,start){
  while(c.eat('|'))alternatives.push(parser.pattern(path,aliases));
  if(alternatives.length>1&&aliases.length)throw unsupported('binding in an or-pattern','bind the value in each alternative separately',span(start,c.peek()));
  c.expect('=','conditional pattern');
- const scrutinee=parser.comparison(path,{noStruct:true});
+ const scrutinee=withRustStandardSumSourceContext(parser,null,()=>parser.comparison(path,{noStruct:true}));
  if(c.is('&&')||c.is('||'))throw unsupported('Rust conditional pattern chain','chained conditions require their complete short-circuit scope interpretation',span(start,c.peek()));
  const previous=parser.origins.enter(parser.origins.cases(alternatives,scrutinee,path));
  let body,bodyOrigin;

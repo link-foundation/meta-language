@@ -1,146 +1,156 @@
 # Standard Option and Result source closure draft
 
-This handoff records an unintegrated JavaScript source policy and independent
-literal controls. It is subordinate to [the vision](../vision.md), not an
-architecture specification or a completion report. No represented program,
-fixture, translator, generator, test, build or validation gate ran. No ledger,
-source register, generated native module or generated Links asset was read or
-changed. The source audit and subsequent reconciliation remain required before
-using the ledger or registering this batch.
+This handoff describes source changes subordinate to [the vision](../vision.md).
+The policy now has an actual JavaScript source adapter and parent-owned frontend
+hooks. No represented program, fixture, translator, generator, test, build or
+validation gate ran. No execution evidence or completion is claimed. The online
+source audit, source registration and ledger reconciliation remain deferred.
 
-## Drafted source
+## Source changes and actual representation
 
-`js/src/translation/rust-standard-sum-source-rules.js` defines source decisions
-for proved standard owned Option and Result definitions, explicit type-argument
-counts, exact constructor inventories/field positions and narrow question-mark
-completion branch roles. It uses scalar/array operations in the style of existing
-shared JavaScript rule modules. It has not been checked for self-translation.
+`js/src/translation/rust-standard-sum-source-rules.js` owns standard owner and
+constructor selection, child counts, constructor field positions, narrow
+question-mark context/branch decisions and finite source budgets. Its new consumer,
+`js/src/translation/rust-standard-sum-source.js`, reads actual cursors, source
+catalog entries, aliases, lexical bindings and complete child origins. The adapter
+calls those shared decisions and constructs existing named datatype, constructor
+and match representation; it introduces no new semantic IR operation.
+
+Actual source type and expression paths are checked against the complete local
+catalog. A user declaration or local namespace named `Option`, `Result`, `std`,
+`core` or a selected constructor does not become the standard owner. Standard
+imports retain actual std/core paths. Source instantiation requires explicit child
+arguments and direct immutable Copy facts supplied by the existing origin engine.
+Every child retains its complete source owner; absent ownership refuses instead of
+inventing a Unit owner. Canonical named child types resolve against actual catalog
+definitions before their use in root generated datatype fields.
+
+Each concrete sum registers an actual `k: 'data'` origin catalog entry, plus exact
+`k: 'ctor'` entries with complete field origins, owner and result. A private
+`standardSumSource` origin projection retains canonical owner, child origins,
+actual type/constructor paths and specialization identity. Expression projections
+are re-resolved through their actual named catalog entry before use; they are not
+serialized proof flags. `RustSourceOrigins.typed` and `typeOrigin` now recover the
+complete actual sum origin for an existing instantiated datatype.
+
+Specialization compares complete canonical source types and owners, including
+pointer-sized owners, recursively retained fields, wrappers, text and float source
+models. It does not identify types merely by width or source spelling. Generated
+names avoid actual source identifiers and preexisting catalog entries. Existing
+sum entries survive parser catalog passes, preserving their actual names.
+
+Generated sum datatypes always retain existing `sourceFieldSignatures`, including
+when ordinary function source-owner export is not selected. This supplies actual
+constructor field types and child owners through the existing graph schema. No
+new source facet or codec schema is introduced. Parent-owned signature checking
+connects standard library positions to these actual declarations and fields;
+source-owner declarations must never be accepted merely because a generated
+name resembles a standard sum name.
+
+The representation keeps `None`, `Some(None)` and `Some(Some(value))` distinct.
+`types.option` is deliberately not used: its nested optional flattening serves a
+different JavaScript absence domain. The closed-empty `Option<f64>` profile and
+its existing independent proof checks remain unchanged.
+
+## Source adapter contracts
+
+| Export | Contract |
+| --- | --- |
+| `initializeRustStandardSumSource` | Initialize bounded instantiation rows from actual catalog data entries; reserve their generated names across parser passes. |
+| `readRustStandardSumSourceType` | Consume explicit Option/Result child types, preserve actual child owners and install the complete instantiated type origin. |
+| `readRustStandardSumSourceConstructor` | Read actual source constructor arguments under expected child contexts; emit the actual constructor path and mark its full sum origin. |
+| `readRustStandardSumSourcePattern` | Read a private resolved-family constructor pattern before or after its scrutinee; actual origin extraction resolves its concrete datatype path before binding fields. |
+| `resolveRustStandardSumSourcePattern` | Normalize the same private pattern object into an existing constructor node against its actual catalog sum and complete child origins; nested extraction follows actual fields. |
+| `refuseRustStandardSumSourcePatterns` | Refuse any unresolved private pattern at final source admission before core checking/emission. |
+| `readRustStandardSumSourceImport` | Preserve checked std/core import paths through the existing import resolver. |
+| `withRustStandardSumSourceContext` | Restore the preceding expected-origin slot with `finally`, including nested constructor contexts. |
+| `readRustStandardSumSourceOrigin` | Resolve the actual named catalog datatype before returning its complete sum origin. |
+| `readRustStandardSumSourceIdentity` | Return complete canonical type/source-owner identity, or an empty string for an unresolved type. |
+| `finishRustStandardSumSource` | Emit complete existing datatype declarations and field-signature facets for every instantiated sum. |
+
+Parent-owned `rust.js` hooks supply expected contexts for explicit declarations,
+callable results, actual call parameters and match scrutinees. An unrelated
+unannotated initializer clears the enclosing result context. Constructor field
+contexts are passed recursively. Source expression construction supports contextual
+None/Some/Ok/Err; only Some can infer its complete family from a proven payload
+when no expected sum exists. Bare None and incomplete Result construction refuse.
+Explicit constructor turbofish forms supply complete child contexts:
+`Some::<T>`, `None::<T>`, `Ok::<T,E>`, `Err::<T,E>` and
+`Option/Result::<...>::Variant`, including qualified/imported owner spellings.
+The existing type reader partitions nested generic closing tokens. Actual core
+type unification checks explicit arguments against surrounding source contracts.
+
+If-let and let-else read a pattern before its scrutinee. A private source pattern
+therefore retains actual canonical family/variant syntax until
+`RustSourceOrigins.pattern` sees the actual scrutinee. It rewrites the same node
+into its concrete constructor path before extracting payload bindings, including
+nested patterns and aliases. Only initial collection may provisionally extract
+unknown bindings for a forward scrutinee; it sets a final-admission requirement,
+and final unresolved patterns refuse instead of returning the provisional surface.
+
+The sibling completion source draft owns postfix question-mark markers and their
+actual lowering into ordinary callable completion trees. It uses the adapter's
+actual constructor paths and payload/error origins. The parent sets and restores
+an independent callable return-origin slot, including closure boundaries. This
+handoff does not claim those sibling changes have passed any control.
+
+## Matching and propagation obligations
+
+Standard sum patterns continue through `RustParser.match`, existing origin scopes,
+`Checker.compileMatch`, `compileRows` and `normalisePattern`. Their real complete
+constructor inventories must drive exhaustiveness. Guarded matches keep the
+existing independent coverage match built from unguarded source arms. A generated
+packet, implementation wildcard or branch guard cannot manufacture source
+coverage. Missing Some/None/Ok/Err and guarded-only coverage remain refusals.
+
+The selected question-mark policy permits an ordinary callable returning the same
+standard sum family and an actual direct Copy operand. Option may propagate
+absence into a different successful result type. Result requires identical
+complete error types; a valid Rust conversion such as u8 error to u16 remains
+explicitly unsupported until its actual From/FromResidual model is integrated.
+
+The operand must evaluate once. Success projects its actual field into the
+continuation. Failure exits the nearest callable with its actual absence/error
+payload. A local expression conditional cannot substitute for that return.
+Initial direct let/tail/return integration must retain explicit refusals for
+unimplemented contextual positions. Later arguments, branches and nonselected
+callbacks must not run after propagation. Nested closure propagation must not
+return from the outer function.
+
+## Deferred literal controls and remaining source work
 
 `js/tests/fixtures/rust-standard-sum-source-rules.mjs` contains independent literal
-decision inputs/expectations, complete original Rust sources with expected stdout,
-and refusal inputs. It imports and invokes nothing. A future fixture author must
-store these controls as shared Links data without executing represented sources.
-The literal checked-identity labels in decision controls are projection examples,
-not certificates that any real source type has that identity.
+projection controls, complete original Rust programs with declared stdout/source
+ranges and refusal inputs. It imports and invokes nothing. Checked-identity labels
+in the decision controls are projection examples, not source certificates. The
+sibling integration controls exercise the real parser/checker/typed graph paths
+when a future authorized phase executes them.
 
-The module is deliberately not imported by a production adapter yet. Its callers
-must derive standard-definition membership, full payload type identity and Copy
-facts from the actual complete source catalog/origins. Passing `true`, comparing
-names or comparing widths cannot establish those facts. The current API supplies
-no proof objects; integration must preserve and recheck the underlying structures
-in semantic Links rather than trusting those projected parameters on reload.
+The declared original range is `>=1.90.0 <1.100.0`; this authoring phase has not
+independently checked it against compilers. Existing TryFrom Debug still has its
+separate pre/post-1.97 interpretations. Source std must come from the preserved
+source selector rather than the eventual target compiler. Uncovered versions
+remain explicit.
 
-## Existing seams and blockers
+Remaining source work includes complete generic aliases,
+unconstrained whole-expression inference, non-Copy/borrow/drop behavior, custom Try/FromResidual,
+error conversion, arbitrary contextual question-mark and full standard sum
+methods. Stored TryFrom, checked-arithmetic and lookup results still need actual
+typed producer integration without changing existing guarded arithmetic, immediate
+consumer effects or versioned panic messages. Debug strings cannot substitute for
+an actual error payload.
 
-| Source | Actual seam | Required continuation |
-| --- | --- | --- |
-| `js/src/translation/rust.js` | `RustParser.type` recognizes only the separate closed-empty Option profile before generic-type refusal. `RustParser.primary` has no ordinary standard sum construction path. | Read the actual resolved library type and explicit children; instantiate the existing named datatype representation, with constructor ownership and source ranges. Pass checked children through declarations, arguments and results. |
-| `js/src/translation/types.js` | `option` recursively collapses an optional element into its absence domain. | Preserve ordinary Rust `None`, `Some(None)` and `Some(Some(value))` as distinct named datatype values. Reusing the JavaScript optional helper would lose a Rust distinction. Preserve the existing closed-empty interpretation unchanged. |
-| `js/src/translation/rust-primitive-try-from.js` | `readRustPrimitiveTryFrom` consumes `.` and an admitted consumer immediately after conversion; `planRustPrimitiveTryFromConsumer` supplies existing guarded common terms. | Retain every existing immediate consumer. A stored Result must capture the input once, keep successful casts behind valid range guards and construct an actual typed error value instead of only its formatted Debug text. |
-| `js/src/translation/rust.js` | `RustParser.postfix` unconditionally refuses `?`. | Attach propagation to the enclosing callable's actual result origin and completion tree before interpreting the continuation; an expression-only local `if` cannot represent early return. |
-| `js/src/translation/rust-ordinary-completions.js` | `readRustOrdinaryFunctionCompletion`, private `sequence` and `lower` build private completion trees and lower return/continuation packets. | Extend the shared construction policy for question-mark inside admitted expression contexts; preserve the nearest callable boundary, evaluation order and single continuation occurrence. Do not add a handwritten native return implementation. |
-| `js/src/translation/rust-source-origins.js` | `RustSourceOrigins.origin`, `cases`, `pattern`, `join`, `bind`, `argument`, owned-binding operations. | Carry complete instantiated child origins, constructor owner and structural source identity; preserve local owners and consumption on each branch. Copy-only admission does not prove arbitrary owned/borrowed payload flow. |
-| `js/src/translation/rust.js` | `RustParser.match`, `pattern` and the guarded-arm route. | Resolve actual standard constructors through the same origin catalog, including qualified imports/aliases, and reuse existing arm scopes. Same-spelled user enums retain their own owners. |
-| `js/src/translation/rust-conditional-chains.js` | `lowerRustGuardedMatch` preserves an independent coverage match built from unguarded arms. | Keep that match. A newly inserted question/continuation packet or an implementation wildcard must never make a guarded-only source constructor exhaustive. |
-| `js/src/translation/check.js` | `Checker.compileMatch`, `compileRows`, `normalisePattern` already compile named datatype patterns and enumerate all constructors. | Supply complete actual standard sum declarations; let missing `Some`, `None`, `Ok` or `Err` reach existing exhaustiveness checks. Do not replace them with a bespoke Boolean presence check. |
+Future controls must cover all admitted constructors/children, duplicate and nested
+instantiations, transparent aliases, actual namespace shadows, incompatible owners
+and child arities, source payload effects, closure boundaries, all success/failure
+branches, exact source order and original coverage refusal cases. Saved-graph edits
+must change/delete actual constructor fields, owners and source facts and still
+reach full semantic rechecking through both codecs and all four emitters. No
+serialized claimed/proven field may bypass those checks.
 
-The closed-empty profile in `rust-empty-options.js` and its proof checker remains
-an independent source interpretation. It currently admits complete flat,
-zero-argument `Option<f64>` leaf functions with an exact `None` body. Its proof
-does not authorize ordinary Some values, generics, parameters or propagation.
-
-## Coherent initial integration boundary
-
-The initial source policy admits actual canonical std/core Option or Result
-owners with explicit, direct immutable Copy payload origins. Nested admitted
-sums must remain child datatypes and retain independently checked Copy facts.
-Do not infer Copy merely because a user datatype has scalar-looking fields.
-Constructor fields use actual argument zero for Some/Ok, argument one for Err,
-and no field for None. Existing source identities must keep different
-instantiations distinct; this draft does not invent a name mangling scheme.
-
-For question-mark, the initial boundary is an ordinary enclosing callable of
-the same standard sum family. Option may propagate absence into a different
-payload result type. Result requires identical complete error types; its
-successful payload and enclosing successful result may differ. Error conversion,
-custom Try/FromResidual, borrow adjustment, non-Copy moves and destructors need
-their full independent models. The valid Rust u8-to-u16 error conversion input
-is retained explicitly as a future unsupported-profile control, not mislabeled
-as an invalid Rust source.
-
-Question-mark must capture its operand once, match the complete constructor
-inventory and continue with the successful field only in the success branch.
-Failure returns the original absence or error payload through the enclosing
-callable's return packet. Nested call/argument/conditional expressions require
-completion-aware ordered captures: later arguments and surrounding continuation
-must not run after propagation. Begin with complete let-initializer and tail
-contexts, and preserve explicit refusal for unimplemented contexts until their
-shared expression-completion rules exist. In particular, a closure's question
-mark must not return from its outer function.
-
-This boundary is a source draft selection only. It does not narrow any wider
-Option/Result, ownership, generic trait, matching, project or own-source obligation.
-
-## Next source-authoring steps
-
-1. Add a bounded shared source-type instantiation policy and real catalog/origin
-   adapters. Register actual standard sum declarations with existing named
-   datatype concepts and preserve owner/child/source-coordinate provenance.
-   Reject missing, extra, inferred or unresolved children in this initial profile.
-2. Integrate constructor expressions and patterns together. Cover explicit
-   annotations, parameters, return positions, local bindings, nested instantiations,
-   aliases/imports and same-spelled local owners before exposing escaping sums.
-3. Extend actual ordinary completion source rules and JavaScript adapters for
-   selected question-mark contexts. Bind actual operand values and payloads;
-   consume the new branch dispositions only after the complete context check.
-4. Extend the shared TryFrom/checked-integer/lookup producers to construct typed
-   stored sums without changing existing immediate-consumer effects, range
-   guards, lazy arithmetic or panic message/version behavior. Integer conversion
-   error types need a source-version-aware value model; strings used for Debug
-   cannot stand in for those values.
-5. Author deferred controls for every projection admission/refusal, every
-   constructor, both success/failure branches and every original fixture. Preserve
-   all previous originals/oracles and add an explicit input for each uncovered
-   source context rather than assuming the existing controls imply coverage.
-6. After the complete batch is drafted, automatically self-translate complete
-   rule closures into native rules and shared typed Links with the existing
-   authoring workflow. Extend native adapters only as actual syntax/origin/term
-   transport. Never handwrite replacement Rust semantics or edit generated output.
-7. Reconcile the source register, naming inventory, parity feature inventory and
-   ledger after the mandated online source audit. Generation, tests and runtime
-   observations remain deferred to the parent task's authorized later phase.
-
-## Deferred independent controls still needed
-
-The literal original sources already retain nested absence, success/error payload
-values, before/after propagation traces and guarded coverage with a real fallback.
-The following controls must be authored before an integrated batch is reviewable:
-
-- Both families with every admitted primitive/Unit child, two distinct Result
-  child types, nested Option/Result combinations and complete concrete source
-  reconstruction. None cannot be encoded as Some(Unit) or JavaScript undefined.
-- Wrong constructor family/field count, missing/extra type arguments, local
-  `Option`/`Result`/`Some`/`Ok` owners, imported standard aliases, source namespace
-  shadows and forged catalog/child provenance. Projection booleans alone must
-  never admit a forged saved graph.
-- A counted operand function proving one evaluation; a failing operand before a
-  later argument proving that argument is skipped; left-to-right ordering of
-  nested propagation, all nonselected callbacks and panic-versus-return order.
-- Actual callable boundary controls, including closures, conditional and match
-  branches, distinct successful result types, direct return and tail positions.
-  Unsupported source syntax remains an explicit refusal until integrated.
-- Guarded-only Some/Ok branches with remaining constructor arms must remain
-  non-exhaustive; a wildcard fallback must be checked against the original source
-  datatype. Failed guards continue in original arm/alternative order.
-- Source std selections from the existing canonical 1.90–1.99 range. The general
-  original fixture range is declared as `>=1.90.0 <1.100.0`; it has not been
-  independently verified in this authoring phase. TryFrom Debug remains bounded
-  by its separate pre/post-1.97 policies. Never infer source std from the target
-  compiler, and report uncovered versions explicitly.
-- Both Links codecs, editable graph rechecking, all four emissions and matching
-  actual native/JavaScript semantics at the recorded commit. Mutate constructor
-  owner, child identity, field arity and callable return context in saved graphs;
-  preserve refusal without trusting a serialized checked/proven flag.
-
-No deferred control above is an observed result. The added policy alone does
-not admit any new Rust program through the public parser.
+After the complete source batch is drafted, translate complete shared JavaScript
+rule closures automatically into native definitions and typed Links, and keep
+native adapters as syntax/origin/term transport. Do not handwrite replacement Rust
+semantics or edit generated output. Reconcile naming, parity, source registration
+and ledger obligations after the mandated audit. This source draft alone supplies
+no native equivalence, runtime observations, whole-language coverage or completion.

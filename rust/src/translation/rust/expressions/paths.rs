@@ -15,6 +15,12 @@ impl RustParser {
         options: Options,
     ) -> Result<SExpr> {
         let segments = self.path_segments("expression")?;
+        if let Some(value)=self.read_generic_type_alias_constructor(&segments,path,token)? {
+            return Ok(value);
+        }
+        if let Some(sum) = self.read_standard_sum_source_constructor(&segments, path, token)? {
+            return Ok(sum);
+        }
         let name = segments.join("::");
         let resolved = self.resolve(&segments, path);
         if !self.primitive_owner_model.is_empty()

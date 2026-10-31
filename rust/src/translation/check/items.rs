@@ -190,15 +190,13 @@ impl Checker {
                 });
             }
             let source_fields = if let Some(signature) = item.source_field_signatures.as_deref() {
-                Some(Box::new(
-                    crate::translation::source_data_field_signatures::check(
-                        signature,
-                        &ctors,
-                        self.language.as_str(),
-                        &full(path, &item.name),
-                        |ty| self.resolve_type(Some(ty), path, item.span),
-                    )?,
-                ))
+                let mut signature = signature.clone();
+                for constructor in &mut signature.ctors {
+                    for position in &mut constructor.fields {
+                        position.ty = self.resolve_type(Some(&position.ty),path,item.span)?;
+                    }
+                }
+                Some(Box::new(signature))
             } else {
                 None
             };
@@ -206,6 +204,20 @@ impl Checker {
                 entry.ctors = ctors;
                 entry.source_field_signatures = source_fields;
             }
+        }
+        // Every actual layout and each field's original declaration context is
+        // now available before a nested sum signature consults the registry.
+        for (item,path) in &flat {
+            let SItem::Data(item) = item else { continue };
+            let Some(signature) = item.source_field_signatures.as_deref() else { continue };
+            let name = full(path,&item.name);
+            let Some(Decl::Data(entry)) = self.decls.get(&name) else { continue };
+            let source_fields = crate::translation::source_data_field_signatures::check(
+                signature,&entry.ctors,self.language.as_str(),&name,
+                |ty|self.resolve_type(Some(ty),path,item.span),
+                |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
+            )?;
+            if let Some(Decl::Data(entry)) = self.decls.get_mut(&name) { entry.source_field_signatures=Some(Box::new(source_fields)); }
         }
         for (item, path) in &flat {
             let SItem::Fn(item) = item else { continue };
@@ -238,7 +250,7 @@ impl Checker {
                 {
                     position.ty = self.resolve_type(Some(&position.ty), path, item.span)?;
                 }
-                super::super::source_signatures::validate_source_signature(
+                super::super::source_signatures::validate_source_signature_with_data(
                     signature,
                     &params
                         .iter()
@@ -246,6 +258,8 @@ impl Checker {
                         .collect::<Vec<_>>(),
                     &ret,
                     self.language.as_str(),
+                    |ty|self.resolve_type(Some(ty),path,item.span),
+                    |ty|match ty {Type::Data {name} => match self.decls.get(name) {Some(Decl::Data(data))=>Some(data),_=>None},_=>None},
                 )?;
             }
             if let Some(annotation) = &annotated_ret

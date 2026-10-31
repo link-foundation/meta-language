@@ -115,16 +115,16 @@ impl RustParser {
 
     pub(in super::super) fn lower_nominal_binding(
         &mut self,
-        pattern: SPattern,
+        mut pattern: SPattern,
         value: SExpr,
         path: &[String],
         bindings: &mut Vec<Binding>,
         fallback: Option<SExpr>,
     ) -> Result<()> {
-        let names = self.nominal_binding_names(&pattern, fallback.is_none())?;
         let scope = self
             .origins
-            .cases(std::slice::from_ref(&pattern), &value, path)?;
+            .cases(std::slice::from_mut(&mut pattern), &value, path)?;
+        let names = self.nominal_binding_names(&pattern, fallback.is_none())?;
         let range = pattern.span;
         let members = names
             .iter()

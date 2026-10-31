@@ -43,10 +43,13 @@ mod float_predicate_rules;
 mod float_predicates;
 mod formatting;
 mod function_pointers;
+mod generic_type_aliases;
 pub(super) mod indirection_rules;
 mod inherent;
 mod items;
 mod ordinary_completions;
+mod expression_completions;
+mod standard_sum_completions;
 mod owned_local_state;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;
@@ -60,6 +63,9 @@ mod records;
 mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
+mod standard_sum_source;
+mod standard_sum_metadata;
+mod standard_sum_methods;
 mod shared_array_handles;
 mod source_constant_evaluation;
 mod source_constants;
@@ -409,6 +415,9 @@ fn parse_rust_with_selected_profiles(
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
     if declarations.ordinary_completion_context() {
         origins.finish_nominal_copies()?;
+        declarations.origins=origins;
+        declarations.finalize_standard_sum_source_declarations()?;
+        origins=std::mem::replace(&mut declarations.origins,SourceOrigins::new(None,array_result_model));
     }
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.collecting = true;
@@ -433,10 +442,12 @@ fn parse_rust_with_selected_profiles(
     let surface = syntax.file()?;
     if syntax.ordinary_completion_context() {
         syntax.origins.finish_nominal_copies()?;
+        syntax.finalize_standard_sum_source_declarations()?;
     }
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
     if super::check::check_program(&surface).is_err() && shared_array_handle_source_model.is_empty()
+        && !syntax.origins.standard_sum_source_needs_final_admission
     {
         return Ok(surface);
     }
@@ -496,6 +507,8 @@ struct RustParser {
     source_version_minor: f64,
     retain_source_type_owners: bool,
     source_type_aliases: type_aliases::SourceTypeAliases,
+    standard_sum_source: standard_sum_source::StandardSumSourceState,
+    standard_sum_try_attempts: Vec<standard_sum_completions::StandardSumTryAttempt>,
     header_discovery: bool,
     source_constant_initializers: HashMap<String, source_constant_evaluation::ConstantInitializer>,
     source_constant_read_stack: HashSet<String>,
@@ -554,6 +567,13 @@ struct RustParser {
 }
 
 impl RustParser {
+    fn with_standard_sum_source_context<T>(&mut self,origin:Option<SourceOrigin>,read:impl FnOnce(&mut Self)->Result<T>)->Result<T>{
+        let previous=std::mem::replace(&mut self.standard_sum_source.expected_origin,origin);
+        let result=read(self);
+        self.standard_sum_source.expected_origin=previous;
+        result
+    }
+
     fn new(
         tokens: Vec<Token>,
         mut origins: SourceOrigins,
@@ -587,6 +607,8 @@ impl RustParser {
             source_version_minor: 0.0,
             retain_source_type_owners: profiles.retain_source_type_owners,
             source_type_aliases: type_aliases::SourceTypeAliases::default(),
+            standard_sum_source: standard_sum_source::StandardSumSourceState::default(),
+            standard_sum_try_attempts: Vec::new(),
             header_discovery: false,
             source_constant_initializers: HashMap::new(),
             source_constant_read_stack: HashSet::new(),

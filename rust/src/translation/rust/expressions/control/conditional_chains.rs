@@ -17,6 +17,19 @@ pub(in crate::translation::rust) struct ConditionalStages {
     forms: Vec<f64>,
 }
 impl ConditionalStages {
+    pub(in crate::translation::rust) fn has_expression_completion(&self)->Result<bool>{
+        use crate::translation::rust::expression_completions::has_expression_completion;
+        for stage in &self.stages {
+            for expression in stage.condition.iter().chain(stage.scrutinee.iter()) {
+                if has_expression_completion(expression)? { return Ok(true); }
+            }
+            for alias in &stage.aliases {
+                if has_expression_completion(&alias.value)? { return Ok(true); }
+            }
+        }
+        Ok(false)
+    }
+
     pub(in crate::translation::rust) fn single_pattern(
         pattern: SPattern,
         scrutinee: SExpr,
@@ -113,14 +126,14 @@ impl RustParser {
                     ));
                 }
                 self.cursor.expect("=", Some("conditional pattern"))?;
-                let scrutinee = self.comparison(
+                let scrutinee = self.with_standard_sum_source_context(None, |parser| parser.comparison(
                     path,
                     Options {
                         no_struct: true,
                         statement: false,
                     },
-                )?;
-                let scope = self.origins.cases(&patterns, &scrutinee, path)?;
+                ))?;
+                let scope = self.origins.cases(&mut patterns, &scrutinee, path)?;
                 self.origins.enter(Some(scope));
                 for alias in &aliases {
                     self.origins.bind(&alias.name, &alias.value, path, None)?;
@@ -134,13 +147,13 @@ impl RustParser {
                 });
                 forms.push(1.0);
             } else {
-                let condition = self.comparison(
+                let condition = self.with_standard_sum_source_context(None, |parser| parser.comparison(
                     path,
                     Options {
                         no_struct: true,
                         statement: false,
                     },
-                )?;
+                ))?;
                 self.origins.direct(&condition, path, condition.span)?;
                 stages.push(Stage {
                     patterns: Vec::new(),

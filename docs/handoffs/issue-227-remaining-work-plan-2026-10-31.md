@@ -832,3 +832,57 @@ text and are not invoked by that runner. Native generation, catalog/package/
 naming/source registration, native controls and frontend integration remain
 explicit next actions. The two policy modules are unintegrated; their presence
 does not mean generic aliases, stored standard sums or `?` now translate.
+
+### Continued frontend integration drafting — 2026-11-01
+
+The user rejected stopping at those isolated policy modules. Work continues
+through actual JavaScript and native adapter source integration, with the same
+three GPT-6.1-sol medium agents. The preceding paragraph describes the earlier
+commit `2d9036d6`; it is not the current source-edit boundary.
+
+Current authored consumers connect generic alias discovery, checked symbolic
+templates, concrete argument origins and eager unused-definition checking to
+both frontend adapters. They preserve definition-scoped binding identities,
+actual scalar/tuple owners, recursion and clone budgets. Canonical standard sum
+template composition is the next active extension rather than a completed claim.
+Actual standard sum type/constructor/import/pattern readers register concrete
+named datatypes and retain their constructor field signatures. Deferred source
+patterns resolve against real scrutinee origins before bindings are installed;
+final admission refuses any unresolved private representation.
+
+Question-mark source transport now connects ordinary callable completion to
+single operand capture and real constructor matches. Expression continuations
+cover ordered operands, calls, constructors, tuple/array slots, branches and
+conditional packets, with explicit nearest-callable ownership and finite
+construction bounds. Both runtime adapter sources are being drafted; native
+private markers use existing surface forms and must be consumed before checked
+IR. Actual native generated policies remain pending the unexecuted author recipe.
+Standard sum method consumers and independent specialization naming are active
+follow-on source batches; do not treat a requested or partially authored method
+as supported without reviewing its complete consumer.
+
+Source signature checking now has actual datatype lookup callbacks. It validates
+library sum owners against complete constructor inventories and existing retained
+field signatures, including recursively preserved payload owners. The graph
+schema is reused; no new opaque sum certificate or JSON artifact is introduced.
+Both checkers resolve all datatype layouts before nested source-field validation.
+The author source for the obsolete generic-Identity refusal retains the exact
+original and previous assertion in an explicit correction directory; generated
+fixture output is still the preceding snapshot until generation is permitted.
+
+All new controls remain unexecuted source, including actual frontend, independent
+stdout, retained-owner forgery, both codecs and four-emitter checks. No test,
+generator, validation gate, rustfmt or compilation runs during this instruction.
+New native module registrations intentionally reference the pending automatic
+policy products; the source draft is not a claim of buildable or verified output.
+The full requirement inventory remains open; no row counts are reclassified by
+this progress note. Continue implementation and source review rather than ending
+at this note or waiting for CI feedback.
+
+Detailed current consumer/author/control paths, source-phase boundaries and next
+actions are recorded in [the consumer handoff](issue-227-source-consumers-2026-11-01.md).
+Subsequent source batches add generic Vec templates and associated construction,
+version-bounded Option panic consumers, stored copied lookup producers and paired
+semantic metadata budgets. The new source author assembles policy dependencies,
+literal Links fixtures, retained alias history, source availability, catalogs and
+package assets automatically once generation is permitted. It has not run.

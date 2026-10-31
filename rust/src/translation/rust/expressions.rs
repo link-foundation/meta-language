@@ -2,6 +2,7 @@
 
 mod array_index;
 mod array_lookups;
+mod array_lookup_options;
 mod ascii_text_predicates;
 mod byte_ascii;
 mod byte_strings;
@@ -448,6 +449,10 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(sum)=self.read_standard_sum_source_method(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
                 if let Some(ascii) = self.read_ascii_text_predicate(&value, &method, path)? {
                     value = ascii;
                     continue;
@@ -530,6 +535,10 @@ impl RustParser {
                     path,
                 ) {
                     value = copy;
+                    continue;
+                }
+                if let Some(lookup)=self.read_array_lookup_option(&value,&method,&args,span(&token,self.cursor.peek()),path)? {
+                    value=lookup;
                     continue;
                 }
                 if let Some(lookup) = self.read_array_lookup(
@@ -816,11 +825,8 @@ impl RustParser {
                 continue;
             }
             if self.cursor.is("?") {
-                return Err(unsupported(
-                    "? operator",
-                    "Result and Option are outside the portable core",
-                    span(&token, &token),
-                ));
+                value = self.standard_sum_try_expression(value, path, &token)?;
+                continue;
             }
             if self.cursor.is("[") {
                 if self.ordinary_completion_context() {
@@ -997,7 +1003,7 @@ impl RustParser {
     pub(super) fn call_arguments(&mut self, path: &[String]) -> Result<Vec<SExpr>> {
         let mut args = Vec::new();
         while !self.cursor.is(")") {
-            args.push(self.expr(path, Options::default())?);
+            args.push(self.with_standard_sum_source_context(None,|parser|parser.expr(path,Options::default()))?);
             if self.cursor.eat(",").is_none() {
                 break;
             }

@@ -16,7 +16,7 @@ fn pop(stack: &mut Vec<SExpr>, span: Option<Span>) -> Result<SExpr> {
         .pop()
         .ok_or_else(|| type_error("an array lookup source plan lost an earlier term", span))
 }
-fn project(plan: &[String], values: &HashMap<String, SExpr>, span: Option<Span>) -> Result<SExpr> {
+pub(super) fn project(plan: &[String], values: &HashMap<String, SExpr>, span: Option<Span>) -> Result<SExpr> {
     let mut stack = Vec::new();
     for term in plan {
         if let Some(value) = values.get(term) {
@@ -85,7 +85,7 @@ struct LookupFacts {
     result_origin: SourceOrigin,
     element_owner: Option<SourceOwner>,
 }
-fn selected_lookup(object: SExpr, index: SExpr, range: Option<Span>) -> SExpr {
+pub(super) fn selected_lookup(object: SExpr, index: SExpr, range: Option<Span>) -> SExpr {
     SExpr::new(
         SNode::Index {
             object: Box::new(object),
@@ -104,7 +104,7 @@ fn selected_lookup(object: SExpr, index: SExpr, range: Option<Span>) -> SExpr {
         range,
     )
 }
-fn lookup_result_origin(
+pub(super) fn lookup_result_origin(
     result_type: &Type,
     owner: &str,
     presence: bool,
@@ -131,7 +131,7 @@ fn lookup_result_origin(
     });
     result_origin
 }
-fn lookup_dimensions(
+pub(super) fn lookup_dimensions(
     object: SExpr,
     usize_type: &Type,
     range: Option<Span>,

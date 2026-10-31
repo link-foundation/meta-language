@@ -3,15 +3,22 @@ import {hasRustConditionalChain,readRustConditionalChainStages,lowerRustConditio
 import {findRustReturningLetElseCompletion} from './let-else-completion-rules.js';
 import {readRustLetElseInitializerError} from './rust-record-rules.js';
 import {rustNominalBindingNames} from './rust-records.js';
+import {refuseRustStandardSumPrivateCompletions} from './rust-standard-sum-completions.js';
+import {lowerRustExpressionCompletions,hasRustExpressionCompletion} from './rust-expression-completions.js';
+import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 // Actual token/term transport into shared ordinary completion constructions.
 import {unsupported} from './diagnostics.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative} from './rust-unit-value-rules.js';
 const range=(from,to)=>({start:from.start,end:Math.max(from.end,to?.kind==='eof'?from.end:to.start)});
 const name=path=>({k:'name',path});
-function leaf(parser,kind,expression,path){return {node:kind,kind:kind==='return'?'returned':kind==='abort'?'aborted':'value',expression,origin:parser.origins.origin(expression,path)};}
+function leaf(parser,kind,expression,path){
+ const success=kind==='return'?'returned':kind==='abort'?'aborted':'value';
+ return {node:kind,kind:hasRustExpressionCompletion(expression)?readRustOrdinaryCompletionAlternativeKind(success,'returned'):success,expression,origin:parser.origins.origin(expression,path)};
+}
 export function readRustOrdinaryFunctionCompletion(parser,path,ret,sourceResult){
  const tree=block(parser,path),context={parser,path,ret,sourceResult,outputs:[],data:null};
  const expression=lower(tree,true,context);
+ refuseRustStandardSumPrivateCompletions(expression);
  parser.origins.mark(expression,parser.origins.join(context.outputs));
  return expression;
 }
@@ -65,7 +72,10 @@ function sequence(parser,path,open){
   }
   result=leaf(parser,completionKind==='abort'?'abort':'value',expression,path);break;
  }
- for(let index=bindings.length-1;index>=0;index-=1)result={node:'binding',binding:bindings[index],body:result,kind:result.kind};
+ for(let index=bindings.length-1;index>=0;index-=1){
+  const binding=bindings[index];
+  result={node:'binding',binding,body:result,kind:hasRustExpressionCompletion(binding.value)?readRustOrdinaryCompletionAlternativeKind(result.kind,'returned'):result.kind};
+ }
  return result;
 }
 function conditional(parser,path){
@@ -73,12 +83,13 @@ function conditional(parser,path){
  let cond,stages,then;
  if(hasRustConditionalChain(parser)){
   const previous=parser.origins.enter();
-  try{stages=readRustConditionalChainStages(parser,path,token);then=block(parser,path);}
+  try{stages=withRustStandardSumSourceContext(parser,null,()=>readRustConditionalChainStages(parser,path,token));then=block(parser,path);}
   finally{parser.origins.scope=previous;}
- }else{cond=parser.expr(path,{noStruct:true});parser.origins.direct(cond,path,cond.span);then=block(parser,path);}
+ }else{cond=withRustStandardSumSourceContext(parser,null,()=>parser.expr(path,{noStruct:true}));parser.origins.direct(cond,path,cond.span);then=block(parser,path);}
  const hasElse=Boolean(c.eat('else'));
  const otherwise=hasElse?(c.is('if')?conditional(parser,path):block(parser,path)):leaf(parser,'value',{k:'unit',span:range(token,token)},path);
- return {node:'conditional',cond,stages,then,otherwise,kind:readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind),span:range(token,c.peek())};
+ const success=readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind);
+ return {node:'conditional',cond,stages,then,otherwise,kind:hasRustExpressionCompletion(cond??stages)?readRustOrdinaryCompletionAlternativeKind(success,'returned'):success,span:range(token,c.peek())};
 }
 function hasLetElseCompletion(parser){
  const c=parser.cursor;let count=64;
@@ -93,7 +104,7 @@ function letElseCompletion(parser,path,open){
  if(aliases.length)throw unsupported('Rust nominal binding alias','whole-value aliases require their complete move and borrow interpretation',pattern.span);
  const names=new Set();for(const item of rustNominalBindingNames(parser,pattern)){if(names.has(item.name))throw unsupported('duplicate tuple binding','each name occurs only once in a destructuring pattern',item.span);names.add(item.name);}
  const type=c.eat(':')?parser.type():undefined,sourceType=type?parser.origins.type:null;
- c.expect('=','let');const first=c.index,value=parser.expr(path),tokens=c.tokens.slice(first,c.index);
+ c.expect('=','let');const first=c.index,value=withRustStandardSumSourceContext(parser,sourceType,()=>parser.expr(path)),tokens=c.tokens.slice(first,c.index);
  const reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));
  if(reason)throw unsupported('Rust let-else initializer',reason,range(start,c.peek()));
  c.expect('else','let-else');const otherwise=block(parser,path);
@@ -118,18 +129,24 @@ function data(context){
 function constructor(context,variant,args,span){return {k:'app',fn:name(['crate',...data(context),variant]),args,...(span?{span}:{})};}
 function lower(tree,terminal,context){
  const {parser,path}=context,form=readRustOrdinaryCompletionConstruction(tree.node,terminal);
+ const lift=(expression,next)=>{
+  if(!terminal&&hasRustExpressionCompletion(expression))data(context);
+  return lowerRustExpressionCompletions(parser,expression,path,context.sourceResult,next,(value,origin)=>lower({node:'return',kind:'returned',expression:value,origin},terminal,context));
+ };
  if(form==='value'||form==='completed'){
   if(tree.node!=='abort')parser.origins.argument(tree.origin,context.sourceResult,tree.expression.span);
   context.outputs.push(tree.origin);
-  return form==='completed'?constructor(context,'FunctionResult',[tree.expression],tree.expression.span):tree.expression;
+  if(form==='completed')data(context);
+  return lift(tree.expression,expression=>form==='completed'?constructor(context,'FunctionResult',[expression],expression.span):expression);
  }
  if(form==='continuation'){
   const origin=tree.origin;
   if(readRustUnitStatementDisposition(tree.expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('ordinary Rust statement completion','a falling-through branch needs an actual direct Unit result before its enclosing continuation',tree.expression.span);
-  return {k:'let',name:parser.freshProductBinding(),value:tree.expression,body:constructor(context,'StatementContinuation',[],tree.expression.span),span:tree.expression.span};
+  const binding=parser.freshProductBinding(),body=constructor(context,'StatementContinuation',[],tree.expression.span);
+  return lift(tree.expression,expression=>({k:'let',name:binding,value:expression,body,span:expression.span}));
  }
- if(form==='binding')return {k:'let',...tree.binding,body:lower(tree.body,terminal,context),span:tree.binding.span};
- if(form==='conditional'){const then=lower(tree.then,terminal,context),otherwise=lower(tree.otherwise,terminal,context);return tree.stages?lowerRustConditionalChainStages(tree.stages,then,otherwise,tree.span):{k:'if',cond:tree.cond,then,else:otherwise,span:tree.span};}
+ if(form==='binding'){const body=lower(tree.body,terminal,context);return lift(tree.binding.value,value=>({k:'let',...tree.binding,value,body,span:tree.binding.span}));}
+ if(form==='conditional'){const then=lower(tree.then,terminal,context),otherwise=lower(tree.otherwise,terminal,context);return tree.stages?lift(lowerRustConditionalChainStages(tree.stages,then,otherwise,tree.span),expression=>expression):lift(tree.cond,cond=>({k:'if',cond,then,else:otherwise,span:tree.span}));}
  if(form==='join'){
   const first=lower(tree.first,false,context),binding=parser.freshProductBinding(),result=parser.freshProductBinding();
   const completed=terminal?name([result]):constructor(context,'FunctionResult',[name([result])],tree.span);

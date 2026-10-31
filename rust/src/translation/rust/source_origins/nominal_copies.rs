@@ -1,6 +1,7 @@
 //! Actual source declarations into the shared nominal Copy dependency plan.
 use super::{Result, SourceDeclaration, SourceOrigin, SourceOrigins, Span, Type, unsupported};
 use crate::translation::rust_nominal_copy_rules as rules;
+use crate::translation::rust_standard_sum_source_rules as sum_rules;
 use serde_json::Value;
 
 #[derive(Clone, Copy)]
@@ -45,20 +46,39 @@ impl SourceOrigins {
     }
 
     pub(in super::super) fn retain_nominal_copy_origin(&self, origin: &mut SourceOrigin) {
+        self.retain_nominal_copy_origin_bounded(origin,0,&mut 0);
+    }
+
+    fn retain_nominal_copy_origin_bounded(&self,origin:&mut SourceOrigin,depth:usize,visits:&mut usize){
+        *visits+=1;
+        if *visits>100_000||depth>256 {origin.copy_evidence=None;return;}
         if let Some(fields) = &mut origin.fields {
             for field in fields {
-                self.retain_nominal_copy_origin(field);
+                self.retain_nominal_copy_origin_bounded(field,depth+1,visits);
             }
         }
         if let Some(fields) = &mut origin.callable_parameters {
             for field in fields {
-                self.retain_nominal_copy_origin(field);
+                self.retain_nominal_copy_origin_bounded(field,depth+1,visits);
             }
         }
         if let Some(result) = &mut origin.callable_result {
-            self.retain_nominal_copy_origin(result);
+            self.retain_nominal_copy_origin_bounded(result,depth+1,visits);
         }
         if let Some(Type::Named { path, .. }) = &origin.ty {
+            let actual_sum=self.lookup_type_owner(path,&origin.path)
+                .filter(|owner|matches!(owner.declaration,SourceDeclaration::Data))
+                .and_then(|owner|self.standard_sum_source_origins.get(&owner.full_name))
+                .and_then(|stored|stored.standard_sum_source.clone());
+            if let Some(mut sum)=actual_sum {
+                for argument in &mut sum.arguments {self.retain_nominal_copy_origin_bounded(argument,depth+1,visits);}
+                let identities=sum.arguments.iter().map(|argument|self.standard_sum_source_identity(argument).map(|identity|format!("{identity:?}")).unwrap_or_default()).collect::<Vec<_>>();
+                let copies=sum.arguments.iter().map(SourceOrigin::direct_copy_value).collect::<Vec<_>>();
+                origin.copy_evidence=(!sum.provisional&&sum_rules::accept_rust_standard_sum_source_arguments(&sum.owner,&identities,&copies)).then_some(());
+                if sum.provisional {origin.proven=false;}
+                origin.standard_sum_source=Some(sum);
+                return;
+            }
             origin.copy_evidence = self
                 .lookup_type_owner(path, &origin.path)
                 .filter(|owner| matches!(owner.declaration, SourceDeclaration::Data))
@@ -95,13 +115,21 @@ impl SourceOrigins {
                 .filter(|owner| matches!(owner.declaration, SourceDeclaration::Data)),
             _ => None,
         };
+        if origin.wrappers.is_empty()
+            && let Some(sum)=owner.and_then(|owner|self.standard_sum_source_origins.get(&owner.full_name)).and_then(|origin|origin.standard_sum_source.as_ref())
+            && count(sum.arguments.len())==sum_rules::read_rust_standard_sum_source_argument_count(&sum.owner)
+        {
+            for child in &sum.arguments {self.nominal_copy_field(child,owners,targets,leaves);}
+            return;
+        }
         let target =
             owner.and_then(|owner| owners.iter().position(|name| name == &owner.full_name));
         targets.push(target.map_or(-1.0, count));
         leaves.push(rules::accept_rust_nominal_copy_field_leaf(
             origin.ty.as_ref().map_or("", Type::kind),
             &origin.wrappers,
-            origin.copy_evidence.is_some() && origin.proven,
+            crate::translation::rust_function_pointer_rules::accept_rust_function_pointer_header_copy(origin.ty.as_ref().map_or("",Type::kind),count(origin.wrappers.len()),origin.source_function_pointer_header)
+                || origin.copy_evidence.is_some() && origin.proven,
         ));
     }
 
@@ -172,6 +200,11 @@ impl SourceOrigins {
         for (name, mut declaration) in entries {
             self.retain_nominal_copy_declaration(&mut declaration);
             self.catalog.insert(name, declaration);
+        }
+        let sums=self.standard_sum_source_origins.clone();
+        for(name,mut origin)in sums {
+            self.retain_nominal_copy_origin(&mut origin);
+            self.standard_sum_source_origins.insert(name,origin);
         }
         Ok(())
     }

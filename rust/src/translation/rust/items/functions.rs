@@ -304,6 +304,9 @@ impl RustParser {
         let mut source_loop = None;
         let mut source_local_state = None;
         let temporary_frame = self.origins.owned_temporary_frame();
+        let previous_sum_return=std::mem::replace(&mut self.standard_sum_source.return_origin,Some(source_result.clone()));
+        let previous_sum_expected=std::mem::replace(&mut self.standard_sum_source.expected_origin,Some(source_result.clone()));
+        let body_read:Result<SExpr>=(|| {
         let body = if scalar_loop {
             if !path.is_empty() {
                 return Err(unsupported(
@@ -339,6 +342,11 @@ impl RustParser {
         } else {
             self.closed_function_completion(path)?
         };
+        Ok(body)
+        })();
+        self.standard_sum_source.return_origin=previous_sum_return;
+        self.standard_sum_source.expected_origin=previous_sum_expected;
+        let body=body_read?;
         let source_const_function = const_keyword.as_ref().filter(|_| crate::translation::rust_function_qualifier_rules::require_rust_const_predicate_proof(true, !self.const_function_model.is_empty())).map(|keyword| {
             Box::new(self.create_const_function_proof(
                 &name,

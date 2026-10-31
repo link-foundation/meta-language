@@ -113,15 +113,16 @@ export function readRustOrdinaryCompletionSequenceKind(first,second){
  if(first==='returned'||first==='aborted')return first;
  return second==='returned'||second==='aborted'?'returned':'mixed';
 }
-/** Ordinary control can also be selected by an actual aborting panic macro.
- * Columns contain only owned keyword/macro markers and brace punctuation.
+/** Ordinary control can also be selected by an actual aborting panic macro
+ * or question-mark propagation token. Columns contain only owned
+ * keyword/macro/propagation markers and brace punctuation.
  * @param {string[]} values @returns {number} */
 export function readRustFunctionCompletionPresence(values){
  if(values[0]!=='{')return 0;
  let depth=0;
  for(let index=0;index<values.length;index+=1){
   const value=values[index]??'';
-  if(value==='return'||value==='abort')return 1;
+  if(value==='return'||value==='abort'||value==='try')return 1;
   if(value==='{')depth+=1;
   if(value==='}'){depth-=1;if(depth===0)return 0;}
  }

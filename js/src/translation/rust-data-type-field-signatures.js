@@ -20,7 +20,7 @@ export function retainRustDataTypeFieldSignatures(parser,declaration,path,groups
  return declaration;
 }
 /** Validate complete actual constructor identities and every resolved field. */
-export function checkRustDataTypeFieldSignatures(signature,constructors,language,dataTypeName,resolveType=value=>value){
+export function checkRustDataTypeFieldSignatures(signature,constructors,language,dataTypeName,resolveType=value=>value,resolveData=()=>null){
  checkRustDataTypeFieldSignatureContainers({sourceFieldSignatures:signature});
  let visits=0;const active=new WeakSet();
  const inspect=(value,depth)=>{visits+=1;if(!acceptRustDataTypeFieldSignatureBudget(visits,depth))fail('the complete field-signature tree exceeds its resource limit');if(value&&typeof value==='object'){if(active.has(value))fail('owned field-signature records cannot contain a structural cycle');active.add(value);for(const child of Object.values(value))inspect(child,depth+1);active.delete(value);}};inspect(signature,0);
@@ -29,7 +29,7 @@ export function checkRustDataTypeFieldSignatures(signature,constructors,language
  const ctors=signature.ctors.map((ctor,index)=>{
   exact(ctor,['name','fields']);const actual=constructors[index];
   if(!Array.isArray(ctor.fields)||!acceptRustConstructorFieldSignature(ctor.name,actual.name,ctor.fields.length,actual.fields.length))fail('the actual constructor name or complete field inventory differs');
-  const checked=checkRustSourceSignature({model:typeModel,language,parameters:ctor.fields,result:unitPosition,lifetimeBindings:[]},actual.fields.map(field=>field.type),UNIT,language,resolveType);
+  const checked=checkRustSourceSignature({model:typeModel,language,parameters:ctor.fields,result:unitPosition,lifetimeBindings:[]},actual.fields.map(field=>field.type),UNIT,language,resolveType,resolveData);
   return{name:ctor.name,fields:checked.parameters};
  });
  return{...signature,ctors};

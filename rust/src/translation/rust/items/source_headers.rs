@@ -176,10 +176,11 @@ impl RustParser {
                     .then(|| primitive_children[0].clone())
                     .flatten()
             });
-        self.origins
-            .current_type
-            .primitive_owner_position
-            .clone_from(&primitive);
+        if self.origins.current_type.expanded_source_owner.is_none()
+            || self.origins.current_type.primitive_owner_position.is_none()
+        {
+            self.origins.current_type.primitive_owner_position.clone_from(&primitive);
+        }
         let owner = if primitive.is_some() {
             SourceOwner {
                 kind: "primitive".to_owned(),

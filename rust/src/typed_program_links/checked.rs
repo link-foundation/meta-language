@@ -14,7 +14,7 @@ use crate::translation::typed_program_link_rules::{
 };
 use regex::Regex;
 use serde_json::Value;
-use std::collections::HashSet;
+use std::collections::{HashMap,HashSet};
 use std::sync::OnceLock;
 
 mod declarations;
@@ -292,6 +292,12 @@ fn validate_type_record(
 }
 
 pub(super) fn validate(program: &Program) -> Result<()> {
+    let mut data_declarations=HashMap::new();
+    for declaration in &program.declarations {
+        if let Decl::Data(data)=declaration
+            && data_declarations.insert(data.full_name.as_str(),data).is_some()
+        { return Err(error("the linked program contains duplicate datatype declarations")); }
+    }
     // A selected runtime interpretation cannot hide owned datatype facets.
     for declaration in &program.declarations {
         if let Decl::Data(data) = declaration
@@ -303,8 +309,18 @@ pub(super) fn validate(program: &Program) -> Result<()> {
                 program.source_language.as_str(),
                 &data.full_name,
                 |ty| Ok(ty.clone()),
+                |ty|match ty {crate::translation::types::Type::Data {name}=>data_declarations.get(name.as_str()).copied(),_=>None},
             )
             .map_err(|failure| error(failure.to_string()))?;
+        }
+        if let Decl::Fn(function)=declaration
+            && let Some(signature)=function.source_signature.as_ref()
+        {
+            crate::translation::source_signatures::validate_source_signature_with_data(
+                signature,&function.params.iter().map(|parameter|parameter.ty.clone()).collect::<Vec<_>>(),&function.ret,program.source_language.as_str(),
+                |ty|Ok(ty.clone()),
+                |ty|match ty {crate::translation::types::Type::Data {name}=>data_declarations.get(name.as_str()).copied(),_=>None},
+            ).map_err(|failure|error(failure.to_string()))?;
         }
     }
     crate::translation::source_const_functions::validate_const_functions(program)

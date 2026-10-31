@@ -40,7 +40,7 @@ pub(super) fn clone_facts(
     let string = element.is_some_and(|element| element.kind() == "string") && error.is_empty();
     (error, string)
 }
-pub(super) fn scalar_owner(source: &super::SourceOrigin) -> String {
+pub(in super::super) fn scalar_owner(source: &super::SourceOrigin) -> String {
     if let Some(expanded) = &source.expanded_source_owner {
         super::SourceOrigin {
             source_owner: Some(expanded.clone()),

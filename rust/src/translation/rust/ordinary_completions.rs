@@ -6,6 +6,7 @@ use super::{
 };
 use crate::translation::rust_unit_value_rules as rules;
 use crate::translation::surface::{SCase, SCasePattern};
+use super::expression_completions::{CompletionContinuation,has_expression_completion};
 
 struct CompletionTree {
     kind: String,
@@ -132,7 +133,7 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        let pattern = self.pattern(path, &mut aliases)?;
+        let mut pattern = self.pattern(path, &mut aliases)?;
         if !aliases.is_empty() {
             return Err(unsupported(
                 "Rust nominal binding alias",
@@ -152,7 +153,11 @@ impl RustParser {
         let source_type = ty.as_ref().map(|_| self.origins.current_type.clone());
         self.cursor.expect("=", Some("let"))?;
         let first = self.cursor.index;
-        let value = self.expr(path, Options::default())?;
+        let expected=self.standard_sum_source.expected_origin.take();
+        self.standard_sum_source.expected_origin=source_type.clone();
+        let value = self.expr(path, Options::default());
+        self.standard_sum_source.expected_origin=expected;
+        let value=value?;
         let tokens = &self.cursor.tokens[first..self.cursor.index];
         let kinds = tokens
             .iter()
@@ -201,7 +206,7 @@ impl RustParser {
         );
         let scope = self
             .origins
-            .cases(std::slice::from_ref(&pattern), &scrutinee, path)?;
+            .cases(std::slice::from_mut(&mut pattern), &scrutinee, path)?;
         let previous = self.origins.enter(Some(scope));
         let first = self.ordinary_completion_sequence(path, open);
         self.origins.scope = previous;
@@ -263,6 +268,8 @@ impl RustParser {
                     if token.kind == TokenKind::Punct && (token.value == "{" || token.value == "}")
                     {
                         token.value.clone()
+                    } else if token.kind == TokenKind::Punct && token.value == "?" {
+                        "try".to_owned()
                     } else if token.kind == TokenKind::Macro && token.value == "panic" {
                         "abort".to_owned()
                     } else if self.cursor.is_at("return", index) {
@@ -297,21 +304,23 @@ impl RustParser {
             data: None,
         };
         let expression = self.lower_ordinary_completion(tree, true, &mut context)?;
+        self.refuse_standard_sum_private_completions(&expression)?;
         let origin = self.origins.checked_join(&context.outputs)?;
         self.origins.mark(&expression, origin);
         Ok(expression)
     }
-    fn completion_leaf(&self, kind: &str, expression: SExpr, path: &[String]) -> CompletionTree {
+    fn completion_leaf(&self, kind: &str, expression: SExpr, path: &[String]) -> Result<CompletionTree> {
         let origin = self.origins.origin(&expression, path);
+        let propagates=has_expression_completion(&expression)?;
         let (kind, node) = match kind {
             "return" => ("returned", CompletionNode::Return(expression, origin)),
             "abort" => ("aborted", CompletionNode::Abort(expression, origin)),
             _ => ("value", CompletionNode::Value(expression, origin)),
         };
-        CompletionTree {
-            kind: kind.to_owned(),
+        Ok(CompletionTree {
+            kind: if propagates {rules::read_rust_ordinary_completion_alternative_kind(kind,"returned")}else{kind.to_owned()},
             node,
-        }
+        })
     }
     fn ordinary_completion_block(&mut self, path: &[String]) -> Result<CompletionTree> {
         let open = self.cursor.expect("{", Some("block"))?;
@@ -348,7 +357,7 @@ impl RustParser {
                     "value",
                     SExpr::new(SNode::Unit, span(open, &token)),
                     path,
-                );
+                )?;
             }
             if self.cursor.is("return") {
                 let bare = self.cursor.is_at(";", 1) || self.cursor.is_at("}", 1);
@@ -376,7 +385,7 @@ impl RustParser {
                         span(&token, self.cursor.peek()),
                     ));
                 }
-                break self.completion_leaf("return", expression, path);
+                break self.completion_leaf("return", expression, path)?;
             }
             if self.cursor.is("if") {
                 let first = self.ordinary_conditional_completion(path)?;
@@ -492,10 +501,10 @@ impl RustParser {
                 }
                 return Err(Self::fail("expected }", self.cursor.peek()));
             }
-            break self.completion_leaf(if abort { "abort" } else { "value" }, expression, path);
+            break self.completion_leaf(if abort { "abort" } else { "value" }, expression, path)?;
         };
         for binding in bindings.into_iter().rev() {
-            let kind = result.kind.clone();
+            let kind = if has_expression_completion(&binding.value)?{rules::read_rust_ordinary_completion_alternative_kind(&result.kind,"returned")}else{result.kind.clone()};
             result = CompletionTree {
                 kind,
                 node: CompletionNode::Binding(binding, Box::new(result)),
@@ -508,7 +517,10 @@ impl RustParser {
         let (condition, stages, first) = if self.has_conditional_chain() {
             let previous = self.origins.enter(None);
             let parsed = (|| {
-                let stages = self.conditional_chain_stages(path, &token)?;
+                let expected=self.standard_sum_source.expected_origin.take();
+                let stages = self.conditional_chain_stages(path, &token);
+                self.standard_sum_source.expected_origin=expected;
+                let stages=stages?;
                 let first = self.ordinary_completion_block(path)?;
                 Ok::<_, crate::translation::diagnostics::TranslationError>((
                     None,
@@ -519,13 +531,16 @@ impl RustParser {
             self.origins.scope = previous;
             parsed?
         } else {
+            let expected=self.standard_sum_source.expected_origin.take();
             let condition = self.expr(
                 path,
                 Options {
                     statement: false,
                     no_struct: true,
                 },
-            )?;
+            );
+            self.standard_sum_source.expected_origin=expected;
+            let condition=condition?;
             self.origins.direct(&condition, path, condition.span)?;
             (Some(condition), None, self.ordinary_completion_block(path)?)
         };
@@ -537,9 +552,10 @@ impl RustParser {
                 self.ordinary_completion_block(path)?
             }
         } else {
-            self.completion_leaf("value", SExpr::new(SNode::Unit, span(&token, &token)), path)
+            self.completion_leaf("value", SExpr::new(SNode::Unit, span(&token, &token)), path)?
         };
-        let kind = rules::read_rust_ordinary_completion_alternative_kind(&first.kind, &second.kind);
+        let mut kind = rules::read_rust_ordinary_completion_alternative_kind(&first.kind, &second.kind);
+        if condition.as_ref().map(has_expression_completion).transpose()?.unwrap_or(false)||stages.as_ref().map(ConditionalStages::has_expression_completion).transpose()?.unwrap_or(false){kind=rules::read_rust_ordinary_completion_alternative_kind(&kind,"returned");}
         Ok(CompletionTree {
             kind,
             node: CompletionNode::Conditional {
@@ -603,6 +619,13 @@ impl RustParser {
             span,
         )
     }
+    fn lift_ordinary_expression(&mut self,expression:SExpr,terminal:bool,context:&mut CompletionContext,continued:CompletionContinuation)->Result<SExpr>{
+        if !has_expression_completion(&expression)?{return continued.apply(&expression);}
+        context.outputs.push(context.source_result.clone());
+        let hole="#rust-ordinary-return-hole".to_owned();let result=name(vec![hole.clone()]);
+        let returned=if terminal{result}else{self.ordinary_completion_constructor(context,"FunctionResult",vec![result],expression.span)};
+        self.lower_expression_completions(expression,&context.path,&context.source_result,continued,CompletionContinuation{hole,expression:returned})
+    }
     fn lower_ordinary_completion(
         &mut self,
         tree: CompletionTree,
@@ -619,17 +642,19 @@ impl RustParser {
                 self.origins
                     .argument(&origin, &context.source_result, expression.span)?;
                 context.outputs.push(origin);
-                Ok(if form == "completed" {
+                let hole="#rust-ordinary-value-hole".to_owned();
+                let continued=if form == "completed" {
                     let span = expression.span;
                     self.ordinary_completion_constructor(
                         context,
                         "FunctionResult",
-                        vec![expression],
+                        vec![name(vec![hole.clone()])],
                         span,
                     )
                 } else {
-                    expression
-                })
+                    name(vec![hole.clone()])
+                };
+                self.lift_ordinary_expression(expression,terminal,context,CompletionContinuation{hole,expression:continued})
             }
             CompletionNode::Value(expression, origin) if form == "continuation" => {
                 if rules::read_rust_unit_statement_disposition(
@@ -654,19 +679,22 @@ impl RustParser {
                     Vec::new(),
                     span,
                 );
-                Ok(binding(binding_name, expression, body, span))
+                let hole="#rust-ordinary-value-hole".to_owned();let continued=binding(binding_name,name(vec![hole.clone()]),body,span);
+                self.lift_ordinary_expression(expression,terminal,context,CompletionContinuation{hole,expression:continued})
             }
             CompletionNode::Binding(value, body) if form == "binding" => {
                 let body = self.lower_ordinary_completion(*body, terminal, context)?;
-                Ok(SExpr::new(
+                let hole="#rust-ordinary-value-hole".to_owned();
+                let continued=SExpr::new(
                     SNode::Let {
                         name: value.name,
                         ty: value.ty.map(Into::into),
-                        value: Box::new(value.value),
+                        value: Box::new(name(vec![hole.clone()])),
                         body: Box::new(body),
                     },
                     value.span,
-                ))
+                );
+                self.lift_ordinary_expression(value.value,terminal,context,CompletionContinuation{hole,expression:continued})
             }
             CompletionNode::Conditional {
                 condition,
@@ -678,16 +706,20 @@ impl RustParser {
                 let first = self.lower_ordinary_completion(*first, terminal, context)?;
                 let second = self.lower_ordinary_completion(*second, terminal, context)?;
                 if let Some(stages) = stages {
-                    return self.lower_conditional_chain_stages(stages, first, second, span);
+                    let expression=self.lower_conditional_chain_stages(stages, first, second, span)?;
+                    let hole="#rust-ordinary-value-hole".to_owned();let continued=name(vec![hole.clone()]);
+                    return self.lift_ordinary_expression(expression,terminal,context,CompletionContinuation{hole,expression:continued});
                 }
-                Ok(SExpr::new(
+                let hole="#rust-ordinary-value-hole".to_owned();let expression=condition.expect("an ordinary Boolean condition");
+                let continued=SExpr::new(
                     SNode::If {
-                        cond: Box::new(condition.expect("an ordinary Boolean condition")),
+                        cond: Box::new(name(vec![hole.clone()])),
                         then: Box::new(first),
                         otherwise: Box::new(second),
                     },
                     span,
-                ))
+                );
+                self.lift_ordinary_expression(expression,terminal,context,CompletionContinuation{hole,expression:continued})
             }
             CompletionNode::Sequence { first, rest, span } if form == "join" => {
                 let first = self.lower_ordinary_completion(*first, false, context)?;

@@ -333,7 +333,20 @@ class Checker {
           type: this.resolveType(field.type, itemPath, item.span),
         })),
       }));
-      if('sourceFieldSignatures' in item){checkRustDataTypeFieldSignatureContainers(item);entry.sourceFieldSignatures=checkRustDataTypeFieldSignatures(item.sourceFieldSignatures,entry.ctors,this.language,entry.fullName,value=>this.resolveType(value,itemPath,item.span));}
+      if('sourceFieldSignatures' in item){
+        checkRustDataTypeFieldSignatureContainers(item);
+        const retained=item.sourceFieldSignatures;
+        if(retained&&Array.isArray(retained.ctors))entry.sourceFieldSignatures={...retained,ctors:retained.ctors.map(ctor=>{
+          if(!ctor||typeof ctor!=='object'||Array.isArray(ctor)||!Array.isArray(ctor.fields))return ctor;
+          return {...ctor,fields:ctor.fields.map(field=>{
+            if(!field||typeof field!=='object'||Array.isArray(field)||!field.type||typeof field.type!=='object')return field;
+            return {...field,type:this.resolveType(field.type,itemPath,item.span)};
+          })};
+        })};
+      }
+    });
+    this.walk(items,path,(item,itemPath,entry)=>{
+      if(item.k==='data'&&'sourceFieldSignatures' in item){checkRustDataTypeFieldSignatureContainers(item);entry.sourceFieldSignatures=checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,this.language,entry.fullName,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k !== 'fn') return;
@@ -349,7 +362,7 @@ class Checker {
         entry.annotatedRet = this.resolveType(item.ret, itemPath, item.span);
         if (!acceptOptionalAnnotationTypes(entry.ret, entry.annotatedRet)) throw typeError('the semantic return type must retain the annotated value types', item.span);
       }
-      if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span));
+      if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span),type=>this.items.get(type.name));
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {

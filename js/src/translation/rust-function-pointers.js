@@ -2,13 +2,13 @@ import {readRustSourceConstantValue,readRustSourceValueName} from './rust-source
 // Real Rust signatures and declaration owners into existing callable types.
 import {unsupported} from './diagnostics.js';
 import {UNIT} from './types.js';
-import {readRustFunctionPointerTypeError,readRustFunctionPointerObservationError} from './rust-function-pointer-rules.js';
+import {readRustFunctionPointerTypeError,readRustFunctionPointerHeaderTypeError,readRustFunctionPointerObservationError} from './rust-function-pointer-rules.js';
 export function readRustFunctionPointerType(parser){
  const c=parser.cursor,start=c.next(),parameters=[],copies=[],parameterOrigins=[];c.expect('(','function pointer');
  while(!c.is(')')){if(c.isKind('identifier')&&c.is(':',1)){c.next();c.next();}parameters.push(parser.type());parameterOrigins.push(parser.origins.copy(parser.origins.type));copies.push(parser.origins.immutableProduct(parser.origins.type));if(!c.eat(','))break;}
  c.expect(')','function pointer');const ret=c.eat('->')?parser.type():parser.origins.typed(UNIT,parser.modulePath),result=parser.origins.type;
- const reason=readRustFunctionPointerTypeError(parser.ordinaryCompletionContext(),copies,parser.origins.immutableProduct(result));if(reason)throw unsupported('Rust function pointer',reason,start);
- const type={kind:'function',params:parameters,ret};parser.origins.typed(type,parser.modulePath);parser.origins.type.copyEvidence=true;parser.origins.type.callableParameters=parameterOrigins;parser.origins.type.callableResult=parser.origins.copy(result);return type;
+ const actual=readRustFunctionPointerTypeError(parser.ordinaryCompletionContext(),copies,parser.origins.immutableProduct(result)),reason=readRustFunctionPointerHeaderTypeError(parser.ordinaryCompletionContext(),copies,parser.origins.immutableProduct(result),parser.headerDiscovery===true);if(reason)throw unsupported('Rust function pointer',reason,start);
+ const type={kind:'function',params:parameters,ret};parser.origins.typed(type,parser.modulePath);parser.origins.type.copyEvidence=actual==='';parser.origins.type.proven=actual==='';if(actual!=='')parser.origins.type.sourceFunctionPointerHeader=true;parser.origins.type.callableParameters=parameterOrigins;parser.origins.type.callableResult=parser.origins.copy(result);return type;
 }
 export function readRustFunctionReference(parser,segments,path,span){
  if(segments.length===1&&parser.origins.scope.has(segments[0])){const origin=parser.origins.scope.get(segments[0]);return origin.type?.kind==='function'?parser.origins.mark({k:'name',path:segments,span},origin):null;}

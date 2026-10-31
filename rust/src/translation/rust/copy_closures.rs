@@ -303,7 +303,10 @@ impl RustParser {
                     count = count.checked_mul(2).expect("actual source token window");
                 }
             }
-            self.expr(path, super::Options::default())
+            let previous=std::mem::replace(&mut self.standard_sum_source.expected_origin,expected.cloned());
+            let read=self.expr(path, super::Options::default());
+            self.standard_sum_source.expected_origin=previous;
+            read
         }
     }
     pub(super) fn read_copy_closure(&mut self, path: &[String]) -> Result<SExpr> {
@@ -514,6 +517,8 @@ impl RustParser {
         for (parameter, origin) in params.iter().zip(bindings.iter().cloned()) {
             self.origins.scope.insert(parameter.name.clone(), origin);
         }
+        let outer_sum_return=std::mem::replace(&mut self.standard_sum_source.return_origin,result_origin.clone());
+        let outer_sum_expected=std::mem::replace(&mut self.standard_sum_source.expected_origin,result_origin.clone());
         let read: Result<SExpr> = (|| {
             let mut projections = Vec::new();
             for (index, pattern) in patterns.into_iter().enumerate() {
@@ -614,6 +619,8 @@ impl RustParser {
             Ok(body)
         })();
         self.origins.scope = outer.clone();
+        self.standard_sum_source.return_origin=outer_sum_return;
+        self.standard_sum_source.expected_origin=outer_sum_expected;
         let body = read?;
         let statements = serde_json::json!([{"s":"return", "expr":&body}]);
         let facts = create_surface_reference_facts(&statements);

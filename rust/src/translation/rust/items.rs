@@ -27,6 +27,7 @@ impl RustParser {
         let mut items = self.items(&[], ItemsEnd::File)?;
         self.finish_type_aliases()?;
         self.install_ordinary_completion_declarations(&mut items)?;
+        self.finish_standard_sum_source(&mut items)?;
         let main = self.main.take();
         if !self.shared_array_handle_source_model.is_empty() {
             self.finish_shared_array_source(&items, main.as_ref())?;
@@ -60,7 +61,7 @@ impl RustParser {
         let source_pure_unit_calls = self.finish_pure_unit_source(&items, &main)?;
         self.require_owned_local_program(&items, &main)?;
         self.require_const_function_program(&items, &main)?;
-        Ok(SProgram {
+        let program = SProgram {
             reference_semantics: None,
             language: Language::Rust,
             items,
@@ -69,7 +70,12 @@ impl RustParser {
             externals: Vec::new(),
             source_pure_unit_calls,
             source_runtime_shell: None,
-        })
+        };
+        self.refuse_standard_sum_private_completions(&program)?;
+        if !self.origins.collecting {
+            self.refuse_standard_sum_source_patterns(&program)?;
+        }
+        Ok(program)
     }
 
     pub(super) fn items(&mut self, path: &[String], end: ItemsEnd) -> Result<Vec<SItem>> {
@@ -338,6 +344,7 @@ impl RustParser {
         let standard_associated = self.primitive_associated_import(&full, path);
         let standard_try_from = self.primitive_try_from_import(&full, path);
         let standard_default = self.primitive_default_import(&full, path);
+        let standard_sum = self.read_standard_sum_source_import(&full, path);
         let c = &mut self.cursor;
         if !self.primitive_owner_model.is_empty() && !standard_primitive {
             return Err(unsupported(
@@ -355,6 +362,7 @@ impl RustParser {
             && !standard_associated
             && !standard_try_from
             && !standard_default
+            && !standard_sum
         {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
@@ -393,6 +401,7 @@ impl RustParser {
             || standard_associated
             || standard_try_from
             || standard_default
+            || standard_sum
         {
             full
         } else {

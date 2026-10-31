@@ -1,23 +1,28 @@
 //! Source token, type and origin transport around shared alias decisions.
 use super::{Result, RustParser, SourceDeclaration, SourceOrigin, Type, unsupported};
 use crate::translation::rust_type_alias_rules as rules;
+use crate::translation::rust_generic_type_alias_rules as generic_rules;
 use std::collections::{BTreeMap, HashSet};
+use std::rc::Rc;
 
 #[derive(Clone)]
-struct AliasDeclaration {
-    key: String,
-    keyword: super::Span,
-    first: usize,
-    end: usize,
-    path: Vec<String>,
+pub(super) struct AliasDeclaration {
+    pub(super) key: String,
+    pub(super) keyword: super::Span,
+    pub(super) first: usize,
+    pub(super) end: usize,
+    pub(super) path: Vec<String>,
+    pub(super) parameters: Vec<String>,
+    pub(super) parameter_bindings: Vec<String>,
 }
 #[derive(Default)]
 pub(super) struct SourceTypeAliases {
-    declarations: BTreeMap<String, AliasDeclaration>,
+    pub(super) declarations: BTreeMap<String, AliasDeclaration>,
     cache: BTreeMap<String, SourceOrigin>,
-    stack: HashSet<String>,
-    expansions: usize,
-    nodes: usize,
+    pub(super) templates: BTreeMap<String, Rc<super::generic_type_aliases::GenericAliasTemplate>>,
+    pub(super) stack: HashSet<String>,
+    pub(super) expansions: usize,
+    pub(super) nodes: usize,
     checked: bool,
 }
 fn children(ty: &Type) -> Vec<&Type> {
@@ -31,7 +36,7 @@ fn children(ty: &Type) -> Vec<&Type> {
     }
 }
 impl RustParser {
-    fn alias_error(
+    pub(super) fn alias_error(
         &self,
         message: &str,
         row: Option<&AliasDeclaration>,
@@ -40,6 +45,7 @@ impl RustParser {
         unsupported("Rust type alias", message, Some(location))
     }
     pub(super) fn initialize_type_aliases(&mut self) -> Result<()> {
+        if let Some(error)=self.origins.standard_sum_metadata_budget.error.as_deref(){return Err(unsupported("Rust standard sum source",error,None));}
         self.source_type_aliases = SourceTypeAliases::default();
         if !self.ordinary_completion_context() {
             return Ok(());
@@ -77,24 +83,34 @@ impl RustParser {
             .iter()
             .map(|token| token.value.clone())
             .collect::<Vec<_>>();
-        let plan = rules::read_rust_type_alias_declaration_plan(&kinds, &values);
+        let raws = self.cursor.tokens.iter().map(|token| token.raw.clone()).collect::<Vec<_>>();
+        let plan = generic_rules::read_rust_generic_type_alias_declaration_plan(&kinds, &values, &raws);
         if plan.first().map(String::as_str) != Some("aliases") {
             return Err(self.alias_error(&plan[1], None));
         }
-        for fields in plan[1..].chunks_exact(5) {
+        let mut position = 1;
+        while position < plan.len() {
+            let fields = &plan[position..];
             let key = fields[0].clone();
+            let count = fields[5].parse::<usize>().expect("shared alias parameter count");
+            let parameters = fields[6..6 + count].to_vec();
+            let keyword = self.cursor.tokens[fields[1].parse::<usize>().unwrap()].span();
+            let parameter_bindings = parameters.iter().enumerate().map(|(index, _)|format!("{key}/parameter/{}/{index}", keyword.start)).collect();
             let mut path = key.split('.').map(str::to_owned).collect::<Vec<_>>();
             path.pop();
             self.source_type_aliases.declarations.insert(
                 key.clone(),
                 AliasDeclaration {
                     key,
-                    keyword: self.cursor.tokens[fields[1].parse::<usize>().unwrap()].span(),
+                    keyword,
                     first: self.cursor.tokens[fields[2].parse::<usize>().unwrap()].start,
                     end: self.cursor.tokens[fields[3].parse::<usize>().unwrap()].start,
                     path,
+                    parameters,
+                    parameter_bindings,
                 },
             );
+            position += 6 + count;
         }
         Ok(())
     }
@@ -110,7 +126,7 @@ impl RustParser {
         }
         None
     }
-    fn alias_namespace_kind(&self, key: &str) -> &'static str {
+    pub(super) fn alias_namespace_kind(&self, key: &str) -> &'static str {
         match self.origins.catalog.get(key) {
             Some(SourceDeclaration::Data) => "data",
             Some(SourceDeclaration::Module) => "module",
@@ -176,6 +192,11 @@ impl RustParser {
             .callable_result
             .as_deref()
             .map(|origin| Box::new(self.qualify_alias_origin(origin)));
+        if let Some(sum) = result.standard_sum_source.as_mut() {
+            if let Some(original) = origin.standard_sum_source.as_deref() {
+                sum.arguments = original.arguments.iter().map(|argument|self.qualify_alias_origin(argument)).collect();
+            }
+        }
         result
     }
     fn measure_alias_origin(&self, origin: &SourceOrigin, row: &AliasDeclaration) -> Result<usize> {
@@ -198,6 +219,9 @@ impl RustParser {
             }
             if let Some(result) = &origin.callable_result {
                 origins.push(result.as_ref());
+            }
+            if let Some(sum) = origin.standard_sum_source.as_deref() {
+                origins.extend(sum.arguments.iter());
             }
             let message = rules::read_rust_type_alias_clone_error(
                 self.source_type_aliases.nodes as f64,
@@ -229,6 +253,16 @@ impl RustParser {
         self.source_type_aliases.nodes += needed;
         Ok(self.qualify_alias_origin(self.source_type_aliases.cache.get(&row.key).unwrap()))
     }
+    pub(super) fn copy_type_alias_origin(&mut self, origin: &SourceOrigin, row: &AliasDeclaration) -> Result<SourceOrigin> {
+        let needed = self.measure_alias_origin(origin, row)?;
+        self.source_type_aliases.nodes += needed;
+        Ok(self.qualify_alias_origin(origin))
+    }
+    pub(super) fn copy_current_type_alias_origin(&mut self, row: &AliasDeclaration) -> Result<SourceOrigin> {
+        let needed = self.measure_alias_origin(&self.origins.current_type, row)?;
+        self.source_type_aliases.nodes += needed;
+        Ok(self.qualify_alias_origin(&self.origins.current_type))
+    }
     fn expand_type_alias(&mut self, row: &AliasDeclaration) -> Result<SourceOrigin> {
         if self.source_type_aliases.cache.contains_key(&row.key) {
             return self.copy_cached_alias_origin(row);
@@ -241,7 +275,7 @@ impl RustParser {
         if !message.is_empty() {
             return Err(self.alias_error(&message, Some(row)));
         }
-        let previous_index = self.cursor.index;
+        let previous_token_start = self.cursor.peek().start;
         let previous_path = std::mem::replace(&mut self.module_path, row.path.clone());
         let previous_lifetimes = std::mem::take(&mut self.lifetime_bindings);
         let previous_header = std::mem::replace(&mut self.lifetime_header, true);
@@ -282,7 +316,7 @@ impl RustParser {
                 .insert(row.key.clone(), origin);
             self.copy_cached_alias_origin(row)
         })();
-        self.cursor.index = previous_index;
+        self.cursor.index = self.cursor.tokens.iter().position(|token|token.start == previous_token_start).expect("original alias caller token");
         self.module_path = previous_path;
         self.lifetime_bindings = previous_lifetimes;
         self.lifetime_header = previous_header;
@@ -297,7 +331,7 @@ impl RustParser {
         let resolved = self.resolve(segments, &self.module_path);
         for key in rules::read_rust_type_alias_lookup_keys(&resolved, &self.module_path) {
             if let Some(row) = self.source_type_aliases.declarations.get(&key).cloned() {
-                let mut origin = self.expand_type_alias(&row)?;
+                let mut origin = if row.parameters.is_empty() { self.expand_type_alias(&row)? } else { self.read_generic_type_alias_value(&row)? };
                 origin.expanded_source_owner = origin.source_owner.clone();
                 let ty = origin.ty.clone().unwrap();
                 self.origins.current_type = origin;
@@ -339,6 +373,7 @@ impl RustParser {
             return Ok(());
         }
         self.source_type_aliases.cache.clear();
+        self.source_type_aliases.templates.clear();
         let mut rows = self
             .source_type_aliases
             .declarations
@@ -355,6 +390,10 @@ impl RustParser {
                     "a type alias cannot replace another source type or module",
                     Some(&row),
                 ));
+            }
+            if !row.parameters.is_empty() {
+                self.prepare_generic_type_alias(&row)?;
+                continue;
             }
             let origin = self.expand_type_alias(&row)?;
             let mut types = origin.ty.as_ref().into_iter().collect::<Vec<_>>();

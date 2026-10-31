@@ -1,7 +1,11 @@
-Draft JavaScript policies for Rust generic alias parameters and resolved-binding
-substitution plans, and standard Option/Result constructor and narrow propagation
-decisions. Add independent deferred controls and a future automatic Rust/Links
-generation recipe. These policies are not yet integrated into translation;
-existing unsupported-input refusals remain. Add bounded own-source CST transport
-controls and correct the native default-parser documentation. No execution or
-native-generation evidence is claimed by this source draft.
+Draft JavaScript and native frontend consumers for explicit generic aliases,
+canonical Option/Result/Vec templates and checked associated construction.
+Connect actual sum constructors, patterns, retained owners, ordinary propagation,
+ordered expressions, callbacks and copied lookup results to shared policies.
+Option unwrap/expect reuse version-bounded panic operations. Add source-only
+CST/AST, codec, emission, signature-forgery and independent runtime controls,
+with automatic Rust/Links generation and fixture-conversion recipes.
+
+These changes are unexecuted source drafts. New generated policy products and
+metadata reconciliation remain pending; no test or compilation result, complete
+language support or requirement completion is claimed.

@@ -1,4 +1,5 @@
 import {retainRustNominalCopyOrigin} from './rust-nominal-copies.js';
+import {resolveRustStandardSumSourcePattern} from './rust-standard-sum-source.js';
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
@@ -75,6 +76,8 @@ export class RustSourceOrigins {
   availableOwnedBinding(origin){return availableRustOwnedOrigin(this,origin);}
   consumeOwnedBinding(origin,span){return consumeRustOwnedOrigin(this,origin,span);}
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
+    const standardSum=type.kind==='named'?this.lookup(type.path,path)?.standardSumSourceOrigin:null;
+    if(standardSum){this.type={...clone(standardSum),path:[...path],wrappers:[...wrappers]};return type;}
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
     this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector',arrayElementCopyEvidence:acceptRustScalarArrayIndexElement(type.element.kind) }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
     retainRustNominalCopyOrigin(this,this.type);
@@ -82,6 +85,8 @@ export class RustSourceOrigins {
   }
 
   typeOrigin(type, path) {
+    const standardSum=type.kind==='named'?this.lookup(type.path,path)?.standardSumSourceOrigin:null;
+    if(standardSum)return clone(standardSum);
     const fields = type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
     return retainRustNominalCopyOrigin(this,{ ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, path: [...path], fields });
   }
@@ -436,6 +441,15 @@ export class RustSourceOrigins {
       throw unsupported('source pattern', 'an owned Box requires an explicit dereference before a constructor or literal pattern', sourceSpan);
     }
     for(const alias of this.literalPatternAliases.get(pattern)??[])this.mark(alias,origin);
+    if(pattern.k==='rustStandardSumSourcePattern'&&!resolveRustStandardSumSourcePattern(this,pattern,origin)){
+      if(!this.collecting)throw unsupported('Rust standard sum source pattern','the constructor pattern requires its actual complete scrutinee source owner',sourceSpan);
+      // Initial declaration collection can encounter a call before its actual
+      // signature. Provisional bindings retain unknown origins; later complete
+      // passes must resolve the original marker before semantic admission.
+      this.standardSumSourceNeedsFinalAdmission=true;
+      for(const argument of pattern.args)this.pattern(argument,unknown(),path,result,argument.span??sourceSpan);
+      return result;
+    }
     if(pattern.k==='typedNumLit'){const actual=readRustPointerIntegerContractOwner(origin.expandedSourceOwner??origin.sourceOwner,origin.integerSourceOwnerConstraint??''),error=readRustSourceNumericPatternOwnerError(actual,pattern.owner,Boolean(origin.type),this.collecting);if(error)throw unsupported('Rust numeric pattern',error,sourceSpan);}
     if(pattern.k==='strLit'){const owner=origin.sourceOwner,error=readRustSourceStringPatternError(origin.type?.kind??'',origin.textSourceModel??'',origin.proven,origin.wrappers.length,origin.wrappers.every(layer=>layer==='reference'),owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,this.collecting);if(error)throw unsupported('Rust string pattern',error,sourceSpan);}
     if(pattern.k==='integerRange'){

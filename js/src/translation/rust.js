@@ -1,5 +1,9 @@
 import {readRustTypeAliasEmptyVectorOrigin} from './rust-type-aliases.js';
 import {readRustTypeAliasStringMemberOwner} from './rust-type-aliases.js';
+import {readRustGenericTypeAliasConstructor} from './rust-type-aliases.js';
+import {initializeRustStandardSumSource,readRustStandardSumSourceType,readRustStandardSumSourceConstructor,readRustStandardSumSourcePattern,readRustStandardSumSourceImport,finishRustStandardSumSource,finishRustStandardSumSourceDeclarations,withRustStandardSumSourceContext,refuseRustStandardSumSourcePatterns} from './rust-standard-sum-source.js';
+import {readRustStandardSumTryExpression,refuseRustStandardSumPrivateCompletions} from './rust-standard-sum-completions.js';
+import {readRustStandardSumSourceMethod} from './rust-standard-sum-methods.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
@@ -20,6 +24,7 @@ import {acceptRustSourceBytePatternToken} from './rust-byte-pattern-rules.js';
 import {acceptRustSourceStringPatternToken} from './rust-string-pattern-rules.js';
 import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
 import {readRustArrayLookup} from './rust-array-lookups.js';
+import {readRustArrayLookupOption} from './rust-array-lookup-options.js';
 import {readRustByteAscii} from './rust-byte-ascii.js';
 import {readRustIntegerMagnitudes} from './rust-integer-magnitudes.js';
 import {readRustWrappingShifts} from './rust-wrapping-shifts.js';
@@ -176,7 +181,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   declarations.headerDiscovery=declarations.ordinaryCompletionContext();
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  if(declarations.ordinaryCompletionContext())finishRustNominalCopies(declarations.origins);
+  if(declarations.ordinaryCompletionContext()){finishRustNominalCopies(declarations.origins);finishRustStandardSumSourceDeclarations(declarations);}
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   syntax.sourceVersionMinor=sourceVersionFacts.minor;
   syntax.retainSourceTypeOwners=retainSourceTypeOwners;
@@ -190,12 +195,12 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   syntax.namedRecords = new Map(declarations.namedRecords);
   syntax.inherentMethods = new Map(declarations.inherentMethods);
   const surface = syntax.file();
-  if(syntax.ordinaryCompletionContext())finishRustNominalCopies(syntax.origins);
+  if(syntax.ordinaryCompletionContext()){finishRustNominalCopies(syntax.origins);finishRustStandardSumSourceDeclarations(syntax);}
   // Preserve syntax trees and the existing checker's diagnostic precedence
   // for programs that already cannot enter the canonical semantic core.
   try { checkProgram(surface); } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
-    if(!sharedArrayHandleSourceModel)return surface;
+    if(!sharedArrayHandleSourceModel&&!syntax.origins.standardSumSourceNeedsFinalAdmission)return surface;
   }
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.sourceVersionMinor=sourceVersionFacts.minor;
@@ -258,6 +263,7 @@ class RustParser {
     this.ordinaryCompletionDeclarations = [];
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = false;
+    initializeRustStandardSumSource(this);
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -276,10 +282,14 @@ class RustParser {
     if(this.constFunctionModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceConstFunction'))||root.main?.effects.length))throw unsupported('Rust const function source','only closed flat const predicates and an empty ordinary main are admitted');
     if (!root.main&&!this.sharedArrayHandleSourceModel) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
     installRustOrdinaryCompletionDeclarations(this,root.items);
+    finishRustStandardSumSource(this,root.items);
     finishRustEmptyOptionSource(this,root);
     finishRustPureUnitSource(this,root);
     finishRustSharedArrayHandleSource(this,root);
-    return { language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
+    const program={ language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
+    refuseRustStandardSumPrivateCompletions(program);
+    if(!this.origins.collecting)refuseRustStandardSumSourcePatterns(program);
+    return program;
   }
 
   innerAttributes() {
@@ -475,8 +485,9 @@ class RustParser {
       const standardAssociated=readRustPrimitiveAssociatedImport(this,full,path);
       const standardTryFrom=readRustPrimitiveTryFromImport(this,full,path);
       const standardDefault=readRustPrimitiveDefaultImport(this,full,path);
+      const standardSum=readRustStandardSumSourceImport(this,full,path);
       if(this.primitiveOwnerModel&&!standardPrimitive)throw unsupported('Rust primitive owner import','only the two actual standard primitive reexports can be imported',span(start,c.peek()));
-      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive&&!standardSelection&&!standardAssociated&&!standardTryFrom&&!standardDefault) {
+      if (!['crate', 'super', 'self'].includes(full[0]) && !standardBox && !standardVector && !standardString&&!standardPrimitive&&!standardSelection&&!standardAssociated&&!standardTryFrom&&!standardDefault&&!standardSum) {
         throw unsupported(`use ${full.join('::')}`, 'only items of this crate can be imported; the standard library is outside the portable core', span(start, c.peek()));
       }
       if (standardBox) this.origins.box(full, full, path, span(start, c.peek()));
@@ -486,7 +497,7 @@ class RustParser {
         if(!acceptRustPrimitiveOwnerImportName(alias)||this.primitiveImportNames.has(alias))throw unsupported('Rust primitive owner alias','each import needs one distinct ASCII identifier outside the standard crate namespace',span(start,c.peek()));
         this.primitiveImportNames.add(alias);
       }
-      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive||standardSelection||standardAssociated||standardTryFrom||standardDefault ? full : absolute(full, path, span(start, c.peek())));
+      aliases.set(alias, standardBox || standardVector || standardString||standardPrimitive||standardSelection||standardAssociated||standardTryFrom||standardDefault||standardSum ? full : absolute(full, path, span(start, c.peek())));
     };
     tree([]);
     c.expect(';', 'use');
@@ -564,7 +575,7 @@ class RustParser {
       const result = this.typeValue();
       if(this.sharedArrayHandleSourceModel&&this.origins.type.wrappers.length)throw unsupported('Rust shared array handle source','borrowed or boxed source type wrappers need an independent composition proof',span(this.cursor.tokens[Math.max(0,this.cursor.index-1)],this.cursor.peek()));
       const position=readRustStandardPrimitivePosition(this,head)??(['&','('].includes(head[0])&&primitiveChildren.length===1?primitiveChildren[0]:null);
-      this.origins.type.primitiveOwnerPosition=position;
+      this.origins.type.primitiveOwnerPosition=this.origins.type.expandedSourceOwner?this.origins.type.primitiveOwnerPosition??position:position;
       const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:this.origins.type.expandedSourceOwner??readRustSourceTypeOwner(this, head, children, result);
       this.origins.type.sourceOwner = owner;
       this.origins.type.namespaceSpelling = !['&', '('].includes(head[0]) ? [...head]
@@ -650,6 +661,16 @@ class RustParser {
     if(sharedHandle)return sharedHandle;
     const emptyOption=readRustEmptyOptionResult(this,segments,token);
     if(emptyOption)return emptyOption;
+    const standardSum=readRustStandardSumSourceType(this,segments,token);
+    if(standardSum)return standardSum;
+    if(this.ordinaryCompletionContext()){
+      const declared=this.origins.lookup(resolved,this.modulePath,['data']);
+      if(declared){
+        if(c.is('<'))throw unsupported('Rust generic datatype','an actual user datatype needs its complete parameter interpretation',span(token,c.peek()));
+        return this.origins.typed({kind:'named',path:['crate',...declared.fullName.split('.')]},this.modulePath);
+      }
+      if(this.headerDiscovery&&['Option','Result'].includes(name)&&!c.is('<'))return this.origins.typed({kind:'named',path:resolved},this.modulePath);
+    }
     if (this.typeNamespaceModel) {
       requireRustTypeNamespaceAnchor(segments, this.modulePath);
       const declared = this.origins.lookup(segments, this.modulePath, RUST_SOURCE_SIGNATURE_POLICY.typeOwnerKinds);
@@ -803,7 +824,11 @@ class RustParser {
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
       const temporaryFrame=this.origins.ownedTemporaryFrame();
-      const body = emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
+      const previousSumReturn=this.standardSumReturnOrigin;
+      let body;
+      this.standardSumReturnOrigin=sourceResult;
+      try{body=withRustStandardSumSourceContext(this,sourceResult,()=>emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true)));}
+      finally{this.standardSumReturnOrigin=previousSumReturn;}
       this.origins.finishOwnedExpression(body,path,temporaryFrame,false);
       this.origins.expireOwnedBindings(functionOwnership,this.origins.origin(body,path));
       this.origins.transferOwnedResult(body,path);
@@ -894,7 +919,7 @@ class RustParser {
     const c=this.cursor;
     let count=64;
     for(;;){
-      const values=c.tokens.slice(c.index,c.index+count).map((token,index)=>token.kind==='punct'&&(token.value==='{'||token.value==='}')?token.value:token.kind==='macro'&&token.value==='panic'?'abort':c.is('return',index)?'return':'');
+      const values=c.tokens.slice(c.index,c.index+count).map((token,index)=>token.kind==='punct'&&(token.value==='{'||token.value==='}')?token.value:token.kind==='punct'&&token.value==='?'?'try':token.kind==='macro'&&token.value==='panic'?'abort':c.is('return',index)?'return':'');
       const presence=readRustFunctionCompletionPresence(values);
       if(presence!==-1)return presence===1;
       if(count>=c.tokens.length-c.index)return false;
@@ -995,7 +1020,7 @@ class RustParser {
     const sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
     const initializerStart=c.index,temporaryFrame=this.origins.ownedTemporaryFrame();
-    const value = readRustExpectedCopyClosure(this,path,sourceType);
+    const value = withRustStandardSumSourceContext(this,sourceType,()=>readRustExpectedCopyClosure(this,path,sourceType));
     let fallback=null;
     if(c.is('else')){
       const tokens=c.tokens.slice(initializerStart,c.index),reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));
@@ -1154,7 +1179,7 @@ class RustParser {
     c.next();
     const args = [];
     while (!c.is(close)) {
-      const value=this.expr(path);if(acceptRustOwnedMacroArgumentTransfer(token.value))this.origins.consumeOwnedBinding(this.origins.origin(value,path),value.span);args.push(value);
+      const value=withRustStandardSumSourceContext(this,null,()=>this.expr(path));if(acceptRustOwnedMacroArgumentTransfer(token.value))this.origins.consumeOwnedBinding(this.origins.origin(value,path),value.span);args.push(value);
       if (!c.eat(',')) break;
     }
     c.expect(close, `${token.value}!`);
@@ -1174,7 +1199,7 @@ class RustParser {
         if(source.value==='_'||!acceptRustSourceIdentifierName(source.value))throw new TranslationError('syntax','invalid named format argument',span(source,source));
         name=source.value;
       }
-      args.push(this.expr(path));if(args.length>1)names.push(name);
+      args.push(withRustStandardSumSourceContext(this,null,()=>this.expr(path)));if(args.length>1)names.push(name);
       if(!c.eat(','))break;
     }
     c.expect(close,`${token.value}!`);
@@ -1415,6 +1440,8 @@ class RustParser {
           continue;
         }
         const method = c.identifier('method');
+        const standardSumMethod=readRustStandardSumSourceMethod(this,value,method,path);
+        if(standardSumMethod){value=standardSumMethod;continue;}
         const ascii = readRustAsciiTextPredicate(this, value, method, path);
         if (ascii) { value = ascii; continue; }
         if (!c.is('(')) {
@@ -1425,14 +1452,14 @@ class RustParser {
         c.next();
         const args = [];
         while (!c.is(')')) {
-          args.push(this.expr(path));
+          args.push(withRustStandardSumSourceContext(this,null,()=>this.expr(path)));
           if (!c.eat(',')) break;
         }
         c.expect(')', method.value);
         value = this.method(value, method, args, span(token, c.peek()),path);
         continue;
       }
-      if (c.is('?')) throw unsupported('? operator', 'Result and Option are outside the portable core', span(token, token));
+      if (c.is('?')) {value=readRustStandardSumTryExpression(this,value,path,token);continue;}
       if(c.is('[')&&this.ordinaryCompletionContext()){value=readRustScalarArrayIndex(this,value,path);continue;}
       if (c.is('[')) throw unsupported('indexing', 'collections are outside the portable core', span(token, token));
       return value;
@@ -1488,6 +1515,7 @@ class RustParser {
     };
     const reduction=readRustIteratorReduction(this,receiver,method,args,range,path);if(reduction)return reduction;
     const vectorCopy=readRustScalarVectorCopy(this,receiver,method,args,range,path);
+    const storedArrayLookup=readRustArrayLookupOption(this,receiver,method,args,range,path);if(storedArrayLookup)return storedArrayLookup;
     const arrayLookup=readRustArrayLookup(this,receiver,method,args,range,path);
     if(arrayLookup)return arrayLookup;
     const byteAscii=readRustByteAscii(this,receiver,method,args,range,path);if(byteAscii)return byteAscii;
@@ -1669,6 +1697,10 @@ class RustParser {
     }
     if (token.kind === 'identifier') {
       const segments = this.pathSegments('expression');
+      const genericAlias=readRustGenericTypeAliasConstructor(this,segments,path,token);
+      if(genericAlias)return genericAlias;
+      const standardSum=readRustStandardSumSourceConstructor(this,segments,path,token);
+      if(standardSum)return standardSum;
       const name = segments.join('::');
       const resolved = this.resolve(segments, path);
       if(this.primitiveOwnerModel&&segments.length>1&&acceptRustFloatConstantName(segments.at(-1))){
@@ -1810,7 +1842,7 @@ class RustParser {
     const token = c.next();
     if(hasRustConditionalChain(this))return readRustConditionalChain(this,path,token);
     if (c.is('let')) return readRustConditionalPattern(this,path,token);
-    const cond = this.expr(path, { noStruct: true });
+    const cond = withRustStandardSumSourceContext(this,null,()=>this.expr(path, { noStruct: true }));
     this.origins.direct(cond, path, cond.span);
     const ownershipBase=this.origins.snapshotOwnedBindings();
     const then = this.block(path);const ownershipThen=this.origins.snapshotOwnedBindings();this.origins.restoreOwnedBindings(ownershipBase);
@@ -1824,7 +1856,7 @@ class RustParser {
   match(path,provided=null) {
     const c = this.cursor;
     const token = provided?.token??c.next();
-    const scrutinee = provided?.scrutinee??this.expr(path, { noStruct: true });
+    const scrutinee = provided?.scrutinee??withRustStandardSumSourceContext(this,null,()=>this.expr(path, { noStruct: true }));
     c.expect('{', 'match');
     const rows = [],guardedArms=[],ownershipBase=this.origins.snapshotOwnedBindings(),ownershipArms=[];
     while (!c.is('}')) {
@@ -1832,13 +1864,14 @@ class RustParser {
       const armStart = c.peek();
       const aliases = [];
       c.eat('|');
-      const alternatives = [this.pattern(path, aliases)];
-      while (c.eat('|')) alternatives.push(this.pattern(path, aliases));
+      const alternatives = withRustStandardSumSourceContext(this,this.origins.origin(scrutinee,path),()=>{
+        const selected=[this.pattern(path,aliases)];while(c.eat('|'))selected.push(this.pattern(path,aliases));return selected;
+      });
       const previous = this.origins.enter(this.origins.cases(alternatives, scrutinee, path));
       let body,bodyOrigin,guard;
       try{
         for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
-        const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?this.expr(path):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
+        const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?withRustStandardSumSourceContext(this,null,()=>this.expr(path)):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
         if(guard)this.origins.direct(guard,path,guard.span);
         c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.transferOwnedResult(body,path);this.origins.expireOwnedBindings(ownershipBase,bodyOrigin);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
       }finally{this.origins.scope=previous;}
@@ -1910,6 +1943,8 @@ class RustParser {
     const sourceConstant=readRustSourceConstantPattern(this,path);if(sourceConstant)return readRustIntegerRangePattern(this,path,token,sourceConstant);
     if (token.kind !== 'identifier') throw unsupported('pattern', `${describe(token)} is outside the portable pattern language`, span(token, token));
     const segments = this.pathSegments('pattern');
+    const standardSum=readRustStandardSumSourcePattern(this,segments,path,token,aliases);
+    if(standardSum)return standardSum;
     const constantPatternError=readRustSourceConstantPatternError(this.origins.lookup(readRustSourceValueName(this,segments,path),path)?.k??'');if(constantPatternError)throw unsupported('Rust constant pattern',constantPatternError,span(token,c.peek()));
 
     if (c.eat('@')) {

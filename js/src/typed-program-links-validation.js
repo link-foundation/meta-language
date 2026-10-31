@@ -135,7 +135,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   }
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   for (const [name, entry] of program.declarations) {
-    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
+    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
     if (entry.k === 'const') type(entry.type);
     if (entry.k === 'data') {
       if (!Array.isArray(entry.ctors)) throw new TypeError('a linked datatype has malformed constructors');
@@ -153,7 +153,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         }
       }
       if (Object.hasOwn(entry,'sourceFieldSignatures')) {
-        checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,program.sourceLanguage,name);
+        checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,program.sourceLanguage,name,value=>value,type=>program.declarations.get(type.name));
         for(const constructor of entry.sourceFieldSignatures.ctors)for(const field of constructor.fields)type(field.type);
       }
     }

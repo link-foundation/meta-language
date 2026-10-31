@@ -6,6 +6,7 @@ import {acceptProgramIntegralMetadata} from '../program-numeric-metadata-rules.j
 import {acceptRustSourceLifetimeBinding} from './rust-indirection-rules.js';
 import {acceptRustSourceSignatureModel,acceptRustSourceSignaturePrimitive,acceptRustSourceSignatureWrapper,acceptRustSourceSignatureOwnerKind} from './rust-source-signature-rules.js';
 import {acceptRustRetainedSourceSignatureModel,acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
+import {readRustStandardSumSignatureArgumentConstructors} from './rust-standard-sum-signature-rules.js';
 export const RUST_SOURCE_SIGNATURE_POLICY=readRuntimeProjectData(new URL('./data/rust-source-signatures.lino',import.meta.url));
 
 export function readRustSourceTypeOwner(parser,head,children,type) {
@@ -56,7 +57,7 @@ export function createRustSourceSignature(model,parameters,result,lifetimeBindin
   return {model,language:'Rust',parameters:parameters.map(position),result:position(result),lifetimeBindings:[...lifetimeBindings]};
 }
 
-export function checkRustSourceSignature(signature,parameters,result,language,resolveType=value=>value) {
+export function checkRustSourceSignature(signature,parameters,result,language,resolveType=value=>value,resolveData=()=>null) {
   const policy=RUST_SOURCE_SIGNATURE_POLICY;
   const retained=acceptRustRetainedSourceSignatureModel(signature?.model??'');
   let visits=0;
@@ -104,16 +105,42 @@ export function checkRustSourceSignature(signature,parameters,result,language,re
       owner(value.arguments[0],type,depth+1);
     } else if(path==='std::string::String') {
       if(value.arguments.length||type.kind!=='string')throw typeError('an owned Rust source string differs from its value type');
+    } else if(path==='std::option::Option'||path==='std::result::Result') {
+      if(value.kind!=='library'||type.kind!=='data')throw typeError('an owned Rust standard sum needs its actual datatype encoding');
+      const declaration=resolveData(type),fields=declaration?.sourceFieldSignatures;
+      if(!declaration||declaration.k!=='data'||declaration.fullName!==type.name||!Array.isArray(declaration.ctors)||!fields)throw typeError('an owned Rust standard sum needs its complete source field signatures');
+      const selected=readRustStandardSumSignatureArgumentConstructors(path,declaration.ctors.map(ctor=>ctor.name),declaration.ctors.map(ctor=>ctor.fields?.length??-1));
+      if(selected.length!==value.arguments.length||selected.length===0)throw typeError('an owned Rust standard sum differs from its complete constructor inventory');
+      exact(fields,['model','language','dataTypeName','ctors']);
+      if(fields.model!=='Rust data type field signatures 1'||fields.language!==language||fields.dataTypeName!==type.name||!Array.isArray(fields.ctors)||fields.ctors.length!==declaration.ctors.length)throw typeError('an owned Rust standard sum has inconsistent source field ownership');
+      for(let index=0;index<declaration.ctors.length;index+=1){
+        const actual=declaration.ctors[index],retained=fields.ctors[index];exact(retained,['name','fields']);
+        if(retained.name!==actual.name||!Array.isArray(retained.fields)||retained.fields.length!==actual.fields.length)throw typeError('an owned Rust standard sum has inconsistent retained constructors');
+      }
+      for(let index=0;index<selected.length;index+=1){
+        const constructor=selected[index],actual=declaration.ctors[constructor].fields[0].type,field=fields.ctors[constructor].fields[0];
+        const checked=position(field,actual,depth+1);
+        if(checked.wrappers.length||checked.lifetimes.length)throw typeError('an owned Rust standard sum payload requires a direct source origin');
+        owner(value.arguments[index],actual,depth+1);
+        const pairs=[[value.arguments[index],checked.owner]];
+        for(let at=0;at<pairs.length;at+=1){
+          if(++visits>100000)throw typeError('an owned Rust source signature exceeds its resource limit');
+          const [left,right]=pairs[at];
+          if(left.kind!==right.kind||left.path.length!==right.path.length||left.path.some((part,slot)=>part!==right.path[slot])||left.arguments.length!==right.arguments.length)throw typeError('an owned Rust standard sum changes a retained payload owner');
+          for(let child=0;child<left.arguments.length;child+=1)pairs.push([left.arguments[child],right.arguments[child]]);
+        }
+      }
     } else throw typeError('an owned Rust source type has an unsupported owner');
   }
-  const position=(value,expected)=>{
+  const position=(value,expected,depth=0)=>{
+    if(++visits>100000||depth>256)throw typeError('an owned Rust source signature exceeds its resource limit');
     exact(value,policy.fields.position);
     valueType(value.type,true);
     const type=resolveType(value.type);
     valueType(type);
     if(typeKey(type)!==typeKey(expected))throw typeError('an owned Rust source signature differs from its function type');
     if(!Array.isArray(value.wrappers)||value.wrappers.some(wrapper=>!acceptRustSourceSignatureWrapper(wrapper))||!Array.isArray(value.lifetimes)||value.lifetimes.length!==value.wrappers.filter(wrapper=>wrapper==='reference').length||value.lifetimes.some(lifetime=>lifetime!==null&&(typeof lifetime!=='string'||!signature.lifetimeBindings.includes(lifetime)&&!policy.specialLifetimes.includes(lifetime))))throw typeError('an owned Rust source type has inconsistent wrapper or lifetime facts');
-    owner(value.owner,type);
+    owner(value.owner,type,depth+1);
     let boxed = 0, leaf = value.owner;
     while (leaf.kind === 'library' && ['std::boxed::Box','alloc::boxed::Box'].includes(leaf.path.join('::'))) { boxed += 1; leaf = leaf.arguments[0]; }
     if (boxed !== value.wrappers.filter(wrapper=>wrapper==='box').length ||

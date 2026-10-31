@@ -1,12 +1,12 @@
 //! Owned datatype-field positions checked by the existing source type model.
 use super::diagnostics::{Result, type_error};
-use super::ir::Ctor;
+use super::ir::{Ctor,DataDecl};
 use super::rust_data_type_field_signature_rules::{
     accept_rust_constructor_field_signature, accept_rust_data_type_field_signature,
     accept_rust_data_type_field_signature_budget,
 };
 use super::source_signatures::{
-    SourceOwner, SourceSignature, SourceTypeSignature, validate_source_signature,
+    SourceOwner, SourceSignature, SourceTypeSignature, validate_source_signature_with_data,
 };
 use super::types::Type;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -106,12 +106,13 @@ fn inspect(value: &serde_json::Value, visits: &mut usize, depth: usize) -> Resul
     Ok(())
 }
 /// Resolve declared positions, then check every actual constructor and field.
-pub(crate) fn check(
+pub(crate) fn check<'data>(
     signature: &RustDataTypeFieldSignatures,
     constructors: &[Ctor],
     language: &str,
     data_type_name: &str,
     mut resolve_type: impl FnMut(&Type) -> Result<Type>,
+    mut resolve_data: impl FnMut(&Type) -> Option<&'data DataDecl>,
 ) -> Result<RustDataTypeFieldSignatures> {
     let value = serde_json::to_value(signature)
         .map_err(|_| fail("an owned field-signature record has missing or unrepresented fields"))?;
@@ -162,7 +163,7 @@ pub(crate) fn check(
             result: unit,
             lifetime_bindings: Vec::new(),
         };
-        validate_source_signature(
+        validate_source_signature_with_data(
             &function,
             &actual
                 .fields
@@ -171,6 +172,8 @@ pub(crate) fn check(
                 .collect::<Vec<_>>(),
             &Type::Unit,
             language,
+            &mut resolve_type,
+            &mut resolve_data,
         )?;
     }
     Ok(result)

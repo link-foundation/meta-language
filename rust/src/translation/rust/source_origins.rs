@@ -37,6 +37,10 @@ mod type_owners;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SourceOrigin {
+    pub(super) source_function_pointer_header: bool,
+    /// Actual concrete standard sum source children, retained independently of
+    /// the generated datatype spelling and re-resolved against the catalog.
+    pub(super) standard_sum_source: Option<Box<super::standard_sum_source::StandardSumSource>>,
     pub(super) source_binding_identity: Option<String>,
     pub(super) source_place_binding_identity: Option<String>,
     pub(super) source_loan_binding_identities: Vec<String>,
@@ -129,6 +133,8 @@ impl SourceOrigin {
 
     pub(super) const fn unknown() -> Self {
         Self {
+            source_function_pointer_header: false,
+            standard_sum_source: None,
             ty: None,
             float_source_model: None,
             path: Vec::new(),
@@ -184,6 +190,8 @@ impl SourceOrigin {
         let array_source_model = matches!(ty, Type::Array { .. }).then_some("owned vector");
         let array_element_copy_evidence = matches!(&ty, Type::Array { element, .. } if accept_rust_scalar_array_index_element(element.kind()));
         Self {
+            source_function_pointer_header: false,
+            standard_sum_source: None,
             float_source_model: (ty == super::FLOAT).then_some("binary64 scalar"),
             ty: Some(ty),
             path: path.to_vec(),
@@ -328,6 +336,9 @@ pub(super) struct SourceLookup {
 }
 
 pub(super) struct SourceOrigins {
+    pub(super) standard_sum_metadata_budget: super::standard_sum_metadata::MetadataBudget,
+    pub(super) standard_sum_source_origins: HashMap<String, SourceOrigin>,
+    pub(super) standard_sum_source_needs_final_admission: bool,
     pub(super) shared_array_handles: bool,
     pub(super) array_result_model: String,
     pub(super) owned_local_values: bool,
@@ -356,7 +367,27 @@ pub(super) struct SourceOrigins {
 
 impl SourceOrigins {
     pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>, model: &str) -> Self {
+        let mut standard_sum_source_origins = HashMap::new();
+        let mut standard_sum_metadata_budget=super::standard_sum_metadata::MetadataBudget::default();
+        if let Some(entries) = catalog.as_ref() {
+            let mut unique=std::collections::BTreeMap::new();
+            for entry in entries.values() {
+                if let SourceDeclaration::Constructor { owner, result, .. } = entry {
+                    if result.standard_sum_source.is_some() {
+                        unique.entry(owner).or_insert(result);
+                    }
+                }
+            }
+            for (owner,result) in unique{
+                let reserved=super::standard_sum_metadata::measure_origins(&[result]).and_then(|cost|standard_sum_metadata_budget.reserve(cost));
+                if let Err(error)=reserved{standard_sum_metadata_budget.error=Some(error);break;}
+                standard_sum_source_origins.insert(owner.clone(),result.clone());
+            }
+        }
         Self {
+            standard_sum_metadata_budget,
+            standard_sum_source_origins,
+            standard_sum_source_needs_final_admission: false,
             shared_array_handles: false,
             array_result_model: model.to_owned(),
             owned_local_values: false,
@@ -401,6 +432,18 @@ impl SourceOrigins {
     }
 
     pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
+        let stored = match &ty {
+            Type::Named { path: names, .. } => self.lookup(names,path)
+                .filter(|owner|matches!(owner.declaration,SourceDeclaration::Data))
+                .and_then(|owner|self.standard_sum_source_origins.get(&owner.full_name)).cloned(),
+            _ => None,
+        };
+        if let Some(mut origin) = stored {
+            origin.path = path.to_vec();
+            origin.wrappers = wrappers;
+            self.current_type = origin;
+            return ty;
+        }
         let mut origin = SourceOrigin::with_type(ty.clone(), path, wrappers);
         self.retain_nominal_copy_origin(&mut origin);
         self.current_type = origin;

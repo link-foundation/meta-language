@@ -30,10 +30,14 @@ impl RustParser {
             self.origins
                 .typed(UNIT, &self.module_path.clone(), Vec::new())
         };
-        let reason = rules::read_rust_function_pointer_type_error(
+        let actual = rules::read_rust_function_pointer_type_error(
             self.ordinary_completion_context(),
             &copies,
             self.origins.current_type.direct_copy_value(),
+        );
+        let reason = rules::read_rust_function_pointer_header_type_error(
+            self.ordinary_completion_context(), &copies,
+            self.origins.current_type.direct_copy_value(),self.header_discovery,
         );
         if !reason.is_empty() {
             return Err(unsupported(
@@ -49,7 +53,9 @@ impl RustParser {
         };
         self.origins
             .typed(ty.clone(), &self.module_path.clone(), Vec::new());
-        self.origins.current_type.copy_evidence = Some(());
+        self.origins.current_type.copy_evidence = actual.is_empty().then_some(());
+        self.origins.current_type.proven=actual.is_empty();
+        self.origins.current_type.source_function_pointer_header=!actual.is_empty();
         self.origins.current_type.callable_parameters = Some(parameter_origins);
         self.origins.current_type.callable_result = Some(Box::new(result_origin));
         Ok(ty)

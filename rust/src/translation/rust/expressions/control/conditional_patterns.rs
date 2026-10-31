@@ -24,13 +24,13 @@ impl RustParser {
             ));
         }
         self.cursor.expect("=", Some("conditional pattern"))?;
-        let scrutinee = self.comparison(
+        let scrutinee = self.with_standard_sum_source_context(None, |parser| parser.comparison(
             path,
             Options {
                 no_struct: true,
                 statement: false,
             },
-        )?;
+        ))?;
         if self.cursor.is("&&") || self.cursor.is("||") {
             return Err(unsupported(
                 "Rust conditional pattern chain",
@@ -38,7 +38,7 @@ impl RustParser {
                 span(start, self.cursor.peek()),
             ));
         }
-        let scope = self.origins.cases(&alternatives, &scrutinee, path)?;
+        let scope = self.origins.cases(&mut alternatives, &scrutinee, path)?;
         let previous = self.origins.enter(Some(scope));
         let result = (|| -> Result<(SExpr, SourceOrigin)> {
             for alias in &aliases {

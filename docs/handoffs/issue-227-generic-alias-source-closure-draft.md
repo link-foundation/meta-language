@@ -1,136 +1,277 @@
-# Generic alias source closure draft
+# Generic alias frontend source draft
 
-This handoff records an unintegrated source draft, not an architecture
-specification, observation record or completion claim. `docs/vision.md` remains
-the architecture contract. No requirement ledger was read: its online source
-audit prerequisite cannot run in this source-only assignment. No tests, source
-generation, validators, represented programs, native compilation, network
-operations, commits or pushes ran.
+This handoff records authored sources, not an architecture specification,
+observation record or completion claim. `docs/vision.md` remains the architecture
+contract. No ledger was read because its online audit prerequisite cannot run
+in this source-only assignment. No tests, generation, validators, represented
+programs, native compilation, network operations, commits or pushes ran.
 
-## Authored sources
+## Authored integration
 
-`js/src/translation/rust-generic-type-alias-rules.js` contains three reusable
-decision policies using the existing dense primitive-column representation:
+`js/src/translation/rust-generic-type-alias-rules.js` now supplies shared source
+decisions consumed by the ordinary JavaScript alias frontend:
 
-| Operation | Actual input premises | Draft output |
+| Operation | Input | Decision |
 | --- | --- | --- |
-| `readRustGenericTypeAliasParameterPlan` | Aligned actual token kinds, values and raw spellings; index of the declaration's `<` | Explicit unconstrained type parameter names, closing token coordinate and unconsumed `=` punctuation; otherwise a refusal |
-| `readRustGenericTypeAliasSubstitutionPlan` | Distinct actual parameter binding identities, one checked complete argument-origin premise per parameter, actual resolved binding identity for every template occurrence | Argument index for a parameter occurrence; `-1` for a definition-bound occurrence; otherwise a refusal |
-| `readRustGenericTypeAliasExpansionError` | Actual declaration owner, active declaration-owner stack, expansion count | Existing recursion/depth/expansion refusal, including recursion that changes its arguments |
+| `readRustGenericTypeAliasDeclarationPlan` | Actual aligned module token kinds, values and raw spellings | Additive declaration directory with complete RHS source coordinates and parameter names |
+| `readRustGenericTypeAliasParameterPlan` | Actual declaration parameter-list tokens | Explicit unconstrained type parameters, closing-token coordinate and remaining punctuation |
+| `readRustGenericTypeAliasBindingPlan` | Declaration-scoped parameter identities, actual symbolic argument count, bound template occurrences | Whole-template substitution indices, without claiming concrete origin proof |
+| `readRustGenericTypeAliasSubstitutionPlan` | The same bound occurrences and complete checked concrete argument-origin premises | Concrete-origin substitution indices |
+| `readRustGenericTypeAliasExpansionError` | Actual active declaration owners and expansion count | Existing recursion/depth/expansion decisions, including argument-changing recursion |
+| Template depth, unused-parameter and concrete-leaf policies | Actual template facts | Bounded construction, unused-parameter refusal and direct scalar/Unit leaf admission |
 
-The declaration policy admits a trailing comma, retains raw keyword spellings
-such as `r#gen`, and rejects bare edition-2024 reserved keywords, duplicate
-parameters, empty lists, bounds/defaults and lifetime/const declarations. Its
-proposed parameter bound is 64. The closing `>=` is returned as one consumed
-angle plus an unconsumed `=`; adapters must partition the original token and
-preserve source spans with the existing type-closing rule. It never edits tokens.
+The original nongeneric five-field planning API remains unchanged. The new
+directory retains the original module/body/macro opacity and adds variable rows:
+qualified name, keyword index, RHS start/end, after-item index, parameter count,
+and parameter names. Its bounds are the existing 10000 alias declarations,
+existing 128 expansion depth and 4096 expansions, proposed 64 explicit
+parameters, and the existing 262144 materialization scale. Trailing parameter
+commas and raw spellings such as `r#gen` are retained. Bounds, defaults,
+lifetime/const parameters and where clauses still refuse. A compound `>=`
+retains the exact remaining `=` rather than consuming source syntax.
 
-Substitution is a selection plan over binding identities. It does not replace
-text or construct a type. An adapter must obtain identities from actual binding
-resolution, retain definition-bound owners, copy each selected argument's
-complete checked origin, and charge materialization before copying. A supplied
-Boolean or matching name alone cannot establish these premises. The proposed
-occurrence bound reuses the existing 262144-node materialization scale but does
-not replace actual clone accounting. No persistent instantiation-cache identity
-or cross-language concept identity is introduced.
+`js/src/translation/rust-type-aliases.js` actually consumes this directory.
+Discovery stores declaration-scoped binding identities with original source
+positions. `readRustTypeAliasValue` now routes generic rows through actual
+argument parsing and concrete instantiation. `finishRustTypeAliases` clears
+both ordinary and generic template caches against the complete namespace and
+checks every generic template before publication. Ordinary nongeneric expansion
+continues through its existing interpretation. Saved cursors now restore by
+actual token object identity, so earlier declaration token splitting cannot
+silently shift a caller's resume index.
 
-`js/tests/fixtures/rust-generic-type-alias-draft.mjs` contains only literal future
-policy inputs/expected decisions and original Rust source programs. Its sources
-cover independent instantiations, reordered parameters, caller namespace
-shadowing, nested closing punctuation, invalid unused definitions, changing-
-argument recursion, bounds and absent explicit arguments. These are deferred
-controls; no fixture is imported by a runner or represented as executed evidence.
-The literal version boundary records the existing proposed Rust fixture profile
-(`>=1.90.0 <1.100.0`, edition 2024, 64-bit pointer width), not a live version audit.
+`js/src/translation/rust-generic-type-aliases.js` transports actual tokens and
+complete source origins around the shared policies. It supports direct type
+parameters, scalar/Unit and actual named datatype leaves, grouping, tuple templates and explicit
+applications of other supported generic aliases. For example, `Swap<T,U>=(U,T)`
+and `Pair<T>=Swap<T,i64>` compose actual declaration-scoped bindings. It prepares
+a target declaration before descending into symbolic arguments, retaining the
+recursion refusal for `Recursive<T>=Recursive<Box<T>>`. Unused parameters and
+invalid unused definitions refuse before public interfaces can be exposed.
 
-## Inspected production constraints
+Canonical standard `Option<T>` and `Result<T,E>` now have symbolic template
+nodes in both adapters. Actual namespace resolution precedes the shared
+owner/constructor/arity selection; local aliases, datatypes and std modules
+cannot impersonate the library. Every symbolic argument is checked, but an
+unknown parameter is never declared Copy. Concrete materialization delegates
+complete origins to the existing standard-sum instantiator and enforces its
+actual direct-Copy admission and shared active nesting depth. Thus
+`Maybe<T>=Option<T>` and `Result<T>=std::result::Result<T,Error>` reuse the actual
+sum datatype/constructor representation. Nominal leaves preserve actual source
+datatype identities; their current real nominal-Copy proof is consulted only
+when an instantiation needs it. An unused nominal sum template can be well
+formed without claiming that every future instantiation belongs to this profile.
 
-`readRustTypeAliasDeclarationPlan` in
-`js/src/translation/rust-type-alias-rules.js` requires `=` immediately after an
-actual alias identifier and otherwise returns the complete-parameter refusal.
-Its consumers use five fields per declaration row. Altering that layout in
-place would affect both frontends and existing independent plan controls.
+Canonical standard `Vec<T>` now has a symbolic vector template node in both
+adapters. Source/import resolution uses the existing vector-owner policy and
+checks actual catalog and type-alias roots for shadows. The shared explicit
+arity rule admits one symbolic element without asserting Copy. At concrete
+materialization, the shared element rule reuses the existing scalar/Unit/owned
+String domain and checks its complete actual primitive/library owner. It builds
+the existing owned array type with its actual element owner. Existing typed
+origin construction derives scalar element Copy separately; owned String stays
+non-Copy. No annotation gains fresh-constructor or fresh-result evidence.
 
-`initializeRustTypeAliases` and `expandAlias` in
-`js/src/translation/rust-type-aliases.js` retain definition source coordinates
-and module paths. Expansion restores parser cursor/module/lifetime/inherent
-state; the cache and recursion stack currently use the declaration key alone.
-`readRustTypeAliasValue` receives path segments after `RustParser.typeValue`
-reads the path, before generic arguments are consumed. Simply relaxing discovery
-would therefore leave argument punctuation unconsumed and reuse an unrelated
-instantiation from a declaration-only cache.
+Ordinary alias-typed scalar vector parameters, fresh scalar results, forwarding
+and concrete specializations reuse the existing ownership/fresh-tail checks.
+For example `Values<T>=std::vec::Vec<T>` supports existing vec/typed constructor
+bodies through `Values<i64>` signatures, while `Integers=Values<i64>` reuses the
+preceding `Integers::new()` member admission. Tuple/vector and sum/vector
+templates compose symbolically; actual instantiation still enforces every
+existing product/element/direct-Copy restriction. Vec allocator forms, nested or
+nominal element domains, borrowed elements, local vector moves, String-vector
+results and other generic alias-associated operations remain obligations.
 
-`finishRustTypeAliases` eagerly checks every alias and verifies actual named
-datatype owners before publication. A generic parameter cannot become a nominal
-datatype by falling through that path. Skipping generic declarations during this
-pass would lose the existing unused-invalid-alias protection.
+Explicit alias-qualified construction now has a consumed source draft in both
+frontends: `Values::<u8>::new()`, `Maybe::<u8>::Some(7)`, and
+`Maybe::<u8>::None` first instantiate the actual generic declaration. Shared
+constructor selection checks the complete resulting owner and actual stored
+sum declaration before the transport reads its registered constructor path.
+Vector construction reuses the existing typed fresh empty-array node. Sum
+arguments use the existing actual-constructor contextual argument and ownership
+adapters; nullary variants remain values without parentheses. Wrong owners,
+members, argument counts and unproved source origins refuse. No type-name
+spelling supplies an element, variant or source owner. Alias-qualified constructor
+function values, inferred alias arguments and other associated operations retain
+their independent obligations.
 
-`qualifyType`, `copyOrigin` and source-owner reconstruction preserve type,
-wrapper, tuple-field and callable origins. A parameter substitution must carry
-all of them, including primitive owner positions, library arguments, Copy facts,
-text/vector models and source lifetimes. A same-spelled caller datatype must
-never be rebound as an alias's definition owner or concrete argument owner.
+Static source review also corrected generic parameter raw-token handling.
+Both actual lexers normalize identifier values to NFC while retaining original
+raw spelling. The parameter policy now reads the actual raw-prefix distinction
+without requiring normalized values to equal original Unicode source bytes.
+Identifier validity still comes from the actual lexer; this policy adds no
+competing Unicode normalizer. Review of native origin construction found both
+new private header/sum fields initialized in the two complete constructors;
+remaining source-origin literals use those constructors through struct updates.
+Pending rule ABI projections follow the existing source-generated alias/pointer
+policy interfaces, not handwritten replacement modules. No compiler or validator
+was invoked by this review.
 
-Native transport in `rust/src/translation/rust/type_aliases.rs` has the matching
-five-field declaration table, declaration-only cache/stack, eager finishing and
-source-origin traversal. `rust/src/translation/rust/items/types.rs` has the
-matching type-parser entry point and source-token partition transport. These
-files were read but not edited. No handwritten native replacement semantics
-were authored.
+Every concrete application parses its explicit arguments in the caller context,
+uses the shared binding plan, and copies complete argument origins. Primitive
+owners, wrappers, callable fields, vector/text models, Copy facts, source
+lifetimes and definition provenance remain on those origins. Tuple construction
+uses existing common tuple types and source product admission. No generic
+instantiation uses the declaration-only concrete-origin cache; alternating
+concrete arguments cannot share a stale origin. Allocation accounting precedes
+copies and bounds private construction-tree traversal. No source text is
+substituted or reparsed under a caller-invented owner.
 
-## Remaining integration closure
+`rust/src/translation/rust/type_aliases.rs` and its new sibling
+`generic_type_aliases.rs` now draft the matching native discovery, eager checking,
+symbolic composition, explicit argument parsing and complete origin transport.
+Their decisions call the pending source-generated `rust_generic_type_alias_rules`
+module. Private immutable `Rc` template sharing prevents composition from
+implicitly cloning argument trees before bounded traversal. Native cursor
+restoration retains actual original source coordinates across token partitioning.
+Logical template/origin accounting follows the JavaScript adapter. Both ordinary
+alias copy paths now traverse complete nested standard-sum argument origins,
+preserving their actual child types and owners before copying.
 
-1. Add a separate shared declaration extension directory or explicitly version
-   the existing five-field plan, preserving the old row contract and all current
-   macro/function-body opacity. Resolve every discovered parameter to an actual
-   binding identity scoped to its complete alias declaration. Do not treat a
-   parameter name as a datatype owner or discard actual raw source spelling.
-2. Represent a checked symbolic alias template as inspectable shared Links data,
-   retaining every definition occurrence and its actual binding identity. Check
-   unused templates against the complete namespace before publication. Admitted
-   symbolic shapes must prove their constraints; for example `Vec<T>` cannot
-   assume the ordinary scalar element restrictions hold for arbitrary `T`.
-   The first safe profile can retain refusal for such shapes while admitting
-   checked identity/permutation shapes.
-3. At `readRustTypeAliasValue`, consume explicit concrete argument syntax with
-   the existing source parser and actual closing-token rules, retain complete
-   origins, and call the shared arity/substitution decisions. Bind parameter
-   identities to those complete origins without reparsing caller spellings in
-   the alias module. Restore all parser context on failure and success.
-4. Materialize the shared substitution plan over actual typed/source-origin
-   Links. Reuse `readRustTypeAliasCloneError` before allocation. Cache only
-   fully checked instantiations keyed by declaration identity and complete
-   argument-origin identity; a type kind, width or textual spelling is
-   insufficient. Keep active declaration identity separately for changing-
-   argument recursion. Until a safe full key exists, omit instantiation caching
-   rather than accepting a declaration-only hit.
-5. Compose concrete generic aliases into the existing nominal, primitive,
-   String/vector and function-value member rules only after complete actual
-   owner proof. Do not broaden their current owner predicates to accept
-   uninstantiated templates or inferred arguments. Generic nominal datatypes,
-   trait bounds/defaults, lifetimes/const arguments, local/associated aliases,
-   qualified paths and general inference remain independent obligations.
-6. Generate the entire new normative JavaScript dependency closure into Rust
-   and typed Links through the existing source-library workflow. The existing
-   `js/scripts/draft-rust-type-alias-rules.mjs` currently selects the old source
-   file; the new source needs an explicit dependency/product authoring path.
-   Implement both runtime adapters as transport over those generated decisions.
-   If translation rejects an authored operation, improve the translator.
-7. Extend literal controls with exact parameter/occurrence and expansion-bound
-   endpoints, malformed token columns, both punctuation forms, source offsets
-   before/after reference splitting, cache alternation between same-width
-   distinct primitive owners, independent definition/argument name shadowing,
-   missing/extra arguments, concrete fresh owned values and unused invalid
-   templates. Preserve the existing generic refusal input and predecessor bytes;
-   only replace its assertion once the same original input has a complete
-   admitted interpretation and stronger independent controls.
-8. After full source drafting and authorization of generation/verification,
-   reconcile source/naming/feature inventories and sources before ledger use.
-   Future checks must exercise actual shipped rule products with independent
-   lexers, actual JavaScript and native frontends, original Rust programs,
-   signature publication, both codecs, four emissions and source-free reload.
-   Record observations only after execution at the exact recorded commit.
+`js/scripts/draft-rust-generic-type-alias-rules.mjs` authors automatic native and
+typed Links production for the complete new normative JavaScript policy closure.
+It was authored only, never invoked. No generated Rust policy was handwritten.
 
-All current frontend generic-alias refusals remain active. This batch provides
-source decisions and deferred inputs for later integration; it does not resolve
-full generic substitution or establish JavaScript/Rust parity.
+The private template tree is construction state, not a serializable trust flag
+or an executable opaque source payload. Only existing checked concrete types and
+origins leave this adapter for the semantic graph. Other parameter-dependent wrapper,
+library and callable template semantics retain refusal. Identity arguments can
+retain already admitted complete origins; concrete tuple instantiations remain
+subject to the existing product restriction.
+
+## Deferred controls and unchanged inputs
+
+`js/tests/fixtures/rust-generic-type-alias-draft.mjs` contains literal future
+policy inputs and original Rust programs. `js/tests/translation-rust-generic-type-aliases.test.js`
+authors actual policy consumers, ordinary checked source parsing, public
+signature discovery, both codecs, four target emissions and future emitted
+JavaScript result checks. Inputs cover independent instantiations, permutation
+and composition, caller namespace shadowing, nested compound closings, Unit,
+well-formed unused definitions and unsupported/invalid definitions. These files
+were only authored and reread, never imported or executed.
+`rust/tests/unit/translation_rust_generic_type_aliases.rs` drafts the actual
+existing original-product pipeline with the new shared rule program, plus
+independent native binding/arity/recursion and complete scalar-owner controls.
+Its pending generated module and package asset remain explicit dependencies.
+
+The original `type Identity<T>=T;fn main(){}` input and preceding refusal
+assertion are preserved together in the new literal controls. Its proposed new
+assertion checks the complete valid declaration and absence of runtime exports.
+The fixture AUTHOR SOURCE `js/scripts/draft-rust-type-alias-fixtures.mjs` now
+moves that unchanged original from current refusals into `genericOriginalControls`,
+retaining its exact preceding kind/reason and an explicit correction rationale.
+It adds concrete generic identity/permutation/composition programs and a public
+concrete-signature publication. The where-clause refusal retains its original
+input and now names the actual new discovery refusal. Parameter-bound,
+unused-parameter and argument-changing recursion refusals add coverage. Its
+assertions and version-qualified boundary describe the integrated JavaScript
+profile and deferred native products. The new test source consumes the authored
+correction directory without skipping missing controls.
+
+The generator was not run and generated LiNo/native controls remain unchanged.
+Full predecessor-byte capture and independent original/native evidence remain
+required before any recorded correction evidence. This static source change
+preserves the original input and oracle rather than deleting their coverage.
+
+The fixture version boundary records the existing proposed Rust source profile
+(`>=1.90.0 <1.100.0`, edition 2024, 64-bit pointer width), not a live audit.
+Additional full endpoint, malformed-column, source-coordinate, owner, native
+and original-program controls remain required. This draft is not evidence.
+
+## Remaining closure
+
+Both frontend adapters are authored; generated policy products remain deferred.
+Generate the complete normative generic policy
+dependency closure into Rust and typed Links with the existing source-library
+workflow, improving the translator for unsupported source constructs. The
+existing `draft-rust-type-alias-rules.mjs` selects the preceding policy source;
+the new sibling author selects the generic closure explicitly. Parent module,
+test and package/catalog registration must retain the new native adapter,
+generated module and shared program asset together. Do not handwrite replacement
+native semantics or broaden owner predicates to accept uninstantiated templates.
+
+The additive native signature batch now mirrors the parent JavaScript sum
+signature integration. `source_signatures.rs` retains the standalone validator
+and adds `validate_source_signature_with_data`, whose borrowed actual datatype
+callback supplies constructor layouts and existing retained field facets. The
+pending generated `rust_standard_sum_signature_rules` selector alone maps
+canonical standard-library arguments to exact actual payload constructors.
+Complete constructor inventories, retained field identities, direct payload
+positions and recursively identical source owners are checked under one finite
+visit/depth budget. Same-width primitive spellings cannot replace retained
+owners. The standalone wrapper still refuses sums without actual data context.
+
+`source_data_field_signatures.rs` forwards actual registry/type callbacks.
+`check/items.rs` installs every resolved datatype layout and normalizes retained
+field positions in their original declaration scope before any nested facet
+validation, then validates function signatures against the complete registry.
+`typed_program_links/checked.rs` uses the actual saved declaration registry for
+both field and function signatures before runtime-profile early returns, and
+refuses duplicate datatype registry identities. No new metadata schema or trust
+flag is introduced. Focused deferred native source controls retain no-context,
+actual-layout, omitted-facet, reordered-constructor and same-erased-owner cases.
+
+`rust/src/translation/rust/standard_sum_methods.rs` drafts actual native method
+transport for the sibling JavaScript method policy. The postfix hook runs before
+argument punctuation is consumed. It obtains the actual registered receiver
+origin, captures the receiver and each eager default/callable factory once, and
+constructs the existing typed let/match/constructor nodes using source-generated
+branch decisions. Callback parameters/results retain complete actual source
+identities. An unknown mapper result receives parameter-only context for a real
+lambda; named callable expressions retain their actual result. `map` delegates
+result construction to the existing instantiator, while `and_then` requires the
+same actual sum family and unchanged complete Result error identity. Callback
+invocation remains inside the selected constructor branch. Module registration
+is recorded by the parent batch; shared policy generation and execution remain
+deferred.
+
+Before any ledger use, run the required online source audit, reread changed
+sources, reconcile source/naming/feature inventories, preserve exact prior
+fixtures and append obligations. Reconcile all preceding generic refusal
+assertions with the retained original source and stronger independent controls.
+After the complete draft, required CI must execute actual original Rust,
+JavaScript/native frontends, shipped rule products, complete source owners,
+publications, codecs, four emissions and source-free reload. Record observations
+only afterward at the exact executed commit.
+
+The subsequent resource draft extracts shared semantic cost roles into
+`js/src/translation/rust-standard-sum-source-metadata-rules.js`, with borrowed
+host traversals in `rust-standard-sum-source-metadata.js` and native
+`rust/standard_sum_metadata.rs`. The pending generated module is
+`rust_standard_sum_source_metadata_rules`; source generation remains deferred.
+Both walks count one node for each record, ordered array, string, boolean,
+number or null, and count UTF16 units for canonical record keys and string
+values. Numeric array indexes do not contribute keys. The origin projection
+retains type, path, wrappers, both complete source-owner trees, fields,
+callable parameters/result, float/text/array models, source lifetimes,
+namespace spelling and the sum's actual owner/argument origins. Missing
+optional records normalize to null; missing lifetime/namespace columns
+normalize to empty arrays. Every portable Type form has an explicit shared
+record role. Effective identity projection additionally follows the actual
+catalog sum argument directory and qualifies nominal type paths identically
+to identity construction. Neither walk includes source coordinates, cached
+identity encodings, generated constructor paths, ordinals, private phase flags
+or incidental binding bookkeeping. Repeated references count per occurrence;
+structural/registry cycles and projection depth beyond 256 refuse early.
+
+JS initialization and concrete instantiation reserve sixteen projected copies
+before origin cloning or JSON encoding; instantiation reserves both raw and
+effective identity projections. Native `SourceOrigins::new` reserves each
+distinct incoming catalog sum before its first origin clone, retaining the
+cumulative budget/error latch for parser initialization and instantiation.
+Initialization's later owned row copies use that reservation. Borrowed native
+catalog lookup avoids cloning a constructor/function declaration while proving
+the projection bound. Identity equality remains the existing complete
+structured identity; no hash or generated-name equivalence substitutes for it.
+The shared limits remain 1,048,576 nodes and 8,388,608 UTF16 units per parser.
+This is a common semantic metadata domain, not a measured host allocation
+byte count. Independent literal unit/Unicode/expanded-owner costs, reservation
+edges, depth edges and JavaScript sharing/cycle controls are authored in
+`translation-rust-standard-sum-source-metadata.test.js`, its draft fixture,
+and the native helper's deferred control module. None were executed.
+
+Generic nominal datatypes, other parameter-dependent library/wrapper/callable
+templates, trait bounds/defaults, lifetime/const arguments, local/associated
+aliases, qualified projections, general inference and full namespace/privacy
+semantics remain obligations. This source batch establishes no execution,
+JavaScript/Rust parity, semantic equivalence or overall requirement completion.
