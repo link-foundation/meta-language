@@ -11539,3 +11539,26 @@ allocator models, capacity/pointer/drop observations and all previous obligation
 remain required. Independent deferred controls cover every admitted scalar/String
 and Unit element, chains/imports/namespaces, fresh arguments, safe empty lookups
 and forged owner/element/wrapper/member premises. No represented controls ran.
+
+
+### Own-source inventory during drafting
+
+A bounded source-authoring inventory now records every tracked production source
+under explicit project-relative roots, with exact working-copy byte hashes,
+index-object identities and the inspected HEAD revision. It reads source text
+only and never imports, parses or executes the inspected files. Its shared
+literal-signal counting policy is defined in JavaScript and automatically emitted
+to Rust/typed Links; signals and bounded source-coordinate samples are retained
+as inspectable Links data. UTF16 offsets and LF-delimited line numbers are
+explicit, as are empty-signal and nonoverlapping-match behavior. Strings/comments
+remain candidates and generator headers remain hints, not semantic classifications.
+
+This supplies triage for the real own-source baseline, not a replacement for its
+complete CST/construct/type/effect/ownership inventory or independent execution.
+The resulting lexical counts cannot mark a language feature or requirement done.
+Further batches must connect candidates to actual source owners, full runtime
+semantics, public project boundaries and independent controls before claiming
+full coverage. The authoring tool refuses exceeded file/byte/sample budgets,
+nonordinary index entries, symlinks, invalid source encoding and escaping roots;
+it performs no installs, clones, compilers or source restoration. These boundaries
+and the shared counter have deferred independent controls; none has run locally.

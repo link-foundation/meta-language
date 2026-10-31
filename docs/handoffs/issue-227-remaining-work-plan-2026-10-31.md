@@ -1,6 +1,6 @@
 # Issue #227 / PR #228 detailed remaining-work plan — 2026-10-31
 
-This is a handoff and future execution plan, not another architecture specification. [The vision](../vision.md), registered requirement sources and atomic manifest remain authoritative. The user requested detailed planning after the stop checkpoint. Production development and behavioral verification remain paused; this documentation update does not resume the active goal.
+This is a handoff and future execution plan, not another architecture specification. [The vision](../vision.md), registered requirement sources and atomic manifest remain authoritative. The user requested detailed planning after the stop checkpoint. This planning snapshot was written while development was paused. On 2026-11-01 the user resumed bulk source drafting; behavioral verification, compilation and CI-feedback work remain deferred until the full code draft.
 
 ## Snapshot and coverage
 
@@ -26,7 +26,7 @@ For each row, a future source audit must record fully drafted / partially drafte
 
 Draft the later CI/control/publication procedures now without executing them. Once every row’s actual code/control draft is complete, start the verification/CI-fix phase; do not wait for unexecuted delivery evidence to exist before permitting that phase, and do not claim delivery merely because drafting is complete. Keep historical verified observations separate and tied to their original commits.
 
-The latest user steering keeps implementation paused and work solo. Earlier delegation/count requests are preserved historical obligations, not authorization to spawn agents now. Never compile Rust locally. Keep disk use bounded; remove only proven task-owned regenerable scratch and retain evidence/receipts. Source-only generation must not execute represented fixture programs.
+The latest user steering resumes bulk implementation and keeps work solo. Earlier delegation/count requests are preserved historical obligations, not authorization to spawn agents now. Never compile Rust locally. Keep disk use bounded; remove only proven task-owned regenerable scratch and retain evidence/receipts. Source-only generation must not execute represented fixture programs.
 
 ## Ordered milestones
 
@@ -39,7 +39,7 @@ The latest user steering keeps implementation paused and work solo. Earlier dele
 
 ## Work packages
 
-Dependencies are architectural/data prerequisites. Do not create a schedule deadlock by requiring a package’s later execution evidence before another package’s source can be drafted. Execution of these packages requires the user to resume development.
+Dependencies are architectural/data prerequisites. Do not create a schedule deadlock by requiring a package’s later execution evidence before another package’s source can be drafted. The user resumed source drafting on 2026-11-01; behavioral execution remains subject to the global draft gate.
 
 ### BASELINE
 
@@ -200,7 +200,7 @@ Prerequisites: [BASELINE](#baseline), [GRAMMAR](#grammar), [MERGE](#merge), [DYN
 
 Prerequisites: [TRACE](#trace). Search/reuse: [AGENTS.md](../../AGENTS.md), [CLAUDE.md](../../CLAUDE.md), [.gitignore](../../.gitignore), [.github/workflows/ci.yml](../../.github/workflows/ci.yml), [scripts/clean-caches.mjs](../../scripts/clean-caches.mjs), [scripts/with-cache-cleanup.mjs](../../scripts/with-cache-cleanup.mjs), [parity/naming/canonical-concepts.lino](../../parity/naming/canonical-concepts.lino). Paths are candidates for review, not proof of requirement coverage.
 
-1. Reconcile historical workflow requests with the latest user steering: production development is paused, work remains solo, no local Rust compilation and no behavioral tests/validation gates or CI-feedback fixes before the full draft. Preserve superseded source rows without reactivating obsolete agent-count or push instructions.
+1. Reconcile historical workflow requests with the latest user steering: bulk production drafting has resumed, work remains solo, no local Rust compilation and no behavioral tests/validation gates or CI-feedback fixes before the full draft. Preserve superseded source rows without reactivating obsolete agent-count or push instructions.
 2. Maintain task-owned resource limits, shared checkout, safe cache receipts and targeted cleanup. Never delete unrelated data, dirty worktrees, active tasks, journals or retained evidence. Verify inherited Cargo target ownership before any cleanup; keep long corpus/consumer/native jobs in CI.
 3. Draft stage ordering, single-pusher batching, complete failure reporting and cancellation diagnostics. Resume implementation while CI runs; do not use waiting for CI as a reason to stop drafting. User-requested stop/checkpoint documentation is a distinct authorized action.
 4. Complete automated JSON-to-Links conversion and documented unavoidable external JSON boundaries; retain compatibility aliases. Ignore temporary external grammars, record download provenance and keep source artifacts out of the tracked tree.
@@ -759,6 +759,76 @@ This index contains every manifest ID exactly once. “Mapped” means only that
 
 ## Next session handoff
 
-Remain paused until instructed. On resumption, update source snapshots first, then perform TRACE’s static full-scope review and identify a complete own-code batch. The contemplated collection Default/trait-scope extension is only a candidate: select it only if the construct inventory shows it unblocks baseline modules. Do not restart a stream of small extensions without updating requirement-level gaps.
+Bulk drafting resumed on 2026-11-01. Update source snapshots first, then perform TRACE’s static full-scope review and identify complete own-code batches. The contemplated collection Default/trait-scope extension is only a candidate: select it only if the construct inventory shows it unblocks baseline modules. Do not restart a stream of small extensions without updating requirement-level gaps.
 
 Keep this plan linked from the stop checkpoint. Reconcile new/edited atomic rows into both appendices and the index; preserve protected source, behavior, scope, aliases, fixtures and runtimes. When a mapping is added, move its planning entry between appendices without calling it fully drafted until the static audit supports that classification. When verification starts, replace future artifact references with actual recorded observations only through the repository evidence workflow.
+
+
+## Resume update — 2026-11-01
+
+Source-only lexical triage now has an actual tracked inventory author and an
+inspectable Links output: [own production source candidates](../../parity/inventories/own-source-construct-candidates.lino).
+The author is [draft-own-source-construct-inventory.mjs](../../js/scripts/draft-own-source-construct-inventory.mjs),
+and its literal statistics kernel is automatically translated from JavaScript
+into Rust and the source-definition catalog. Every indexed production file keeps
+exact content/index identities; source is read as text and never imported or
+executed. Signals retain explicit UTF16/LF coordinates, bounded samples and
+strings/comments as possible false positives. This is the first triage artifact
+for TRACE/BASELINE, not a complete parsed construct inventory or a completed row.
+
+The initial snapshot contains 2,425 files / 38,647,509 source bytes under `js/src`
+and `rust/src`. Literal `Option<` candidates occur in 723 Rust files and `Result<` in 548;
+these are candidates requiring actual owner/construct review, not counts of
+missing features. Inspect representative modules and dependency closures for
+standard sum types, generic aliases, trait dispatch and error propagation before
+choosing the next baseline batch. Standard collection Default alone does not
+establish that closure. Keep the existing80 unmapped/393 full-review-pending
+counts until real requirement scope review justifies updated mappings/classifications.
+
+### Parallel source drafting instruction — 2026-11-01
+
+The user authorized three GPT-6.1-sol medium agents for bulk drafting, with no
+testing or CPU-heavy work. Delegation is limited to source reads and edits:
+standard sum types and propagation, generic alias parameter policies, and
+lossless own-source CST controls. The coordinator owns source inventory tooling,
+shared handoff integration and any future commit/push. No tests, validation,
+compilation, source generators or inventory rebuild run under this instruction.
+
+The inventory author now drafts schema 2 with a separate per-file signal list,
+fatal UTF-8 decoding of Git output, exact format-sized object identities, and an
+explicit distinction between working-tree bytes, index identities and HEAD.
+The existing Links inventory is the earlier schema 1 snapshot. It has not been
+regenerated after these source edits, and does not include the concurrent new
+policies. A future authorized source-authoring batch must regenerate it; its
+current counts remain historical triage only. Metadata and native counterparts
+for new policies also remain deferred. None of these drafts changes the
+80 unmapped / 393 review-pending planning classifications or establishes a
+fully drafted requirement count.
+
+The three source batches are now present, with exact integration work retained
+in their subordinate handoffs:
+
+- [Generic alias source closure](issue-227-generic-alias-source-closure-draft.md):
+  new parameter parsing, binding-identity substitution-index and declaration-owner
+  recursion policies; independently authored literal decisions and original
+  Rust programs. Symbolic template checking, concrete origin substitution,
+  instance-aware adapters and both runtime integrations remain open.
+- [Standard sum source closure](issue-227-option-result-source-closure-draft.md):
+  actual standard-owner, argument, constructor/field and narrow propagation
+  branch policies; literal decisions, original programs and refusal controls.
+  The existing optional helper collapses nesting, so integration must use
+  complete named datatypes to preserve `None` versus `Some(None)`.
+- [Own-source CST closure](issue-227-cst-baseline-source-closure-draft.md):
+  bounded real-production-file reconstruction, distinct occurrence, default-CST,
+  explicit AST and text/binary reload controls. Native parser documentation now
+  describes its actual CST dispatch. Spanless emission, mixed token ordering
+  and editable embedded-region ownership remain actual source gaps.
+
+`js/scripts/draft-rust-baseline-source-policies.mjs` is an authored future
+automatic Rust/Links generation and literal fixture conversion recipe for both
+new policies. It has not run. `js/tests/rust-baseline-source-policies.test.js`
+is the deferred literal-policy runner; original Rust programs remain untouched
+text and are not invoked by that runner. Native generation, catalog/package/
+naming/source registration, native controls and frontend integration remain
+explicit next actions. The two policy modules are unintegrated; their presence
+does not mean generic aliases, stored standard sums or `?` now translate.

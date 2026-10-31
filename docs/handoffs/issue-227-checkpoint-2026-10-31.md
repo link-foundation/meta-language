@@ -5,6 +5,20 @@ a check point with handoff document updated, everything must be committed and
 pushed and stop.” Resume only on user instruction. This checkpoint is not a
 completion claim; the full requirements draft remains unfinished and unverified.
 
+## Resumed source drafting — 2026-11-01
+
+The user subsequently instructed “Continue the bulk drafting.” The stop above is
+historical; source drafting has resumed. Tests, local compilation and CI
+feedback remain deferred under the existing full-draft-first contract. The
+continuation plan records the current lexical inventory draft and remaining
+full-scope audit; no requirement completion is inferred from its counters.
+
+The latest instruction authorizes up to three GPT-6.1-sol agents at medium
+effort for source edits only. Three agents are drafting separate standard sum,
+generic alias and CST baseline batches. No generator, validation, tests or
+compilation run under this instruction. Generated output and source-register
+refreshes required by subsequent source edits remain explicitly deferred.
+
 ## Detailed remaining-work plan
 
 The user subsequently requested detailed planning of every undrafted and unfinished
@@ -21,7 +35,7 @@ requirements are not marked done; missing mappings may hide existing code that
 must be found before creating duplicates. The plan preserves all current manifest
 rows and makes the next action explicit: statically audit full-scope code/control
 coverage, then select complete batches by the own-code construct inventory.
-Implementation remains paused. No tests, compilation or CI feedback were used to
+Implementation was paused when that plan snapshot was written. No tests, compilation or CI feedback were used to
 produce this documentation update. The plan is based on checkpoint `9405c25f` and
 the manifest hash recorded in its header; it does not replace the vision.
 

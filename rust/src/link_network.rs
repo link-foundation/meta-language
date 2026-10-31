@@ -311,11 +311,12 @@ impl LinkNetwork {
         output
     }
 
-    /// Parses plain source text into a lossless token network.
+    /// Parses registered source languages into their full lossless concrete trees.
     ///
-    /// This is the default parse operation. It is lossless by construction; use
-    /// [`LinkNetwork::projected_links`] when a lower-level view should be
-    /// stripped away for CST, AST, or semantic-only work.
+    /// This default operation retains syntax hierarchy, fields, source tokens,
+    /// trivia, spans, and recovery information supplied by the selected parser.
+    /// Use [`LinkNetwork::projected_links`] for an explicitly selected view;
+    /// selecting a view leaves the complete concrete network intact.
     #[must_use]
     pub fn parse(text: &str, language: &str, configuration: ParseConfiguration) -> Self {
         let mut network = BuiltInLanguageParser.parse_source(text, language, configuration);
