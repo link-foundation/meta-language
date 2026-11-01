@@ -84,6 +84,16 @@ inherent-implementation receivers, and grants no `Copy`, clone or recursive-size
 proof. Recursive declarations still require their actual guarded ownership and
 finite-constructor witnesses.
 
+Formal targets may place an actual mutually recursive datatype component in
+its source modules' longest common ancestor. This is a target placement plan:
+nominal source identities and the original checked graph remain intact, target
+name assignment uses the projected module paths, and each moved datatype and
+constructor has an explicit public-alias obligation at its original scope.
+The placement planner grants no strict-positivity, ownership, Clone or default
+proof. The target emitter must prove admission, emit the complete mutual block
+and all aliases together. Ordinary dependency ordering retains its explicit
+cross-module refusal when this complete projection is not selected.
+
 Meta-language provides **one common, extensible language, represented
 recursively as links and serialized in Links Notation**. It covers:
 

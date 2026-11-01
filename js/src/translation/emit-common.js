@@ -45,25 +45,7 @@ export class EmitState {
 
   /** Target names are fixed up front, so references never depend on emission order. */
   assign() {
-    const namespace = (key) => {
-      // Root declarations may not redeclare the target's prelude (`rootReserved`).
-      if (!this.taken.has(key)) {
-        const root = key.endsWith(':') ? this.options.rootReserved ?? [] : [];
-        this.taken.set(key, new Set([...this.reserved, ...root]));
-      }
-      return this.taken.get(key);
-    };
-    const claim = (space, name) => {
-      name = renderSourceTargetIdentifier(name);
-      const used = namespace(space);
-      let candidate = name;
-      for (let index = 2; used.has(candidate) || this.isGenerated(candidate, used); index += 1) candidate = `${name}_${index}`;
-      for (const name of [candidate, ...this.generatedFor(candidate)]) {
-        used.add(name);
-        this.claimed.add(name);
-      }
-      return candidate;
-    };
+    const claim = (space, name) => this.claimTargetName(space,name);
     const moduleName = this.options.moduleSegment ?? this.ident;
     // JavaScript modules are values; Rust modules share the type namespace.
     let moduleSpace = 'module';
@@ -91,6 +73,36 @@ export class EmitState {
           this.ctorNames.set(`${entry.fullName}#${ctor.name}`, claim(ctorSpace, ctorBase));
         }
       }
+    }
+  }
+
+  /** Claim private target names without releasing any existing public name. */
+  claimTargetName(space,name){
+    name=renderSourceTargetIdentifier(name);
+    if(!this.taken.has(space))this.taken.set(space,new Set([...this.reserved,...(space.endsWith(':')?this.options.rootReserved??[]:[])]));
+    const used=this.taken.get(space);let candidate=name;
+    for(let index=2;used.has(candidate)||this.isGenerated(candidate,used);index+=1)candidate=`${name}_${index}`;
+    for(const claimed of [candidate,...this.generatedFor(candidate)]){used.add(claimed);this.claimed.add(claimed);}
+    return candidate;
+  }
+
+  /** Start from original public naming, then claim private lifted names.
+   * All original names remain reserved for the explicit emitted aliases. */
+  relocateDatatypes(program,aliases){
+    const seen=new Set();
+    for(const alias of aliases){
+      const source=this.program.declarations.get(alias.sourceFullName),target=program.declarations.get(alias.targetFullName);
+      if(seen.has(alias.sourceFullName)||source?.k!=='data'||target?.k!=='data'||source.fullName!==target.fullName||source.name!==target.name||source.ctors!==target.ctors||source.modulePath.join('.')!==alias.sourceModulePath.join('.')||target.modulePath.join('.')!==alias.targetModulePath.join('.')||target.modulePath.length>=source.modulePath.length||!target.modulePath.every((part,index)=>part===source.modulePath[index]))throw unsupported('formal datatype target names','relocation requires its exact original nominal owner and target prefix');
+      for(let depth=1;depth<=target.modulePath.length;depth+=1)if(!this.moduleNames.has(target.modulePath.slice(0,depth).join('.')))throw unsupported('formal datatype target names','a lifted module prefix must belong to the original source');
+      seen.add(alias.sourceFullName);
+    }
+    this.program=program;
+    for(const alias of aliases){
+      const entry=program.declarations.get(alias.targetFullName),space=`term:${entry.modulePath.join('.')}`;
+      const local=this.claimTargetName(this.options.typeSpace?`type:${entry.modulePath.join('.')}`:space,(this.options.typeName??this.ident)(entry.name));
+      const path=entry.modulePath.map((_,index)=>this.moduleNames.get(entry.modulePath.slice(0,index+1).join('.')));
+      this.names.set(entry.fullName,{local,path});
+      for(const ctor of entry.ctors){const ctorSpace=this.options.ctorStyle==='module'?space:`ctor:${entry.fullName}`;this.ctorNames.set(`${entry.fullName}#${ctor.name}`,this.claimTargetName(ctorSpace,(this.options.ctorName??this.ident)(ctor.name)));}
     }
   }
 

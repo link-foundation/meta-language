@@ -224,6 +224,38 @@ impl<'p> EmitState<'p> {
         }
     }
 
+    /// Preserve original public names and claim only new private lifted names.
+    /// The corresponding public aliases remain mandatory emitter obligations.
+    pub(crate) fn relocate_datatypes(
+        &mut self,
+        program:&'p Program,
+        aliases:&[super::formal_datatype_modules::FormalDatatypeAlias],
+    )->Result<()> {
+        let mut seen=HashSet::new();
+        for alias in aliases {
+            let (Some(Decl::Data(source)),Some(Decl::Data(target)))=(self.program.declaration(&alias.source_full_name),program.declaration(&alias.target_full_name))else{return Err(unsupported("formal datatype target names","relocation requires its exact original nominal owner and target prefix",None));};
+            if !seen.insert(alias.source_full_name.as_str())||source.full_name!=target.full_name||source.name!=target.name||source.ctors!=target.ctors||source.module_path!=alias.source_module_path||target.module_path!=alias.target_module_path||target.module_path.len()>=source.module_path.len()||!source.module_path.starts_with(&target.module_path){return Err(unsupported("formal datatype target names","relocation requires its exact original nominal owner and target prefix",None));}
+            for depth in 1..=target.module_path.len(){if !self.module_names.contains_key(&target.module_path[..depth].join(".")){return Err(unsupported("formal datatype target names","a lifted module prefix must belong to the original source",None));}}
+        }
+        self.program=program;
+        for alias in aliases {
+            let Some(Decl::Data(entry))=program.declaration(&alias.target_full_name)else{unreachable!("preflight retained the nominal owner")};
+            let space=format!("term:{}",entry.module_path.join("."));
+            let type_space=if self.options.type_space{format!("type:{}",entry.module_path.join("."))}else{space.clone()};
+            let base=self.options.type_name.unwrap_or(self.ident)(&entry.name);
+            let local=self.claim(&type_space,&base);
+            let path=(1..=entry.module_path.len()).map(|depth|self.module_names[&entry.module_path[..depth].join(".")].clone()).collect();
+            self.names.insert(entry.full_name.clone(),Target{local,path});
+            for ctor in &entry.ctors {
+                let ctor_space=if self.options.ctor_style==CtorStyle::Module{space.clone()}else{format!("ctor:{}",entry.full_name)};
+                let base=self.options.ctor_name.unwrap_or(self.ident)(&ctor.name);
+                let name=self.claim(&ctor_space,&base);
+                self.ctor_names.insert(format!("{}#{}",entry.full_name,ctor.name),name);
+            }
+        }
+        Ok(())
+    }
+
     fn claim(&mut self, space: &str, name: &str) -> String {
         let name = crate::translation::source_identifiers::render_source_target_identifier(name);
         if !self.taken.contains_key(space) {

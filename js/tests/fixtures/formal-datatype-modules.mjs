@@ -1,0 +1,20 @@
+// Independent placement expectations, separate from semantic admission proofs.
+export const formalDatatypeModuleDecisions=[
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[],[]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[[]],[0]],expected:[0]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a']],[0]],expected:[1]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a'],['b']],[0,1]],expected:[1,1]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a'],['b']],[0,0]],expected:[0,0]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a','left'],['a','right']],[0,0]],expected:[1,1]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a'],['a','inner']],[0,0]],expected:[1,1]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a','left'],['a','right'],['a','left','inner']],[0,0,0]],expected:[1,1,1]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a'],['b','left'],['b','right']],[0,1,1]],expected:[1,1,1]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a']],[1]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a']],[-1]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a']],[-0]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a']],[0.5]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a'],['b']],[1,1]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a'],['b']],[1,0]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['']], [0]],expected:[]},
+ {operation:'planFormalDatatypeModulePrefixes',arguments:[[['a']], []],expected:[]},
+];

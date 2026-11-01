@@ -412,3 +412,15 @@ The three source agents continue recursive Box/Vec ownership and formal blocks,
 ordered mutable-record effects, and actual supplied-module class/re-export
 composition. The complete requirements draft remains the active work scope;
 this record is not an instruction to stop at a checkpoint.
+
+Source allocation/record lowering and its five-process future authoring batch
+were committed and pushed as `127b6863`. Subsequent source work adds shared
+formal datatype common-prefix planning, paired JS/native immutable projection
+consumers, explicit datatype/constructor alias obligations, seventeen independent
+literal policy controls and deferred JS/native projection controls. The formal
+emitter integration must preserve actual public target names, reserve alias
+names against lifted private declarations, and create each Rocq module once;
+appending aliases by reopening a closed module is insufficient. The recursive
+type agent owns this emitter integration together with actual positivity,
+finite-constructor and default-instance witnesses. Placement alone is not
+semantic or compiler evidence.
