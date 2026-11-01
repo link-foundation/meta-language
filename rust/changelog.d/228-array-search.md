@@ -36,3 +36,6 @@ field access and rest exclusion, preserving key and default evaluation order.
 
 Draft explicit constructor metadata events in source traces and native replay
 through the common authority extension, with automatic codec generation inputs.
+
+Draft recursive object bindings using the shared initialization protocol,
+including nested defaults, per-level rest exclusions and explicit nesting bounds.

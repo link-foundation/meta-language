@@ -309,3 +309,18 @@ The generator root list includes species directories and authority updates;
 generated codecs themselves remain untouched until automatic regeneration. A
 deferred Node trace control expects one metadata addition and complete source
 execution. Neither that control nor Rust replay was executed or compiled.
+
+
+### Recursive object binding source draft
+
+Nested object patterns now recurse through the same reader and initialization
+lowerer, retaining each parent field/default value in its synthetic actual
+binding before nested coercibility and field work. Computed keys and rest
+exclusions stay at their original level. Both reader and lowerer bound nesting
+at 128. Outer default expressions are read before marking nested parameter
+bindings initialized, retaining the existing parameter TDZ refusal. Four new
+originals cover nested parameter defaults with inner/outer rest, lexical nested
+bindings, computed nested keys with earlier defaults, and nested empty patterns.
+These inputs and all generated/native products remain unexecuted. Array binding
+iterators, mutable lexical cells and exact nullish diagnostic compatibility still
+need their further drafts. No ledger was used and no validation gate ran.

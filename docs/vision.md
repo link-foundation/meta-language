@@ -12238,3 +12238,11 @@ complete unchanged machine and resulting program, then continues with that
 program. A trace cannot replace executable code by declaring an expected update.
 Codec generation includes these authority types; generated codecs are never
 manually patched. Metadata events consume the same shared transition budget.
+
+Object binding patterns recurse through the same initialization protocol. Each
+nested value/default is held once before recursively checking coercibility,
+reading nested fields and collecting that level's rest properties. Computed
+keys and exclusions belong to their actual pattern level. Source reading and
+lowering share an explicit nesting bound. Parameter default admission respects
+uninitialized nested bindings; enclosing defaults cannot read bindings that
+will only be initialized by the nested pattern.

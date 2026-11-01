@@ -197,7 +197,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  function split(first,last,separator,preserveEmpty=false){const result=[];let start=first;for(let at=first;at<last;at++){if(['(','{','['].includes(values[at])){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>=last)fail('source groups must remain complete');at=end;}else if(values[at]===separator){result.push([start,at]);start=at+1;}}if(start<last||preserveEmpty)result.push([start,last]);return result;}
  // Shared fixed object binding shape; evaluation is lowered once for
  // parameters and lexical declarations, including coercibility and rest copy.
- function readObjectBinding(first,close,kind){
+ function readObjectBinding(first,close,kind,depth=0){
+  if(depth>128)fail('object binding patterns exceed their explicit source nesting budget');
   const fields=[];let rest;
   for(const [a,b]of split(first+1,close,',')){
    if(values[a]==='...'){
@@ -206,8 +207,10 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    const key=tokens[a],computed=key.value==='[',keyEnd=computed?findJavaScriptClassGroupEnd(values,a):-1;
    if(computed&&(!classProfile||keyEnd<0||keyEnd+2>=b||values[keyEnd+1]!==':'))fail('computed object binding keys retain their complete key expression and actual alias');
-   const position=computed?keyEnd+2:values[a+1]===':'?a+2:a,owner=declared(tokens[position]);if(!computed&&!['identifier','string'].includes(key.kind)||!owner||owner.kind!==kind||position>=b||b>position+1&&values[position+1]!=='=')fail('source object bindings need actual field keys, binding aliases and optional defaults');
-   const keyExpression=computed?expression(tokens.slice(a+1,keyEnd)):undefined,hasDefault=b>position+1,defaultValue=hasDefault?inferArrowName(expression(tokens.slice(position+2,b)),owner.name):absent();fields.push({$:'errorParameterField',identity:owner.identity,key:computed?[]:key.stringUnits??units(key.value),hasDefault,value:defaultValue,...(computed?{keyExpression}:{})});if(kind==='parameter')initializingParameters.add(owner.identity);
+   const position=computed?keyEnd+2:values[a+1]===':'?a+2:a,nested=values[position]==='{',targetEnd=nested?findJavaScriptClassGroupEnd(values,position):position,owner=nested?undefined:declared(tokens[position]);
+   if(!computed&&!['identifier','string'].includes(key.kind)||position>=b||targetEnd<position||targetEnd>=b||!nested&&(!owner||owner.kind!==kind)||b>targetEnd+1&&values[targetEnd+1]!=='='||nested&&!classProfile)fail('source object bindings retain actual keys, nested patterns or binding aliases and optional defaults');
+   const keyExpression=computed?expression(tokens.slice(a+1,keyEnd)):undefined,hasDefault=b>targetEnd+1,defaultExpression=hasDefault?expression(tokens.slice(targetEnd+2,b)):absent(),defaultValue=hasDefault&&owner?inferArrowName(defaultExpression,owner.name):defaultExpression,pattern=nested?readObjectBinding(position,targetEnd,kind,depth+1):undefined,identity=pattern?.identity??owner.identity;
+   fields.push({$:'errorParameterField',identity,key:computed?[]:key.stringUnits??units(key.value),hasDefault,value:defaultValue,...(computed?{keyExpression}:{}),...(pattern===undefined?{}:{pattern})});if(kind==='parameter'&&!nested)initializingParameters.add(identity);
   }
   if(fields.length===0&&rest===undefined&&!classProfile)fail('empty object binding patterns require their explicit coercibility operation');
   return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault:false,value:absent(),...(rest===undefined?{}:{rest})};

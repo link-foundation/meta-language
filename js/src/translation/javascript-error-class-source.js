@@ -33,7 +33,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
-/** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression,keyExpression?:JavaScriptErrorExpression}} JavaScriptErrorParameterField */
+/** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression,keyExpression?:JavaScriptErrorExpression,pattern?:JavaScriptErrorParameter}} JavaScriptErrorParameterField */
 /** @typedef {{$:'errorRequiredParameter',identity:number} | {$:'errorDefaultParameter',identity:number,value:JavaScriptErrorExpression} | {$:'errorObjectParameter',identity:number,hasDefault:boolean,value:JavaScriptErrorExpression,fields:JavaScriptErrorParameterField[],rest?:number}} JavaScriptErrorParameter */
 /** @typedef {{$:'sourceObjectBindingStatement',pattern:JavaScriptErrorParameter,value:JavaScriptErrorExpression,mutable:boolean} | {$:'sourceConstStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceMutableStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceExpressionStatement',value:JavaScriptErrorExpression} | {$:'sourceReturnStatement',value:JavaScriptErrorExpression} | {$:'sourceThrowStatement',value:JavaScriptErrorExpression} | {$:'sourceIfStatement',condition:JavaScriptErrorExpression,yes:JavaScriptSourceStatement[],no:JavaScriptSourceStatement[]} | {$:'sourceBlockStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceDeclarationGroupStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceWhileStatement',condition:JavaScriptErrorExpression,body:JavaScriptSourceStatement[],target?:number,update?:JavaScriptErrorExpression,postTest?:boolean} | {$:'sourceControlBlockStatement',target:number,body:JavaScriptSourceStatement[]} | {$:'sourceControlJumpStatement',target:number,continuing:boolean} | {$:'sourceSwitchStatement',target:number,value:JavaScriptErrorExpression,clauses:JavaScriptSourceSwitchClause[]}} JavaScriptSourceStatement */
 /** @typedef {{$:'sourceCaseStatement',value:JavaScriptErrorExpression,body:JavaScriptSourceStatement[]} | {$:'sourceDefaultStatement',body:JavaScriptSourceStatement[]}} JavaScriptSourceSwitchClause */
@@ -242,9 +242,10 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
 /** Shared ordered ObjectBindingInitialization, preserving each field Get,
  * default and rest copy. The source value has already been evaluated once.
  * @param {JavaScriptErrorParameter} parameter @param {JavaScriptErrorSourceContext} first
- * @param {JavaScriptCallSource} continuation @param {boolean} mutable
+ * @param {JavaScriptCallSource} continuation @param {boolean} mutable @param {number} [depth]
  * @returns {JavaScriptErrorSourceExpression} */
-export function lowerJavaScriptSourceObjectBinding(parameter,first,continuation,mutable){
+export function lowerJavaScriptSourceObjectBinding(parameter,first,continuation,mutable,depth=0){
+ if(depth>128)return refuseJavaScriptErrorSource(first,'object binding lowering exceeds its actual nesting budget');
  if(parameter.$!=='errorObjectParameter')return refuseJavaScriptErrorSource(first,'object binding retains its actual object pattern');
  let context=first,source=continuation;
  const keys=[];
@@ -258,6 +259,7 @@ export function lowerJavaScriptSourceObjectBinding(parameter,first,continuation,
  }
  for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){
   const field=parameter.fields[fieldAt],key=keys[fieldAt];if(field===undefined||key===undefined)continue;
+  if(field.pattern!==undefined){const initialized=lowerJavaScriptSourceObjectBinding(field.pattern,context,source,mutable,depth+1);context=initialized.context;source=initialized.source;}
   const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},key.source,context);
   if(field.hasDefault){
    const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};
