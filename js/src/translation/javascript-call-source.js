@@ -15,7 +15,8 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceThrow',value:JavaScriptCallSource} |
  * {$:'sourceReturn',value:JavaScriptCallSource} |
  * {$:'sourceAssignBinding',identity:number,value:JavaScriptCallSource} |
- * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource,target?:number,update?:JavaScriptCallSource,postTest?:boolean} |
+ * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource,target?:number,update?:JavaScriptCallSource,postTest?:boolean,iteration?:JavaScriptCallSource} |
+ * {$:'sourceCloneBindingCell',identity:number,realm:bigint} |
  * {$:'sourceControlJump',target:number,continuing:boolean} |
  * {$:'sourceControlBlock',target:number,body:JavaScriptCallSource,after:JavaScriptCallSource} |
  * {$:'sourceSwitch',target:number,value:JavaScriptCallSource,clauses:JavaScriptCallSourceSwitchClause[],after:JavaScriptCallSource} |
@@ -130,6 +131,11 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    if(state.snapshotMutableBindings!==true)return refuseJavaScriptCallSource(state,'mutable source bindings require their snapshot compilation pass');
    const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.register===0||!binding.mutable||binding.initializing===true&&!(state.initializedBindings??[]).includes(source.identity))return refuseJavaScriptCallSource(state,'a mutable assignment needs its actual mutable local lexical register');
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register})};
+  }
+  case 'sourceCloneBindingCell':{
+   const binding=bindings.find(row=>row.identity===source.identity);if(state.snapshotMutableBindings!==true||binding===undefined||binding.register===0||binding.initializing===true||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'iteration cloning requires its actual initialized lexical cell and source realm');
+   const cell={$:'sourceObject',prototype:{$:'sourceConstant',value:{$:'null'}},realm:source.realm,properties:[{$:'sourceObjectProperty',key:{$:'sourceConstant',value:{$:'text',units:[118,97,108,117,101]}},value:{$:'sourceGet',object:{$:'sourceBinding',identity:source.identity},key:{$:'sourceConstant',value:{$:'text',units:[118,97,108,117,101]}}}}]},copied=lowerJavaScriptCallSourceExpression(cell,bindings,state,depth+1);
+   return {...copied,builder:appendJavaScriptCallSourceInstruction(copied.builder,{$:'copy',destination:binding.register,source:copied.register})};
   }
   case 'sourceWhile':return lowerJavaScriptCallSourceLoop(source,bindings,state,depth);
   case 'sourceControlBlock':{const scoped=pushJavaScriptCallSourceControlScope(state,source.target,'block'),body=lowerJavaScriptCallSourceExpression(source.body,bindings,scoped,depth+1),finished=finishJavaScriptCallSourceControlScope(body.builder,state,source.target,body.builder.instructions.length,-1);return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);}
@@ -463,18 +469,18 @@ export function lowerJavaScriptCallSourceLoop(source,bindings,builder,depth){
  if(source.$!=='sourceWhile')return refuseJavaScriptCallSource(builder,'loop lowering requires its actual condition and body');
  const scoped=source.target===undefined?builder:pushJavaScriptCallSourceControlScope(builder,source.target,'loop');
  if(source.postTest===true){
-  if(source.update!==undefined)return refuseJavaScriptCallSource(scoped,'a post-test loop retains its actual separate condition without an invented update');
+  if(source.update!==undefined||source.iteration!==undefined)return refuseJavaScriptCallSource(scoped,'a post-test loop retains its actual separate condition without an invented update or lexical head clone');
   const start=scoped.instructions.length,body=lowerJavaScriptCallSourceExpression(source.body,bindings,scoped,depth+1),test=body.builder.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,body.builder,depth+1),end=condition.builder.instructions.length+1;
   let finished=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:start,no:end});
   if(source.target!==undefined)finished=finishJavaScriptCallSourceControlScope(finished,builder,source.target,end,test);
   return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);
  }
- const start=scoped.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,scoped,depth+1),branch=condition.builder.instructions.length;
+ const initial=source.iteration===undefined?scoped:lowerJavaScriptCallSourceExpression(source.iteration,bindings,scoped,depth+1).builder,start=initial.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,initial,depth+1),branch=condition.builder.instructions.length;
  const test=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:branch+1,no:0}),body=lowerJavaScriptCallSourceExpression(source.body,bindings,test,depth+1),update=body.builder.instructions.length;
- const updated=source.update===undefined?body.builder:lowerJavaScriptCallSourceExpression(source.update,bindings,body.builder,depth+1).builder;
+ const cloned=source.iteration===undefined?body.builder:lowerJavaScriptCallSourceExpression(source.iteration,bindings,body.builder,depth+1).builder,updated=source.update===undefined?cloned:lowerJavaScriptCallSourceExpression(source.update,bindings,cloned,depth+1).builder;
  const loop=appendJavaScriptCallSourceInstruction(updated,{$:'jump',target:start}),end=loop.instructions.length;
  let finished={...loop,instructions:loop.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction)};
- if(source.target!==undefined)finished=finishJavaScriptCallSourceControlScope(finished,builder,source.target,end,source.update===undefined?start:update);
+ if(source.target!==undefined)finished=finishJavaScriptCallSourceControlScope(finished,builder,source.target,end,source.update===undefined&&source.iteration===undefined?start:update);
  return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);
 }
 /** Switch statement sequencing: compare once-captured input to case selectors

@@ -120,8 +120,8 @@ updates and prefix/postfix operations access its current value through shared
 property instructions. The holder is never returned instead of the binding's
 value or published as a source property. Independent parent/block invocations
 allocate independent holders; sibling functions/methods share one. Capture
-during initialization, later-binding TDZ and for-head
-per-iteration cloning require their explicit environment extensions. Simple
+during initialization and later-binding TDZ require their explicit environment
+extensions. Simple
 captured parameters use the same shared storage, installed after each required,
 default or rest value is prepared and before later parameter initialization.
 Defaults therefore see earlier current values, and rest keeps the actual frame
@@ -140,6 +140,12 @@ For-of captured mutable heads allocate cells inside each actual body entry,
 after the iterator value is received and before body statements execute.
 Recursive heads use the shared pattern initializer. Continue retains the current
 captured holder while the next step initializes a distinct holder.
+Normal lexical for heads clone all captured mutable binding holders before the
+first test and before each update, preserving their current values in fresh
+per-iteration storage. Initializer closures retain the pre-iteration holders;
+condition/body closures retain their own iteration. Continue, including through
+finally, targets cloning before update; break exits without that clone. Shared
+recursive head leaves use the same identity directory and cloning operation.
 Nested code and static code share explicit instruction and capture budgets.
 Parameter initialization uses one shared lowerer for functions, methods and
 arrows. Fixed object-field aliases retain actual binding identities; defaults

@@ -1,6 +1,7 @@
 // Deferred source controls for shared lexical storage, no behavior at import.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {lowerJavaScriptSourceStatements,lowerJavaScriptSourceParameters,constructJavaScriptSourcePatternBinding,collectJavaScriptPatternBindingDeclarations} from '../src/translation/javascript-error-class-source.js';
+import {compileJavaScriptMutableCallSourceWithCaptures} from '../src/translation/javascript-call-source.js';
 const absent={$:'undefined'},constant=value=>({$:'errorConstant',value});
 function context(){return {$:'errorSourceContext',registry:{$:'errorRegistry',owners:[],operations:[],intrinsics:[],realms:[1n],exoticKey:absent},realm:{$:'errorRealmOperations',realm:1n,objectPrototype:absent,get:absent,assign:absent},capabilities:[],next:20,visits:0,error:'',mutableBindings:true};}
 test('captured local declaration binds a stable private cell identity with mutable value storage',()=>{
@@ -20,4 +21,7 @@ test('simple shared catch cells initialize the handler register before handler b
 });
 test('for-of shared simple heads wrap the actual iteration register inside each body entry',()=>{
  const lowered=lowerJavaScriptSourceStatements([{$:'sourceForOfStatement',target:9,binding:1,mutable:true,input:constant(absent),iteratorKey:constant({$:'symbol',identity:99n}),body:[{$:'sourceReturnStatement',value:{$:'errorModuleCell',identity:1}}]}],0,{...context(),sharedBindings:[1]},{$:'sourceConstant',value:absent},0);assert.equal(lowered.context.error,'');assert.equal(lowered.source.value.$,'sourceForOf');const body=lowered.source.value.body;assert.equal(body.$,'sourceLocalLet');assert.equal(body.value.$,'sourceAssignBinding');assert.equal(body.value.identity,1);assert.equal(body.value.value.$,'sourceObject');
+});
+test('normal for head clones precede the first test and each update including continue without an update expression',()=>{
+ const constant=value=>({$:'sourceConstant',value}),source={$:'sourceLocalLet',identity:1,mutable:false,value:{$:'sourceObject',prototype:constant({$:'null'}),realm:1n,properties:[{$:'sourceObjectProperty',key:constant({$:'text',units:[118,97,108,117,101]}),value:constant({$:'number',value:0})}]},body:{$:'sourceWhile',target:9,condition:constant({$:'boolean',value:true}),body:{$:'sourceControlJump',target:9,continuing:true},iteration:{$:'sourceCloneBindingCell',identity:1,realm:1n},after:constant(absent)}},compiled=compileJavaScriptMutableCallSourceWithCaptures(source,[],[]);assert.equal(compiled.error,'');const code=compiled.instructions,allocations=code.flatMap((row,index)=>row.$==='ordinaryAllocate'?[index]:[]);assert.equal(allocations.length,3);const forward=code.find((row,index)=>row.$==='jump'&&row.target>index),back=code.findLast((row,index)=>row.$==='jump'&&row.target<index);assert.ok(forward.target>allocations[1]&&forward.target<=allocations[2]);assert.ok(back.target>allocations[1]&&back.target<allocations[2]);
 });

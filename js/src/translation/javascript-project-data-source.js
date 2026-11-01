@@ -73,13 +73,13 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  if(arrowNodes.length+methodNodes.length>4096)fail('source lexical templates exceed their explicit site budget');
  // A shared lexical cell is private source storage, using the same null-
  // prototype value holder as module cells. Its identity, not its mutable value,
- // is captured. Loop-head cloning and TDZ initialization are separate profiles.
+ // is captured. Loop-head cloning is explicit; runtime TDZ remains separate.
  const sharedBindingCells=new Set();
  if(classProfile)for(const binding of bindings){
   if(!['let','parameter'].includes(binding.kind)||binding.scope==='scope:0')continue;
   if(binding.kind==='let'){
    const declaration=containing(binding,['variable_declarator']),loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);
-   if(loop){const body=sourceField(loop,'body');if(!body)continue;if(binding.declaration.start<body.start&&loop.term==='for_statement')continue;}
+   if(loop){const body=sourceField(loop,'body');if(!body)continue;}
    if(!declaration&&(!loop||loop.term==='for_statement'))continue;
   }else{
    const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>'),clause=containing(binding,['catch_clause']),caught=clause?sourceField(clause,'parameter'):null,inCatch=caught&&binding.declaration.start>=caught.start&&binding.declaration.end<=caught.end;
@@ -415,7 +415,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     }
     const condition=parts[1][0]===parts[1][1]?constant({$:'boolean',value:true}):expression(tokens.slice(...parts[1])),update=parts[2][0]===parts[2][1]?null:expression(tokens.slice(...parts[2])),target=nextBinding++;at=close+1;let body;
     controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
-    return {$:'sourceBlockStatement',statements:initializers.concat([{$:'sourceWhileStatement',target,condition,...(update!==null?{update}:{}),body}])};
+    const iterationBindings=values[first]==='let'?bindings.filter(binding=>binding.kind==='let'&&sharedBindingCells.has(binding.identity)&&containing(binding,['lexical_declaration'])?.start===tokens[first].start).toSorted((a,b)=>a.declaration.start-b.declaration.start).map(binding=>binding.identity):[];
+    return {$:'sourceBlockStatement',statements:initializers.concat([{$:'sourceWhileStatement',target,condition,...(update!==null?{update}:{}),body,...(iterationBindings.length?{iterationBindings}:{})}])};
    }
    if(word==='{'){at--;return {$:'sourceBlockStatement',statements:one()};}
    const begin=at-1;let end=at;for(;end<last&&values[end]!==';';end++)if(['(','{','['].includes(values[end])){const close=findJavaScriptClassGroupEnd(values,end);if(close<0||close>=last)fail('source statement groups must close');end=close;}if(end>=last)fail('this source statement profile requires explicit actual semicolons');at=end+1;

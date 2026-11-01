@@ -865,3 +865,21 @@ Three originals cover simple/pattern heads and continue. One authored lowering
 control checks per-body wrapping of the actual loop register. No execution or
 generation occurred. Normal for-head environment cloning, runtime TDZ and
 initialization-time recursive captures remain further drafting work.
+
+### Normal lexical for per-iteration cell cloning draft
+
+Captured mutable normal for-head bindings now receive shared cells and retain
+their actual source identity list on the loop statement. Source lowering drafts
+the same clone expression before the initial test and before every update.
+Cloning copies current values into new private holders and replaces only the
+internal holder registers. Initializer closures keep the original environment;
+condition/body closures keep each iteration's environment. Continue targets the
+clone/update region even when no update expression exists, and existing
+completion machinery routes finally before it. Break exits before cloning.
+Recursive binding heads participate through their shared leaf identity directory.
+
+Six originals cover normal capture, initializer capture, continue/finally,
+destructured heads, multiple bindings and final-false-condition capture. One
+authored compiler control checks two clone sites and the continue/back-edge
+targets. No execution/generation/validation occurred. Runtime TDZ and recursive
+capture during initialization remain further source drafting work.

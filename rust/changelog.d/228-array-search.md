@@ -41,6 +41,10 @@ storage per handler activation for closures retained beyond catch scope.
 Draft captured mutable for-of heads with fresh cells per received iterator value,
 including recursive patterns and continue paths. Execution remains deferred.
 
+Draft normal lexical for-head environment cloning before the first test and
+each update, preserving initializer/condition/body closure environments and
+continue/finally control flow. Execution remains deferred.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target
