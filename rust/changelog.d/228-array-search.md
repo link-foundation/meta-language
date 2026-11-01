@@ -69,3 +69,6 @@ rest initialization, preserving failures to the enclosing handler.
 
 Draft source finally and common deferred return/throw/control completions,
 including loop exit unwinding and constructor normalization after finalizers.
+
+Draft bounded per-frame iterator region ownership and preserve Array spread
+operand/key snapshots before callbacks.

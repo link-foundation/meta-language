@@ -543,3 +543,31 @@ This provides completion machinery for the still-required iterator-region
 connections in for-of and array binding/default evaluation. Those consumer
 connections, general shared lexical environments and remaining language surfaces
 continue to require source drafting. No ledger/evidence status was changed.
+
+
+### Iterator consumer region ownership foundation draft
+
+`javascript-iterator-regions.js` drafts ordered source slot ownership for actual
+internal iterator records: bounded opening, cached identity-preserving updates,
+monotonic exhaustion and explicit release. Three deferred controls cover ordering
+and duplicate opening, identity/exhaustion invariants, nesting and malformed
+coordinates. Library/native-control generation inputs are registered. Array
+spread source lowering additionally holds its operand and iterator key in
+private registers before callbacks; its existing compiler control now asserts
+the actual operand copy without removing prior assertions.
+
+The next source/VM connection should use one iteratorProtocol instruction with
+acquire/step/close operations and a per-frame optional region directory. Acquire
+belongs outside a generated sourceFinally; step binds actual value/done registers
+in the source loop; close uses the nearest deferred completion for throw
+precedence and skips already-done records. Continue targeting this loop remains
+inside its region; exits crossing the region use the common completion unwinder.
+Getter/method throws during step must update done before the generated finalizer
+checks the record. Throws from selected close getters/calls must resume the
+shared close protocol before ordinary handler unwinding, preserving an original
+throw while letting new cleanup failures override returns/control jumps. Close
+completion/error paths release the actual region. Primitive prototype resumption
+and trace/native replay should extend the existing common API rather than
+introduce host iterator execution. Then connect for-of source heads/body/bindings
+and Array binding/default/IteratorClose consumers through the same primitives.
+No tests, generation or compilation ran; these connections remain drafting work.

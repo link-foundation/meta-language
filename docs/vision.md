@@ -12353,3 +12353,11 @@ original completion. Return normalization for constructors follows finalizer
 execution. Loop exits retain their actual destination and handler depth and run
 crossed finalizers before reaching that destination. All completion values and
 coordinates remain bounded, inspectable common data.
+
+Iterator consumer regions retain internal iterator records in ordered slots
+owned by their actual call frame. These slots are control data rather than
+ECMAScript Objects. Opening cannot overwrite an active region; advancement
+preserves cached iterator/next identities and cannot revive exhaustion; release
+is explicit. Each frame shares a bounded region directory. Source iterator
+operands and keys are held before callbacks so later mutable binding writes
+cannot replace an already selected value.
