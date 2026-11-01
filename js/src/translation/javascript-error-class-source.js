@@ -34,8 +34,8 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
 /** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression}} JavaScriptErrorParameterField */
-/** @typedef {{$:'errorRequiredParameter',identity:number} | {$:'errorDefaultParameter',identity:number,value:JavaScriptErrorExpression} | {$:'errorObjectParameter',identity:number,hasDefault:boolean,value:JavaScriptErrorExpression,fields:JavaScriptErrorParameterField[]}} JavaScriptErrorParameter */
-/** @typedef {{$:'sourceConstStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceMutableStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceExpressionStatement',value:JavaScriptErrorExpression} | {$:'sourceReturnStatement',value:JavaScriptErrorExpression} | {$:'sourceThrowStatement',value:JavaScriptErrorExpression} | {$:'sourceIfStatement',condition:JavaScriptErrorExpression,yes:JavaScriptSourceStatement[],no:JavaScriptSourceStatement[]} | {$:'sourceBlockStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceDeclarationGroupStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceWhileStatement',condition:JavaScriptErrorExpression,body:JavaScriptSourceStatement[],target?:number,update?:JavaScriptErrorExpression,postTest?:boolean} | {$:'sourceControlBlockStatement',target:number,body:JavaScriptSourceStatement[]} | {$:'sourceControlJumpStatement',target:number,continuing:boolean} | {$:'sourceSwitchStatement',target:number,value:JavaScriptErrorExpression,clauses:JavaScriptSourceSwitchClause[]}} JavaScriptSourceStatement */
+/** @typedef {{$:'errorRequiredParameter',identity:number} | {$:'errorDefaultParameter',identity:number,value:JavaScriptErrorExpression} | {$:'errorObjectParameter',identity:number,hasDefault:boolean,value:JavaScriptErrorExpression,fields:JavaScriptErrorParameterField[],rest?:number}} JavaScriptErrorParameter */
+/** @typedef {{$:'sourceObjectBindingStatement',pattern:JavaScriptErrorParameter,value:JavaScriptErrorExpression,mutable:boolean} | {$:'sourceConstStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceMutableStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceExpressionStatement',value:JavaScriptErrorExpression} | {$:'sourceReturnStatement',value:JavaScriptErrorExpression} | {$:'sourceThrowStatement',value:JavaScriptErrorExpression} | {$:'sourceIfStatement',condition:JavaScriptErrorExpression,yes:JavaScriptSourceStatement[],no:JavaScriptSourceStatement[]} | {$:'sourceBlockStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceDeclarationGroupStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceWhileStatement',condition:JavaScriptErrorExpression,body:JavaScriptSourceStatement[],target?:number,update?:JavaScriptErrorExpression,postTest?:boolean} | {$:'sourceControlBlockStatement',target:number,body:JavaScriptSourceStatement[]} | {$:'sourceControlJumpStatement',target:number,continuing:boolean} | {$:'sourceSwitchStatement',target:number,value:JavaScriptErrorExpression,clauses:JavaScriptSourceSwitchClause[]}} JavaScriptSourceStatement */
 /** @typedef {{$:'sourceCaseStatement',value:JavaScriptErrorExpression,body:JavaScriptSourceStatement[]} | {$:'sourceDefaultStatement',body:JavaScriptSourceStatement[]}} JavaScriptSourceSwitchClause */
 /** @typedef {{$:'errorFieldAssignment',name:number[],value:JavaScriptErrorExpression}} JavaScriptErrorFieldAssignment */
 /** @typedef {{$:'errorConstructorPlan',identity:number,name:string,baseClass:string,parameters:JavaScriptErrorParameter[],message:JavaScriptErrorExpression,fields:JavaScriptErrorFieldAssignment[]} |
@@ -215,6 +215,10 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
  if(statement.$==='sourceControlJumpStatement')return {$:'errorSourceExpression',source:{$:'sourceControlJump',target:statement.target,continuing:statement.continuing},context};
  if(statement.$==='sourceReturnStatement'||statement.$==='sourceThrowStatement'){const value=lowerJavaScriptErrorExpression(statement.value,context,depth+1);return {...value,source:{$:statement.$==='sourceThrowStatement'?'sourceThrow':'sourceReturn',value:value.source}};}
  const rest=lowerJavaScriptSourceStatements(statements,first+1,context,continuation,depth+1);
+ if(statement.$==='sourceObjectBindingStatement'){
+  const value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1),initialized=lowerJavaScriptSourceObjectBinding(statement.pattern,value.context,rest.source,statement.mutable);
+  return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(initialized.context,statement.pattern.identity,value.source,initialized.source,false),context:initialized.context};
+ }
  if(statement.$==='sourceBlockStatement'||statement.$==='sourceDeclarationGroupStatement')return lowerJavaScriptSourceStatements(statement.statements,0,rest.context,rest.source,depth+1);
  if(statement.$==='sourceControlBlockStatement'){
   const body=lowerJavaScriptSourceStatements(statement.body,0,rest.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);
@@ -235,6 +239,26 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
  if(statement.$==='sourceIfStatement'){const condition=lowerJavaScriptErrorExpression(statement.condition,rest.context,depth+1),yes=lowerJavaScriptSourceStatements(statement.yes,0,condition.context,rest.source,depth+1),no=lowerJavaScriptSourceStatements(statement.no,0,yes.context,rest.source,depth+1);return {$:'errorSourceExpression',source:{$:'sourceIf',condition:condition.source,yes:yes.source,no:no.source},context:no.context};}
  const local=statement.$==='sourceConstStatement'||statement.$==='sourceMutableStatement',value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1),identity=local?statement.identity:value.context.next,next=local?value.context:{...value.context,next:value.context.next+1};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,identity,value.source,rest.source,statement.$==='sourceMutableStatement'),context:next};
 }
+/** Shared ordered ObjectBindingInitialization, preserving each field Get,
+ * default and rest copy. The source value has already been evaluated once.
+ * @param {JavaScriptErrorParameter} parameter @param {JavaScriptErrorSourceContext} first
+ * @param {JavaScriptCallSource} continuation @param {boolean} mutable
+ * @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptSourceObjectBinding(parameter,first,continuation,mutable){
+ if(parameter.$!=='errorObjectParameter')return refuseJavaScriptErrorSource(first,'object binding retains its actual object pattern');
+ let context=first,source=continuation;
+    if(parameter.rest!==undefined){
+     const input={$:'sourceBinding',identity:parameter.identity},excluded=parameter.fields.map(field=>constructJavaScriptErrorConstant({$:'text',units:field.key}));
+     const value={$:'sourceObject',prototype:constructJavaScriptErrorConstant(context.realm.objectPrototype),realm:context.realm.realm,properties:[{$:'sourceObjectSpread',input,excluded}]};
+     source=constructJavaScriptErrorLocalBinding(context,parameter.rest,value,source,mutable);
+    }
+    for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){const field=parameter.fields[fieldAt];if(field===undefined)continue;const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},constructJavaScriptErrorConstant({$:'text',units:field.key}),context);
+     if(field.hasDefault){const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};source=constructJavaScriptErrorLocalBinding(context,identity,raw,constructJavaScriptErrorLocalBinding(context,field.identity,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:saved,right:constructJavaScriptErrorConstant({$:'undefined'})},yes:value.source,no:saved},source,mutable),false);}
+     else source=constructJavaScriptErrorLocalBinding(context,field.identity,raw,source,mutable);
+    }
+    {const identity=context.next;context={...context,next:identity+1};source=constructJavaScriptErrorLocalBinding(context,identity,{$:'sourcePrimitive',operation:'require object coercible',arguments:[{$:'sourceBinding',identity:parameter.identity}]},source,false);}
+ return {$:'errorSourceExpression',source,context};
+}
 /** Shared ordered initialization for ordinary functions, methods and arrows.
  * @param {JavaScriptErrorParameter[]} parameters @param {JavaScriptErrorSourceContext} first
  * @param {JavaScriptCallSource} continuation @returns {JavaScriptErrorSourceExpression} */
@@ -242,10 +266,7 @@ export function lowerJavaScriptSourceParameters(parameters,first,continuation){
  let context=first,source=continuation;
   for(let at=parameters.length-1;at>=0;at-=1){const parameter=parameters[at];if(parameter===undefined)continue;
    if(parameter.$==='errorObjectParameter'){
-    for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){const field=parameter.fields[fieldAt];if(field===undefined)continue;const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},constructJavaScriptErrorConstant({$:'text',units:field.key}),context);
-     if(field.hasDefault){const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};source=constructJavaScriptErrorLocalBinding(context,identity,raw,constructJavaScriptErrorLocalBinding(context,field.identity,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:saved,right:constructJavaScriptErrorConstant({$:'undefined'})},yes:value.source,no:saved},source,true),false);}
-     else source=constructJavaScriptErrorLocalBinding(context,field.identity,raw,source,true);
-    }
+    const initialized=lowerJavaScriptSourceObjectBinding(parameter,context,source,true);context=initialized.context;source=initialized.source;
     if(parameter.hasDefault){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
    }else if(parameter.$==='errorDefaultParameter'){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
   }

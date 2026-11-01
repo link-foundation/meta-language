@@ -9,6 +9,17 @@ export const javascriptOrdinaryClassDecisions=[
  {operation:'testJavaScriptOrdinaryClassReceiverResult',arguments:['strict','number'],expected:false}
 ];
 export const javascriptOrdinaryClassOriginals=[
+ {name:'arrow empty object binding requires its real coercibility operation',source:'export function read(input) { const pick = ({}) => 7; return pick(input); }',entries:['read'],entry:'read',arguments:[{}],expected:7},
+ {name:'lexical object rest retains aliases and default evaluation order',source:'export function read(input) { const { selected: first = 3, other = first + 1, ...rest } = input; return first + other + rest.last; }',entries:['read'],entry:'read',arguments:[{last:5}],expected:12},
+ {name:'mutable lexical rest binding is independent of its source',source:'export function read(input) { let { selected, ...rest } = input; selected = 9; rest = { other: 7 }; return selected + rest.other + input.selected; }',entries:['read'],entry:'read',arguments:[{selected:2,other:5}],expected:18},
+ {name:'empty lexical object binding requires coercibility before following statements',source:'export function read(input) { const {} = input; return 7; }',entries:['read'],entry:'read',arguments:[{}],expected:7},
+ {name:'rest copying happens after field defaults mutate the original object',source:'export function read(input) { const { absent = (input.added = 9), ...rest } = input; return rest.added + absent; }',entries:['read'],entry:'read',arguments:[{}],expected:18},
+
+ {name:'object rest parameter retains unselected own fields',source:'export function read(input) { const pick = ({ selected, ...rest }) => selected + rest.other; return pick(input); }',entries:['read'],entry:'read',arguments:[{selected:2,other:5}],expected:7},
+ {name:'object rest parameter excludes original key after alias and default',source:'function pick({ selected: alias = 3, ...rest }) { return alias + rest.other + (rest.selected === undefined ? 10 : 100); } export function read(input) { return pick(input); }',entries:['read'],entry:'read',arguments:[{other:5}],expected:18},
+ {name:'object rest parameter receives a fresh ordinary object',source:'function pick({ ...rest }) { rest.other = 9; return rest; } export function read(input) { const rest = pick(input); return rest !== input && rest.other === 9 && input.other === 5; }',entries:['read'],entry:'read',arguments:[{other:5}],expected:true},
+ {name:'object rest excludes nonenumerable array length while copying actual indices',source:'function pick({ "0": first, ...rest }) { return first + rest[1] + (rest.length === undefined ? 10 : 100); } export function read() { return pick([2, 5]); }',entries:['read'],entry:'read',arguments:[],expected:17},
+
  {name:'actual ordinary class receiver and prototype method',source:'class Box { constructor(value) { this.value = value; } get() { return this.value; } } export function read(value) { const box = new Box(value); return box.get(); }',entries:['read'],entry:'read',arguments:[17],expected:17},
  {name:'base class default sees the allocated this receiver',source:'class Box { constructor(value = this) { this.value = value; } same() { return this.value === this; } } export function read() { return new Box().same(); }',entries:['read'],entry:'read',arguments:[],expected:true},
  {name:'base constructor primitive return selects the actual receiver',source:'class Box { constructor(value) { this.value = value; return 9; } get() { return this.value; } } export function read() { return new Box(23).get(); }',entries:['read'],entry:'read',arguments:[],expected:23},
@@ -221,7 +232,6 @@ export const javascriptOrdinaryClassRefusals=[
  {name:'dynamic computed anonymous function naming retains its runtime key obligation',source:'export function read(key) { const output = { [key]: () => 7 }; return output[key].name; }',entries:['read']},
  {name:'literal prototype setters retain their prototype installation obligation',source:'export function read(input) { const output = { __proto__: input }; return output; }',entries:['read']},
  {name:'arrow later-parameter TDZ needs its explicit lexical initialization cells',source:'export function read() { const pick = (first = second, second = 7) => first; return pick(); }',entries:['read']},
- {name:'arrow empty object binding requires its real coercibility operation',source:'export function read(input) { const pick = ({}) => 7; return pick(input); }',entries:['read']},
  {name:'unbraced switch declarations retain their shared TDZ environment obligation',source:'export function read(kind) { switch (kind) { case "first": const value = 7; case "second": return value; } }',entries:['read']},
  {name:'parenthesized captured binding writes still require their lexical cell',source:'export function read() { let value = 1; const current = () => value; (value) = 9; return current(); }',entries:['read']},
  {name:'mutable captured bindings retain their shared lexical cell obligation',source:'export function read() { let value = 1; const current = () => value; value = 9; return current(); }',entries:['read']},

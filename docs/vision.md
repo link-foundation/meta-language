@@ -12211,3 +12211,16 @@ suspended request, uses the adopted latest heap, and publishes only the common
 machine's monotonic authority extension. Subsequent steps and Error operations
 use the updated program. Unknown constructors stay suspended when no new
 authenticated facts exist; metadata absence never authorizes host body execution.
+
+Fixed object binding patterns share one initialization lowerer across parameters
+and local const/let declarations. Evaluate the source once, require object
+coercibility even for empty patterns, read fields and apply undefined-only
+defaults in source order, then create a fresh ordinary rest Object through shared
+CopyDataProperties with the original field keys excluded. Rest copying observes
+mutations from preceding defaults. Parameter initialization and local mutable or
+constant bindings retain their actual identities. Unbraced switch object bindings
+remain subject to the shared TDZ environment requirement. Nullish values throw
+TypeError without property access; exact engine diagnostic text remains an
+explicit version-qualified compatibility obligation. See the normative
+[coercibility operation](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-requireobjectcoercible)
+and [rest binding initialization](https://tc39.es/ecma262/2026/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-restbindinginitialization).

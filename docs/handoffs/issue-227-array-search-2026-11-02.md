@@ -260,3 +260,28 @@ refusal and forged selected-constructor refusal. No control executed.
 Portable trace/codec transport of authority updates, exotic constructor protocols
 and native artifact regeneration remain further work; these are not claimed as
 observations or completed requirements.
+
+
+### Shared fixed object binding/rest source draft
+
+Parameters and const/let declarators now use one object binding reader and one
+ordered lowerer. Fixed keys, aliases and defaults precede fresh rest copying;
+original source keys become shared CopyDataProperties exclusions. The source
+initializer is retained once. Required object coercibility precedes all field
+work, including empty patterns and rest-only patterns. The scalar operation
+returns unused/undefined, rejects nullish inputs and never calls a getter.
+Unbraced switch object bindings preserve the existing TDZ refusal.
+
+Eight new originals cover rest parameters, aliases/defaults, independent rest
+Objects, Array own indices, lexical const/let patterns, empty lexical patterns and
+default effects preceding rest copy. The previously retained empty-arrow-pattern
+source moved from refusal to the original-source oracle inventory with its exact
+source/name retained. This expectation changes because the missing coercibility
+operation is now drafted, consistent with ECMAScript 2026 RequireObjectCoercible
+and RestBindingInitialization (linked in the vision). Its input and successful
+result assertions are now explicit. A scalar control covers null/undefined, all
+other value categories and wrong arity. No assertion executed.
+
+Computed/nested object patterns, array/rest iterators, general TDZ cells and exact
+engine nullish-pattern diagnostics remain further work. Generated products and
+source-register reconciliation remain deferred, as do all tests and compilation.

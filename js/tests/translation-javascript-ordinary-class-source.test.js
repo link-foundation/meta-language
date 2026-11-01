@@ -48,3 +48,10 @@ test('computed assignment checks nullish receiver after key expression and RHS b
  const transition=runJavaScriptSourceTransition(instance.embedding,instance.begin('read',[argument]),{steps:65536}).transition;assert.equal(transition.$,'machineThrow');assert.equal(instance.embedding.decode(transition.value).name,'TypeError');assert.deepEqual(instance.embedding.materializeData(argument),{key:1,converted:0,rhs:1});assert.notDeepEqual(instance.embedding.materializeData(argument),previousDraftExpectation);
  const declarations=capture.origins.filter(origin=>origin.classBinding===undefined||origin.constructor===true).map(origin=>source.slice(origin.start,origin.end)).join('\n'),original=compileFunction('"use strict";'+declarations+';return read;',[])(),expected={key:0,converted:0,rhs:0};assert.throws(()=>original(expected),TypeError);assert.deepEqual(expected,{key:1,converted:0,rhs:1});
 });
+
+
+test('object binding coercibility rejects only nullish semantic values without inspecting properties',()=>{
+ for(const value of [{$:'undefined'},{$:'null'}]){const actual=primitives.executeJavaScriptCallPrimitive('require object coercible',[value]);assert.equal(actual.$,'primitiveError');assert.equal(actual.errorClass,'TypeError');}
+ for(const value of [{$:'boolean',value:false},{$:'number',value:0},{$:'integer',value:0n},{$:'text',units:[]},{$:'symbol',identity:1n},{$:'object',identity:1n,callable:false}])assert.deepEqual(primitives.executeJavaScriptCallPrimitive('require object coercible',[value]),{$:'primitiveValue',value:{$:'undefined'}});
+ assert.notEqual(primitives.readJavaScriptCallPrimitiveArityError('require object coercible',0),'');assert.notEqual(primitives.readJavaScriptCallPrimitiveArityError('require object coercible',2),'');
+});

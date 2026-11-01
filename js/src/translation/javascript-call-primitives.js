@@ -26,7 +26,7 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
+ const unary=['require object coercible','test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
  const binary=['compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
  const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
@@ -174,6 +174,7 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='compare relational values')return executeJavaScriptCallRelationalComparison(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
  if(operation==='convert primitive value'||operation==='convert number primitive value'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveInvalid',reason:'object ToPrimitive requires its actual selected-hint continuation'}:{$:'primitiveValue',value};}
  if(operation==='add primitive values')return executeJavaScriptCallPrimitiveAddition(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
+ if(operation==='require object coercible'){const value=values[0]??{$:'undefined'};return value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot destructure null or undefined'}:{$:'primitiveValue',value:{$:'undefined'}};}
  if(operation==='test object value')return {$:'primitiveValue',value:{$:'boolean',value:(values[0]??{$:'undefined'}).$==='object'}};
  if(operation==='read semantic type'){
   const value=values[0]??{$:'undefined'},kind=value.$==='null'?'object':value.$==='object'?(value.callable?'function':'object'):value.$==='integer'?'bigint':value.$==='text'||value.$==='sourceText'?'string':value.$,units=[];

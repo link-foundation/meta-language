@@ -195,6 +195,21 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   const result=parse(0);if(at!==input.length)fail('source expression cannot discard unconsumed syntax');return result;
  }
  function split(first,last,separator,preserveEmpty=false){const result=[];let start=first;for(let at=first;at<last;at++){if(['(','{','['].includes(values[at])){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>=last)fail('source groups must remain complete');at=end;}else if(values[at]===separator){result.push([start,at]);start=at+1;}}if(start<last||preserveEmpty)result.push([start,last]);return result;}
+ // Shared fixed object binding shape; evaluation is lowered once for
+ // parameters and lexical declarations, including coercibility and rest copy.
+ function readObjectBinding(first,close,kind){
+  const fields=[];let rest;
+  for(const [a,b]of split(first+1,close,',')){
+   if(values[a]==='...'){
+    const owner=declared(tokens[a+1]);if(!classProfile||rest!==undefined||b!==close||values[close-1]===','||b!==a+2||tokens[a+1]?.kind!=='identifier'||!owner||owner.kind!==kind)fail('object rest retains one final actual identifier binding without an initializer');
+    rest=owner.identity;if(kind==='parameter')initializingParameters.add(rest);continue;
+   }
+   const key=tokens[a],position=values[a+1]===':'?a+2:a,owner=declared(tokens[position]);if(!['identifier','string'].includes(key.kind)||!owner||owner.kind!==kind||position>=b||b>position+1&&values[position+1]!=='=')fail('source object bindings need actual fixed field keys, binding aliases and optional defaults');
+   const hasDefault=b>position+1,defaultValue=hasDefault?inferArrowName(expression(tokens.slice(position+2,b)),owner.name):absent();fields.push({$:'errorParameterField',identity:owner.identity,key:key.stringUnits??units(key.value),hasDefault,value:defaultValue});if(kind==='parameter')initializingParameters.add(owner.identity);
+  }
+  if(fields.length===0&&rest===undefined&&!classProfile)fail('empty object binding patterns require their explicit coercibility operation');
+  return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault:false,value:absent(),...(rest===undefined?{}:{rest})};
+ }
  function readSourceParameters(header){
   if(header.implicitConstructor)return [];
   const previous=initializingParameters,previousOwners=initializingParameterOwners;initializingParameters=new Set();
@@ -202,14 +217,9 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   try{return split(header.open+1,header.close,',').map(([first,last])=>{
    const token=tokens[first],binding=declared(token);
    if(token.value==='{'){
-    const close=findJavaScriptClassGroupEnd(values,first),fields=[];if(close<0||close>=last)fail('source object parameter retains its complete binding pattern');
+    const close=findJavaScriptClassGroupEnd(values,first);if(close<0||close>=last)fail('source object parameter retains its complete binding pattern');
     const hasDefault=close+1<last;if(hasDefault&&values[close+1]!=='=')fail('object parameter default needs its actual source expression');const value=hasDefault?expression(tokens.slice(close+2,last)):absent();
-    for(const [a,b]of split(first+1,close,',')){
-     const key=tokens[a],position=values[a+1]===':'?a+2:a,owner=declared(tokens[position]);if(!['identifier','string'].includes(key.kind)||!owner||owner.kind!=='parameter'||position>=b||b>position+1&&values[position+1]!=='=')fail('source object parameters need actual fixed field keys, binding aliases and optional defaults');
-     const hasDefault=b>position+1,defaultValue=hasDefault?inferArrowName(expression(tokens.slice(position+2,b)),owner.name):absent();fields.push({$:'errorParameterField',identity:owner.identity,key:key.stringUnits??units(key.value),hasDefault,value:defaultValue});initializingParameters.add(owner.identity);
-    }
-    if(fields.length===0)fail('empty object binding patterns require their explicit coercibility operation');
-    return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault,value};
+    return {...readObjectBinding(first,close,'parameter'),hasDefault,value};
    }
    if(!binding||binding.kind!=='parameter'||last>first+1&&values[first+1]!=='=')fail('source parameters need actual fixed binding identities; rest and other patterns need their own lowering');
    const parameter=last===first+1?{$:'errorRequiredParameter',identity:binding.identity}:{$:'errorDefaultParameter',identity:binding.identity,value:inferArrowName(expression(tokens.slice(first+2,last)),binding.name)};initializingParameters.add(binding.identity);return parameter;
@@ -219,6 +229,10 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   if(!['let','const'].includes(kind)||kind==='let'&&!classProfile)fail('lexical declaration groups require their actual source initialization profile');
   const result=[];
   for(const [start,end]of split(first,last,',')){
+   if(classProfile&&values[start]==='{'){
+    const close=findJavaScriptClassGroupEnd(values,start);if(close<0||close+2>=end||values[close+1]!=='=')fail('lexical object bindings retain their complete required source initializer');
+    const value=expression(tokens.slice(close+2,end)),pattern=readObjectBinding(start,close,kind);result.push({$:'sourceObjectBindingStatement',pattern,value,mutable:kind==='let'});continue;
+   }
    const token=tokens[start],owner=declared(token),hasInitializer=start+1<end;
    if(token?.kind!=='identifier'||!owner||owner.kind!==kind||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
    result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent()});
@@ -277,7 +291,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       while(colon<next&&tokens[colon].start<selector.end)colon++;test=expression(tokens.slice(cursor+1,colon));
      }else if(++defaults>1)fail('switch cannot contain duplicate default clauses');
      if(values[colon]!==':')fail('switch selector requires its actual clause separator');
-     const statements_=statements(colon+1,next);if(statements_.some(row=>row.$==='sourceConstStatement'||row.$==='sourceMutableStatement'||row.$==='sourceDeclarationGroupStatement'))fail('unbraced switch lexical declarations require their shared TDZ environment');
+     const statements_=statements(colon+1,next);if(statements_.some(row=>row.$==='sourceConstStatement'||row.$==='sourceMutableStatement'||row.$==='sourceDeclarationGroupStatement'||row.$==='sourceObjectBindingStatement'))fail('unbraced switch lexical declarations require their shared TDZ environment');
      if(clauses.length>=4096)fail('switch clause source witnesses exceed their explicit directory budget');
      clauses.push(test===null?{$:'sourceDefaultStatement',body:statements_}:{$:'sourceCaseStatement',value:test,body:statements_});cursor=next;
     }}finally{controlTargets.pop();}

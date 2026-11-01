@@ -27,3 +27,6 @@ return selection. Preserve current effects without replaying original host bodie
 
 Draft Node driver responses to authenticated constructor metadata additions,
 retaining suspended effects and publishing monotonic shared program updates.
+
+Draft shared object binding/rest initialization for parameters and lexical
+declarations, including empty-pattern coercibility, defaults and own-key exclusions.
