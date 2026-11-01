@@ -1,6 +1,6 @@
 // Deferred source controls for shared lexical storage, no behavior at import.
 import test from 'node:test';import assert from 'node:assert/strict';
-import {lowerJavaScriptSourceStatements} from '../src/translation/javascript-error-class-source.js';
+import {lowerJavaScriptSourceStatements,lowerJavaScriptSourceParameters} from '../src/translation/javascript-error-class-source.js';
 const absent={$:'undefined'},constant=value=>({$:'errorConstant',value});
 function context(){return {$:'errorSourceContext',registry:{$:'errorRegistry',owners:[],operations:[],intrinsics:[],realms:[1n],exoticKey:absent},realm:{$:'errorRealmOperations',realm:1n,objectPrototype:absent,get:absent,assign:absent},capabilities:[],next:20,visits:0,error:'',mutableBindings:true};}
 test('captured local declaration binds a stable private cell identity with mutable value storage',()=>{
@@ -8,4 +8,7 @@ test('captured local declaration binds a stable private cell identity with mutab
 });
 test('ordinary mutable locals keep their existing register representation',()=>{
  const lowered=lowerJavaScriptSourceStatements([{$:'sourceMutableStatement',identity:1,value:constant({$:'number',value:7})}],0,context(),{$:'sourceConstant',value:absent},0);assert.equal(lowered.context.error,'');assert.equal(lowered.source.$,'sourceLocalLet');assert.equal(lowered.source.mutable,true);assert.deepEqual(lowered.source.value,{$:'sourceConstant',value:{$:'number',value:7}});
+});
+test('shared formal cells initialize after default or rest value preparation',()=>{
+ const next=context(),body={$:'sourceConstant',value:absent},parameter={$:'errorDefaultParameter',identity:1,value:constant({$:'number',value:7}),shared:true},defaulted=lowerJavaScriptSourceParameters([parameter],next,body);assert.equal(defaulted.context.error,'');assert.equal(defaulted.source.$,'sourceParameterDefault');assert.equal(defaulted.source.body.$,'sourceLocalLet');assert.equal(defaulted.source.body.value.$,'sourceAssignBinding');assert.equal(defaulted.source.body.value.identity,1);assert.equal(defaulted.source.body.value.value.$,'sourceObject');const rest=lowerJavaScriptSourceParameters([{$:'errorRestParameter',identity:1,shared:true}],{...next,realm:{...next.realm,arrayPrototype:{$:'null'}}},body);assert.equal(rest.context.error,'');assert.equal(rest.source.$,'sourceParameterRest');assert.equal(rest.source.body.value.$,'sourceAssignBinding');
 });

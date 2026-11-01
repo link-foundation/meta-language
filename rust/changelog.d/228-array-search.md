@@ -28,6 +28,9 @@ Draft captured local let bindings through the existing private shared cell
 representation, preserving sibling closure updates and independent declaration
 evaluations. General TDZ/parameter/loop-head environments remain separate.
 
+Draft shared simple required/default/rest parameter cells for functions, methods
+and Arrows, preserving ordered initialization and the original Call arguments.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

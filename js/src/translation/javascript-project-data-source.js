@@ -74,11 +74,17 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  // A shared lexical cell is private source storage, using the same null-
  // prototype value holder as module cells. Its identity, not its mutable value,
  // is captured. Loop-head cloning and TDZ initialization are separate profiles.
- const localSharedCells=new Set();
+ const sharedBindingCells=new Set();
  if(classProfile)for(const binding of bindings){
-  if(binding.kind!=='let'||binding.scope==='scope:0')continue;const declaration=containing(binding,['variable_declarator']);if(!declaration||declaration.start!==binding.declaration.start)continue;
-  const loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);if(loop){const body=sourceField(loop,'body');if(!body||binding.declaration.start<body.start)continue;}
-  if([...arrowNodes,...methodNodes].some(node=>!(binding.declaration.start>=node.start&&binding.declaration.end<=node.end)&&binding.references.some(row=>row.start>=node.start&&row.end<=node.end))){localSharedCells.add(binding.identity);cellIDs.add(binding.identity);}
+  if(!['let','parameter'].includes(binding.kind)||binding.scope==='scope:0')continue;
+  if(binding.kind==='let'){
+   const declaration=containing(binding,['variable_declarator']);if(!declaration||declaration.start!==binding.declaration.start)continue;
+   const loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);if(loop){const body=sourceField(loop,'body');if(!body||binding.declaration.start<body.start)continue;}
+  }else{
+   const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>');
+   if(position<0||!singleArrow&&(!formal||!['(',',','...'].includes(values[position-1])||![')',',','='].includes(values[position+1])))continue;
+  }
+  if([...arrowNodes,...methodNodes].some(node=>!(binding.declaration.start>=node.start&&binding.declaration.end<=node.end)&&binding.references.some(row=>row.start>=node.start&&row.end<=node.end))){sharedBindingCells.add(binding.identity);cellIDs.add(binding.identity);}
  }
  function inferArrowName(value,name){if(value.$==='errorClosure'){const template=templates.find(row=>row.owner===value.owner&&row.ordinal===value.ordinal);if(template&&template.name==='')template.name=name;}return value;}
  let writeCoordinates=null,writeRanges=[],writeComparisonWork=0;
@@ -105,7 +111,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  function readonlyCapture(binding,node){
   if(!['parameter','const','let'].includes(binding.kind)||binding.declaration.end>node.start)fail('arrow capture requires its actual already initialized lexical source binding; later bindings need shared cells');
   const declaration=binding.kind==='parameter'?null:containing(binding,['variable_declarator']);if(declaration&&declaration.end>node.start)fail('capturing a binding during its initializer requires its shared lexical cell');
-  if(localSharedCells.has(binding.identity))return;
+  if(sharedBindingCells.has(binding.identity))return;
   const writes=capturedBindingWrites();for(const occurrence of binding.references)if(writes.has(occurrence.start+':'+occurrence.end)||writeRanges.some(([start,end])=>{if(++writeComparisonWork>1000000)fail('capture write ranges exceed their bounded comparison work');return occurrence.start>=start&&occurrence.end<=end;}))fail('mutable captured bindings require their actual shared lexical cells');
  }
  function objectMethod(input,first,keyAt,kind,offset,computedKeyUnits=null){
@@ -136,7 +142,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    const openAt=tokens.findIndex(token=>token.start===input[first].start),closeAt=tokens.findIndex(token=>token.start===input[close].start);if(openAt<0||closeAt<openAt)fail('arrow parameter head retains its actual source coordinates');
    parameters=readSourceParameters({open:openAt,close:closeAt});
   }else{
-   const token=input[first],binding=declared(token);if(token.kind!=='identifier'||input[first+1]?.value!=='=>'||!binding||binding.kind!=='parameter')fail('arrow parameters need their actual binding head');separator=first+1;parameters=[{$:'errorRequiredParameter',identity:binding.identity}];
+   const token=input[first],binding=declared(token);if(token.kind!=='identifier'||input[first+1]?.value!=='=>'||!binding||binding.kind!=='parameter')fail('arrow parameters need their actual binding head');separator=first+1;parameters=[{$:'errorRequiredParameter',identity:binding.identity,...(sharedBindingCells.has(binding.identity)?{shared:true}:{})}];
   }
   let end=separator+1;while(end<input.length&&input[end].start<node.end)end++;
   if(end<=separator+1||input[end-1].end>node.end)fail('arrow body retains its complete actual CST interval');
@@ -282,7 +288,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    const token=tokens[first],binding=declared(token);
    if(token.value==='...'){
     if(!classProfile||last!==header.close)fail('rest parameters require their actual final source formal without a trailing comma');const target=tokens[first+1],nested=target?.value==='{'||target?.value==='[',end=nested?findJavaScriptClassGroupEnd(values,first+1):first+1,owner=nested?undefined:declared(target);if(end+1!==last||!nested&&(target?.kind!=='identifier'||!owner||owner.kind!=='parameter'))fail('rest parameters retain their actual identifier or recursive binding target');
-    const pattern=nested?(target.value==='['?readArrayBinding(first+1,end,'parameter'):readObjectBinding(first+1,end,'parameter')):undefined,identity=pattern?.identity??owner.identity;if(!nested)initializingParameters.add(identity);return {$:'errorRestParameter',identity,...(pattern===undefined?{}:{pattern})};
+    const pattern=nested?(target.value==='['?readArrayBinding(first+1,end,'parameter'):readObjectBinding(first+1,end,'parameter')):undefined,identity=pattern?.identity??owner.identity;if(!nested)initializingParameters.add(identity);return {$:'errorRestParameter',identity,...(pattern===undefined?{}:{pattern}),...(sharedBindingCells.has(identity)?{shared:true}:{})};
    }
    if(token.value==='{'||token.value==='['){
     const close=findJavaScriptClassGroupEnd(values,first);if(close<0||close>=last)fail('source object parameter retains its complete binding pattern');
@@ -290,7 +296,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     return {...(token.value==='['?readArrayBinding(first,close,'parameter'):readObjectBinding(first,close,'parameter')),hasDefault,value};
    }
    if(!binding||binding.kind!=='parameter'||last>first+1&&values[first+1]!=='=')fail('source parameters need actual fixed binding identities; rest and other patterns need their own lowering');
-   const parameter=last===first+1?{$:'errorRequiredParameter',identity:binding.identity}:{$:'errorDefaultParameter',identity:binding.identity,value:inferArrowName(expression(tokens.slice(first+2,last)),binding.name)};initializingParameters.add(binding.identity);return parameter;
+   const parameter=last===first+1?{$:'errorRequiredParameter',identity:binding.identity}:{$:'errorDefaultParameter',identity:binding.identity,value:inferArrowName(expression(tokens.slice(first+2,last)),binding.name)};initializingParameters.add(binding.identity);return {...parameter,...(sharedBindingCells.has(binding.identity)?{shared:true}:{})};
   });}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;}
  }
  function lexicalDeclarations(first,last,kind){
@@ -303,7 +309,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    const token=tokens[start],owner=declared(token),hasInitializer=start+1<end;
    if(token?.kind!=='identifier'||!owner||owner.kind!==kind||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
-   result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),...(localSharedCells.has(owner.identity)?{shared:true}:{})});
+   result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),...(sharedBindingCells.has(owner.identity)?{shared:true}:{})});
   }
   if(result.length===0)fail('a lexical declaration group requires its actual declarators');return result;
  }

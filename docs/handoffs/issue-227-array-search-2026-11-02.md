@@ -802,3 +802,20 @@ mutable parameters, destructuring bindings, for-head per-iteration environments
 and general runtime TDZ remain separate undrafted source work. The private cell
 representation is shared with existing module storage, not a claim that full
 ECMAScript declarative environments are implemented.
+
+### Shared simple formal parameter cells draft
+
+The same shared-storage admission now includes captured simple formal parameters
+for functions, methods and Arrows, including one-parameter Arrow syntax. Source
+parameter initialization installs a cell after its required/default/rest value
+is ready and before later parameters initialize. Defaults can capture an earlier
+initialized parameter; rest binding reassignment leaves the actual immutable
+Call argument list unchanged. Own/later-parameter TDZ and recursive binding
+patterns remain explicitly outside this admission.
+
+Five originals cover returned parameter closures, later default capture,
+rest-binding replacement, single-parameter Arrow and method parameter updates.
+An additional deferred lowering control checks default/rest-before-cell ordering.
+No execution, generation or validation occurred. Remaining environment work is
+runtime TDZ, initialization-time recursion, shared destructuring bindings,
+catch cells, loop-head cloning and full declarative environment behavior.
