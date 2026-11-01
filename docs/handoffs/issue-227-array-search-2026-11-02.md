@@ -324,3 +324,30 @@ bindings, computed nested keys with earlier defaults, and nested empty patterns.
 These inputs and all generated/native products remain unexecuted. Array binding
 iterators, mutable lexical cells and exact nullish diagnostic compatibility still
 need their further drafts. No ledger was used and no validation gate ran.
+
+
+### Synchronous iterator protocol draft
+
+`javascript-iterator-protocol.js` now drafts shared acquisition, IteratorStepValue
+and IteratorClose continuations with actual heap Get/getter/call effects. The
+record caches next once; callability is checked at invocation. Done precedes
+value, exhaustion skips value, and ECMAScript 2026 next/done/value abrupt paths
+mark the record done. Primitive acquisition emits an explicit original-receiver
+Get request. No fabricated boxing, iterator method or host body executes.
+
+Cleanup preserves original throw precedence across return getter/call failures
+and non-Object results, while retaining normal/return/break/continue completion
+values and actual numeric source control targets. Return is still acquired when
+this exact close operation is explicitly requested for a done record; consumer
+algorithms decide whether closing is required. State validation binds actual
+selected callback receivers and cached next method.
+
+Six deferred controls cover acquisition/callability timing, cached next and done
+truthiness, skipped value getters, getter throws/current effects, cleanup throw
+precedence, return/break preservation, primitive cleanup rejection and primitive
+receiver requests. Automatic native policy/library generation inputs are
+registered; no generation or control execution ran. Array/String iterator
+builtin adapters, source/VM iterator regions and abrupt-unwinding consumers for
+for-of, spread and array patterns remain the next required connections. Older
+engine done-slot behavior needs explicit version-qualified controls rather than
+an unqualified assertion. These are draft semantics, not recorded observations.

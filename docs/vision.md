@@ -12246,3 +12246,18 @@ keys and exclusions belong to their actual pattern level. Source reading and
 lowering share an explicit nesting bound. Parameter default admission respects
 uninitialized nested bindings; enclosing defaults cannot read bindings that
 will only be initialized by the nested pattern.
+
+Synchronous iterator consumers share acquisition, cached-next advancement and
+IteratorClose continuations. Acquisition retains the actual iterator method
+receiver and captures next once, without prematurely requiring next to be
+callable. Advancement calls that cached method, reads done before value, skips
+value on exhaustion, and retains the done slot after next/done/value failure
+under the ECMAScript 2026 profile. Primitive acquisition requires an explicit
+original-receiver property protocol, never a guessed boxed prototype. Closing
+acquires and calls return while preserving a preexisting throw over cleanup
+failures; normal, return and loop completions retain their actual values and
+control targets. Non-Object cleanup results fail after throw precedence.
+Consumers decide when closing is required; the close operation does not silently
+skip return merely because a caller supplied a done record. Every getter/call
+retains the latest heap and exact selected operands across suspension. This
+protocol follows [ECMAScript 2026 iteration operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-iteration).

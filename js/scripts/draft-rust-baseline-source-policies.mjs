@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-iterator-protocol.js',moduleName:'javascript_iterator_protocol',model:'ECMAScript 2026 synchronous iterator acquisition advancement and close continuations 1',programAsset:'javascript-iterator-protocol-program'},
  {sourcePath:'js/src/translation/javascript-species-construction.js',moduleName:'javascript_species_construction',model:'Actual source species constructor prototype receiver and body continuations 1',programAsset:'javascript-species-construction-program'},
  {sourcePath:'js/src/translation/javascript-array-transform.js',moduleName:'javascript_array_transform',model:'Actual Array map filter species and callback continuations 1',programAsset:'javascript-array-transform-program'},
  {sourcePath:'js/src/translation/javascript-array-species.js',moduleName:'javascript_array_species',model:'Actual Array species constructor selection and authority continuations 1',programAsset:'javascript-array-species-program'},
@@ -160,6 +161,7 @@ const fixtures=[
 ];
 const consumers=[
  'js/tests/translation-javascript-species-construction.test.js',
+ 'js/tests/translation-javascript-iterator-protocol.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

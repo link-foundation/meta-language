@@ -39,3 +39,6 @@ through the common authority extension, with automatic codec generation inputs.
 
 Draft recursive object bindings using the shared initialization protocol,
 including nested defaults, per-level rest exclusions and explicit nesting bounds.
+
+Draft shared synchronous iterator acquisition, advancement and closing protocols
+with cached methods, original receivers and exact cleanup completion precedence.
