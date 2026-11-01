@@ -1,10 +1,10 @@
 // Deferred continuation controls. No source body is executed by this module.
 import test from 'node:test';import assert from 'node:assert/strict';
-import {beginJavaScriptSynchronousIterator,beginJavaScriptSynchronousIteratorStep,beginJavaScriptSynchronousIteratorClose,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,resumeJavaScriptIteratorPrimitiveGet} from '../src/translation/javascript-iterator-protocol.js';
+import {beginJavaScriptSynchronousIterator,beginJavaScriptSynchronousIteratorStep,beginJavaScriptSynchronousIteratorClose,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,resumeJavaScriptIteratorPrimitiveGet,provideJavaScriptIteratorPrimitivePrototype} from '../src/translation/javascript-iterator-protocol.js';
 import {insertJavaScriptOrdinaryObject,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from '../src/translation/javascript-ordinary-heap.js';
 const object=(identity,callable=false)=>({$:'object',identity,callable}),number=value=>({$:'number',value}),absent={$:'undefined'},symbol={$:'symbol',identity:99n},text=value=>({$:'text',units:Array.from(value,ch=>ch.charCodeAt(0))}),normal=value=>({$:'normalCompletion',value}),abrupt=value=>({$:'throwCompletion',value});
 function data(heap,id,key,value){return defineJavaScriptOrdinaryProperty(heap,id,typeof key==='string'?text(key):key,createJavaScriptOrdinarySetDescriptor(value,true)).heap;}
-function getter(heap,id,key,callee){return defineJavaScriptOrdinaryProperty(heap,id,text(key),{configurablePresent:true,configurable:true,enumerablePresent:true,enumerable:true,valuePresent:false,value:absent,writablePresent:false,writable:false,getterPresent:true,getter:callee,setterPresent:true,setter:absent}).heap;}
+function getter(heap,id,key,callee){return defineJavaScriptOrdinaryProperty(heap,id,typeof key==='string'?text(key):key,{configurablePresent:true,configurable:true,enumerablePresent:true,enumerable:true,valuePresent:false,value:absent,writablePresent:false,writable:false,getterPresent:true,getter:callee,setterPresent:true,setter:absent}).heap;}
 function setup(){let heap={$:'ordinaryHeap',objects:[],symbols:[99n]};for(const id of [1n,2n,3n,4n,5n,6n])heap=insertJavaScriptOrdinaryObject(heap,id,{$:'null'}).heap;heap={...heap,objects:heap.objects.map(row=>[2n,4n,6n].includes(row.identity)?{...row,callable:true}:row)};heap=data(heap,1n,symbol,object(2n,true));heap=data(heap,3n,'next',object(4n,true));return {heap,record:{$:'synchronousIteratorRecord',iterator:object(3n),nextMethod:object(4n,true),done:false}};}
 function advance(transition){let current=transition;for(let at=0;at<32&&current.$==='iteratorProtocolContinue';at++)current=stepJavaScriptIteratorProtocol(current.heap,current.state);assert.notEqual(current.$,'iteratorProtocolContinue');return current;}
 test('acquisition calls the actual iterator method then caches next without prematurely requiring callability',()=>{
@@ -24,4 +24,9 @@ test('close preserves return and break completions but rejects primitive cleanup
 });
 test('primitive acquisition explicitly requests original-receiver Get semantics',()=>{
  const {heap}=setup(),input=text('text'),request=advance(beginJavaScriptSynchronousIterator(heap,input,symbol));assert.equal(request.$,'iteratorProtocolPrimitiveGet');assert.deepEqual(request.receiver,input);assert.deepEqual(request.key,symbol);const call=resumeJavaScriptIteratorPrimitiveGet(heap,request.state,normal(object(2n,true)));assert.equal(call.$,'iteratorProtocolCall');assert.deepEqual(call.receiver,input);for(const value of [absent,{$:'null'}])assert.equal(beginJavaScriptSynchronousIterator(heap,value,symbol).$,'iteratorProtocolError');
+});
+
+
+test('authenticated primitive prototype Get retains the original receiver and selected getter',()=>{
+ const input=text('original');let {heap}=setup();heap=getter(heap,1n,symbol,object(6n,true));const request=advance(beginJavaScriptSynchronousIterator(heap,input,symbol));assert.equal(request.$,'iteratorProtocolPrimitiveGet');const selected=provideJavaScriptIteratorPrimitivePrototype(heap,request.state,object(1n));assert.equal(selected.$,'iteratorProtocolCall');assert.deepEqual(selected.receiver,input);assert.deepEqual(selected.callee,object(6n,true));heap=data(selected.heap,1n,symbol,object(4n,true));const method=resumeJavaScriptIteratorProtocolCall(heap,selected.state,normal(object(2n,true)));assert.equal(method.$,'iteratorProtocolCall');assert.deepEqual(method.callee,object(2n,true));assert.deepEqual(method.receiver,input);
 });

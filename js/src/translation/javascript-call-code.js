@@ -11,7 +11,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'callClassConstructor',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'constructCollection',destination:number,callee:number,arguments:number[]} |
  * {$:'collectionAllocate',destination:number,prototype:number,kind:string} |
- * {$:'collectionIteratorAllocate',destination:number,prototype:number,kind:string,iterationKind:string} |
+ * {$:'collectionIteratorAllocate',destination:number,prototype:number,kind:string,iterationKind:string,input?:number} |
  * {$:'collectionIteratorResult',destination:number,kind:string,arrayPrototype:number,objectPrototype:number} |
  * {$:'collectionOperation',destination:number,operation:string} |
  * {$:'primitiveMethod',destination:number,operation:string} |
@@ -77,7 +77,8 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
-    case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype];
+    case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':return [instruction.destination,instruction.prototype];
+    case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype].concat(instruction.input===undefined?[]:[instruction.input]);
     case 'collectionIteratorResult':return [instruction.destination,instruction.arrayPrototype,instruction.objectPrototype];
     case 'closureAllocate':return [instruction.destination,instruction.receiver].concat(instruction.captures);
     case 'collectionCopy':return [instruction.destination,instruction.target,instruction.input,instruction.adder,instruction.iteratorKey,instruction.iteratorMethod,instruction.iteratorPrototype,instruction.nextMethod];

@@ -457,3 +457,32 @@ are registered. No generation, tests, compilation or CI feedback review ran.
 String builtin ToString/allocation continuations, protected owner linkage and
 primitive iterator property authority are the next required connections before
 source String spread/for-of can consume this foundation.
+
+
+### Primitive iterator authority and String source integration draft
+
+The common iterator protocol can now Get the actual iterator property from an
+independently authenticated primitive realm prototype while retaining the
+original primitive as getter/method receiver. The spread and VM resumers
+re-derive the pending request. Node roots are copied and registered once before
+publication; later root replacement and substituted receiver/key operands
+refuse. The driver resumes this boundary without host getter/body fallback.
+Trace/native replay records and applies the exact primitive prototype input
+through the common translated VM resumer. Metadata events consume the shared
+transition budget.
+
+Protected String iterator/next owners now compile to portable instructions.
+Creation performs shared coercibility and ToString, then allocates from the
+held converted text using the iterator instruction's explicit input register.
+Other iterator families retain their existing receiver operand convention.
+String next advances the genuine slots and reuses common result allocation.
+Five complete originals cover Unicode code points, lone-surrogate escaped source,
+explicit iterator next, empty spread/hole behavior and nested/multiple spreads.
+Three deferred controls cover original primitive getter receiver/selection,
+prototype trace witnesses and authority operand/root refusal.
+
+All are source drafts. Generation, behavioral controls, native compilation and
+CI feedback review remain deferred. Exact nullish/String-method diagnostic text,
+Array method primitive boxing, iterable call-argument spread and array-pattern/
+for-of unwinding still require their further source work; no passing observation
+or completion percentage is claimed.

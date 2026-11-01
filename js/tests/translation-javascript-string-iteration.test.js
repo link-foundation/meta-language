@@ -1,3 +1,7 @@
+import {captureJavaScriptOrdinaryClassModule} from '../src/translation/javascript-ordinary-class-source.js';
+import {prepareJavaScriptOrdinaryClassModule} from '../src/translation/javascript-ordinary-class-module.js';
+import {runJavaScriptCallMachine,resumeJavaScriptCallObjectAllocation} from '../src/translation/javascript-call-machine.js';
+import {readSourceMachineTrace} from './support/source-machine-trace.js';
 // Deferred exact code-point controls, including ill-formed UTF16 transport.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {allocateJavaScriptStringIterator,advanceJavaScriptStringIterator,beginJavaScriptStringIteratorResult} from '../src/translation/javascript-string-iteration.js';
@@ -20,4 +24,15 @@ test('String next allocates the shared genuine value/done result after advancing
 });
 test('String iterator allocation requires a completed semantic text value and a fresh identity',()=>{
  const allocated=setup({$:'text',units:[65]});assert.equal(allocateJavaScriptStringIterator(allocated.heap,6n,object(2n),{$:'number',value:7}).$,'stringIteratorInvalid');assert.equal(allocateJavaScriptStringIterator(allocated.heap,3n,object(2n),{$:'text',units:[65]}).$,'stringIteratorInvalid');
+});
+
+
+test('String spread records actual primitive prototype witnesses for common native replay',()=>{
+ const source='export function read() { const output = [..."A😀"]; return output.length; }',capture=captureJavaScriptOrdinaryClassModule(source,{identifier:'literal-string-iterator-trace.js',entries:['read']}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:149n}),trace=readSourceMachineTrace(instance.embedding,instance.begin('read',[]),{steps:8192});assert.equal(trace.transition.$,'machineCompleted');assert.deepEqual(trace.transition.value,{$:'number',value:2});const witnesses=trace.events.filter(event=>event.operation==='primitiveIteratorPrototype');assert.equal(witnesses.length,1);assert.equal(witnesses[0].receiver.$,'text');assert.equal(witnesses[0].prototype.$,'object');assert.equal(witnesses[0].key.$,'symbol');
+});
+test('primitive iterator authority rejects substituted operands and replacement roots after publication',()=>{
+ const capture=captureJavaScriptOrdinaryClassModule('export function read() { return [..."A"].length; }',{identifier:'literal-string-iterator-authority.js',entries:['read']}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:151n}),started=instance.begin('read',[]),request=runJavaScriptCallMachine(instance.embedding.module.program,started.machine,1024,[]).transition;
+ // Reach the metadata boundary using the ordinary explicit identity allocator.
+ let current=request;for(let at=0;at<32&&current.$!=='machineNeedPrimitiveIteratorGet';at++){if(current.$!=='machineAllocateObject')assert.fail('expected an actual identity or primitive metadata boundary');instance.embedding.adoptHeap(current.machine.heap);const identity=instance.embedding.allocateIdentity();const allocated=resumeJavaScriptCallObjectAllocation(instance.embedding.module.program,current.machine,identity);assert.equal(allocated.$,'machineContinue');current=runJavaScriptCallMachine(instance.embedding.module.program,allocated.machine,1024,[]).transition;}
+ assert.equal(current.$,'machineNeedPrimitiveIteratorGet');instance.embedding.adoptHeap(current.machine.heap);assert.throws(()=>instance.embedding.resumePrimitiveIteratorGet({...current,receiver:{$:'text',units:[66]}}),/actual receiver or key/);assert.throws(()=>instance.embedding.registerPrimitiveIteratorPrototypes([]),/before source publication/);const resumed=instance.embedding.resumePrimitiveIteratorGet(current);assert.equal(resumed.resumed,true);assert.equal(resumed.prototype.$,'object');assert.notEqual(resumed.transition.$,'machineNeedPrimitiveIteratorGet');
 });

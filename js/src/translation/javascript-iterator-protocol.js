@@ -114,3 +114,17 @@ export function resumeJavaScriptIteratorProtocolValue(heap,state,completion){
  if(state.operation==='close'&&state.completion.kind==='throw')return {$:'iteratorProtocolClosed',heap,record:state.record,completion:state.completion};
  return {$:'iteratorProtocolThrow',heap,state:state.operation==='step'?{...state,record:{...state.record,done:true}}:state,value:completion.value};
 }
+
+
+/** Resolve primitive property access against an independently authenticated
+ * realm prototype, preserving the original primitive receiver for getters.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptIteratorProtocolState} state
+ * @param {JavaScriptSemanticValue} prototype @returns {JavaScriptIteratorProtocolTransition} */
+export function provideJavaScriptIteratorPrimitivePrototype(heap,state,prototype){
+ const error=readJavaScriptIteratorProtocolStateError(heap,state);if(error!=='')return {$:'iteratorProtocolInvalid',heap,reason:error};
+ if(state.phase!=='method'||state.input.$==='object'||state.input.$==='null'||state.input.$==='undefined'||state.call!==undefined)return {$:'iteratorProtocolInvalid',heap,reason:'primitive iterator prototype retains its actual pending primitive method Get'};
+ const invalid=readJavaScriptOrdinaryValueError(heap,prototype);if(invalid!==''||prototype.$!=='object')return {$:'iteratorProtocolInvalid',heap,reason:invalid||'primitive iterator Get retains its actual realm prototype'};
+ const get=planJavaScriptOrdinaryGet(heap,prototype.identity,state.key,state.input);if(get.error!=='')return {$:'iteratorProtocolInvalid',heap,reason:get.error};
+ if(get.action==='call')return requestJavaScriptIteratorProtocolCall(heap,state,get.callee,get.receiver,'method getter');
+ return get.action==='value'?continueJavaScriptIteratorProtocolValue(heap,state,get.value):{$:'iteratorProtocolInvalid',heap,reason:'primitive iterator Get requires its actual property value or getter protocol'};
+}

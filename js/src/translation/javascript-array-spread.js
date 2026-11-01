@@ -1,6 +1,6 @@
 // ArrayAccumulation spread delegates every iterator effect to the shared protocol.
 // Completed values remain held across property storage suspension.
-import {beginJavaScriptSynchronousIterator,beginJavaScriptSynchronousIteratorStep,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,resumeJavaScriptIteratorPrimitiveGet,readJavaScriptIteratorProtocolStateError,readJavaScriptSynchronousIteratorRecordError} from './javascript-iterator-protocol.js';
+import {provideJavaScriptIteratorPrimitivePrototype,beginJavaScriptSynchronousIterator,beginJavaScriptSynchronousIteratorStep,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,resumeJavaScriptIteratorPrimitiveGet,readJavaScriptIteratorProtocolStateError,readJavaScriptSynchronousIteratorRecordError} from './javascript-iterator-protocol.js';
 import {createJavaScriptIndexedDataProperty} from './javascript-array-transform.js';
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -68,4 +68,12 @@ export function stepJavaScriptArraySpread(heap,state){
 export function resumeJavaScriptArraySpread(heap,state,completion,primitiveGet){
  const error=readJavaScriptArraySpreadStateError(heap,state);if(error!=='')return {$:'arraySpreadInvalid',heap,reason:error};if(state.phase!=='iterator'||state.protocol===undefined)return {$:'arraySpreadInvalid',heap,reason:'spread completion requires its actual selected iterator operation'};
  return continueJavaScriptArraySpreadIterator(heap,state,primitiveGet?resumeJavaScriptIteratorPrimitiveGet(heap,state.protocol,completion):resumeJavaScriptIteratorProtocolCall(heap,state.protocol,completion));
+}
+
+
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArraySpreadState} state
+ * @param {JavaScriptSemanticValue} prototype @returns {JavaScriptArraySpreadTransition} */
+export function provideJavaScriptArraySpreadPrimitivePrototype(heap,state,prototype){
+ const error=readJavaScriptArraySpreadStateError(heap,state);if(error!=='')return {$:'arraySpreadInvalid',heap,reason:error};if(state.phase!=='iterator'||state.protocol===undefined)return {$:'arraySpreadInvalid',heap,reason:'spread primitive prototype requires its actual pending acquisition'};
+ return continueJavaScriptArraySpreadIterator(heap,state,provideJavaScriptIteratorPrimitivePrototype(heap,state.protocol,prototype));
 }

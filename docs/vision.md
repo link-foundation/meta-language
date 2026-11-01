@@ -12314,3 +12314,16 @@ the actual constructor/method continuation before allocation. String next uses
 the shared genuine value/done result allocator. Map/Set/Array iterator brands
 cannot resume String slots. Iterator texts share the explicit UTF16 storage
 budget, and generated models/codecs preserve these internal slots.
+
+Primitive iterator property lookup uses independently authenticated realm
+prototypes while preserving the original primitive receiver. The shared Get
+planner executes selected accessors in the common machine; neither boxing nor
+original host getter bodies substitute for that protocol. The Node embedding
+registers copied primitive roots once before publication, re-derives each
+suspended request and rejects substituted receiver/key operands. Source traces
+record the actual prototype input; native replay applies the common translated
+resumer. String iterator creation completes coercibility/ToString in the shared
+VM before requesting identity, and String next reuses result allocation.
+Protected String iterator/next owners and shared iterator identities complete
+source text spread composition. Exact engine diagnostic strings remain subject
+to their explicit version-qualified compatibility obligations.

@@ -1,4 +1,5 @@
-import {beginJavaScriptArraySpread,stepJavaScriptArraySpread,resumeJavaScriptArraySpread,readJavaScriptArraySpreadStateError} from './javascript-array-spread.js';
+import {allocateJavaScriptStringIterator,beginJavaScriptStringIteratorResult} from './javascript-string-iteration.js';
+import {provideJavaScriptArraySpreadPrimitivePrototype,beginJavaScriptArraySpread,stepJavaScriptArraySpread,resumeJavaScriptArraySpread,readJavaScriptArraySpreadStateError} from './javascript-array-spread.js';
 import {allocateJavaScriptArrayIterator,beginJavaScriptArrayIteratorNext,stepJavaScriptArrayIteratorNext,resumeJavaScriptArrayIteratorCall,readJavaScriptArrayIteratorStateError,finishJavaScriptArrayIteratorCursor} from './javascript-array-iteration.js';
 import {beginJavaScriptSpeciesConstruction,stepJavaScriptSpeciesConstruction,resumeJavaScriptSpeciesConstructionAllocation,resumeJavaScriptSpeciesConstructionCall,readJavaScriptSpeciesConstructionStateError} from './javascript-species-construction.js';
 import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
@@ -179,9 +180,9 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'readDerivedReceiver':if(!testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived receiver reads retain their actual constructor source owner';break;
         case 'invokeErrorIntrinsic':if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'host Error intrinsic calls require an externally registered intrinsic owner';break;
         case 'invokeHostCapability':if(!testJavaScriptHostCapabilityMode(fn.receiverMode))return 'host capability calls require their explicitly qualified external source owner';break;
-        case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind))return 'iterator allocation retains its actual standard operation kind and owner';break;
-        case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
-        case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
+        case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind)||instruction.kind==='String'&&(instruction.iterationKind!=='values'||instruction.input===undefined)||instruction.kind!=='String'&&instruction.input!==undefined)return 'iterator allocation retains its actual standard operation kind and owner';break;
+        case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
+        case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
         case 'collectionOperation':if(!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||readJavaScriptCollectionOperationKind(instruction.operation)==='')return 'collection operations retain their actual registered intrinsic frame';break;
         case 'primitiveMethod':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPrimitiveMethodOperation(instruction.operation)&&!testJavaScriptArrayIntrinsicOperation(instruction.operation))return 'primitive methods retain their actual registered intrinsic frame';break;
@@ -707,12 +708,15 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
         if(receiver.$==='null'||receiver.$==='undefined')return owner===undefined?{$:'machineInvalid',heap:machine.heap,reason:'Array iterator creation retains its actual realm'}:requestJavaScriptCallError(machine,owner.realm,'TypeError','Cannot convert undefined or null to object');
         if(receiver.$!=='object')return {$:'machineNeedArrayIteratorBoxing',machine,receiver};
       }
-      if(instruction.$==='collectionIteratorAllocate'&&instruction.kind!=='Array'){
+      if(instruction.$==='collectionIteratorAllocate'&&instruction.kind!=='Array'&&instruction.kind!=='String'){
         const receiver=readJavaScriptCollectionIteratorReceiverError(machine.heap,registers[0]??{$:'undefined'},instruction.kind);
         if(receiver.error!==''){
           const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
           return receiver.typeError&&owner!==undefined?requestJavaScriptCallError(machine,owner.realm,'TypeError',receiver.error):{$:'machineInvalid',heap:machine.heap,reason:receiver.error};
         }
+      }
+      if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='String'){
+        const value=registers[instruction.input??-1]??{$:'undefined'};if(value.$!=='text'&&value.$!=='sourceText')return {$:'machineInvalid',heap:machine.heap,reason:'String iterator allocation retains its actual completed text conversion'};
       }
       const prototype=registers[instruction.prototype]??{$:'undefined'};
       if(prototype.$!=='null'&&prototype.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary allocation requires its actual null or Object prototype'};
@@ -834,6 +838,7 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'callClassConstructor':return pushJavaScriptOrdinaryClassConstructor(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitCall',destination:instruction.destination}}),registers[instruction.callee]??{$:'undefined'},registers[instruction.receiver]??{$:'undefined'},instruction.arguments.map(index=>registers[index]??{$:'undefined'}));
     case 'constructCollection':return pushJavaScriptCollectionConstructor(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitCall',destination:instruction.destination}}),registers[instruction.callee]??{$:'undefined'},instruction.arguments.map(index=>registers[index]??{$:'undefined'}));
     case 'collectionIteratorResult':{
+      if(instruction.kind==='String')return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,instruction.destination,fn.realm,beginJavaScriptStringIteratorResult(machine.heap,registers[0]??{$:'undefined'},registers[instruction.arrayPrototype]??{$:'undefined'},registers[instruction.objectPrototype]??{$:'undefined'}));
       if(instruction.kind==='Array'){
         const error=readJavaScriptCollectionIteratorResultPrototypesError(machine.heap,registers[instruction.arrayPrototype]??{$:'undefined'},registers[instruction.objectPrototype]??{$:'undefined'});if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
         return acceptJavaScriptCallArrayIteration(program,machine,beginJavaScriptArrayIteratorNext(machine.heap,registers[0]??{$:'undefined'},program.exoticKey));
@@ -931,6 +936,13 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
   if(allocation.$!=='arrayNormal')return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='arrayError'?'literal Array length must have been validated before allocation':allocation.$==='arrayInvalid'?allocation.reason:'Array allocation requires its actual normal completion'};
   const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value);return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
  }
+ if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='String'){
+  const allocation=allocateJavaScriptStringIterator(machine.heap,identity,prototype,frame.registers[instruction.input??-1]??{$:'undefined'});
+  if(allocation.$==='stringIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
+  if(allocation.$==='stringIteratorResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
+  return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='stringIteratorInvalid'?allocation.reason:'String iterator creation retains its actual allocation result'};
+ }
+
  if(instruction.$==='collectionIteratorAllocate'&&instruction.kind==='Array'){
   const allocation=allocateJavaScriptArrayIterator(machine.heap,identity,prototype,frame.registers[0]??{$:'undefined'},instruction.iterationKind);
   if(allocation.$==='arrayIteratorAllocated')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
@@ -1347,4 +1359,13 @@ export function resumeJavaScriptCallPrimitiveIteratorGet(program,machine,complet
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];if(frame?.pending.$!=='waitArraySpread')return {$:'machineInvalid',heap:machine.heap,reason:'primitive iterator response retains its actual suspended source operation'};
  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineNeedPrimitiveIteratorGet')return {$:'machineInvalid',heap:machine.heap,reason:'primitive iterator response cannot replace a live iterator call'};
  return acceptJavaScriptCallArraySpread(program,machine,frame.pending.destination,frame.pending.realm,resumeJavaScriptArraySpread(machine.heap,frame.pending.state,completion,true));
+}
+
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {JavaScriptSemanticValue} prototype @returns {JavaScriptCallMachineTransition} */
+export function resumeJavaScriptCallPrimitiveIteratorPrototype(program,machine,prototype){
+ const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];if(frame?.pending.$!=='waitArraySpread')return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response retains its actual suspended spread'};
+ const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineNeedPrimitiveIteratorGet')return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response cannot replace a live getter or iterator call'};
+ return acceptJavaScriptCallArraySpread(program,machine,frame.pending.destination,frame.pending.realm,provideJavaScriptArraySpreadPrimitivePrototype(machine.heap,frame.pending.state,prototype));
 }

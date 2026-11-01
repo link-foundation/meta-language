@@ -57,3 +57,6 @@ continuations, private coordinates and explicit hole length writes.
 
 Draft exact UTF16 String iterator slots, code-point advancement and shared
 result allocation, preserving surrogate pairs and unpaired code units.
+
+Draft String iterator builtin/VM composition and authenticated primitive
+prototype lookup, preserving original receivers in source/native replay.

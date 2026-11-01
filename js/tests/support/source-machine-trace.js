@@ -36,6 +36,9 @@ export function readSourceMachineTrace(embedding,initial,{steps=65536}={}){
    if(actual.$!=='machineAllocateObject'||!testJavaScriptSemanticSameValue(actual.prototype,current.prototype))throw new TypeError('source replay allocation must retain its actual pending prototype');
    const identity=embedding.allocateIdentity();current=resumeJavaScriptCallObjectAllocation(program,current.machine,identity);
    append({operation:'allocateObject',identity:String(identity),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
+  }else if(current.$==='machineNeedPrimitiveIteratorGet'){
+   if(typeof embedding.resumePrimitiveIteratorGet!=='function')break;const request=current,response=embedding.resumePrimitiveIteratorGet(request);if(!response.resumed)break;current=response.transition;
+   append({operation:'primitiveIteratorPrototype',receiver:codecs.encodeJavaScriptSemanticValue(request.receiver),key:codecs.encodeJavaScriptSemanticValue(request.key),prototype:codecs.encodeJavaScriptSemanticValue(response.prototype),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
   }else if(current.$==='machineNeedConstructorAuthority'){
    if(typeof embedding.resumeArrayConstructorAuthority!=='function')break;
    const request=current,response=embedding.resumeArrayConstructorAuthority(request);if(!response.updated)break;

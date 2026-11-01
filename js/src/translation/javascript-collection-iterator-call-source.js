@@ -8,9 +8,9 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 /** @param {string} mode @returns {boolean} */
 export function testJavaScriptCollectionIteratorIntrinsicMode(mode){return mode==='collection iterator intrinsic';}
 /** @param {string} operation @returns {string} */
-export function normalizeJavaScriptCollectionIteratorOperation(operation){return operation==='Set.keys'?'Set.values':operation;}
+export function normalizeJavaScriptCollectionIteratorOperation(operation){return operation==='String.iterator'?'String.values':operation==='Set.keys'?'Set.values':operation;}
 /** @param {string} operation @returns {string} */
-export function readJavaScriptCollectionIteratorOperationKind(operation){if(['Array.keys','Array.values','Array.entries','ArrayIterator.next'].includes(operation))return 'Array';if(['Map.keys','Map.values','Map.entries','MapIterator.next'].includes(operation))return 'Map';if(['Set.keys','Set.values','Set.entries','SetIterator.next'].includes(operation))return 'Set';return operation==='Iterator.self'?'self':'';}
+export function readJavaScriptCollectionIteratorOperationKind(operation){if(['String.iterator','String.values','StringIterator.next'].includes(operation))return 'String';if(['Array.keys','Array.values','Array.entries','ArrayIterator.next'].includes(operation))return 'Array';if(['Map.keys','Map.values','Map.entries','MapIterator.next'].includes(operation))return 'Map';if(['Set.keys','Set.values','Set.entries','SetIterator.next'].includes(operation))return 'Set';return operation==='Iterator.self'?'self':'';}
 /** @param {string} operation @returns {string} */
 export function readJavaScriptCollectionIteratorOperationStrategy(operation){const actual=normalizeJavaScriptCollectionIteratorOperation(operation);return actual.endsWith('.keys')?'keys':actual.endsWith('.values')?'values':actual.endsWith('.entries')?'entries':'';}
 /** @param {JavaScriptCollectionIteratorMethodOwner} left @param {JavaScriptCollectionIteratorMethodOwner} right @returns {boolean} */
@@ -35,6 +35,10 @@ export function compileJavaScriptCollectionIteratorCallDirectory(directory){
   owners.push(owner);
   if(kind==='self'){
    functions.push({$:'callFunction',identity:owner.identity,realm:owner.realm,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'copy',destination:1,source:0},{$:'return',source:1}]});continue;
+  }
+  if(kind==='String'&&strategy==='values'){
+   if(owner.iteratorPrototype.$!=='object'||owner.iteratorPrototype.callable)return {$:'collectionIteratorCallCompilation',program:empty,error:'String iterator creation retains its actual standard prototype'};
+   functions.push({$:'callFunction',identity:owner.identity,realm:owner.realm,receiverMode:'collection iterator intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:4,captures:[],instructions:[{$:'primitive',destination:1,operation:'require object coercible',arguments:[0]},{$:'primitive',destination:1,operation:'convert primitive text',arguments:[0]},{$:'constant',destination:2,value:owner.iteratorPrototype},{$:'collectionIteratorAllocate',destination:3,prototype:2,kind:'String',iterationKind:'values',input:1},{$:'return',source:3}]});continue;
   }
   if(strategy!==''){
    if(owner.iteratorPrototype.$!=='object'||owner.iteratorPrototype.callable)return {$:'collectionIteratorCallCompilation',program:empty,error:'iterator creation retains its actual standard prototype'};

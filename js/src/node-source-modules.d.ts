@@ -27,6 +27,7 @@ export interface JavaScriptSourceEmbedding {
  heap():unknown;
  adoptHeap(heap:unknown):void;
  allocateIdentity():bigint;
+ resumePrimitiveIteratorGet?(request:JavaScriptSourceTransition):{resumed:boolean;prototype?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  sourceConstructorFacts():readonly {identity:bigint;realm:bigint;constructable:boolean;intrinsicArray:boolean}[];
  resumeArrayConstructorAuthority?(request:JavaScriptSourceTransition):{updated:boolean;transition:JavaScriptSourceTransition};
  encode(value:unknown):JavaScriptSemanticValue;

@@ -200,6 +200,11 @@ pub(super) fn assert_source_machine_trace(program_wire:&serde_json::Value,trace:
                 used+=1.0;assert_eq!(before["$"],"machineAllocateObject");
                 native::resume_java_script_call_object_allocation(program.clone(),machine,native::ml::Big::parse(event["identity"].as_str().unwrap()))
             },
+            "primitiveIteratorPrototype"=>{
+                used+=1.0;assert_eq!(before["$"],"machineNeedPrimitiveIteratorGet");assert_eq!(before["receiver"],event["receiver"]);assert_eq!(before["key"],event["key"]);
+                let prototype=decode_java_script_semantic_value(&event["prototype"]);
+                native::resume_java_script_call_primitive_iterator_prototype(program.clone(),machine,prototype)
+            },
             "extendConstructorAuthority"=>{
                 used+=1.0;assert_eq!(before["$"],"machineNeedConstructorAuthority");assert_eq!(before["constructor"],event["constructor"]);
                 let directory=decode_java_script_array_species_directory(&event["directory"]);

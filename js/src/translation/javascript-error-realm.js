@@ -13,7 +13,7 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority} from './javascript-call-machine.js';
+import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype} from './javascript-call-machine.js';
 
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
 const string=units=>{let result='';for(const unit of units)result+=String.fromCharCode(unit);return result;};
@@ -39,7 +39,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
  let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[]};
  const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
- let portableTemplateProgram={templates:undefined},arrayConstructorAuthority=null;
+ let portableTemplateProgram={templates:undefined},arrayConstructorAuthority=null,primitiveIteratorPrototypes=null;
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
  const allocate=()=>{while(heap.objects.some(row=>row.identity===next)||heap.symbols.includes(next))next+=1n;if(next>18446744073709551615n)throw new RangeError('the authoritative global identity allocator exhausted unsigned64 identities');return next++;};
  const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0)};};
@@ -196,6 +196,20 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  }
  // Register metadata authority before publication, independently of mutable
  // module/capture records. It never executes a represented constructor body.
+ function registerPrimitiveIteratorPrototypes(roots){
+  if(!sourceFunctions||module!==null||primitiveIteratorPrototypes!==null||!Array.isArray(roots)||roots.length!==6)throw new TypeError('primitive iterator roots are registered once before source publication');
+  const kinds=['text','sourceText','number','boolean','integer','symbol'];
+  for(const kind of kinds){const matches=roots.filter(row=>row.kind===kind);if(matches.length!==1||matches[0].prototype?.$!=='object'||readJavaScriptOrdinaryValueError(heap,matches[0].prototype)!=='')throw new TypeError('primitive iteration requires each actual registered realm prototype');}
+  primitiveIteratorPrototypes=roots.map(row=>({kind:row.kind,prototype:{...row.prototype}}));
+ }
+ function resumePrimitiveIteratorGet(request){
+  if(module===null||request?.$!=='machineNeedPrimitiveIteratorGet'||!request.machine)throw new TypeError('primitive iterator metadata requires its actual published request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
+  if(actual.$!=='machineNeedPrimitiveIteratorGet'||!testJavaScriptSemanticSameValue(actual.receiver,request.receiver)||!testJavaScriptSemanticSameValue(actual.key,request.key))throw new TypeError('primitive iterator metadata cannot substitute the actual receiver or key');
+  const root=primitiveIteratorPrototypes?.find(row=>row.kind===request.receiver.$);if(root===undefined)return {resumed:false,transition:request};
+  if(heap!==request.machine.heap)throw new TypeError('primitive iterator metadata requires the adopted latest heap');
+  const prototype={...root.prototype},transition=resumeJavaScriptCallPrimitiveIteratorPrototype(module.program,request.machine,prototype);return {resumed:true,prototype,transition};
+ }
  function registerArrayConstructorAuthority(provider){
   if(!sourceFunctions||module!==null||arrayConstructorAuthority!==null||typeof provider!=='function')throw new TypeError('constructor metadata authority is registered once before source publication');
   arrayConstructorAuthority=provider;
@@ -268,7 +282,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   capabilityReference(source,value,{operation,owner}){const semantic=encode(value);if(semantic.$!=='object')throw new TypeError('a capability reference requires its actual native namespace or source callable identity');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:semantic.callable,executable:false};},
