@@ -12394,3 +12394,12 @@ definitely initialized outputs. Initializer scopes do not extend iterator
 lifetime across the function body or later statements. Array patterns reuse
 this protocol in parameters, lexical declarations, catch heads and for-of heads,
 including recursive Object/Array targets and rest patterns.
+
+Formal rest parameters collect the original Call argument list into a fresh
+realm Array, independently of mutable named parameter bindings. Initialization
+retains the actual formal offset, prototype and copy coordinate across identity
+or storage suspension. Omitted and explicitly undefined arguments retain their
+different list lengths. Functions, methods and arrows share this protocol;
+Object/Array rest targets then use the common recursive binding initializer.
+Function length stops at the first rest formal or whole-parameter default.
+Argument collection does not acquire an iterator or apply species.

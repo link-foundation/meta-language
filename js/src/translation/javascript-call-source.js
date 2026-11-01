@@ -30,6 +30,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceBinding',identity:number} |
  * {$:'sourceLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceLocalLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource,mutable:boolean} |
+ * {$:'sourceParameterRest',identity:number,from:number,prototype:JavaScriptCallSource,realm:bigint,body:JavaScriptCallSource} |
  * {$:'sourceParameterDefault',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceIf',condition:JavaScriptCallSource,yes:JavaScriptCallSource,no:JavaScriptCallSource} |
  * {$:'sourceNumberBinary',operator:string,left:JavaScriptCallSource,right:JavaScriptCallSource} |
@@ -161,6 +162,10 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
     return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:local.register,mutable:source.mutable}]),copied,depth+1);
    }
    return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:value.register,mutable:false}]),value.builder,depth+1);
+  }
+  case 'sourceParameterRest':{
+   const binding=bindings.find(row=>row.identity===source.identity);if(state.snapshotMutableBindings!==true||binding===undefined||binding.register!==source.from+1||binding.register>state.parameters||!testJavaScriptCallCodeCoordinate(source.from,1048577)||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'rest parameters retain their actual formal coordinate and realm');
+   const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),copied=appendJavaScriptCallSourceInstruction(prototype.builder,{$:'argumentRest',destination:binding.register,prototype:prototype.register,from:source.from,realm:source.realm});return lowerJavaScriptCallSourceExpression(source.body,bindings,copied,depth+1);
   }
   case 'sourceParameterDefault':{
    if(state.snapshotMutableBindings!==true)return refuseJavaScriptCallSource(state,'mutable source bindings require their snapshot compilation pass');

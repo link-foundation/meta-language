@@ -645,3 +645,30 @@ is source inspection, not passing execution evidence. Automatic generation is
 still deferred. Remaining source work includes formal rest parameters, iterable
 call-argument spread, general lexical environments/cells, version-qualified
 diagnostics and the other recorded library/language surfaces.
+
+
+### Formal rest parameter source/VM draft
+
+`javascript-argument-rest.js` drafts fresh Array creation and indexed copying
+from the actual immutable frame Call argument list. Named parameter binding
+writes do not replace that list. Allocation and storage pauses retain formal
+offset/count, target/prototype and next copy coordinate. The argumentRest
+instruction/pending state bind the actual formal register, source realm, original
+argument range and prototype; no selected callback is hidden. Step, identity
+allocation, result publication and argument-context validation are drafted as
+one batch.
+
+The source reader/lowerer now admits one final rest identifier or recursive
+Object/Array target for functions, methods and arrows, without initializer or
+trailing comma. Function length stops at rest, and nested targets initialize
+from the genuine collected Array. Ten originals cover all supplied arguments,
+Arrow length, omitted/undefined distinction, fresh Array identity, constructor/
+method rest, recursive targets, preceding defaults, returned closures and
+mutable rest binding assignment. Four deferred controls cover exact copied
+values/Object identities, empty/rest range behavior, copy storage suspension and
+formal-register source emission. Generation inputs are registered. Nothing ran.
+
+Iterable argument spread/constructor spread, full lexical environments/cells,
+version-qualified diagnostics and remaining standard/library/language surfaces
+remain further source drafting work. Generated artifacts and all verification
+continue to be deferred; no ledger/evidence status or closing directive changed.

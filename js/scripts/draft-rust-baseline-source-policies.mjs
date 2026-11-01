@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-argument-rest.js',moduleName:'javascript_argument_rest',model:'Actual Call argument list rest parameter Array creation and copy continuations 1',programAsset:'javascript-argument-rest-program'},
  {sourcePath:'js/src/translation/javascript-iterator-regions.js',moduleName:'javascript_iterator_regions',model:'Actual per-frame synchronous iterator region ownership and cached identity updates 1',programAsset:'javascript-iterator-regions-program'},
  {sourcePath:'js/src/translation/javascript-string-iteration.js',moduleName:'javascript_string_iteration',model:'Exact UTF16 String iterator internal slots and code point advancement 1',programAsset:'javascript-string-iteration-program'},
  {sourcePath:'js/src/translation/javascript-array-spread.js',moduleName:'javascript_array_spread',model:'ECMAScript 2026 Array accumulation shared iterator continuations 1',programAsset:'javascript-array-spread-program'},
@@ -173,6 +174,7 @@ const consumers=[
  'js/tests/translation-javascript-iterator-regions.test.js',
  'js/tests/translation-javascript-for-of.test.js',
  'js/tests/translation-javascript-array-bindings.test.js',
+ 'js/tests/translation-javascript-argument-rest.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

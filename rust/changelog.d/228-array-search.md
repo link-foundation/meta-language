@@ -78,3 +78,6 @@ regions, shared callbacks and finalizer-based closing with throw precedence.
 
 Draft recursive Array binding patterns across parameters, declarations, catch
 and for-of, with elisions, defaults, cached iterator rest and closing before body.
+
+Draft formal rest parameters through original Call argument collection, actual
+Array allocation, recursive binding targets and Function length boundaries.

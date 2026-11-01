@@ -119,7 +119,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   if(previous!==null&&captures.some(identity=>previousOwners?.has(identity)&&!previous.has(identity)))fail('capturing an uninitialized parameter requires its shared lexical cell');
   initializingParameters=null;initializingParameterOwners=null;controlTargets=[];
   try{if(input[separator+1].value==='{'){const block=sourceField(node,'body'),begin=tokens.findIndex(token=>token.start===input[separator+1].start),last=begin<0?-1:findJavaScriptClassGroupEnd(values,begin);if(!block||block.term!=='statement_block'||begin<0||last<begin||tokens[last].end>block.end)fail('arrow block body retains its actual CST field and source token interval');body=statements(begin+1,last);}else body=[{$:'sourceReturnStatement',value:expression(input.slice(separator+1,end))}];}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;controlTargets=previousTargets;}
-  const firstDefault=parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||(parameter.$==='errorObjectParameter'||parameter.$==='errorArrayParameter')&&parameter.hasDefault);
+  const firstDefault=parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||parameter.$==='errorRestParameter'||(parameter.$==='errorObjectParameter'||parameter.$==='errorArrayParameter')&&parameter.hasDefault);
   templates.push({$:'errorArrowTemplatePlan',owner,ordinal,name:'',length:firstDefault<0?parameters.length:firstDefault,parameters,captures,statements:body});
   return {end,value:{$:'errorClosure',owner,ordinal,captures}};
  }
@@ -246,6 +246,10 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   initializingParameterOwners=new Set(bindings.filter(binding=>binding.kind==='parameter'&&binding.declaration.start>=tokens[header.open].start&&binding.declaration.end<=tokens[header.close].end).map(binding=>binding.identity));
   try{return split(header.open+1,header.close,',').map(([first,last])=>{
    const token=tokens[first],binding=declared(token);
+   if(token.value==='...'){
+    if(!classProfile||last!==header.close)fail('rest parameters require their actual final source formal without a trailing comma');const target=tokens[first+1],nested=target?.value==='{'||target?.value==='[',end=nested?findJavaScriptClassGroupEnd(values,first+1):first+1,owner=nested?undefined:declared(target);if(end+1!==last||!nested&&(target?.kind!=='identifier'||!owner||owner.kind!=='parameter'))fail('rest parameters retain their actual identifier or recursive binding target');
+    const pattern=nested?(target.value==='['?readArrayBinding(first+1,end,'parameter'):readObjectBinding(first+1,end,'parameter')):undefined,identity=pattern?.identity??owner.identity;if(!nested)initializingParameters.add(identity);return {$:'errorRestParameter',identity,...(pattern===undefined?{}:{pattern})};
+   }
    if(token.value==='{'||token.value==='['){
     const close=findJavaScriptClassGroupEnd(values,first);if(close<0||close>=last)fail('source object parameter retains its complete binding pattern');
     const hasDefault=close+1<last;if(hasDefault&&values[close+1]!=='=')fail('object parameter default needs its actual source expression');const value=hasDefault?expression(tokens.slice(close+2,last)):absent();
