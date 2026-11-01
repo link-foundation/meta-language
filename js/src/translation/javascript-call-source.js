@@ -41,7 +41,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
-/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource}} JavaScriptCallSourceProperty */
+/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource,excluded?:JavaScriptCallSource[]}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
 /** @typedef {{$:'sourceControlScope',identity:number,kind:string,handlers:number}} JavaScriptCallSourceControlScope */
@@ -206,7 +206,11 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    let current=appendJavaScriptCallSourceInstruction(object.builder,{$:'ordinaryAllocate',destination:object.register,prototype:prototype.register});
    for(const property of source.properties){
     if(property.$==='sourceObjectSpread'){
-     const input=lowerJavaScriptCallSourceExpression(property.input,bindings,current,depth+1),result=allocateJavaScriptCallSourceRegister(input.builder);current=appendJavaScriptCallSourceInstruction(result.builder,{$:'objectSpread',destination:result.register,target:object.register,input:input.register,realm:source.realm});continue;
+     const input=lowerJavaScriptCallSourceExpression(property.input,bindings,current,depth+1);current=input.builder;
+     if((property.excluded??[]).length>4096)return refuseJavaScriptCallSource(current,'object copy exclusions exceed their actual operand budget');
+     const excluded=[];
+     for(const expression of property.excluded??[]){const key=lowerJavaScriptCallSourceExpression({$:'sourcePropertyKey',input:expression,realm:source.realm},bindings,current,depth+1),saved=allocateJavaScriptCallSourceRegister(key.builder);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:key.register});excluded.push(saved.register);}
+     const result=allocateJavaScriptCallSourceRegister(current);current=appendJavaScriptCallSourceInstruction(result.builder,{$:'objectSpread',destination:result.register,target:object.register,input:input.register,realm:source.realm,...(property.excluded!==undefined?{excluded}:{})});continue;
     }
     const key=lowerJavaScriptCallSourceExpression({$:'sourcePropertyKey',input:property.key,realm:source.realm},bindings,current,depth+1);
     const value=lowerJavaScriptCallSourceExpression(property.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);

@@ -7,3 +7,7 @@ Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target
 creation and traversal composition remain to be drafted.
+
+Draft excluded String/Symbol keys in shared CopyDataProperties, including exact
+instruction/register binding and skipping excluded getters. General source rest
+pattern binding and execution checks remain deferred.

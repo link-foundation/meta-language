@@ -1,8 +1,8 @@
 // CopyDataProperties for actual object-literal targets. Getters execute through
 // the common call machine; snapshots never substitute original host bodies.
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,readJavaScriptOrdinaryOwnKeys,planJavaScriptOrdinaryGet,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
-import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextString,readJavaScriptSemanticTextUnit} from './javascript-semantic-values.js';
-/** @typedef {{$:'objectSpreadState',target:JavaScriptSemanticValue,input:JavaScriptSemanticValue,keys:JavaScriptSemanticValue[],position:number,phase:string,value:JavaScriptSemanticValue,callee:JavaScriptSemanticValue}} JavaScriptObjectSpreadState */
+import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextString,readJavaScriptSemanticTextUnit} from './javascript-semantic-values.js';
+/** @typedef {{$:'objectSpreadState',target:JavaScriptSemanticValue,input:JavaScriptSemanticValue,excluded:JavaScriptSemanticValue[],keys:JavaScriptSemanticValue[],position:number,phase:string,value:JavaScriptSemanticValue,callee:JavaScriptSemanticValue}} JavaScriptObjectSpreadState */
 /** @typedef {{$:'objectSpreadContinue',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectSpreadState} |
  * {$:'objectSpreadCall',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectSpreadState,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]} |
  * {$:'objectSpreadCompleted',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
@@ -25,14 +25,16 @@ export function readJavaScriptObjectSpreadStateError(heap,state){
   if(length!==state.keys.length)return 'primitive spread snapshots retain all actual String indices and no invented keys';
   for(let at=0;at<state.keys.length;at++){const key=state.keys[at];if(key===undefined||key.$!=='text'||readJavaScriptSemanticTextString(key)!==String(at))return 'String spread snapshots retain their exact ordered UTF16 indices';}
  }
+ if(state.excluded.length>4096)return 'object spread excluded keys exceed their explicit snapshot budget';
+ for(const key of state.excluded){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;}
  const names=[];for(const key of state.keys){const error=readJavaScriptOrdinaryKeyError(heap,key);if(error!=='')return error;names.push(key.$==='symbol'?'symbol:'+String(key.identity):'text:'+readJavaScriptSemanticTextString(key));}
  const ordered=names.toSorted();for(let at=1;at<ordered.length;at++)if(ordered[at]===ordered[at-1])return 'object spread own-key snapshots cannot duplicate a semantic key';
  return '';
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} target
- * @param {JavaScriptSemanticValue} input @returns {JavaScriptObjectSpreadTransition} */
-export function beginJavaScriptObjectSpread(heap,target,input){
- const state={$:'objectSpreadState',target,input,keys:[],position:0,phase:'keys',value:{$:'undefined'},callee:{$:'undefined'}};
+ * @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue[]} [excluded] @returns {JavaScriptObjectSpreadTransition} */
+export function beginJavaScriptObjectSpread(heap,target,input,excluded=[]){
+ const state={$:'objectSpreadState',target,input,excluded,keys:[],position:0,phase:'keys',value:{$:'undefined'},callee:{$:'undefined'}};
  const error=readJavaScriptObjectSpreadStateError(heap,state);return error===''?{$:'objectSpreadContinue',heap,state}:{$:'objectSpreadInvalid',heap,reason:error};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectSpreadState} state
@@ -62,6 +64,7 @@ export function stepJavaScriptObjectSpread(heap,state){
   if(!defined.success)return {$:'objectSpreadError',heap:defined.heap,reason:'object spread cannot create its selected own data property'};
   return {$:'objectSpreadContinue',heap:defined.heap,state:{...state,position:state.position+1,phase:'read',value:{$:'undefined'}}};
  }
+ if(state.excluded.some(excluded=>testJavaScriptSemanticSameValue(excluded,key)))return {$:'objectSpreadContinue',heap,state:{...state,position:state.position+1}};
  if(state.input.$==='object'){
   const input=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.input.identity)];if(input===undefined)return {$:'objectSpreadInvalid',heap,reason:'object spread source cannot disappear from its global context'};
   if(!['ordinaryObject','closureObject','mapObject','setObject','collectionIteratorObject','arrayObject'].includes(input.$))return {$:'objectSpreadInvalid',heap,reason:'opaque object spread requires its actual own-key and descriptor host protocols'};

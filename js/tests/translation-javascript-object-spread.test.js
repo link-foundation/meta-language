@@ -48,3 +48,18 @@ test('the shared machine executes an actual spread getter and returns its litera
  ]};
  const started=beginJavaScriptCallMachine(program,heap,5n,{$:'undefined'},[object(2n),object(1n)]);assert.equal(started.$,'machineContinue');const actual=runJavaScriptCallMachine(program,started.machine,256,[]).transition;assert.equal(actual.$,'machineCompleted');assert.deepEqual(actual.value,object(2n));assert.deepEqual(get(actual.heap,text('value')),number(7));
 });
+
+test('excluded own properties are skipped before descriptor Get or getter execution',()=>{
+ let heap=getter(setup(),1n,'drop',object(4n,true));heap=data(heap,1n,text('keep'),number(7));const actual=advance(beginJavaScriptObjectSpread(heap,object(2n),object(1n),[text('drop')]));assert.equal(actual.$,'objectSpreadCompleted');assert.deepEqual(readJavaScriptOrdinaryOwnKeys(actual.heap,2n).keys,[text('keep')]);assert.deepEqual(get(actual.heap,text('keep')),number(7));
+});
+test('excluded Symbol identities and duplicate keys preserve exact key semantics',()=>{
+ let heap=data(setup(),1n,{$:'symbol',identity:99n},number(7));heap=data(heap,1n,text('Symbol'),number(9));heap=data(heap,1n,text('drop'),number(11));const excluded=[{$:'symbol',identity:99n},text('drop'),text('drop')],actual=advance(beginJavaScriptObjectSpread(heap,object(2n),object(1n),excluded));assert.equal(actual.$,'objectSpreadCompleted');assert.deepEqual(readJavaScriptOrdinaryOwnKeys(actual.heap,2n).keys,[text('Symbol')]);assert.deepEqual(get(actual.heap,text('Symbol')),number(9));
+ const malformed=beginJavaScriptObjectSpread(heap,object(2n),object(1n),[object(1n)]);assert.equal(malformed.$,'objectSpreadInvalid');
+});
+test('the VM retains actual excluded-key registers and never calls the excluded getter',()=>{
+ let heap=getter(setup(),1n,'drop',object(4n,true));heap=data(heap,1n,text('keep'),number(9));heap=insertJavaScriptOrdinaryObject(heap,5n,{$:'null'}).heap;heap={...heap,objects:heap.objects.map(row=>row.identity===5n?{...row,callable:true}:row)};
+ const program={$:'callProgram',realms:[1000n],exoticKey:{$:'symbol',identity:99n},functions:[
+  {$:'callFunction',identity:4n,realm:1000n,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'constant',destination:1,value:text('excluded getter must not run')},{$:'throw',source:1}]},
+  {$:'callFunction',identity:5n,realm:1000n,receiverMode:'strict',lexicalReceiver:{$:'undefined'},parameters:3,registers:5,captures:[],instructions:[{$:'objectSpread',destination:4,target:1,input:2,excluded:[3],realm:1000n},{$:'return',source:4}]},
+ ]};const started=beginJavaScriptCallMachine(program,heap,5n,{$:'undefined'},[object(2n),object(1n),text('drop')]);assert.equal(started.$,'machineContinue');const actual=runJavaScriptCallMachine(program,started.machine,256,[]).transition;assert.equal(actual.$,'machineCompleted');assert.deepEqual(readJavaScriptOrdinaryOwnKeys(actual.heap,2n).keys,[text('keep')]);assert.deepEqual(get(actual.heap,text('keep')),number(9));
+});

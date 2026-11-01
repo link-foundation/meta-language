@@ -131,7 +131,11 @@ storage suspension. Nullish and keyless primitives contribute no properties;
 String sources contribute separate UTF16 code units without scalar normalization.
 The literal target is an actual ordinary object. Opaque host own-key/descriptor
 operations and Proxy traps need explicit protocols; no original-body fallback
-establishes translation. Object rest additionally needs excluded-key semantics.
+establishes translation. The same kernel accepts retained excluded String/Symbol keys, skipping them
+before descriptor/Get work. Copy instructions bind every excluded-key register;
+source lowering converts and snapshots explicit exclusion operands once. General
+object-rest binding still requires its coercibility, binding-order and lexical
+environment lowering.
 
 Source switches capture their input once, test selectors with strict equality in
 source order until selection, and enter adjacent clause bodies without repeating

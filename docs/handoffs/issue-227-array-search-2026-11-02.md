@@ -121,3 +121,21 @@ realm traversal still need their explicit authorities and version profiles.
 This selection foundation does not claim completed map/filter execution. Earlier
 iterator/IteratorClose, lexical cells/TDZ, source import/decoder, full grammar and
 architecture obligations remain binding and keep their prior detailed plans.
+
+
+## CopyDataProperties exclusions drafted
+
+The common object-copy state now retains excluded actual String/Symbol keys.
+Exclusion is tested before own descriptor/Get work and therefore never invokes an
+excluded getter. Duplicated exclusions remain legal and Symbols compare by their
+global identities. Optional source/instruction exclusion operands preserve the
+old no-exclusion form; source lowering converts and snapshots explicit operands
+once, with register/operand bounds. Whole-machine pending validation binds every
+excluded value to the selected instruction's actual register.
+
+Three continuation/VM controls and one original/compiler/native replay input are
+authored. The raw replay input compares data-rest behavior for an explicit supplied
+source IR; it does not claim that the CST object-rest binding reader is drafted.
+General rest-pattern binding, RequireObjectCoercible/diagnostics, prior field read
+order and lexical environment construction remain explicit next work. Automatic
+codec/native/Links regeneration and all behavioral assertions remain deferred.
