@@ -3,7 +3,7 @@ import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScr
 /** @typedef {{$:'numberProtocolState',state:JavaScriptPrimitiveConversionState} |
  * {$:'numberPrimitiveValue',value:JavaScriptSemanticValue}} JavaScriptNumberCallState */
 /** @param {string} operation @returns {string} */
-export function readJavaScriptNumberProtocolOperationError(operation){return operation==='convert explicit number'||operation==='coerce primitive number'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'number conversion requires its actual registered source operation';}
+export function readJavaScriptNumberProtocolOperationError(operation){return operation==='convert explicit number'||operation==='coerce primitive number'||operation==='coerce primitive numeric'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'number conversion requires its actual registered source operation';}
 /** @param {string} operation @param {JavaScriptPrimitiveConversionTransition} transition @returns {JavaScriptScalarConversionTransition} */
 export function finishJavaScriptNumberProtocol(operation,transition){const error=readJavaScriptNumberProtocolOperationError(operation);return error!==''?{$:'scalarInvalid',reason:error}:finishJavaScriptScalarProtocol(operation,transition);}
 /** @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptScalarConversionTransition} */

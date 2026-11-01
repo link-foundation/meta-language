@@ -7,13 +7,14 @@ import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values
 
 /** @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallNumberConversion(operation,value){
- if(operation!=='convert explicit number'&&operation!=='coerce primitive number')return {$:'primitiveInvalid',reason:'number conversion needs its actual registered operation'};
+ if(operation!=='convert explicit number'&&operation!=='coerce primitive number'&&operation!=='coerce primitive numeric')return {$:'primitiveInvalid',reason:'number conversion needs its actual registered operation'};
  switch(value.$){
   case 'undefined':return {$:'primitiveValue',value:{$:'number',value:NaN}};
   case 'null':return {$:'primitiveValue',value:{$:'number',value:0}};
   case 'boolean':return {$:'primitiveValue',value:{$:'number',value:value.value?1:0}};
   case 'number':return {$:'primitiveValue',value};
   case 'integer':{
+   if(operation==='coerce primitive numeric')return {$:'primitiveValue',value};
    if(operation==='coerce primitive number')return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert a BigInt value to a number'};
    if(readJavaScriptCallIntegerWidth(value.value)<0)return {$:'primitiveResourceLimit',reason:'explicit Number conversion exceeds the selected integer work profile'};
    return {$:'primitiveValue',value:{$:'number',value:convertJavaScriptBigIntegerNumber(value.value)}};

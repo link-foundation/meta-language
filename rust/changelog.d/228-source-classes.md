@@ -55,3 +55,7 @@ Controls are authored but not executed; native products still require generation
 Draft object-literal spread with shared own-key snapshots, fresh descriptor reads,
 source getter continuations and resumable data-property creation. Native policy
 registration and deferred controls accompany the draft; execution remains deferred.
+
+Draft Number/BigInt-preserving ToNumeric, prefix/postfix reference updates, unary
+numeric conversion and ordinary for loops with optional clauses/empty bodies.
+Original-source and shared-machine controls await automatic generation and CI.

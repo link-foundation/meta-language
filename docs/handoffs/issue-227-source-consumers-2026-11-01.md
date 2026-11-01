@@ -973,3 +973,35 @@ The machine also retains a selected getter when pushing its child call encounter
 stack resource limits. A later step retries that same unstarted call; completed
 getters resume at property creation. Whole-stack checks bind the actual getter
 identity, receiver mode and empty argument list to the suspended spread parent.
+
+
+### Numeric updates and ordinary for clauses continuation draft
+
+The shared scalar and call-number protocols now distinguish ToNumeric from
+ToNumber. Actual object callbacks retain number hints; BigInt results survive
+ToNumeric, while ToNumber continues to reject BigInt. Increment, decrement and
+numeric negation reuse existing exact integer work limits and Number operations.
+Unary plus/minus lower through the proper conversion operation. The actual CST
+reader preserves the lexer BigInt suffix instead of treating its decimal token
+value as a Number; BigInt literal digits have an explicit 4096-character source
+limit. Numeric object property names preserve those exact digits.
+
+Prefix/postfix source updates retain their actual lexical/module/property
+reference, one receiver/key evaluation, the converted key, and one GetValue and
+ToNumeric before PutValue. Prefix returns the updated value; postfix returns the
+converted old value. Primitive property writes still use the actual supplied
+strict assignment intrinsic. The update proof follows ECMAScript 2026 sections
+13.4 and 6.2.5.5 (GetValue updates the Reference's converted key):
+https://tc39.es/ecma262/2026/multipage/ecmascript-language-expressions.html#sec-update-expressions
+and https://tc39.es/ecma262/2026/multipage/ecmascript-data-types-and-values.html#sec-getvalue.
+
+Ordinary for headers preserve empty clauses, optional updates, expression
+initialization, one let/const binding, and genuinely empty statement bodies.
+Continue still reaches the actual update or test. Seventeen original-source
+controls, two explicit remaining-boundary refusals, three numeric/protocol
+controls and one compiler/native-machine control are authored. They include
+String old values, BigInt beyond Number precision, callback/key order, Number
+negative zero, postfix loop updates and omitted clauses. Nothing was executed.
+Native/model/fixture generation remains deferred. Constant-binding abrupt writes,
+var hoisting, multiple declarations, mutable per-iteration captures and general
+iterator-close/finally transfers retain their complete obligations.

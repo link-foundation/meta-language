@@ -94,6 +94,18 @@ comma expressions produce values and discard that reference. Comma operands run
 in order without consuming argument, field or element separators. Nullish
 coalescing snapshots its input and evaluates its fallback only for null/undefined.
 
+Source prefix/postfix updates retain one actual mutable Reference. They evaluate
+its receiver and raw key once, retain the converted property key after GetValue,
+complete ToNumeric through the actual number-hint callback protocol, and then
+perform PutValue. Postfix returns the converted old numeric value; prefix returns
+the new value. Number and BigInt retain separate arithmetic, including Number
+zero signs and exact integer steps. Unary minus uses ToNumeric; unary plus uses
+ToNumber and rejects BigInt. BigInt literals and property names retain exact
+digits within their explicit source budget. Ordinary for loops admit omitted
+clauses, expression initialization, a single lexical initializer, and empty
+bodies. Captured per-iteration mutable cells, var hoisting, multiple declaration
+initializers and abrupt constant-binding writes still need their own protocols.
+
 Object literal spread uses a bounded CopyDataProperties continuation in the
 shared heap. It snapshots actual ordered own keys, including Symbols, and reads
 each current own descriptor immediately before its Get. Only enumerable own

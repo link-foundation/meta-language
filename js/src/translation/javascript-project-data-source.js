@@ -126,9 +126,15 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  function expression(input,offset=0){let at=0;const peek=()=>input[at],take=value=>{if(peek()?.value===value){at++;return true;}return false;};
   function variable(token){const binding=reference(token,offset);if(binding){if(initializingParameters!==null&&initializingParameterOwners?.has(binding.identity)&&!initializingParameters.has(binding.identity))fail('parameter defaults require actual earlier initialized bindings; later/self parameter TDZ needs its explicit source continuation');const actualClass=classBinding(binding);if(actualClass)return {$:'errorFunctionReference',identity:actualClass.binding};if(cellIDs.has(binding.identity))return {$:'errorModuleCell',identity:binding.identity};if(functionIDs.has(binding.identity))return {$:'errorFunctionReference',identity:binding.identity};if(importByID.has(binding.identity)){const owner=importByID.get(binding.identity);return port('binding:'+binding.identity,{kind:'import',binding:binding.identity,specifier:owner.specifier,imported:owner.imported});}if(binding.scope!=='scope:0')return {$:'errorBinding',identity:binding.identity};fail('a selected source function refers to an unmodeled module binding');}if(token.value==='undefined'&&unresolved(token,offset))return absent();if(classProfile&&unresolved(token,offset)&&['NaN','Infinity'].includes(token.value))return {$:'errorSpecialNumber',form:token.value};if(!unresolved(token,offset)||!['URL','Buffer','JSON','structuredClone','TypeError','Error',...(classProfile?['Set','Map','Array']:[])].includes(token.value))fail('source globals need their actual unshadowed bounded operation owner');return port('global:'+token.value,{kind:'global',name:token.value});}
   function arguments_(end){const result=[];if(take(end))return result;while(at<input.length){result.push(parse(1));if(take(end))return result;if(!take(','))fail('source arguments require complete separators');}fail('source arguments require their closing group');}
+  function update(target,operator,prefix){
+   if(!classProfile||!['errorBinding','errorModuleCell','errorGet','errorComputedGet'].includes(target.$))fail('updates require their actual admitted mutable source reference');
+   if(target.$==='errorBinding'&&!['parameter','let'].includes(bindings.find(row=>row.identity===target.identity)?.kind))fail('constant binding updates retain their explicit abrupt PutValue obligation');
+   return {$:'errorUpdate',target,operator,prefix};
+  }
   function primary(){const token=peek();if(!token)fail('source expressions require a complete operand');let value,member=null;const closure=arrow(input,at,offset);
    if(closure){at=closure.end;value=closure.value;}
-   else if(['!','typeof','-'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
+   else if(['++','--'].includes(token.value)){at++;return update(parse(9),token.value,true);}
+   else if(['!','typeof','-','+'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
    else if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');if(value.$==='errorGet'||value.$==='errorComputedGet')member={object:value.object,key:value.key,computed:value.$==='errorComputedGet'};}
    else if(take('[')){
     if(classProfile){let length=0;const elements=[];if(!take(']'))while(at<input.length){if(take(']'))break;if(take(',')){length++;continue;}if(peek()?.value==='...')fail('Array literal spread requires its actual iterator and close continuations');elements.push({$:'errorArrayElement',index:length++,value:parse(1)});if(take(']'))break;if(!take(','))fail('Array literal elements need complete separators');if(take(']'))break;}if(input[at-1]?.value!==']')fail('Array literal needs its closing bracket');value={$:'errorArrayLiteral',length,elements};}
@@ -141,14 +147,14 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       if(!classProfile)fail('computed object fields require the closed source profile');
       const key=parse(0);if(!take(']')||!take(':'))fail('computed object fields retain their complete key and value');const field=parse(1);
       if(field.$==='errorClosure'){
-       if(key.$!=='errorConstant'||!['text','number'].includes(key.value.$))fail('computed anonymous function names require their actual runtime property-key naming continuation');
+       if(key.$!=='errorConstant'||!['text','number','integer'].includes(key.value.$))fail('computed anonymous function names require their actual runtime property-key naming continuation');
        inferArrowName(field,key.value.$==='text'?key.value.units.map(unit=>String.fromCharCode(unit)).join(''):String(key.value.value));
       }
       properties.push({$:'errorComputedObjectProperty',key,value:field});
      }else{
       const key=peek();if(!key||!['identifier','string','number'].includes(key.kind))fail('source object fields require their actual fixed or computed data key');at++;
       const pair=take(':');if(!pair&&key.kind!=='identifier')fail('only actual identifier bindings admit object shorthand');if(pair&&key.value==='__proto__')fail('object literal prototype setters require their explicit prototype installation operation');
-      const name=key.kind==='number'?String(Number(key.value)):key.value;if(key.kind==='number'&&!Number.isFinite(Number(key.value)))fail('source numeric property names require their actual finite literal Number');
+      const name=key.kind==='number'?key.suffix==='n'?String(BigInt(key.value)):String(Number(key.value)):key.value;if(key.kind==='number'&&key.suffix!=='n'&&!Number.isFinite(Number(key.value)))fail('source numeric property names require their actual finite literal Number');
       const keyUnits=key.stringUnits??units(name),field=pair?parse(1):variable(key);if(pair)inferArrowName(field,keyUnits.map(unit=>String.fromCharCode(unit)).join(''));
       properties.push({$:'errorObjectProperty',key:keyUnits,value:field});
      }
@@ -162,12 +168,13 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     if(classOwner)value={$:'errorOrdinaryConstruction',identity:classOwner.binding,arguments:arguments_(')')};
     else{if(owner||!unresolved(name,offset)||!['URL','Error','TypeError',...(classProfile?['Set','Map']:[])].includes(name.value))fail('native construction needs its actual unshadowed source capability');const callee=port('construct:'+name.value,{kind:'construct',name:name.value});value=classProfile&&['Set','Map'].includes(name.value)?{$:'errorCollectionConstruction',source:'construct:'+name.value,arguments:arguments_(')')}:{$:'errorCall',callee,receiver:absent(),arguments:arguments_(')'),construct:false};}
    }
+   else if(token.kind==='number'&&token.suffix==='n'){if(!classProfile||token.value.length>4096)fail('BigInt literals retain their explicit source profile and digit budget');at++;value=constant({$:'integer',value:BigInt(token.value)});}
    else if(token.kind==='number'){at++;const value_=Number(token.value);if(!Number.isFinite(value_))fail('source numeric literals need a finite actual Number');value=constant({$:'number',value:value_});}
    else if(token.kind==='string'){at++;value=constant({$:'text',units:token.stringUnits??units(token.value)});}
    else if(token.kind==='template'){at++;const parts=[];for(const part of token.parts){parts.push({$:'errorTemplateText',units:part.stringUnits??units(part.text)});if(part.expression)parts.push({$:'errorTemplateValue',value:expression(tokenize(part.expression.source,'JavaScript').tokens.filter(row=>row.kind!=='eof'),offset+part.expression.offset)});}value={$:'errorTemplate',parts};}
    else if(take('null'))value=constant({$:'null'});else if(take('true'))value=constant({$:'boolean',value:true});else if(take('false'))value=constant({$:'boolean',value:false});
    else if(token.kind==='identifier'){at++;value=variable(token);}else fail('this source operand requires an additional actual semantic operation');
-   while(at<input.length){if(peek()?.value==='.'||peek()?.value==='?.'){const optional=take('?.');if(!optional)take('.');const key=peek();if(key?.kind!=='identifier')fail('source member reads require a complete fixed key');at++;const property=constant({$:'text',units:units(key.value)});member=optional?null:{object:value,key:property};value={$:optional?'errorOptionalGet':'errorGet',object:value,key:property};}else if(classProfile&&take('[')){const key=parse(0);if(!take(']'))fail('computed source member access needs its complete key');member={object:value,key,computed:true};value={$:'errorComputedGet',object:value,key};}else if(take('(')){const args=arguments_(')');value=member?{$:member.computed?'errorComputedMethodCall':'errorMethodCall',object:member.object,key:member.key,arguments:args}:{$:'errorCall',callee:value,receiver:absent(),arguments:args,construct:false};member=null;}else break;}return value;
+   while(at<input.length){if(peek()?.value==='.'||peek()?.value==='?.'){const optional=take('?.');if(!optional)take('.');const key=peek();if(key?.kind!=='identifier')fail('source member reads require a complete fixed key');at++;const property=constant({$:'text',units:units(key.value)});member=optional?null:{object:value,key:property};value={$:optional?'errorOptionalGet':'errorGet',object:value,key:property};}else if(classProfile&&take('[')){const key=parse(0);if(!take(']'))fail('computed source member access needs its complete key');member={object:value,key,computed:true};value={$:'errorComputedGet',object:value,key};}else if(take('(')){const args=arguments_(')');value=member?{$:member.computed?'errorComputedMethodCall':'errorMethodCall',object:member.object,key:member.key,arguments:args}:{$:'errorCall',callee:value,receiver:absent(),arguments:args,construct:false};member=null;}else break;}if(['++','--'].includes(peek()?.value)&&!/[\r\n\u2028\u2029]/u.test(source.slice(input[at-1].end+offset,peek().start+offset))){const operator=peek().value;at++;value=update(value,operator,false);}return value;
   }
   const levels={',':0,'=':1,'+=':1,'?':2,'||':3,'??':3,'&&':4,'===':5,'!==':5,'<':6,'<=':6,'>':6,'>=':6,'instanceof':6,'+':7,'-':7,'*':8,'/':8,'%':8};
   function parse(minimum){if(++expressionDepth>128)fail('project data expressions exceed their explicit source depth');let left=primary();while(at<input.length){const operator=peek().value,level=levels[operator];if(level===undefined||level<minimum)break;at++;
@@ -182,7 +189,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }expressionDepth--;return left;}
   const result=parse(0);if(at!==input.length)fail('source expression cannot discard unconsumed syntax');return result;
  }
- function split(first,last,separator){const result=[];let start=first;for(let at=first;at<last;at++){if(['(','{','['].includes(values[at])){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>=last)fail('source groups must remain complete');at=end;}else if(values[at]===separator){result.push([start,at]);start=at+1;}}if(start<last)result.push([start,last]);return result;}
+ function split(first,last,separator,preserveEmpty=false){const result=[];let start=first;for(let at=first;at<last;at++){if(['(','{','['].includes(values[at])){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>=last)fail('source groups must remain complete');at=end;}else if(values[at]===separator){result.push([start,at]);start=at+1;}}if(start<last||preserveEmpty)result.push([start,last]);return result;}
  function readSourceParameters(header){
   if(header.implicitConstructor)return [];
   const previous=initializingParameters,previousOwners=initializingParameterOwners;initializingParameters=new Set();
@@ -204,7 +211,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   });}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;}
  }
  function statements(first,last){if(++statementDepth>128)fail('project data statements exceed their explicit source depth');const result=[];let at=first;
-  function one(){if(values[at]==='{'){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>last)fail('source blocks require complete groups');const body=statements(at+1,end);at=end+1;return body;}return [statement()];}
+  function one(){if(values[at]===';'){at++;return [];}if(values[at]==='{'){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>last)fail('source blocks require complete groups');const body=statements(at+1,end);at=end+1;return body;}return [statement()];}
   function statement(){
    const labels=[];
    while(classProfile&&tokens[at]?.kind==='identifier'&&values[at+1]===':'){
@@ -261,12 +268,20 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     }}finally{controlTargets.pop();}
     at=end+1;return {$:'sourceSwitchStatement',target,value,clauses};
    }
-   if(word==='for'&&classProfile){const open=at,close=findJavaScriptClassGroupEnd(values,open),parts=close>=0?split(open+1,close,';'):[];
-    if(values[open]!=='('||parts.length!==3||values[parts[0][0]]!=='let'||values[parts[0][0]+2]!=='=')fail('source class loops require their actual fixed let/condition/update operands');
-    const owner=declared(tokens[parts[0][0]+1]);if(!owner||owner.kind!=='let')fail('source loop initialization requires its actual mutable lexical owner');
-    const initial=expression(tokens.slice(parts[0][0]+3,parts[0][1])),condition=expression(tokens.slice(...parts[1])),update=expression(tokens.slice(...parts[2])),target=nextBinding++;at=close+1;let body;
+   if(word==='for'&&classProfile){
+    const open=at,close=findJavaScriptClassGroupEnd(values,open),parts=close>=0?split(open+1,close,';',true):[];
+    if(values[open]!=='('||parts.length!==3)fail('ordinary for loops retain their actual initialization, test and update clauses; iterable loops need their separate protocol');
+    const initializers=[],[first,lastInitial]=parts[0];
+    if(first<lastInitial){
+     if(values[first]==='let'||values[first]==='const'){
+      const kind=values[first],owner=declared(tokens[first+1]);if(!owner||owner.kind!==kind||split(first,lastInitial,',').length!==1||lastInitial>first+2&&values[first+2]!=='='||kind==='const'&&lastInitial===first+2)fail('for lexical initialization retains one actual binding and its complete initializer');
+      initializers.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:lastInitial===first+2?absent():inferArrowName(expression(tokens.slice(first+3,lastInitial)),owner.name)});
+     }else if(values[first]==='var')fail('function-scoped var initialization requires its actual hoisting environment');
+     else initializers.push({$:'sourceExpressionStatement',value:expression(tokens.slice(first,lastInitial))});
+    }
+    const condition=parts[1][0]===parts[1][1]?constant({$:'boolean',value:true}):expression(tokens.slice(...parts[1])),update=parts[2][0]===parts[2][1]?null:expression(tokens.slice(...parts[2])),target=nextBinding++;at=close+1;let body;
     controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
-    return {$:'sourceBlockStatement',statements:[{$:'sourceMutableStatement',identity:owner.identity,value:initial},{$:'sourceWhileStatement',target,condition,update,body}]};
+    return {$:'sourceBlockStatement',statements:initializers.concat([{$:'sourceWhileStatement',target,condition,...(update!==null?{update}:{}),body}])};
    }
    if(word==='{'){at--;return {$:'sourceBlockStatement',statements:one()};}
    const begin=at-1;let end=at;for(;end<last&&values[end]!==';';end++)if(['(','{','['].includes(values[end])){const close=findJavaScriptClassGroupEnd(values,end);if(close<0||close>=last)fail('source statement groups must close');end=close;}if(end>=last)fail('this source statement profile requires explicit actual semicolons');at=end+1;

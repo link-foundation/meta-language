@@ -26,7 +26,7 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer'];
+ const unary=['test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
  const binary=['repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
  const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
@@ -169,6 +169,7 @@ export function executeJavaScriptCallTextReplacement(text,search,replacement,all
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(operation==='increment numeric value'||operation==='decrement numeric value'||operation==='negate numeric value')return executeJavaScriptCallNumericUpdate(operation,values[0]??{$:'undefined'});
  if(operation==='add primitive values')return executeJavaScriptCallPrimitiveAddition(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
  if(operation==='test object value')return {$:'primitiveValue',value:{$:'boolean',value:(values[0]??{$:'undefined'}).$==='object'}};
  if(operation==='read semantic type'){
@@ -176,7 +177,7 @@ export function executeJavaScriptCallPrimitive(operation,values){
   for(let at=0;at<kind.length;at++)units.push(kind.charCodeAt(at));return {$:'primitiveValue',value:{$:'text',units}};
  }
  if(readJavaScriptSourceExceptionClass(operation)!=='')return {$:'primitiveInvalid',reason:'source Error allocation requires its actual registered realm'};
- if(operation==='convert explicit number'||operation==='coerce primitive number')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
+ if(operation==='convert explicit number'||operation==='coerce primitive number'||operation==='coerce primitive numeric')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert explicit integer'||operation==='coerce primitive integer')return executeJavaScriptCallIntegerConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert primitive text')return executeJavaScriptCallTextConversion(values[0]??{$:'undefined'});
  if(values.some(value=>value.$==='sourceText')){
@@ -231,4 +232,13 @@ export function executeJavaScriptCallTextConversion(value){
  /** @type {number[]} */ const units=[];
  for(let index=0;index<text.length;index+=1)units.push(text.charCodeAt(index));
  return {$:'primitiveValue',value:{$:'text',units}};
+}
+
+/** ToNumeric has already completed; preserve Number versus BigInt exactly.
+ * @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallNumericUpdate(operation,value){
+ if(operation!=='increment numeric value'&&operation!=='decrement numeric value'&&operation!=='negate numeric value')return {$:'primitiveInvalid',reason:'numeric updates require their actual increment or decrement operation'};
+ if(value.$==='number')return {$:'primitiveValue',value:{$:'number',value:operation==='increment numeric value'?value.value+1:operation==='decrement numeric value'?value.value-1:-value.value}};
+ if(value.$==='integer')return operation==='negate numeric value'?executeJavaScriptCallIntegerPrimitive('negate integer',[value]):executeJavaScriptCallIntegerPrimitive(operation==='increment numeric value'?'add integers':'subtract integers',[value,{$:'integer',value:1n}]);
+ return {$:'primitiveInvalid',reason:'numeric updates retain their actual completed Number or BigInt conversion'};
 }

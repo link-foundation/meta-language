@@ -153,6 +153,7 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/tests/translation-javascript-numeric-updates.test.js',
  'js/tests/translation-javascript-object-spread.test.js',
  'js/tests/translation-javascript-array-objects.test.js',
  'js/tests/translation-javascript-collection-iterator-results.test.js',

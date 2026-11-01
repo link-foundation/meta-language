@@ -14,7 +14,7 @@ import {executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
  */
 /** @param {string} operation @returns {string} */
 export function readJavaScriptScalarProtocolOperationError(operation){
- return operation==='convert explicit number'||operation==='coerce primitive number'||operation==='convert primitive text'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'scalar conversion requires its actual registered Number, integer or text source operation';
+ return operation==='convert explicit number'||operation==='coerce primitive number'||operation==='coerce primitive numeric'||operation==='convert primitive text'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'scalar conversion requires its actual registered Number, integer or text source operation';
 }
 /** @param {string} operation @param {JavaScriptPrimitiveConversionTransition} transition @returns {JavaScriptScalarConversionTransition} */
 export function finishJavaScriptScalarProtocol(operation,transition){
