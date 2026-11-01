@@ -57,6 +57,16 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Source delete evaluates its actual property Reference without GetValue of the
+selected property, converts a computed key once after the receiver check and
+requires strict deletion success. Optional deletion skips property/key work for
+nullish receivers. Deleting a non-Reference evaluates the operand and returns
+true; strict deletion of an unqualified identifier remains an early error.
+Source in evaluates its raw key then Object operand, checks the Object before
+ToPropertyKey and uses actual prototype presence without invoking accessors.
+Void evaluates its operand and returns undefined. Primitive property receiver
+boxing and opaque/Proxy presence/deletion retain explicit protocol obligations.
+
 Array push/pop use ordinary shared property instructions, not native Array
 bodies. They obtain length through actual Get/ToNumber/ToLength effects. Push
 reads the actual frame argument List, checks the safe-length limit before

@@ -53,6 +53,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceSnapshotSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
+ * {$:'sourceDelete',object:JavaScriptCallSource,key:JavaScriptCallSource} | {$:'sourceHas',object:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
@@ -305,6 +306,11 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   case 'sourceAllocate':{
    const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),result=allocateJavaScriptCallSourceRegister(prototype.builder);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryAllocate',destination:result.register,prototype:prototype.register})};
+  }
+  case 'sourceDelete':case 'sourceHas':{
+   const raw=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(raw.builder),saved=appendJavaScriptCallSourceInstruction(object.builder,{$:'copy',destination:object.register,source:raw.register}),key=lowerJavaScriptCallSourceExpression(source.key,bindings,saved,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);let current=appendJavaScriptCallSourceInstruction(result.builder,{$:source.$==='sourceDelete'?'ordinaryDelete':'ordinaryHas',destination:result.register,object:object.register,key:key.register});
+   if(source.$==='sourceDelete'){const checked=allocateJavaScriptCallSourceRegister(current);current=appendJavaScriptCallSourceInstruction(checked.builder,{$:'primitive',destination:checked.register,operation:'require delete success',arguments:[result.register]});}
+   return {$:'sourceResult',builder:current,register:result.register};
   }
   case 'sourceGet':{
    const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);

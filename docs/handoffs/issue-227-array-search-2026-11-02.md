@@ -957,3 +957,21 @@ additional deferred controls inspect bytecode ordering/direction and relative
 index boundaries. No execution/generation/validation occurred. Remaining source
 library, primitive boxing, opaque protocols and full lexical TDZ/recursion
 continue as separate drafting work.
+
+### Source delete/in/void operator draft
+
+Source capture/lowering now routes delete and in to the shared property
+instructions. Delete retains the actual receiver/key Reference without reading
+the selected value, applies strict success checking and preserves optional
+nullish short-circuiting. Non-Reference operands evaluate before returning true;
+unqualified strict identifier deletion (including parenthesized undefined) is
+rejected as an early error. In holds key then Object operands, checks the Object
+before key conversion and uses prototype presence without invoking getters.
+Void evaluates then discards its operand value without conversion.
+
+Ten originals cover Array holes/length, accessor deletion, inherited fields,
+strict nonconfigurable deletion, accessor presence, in error ordering, one key
+conversion, optional deletion, void and non-Reference effects. Two new early
+error refusals and three deferred source/provenance controls accompany them.
+No execution/generation/validation occurred. Primitive property boxing and
+opaque/Proxy protocols remain explicit unsupported boundaries.

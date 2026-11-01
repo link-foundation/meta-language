@@ -172,7 +172,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   function primary(){const token=peek();if(!token)fail('source expressions require a complete operand');let value,member=null;const closure=arrow(input,at,offset);
    if(closure){at=closure.end;value=closure.value;}
    else if(['++','--'].includes(token.value)){at++;return update(parse(9),token.value,true);}
-   else if(['!','typeof','-','+'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
+   else if(['!','typeof','void','-','+'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
+   else if(take('delete')){if(!classProfile)fail('delete requires its actual closed source reference protocol');let first=at;const target=parse(9);let last=at;while(input[first]?.value==='('&&findJavaScriptClassGroupEnd(input.map(token=>token.value),first)===last-1){first++;last--;}if(last===first+1&&input[first]?.kind==='identifier'&&!['this','null','true','false'].includes(input[first].value))fail('strict source cannot delete an unqualified identifier');if(target.$==='errorBinding'||target.$==='errorModuleCell'||target.$==='errorFunctionReference'||target.$==='errorNativeReference')fail('strict source cannot delete an unqualified binding Reference');return {$:'errorDelete',target};}
    else if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');if(value.$==='errorGet'||value.$==='errorComputedGet')member={object:value.object,key:value.key,computed:value.$==='errorComputedGet'};}
    else if(take('[')){
     if(classProfile){
@@ -230,7 +231,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    while(at<input.length){if(peek()?.value==='.'||peek()?.value==='?.'){const optional=take('?.');if(!optional)take('.');const key=peek();if(key?.kind!=='identifier')fail('source member reads require a complete fixed key');at++;const property=constant({$:'text',units:units(key.value)});member=optional?null:{object:value,key:property};value={$:optional?'errorOptionalGet':'errorGet',object:value,key:property};}else if(classProfile&&take('[')){const key=parse(0);if(!take(']'))fail('computed source member access needs its complete key');member={object:value,key,computed:true};value={$:'errorComputedGet',object:value,key};}else if(take('(')){const args=arguments_(')');value=member?{$:member.computed?'errorComputedMethodCall':'errorMethodCall',object:member.object,key:member.key,arguments:args}:{$:'errorCall',callee:value,receiver:absent(),arguments:args,construct:false};member=null;}else break;}if(['++','--'].includes(peek()?.value)&&!/[\r\n\u2028\u2029]/u.test(source.slice(input[at-1].end+offset,peek().start+offset))){const operator=peek().value;at++;value=update(value,operator,false);}return value;
   }
   const assignments=['=','+=','-=','*=','/=','%=','**=','&&=','||=','??='];
-  const levels={',':0,'=':1,'+=':1,'-=':1,'*=':1,'/=':1,'%=':1,'**=':1,'&&=':1,'||=':1,'??=':1,'?':2,'||':3,'??':3,'&&':4,'===':5,'!==':5,'<':6,'<=':6,'>':6,'>=':6,'instanceof':6,'+':7,'-':7,'*':8,'/':8,'%':8,'**':9};
+  const levels={',':0,'=':1,'+=':1,'-=':1,'*=':1,'/=':1,'%=':1,'**=':1,'&&=':1,'||=':1,'??=':1,'?':2,'||':3,'??':3,'&&':4,'===':5,'!==':5,'<':6,'<=':6,'>':6,'>=':6,'instanceof':6,'in':6,'+':7,'-':7,'*':8,'/':8,'%':8,'**':9};
   function parse(minimum){if(++expressionDepth>128)fail('project data expressions exceed their explicit source depth');let left=primary();while(at<input.length){const operator=peek().value,level=levels[operator];if(level===undefined||level<minimum)break;at++;
     if(operator==='?'){const yes=parse(1);if(!take(':'))fail('source conditional needs both branches');left={$:'errorConditional',condition:left,yes,no:parse(level)};continue;}
     let right=parse(assignments.includes(operator)||operator==='**'?level:level+1);if(assignments.includes(operator)){
@@ -242,6 +243,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
      if(left.$==='errorModuleCell'){inferArrowName(right,bindings.find(row=>row.identity===left.identity).name);left={$:'errorModuleCellSet',identity:left.identity,value:right};}else if(left.$==='errorGet'||left.$==='errorComputedGet')left={$:left.$==='errorComputedGet'?'errorComputedSet':'errorSet',object:left.object,key:left.key,value:right};
      else if(classProfile&&left.$==='errorBinding'&&['parameter','let','const'].includes(bindings.find(row=>row.identity===left.identity)?.kind)){inferArrowName(right,bindings.find(row=>row.identity===left.identity).name);left={$:'errorBindingSet',identity:left.identity,value:right,...(left.immutable?{immutable:true}:{})};}else fail('source assignment requires its actual admitted mutable cell or property');
     }
+    else if(operator==='in'){if(!classProfile)fail('in requires its actual closed source property presence protocol');left={$:'errorIn',key:left,object:right};}
     else if(operator==='==='||operator==='!==')left={$:'errorStrictEqual',left,right,negate:operator==='!=='};
     else {let key='';if(operator==='instanceof'){key='syntax:instanceof';port(key,{kind:'syntax',operation:'instanceof'});}left={$:'errorBinary',operator,left,right,port:key};}
    }expressionDepth--;return left;}

@@ -186,6 +186,7 @@ const consumers=[
  'js/tests/translation-javascript-local-cells.test.js',
  'js/tests/translation-javascript-immutable-bindings.test.js',
  'js/tests/translation-javascript-array-mutations.test.js',
+ 'js/tests/translation-javascript-property-operators.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

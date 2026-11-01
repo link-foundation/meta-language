@@ -6,6 +6,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorConstant',value:JavaScriptSemanticValue} |
  * {$:'errorClosure',owner:number,ordinal:number,captures:number[],receiverMode?:string} |
  * {$:'errorArgumentSpread',value:JavaScriptErrorExpression,iteratorKey:JavaScriptErrorExpression} |
+ * {$:'errorDelete',target:JavaScriptErrorExpression} | {$:'errorIn',key:JavaScriptErrorExpression,object:JavaScriptErrorExpression} |
  * {$:'errorBinding',identity:number,immutable?:boolean} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
  * {$:'errorConditional',condition:JavaScriptErrorExpression,yes:JavaScriptErrorExpression,no:JavaScriptErrorExpression} |
  * {$:'errorGet',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
@@ -86,6 +87,28 @@ export function constructJavaScriptSourceComputedRead(receiver,key,context){
 }
 /** @param {string} key @returns {JavaScriptCallSource} */
 export function constructJavaScriptSourceFieldKey(key){const units=[];for(let at=0;at<key.length;at++)units.push(key.charCodeAt(at));return constructJavaScriptErrorConstant({$:'text',units});}
+/** @param {JavaScriptErrorExpression} expression @param {JavaScriptErrorSourceContext} context
+ * @param {number} depth @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptSourceDelete(expression,context,depth){
+ if(expression.$!=='errorDelete')return refuseJavaScriptErrorSource(context,'delete lowering retains its actual source target');
+ const target=expression.target,constant=constructJavaScriptErrorConstant;
+ if(target.$!=='errorGet'&&target.$!=='errorComputedGet'&&target.$!=='errorOptionalGet'){
+  if(target.$==='errorBinding'||target.$==='errorModuleCell'||target.$==='errorFunctionReference'||target.$==='errorNativeReference')return refuseJavaScriptErrorSource(context,'strict source cannot delete an unqualified binding Reference');
+  const value=lowerJavaScriptErrorExpression(target,context,depth+1),identity=value.context.next,current={...value.context,next:identity+1};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(current,identity,value.source,constant({$:'boolean',value:true}),false),context:current};
+ }
+ const object=lowerJavaScriptErrorExpression(target.object,context,depth+1),key=lowerJavaScriptErrorExpression(target.key,object.context,depth+1),objectID=key.context.next,keyID=objectID+1,checkedID=keyID+1,current={...key.context,next:checkedID+1},receiver={$:'sourceBinding',identity:objectID},rawKey={$:'sourceBinding',identity:keyID};
+ let source=constructJavaScriptErrorLocalBinding(current,keyID,key.source,constructJavaScriptErrorLocalBinding(current,checkedID,{$:'sourcePrimitive',operation:'require ordinary property object',arguments:[receiver]},{$:'sourceDelete',object:receiver,key:{$:'sourcePropertyKey',input:rawKey,realm:current.realm.realm}},false),false);
+ if(target.$==='errorOptionalGet'){const truth=constant({$:'boolean',value:true});source={$:'sourceIf',condition:{$:'sourceStrictEqual',left:receiver,right:constant({$:'null'})},yes:truth,no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:receiver,right:constant({$:'undefined'})},yes:truth,no:source}};}
+ return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(current,objectID,object.source,source,false),context:current};
+}
+/** @param {JavaScriptErrorExpression} expression @param {JavaScriptErrorSourceContext} context
+ * @param {number} depth @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptSourcePresence(expression,context,depth){
+ if(expression.$!=='errorIn')return refuseJavaScriptErrorSource(context,'in lowering retains its actual key and Object operands');
+ const key=lowerJavaScriptErrorExpression(expression.key,context,depth+1),object=lowerJavaScriptErrorExpression(expression.object,key.context,depth+1),keyID=object.context.next,objectID=keyID+1,checkedID=objectID+1,current={...object.context,next:checkedID+1},receiver={$:'sourceBinding',identity:objectID},rawKey={$:'sourceBinding',identity:keyID};
+ const source=constructJavaScriptErrorLocalBinding(current,keyID,key.source,constructJavaScriptErrorLocalBinding(current,objectID,object.source,constructJavaScriptErrorLocalBinding(current,checkedID,{$:'sourcePrimitive',operation:'require object for in',arguments:[receiver]},{$:'sourceHas',object:receiver,key:{$:'sourcePropertyKey',input:rawKey,realm:current.realm.realm}},false),false),false);return {$:'errorSourceExpression',source,context:current};
+}
+
 /** @param {JavaScriptErrorSourceContext} context @param {number} identity
  * @param {JavaScriptCallSource} value @param {JavaScriptCallSource} body
  * @param {boolean} mutable @returns {JavaScriptCallSource} */
@@ -97,6 +120,8 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
  switch(expression.$){
   case 'errorConstant':return {$:'errorSourceExpression',source:constant(expression.value),context:next};
   case 'errorSpecialNumber':return expression.form==='NaN'||expression.form==='Infinity'?{$:'errorSourceExpression',source:constant({$:'number',value:expression.form==='NaN'?NaN:Infinity}),context:next}:refuseJavaScriptErrorSource(next,'a special Number requires its actual unshadowed source global');
+  case 'errorDelete':return lowerJavaScriptSourceDelete(expression,next,depth+1);
+  case 'errorIn':return lowerJavaScriptSourcePresence(expression,next,depth+1);
   case 'errorArgumentSpread':{const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1),key=lowerJavaScriptErrorExpression(expression.iteratorKey,value.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceArgumentSpread',value:value.source,iteratorKey:key.source,realm:next.realm.realm},context:key.context};}
   case 'errorClosure':{
    const owner=next.registry.owners.find(row=>row.source===expression.owner);
@@ -153,6 +178,7 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
   case 'errorSet':{const object=lowerJavaScriptErrorExpression(expression.object,next,depth+1),key=lowerJavaScriptErrorExpression(expression.key,object.context,depth+1),value=lowerJavaScriptErrorExpression(expression.value,key.context,depth+1);return {$:'errorSourceExpression',source:{$:next.mutableBindings?'sourceSnapshotSet':'sourceSet',object:object.source,key:key.source,value:value.source},context:value.context};}
   case 'errorUnary':{
    const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);
+   if(expression.operator==='void'){const identity=value.context.next,current={...value.context,next:identity+1};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(current,identity,value.source,constant({$:'undefined'}),false),context:current};}
    if(expression.operator==='!')return {$:'errorSourceExpression',source:{$:'sourceIf',condition:value.source,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})},context:value.context};
    if(expression.operator==='typeof')return {$:'errorSourceExpression',source:{$:'sourcePrimitive',operation:'read semantic type',arguments:[value.source]},context:value.context};
    if(expression.operator==='+')return {$:'errorSourceExpression',source:{$:'sourcePrimitive',operation:'coerce primitive number',arguments:[value.source]},context:value.context};
