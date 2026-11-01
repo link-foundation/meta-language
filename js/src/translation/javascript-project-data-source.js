@@ -71,6 +71,15 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  const arrowNodes=[...new Map(program.sourceMappings.filter(row=>row.term==='arrow_function').map(row=>[row.start+':'+row.end,row])).values()].sort((a,b)=>a.start-b.start||b.end-a.end),templates=[];
  const methodNodes=[...new Map(program.sourceMappings.filter(row=>row.term==='method_definition').map(row=>[row.start+':'+row.end,row])).values()].sort((a,b)=>a.start-b.start||b.end-a.end);
  if(arrowNodes.length+methodNodes.length>4096)fail('source lexical templates exceed their explicit site budget');
+ // A shared lexical cell is private source storage, using the same null-
+ // prototype value holder as module cells. Its identity, not its mutable value,
+ // is captured. Loop-head cloning and TDZ initialization are separate profiles.
+ const localSharedCells=new Set();
+ if(classProfile)for(const binding of bindings){
+  if(binding.kind!=='let'||binding.scope==='scope:0')continue;const declaration=containing(binding,['variable_declarator']);if(!declaration||declaration.start!==binding.declaration.start)continue;
+  const loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);if(loop){const body=sourceField(loop,'body');if(!body||binding.declaration.start<body.start)continue;}
+  if([...arrowNodes,...methodNodes].some(node=>!(binding.declaration.start>=node.start&&binding.declaration.end<=node.end)&&binding.references.some(row=>row.start>=node.start&&row.end<=node.end))){localSharedCells.add(binding.identity);cellIDs.add(binding.identity);}
+ }
  function inferArrowName(value,name){if(value.$==='errorClosure'){const template=templates.find(row=>row.owner===value.owner&&row.ordinal===value.ordinal);if(template&&template.name==='')template.name=name;}return value;}
  let writeCoordinates=null,writeRanges=[],writeComparisonWork=0;
  function capturedBindingWrites(){
@@ -96,6 +105,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  function readonlyCapture(binding,node){
   if(!['parameter','const','let'].includes(binding.kind)||binding.declaration.end>node.start)fail('arrow capture requires its actual already initialized lexical source binding; later bindings need shared cells');
   const declaration=binding.kind==='parameter'?null:containing(binding,['variable_declarator']);if(declaration&&declaration.end>node.start)fail('capturing a binding during its initializer requires its shared lexical cell');
+  if(localSharedCells.has(binding.identity))return;
   const writes=capturedBindingWrites();for(const occurrence of binding.references)if(writes.has(occurrence.start+':'+occurrence.end)||writeRanges.some(([start,end])=>{if(++writeComparisonWork>1000000)fail('capture write ranges exceed their bounded comparison work');return occurrence.start>=start&&occurrence.end<=end;}))fail('mutable captured bindings require their actual shared lexical cells');
  }
  function objectMethod(input,first,keyAt,kind,offset,computedKeyUnits=null){
@@ -293,7 +303,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    const token=tokens[start],owner=declared(token),hasInitializer=start+1<end;
    if(token?.kind!=='identifier'||!owner||owner.kind!==kind||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
-   result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent()});
+   result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),...(localSharedCells.has(owner.identity)?{shared:true}:{})});
   }
   if(result.length===0)fail('a lexical declaration group requires its actual declarators');return result;
  }

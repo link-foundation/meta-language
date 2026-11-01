@@ -1,0 +1,11 @@
+// Deferred source controls for shared lexical storage, no behavior at import.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {lowerJavaScriptSourceStatements} from '../src/translation/javascript-error-class-source.js';
+const absent={$:'undefined'},constant=value=>({$:'errorConstant',value});
+function context(){return {$:'errorSourceContext',registry:{$:'errorRegistry',owners:[],operations:[],intrinsics:[],realms:[1n],exoticKey:absent},realm:{$:'errorRealmOperations',realm:1n,objectPrototype:absent,get:absent,assign:absent},capabilities:[],next:20,visits:0,error:'',mutableBindings:true};}
+test('captured local declaration binds a stable private cell identity with mutable value storage',()=>{
+ const lowered=lowerJavaScriptSourceStatements([{$:'sourceMutableStatement',identity:1,value:constant({$:'number',value:7}),shared:true},{$:'sourceReturnStatement',value:{$:'errorModuleCell',identity:1}}],0,context(),{$:'sourceConstant',value:absent},0);assert.equal(lowered.context.error,'');assert.equal(lowered.source.$,'sourceLocalLet');assert.equal(lowered.source.mutable,false);assert.equal(lowered.source.identity,1);assert.equal(lowered.source.value.$,'sourceObject');assert.deepEqual(lowered.source.value.prototype,{$:'sourceConstant',value:{$:'null'}});assert.deepEqual(lowered.source.value.properties[0].key,{$:'sourceConstant',value:{$:'text',units:[118,97,108,117,101]}});assert.equal(lowered.source.body.$,'sourceReturn');assert.equal(lowered.source.body.value.$,'sourceGet');
+});
+test('ordinary mutable locals keep their existing register representation',()=>{
+ const lowered=lowerJavaScriptSourceStatements([{$:'sourceMutableStatement',identity:1,value:constant({$:'number',value:7})}],0,context(),{$:'sourceConstant',value:absent},0);assert.equal(lowered.context.error,'');assert.equal(lowered.source.$,'sourceLocalLet');assert.equal(lowered.source.mutable,true);assert.deepEqual(lowered.source.value,{$:'sourceConstant',value:{$:'number',value:7}});
+});

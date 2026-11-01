@@ -113,6 +113,15 @@ actual object to its declared template and complete capture vector. Function
 name/length metadata retains ordinary descriptor semantics. Initial source
 capture-by-value admission requires proof of immutable lexical bindings; mutable
 bindings and derived-this initialization require actual shared lexical cells.
+Captured simple local `let` declarations use the existing private module-cell
+representation: one genuine null-prototype heap value holder per declaration
+evaluation, captured by stable identity. All source reads, assignments, compound
+updates and prefix/postfix operations access its current value through shared
+property instructions. The holder is never returned instead of the binding's
+value or published as a source property. Independent parent/block invocations
+allocate independent holders; sibling functions/methods share one. Capture
+during initialization, later-binding TDZ, mutable parameters and for-head
+per-iteration cloning require their explicit environment extensions.
 Nested code and static code share explicit instruction and capture budgets.
 Parameter initialization uses one shared lowerer for functions, methods and
 arrows. Fixed object-field aliases retain actual binding identities; defaults

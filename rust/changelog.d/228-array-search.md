@@ -24,6 +24,10 @@ Draft computed object methods/accessors and runtime anonymous Function names
 from converted property keys, including authenticated Symbol description
 metadata and replay through translated shared semantics. Execution deferred.
 
+Draft captured local let bindings through the existing private shared cell
+representation, preserving sibling closure updates and independent declaration
+evaluations. General TDZ/parameter/loop-head environments remain separate.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

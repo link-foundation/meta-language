@@ -182,6 +182,7 @@ const consumers=[
  'js/tests/translation-javascript-object-methods.test.js',
  'js/tests/translation-javascript-call-argument-lists.test.js',
  'js/tests/translation-javascript-function-names.test.js',
+ 'js/tests/translation-javascript-local-cells.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

@@ -777,3 +777,28 @@ Three deferred controls cover name assembly/metadata boundaries and converted
 key/function provenance. This also connects previously drafted custom iterable
 method syntax to the generic collection/for-of/spread paths. Generation inputs
 are registered; generated code, all execution and validation remain deferred.
+
+### Captured mutable local let cells draft
+
+The source reader identifies simple local let declarations captured by actual
+Arrow/method CST sites. It marks stable storage identities as captures rather
+than taking immutable value snapshots. Lowering reuses the existing private
+module-cell representation, allocating a genuine null-prototype value holder
+per declaration evaluation. Reads and every existing module-cell assignment/
+update protocol share that holder. The pointer binding is immutable; user value
+writes change only its value field. Ordinary unshared locals keep registers.
+No Rust replacement semantics or host closure fallback was authored.
+
+Two previous mutable-capture refusals retain their exact source text as positive
+originals expecting 9. Six additional originals cover sibling returned closures,
+updates, distinct loop-body declarations, shared method/Arrow access, undefined
+initialization and independent parent invocations. Two deferred controls compare
+shared-cell versus ordinary register declaration lowering. Their expected IR
+tags were selected by reading the existing local-binding constructor, without
+executing it. Generation inputs are registered and no execution occurred.
+
+Admission still refuses capture during initialization/later binding access;
+mutable parameters, destructuring bindings, for-head per-iteration environments
+and general runtime TDZ remain separate undrafted source work. The private cell
+representation is shared with existing module storage, not a claim that full
+ECMAScript declarative environments are implemented.
