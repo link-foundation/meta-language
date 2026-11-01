@@ -385,3 +385,30 @@ semantics, including stored callable environments; a declaration, acceptance
 label, source envelope or changed refusal oracle does not implement it. The
 next diagnostic automation batch must collect all fixture/transport/target
 failures into valid bounded reports rather than abort the first producer row.
+
+Continued source drafting after pushed checkpoint
+`b0864c92b3f108509bb02a1d15300a54e495158a` adds declaration-local Rust `Self`
+transport and scopes, plus the existing JavaScript call machine's ordinary
+allocation protocol. Allocation requests leave the instruction unchanged;
+explicit external-identity resumption inserts one object and advances once.
+The source compiler now lowers object construction, property-key conversion
+and descriptor definition. Plain checked records use actual supplied realm
+prototypes and own data descriptors; class instances, dynamic field orders and
+prototype-setting literal syntax retain their separate requirements. Record
+reference wrappers preserve the semantic object identity.
+
+The bounded pure runner reports its actual transition, step count and consumed
+allocation count. Missing allocator input returns the pending request; exhausted
+steps are a resource outcome. Automatic machine/source recipes and model codecs
+are included after schema/classifier/baseline authoring in five fresh processes.
+Deferred controls cover allocator refusal/retry, exact prototypes, property
+creation order/attributes, actual frontend records and runner budgets. No code
+execution or generation has occurred. The machine remains an integration
+foundation, not a complete formal reference-state frontend/backend.
+
+Workflow run `41275268165` for `b0864c92` is terminal. Only its status was read;
+no conclusion, logs or feedback were inspected. Disk free space is about 9.1 GiB.
+The three source agents continue recursive Box/Vec ownership and formal blocks,
+ordered mutable-record effects, and actual supplied-module class/re-export
+composition. The complete requirements draft remains the active work scope;
+this record is not an instruction to stop at a checkpoint.

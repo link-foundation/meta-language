@@ -1398,7 +1398,11 @@ node js/scripts/draft-rust-baseline-complete-source.mjs --draft
 
 Do not invoke it during the current source-edit-only phase. It starts separate
 Node processes for class-owner schema/source-profile publication, shared
-classifier regeneration and baseline source libraries. Separate processes avoid
+classifier regeneration and baseline source libraries, followed by the actual
+JavaScript call-machine and call-source libraries and their automatic model
+codecs. The latter regenerate the allocation/property source constructors and
+machine transitions together; generated native codecs are never patched by
+hand. Separate processes avoid
 using a predecessor schema cached by earlier static imports. The profile author
 preserves complete committed predecessors and publishes an exact successor
 receipt; existing version-one/version-two assertions remain independently

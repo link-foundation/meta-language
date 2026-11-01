@@ -7,7 +7,8 @@ test('schema and classifier construction precede source libraries in separate No
  const calls=[];
  draftRustBaselineCompleteSource({run:(...args)=>{calls.push(args);return {status:0,signal:null};}});
  assert.deepEqual(calls.map(([,args])=>args),rustBaselineSourceAuthoringSteps.map(step=>['--expose-gc',...step]));
- assert.equal(calls.length,3);
+ assert.equal(calls.length,5);
+ assert.deepEqual(calls.slice(3).map(([,args])=>args[1]),['js/scripts/draft-javascript-call-machine.mjs','js/scripts/draft-javascript-call-source.mjs']);
  for(const [node,args,options]of calls){assert.equal(node,process.execPath);assert.equal(options.stdio,'inherit');assert.equal(options.cwd,fileURLToPath(new URL('../../',import.meta.url)));assert.ok(args.includes('--draft'));assert.ok(!args.some(arg=>/^(?:--check|--test|cargo|rustc)$/u.test(arg)));}
 });
 test('a failed or interrupted author preserves later products by stopping the batch',()=>{

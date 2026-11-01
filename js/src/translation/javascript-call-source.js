@@ -15,10 +15,15 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceStrictEqual',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourcePrimitive',operation:string,arguments:JavaScriptCallSource[]} |
  * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
+ * {$:'sourceAllocate',prototype:JavaScriptCallSource} |
+ * {$:'sourceObject',prototype:JavaScriptCallSource,properties:JavaScriptCallSourceProperty[],realm:bigint} |
+ * {$:'sourcePropertyKey',input:JavaScriptCallSource,realm:bigint} |
+ * {$:'sourcePropertyDefinition',target:JavaScriptCallSource,key:JavaScriptCallSource,attributes:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
+/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceBindingRegister',identity:number,register:number}} JavaScriptCallSourceBinding */
 /** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
@@ -107,6 +112,32 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),value=lowerJavaScriptCallSourceExpression(source.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
    const write=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinarySet',destination:result.register,object:object.register,key:key.register,value:value.register,receiver:object.register});
    return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(write,{$:'requireWrite',success:result.register}),register:value.register};
+  }
+  case 'sourceObject':{
+   if(source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source object construction requires its actual unsigned64 realm identity');
+   if(source.properties.length>4096)return refuseJavaScriptCallSource(state,'source object properties exceed their explicit structural budget');
+   const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(prototype.builder);
+   let current=appendJavaScriptCallSourceInstruction(object.builder,{$:'ordinaryAllocate',destination:object.register,prototype:prototype.register});
+   for(const property of source.properties){
+    const key=lowerJavaScriptCallSourceExpression({$:'sourcePropertyKey',input:property.key,realm:source.realm},bindings,current,depth+1);
+    const value=lowerJavaScriptCallSourceExpression(property.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
+    current=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryDataProperty',destination:result.register,object:object.register,key:key.register,value:value.register,realm:source.realm});
+   }
+   return {$:'sourceResult',builder:current,register:object.register};
+  }
+  case 'sourcePropertyKey':{
+   if(source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source property conversion requires its actual unsigned64 realm identity');
+   const input=lowerJavaScriptCallSourceExpression(source.input,bindings,state,depth+1),result=allocateJavaScriptCallSourceRegister(input.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'propertyKey',destination:result.register,input:input.register,realm:source.realm})};
+  }
+  case 'sourcePropertyDefinition':{
+   if(source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source property definition requires its actual unsigned64 realm identity');
+   const target=lowerJavaScriptCallSourceExpression(source.target,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,target.builder,depth+1),attributes=lowerJavaScriptCallSourceExpression(source.attributes,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(attributes.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'propertyDefinition',destination:result.register,target:target.register,key:key.register,attributes:attributes.register,realm:source.realm})};
+  }
+  case 'sourceAllocate':{
+   const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),result=allocateJavaScriptCallSourceRegister(prototype.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryAllocate',destination:result.register,prototype:prototype.register})};
   }
   case 'sourceGet':{
    const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);

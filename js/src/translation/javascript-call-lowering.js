@@ -28,7 +28,7 @@ function acceptType(type,depth=0){
  * This initial profile lowers complete pure primitive expression functions;
  * it refuses a whole program if any function needs an unrepresented operation.
  */
-export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoticKey}){
+export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoticKey,ordinaryPrototypes=[]}){
  validateLinkedTypedProgram(program);
  recheckLinkedTypedProgram(program,{wholeProgram:true});
  if(program.sourceLanguage!=='JavaScript')refuse(null,'this profile retains actual JavaScript source semantics');
@@ -36,6 +36,12 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
  if(!Array.isArray(functions)||functions.length>4096||!Array.isArray(realms)||realms.length>4096)refuse(null,'complete bounded function and realm directories are required');
  let previous=0n;for(const realm of realms){if(typeof realm!=='bigint'||realm<=previous||realm>18446744073709551615n)refuse(null,'realm identities must be actual ordered unique unsigned64 links');previous=realm;}
  if(exoticKey?.$!=='symbol'||typeof exoticKey.identity!=='bigint'||exoticKey.identity<=0n||exoticKey.identity>18446744073709551615n)refuse(null,'the actual primitive conversion Symbol link is required');
+ if(!Array.isArray(ordinaryPrototypes)||ordinaryPrototypes.length>4096)refuse(null,'ordinary prototypes require a bounded actual realm registry');
+ const prototypes=new Map();
+ for(const row of ordinaryPrototypes){
+  if(!realms.includes(row.realm)||prototypes.has(row.realm)||row.prototype?.$!=='object'||typeof row.prototype.identity!=='bigint'||row.prototype.identity<=0n||row.prototype.identity>18446744073709551615n||typeof row.prototype.callable!=='boolean')refuse(null,'ordinary prototypes require one supplied actual Object identity per registered realm');
+  prototypes.set(row.realm,row.prototype);
+ }
  const directory=new Map(),identities=new Set();
  for(const row of functions){
   if(typeof row.name!=='string'||directory.has(row.name)||typeof row.identity!=='bigint'||row.identity<=0n||row.identity>18446744073709551615n||identities.has(row.identity)||!realms.includes(row.realm))refuse(null,'function names, global identities and source realms require complete unique actual owners');
@@ -159,6 +165,21 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
      const operation={add:'add',sub:'subtract',mul:'multiply',div:'divide',rem:'remainder',lt:'lessThan',eq:'equal'}[node.op];
      if(!operation||node.left.type.kind!=='float'||node.right.type.kind!=='float')return refuse(node,'this operator requires additional exact source lowering');
      return {$:'sourceNumberBinary',operator:operation,left:expression(node.left,environment,depth+1),right:expression(node.right,environment,depth+1)};
+    }
+    case 'referenceAllocate':{
+     if(node.type.kind!=='record'||node.value.type.kind!=='record')return refuse(node,'this shared value needs its complete semantic allocation representation');
+     return expression(node.value,environment,depth+1);
+    }
+    case 'referenceRead':{
+     if(node.type.kind!=='record'||node.reference.type.kind!=='record')return refuse(node,'this shared value needs its complete semantic read representation');
+     return expression(node.reference,environment,depth+1);
+    }
+    case 'record':{
+     const prototype=prototypes.get(owner.realm);
+     if(!prototype)return refuse(node,'record construction requires the actual Object prototype for its source realm');
+     if(node.type.sourceClassOwner!==undefined||node.type.ordered||node.order!==undefined)return refuse(node,'class instances and dynamic property orders require their actual construction profile');
+     if(node.entries.some(field=>field.name==='__proto__'))return refuse(node,'prototype-setting literal syntax requires its actual source distinction from a data property');
+     return {$:'sourceObject',prototype:constant(prototype),realm:owner.realm,properties:node.entries.map(field=>({$:'sourceObjectProperty',key:constant({$:'text',units:Array.from({length:field.name.length},(_,index)=>field.name.charCodeAt(index))}),value:expression(field.value,environment,depth+1)}))};
     }
     case 'recordField':return {$:'sourceGet',object:expression(node.object,environment,depth+1),key:constant({$:'text',units:Array.from({length:node.field.length},(_,index)=>node.field.charCodeAt(index))})};
     case 'strictEqual':{

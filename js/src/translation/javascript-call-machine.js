@@ -5,10 +5,10 @@ import {readJavaScriptTextProtocolOperationError} from './javascript-text-conver
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptCallPrimitiveArityError,executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
 import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJavaScriptCallCodeRegisters,testJavaScriptCallStrictEqual} from './javascript-call-code.js';
-import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySet} from './javascript-ordinary-heap.js';
+import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySet,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
-import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
+import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,completeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
 import {beginJavaScriptPropertyKeyConversion,stepJavaScriptPropertyKeyConversion,resumeJavaScriptPropertyKeyConversion} from './javascript-property-key-conversion.js';
 import {readJavaScriptNumberProtocolOperationError} from './javascript-number-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
@@ -31,11 +31,42 @@ import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 /** @typedef {{$:'machineContinue',machine:JavaScriptCallMachine} |
  * {$:'machineCompleted',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'machineThrow',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
+ * {$:'machineAllocateObject',machine:JavaScriptCallMachine,prototype:JavaScriptSemanticValue} |
  * {$:'machineAllocateError',machine:JavaScriptCallMachine,realm:bigint,errorClass:string,reason:string} |
  * {$:'machineAllocateSourceError',machine:JavaScriptCallMachine,realm:bigint,errorClass:string,message:JavaScriptSemanticValue,messagePresent:boolean} |
  * {$:'machineInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'machineResourceLimit',machine:JavaScriptCallMachine,reason:string}} JavaScriptCallMachineTransition
  */
+/** @typedef {{$:'callExecution',transition:JavaScriptCallMachineTransition,steps:number,objectIdentitiesUsed:number}} JavaScriptCallExecution */
+
+/** Bounded, pure execution over the same machine. Identities are supplied by
+ * the external allocator and consumed only by successful object resumptions.
+ * An unavailable identity suspends at the allocation request; intrinsic Error
+ * allocations retain their existing authority-specific resumption protocol.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {number} limit @param {bigint[]} objectIdentities
+ * @returns {JavaScriptCallExecution} */
+export function runJavaScriptCallMachine(program,machine,limit,objectIdentities){
+ if(!testJavaScriptCallCoordinate(limit,1048577)||objectIdentities.length>4096)return {$:'callExecution',transition:{$:'machineInvalid',heap:machine.heap,reason:'execution requires bounded exact step and allocation budgets'},steps:0,objectIdentitiesUsed:0};
+ const error=readJavaScriptCallMachineError(program,machine);
+ if(error!=='')return {$:'callExecution',transition:{$:'machineInvalid',heap:machine.heap,reason:error},steps:0,objectIdentitiesUsed:0};
+ /** @type {JavaScriptCallMachineTransition} */
+ let current={$:'machineContinue',machine};
+ let steps=0,used=0;
+ while(steps<limit){
+  if(current.$==='machineContinue')current=stepJavaScriptCallMachine(program,current.machine);
+  else if(current.$==='machineAllocateObject'){
+   const identity=objectIdentities[used];
+   if(identity===undefined)return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
+   const next=resumeJavaScriptCallObjectAllocation(program,current.machine,identity);
+   if(next.$==='machineContinue')used+=1;
+   current=next;
+  }else return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
+  steps+=1;
+ }
+ if(current.$==='machineContinue')current={$:'machineResourceLimit',machine:current.machine,reason:'execution exhausted its explicit transition budget'};
+ return {$:'callExecution',transition:current,steps,objectIdentitiesUsed:used};
+}
 
 /** @param {number} value @param {number} limit @returns {boolean} */
 export function testJavaScriptCallCoordinate(value,limit){return testJavaScriptCallCodeCoordinate(value,limit);}
@@ -75,6 +106,7 @@ export function readJavaScriptCallProgramError(program,heap){
         case 'numberBinary':if(!['add','subtract','multiply','divide','remainder','power','lessThan','equal'].includes(instruction.operator))return 'call number instructions require an actual registered operation';break;
         case 'propertyKey':if(!program.realms.includes(instruction.realm))return 'a property key operation retains its actual intrinsic realm';break;
         case 'propertyDefinition':if(!program.realms.includes(instruction.realm))return 'a property definition retains its actual intrinsic realm';break;
+        case 'ordinaryDataProperty':if(!program.realms.includes(instruction.realm))return 'a data property definition retains its actual intrinsic realm';break;
         default:break;
       }
     }
@@ -434,6 +466,12 @@ export function returnJavaScriptCallValue(program,machine,value){
 export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction){
   const next=advanceJavaScriptCallFrame(frame),registers=frame.registers;
   switch(instruction.$){
+    case 'ordinaryAllocate':{
+      const prototype=registers[instruction.prototype]??{$:'undefined'};
+      if(prototype.$!=='null'&&prototype.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary allocation requires its actual null or Object prototype'};
+      if(machine.heap.objects.length>=4096)return {$:'machineResourceLimit',machine,reason:'ordinary heap identity directory exceeds its explicit resource budget'};
+      return {$:'machineAllocateObject',machine,prototype};
+    }
     case 'ordinaryGet':{
       const object=registers[instruction.object]??{$:'undefined'};if(object.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary Get instructions require their actual Object operand'};
       const plan=planJavaScriptOrdinaryGet(machine.heap,object.identity,registers[instruction.key]??{$:'undefined'},registers[instruction.receiver]??{$:'undefined'});
@@ -542,9 +580,10 @@ export function stepJavaScriptCallMachine(program,machine){
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'number',value}))};
     }
     case 'primitive':return executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction);
-    case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
+    case 'ordinaryAllocate':case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
     case 'propertyKey':return acceptJavaScriptCallKey(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyKeyConversion(machine.heap,registers[instruction.input]??{$:'undefined'},program.exoticKey));
     case 'propertyDefinition':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyDefinition(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.attributes]??{$:'undefined'},program.exoticKey));
+    case 'ordinaryDataProperty':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinition(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},createJavaScriptOrdinarySetDescriptor(registers[instruction.value]??{$:'undefined'},true)));
   }
 }
 
@@ -558,6 +597,29 @@ export function beginJavaScriptCallMachine(program,heap,identity,receiver,argume
   for(const value of arguments_)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return {$:'machineInvalid',heap,reason:'entry arguments belong to the actual global context'};
   return {$:'machineContinue',machine:{$:'callMachine',heap,frames:[createJavaScriptCallFrame(fn,receiver,arguments_)]}};
 }
+/** The global allocator supplies an unused identity; heap maximums do not
+ * establish global identity authority. A request leaves its instruction and
+ * prototype register unchanged until this explicit resumption advances once.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {bigint} identity @returns {JavaScriptCallMachineTransition} */
+export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
+ const error=readJavaScriptCallMachineError(program,machine);
+ if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
+ const frame=machine.frames[machine.frames.length-1];
+ if(frame===undefined||frame.pending.$!=='callIdle')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual active allocation instruction'};
+ const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+ if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual source function'};
+ const instruction=fn.instructions[frame.position];
+ if(instruction===undefined||instruction.$!=='ordinaryAllocate')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual allocation instruction'};
+ const prototype=frame.registers[instruction.prototype]??{$:'undefined'};
+ if(prototype.$!=='null'&&prototype.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary allocation requires its actual null or Object prototype'};
+ if(machine.heap.objects.length>=4096)return {$:'machineResourceLimit',machine,reason:'ordinary heap identity directory exceeds its explicit resource budget'};
+ const allocation=insertJavaScriptOrdinaryObject(machine.heap,identity,prototype);
+ if(!allocation.success)return {$:'machineInvalid',heap:machine.heap,reason:allocation.error};
+ const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,{$:'object',identity,callable:false});
+ return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
+}
+
 /** The allocator must create the actual Error in the requested realm and
  * extend the same global heap. Its authority is external, not inferred from
  * an Object name/prototype or membership in this ordinary directory.

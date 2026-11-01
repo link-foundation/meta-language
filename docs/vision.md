@@ -57,6 +57,33 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+The executable JavaScript call model uses the same globally identified ordinary
+heap for allocation, property access and calls. An ordinary-object allocation
+instruction evaluates its explicit prototype once, suspends without advancing,
+and requests an identity from the external global allocator. Resumption checks
+identity freshness against the actual heap and Symbol directory, inserts a
+noncallable extensible object with that exact prototype, and advances once.
+Repeated requests preserve the suspended state; exhausted storage is a resource
+outcome. Neither a heap maximum nor a source spelling establishes global identity
+authority. Source allocation lowers through this instruction; native and formal
+implementations derive from the shared JavaScript source and model codecs.
+Ordinary record construction in checked source requires the supplied realm's
+actual Object prototype. It lowers ordered key conversion and own data-property
+creation, preserving writable, enumerable and configurable attributes without
+invoking inherited setters. Reference classification around these records
+retains the same semantic object identity. Class instances, dynamic property
+orders and prototype-setting literal syntax require their distinct source
+construction profiles; their representation is never inferred from a record
+shape. Descriptor-definition sources preserve operand evaluation order before
+the existing key/descriptor conversion continuation.
+
+Within the selected Rust owned-container source profile, nongeneric enum and
+struct declarations bind `Self` to their actual nominal owner while reading
+fields. This binding ends on both success and failure, remains separate from
+inherent-implementation receivers, and grants no `Copy`, clone or recursive-size
+proof. Recursive declarations still require their actual guarded ownership and
+finite-constructor witnesses.
+
 Meta-language provides **one common, extensible language, represented
 recursively as links and serialized in Links Notation**. It covers:
 

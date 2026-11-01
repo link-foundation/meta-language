@@ -7,6 +7,8 @@ export const rustBaselineSourceAuthoringSteps=Object.freeze([
  Object.freeze(['js/scripts/draft-class-owner-source-profiles.mjs','--draft']),
  Object.freeze(['js/scripts/generate-typed-program-link-rules.mjs','--draft']),
  Object.freeze(['js/scripts/draft-rust-baseline-source-policies.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-javascript-call-machine.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-javascript-call-source.mjs','--draft']),
 ]);
 export function draftRustBaselineCompleteSource({run=spawnSync}={}){
  const cwd=fileURLToPath(new URL('../../',import.meta.url));

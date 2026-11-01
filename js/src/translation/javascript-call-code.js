@@ -14,6 +14,8 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'strictEqual',destination:number,left:number,right:number} |
  * {$:'requireWrite',success:number} |
  * {$:'primitive',destination:number,operation:string,arguments:number[]} |
+ * {$:'ordinaryAllocate',destination:number,prototype:number} |
+ * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
  * {$:'propertyKey',destination:number,input:number,realm:bigint} |
@@ -51,6 +53,8 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
+    case 'ordinaryAllocate':return [instruction.destination,instruction.prototype];
+    case 'ordinaryDataProperty':return [instruction.destination,instruction.object,instruction.key,instruction.value];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
     case 'propertyKey':return [instruction.destination,instruction.input];
     case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
