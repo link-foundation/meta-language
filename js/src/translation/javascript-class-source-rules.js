@@ -28,6 +28,16 @@ export function findJavaScriptClassGroupEnd(values, open) {
  * @param {string[]} values @param {string[]} kinds @param {number} open
  * @param {number} close @returns {number[]} */
 export function readJavaScriptClosedClassParameterPositions(values, kinds, open, close) {
+  return readJavaScriptClosedClassParameterPositionsWithCollections(values,kinds,open,close,false);
+}
+/** The wider profile transports the original expression to ordinary parameter
+ * parsing; this census alone never certifies a standard constructor owner.
+ * @param {string[]} values @param {string[]} kinds @param {number} open
+ * @param {number} close @returns {number[]} */
+export function readJavaScriptClosedClassCollectionParameterPositions(values,kinds,open,close){return readJavaScriptClosedClassParameterPositionsWithCollections(values,kinds,open,close,true);}
+/** @param {string[]} values @param {string[]} kinds @param {number} open
+ * @param {number} close @param {boolean} collections @returns {number[]} */
+function readJavaScriptClosedClassParameterPositionsWithCollections(values,kinds,open,close,collections){
   let result = [];
   for (let at = open + 1; at < close;) {
     if ((kinds[at] ?? '') !== 'identifier') return [-1, at];
@@ -43,6 +53,7 @@ export function readJavaScriptClosedClassParameterPositions(values, kinds, open,
       } else if ((kinds[at] ?? '') === 'number' || (kinds[at] ?? '') === 'string'
         || ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'].includes(value)) at += 1;
       else if ((value === '[' && (values[at + 1] ?? '') === ']') || (value === '{' && (values[at + 1] ?? '') === '}')) at += 2;
+      else if(collections&&value==='new'&&['Set','Map'].includes(values[at+1]??'')&&(values[at+2]??'')==='('&&(values[at+3]??'')===')')at+=4;
       else return [-1, at];
     }
     if (at < close) {
@@ -66,6 +77,7 @@ export function renderJavaScriptClosedClassParameterArguments(source, values, st
       const value = values[at] ?? '';
       if (value === '[' || value === '{') at += 2;
       else if (value === '+' || value === '-') at += 2;
+      else if(value==='new'&&['Set','Map'].includes(values[at+1]??'')&&(values[at+2]??'')==='('&&(values[at+3]??'')===')')at+=4;
       else at += 1;
     }
     if (at < close) at += 1;
@@ -172,7 +184,8 @@ export function readJavaScriptClosedClassDirectory(values, kinds, first) {
       || names.includes(owner) || (values[position + 1] ?? '') !== '(') return [-2, at];
     const parameters = findJavaScriptClassGroupEnd(values, position + 1);
     if (parameters < 0 || (values[parameters + 1] ?? '') !== '{') return [-2, at];
-    const positions = readJavaScriptClosedClassParameterPositions(values, kinds, position + 1, parameters);
+    const literalPositions=readJavaScriptClosedClassParameterPositions(values,kinds,position+1,parameters);
+    const positions = (literalPositions[0]??0)<0?readJavaScriptClosedClassCollectionParameterPositions(values, kinds, position + 1, parameters):literalPositions;
     if ((positions[0] ?? 0) < 0) return [-3, positions[1] ?? at];
     const body = findJavaScriptClassGroupEnd(values, parameters + 1);
     if (body < 0 || body > end) return [-2, at];
@@ -222,6 +235,7 @@ export function readJavaScriptClosedClassRefusal(code) {
   if (code === -1) return 'a closed class needs an ordinary named base-class declaration and balanced source groups';
   if (code === -2) return 'accessors, private names, inheritance, static initialization and duplicate member owners need their full descriptor model';
   if (code === -3) return 'this class profile requires ordinary fixed identifier parameters with literal defaults; patterns and dependent or instance-reading defaults need their complete parameter environment';
+  if (code === -11) return 'a closed collection default cannot replace an actual local class constructor with the standard Map or Set owner';
   if (code === -4) return 'initial own fields must be distinct and cannot replace a prototype method';
   if (code === -5) return 'initial own fields need a complete semicolon-terminated assignment prefix without instance escape or reads before allocation';
   if (code === -6) return 'constructor return overrides need their complete object replacement semantics';
@@ -294,6 +308,21 @@ export function readJavaScriptClosedClassStaticTarget(values, names, calls, at) 
   return '';
 }
 
+/** Local classes are renamed into ordinary constructor functions by this
+ * transform. Refuse a collection-default collision before that rewrite could
+ * hide its original `new` owner; other lexical/module shadows remain subject
+ * to the ordinary parser's actual standard-builtin owner check.
+ * @param {string[]} values @param {number[][]} directory @returns {number} */
+export function readJavaScriptClosedClassCollectionDefaultClassOwnerError(values,directory){
+ let names=[];for(const row of directory)names=names.concat([values[(row[0]??0)+1]??'']);
+ for(const row of directory){
+  let parameters=[row[3]??-1,row[4]??-1];
+  for(let at=9+3*(row[7]??0);at<row.length;at+=5)parameters=parameters.concat([row[at+1]??-1,row[at+2]??-1]);
+  for(let pair=0;pair<parameters.length;pair+=2)for(let at=(parameters[pair]??-1)+1;at<(parameters[pair+1]??-1);at+=1)
+   if((values[at-1]??'')==='='&&(values[at]??'')==='new'&&['Set','Map'].includes(values[at+1]??'')&&names.includes(values[at+1]??''))return at+1;
+ }return -1;
+}
+
 /** The profile is deliberately closed: its synthetic method slots cannot be
  * observed as own enumerable fields or as bound detached function objects.
  * Calls and shared state retain ordinary source receiver/argument order.
@@ -332,8 +361,9 @@ export function readJavaScriptClosedClassObservationError(values, kinds, directo
 
 /** @param {string} source @param {string[]} values @param {number[]} starts
  * @param {number[]} ends @param {number[]} row @param {string} prefix
- * @param {number} ordinal @param {string[]} classNames @param {string[]} staticCalls @returns {string} */
-export function renderJavaScriptClosedClass(source, values, starts, ends, row, prefix, ordinal, classNames, staticCalls) {
+ * @param {number} ordinal @param {string[]} classNames @param {string[]} staticCalls
+ * @param {boolean} [prototype] @returns {string} */
+export function renderJavaScriptClosedClass(source, values, starts, ends, row, prefix, ordinal, classNames, staticCalls, prototype = false) {
   const name = values[(row[0] ?? 0) + 1] ?? '';
   const receiver = prefix + 'class_receiver_' + String(ordinal);
   const brand = prefix + 'class_identity_' + String(ordinal);
@@ -373,6 +403,10 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
       stubs += '\n' + documentation + '\nfunction ' + prefix + 'class_static_' + String(ordinal) + '_' + String(at) + '(' + args + ') { ' + body + ' }\n';
       continue;
     }
+    if(prototype){
+      stubs+='\n'+documentation+'\nfunction '+prefix+'class_method_'+String(ordinal)+'_'+String(at)+'('+receiver+(args===''?'':', '+args)+') { '+body+' }\n';
+      continue;
+    }
     const environment = prefix + 'class_method_environment_' + String(ordinal) + '_' + String(at);
     stubs += '\n' + documentation + '\nfunction ' + stub + '(' + args + ') { return ' + stub + '(' + arguments_ + '); }\n';
     // The method's lexical environment is the original module, not the
@@ -395,16 +429,52 @@ export function renderJavaScriptClosedClass(source, values, starts, ends, row, p
     + assignments + remainder + '\nreturn ' + receiver + ';\n}\n';
 }
 
+/** Methods which construct closed class instances need finite data-only
+ * records rather than recursively embedding bound method Function fields.
+ * Earlier closed field/closure lowering remains a separate exact profile.
+ * @param {string[]} values @param {number[][]} directory @returns {boolean} */
+export function requireJavaScriptClosedClassPrototypeMethods(values,directory){
+ let names=[];for(const row of directory)names=names.concat([values[(row[0]??0)+1]??'']);
+ for(const row of directory)for(let method=9+3*(row[7]??0);method<row.length;method+=5)if((row[method]??-1)>=0)
+  for(let at=(row[method+3]??0)+1;at<(row[method+4]??0);at+=1)if((values[at]??'')==='new'&&names.includes(values[at+1]??'')&&(values[at+2]??'')==='(')return true;
+ return false;
+}
+/** @param {string[]} methods @param {string[]} receiverFields
+ * @param {string} method @returns {string} */
+export function readJavaScriptClosedClassMethodTarget(methods,receiverFields,method){
+ if(methods.length%3!==0)return '';
+ let target='';
+ for(let at=0;at<methods.length;at+=3)if(receiverFields.includes(methods[at]??'')&&(methods[at+1]??'')===method){if(target!=='')return '';target=methods[at+2]??'';}
+ return target;
+}
+/** @param {string} brand @param {string} method @param {string} helper
+ * @param {string} parameter @param {string[]} receiverFields
+ * @param {boolean} constructor @returns {boolean} */
+export function acceptJavaScriptClosedClassMethodDefinition(brand,method,helper,parameter,receiverFields,constructor){
+ const marker=brand.lastIndexOf('class_identity_');if(marker<0)return false;
+ const prefix=brand.slice(0,marker),ordinal=brand.slice(marker+15);
+ return ordinal!==''&&method!==''&&helper.startsWith(prefix+'class_method_'+ordinal+'_')&&parameter===prefix+'class_receiver_'+ordinal&&receiverFields.includes(brand)&&constructor;
+}
+/** Primitive owned rows keep host decoding independent of generated record
+ * DTO layout. Counts only select actual row coordinates.
+ * @param {string[]} row @returns {number[]} */
+export function readJavaScriptClosedClassOwnerRow(row){
+ if(row.length<5)return [-1];
+ const fields=Number(row[3]??''),methods=Number(row[4]??'');
+ if(!Number.isSafeInteger(fields)||fields<0||fields>8192||String(fields)!==(row[3]??'')||!Number.isSafeInteger(methods)||methods<0||methods>8192||String(methods)!==(row[4]??'')||row.length!==5+fields+2*methods)return [-1];
+ return [0,5,fields,5+fields,methods];
+}
+
 /** Complete source plus conservative original intervals for each emitted chunk.
  * A changed class retains its entire original interval, never a fabricated
  * point location. Unchanged chunks retain exact original text coordinates.
  * @param {string} source @param {string[]} values @param {string[]} kinds
  * @param {number[]} starts @param {number[]} ends @param {string} prefix
- * @returns {{text:string, intervals:number[], brands:string[], error:string, at:number, changed:boolean}} */
+ * @returns {{text:string, intervals:number[], brands:string[], publicFields:string[], prototypeMethods:string[], ownerRows:string[][], error:string, at:number, changed:boolean}} */
 export function lowerJavaScriptClosedClassSource(source, values, kinds, starts, ends, prefix) {
   if (!acceptJavaScriptClosedClassSourceSize(source.length, values.length)
     || kinds.length !== values.length || starts.length !== values.length || ends.length !== values.length)
-    return { text: source, intervals: [], brands: [], error: readJavaScriptClosedClassRefusal(-8), at: 0, changed: false };
+    return { text: source, intervals: [], brands: [], publicFields: [], prototypeMethods: [], ownerRows: [], error: readJavaScriptClosedClassRefusal(-8), at: 0, changed: false };
   // Literal contents are not delimiters, keywords, or source identifier owners.
   let syntax = [];
   for (let at = 0; at < values.length; at += 1) syntax = syntax.concat([
@@ -457,28 +527,37 @@ export function lowerJavaScriptClosedClassSource(source, values, kinds, starts, 
       && source.slice(starts[at] ?? 0, ends[at] ?? 0) !== value) { error = -9; errorAt = at; break; }
   }
   const staticCalls = readJavaScriptClosedClassStaticCalls(values, directory, prefix);
+  if(error===0&&directory.length>0){const owner=readJavaScriptClosedClassCollectionDefaultClassOwnerError(values,directory);if(owner>=0){error=-11;errorAt=owner;}}
   if (error === 0 && directory.length > 0) {
     const observation = readJavaScriptClosedClassObservationError(values, kinds, directory, staticCalls);
     if (observation >= 0) { error = -7; errorAt = observation; }
   }
-  if (error !== 0) return { text: source, intervals: [], brands: [], error: readJavaScriptClosedClassRefusal(error), at: errorAt, changed: false };
-  if (directory.length === 0) return { text: source, intervals: [], brands: [], error: '', at: 0, changed: false };
+  if (error !== 0) return { text: source, intervals: [], brands: [], publicFields: [], prototypeMethods: [], ownerRows: [], error: readJavaScriptClosedClassRefusal(error), at: errorAt, changed: false };
+  if (directory.length === 0) return { text: source, intervals: [], brands: [], publicFields: [], prototypeMethods: [], ownerRows: [], error: '', at: 0, changed: false };
   let text = '';
   let intervals = [];
   let previous = 0;
   let ordinal = 0;
-  let brands = [];
+  let brands = [], publicFields=[],prototypeMethods=[],ownerRows=[];
+  const prototype=requireJavaScriptClosedClassPrototypeMethods(values,directory);
   for (const row of directory) {
     const first = row[0] ?? 0;
     const last = row[1] ?? 0;
     const before = source.slice(previous, starts[first] ?? previous);
     intervals = intervals.concat([text.length, text.length + before.length, previous, starts[first] ?? previous]);
     text += before;
-    const replacement = renderJavaScriptClosedClass(source, values, starts, ends, row, prefix, ordinal, names, staticCalls);
+    const replacement = renderJavaScriptClosedClass(source, values, starts, ends, row, prefix, ordinal, names, staticCalls, prototype);
     intervals = intervals.concat([text.length, text.length + replacement.length, starts[first] ?? 0, ends[last] ?? 0]);
     text += replacement;
     previous = ends[last] ?? previous;
-    brands = brands.concat([prefix + 'class_identity_' + String(ordinal)]);
+    const brand=prefix+'class_identity_'+String(ordinal);
+    brands = brands.concat([brand]);
+    if(prototype)for(let method=9+3*(row[7]??0);method<row.length;method+=5)if((row[method]??-1)>=0)prototypeMethods=prototypeMethods.concat([brand,values[row[method]??0]??'',prefix+'class_method_'+String(ordinal)+'_'+String(method)]);
+    for(let field=9;field<9+3*(row[7]??0);field+=3){const position=row[field]??0;publicFields=publicFields.concat([brand,values[position<0?-position-1:position]??'']);}
+    let ownFields=[],ownMethods=[];
+    for(let field=9;field<9+3*(row[7]??0);field+=3){const position=row[field]??0,name=values[position<0?-position-1:position]??'';if(!ownFields.includes(name))ownFields=ownFields.concat([name]);}
+    for(let method=9+3*(row[7]??0);method<row.length;method+=5)if((row[method]??-1)>=0)ownMethods=ownMethods.concat([values[row[method]??0]??'',prefix+(prototype?'class_method_':'class_method_environment_')+String(ordinal)+'_'+String(method)]);
+    ownerRows=ownerRows.concat([[(values[first+1]??''),brand,prototype?'prototype helpers':'closure slots',String(ownFields.length),String(ownMethods.length/2)].concat(ownFields,ownMethods)]);
     ordinal += 1;
   }
   let first = 0;
@@ -488,8 +567,8 @@ export function lowerJavaScriptClosedClassSource(source, values, kinds, starts, 
     + source.slice(ends[values.length - 1] ?? source.length);
   intervals = intervals.concat([text.length, text.length + rest.length, previous, source.length]);
   text += rest;
-  if (text.length > 1048576) return { text: source, intervals: [], brands: [], error: readJavaScriptClosedClassRefusal(-8), at: 0, changed: false };
-  return { text, intervals, brands, error: '', at: 0, changed: true };
+  if (text.length > 1048576) return { text: source, intervals: [], brands: [], publicFields: [], prototypeMethods: [], ownerRows: [], error: readJavaScriptClosedClassRefusal(-8), at: 0, changed: false };
+  return { text, intervals, brands, publicFields, prototypeMethods, ownerRows, error: '', at: 0, changed: true };
 }
 
 /** @param {number} units @param {number} tokens @returns {boolean} */
@@ -517,6 +596,24 @@ export function readJavaScriptClosedClassUseError(kind, operation, instance, pri
   if (kind === 'recordField' && !privateField && (!callable || direct)) return '';
   if (kind === 'method' && operation.startsWith('writeRecordField')) return '';
   return 'closed class instances require direct public field operations and receiver-retaining method calls; private slots, detached callables and indirect reflective lookups need the full object model';
+}
+/** Actual source-owned brand/own-field pairs distinguish stored caller
+ * functions from synthetic prototype-method slots. Names alone do not.
+ * @param {string[]} receiverFields @param {string[]} publicFields
+ * @param {string} field @returns {boolean} */
+export function acceptJavaScriptClosedClassOwnField(receiverFields,publicFields,field){
+ if(publicFields.length%2!==0)return false;
+ for(let at=0;at<publicFields.length;at+=2)if(receiverFields.includes(publicFields[at]??'')&&(publicFields[at+1]??'')===field)return true;
+ return false;
+}
+/** The old method-slot policy stays exact; only independently proved actual
+ * own callable fields can travel as ordinary function values.
+ * @param {string} kind @param {string} operation @param {boolean} instance
+ * @param {boolean} privateField @param {boolean} callable @param {boolean} direct
+ * @param {boolean} ownField @returns {string} */
+export function readJavaScriptClosedClassOwnFieldUseError(kind,operation,instance,privateField,callable,direct,ownField){
+ if(instance&&kind==='recordField'&&!privateField&&ownField)return '';
+ return readJavaScriptClosedClassUseError(kind,operation,instance,privateField,callable,direct);
 }
 
 /** @param {number[]} intervals @param {number} first @param {number} last

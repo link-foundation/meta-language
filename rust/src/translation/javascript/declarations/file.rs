@@ -168,6 +168,8 @@ impl JavaScriptParser {
                 );
         }
         let program = SProgram {
+            source_class_owners: self.closed_class_owners.clone(),
+            source_class_methods:self.closed_class_methods.clone(),
             reference_semantics: self.reference_state.enabled.then(|| true.into()),
             language: Language::JavaScript,
             items,

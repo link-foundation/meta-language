@@ -1,5 +1,5 @@
 //! Thin owned source projection into the shared primitive vector-copy rules.
-use super::{RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type};
+use super::{Result,RustParser, SExpr, SNode, SourceOrigin, Span, Token, Type};
 use crate::translation::rust_scalar_vector_copy_rules::{
     accept_rust_scalar_vector_copy_owner, accept_rust_scalar_vector_copy_query,
     accept_rust_scalar_vector_copy_receiver, read_rust_scalar_vector_copy_operation,
@@ -13,7 +13,7 @@ impl RustParser {
         args: usize,
         range: Option<Span>,
         path: &[String],
-    ) -> Option<SExpr> {
+    ) -> Result<Option<SExpr>> {
         let actual = self.origins.origin(receiver, path);
         let origin = actual.static_byte_array_read_view().unwrap_or(actual);
         let layers = u32::try_from(origin.wrappers.len()).map_or(f64::INFINITY, f64::from);
@@ -23,7 +23,7 @@ impl RustParser {
             origin.array_source_model.unwrap_or(""),
             layers,
         ) {
-            return None;
+            return Ok(None);
         }
         let element = match &origin.ty {
             Some(Type::Array { element, .. }) => Some(element.as_ref()),
@@ -37,9 +37,9 @@ impl RustParser {
             origin.array_element_copy_evidence,
             u32::try_from(args).map_or(f64::INFINITY, f64::from),
         ) {
-            return None;
+            return Ok(None);
         }
-        Some(self.build_scalar_vector_copy(receiver, origin, range, path))
+        self.build_scalar_vector_copy(receiver, origin, range, path).map(Some)
     }
 
     /// Project an admitted source copy without reinterpreting its trait call.
@@ -49,7 +49,7 @@ impl RustParser {
         origin: SourceOrigin,
         range: Option<Span>,
         path: &[String],
-    ) -> SExpr {
+    ) -> Result<SExpr> {
         let owner = origin
             .source_owner
             .as_ref()
@@ -85,7 +85,7 @@ impl RustParser {
         copied.expanded_source_owner = None;
         copied.fresh_array_value = range;
         copied.fresh_vector_result_contract = false;
-        self.origins.mark_vector_constructor(&result, copied);
-        result
+        self.origins.mark_vector_constructor(&result, copied)?;
+        Ok(result)
     }
 }

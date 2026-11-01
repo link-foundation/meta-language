@@ -103,3 +103,28 @@ export function acceptRustOwnedStandardSumCallbackClosureCopy(parameters,result,
 /** @param {string} kind @param {number} parameters @param {number} expected
  * @param {number} wrappers @param {boolean} callableCopy @param {string} result @returns {string} */
 export function readRustOwnedStandardSumCallbackSourceError(kind,parameters,expected,wrappers,callableCopy,result){return kind==='function'&&parameters===expected&&wrappers===0&&callableCopy&&(result==='copy'||result==='owned')?'':'the callback needs its actual Copy callable and complete movable parameter/result contracts';}
+/** Selection is read-only context, never source admission or type inference.
+ * @returns {number} */
+export function readRustOwnedStandardSumCallbackSelectionTokenLimit(){return 4096;}
+/** Code 1 named value, 2 factory call, 3 explicitly written lambda result.
+ * The returned source path is a half-open token range, not a parsed type.
+ * @param {string[]} values @param {string[]} kinds @returns {number[]} */
+export function planRustOwnedStandardSumCallbackSelection(values,kinds){
+ if(values.length!==kinds.length||values.length===0||values.length>4096||values[0]!=='(')return [];
+ let at=1,layers=0;while(values[at]==='('&&layers<256){at+=1;layers+=1;}
+ const moved=values[at]==='move';if(moved)at+=1;
+ let code=1;
+ if(values[at]==='||'||values[at]==='|'){
+  if(values[at]==='||')at+=1;else{at+=1;let budget=0;while(at<values.length&&values[at]!=='|'&&budget<1024){at+=1;budget+=1;}if(values[at]!=='|')return [];at+=1;}
+  if(values[at]!=='->')return [];at+=1;code=3;
+ }else if(moved)return [];
+ const start=at;
+ if(kinds[at]!=='identifier'&&!['crate','self','super'].includes(values[at]))return [];
+ at+=1;let parts=1;while(values[at]==='::'&&kinds[at+1]==='identifier'&&parts<256){at+=2;parts+=1;}
+ if(code===3)return [3,start,at];
+ if(values[at]==='(')code=2;else if(values[at]!==')'&&values[at]!==',')return [];
+ return [code,start,at];
+}
+/** @param {string} owner @param {string} path @param {boolean} alias
+ * @param {boolean} shadow @returns {boolean} */
+export function acceptRustOwnedStandardSumCallbackWrittenSelection(owner,path,alias,shadow){return !alias&&!shadow&&owner==='library'&&(path==='std::string::String'||path==='std::vec::Vec');}

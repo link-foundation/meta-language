@@ -4,5 +4,6 @@ use super::{Expr, RustEmitter};
 impl RustEmitter<'_> {
     pub(super) fn read_only_reference_callback(&self, callback: &Expr) -> bool {
         crate::translation::reference_callbacks::read_only_reference_callback(callback,&self.program.declarations)
+            || crate::translation::disjoint_collection_iterations::read_program_proof(self.program,&[]).array_callbacks
     }
 }

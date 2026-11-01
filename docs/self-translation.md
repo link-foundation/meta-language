@@ -1388,3 +1388,27 @@ passes it through the existing semantic checks. Multiple declared roots require
 through the inverse directory. Binary output preserves the full snapshot state;
 text follows the existing Links text-state scope. These draft controls remain
 unexecuted until the complete requirements code draft is ready.
+
+
+The next complete baseline source-authoring batch has one future entry point:
+
+```sh
+node js/scripts/draft-rust-baseline-complete-source.mjs --draft
+```
+
+Do not invoke it during the current source-edit-only phase. It starts separate
+Node processes for class-owner schema/source-profile publication, shared
+classifier regeneration and baseline source libraries. Separate processes avoid
+using a predecessor schema cached by earlier static imports. The profile author
+preserves complete committed predecessors and publishes an exact successor
+receipt; existing version-one/version-two assertions remain independently
+selected. Version three adds a separately declared optional class-constructor
+owner instead of inventing a Boolean neutral default.
+
+The baseline author also translates complete literal policy assertion programs
+into native test sources. Each fixture/export/index retains its actual owner,
+input and independently authored expected literal, including special Number
+spellings. The bounded publisher retains source/closure hashes, ownership
+receipts and edited-file refusals. These are generation recipes and future
+controls, not observed results. No original fixture, test, compilation or
+validation gate is invoked by the outer source-authoring runner.

@@ -106,7 +106,7 @@ impl RustParser {
             let element_token = self.peek();
             let element = self.parse_type()?;
             let element_owner = self.origins.current_type.source_owner.clone();
-            self.array_element(token, &element_token)?;
+            let element_copy=self.array_element(token, &element_token)?;
             self.cursor.expect(">", Some("Vec constructor"))?;
             self.cursor.expect("::", Some("Vec constructor"))?;
             self.cursor.expect("new", Some("Vec constructor"))?;
@@ -133,7 +133,8 @@ impl RustParser {
                     path: vec!["std".to_owned(), "vec".to_owned(), "Vec".to_owned()],
                     arguments: vec![owner],
                 });
-            self.origins.mark_vector_constructor(&result, origin);
+            origin.array_element_copy_evidence=element_copy;
+            self.origins.mark_vector_constructor(&result, origin)?;
             return Ok(result);
         }
         if let Some(shared) = self.shared_array_constructor(&segments, token, path)? {
@@ -164,20 +165,17 @@ impl RustParser {
             }),
         )?;
         if !c.is("(") {
+            let node = SExpr::new(SNode::Name {path:record_path.unwrap_or_else(||self.source_value_path(&segments,path))},span(token,token));
+            let unit=match &node.node{SNode::Name{path:names}=>self.origins.lookup_value_owner(names,path).is_some_and(|entry|matches!(entry.declaration,super::super::SourceDeclaration::Constructor{fields,..}if fields.is_empty())),_=>false};
+            if unit&&let Some(produced)=self.nominal_constructor_origin(&node,&[],path,node.span)?{self.origins.mark(&node,produced);return Ok(node);}
             if let Some(reference) =
                 self.read_function_reference(&segments, path, span(token, token))?
             {
                 return Ok(reference);
             }
-            let node = SExpr::new(
-                SNode::Name {
-                    path: record_path.unwrap_or_else(|| self.source_value_path(&segments, path)),
-                },
-                span(token, token),
-            );
             self.shared_array_name(&node, path)?;
-            self.origins.check_owned_name(&node, path)?;
-            return Ok(node);
+            if !self.owned_record_projection_name(&node,path){self.origins.check_owned_name(&node,path)?;}
+            return self.owned_record_mutable_name(node,path);
         }
         self.cursor.advance();
         let callee = SExpr::new(
@@ -205,7 +203,7 @@ impl RustParser {
                 range,
             );
             origin.path = path.to_vec();
-            self.origins.mark_vector_constructor(&result, origin);
+            self.origins.mark_vector_constructor(&result, origin)?;
             return Ok(result);
         }
         if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {
@@ -224,19 +222,20 @@ impl RustParser {
             return Ok(call);
         }
         if let Some(record_path) = record_path {
-            self.origins.call(&record_path, &args, path, range)?;
-            let function = SExpr::new(SNode::Name { path: record_path }, span(token, token));
-            return Ok(if args.is_empty() {
+            let function = SExpr::new(SNode::Name { path: record_path.clone() }, span(token, token));
+            let node=if args.is_empty() {
                 SExpr::new(function.node, range)
             } else {
                 SExpr::new(
                     SNode::App {
                         func: Box::new(function),
-                        args,
+                        args:args.clone(),
                     },
                     range,
                 )
-            });
+            };
+            if let Some(produced)=self.nominal_constructor_origin(&node,&args,path,range)?{self.origins.mark(&node,produced);return Ok(node);}
+            self.origins.call(&record_path,&args,path,range)?;return Ok(node);
         }
         if let Some(shared) = self.shared_array_call(&segments, &args, path, range)? {
             return Ok(shared);
@@ -324,6 +323,9 @@ impl RustParser {
         if segments.len() == 2 && fixed.is_some() {
             return Err(unsupported(&name, "outside the portable core", range));
         }
+        let callee = self.source_value_path(&segments, path);
+        let nominal_node=if args.is_empty(){SExpr::new(SNode::Name{path:callee.clone()},range)}else{SExpr::new(SNode::App{func:Box::new(SExpr::new(SNode::Name{path:callee.clone()},span(token,token))),args:args.clone()},range)};
+        if let Some(produced)=self.nominal_constructor_origin(&nominal_node,&args,path,range)?{self.origins.mark(&nominal_node,produced);return Ok(nominal_node);}
         if ["std", "core", "alloc"].contains(&segments[0].as_str()) {
             return Err(unsupported(
                 &name,
@@ -331,7 +333,6 @@ impl RustParser {
                 range,
             ));
         }
-        let callee = self.source_value_path(&segments, path);
         let ordinary = self.ordinary_completion_context();
         self.origins
             .call_with_fresh_vector_arguments(&callee, &args, path, range, ordinary)?;

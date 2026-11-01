@@ -618,6 +618,7 @@ fn emit_rust_context_owned(
 ) -> Result<(Emitted, Option<DefinitionOwnership>)> {
     let prepared = super::ordered_record_preparation::prepare(program)?;
     let program = prepared.as_ref();
+    super::class_owners::validate_program(program)?;
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
@@ -780,6 +781,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
 /// # Errors
 /// On a constant value the target cannot express faithfully.
 pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    super::class_owners::validate_program(program)?;
     let prepared = super::ordered_record_preparation::prepare(program)?;
     let program = prepared.as_ref();
     let Some(main) = &program.main else {

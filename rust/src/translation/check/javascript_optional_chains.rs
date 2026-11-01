@@ -106,6 +106,7 @@ impl Checker {
         let binding = self.fresh_name("ml_optional_chain_receiver");
         let field = rules::read_java_script_optional_chain_field();
         let ty = Type::Record {
+            source_class_owner: None,
             fields: vec![TypeField {
                 name: field.clone(),
                 ty: value.ty.clone(),

@@ -263,11 +263,13 @@ impl RustParser {
         Ok(result)
     }
     pub(super) fn conditional_chain(&mut self, path: &[String], start: &Token) -> Result<SExpr> {
+        let ownership_base=self.origins.snapshot_owned_bindings();
         let previous = self.origins.enter(None);
         let parsed = (|| {
             let syntax = self.conditional_chain_stages(path, start)?;
             let body = self.block(path)?;
             let origin = self.origins.origin(&body, path);
+            self.origins.expire_owned_bindings(&ownership_base,&origin)?;
             Ok::<_, crate::translation::diagnostics::TranslationError>((syntax, body, origin))
         })();
         self.origins.scope = previous;

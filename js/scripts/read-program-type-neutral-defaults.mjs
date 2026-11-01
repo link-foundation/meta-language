@@ -1,5 +1,6 @@
 // Source guard for the finite false fields actually omitted by the Rust Type enum.
 import {restoreOrderedRecordTypeSource} from './ordered-record-schema-profile.mjs';
+import {restoreClassOwnerNativeTypeSource,readClassOwnerNativeTypeSource} from './class-owner-schema-profile.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -9,8 +10,9 @@ const root=new URL('../../',import.meta.url);
 const field=(node,name)=>{const selected=node.children.filter(child=>child.field===name);assert.ok(selected.length<=1);return selected[0]?.node;};
 
 export function readProgramTypeNeutralDefaults({version=1}={}){
-  if(version!==1&&version!==2)throw new RangeError("uncovered native Type source profile "+version);
-  const path='rust/src/translation/types.rs',actualBytes=readFileSync(new URL(path,root)),bytes=version===1?Buffer.from(restoreOrderedRecordTypeSource(actualBytes,path)):actualBytes,source=bytes.toString('utf8');
+  if(version!==1&&version!==2&&version!==3)throw new RangeError("uncovered native Type source profile "+version);
+  const path='rust/src/translation/types.rs',actualBytes=readFileSync(new URL(path,root)),orderedSha256='89d8ca15420493e3e9210a1b0a5b359d55d8a9821a7445806ea82a98fd99f92f';
+  const bytes=version===1?Buffer.from(restoreOrderedRecordTypeSource(actualBytes,path)):version===2?(createHash('sha256').update(actualBytes).digest('hex')===orderedSha256?actualBytes:Buffer.from(restoreClassOwnerNativeTypeSource(actualBytes,path))):Buffer.from(readClassOwnerNativeTypeSource(actualBytes,path)),source=bytes.toString('utf8');
   const declaration=readSourceTextRustBlock(source,'enum','Type'),at=source.indexOf(declaration);
   assert.equal(source.indexOf(declaration,at+1),-1);
   assert.ok(source.slice(Math.max(0,at-100),at).includes('#[serde(tag = "kind", rename_all = "camelCase")]'));
@@ -20,7 +22,7 @@ export function readProgramTypeNeutralDefaults({version=1}={}){
   const owners=tree.children.map(child=>child.node).filter(node=>field(node,'name')&&text(field(node,'name'))==='Type');
   assert.equal(owners.length,1);
   const variants=field(owners[0],'body');assert.ok(variants);
-  const defaults={},evidence=[];
+  const defaults={},evidence=[],optionalFields=[];
   for(const {node:variant}of variants.children){
     if(variant.term!=='enum_variant')continue;
     const name=text(field(variant,'name')),body=field(variant,'body');if(!body)continue;
@@ -34,6 +36,11 @@ export function readProgramTypeNeutralDefaults({version=1}={}){
         (defaults[kind]??={})[name]='false';
         evidence.push({kind,field:name,fieldSource:text(node),attributes:[...attributes]});
       }
+      if(version===3&&kind==='record'&&text(key)==='source_class_owner'){
+        assert.equal(text(type).replace(/\s+/gu,''),'Option<std::string::String>');
+        assert.deepEqual(attributes.map(value=>value.replace(/\s+/gu,'')),['#[serde(default,rename="sourceClassOwner",skip_serializing_if="Option::is_none",deserialize_with="deserialize_tuple_product_model")]']);
+        optionalFields.push({kind,field:'sourceClassOwner',nativeField:text(key),absence:'omitted field',fieldSource:text(node),attributes:[...attributes]});
+      }
       attributes=[];
     }
   }
@@ -41,5 +48,6 @@ export function readProgramTypeNeutralDefaults({version=1}={}){
   assert.equal(isFalse,'fn is_false(value: impl std::ops::Not<Output = bool>) -> bool {\n    !value\n}');
   assert.deepEqual(defaults,version===1?{array:{reference:'false'},record:{open:'false',reference:'false'},map:{reference:'false'},set:{reference:'false'}}:{array:{reference:'false'},record:{ordered:'false',open:'false',reference:'false'},map:{reference:'false'},set:{reference:'false'}});
   assert.equal(evidence.length,version===1?5:6);
-  return {defaults,source:{path,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),declaration,isFalse},fields:evidence};
+  if(version===3)assert.equal(optionalFields.length,1);
+  return {defaults,source:{path,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),declaration,isFalse},fields:evidence,...(version===3?{optionalFields}: {})};
 }

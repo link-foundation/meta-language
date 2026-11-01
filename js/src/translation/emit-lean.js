@@ -1,3 +1,4 @@
+import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal-runtime.js';
@@ -208,6 +209,7 @@ function ident(name) {
 }
 
 export function emitLean(source) {
+  checkJavaScriptClassOwners(source);
   const program = threadOutput(prepareOrderedRecordValues(source), 'Lean');
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',

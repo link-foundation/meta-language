@@ -1,6 +1,7 @@
 // Actual standard owners and tracked eager moves into shared combinator plans.
 import {TranslationError,unsupported} from './diagnostics.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {carryRustCopyClosureValueUnion} from './rust-copy-closure-lifetimes.js';
 import {readRustStandardSumOwnershipFacts,captureRustStandardSumConstructor} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue,createRustOwnedStandardSumMethodResult} from './rust-owned-standard-sum-methods.js';
 import {readRustExpectedCopyClosure,readRustParameterOnlyCopyClosure} from './rust-copy-closures.js';
@@ -103,5 +104,5 @@ export function readRustStandardSumSourceCombinator(parser,receiver,method,path)
  }
  let body={k:'match',scrutinees:method.value==='xor'?[local('receiver'),local('argument')]:[local('receiver')],rows,span};
  for(let at=captures.length-1;at>=0;at-=1){const capture=captures[at];body={k:'let',name:capture.name,type:capture.origin.type,value:capture.value,body,span};}
- return parser.origins.mark(body,createRustOwnedStandardSumMethodResult(parser,result,leftMoved,rightMoved));
+ return parser.origins.mark(body,carryRustCopyClosureValueUnion(createRustOwnedStandardSumMethodResult(parser,result,leftMoved,rightMoved),[receiverOrigin,rightOrigin]));
 }

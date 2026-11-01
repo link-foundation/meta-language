@@ -1,0 +1,47 @@
+// Independently authored source controls. No rule or represented program runs.
+const sourceVersionRange='>=1.90.0 <1.100.0';
+export const rustStandardDefaultDecisions=[
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['string','library','std::string::String','owned string',0,true],expected:'empty owned string'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['string','library','alloc::string::String','owned string',0,true],expected:'empty owned string'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['array','library','std::vec::Vec','owned vector',0,true],expected:'empty owned vector'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['array','library','alloc::vec::Vec','owned vector',0,true],expected:'empty owned vector'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['named','declaration','std::option::Option','',0,true],expected:'empty actual Option'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['unit','unit','','',0,true],expected:'unit'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['fixed','primitive','u8','',0,true],expected:'integer zero'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['fixed','primitive','usize','',0,true],expected:'integer zero'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['float','primitive','f64','',0,true],expected:'positive floating zero'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['bool','primitive','bool','',0,true],expected:'false'},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['string','library','std::string::String','owned string',1,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['string','declaration','std::string::String','owned string',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['array','library','std::vec::Vec','fixed array',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['array','library','local::Vec','owned vector',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['named','declaration','local::Option','',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['named','declaration','std::result::Result','',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['fixed','declaration','u8','',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['string','library','std::string::String','owned string',0,false],expected:''},
+ {operation:'readRustOwnedStandardSumMethodArity',arguments:['std::option::Option','unwrap_or_default'],expected:0},
+ {operation:'readRustOwnedStandardSumMethodArity',arguments:['std::result::Result','unwrap_or_default'],expected:0},
+ {operation:'readRustOwnedStandardSumMethodReceiverMode',arguments:['std::option::Option','unwrap_or_default','copy'],expected:'copy'},
+ {operation:'readRustOwnedStandardSumMethodReceiverMode',arguments:['std::result::Result','unwrap_or_default','owned'],expected:'owned'},
+ {operation:'planRustOwnedStandardSumMethodBranch',arguments:['std::option::Option','None','unwrap_or_default'],expected:['','standard default']},
+ {operation:'planRustOwnedStandardSumMethodBranch',arguments:['std::result::Result','Err','unwrap_or_default'],expected:['','standard default']},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['string','primitive','u8','',0,true],expected:''},
+ {operation:'readRustOwnedStandardSumDefaultTerm',arguments:['fixed','primitive','bool','',0,true],expected:''},
+];
+export const rustStandardDefaultOriginals=[
+ {name:'actual owned String defaults preserve selected payload and empty fallback',sourceVersionRange,stdout:'text\n0\n',source:'fn main(){let present:Option<String>=Some(String::from("text"));let absent:Option<String>=None;println!("{}",present.unwrap_or_default());println!("{}",absent.unwrap_or_default().len());}'},
+ {name:'actual vector default preserves its full element owner',sourceVersionRange,stdout:'2\n0\n',source:'fn main(){let present:Option<Vec<u8>>=Some(vec![7u8,9u8]);let absent:Option<Vec<u8>>=None;println!("{}",present.unwrap_or_default().len());println!("{}",absent.unwrap_or_default().len());}'},
+ {name:'Result defaults do not require Debug on the actual owned error',sourceVersionRange,stdout:'text\n0\n',source:'fn main(){let present:Result<String,String>=Ok(String::from("text"));let absent:Result<String,String>=Err(String::from("error"));println!("{}",present.unwrap_or_default());println!("{}",absent.unwrap_or_default().len());}'},
+ {name:'nested Option default needs no default implementation for its payload',sourceVersionRange,stdout:'false\ntext\n',source:'fn main(){let absent:Option<Option<String>>=None;let present:Option<Option<String>>=Some(Some(String::from("text")));println!("{}",absent.unwrap_or_default().is_some());println!("{}",present.unwrap_or_default().unwrap_or_default());}'},
+ {name:'Copy scalar default keeps an owning error independent of its output',sourceVersionRange,stdout:'0\n7\nfalse\n0\n',source:'fn main(){let error:Result<u8,String>=Err(String::from("bad"));let some:Option<u8>=Some(7u8);let flag:Option<bool>=None;println!("{}",error.unwrap_or_default());println!("{}",some.unwrap_or_default());println!("{}",flag.unwrap_or_default());println!("{}",None::<usize>.unwrap_or_default());}'},
+ {name:'standard Unit default retains presence independently of empty payload',sourceVersionRange,stdout:'true\n',source:'fn main(){let value:Option<()>=None;let unit=value.unwrap_or_default();println!("{}",Some(unit).is_some());}'},
+ {name:'owned default receiver evaluates exactly once',sourceVersionRange,stdout:'receiver\n0\n',source:'fn make()->Option<String>{println!("receiver");None}fn main(){println!("{}",make().unwrap_or_default().len());}'},
+ {name:'empty Option and vector defaults require no element Default implementation',sourceVersionRange,stdout:'true\n0\n',source:'#[derive(Clone,Copy)]struct NoDefault{value:u8}fn main(){let nested:Option<Option<NoDefault>>=None;let vectors:Option<Vec<NoDefault>>=None;println!("{}",nested.unwrap_or_default().is_none());println!("{}",vectors.unwrap_or_default().len());}'},
+];
+export const rustStandardDefaultRefusals=[
+ {name:'owned default receiver cannot be read after consumption',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn main(){let value:Option<String>=None;let text=value.unwrap_or_default();println!("{}",value.is_some());}'},
+ {name:'owned default cannot move out of a shared source place',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn main(){let value:Option<String>=None;let text=(&value).unwrap_or_default();}'},
+ {name:'unwrap_or_default has no actual arguments',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn main(){let value:Option<String>=None;let text=value.unwrap_or_default(String::from("wrong"));}'},
+ {name:'standard Result has no inferred Default implementation',sourceVersionRange,originalCompilerOutcome:'reject',source:'fn main(){let value:Option<Result<u8,u8>>=None;let result=value.unwrap_or_default();}'},
+ {name:'user Default derivation requires its actual nominal trait interpretation',sourceVersionRange,originalCompilerOutcome:'accept',source:'#[derive(Default)]struct Example{value:u8}fn main(){let value:Option<Example>=None;let result=value.unwrap_or_default();}'},
+];

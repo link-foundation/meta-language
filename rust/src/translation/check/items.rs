@@ -11,6 +11,7 @@ use super::{
 
 impl Checker {
     pub(super) fn refuse_callable_data_observation(&self,ty:&Type,operation:&str,span:Option<Span>)->Result<()>{
+        if crate::translation::class_owners::accept_type_observation(ty,self.source_class_owners.as_ref(),operation){return Ok(());}
         let facts=crate::translation::callable_data::read_callable_data_facts(ty,&|name|match self.decls.get(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
         let reason=crate::translation::callable_data_derivation_rules::read_callable_data_observation_error(operation,facts.callable);
         if reason.is_empty(){Ok(())}else{Err(unsupported("callable aggregate observation",&reason,span))}

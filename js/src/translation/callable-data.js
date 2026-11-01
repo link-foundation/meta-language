@@ -2,6 +2,7 @@
 import {typeChildren} from './emit-common.js';
 import {acceptCallableDataNode,acceptCallableDataConstructiveNode,readCallableDataTraversalError,readCallableDataObservationError,readCallableDataRecursivePlan} from './callable-data-derivation-rules.js';
 import {unsupported} from './diagnostics.js';
+import {acceptJavaScriptClassOwnerTypeObservation} from './javascript-class-owners.js';
 export function readCallableDataFacts(type,declarations){
  let visits=0;
  const active=new Set();
@@ -17,7 +18,7 @@ export function readCallableDataFacts(type,declarations){
  }
  return walk(type,0);
 }
-export function refuseCallableDataObservation(type,declarations,operation,span){const reason=readCallableDataObservationError(operation,readCallableDataFacts(type,declarations).callable);if(reason)throw unsupported('callable aggregate observation',reason,span);}
+export function refuseCallableDataObservation(type,declarations,operation,span,witness=undefined){if(acceptJavaScriptClassOwnerTypeObservation(type,witness,operation))return;const reason=readCallableDataObservationError(operation,readCallableDataFacts(type,declarations).callable);if(reason)throw unsupported('callable aggregate observation',reason,span);}
 export function readCallableDataRecursiveProfile(type,declarations){
  const kinds=[],ends=[],edges=[],references=[],roots=[],names=[],positions=new Map();let visits=0;
  function node(kind,children,reference=-1){const error=readCallableDataTraversalError(0,kinds.length+1);if(error)throw unsupported('callable data source profile',error);const at=kinds.length;kinds.push(kind);edges.push(...children);ends.push(edges.length);references.push(reference);return at;}

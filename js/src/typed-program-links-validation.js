@@ -1,3 +1,4 @@
+import {checkJavaScriptClassOwners} from './translation/javascript-class-owners.js';
 import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
@@ -60,6 +61,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
   if (program.main != null && (typeof program.main !== 'object' || Array.isArray(program.main)
     || program.main.k !== undefined || program.main.p !== undefined || !Array.isArray(program.main.effects))) throw new TypeError('a linked main has an invalid effect-container role');
+  checkJavaScriptClassOwners(program);
   if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, Object.hasOwn(program, 'utf16Strings'))) throw new TypeError('a program string representation flag must be an explicit boolean');
   const active = new Set();
   const visited = new Set();
@@ -117,6 +119,11 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       for (const alternative of value.alternatives) type(alternative);
     }
     else if (value.kind === 'record') {
+      if(Object.hasOwn(value,'sourceClassOwner')&&(typeof value.sourceClassOwner!=='string'||value.sourceClassOwner.length===0))throw new TypeError('a linked class record needs its actual nonempty constructor owner');
+      if(Object.hasOwn(value,'sourceClassOwner')){
+        const declaration=declarations.get(value.sourceClassOwner),target=targetOf(value,'classConstructor');
+        if(declaration?.k!=='fn'||target&&target!==declaration)throw new TypeError('a linked class record must target its actual owned constructor declaration');
+      }
       if(value.ordered!==undefined&&typeof value.ordered!=='boolean')throw new TypeError('a linked record ordered facet must be a boolean');
       value.fields.forEach((field) => type(field.type));
     }

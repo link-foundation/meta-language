@@ -15,17 +15,23 @@ import {deferRustStandardSumGuard} from './rust-standard-sum-guards.js';
 import {readRustOwnedStandardSumObserver} from './rust-owned-standard-sum-observers.js';
 import {readRustOwnedStandardSumMethod} from './rust-owned-standard-sum-methods.js';
 import {readRustOwnedStandardSumCallback} from './rust-owned-standard-sum-callbacks.js';
+import {readRustOwnedStandardSumPredicate} from './rust-owned-standard-sum-predicates.js';
+import {readRustStandardSumClone} from './rust-standard-sum-clones.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
 import {readRustIntegerRangePattern} from './rust-integer-ranges.js';
 import {registerRustNominalCopyDeclaration,finishRustNominalCopies} from './rust-nominal-copies.js';
+import {finishRustNominalOwnershipDeclarations,createRustNominalConstructorOrigin,readRustNominalClone,acceptRustNominalVectorElement} from './rust-nominal-ownership.js';
+import {readRustNominalVectorElementAdmission} from './rust-nominal-ownership-rules.js';
+import {acceptRustOwnedContainerSource} from './rust-owned-recursive-datatype-rules.js';
 import {readRustSourceVersion} from './rust-source-versions.js';
 import {readRustFormattedPanic} from './rust-panic-values.js';
 import {acceptRustPanicFormattingMacro,readRustPanicCompletionKind} from './rust-panic-value-rules.js';
 import {readRustStringByteView} from './rust-string-byte-views.js';
 import {acceptRustOwnedMacroArgumentTransfer,acceptRustStringSliceCloneReference} from './rust-owned-binding-rules.js';
 import {checkRustOwnedOrigin,noteRustOwnedBindingRead} from './rust-owned-bindings.js';
+import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock,registerRustOwnedRecordMutableBinding,readRustOwnedRecordMutableName,readRustOwnedRecordStateStatement} from './rust-owned-record-state.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {acceptRustIteratorItemInferredType} from './rust-iterator-reduction-rules.js';
 import {readRustIteratorReduction} from './rust-iterator-reductions.js';
@@ -188,17 +194,22 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   }
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   declarations.sourceVersionMinor=sourceVersionFacts.minor;
+  declarations.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(declarations.ordinaryCompletionContext(),sourceVersionFacts.minor);
   declarations.retainSourceTypeOwners=retainSourceTypeOwners;
   declarations.headerDiscovery=declarations.ordinaryCompletionContext();
   declarations.file();
+  declarations.origins.nominalOwnershipScopeComplete=true;
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  if(declarations.ordinaryCompletionContext()){finishRustNominalCopies(declarations.origins);finishRustStandardSumSourceDeclarations(declarations);}
+  if(declarations.ordinaryCompletionContext()){finishRustNominalCopies(declarations.origins);finishRustNominalOwnershipDeclarations(declarations.origins);finishRustStandardSumSourceDeclarations(declarations);}
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   syntax.sourceVersionMinor=sourceVersionFacts.minor;
+  syntax.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(syntax.ordinaryCompletionContext(),sourceVersionFacts.minor);
   syntax.retainSourceTypeOwners=retainSourceTypeOwners;
   syntax.origins.collecting = true;
   syntax.origins.nominalCopyOwners=new Set(declarations.origins.nominalCopyOwners);
   syntax.origins.nominalCopyDerivations=new Map(declarations.origins.nominalCopyDerivations);
+  syntax.origins.nominalOwnershipDeclarations=new Map(declarations.origins.nominalOwnershipDeclarations);
+  syntax.origins.nominalOwnershipScopeComplete=declarations.origins.nominalOwnershipScopeComplete;
   syntax.sourceConstantInitializers=new Map(declarations.sourceConstantInitializers);
   syntax.sourceConstantFunctions=new Map(declarations.sourceConstantFunctions);
   syntax.sourceConstantTokens=declarations.sourceConstantTokens;
@@ -206,7 +217,8 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   syntax.namedRecords = new Map(declarations.namedRecords);
   syntax.inherentMethods = new Map(declarations.inherentMethods);
   const surface = syntax.file();
-  if(syntax.ordinaryCompletionContext()){finishRustNominalCopies(syntax.origins);finishRustStandardSumSourceDeclarations(syntax);}
+  syntax.origins.nominalOwnershipScopeComplete=true;
+  if(syntax.ordinaryCompletionContext()){finishRustNominalCopies(syntax.origins);finishRustNominalOwnershipDeclarations(syntax.origins);finishRustStandardSumSourceDeclarations(syntax);}
   // Preserve syntax trees and the existing checker's diagnostic precedence
   // for programs that already cannot enter the canonical semantic core.
   try { checkProgram(surface); } catch (error) {
@@ -215,9 +227,12 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   }
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.sourceVersionMinor=sourceVersionFacts.minor;
+  parser.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(parser.ordinaryCompletionContext(),sourceVersionFacts.minor);
   parser.retainSourceTypeOwners=retainSourceTypeOwners;
   parser.origins.nominalCopyOwners=new Set(syntax.origins.nominalCopyOwners);
   parser.origins.nominalCopyDerivations=new Map(syntax.origins.nominalCopyDerivations);
+  parser.origins.nominalOwnershipDeclarations=new Map(syntax.origins.nominalOwnershipDeclarations);
+  parser.origins.nominalOwnershipScopeComplete=syntax.origins.nominalOwnershipScopeComplete;
   parser.sourceConstantInitializers=new Map(syntax.sourceConstantInitializers);
   parser.sourceConstantFunctions=new Map(syntax.sourceConstantFunctions);
   parser.sourceConstantTokens=syntax.sourceConstantTokens;
@@ -621,10 +636,11 @@ class RustParser {
       if (c.eat('[')) {
         const elementToken = c.peek();
         const inner = this.type();
-        this.arrayElement(token, elementToken);
+        const elementCopy=this.arrayElement(token, elementToken);
         c.expect(']', 'immutable slice');
         const result = this.origins.typed(array(inner), this.modulePath, ['reference']);
         this.origins.type.arraySourceModel = 'immutable slice';
+        this.origins.type.arrayElementCopyEvidence=elementCopy;
         this.origins.type.sourceLifetimes = [sourceLifetime];
         return result;
       }
@@ -697,9 +713,9 @@ class RustParser {
       c.expect('<', 'Vec');
       const elementToken = c.peek();
       const inner = this.type();
-      this.arrayElement(token, elementToken);
+      const elementCopy=this.arrayElement(token, elementToken);
       splitRustTypeClosingToken(this);c.expect('>', 'Vec');
-      return this.origins.typed(array(inner), this.modulePath);
+      const result=this.origins.typed(array(inner), this.modulePath);this.origins.type.arrayElementCopyEvidence=elementCopy;return result;
     }
     if (acceptRustSourceBoxOwner(name, false) || acceptRustSourceBoxOwner(resolved.join('::'), false)) {
       this.origins.box(segments, resolved, this.modulePath, span(token, c.peek()));
@@ -737,8 +753,12 @@ class RustParser {
   }
 
   arrayElement(token, elementToken) {
+    const origin=this.origins.type,nominal=acceptRustNominalVectorElement(this.origins,origin);
     const shadowed = !this.origins.collecting && elementToken?.kind === 'identifier' && this.origins.lookupTypeOwner([elementToken.value], this.modulePath);
-    if (shadowed || !acceptRustSourceArrayElement(this.origins.type.type?.kind ?? '', this.origins.type.wrappers.length > 0)) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', span(token, this.cursor.peek()));
+    const disposition=readRustNominalVectorElementAdmission(!shadowed&&acceptRustSourceArrayElement(origin.type?.kind??'',origin.wrappers.length>0),nominal,this.headerDiscovery===true,this.origins.collecting,this.origins.nominalOwnershipScopeComplete===true,origin.type?.kind??'',origin.wrappers.length);
+    if(disposition==='defer'){origin.proven=false;origin.copyEvidence=false;return false;}
+    if(disposition!=='admit')throw unsupported('Rust array element','only direct immutable scalar, owned string or verified nominal Copy vector elements are admitted',span(token,this.cursor.peek()));
+    return this.origins.immutableProduct(origin)||nominal;
   }
 
   fn(path,constKeyword=null) {
@@ -893,8 +913,10 @@ class RustParser {
       const reader=new RustParser(this.sourceConstantTokens,this.origins.catalog);
       reader.sourceConstantTokens=this.sourceConstantTokens;
       reader.source=this.source;reader.sourceVersionMinor=this.sourceVersionMinor;reader.retainSourceTypeOwners=this.retainSourceTypeOwners;
+      reader.origins.ownedContainerSourceEnabled=this.origins.ownedContainerSourceEnabled;
       reader.aliases=this.aliases;reader.namedRecords=new Map(this.namedRecords);reader.inherentMethods=new Map(this.inherentMethods);
       reader.origins.nominalCopyOwners=new Set(this.origins.nominalCopyOwners);reader.origins.nominalCopyDerivations=new Map(this.origins.nominalCopyDerivations);
+      reader.origins.nominalOwnershipDeclarations=new Map(this.origins.nominalOwnershipDeclarations);reader.origins.nominalOwnershipScopeComplete=this.origins.nominalOwnershipScopeComplete;
       reader.sourceConstantInitializers=new Map(this.sourceConstantInitializers);reader.sourceConstantFunctions=new Map(this.sourceConstantFunctions);reader.sourceConstantReadStack=this.sourceConstantReadStack;
       initializeRustTypeAliases(reader);finishRustTypeAliases(reader);reader.modulePath=[...row.path];reader.cursor.index=reader.cursor.tokens.findIndex(token=>token.start===row.keyword);
       if(reader.cursor.index<0)throw reader.fail('the constant initializer needs its actual source declaration');
@@ -944,6 +966,11 @@ class RustParser {
   }
 
   block(path,functionBody=false) {
+    const frame=beginRustOwnedRecordStateBlock(this,functionBody);
+    try{return this.readRecordStateBlock(path,functionBody);}finally{endRustOwnedRecordStateBlock(this,frame);}
+  }
+
+  readRecordStateBlock(path,functionBody) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
     const ownershipBefore=this.origins.snapshotOwnedBindings();
@@ -977,7 +1004,9 @@ class RustParser {
         throw unsupported(`${token.value} loop`, 'loops over mutable state are outside the portable core; use recursion', span(token, token));
       }
       const temporaryFrame=this.origins.ownedTemporaryFrame();
-      const expr = this.expr(path, { statement: true });
+      const statement=readRustOwnedRecordStateStatement(this,path);
+      if(statement)lets.push(...statement.bindings);
+      const expr = statement?.value??this.expr(path, { statement: true });
       if (c.eat(';')) {
         this.origins.finishOwnedExpression(expr,path,temporaryFrame,false);
         const origin=this.origins.origin(expr,path);
@@ -1011,8 +1040,9 @@ class RustParser {
   letStatement(path) {
     const c = this.cursor;
     const start = c.next();
-    if (c.is('mut')) throw unsupported('mutable binding', 'mutation is outside the portable core', span(start, c.peek()));
+    const mutableToken=c.eat('mut'),mutable=Boolean(mutableToken);
     const pattern = readRustLetElsePattern(this,path)??this.productBindingPattern();
+    if(mutable&&pattern.k!=='name')throw unsupported('mutable binding','mutation is outside the portable core',span(start,mutableToken));
     const names = new Set();
     const validateNames = binding => {
       if(binding.k==='nominal'){
@@ -1046,7 +1076,8 @@ class RustParser {
     const range = span(start, c.peek());
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path, sourceType);
-      return [{ name: pattern.name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range }];
+      const name=mutable?registerRustOwnedRecordMutableBinding(this,pattern.name,span(start,mutableToken)):pattern.name;
+      return [{ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range }];
     }
     const bindings = [];
     const name = this.freshProductBinding();
@@ -1129,6 +1160,11 @@ class RustParser {
 
   main() {
     if(this.pureUnitCallModel)return readRustPureUnitMain(this);
+    const frame=beginRustOwnedRecordStateBlock(this,true);
+    try{return this.readRecordStateMain();}finally{endRustOwnedRecordStateBlock(this,frame);}
+  }
+
+  readRecordStateMain() {
     const c = this.cursor;
     const start = c.next();
     c.expect('main', 'fn main');
@@ -1152,9 +1188,11 @@ class RustParser {
         c.expect(';', token.value);
         continue;
       }
-      const value=this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
+      const statement=readRustOwnedRecordStateStatement(this,[]);
+      if(statement)for(const binding of statement.bindings)effects.push({k:'let',...binding});
+      const value=statement?.value??this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
       if(readRustUnitStatementDisposition(value.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('main statement','main may only print, bind, assert and evaluate direct Unit calls',span(token,token));
-      if(!c.eat(';')&&!c.is('}'))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),value,span:value.span});
+      if(!c.eat(';')&&!c.is('}')&&!(statement&&value.block===true))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),value,span:value.span});
     }
     c.expect('}', 'fn main');
     this.origins.scope = previous;
@@ -1266,7 +1304,7 @@ class RustParser {
         const sourceName=template.value.slice(first,last);
         if(sourceName==='_'||!acceptRustSourceIdentifierName(sourceName))throw unsupported(`format argument {${sourceName}}`,'outside the portable core',template.span);
         const name=normalizeRustSourceIdentifier(sourceName,template.span);
-        value=readRustFunctionReference(this,[name],path,template.span)??{k:'name',path:[name],span:template.span};
+        value=readRustFunctionReference(this,[name],path,template.span)??readRustOwnedRecordMutableName(this,{k:'name',path:[name],span:template.span},path);
         refuseRustCallableObservation(this,value,path,value.span);
         refuseRustSharedArrayHandleObservation(this,value,path,value.span);
       }else throw new TypeError('unknown Rust formatting term instruction');
@@ -1453,6 +1491,10 @@ class RustParser {
         const method = c.identifier('method');
         const ownedStandardSumObserver=readRustOwnedStandardSumObserver(this,value,method,path);
         if(ownedStandardSumObserver){value=ownedStandardSumObserver;continue;}
+        const standardSumClone=readRustStandardSumClone(this,value,method,path);
+        if(standardSumClone){value=standardSumClone;continue;}
+        const nominalClone=readRustNominalClone(this,value,method,path);
+        if(nominalClone){value=nominalClone;continue;}
         const ownedStandardSumMethod=readRustOwnedStandardSumMethod(this,value,method,path);
         if(ownedStandardSumMethod){value=ownedStandardSumMethod;continue;}
         const ownedStandardSumCallback=readRustOwnedStandardSumCallback(this,value,method,path);
@@ -1463,6 +1505,8 @@ class RustParser {
         if(standardSumNested){value=standardSumNested;continue;}
         const standardSumConversion=readRustStandardSumSourceConversion(this,value,method,path);
         if(standardSumConversion){value=standardSumConversion;continue;}
+        const ownedStandardSumPredicate=readRustOwnedStandardSumPredicate(this,value,method,path);
+        if(ownedStandardSumPredicate){value=ownedStandardSumPredicate;continue;}
         const standardSumPredicate=readRustStandardSumSourcePredicate(this,value,method,path);
         if(standardSumPredicate){value=standardSumPredicate;continue;}
         const standardSumMethod=readRustStandardSumSourceMethod(this,value,method,path);
@@ -1753,8 +1797,7 @@ class RustParser {
         const elementToken = c.peek();
         const element = this.type();
         const elementOwner=this.origins.type.sourceOwner;
-        const elementCopy=this.origins.immutableProduct(this.origins.type);
-        this.arrayElement(token, elementToken);
+        const elementCopy=this.arrayElement(token, elementToken);
         c.expect('>', 'Vec constructor'); c.expect('::', 'Vec constructor'); c.expect('new', 'Vec constructor');
         c.expect('(', 'Vec constructor'); c.expect(')', 'Vec constructor');
         return this.origins.markVectorConstructor({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element),sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', arrayElementCopyEvidence:elementCopy, proven: true });
@@ -1767,7 +1810,11 @@ class RustParser {
       if(sharedConstruction)return sharedConstruction;
       requireRustTypeAliasValueConstructor(this,segments,path,{start:token.start,end:c.tokens[c.index-1].end});
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
-      if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustOwnedBindingRead(this,noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??readRustSourceValueName(this,segments,path), span: span(token, token) },path),path);
+      if (!c.is('(')){
+        const node={k:'name',path:recordValuePath??readRustSourceValueName(this,segments,path),span:span(token,token)},entry=this.origins.lookupValueOwner(node.path,path),produced=entry?.k==='ctor'&&entry.fields.length===0?createRustNominalConstructorOrigin(this,node,[],path,node.span):null;
+        if(produced)return this.origins.mark(node,produced);
+        return readRustFunctionReference(this,segments,path,span(token,token))??readRustOwnedRecordMutableName(this,noteRustOwnedBindingRead(this,noteRustSharedArrayHandleName(this,node,path),path),path);
+      }
       c.next();
       const args = readRustContextualCallArguments(this,{k:'name',path:segments,span:span(token,token)},path);
       c.expect(')', 'call');
@@ -1780,8 +1827,9 @@ class RustParser {
       if(segments.length===1&&this.origins.scope.has(segments[0])){const closureCall=readRustCopyClosureCall(this,{k:'name',path:segments,span:span(token,token)},args,path,range);if(closureCall)return closureCall;throw typeError(readRustSourceCallableValueError(this.origins.scope.get(segments[0]).type?.kind??'','local value'),range);}
       const constantCall=readRustSourceConstantCall(this,segments,args,path,range);if(constantCall)return constantCall;
       if(recordValuePath){
-        this.origins.call(recordValuePath,args,path,range);
-        return args.length?{k:'app',fn:{k:'name',path:recordValuePath,span:span(token,token)},args,span:range}:{k:'name',path:recordValuePath,span:range};
+        const node=args.length?{k:'app',fn:{k:'name',path:recordValuePath,span:span(token,token)},args,span:range}:{k:'name',path:recordValuePath,span:range},produced=createRustNominalConstructorOrigin(this,node,args,path,range);
+        if(produced)return this.origins.mark(node,produced);
+        this.origins.call(recordValuePath,args,path,range);return node;
       }
       const sharedCall=readRustSharedArrayHandleCall(this,segments,args,path,range);
       if(sharedCall)return sharedCall;
@@ -1812,8 +1860,10 @@ class RustParser {
       if (segments.length === 2 && rustFixedType(segments[0])) {
         throw unsupported(`${name}`, 'outside the portable core', range);
       }
-      if (['std', 'core', 'alloc'].includes(segments[0])) throw unsupported(name, 'the standard library is outside the portable core', range);
       const callee=readRustSourceValueName(this,segments,path);
+      const nominalNode=args.length?{k:'app',fn:{k:'name',path:callee,span:span(token,token)},args,span:range}:{k:'name',path:callee,span:range},nominalOrigin=createRustNominalConstructorOrigin(this,nominalNode,args,path,range);
+      if(nominalOrigin)return this.origins.mark(nominalNode,nominalOrigin);
+      if (['std', 'core', 'alloc'].includes(segments[0])) throw unsupported(name, 'the standard library is outside the portable core', range);
       this.origins.call(callee, args, path, range,this.ordinaryCompletionContext());
       if (readRustSourceCallForm(this.ordinaryCompletionContext(),args.length)==='name') return { k: 'name', path: callee, span: range };
       return { k: 'app', fn: { k: 'name', path: callee, span: span(token, token) }, args, span: range };
@@ -1834,12 +1884,12 @@ class RustParser {
         if(ownerError)throw unsupported('Rust integer source owner',ownerError,range);
         for (const arg of args) {
           const origin = this.origins.origin(arg, path);
-          if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false))) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', range);
+          if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false)&&!acceptRustNominalVectorElement(this.origins,origin))) throw unsupported('Rust array element','only direct immutable scalar, owned string or verified nominal Copy vector elements are admitted',range);
         }
         const element = args.length ? this.origins.origin(args[0], path).type : null;
         const owner=selectRustPointerIntegerResultOwner(owners);
         const actualOwners=argumentOrigins.map(origin=>origin.expandedSourceOwner??origin.sourceOwner);
-        const ownerIndex=selectRustArrayElementOwnerIndex(actualOwners.map(value=>value?value.kind+':'+value.path.join('::'):''),actualOwners.map((value,index)=>Boolean(value&&value.kind==='primitive'&&value.arguments.length===0&&acceptRustSourceSignaturePrimitive(argumentOrigins[index].type?.kind??'',value.path.join('::'),String(argumentOrigins[index].type?.bits??''),argumentOrigins[index].type?.signed===true))));
+        const ownerIndex=selectRustArrayElementOwnerIndex(actualOwners.map(value=>value?value.kind+':'+value.path.join('::'):''),actualOwners.map((value,index)=>Boolean(value&&(value.kind==='primitive'&&value.arguments.length===0&&acceptRustSourceSignaturePrimitive(argumentOrigins[index].type?.kind??'',value.path.join('::'),String(argumentOrigins[index].type?.bits??''),argumentOrigins[index].type?.signed===true)||acceptRustNominalVectorElement(this.origins,argumentOrigins[index])))));
         const elementOwner=ownerIndex>=0?structuredClone(actualOwners[ownerIndex]):owner?{kind:'primitive',path:[owner],arguments:[]}:null;
         return noteRustSharedArrayLiteral(this,this.origins.markVectorConstructor({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null,path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector',arrayElementCopyEvidence:args.length>0&&args.every(value=>this.origins.immutableProduct(this.origins.origin(value,path))), proven: true }),path);
       }

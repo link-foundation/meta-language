@@ -16,15 +16,15 @@ mod variants;
 
 #[derive(Clone)]
 pub(super) struct NamedRecord {
-    owner: String,
-    constructor: String,
-    names: Vec<String>,
+    pub(super) owner: String,
+    pub(super) constructor: String,
+    pub(super) names: Vec<String>,
     pub(super) syntax: &'static str,
     update: bool,
 }
 
 impl RustParser {
-    fn record_source_type(&self, ty: &Type, path: &[String]) -> Type {
+    pub(super) fn record_source_type(&self, ty: &Type, path: &[String]) -> Type {
         match ty {
             Type::Named { path: names, span } => {
                 let owner = self.origins.lookup_type_owner(&self.resolve(names, path), path);
@@ -252,7 +252,7 @@ impl RustParser {
         let mut base = None;
         while !self.cursor.is("}") {
             if self.cursor.eat("..").is_some() {
-                base = Some(self.expr(path, Options::default())?);
+                base = Some(self.owned_record_update_base(path)?);
                 break;
             }
             self.attributes(None)?;
@@ -278,13 +278,14 @@ impl RustParser {
             let value = if colon {
                 self.expr(path, Options::default())?
             } else {
-                SExpr::new(
+                let value=SExpr::new(
                     SNode::Name {
                         path: vec![field.value.clone()],
                     },
                     span(&field, &field),
-                )
+                );self.owned_record_mutable_name(value,path)?
             };
+            if let Some(record)=record.as_ref(){self.prepare_owned_record_entry(record,&name,&value,path)?;}
             names.push(name);
             values.push(value);
             if self.cursor.eat(",").is_none() {
@@ -340,7 +341,6 @@ impl RustParser {
             .iter()
             .map(|index| values[*index].clone())
             .collect::<Vec<_>>();
-        self.origins.call(&constructor_path, &ordered, &[], range)?;
         let mut rooted = vec!["crate".to_owned()];
         rooted.extend(constructor_path.clone());
         let args = positions
@@ -366,6 +366,8 @@ impl RustParser {
                 range,
             )
         };
+        let produced=self.nominal_constructor_origin(&body,&ordered,path,range)?;
+        if produced.is_none(){self.origins.call(&constructor_path,&ordered,path,range)?;}
         let field_origins = self
             .origins
             .lookup(&constructor_path, &[])
@@ -397,7 +399,7 @@ impl RustParser {
                 range,
             );
         }
-        if let Some(found) = self.origins.lookup(&constructor_path, &[]) {
+        if let Some(produced)=produced{self.origins.mark(&body,produced);}else if let Some(found) = self.origins.lookup(&constructor_path, &[]) {
             if let SourceDeclaration::Constructor { result, .. } = found.declaration {
                 self.origins.mark(&body, result);
             }
@@ -482,7 +484,7 @@ impl RustParser {
         if let Some(found) = self.origins.lookup(&constructor_path, &[]) {
             if let SourceDeclaration::Constructor { fields, .. } = found.declaration {
                 if let Some(field) = fields.get(index) {
-                    self.origins.mark(&node, field.clone());
+                    let selected=self.origins.project_owned_record_field(&origin,field,index,!origin.wrappers.is_empty()&&origin.wrappers.iter().all(|layer|layer=="reference"),range)?;self.origins.mark(&node,selected);
                 }
             }
         }

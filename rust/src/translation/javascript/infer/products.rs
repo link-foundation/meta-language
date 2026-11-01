@@ -2,7 +2,7 @@
 
 use super::{
     Env, HashMap, HashSet, Inference, ROOT, Result, SExpr, SItem, SNode, SProgram, Span, Term,
-    Type, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
+    Type, Signature, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
 };
 use crate::translation::frontend_rules::{
     accept_argument_count, accept_java_script_optional_tuple_context,
@@ -49,6 +49,8 @@ fn infer_javascript_types_with_observations(
         return Ok((program, observed));
     }
     let mut inference = Inference::new(&program.items);
+    inference.source_class_methods=program.source_class_methods.clone();
+    inference.source_class_owners=program.source_class_owners.clone();
     inference.record_expressions = observe;
     let inferred = inference.run(&functions, &program)?;
     let mut expression_types = if observe {
@@ -325,7 +327,7 @@ impl Inference {
         place: Option<Span>,
     ) -> Result<Term> {
         let signature = self.signature(path);
-        let mut arg_terms = args
+        let arg_terms = args
             .iter()
             .enumerate()
             .map(|(index, arg)| {
@@ -338,6 +340,10 @@ impl Inference {
                 )
             })
             .collect::<Result<Vec<_>>>()?;
+        self.call_terms(signature,arg_terms,&args.iter().map(|arg|arg.span).collect::<Vec<_>>(),place)
+    }
+
+    pub(super) fn call_terms(&mut self,signature:Option<Signature>,mut arg_terms:Vec<Term>,spans:&[Option<Span>],place:Option<Span>)->Result<Term>{
         #[allow(clippy::cast_precision_loss)]
         let argument_count = if let Some(signature) = &signature {
             let plan = crate::translation::excess_argument_rules::plan_java_script_excess_arguments(
@@ -345,7 +351,7 @@ impl Inference {
                 serde_json::Number::from(signature.params.len())
                     .as_f64()
                     .expect("actual parameters"),
-                serde_json::Number::from(args.len())
+                serde_json::Number::from(arg_terms.len())
                     .as_f64()
                     .expect("actual arguments"),
             );
@@ -354,7 +360,7 @@ impl Inference {
             }
             arg_terms.len() as f64
         } else {
-            args.len() as f64
+            arg_terms.len() as f64
         };
         let Some(signature) = signature.filter(|signature| {
             accept_argument_count(signature.defaults.clone(), argument_count)
@@ -387,7 +393,7 @@ impl Inference {
             self.unify(
                 &value,
                 param,
-                args.get(index).and_then(|arg| arg.span).or(place),
+                spans.get(index).copied().flatten().or(place),
             )?;
             if let Term::Var(variable) = param
                 && matches!(self.resolve(&value), Term::Option { .. })

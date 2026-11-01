@@ -773,10 +773,20 @@ fn read_present_program_string_representation<'de, D: serde::Deserializer<'de>>(
     bool::deserialize(deserializer).map(Some)
 }
 
+/// A present class interpretation cannot be erased into an absent selector.
+pub(crate) fn read_present_source_class_owners<'de,D:serde::Deserializer<'de>>(deserializer:D)->std::result::Result<Option<serde_json::Value>,D::Error>{
+    let value=serde_json::Value::deserialize(deserializer)?;
+    if value.is_null(){return Err(<D::Error as serde::de::Error>::custom("present source class owners cannot be null"));}
+    Ok(Some(value))
+}
+
 /// A checked portable-core program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Program {
+    /// Checked constructor ownership retained when source classes become data.
+    #[serde(default,skip_serializing_if="Option::is_none",deserialize_with="read_present_source_class_owners")]
+    pub source_class_owners: Option<serde_json::Value>,
     /// Selected shared-reference representation; false retains its default omission.
     #[serde(default, skip_serializing_if = "is_false")]
     pub reference_semantics: bool,

@@ -11,11 +11,11 @@ export function readRustConditionalPattern(parser,path,start){
  c.expect('=','conditional pattern');
  const scrutinee=withRustStandardSumSourceContext(parser,null,()=>parser.comparison(path,{noStruct:true}));
  if(c.is('&&')||c.is('||'))throw unsupported('Rust conditional pattern chain','chained conditions require their complete short-circuit scope interpretation',span(start,c.peek()));
- const previous=parser.origins.enter(parser.origins.cases(alternatives,scrutinee,path));
+ const ownershipBase=parser.origins.snapshotOwnedBindings(),previous=parser.origins.enter(parser.origins.cases(alternatives,scrutinee,path));
  let body,bodyOrigin;
  try{
   for(const alias of aliases)parser.origins.bind(alias.name,alias.value,path);
-  body=parser.block(path);bodyOrigin=parser.origins.origin(body,path);
+  body=parser.block(path);bodyOrigin=parser.origins.origin(body,path);parser.origins.expireOwnedBindings(ownershipBase,bodyOrigin);
  }finally{parser.origins.scope=previous;}
  for(const alias of [...aliases].reverse())body={k:'let',name:alias.name,value:alias.value,body,span:body.span};
  if(!c.eat('else'))throw unsupported('if without else','the value of an if must be defined on both branches',span(start,c.peek()));

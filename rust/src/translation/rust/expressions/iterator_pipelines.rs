@@ -548,7 +548,7 @@ pub(super) fn construct(parser: &mut RustParser, pipeline: Pipeline<'_>) -> Resu
     if pipeline.consumer == "collect" {
         parser
             .origins
-            .mark_vector_constructor(&body, pipeline.result.clone());
+            .mark_vector_constructor(&body, pipeline.result.clone())?;
     }
     for capture in captures.into_iter().rev() {
         body = SExpr::new(

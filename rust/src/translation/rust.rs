@@ -51,6 +51,9 @@ mod ordinary_completions;
 mod expression_completions;
 mod standard_sum_completions;
 mod owned_local_state;
+mod owned_record_updates;
+mod owned_record_places;
+mod owned_record_state;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;
 pub(crate) mod primitive_owner_rules;
@@ -74,6 +77,12 @@ mod standard_sum_combinators;
 mod standard_sum_ownership;
 mod owned_standard_sum_observers;
 mod owned_standard_sum_methods;
+mod standard_default_values;
+mod standard_sum_clones;
+mod owned_standard_sum_predicates;
+mod owned_standard_sum_callback_selection;
+mod copy_closure_lifetimes;
+mod nominal_ownership;
 mod owned_standard_sum_callbacks;
 mod standard_sum_guards;
 mod shared_array_handles;
@@ -416,8 +425,10 @@ fn parse_rust_with_selected_profiles(
         original_source.clone(),
     );
     declarations.source_version_minor = source_version_minor;
+    declarations.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(declarations.ordinary_completion_context(),source_version_minor);
     declarations.header_discovery = declarations.ordinary_completion_context();
     declarations.file()?;
+    declarations.origins.nominal_ownership_scope_complete=true;
     let mut origins = std::mem::replace(
         &mut declarations.origins,
         SourceOrigins::new(None, array_result_model),
@@ -425,6 +436,7 @@ fn parse_rust_with_selected_profiles(
     origins.resolve_catalog_types(|segments, path| declarations.resolve(segments, path));
     if declarations.ordinary_completion_context() {
         origins.finish_nominal_copies()?;
+        origins.finish_nominal_ownership_declarations()?;
         declarations.origins=origins;
         declarations.finalize_standard_sum_source_declarations()?;
         origins=std::mem::replace(&mut declarations.origins,SourceOrigins::new(None,array_result_model));
@@ -436,6 +448,8 @@ fn parse_rust_with_selected_profiles(
     source_origins.unit_clone_facts = origins.unit_clone_facts;
     source_origins.nominal_copy_derivations = origins.nominal_copy_derivations;
     source_origins.nominal_copy_owners = origins.nominal_copy_owners;
+    source_origins.nominal_ownership_declarations=origins.nominal_ownership_declarations;
+    source_origins.nominal_ownership_scope_complete=origins.nominal_ownership_scope_complete;
     let mut syntax = RustParser::new(
         tokens.clone(),
         source_origins,
@@ -444,6 +458,7 @@ fn parse_rust_with_selected_profiles(
         original_source.clone(),
     );
     syntax.source_version_minor = source_version_minor;
+    syntax.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(syntax.ordinary_completion_context(),source_version_minor);
     syntax.source_constant_initializers = declarations.source_constant_initializers;
     syntax.source_constant_functions = declarations.source_constant_functions;
     syntax.source_constant_tokens = Arc::clone(&declarations.source_constant_tokens);
@@ -452,8 +467,10 @@ fn parse_rust_with_selected_profiles(
     syntax.named_records = declarations.named_records;
     syntax.inherent_methods = declarations.inherent_methods;
     let surface = syntax.file()?;
+    syntax.origins.nominal_ownership_scope_complete=true;
     if syntax.ordinary_completion_context() {
         syntax.origins.finish_nominal_copies()?;
+        syntax.origins.finish_nominal_ownership_declarations()?;
         syntax.finalize_standard_sum_source_declarations()?;
     }
     // Preserve the existing checker's rejection and syntax-tree contract;
@@ -471,11 +488,14 @@ fn parse_rust_with_selected_profiles(
         original_source,
     );
     parser.source_version_minor = source_version_minor;
+    parser.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(parser.ordinary_completion_context(),source_version_minor);
     parser.origins.type_catalog = syntax.origins.type_catalog;
     parser.origins.value_catalog = syntax.origins.value_catalog;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.origins.nominal_copy_derivations = syntax.origins.nominal_copy_derivations;
     parser.origins.nominal_copy_owners = syntax.origins.nominal_copy_owners;
+    parser.origins.nominal_ownership_declarations=syntax.origins.nominal_ownership_declarations;
+    parser.origins.nominal_ownership_scope_complete=syntax.origins.nominal_ownership_scope_complete;
     parser.source_constant_initializers = syntax.source_constant_initializers;
     parser.source_constant_functions = syntax.source_constant_functions;
     parser.source_constant_tokens = Arc::clone(&syntax.source_constant_tokens);
@@ -568,6 +588,7 @@ struct RustParser {
     iterator_item_type_inference_origin: Option<SourceOrigin>,
     reserved_binding_names: HashSet<String>,
     named_records: HashMap<String, records::NamedRecord>,
+    owned_record_state: owned_record_state::OwnedRecordState,
     inherent_owner: Option<inherent::InherentOwner>,
     inherent_methods: HashMap<String, inherent::InherentMethod>,
     inherent_discovery: bool,
@@ -678,6 +699,7 @@ impl RustParser {
             iterator_item_type_inference_origin: None,
             reserved_binding_names,
             named_records: HashMap::new(),
+            owned_record_state: owned_record_state::OwnedRecordState::default(),
             inherent_owner: None,
             inherent_methods: HashMap::new(),
             inherent_discovery,

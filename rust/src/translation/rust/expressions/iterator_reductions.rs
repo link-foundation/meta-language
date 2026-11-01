@@ -356,7 +356,7 @@ impl RustParser {
                 },
                 range,
             );
-            self.origins.mark_vector_constructor(&value, origin.clone());
+            self.origins.mark_vector_constructor(&value, origin.clone())?;
             let body = SExpr::new(
                 SNode::Let {
                     name,

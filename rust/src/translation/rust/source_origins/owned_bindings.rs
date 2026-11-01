@@ -3,12 +3,22 @@ use super::{Result, SExpr, SNode, SourceOrigin, SourceOrigins, Span, Type, unsup
 use crate::translation::rust_owned_binding_rules as rules;
 use std::collections::{HashMap, HashSet};
 impl SourceOrigins {
+    pub(in super::super) fn ensure_owned_record_field_state(&mut self,identity:&str){self.source_binding_states.entry(identity.to_owned()).or_insert_with(||"available".to_owned());}
+    pub(in super::super) fn set_owned_record_field_state(&mut self,identity:&str,state:&str){self.source_binding_states.insert(identity.to_owned(),state.to_owned());}
+    pub(in super::super) fn check_owned_record_whole(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{
+        if self.collecting||origin.source_binding_identity.is_none(){return Ok(());}let mut direct=origin.clone();direct.wrappers.clear();if self.nominal_ownership_facts(&direct).profile!="owned"{return Ok(());}let (identities,states):(Vec<_>,Vec<_>)=self.source_binding_states.iter().map(|(identity,state)|(identity.clone(),state.clone())).unzip();let error=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_whole_error(origin.source_binding_identity.as_deref().unwrap_or(""),&identities,&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust record field ownership",&error,span))}
+    }
+    pub(in super::super) fn assign_copy_closure_lexical_binding(&mut self,mut origin:SourceOrigin)->SourceOrigin{
+        if !self.collecting{let identity=format!("lexical {}",self.next_source_binding_identity);self.next_source_binding_identity+=1;origin.source_lexical_binding_identity=Some(identity.clone());self.source_binding_states.insert(identity,"available".to_owned());}origin
+    }
+    pub(in super::super) fn copy_closure_lexical_state(&self,identity:&str)->&str{self.source_binding_states.get(identity).map_or("",String::as_str)}
     pub(in super::super) fn owned_standard_sum_argument_transferred(&self,node:&SExpr)->bool{
         node.span.is_some_and(|span|self.owned_argument_transfers.contains(&span))
     }
     pub(in super::super) fn owned_standard_sum_recorded_call(&self,node:&SExpr)->bool{
         node.span.is_some_and(|span|self.fresh_calls.contains(&span))
     }
+    pub(in super::super) fn owned_standard_sum_recorded_vector(&self,node:&SExpr)->bool{node.span.is_some_and(|span|self.fresh_vector_constructors.contains(&span))}
     pub(in super::super) fn track_owned_bindings(&self) -> bool {
         rules::accept_rust_owned_binding_tracking(
             self.collecting,
@@ -28,16 +38,18 @@ impl SourceOrigins {
                     .unwrap_or(""),
                 origin.wrappers.len() as f64,
                 origin.proven,
-            ) || self.is_owned_standard_sum_value(origin))
+            ) || self.is_owned_standard_sum_value(origin) || self.is_owned_nominal_value(origin))
     }
     pub(in super::super) fn check_owned_origin(
         &self,
         origin: &SourceOrigin,
         span: Option<Span>,
     ) -> Result<()> {
+        self.validate_copy_closure_value_borrows(origin,span)?;
         if !self.track_owned_bindings() {
             return Ok(());
         }
+        self.check_owned_record_whole(origin,span)?;
         let identities = rules::project_rust_owned_loan_bindings(
             origin.source_binding_identity.as_deref().unwrap_or(""),
             &origin.source_loan_binding_identities,
@@ -70,6 +82,7 @@ impl SourceOrigins {
             origin.source_loan_binding_identities.clear();
             origin.source_place_loan_binding_identities.clear();
             origin.source_standard_sum_pattern_move=false;
+            origin.source_nominal_pattern_move=false;
             self.source_binding_states
                 .insert(id, "available".to_owned());
         }
@@ -230,8 +243,9 @@ impl SourceOrigins {
         } else {
             None
         };
+        let surviving_fields=self.source_binding_states.keys().filter(|id|{let root=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_ultimate_root(id);!root.is_empty()&&self.source_binding_states.get(&root).is_some_and(|state|state=="available")&&(before.contains_key(&root)||escaping.as_ref()==Some(&root)||result.source_extending_temporary_bindings.contains(&root))}).cloned().collect::<HashSet<_>>();
         for (id, state) in &mut self.source_binding_states {
-            if !before.contains_key(id)
+            if !before.contains_key(id)&&!surviving_fields.contains(id)
                 && escaping.as_ref() != Some(id)
                 && !result.source_extending_temporary_bindings.contains(id)
             {
@@ -239,6 +253,7 @@ impl SourceOrigins {
             }
         }
         self.validate_standard_sum_borrowed_result(result,None)?;
+        self.validate_copy_closure_value_borrows(result,None)?;
         Ok(())
     }
     pub(in super::super) fn snapshot_owned_bindings(&self) -> HashMap<String, String> {
@@ -263,8 +278,8 @@ impl SourceOrigins {
             .into_iter()
             .map(|id| {
                 let state = rules::merge_rust_owned_binding_states(
-                    left.get(&id).map_or("absent", String::as_str),
-                    right.get(&id).map_or("absent", String::as_str),
+                    &super::super::owned_record_updates::field_state(left,&id),
+                    &super::super::owned_record_updates::field_state(right,&id),
                     left_returns,
                     right_returns,
                 );
@@ -277,18 +292,15 @@ impl SourceOrigins {
         before: &HashMap<String, String>,
         span: Option<Span>,
     ) -> Result<()> {
-        let ids = before.keys().collect::<Vec<_>>();
+        let ids = before.keys().chain(self.source_binding_states.keys().filter(|id|!crate::translation::rust_owned_record_update_rules::read_rust_owned_record_field_root(id).is_empty())).collect::<HashSet<_>>().into_iter().collect::<Vec<_>>();
         let left = ids
             .iter()
-            .map(|id| before.get(*id).unwrap().clone())
+            .map(|id| super::super::owned_record_updates::field_state(before,id))
             .collect::<Vec<_>>();
         let right = ids
             .iter()
             .map(|id| {
-                self.source_binding_states
-                    .get(*id)
-                    .cloned()
-                    .unwrap_or_else(|| "absent".to_owned())
+                super::super::owned_record_updates::field_state(&self.source_binding_states,id)
             })
             .collect::<Vec<_>>();
         if !rules::accept_rust_owned_binding_guard(&left, &right) {

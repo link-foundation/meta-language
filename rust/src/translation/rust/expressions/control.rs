@@ -66,11 +66,11 @@ impl RustParser {
                         || origin
                             .ty
                             .as_ref()
-                            .is_some_and(|ty| !accept_rust_source_array_element(ty.kind(), false))
+                            .is_some_and(|ty| !accept_rust_source_array_element(ty.kind(), false)&&!self.origins.nominal_vector_element(&origin))
                     {
                         return Err(unsupported(
                             "Rust array element",
-                            "only direct immutable scalar and owned string elements are admitted",
+                            "only direct immutable scalar, owned string or verified nominal Copy vector elements are admitted",
                             range,
                         ));
                     }
@@ -111,7 +111,7 @@ impl RustParser {
                     let Some(owner) = owner else { return false; };
                     let Some(ty) = value.ty.as_ref() else { return false; };
                     let (bits, signed) = match ty { Type::Fixed { bits, signed } => (bits.to_string(), *signed), _ => (String::new(), false) };
-                    owner.kind == "primitive" && owner.arguments.is_empty() && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed)
+                    owner.kind == "primitive" && owner.arguments.is_empty() && crate::translation::source_signature_rules::accept_rust_source_signature_primitive(ty.kind(), &owner.path.join("::"), &bits, signed)||self.origins.nominal_vector_element(value)
                 }).collect::<Vec<_>>();
                 let owner_index = crate::translation::rust_array_element_owner_rules::select_rust_array_element_owner_index(&identities, &admitted);
                 let element_owner = if owner_index >= 0.0 {
@@ -147,7 +147,7 @@ impl RustParser {
                     },
                     range,
                 );
-                self.origins.mark_vector_constructor(&result, origin);
+                self.origins.mark_vector_constructor(&result, origin)?;
                 self.shared_array_literal(&result)?;
                 Ok(result)
             }

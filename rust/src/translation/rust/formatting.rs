@@ -240,11 +240,7 @@ impl RustParser {
                         ));
                     }
                     let name = crate::translation::lexer::normalize_unicode_text(&source_name)?;
-                    let value = self
-                        .read_function_reference(std::slice::from_ref(&name), path, template_span)?
-                        .unwrap_or_else(|| {
-                            SExpr::new(SNode::Name { path: vec![name] }, template_span)
-                        });
+                    let value=if let Some(reference)=self.read_function_reference(std::slice::from_ref(&name),path,template_span)?{reference}else{self.owned_record_mutable_name(SExpr::new(SNode::Name{path:vec![name]},template_span),path)?};
                     self.refuse_callable_observation(&value, path, value.span)?;
                     self.refuse_shared_value_observation(&value, None, path, value.span)?;
                     value

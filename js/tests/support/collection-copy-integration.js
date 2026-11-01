@@ -17,6 +17,12 @@ export function readCollectionCopyOriginalControl(row){
  assert.equal(row.sourceVersionRange,'ECMAScript 2024-2025; Node >=22.15 <23 || >=24 <25');
  requireCollectionCopyNodeVersion();const concrete=readCollectionCopyConcreteControl(row.source),originalStdout=collectionCopyStdout(row.source);assert.equal(originalStdout,row.stdout,row.name+': independent complete original');
  const surface=parseJavaScript(row.source),program=checkProgram(surface),observedStdout=collectionCopyStdout(emitJavaScript(program).text);assert.equal(observedStdout,row.stdout,row.name+': actual frontend');
+ if(row.prototypeMethodsExpected!==undefined){
+  const methods=surface.sourceClassMethods??[];assert.equal(methods.length>0,row.prototypeMethodsExpected);assert.equal(methods.length%3,0);assert.equal(Object.hasOwn(program,'sourceClassMethods'),false);
+  for(let at=0;at<methods.length;at+=3){const[brand,method,helper]=methods.slice(at,at+3),entry=program.declarations.get(helper);assert.equal(entry?.k,'fn');assert.equal(entry.params[0].type.kind,'record');assert.ok(entry.params[0].type.fields.some(field=>field.name===brand));
+   for(const declaration of program.declarations.values())if(declaration.k==='fn'&&declaration.ret.kind==='record'&&declaration.ret.fields.some(field=>field.name===brand))assert.ok(!declaration.ret.fields.some(field=>field.name===method),row.name+': prototype method is absent from instance data');
+  }
+ }
  const packet=createTypedProgramLinks(row.source,'JavaScript'),links=packet.network.toLino(),binary=encodeLinkNetworkBinary(packet.network);
  const variants=[packet.network,LinkNetwork.fromLino(links),decodeLinkNetworkBinary(binary)],emissions={};assert.equal(variants.length,transports.length);
  for(let at=0;at<variants.length;at++){

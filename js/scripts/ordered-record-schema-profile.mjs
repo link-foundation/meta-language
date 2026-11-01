@@ -3,6 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {restoreClassOwnerSchema,restoreClassOwnerNativeTypeSource,restoreClassOwnerOwnedSource,readClassOwnerSourceProfile} from './class-owner-schema-profile.mjs';
 const root=new URL('../../',import.meta.url);
 const previousSchemaSha256='b1ac91ce373be90d0326f4489dfb9dea8f5b2964c7174322e7d8a532c097ebbf';
 const previousNativeTypeSha256='329dfababaff646a3ad870e76abbf026924b8c367cde6b9a5364def05fdd50d0';
@@ -43,14 +44,15 @@ export function restoreOrderedRecordSchema(bytes,file){
  if(!Buffer.isBuffer(bytes)||bytes.length>256*1024)fail('invalid schema source boundary');
  if(hash(bytes)===previousSchemaSha256)return bytes.toString('utf8');
  const previous=readOrderedRecordSchemaPredecessor().previousSchema;
- const before=readStructuredDataLino(previous.source),expected=extendOrderedRecordSchema(before),after=readStructuredDataLino(bytes.toString('utf8'));
+ const before=readStructuredDataLino(previous.source),expected=extendOrderedRecordSchema(before);
+ let after=readStructuredDataLino(bytes.toString('utf8'));if(Object.hasOwn(after.references??{},'classConstructor'))after=readStructuredDataLino(restoreClassOwnerSchema(bytes,file));
  if(JSON.stringify(after)!==JSON.stringify(expected))fail('unknown complete current schema edit');
  return previous.source;
 }
 export function restoreOrderedRecordTypeSource(bytes,file){
  if(file!=='rust/src/translation/types.rs'||!Buffer.isBuffer(bytes)||bytes.length>128*1024)fail('unknown native type owner');
  if(hash(bytes)===previousNativeTypeSha256)return bytes.toString('utf8');
- if(hash(bytes)!==currentNativeTypeSha256)fail('uncovered native type source version');
+ if(hash(bytes)!==currentNativeTypeSha256&&hash(Buffer.from(restoreClassOwnerNativeTypeSource(bytes,file)))!==currentNativeTypeSha256)fail('uncovered native type source version');
  return readOrderedRecordSchemaPredecessor().previousNativeTypes.source;
 }
 function replaceOnce(source,before,after){
@@ -77,7 +79,7 @@ export function restoreOrderedRecordOwnedSource(file,bytes){
  if(!previous) return bytes;
  if(hash(bytes)===previous.sha256)return bytes;
  const expected=extendOrderedRecordOwnedSource(file,previous.source);
- if(bytes.toString('utf8')!==expected)fail('unknown complete source bridge edit');
+ if(bytes.toString('utf8')!==expected&&restoreClassOwnerOwnedSource(file,bytes).toString('utf8')!==expected)fail('unknown complete source bridge edit');
  return Buffer.from(previous.source);
 }
 
@@ -86,9 +88,10 @@ export function restoreOrderedRecordOwnedSource(file,bytes){
 export async function readOrderedRecordSourceProfiles(){
  const previous=readOrderedRecordSchemaPredecessor();
  const {readProgramTypeNeutralDefaults}=await import('./read-program-type-neutral-defaults.mjs');
- const legacy=readProgramTypeNeutralDefaults({version:1}),current=readProgramTypeNeutralDefaults({version:2});
- if(legacy.source.sha256!==previousNativeTypeSha256||current.source.sha256!==currentNativeTypeSha256)fail('source profile belongs to another native definition');
  const nativeBytes=readFileSync(new URL(previous.previousNativeTypes.file,root));
+ const legacy=readProgramTypeNeutralDefaults({version:1}),ordered=readProgramTypeNeutralDefaults({version:2}),classActive=hash(nativeBytes)!==currentNativeTypeSha256,current=classActive?readProgramTypeNeutralDefaults({version:3}):ordered;
+ if(legacy.source.sha256!==previousNativeTypeSha256||ordered.source.sha256!==currentNativeTypeSha256)fail('source profile belongs to another native definition');
+ if(classActive&&current.source.sha256!==readClassOwnerSourceProfile().currentNativeTypes.sha256)fail('the class owner profile belongs to another native definition');
  if(restoreOrderedRecordTypeSource(nativeBytes,previous.previousNativeTypes.file)!==previous.previousNativeTypes.source)fail('the complete native source predecessor was lost');
  for(const file of ['js/src/data/typed-program-links-schema.lino','rust/src/data/typed-program-links-schema.lino']){
   const bytes=readFileSync(new URL(file,root));
@@ -101,5 +104,5 @@ export async function readOrderedRecordSourceProfiles(){
   const actual=readFileSync(new URL(entry.file,root));
   if(hash(restoreOrderedRecordOwnedSource(entry.file,actual))!==entry.sha256)fail('the complete original source owner was lost');
  }
- return {version:1,legacy,current,sourceClosureOnly:true};
+ return {version:classActive?3:1,legacy,...(classActive?{ordered}:{}),current,sourceClosureOnly:true};
 }

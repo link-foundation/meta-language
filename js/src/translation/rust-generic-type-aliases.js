@@ -336,7 +336,10 @@ export function readRustGenericTypeAliasConstructor(parser,segments,path,start,c
   end=c.expect(')','generic alias standard sum constructor').end;
   if(args.length!==arity)context.fail(parser,'generic alias constructor arguments differ from their actual source fields',row);
  }
- const span={start:start.start,end};parser.origins.call(constructorPath,args,path,span);
+ // Contextual arguments may already have transferred real owners. The
+ // constructor-origin consumer validates fields and records any remaining
+ // transfer exactly once; a second generic call pass would consume them again.
+ const span={start:start.start,end};
  const name={k:'name',path:[...constructorPath],span};
  const node=args.length?{k:'app',fn:name,args,span}:name;
  captureRustStandardSumConstructor(parser,node,origin,args,path,span);return node;

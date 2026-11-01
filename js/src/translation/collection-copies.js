@@ -2,6 +2,7 @@
 // transports, not iterator implementations or replacement collection runtimes.
 import {unsupported} from './diagnostics.js';
 import {acceptReadOnlyReferenceCallback} from './reference-callbacks.js';
+import {readProgramDisjointCollectionIterationProof} from './disjoint-collection-iterations.js';
 import {readCollectionCopyInferenceRole,readCollectionCopySourceNormalization,acceptCollectionCopyMapperSnapshot,readCollectionCopyMapperError} from './collection-copy-rules.js';
 function settle(inference,constraint,settled){
  const input=inference.resolve?inference.resolve(constraint.input):constraint.input;
@@ -30,12 +31,14 @@ export function normalizeCollectionCopyInputs(inference){
  }
 }
 export function checkCollectionCopySnapshotCallbacks(program){
- const pending=[program],seen=new Set();
+ const pending=[program],seen=new Set();let disjoint=null;
  while(pending.length){
   const node=pending.pop();if(!node||typeof node!=='object'||seen.has(node))continue;seen.add(node);
   const snapshot=node.k==='method'&&node.op==='map'&&node.object?.k==='collectionItems'?node.object:null;
   if(snapshot&&acceptCollectionCopyMapperSnapshot(snapshot.object.type.kind,snapshot.op)){
-   const callback=node.args[0],error=readCollectionCopyMapperError(true,acceptReadOnlyReferenceCallback(callback,program.declarations));if(error)throw unsupported('collection snapshot callback',error,callback?.span??node.span);
+   const callback=node.args[0];let safe=acceptReadOnlyReferenceCallback(callback,program.declarations);
+   if(!safe){disjoint??=readProgramDisjointCollectionIterationProof(program);safe=disjoint.collectionMappers;}
+   const error=readCollectionCopyMapperError(true,safe);if(error)throw unsupported('collection snapshot callback',error,callback?.span??node.span);
   }
   pending.push(...(node instanceof Map?[...node.values()]:Object.entries(node).filter(([key])=>!['type','domain','span','modulePath'].includes(key)).map(([,value])=>value)));
  }

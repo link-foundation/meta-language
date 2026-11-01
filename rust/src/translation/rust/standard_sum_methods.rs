@@ -141,8 +141,10 @@ impl RustParser {
         }
         let captured=self.standard_sum_method_local(&captures[0],span);
         let mut body=SExpr::new(SNode::Match {scrutinees:vec![captured],rows},span);
+        let mut value_origins=vec![receiver_origin];value_origins.extend(captures.iter().skip(1).map(|capture|self.origins.origin(&capture.value,path)));
         for capture in captures.into_iter().rev(){body=SExpr::new(SNode::Let {name:capture.name,ty:capture.origin.ty.map(Into::into),value:Box::new(capture.value),body:Box::new(body)},span);}
         let output=if owned{self.owned_standard_sum_method_output(result_origin,receiver_moved,true)}else{result_origin};
+        let output=super::copy_closure_lifetimes::carry_value_union(output,&value_origins.iter().collect::<Vec<_>>());
         self.origins.mark(&body,output);
         Ok(Some(body))
     }

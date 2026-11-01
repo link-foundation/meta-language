@@ -194,6 +194,7 @@ fn generated(name: &str) -> Vec<String> {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_lean(source: &Program) -> Result<Emitted> {
+    super::class_owners::validate_program(source)?;
     let prepared = super::ordered_record_preparation::prepare(source)?;
     let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Lean")?;

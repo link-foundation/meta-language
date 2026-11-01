@@ -186,7 +186,7 @@ impl RustParser {
         origin.source_byte_iterator = method.value == "bytes";
         origin.fresh_array_value = range.filter(|_| storage == "owned vector");
         if storage == "owned vector" {
-            self.origins.mark_vector_constructor(&result, origin);
+            self.origins.mark_vector_constructor(&result, origin)?;
         } else {
             self.origins.mark(&result, origin);
         }

@@ -7,7 +7,7 @@ use serde_json::Value;
 #[derive(Clone, Copy)]
 pub(in super::super) struct NominalCopyDerivation {
     copy: bool,
-    clone: bool,
+    pub(in super::super) clone: bool,
     span: Option<Span>,
 }
 fn count(value: usize) -> f64 {

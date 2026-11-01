@@ -4,6 +4,9 @@ import {registerRustNominalCopyDeclaration} from './rust-nominal-copies.js';
 import{unsupported,typeError}from'./diagnostics.js';
 import{resolveRustTypeAliasPath}from'./rust-type-aliases.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
+import {createRustNominalConstructorOrigin,readRustNominalOwnershipFacts,projectRustNominalPatternField} from './rust-nominal-ownership.js';
+import {readRustOwnedRecordUpdateBase,prepareRustOwnedRecordEntry,createRustOwnedRecordUpdateOrigin,projectRustOwnedRecordField} from './rust-owned-record-updates.js';
+import {readRustOwnedRecordMutableName} from './rust-owned-record-state.js';
 import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -19,6 +22,7 @@ function sourceType(parser,type,path){
  if(type.kind==='tuple')return{...type,elements:type.elements.map(element=>sourceType(parser,element,path))};
  return type;
 }
+export function readRustRecordSourceType(parser,type,path){return sourceType(parser,type,path);}
 function nominal(parser,segments,path){
  const found=parser.origins.lookupTypeOwner(parser.resolve(segments,path),path);
  return found?parser.namedRecords.get(found.fullName):null;
@@ -82,14 +86,14 @@ export function readRustRecordConstruction(parser,segments,path,start){
  let base=null;
  c.expect('{','record construction');
  while(!c.is('}')){
-  if(c.eat('..')){base=parser.expr(path);break;}
+  if(c.eat('..')){base=readRustOwnedRecordUpdateBase(parser,path);break;}
   parser.attributes();
   const numeric=c.peek().kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(c.peek().raw);
   const field=numeric?c.next():c.identifier('record field'),name=numeric?field.raw:field.value;
   const colon=Boolean(c.eat(':'));
   if(numeric&&!colon)c.expect(':','tuple record field');
-  const value=colon?parser.expr(path):{k:'name',path:[field.value],span:span(field,field)};
-  entries.push({name,value});if(!c.eat(','))break;
+  const value=colon?parser.expr(path):readRustOwnedRecordMutableName(parser,{k:'name',path:[field.value],span:span(field,field)},path);
+  prepareRustOwnedRecordEntry(parser,record,name,value,path);entries.push({name,value});if(!c.eat(','))break;
  }
  c.expect('}','record construction');
  if(!record){
@@ -100,15 +104,16 @@ export function readRustRecordConstruction(parser,segments,path,start){
  const plan=planRustRecordFields(record.names,entries.map(entry=>entry.name));
  if(plan[0]<0)throw typeError('a Rust record construction has duplicate, unknown or missing fields',span(start,c.peek()));
  const bindings=recordNames(parser,entries.length),where=span(start,c.peek());
- parser.origins.call(record.constructor.split('.'),plan.map(index=>entries[index].value),[],where);
  const constructor={k:'name',path:['crate',...record.constructor.split('.')],span:where};
  let body=plan.length?{k:'app',fn:constructor,args:plan.map(index=>({k:'name',path:[bindings[index]],span:where})),span:where}:constructor;
+ const produced=createRustNominalConstructorOrigin(parser,body,plan.map(index=>entries[index].value),path,where);
+ if(!produced)parser.origins.call(record.constructor.split('.'),plan.map(index=>entries[index].value),path,where);
  const result=parser.origins.lookup(record.constructor.split('.'),[],['ctor']);
  for(let index=entries.length-1;index>=0;index-=1){
   const origin=result?.fields[plan.indexOf(index)],type=origin?sourceType(parser,origin.type,origin.path):undefined;
   body={k:'let',name:bindings[index],...(type?{type}:{}),value:entries[index].value,body,span:where};
  }
- if(result)parser.origins.mark(body,result.result);
+ if(produced||result)parser.origins.mark(body,produced??result.result);
  return body;
 }
 
@@ -121,7 +126,7 @@ export function readRustRecordProjection(parser,object,field,path,where){
  if(index<0)throw typeError('a Rust record has no field '+field,where);
  const node=recordProjectionNode(parser,record,object,index,where);
  const constructor=parser.origins.lookup(record.constructor.split('.'),[],['ctor']);
- if(constructor?.fields[index])parser.origins.mark(node,constructor.fields[index]);
+ if(constructor?.fields[index])parser.origins.mark(node,projectRustOwnedRecordField(parser.origins,origin,constructor.fields[index],index,origin.wrappers.length>0&&origin.wrappers.every(layer=>layer==='reference'),where));
  return node;
 }
 
@@ -143,6 +148,7 @@ function readRecordUpdate(parser,record,entries,base,path,where){
  const args=positions.map((position,index)=>({k:'name',path:[bindings[position<0?entries.length+1+index:position]],span:where}));
  const fn={k:'name',path:['crate',...record.constructor.split('.')],span:where};
  let body=args.length?{k:'app',fn,args,span:where}:fn;
+ const produced=createRustOwnedRecordUpdateOrigin(parser,record,entries,base,positions,body,path,where);
  body={k:'match',scrutinees:[baseReference],rows:[{patterns:[{k:'ctor',path:fn.path,args:positions.map((position,index)=>position<0?{k:'bind',name:bindings[entries.length+1+index]}:{k:'wild'})}],body}],span:where};
  body={k:'let',name:baseName,type:{kind:'named',path:['crate',...record.owner.split('.')]},value:base,body,span:where};
  for(let index=entries.length-1;index>=0;index-=1){
@@ -150,7 +156,7 @@ function readRecordUpdate(parser,record,entries,base,path,where){
   if(field)parser.origins.argument(parser.origins.origin(entries[index].value,path),field,where);
   body={k:'let',name:bindings[index],...(type?{type}:{}),value:entries[index].value,body,span:where};
  }
- if(constructor)parser.origins.mark(body,constructor.result);
+ if(constructor)parser.origins.mark(body,produced??constructor.result);
  return body;
 }
 

@@ -177,8 +177,10 @@ impl SourceOrigins {
                         .and_then(|position| fields.get(position))
                         .cloned()
                         .unwrap_or_else(SourceOrigin::unknown);
+                    if let Some(position)=position{field=super::super::copy_closure_lifetimes::project_value_field(&origin,field,position);}
                     if borrowed && position.is_some() {
                         field.wrappers.insert(0, "reference".to_owned());
+                        field.source_value_borrow_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&super::super::copy_closure_lifetimes::value_borrows(&field),&super::super::copy_closure_lifetimes::value_borrows(&origin));
                     }
                     let item_span = item.span.or(source_span);
                     self.pattern(item, &field, path, result, item_span)?;
@@ -233,8 +235,15 @@ impl SourceOrigins {
                         .unwrap_or_else(SourceOrigin::unknown);
                     if standard_sum&&fields.is_some(){
                         field=self.project_standard_sum_pattern_field(&origin,&field,borrowed);
-                    }else if borrowed && fields.is_some() {
-                        field.wrappers.insert(0, "reference".to_owned());
+                    }else if fields.is_some() {
+                        let mut direct=origin.clone();direct.wrappers.clear();
+                        let nominal=self.nominal_ownership_facts(&direct);
+                        if nominal.profile=="copy"||nominal.profile=="owned"{
+                            field=self.project_nominal_pattern_field(&origin,&field,index,borrowed);
+                        }else{
+                            field=super::super::copy_closure_lifetimes::project_value_field(&origin,field,index);
+                            if borrowed{field.wrappers.insert(0,"reference".to_owned());field.source_value_borrow_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&super::super::copy_closure_lifetimes::value_borrows(&field),&super::super::copy_closure_lifetimes::value_borrows(&origin));}
+                        }
                     }
                     let argument_span = argument.span.or(source_span);
                     self.pattern(
@@ -272,7 +281,7 @@ impl SourceOrigins {
 
     fn cases_with_guard_mode(&mut self,patterns:&mut [SPattern],scrutinee:&SExpr,path:&[String],deferred_guard:bool)->Result<HashMap<String,SourceOrigin>>{
         let origin = self.origin(scrutinee, path);
-        let maps: Vec<_> = patterns
+        let mut maps: Vec<_> = patterns
             .iter_mut()
             .map(|pattern| {
                 let mut scope = HashMap::new();
@@ -292,11 +301,11 @@ impl SourceOrigins {
             let aliases=super::super::standard_sum_guards::standard_sum_guard_alias_count(patterns);
             for map in &maps{let owned=map.values().filter(|origin|self.owned_binding_value(origin)).count();let error=crate::translation::rust_standard_sum_guard_rules::read_rust_standard_sum_guard_alias_transfer_error(aliases as f64,owned as f64);if !error.is_empty(){return Err(unsupported("Rust owned standard sum guard",&error,scrutinee.span));}}
         }
-        if let Some(first) = maps.first() {
-            let span = patterns
+        let span = patterns
                 .iter()
                 .find_map(|pattern| pattern.span)
                 .or(scrutinee.span);
+        if let Some(first) = maps.first() {
             if !self.collecting
                 && maps.len() > 1
                 && maps.iter().any(|map| {
@@ -309,6 +318,9 @@ impl SourceOrigins {
                     span,
                 ));
             }
+        }
+        let nominal_prepared=self.prepare_nominal_pattern_transfers(&mut maps,span,deferred_guard)?;
+        if let Some(first)=maps.first(){
             for (name, origin) in first {
                 let candidates: Vec<_> = maps
                     .iter()
@@ -333,17 +345,23 @@ impl SourceOrigins {
                     if !error.is_empty(){return Err(unsupported("Rust owned standard sum guard",&error,span));}
                 }
                 let mut binding = self.join(&candidates);
+                binding.source_record_state_collecting_site=None;
                 binding.source_extending_temporary_bindings.clear();
                 let disposition=crate::translation::rust_standard_sum_guard_rules::read_rust_standard_sum_guard_binding_disposition(deferred_guard,self.owned_binding_value(&binding));
                 if disposition=="readonly"{
                     binding.source_borrowed_place=true;
+                    let binding=self.assign_copy_closure_lexical_binding(binding);
                     scope.insert(name.clone(),binding);
                 } else if disposition=="transfer" {
-                    self.validate_standard_sum_pattern_transfer(&binding,span)?;
-                    self.consume_owned_binding(&binding, span)?;
+                    if !nominal_prepared.contains(name){
+                        self.validate_standard_sum_pattern_transfer(&binding,span)?;
+                        self.consume_owned_binding(&binding, span)?;
+                    }
                     let binding = self.register_owned_binding(binding);
+                    let binding=self.assign_copy_closure_lexical_binding(binding);
                     scope.insert(name.clone(), binding);
                 } else {
+                    let binding=self.assign_copy_closure_lexical_binding(binding);
                     scope.insert(name.clone(), binding);
                 }
             }

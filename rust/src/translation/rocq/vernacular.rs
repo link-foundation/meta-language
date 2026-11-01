@@ -12,6 +12,8 @@ impl RocqParser {
         let mut main = None;
         let items = self.items(&mut main, &[])?;
         Ok(SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Rocq,
             items,

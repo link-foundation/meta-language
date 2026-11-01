@@ -2,6 +2,7 @@
 import {BOOL} from './types.js';
 import {unsupported} from './diagnostics.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {carryRustCopyClosureValueUnion} from './rust-copy-closure-lifetimes.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue,createRustOwnedStandardSumMethodResult} from './rust-owned-standard-sum-methods.js';
 import {readRustExpectedCopyClosure,readRustParameterOnlyCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
@@ -108,5 +109,6 @@ export function readRustStandardSumSourceMethod(parser,receiver,method,path){
  }
  let body={k:'match',scrutinees:[local(captures[0])],rows,span};
  for(let at=captures.length-1;at>=0;at-=1){const capture=captures[at];body={k:'let',name:capture.name,type:capture.origin.type,value:capture.value,body,span};}
- return parser.origins.mark(body,owned?createRustOwnedStandardSumMethodResult(parser,resultOrigin,receiverMoved,true):resultOrigin);
+ const valueOrigins=[receiverOrigin,...captures.slice(1).map(capture=>parser.origins.origin(capture.value,path))];
+ return parser.origins.mark(body,carryRustCopyClosureValueUnion(owned?createRustOwnedStandardSumMethodResult(parser,resultOrigin,receiverMoved,true):resultOrigin,valueOrigins));
 }

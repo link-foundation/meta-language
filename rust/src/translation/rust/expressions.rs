@@ -453,6 +453,12 @@ impl RustParser {
                     value=sum;
                     continue;
                 }
+                if let Some(sum)=self.read_standard_sum_clone(&value,&method,path)? {
+                    value=sum;continue;
+                }
+                if let Some(nominal)=self.read_nominal_clone(&value,&method,path)? {
+                    value=nominal;continue;
+                }
                 if let Some(sum)=self.read_owned_standard_sum_method(&value,&method,path)? {
                     value=sum;
                     continue;
@@ -472,6 +478,9 @@ impl RustParser {
                 if let Some(sum)=self.read_standard_sum_source_conversion(&value,&method,path)? {
                     value=sum;
                     continue;
+                }
+                if let Some(sum)=self.read_owned_standard_sum_predicate(&value,&method,path)? {
+                    value=sum;continue;
                 }
                 if let Some(sum)=self.read_standard_sum_source_predicate(&value,&method,path)? {
                     value=sum;
@@ -561,7 +570,7 @@ impl RustParser {
                     args.len(),
                     span(&token, self.cursor.peek()),
                     path,
-                ) {
+                )? {
                     value = copy;
                     continue;
                 }

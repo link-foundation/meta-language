@@ -472,6 +472,17 @@ impl Inference {
             receiver = self.resolve(&method.object);
         }
         if let Term::Record(record) = &receiver {
+            let has_field=record.borrow().fields.iter().any(|(name,_)|name==&method.operation);
+            if !has_field{
+                let target=self.closed_class_method_target(&receiver,&method.operation);
+                if !target.is_empty(){
+                    let signature=self.signature(&[super::ROOT.to_owned(),target]).ok_or_else(||super::type_error("a closed class method needs its actual declared helper",method.place))?;
+                    let arguments=std::iter::once(method.object.clone()).chain(method.args.iter().cloned()).collect::<Vec<_>>();
+                    let result=self.call_terms(Some(signature),arguments,&[],method.place)?;
+                    self.unify(&method.result,&result,method.place)?;return Ok(true);
+                }
+                if !force&&record.borrow().open&&self.source_class_methods.chunks_exact(3).any(|row|row[1]==method.operation){return Ok(false);}
+            }
             let field = record
                 .borrow()
                 .fields

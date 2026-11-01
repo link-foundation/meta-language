@@ -114,6 +114,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     ...(program.externals !== undefined ? { externals: program.externals } : {}),
     ...(program.referenceSemantics !== undefined ? { referenceSemantics: program.referenceSemantics } : {}),
     ...(program.sourcePureUnitCalls!==undefined?{sourcePureUnitCalls:program.sourcePureUnitCalls}:{}),
+    ...(program.sourceClassOwners!==undefined?{sourceClassOwners:program.sourceClassOwners}:{}),
   };
   const checked = checkProjectedProgram(surface);
   if (Object.hasOwn(program, 'utf16Strings')) {

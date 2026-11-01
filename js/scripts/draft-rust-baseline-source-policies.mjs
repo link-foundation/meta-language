@@ -5,10 +5,25 @@ import {readFileSync} from 'node:fs';
 import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {draftSourceLibrary} from './draft-source-library.mjs';
 import {writeProjectData} from './project-data.mjs';
+import {draftRustBaselineNativePolicyControls} from './draft-rust-baseline-native-policy-controls.mjs';
+import {readNativePolicyLiteralControls} from './draft-native-policy-assertion-controls.mjs';
 
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/rust-owned-recursive-datatype-rules.js',moduleName:'rust_owned_recursive_datatype_rules',model:'Rust finite recursive owned datatype witnesses 1',programAsset:'rust-owned-recursive-datatype-program'},
+ {sourcePath:'js/src/translation/rust-owned-record-state-rules.js',moduleName:'rust_owned_record_state_rules',model:'Rust scoped owned record state through explicit value carriers 1',programAsset:'rust-owned-record-state-program'},
+ {sourcePath:'js/src/translation/rust-owned-record-place-rules.js',moduleName:'rust_owned_record_place_rules',model:'Rust exact local record update places 1',programAsset:'rust-owned-record-place-program'},
+ {sourcePath:'js/src/translation/datatype-dependency-group-rules.js',moduleName:'datatype_dependency_group_rules',model:'Source-ordered datatype dependency components 1',programAsset:'datatype-dependency-group-program'},
+ {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'javascript_class_owner_rules',model:'closed JavaScript class data owners 1',programAsset:'javascript-class-owner-program'},
+ {sourcePath:'js/src/translation/rust-owned-record-update-rules.js',moduleName:'rust_owned_record_update_rules',model:'Rust destructor-free record field moves and updates 1',programAsset:'rust-owned-record-update-program'},
+ {sourcePath:'js/src/translation/rust-copy-closure-rules.js',moduleName:'rust_copy_closure_rules',model:'ordinary explicitly typed immutable Rust Copy closures 1',programAsset:'rust-copy-closure-program'},
+ {sourcePath:'js/src/translation/javascript-class-observation-rules.js',moduleName:'javascript_class_observation_rules',model:'Closed JavaScript class aggregate observation proof 1',programAsset:'javascript-class-observation-program'},
+ {sourcePath:'js/src/translation/javascript-class-source-rules.js',moduleName:'javascript_class_source_rules',model:'closed JavaScript ordinary classes shared reference source lowering with public instance fields 4',programAsset:'javascript-class-source-program',valueSharing:'exact scalars, types and source spans 1'},
+ {sourcePath:'js/src/translation/rust-nominal-ownership-rules.js',moduleName:'rust_nominal_ownership_rules',model:'Actual ordinary nominal datatype ownership and Clone roles 1',programAsset:'rust-nominal-ownership-program'},
+ {sourcePath:'js/src/translation/disjoint-collection-iteration-rules.js',moduleName:'disjoint_collection_iteration_rules',model:'Closed collection allocation and effect proof 1',programAsset:'disjoint-collection-iteration-program'},
+ {sourcePath:'js/src/translation/disjoint-collection-projection-rules.js',moduleName:'disjoint_collection_projection_rules',model:'Checked collection allocation and effect projection 1',programAsset:'disjoint-collection-projection-program'},
+ {sourcePath:'js/src/translation/rust-owned-standard-sum-predicate-rules.js',moduleName:'rust_owned_standard_sum_predicate_rules',model:'Rust owned standard sum predicate result admission 1',programAsset:'rust-owned-standard-sum-predicate-program'},
  {sourcePath:'js/src/translation/callable-data-derivation-rules.js',moduleName:'callable_data_derivation_rules',model:'Constructive callable data emission 1',programAsset:'callable-data-derivation-program'},
  {sourcePath:'js/src/translation/collection-copy-rules.js',moduleName:'collection_copy_rules',model:'JavaScript eager same-kind collection copies 1',programAsset:'collection-copy-program'},
  {sourcePath:'js/src/translation/rust-source-type-origin-rules.js',moduleName:'rust_source_type_origin_rules',model:'Rust source type contract runtime clearing 1',programAsset:'rust-source-type-origin-program'},
@@ -34,6 +49,18 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/disjoint-collection-iterations.mjs',
+ 'js/tests/fixtures/disjoint-collection-item-iterations.mjs',
+ 'js/tests/fixtures/disjoint-collection-spreads.mjs',
+ 'js/tests/fixtures/closed-class-collection-defaults.mjs',
+ 'js/tests/fixtures/closed-class-prototype-methods.mjs',
+ 'js/tests/fixtures/closed-class-owner-witnesses.mjs',
+ 'js/tests/fixtures/rust-nominal-standard-sum-ownership.mjs',
+ 'js/tests/fixtures/rust-copy-closure-values.mjs',
+ 'js/tests/fixtures/rust-owned-record-updates.mjs',
+ 'js/tests/fixtures/rust-owned-record-places.mjs',
+ 'js/tests/fixtures/datatype-dependency-groups.mjs',
+ 'js/tests/fixtures/native-policy-authoring-controls.mjs',
  'js/tests/fixtures/callable-data-originals.mjs',
  'js/tests/fixtures/collection-copies.mjs',
  'js/tests/fixtures/rust-source-namespaces-draft.mjs',
@@ -49,6 +76,12 @@ const fixtures=[
  'js/tests/fixtures/rust-owned-standard-sum-callbacks.mjs',
  'js/tests/fixtures/rust-owned-standard-sum-move-captures.mjs',
  'js/tests/fixtures/rust-owned-standard-sum-bind-callbacks.mjs',
+ 'js/tests/fixtures/rust-standard-default-values.mjs',
+ 'js/tests/fixtures/rust-standard-sum-clones.mjs',
+ 'js/tests/fixtures/rust-owned-standard-sum-predicates.mjs',
+ 'js/tests/fixtures/rust-standard-sum-copy-owned-callbacks.mjs',
+ 'js/tests/fixtures/rust-standard-sum-owned-propagation.mjs',
+ 'js/tests/fixtures/rust-standard-sum-primitive-question-conversions.mjs',
  'js/tests/fixtures/rust-standard-sum-guard-alternatives.mjs',
  'js/tests/fixtures/rust-generic-type-alias-defaults-draft.mjs',
  'js/tests/fixtures/rust-generic-type-alias-draft.mjs',
@@ -61,6 +94,46 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/src/translation/disjoint-collection-iterations.js',
+ 'js/src/translation/source-collection-iterations.js',
+ 'js/src/translation/collection-items.js',
+ 'js/src/translation/javascript-class-methods.js',
+ 'js/src/translation/javascript-class-owners.js',
+ 'js/src/translation/javascript-classes.js',
+ 'js/tests/translation-disjoint-collection-iterations.test.js',
+ 'js/scripts/produce-disjoint-collection-iterations.mjs',
+ 'js/tests/translation-disjoint-collection-item-iterations.test.js',
+ 'js/scripts/produce-disjoint-collection-item-iterations.mjs',
+ 'js/tests/translation-disjoint-collection-spreads.test.js',
+ 'js/scripts/produce-disjoint-collection-spreads.mjs',
+ 'js/tests/translation-closed-class-collection-defaults.test.js',
+ 'js/scripts/produce-closed-class-collection-defaults.mjs',
+ 'js/scripts/produce-closed-class-prototype-methods.mjs',
+ 'js/tests/translation-closed-class-prototype-methods.test.js',
+ 'js/tests/translation-closed-class-owner-witnesses.test.js',
+ 'js/scripts/produce-closed-class-owner-witnesses.mjs',
+ 'js/tests/support/closed-class-owner-integration.js',
+ 'js/tests/translation-rust-nominal-standard-sum-ownership.test.js',
+ 'js/tests/translation-rust-copy-closure-values.test.js',
+ 'js/tests/translation-rust-owned-record-updates.test.js',
+ 'js/tests/translation-rust-owned-record-places.test.js',
+ 'js/tests/translation-datatype-dependency-groups.test.js',
+ 'js/scripts/draft-native-policy-assertion-controls.mjs',
+ 'js/scripts/draft-rust-baseline-native-policy-controls.mjs',
+ 'js/scripts/rust-baseline-native-policy-control-groups.mjs',
+ 'js/scripts/class-owner-schema-extension.mjs',
+ 'js/scripts/class-owner-schema-profile.mjs',
+ 'js/scripts/draft-class-owner-source-profiles.mjs',
+ 'js/scripts/ordered-record-schema-profile.mjs',
+ 'js/scripts/read-program-type-neutral-defaults.mjs',
+ 'js/tests/class-owner-source-profiles.test.js',
+ 'js/scripts/draft-rust-baseline-complete-source.mjs',
+ 'js/tests/class-owner-schema-extension.test.js',
+ 'js/tests/rust-baseline-source-authoring-order.test.js',
+ 'js/tests/native-policy-assertion-authoring.test.js',
+ 'js/tests/native-policy-control-publication.test.js',
+ 'js/tests/support/native-policy-authoring-rules.js',
+ 'js/tests/support/native-policy-authoring-peer-rules.js',
  'js/src/translation/callable-data.js','js/tests/translation-callable-data.test.js',
  'js/tests/translation-rust-source-type-origins.test.js',
  'js/src/translation/collection-copies.js',
@@ -78,6 +151,15 @@ const consumers=[
  'js/src/translation/rust-standard-sum-ownership.js',
  'js/src/translation/rust-owned-standard-sum-observers.js',
  'js/src/translation/rust-owned-standard-sum-methods.js',
+ 'js/src/translation/rust-standard-default-values.js',
+ 'js/src/translation/rust-standard-sum-clones.js',
+ 'js/src/translation/rust-owned-standard-sum-predicates.js',
+ 'js/src/translation/rust-owned-standard-sum-callback-selection.js',
+ 'js/src/translation/rust-copy-closure-lifetimes.js',
+ 'js/src/translation/rust-nominal-ownership.js',
+ 'js/src/translation/rust-owned-record-updates.js',
+ 'js/src/translation/rust-owned-record-places.js',
+ 'js/src/translation/rust-owned-record-state.js',
  'js/src/translation/rust-owned-standard-sum-callbacks.js',
  'js/src/translation/rust-source-type-origins.js',
  'js/src/translation/rust-standard-sum-guards.js',
@@ -105,6 +187,12 @@ const consumers=[
  'js/tests/translation-rust-owned-standard-sum-callbacks.test.js',
  'js/tests/translation-rust-owned-standard-sum-move-captures.test.js',
  'js/tests/translation-rust-owned-standard-sum-bind-callbacks.test.js',
+ 'js/tests/translation-rust-standard-default-values.test.js',
+ 'js/tests/translation-rust-standard-sum-clones.test.js',
+ 'js/tests/translation-rust-owned-standard-sum-predicates.test.js',
+ 'js/tests/translation-rust-standard-sum-copy-owned-callbacks.test.js',
+ 'js/tests/translation-rust-standard-sum-owned-propagation.test.js',
+ 'js/tests/translation-rust-standard-sum-primitive-question-conversions.test.js',
  'js/tests/translation-rust-standard-sum-guard-alternatives.test.js',
  'js/tests/translation-rust-original-compiler-classifications.test.js',
  'js/tests/support/rust-original-compiler-classifications.js',
@@ -141,6 +229,17 @@ writeProjectData(new URL('parity/fixtures/rust-standard-sum-source-draft.lino',r
 // Every remaining fixture namespace is an independently authored literal data
 // module. Convert all of its exports automatically without dropping any rows.
 for(const [source,target] of [
+ ['disjoint-collection-iterations','disjoint-collection-iterations'],
+ ['disjoint-collection-item-iterations','disjoint-collection-item-iterations'],
+ ['disjoint-collection-spreads','disjoint-collection-spreads'],
+ ['closed-class-collection-defaults','closed-class-collection-defaults'],
+ ['closed-class-prototype-methods','closed-class-prototype-methods'],
+ ['closed-class-owner-witnesses','closed-class-owner-witnesses'],
+ ['rust-nominal-standard-sum-ownership','rust-nominal-standard-sum-ownership'],
+ ['rust-copy-closure-values','rust-copy-closure-values'],
+ ['rust-owned-record-updates','rust-owned-record-updates'],
+ ['rust-owned-record-places','rust-owned-record-places'],
+ ['datatype-dependency-groups','datatype-dependency-groups'],
  ['callable-data-originals','callable-data-originals'],
  ['collection-copies','collection-copies'],
  ['rust-source-namespaces-draft','rust-source-namespaces-draft'],
@@ -156,6 +255,12 @@ for(const [source,target] of [
  ['rust-owned-standard-sum-callbacks','rust-owned-standard-sum-callbacks'],
  ['rust-owned-standard-sum-move-captures','rust-owned-standard-sum-move-captures'],
  ['rust-owned-standard-sum-bind-callbacks','rust-owned-standard-sum-bind-callbacks'],
+ ['rust-standard-default-values','rust-standard-default-values'],
+ ['rust-standard-sum-clones','rust-standard-sum-clones'],
+ ['rust-owned-standard-sum-predicates','rust-owned-standard-sum-predicates'],
+ ['rust-standard-sum-copy-owned-callbacks','rust-standard-sum-copy-owned-callbacks'],
+ ['rust-standard-sum-owned-propagation','rust-standard-sum-owned-propagation'],
+ ['rust-standard-sum-primitive-question-conversions','rust-standard-sum-primitive-question-conversions'],
  ['rust-standard-sum-guard-alternatives','rust-standard-sum-guard-alternatives'],
  ['rust-generic-type-alias-defaults-draft','rust-generic-type-alias-defaults-draft'],
  ['rust-standard-sum-methods','rust-standard-sum-methods-source-draft'],
@@ -174,7 +279,18 @@ for(const [source,target] of [
 // Preserve original alias fixture coordinates/history while appending the new
 // authored controls, then register concrete source availability. Neither import
 // executes represented programs or a validation gate.
+// Special Number assertions retain their exact authored source spellings;
+// finite structured data must never coerce NaN/Infinity into JSON nulls.
+const nativeLiteralPath='js/tests/fixtures/native-policy-authoring-controls.mjs';
+const nativeLiteralSource=readFileSync(new URL(nativeLiteralPath,root),'utf8');
+writeProjectData(new URL('parity/fixtures/native-policy-authoring-controls.lino',root),{
+ schemaVersion:1,model:'literal native policy assertion source controls 1',boundary,
+ selections:['nativeLiteralAssertions','mixedLiteralAssertions'].map(exportName=>readNativePolicyLiteralControls(nativeLiteralSource,{path:nativeLiteralPath,exportName})),
+});
+draftRustBaselineNativePolicyControls({publish:true});globalThis.gc?.();
 await import('./draft-rust-type-alias-fixtures.mjs');globalThis.gc?.();
+await import('./draft-javascript-classes-fixtures.mjs');globalThis.gc?.();
+await import('./draft-javascript-classes-inventory.mjs');globalThis.gc?.();
 await import('./draft-rust-baseline-inventory.mjs');
 // Assemble generated products into both actual source-definition catalogs and
 // the native package manifest. These are declaration writers, not test runners.

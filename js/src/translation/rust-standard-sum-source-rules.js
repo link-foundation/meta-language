@@ -1,9 +1,11 @@
 // Shared source decisions for standard owned sums.
-// Callers must establish resolved definition ownership from the actual catalog,
-// direct immutable Copy payload origins and complete checked type identities.
+// Callers establish resolved definition ownership and complete checked source
+// identities. Copy, owned and primitive residual conversion admissions remain
+// separate operations; none upgrades another profile's missing proof.
 // These scalar projections neither create nor replace any certificate.
 // Instantiate the existing named datatype/constructor/match algebra. In
 // particular, types.option is unsuitable: it collapses nested optional values.
+import {planRustPrimitiveFrom} from './rust-primitive-from-rules.js';
 
 /** A resolved standard definition, never an unresolved caller spelling.
  * @param {string} path @param {boolean} standardDefinition
@@ -122,10 +124,35 @@ export function acceptRustStandardSumSourceInferredConstructor(owner,constructor
  * @param {boolean} ordinaryCallable @param {boolean} directCopyOperand
  * @param {string} operandError @param {string} returnError @returns {boolean} */
 export function acceptRustStandardSumQuestionContext(operandOwner,returnOwner,ordinaryCallable,directCopyOperand,operandError,returnError){
- if(!ordinaryCallable||!directCopyOperand||operandOwner!==returnOwner)return false;
+ return ordinaryCallable&&directCopyOperand&&acceptRustStandardSumQuestionFamily(operandOwner,returnOwner,operandError,returnError);
+}
+/** Actual constructor/residual roles are shared by the independent ownership
+ * profiles. @param {string} operandOwner @param {string} returnOwner
+ * @param {string} operandError @param {string} returnError @returns {boolean} */
+export function acceptRustStandardSumQuestionFamily(operandOwner,returnOwner,operandError,returnError){
+ if(operandOwner!==returnOwner)return false;
  if(operandOwner==='std::option::Option')return operandError===''&&returnError==='';
  return operandOwner==='std::result::Result'&&operandError!==''&&operandError===returnError;
 }
+/** Owning operands require actual direct ownership, independently from Copy.
+ * @param {string} operandOwner @param {string} returnOwner @param {boolean} ordinary
+ * @param {string} role @param {number} wrappers @param {string} operandError
+ * @param {string} returnError @returns {boolean} */
+export function acceptRustStandardSumOwnedQuestionContext(operandOwner,returnOwner,ordinary,role,wrappers,operandError,returnError){return ordinary&&role==='owned'&&wrappers===0&&acceptRustStandardSumQuestionFamily(operandOwner,returnOwner,operandError,returnError);}
+/** Independent conversion profile. Primitive certificates come from actual
+ * complete source types and canonical structural identities, not width guesses.
+ * @param {string} operandOwner @param {string} returnOwner @param {boolean} ordinary
+ * @param {string} role @param {number} wrappers @param {boolean} directCopy
+ * @param {boolean} sourceKnown @param {boolean} targetKnown
+ * @param {string} source @param {string} target @param {number} minor
+ * @returns {string[]} */
+export function readRustStandardSumPrimitiveQuestionConversionPlan(operandOwner,returnOwner,ordinary,role,wrappers,directCopy,sourceKnown,targetKnown,source,target,minor){
+ if(!ordinary||operandOwner!=='std::result::Result'||returnOwner!=='std::result::Result'||wrappers!==0||!sourceKnown||!targetKnown||!Number.isInteger(minor)||minor<90||minor>=100)return [];
+ if(source===target||role!=='owned'&&(role!=='copy'||!directCopy))return [];
+ const plan=planRustPrimitiveFrom(target,source);return plan===''?[]:[role,target,plan];
+}
+/** @param {string} profile @param {boolean} consumed @returns {boolean} */
+export function acceptRustStandardSumPrimitiveQuestionCompletion(profile,consumed){return profile==='copy'||profile==='owned'&&consumed;}
 
 /** These are private completion-tree dispositions, not semantic IR operations.
  * The adapter must first admit the complete question context above, capture

@@ -132,7 +132,7 @@ impl Checker {
             }
         }
         let expected = expected
-            .or_else(|| declared.filter(|ty| matches!(ty, Type::Record { ordered: true, .. })));
+            .or_else(|| declared.filter(|ty| matches!(ty, Type::Record { ordered: true, .. }|Type::Record{source_class_owner:Some(_),..})));
         let expected_fields = match expected {
             Some(Type::Record { fields, .. }) => fields.as_slice(),
             _ => &[],
@@ -224,6 +224,7 @@ impl Checker {
                 })
                 .transpose()?;
             let ty = Type::Record {
+                source_class_owner: match expected{Some(Type::Record{source_class_owner,..})=>source_class_owner.clone(),_=>None},
                 fields: values
                     .iter()
                     .map(|entry| TypeField {
@@ -341,6 +342,7 @@ impl Checker {
             None
         };
         let ty = Type::Record {
+            source_class_owner: match expected{Some(Type::Record{source_class_owner,..})=>source_class_owner.clone(),_=>None},
             fields: selected
                 .iter()
                 .map(|entry| TypeField {

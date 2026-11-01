@@ -124,6 +124,7 @@ fn main() {
     println!("{}", classify(Some(7)));
 }
 `},
+ {name:'error conversion needs its own policy',sourceVersionRange:'>=1.90.0 <1.100.0',originalCompilerOutcome:'accept',stdout:'',previousBoundary:'identity-error primitive conversion boundary',source:`fn later(value: Result<u8,u8>) -> Result<u8,u16> { let number = value?; Ok(number) } fn main() {}`},
 ];
 
 export const rustStandardSumSourceRefusals = [
@@ -131,7 +132,9 @@ export const rustStandardSumSourceRefusals = [
  {name:'guard does not cover present constructor',source:`fn bad(value: Option<u8>) -> u8 { match value { Some(number) if number > 0 => number, None => 0 } } fn main() {}`},
  {name:'missing error case',source:`fn bad(value: Result<u8,u8>) -> u8 { match value { Ok(number) => number } } fn main() {}`},
  {name:'question has incompatible return family',source:`fn bad(value: Option<u8>) -> Result<u8,u8> { let number = value?; Ok(number) } fn main() {}`},
- // This source is valid Rust: From<u8> for u16 exists. Only the deliberately
- // narrow identity-error policy refuses; a later conversion model must retain it.
- {name:'error conversion needs its own policy',source:`fn later(value: Result<u8,u8>) -> Result<u8,u16> { let number = value?; Ok(number) } fn main() {}`},
 ];
+export const rustStandardSumSourcePreviousBoundaries=[{
+ name:'identity-error primitive conversion boundary',previousCollection:'rustStandardSumSourceRefusals',previousIndex:4,previousDiagnosticKinds:['syntax','type','unsupported'],sourceVersionRange:'>=1.90.0 <1.100.0',originalCompilerOutcome:'accept',
+ row:{name:'error conversion needs its own policy',source:`fn later(value: Result<u8,u8>) -> Result<u8,u16> { let number = value?; Ok(number) } fn main() {}`},
+ extension:'Separate actual standard primitive From conversion profile; unchanged identity-error policy still rejects different error identities. This is source declaration history, not execution evidence.',
+}];

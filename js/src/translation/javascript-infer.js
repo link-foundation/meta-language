@@ -1,4 +1,7 @@
 import {requireCallableConstantApplicationCapture} from './rust-module-value-rules.js';
+import {readClosedClassMethodTarget} from './javascript-class-methods.js';
+import {readJavaScriptSourceClassOwner} from './javascript-class-owners.js';
+import {readJavaScriptClassOwnerInference} from './javascript-class-owner-rules.js';
 import {readJavaScriptNominalSpreadError} from './javascript-nominal-spread-rules.js';
 import {readJavaScriptDataFieldInferenceForm,acceptJavaScriptDataFieldOwnerFallback} from './javascript-data-field-rules.js';
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
@@ -30,6 +33,8 @@ import { readReferenceMethodResult } from './reference-method-rules.js';
 import { readCollectionAccessResult } from './collection-access-rules.js';
 import { inferCollectionConstruction } from './collection-construction.js';
 import {solveCollectionCopyInputs,normalizeCollectionCopyInputs} from './collection-copies.js';
+import {readDisjointCollectionIterationSourceOperation,readDisjointCollectionSpreadSourceOperation} from './disjoint-collection-iteration-rules.js';
+import {readClosedCollectionIterationOperand} from './source-collection-iterations.js';
 import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
 import { readJavaScriptBindingDefaultConstraints } from './array-binding-inference.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
@@ -69,6 +74,8 @@ export function inferJavaScriptTypes(program) {
   const untyped = program.items.some((item) => item.k === 'data' && item.ctors.some((ctor) => ctor.fields.some((field) => !field.type)));
   if (!untyped && functions.every(({ fn }) => fn.ret && fn.params.every((param) => param.type)) && !hasStructuralInference(program)) return markSharedReferenceTypes(program);
   const inference = new Inference(program.items, requiresJavaScriptProductProof(program));
+  inference.sourceClassMethods=program.sourceClassMethods??[];
+  inference.sourceClassOwners=program.sourceClassOwners;
   inference.run(functions, program.main, program.externals ?? []);
   if (inference.recordExpressionTypes) Object.defineProperty(program, 'inferredExpressionTypes', { value: inference.expressionTypes });
   return markSharedReferenceTypes(program);
@@ -98,6 +105,8 @@ class Inference {
       if (item.k === 'data') this.data.set(item.name, item.ctors);
     }
     this.bindings = [];
+    this.sourceClassMethods=[];
+    this.sourceClassOwners=undefined;
     this.unificationChanges = 0;
     this.bigints = new Set();
     this.plus = [];
@@ -252,6 +261,10 @@ class Inference {
       return;
     }
     if (a.kind === 'record' && b.kind === 'record') {
+      const owner=readJavaScriptClassOwnerInference(a.sourceClassOwner??'',b.sourceClassOwner??'',a.open===true,b.open===true);
+      if(owner==='error')throw typeError('an actual class constructor owner cannot be erased or replaced by a plain record',where);
+      if(owner==='left'){a.sourceClassOwner=b.sourceClassOwner;this.unificationChanges+=1;}
+      if(owner==='right'){b.sourceClassOwner=a.sourceClassOwner;this.unificationChanges+=1;}
       let phase = 0;
       let index = 0;
       for (;;) {
@@ -396,6 +409,14 @@ class Inference {
   solve() {
     for (let progress = true; progress;) {
       progress = false;
+      for(let at=0;at<this.sourceClassMethods.length;at+=3){
+        const brand=this.sourceClassMethods[at],helper=this.signature([ROOT,this.sourceClassMethods[at+2]]);
+        if(!helper?.params.length)continue;
+        for(const signature of this.signatures.values()){
+          const owner=this.resolve(signature.ret);if(owner.kind!=='record'||!owner.fields.some(field=>field.name===brand))continue;
+          const before=this.unificationChanges;this.unify(helper.params[0],owner);if(this.unificationChanges!==before)progress=true;break;
+        }
+      }
       for (const constraint of [...this.plus]) {
         if (this.plusStep(constraint, false)) {
           this.plus.splice(this.plus.indexOf(constraint), 1);
@@ -1106,6 +1127,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readDisjointCollectionIterationSourceOperation()||node.op===readDisjointCollectionSpreadSourceOperation())return this.expr(readClosedCollectionIterationOperand(node).iterable,env,expected);
         if(node.op===readJavaScriptRecursiveBindingIterableOperation()){
           if(node.args.length!==1||node.args[0].spread)throw typeError('a recursive binding iterator needs one actual operand',node.span);
           const object=this.expr(node.args[0].value,env),result=this.fresh();this.recursiveBindingIterables.push({object,result,where:node.span});return result;
@@ -1224,7 +1246,11 @@ class Inference {
   call(path, args, env, where) {
     const signature = this.signature(path);
     let argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
-    const excess=signature?planJavaScriptExcessArguments('JavaScript',signature.params.length,args.length):[];
+    return this.callTerms(signature,argTypes,where,args.map(arg=>arg.span??where));
+  }
+
+  callTerms(signature,argTypes,where,spans=[]){
+    const excess=signature?planJavaScriptExcessArguments('JavaScript',signature.params.length,argTypes.length):[];
     if(excess.length)argTypes=excess.slice(1,excess[0]+1).map(index=>argTypes[index]);
     if(signature)argTypes=completeMissingCallableInference(this,signature.params,argTypes,signature.defaults,where,false);
     // Resolve omission after body constraints; supplied prefix terms and the
@@ -1237,7 +1263,7 @@ class Inference {
       const operation = readParameterDefaultArgumentInference(signature.defaults[index], signature.optionalParams[index], actual.kind, actual.absence ?? '');
       if (operation === 'defer') return;
       const value = operation === 'element' ? actual.element : type;
-      this.unify(value, param, args[index]?.span ?? where);
+      this.unify(value, param, spans[index] ?? where);
       if (param.kind === 'var' && this.resolve(value).kind === 'option') this.bindings[param.id] = this.resolve(value);
     });
     return signature.ret;
@@ -1368,7 +1394,8 @@ class Inference {
         entries.push({ spread: false, name: entry.name, type: declared ?? value });
       }
     }
-    const term = { kind: 'record', fields: readRecordFieldInsertionOrder(recordNameUnits(fields)).map(index => ({ name: fields[index].name, type: fields[index].type })), ...(unknownSpread && { open: true }) };
+    const sourceClassOwner=node.type?.sourceClassOwner??want?.sourceClassOwner??readJavaScriptSourceClassOwner(this.sourceClassOwners,fields.map(field=>field.name));
+    const term = { kind: 'record', fields: readRecordFieldInsertionOrder(recordNameUnits(fields)).map(index => ({ name: fields[index].name, type: fields[index].type })), ...(unknownSpread && { open: true }),...(sourceClassOwner!==undefined?{sourceClassOwner}:{}) };
     if (unknownSpread) this.recordSpreads.push({ term, entries, where: node.span });
     this.records.set(node, term);
     return term;
@@ -1409,6 +1436,10 @@ class Inference {
     }
     if(receiver.kind==='record'){
       const field=receiver.fields.find(field=>field.name===op);
+      if(!field){const target=readClosedClassMethodTarget(this.sourceClassMethods,receiver,op);
+        if(target){const signature=this.signature([ROOT,target]);if(!signature)throw typeError('a closed class method needs its actual declared helper',where);this.unify(result,this.callTerms(signature,[object,...args],where),where);return true;}
+        if(!force&&receiver.open===true&&this.sourceClassMethods.some((value,index)=>index%3===1&&value===op))return false;
+      }
       if(!field)return true;
       const callable=this.resolve(field.type);
       if(callable.kind==='var'){this.computedCalls.push({fn:field.type,args,result,where});return true;}

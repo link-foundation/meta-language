@@ -8,6 +8,9 @@ pub(super) struct ClassSource {
     pub(super) text: String,
     intervals: Vec<f64>,
     brands: Vec<String>,
+    public_fields: Vec<String>,
+    pub(super) prototype_methods: Vec<String>,
+    pub(super) owners: serde_json::Value,
 }
 
 #[allow(clippy::cast_precision_loss)] // actual token columns are bounded before transport
@@ -59,7 +62,7 @@ pub(super) fn read(
     let prefix = crate::translation::source_identifiers::read_source_parser_identifier_supply(
         source, tokens,
     );
-    let (at, brands, changed, error, intervals, text) =
+    let (at, brands, changed, error, intervals, owner_rows, prototype_methods, public_fields, text) =
         rules::lower_java_script_closed_class_source(
             &Text::from_text(source),
             &values,
@@ -100,6 +103,9 @@ pub(super) fn read(
         text: text.to_string(),
         intervals,
         brands: brands.iter().map(ToString::to_string).collect(),
+        public_fields: public_fields.iter().map(ToString::to_string).collect(),
+        prototype_methods: prototype_methods.iter().map(ToString::to_string).collect(),
+        owners: crate::translation::class_owners::owners_from_rows(&owner_rows)?,
     }))
 }
 
@@ -219,6 +225,8 @@ fn validate_uses(surface: &SProgram, plan: &ClassSource) -> Result<()> {
             None,
         )
     })?;
+    let facts=crate::translation::surface_reference_facts::create_surface_reference_facts(&value);
+    let declarations=crate::translation::collection_construction_rules::read_collection_construction_field(&facts.starts,&facts.counts,&facts.labels,&facts.targets,facts.root,"declarations");
     let mut pending = vec![(&value, false)];
     while let Some((node, direct)) = pending.pop() {
         let kind = node
@@ -247,13 +255,17 @@ fn validate_uses(surface: &SProgram, plan: &ClassSource) -> Result<()> {
             .and_then(serde_json::Value::as_str)
             .is_some_and(|name| plan.brands.iter().any(|brand| brand == name));
         let callable = node.get("type").is_some_and(|ty| ty["kind"] == "function");
-        let error = rules::read_java_script_closed_class_use_error(
+        let receiver_fields=object.and_then(|object|object.get("type")).and_then(|ty|ty.get("fields")).and_then(serde_json::Value::as_array).map(|fields|fields.iter().filter_map(|field|field.get("name").and_then(serde_json::Value::as_str)).map(Text::from_text).collect::<Vec<_>>()).unwrap_or_default();
+        let public_fields=plan.public_fields.iter().map(|field|Text::from_text(field)).collect::<Vec<_>>();
+        let own_field=rules::accept_java_script_closed_class_own_field(&receiver_fields,&public_fields,&Text::from_text(node.get("field").and_then(serde_json::Value::as_str).unwrap_or("")));
+        let error = rules::read_java_script_closed_class_own_field_use_error(
             &Text::from_text(kind),
             &Text::from_text(operation),
             instance,
             private_field,
             callable,
             direct,
+            own_field,
         );
         if !error.0.is_empty() {
             return Err(unsupported(
@@ -261,6 +273,18 @@ fn validate_uses(surface: &SProgram, plan: &ClassSource) -> Result<()> {
                 &error.to_string(),
                 Some(Span::new(0, plan.text.encode_utf16().count())),
             ));
+        }
+        let proof=node.get("p").and_then(serde_json::Value::as_str).unwrap_or("");
+        let identity=kind=="strictEqual"||kind=="binary"&&["eq","ne"].contains(&operation)||["eq","ne"].contains(&proof)&&node.get("reference").and_then(serde_json::Value::as_bool)==Some(true);
+        let observed_brands=if identity{plan.owners["owners"].as_array().into_iter().flatten().filter(|owner|owner["representation"]=="prototype helpers").filter_map(|owner|owner["brand"].as_str().map(str::to_owned)).collect::<Vec<_>>()}else{plan.brands.clone()};
+        let operands=crate::translation::javascript_class_observation_rules::read_java_script_closed_class_observation_operation_operands(kind,proof,operation);
+        for key in operands.split_whitespace(){
+            let Some(operand)=node.get(key)else{continue};
+            let values=match operand{serde_json::Value::Array(values)=>values.iter().collect::<Vec<_>>(),other=>vec![other]};
+            for operand in values{if let Some(ty)=operand.get("type"){
+                let root=facts.values.iter().position(|value|std::ptr::eq(*value,ty)).and_then(|at|serde_json::Number::from(at).as_f64()).unwrap_or(-1.0);
+                if crate::translation::javascript_class_observation_rules::contains_java_script_closed_class_brand(&facts.texts,&facts.starts,&facts.counts,&facts.labels,&facts.targets,root,declarations,&observed_brands){return Err(unsupported("JavaScript closed class observation","class instances and nested class values require an explicit observation model; hidden source brands are not printable or structural equality data",Some(Span::new(0,plan.text.encode_utf16().count()))));}
+            }}
         }
         match node {
             serde_json::Value::Array(values) => {

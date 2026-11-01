@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use super::array_rules::{
     accept_rust_fresh_array_result_tail, accept_rust_source_array_coercion,
-    accept_rust_source_array_owner,
+    accept_rust_source_array_owner,accept_rust_source_array_element,
 };
 use super::indirection_rules::{
     accept_rust_immutable_indirection_layer, accept_rust_source_box_availability,
@@ -42,12 +42,18 @@ pub(super) struct SourceOrigin {
     /// the generated datatype spelling and re-resolved against the catalog.
     pub(super) standard_sum_source: Option<Box<super::standard_sum_source::StandardSumSource>>,
     pub(super) source_binding_identity: Option<String>,
+    pub(super) source_lexical_binding_identity: Option<String>,
+    pub(super) source_record_state_collecting_site: Option<Span>,
+    pub(super) source_value_borrow_bindings: Vec<String>,
+    pub(super) source_value_field_borrow_bindings: Option<Vec<Vec<String>>>,
     pub(super) source_place_binding_identity: Option<String>,
     pub(super) source_loan_binding_identities: Vec<String>,
     pub(super) source_place_loan_binding_identities: Vec<String>,
     pub(super) source_owned_result_proof: bool,
     pub(super) source_standard_sum_pattern_move: bool,
     pub(super) source_standard_sum_borrowed_field: bool,
+    pub(super) source_nominal_pattern_move: bool,
+    pub(super) source_nominal_borrowed_field: bool,
     pub(super) source_byte_iterator: bool,
     pub(super) source_borrowed_place: bool,
     pub(super) source_extending_temporary_bindings: Vec<String>,
@@ -151,12 +157,18 @@ impl SourceOrigin {
             array_element_copy_evidence: false,
             source_lifetimes: Vec::new(),
             source_binding_identity: None,
+            source_lexical_binding_identity: None,
+            source_record_state_collecting_site: None,
+            source_value_borrow_bindings: Vec::new(),
+            source_value_field_borrow_bindings: None,
             source_place_binding_identity: None,
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
             source_standard_sum_pattern_move: false,
             source_standard_sum_borrowed_field: false,
+            source_nominal_pattern_move:false,
+            source_nominal_borrowed_field:false,
             source_byte_iterator: false,
             source_borrowed_place: false,
             source_extending_temporary_bindings: Vec::new(),
@@ -210,12 +222,18 @@ impl SourceOrigin {
             array_element_copy_evidence,
             source_lifetimes: Vec::new(),
             source_binding_identity: None,
+            source_lexical_binding_identity: None,
+            source_record_state_collecting_site: None,
+            source_value_borrow_bindings: Vec::new(),
+            source_value_field_borrow_bindings: None,
             source_place_binding_identity: None,
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
             source_standard_sum_pattern_move: false,
             source_standard_sum_borrowed_field: false,
+            source_nominal_pattern_move:false,
+            source_nominal_borrowed_field:false,
             source_byte_iterator: false,
             source_borrowed_place: false,
             source_extending_temporary_bindings: Vec::new(),
@@ -353,6 +371,7 @@ pub(super) struct SourceOrigins {
     fresh_calls: HashSet<Span>,
     fresh_vector_constructors: HashSet<Span>,
     pub(super) owned_binding_excluded: bool,
+    pub(super) owned_container_source_enabled: bool,
     source_binding_states: HashMap<String, String>,
     next_source_binding_identity: usize,
     owned_argument_transfers: HashSet<Span>,
@@ -361,6 +380,8 @@ pub(super) struct SourceOrigins {
     pub(super) catalog: HashMap<String, SourceDeclaration>,
     pub(super) nominal_copy_derivations: HashMap<String, nominal_copies::NominalCopyDerivation>,
     pub(super) nominal_copy_owners: HashSet<String>,
+    pub(super) nominal_ownership_declarations: HashMap<String,super::nominal_ownership::NominalOwnershipDeclaration>,
+    pub(super) nominal_ownership_scope_complete: bool,
     pub(super) unit_clone_facts: HashMap<String, (Option<serde_json::Value>, bool)>,
     pub(super) scope: HashMap<String, SourceOrigin>,
     pub(super) current_type: SourceOrigin,
@@ -405,6 +426,7 @@ impl SourceOrigins {
             fresh_vector_constructors: HashSet::new(),
             collecting: catalog.is_none(),
             owned_binding_excluded: false,
+            owned_container_source_enabled: false,
             source_binding_states: HashMap::new(),
             next_source_binding_identity: 0,
             owned_argument_transfers: HashSet::new(),
@@ -413,6 +435,8 @@ impl SourceOrigins {
             unit_clone_facts: HashMap::new(),
             nominal_copy_derivations: HashMap::new(),
             nominal_copy_owners: HashSet::new(),
+            nominal_ownership_declarations: HashMap::new(),
+            nominal_ownership_scope_complete: false,
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
@@ -435,6 +459,7 @@ impl SourceOrigins {
                 } else {
                     origin
                 };
+                let origin=if origin.source_lexical_binding_identity.is_none(){self.assign_copy_closure_lexical_binding(origin)}else{origin};
                 (name, origin)
             })
             .collect();
@@ -550,7 +575,7 @@ impl SourceOrigins {
             .and_then(|fields| fields.get(*index))
             .cloned()
             .unwrap_or_else(SourceOrigin::unknown);
-        self.mark(node, field);
+        self.mark(node, super::copy_closure_lifetimes::project_value_field(&origin,field,*index));
         Ok(())
     }
 
@@ -694,6 +719,7 @@ impl SourceOrigins {
 
     /// Compare retained source types by their existing declaration identities.
     pub(super) fn same_origin(&self, left: &SourceOrigin, right: &SourceOrigin) -> bool {
+        if !crate::translation::rust_copy_closure_rules::read_rust_copy_closure_join_error(left.copy_closure_identity.is_some(),right.copy_closure_identity.is_some(),left.copy_closure_identity==right.copy_closure_identity).is_empty(){return false;}
         if !crate::translation::rust_callable_owner_rules::accept_rust_callable_owner_descriptors_equal(&callable_owners::descriptor(left),&callable_owners::descriptor(right)){return false;}
         self.compare_origin_structure(left, right)
     }
@@ -1059,6 +1085,8 @@ impl SourceOrigins {
                     &origin.source_extending_temporary_bindings,
                 )
             });
+        let source_value_borrow_bindings=returning.iter().fold(Vec::new(),|all,origin|crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&all,&super::copy_closure_lifetimes::value_borrows(origin)));
+        let source_value_field_borrow_bindings=if returning.iter().all(|origin|origin.source_value_field_borrow_bindings==first.source_value_field_borrow_bindings){first.source_value_field_borrow_bindings.clone()}else{None};
         let source_loan_binding_identities = if first.wrappers.is_empty() {
             Vec::new()
         } else {
@@ -1077,6 +1105,9 @@ impl SourceOrigins {
             .all(|origin| self.same_origin(origin, first))
         {
             return SourceOrigin {
+                source_lexical_binding_identity:None,
+                source_value_borrow_bindings,
+                source_value_field_borrow_bindings,
                 integer_source_owner_constraint: Some(select_rust_pointer_integer_result_owner(
                     &owners,
                 )),
@@ -1100,6 +1131,8 @@ impl SourceOrigins {
                     .all(|origin| origin.source_owned_result_proof),
                 source_standard_sum_pattern_move: returning.iter().any(|origin|origin.source_standard_sum_pattern_move),
                 source_standard_sum_borrowed_field: returning.iter().any(|origin|origin.source_standard_sum_borrowed_field),
+                source_nominal_pattern_move:returning.iter().any(|origin|origin.source_nominal_pattern_move),
+                source_nominal_borrowed_field:returning.iter().any(|origin|origin.source_nominal_borrowed_field),
                 source_binding_identity: if returning
                     .iter()
                     .all(|origin| origin.source_binding_identity == first.source_binding_identity)
@@ -1159,6 +1192,8 @@ impl SourceOrigins {
             let integer_owner = select_rust_pointer_integer_result_owner(&owners);
             return SourceOrigin {
                 wrappers: first.wrappers.clone(),
+                source_value_borrow_bindings,
+                source_value_field_borrow_bindings,
                 copy_evidence: returning
                     .iter()
                     .all(|origin| origin.copy_evidence.is_some())
@@ -1175,6 +1210,8 @@ impl SourceOrigins {
                 text_source_model,
                 source_standard_sum_borrowed_field: returning.iter().any(|origin|origin.source_standard_sum_borrowed_field),
                 source_standard_sum_pattern_move: returning.iter().any(|origin|origin.source_standard_sum_pattern_move),
+                source_nominal_pattern_move:returning.iter().any(|origin|origin.source_nominal_pattern_move),
+                source_nominal_borrowed_field:returning.iter().any(|origin|origin.source_nominal_borrowed_field),
                 ..SourceOrigin::value()
             };
         }
@@ -1193,8 +1230,9 @@ impl SourceOrigins {
             .iter()
             .filter(|origin| !origin.diverging)
             .collect::<Vec<_>>();
-        if let Some(first) = returning.first() {
-            for origin in &returning {
+        let mut groups=vec![returning];while let Some(group)=groups.pop(){
+          if let Some(first) = group.first() {
+            for origin in &group {
                 let error =
                     crate::translation::rust_copy_closure_rules::read_rust_copy_closure_join_error(
                         first.copy_closure_identity.is_some(),
@@ -1202,9 +1240,11 @@ impl SourceOrigins {
                         first.copy_closure_identity == origin.copy_closure_identity,
                     );
                 if !error.is_empty() {
-                    return Err(unsupported("Rust closure source join", error, None));
+                    return Err(unsupported("Rust closure source join", &error, None));
                 }
             }
+            if let Some(fields)=first.fields.as_ref(){if group.iter().all(|origin|origin.fields.as_ref().is_some_and(|next|next.len()==fields.len())){for at in 0..fields.len(){groups.push(group.iter().map(|origin|&origin.fields.as_ref().expect("actual joined fields")[at]).collect());}}}
+          }
         }
         Ok(self.join(origins))
     }
@@ -1257,7 +1297,8 @@ impl SourceOrigins {
     }
 
     pub(super) fn mark_owned_string_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
-        origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;
+        origin.source_lexical_binding_identity=None;origin.source_value_borrow_bindings.clear();origin.source_value_field_borrow_bindings=None;
+        origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;origin.source_nominal_borrowed_field=false;origin.source_nominal_pattern_move=false;
         origin.source_binding_identity = None;
         origin.source_place_binding_identity = None;
         origin.source_extending_temporary_bindings.clear();
@@ -1273,8 +1314,13 @@ impl SourceOrigins {
             );
         self.mark(node, origin);
     }
-    pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
-        origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;
+    pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) ->Result<()> {
+        let values=match &node.node{SNode::Array{items,..}=>items.iter().map(|item|self.origin(&item.value,&origin.path)).collect::<Vec<_>>(),_=>Vec::new()};
+        let element=match origin.ty.as_ref(){Some(Type::Array{element,..})=>{let mut value=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());self.retain_nominal_copy_origin(&mut value);if let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|owner|owner.kind=="library"&&owner.path.join("::")=="std::vec::Vec"&&owner.arguments.len()==1){value.source_owner=Some(owner.arguments[0].clone());}Some(value)},_=>None};
+        let invalid_type=element.as_ref().is_some_and(|element|!accept_rust_source_array_element(element.ty.as_ref().map_or("",Type::kind),false)&&!self.nominal_vector_element(element));
+        if invalid_type||values.iter().any(|value|(value.ty.is_some()||value.fields.is_some()||!value.wrappers.is_empty())&&!accept_rust_source_array_element(value.ty.as_ref().map_or("tuple",Type::kind),!value.wrappers.is_empty())&&!self.nominal_vector_element(value)){return Err(unsupported("Rust array element","only direct immutable scalar, owned string or verified nominal Copy vector elements are admitted",node.span));}
+        origin.source_lexical_binding_identity=None;origin.source_value_borrow_bindings.clear();origin.source_value_field_borrow_bindings=None;
+        origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;origin.source_nominal_borrowed_field=false;origin.source_nominal_pattern_move=false;
         if let Some(span) = node.span {
             self.fresh_vector_constructors.insert(span);
         }
@@ -1285,6 +1331,7 @@ impl SourceOrigins {
         origin.source_extending_temporary_bindings.clear();
         origin.source_borrowed_place = false;
         self.mark(node, origin);
+        Ok(())
     }
 
     pub(super) fn fresh_vector_argument(
@@ -1365,7 +1412,8 @@ impl SourceOrigins {
 
     pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) -> Result<()> {
         let mut origin = self.origin(node, path);
-        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if !(origin.source_standard_sum_borrowed_field&&origin.source_borrowed_place)&&self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){if let Some(identity)=origin.source_lexical_binding_identity.as_ref(){origin.source_value_borrow_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&super::copy_closure_lifetimes::value_borrows(&origin),std::slice::from_ref(identity));}}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if !((origin.source_standard_sum_borrowed_field||origin.source_nominal_borrowed_field)&&origin.source_borrowed_place)&&self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&origin.source_place_binding_identity.is_some(){origin.source_binding_identity=origin.source_place_binding_identity.clone();}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_loan_binding_identities=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_loan_binding_identities,&origin.source_place_loan_binding_identities);}
         origin.wrappers.insert(0, layer.to_owned());
@@ -1406,7 +1454,9 @@ impl SourceOrigins {
         if lifetime && !origin.source_lifetimes.is_empty() {
             origin.source_lifetimes.remove(0);
         }
+        self.validate_copy_closure_value_borrows(&origin,span)?;
         origin=self.finish_standard_sum_field_dereference(origin,span)?;
+        if origin.wrappers.is_empty()&&origin.direct_copy_value(){origin=super::copy_closure_lifetimes::carry_value_borrows(origin.clone(),&origin);}
         self.mark(node, origin);
         Ok(())
     }
@@ -1459,11 +1509,14 @@ impl SourceOrigins {
             binding.source_loan_binding_identities = actual.source_loan_binding_identities.clone();
         }
         binding.source_extending_temporary_bindings.clear();
+        binding.source_record_state_collecting_site=None;
         binding.source_place_binding_identity = None;
         binding.source_place_loan_binding_identities.clear();
         binding.fresh_array_value = None;
         binding.fresh_vector_result_contract = false;
         let binding = self.register_owned_binding(binding);
+        let binding=super::copy_closure_lifetimes::carry_value_borrows(binding,&actual);
+        let binding=self.assign_copy_closure_lexical_binding(binding);
         self.scope.insert(name.to_owned(), binding);
         Ok(())
     }

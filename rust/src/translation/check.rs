@@ -92,6 +92,8 @@ mod string_unit_calls;
 mod strings;
 mod tuple_patterns;
 mod type_queries;
+mod source_collection_iterations;
+mod class_methods;
 pub use self::recursion::*;
 
 /// Checks a surface program into the portable core.
@@ -567,6 +569,9 @@ struct Checker {
     language: Language,
     reference_semantics: bool,
     checked_projection: bool,
+    closed_collection_iteration_markers: Vec<(String,String)>,
+    source_class_methods: Vec<String>,
+    source_class_owners: Option<serde_json::Value>,
     /// Declaration full names in declaration order.
     order: Vec<String>,
     decls: HashMap<String, Decl>,
@@ -588,6 +593,9 @@ impl Checker {
             language,
             reference_semantics: false,
             checked_projection: false,
+            closed_collection_iteration_markers: Vec::new(),
+            source_class_methods: Vec::new(),
+            source_class_owners: None,
             order: Vec::new(),
             decls: HashMap::new(),
             signatures: HashSet::new(),
@@ -617,6 +625,9 @@ impl Checker {
                 false,
             );
         self.declare(&surface.items, &[])?;
+        self.source_class_methods=surface.source_class_methods.clone();
+        self.source_class_owners=surface.source_class_owners.clone();
+        self.validate_closed_class_method_definitions()?;
         let items = self.check_items(&surface.items)?;
         let main = match &surface.main {
             Some(main) => Some(self.check_main(main)?),
@@ -645,6 +656,7 @@ impl Checker {
             aborts_threaded: false,
             imports: surface.imports.clone(),
             externals: self.externals,
+            source_class_owners: surface.source_class_owners.clone(),
             source_pure_unit_calls: surface.source_pure_unit_calls.clone(),
             source_runtime_shell: surface.source_runtime_shell.clone(),
         };
@@ -655,6 +667,8 @@ impl Checker {
         super::source_pure_unit_calls::validate_source_pure_unit_calls(&program)?;
         super::owned_local_state::validate_owned_local_state(&program)?;
         super::source_const_functions::validate_const_functions(&program)?;
+        super::class_owners::validate_program(&program)?;
+        super::disjoint_collection_iterations::check_program_markers(&mut program,&self.closed_collection_iteration_markers)?;
         if let Some(source) = &surface.source_runtime_shell {
             super::runtime_shell::capture_program(&mut program, source)?;
         }

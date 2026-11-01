@@ -317,6 +317,8 @@ impl<'a> LeanParser<'a> {
         let mut main = None;
         self.items(&mut main, &mut items, &[])?;
         Ok(SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Lean,
             items,

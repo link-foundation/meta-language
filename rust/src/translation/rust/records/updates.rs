@@ -111,6 +111,7 @@ impl RustParser {
                 range,
             )
         };
+        let produced=self.owned_record_update_origin(record,&values,&base,&positions,&body,path,range)?;
         let pattern = SPattern {
             node: SPatternNode::Ctor {
                 path: rooted,
@@ -194,7 +195,7 @@ impl RustParser {
             );
         }
         if let Some(SourceDeclaration::Constructor { result, .. }) = constructor {
-            self.origins.mark(&body, result);
+            self.origins.mark(&body, produced.unwrap_or(result));
         }
         Ok(body)
     }

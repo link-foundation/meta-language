@@ -94,6 +94,7 @@ impl RustParser{
             let mut patterns=vec![first];patterns.extend(second.map(|(pattern,_)|pattern));rows.push(SRow{patterns,body,span});
         }}
         let mut scrutinees=vec![self.combinator_local(&captures,"receiver",span)?];if method.value=="xor"{scrutinees.push(self.combinator_local(&captures,"argument",span)?);}
-        let mut body=SExpr::new(SNode::Match{scrutinees,rows},span);for capture in captures.into_iter().rev(){body=SExpr::new(SNode::Let{name:capture.name,ty:capture.origin.ty.map(Into::into),value:Box::new(capture.value),body:Box::new(body)},span);}let output=self.owned_standard_sum_method_output(result,left_moved,right_moved);self.origins.mark(&body,output);Ok(Some(body))
+        let output=super::copy_closure_lifetimes::carry_value_union(self.owned_standard_sum_method_output(result,left_moved,right_moved),&[&receiver_origin,&right]);
+        let mut body=SExpr::new(SNode::Match{scrutinees,rows},span);for capture in captures.into_iter().rev(){body=SExpr::new(SNode::Let{name:capture.name,ty:capture.origin.ty.map(Into::into),value:Box::new(capture.value),body:Box::new(body)},span);}self.origins.mark(&body,output);Ok(Some(body))
     }
 }

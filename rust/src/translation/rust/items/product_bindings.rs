@@ -8,18 +8,15 @@ use super::super::{
 impl RustParser {
     pub(in super::super) fn let_statement(&mut self, path: &[String]) -> Result<Vec<Binding>> {
         let start = self.cursor.advance();
-        if self.cursor.is("mut") {
-            return Err(unsupported(
-                "mutable binding",
-                "mutation is outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
-        }
+        let mutable_token=self.cursor.eat("mut");
         let pattern = if let Some(pattern) = self.let_else_pattern(path)? {
             ProductBindingPattern::Nominal(pattern)
         } else {
             self.product_binding_pattern()?
         };
+        if mutable_token.is_some()&&!matches!(&pattern,ProductBindingPattern::Name(_)){
+            return Err(unsupported("mutable binding","mutation is outside the portable core",span(&start,mutable_token.as_ref().expect("actual mut token"))));
+        }
         let mut names = std::collections::HashSet::new();
         self.validate_product_binding_names(&pattern, &mut names)?;
         let ty = if self.cursor.eat(":").is_some() {
@@ -87,8 +84,9 @@ impl RustParser {
             self.require_nonconstant_binding(&token.value, path, Some(token.span()))?;
             self.origins
                 .bind(&token.value, &value, path, source_type.as_ref())?;
+            let name=if let Some(mutable)=mutable_token.as_ref(){self.register_owned_record_mutable_binding(&token.value,span(&start,mutable))?}else{token.value};
             return Ok(vec![Binding {
-                name: token.value,
+                name,
                 ty,
                 value,
                 span: range,

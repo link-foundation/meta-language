@@ -85,7 +85,7 @@ impl RustParser {
             if self.cursor.eat("[").is_some() {
                 let element_token = self.peek();
                 let inner = self.parse_type()?;
-                self.array_element(&token, &element_token)?;
+                let element_copy=self.array_element(&token, &element_token)?;
                 self.cursor.expect("]", Some("immutable slice"))?;
                 let result = self.origins.typed(
                     Type::Array {
@@ -96,6 +96,7 @@ impl RustParser {
                     vec!["reference".to_owned()],
                 );
                 self.origins.current_type.array_source_model = Some("immutable slice");
+                self.origins.current_type.array_element_copy_evidence=element_copy;
                 self.origins.current_type.source_lifetimes = vec![source_lifetime];
                 return Ok(result);
             }
@@ -250,17 +251,17 @@ impl RustParser {
             self.cursor.expect("<", Some("Vec"))?;
             let element_token = self.peek();
             let inner = self.parse_type()?;
-            self.array_element(&token, &element_token)?;
+            let element_copy=self.array_element(&token, &element_token)?;
             self.split_type_closing_token();
             self.cursor.expect(">", Some("Vec"))?;
-            return Ok(self.origins.typed(
+            let result=self.origins.typed(
                 Type::Array {
                     element: Box::new(inner),
                     reference: false,
                 },
                 &self.module_path,
                 Vec::new(),
-            ));
+            );self.origins.current_type.array_element_copy_evidence=element_copy;return Ok(result);
         }
         if accept_rust_source_box_owner(&name, false)
             || accept_rust_source_box_owner(&resolved.join("::"), false)
@@ -325,10 +326,10 @@ impl RustParser {
     }
 
     pub(in super::super) fn array_element(
-        &self,
+        &mut self,
         token: &Token,
         element_token: &Token,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let origin = &self.origins.current_type;
         let shadowed = !self.origins.collecting
             && element_token.kind == TokenKind::Identifier
@@ -339,18 +340,19 @@ impl RustParser {
                     &self.module_path,
                 )
                 .is_some();
-        if shadowed
-            || !accept_rust_source_array_element(
+        let nominal=self.origins.nominal_vector_element(origin);
+        let disposition=crate::translation::rust_nominal_ownership_rules::read_rust_nominal_vector_element_admission(!shadowed&&accept_rust_source_array_element(
                 origin.ty.as_ref().map_or("", Type::kind),
                 !origin.wrappers.is_empty(),
-            )
-        {
+            ),nominal,self.header_discovery,self.origins.collecting,self.origins.nominal_ownership_scope_complete,origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64);
+        if disposition=="defer"{self.origins.current_type.proven=false;self.origins.current_type.copy_evidence=None;return Ok(false);}
+        if disposition!="admit" {
             return Err(unsupported(
                 "Rust array element",
-                "only direct immutable scalar and owned string elements are admitted",
+                "only direct immutable scalar, owned string or verified nominal Copy vector elements are admitted",
                 span(token, self.cursor.peek()),
             ));
         }
-        Ok(())
+        Ok(origin.direct_copy_value()||nominal)
     }
 }

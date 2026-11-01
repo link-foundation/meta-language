@@ -11675,7 +11675,8 @@ remain separate deferred obligations.
 
 Consuming standard-sum operations retain actual ownership independently from
 their result's type. The source draft covers eager `unwrap_or`, Option `ok_or`,
-Result `ok`/`err`, Option `unwrap`/`expect`, eager `and`/`or` and Option `xor`,
+Result `ok`/`err`, Option `unwrap`/`expect`, standard `unwrap_or_default`,
+eager `and`/`or` and Option `xor`,
 nested Option `flatten`, and both `transpose` directions for
 supported owned leaves. Self moves before eager arguments; even an unselected
 owned argument is consumed. A fresh result capability requires completed moves
@@ -11686,9 +11687,16 @@ actual owned fields and retain the receiver's independently determined child.
 Nested operations reuse the complete constructor plans and preserve each
 branch's actual payload and error types. Further eager and lazy operations
 remain obligations until their actual consumers are drafted.
+The standard default consumer resolves primitive zero/false/Unit, owned String,
+owned vector and actual Option defaults from complete source identities and
+storage models. An empty vector or Option requires no default implementation
+for its element. Arbitrary nominal `Default` implementations and derivations
+require their separate actual trait interpretation. The selected fallback is
+an ordinary literal or resolved constructor in the branch; no eager default
+callback, guessed trait body or copied ownership capability is introduced.
 
-The initial owned callback source profile covers `unwrap_or_else`, `ok_or_else`,
-`map` and `map_err` with named functions, capture-free closures or inline
+The owned callback source profile covers `unwrap_or_else`, `ok_or_else`,
+`map`, `map_err`, `and_then` and `or_else` with named functions, capture-free closures or inline
 explicit `move` closures whose actual captured bindings independently satisfy
 the complete direct Copy profile. Implicit borrowed environments, captured
 references, function-pointer coercion of a captured environment and owned
@@ -11701,6 +11709,46 @@ complete type, lifetime and callable witnesses remain. Safe function-pointer
 domains may contain supported owned types without inventing Copy payloads.
 Alias expansion must preserve that distinction, including parameter-dependent
 function templates and complete associated owner paths.
+Bind operations require an actual direct same-family callback result, preserving
+Result's complete error for `and_then` or success for `or_else`. Owned predicate
+and `map_or`/`map_or_else` consumers reuse the existing constructor/argument-role
+plans with the same private callback frames. Eager defaults move before mapper
+creation; lazy factories evaluate in source order and only the selected callable
+invokes. First sibling results need actual complete source types; an untyped
+literal or unresolved callback cannot borrow a guessed type from an unrelated
+enclosing return context.
+Owned question-mark propagation consumes the actual standard-sum receiver
+before parsing the successful continuation. Only that continuation receives
+the selected owned payload's fresh tracked identity; a type template cannot
+create it. Residuals use the existing ordered completion algebra and return
+through the nearest actual callable. The independent Copy-only context gate
+retains its exact assertions. A separate primitive conversion profile resolves
+both actual canonical error owners and uses the existing standard primitive
+From conversion plan. Residual constructor origins come from the selected
+actual value and completed transfer, never a cloned return-type template.
+Custom Try, FromResidual and user-defined error conversion interpretations
+require their own complete source models.
+Ordinary standard-sum `clone` reads an actual available value without consuming
+its source binding. The immutable value IR already emits Rust clones for
+non-Copy variable uses, so one ordered receiver capture preserves this source
+operation for the admitted value profile. Supported owned fields must still
+come from a live root or actual producer; a stored type cannot supply a clone
+capability. Actual contained callable borrow obligations survive cloning.
+Shared or mutable handle interpretations need their own cloning/alias model.
+
+Independent policy assertions may be translated automatically as complete
+programs. Source tooling captures literal fixture rows, constant references,
+literal append operations and exact Number spellings without executing a policy
+to derive its expected result. Every original fixture/export/index has one
+actual exported owner in its captured source closure. Multiple independent
+roots reconcile all original coordinates before filtering; unknown, missing or
+duplicate assignments refuse. The source compiler translates the complete
+assertion program and a same-file native test invokes its generated main only
+in the later verification phase. Rust dispatcher semantics are not rewritten
+by hand. Hash-pinned source/closure/program/output and assignment receipts are
+Links data, describing authorship rather than observed behavior. Publication
+preflights exact predecessor ownership and non-symlink paths, preserves edited
+or unexpected files and obeys bounded in-memory/output budgets.
 
 Callable fields use the existing function representation in every emitter.
 Aggregate derivations and observations must reflect actual target capabilities:
@@ -11728,3 +11776,51 @@ Live mutation and unknown effect paths require a complete iterator/effect model.
 These source consumers, original programs and future native/codec/emission
 controls have not been executed. Automatic policy and Links fixture generation,
 source reconciliation and behavioral evidence remain deferred.
+
+
+Ordinary Rust nominal ownership is derived from the actual complete declaration
+field graph. Copy, destructor-free owned values, actual derived Clone and safe
+vector element eligibility are separate facts. A clonable field graph cannot
+supply a missing nominal Clone implementation. Constructor arguments transfer
+exactly once; a multi-field pattern transfers its parent once and cannot also
+move a whole-value alias. Borrowed fields retain the actual parent loan, and
+reference wrapping cannot grant a new temporary lifetime to a matched field.
+Destructor-free record updates evaluate and transfer explicit fields before
+the base, move only selected omitted fields, and retain per-field state in the
+existing ownership snapshots. Untouched fields remain available; whole-value
+reads detect partial moves, including across joins and scope expiry. The exact
+former unsupported update input is preserved as history and a positive source
+control. Recursive or unknown ownership, custom destructors and guarded partial
+moves need their complete interpretations before admission.
+
+Lexical capture provenance belongs to values. Implicit Copy closure captures
+borrow their actual lexical binding until its scope ends; explicit move Copy
+captures avoid that extra borrow but retain loans already contained in the
+captured value. Containers, selected fields, joins, cloning and standard-sum
+operations preserve contained callable loans. Type templates clear all such
+runtime identities. Distinct captured closure sites remain distinct Rust types.
+
+Closed JavaScript classes whose methods construct a known class use data-only
+instance records and actual checked helper dispatch. A source-only table names
+actual brands, methods and helper declarations; inference and checking validate
+those definitions, evaluate the receiver once before arguments, then consume
+the table into ordinary checked applications. Fresh Map/Set constructor defaults
+are evaluated at each missing argument site with ordinary scope resolution.
+Existing detached/replaced method and unsupported object observation gates
+remain requirements; a data-only representation must not silently add object
+identity, display or proof capabilities. The complete own Scope source and
+its identifier helper are retained as source anchors, with supplied closure
+controls; import linking remains a separate actual module-resolution task.
+
+Class data retains an explicit constructor owner in its type identity and
+checked program witness. Text and binary Links encode that owner as an actual
+constructor declaration reference. The witness describes actual data fields,
+method helpers and representation; checking, codec rechecking and each emitter
+validate it against the current declarations and constructor bodies. Removing
+a witness cannot make an owner-tagged record an ordinary record. Legacy class
+identity capabilities remain selected by their actual representation. Schema
+and complete native type source successors preserve historical version guards
+through exact predecessor receipts; optional ownership is separate from Boolean
+neutral defaults. Source generation runs schema publication, classifier
+regeneration and source libraries in separate processes so cached predecessors
+cannot select a successor interpretation. All remain unexecuted source drafts.

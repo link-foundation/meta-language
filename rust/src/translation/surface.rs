@@ -797,6 +797,13 @@ pub struct SMain {
 /// A parsed source program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SProgram {
+    /// Actual class constructor ownership, also retained by checked projection.
+    #[serde(default,rename="sourceClassOwners",skip_serializing_if="Option::is_none",deserialize_with="super::ir::read_present_source_class_owners")]
+    pub source_class_owners: Option<serde_json::Value>,
+    /// Source-only closed class brand/method/helper triples. The checker
+    /// consumes dispatch into ordinary calls; checked archives carry no table.
+    #[serde(default,rename = "sourceClassMethods",skip_serializing_if = "Vec::is_empty")]
+    pub source_class_methods: Vec<String>,
     /// Preserve the raw program representation selector without erasing null.
     #[serde(
         default,

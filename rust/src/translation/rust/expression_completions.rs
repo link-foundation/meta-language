@@ -45,7 +45,7 @@ enum Failure {
     Expression{node:Value,next:Box<Continuation>,depth:usize},
     Packet{node:Value,levels:usize,next:Box<Continuation>,failed:Box<Self>,depth:usize},
 }
-struct Transport<'a>{parser:&'a mut RustParser,path:&'a [String],source_result:&'a SourceOrigin,returned:CompletionContinuation,work:usize,inspection:usize}
+struct Transport<'a>{parser:&'a mut RustParser,path:&'a [String],source_result:&'a SourceOrigin,returned:CompletionContinuation,work:usize,inspection:usize,residual_origins:Vec<SourceOrigin>}
 impl Transport<'_>{
     fn charge(&mut self,depth:usize)->Result<()>{self.work+=1;if self.work>rules::read_rust_expression_completion_limit("work") as usize||depth>rules::read_rust_expression_completion_limit("depth") as usize{return Err(unsupported("Rust expression completion","continuation construction exceeds its finite node/depth budget",None));}Ok(())}
     fn has(&mut self,value:&Value)->Result<bool>{contains(value,&mut self.inspection)}
@@ -68,7 +68,7 @@ impl Transport<'_>{
             Continuation::Propagate{ordinal,next,depth}=>{
                 let attempt=self.parser.standard_sum_try_attempts.get(ordinal).cloned().ok_or_else(||unsupported("Rust question-mark completion","unknown actual source attempt",None))?;
                 let continued=self.visit(encode(&attempt.payload)?,*next,depth+1)?;
-                self.parser.lower_standard_sum_try_completion(ordinal,decode(value)?,self.path,self.source_result,continued,&self.returned)
+                let (expression,origins)=self.parser.lower_standard_sum_try_completion(ordinal,decode(value)?,self.path,self.source_result,continued,&self.returned)?;self.residual_origins.extend(origins);Ok(expression)
             },
             Continuation::Conditional{mut node,next,depth}=>{
                 node["cond"]=value;node["then"]=encode(&self.visit(node["then"].clone(),(*next).clone(),depth+1)?)?;node["else"]=encode(&self.visit(node["else"].clone(),*next,depth+1)?)?;decode(node)
@@ -124,8 +124,8 @@ impl Transport<'_>{
     }
 }
 impl RustParser{
-    pub(super) fn lower_expression_completions(&mut self,expression:SExpr,path:&[String],source_result:&SourceOrigin,continued:CompletionContinuation,returned:CompletionContinuation)->Result<SExpr>{
-        let value=encode(&expression)?;Transport{parser:self,path,source_result,returned,work:0,inspection:0}.visit(value,Continuation::Template(continued),0)
+    pub(super) fn lower_expression_completions(&mut self,expression:SExpr,path:&[String],source_result:&SourceOrigin,continued:CompletionContinuation,returned:CompletionContinuation)->Result<(SExpr,Vec<SourceOrigin>)>{
+        let value=encode(&expression)?;let mut transport=Transport{parser:self,path,source_result,returned,work:0,inspection:0,residual_origins:Vec::new()};let expression=transport.visit(value,Continuation::Template(continued),0)?;Ok((expression,transport.residual_origins))
     }
     pub(super) fn refuse_standard_sum_private_completions<T:Serialize>(&self,value:&T)->Result<()>{
         let value=encode(value)?;if contains(&value,&mut 0)?{return Err(unsupported("Rust question-mark completion","this position requires its complete ordered expression interpretation and actual nearest callable ownership",None));}

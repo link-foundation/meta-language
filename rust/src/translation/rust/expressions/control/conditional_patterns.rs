@@ -38,6 +38,7 @@ impl RustParser {
                 span(start, self.cursor.peek()),
             ));
         }
+        let ownership_base=self.origins.snapshot_owned_bindings();
         let scope = self.origins.cases(&mut alternatives, &scrutinee, path)?;
         let previous = self.origins.enter(Some(scope));
         let result = (|| -> Result<(SExpr, SourceOrigin)> {
@@ -46,6 +47,7 @@ impl RustParser {
             }
             let body = self.block(path)?;
             let origin = self.origins.origin(&body, path);
+            self.origins.expire_owned_bindings(&ownership_base,&origin)?;
             Ok((body, origin))
         })();
         self.origins.scope = previous;

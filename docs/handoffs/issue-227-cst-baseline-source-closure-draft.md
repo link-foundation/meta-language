@@ -6,6 +6,174 @@ architecture specification and supplies no execution or completion evidence.
 The requirement ledger and its source register were not read or changed: their
 online prerequisite is deferred with runtime execution in this drafting phase.
 
+## Disjoint collection iteration source batch
+
+The own-source anchor is `EmitState.assign` in `emit-common.js`: it reads
+`program.declarations.values()` while writing its separate naming maps. The
+new source path wraps only actual eager `for…of receiver.values()` in a closed
+known source scope. Existing general live collection iterator refusals remain.
+`disjoint-collection-iteration-rules.js` and
+`disjoint-collection-projection-rules.js` project the final checked graph into
+actual lexical slots, allocation sites, record fields, call edges and effects.
+Reference names are lookup keys, never distinctness proofs. A final bounded
+fixed point must prove the complete reachable lowered loop cannot mutate the
+captured collection. Unknown container contents, callable bodies, operations
+and effects refuse. Cell replacement remains refused because this first
+profile does not model temporal cell versions. Array index/lookup results have
+unknown provenance; an Array-typed method result is never by itself a fresh
+allocation certificate. Actual `referenceAllocate` nodes establish outer
+identities. Primitive-column reads use the existing required-fact functions.
+
+`source-collection-iterations.js`, the JavaScript parser/inference/checker
+seams and `disjoint-collection-iterations.js` connect this policy to actual
+source consumers. Private pending markers are proof-checked and removed before
+checked IR returns. The root-authored native source-wrapper/checker seams
+consume the same decisions; `disjoint_collection_iterations.rs` only transports
+actual serialized checked terms and the generated numeric plans. The additive
+callback consumers in `collection-copies.js`, `emit-rust.js`, native
+`collection_copies.rs` and `emit_rust/reference_callbacks.rs` retain the existing
+readonly/factory/arity restrictions and permit additional disjoint effects only
+when every relevant original callback passes the same final-program proof.
+
+The independent fixture `disjoint-collection-iterations.mjs` retains two exact
+own-source anchors, 24 literal decisions, seven complete positive originals
+and nine complete refusal originals with literal stdout. Controls include
+distinct fields and helper arguments, an own-shaped closed EmitState class,
+nested Array callbacks, actual Map/Set aliases, aliases recovered through
+array indexing/reduce, opaque Math operations and mutable cell redirection.
+`translation-disjoint-collection-iterations.test.js` and the CI-only producer
+`produce-disjoint-collection-iterations.mjs` reuse the complete physical CST,
+exact source bytes, explicit AST projection without graph mutation, source
+text/binary reload, typed three-transport/four-target and stdout assertions.
+The native `translation_disjoint_collection_iterations.rs` uses the same full
+CI consumer factored from `translation_collection_copies.rs`; the original
+collection-copy test invocation and every prior assertion remain represented.
+
+The initial proof bounds are 4,096 checked expression nodes, 32,768 edges,
+65,536 accumulated facts, 32 aliases per node and 128 fixed-point passes, with
+an additional explicit work budget. Larger/opaque programs and full live
+iterator behavior remain obligations. Generated native policy sources, tests,
+compilation, formatting, validation and runtime observations were not run in
+this batch. These source drafts provide no parity or completion evidence.
+
+The additive keys/entries batch uses the same proof and private-marker path.
+`readDisjointCollectionIterationItemForm` delegates to the established
+collection-access result roles and preserves the original values-only decision
+and fixture unchanged. `collection-items.js` factors the existing JavaScript
+checked key/value/pair construction for both consumers; native transport reuses
+`checked_collection_access` directly. Map entries preserve independent key and
+value types; Set entries retain the same element owner in both pair positions.
+Existing snapshot runtime operations retain insertion order and nested handles.
+`disjoint-collection-item-iterations.mjs` adds ten literal decisions, five
+complete positives and five complete refusal inputs, including pair
+destructuring, nested handle mutation, actual source aliases, nonzero argument
+calls and escaping stored iterators. Its JS test, CI-only producer and native
+test reuse all existing complete source/CST/transport/target assertions. This
+extension was also authored without execution or generation.
+
+The subsequent eager-spread source batch addresses the exact own-source
+`return [...this.assumptions.values()]` and encoding counterpart. It adds an
+`eager snapshot` consumer role to the same shared projection/solver. This role
+requires actual standard collection allocation provenance, with synchronous
+consumption at the existing array-spread operand; it neither fabricates a
+callable loop scope nor ignores mutations that run during a loop body. Earlier
+and later array elements retain their existing left-to-right append structure.
+Later sibling mutations therefore run after the earlier snapshot, and a later
+spread captures at its own later position. A separate private marker prefix is
+registered and erased by both actual final checker consumers. Only closed
+owned name/field receivers and zero-argument standard item operations enter
+this path; stored iterators, factory/index receiver expressions and nonstandard
+source ownership remain outside it.
+
+The new `disjoint-collection-spreads.mjs` fixture contains two exact own-source
+anchors, 12 literal decisions, ten complete positives and four complete
+refusals. It retains literal evaluation traces, an actual single-call producer
+assertion, nested handle aliases and all Map/Set item families. Its JS/native
+tests and CI-only producer use the same complete source/CST/typed/target
+assertions; the native shared consumer now also explicitly counts every
+declared single-call owner in the actual checked native body. No existing
+inputs or assertion cells were removed. Source generation, tests, compilation
+and observations remain deferred.
+
+## Actual closed Scope and composition source batch
+
+Inspection corrected the proposed inheritance anchor: current `RustEmitter`
+does not extend `Emitter`; it composes an EmitState. No speculative inheritance
+implementation was authored. Actual `Scope` in `ir.js` instead exposed two
+concrete gaps: its `reserved = new Set()` constructor default and its `child()`
+method returning a fresh Scope while forwarding the ordinary `ident` function
+field. The literal-only class parameter census remains an exact old policy;
+an additive collection-default census forwards actual zero-argument Map/Set
+expressions to the existing ordinary default parser. Actual lexical/function
+shadows are still checked there, and class-name collisions refuse before
+class rewriting can hide the original constructor owner. Shared class plans
+now carry actual brand/declared-own-field pairs, allowing ordinary stored
+callable fields to travel without admitting detached prototype method slots.
+
+The additive prototype profile is selected when a method constructs an actual
+known closed class. It emits finite instance records containing data fields
+and the private brand, with prototype methods as module helpers taking the
+actual receiver first. The old closure-slot model stays the separate earlier
+profile. The source-only method table has brand/method/helper triples. Actual
+constructor return types seed receiver constraints; ordinary call/default
+constraints select results, and the checker validates actual local helper
+definitions and branded receiver signatures. Receiver capture precedes every
+argument exactly once. The table is consumed into ordinary Core calls and is
+not copied into checked Program or typed archives. Native class/inference/
+checker adapters transport the same decisions and reuse ordinary calls rather
+than implementing an independent object runtime.
+
+`javascript-class-observation-rules.js` and actual JS/native type/declaration
+traversal preserve direct and nested branded aggregate observation refusals
+after prototype Function slots disappear. Scalar field/method observations
+remain ordinary operations. Printing/String conversion, aggregate identity
+comparisons and structural proof operands cannot expose hidden brands. The
+existing raw reflection, method replacement, detached method and unproved
+module-context gates remain. The subsequent persistent owner batch below
+revalidates archived ownership using actual constructor/type edges; no emitter
+guesses ownership from a generated field spelling.
+
+Independent defaults controls live in `closed-class-collection-defaults.mjs`
+(nine decisions, five complete positives, five complete refusals). Prototype
+controls live in `closed-class-prototype-methods.mjs` (two exact source anchors,
+nine method decisions, five observation decisions, five complete positives and
+five complete refusals). These include the complete actual Scope class body,
+Set copy independence through child(), own-shaped backend/state composition,
+call-once/effect order, helper lexical scope, nested handle aliasing and hidden
+brand observations. Each family has a future JS/native full-matrix test and
+CI-only producer using the existing complete CST, byte, source codec, typed
+transport, four-target and stdout assertions. Actual module import closure
+composition remains a separate required frontier. No test, source generation,
+formatting, compiler, validation or product execution ran in this source batch.
+
+The persistent-owner source batch adds `javascript-class-owner-rules.js`,
+`javascript-class-owners.js` and native `class_owners.rs`. Source lowering
+captures actual constructor, brand, representation, declared data fields and
+method/helper ownership. Inference preserves a nominal `sourceClassOwner`
+record type attribute; its type identity and typed Links constructor reference
+are root-authored structural plumbing. Checked programs retain the versioned
+`sourceClassOwners` witness, whereas the private prototype dispatch table still
+disappears into actual Core calls. Shared validation checks the witness against
+actual constructor fresh-reference return flow, helper receiver signatures,
+complete branded record fields and ordinary type identities. It checks direct
+and nested nominal/structural observations at checker, typed archive and all
+four emitter boundaries. The old closure-slot representation retains reference
+identity; the data-only prototype representation retains its observation
+refusals. Missing, contradictory, malformed and orphaned owner data refuse.
+
+`closed-class-owner-witnesses.mjs` adds ten independent policy decisions, four
+complete originals, 16 direct archive edits and three semantic graph edits.
+Controls retain alias/fresh/empty-class identity positives, malformed/null/empty
+owner metadata, dropped witnesses, wrong constructor/helper edges, retagged
+plain records, direct/nested debug and prototype identity observations.
+Restored graph edits run through original/text/binary transports and every
+target; native consumers retain each exact JSON input even when serde itself
+rejects malformed types. Producer, JS tests, support and native unit sources
+are drafted but unexecuted. Formal Lean/Rocq reference allocation/state lowering
+remains required target work: existing four-target positive assertions are
+retained and are not presented as passing. No source generation, tests,
+compilation, validation or runtime observation ran for this batch.
+
 ## Drafted files
 
 - `rust/src/link_network.rs`: corrected the documentation of `LinkNetwork::parse`

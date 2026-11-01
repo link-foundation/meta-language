@@ -98,6 +98,13 @@ impl Inference {
         right: &Rc<RefCell<RecordTerm>>,
         place: Option<Span>,
     ) -> Result<()> {
+        let (left_owner,left_open)={let value=left.borrow();(value.source_class_owner.clone(),value.open)};
+        let (right_owner,right_open)={let value=right.borrow();(value.source_class_owner.clone(),value.open)};
+        match crate::translation::javascript_class_owner_rules::read_java_script_class_owner_inference(left_owner.as_deref().unwrap_or(""),right_owner.as_deref().unwrap_or(""),left_open,right_open).as_str(){
+            "left"=>{left.borrow_mut().source_class_owner=right_owner;self.unification_changes+=1;},
+            "right"=>{right.borrow_mut().source_class_owner=left_owner;self.unification_changes+=1;},
+            "error"=>return Err(type_error("an actual class constructor owner cannot be erased or replaced by a plain record",place)),_=>{}
+        }
         let mut phase = 0.0;
         let mut index = 0.0;
         loop {
@@ -443,6 +450,7 @@ impl Inference {
             }
         }
         let owner = Rc::new(RefCell::new(RecordTerm {
+            source_class_owner: crate::translation::class_owners::source_record_owner(self.source_class_owners.as_ref(),&fields.iter().map(|(name,_)|name.clone()).collect::<Vec<_>>())?,
             fields: insertion_fields(&fields),
             open,
         }));
@@ -529,6 +537,7 @@ impl Inference {
                 }
             }
             let shape = Rc::new(RefCell::new(RecordTerm {
+                source_class_owner: constraint.owner.borrow().source_class_owner.clone(),
                 fields: insertion_fields(&fields),
                 open: false,
             }));

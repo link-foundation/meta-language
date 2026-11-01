@@ -1,6 +1,8 @@
 // Actual consuming receiver/default transitions into shared constructor plans.
 // Copy-only methods keep their existing independent admission and lowering.
 import {unsupported} from './diagnostics.js';
+import {createRustStandardDefaultValue} from './rust-standard-default-values.js';
+import {carryRustCopyClosureValueUnion} from './rust-copy-closure-lifetimes.js';
 import {trackRustOwnedBindings,checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {readRustStandardSumSourceOrigin,readRustStandardSumSourceIdentity,createRustStandardSumSourceOrigin,withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
@@ -21,7 +23,7 @@ export function captureRustOwnedStandardSumMethodValue(parser,value,path){
 export function createRustOwnedStandardSumMethodResult(parser,origin,receiver,argument){
  const result=clone(origin),role=readRustStandardSumOwnershipFacts(parser.origins,result).profile;
  // All capability comes from the consumed real operands, never a type clone.
- for(const key of ['sourceBindingIdentity','sourcePlaceBindingIdentity'])result[key]=null;
+ for(const key of ['sourceBindingIdentity','sourcePlaceBindingIdentity','sourceLexicalBindingIdentity'])result[key]=null;
  for(const key of ['sourceLoanBindingIdentities','sourcePlaceLoanBindingIdentities','sourceExtendingTemporaryBindings'])result[key]=[];
  result.sourceBorrowedPlace=false;result.sourceStandardSumBorrowedField=false;result.sourceStandardSumPatternMove=false;
  result.sourceOwnedResultProof=acceptRustOwnedStandardSumMethodProduction(role,receiver,argument);return result;
@@ -56,12 +58,12 @@ export function readRustOwnedStandardSumMethod(parser,receiver,method,path){
  // Both eager operands are consumed regardless of the selected constructor.
  const receiverMoved=receiverMode==='copy'||table.consumeOwnedBinding(receiverOrigin,receiver.span);let argumentMoved=true;
  if(argumentOrigin&&readRustStandardSumOwnershipFacts(table,argumentOrigin).profile==='owned')argumentMoved=table.consumeOwnedBinding(argumentOrigin,argument.span);
- const result=createRustOwnedStandardSumMethodResult(parser,resultType,receiverMoved,argumentMoved),local=capture=>table.mark({k:'name',path:[capture.name],span},capture.origin),rows=[];
+ const result=carryRustCopyClosureValueUnion(createRustOwnedStandardSumMethodResult(parser,resultType,receiverMoved,argumentMoved),argumentOrigin?[actual,argumentOrigin]:[actual]),local=capture=>table.mark({k:'name',path:[capture.name],span},capture.origin),rows=[];
  for(const variant of readRustStandardSumSourceConstructors(sum.owner)){
   const plan=planRustOwnedStandardSumMethodBranch(sum.owner,variant,method.value);if(plan.length!==2)fail('the actual constructor has no consuming branch',span);
   const count=readRustStandardSumSourceConstructorArity(sum.owner,variant),field=readRustStandardSumSourceFieldArgument(sum.owner,variant),binding=count===1&&plan[1]==='payload'?parser.freshProductBinding():null;
   const payload=binding?table.mark({k:'name',path:[binding],span},sum.arguments[field]):null;
-  const value=plan[1]==='payload'?payload:plan[1]==='argument'?local(captures[1]):null;let body=value;
+  const value=plan[1]==='payload'?payload:plan[1]==='argument'?local(captures[1]):plan[1]==='standard default'?createRustStandardDefaultValue(parser,sum.arguments[0],path,span):null;let body=value;
   if(plan[0]){const constructor=result.standardSumSource.constructorPaths[plan[0]];if(!constructor)fail('the consuming result constructor has no actual datatype owner',span);body=value?{k:'app',fn:{k:'name',path:constructor,span},args:[value],span}:{k:'name',path:constructor,span};}
   if(!body)fail('the consuming branch must retain its actual result value',span);
   rows.push({patterns:[{k:'ctor',path:sum.constructorPaths[variant],args:count===1?[binding?{k:'bind',name:binding,span}:{k:'wild',span}]:[],span}],body,span});

@@ -165,6 +165,8 @@ pub fn parse_javascript_with_scalar_loop_model(source: &str, model: &str) -> Res
                 JavaScriptParser::new(&classes.text, lowered.tokens, &lowered.comments);
             parser.reference_state.enabled = true;
             parser.reference_state.forced = true;
+            parser.closed_class_methods=classes.prototype_methods.clone();
+            parser.closed_class_owners=Some(classes.owners.clone());
             model.clone_into(&mut parser.scalar_loop_model);
             parser.file()
         })();
@@ -268,6 +270,8 @@ pub(crate) fn parse_javascript_bound_in_with_module_representation(
             parser.reference_state.enabled = true;
             parser.reference_state.forced = true;
             parser.readonly_constants.module = readonly_module_constants;
+            parser.closed_class_methods=classes.prototype_methods.clone();
+            parser.closed_class_owners=Some(classes.owners.clone());
             parser.file()
         })();
         return classes::project(result, &classes);
@@ -289,6 +293,9 @@ pub(crate) fn parse_javascript_bound_in_with_module_representation(
     parser
         .module_directory
         .clone_from(&context.module_directory);
+    parser.closed_collection_iteration_scope=crate::translation::disjoint_collection_iteration_rules::accept_disjoint_collection_iteration_scope(
+        module_scope.is_none_or(|scope|scope.known),context.externals.len() as f64,literal_bindings.len() as f64,module_scope.map_or(0,|scope|scope.names.len()) as f64,context.module_directory.is_some(),
+        parser.cursor.tokens.iter().any(|token|token.value=="import"||token.value=="export"));
     parser.file()
 }
 
@@ -492,6 +499,9 @@ struct JavaScriptParser {
     top_level: bool,
     readonly_constants: ReadonlyConstants,
     reference_state: ReferenceSemantics,
+    closed_collection_iteration_scope: bool,
+    closed_class_methods: Vec<String>,
+    closed_class_owners: Option<serde_json::Value>,
     eliminated_owned_array_append_operations: Vec<Span>,
     scalar_loop_model: String,
     /// Functions and data types that loops and joins of statements lower to, and their count.
@@ -520,6 +530,7 @@ struct JavaScriptParser {
 impl JavaScriptParser {
     fn new(source: &str, tokens: Vec<Token>, comments: &[Comment]) -> Self {
         let reference_semantics = reference_analysis::requires_reference_semantics(&tokens, &[]);
+        let closed_collection_iteration_scope=crate::translation::disjoint_collection_iteration_rules::accept_disjoint_collection_iteration_scope(true,0.0,0.0,0.0,false,tokens.iter().any(|token|token.value=="import"||token.value=="export"));
         let generated_prefix =
             crate::translation::source_identifiers::read_source_parser_identifier_supply(
                 source, &tokens,
@@ -550,6 +561,9 @@ impl JavaScriptParser {
                 enabled: reference_semantics,
                 forced: false,
             },
+            closed_collection_iteration_scope,
+            closed_class_methods: Vec::new(),
+            closed_class_owners: None,
             eliminated_owned_array_append_operations: Vec::new(),
             scalar_loop_model: String::new(),
             generated: Vec::new(),

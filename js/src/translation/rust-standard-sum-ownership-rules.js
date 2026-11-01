@@ -24,6 +24,9 @@ export function acceptRustStandardSumOwnedArguments(owner,identities,roles){
 export function readRustStandardSumOwnedConstructorError(owner,fields,arguments_){
  return owner&&(fields===0||fields===1)&&arguments_===fields?'':'an owned sum construction needs its actual constructor owner and exact source field arguments';
 }
+/** @param {boolean} owned @param {boolean} transferred @param {boolean} available
+ * @param {boolean} producer @returns {string} */
+export function readRustStandardSumOwnedFieldProductionError(owned,transferred,available,producer){return !owned||transferred||available||producer?'':'an owned constructor field needs its actual available binding or source producer contract';}
 /** @param {boolean} owned @param {boolean} borrowed @param {boolean} field
  * @returns {string} */
 export function readRustStandardSumOwnedFieldDisposition(owned,borrowed,field){return !owned?'plain':borrowed?'borrow':field?'move':'plain';}

@@ -364,6 +364,7 @@ impl Checker {
         let width = (values.len() - 1).to_string().len();
         let field = |index: usize| format!("argument{index:0width$}");
         let ty = Type::Record {
+            source_class_owner: None,
             fields: values
                 .iter()
                 .enumerate()

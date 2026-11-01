@@ -26,13 +26,13 @@ For each row, a future source audit must record fully drafted / partially drafte
 
 Draft the later CI/control/publication procedures now without executing them. Once every row’s actual code/control draft is complete, start the verification/CI-fix phase; do not wait for unexecuted delivery evidence to exist before permitting that phase, and do not claim delivery merely because drafting is complete. Keep historical verified observations separate and tied to their original commits.
 
-The latest user steering resumes bulk implementation and keeps work solo. Earlier delegation/count requests are preserved historical obligations, not authorization to spawn agents now. Never compile Rust locally. Keep disk use bounded; remove only proven task-owned regenerable scratch and retain evidence/receipts. Source-only generation must not execute represented fixture programs.
+The latest user steering resumes bulk implementation with up to three GPT-6.1-sol medium agents. Root integrates source batches and alone commits/pushes. Earlier solo/count instructions remain historical and are superseded by the current delegation request. Never compile Rust locally. Keep disk use bounded; remove only proven task-owned regenerable scratch and retain evidence/receipts. Source-only generation must not execute represented fixture programs.
 
 ## Ordered milestones
 
 1. **Source audit and work ledger:** TRACE plus OPERATIONS; statically classify every row and build a complete own-source construct inventory.
 2. **Critical baseline code draft:** BASELINE + priority GRAMMAR + MEANING/EDIT/EMBED dependencies. Select complete batches by the real modules they unblock; retain all broader language obligations.
-3. **Remaining full code draft:** finish all catalog rows and FORMAL, MERGE, DYNAMIC and INFERENCE; draft EVIDENCE and DELIVERY automation/controls in parallel where independent, while staying within the user’s current solo constraint.
+3. **Remaining full code draft:** finish all catalog rows and FORMAL, MERGE, DYNAMIC and INFERENCE; draft EVIDENCE and DELIVERY automation/controls in parallel where independent, while staying within the user’s current three-agent limit.
 4. **Global draft audit:** every row has full-scope executable code and independent controls, exact current mappings and no undisclosed construct gap. Missing formal proof/decision-procedure code remains a draft gap.
 5. **Verification and CI repair:** run all declared cells on exact commits, inspect failures, repair actual behavior and repeat coherent batches. Native compilation, full corpora, provers and clean consumers remain CI-only.
 6. **Release and final delivery:** matching published packages, exact downstream installations/workloads, required merge/main reports and every ledger obligation established. Only then consider completion/closing directives.

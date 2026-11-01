@@ -64,7 +64,7 @@ impl RustParser{
         let captured=if role=="owned"{self.owned_standard_sum_method_capture(receiver,path)?}else{actual};
         let moved=role=="copy"||self.origins.consume_owned_binding(&captured,receiver.span)?;
         let result_type=self.standard_sum_nested_result(&source,&inner,&profile,span)?;
-        let result=self.owned_standard_sum_method_output(result_type,moved,true);let capture=self.fresh_product_binding();let local=SExpr::new(SNode::Name {path:vec![capture.clone()]},span);self.origins.mark(&local,captured);
+        let result=super::copy_closure_lifetimes::carry_value_union(self.owned_standard_sum_method_output(result_type,moved,true),&[&captured]);let capture=self.fresh_product_binding();let local=SExpr::new(SNode::Name {path:vec![capture.clone()]},span);self.origins.mark(&local,captured);
         let matched=self.standard_sum_nested_match(&source,&local,&inner,&result,&profile,false,span)?;
         let body=SExpr::new(SNode::Let {name:capture,ty:source.ty.clone().map(Into::into),value:Box::new(receiver.clone()),body:Box::new(matched)},span);self.origins.mark(&body,result);Ok(Some(body))
     }

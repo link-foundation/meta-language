@@ -1,3 +1,4 @@
+import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
 import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
@@ -154,6 +155,7 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  checkJavaScriptClassOwners(program);
   program=prepareOrderedRecordValues(program);
   const targetIdentifier=readJavaScriptIdentifierModel(options.identifierModel,ident);
   if(options.identifierModel!==undefined&&options.scopedBindingModel!==undefined)throw unsupported('JavaScript identifier model composition','the original narrow scoped-binding model requires a separate composition proof');

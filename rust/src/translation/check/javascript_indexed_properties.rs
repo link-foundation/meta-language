@@ -112,6 +112,7 @@ impl Checker {
         let key = self.expr(index, env, path, None, false)?;
         let capture = self.fresh_name("ml_string_index_operands");
         let captured_type = Type::Record {
+            source_class_owner: None,
             fields: vec![
                 TypeField {
                     name: "base".to_owned(),

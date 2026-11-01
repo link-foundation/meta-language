@@ -38,16 +38,36 @@ fn concrete(source:&str,expected:&Value){
 }
 #[test]
 fn actual_collection_copies_retain_all_source_graph_transport_and_native_cells(){
+ assert_collection_fixture("../js/scripts/produce-collection-copies.mjs","standard same-kind collection copy controls 1");
+}
+// Shared physical/semantic transport assertions retain every input cell for
+// the independent collection source families. This is a future CI consumer.
+pub(super) fn assert_collection_fixture(producer_script:&str,model:&str){
  assert_eq!(std::env::var("CI").as_deref(),Ok("true"),"source products compile and run only in CI");
  let compiler=run(Command::new("rustc").arg("--version"));assert!(compiler.ok,"{}",compiler.stderr);let version=compiler.stdout.split_whitespace().nth(1).unwrap();let parts=version.split('.').map(|part|part.parse::<u32>().unwrap()).collect::<Vec<_>>();assert!(parts[0]==1&&(90..100).contains(&parts[1]),"uncovered Rust target compiler {version}; >=1.90 <1.100");
- let producer=run(Command::new("node").current_dir(env!("CARGO_MANIFEST_DIR")).args(["--max-old-space-size=352","--max-semi-space-size=1","../js/scripts/produce-collection-copies.mjs"]));assert!(producer.ok,"{}",producer.stderr);let fixture:Value=serde_json::from_str(&producer.stdout).unwrap();
- assert_eq!(fixture["model"],"standard same-kind collection copy controls 1");assert_eq!(fixture["targets"],json!(["JavaScript","Rust","Lean","Rocq"]));assert_eq!(fixture["transports"],json!(["original","text","binary"]));
+ let producer=run(Command::new("node").current_dir(env!("CARGO_MANIFEST_DIR")).args(["--max-old-space-size=352","--max-semi-space-size=1",producer_script]));assert!(producer.ok,"{}",producer.stderr);let fixture:Value=serde_json::from_str(&producer.stdout).unwrap();
+ assert_eq!(fixture["model"],model);assert_eq!(fixture["targets"],json!(["JavaScript","Rust","Lean","Rocq"]));assert_eq!(fixture["transports"],json!(["original","text","binary"]));
  eprintln!("collection copy selected source Node {} and target Rust {}",fixture["nodeVersion"],version);
  for anchor in fixture["sourceAnchors"].as_array().unwrap(){let path=std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().join(anchor["path"].as_str().unwrap());assert!(fs::read_to_string(path).unwrap().contains(anchor["source"].as_str().unwrap()));}
  let directory=TemporaryDirectory::new("collection-copy-products");let mut cells=0_usize;
  for(index,row)in fixture["cases"].as_array().unwrap().iter().enumerate(){
   let source=row["source"].as_str().unwrap();let expected=row["stdout"].as_str().unwrap();assert_eq!(row["originalStdout"],row["stdout"]);assert_eq!(row["observedStdout"],row["stdout"]);assert_eq!(javascript_stdout(source),expected);concrete(source,&row["concrete"]);
-  let surface=parse_javascript(source).unwrap();assert_eq!(serde_json::to_value(&surface).unwrap(),row["surface"]);check_program(&surface).unwrap();
+  let surface=parse_javascript(source).unwrap();assert_eq!(serde_json::to_value(&surface).unwrap(),row["surface"]);let checked=check_program(&surface).unwrap();
+  if let Some(expected)=row.get("prototypeMethodsExpected").and_then(Value::as_bool){
+   assert_eq!(!surface.source_class_methods.is_empty(),expected);assert_eq!(surface.source_class_methods.len()%3,0);assert!(serde_json::to_value(&checked).unwrap().get("sourceClassMethods").is_none());
+   for method in surface.source_class_methods.chunks_exact(3){
+    let Some(meta_language::translation::ir::Decl::Fn(helper))=checked.declaration(&method[2])else{panic!("actual class helper is required")};
+    let meta_language::translation::types::Type::Record{fields,..}=&helper.params[0].ty else{panic!("actual branded receiver is required")};assert!(fields.iter().any(|field|field.name==method[0]));
+    for declaration in &checked.declarations{if let meta_language::translation::ir::Decl::Fn(function)=declaration{if let meta_language::translation::types::Type::Record{fields,..}=&function.ret{if fields.iter().any(|field|field.name==method[0]){assert!(!fields.iter().any(|field|field.name==method[1]),"prototype method is absent from instance data");}}}}
+   }
+  }
+  for owner in row["singleCallOwners"].as_array().unwrap(){
+   let function=row["singleCallFunction"].as_str().unwrap_or("copy");
+   let Some(meta_language::translation::ir::Decl::Fn(declaration))=checked.declaration(function)else{panic!("actual single-call function {function} is required")};
+   let mut pending=vec![&declaration.body];let mut calls=0_usize;
+   while let Some(node)=pending.pop(){if let meta_language::translation::ir::Node::Call{func,..}=&node.node{if func==owner.as_str().unwrap(){calls+=1;}}pending.extend(node.children());}
+   assert_eq!(calls,1,"{}: actual native source operand call once",row["name"]);
+  }
   let packet=create_typed_program_links(source,"JavaScript").unwrap();assert_eq!(packet.root.as_u64(),row["root"].as_u64().unwrap());assert_eq!(packet.network.to_lino(),row["links"].as_str().unwrap());let binary=encode_link_network_binary(&packet.network,BinaryLinksOptions::default()).unwrap();assert_eq!(json!(binary),row["binary"]);
   for network in [packet.network.clone(),LinkNetwork::from_lino(row["links"].as_str().unwrap()).unwrap(),decode_link_network_binary(&binary,BinaryLinksOptions::default()).unwrap()]{
    assert_eq!(network.to_lino(),packet.network.to_lino());decode_typed_program_links(&network,packet.root).unwrap();

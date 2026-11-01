@@ -149,6 +149,7 @@ impl Inference {
         let mut progress = true;
         while progress {
             progress = false;
+            progress|=self.solve_closed_class_receivers()?;
             let mut waiting = Vec::new();
             for constraint in std::mem::take(&mut self.plus) {
                 if self.plus_step(&constraint, false)? {

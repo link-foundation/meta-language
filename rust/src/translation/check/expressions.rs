@@ -673,6 +673,7 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if op==&crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_source_operation()||op==&crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_spread_source_operation(){return self.closed_collection_iteration(args,span,env,path,expected,op==&crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_spread_source_operation());}
                 if crate::translation::conditional_chain_rules::accept_conditional_chain_operation(
                     op,
                 ) {

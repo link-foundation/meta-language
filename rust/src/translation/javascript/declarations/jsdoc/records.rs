@@ -55,6 +55,7 @@ pub(super) fn read_record_type(
         });
     }
     Ok(Some(Type::Record {
+        source_class_owner: None,
         fields,
         open: false,
         reference: false,

@@ -1,6 +1,7 @@
 // Actual nested source owners into existing complete constructor/match terms.
 import {unsupported} from './diagnostics.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {carryRustCopyClosureValueUnion} from './rust-copy-closure-lifetimes.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue,createRustOwnedStandardSumMethodResult} from './rust-owned-standard-sum-methods.js';
 import {readRustStandardSumSourceOrigin,createRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
@@ -47,7 +48,7 @@ export function readRustStandardSumSourceNested(parser,receiver,method,path){
  checkRustOwnedOrigin(parser.origins,actual,receiver.span);
  const captured=role==='owned'?captureRustOwnedStandardSumMethodValue(parser,receiver,path):actual;
  const moved=role==='copy'||parser.origins.consumeOwnedBinding(captured,receiver.span);
- const result=createRustOwnedStandardSumMethodResult(parser,resultOrigin(parser,source,inner,profile,span),moved,true),capture=parser.freshProductBinding();
+ const result=carryRustCopyClosureValueUnion(createRustOwnedStandardSumMethodResult(parser,resultOrigin(parser,source,inner,profile,span),moved,true),[captured]),capture=parser.freshProductBinding();
  const local=parser.origins.mark({k:'name',path:[capture],span},captured);
  function matched(origin,scrutinee,isInner){
   const sum=origin.standardSumSource,rows=[];

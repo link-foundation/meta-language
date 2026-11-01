@@ -20,10 +20,30 @@ import {rustOwnedStandardSumCallbackOriginals,rustOwnedStandardSumCallbackRefusa
 import {callableDataOriginals,callableDataObservationRefusals,callableDataRecursiveRefusals,callableDataSourceVersionRange} from './callable-data-originals.mjs';
 import {rustOwnedStandardSumMoveCaptureOriginals,rustOwnedStandardSumMoveCaptureRefusals} from './rust-owned-standard-sum-move-captures.mjs';
 import {rustOwnedStandardSumBindOriginals,rustOwnedStandardSumBindRefusals} from './rust-owned-standard-sum-bind-callbacks.mjs';
+import {rustStandardDefaultOriginals,rustStandardDefaultRefusals} from './rust-standard-default-values.mjs';
+import {rustOwnedStandardSumPredicateOriginals,rustOwnedStandardSumPredicateRefusals} from './rust-owned-standard-sum-predicates.mjs';
+import {rustStandardSumCopyOwnedCallbackOriginals,rustStandardSumCopyOwnedCallbackRefusals} from './rust-standard-sum-copy-owned-callbacks.mjs';
+import {rustStandardSumOwnedPropagationOriginals,rustStandardSumOwnedPropagationRefusals} from './rust-standard-sum-owned-propagation.mjs';
+import {rustStandardSumCloneOriginals,rustStandardSumCloneRefusals} from './rust-standard-sum-clones.mjs';
+import {rustStandardSumPrimitiveQuestionOriginals,rustStandardSumPrimitiveQuestionRefusals} from './rust-standard-sum-primitive-question-conversions.mjs';
+
+import {rustNominalStandardSumOwnershipOriginals,rustNominalStandardSumOwnershipRefusals} from './rust-nominal-standard-sum-ownership.mjs';
+
+import {rustCopyClosureValueOriginals,rustCopyClosureValueRefusals} from './rust-copy-closure-values.mjs';
+
+import {rustOwnedRecordUpdateOriginals,rustOwnedRecordUpdateRefusals} from './rust-owned-record-updates.mjs';
+
+import {rustOwnedRecordPlaceOriginals,rustOwnedRecordPlaceRefusals} from './rust-owned-record-places.mjs';
 
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
 export const rustStandardSumIntegrationTransports=['original','text','binary'];
+const retainedOriginalCompilerDeclaration=row=>row.originalCompilerOutcome?{
+ ...row,originalCompilerExpectation:row.originalCompilerExpectation??{
+  model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+  outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source',
+ },
+}:row;
 // Future native controls retain every original input and every assertion. This
 // is runner work data, not claimed native evidence or a handwritten interpreter.
 export const rustStandardSumIntegrationNativeControls=[
@@ -46,7 +66,7 @@ export const rustStandardSumIntegrationPreviousRefusals=[
 ];
 
 export const rustStandardSumIntegrationOriginals=[
- ...rustStandardSumSourceOriginals.map(row=>({...row,singleCallOwners:[]})),
+ ...rustStandardSumSourceOriginals.map(row=>({...retainedOriginalCompilerDeclaration(row),singleCallOwners:[]})),
  ...rustStandardSumMethodOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustStandardSumMethodSourceOriginals,
  ...rustArrayLookupOptionOriginals,
@@ -233,6 +253,16 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...callableDataOriginals.map(row=>({singleCallOwners:[],sourceVersionRange:callableDataSourceVersionRange,...row})),
  ...rustOwnedStandardSumMoveCaptureOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedStandardSumBindOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardDefaultOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedStandardSumPredicateOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumCopyOwnedCallbackOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumOwnedPropagationOriginals.map(row=>({singleCallOwners:[],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustStandardSumCloneOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordPlaceOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordUpdateOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustCopyClosureValueOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustNominalStandardSumOwnershipOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumPrimitiveQuestionOriginals.map(row=>({singleCallOwners:[],...row})),
 ];
 rustStandardSumIntegrationOriginals.push(...rustStandardSumIntegrationAdditionalOriginals);
 
@@ -267,6 +297,28 @@ export const rustStandardSumIntegrationRefusals=[
  originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
  outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
  ...rustOwnedStandardSumBindRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustStandardDefaultRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustOwnedStandardSumPredicateRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustStandardSumCopyOwnedCallbackRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustStandardSumOwnedPropagationRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustStandardSumCloneRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustOwnedRecordPlaceRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustOwnedRecordUpdateRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustCopyClosureValueRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustNominalStandardSumOwnershipRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustStandardSumPrimitiveQuestionRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
  originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
  outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
 ];

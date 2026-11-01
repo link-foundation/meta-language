@@ -51,6 +51,7 @@ impl Checker {
             .map(|position| fields[*position].clone())
             .collect::<Vec<_>>();
         let ty = Type::Record {
+            source_class_owner: None,
             fields: selected.clone(),
             ordered: true,
             open: false,

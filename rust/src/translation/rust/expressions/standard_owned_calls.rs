@@ -178,7 +178,7 @@ impl RustParser {
             0.0,
         ) {
             return Ok(Some(
-                self.build_scalar_vector_copy(receiver, origin, range, path),
+                self.build_scalar_vector_copy(receiver, origin, range, path)?,
             ));
         }
         Err(unsupported(

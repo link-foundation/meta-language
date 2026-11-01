@@ -49,7 +49,10 @@ function bindingTargets(program) {
     else if (['array', 'option', 'set', 'cell'].includes(type.kind)) walkType(type.element);
     else if (type.kind === 'tuple') type.elements.forEach(walkType);
     else if (type.kind === 'union') type.alternatives.forEach(walkType);
-    else if (type.kind === 'record') type.fields.forEach(field => walkType(field.type));
+    else if (type.kind === 'record') {
+      if(Object.hasOwn(type,'sourceClassOwner'))reference(type,'sourceClassOwner',schema.references.classConstructor,declarations.get(type.sourceClassOwner));
+      type.fields.forEach(field => walkType(field.type));
+    }
     else if (type.kind === 'map') { walkType(type.key); walkType(type.value); }
     else if (type.kind === 'function') { type.params.forEach(walkType); walkType(type.ret); }
   }

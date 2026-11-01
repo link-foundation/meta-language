@@ -35,8 +35,8 @@ export function lowerRustConditionalChainStages({stages,forms},body,otherwise,sp
  return {...operation('result',[result,otherwise],span),block:true};
 }
 export function readRustConditionalChain(parser,path,start){
- const c=parser.cursor,previous=parser.origins.enter();let syntax,body,bodyOrigin;
- try{syntax=readRustConditionalChainStages(parser,path,start);body=parser.block(path);bodyOrigin=parser.origins.origin(body,path);}
+ const c=parser.cursor,ownershipBase=parser.origins.snapshotOwnedBindings(),previous=parser.origins.enter();let syntax,body,bodyOrigin;
+ try{syntax=readRustConditionalChainStages(parser,path,start);body=parser.block(path);bodyOrigin=parser.origins.origin(body,path);parser.origins.expireOwnedBindings(ownershipBase,bodyOrigin);}
  finally{parser.origins.scope=previous;}
  if(!c.eat('else'))throw unsupported('if without else','the value of an if must be defined on both branches',where(start,c.peek()));
  const otherwise=c.is('if')?parser.ifExpr(path):parser.block(path),span=where(start,c.peek()),origin=parser.origins.join([bodyOrigin,parser.origins.origin(otherwise,path)]);

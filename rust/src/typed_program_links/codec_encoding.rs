@@ -191,6 +191,9 @@ fn semantic_targets(
             if field.is_empty() {
                 continue;
             }
+            if value.get(&field).is_none()&&typed_program_links_schema()["optionalReferenceRoles"].as_array().is_some_and(|roles|roles.iter().any(|optional|optional.as_str()==Some(role.as_str()))){
+                continue;
+            }
             let name = value[&field]
                 .as_str()
                 .ok_or_else(|| error("a checked program reference has no name"))?;

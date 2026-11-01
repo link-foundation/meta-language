@@ -7,6 +7,7 @@ import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
 import { renderSourceTargetIdentifier } from './source-identifier-rules.js';
 import {acceptOrderedRecordNumberStorage} from './ordered-record-layout-rules.js';
+import {planDatatypeDependencyGroups} from './datatype-dependency-group-rules.js';
 
 /** Assumption texts are fixed so that contracts compare across runtimes. */
 export const ASSUMPTIONS = {
@@ -212,8 +213,18 @@ export function unthreaded(what) {
 export function dependencies(entry) {
   const found = new Set();
   const types = (type) => {
-    if (type?.kind === 'data') found.add(type.name);
-    if (type?.kind === 'array') types(type.element);
+    const pending=type?[type]:[],seen=new Set();
+    while(pending.length){
+      const value=pending.pop();if(seen.has(value))continue;seen.add(value);
+      if(seen.size>100000)throw unsupported('datatype dependencies','the actual type graph exceeds its traversal budget');
+      if(value.kind==='data')found.add(value.name);
+      else if(['array','option','set','cell'].includes(value.kind))pending.push(value.element);
+      else if(value.kind==='map')pending.push(value.key,value.value);
+      else if(value.kind==='tuple')pending.push(...value.elements);
+      else if(value.kind==='union')pending.push(...value.alternatives);
+      else if(value.kind==='record')pending.push(...value.fields.map(field=>field.type));
+      else if(value.kind==='function')pending.push(...value.params,value.ret);
+    }
   };
   const visit = (node) => {
     if (!node || typeof node !== 'object') return;
@@ -340,6 +351,20 @@ export function mutualGroups(program) {
     .filter((other) => reach.get(entry.fullName).has(other.fullName) && reach.get(other.fullName).has(entry.fullName))]));
 }
 
+/** Actual datatype SCCs, retaining source order within every mutual unit.
+ * Positivity, finite constructors and target blocks are checked separately. */
+export function datatypeGroups(program){
+  const members=[...program.declarations.values()].filter(entry=>entry.k==='data');
+  if(members.length>8192)throw unsupported('datatype dependencies','the complete datatype dependency graph exceeds its bounded source profile');
+  const positions=new Map(members.map((entry,index)=>[entry.fullName,index])),ends=[],edges=[];
+  for(const entry of members){for(const name of dependencies(entry))if(positions.has(name)){if(edges.length>=131072)throw unsupported('datatype dependencies','the complete datatype dependency graph exceeds its bounded source profile');edges.push(positions.get(name));}ends.push(edges.length);}
+  const plan=planDatatypeDependencyGroups(members.length,ends,edges);
+  if(plan.length!==members.length)throw unsupported('datatype dependencies','the complete datatype dependency graph exceeds its bounded source profile');
+  const units=new Map();for(let index=0;index<members.length;index+=1){const representative=plan[index];if(!Number.isInteger(representative)||representative<0||representative>=members.length)throw unsupported('datatype dependencies','the shared component plan has an invalid actual owner');const unit=units.get(representative)??[];unit.push(members[index]);units.set(representative,unit);}
+  const result=new Map();for(const group of units.values())if(group.length>1)for(const entry of group)result.set(entry.fullName,group);
+  return result;
+}
+
 /**
  * Declarations in an order where each follows everything it uses. Source
  * order is kept where possible and, among ready declarations, the ones in
@@ -350,7 +375,7 @@ export function orderDeclarations(program, { requireContiguousModules = false } 
   const position = new Map(entries.map((entry, index) => [entry.fullName, index]));
   const pending = new Map(entries.map((entry) => [entry.fullName, dependencies(entry)]));
   // A group of mutually recursive functions is ready, and placed, as one.
-  const groups = mutualGroups(program);
+  const groups = new Map([...mutualGroups(program),...datatypeGroups(program)]);
   const unit = (entry) => groups.get(entry.fullName) ?? [entry];
   const done = new Set();
   const order = [];

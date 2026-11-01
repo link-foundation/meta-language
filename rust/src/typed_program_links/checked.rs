@@ -95,6 +95,9 @@ fn validate_type_record(
     utf16_strings: bool,
 ) -> Result<()> {
     if let Some(fields) = value.as_object() {
+        if value["kind"]=="record"&&fields.get("sourceClassOwner").is_some_and(|owner|!owner.as_str().is_some_and(|name|!name.is_empty())){
+            return Err(error("a linked class record needs its actual nonempty constructor owner"));
+        }
         if value["k"] == "binary"
             && value
                 .get("rounding")
@@ -323,6 +326,7 @@ pub(super) fn validate(program: &Program) -> Result<()> {
             ).map_err(|failure|error(failure.to_string()))?;
         }
     }
+    crate::translation::class_owners::validate_program(program).map_err(|failure|error(failure.to_string()))?;
     crate::translation::source_const_functions::validate_const_functions(program)
         .map_err(|failure| error(failure.to_string()))?;
     if crate::translation::runtime_shell::validate_program(program)
@@ -462,6 +466,8 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         })
         .transpose()?;
     let surface = SProgram {
+        source_class_owners: program.source_class_owners.clone(),
+        source_class_methods:Vec::new(),
         reference_semantics: program.reference_semantics.then(|| true.into()),
         language: program.source_language,
         items,

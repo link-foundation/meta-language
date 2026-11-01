@@ -161,6 +161,16 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if op==&crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_source_operation()||op==&crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_spread_source_operation(){
+                    if args.len()!=1||args[0].spread{return Err(crate::translation::diagnostics::unsupported("closed collection iteration","one actual eager for-of source operand is required",expr.span));}
+                    let valid=matches!(&args[0].value.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{op,args,..}if !crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_iteration_item_form("map",op).is_empty()&&args.is_empty()));
+                    if !valid{return Err(crate::translation::diagnostics::unsupported("closed collection iteration","only a direct zero-argument standard keys, values or entries source is admitted",expr.span));}
+                    if op==&crate::translation::disjoint_collection_iteration_rules::read_disjoint_collection_spread_source_operation()
+                        &&!matches!(&args[0].value.node,SNode::ForOfIterable{object,..}if matches!(&object.node,SNode::Method{object:receiver,..}if crate::translation::disjoint_collection_iteration_rules::accept_disjoint_collection_spread_receiver(receiver.node.kind()))){
+                        return Err(crate::translation::diagnostics::unsupported("closed collection spread","the eager source needs an actual owned name or field receiver",expr.span));
+                    }
+                    return self.expr(&args[0].value,env);
+                }
                 if op==&crate::translation::recursive_binding_rules::read_java_script_recursive_binding_iterable_operation().to_string(){if args.len()!=1||args[0].spread{return Err(type_error("a recursive binding iterator needs one actual operand",expr.span));}let object=self.expr(&args[0].value,env)?;let result=self.fresh(false);self.recursive_binding_iterables.push(IterableOf{object,mapper:None,result:result.clone(),place:expr.span});return Ok(result);}
                 if op==&crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(){
                     return self.record_formal_default_term(args,env,expr.span);

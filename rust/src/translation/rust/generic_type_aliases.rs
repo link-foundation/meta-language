@@ -479,7 +479,7 @@ impl RustParser {
             let close=self.cursor.expect(")",Some("generic alias Vec constructor"))?;
             let element=match origin.ty.as_ref(){Some(Type::Array {element,..})=>element.as_ref().clone(),_=>unreachable!("shared vector constructor policy proved the actual element")};
             let node=SExpr::new(SNode::Array {items:Vec::new(),element:Some(element)},Some(Span::new(start.start,close.end)));
-            origin.path=path.to_vec();self.origins.mark_vector_constructor(&node,origin);return Ok(Some(node));
+            origin.path=path.to_vec();self.origins.mark_vector_constructor(&node,origin)?;return Ok(Some(node));
         }
         let constructor_path=constructor_path.ok_or_else(||self.alias_error("the generic alias constructor needs its actual registered variant path",Some(&row)))?;
         let mut end=member.end;let mut args=Vec::new();
@@ -492,7 +492,9 @@ impl RustParser {
             end=self.cursor.expect(")",Some("generic alias standard sum constructor"))?.end;
             if args.len()!=arity{return Err(self.alias_error("generic alias constructor arguments differ from their actual source fields",Some(&row)));}
         }
-        let span=Some(Span::new(start.start,end));self.origins.call(&constructor_path,&args,path,span)?;
+        // The returning constructor helper validates every actual field and
+        // performs only transfers not already recorded by contextual parsing.
+        let span=Some(Span::new(start.start,end));
         let name=SExpr::new(SNode::Name {path:constructor_path},span);
         let node=if args.is_empty(){name}else{SExpr::new(SNode::App {func:Box::new(name),args},span)};
         let arguments=match &node.node{SNode::App {args,..}=>args.as_slice(),_=>&[]};

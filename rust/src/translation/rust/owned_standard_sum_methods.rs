@@ -17,7 +17,7 @@ impl RustParser{
  }
  pub(super) fn owned_standard_sum_method_output(&self,mut origin:SourceOrigin,receiver:bool,argument:bool)->SourceOrigin{
   let role=self.origins.standard_sum_ownership_facts(&origin).profile;
-  origin.source_binding_identity=None;origin.source_place_binding_identity=None;origin.source_loan_binding_identities.clear();origin.source_place_loan_binding_identities.clear();origin.source_extending_temporary_bindings.clear();origin.source_borrowed_place=false;origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;
+  origin.source_binding_identity=None;origin.source_place_binding_identity=None;origin.source_lexical_binding_identity=None;origin.source_loan_binding_identities.clear();origin.source_place_loan_binding_identities.clear();origin.source_extending_temporary_bindings.clear();origin.source_borrowed_place=false;origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;
   origin.source_owned_result_proof=rules::accept_rust_owned_standard_sum_method_production(&role,receiver,argument);origin
  }
  fn owned_standard_sum_method_local(&mut self,capture:&OwnedMethodCapture,span:Option<Span>)->SExpr{
@@ -52,12 +52,13 @@ impl RustParser{
   };
   let receiver_moved=receiver_mode=="copy"||self.origins.consume_owned_binding(&receiver_origin,receiver.span)?;let mut argument_moved=true;
   if let Some(origin)=argument_origin.as_ref(){if self.origins.standard_sum_ownership_facts(origin).profile=="owned"{argument_moved=self.origins.consume_owned_binding(origin,captures[1].value.span)?;}}
-  let result=self.owned_standard_sum_method_output(result_type,receiver_moved,argument_moved);let mut rows=Vec::new();
+  let sources=if let Some(argument)=argument_origin.as_ref(){vec![&actual,argument]}else{vec![&actual]};
+  let result=super::copy_closure_lifetimes::carry_value_union(self.owned_standard_sum_method_output(result_type,receiver_moved,argument_moved),&sources);let mut rows=Vec::new();
   for variant in sum_rules::read_rust_standard_sum_source_constructors(&sum.owner){
    let plan=rules::plan_rust_owned_standard_sum_method_branch(&sum.owner,&variant,&method.value);if plan.len()!=2{return Err(fail("the actual constructor has no consuming branch",span));}
    let count=sum_rules::read_rust_standard_sum_source_constructor_arity(&sum.owner,&variant);let field=sum_rules::read_rust_standard_sum_source_field_argument(&sum.owner,&variant);let binding=(count==1.0&&plan[1]=="payload").then(||self.fresh_product_binding());
    let payload=binding.as_ref().map(|name|{let value=SExpr::new(SNode::Name{path:vec![name.clone()]},span);self.origins.mark(&value,sum.arguments[field as usize].clone());value});
-   let value=match plan[1].as_str(){"payload"=>payload,"argument"=>Some(self.owned_standard_sum_method_local(&captures[1],span)),_=>None};
+   let value=match plan[1].as_str(){"payload"=>payload,"argument"=>Some(self.owned_standard_sum_method_local(&captures[1],span)),"standard default"=>Some(self.standard_default_value(&sum.arguments[0],path,span)?),_=>None};
    let body=if plan[0].is_empty(){value.ok_or_else(||fail("the consuming branch must retain its actual result value",span))?}else{
     let constructor=result.standard_sum_source.as_deref().and_then(|sum|sum.constructor_paths.get(&plan[0])).cloned().ok_or_else(||fail("the consuming result constructor has no actual datatype owner",span))?;
     let name=SExpr::new(SNode::Name{path:constructor},span);if let Some(value)=value{SExpr::new(SNode::App{func:Box::new(name),args:vec![value]},span)}else{name}

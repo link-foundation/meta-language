@@ -35,6 +35,7 @@ import {readJavaScriptStringConstructionOperation} from './string-construction-r
 import {readJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
+import {readClosedCollectionIterationSourceScope,wrapClosedCollectionIteration,wrapClosedCollectionSpread} from './source-collection-iterations.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
@@ -142,15 +143,17 @@ export function parseJavaScript(source, context = {}) {
   const { tokens, comments } = tokenize(source, 'JavaScript');
   const classes=readJavaScriptClosedClassSource(source,tokens,context);
   if(classes){
-    try{return projectJavaScriptClosedClassOrigins(validateJavaScriptClosedClassUses(parseJavaScript(classes.text,{...context,referenceSemantics:true}),classes),classes);}
+    try{return projectJavaScriptClosedClassOrigins(validateJavaScriptClosedClassUses(parseJavaScript(classes.text,{...context,referenceSemantics:true,closedClassMethods:classes.prototypeMethods,closedClassOwners:classes.owners}),classes),classes);}
     catch(error){return projectJavaScriptClosedClassError(error,classes);}
   }
   return new JavaScriptParser(source, tokens, comments, context).file();
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '', moduleBindingNames = [], moduleScopeKnown = true } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '', moduleBindingNames = [], moduleScopeKnown = true, closedClassMethods=[],closedClassOwners=undefined } = {}) {
     this.source = source;
+    this.closedClassMethods=closedClassMethods;
+    this.closedClassOwners=closedClassOwners;
     if (typeof moduleScopeKnown !== 'boolean' || !Array.isArray(moduleBindingNames)
       || moduleBindingNames.length > 100_000) {
       throw unsupported('JavaScript module binding context', 'known actual outer binding names and an explicit Boolean scope fact are required');
@@ -163,6 +166,7 @@ class JavaScriptParser {
     this.readonlyModuleConstants = readonlyModuleConstants;
     this.readonlyConstantInitializer = false;
     this.referenceSemantics = referenceSemantics ?? requiresReferenceSemantics(source);
+    this.closedCollectionIterationScope=readClosedCollectionIterationSourceScope(moduleScopeKnown,externals.length,literalBindings.size,moduleBindingNames.length,moduleDirectory!==null,tokens);
     this.referenceSemanticsEnabled = referenceSemantics !== false;
     this.referenceSemanticsOverride = referenceSemantics;
     this.referenceSemanticsForced = false;
@@ -361,6 +365,8 @@ class JavaScriptParser {
     const main = { effects, span: { start: 0, end: this.source.length } };
     if (this.sequentialAsync) main.sequentialAsync = true;
     const program = { language: 'JavaScript', items, main };
+    if(this.closedClassMethods.length)program.sourceClassMethods=[...this.closedClassMethods];
+    if(this.closedClassOwners!==undefined)program.sourceClassOwners=this.closedClassOwners;
     if (this.eliminatedOwnedArrayAppendOperations.length) {
       this.referenceSemantics = this.referenceSemanticsForced || (this.referenceSemanticsOverride
         ?? requiresReferenceSemantics(this.source, this.eliminatedOwnedArrayAppendOperations));
@@ -1360,7 +1366,7 @@ class JavaScriptParser {
     if (name) reserved(name);
     c.expect('of', 'for…of');
     const value = bindings ? readArrayBindingInitializer(this, bindings, () => this.expr()) : this.expr();
-    const iterable = { k: 'forOfIterable', object: value, span: value.span };
+    const iterable = wrapClosedCollectionIteration(this,{ k: 'forOfIterable', object: value, span: value.span });
     c.expect(')', 'for');
     this.generatedCount += 1;
     const values = `${this.generatedPrefix}temporary_values${this.generatedCount}`;
@@ -2354,7 +2360,7 @@ class JavaScriptParser {
       const spread = c.is('...');
       if (spread) c.next();
       const value = this.expr();
-      items.push({ spread, value: spread ? { k: 'forOfIterable', object: value, span: value.span } : value });
+      items.push({ spread, value: spread ? wrapClosedCollectionSpread(this,{ k: 'forOfIterable', object: value, span: value.span }) : value });
       if (!c.eat(',')) break;
     }
     c.expect(']', 'array literal');

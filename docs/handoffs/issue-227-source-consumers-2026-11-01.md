@@ -231,3 +231,157 @@ policy products and Links fixture snapshots remain pending the permitted
 generation phase and mandatory live source audit. Full frontend integration
 and the remaining architecture work packages remain active work, not a reason
 to stop drafting or claim completion.
+
+Checkpoint `397c2ea4` commits 111 source files and was pushed after predecessor
+run `41259701920` reported completed. No CI conclusions, logs or artifacts were
+read. The next source batch adds standard `unwrap_or_default` consumers and
+owned predicate/multicallback adapters. Default values come from actual
+primitive/String/vector/Option contracts; eight originals and five refusals
+cover no-element-Default bounds, source ownership and unsupported nominal
+trait interpretation. Twenty-six independent policy controls are authored.
+Owned predicate methods reuse the existing predicate semantics and callback
+value admission; their ten originals/eight refusals are registered with the
+common compiler/frontend/codec/emission matrix. The new rules/module/dispatch
+and automatic source-author inputs are wired. All remain unexecuted drafts.
+
+The next automation source work translates complete literal assertion programs
+to native controls, preserving each actual fixture/export/index and expected
+literal rather than handwriting Rust policy dispatch. Collection iteration
+requires a final complete noninterference proof over actual allocation/alias/
+call/write facts before an eager snapshot can replace a live source iterator.
+Keep unknown effects, aliasing mutation and mutable mapper factories explicit
+until their actual models exist. Continue Copy receiver callbacks that introduce
+owned outputs, using actual named/typed callable results without changing the
+established Copy closure profile or guessing result types.
+The owned question-mark draft now captures and consumes actual receivers at
+their source token, registers owned successful fields for the continuation and
+retains exact nearest-callable/error identities during lowering. Six complete
+originals cover String/vector payloads, stacked propagation, changing success
+types, one receiver evaluation and skipped later producers. Five refusals retain
+move/borrow misuse and the still-valid-but-unimplemented residual conversion
+source. The old Copy gate remains independently asserted. Source-author, common
+native/frontend/codec/emitter matrix and automatic policy-control group inputs
+include every new row; no represented execution occurred.
+Ordinary standard-sum Clone now has an actual read/producer gate, one ordered
+receiver capture and a separate output owner. Nine policy decisions, five
+originals and three invalid originals retain both original and cloned source
+availability, nested vector fields and exactly one producer evaluation. The
+source profile uses existing immutable-value emitter cloning and excludes
+shared/mutable handle interpretations. Actual contained callable borrow
+provenance must survive the new lexical-lifetime integration.
+
+Automatic native policy assertion authoring is wired into the unexecuted
+omnibus source author and one future generated Rust test root. The configured
+roots retain complete source closures, exact literal fixture coordinates and
+Number spellings; mixed predicate operations reconcile both actual owners
+without moving fixture rows. Unknown/dynamic mutation, mismatched metadata,
+missing/duplicate assignments and collisions with assertion/Number globals
+refuse. Special Number fixture conversion uses literal-source descriptors,
+preserving NaN/Infinity/-Infinity/-0 in Links without JSON numeric loss. A
+bounded publisher prepares every product before ownership preflight; it keeps
+receipts under `parity/self-translation/rust-baseline-native-policy-controls/`
+and the future test root under `rust/tests/generated/`. No product was emitted
+or published during this source-edit phase. The authored controls, source hashes
+and receipts are future inputs, never observations or completion evidence.
+
+
+The ongoing source batch now includes complete literal native assertion
+authoring/publication source, disjoint Map/Set loops/items/spreads, fresh
+collection class defaults and closed prototype-method dispatch. All new
+fixtures, producers, deferred suites and automatic source roots are registered.
+Ordinary nominal Rust ownership/Clone/vector eligibility uses the actual
+declaration graph. Constructor, pattern and raw Vec header consumers are
+connected, including a separate nominal multi-field constructor gate and nested
+Vec eligibility from actual finite element witnesses. Their current literal
+exports are included intact in the common future native matrix; counts remain
+source coordinates, not a completion measurement.
+Primitive question-mark conversions now carry actual residual origins and
+reuse the existing primitive From plan; the former conversion refusal input
+is retained identically as a positive and historical boundary. The old
+Copy-only gate stays unchanged. Copy closure lexical loans are being propagated
+through all selected values, cloning and consuming sum operations.
+
+No tests, generators, formatting gates, compilation or represented programs
+were run. Generated policy products are intentionally absent until generation
+is allowed. No CI conclusions/logs/artifacts were read. These source edits
+are not observations, complete language support or a completion percentage.
+
+
+Owned record updates now retain explicit-field-before-base evaluation, actual
+selected field moves, untouched field availability and per-field loans through
+existing guard/join/expiry snapshots. The exact former nominal refusal at
+index six is retained with its original coordinate in the history export and
+is an identical positive in the update matrix. Eleven originals, ten refusals
+and 29 independent decisions are registered in the common future native matrix
+and automatic policy source author. General custom Drop, field reinitialization
+and complete nested partial-place expressions remain separate source work.
+
+Class archive integration now retains a constructor owner in type identity and
+program metadata, and encodes it as an actual declaration reference. Root hooks
+cover all emitters, linked validation and checked projection; the class agent
+is connecting actual constructor/body/helper witnesses and inference. The fresh
+process generation runner is authored, with exact source/schema predecessor
+receipts and deferred version-specific controls. Native products, receipt pins,
+source audit/register reconciliation and behavioral observations remain deferred.
+
+Previous head `397c2ea47e8531558857dc54caf88358fd51033a` has terminal CI run
+`41264586573`. Only status was read. Disk free space was about 13 GiB; no builds,
+installs, clones, worktrees, generators or cache removal were performed.
+
+
+Source interpretation review consulted the current Rust Reference: [assignment
+order and replacement](https://doc.rust-lang.org/reference/expressions/operator-expr.html#assignment-expressions),
+[operand order and place contexts](https://doc.rust-lang.org/reference/expressions.html#evaluation-order-of-operands),
+and [functional update semantics](https://doc.rust-lang.org/reference/expressions/struct-expr.html#functional-update-syntax).
+Assignments evaluate the value before the assignee; struct operands follow
+source order, and update syntax accesses omitted fields. This is a current
+reference review, not observed behavior at either pinned compiler version.
+
+The next source batch targets actual `Expr`/`Node` mutual recursion in the own
+Rust IR, including Box/Vec ownership and formal target blocks. Root authored a
+bounded iterative datatype component policy and common JS/native ordering
+transport. Type dependencies now include all structural children in JavaScript,
+matching the native traversal. Grouping alone grants no positivity, finite
+constructor, ownership, Clone or default capability; the agent is drafting those
+witnesses and corresponding backends before source admission. Source/codec and
+independent control execution remain deferred.
+
+
+Parenthesized and nested local record places have their own syntax/owner
+consumer, shared rule root, native module, original source matrix and twelve
+literal policy controls. Actual source field identities survive nested branch
+defaults. Mutable record state is being connected through pure value carriers
+rather than adding cells to targets that reject cells. Root hooks now cover
+ordinary block/main frames, real `mut` token binding registration, fresh IR
+binding names, source name and formatting captures, statement carriers and
+implicit Unit blocks in both runtimes. The state agent owns runtime/source
+admission, move/loan/state joins and deferred controls. Source-only collecting
+passes retain structural placeholders without granting runtime identities,
+Copy or complete type capability; the final pass must prove admission.
+
+This first mutation batch keeps ordinary unsupported mutable scalar/String/
+non-record diagnostics and old inputs. Closures cannot launder mutable outer
+records into a different callable frame. Recursive Box storage and arbitrary
+loop/match/early-return state require their complete carriers and witnesses;
+they are not covered by the first mutation profile. No behavioral result is
+inferred from the source hooks or fixtures.
+
+
+Source checkpoint scope: persistent class-owner policy/JS/native consumers and
+malformed/archive controls are connected. Recursive ownership graph results
+remain private type-only prospective facts: runtime profiles retain the old
+acyclic admission until actual Box/Vec producers, signature consumers and
+formal mutual blocks are closed. New generated rule products and pinned source
+receipts remain intentionally absent during this phase. Scoped record-state
+helper definitions and root hooks exist; its dedicated source fixture/control
+batch is the next active task. A read-only ABI review corrected a native
+checked_join call arity; no represented code or gate was executed.
+
+Known four-target gap: shared collection/class originals still require Lean
+and Rocq success, but their emitters currently reject referenceAllocate,
+referenceRead, referenceWrite and cells. Preserve those positive obligations.
+Draft an actual formal reference-state backend with explicit state/alias/order
+semantics, including stored callable environments; a declaration, acceptance
+label, source envelope or changed refusal oracle does not implement it. The
+next diagnostic automation batch must collect all fixture/transport/target
+failures into valid bounded reports rather than abort the first producer row.

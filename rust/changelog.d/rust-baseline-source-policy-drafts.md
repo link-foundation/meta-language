@@ -27,3 +27,10 @@ eager combinators with actual move tracking. Add capture-free owned callback
 domains, source-contract sanitization, callable data fields and same-kind
 JavaScript Map/Set copying. Retain obsolete refusal inputs and compiler
 contracts alongside their newly authored positive controls.
+
+Source drafts also connect actual nominal ownership and Clone, standard defaults,
+owned predicates, primitive question-mark conversions and lexical Copy closure
+value loans. JavaScript drafts add checked disjoint Map/Set loops and spreads,
+fresh collection defaults and closed class helper dispatch. Literal assertion
+programs have an automatic native source-authoring recipe with bounded, pinned
+publication. These additions remain unexecuted during bulk drafting.

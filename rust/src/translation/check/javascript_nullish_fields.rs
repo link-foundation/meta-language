@@ -234,6 +234,7 @@ impl Checker {
             });
         }
         let captured_type = Type::Record {
+            source_class_owner: None,
             fields,
             open: false,
             reference: false,

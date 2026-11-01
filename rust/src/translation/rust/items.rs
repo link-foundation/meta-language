@@ -32,6 +32,8 @@ impl RustParser {
         if !self.shared_array_handle_source_model.is_empty() {
             self.finish_shared_array_source(&items, main.as_ref())?;
             return Ok(SProgram {
+                source_class_owners: None,
+        source_class_methods:Vec::new(),
                 reference_semantics: Some(true.into()),
                 language: Language::Rust,
                 items,
@@ -62,6 +64,8 @@ impl RustParser {
         self.require_owned_local_program(&items, &main)?;
         self.require_const_function_program(&items, &main)?;
         let program = SProgram {
+            source_class_owners: None,
+        source_class_methods:Vec::new(),
             reference_semantics: None,
             language: Language::Rust,
             items,
@@ -617,6 +621,13 @@ impl RustParser {
         path: &[String],
         function_body: bool,
     ) -> Result<SExpr> {
+        let frame=self.begin_owned_record_state_block(function_body);
+        let result=self.read_record_state_block(path,function_body);
+        self.end_owned_record_state_block(frame)?;
+        result
+    }
+
+    fn read_record_state_block(&mut self,path:&[String],function_body:bool)->Result<SExpr>{
         let open = self.cursor.expect("{", Some("block"))?;
         let ownership_before = self.origins.snapshot_owned_bindings();
         let previous = self.origins.enter(None);
@@ -703,13 +714,14 @@ impl RustParser {
                 ));
             }
             let temporary_frame = self.origins.owned_temporary_frame();
-            let expr = self.expr(
+            let state_statement=self.read_owned_record_state_statement(path)?;
+            let expr=if let Some(statement)=state_statement{lets.extend(statement.bindings);statement.value}else{self.expr(
                 path,
                 Options {
                     statement: true,
                     no_struct: false,
                 },
-            )?;
+            )?};
             if self.cursor.eat(";").is_some() {
                 self.origins
                     .finish_owned_expression(&expr, path, &temporary_frame, false);
@@ -803,6 +815,13 @@ impl RustParser {
         if !self.pure_unit_call_model.is_empty() {
             return self.pure_unit_main();
         }
+        let frame=self.begin_owned_record_state_block(true);
+        let result=self.read_record_state_main();
+        self.end_owned_record_state_block(frame)?;
+        result
+    }
+
+    fn read_record_state_main(&mut self)->Result<SMain>{
         let start = self.cursor.advance();
         self.cursor.expect("main", Some("fn main"))?;
         self.cursor.expect("(", Some("fn main"))?;
@@ -851,13 +870,15 @@ impl RustParser {
                 self.cursor.expect(";", Some(&token.value))?;
                 continue;
             }
-            let value = self.expr(
+            let state_statement=self.read_owned_record_state_statement(&[])?;
+            let is_state_statement=state_statement.is_some();
+            let value=if let Some(statement)=state_statement{for binding in statement.bindings{effects.push(SEffect::Let{name:binding.name,ty:binding.ty,value:binding.value,span:binding.span,constant:false,source_pure_unit_call:None});}statement.value}else{self.expr(
                 &[],
                 Options {
                     statement: true,
                     no_struct: false,
                 },
-            )?;
+            )?};
             let origin = self.origins.origin(&value, &[]);
             if crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition(
                 value.node.kind(),
@@ -873,7 +894,7 @@ impl RustParser {
                     span(&token, &token),
                 ));
             }
-            if self.cursor.eat(";").is_none() && !self.cursor.is("}") {
+            if self.cursor.eat(";").is_none() && !self.cursor.is("}") && !(is_state_statement&&value.block) {
                 return Err(Self::fail("expected ; or }", self.cursor.peek()));
             }
             effects.push(SEffect::Let {

@@ -16,6 +16,29 @@ export function readRustCopyClosureCaptureError(collecting,copies,assigned){
  if(!collecting)for(let index=0;index<copies.length;index+=1)if(!readRequiredBooleanFact(copies,index))return 'closure captures require proven direct immutable Copy source values';
  return '';
 }
+/** A callable value's Copy witness follows its admitted header and actual
+ * immutable environment, independently of the Type(Function) constructor.
+ * @param {boolean} ordinary @param {string[]} names @param {boolean[]} parameters
+ * @param {boolean} known @param {boolean} result @param {boolean[]} captures
+ * @param {boolean[]} loans @param {number} assigned @returns {boolean} */
+export function acceptRustCopyClosureValue(ordinary,names,parameters,known,result,captures,loans,assigned){
+ if(readRustCopyClosureParameterHeaderError(ordinary,names,parameters)!==''||!known||!result||assigned!==0||captures.length!==loans.length)return false;
+ for(let at=0;at<captures.length;at+=1)if(!readRequiredBooleanFact(captures,at)||loans[at]!==false)return false;
+ return true;
+}
+/** A local place/loan must not escape through a copied environment snapshot.
+ * @param {number} captures @param {boolean[]} loans @returns {string} */
+export function readRustCopyClosureLoanCaptureError(captures,loans){
+ if(captures!==loans.length)return 'a Copy closure environment needs every actual capture loan fact';
+ for(const loan of loans)if(loan!==false)return 'a Copy closure environment cannot discard borrowed-place or local loan provenance';
+ return '';
+}
+/** @param {string[]} states @returns {string} */
+export function readRustCopyClosureValueBorrowError(states){for(const state of states)if(state!=='available')return 'a borrowed Copy closure environment does not outlive this value';return '';}
+/** Until returned anonymous callable lifetimes have an explicit contract,
+ * retain this narrower source boundary rather than erase their value loans.
+ * @param {number} borrows @returns {string} */
+export function readRustCopyClosureReturnedBorrowError(borrows){return borrows===0?'':'returning a borrowed callable environment needs its explicit callable result lifetime contract';}
 /** @param {string} kind @returns {boolean} */
 export function acceptRustCopyClosureInvocation(kind){return kind==='function';}
 /** Anonymous closure identity never follows from equal callable signatures.

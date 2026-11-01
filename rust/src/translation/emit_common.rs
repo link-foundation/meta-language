@@ -739,14 +739,24 @@ pub fn mutual_groups(program: &Program) -> HashMap<String, Vec<&Decl>> {
         .collect()
 }
 
-/// Declarations in an order where each follows everything it uses.
-///
-/// Source order is kept where possible and, among ready declarations, the
-/// ones in the module being emitted come first so modules stay contiguous.
-///
-/// # Errors
-/// On cyclic declarations, and on modules that would have to be reopened
-/// when `require_contiguous_modules` is set.
+/// Actual datatype components in source order; no positivity/default proof.
+/// Returns an error when the shared finite graph profile cannot represent it.
+pub fn datatype_groups(program:&Program)->Result<HashMap<String,Vec<&Decl>>>{
+    let members=program.declarations.iter().filter(|entry|matches!(entry,Decl::Data(_))).collect::<Vec<_>>();
+    if members.len()>8192{return Err(unsupported("datatype dependencies","the complete datatype dependency graph exceeds its bounded source profile",None));}
+    let positions=members.iter().enumerate().map(|(index,entry)|(entry.full_name(),index)).collect::<HashMap<_,_>>();
+    let mut ends=Vec::new();let mut edges=Vec::new();
+    for entry in &members{for name in dependencies(entry){if let Some(index)=positions.get(name.as_str()){if edges.len()>=131072{return Err(unsupported("datatype dependencies","the complete datatype dependency graph exceeds its bounded source profile",None));}edges.push(*index as f64);}}ends.push(edges.len() as f64);}
+    let plan=super::datatype_dependency_group_rules::plan_datatype_dependency_groups(members.len() as f64,&ends,&edges);
+    if plan.len()!=members.len(){return Err(unsupported("datatype dependencies","the complete datatype dependency graph exceeds its bounded source profile",None));}
+    let mut units=HashMap::<usize,Vec<&Decl>>::new();
+    for(index,representative)in plan.iter().enumerate(){if !representative.is_finite()||representative.fract()!=0.0||*representative<0.0||*representative>=members.len() as f64{return Err(unsupported("datatype dependencies","the shared component plan has an invalid actual owner",None));}units.entry(*representative as usize).or_default().push(members[index]);}
+    let mut result=HashMap::new();for group in units.into_values(){if group.len()>1{for entry in &group{result.insert(entry.full_name().to_owned(),group.clone());}}}Ok(result)
+}
+
+/// Declarations follow their dependencies, preserving ready source/module order.
+/// Returns an error on ungrouped cycles, cross-module mutual groups, or a module
+/// that must reopen when `require_contiguous_modules` is selected.
 pub fn order_declarations(
     program: &Program,
     require_contiguous_modules: bool,
@@ -759,7 +769,8 @@ pub fn order_declarations(
         .collect();
     let pending: Vec<HashSet<String>> = entries.iter().map(dependencies).collect();
     // A group of mutually recursive functions is ready, and placed, as one.
-    let groups = mutual_groups(program);
+    let mut groups = mutual_groups(program);
+    groups.extend(datatype_groups(program)?);
     let unit = |index: usize| -> Vec<&Decl> {
         groups
             .get(entries[index].full_name())

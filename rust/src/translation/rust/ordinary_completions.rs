@@ -621,10 +621,10 @@ impl RustParser {
     }
     fn lift_ordinary_expression(&mut self,expression:SExpr,terminal:bool,context:&mut CompletionContext,continued:CompletionContinuation)->Result<SExpr>{
         if !has_expression_completion(&expression)?{return continued.apply(&expression);}
-        context.outputs.push(context.source_result.clone());
         let hole="#rust-ordinary-return-hole".to_owned();let result=name(vec![hole.clone()]);
         let returned=if terminal{result}else{self.ordinary_completion_constructor(context,"FunctionResult",vec![result],expression.span)};
-        self.lower_expression_completions(expression,&context.path,&context.source_result,continued,CompletionContinuation{hole,expression:returned})
+        let (expression,origins)=self.lower_expression_completions(expression,&context.path,&context.source_result,continued,CompletionContinuation{hole,expression:returned})?;
+        for origin in origins{self.origins.argument(&origin,&context.source_result,expression.span)?;context.outputs.push(origin);}Ok(expression)
     }
     fn lower_ordinary_completion(
         &mut self,

@@ -172,6 +172,7 @@ impl Checker {
         let name = self.fresh_name("ml_own_property_key");
         let text = super::string_search::primitive_text(key, span)?;
         let ty = Type::Record {
+            source_class_owner: None,
             fields: vec![TypeField {
                 name: "key".to_owned(),
                 ty: STRING,
@@ -233,6 +234,7 @@ impl Checker {
         let width = (values.len() - 1).to_string().len();
         let field = |index: usize| format!("argument{index:0width$}");
         let ty = Type::Record {
+            source_class_owner: None,
             fields: values
                 .iter()
                 .enumerate()

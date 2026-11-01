@@ -1,3 +1,4 @@
+import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
 import {acceptLinkedRustPanicValue,renderRustPanicValueExpression} from './rust-panic-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
@@ -25,6 +26,7 @@ import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordF
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
 import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
+import {readProgramDisjointCollectionIterationProof} from './disjoint-collection-iterations.js';
 import { readArrayCallbackResultForm } from './array-callback-rules.js';
 import { acceptLinkedArrayStateMethod, readArrayStateMethodArgumentProfile, readArrayStateMethodSuffix,
   renderArrayStateMethodExpression, readArrayStateMethodIdentity, readArrayStateMethodStatement } from './array-state-method-rules.js';
@@ -696,6 +698,7 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  checkJavaScriptClassOwners(program);
   program=prepareOrderedRecordValues(program);
   validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
@@ -750,6 +753,7 @@ export function readRustExternalTargets(program) {
  * for a program with declarations or other effects.
  */
 export function emitRustConstants(program) {
+  checkJavaScriptClassOwners(program);
   program=prepareOrderedRecordValues(program);
   const effects = program.main?.effects ?? [];
   const effect = effects[0];
@@ -787,6 +791,7 @@ export function emitRustConstants(program) {
 class RustEmitter {
   constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false, scalarSourceInterface = false) {
     this.program = program;
+    this.disjointCollectionCallbackProof=null;
     this.namedConstructorFields = program.sourceLanguage === 'Rust' && [...program.declarations.values()].some(entry=>entry.k==='data'&&entry.ctors.some(ctor=>acceptRustNamedConstructorFields(program.sourceLanguage,ctor.fields.map(field=>field.name??''))));
     this.state = state;
     this.definitionOwnership = recordDefinitionOwnership ? { schemaVersion: 1, blocks: [], externalTargets: [] } : null;
@@ -1253,8 +1258,10 @@ class RustEmitter {
     const order=emitOrderedRecordOrderRead(this,e,'Rust');if(order!==null)return order;
     if (e.object.k === 'referenceRead' && e.object.reference.type.reference && readArrayCallbackResultForm(e.op)) {
       const callback = e.args[0];
+      let readOnly=callback&&acceptReadOnlyReferenceCallback(callback,this.program.declarations);
+      if(callback&&!readOnly){this.disjointCollectionCallbackProof??=readProgramDisjointCollectionIterationProof(this.program);readOnly=this.disjointCollectionCallbackProof.arrayCallbacks;}
       if (!callback || !acceptSnapshotCallbackParameters(e.op, callback.type.params.length)
-        || !acceptReadOnlyReferenceCallback(callback, this.program.declarations)) {
+        || !readOnly) {
         throw unsupported('shared array callback', 'this callback needs live array slots, effects and the original receiver identity rather than a snapshot', e.span);
       }
     }

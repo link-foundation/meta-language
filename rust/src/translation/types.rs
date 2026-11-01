@@ -95,6 +95,9 @@ pub enum Type {
     /// Named fields, whose declaration order does not affect type identity.
     Record {
         fields: Vec<TypeField>,
+        /// Actual source class constructor owner, retained through graph edits.
+        #[serde(default,rename="sourceClassOwner",skip_serializing_if="Option::is_none",deserialize_with="deserialize_tuple_product_model")]
+        source_class_owner: Option<std::string::String>,
         /// The value carries its own property order separately from its layout.
         #[serde(default, skip_serializing_if = "is_false")]
         ordered: bool,
@@ -247,6 +250,7 @@ impl Type {
                 fields,
                 open,
                 ordered,
+                source_class_owner,
                 ..
             } => {
                 let mut fields: Vec<_> = fields
@@ -263,6 +267,7 @@ impl Type {
                 });
                 Self::Record {
                     fields,
+                    source_class_owner: source_class_owner.clone(),
                     open: *open,
                     reference: self.is_reference(),
                     ordered: *ordered,
@@ -318,6 +323,7 @@ impl Type {
                 fields,
                 open,
                 ordered,
+                source_class_owner,
                 ..
             } => {
                 let mut sorted: Vec<_> = fields.iter().collect();
@@ -336,7 +342,8 @@ impl Type {
                         "open:".to_owned()
                     } else {
                         std::string::String::new()
-                    }) + if *ordered { "ordered:" } else { "" },
+                    }) + (if *ordered { "ordered:" } else { "" })
+                        + &source_class_owner.as_ref().map(|owner|format!("class:{}:",serde_json::to_string(owner).expect("class owner string serializes"))).unwrap_or_default(),
                     children,
                 )
             }

@@ -130,6 +130,7 @@ pub fn emit_javascript_with_options(
             None,
         ));
     }
+    super::class_owners::validate_program(program)?;
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     let runtime = super::runtime_shell::validate_program(program)?;
     if runtime.is_some() && options.scoped_binding_model.is_some() {

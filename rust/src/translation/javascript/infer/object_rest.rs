@@ -76,6 +76,7 @@ impl Inference {
             self.unify(
                 &constraint.result,
                 &Term::Record(Rc::new(RefCell::new(RecordTerm {
+                    source_class_owner: None,
                     fields,
                     open: false,
                 }))),

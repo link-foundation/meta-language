@@ -208,7 +208,15 @@ mod translation_ascii_text_predicates;
 mod translation_big_integer_bitwise;
 mod translation_collection_access;
 mod translation_collection_copies;
+mod translation_disjoint_collection_iterations;
+mod translation_disjoint_collection_item_iterations;
+mod translation_disjoint_collection_spreads;
+mod translation_closed_class_collection_defaults;
+mod translation_closed_class_prototype_methods;
+mod translation_closed_class_owner_witnesses;
 mod translation_callable_data;
+#[path = "../generated/rust_baseline_native_policy_assertions.rs"]
+mod rust_baseline_native_policy_assertions;
 mod translation_concrete_program_graphs;
 mod translation_console_format;
 mod translation_constructor_tags;

@@ -15,6 +15,7 @@ mod array_callbacks;
 mod array_from;
 mod arrays;
 mod callables;
+mod class_methods;
 mod collections;
 mod enumerations;
 mod expressions;
@@ -155,6 +156,7 @@ enum Term {
 struct RecordTerm {
     fields: Vec<(String, Term)>,
     open: bool,
+    source_class_owner: Option<String>,
 }
 
 #[derive(Clone)]
@@ -278,6 +280,8 @@ struct Inference {
     collection_copies:HashMap<*const SExpr,Term>,
     collection_construction_inputs:Vec<collections::CollectionConstructionInput>,
     signatures: HashMap<String, Signature>,
+    source_class_methods: Vec<String>,
+    source_class_owners: Option<serde_json::Value>,
     context: Vec<String>,
     /// The types of the fields the translator makes up, which are inferred
     /// like parameters, by data type, constructor and position.
@@ -309,6 +313,8 @@ impl Inference {
             .collect();
         Self {
             data,
+            source_class_methods: Vec::new(),
+            source_class_owners: None,
             bindings: Vec::new(),
             unification_changes: 0,
             bigints: HashSet::new(),

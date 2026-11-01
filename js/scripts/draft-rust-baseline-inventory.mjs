@@ -4,6 +4,28 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const file=new URL('../../parity/language-features.lino',import.meta.url),inventory=readProjectData(file);
 const profiles=[
+ {id:'rust-destructor-free-record-field-moves-and-updates',javascript:[
+  'js/src/translation/rust-owned-record-update-rules.js','js/src/translation/rust-owned-record-updates.js',
+  'js/src/translation/rust-records.js','js/tests/translation-rust-owned-record-updates.test.js','parity/fixtures/rust-owned-record-updates.lino',
+ ],rust:['rust/src/translation/rust_owned_record_update_rules.rs','rust/src/translation/rust/owned_record_updates.rs',
+  'rust/src/translation/rust/records.rs','rust/src/translation/rust/records/updates.rs',
+  'rust/tests/unit/translation_rust_standard_sum_integration.rs','parity/fixtures/rust-owned-record-updates.lino']},
+ {id:'ordinary-rust-nominal-value-ownership-and-clone',javascript:[
+  'js/src/translation/rust-nominal-ownership-rules.js','js/src/translation/rust-nominal-ownership.js',
+  'js/src/translation/rust-records.js','js/src/translation/rust-owned-bindings.js',
+  'js/tests/translation-rust-nominal-standard-sum-ownership.test.js','parity/fixtures/rust-nominal-standard-sum-ownership.lino',
+ ],rust:['rust/src/translation/rust_nominal_ownership_rules.rs','rust/src/translation/rust/nominal_ownership.rs',
+  'rust/src/translation/rust/records.rs','rust/src/translation/rust/source_origins/owned_bindings.rs',
+  'rust/tests/unit/translation_rust_standard_sum_integration.rs','parity/fixtures/rust-nominal-standard-sum-ownership.lino']},
+ {id:'closed-disjoint-standard-collection-iteration',javascript:[
+  'js/src/translation/disjoint-collection-iteration-rules.js','js/src/translation/disjoint-collection-projection-rules.js',
+  'js/src/translation/disjoint-collection-iterations.js','js/src/translation/source-collection-iterations.js','js/src/translation/collection-items.js',
+  'js/tests/translation-disjoint-collection-iterations.test.js','js/tests/translation-disjoint-collection-item-iterations.test.js','js/tests/translation-disjoint-collection-spreads.test.js',
+  'parity/fixtures/disjoint-collection-iterations.lino','parity/fixtures/disjoint-collection-item-iterations.lino','parity/fixtures/disjoint-collection-spreads.lino',
+ ],rust:['rust/src/translation/disjoint_collection_iteration_rules.rs','rust/src/translation/disjoint_collection_projection_rules.rs',
+  'rust/src/translation/disjoint_collection_iterations.rs','rust/src/translation/check/source_collection_iterations.rs',
+  'rust/tests/unit/translation_disjoint_collection_iterations.rs','rust/tests/unit/translation_disjoint_collection_item_iterations.rs','rust/tests/unit/translation_disjoint_collection_spreads.rs',
+  'parity/fixtures/disjoint-collection-iterations.lino','parity/fixtures/disjoint-collection-item-iterations.lino','parity/fixtures/disjoint-collection-spreads.lino']},
  {id:'ordinary-transparent-rust-source-type-aliases',javascript:[
   'js/src/translation/rust-generic-type-alias-rules.js','js/src/translation/rust-generic-type-aliases.js',
   'js/tests/translation-rust-generic-type-aliases.test.js','parity/fixtures/rust-generic-type-alias-source-draft.lino',

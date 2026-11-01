@@ -1,6 +1,12 @@
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
 import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
+import {checkDisjointCollectionIterations} from './disjoint-collection-iterations.js';
+import {readDisjointCollectionIterationSourceOperation,readDisjointCollectionSpreadSourceOperation} from './disjoint-collection-iteration-rules.js';
+import {checkClosedCollectionIteration} from './source-collection-iterations.js';
+import {constructStandardCollectionItems} from './collection-items.js';
+import {checkClosedClassMethodCall,validateClosedClassMethodDefinitions} from './javascript-class-methods.js';
+import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
 import {projectPatternAliasRow} from './pattern-aliases.js';
 import {acceptLinkedRustPanicValue,readRustPanicValueArgumentError} from './rust-panic-value-rules.js';
 import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
@@ -253,6 +259,9 @@ class Checker {
     this.items = new Map();
     this.externals = new Map(externals.map((external) => [external.name, externalEntry(external)]));
     this.fresh = 0;
+    this.closedCollectionIterationMarkers=[];
+    this.sourceClassMethods=[];
+    this.sourceClassOwners=undefined;
     this.generatedPrefix = 'ml_';
     this.modules = new Map([['', { path: [], names: new Map(), modules: new Map() }]]);
   }
@@ -260,6 +269,9 @@ class Checker {
   program(surface) {
     this.generatedPrefix = readSourceIdentifierSupply(collectSourceIdentifierTexts(surface));
     this.declare(surface.items, []);
+    this.sourceClassMethods=surface.sourceClassMethods??[];
+    this.sourceClassOwners=Object.hasOwn(surface,'sourceClassOwners')?surface.sourceClassOwners:undefined;
+    validateClosedClassMethodDefinitions(this,this.sourceClassMethods);
     const items = this.checkItems(surface.items, []);
     const main = surface.main ? this.checkMain(surface.main) : null;
     const program = {
@@ -271,6 +283,7 @@ class Checker {
     };
     if (surface.imports) program.imports = surface.imports;
     if (surface.externals) program.externals = surface.externals;
+    if(Object.hasOwn(surface,'sourceClassOwners'))program.sourceClassOwners=surface.sourceClassOwners;
     if(Object.hasOwn(surface,'sourcePureUnitCalls'))program.sourcePureUnitCalls=surface.sourcePureUnitCalls;
     if (this.referenceSemantics) program.referenceSemantics = true;
     for (const entry of this.items.values()) {
@@ -283,7 +296,9 @@ class Checker {
     validateRustTypeNamespace(program);
     checkRustPureUnitCalls(program);
     checkRustOwnedLocalStateProof(program);
+    checkDisjointCollectionIterations(program,this.closedCollectionIterationMarkers);
     checkCollectionCopySnapshotCallbacks(program);
+    checkJavaScriptClassOwners(program);
     if(Object.hasOwn(surface,'sourceRuntimeShell'))captureRustRuntimeShell(program,surface.sourceRuntimeShell);
     return program;
   }
@@ -497,7 +512,7 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
-    refuseCallableDataObservation(value.type,this.items,'display',expr.span);
+    refuseCallableDataObservation(value.type,this.items,'display',expr.span,this.sourceClassOwners);
     const displayRefusal = readNumberDisplayRefusal(this.language, value.type.kind);
     if (displayRefusal) throw unsupported('Rust Float display', displayRefusal, expr.span);
     const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
@@ -536,7 +551,7 @@ class Checker {
     switch (prop.p) {
       case 'forall': {
         const binders = prop.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, path, prop.span) }));
-        for(const binder of binders)refuseCallableDataObservation(binder.type,this.items,'proof',prop.span);
+        for(const binder of binders)refuseCallableDataObservation(binder.type,this.items,'proof',prop.span,this.sourceClassOwners);
         if (binders.some((binder) => isFloat(binder.type))) {
           throw unsupported('quantification over Numbers', 'a theorem quantifies over integers, naturals, booleans, strings or data', prop.span);
         }
@@ -555,7 +570,7 @@ class Checker {
       default: {
         if (!COMPARISONS.has(prop.p)) throw typeError(`unknown proposition ${prop.p}`, prop.span);
         const [left, right] = this.operands(prop.left, prop.right, env, path, prop.span);
-        refuseCallableDataObservation(left.type,this.items,'comparison',prop.span);
+        refuseCallableDataObservation(left.type,this.items,'comparison',prop.span,this.sourceClassOwners);
         if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', prop.span);
         if (prop.p !== 'eq' && prop.p !== 'ne' && !isOrdered(left.type)) {
           throw typeError(`ordering on ${typeKey(left.type)}`, prop.span);
@@ -1009,7 +1024,7 @@ class Checker {
       }
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
-        refuseCallableDataObservation(arg.type,this.items,'display',node.span);
+        refuseCallableDataObservation(arg.type,this.items,'display',node.span,this.sourceClassOwners);
         if (arg.type.kind === 'string') return arg;
         if (arg.type.kind === 'array') throw arrayText(node.span);
         if (arg.type.kind === 'option' && primitiveKey(arg.type.element)) return { k: 'optionalText', arg, console: false, type: STRING };
@@ -1048,7 +1063,7 @@ class Checker {
    */
   recordLiteral(node, env, path, expected) {
     const nominal=checkJavaScriptNominalSpread(this,node,env,path,expected);if(nominal)return nominal;
-    if(!expected&&node.type?.kind==='record'&&node.type.ordered===true)expected=this.resolveType(node.type,path,node.span);
+    if(!expected&&node.type?.kind==='record'&&(node.type.ordered===true||node.type.sourceClassOwner!==undefined))expected=this.resolveType(node.type,path,node.span);
     const entries = [];
     const bindings = [];
     const orderChunks=[];
@@ -1074,7 +1089,7 @@ class Checker {
       if(node.type?.kind==='record'&&Boolean(node.type.ordered)!==ordered)throw typeError(node.type.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
       if(expected?.kind==='record'&&Boolean(expected.ordered)!==ordered)throw typeError(expected.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
       const order=ordered?coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span):null;
-      return { k: 'record', entries, ...(ordered?{order}:{}), type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}) } };
+      return { k: 'record', entries, ...(ordered?{order}:{}), type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) } };
     }
     const evaluationOrder = readRecordValueOrder(node.entries.length, false);
     if (evaluationOrder[0] < 0) throw typeError('record entries need an exact ordered input length', node.span);
@@ -1131,7 +1146,7 @@ class Checker {
         order={k:'array',items:positions.map(index=>({k:'lit',value:String(index),type:FLOAT})),type:array(FLOAT)};
       }
     }
-    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}) };
+    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}),...(expected?.sourceClassOwner!==undefined?{sourceClassOwner:expected.sourceClassOwner}:{}) };
     let body = { k: 'record', entries: selected, ...(ordered?{order}:{}), type };
     for (const index of readRecordValueOrder(bindings.length, true)) {
       const binding = bindings[index];
@@ -1201,6 +1216,7 @@ class Checker {
 
   method(node, env, path, expected, preparedReceiver) {
     const receiver = preparedReceiver??this.expr(node.object, env, path, undefined);
+    const prototype=checkClosedClassMethodCall(this,node,receiver,env,path,expected);if(prototype)return prototype;
     if(node.op==='toSorted'&&receiver.type.kind==='array'){
       if(!acceptLinkedStringArrayCopySort('method',node.op,receiver.type.kind,receiver.type.element.kind,receiver.type.reference===true,node.args.length))throw unsupported('array copying sort','the default copying sort needs an immutable dense primitive string array and no comparator or extra arguments',node.span);
       return {k:'method',object:receiver,op:node.op,args:[],type:receiver.type,span:node.span};
@@ -1241,9 +1257,7 @@ class Checker {
       }
       if (['keys', 'values', 'entries'].includes(node.op)) {
         count(readCollectionAccessArgumentCount(node.op));
-        const value = object.type.kind === 'map' ? object.type.value : key;
-        const element = node.op === 'keys' ? key : node.op === 'values' ? value : { kind: 'tuple', elements: [key, value] };
-        return { k: 'collectionItems', object, op: node.op, type: array(element) };
+        return constructStandardCollectionItems(object,node.op);
       }
       throw unsupported(`mutable collection .${node.op}()`, 'mutation requires shared reference identities and cells so aliases observe every change', node.span);
     }
@@ -1355,6 +1369,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op===readDisjointCollectionIterationSourceOperation()||node.op===readDisjointCollectionSpreadSourceOperation())return checkClosedCollectionIteration(this,node,env,path,expected);
     if(acceptRustStringByteLengthOperation('math',node.op)){
       const value=node.args.length===1&&!node.args[0].spread?this.expr(node.args[0].value,env,path,STRING):null;
       const error=readRustStringByteLengthArgumentError(this.language,false,node.args.length,node.args.some(arg=>arg.spread),value?.type.kind??'');if(error)throw typeError(error,node.span);
@@ -1487,7 +1502,7 @@ class Checker {
         let right = this.expr(node.right, env, path, undefined, true);
         if (left.type.kind === 'literal') left = this.expr(node.left, env, path, this.defaultNumber());
         if (right.type.kind === 'literal') right = this.expr(node.right, env, path, this.defaultNumber());
-        refuseCallableDataObservation(left.type,this.items,'comparison',node.span);refuseCallableDataObservation(right.type,this.items,'comparison',node.span);
+        refuseCallableDataObservation(left.type,this.items,'comparison',node.span,this.sourceClassOwners);refuseCallableDataObservation(right.type,this.items,'comparison',node.span,this.sourceClassOwners);
         const comparison=materializeJavaScriptPrimitiveComparison(this,op,left,right);
         if(comparison)return comparison;
         if (left.type.kind === 'option' || right.type.kind === 'option') {
@@ -1504,7 +1519,7 @@ class Checker {
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
-      refuseCallableDataObservation(left.type,this.items,'comparison',node.span);
+      refuseCallableDataObservation(left.type,this.items,'comparison',node.span,this.sourceClassOwners);
       if (this.language === 'JavaScript' && acceptReferenceIdentityComparison(op, left.type.kind, right.type.kind, left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
         return {k: 'binary', op, left, right, type: BOOL, domain: left.type};
       }

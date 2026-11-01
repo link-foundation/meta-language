@@ -1,0 +1,22 @@
+//! Value-specific lexical loans; datatype/callable TYPE contracts never store
+//! them. Lexical roots reuse existing snapshot/expiry state transitions only.
+use super::{Result,SourceOrigin,SourceOrigins,Span,Type,unsupported};
+use crate::translation::rust_owned_binding_rules as loan_rules;
+use crate::translation::rust_copy_closure_rules as rules;
+pub(super) fn value_borrows(origin:&SourceOrigin)->Vec<String>{
+ let mut pending=vec![origin];let mut result=Vec::new();while let Some(value)=pending.pop(){result=loan_rules::merge_rust_owned_loan_bindings(&result,&value.source_value_borrow_bindings);if let Some(fields)=value.source_value_field_borrow_bindings.as_ref(){for field in fields{result=loan_rules::merge_rust_owned_loan_bindings(&result,field);}}if let Some(fields)=value.fields.as_ref(){pending.extend(fields);}}result
+}
+fn may_contain_callable(origin:&SourceOrigin)->bool{
+ if origin.wrappers.iter().any(|layer|layer=="reference"){return true;}
+ if let Some(sum)=origin.standard_sum_source.as_deref(){return sum.arguments.iter().any(may_contain_callable);}
+ if let (Some(Type::Tuple{elements}),Some(fields))=(origin.ty.as_ref(),origin.fields.as_ref()){if fields.len()==elements.len(){return fields.iter().any(may_contain_callable);}}
+ let Some(ty)=origin.ty.as_ref()else{return true;};let mut pending=vec![ty];while let Some(ty)=pending.pop(){match ty{Type::Function{..}|Type::Named{..}=>return true,Type::Tuple{elements}=>pending.extend(elements),Type::Array{element,..}=>pending.push(element),_=>{}}}false
+}
+pub(super) fn carry_value_borrows(mut result:SourceOrigin,actual:&SourceOrigin)->SourceOrigin{if may_contain_callable(&result){result.source_value_borrow_bindings=value_borrows(actual);result.source_value_field_borrow_bindings=actual.source_value_field_borrow_bindings.clone().or_else(||actual.fields.as_ref().map(|fields|fields.iter().map(value_borrows).collect()));}else{result.source_value_borrow_bindings.clear();result.source_value_field_borrow_bindings=None;}result}
+pub(super) fn carry_value_union(mut result:SourceOrigin,actuals:&[&SourceOrigin])->SourceOrigin{result.source_value_borrow_bindings=if may_contain_callable(&result){actuals.iter().fold(value_borrows(&result),|all,actual|loan_rules::merge_rust_owned_loan_bindings(&all,&value_borrows(actual)))}else{Vec::new()};result.source_value_field_borrow_bindings=None;result}
+pub(super) fn project_value_field(parent:&SourceOrigin,mut field:SourceOrigin,index:usize)->SourceOrigin{field.source_lexical_binding_identity=parent.source_lexical_binding_identity.clone();field.source_value_borrow_bindings=if may_contain_callable(&field){parent.source_value_field_borrow_bindings.as_ref().and_then(|fields|fields.get(index)).cloned().unwrap_or_else(||value_borrows(parent))}else{Vec::new()};field.source_value_field_borrow_bindings=None;field}
+impl SourceOrigins{
+ pub(super) fn validate_copy_closure_value_borrows(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{if self.collecting{return Ok(());}let states=value_borrows(origin).iter().map(|identity|self.copy_closure_lexical_state(identity).to_owned()).collect::<Vec<_>>();let error=rules::read_rust_copy_closure_value_borrow_error(&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust Copy closure lifetime",&error,span))}}
+ pub(super) fn copy_closure_capture_borrows(&self,captured:&[SourceOrigin],explicit_move:bool,span:Option<Span>)->Result<Vec<String>>{let mut result=Vec::new();for origin in captured{result=loan_rules::merge_rust_owned_loan_bindings(&result,&value_borrows(origin));if !explicit_move&&!self.collecting{let identity=origin.source_lexical_binding_identity.as_ref().ok_or_else(||unsupported("Rust Copy closure lifetime","an implicit capture needs its actual lexical binding identity",span))?;result=loan_rules::merge_rust_owned_loan_bindings(&result,std::slice::from_ref(identity));}}if !self.collecting{let states=result.iter().map(|identity|self.copy_closure_lexical_state(identity).to_owned()).collect::<Vec<_>>();let error=rules::read_rust_copy_closure_value_borrow_error(&states);if !error.is_empty(){return Err(unsupported("Rust Copy closure lifetime",&error,span));}}Ok(result)}
+ pub(super) fn refuse_copy_closure_returned_borrows(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{if self.collecting{return Ok(());}let error=rules::read_rust_copy_closure_returned_borrow_error(value_borrows(origin).len() as f64);if error.is_empty(){Ok(())}else{Err(unsupported("Rust Copy closure lifetime",&error,span))}}
+}

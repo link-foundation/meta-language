@@ -68,6 +68,7 @@ impl Checker {
     ) -> Result<Expr> {
         let (source, expected) = subject;
         let object = self.expr(source, env, path, None, false)?;
+        if let Some(value)=self.closed_class_method_call(&object,operation,args,env,path,span)?{return Ok(value);}
         if !self.checked_projection
             && let Some(value) = self.javascript_nullish_access(
                 (&object, source),

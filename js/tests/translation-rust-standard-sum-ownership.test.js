@@ -75,6 +75,7 @@ test('only an actual Copy field dereference detaches a live loan',()=>{
 test('constructor transfer bookkeeping prevents a second move and header capture stays provisional',()=>{
  const {table,origin,text}=catalog(),argument={k:'name',path:['payload']},node={k:'app',fn:{k:'name',path:['ActualSome']},args:[argument]};
  table.registerCatalogEntry('ActualSome',{k:'ctor',owner:'actual_sum',fields:[text],result:origin});
+ table.scope.set('payload',registerRustOwnedBinding(table,text));
  let transfers=0;table.prepareOwnedArgument=actual=>{transfers+=1;table.ownedArgumentTransfers.add(actual);};
  captureRustStandardSumConstructor({origins:table},node,origin,[argument],[]);assert.equal(transfers,1);assert.equal(table.expressions.get(node).sourceOwnedResultProof,true);assert.equal(table.expressions.get(node).copyEvidence,false);
  captureRustStandardSumConstructor({origins:table},node,origin,[argument],[]);assert.equal(transfers,1);

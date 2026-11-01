@@ -315,7 +315,8 @@ impl RustParser {
         }
         if let Some(Type::Named {path,..})=argument.ty.as_ref(){
             if let Some(owner)=self.origins.lookup_type_owner(path,&argument.path){
-                argument.proven=self.origins.nominal_copy_owners.contains(&owner.full_name);
+                let role=self.origins.nominal_ownership_declarations.get(&owner.full_name).map_or("",|row|row.profile.as_str());
+                argument.proven=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_nominal_header_type(matches!(owner.declaration,SourceDeclaration::Data),self.origins.nominal_ownership_scope_complete,role);
                 if let Some(source)=argument.source_owner.as_mut().filter(|source|source.kind=="declaration"){source.path=owner.full_name.split('.').map(str::to_owned).collect();}
                 if let Some(source)=argument.expanded_source_owner.as_mut().filter(|source|source.kind=="declaration"){source.path=owner.full_name.split('.').map(str::to_owned).collect();}
             }
