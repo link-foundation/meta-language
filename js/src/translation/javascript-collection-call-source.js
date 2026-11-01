@@ -1,3 +1,4 @@
+import {testJavaScriptArrayTransformOperation} from './javascript-array-transform.js';
 import {testJavaScriptArraySpeciesGetterOperation} from './javascript-array-species.js';
 import {testJavaScriptArraySearchOperation} from './javascript-array-index-rules.js';
 import {testJavaScriptArrayCallbackOperation} from './javascript-array-callbacks.js';
@@ -10,8 +11,8 @@ import {testJavaScriptPrimitiveMethodOperation} from './javascript-primitive-met
 import {testJavaScriptArrayIntrinsicOperation} from './javascript-arrays.js';
 /** @typedef {{$:'collectionMethodOwner',identity:bigint,operation:string}} JavaScriptCollectionMethodOwner */
 /** @typedef {{$:'collectionConstructorOwner',kind:string,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue,adder:JavaScriptSemanticValue,iteratorKey:JavaScriptSemanticValue,iteratorMethod:JavaScriptSemanticValue,iteratorPrototype:JavaScriptSemanticValue,nextMethod:JavaScriptSemanticValue,methods:JavaScriptCollectionMethodOwner[]}} JavaScriptCollectionConstructorOwner */
-/** @typedef {{$:'primitiveMethodOwner',identity:bigint,realm:bigint,operation:string}} JavaScriptPrimitiveMethodOwner */
-/** @typedef {{$:'collectionCallableDirectory',realms:bigint[],exoticKey:JavaScriptSemanticValue,constructors:JavaScriptCollectionConstructorOwner[],primitiveMethods:JavaScriptPrimitiveMethodOwner[],iteratorMethods?:JavaScriptCollectionIteratorMethodOwner[]}} JavaScriptCollectionCallableDirectory */
+/** @typedef {{$:'primitiveMethodOwner',identity:bigint,realm:bigint,operation:string,species?:JavaScriptArraySpeciesDirectory}} JavaScriptPrimitiveMethodOwner */
+/** @typedef {{$:'collectionCallableDirectory',realms:bigint[],exoticKey:JavaScriptSemanticValue,constructors:JavaScriptCollectionConstructorOwner[],primitiveMethods:JavaScriptPrimitiveMethodOwner[],iteratorMethods?:JavaScriptCollectionIteratorMethodOwner[],ownerBudget?:number}} JavaScriptCollectionCallableDirectory */
 /** @typedef {{$:'collectionCallCompilation',program:JavaScriptCallProgram,error:string}} JavaScriptCollectionCallCompilation */
 /** @param {string} mode @returns {boolean} */
 export function testJavaScriptCollectionConstructorMode(mode){return mode==='collection constructor';}
@@ -27,7 +28,8 @@ export function readJavaScriptCollectionConstructorKind(fn){
 /** @param {JavaScriptCollectionCallableDirectory} directory @returns {JavaScriptCollectionCallCompilation} */
 export function compileJavaScriptCollectionCallDirectory(directory){
  const empty={$:'callProgram',functions:[],realms:directory.realms,exoticKey:directory.exoticKey};
- if(directory.constructors.length>2||directory.realms.length>4096||directory.primitiveMethods.length>16)return {$:'collectionCallCompilation',program:empty,error:'standard collection call directories exceed their actual owner budget'};
+ const ownerBudget=directory.ownerBudget??16;if(ownerBudget!==16&&ownerBudget!==64)return {$:'collectionCallCompilation',program:empty,error:'standard callable owner budgets require their actual registered 16 or 64 profile'};
+ if(directory.constructors.length>2||directory.realms.length>4096||directory.primitiveMethods.length>ownerBudget)return {$:'collectionCallCompilation',program:empty,error:'standard collection call directories exceed their actual owner budget'};
  const identities=[];/** @type {JavaScriptCallFunction[]} */let functions=[];
  for(const owner of directory.constructors){
   if(!['Set','Map'].includes(owner.kind)||owner.identity<=0n||owner.identity>18446744073709551615n||!directory.realms.includes(owner.realm)||identities.includes(owner.identity)||owner.prototype.$!=='object'||owner.prototype.callable||owner.methods.length>16)return {$:'collectionCallCompilation',program:empty,error:'collection constructors require actual unique callable, realm, kind and prototype owners'};
@@ -43,8 +45,9 @@ export function compileJavaScriptCollectionCallDirectory(directory){
   }
  }
  for(const method of directory.primitiveMethods){
-  if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||!directory.realms.includes(method.realm)||!testJavaScriptPrimitiveMethodOperation(method.operation)&&!testJavaScriptArrayIntrinsicOperation(method.operation)&&!testJavaScriptArrayCallbackOperation(method.operation)&&!testJavaScriptArraySearchOperation(method.operation)&&!testJavaScriptArraySpeciesGetterOperation(method.operation))return {$:'collectionCallCompilation',program:empty,error:'primitive methods require their actual distinct standard identity, realm and operation'};
-  identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:method.realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:testJavaScriptArraySpeciesGetterOperation(method.operation)?[{$:'copy',destination:1,source:0},{$:'return',source:1}]:[{$:testJavaScriptArrayCallbackOperation(method.operation)?'arrayCallback':testJavaScriptArraySearchOperation(method.operation)?'arraySearch':'primitiveMethod',destination:1,operation:method.operation},{$:'return',source:1}]});
+  if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||!directory.realms.includes(method.realm)||!testJavaScriptPrimitiveMethodOperation(method.operation)&&!testJavaScriptArrayIntrinsicOperation(method.operation)&&!testJavaScriptArrayCallbackOperation(method.operation)&&!testJavaScriptArraySearchOperation(method.operation)&&!testJavaScriptArraySpeciesGetterOperation(method.operation)&&!testJavaScriptArrayTransformOperation(method.operation))return {$:'collectionCallCompilation',program:empty,error:'primitive methods require their actual distinct standard identity, realm and operation'};
+  if(testJavaScriptArrayTransformOperation(method.operation)&&(method.species===undefined||method.species.realm!==method.realm))return {$:'collectionCallCompilation',program:empty,error:'Array transformations require their actual intrinsic owner realm species directory'};
+  identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:method.realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:testJavaScriptArrayTransformOperation(method.operation)&&method.species!==undefined?[{$:'arrayTransform',destination:1,operation:method.operation,species:method.species},{$:'return',source:1}]:testJavaScriptArraySpeciesGetterOperation(method.operation)?[{$:'copy',destination:1,source:0},{$:'return',source:1}]:[{$:testJavaScriptArrayCallbackOperation(method.operation)?'arrayCallback':testJavaScriptArraySearchOperation(method.operation)?'arraySearch':'primitiveMethod',destination:1,operation:method.operation},{$:'return',source:1}]});
  }
  const iterators=compileJavaScriptCollectionIteratorCallDirectory({$:'collectionIteratorCallableDirectory',realms:directory.realms,exoticKey:directory.exoticKey,methods:directory.iteratorMethods??[]});
  if(iterators.error!=='')return {$:'collectionCallCompilation',program:empty,error:iterators.error};

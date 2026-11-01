@@ -222,6 +222,25 @@ result Object. Array length limits apply during ArrayCreate, while custom specie
 constructors retain their actual requested length. Generic Construct, target
 allocation and map/filter callback/result composition remain separate protocols.
 
+Expanded standard callable catalogs select the explicit 64-owner directory
+profile; directories omitting this selection retain the historical 16-owner
+limit. Unknown owner profiles refuse. The profile changes admission capacity,
+not constructor/method ownership authority or runtime behavior.
+
+Array map/filter composition captures length and checks callback callability
+before species selection, including empty input. Default and current-realm
+intrinsic Array results use the common sparse allocator and external global
+identity authority. Invalid default lengths fail before an identity is requested.
+Traversal uses current HasProperty/Get at each retained input index. Map keeps
+holes and original positions; filter writes held source elements at its compact
+output index. Callbacks retain actual source, index, element and thisArg. Indexed
+CreateDataPropertyOrThrow bypasses inherited setters and preserves Array exotic
+index/length behavior, with explicit rejection versus storage-limit outcomes.
+Completed callback values and filter selections survive suspended writes.
+Custom species construction and missing constructor authority are explicit
+resumable VM requests; fulfilling Construct requires actual portable constructor
+execution and its receiver/return rules, never an original-host-body fallback.
+
 Map and Set internal slots belong to that same inspectable global heap. Their
 keys use SameValueZero, normalize Number zero, and retain insertion ordinals.
 Deletion releases the deleted key/value references while retaining a tombstone;

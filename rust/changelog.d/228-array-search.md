@@ -15,3 +15,8 @@ pattern binding and execution checks remain deferred.
 Draft ordered identifier declaration groups and uninitialized local let in
 ordinary statements/for heads, preserving binding identities and initializer
 order while retaining explicit switch TDZ refusal.
+
+Draft shared map/filter traversal and default species Array allocation, preserving
+holes, callback effects, compact filter outputs and held results across resource
+limits. Custom construction and missing authority remain explicit VM requests;
+portable constructor execution and generated parity remain separate work.
