@@ -16,6 +16,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorModuleCell',identity:number} | {$:'errorModuleCellSet',identity:number,value:JavaScriptErrorExpression} |
  * {$:'errorUnary',operator:string,value:JavaScriptErrorExpression} |
  * {$:'errorUpdate',operator:string,target:JavaScriptErrorExpression,prefix:boolean} |
+ * {$:'errorCompoundAssignment',operator:string,target:JavaScriptErrorExpression,value:JavaScriptErrorExpression} |
  * {$:'errorBinary',operator:string,left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,port:string} |
  * {$:'errorArray',factory:string,items:JavaScriptErrorExpression[]} |
  * {$:'errorArrayLiteral',length:number,elements:JavaScriptErrorArrayElement[]} |
@@ -148,6 +149,7 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
    return refuseJavaScriptErrorSource(value.context,'this unary source operator requires its own semantic profile');
   }
   case 'errorArray':{const owner=next.capabilities.find(owner=>owner.source===expression.factory);if(owner===undefined||!owner.executable)return refuseJavaScriptErrorSource(next,'array literals require their actual protected realm constructor capability');let current=next;const arguments_=[];for(const item of expression.items){const value=lowerJavaScriptErrorExpression(item,current,depth+1);current=value.context;arguments_.push(value.source);}return {$:'errorSourceExpression',source:{$:'sourceCall',callee:constant({$:'object',identity:owner.identity,callable:owner.callable}),receiver:constant({$:'undefined'}),arguments:arguments_},context:current};}
+  case 'errorCompoundAssignment':return lowerJavaScriptSourceCompoundAssignment(expression,next,depth+1);
   case 'errorUpdate':return lowerJavaScriptSourceUpdate(expression,next,depth+1);
   case 'errorBinary':return lowerJavaScriptSourceBinary(expression,next,depth+1);
   case 'errorConditional':{const condition=lowerJavaScriptErrorExpression(expression.condition,next,depth+1),yes=lowerJavaScriptErrorExpression(expression.yes,condition.context,depth+1),no=lowerJavaScriptErrorExpression(expression.no,yes.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceIf',condition:condition.source,yes:yes.source,no:no.source},context:no.context};}
@@ -181,6 +183,19 @@ export function lowerJavaScriptSourceBinary(expression,context,depth){
   return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,first,left.source,{$:'sourceIf',condition:nullish,yes:right.source,no:a},false),context:next};
  }
  if(expression.operator==='&&'||expression.operator==='||')return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,first,left.source,{$:'sourceIf',condition:a,yes:expression.operator==='&&'?right.source:a,no:expression.operator==='&&'?a:right.source},false),context:next};
+ if(context.mutableBindings&&['+','-','*','/','%','**'].includes(expression.operator)){
+  const firstConverted=next.next,secondConverted=firstConverted+1,complete={...next,next:secondConverted+1},convert=expression.operator==='+'?'convert primitive value':'coerce primitive numeric',operation=expression.operator==='+'?'add primitive values':expression.operator==='-'?'subtract numeric values':expression.operator==='*'?'multiply numeric values':expression.operator==='/'?'divide numeric values':expression.operator==='%'?'read numeric remainder':'raise numeric power';
+  const convertedA={$:'sourceBinding',identity:firstConverted},convertedB={$:'sourceBinding',identity:secondConverted};
+  const body=constructJavaScriptErrorLocalBinding(complete,firstConverted,{$:'sourcePrimitive',operation:convert,arguments:[a]},constructJavaScriptErrorLocalBinding(complete,secondConverted,{$:'sourcePrimitive',operation:convert,arguments:[b]},{$:'sourcePrimitive',operation,arguments:[convertedA,convertedB]},false),false);
+  return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(complete,first,left.source,constructJavaScriptErrorLocalBinding(complete,second,right.source,body,false),false),context:complete};
+ }
+ if(context.mutableBindings&&['<','<=','>','>='].includes(expression.operator)){
+  const firstConverted=next.next,secondConverted=firstConverted+1,comparison=secondConverted+1,complete={...next,next:comparison+1},ordering={$:'sourceBinding',identity:comparison};
+  const chosen=expression.operator==='<'?constructJavaScriptSourceOrderingComparison(ordering,-1):expression.operator==='>'?constructJavaScriptSourceOrderingComparison(ordering,1):{$:'sourceIf',condition:constructJavaScriptSourceOrderingComparison(ordering,0),yes:constant({$:'boolean',value:true}),no:constructJavaScriptSourceOrderingComparison(ordering,expression.operator==='<='?-1:1)};
+  const compared=constructJavaScriptErrorLocalBinding(complete,comparison,{$:'sourcePrimitive',operation:'compare relational values',arguments:[{$:'sourceBinding',identity:firstConverted},{$:'sourceBinding',identity:secondConverted}]},chosen,false);
+  const converted=constructJavaScriptErrorLocalBinding(complete,firstConverted,{$:'sourcePrimitive',operation:'convert number primitive value',arguments:[a]},constructJavaScriptErrorLocalBinding(complete,secondConverted,{$:'sourcePrimitive',operation:'convert number primitive value',arguments:[b]},compared,false),false);
+  return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(complete,first,left.source,constructJavaScriptErrorLocalBinding(complete,second,right.source,converted,false),false),context:complete};
+ }
  let body=constant({$:'undefined'});
  if(expression.operator==='instanceof'){const owner=context.capabilities.find(owner=>owner.source===expression.port);if(owner===undefined||!owner.executable)return refuseJavaScriptErrorSource(next,'instanceof needs its actual qualified constructor/operator owner');body={$:'sourceCall',callee:constant({$:'object',identity:owner.identity,callable:true}),receiver:constant({$:'undefined'}),arguments:[a,b]};}
  else if(expression.operator==='+'&&context.mutableBindings)body={$:'sourcePrimitive',operation:'add primitive values',arguments:[a,b]};
@@ -310,24 +325,60 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
  return {$:'errorModuleCompilation',program:{$:'callProgram',functions,realms:registry.realms,exoticKey:registry.exoticKey,...(plan.templates!==undefined?{templates:orderedTemplates}:{})},error:''};
 }
 
+/** @typedef {{$:'sourceReferenceCapture',identity:number,value:JavaScriptCallSource}} JavaScriptSourceReferenceCapture */
+/** @typedef {{$:'sourceReference',kind:string,identity:number,read:JavaScriptCallSource,receiver:JavaScriptCallSource,key:JavaScriptCallSource,captures:JavaScriptSourceReferenceCapture[],context:JavaScriptErrorSourceContext}} JavaScriptSourceReference */
+/** Capture reference evaluation independently of later GetValue/RHS/PutValue.
+ * @param {JavaScriptErrorExpression} target @param {JavaScriptErrorSourceContext} context
+ * @param {number} depth @returns {JavaScriptSourceReference} */
+export function lowerJavaScriptSourceReference(target,context,depth){
+ const constant=constructJavaScriptErrorConstant;let current=context,read=constant({$:'undefined'}),receiver=constant({$:'undefined'}),key=constant({$:'undefined'}),kind='',identity=0;
+ const captures=[];
+ if(target.$==='errorBinding'){kind='binding';identity=target.identity;read={$:'sourceBinding',identity:target.identity};}
+ else if(target.$==='errorModuleCell'){kind='property';receiver={$:'sourceBinding',identity:target.identity};key=constructJavaScriptSourceFieldKey('value');read={$:'sourceGet',object:receiver,key};}
+ else if(target.$==='errorGet'||target.$==='errorComputedGet'){
+  kind='property';const object=lowerJavaScriptErrorExpression(target.object,current,depth+1),property=lowerJavaScriptErrorExpression(target.key,object.context,depth+1),receiverID=property.context.next,keyID=receiverID+1,convertedID=keyID+1;current={...property.context,next:convertedID+1};receiver={$:'sourceBinding',identity:receiverID};const rawKey={$:'sourceBinding',identity:keyID};key={$:'sourceBinding',identity:convertedID};
+  const failure={$:'sourceCall',callee:constant(context.realm.get),receiver,arguments:[rawKey]},conversion={$:'sourcePropertyKey',input:rawKey,realm:context.realm.realm};
+  const checked={$:'sourceIf',condition:{$:'sourceStrictEqual',left:receiver,right:constant({$:'null'})},yes:failure,no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:receiver,right:constant({$:'undefined'})},yes:failure,no:conversion}};
+  captures.push({$:'sourceReferenceCapture',identity:receiverID,value:object.source},{$:'sourceReferenceCapture',identity:keyID,value:property.source},{$:'sourceReferenceCapture',identity:convertedID,value:checked});read=constructJavaScriptErrorPropertyRead(receiver,key,current);
+ }else current={...current,error:'source read/modify/write retains an actual lexical, module-cell or property reference'};
+ return {$:'sourceReference',kind,identity,read,receiver,key,captures,context:current};
+}
+/** @param {JavaScriptSourceReference} reference @param {JavaScriptCallSource} value @returns {JavaScriptCallSource} */
+export function constructJavaScriptSourceReferenceWrite(reference,value){
+ return reference.kind==='binding'?{$:'sourceAssignBinding',identity:reference.identity,value}:{$:'sourceIf',condition:{$:'sourcePrimitive',operation:'test object value',arguments:[reference.receiver]},yes:{$:'sourceSnapshotSet',object:reference.receiver,key:reference.key,value},no:{$:'sourceCall',callee:constructJavaScriptErrorConstant(reference.context.realm.assign),receiver:reference.receiver,arguments:[reference.key,value]}};
+}
+/** @param {JavaScriptSourceReference} reference @param {JavaScriptErrorSourceContext} context
+ * @param {JavaScriptCallSource} body @returns {JavaScriptCallSource} */
+export function constructJavaScriptSourceReferenceCaptures(reference,context,body){
+ let source=body;for(let at=reference.captures.length-1;at>=0;at--){const capture=reference.captures[at];if(capture!==undefined)source=constructJavaScriptErrorLocalBinding(context,capture.identity,capture.value,source,false);}return source;
+}
 /** Retain one actual Reference, one GetValue and one ToNumeric before PutValue.
  * @param {JavaScriptErrorExpression} expression @param {JavaScriptErrorSourceContext} context
  * @param {number} depth @returns {JavaScriptErrorSourceExpression} */
 export function lowerJavaScriptSourceUpdate(expression,context,depth){
  if(expression.$!=='errorUpdate'||!context.mutableBindings||!['++','--'].includes(expression.operator)||typeof expression.prefix!=='boolean')return refuseJavaScriptErrorSource(context,'source updates require their actual mutable reference and prefix/postfix operator');
- const target=expression.target,constant=constructJavaScriptErrorConstant;let current=context,read=constant({$:'undefined'}),receiver=constant({$:'undefined'}),key=constant({$:'undefined'});
- const captures=[];
- if(target.$==='errorBinding')read={$:'sourceBinding',identity:target.identity};
- else if(target.$==='errorModuleCell'){receiver={$:'sourceBinding',identity:target.identity};key=constructJavaScriptSourceFieldKey('value');read={$:'sourceGet',object:receiver,key};}
- else if(target.$==='errorGet'||target.$==='errorComputedGet'){
-  const object=lowerJavaScriptErrorExpression(target.object,current,depth+1),property=lowerJavaScriptErrorExpression(target.key,object.context,depth+1),receiverID=property.context.next,keyID=receiverID+1,convertedID=keyID+1;current={...property.context,next:convertedID+1};receiver={$:'sourceBinding',identity:receiverID};const rawKey={$:'sourceBinding',identity:keyID};key={$:'sourceBinding',identity:convertedID};
-  const failure={$:'sourceCall',callee:constant(context.realm.get),receiver,arguments:[rawKey]},conversion={$:'sourcePropertyKey',input:rawKey,realm:context.realm.realm};
-  const checked={$:'sourceIf',condition:{$:'sourceStrictEqual',left:receiver,right:constant({$:'null'})},yes:failure,no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:receiver,right:constant({$:'undefined'})},yes:failure,no:conversion}};
-  captures.push({identity:receiverID,value:object.source},{identity:keyID,value:property.source},{identity:convertedID,value:checked});read=constructJavaScriptErrorPropertyRead(receiver,key,current);
- }else return refuseJavaScriptErrorSource(current,'source updates retain an actual lexical, module-cell or property reference');
- const prior=current.next,updated=prior+1,effect=updated+1;current={...current,next:effect+1};const old={$:'sourceBinding',identity:prior},value={$:'sourceBinding',identity:updated};
- let write=target.$==='errorBinding'?{$:'sourceAssignBinding',identity:target.identity,value}:{$:'sourceIf',condition:{$:'sourcePrimitive',operation:'test object value',arguments:[receiver]},yes:{$:'sourceSnapshotSet',object:receiver,key,value},no:{$:'sourceCall',callee:constant(context.realm.assign),receiver,arguments:[key,value]}};
- let source=constructJavaScriptErrorLocalBinding(current,prior,{$:'sourcePrimitive',operation:'coerce primitive numeric',arguments:[read]},constructJavaScriptErrorLocalBinding(current,updated,{$:'sourcePrimitive',operation:expression.operator==='++'?'increment numeric value':'decrement numeric value',arguments:[old]},constructJavaScriptErrorLocalBinding(current,effect,write,expression.prefix?value:old,false),false),false);
- for(let at=captures.length-1;at>=0;at--){const capture=captures[at];if(capture!==undefined)source=constructJavaScriptErrorLocalBinding(current,capture.identity,capture.value,source,false);}
- return {$:'errorSourceExpression',source,context:current};
+ const reference=lowerJavaScriptSourceReference(expression.target,context,depth+1);if(reference.context.error!=='')return refuseJavaScriptErrorSource(reference.context,reference.context.error);
+ const prior=reference.context.next,updated=prior+1,effect=updated+1,current={...reference.context,next:effect+1},old={$:'sourceBinding',identity:prior},value={$:'sourceBinding',identity:updated};
+ const write=constructJavaScriptSourceReferenceWrite(reference,value),body=constructJavaScriptErrorLocalBinding(current,prior,{$:'sourcePrimitive',operation:'coerce primitive numeric',arguments:[reference.read]},constructJavaScriptErrorLocalBinding(current,updated,{$:'sourcePrimitive',operation:expression.operator==='++'?'increment numeric value':'decrement numeric value',arguments:[old]},constructJavaScriptErrorLocalBinding(current,effect,write,expression.prefix?value:old,false),false),false);
+ return {$:'errorSourceExpression',source:constructJavaScriptSourceReferenceCaptures(reference,current,body),context:current};
 }
+/** The source RHS runs after GetValue and before either operand conversion.
+ * @param {JavaScriptErrorExpression} expression @param {JavaScriptErrorSourceContext} context
+ * @param {number} depth @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptSourceCompoundAssignment(expression,context,depth){
+ if(expression.$!=='errorCompoundAssignment'||!context.mutableBindings||!['+=','-=','*=','/=','%=','**=','&&=','||=','??='].includes(expression.operator))return refuseJavaScriptErrorSource(context,'compound assignment requires its actual source read/modify/write reference');
+ const reference=lowerJavaScriptSourceReference(expression.target,context,depth+1);if(reference.context.error!=='')return refuseJavaScriptErrorSource(reference.context,reference.context.error);
+ if(['&&=','||=','??='].includes(expression.operator)){
+  const prior=reference.context.next,rhs=lowerJavaScriptErrorExpression(expression.value,{...reference.context,next:prior+1},depth+1),updated=rhs.context.next,effect=updated+1,current={...rhs.context,next:effect+1},old={$:'sourceBinding',identity:prior},value={$:'sourceBinding',identity:updated},constant=constructJavaScriptErrorConstant;
+  const selected=constructJavaScriptErrorLocalBinding(current,updated,rhs.source,constructJavaScriptErrorLocalBinding(current,effect,constructJavaScriptSourceReferenceWrite(reference,value),value,false),false);
+  const nullish={$:'sourceIf',condition:{$:'sourceStrictEqual',left:old,right:constant({$:'null'})},yes:constant({$:'boolean',value:true}),no:{$:'sourceStrictEqual',left:old,right:constant({$:'undefined'})}};
+  const choice=expression.operator==='&&='?{$:'sourceIf',condition:old,yes:selected,no:old}:expression.operator==='||='?{$:'sourceIf',condition:old,yes:old,no:selected}:{$:'sourceIf',condition:nullish,yes:selected,no:old};
+  const body=constructJavaScriptErrorLocalBinding(current,prior,reference.read,choice,false);return {$:'errorSourceExpression',source:constructJavaScriptSourceReferenceCaptures(reference,current,body),context:current};
+ }
+ const prior=reference.context.next,binary=lowerJavaScriptSourceBinary({$:'errorBinary',operator:expression.operator.slice(0,-1),left:{$:'errorBinding',identity:prior},right:expression.value,port:''},{...reference.context,next:prior+1},depth+1),updated=binary.context.next,effect=updated+1,current={...binary.context,next:effect+1},value={$:'sourceBinding',identity:updated};
+ const write=constructJavaScriptSourceReferenceWrite(reference,value),body=constructJavaScriptErrorLocalBinding(current,prior,reference.read,constructJavaScriptErrorLocalBinding(current,updated,binary.source,constructJavaScriptErrorLocalBinding(current,effect,write,value,false),false),false);
+ return {$:'errorSourceExpression',source:constructJavaScriptSourceReferenceCaptures(reference,current,body),context:current};
+}
+
+/** @param {JavaScriptCallSource} ordering @param {number} code @returns {JavaScriptCallSource} */
+export function constructJavaScriptSourceOrderingComparison(ordering,code){return {$:'sourceNumberBinary',operator:'equal',left:ordering,right:constructJavaScriptErrorConstant({$:'number',value:code})};}

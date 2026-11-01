@@ -212,6 +212,7 @@ export function readJavaScriptNumberCallSourceOperation(fn,frame,destination,rea
    if(input.$!=='object')return '';
    switch(state.$){
     case 'numberProtocolState':{
+     if(state.state.hint!==(instruction.operation==='convert primitive value'?'default':'number'))return '';
      if(!testJavaScriptSemanticSameValue(state.state.receiver,input)||!testJavaScriptSemanticSameValue(state.state.exoticKey,exoticKey))return '';
      break;
     }
@@ -413,7 +414,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
 export function readJavaScriptNumberCallStateError(heap,state){
  switch(state.$){
   case 'numberProtocolState':{
-   if(state.state.hint!=='number')return 'Number conversion retains its actual numeric primitive hint';
+   if(state.state.hint!=='number'&&state.state.hint!=='default')return 'Number conversion retains its actual numeric primitive hint';
    return readJavaScriptPrimitiveConversionStateError(heap,state.state);
   }
   case 'numberPrimitiveValue':{

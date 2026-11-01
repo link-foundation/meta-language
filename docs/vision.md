@@ -106,6 +106,20 @@ clauses, expression initialization, a single lexical initializer, and empty
 bodies. Captured per-iteration mutable cells, var hoisting, multiple declaration
 initializers and abrupt constant-binding writes still need their own protocols.
 
+Shared source arithmetic evaluates both operand values before performing their
+ordered conversions. Addition uses default-hint ToPrimitive and then String or
+numeric addition. Other arithmetic uses ToNumeric, rejects mixed Number/BigInt,
+and retains integer division, remainder and exponent resource/error boundaries.
+Exponentiation remains right associative. Relational operators use number-hint
+ToPrimitive, UTF16 lexical comparison for two Strings, exact mixed Number/BigInt
+ordering and an explicit unordered result. NaN and invalid String/BigInt ordering
+never become true through negating a false less-than test. Arithmetic and logical
+compound assignments share reference capture with prefix/postfix updates. They
+retain converted keys and GetValue before RHS effects. Logical assignment
+executes its RHS and PutValue only when selected and retains identifier-derived
+anonymous function naming. Ordinary lexical constant writes still require their
+source/version-qualified abrupt-completion protocol.
+
 Object literal spread uses a bounded CopyDataProperties continuation in the
 shared heap. It snapshots actual ordered own keys, including Symbols, and reads
 each current own descriptor immediately before its Get. Only enumerable own

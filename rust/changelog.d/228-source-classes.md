@@ -59,3 +59,8 @@ registration and deferred controls accompany the draft; execution remains deferr
 Draft Number/BigInt-preserving ToNumeric, prefix/postfix reference updates, unary
 numeric conversion and ordinary for loops with optional clauses/empty bodies.
 Original-source and shared-machine controls await automatic generation and CI.
+
+Draft ordered object/primitive arithmetic conversion, exact mixed relational
+comparison, arithmetic compound references and lazy logical assignment. Reuse
+shared numeric kernels and source-reference helpers; generated native parity
+and original-runtime observations remain deferred.

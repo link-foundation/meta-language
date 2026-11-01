@@ -1005,3 +1005,43 @@ negative zero, postfix loop updates and omitted clauses. Nothing was executed.
 Native/model/fixture generation remains deferred. Constant-binding abrupt writes,
 var hoisting, multiple declarations, mutable per-iteration captures and general
 iterator-close/finally transfers retain their complete obligations.
+
+
+### Shared arithmetic, relational and compound assignment continuation draft
+
+The source scalar protocol now admits default-hint ToPrimitive and number-hint
+ToPrimitive separately from ToNumeric. Suspended machine conversions are tied to
+the actual instruction's operation/hint; accepting a default-hint state shape
+does not permit substituting it for a number-hint instruction. Addition evaluates
+both operand values, then performs left/right default-hint conversion and the
+String/numeric branch. Other arithmetic performs ordered ToNumeric and delegates
+exact BigInt arithmetic to its existing bounded kernels; mixed types throw.
+Exponentiation has its actual right associativity.
+
+Relational comparison preserves String UTF16 ordering, String/BigInt integer
+parsing, exact Number/BigInt order, and unordered outcomes. The source still
+converts operands left to right for swapped relational operators. <= and >= test
+explicit ordering codes and keep NaN/invalid String-BigInt comparisons false.
+Reference capture, write and capture-wrapping helpers are now shared by updates,
+arithmetic compound assignments and &&=/||=/??=. Compound assignment gets the
+old value and converted key before RHS evaluation. Logical assignment evaluates
+neither RHS nor PutValue on a skipped branch, and identifier assignment retains
+anonymous arrow name inference. Const write behavior remains an explicit source
+boundary; gates and previous inputs were not weakened.
+
+Twenty original-source controls and three additional primitive controls are
+authored for operand evaluation versus conversion ordering, compound receiver/key
+identity, RHS field mutation, text addition, BigInt arithmetic, exponentiation,
+NaN, mixed relational ordering and lazy logical writes. Existing automatic native
+source capture/compilation and machine controls consume the shared operation
+registrations after generation; generated codecs/native files are untouched.
+No tests, validation, generation, compilation or CI failure review ran.
+
+Normative algorithm references (ECMAScript 2026, reviewed November 1):
+https://tc39.es/ecma262/2026/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator
+and https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-islessthan.
+Version-sensitive original engine observations must continue through the existing
+selected runtime/version controls; the draft declarations are not observations.
+Remaining own-code priorities include Array callbacks/species, iterator loops and
+IteratorClose, general lexical cells/TDZ, source import/decode bodies, object rest,
+async/generator execution and all remaining architecture/grammar obligations.

@@ -26,8 +26,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
- const binary=['repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
+ const unary=['test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
+ const binary=['compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
  const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
  return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
@@ -170,6 +170,9 @@ export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
  if(operation==='increment numeric value'||operation==='decrement numeric value'||operation==='negate numeric value')return executeJavaScriptCallNumericUpdate(operation,values[0]??{$:'undefined'});
+ if(['subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power'].includes(operation))return executeJavaScriptCallNumericBinary(operation,values[0]??{$:'undefined'},values[1]??{$:'undefined'});
+ if(operation==='compare relational values')return executeJavaScriptCallRelationalComparison(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
+ if(operation==='convert primitive value'||operation==='convert number primitive value'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveInvalid',reason:'object ToPrimitive requires its actual selected-hint continuation'}:{$:'primitiveValue',value};}
  if(operation==='add primitive values')return executeJavaScriptCallPrimitiveAddition(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
  if(operation==='test object value')return {$:'primitiveValue',value:{$:'boolean',value:(values[0]??{$:'undefined'}).$==='object'}};
  if(operation==='read semantic type'){
@@ -241,4 +244,39 @@ export function executeJavaScriptCallNumericUpdate(operation,value){
  if(value.$==='number')return {$:'primitiveValue',value:{$:'number',value:operation==='increment numeric value'?value.value+1:operation==='decrement numeric value'?value.value-1:-value.value}};
  if(value.$==='integer')return operation==='negate numeric value'?executeJavaScriptCallIntegerPrimitive('negate integer',[value]):executeJavaScriptCallIntegerPrimitive(operation==='increment numeric value'?'add integers':'subtract integers',[value,{$:'integer',value:1n}]);
  return {$:'primitiveInvalid',reason:'numeric updates retain their actual completed Number or BigInt conversion'};
+}
+
+/** Arithmetic after left-to-right ToNumeric, with no implicit Number/BigInt mix.
+ * @param {string} operation @param {JavaScriptSemanticValue} left
+ * @param {JavaScriptSemanticValue} right @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallNumericBinary(operation,left,right){
+ if(!['subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power'].includes(operation))return {$:'primitiveInvalid',reason:'numeric binary instructions require their actual arithmetic operation'};
+ if(!['number','integer'].includes(left.$)||!['number','integer'].includes(right.$))return {$:'primitiveInvalid',reason:'numeric arithmetic retains both actual completed ToNumeric operands'};
+ if(left.$!==right.$)return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot mix BigInt and other types, use explicit conversions'};
+ if(left.$==='integer'&&right.$==='integer')return executeJavaScriptCallIntegerPrimitive(operation==='subtract numeric values'?'subtract integers':operation==='multiply numeric values'?'multiply integers':operation==='divide numeric values'?'divide integers':operation==='read numeric remainder'?'read integer remainder':'raise integer power',[left,right]);
+ if(left.$!=='number'||right.$!=='number')return {$:'primitiveInvalid',reason:'numeric arithmetic retains matching Number or BigInt operands'};
+ const a=left.value,b=right.value;return {$:'primitiveValue',value:{$:'number',value:operation==='subtract numeric values'?a-b:operation==='multiply numeric values'?a*b:operation==='divide numeric values'?a/b:operation==='read numeric remainder'?a%b:a**b}};
+}
+
+/** Abstract relational comparison after ordered number-hint ToPrimitive.
+ * Two denotes unordered; it must never be treated as a true >= relation.
+ * @param {JavaScriptSemanticValue} left @param {JavaScriptSemanticValue} right @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallRelationalComparison(left,right){
+ if(left.$==='object'||right.$==='object')return {$:'primitiveInvalid',reason:'relational comparison requires both actual ToPrimitive completions'};
+ const textLeft=left.$==='text'||left.$==='sourceText',textRight=right.$==='text'||right.$==='sourceText';
+ if(textLeft&&textRight)return executeJavaScriptCallPrimitive('compare text',[left,right]);
+ if(textLeft&&right.$==='integer')return executeJavaScriptCallIntegerPrimitive('compare text integer',[left,right]);
+ if(left.$==='integer'&&textRight)return invertJavaScriptCallRelationalComparison(executeJavaScriptCallIntegerPrimitive('compare text integer',[right,left]));
+ const first=executeJavaScriptCallPrimitive('coerce primitive numeric',[left]);if(first.$!=='primitiveValue')return first;const second=executeJavaScriptCallPrimitive('coerce primitive numeric',[right]);if(second.$!=='primitiveValue')return second;
+ const a=first.value,b=second.value;
+ if(a.$==='integer'&&b.$==='integer')return executeJavaScriptCallIntegerPrimitive('compare integers',[a,b]);
+ if(a.$==='number'&&b.$==='integer')return executeJavaScriptCallIntegerPrimitive('compare number integer',[a,b]);
+ if(a.$==='integer'&&b.$==='number')return invertJavaScriptCallRelationalComparison(executeJavaScriptCallIntegerPrimitive('compare number integer',[b,a]));
+ if(a.$!=='number'||b.$!=='number')return {$:'primitiveInvalid',reason:'relational comparison retains its completed numeric operands'};
+ return {$:'primitiveValue',value:{$:'number',value:Number.isNaN(a.value)||Number.isNaN(b.value)?2:a.value<b.value?-1:a.value>b.value?1:0}};
+}
+/** @param {JavaScriptCallPrimitiveResult} result @returns {JavaScriptCallPrimitiveResult} */
+export function invertJavaScriptCallRelationalComparison(result){
+ if(result.$!=='primitiveValue')return result;if(result.value.$!=='number')return {$:'primitiveInvalid',reason:'relational comparison inversion retains its actual ordering code'};
+ const value=result.value.value;return {$:'primitiveValue',value:{$:'number',value:value===2?2:value===0?0:-value}};
 }

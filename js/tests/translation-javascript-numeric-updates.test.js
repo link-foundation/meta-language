@@ -17,3 +17,14 @@ test('ToNumeric uses its actual number-hint object callback and retains BigInt c
  let current=beginJavaScriptScalarProtocol(heap,object(1n),{$:'symbol',identity:99n},'coerce primitive numeric');for(let at=0;at<16&&current.$==='scalarContinuation';at++)current=stepJavaScriptScalarProtocol(heap,current.state,'coerce primitive numeric');assert.equal(current.$,'scalarCall');assert.deepEqual(current.callee,object(2n,true));assert.deepEqual(current.receiver,object(1n));assert.deepEqual(current.arguments,[]);
  const completed=resumeJavaScriptScalarProtocol(heap,current.state,{$:'normalCompletion',value:integer(7n)},'coerce primitive numeric');assert.deepEqual(completed,{$:'scalarCompleted',value:integer(7n)});
 });
+
+test('generic numeric binary primitives retain exact arithmetic and reject mixed types',()=>{
+ for(const [operation,left,right,expected]of [['subtract numeric values',integer(7n),integer(9n),integer(-2n)],['multiply numeric values',integer(7n),integer(9n),integer(63n)],['divide numeric values',integer(17n),integer(5n),integer(3n)],['read numeric remainder',integer(17n),integer(5n),integer(2n)],['raise numeric power',integer(2n),integer(3n),integer(8n)],['divide numeric values',number(1),number(-0),number(-Infinity)]])assert.deepEqual(executeJavaScriptCallPrimitive(operation,[left,right]),{$:'primitiveValue',value:expected});
+ for(const [operation,left,right,errorClass]of [['subtract numeric values',integer(7n),number(3),'TypeError'],['divide numeric values',integer(7n),integer(0n),'RangeError'],['raise numeric power',integer(2n),integer(-1n),'RangeError']]){const actual=executeJavaScriptCallPrimitive(operation,[left,right]);assert.equal(actual.$,'primitiveError');assert.equal(actual.errorClass,errorClass);}
+});
+test('relational primitives preserve String, mixed integer and unordered results',()=>{
+ for(const [left,right,expected]of [[text('20'),text('3'),-1],[number(9007199254740992),integer(9007199254740993n),-1],[integer(9007199254740993n),number(9007199254740992),1],[text('7'),integer(9n),-1],[integer(9n),text('1.5'),2],[number(NaN),number(0),2],[{$:'null'},{$:'boolean',value:false},0]])assert.deepEqual(executeJavaScriptCallPrimitive('compare relational values',[left,right]),{$:'primitiveValue',value:number(expected)});
+});
+test('default and number-hint primitive conversion retain their original primitive payload',()=>{
+ for(const operation of ['convert primitive value','convert number primitive value'])for(const value of [number(-0),integer(7n),text('7'),{$:'symbol',identity:99n}])assert.deepEqual(executeJavaScriptCallPrimitive(operation,[value]),{$:'primitiveValue',value});
+});

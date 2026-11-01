@@ -14,8 +14,10 @@ import {executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
  */
 /** @param {string} operation @returns {string} */
 export function readJavaScriptScalarProtocolOperationError(operation){
- return operation==='convert explicit number'||operation==='coerce primitive number'||operation==='coerce primitive numeric'||operation==='convert primitive text'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'scalar conversion requires its actual registered Number, integer or text source operation';
+ return operation==='convert explicit number'||operation==='coerce primitive number'||operation==='coerce primitive numeric'||operation==='convert primitive value'||operation==='convert number primitive value'||operation==='convert primitive text'||readJavaScriptIntegerProtocolOperationError(operation)===''?'':'scalar conversion requires its actual registered Number, integer or text source operation';
 }
+/** @param {string} operation @returns {string} */
+export function readJavaScriptScalarProtocolHint(operation){return operation==='convert primitive text'?'string':operation==='convert primitive value'?'default':'number';}
 /** @param {string} operation @param {JavaScriptPrimitiveConversionTransition} transition @returns {JavaScriptScalarConversionTransition} */
 export function finishJavaScriptScalarProtocol(operation,transition){
  const error=readJavaScriptScalarProtocolOperationError(operation);if(error!=='')return {$:'scalarInvalid',reason:error};
@@ -43,19 +45,19 @@ export function finishJavaScriptScalarPrimitive(operation,value){
  * @param {JavaScriptSemanticValue} exoticKey @param {string} operation @returns {JavaScriptScalarConversionTransition} */
 export function beginJavaScriptScalarProtocol(heap,input,exoticKey,operation){
  const error=readJavaScriptScalarProtocolOperationError(operation);if(error!=='')return {$:'scalarInvalid',reason:error};
- return finishJavaScriptScalarProtocol(operation,beginJavaScriptPrimitiveConversion(heap,input,exoticKey,operation==='convert primitive text'?'string':'number'));
+ return finishJavaScriptScalarProtocol(operation,beginJavaScriptPrimitiveConversion(heap,input,exoticKey,readJavaScriptScalarProtocolHint(operation)));
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPrimitiveConversionState} state
  * @param {string} operation @returns {JavaScriptScalarConversionTransition} */
 export function stepJavaScriptScalarProtocol(heap,state,operation){
  const error=readJavaScriptScalarProtocolOperationError(operation);if(error!=='')return {$:'scalarInvalid',reason:error};
- if(state.hint!==(operation==='convert primitive text'?'string':'number'))return {$:'scalarInvalid',reason:'scalar conversion retains the hint of its actual source operation'};
+ if(state.hint!==(readJavaScriptScalarProtocolHint(operation)))return {$:'scalarInvalid',reason:'scalar conversion retains the hint of its actual source operation'};
  return finishJavaScriptScalarProtocol(operation,stepJavaScriptPrimitiveConversion(heap,state));
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptPrimitiveConversionState} state
  * @param {JavaScriptPrimitiveConversionCompletion} completion @param {string} operation @returns {JavaScriptScalarConversionTransition} */
 export function resumeJavaScriptScalarProtocol(heap,state,completion,operation){
  const error=readJavaScriptScalarProtocolOperationError(operation);if(error!=='')return {$:'scalarInvalid',reason:error};
- if(state.hint!==(operation==='convert primitive text'?'string':'number'))return {$:'scalarInvalid',reason:'scalar conversion retains the hint of its actual source operation'};
+ if(state.hint!==(readJavaScriptScalarProtocolHint(operation)))return {$:'scalarInvalid',reason:'scalar conversion retains the hint of its actual source operation'};
  return finishJavaScriptScalarProtocol(operation,resumeJavaScriptPrimitiveConversion(heap,state,completion));
 }
