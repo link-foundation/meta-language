@@ -819,3 +819,21 @@ An additional deferred lowering control checks default/rest-before-cell ordering
 No execution, generation or validation occurred. Remaining environment work is
 runtime TDZ, initialization-time recursion, shared destructuring bindings,
 catch cells, loop-head cloning and full declarative environment behavior.
+
+### Recursive destructuring shared cells draft
+
+Source plans now retain the ordered unique actual shared-binding identity
+directory. Both ordinary and template lowering carry it into recursive Object/
+Array binding initialization. Shared captured leaves/rest bindings initialize
+private value holders; Array output declarations keep their holder identities
+immutable while user assignments continue through shared field operations.
+Nested synthetic pattern roots are not captured as user bindings. Unshared
+leaves retain existing mutability. The plan validator bounds and rejects invalid
+or duplicate shared IDs; source capture still authenticates the actual full plan.
+
+Six originals cover Object/Array lexical patterns, mixed nested patterns, Object/
+Array rest binding replacement and destructured formal parameter captures. One
+additional deferred control checks output mutability and cell initialization.
+No execution or generation occurred. This drafts shared pattern storage after
+initialization; runtime TDZ, capture during initialization, catch-cell storage,
+and for-head environment cloning remain further work.

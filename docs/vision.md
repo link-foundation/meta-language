@@ -120,12 +120,17 @@ updates and prefix/postfix operations access its current value through shared
 property instructions. The holder is never returned instead of the binding's
 value or published as a source property. Independent parent/block invocations
 allocate independent holders; sibling functions/methods share one. Capture
-during initialization, later-binding TDZ, destructuring cells and for-head
+during initialization, later-binding TDZ and for-head
 per-iteration cloning require their explicit environment extensions. Simple
 captured parameters use the same shared storage, installed after each required,
 default or rest value is prepared and before later parameter initialization.
 Defaults therefore see earlier current values, and rest keeps the actual frame
 argument list separate from later binding reassignment.
+Recursive Object/Array binding patterns carry the actual shared source binding
+directory into their common initializer. Captured mutable leaves and rest
+bindings initialize private cell holders; Array output scopes keep the holder
+identity immutable while later user assignment updates its value. Unshared
+leaves preserve their ordinary binding representation and mutability.
 Nested code and static code share explicit instruction and capture budgets.
 Parameter initialization uses one shared lowerer for functions, methods and
 arrows. Fixed object-field aliases retain actual binding identities; defaults

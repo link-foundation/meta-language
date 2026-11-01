@@ -50,7 +50,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorMutableStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]} |
  * {$:'errorStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]}} JavaScriptErrorFunctionPlan */
 /** @typedef {{$:'errorArrowTemplatePlan',owner:number,ordinal:number,name:string,length:number,parameters:JavaScriptErrorParameter[],captures:number[],statements:JavaScriptSourceStatement[],receiverMode?:string}} JavaScriptErrorArrowTemplatePlan */
-/** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number,templates?:JavaScriptErrorArrowTemplatePlan[]}} JavaScriptErrorModulePlan */
+/** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number,templates?:JavaScriptErrorArrowTemplatePlan[],sharedBindings?:number[]}} JavaScriptErrorModulePlan */
 /** @typedef {{$:'errorConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue,baseConstructor:JavaScriptSemanticValue,baseRealm:bigint} |
  * {$:'ordinaryConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue} |
  * {$:'errorFunctionOwner',source:number,identity:bigint,realm:bigint}} JavaScriptErrorFunctionOwner */
@@ -58,7 +58,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorIntrinsicOwner',identity:bigint,realm:bigint}} JavaScriptErrorIntrinsicOwner */
 /** @typedef {{$:'errorModuleRegistry',owners:JavaScriptErrorFunctionOwner[],operations:JavaScriptErrorRealmOperations[],intrinsics:JavaScriptErrorIntrinsicOwner[],realms:bigint[],exoticKey:JavaScriptSemanticValue}} JavaScriptErrorModuleRegistry */
 /** @typedef {{$:'sourceCapabilityOwner',source:string,identity:bigint,realm:bigint,operation:string,owner:string,callable:boolean,executable:boolean}} JavaScriptSourceCapabilityOwner */
-/** @typedef {{$:'errorSourceContext',registry:JavaScriptErrorModuleRegistry,realm:JavaScriptErrorRealmOperations,capabilities:JavaScriptSourceCapabilityOwner[],next:number,visits:number,error:string,mutableBindings:boolean,globalBindings?:number[]}} JavaScriptErrorSourceContext */
+/** @typedef {{$:'errorSourceContext',registry:JavaScriptErrorModuleRegistry,realm:JavaScriptErrorRealmOperations,capabilities:JavaScriptSourceCapabilityOwner[],next:number,visits:number,error:string,mutableBindings:boolean,globalBindings?:number[],sharedBindings?:number[]}} JavaScriptErrorSourceContext */
 /** @typedef {{$:'errorSourceExpression',source:JavaScriptCallSource,context:JavaScriptErrorSourceContext}} JavaScriptErrorSourceExpression */
 /** @typedef {{$:'errorModuleCompilation',program:JavaScriptCallProgram,error:string}} JavaScriptErrorModuleCompilation */
 /** @typedef {{$:'errorModuleBindingValue',identity:number,value:JavaScriptSemanticValue}} JavaScriptErrorModuleBinding */
@@ -345,6 +345,7 @@ export function compileJavaScriptErrorModulePlanWithBindings(plan,registry,bindi
  * @returns {JavaScriptErrorModuleCompilation} */
 export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,bindings,capabilities){
  const empty={$:'callProgram',functions:[],realms:registry.realms,exoticKey:registry.exoticKey};
+ const shared=plan.sharedBindings??[];if(shared.length>4096||shared.some((identity,index)=>!Number.isSafeInteger(identity)||Object.is(identity,-0)||identity<0||identity>=plan.nextBinding||index>0&&identity<=(shared[index-1]??-1)))return {$:'errorModuleCompilation',program:empty,error:'shared lexical cells retain ordered unique actual bounded source binding identities'};
  if(capabilities.length>4096)return {$:'errorModuleCompilation',program:empty,error:'qualified source capabilities exceed their actual directory budget'};
  for(let at=0;at<capabilities.length;at++){const capability=capabilities[at];if(capability===undefined||capability.source===''||capability.owner===''||capability.operation===''||capability.identity<=0n||capability.identity>18446744073709551615n||!registry.realms.includes(capability.realm)||capability.executable&&!capability.callable||capabilities.findIndex(row=>row.source===capability.source)!==at)return {$:'errorModuleCompilation',program:empty,error:'source capabilities require distinct actual references, identities, realms and operation owners'};const previous=capabilities.findIndex(row=>row.identity===capability.identity);if(previous!==at){const owner=capabilities[previous];if(owner===undefined||owner.realm!==capability.realm||owner.owner!==capability.owner||owner.operation!==capability.operation||owner.callable!==capability.callable||owner.executable!==capability.executable)return {$:'errorModuleCompilation',program:empty,error:'one actual capability identity cannot acquire conflicting operation or namespace roles'};}}
  if(bindings.length>4096)return {$:'errorModuleCompilation',program:empty,error:'actual module captures exceed the source frame budget'};
@@ -355,7 +356,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   const matches=registry.owners.filter(owner=>owner.source===definition.identity);if(matches.length!==1)return {$:'errorModuleCompilation',program:empty,error:'every actual source definition needs exactly one supplied callable owner'};const owner=matches[0];if(owner===undefined)return {$:'errorModuleCompilation',program:empty,error:'source callable owners must be dense'};
   if(identities.includes(owner.identity)||!registry.realms.includes(owner.realm))return {$:'errorModuleCompilation',program:empty,error:'source callable owners need distinct identities and actual realms'};identities.push(owner.identity);
   const operations=registry.operations.filter(row=>row.realm===owner.realm);if(operations.length!==1)return {$:'errorModuleCompilation',program:empty,error:'Error source operations require their actual complete source realm'};const realm=operations[0];if(realm===undefined)return {$:'errorModuleCompilation',program:empty,error:'Error source realm rows must be dense'};
-  let context={$:'errorSourceContext',registry,realm,capabilities,next:plan.nextBinding,visits:0,error:'',globalBindings:bindings.map(binding=>binding.identity),mutableBindings:definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'},source=constructJavaScriptErrorConstant({$:'undefined'});
+  let context={$:'errorSourceContext',registry,realm,capabilities,sharedBindings:plan.sharedBindings??[],next:plan.nextBinding,visits:0,error:'',globalBindings:bindings.map(binding=>binding.identity),mutableBindings:definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'},source=constructJavaScriptErrorConstant({$:'undefined'});
   if(definition.$==='errorConstructorPlan'){
    if(owner.$!=='errorConstructorOwner'||!registry.realms.includes(owner.baseRealm))return {$:'errorModuleCompilation',program:empty,error:'an Error subclass requires its actual base constructor and realm authority'};
    const message=lowerJavaScriptErrorExpression(definition.message,context,0);context=message.context;
@@ -386,7 +387,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   if(definition.length!==length)return {$:'errorModuleCompilation',program:empty,error:'arrow Function length retains its actual parameter initializer boundary'};
   const identities=bindings.map(binding=>binding.identity).concat(definition.captures),parameters=definition.parameters.map(parameter=>parameter.identity);
   if(identities.length>4096||identities.some((identity,index)=>identities.indexOf(identity)!==index||parameters.includes(identity)))return {$:'errorModuleCompilation',program:empty,error:'arrow parameters and captures retain disjoint actual lexical bindings'};
-  const context={$:'errorSourceContext',registry,realm,capabilities,globalBindings:bindings.map(binding=>binding.identity),next:plan.nextBinding,visits:0,error:'',mutableBindings:true};
+  const context={$:'errorSourceContext',registry,realm,capabilities,sharedBindings:plan.sharedBindings??[],globalBindings:bindings.map(binding=>binding.identity),next:plan.nextBinding,visits:0,error:'',mutableBindings:true};
   const lowered=lowerJavaScriptSourceStatements(definition.statements,0,context,constructJavaScriptErrorConstant({$:'undefined'}),0);
   if(lowered.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:lowered.context.error};
   const initialized=lowerJavaScriptSourceParameters(definition.parameters,lowered.context,lowered.source);if(initialized.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:initialized.context.error};
@@ -463,7 +464,10 @@ export function constructJavaScriptSourceOrderingComparison(ordering,code){retur
 /** @param {JavaScriptErrorSourceContext} context @param {number} identity
  * @param {JavaScriptCallSource} value @param {JavaScriptCallSource} body
  * @param {boolean} mutable @param {boolean} initializeExisting @returns {JavaScriptCallSource} */
-export function constructJavaScriptSourcePatternBinding(context,identity,value,body,mutable,initializeExisting){return initializeExisting?{$:'sourceInitializeBinding',identity,value,body}:constructJavaScriptErrorLocalBinding(context,identity,value,body,mutable);}
+export function constructJavaScriptSourcePatternBinding(context,identity,value,body,mutable,initializeExisting){
+ const shared=(context.sharedBindings??[]).includes(identity),stored=shared?{$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:context.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value}]}:value;
+ return initializeExisting?{$:'sourceInitializeBinding',identity,value:stored,body}:constructJavaScriptErrorLocalBinding(context,identity,stored,body,mutable&&!shared);
+}
 /** @param {JavaScriptErrorParameter} pattern @param {JavaScriptErrorSourceContext} context
  * @param {JavaScriptCallSource} continuation @param {boolean} mutable @param {number} [depth]
  * @param {boolean} [initializeExisting] @returns {JavaScriptErrorSourceExpression} */
@@ -471,17 +475,17 @@ export function lowerJavaScriptSourceBindingPattern(pattern,context,continuation
  return pattern.$==='errorArrayParameter'?lowerJavaScriptSourceArrayBinding(pattern,context,continuation,mutable,depth,initializeExisting):lowerJavaScriptSourceObjectBinding(pattern,context,continuation,mutable,depth,initializeExisting);
 }
 /** @typedef {{$:'bindingDeclarations',declarations:JavaScriptCallBindingDeclaration[],error:string}} JavaScriptPatternBindingDeclarations */
-/** @param {JavaScriptErrorParameter} pattern @param {boolean} mutable @param {number} depth @returns {JavaScriptPatternBindingDeclarations} */
-export function collectJavaScriptPatternBindingDeclarations(pattern,mutable,depth){
+/** @param {JavaScriptErrorParameter} pattern @param {boolean} mutable @param {number} depth @param {number[]} [shared] @returns {JavaScriptPatternBindingDeclarations} */
+export function collectJavaScriptPatternBindingDeclarations(pattern,mutable,depth,shared=[]){
  if(depth>128||pattern.$!=='errorObjectParameter'&&pattern.$!=='errorArrayParameter')return {$:'bindingDeclarations',declarations:[],error:'pattern output declarations retain their actual bounded recursive pattern'};
  const fields=pattern.$==='errorObjectParameter'?pattern.fields:pattern.elements.filter(field=>field.$==='errorArrayBindingElement'),declarations=[];
  for(const field of fields){
-  if(field.$==='errorArrayElision')continue;declarations.push({$:'sourceBindingDeclaration',identity:field.identity,mutable});
-  if(field.pattern!==undefined){const child=collectJavaScriptPatternBindingDeclarations(field.pattern,mutable,depth+1);if(child.error!=='')return child;declarations.push(...child.declarations);}
+  if(field.$==='errorArrayElision')continue;declarations.push({$:'sourceBindingDeclaration',identity:field.identity,mutable:mutable&&!shared.includes(field.identity)});
+  if(field.pattern!==undefined){const child=collectJavaScriptPatternBindingDeclarations(field.pattern,mutable,depth+1,shared);if(child.error!=='')return child;declarations.push(...child.declarations);}
   if(declarations.length>4096)return {$:'bindingDeclarations',declarations:[],error:'binding outputs exceed their actual structural budget'};
  }
- if(pattern.$==='errorObjectParameter'&&pattern.rest!==undefined)declarations.push({$:'sourceBindingDeclaration',identity:pattern.rest,mutable});
- if(pattern.$==='errorArrayParameter'&&pattern.rest!==undefined){declarations.push({$:'sourceBindingDeclaration',identity:pattern.rest.identity,mutable});if(pattern.rest.pattern!==undefined){const child=collectJavaScriptPatternBindingDeclarations(pattern.rest.pattern,mutable,depth+1);if(child.error!=='')return child;declarations.push(...child.declarations);}}
+ if(pattern.$==='errorObjectParameter'&&pattern.rest!==undefined)declarations.push({$:'sourceBindingDeclaration',identity:pattern.rest,mutable:mutable&&!shared.includes(pattern.rest)});
+ if(pattern.$==='errorArrayParameter'&&pattern.rest!==undefined){declarations.push({$:'sourceBindingDeclaration',identity:pattern.rest.identity,mutable:mutable&&!shared.includes(pattern.rest.identity)});if(pattern.rest.pattern!==undefined){const child=collectJavaScriptPatternBindingDeclarations(pattern.rest.pattern,mutable,depth+1,shared);if(child.error!=='')return child;declarations.push(...child.declarations);}}
  return declarations.length>4096?{$:'bindingDeclarations',declarations:[],error:'binding outputs exceed their actual structural budget'}:{$:'bindingDeclarations',declarations,error:''};
 }
 /** @param {JavaScriptErrorParameter} pattern @param {JavaScriptErrorSourceContext} first
@@ -500,6 +504,6 @@ export function lowerJavaScriptSourceArrayBinding(pattern,first,continuation,mut
  }
  const initializer={$:'sourceIteratorBinding',slot:pattern.identity,input:{$:'sourceBinding',identity:pattern.identity},iteratorKey:key.source,body:source,realm:context.realm.realm};
  if(initializeExisting){const identity=context.next;context={...context,next:identity+1};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(context,identity,initializer,continuation,false),context};}
- const outputs=collectJavaScriptPatternBindingDeclarations(pattern,mutable,depth);if(outputs.error!=='')return refuseJavaScriptErrorSource(context,outputs.error);
+ const outputs=collectJavaScriptPatternBindingDeclarations(pattern,mutable,depth,context.sharedBindings??[]);if(outputs.error!=='')return refuseJavaScriptErrorSource(context,outputs.error);
  return {$:'errorSourceExpression',source:{$:'sourceBindingScope',declarations:outputs.declarations,initializer,body:continuation},context};
 }

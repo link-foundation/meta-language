@@ -78,11 +78,11 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  if(classProfile)for(const binding of bindings){
   if(!['let','parameter'].includes(binding.kind)||binding.scope==='scope:0')continue;
   if(binding.kind==='let'){
-   const declaration=containing(binding,['variable_declarator']);if(!declaration||declaration.start!==binding.declaration.start)continue;
+   const declaration=containing(binding,['variable_declarator']);if(!declaration)continue;
    const loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);if(loop){const body=sourceField(loop,'body');if(!body||binding.declaration.start<body.start)continue;}
   }else{
    const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>');
-   if(position<0||!singleArrow&&(!formal||!['(',',','...'].includes(values[position-1])||![')',',','='].includes(values[position+1])))continue;
+   if(position<0||!singleArrow&&!formal)continue;
   }
   if([...arrowNodes,...methodNodes].some(node=>!(binding.declaration.start>=node.start&&binding.declaration.end<=node.end)&&binding.references.some(row=>row.start>=node.start&&row.end<=node.end))){sharedBindingCells.add(binding.identity);cellIDs.add(binding.identity);}
  }
@@ -429,7 +429,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    functions.push({$:member.isConstructor?'errorOrdinaryConstructorPlan':member.classBinding!==undefined?'errorMethodFunctionPlan':classProfile?'errorMutableStatementFunctionPlan':'errorStatementFunctionPlan',identity:member.binding.identity,name:member.binding.name,parameters:params,statements:body});origins.push({identity:member.binding.identity,name:member.binding.name,start:member.node.start,end:member.node.end,coordinateUnit:'UTF-16 code units',...(member.classBinding!==undefined?{classBinding:member.classBinding,constructor:member.isConstructor}: {})});
   }
  }activeClass=null;activeFunction=null;
- return {schemaVersion:1,artifactKind:'authenticated semantic source plan/input 1',model:profile,identifier,source,sourceBytes:Buffer.byteLength(source),sourceSha256:createHash('sha256').update(source).digest('hex'),entries:[...entries],origins,imports:imports.filter(row=>capabilities.has('binding:'+row.binding)),cells,capabilities:[...capabilities.values()],...(classProfile?{classes:classes.filter(row=>selected.has(row.binding))}:{}),qualification:'owned selected source functions/classes; imported operations require their actual qualified implementations; not a checked portable Core program',plan:{$:'errorModulePlan',functions,...(templates.length?{templates:templates.toSorted((a,b)=>a.owner-b.owner||a.ordinal-b.ordinal)}:{}),exports:entries.map(name=>headers.find(row=>row.binding.name===name).binding.identity),nextBinding}};
+ return {schemaVersion:1,artifactKind:'authenticated semantic source plan/input 1',model:profile,identifier,source,sourceBytes:Buffer.byteLength(source),sourceSha256:createHash('sha256').update(source).digest('hex'),entries:[...entries],origins,imports:imports.filter(row=>capabilities.has('binding:'+row.binding)),cells,capabilities:[...capabilities.values()],...(classProfile?{classes:classes.filter(row=>selected.has(row.binding))}:{}),qualification:'owned selected source functions/classes; imported operations require their actual qualified implementations; not a checked portable Core program',plan:{$:'errorModulePlan',functions,...(sharedBindingCells.size?{sharedBindings:[...sharedBindingCells].toSorted((a,b)=>a-b)}:{}),...(templates.length?{templates:templates.toSorted((a,b)=>a.owner-b.owner||a.ordinal-b.ordinal)}:{}),exports:entries.map(name=>headers.find(row=>row.binding.name===name).binding.identity),nextBinding}};
 }
 
 export function checkJavaScriptProjectDataSource(capture){assertPlainSourceReceipt(capture);const actual=captureJavaScriptProjectDataSource(capture.source,{identifier:capture.identifier,entries:capture.entries,profile:capture.model});if(JSON.stringify(actual)!==JSON.stringify(capture))throw new TypeError('project data source plan must retain its complete CST, selected binding closure and operation owners');return actual;}

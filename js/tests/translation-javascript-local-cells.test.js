@@ -1,6 +1,6 @@
 // Deferred source controls for shared lexical storage, no behavior at import.
 import test from 'node:test';import assert from 'node:assert/strict';
-import {lowerJavaScriptSourceStatements,lowerJavaScriptSourceParameters} from '../src/translation/javascript-error-class-source.js';
+import {lowerJavaScriptSourceStatements,lowerJavaScriptSourceParameters,constructJavaScriptSourcePatternBinding,collectJavaScriptPatternBindingDeclarations} from '../src/translation/javascript-error-class-source.js';
 const absent={$:'undefined'},constant=value=>({$:'errorConstant',value});
 function context(){return {$:'errorSourceContext',registry:{$:'errorRegistry',owners:[],operations:[],intrinsics:[],realms:[1n],exoticKey:absent},realm:{$:'errorRealmOperations',realm:1n,objectPrototype:absent,get:absent,assign:absent},capabilities:[],next:20,visits:0,error:'',mutableBindings:true};}
 test('captured local declaration binds a stable private cell identity with mutable value storage',()=>{
@@ -11,4 +11,7 @@ test('ordinary mutable locals keep their existing register representation',()=>{
 });
 test('shared formal cells initialize after default or rest value preparation',()=>{
  const next=context(),body={$:'sourceConstant',value:absent},parameter={$:'errorDefaultParameter',identity:1,value:constant({$:'number',value:7}),shared:true},defaulted=lowerJavaScriptSourceParameters([parameter],next,body);assert.equal(defaulted.context.error,'');assert.equal(defaulted.source.$,'sourceParameterDefault');assert.equal(defaulted.source.body.$,'sourceLocalLet');assert.equal(defaulted.source.body.value.$,'sourceAssignBinding');assert.equal(defaulted.source.body.value.identity,1);assert.equal(defaulted.source.body.value.value.$,'sourceObject');const rest=lowerJavaScriptSourceParameters([{$:'errorRestParameter',identity:1,shared:true}],{...next,realm:{...next.realm,arrayPrototype:{$:'null'}}},body);assert.equal(rest.context.error,'');assert.equal(rest.source.$,'sourceParameterRest');assert.equal(rest.source.body.value.$,'sourceAssignBinding');
+});
+test('pattern outputs initialize private shared cells while preserving ordinary binding mutability',()=>{
+ const pattern={$:'errorArrayParameter',identity:9,hasDefault:false,value:constant(absent),iteratorKey:constant({$:'symbol',identity:99n}),elements:[{$:'errorArrayBindingElement',identity:1,hasDefault:false,value:constant(absent)},{$:'errorArrayBindingElement',identity:2,hasDefault:false,value:constant(absent)}]},outputs=collectJavaScriptPatternBindingDeclarations(pattern,true,0,[1]);assert.equal(outputs.error,'');assert.deepEqual(outputs.declarations.map(row=>({identity:row.identity,mutable:row.mutable})),[{identity:1,mutable:false},{identity:2,mutable:true}]);const initialized=constructJavaScriptSourcePatternBinding({...context(),sharedBindings:[1]},1,{$:'sourceConstant',value:{$:'number',value:7}},{$:'sourceConstant',value:absent},true,true);assert.equal(initialized.$,'sourceInitializeBinding');assert.equal(initialized.value.$,'sourceObject');assert.equal(initialized.value.properties[0].value.value.value,7);
 });
