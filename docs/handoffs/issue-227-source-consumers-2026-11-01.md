@@ -713,7 +713,7 @@ remain distinct. Neither wire generation nor runtime comparison was run.
 The readonly iterator fixtures are registered with the automatic fixture author,
 exact native literal group and shared original/compiler/native parity matrix.
 The five smaller originals and retained Type::children method retain signature
-model 3. All six refusal rows keep their declared compiler classification and
+model 3. All seven refusal rows keep their declared compiler classification and
 select model 3 explicitly. The common JavaScript producer now passes that
 selector into both parsing and typed import. The additive native parser and
 typed importer `*_with_source_version_and_signature_model` retain both selectors
@@ -721,3 +721,86 @@ and their provenance; the legacy version-only API keeps its prior profile shape.
 The native matrix uses each row's actual selector. Old uncovered-version
 assertions remain, with an additional version-plus-model rejection assertion.
 These are unexecuted source integrations, not compiler observations.
+
+
+All three agents have finished; root continues alone. The final readonly source
+review distinguishes actual Box.as_ref candidates with wrong arity/unsupported
+receivers from non-Box receivers: an actual standard candidate cannot fall
+through to an inner nominal method. The final iterator inventory contains
+54 decisions, five smaller originals, the separate retained Type::children
+method and seven classified refusals. Vector and body-region inventories contain
+46 and 62 decisions. These are unexecuted assertion inventories.
+
+The next active source batch introduces actual runtime arrow closure heap slots,
+code-only lexical templates and machine dispatch. Source-expression lowering
+snapshots captures and lexical receiver before global identity suspension.
+Original CST arrow admission, immutable-binding proof, source plan/code template
+publication, Node source-unit composition and native consumer template coverage
+are still being connected. General mutable lexical cells, derived-this closure
+cells and full callable reflection remain distinct obligations. No template
+model, authored test or partial integration claims whole-language support.
+
+
+The source arrow connection now spans the actual CST mapping and binding
+reference facts, error-module input plan, shared source-expression compiler,
+code-only template directory, fresh global callable allocation, ordinary heap
+operations, machine call resolution and Node/native program composition.
+Simple parameter heads and expression/block bodies retain their exact CST
+intervals. Capture admission proves actual earlier binding declarations and
+checks every actual binding reference against CST assignment operand fields,
+including parenthesized targets, while preserving writes to captured objects; an
+initializer's own binding, later binding or mutable capture requires a lexical
+cell. Nested templates retain transitive outer captures by their actual binding
+coordinates. Global module cells remain shared captured handles. Name inference
+applies to direct anonymous arrow values at admitted declarations, defaults,
+object fields and identifier assignments; it does not rename returned closures.
+The eight new originals bring the flat source inventory to forty-nine originals;
+three additional valid-source boundaries bring refusal inputs to ten. Four
+separate template/machine controls are authored. All are unexecuted.
+
+The primary source is the ECMAScript 2026
+[arrow instantiation algorithm](https://tc39.es/ecma262/2026/multipage/ecmascript-language-functions-and-classes.html#sec-runtime-semantics-instantiatearrowfunctionexpression)
+and [assignment evaluation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-expressions.html#sec-assignment-operators-runtime-semantics-evaluation).
+The draft captures proven immutable bindings as values; general lexical
+environments still require cells. Template/body checks reject overwriting
+immutable capture/receiver slots, bind live closures to their real static owner,
+and validate exact runtime captured values. Static owners and lexical sites
+are never published as fake runtime callable objects. The common instruction
+validator handles template code without adding static function rows.
+
+Remaining arrow source work includes general mutable/TDZ/self-recursive cells,
+derived-this cells, argument objects/new.target/super, async/generator forms,
+parameter defaults/rest/patterns inside arrows, template-interpolation arrow
+coordinates, general function expressions, complete callable reflection,
+independent compiler/runtime validation and native generated policy products.
+Array callback protocols, switch/fallthrough, spread, for-of/IteratorClose and
+full renameExpr remain active drafting work; helper presence is not completion.
+
+
+The native source consumer now independently re-derives arrow sites and
+parameter/capture membership from its actual CST, field links and binding
+references. It checks byte-to-UTF16 source ownership ranges, actual assignment
+operand fields (including parenthesized targets), lexical capture writes and
+nearest initializer boundaries. Arrow parameters remain initialized frame values,
+not declarations belonging to an enclosing variable initializer. All checks are
+authored for later CI execution. Template-interpolation references participate
+through CST fields rather than token-spelling guesses; arrows defined inside
+interpolations still need their separate source coordinate admission.
+
+
+Mutable source arithmetic now uses the same read-snapshot mechanism for every
+mutable binding read. The error-module and arrow compilers select it directly;
+the general source compiler retries its pure lowering with snapshots when it
+encounters a binding write or parameter default. The retry executes no source
+program or callback. Immutable-only source compilation retains its existing
+output. Two complete originals assert `value + (value = 9)` is 12 from input 3,
+both in an ordinary source function and an arrow. This fixes GetValue order
+without copying referenced object contents. All earlier inputs and assertions
+remain; none were executed or presented as evidence.
+
+Checkpoint `7b9034cd` is pushed. Its workflow `41312462200` was terminal before
+the following source batch; only workflow identity/status was read. All agents
+are finished and root works alone. No CI feedback, local tests, validators,
+generators or compilation were run for these drafts. Native and formal products
+remain automatic future source generation. No full-requirement completion or
+whole-project translation claim is made.

@@ -94,6 +94,7 @@ pub(crate) mod javascript_collection_rules;
 pub(crate) mod javascript_array_objects;
 pub(crate) mod javascript_arrays;
 pub(crate) mod javascript_array_assignment;
+pub(crate) mod javascript_call_templates;
 pub(crate) mod javascript_collection_iteration;
 pub(crate) mod javascript_collection_iterator_results;
 pub(crate) mod javascript_collection_iterator_call_source;

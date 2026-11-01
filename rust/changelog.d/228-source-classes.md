@@ -25,3 +25,9 @@ and verification remain pending.
 Retain independently selected Rust source versions and signature models through
 the shared original-program matrix and native typed Links import. Add explicit
 combined-selector entry points while preserving the version-only profile.
+
+Draft actual CST arrow templates and immutable binding captures through fresh
+callable heap allocation and shared machine dispatch, including lexical this,
+nested factory captures, ordinary name/length metadata and source-unit template
+composition. Mutable lexical cells and broader arrow/function forms remain
+separate work; all added controls remain unexecuted.

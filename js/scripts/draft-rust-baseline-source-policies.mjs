@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-call-templates.js',moduleName:'javascript_call_templates',model:'Actual runtime arrow closure identities and lexical code templates 1',programAsset:'javascript-call-templates-program'},
  {sourcePath:'js/src/translation/javascript-array-assignment.js',moduleName:'javascript_array_assignment',model:'Actual Array length assignment conversion continuations 1',programAsset:'javascript-array-assignment-program'},
  {sourcePath:'js/src/translation/javascript-collection-iterator-call-source.js',moduleName:'javascript_collection_iterator_call_source',model:'Actual JavaScript collection iterator callable owners 1',programAsset:'javascript-collection-iterator-call-source-program'},
  {sourcePath:'js/src/translation/javascript-collection-iterator-results.js',moduleName:'javascript_collection_iterator_results',model:'Inspectable collection iterator entry and result objects 1',programAsset:'javascript-collection-iterator-results-program'},
@@ -153,6 +154,7 @@ const consumers=[
  'js/tests/translation-javascript-array-objects.test.js',
  'js/tests/translation-javascript-collection-iterator-results.test.js',
  'js/tests/translation-javascript-array-assignment.test.js',
+ 'js/tests/translation-javascript-call-templates.test.js',
  'js/tests/translation-javascript-collection-iterator-call-source.test.js',
  'js/tests/translation-rust-owned-record-nested-loops.test.js',
  'js/tests/translation-rust-ordinary-match-completions.test.js',

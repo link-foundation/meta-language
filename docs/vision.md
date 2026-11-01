@@ -57,6 +57,25 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Runtime arrow closures have genuine callable identities in the common heap,
+ordinary own properties, actual prototypes, lexical receivers and captured
+semantic values. A separate code-only directory names static lexical sites by
+actual source function owner and ordinal; these templates never allocate fake
+callable objects or substitute code-site identity for evaluation identity. Every
+closure evaluation requests a fresh external global identity. Calls resolve that
+actual object to its declared template and complete capture vector. Function
+name/length metadata retains ordinary descriptor semantics. Initial source
+capture-by-value admission requires proof of immutable lexical bindings; mutable
+bindings and derived-this initialization require actual shared lexical cells.
+Nested code and static code share explicit instruction and capture budgets.
+Mutable source reads snapshot their semantic value before later operand effects;
+this preserves referenced object identity while preventing a later binding write
+from replacing an earlier operand. Immutable expression compilation keeps its
+existing form; encountering a binding write selects the shared snapshot pass.
+Both typed Links transports must preserve optional template directories and
+all runtime closure slots, including through source-unit composition.
+
+
 The executable JavaScript call model uses the same globally identified ordinary
 heap for allocation, property access and calls. An ordinary-object allocation
 instruction evaluates its explicit prototype once, suspends without advancing,

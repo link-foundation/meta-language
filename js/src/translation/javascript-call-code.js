@@ -27,6 +27,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'primitive',destination:number,operation:string,arguments:number[]} |
  * {$:'ordinaryAllocate',destination:number,prototype:number} |
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
+ * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
  * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
@@ -40,9 +41,13 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * lexicalReceiver:JavaScriptSemanticValue,parameters:number,registers:number,
  * captures:JavaScriptSemanticValue[],instructions:JavaScriptCallInstruction[]}} JavaScriptCallFunction
  */
+/** Code-only arrow templates have no heap identity. Their owner is the actual
+ * registered source function; ordinals distinguish its nested lexical sites.
+ * @typedef {{$:'callTemplate',owner:bigint,ordinal:number,realm:bigint,parameters:number,registers:number,captureCount:number,instructions:JavaScriptCallInstruction[],prototype:JavaScriptSemanticValue,name:JavaScriptSemanticValue,length:number}} JavaScriptCallTemplate
+ */
 /** Realm identifiers are supplied by the actual intrinsic registry. Membership
  * checks do not prove authority or allocate a substitute realm/Error object.
- * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue}} JavaScriptCallProgram
+ * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue,templates?:JavaScriptCallTemplate[]}} JavaScriptCallProgram
  */
 /** @param {number} value @param {number} limit @returns {boolean} */
 export function testJavaScriptCallCodeCoordinate(value,limit){return Number.isSafeInteger(value)&&value>=0&&value<limit&&(value!==0||1/value>0);}
@@ -69,6 +74,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype];
     case 'collectionIteratorResult':return [instruction.destination,instruction.arrayPrototype,instruction.objectPrototype];
+    case 'closureAllocate':return [instruction.destination,instruction.receiver].concat(instruction.captures);
     case 'collectionCopy':return [instruction.destination,instruction.target,instruction.input,instruction.adder,instruction.iteratorKey,instruction.iteratorMethod,instruction.iteratorPrototype,instruction.nextMethod];
     case 'ordinaryDataProperty':return [instruction.destination,instruction.object,instruction.key,instruction.value];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];

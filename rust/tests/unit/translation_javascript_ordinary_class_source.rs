@@ -6,7 +6,7 @@ use super::source_module_compilation::assert_source_module_compilation;
 use super::collection_source_compilation::assert_collection_source_compilation;
 use super::translation_javascript_call_machine::assert_source_machine_trace;
 use serde_json::{Value,json};
-use std::{collections::BTreeMap,process::Command,fs,path::Path};
+use std::{collections::{BTreeMap,BTreeSet},process::Command,fs,path::Path};
 
 fn actual_class_declaration<'a>(source:&'a str,name:&str)->&'a str{
  let program=meta_language::program_representation::analyze_program(source,"JavaScript",Default::default()).unwrap();
@@ -14,6 +14,50 @@ fn actual_class_declaration<'a>(source:&'a str,name:&str)->&'a str{
  let declared=bindings[0].declaration();
  let syntax=program.source_mappings().iter().filter(|mapping|mapping.term()=="class_declaration"&&mapping.range().start()<=declared.start()&&mapping.range().end()>=declared.end()).min_by_key(|mapping|mapping.range().end()-mapping.range().start()).unwrap();
  &source[syntax.range().start()..syntax.range().end()]
+}
+
+// Re-derive lexical sites, parameter/capture membership and write targets from
+// actual native CST fields and bindings, independently of the JS input plan.
+fn assert_source_arrow_inputs(capture:&Value){
+ let Some(templates)=capture["plan"].get("templates") else{return};
+ let source=capture["source"].as_str().unwrap();let program=meta_language::program_representation::analyze_program(source,"JavaScript",Default::default()).unwrap();
+ let syntax=program.source_mappings();assert!(syntax.len()<=100000);let network=program.network();
+ let by_id=syntax.iter().map(|row|(row.link_id(),row)).collect::<BTreeMap<_,_>>();let mut fields=BTreeMap::new();let mut named=BTreeSet::new();
+ for link in network.links(){
+  if link.metadata().link_type()==Some(meta_language::LinkType::Syntax)&&link.metadata().is_named()&&!link.metadata().flags().is_extra(){named.insert(link.id().as_u64());}
+  if link.metadata().link_type()==Some(meta_language::LinkType::Field)&&link.metadata().term().is_none(){if let[parent,label,child]=link.references(){fields.insert((parent.as_u64(),network.link(*label).unwrap().metadata().term().unwrap().to_owned()),child.as_u64());}}
+ }
+ assert!(fields.len()<=100000);let mut writes=BTreeSet::new();let mut write_ranges=Vec::new();let mut work=0_usize;
+ for assignment in syntax.iter().filter(|row|matches!(row.term(),"assignment_expression"|"augmented_assignment_expression"|"update_expression")){
+  let label=if assignment.term()=="update_expression"{"argument"}else{"left"};let mut target=*by_id.get(&fields[&(assignment.link_id(),label.to_owned())]).unwrap();let mut depth=0;
+  while target.term()=="parenthesized_expression"{
+   depth+=1;assert!(depth<=128);let mut child=None;
+   for candidate in syntax{work+=1;assert!(work<=1000000);if candidate.range().start()<=target.range().start()||candidate.range().end()>=target.range().end()||!named.contains(&candidate.link_id()){continue;}if child.is_none_or(|old:&meta_language::program_representation::ProgramSourceMapping|candidate.range().end()-candidate.range().start()>old.range().end()-old.range().start()){child=Some(candidate);}}
+   target=child.expect("a parenthesized write needs its actual expression child");
+  }
+  if matches!(target.term(),"member_expression"|"subscript_expression"){continue;}
+  if target.term()!="identifier"{write_ranges.push((target.range().start(),target.range().end()));continue;}writes.insert((target.range().start(),target.range().end()));
+ }
+ let mut unique=BTreeMap::new();for row in syntax.iter().filter(|row|row.term()=="arrow_function"){unique.insert((row.range().start(),row.range().end()),row);}
+ let mut arrows=unique.into_values().collect::<Vec<_>>();arrows.sort_by_key(|row|(row.range().start(),std::cmp::Reverse(row.range().end())));assert!(arrows.len()<=4096);
+ let units=|byte:usize|source[..byte].encode_utf16().count();let bindings=program.bindings();
+ for template in templates.as_array().unwrap(){
+  let arrow=arrows[template["ordinal"].as_u64().unwrap() as usize];let start=arrow.range().start();let end=arrow.range().end();
+  let origin=capture["origins"].as_array().unwrap().iter().find(|row|row["identity"]==template["owner"]).unwrap();assert_eq!(origin["coordinateUnit"],"UTF-16 code units");assert!(origin["start"].as_u64().unwrap() as usize<=units(start));assert!(origin["end"].as_u64().unwrap() as usize>=units(end));
+  assert!(syntax.iter().any(|row|matches!(row.term(),"function_declaration"|"method_definition"|"class_declaration")&&units(row.range().start())==origin["start"].as_u64().unwrap() as usize&&units(row.range().end())==origin["end"].as_u64().unwrap() as usize));
+  let parameter=*by_id.get(fields.get(&(arrow.link_id(),"parameters".to_owned())).or_else(||fields.get(&(arrow.link_id(),"parameter".to_owned()))).expect("actual arrow parameter field")).unwrap();
+  let expected_parameters=bindings.iter().enumerate().filter(|(_,binding)|binding.kind()=="parameter"&&binding.declaration().start()>=parameter.range().start()&&binding.declaration().end()<=parameter.range().end()).map(|(index,_)|index).collect::<Vec<_>>();
+  assert_eq!(template["parameters"].as_array().unwrap().iter().map(|row|row["identity"].as_u64().unwrap() as usize).collect::<Vec<_>>(),expected_parameters);assert_eq!(template["length"].as_u64().unwrap() as usize,expected_parameters.len());
+  let mut expected_captures=Vec::new();
+  for(index,binding)in bindings.iter().enumerate(){
+   let declaration=binding.declaration();if binding.scope()=="scope:0"||declaration.start()>=start&&declaration.end()<=end||!binding.references().iter().any(|range|range.start()>=start&&range.end()<=end){continue;}
+   assert!(matches!(binding.kind(),"parameter"|"const"|"let"));assert!(declaration.end()<=start);
+   if binding.kind()!="parameter"{if let Some(initializer)=syntax.iter().filter(|row|row.term()=="variable_declarator"&&row.range().start()<=declaration.start()&&row.range().end()>=declaration.end()).min_by_key(|row|row.range().end()-row.range().start()){assert!(initializer.range().end()<=start);}}
+   for reference in binding.references(){assert!(!writes.contains(&(reference.start(),reference.end()))&&!write_ranges.iter().any(|(start,end)|{work+=1;assert!(work<=1000000);reference.start()>=*start&&reference.end()<=*end}),"an immutable capture cannot hide a native CST binding write");}
+   expected_captures.push(index);
+  }
+  assert_eq!(template["captures"].as_array().unwrap().iter().map(|row|row.as_u64().unwrap() as usize).collect::<Vec<_>>(),expected_captures);
+ }
 }
 
 fn assert_source_closure_inputs(definition:&Value,row:&Value){
@@ -46,7 +90,7 @@ fn assert_joined_program(input:&Value){
  let source=&input["sourceCompilation"]["expected"]["program"];
  let collection=&input["collectionCompilation"]["expected"]["program"];
  assert_eq!(source["realms"],collection["realms"]);assert_eq!(source["exoticKey"],collection["exoticKey"]);
- let mut functions=BTreeMap::new();let mut programs=vec![source,collection];
+ let mut functions=BTreeMap::new();let mut templates=BTreeMap::new();let mut templates_selected=false;let mut programs=vec![source,collection];
  let mut units=vec![&input["sourceCompilation"]];let mut count=0_usize;
  while let Some(unit)=units.pop(){
   count+=1;assert!(count<=64);
@@ -56,12 +100,18 @@ fn assert_joined_program(input:&Value){
  }
  for program in programs{
   assert_eq!(program["realms"],source["realms"]);assert_eq!(program["exoticKey"],source["exoticKey"]);
+  if let Some(rows)=program.get("templates"){
+   templates_selected=true;
+   for template in rows.as_array().unwrap(){let owner=template["owner"].as_str().unwrap().parse::<u64>().unwrap();let ordinal=template["ordinal"].as_u64().unwrap();if let Some(previous)=templates.insert((owner,ordinal),template.clone()){assert_eq!(previous,*template,"joining lexical sites cannot replace their source templates");}}
+  }
   for function in program["functions"].as_array().unwrap(){
    let identity=function["identity"].as_str().unwrap().parse::<u64>().unwrap();
    if let Some(previous)=functions.insert(identity,function.clone()){assert_eq!(previous,*function,"joining frames cannot replace an actual source or standard owner");}
   }
  }
- assert_eq!(input["combinedProgram"],json!({"$":"callProgram","functions":functions.into_values().collect::<Vec<_>>(),"realms":source["realms"],"exoticKey":source["exoticKey"]}));
+ let mut expected=json!({"$":"callProgram","functions":functions.into_values().collect::<Vec<_>>(),"realms":source["realms"],"exoticKey":source["exoticKey"]});
+ if templates_selected{expected["templates"]=json!(templates.into_values().collect::<Vec<_>>());}
+ assert_eq!(input["combinedProgram"],expected);
 }
 
 #[test]
@@ -89,6 +139,7 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
    diagnostic.attempt(format!("{label}/independent default CST and physical transports"),||assert_eq!(concrete(source_definition["source"].as_str().unwrap()),row["concrete"]));
    if group=="closures"||group=="workloads"{diagnostic.attempt(format!("{label}/every complete original source and public entry"),||assert_source_closure_inputs(definition,row));}
    if group=="refusals"{continue;}
+   diagnostic.attempt(format!("{label}/actual native arrow lexical site and immutable capture proof"),||assert_source_arrow_inputs(&row["capture"]));
    let transports=diagnostic.attempt(format!("{label}/every source transport"),||{let rows=row["transports"].as_array().unwrap();assert_eq!(rows.iter().map(|row|row["transport"].as_str().unwrap()).collect::<Vec<_>>(),["original","text","binary"]);rows});
    for transport in transports.into_iter().flatten(){let label=format!("{label}/{}",transport["transport"]);
     diagnostic.attempt(format!("{label}/complete original source receipt"),||{assert_eq!(transport["capture"],row["capture"]);assert_eq!(transport["capture"]["source"],source_definition["source"]);});

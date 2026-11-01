@@ -1,3 +1,4 @@
+import {allocateJavaScriptCallClosure,findJavaScriptCallTemplate,projectJavaScriptCallTemplateFunction,readJavaScriptExecutableCallFunction,readJavaScriptCallTemplateDirectoryError} from './javascript-call-templates.js';
 import {beginJavaScriptArrayAssignment,stepJavaScriptArrayAssignment,resumeJavaScriptArrayAssignment,readJavaScriptArrayAssignmentStateError} from './javascript-array-assignment.js';
 import {allocateJavaScriptCollectionIterator,readJavaScriptCollectionIteratorReceiverError} from './javascript-collection-iteration.js';
 import {beginJavaScriptCollectionIteratorResult,stepJavaScriptCollectionIteratorResult,resumeJavaScriptCollectionIteratorResultAllocation,readJavaScriptCollectionIteratorResultStateError} from './javascript-collection-iterator-results.js';
@@ -9,7 +10,7 @@ import {readJavaScriptTextProtocolOperationError} from './javascript-text-conver
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptCallPrimitiveArityError,executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
 import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJavaScriptCallCodeRegisters,readJavaScriptCallCodeDestination,testJavaScriptCallStrictEqual} from './javascript-call-code.js';
-import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
+import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
 import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,completeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
@@ -108,6 +109,23 @@ export function readJavaScriptCallProgramError(program,heap){
   previous=0n;let count=0;
   for(const fn of program.functions){
     if(fn.identity<=previous||fn.identity>18446744073709551615n)return 'call functions require ordered unique positive unsigned64 identities';previous=fn.identity;
+    count+=fn.instructions.length;if(count>65536)return 'call code exceeds its explicit total instruction budget';
+    const bodyError=readJavaScriptCallFunctionBodyError(program,heap,fn);if(bodyError!=='')return bodyError;
+  }
+  const templateError=readJavaScriptCallTemplateDirectoryError(program,heap);if(templateError!=='')return templateError;
+  for(const template of program.templates??[]){
+    count+=template.instructions.length;if(count>65536)return 'static functions and templates share one total instruction budget';
+    const body=projectJavaScriptCallTemplateFunction(template,template.owner,[],{$:'undefined'});
+    const bodyError=readJavaScriptCallFunctionBodyError(program,heap,body);if(bodyError!=='')return bodyError;
+  }
+  return '';
+}
+
+/** Validate one body without inventing a callable identity for static templates.
+ * Source ownership and actual captures are checked by their outer directories.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap
+ * @param {JavaScriptCallFunction} fn @returns {string} */
+export function readJavaScriptCallFunctionBodyError(program,heap,fn){
     if(!program.realms.includes(fn.realm))return 'call functions require their actual declared source realm';
     const callable=readJavaScriptOrdinaryValueError(heap,{$:'object',identity:fn.identity,callable:true});if(callable!=='')return callable;
     if(fn.receiverMode!=='strict'&&fn.receiverMode!=='lexical'&&!testJavaScriptErrorConstructorMode(fn.receiverMode)&&!testJavaScriptErrorIntrinsicMode(fn.receiverMode)&&!testJavaScriptHostCapabilityMode(fn.receiverMode)&&!testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)&&!testJavaScriptCollectionConstructorMode(fn.receiverMode)&&!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)&&!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)&&!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode))return 'call code requires explicit strict, lexical or registered Error receiver binding';
@@ -115,7 +133,7 @@ export function readJavaScriptCallProgramError(program,heap){
     if(testJavaScriptCollectionConstructorMode(fn.receiverMode)&&readJavaScriptCollectionConstructorKind(fn)==='')return 'collection constructors retain their actual single standard allocation kind';
     if(!testJavaScriptCallCoordinate(fn.registers,4097)||fn.registers===0||!testJavaScriptCallCoordinate(fn.parameters,fn.registers)||fn.parameters+fn.captures.length+1>fn.registers)return 'call function register and parameter coordinates must be complete';
     for(const capture of fn.captures)if(readJavaScriptOrdinaryValueError(heap,capture)!=='')return 'call captures belong to the latest global context';
-    count+=fn.instructions.length;if(count>65536||fn.instructions.length===0)return 'call code exceeds its explicit instruction budget or has no entry';
+    if(fn.instructions.length>65536||fn.instructions.length===0)return 'call code exceeds its explicit instruction budget or has no entry';
     for(const instruction of fn.instructions){
       if(testJavaScriptErrorConstructorMode(fn.receiverMode)&&readJavaScriptCallCodeDestination(instruction)===0)return 'derived this is initialized only by its actual super construction';
       if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)&&readJavaScriptCallCodeDestination(instruction)===0)return 'ordinary class this retains its actual allocated receiver';
@@ -142,11 +160,16 @@ export function readJavaScriptCallProgramError(program,heap){
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
         case 'collectionOperation':if(!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||readJavaScriptCollectionOperationKind(instruction.operation)==='')return 'collection operations retain their actual registered intrinsic frame';break;
         case 'primitiveMethod':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPrimitiveMethodOperation(instruction.operation)&&!testJavaScriptArrayIntrinsicOperation(instruction.operation))return 'primitive methods retain their actual registered intrinsic frame';break;
+        case 'closureAllocate':{
+          if(testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived this closures require their shared lexical initialization cell';
+          const template=(program.templates??[])[findJavaScriptCallTemplate(program,instruction.owner,instruction.ordinal)];
+          if(template===undefined||template.realm!==fn.realm||template.captureCount!==instruction.captures.length)return 'closure allocation retains its actual lexical template, realm and capture vector';
+          break;
+        }
         case 'arrayAllocate':if(!testJavaScriptArrayLength(instruction.length))return 'Array literals retain their actual unsigned32 sparse length';break;
         default:break;
       }
     }
-  }
   return '';
 }
 
@@ -230,13 +253,13 @@ export function readJavaScriptCallMachineError(program,machine){
   let slots=0,argumentSlots=0;
   for(let index=0;index<machine.frames.length;index+=1){
     const frame=machine.frames[index];if(frame===undefined)return 'call stacks must be dense';
-    const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return 'every call frame retains its actual registered function';
+    const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return 'every call frame retains its actual registered function';
     if(frame.registers.length!==fn.registers||!testJavaScriptCallCoordinate(frame.position,fn.instructions.length+1))return 'call frames retain their complete register and instruction coordinates';
     slots+=frame.registers.length;argumentSlots+=frame.arguments.length;if(slots>1048576||argumentSlots>1048576||frame.handlers.length>1024)return 'call frame storage exceeds its explicit resource budget';
     const frameError=readJavaScriptCallFrameError(program,machine.heap,frame,fn,index<machine.frames.length-1);
     if(frameError!=='')return frameError;
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||testJavaScriptCollectionConstructorMode(fn.receiverMode)){
-      const parent=machine.frames[index-1],caller=parent===undefined?undefined:program.functions[findJavaScriptCallFunction(program,parent.identity)],instruction=parent===undefined||caller===undefined||parent.position===0?undefined:caller.instructions[parent.position-1];
+      const parent=machine.frames[index-1],caller=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity),instruction=parent===undefined||caller===undefined||parent.position===0?undefined:caller.instructions[parent.position-1];
       if(parent===undefined||parent.pending.$!=='waitCall'||instruction===undefined||(instruction.$!=='callClassConstructor'&&instruction.$!=='constructCollection')||instruction.destination!==parent.pending.destination)return 'a constructor frame retains its actual suspended source new operation';
       if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)!==(instruction.$==='callClassConstructor'))return 'a constructor frame retains its actual class or standard collection operation';
       const callee=parent.registers[instruction.callee]??{$:'undefined'},receiver=instruction.$==='callClassConstructor'?(parent.registers[instruction.receiver]??{$:'undefined'}):{$:'undefined'};
@@ -265,6 +288,11 @@ export function testJavaScriptCallPendingDestination(pending,registers){
 export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
     for(const value of frame.registers)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call registers belong to the latest global context';
     for(const value of frame.arguments)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call arguments belong to the latest global context';
+    const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,frame.identity)];
+    if(closure!==undefined&&closure.$==='closureObject'){
+      if(!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},closure.lexicalReceiver))return 'an arrow frame retains its actual lexical receiver';
+      for(let index=0;index<closure.captures.length;index++)if(!testJavaScriptSemanticSameValue(frame.registers[fn.parameters+1+index]??{$:'undefined'},closure.captures[index]??{$:'undefined'}))return 'an arrow frame retains its actual immutable captured values';
+    }
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const error=readJavaScriptOrdinaryClassReceiverError(heap,{$:'object',identity:fn.identity,callable:true},frame.registers[0]??{$:'undefined'});if(error!=='')return error;}
     for(const handler of frame.handlers)if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';
     const pending=frame.pending;
@@ -417,10 +445,10 @@ export function requestJavaScriptCallError(machine,realm,errorClass,reason){
  * @returns {JavaScriptCallMachineTransition} */
 export function pushJavaScriptCall(program,machine,callee,receiver,arguments_){
   const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a nested call needs its actual suspended parent'};
-  const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call frame needs its registered source owner'};
+  const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call frame needs its registered source owner'};
   if(callee.$!=='object')return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected callee is not callable');
   if(!callee.callable)return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected callee is not callable');
-  const fn=program.functions[findJavaScriptCallFunction(program,callee.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'the actual callable needs its registered executable definition'};
+  const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'the actual callable needs its registered executable definition'};
   if(testJavaScriptErrorConstructorMode(fn.receiverMode))return requestJavaScriptCallError(machine,fn.realm,'TypeError','a derived Error constructor requires its actual new operation');
   if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const reason=readJavaScriptOrdinaryClassCallReason(machine.heap,fn.identity);return reason===''?{$:'machineInvalid',heap:machine.heap,reason:'an ordinary class call needs its actual named source declaration'}:requestJavaScriptCallError(machine,fn.realm,'TypeError',reason);}
   if(testJavaScriptCollectionConstructorMode(fn.receiverMode))return requestJavaScriptCallError(machine,fn.realm,'TypeError','Constructor '+readJavaScriptCollectionConstructorKind(fn)+" requires 'new'");
@@ -475,7 +503,7 @@ export function acceptJavaScriptCallNumber(program,machine,destination,realm,tra
  * @param {bigint} realm @param {JavaScriptNumberCallState} state @returns {JavaScriptCallMachineTransition} */
 export function stepJavaScriptCallNumber(program,machine,destination,realm,state){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual active frame'};
- const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual source function'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual source function'};
  const operation=readJavaScriptNumberCallSourceOperation(fn,frame,destination,realm,program.exoticKey,state);
  if(operation==='')return {$:'machineInvalid',heap:machine.heap,reason:'pending number conversion retains its actual source instruction, receiver, Symbol and realm'};
  switch(state.$){
@@ -487,7 +515,7 @@ export function stepJavaScriptCallNumber(program,machine,destination,realm,state
  * @param {bigint} realm @param {JavaScriptNumberCallState} state @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function resumeJavaScriptCallNumber(program,machine,destination,realm,state,value){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual active frame'};
- const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual source function'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'number conversion needs its actual source function'};
  const operation=readJavaScriptNumberCallSourceOperation(fn,frame,destination,realm,program.exoticKey,state);
  if(operation==='')return {$:'machineInvalid',heap:machine.heap,reason:'pending number conversion retains its actual source instruction, receiver, Symbol and realm'};
  switch(state.$){
@@ -514,7 +542,7 @@ export function acceptJavaScriptCallText(program,machine,destination,realm,trans
  * @param {bigint} realm @param {JavaScriptTextCallState} state @returns {JavaScriptCallMachineTransition} */
 export function stepJavaScriptCallText(program,machine,destination,realm,state){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual active frame'};
- const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual source function'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual source function'};
  const operation=readJavaScriptTextCallSourceOperation(fn,frame,destination,realm,program.exoticKey,state);
  if(operation==='')return {$:'machineInvalid',heap:machine.heap,reason:'pending text conversion retains its actual source instruction, receiver, Symbol and realm'};
  switch(state.$){
@@ -526,7 +554,7 @@ export function stepJavaScriptCallText(program,machine,destination,realm,state){
  * @param {bigint} realm @param {JavaScriptTextCallState} state @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function resumeJavaScriptCallText(program,machine,destination,realm,state,value){
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual active frame'};
- const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual source function'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'text conversion needs its actual source function'};
  const operation=readJavaScriptTextCallSourceOperation(fn,frame,destination,realm,program.exoticKey,state);
  if(operation==='')return {$:'machineInvalid',heap:machine.heap,reason:'pending text conversion retains its actual source instruction, receiver, Symbol and realm'};
  switch(state.$){
@@ -536,7 +564,7 @@ export function resumeJavaScriptCallText(program,machine,destination,realm,state
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function returnJavaScriptCallValue(program,machine,value){
-  const active=machine.frames[machine.frames.length-1],owner=active===undefined?undefined:program.functions[findJavaScriptCallFunction(program,active.identity)];
+  const active=machine.frames[machine.frames.length-1],owner=active===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,active.identity);
   if(active!==undefined&&owner!==undefined&&testJavaScriptOrdinaryClassReceiverResult(owner.receiverMode,value.$)){const receiver=active.registers[0]??{$:'undefined'};if(receiver.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'an ordinary class completion needs its actual allocated receiver'};value=receiver;}
   if(active!==undefined&&owner!==undefined&&testJavaScriptErrorConstructorMode(owner.receiverMode)){
     if(value.$==='undefined'){const receiver=active.registers[0]??{$:'undefined'};if(receiver.$==='undefined')return requestJavaScriptCallError(machine,owner.realm,'ReferenceError','a derived constructor must initialize this through its actual super call');value=receiver;}
@@ -564,11 +592,17 @@ export function returnJavaScriptCallValue(program,machine,value){
 export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction){
   const next=advanceJavaScriptCallFrame(frame),registers=frame.registers;
   switch(instruction.$){
+    case 'closureAllocate':{
+      const template=(program.templates??[])[findJavaScriptCallTemplate(program,instruction.owner,instruction.ordinal)];
+      if(template===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'closure allocation needs its actual static lexical template'};
+      if(machine.heap.objects.length>=4096)return {$:'machineResourceLimit',machine,reason:'closure allocation exceeds the shared heap identity budget'};
+      return {$:'machineAllocateObject',machine,prototype:template.prototype};
+    }
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':{
       if(instruction.$==='collectionIteratorAllocate'){
         const receiver=readJavaScriptCollectionIteratorReceiverError(machine.heap,registers[0]??{$:'undefined'},instruction.kind);
         if(receiver.error!==''){
-          const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+          const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
           return receiver.typeError&&owner!==undefined?requestJavaScriptCallError(machine,owner.realm,'TypeError',receiver.error):{$:'machineInvalid',heap:machine.heap,reason:receiver.error};
         }
       }
@@ -590,7 +624,7 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
       const plan=planJavaScriptOrdinarySetWithArrayDefinition(machine.heap,object.identity,registers[instruction.key]??{$:'undefined'},registers[instruction.value]??{$:'undefined'},registers[instruction.receiver]??{$:'undefined'});
       if(plan.error!=='')return {$:'machineInvalid',heap:machine.heap,reason:plan.error};
       if(plan.action==='array definition'){
-        const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+        const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
         if(owner===undefined||plan.receiver.$!=='object'||plan.definition===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'deferred Array assignment requires its actual owner, receiver and value descriptor'};
         const current=replaceJavaScriptCallFrame(plan.heap,machine.frames,next);
         return acceptJavaScriptCallArrayAssignment(program,current,instruction.destination,owner.realm,beginJavaScriptArrayAssignment(plan.heap,plan.receiver.identity,registers[instruction.key]??{$:'undefined'},plan.definition,program.exoticKey));
@@ -600,7 +634,7 @@ export function executeJavaScriptOrdinaryCallProperty(program,machine,frame,inst
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(plan.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:plan.success}))};
     }
     case 'requireWrite':{
-      const success=registers[instruction.success]??{$:'undefined'},owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+      const success=registers[instruction.success]??{$:'undefined'},owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
       if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a strict write guard needs its actual registered source owner'};
       if(success.$!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'a strict write guard requires its actual ordinary Set result'};
       const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,next);
@@ -617,13 +651,13 @@ export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,
  const arguments_=instruction.arguments.map(index=>frame.registers[index]??{$:'undefined'}),input=arguments_[0]??{$:'undefined'};
  if(readJavaScriptSourceExceptionClass(instruction.operation)!=='')return requestJavaScriptCallSourceError(program,machine,frame,instruction);
  if((instruction.operation==='convert explicit number'||instruction.operation==='coerce primitive number'||readJavaScriptIntegerProtocolOperationError(instruction.operation)==='')&&input.$==='object'){
-  const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+  const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a number conversion needs its actual registered source owner'};
   const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,advanceJavaScriptCallFrame(frame));
   return acceptJavaScriptCallNumber(program,current,instruction.destination,owner.realm,beginJavaScriptScalarProtocol(machine.heap,input,program.exoticKey,instruction.operation));
  }
  if(instruction.operation==='convert primitive text'&&input.$==='object'){
-  const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+  const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
   if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a text conversion needs its actual registered source owner'};
   const current=replaceJavaScriptCallFrame(machine.heap,machine.frames,advanceJavaScriptCallFrame(frame));
   return acceptJavaScriptCallText(program,current,instruction.destination,owner.realm,beginJavaScriptScalarProtocol(machine.heap,input,program.exoticKey,instruction.operation));
@@ -634,7 +668,7 @@ export function executeJavaScriptCallPrimitiveInstruction(program,machine,frame,
   case 'primitiveInvalid':return {$:'machineInvalid',heap:machine.heap,reason:result.reason};
   case 'primitiveResourceLimit':return {$:'machineResourceLimit',machine,reason:result.reason};
   case 'primitiveError':{
-   const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+   const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
    if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a primitive failure needs its actual registered source owner'};
    return requestJavaScriptCallError(replaceJavaScriptCallFrame(machine.heap,machine.frames,advanceJavaScriptCallFrame(frame)),owner.realm,result.errorClass,result.reason);
   }
@@ -658,7 +692,7 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'callIdle':break;
     default:return {$:'machineInvalid',heap:machine.heap,reason:'a pending call or allocation needs its actual completion'};
   }
-  const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call step needs its actual source function'};
+  const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a call step needs its actual source function'};
   const instruction=fn.instructions[frame.position];
   if(instruction===undefined)return returnJavaScriptCallValue(program,machine,{$:'undefined'});
   const next=advanceJavaScriptCallFrame(frame),current=replaceJavaScriptCallFrame(machine.heap,machine.frames,next),registers=frame.registers;
@@ -717,7 +751,7 @@ export function stepJavaScriptCallMachine(program,machine){
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'number',value}))};
     }
     case 'primitive':return executeJavaScriptCallPrimitiveInstruction(program,machine,frame,instruction);
-    case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
+    case 'closureAllocate':case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':case 'ordinaryGet':case 'ordinarySet':case 'requireWrite':return executeJavaScriptOrdinaryCallProperty(program,machine,frame,instruction);
     case 'propertyKey':return acceptJavaScriptCallKey(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyKeyConversion(machine.heap,registers[instruction.input]??{$:'undefined'},program.exoticKey));
     case 'propertyDefinition':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,beginJavaScriptPropertyDefinition(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.attributes]??{$:'undefined'},program.exoticKey));
     case 'ordinaryDataProperty':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinition(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},createJavaScriptOrdinarySetDescriptor(registers[instruction.value]??{$:'undefined'},true)));
@@ -728,7 +762,7 @@ export function stepJavaScriptCallMachine(program,machine){
  * @param {JavaScriptSemanticValue} receiver @param {JavaScriptSemanticValue[]} arguments_ @returns {JavaScriptCallMachineTransition} */
 export function beginJavaScriptCallMachine(program,heap,identity,receiver,arguments_){
   const error=readJavaScriptCallProgramError(program,heap);if(error!=='')return {$:'machineInvalid',heap,reason:error};
-  const fn=program.functions[findJavaScriptCallFunction(program,identity)];if(fn===undefined)return {$:'machineInvalid',heap,reason:'the entry callable needs its actual executable definition'};
+  const fn=readJavaScriptExecutableCallFunction(program,heap,identity);if(fn===undefined)return {$:'machineInvalid',heap,reason:'the entry callable needs its actual executable definition'};
   if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap,reason:'an ordinary class entry requires its actual source construction operation'};
   if(testJavaScriptCollectionConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap,reason:'a collection entry requires its actual source construction operation'};
   if(arguments_.length>1048576)return {$:'machineInvalid',heap,reason:'entry arguments exceed the explicit call storage budget'};
@@ -747,10 +781,16 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
  const frame=machine.frames[machine.frames.length-1];
  if(frame!==undefined&&frame.pending.$==='waitCollectionIteratorResult')return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,frame.pending.destination,frame.pending.realm,resumeJavaScriptCollectionIteratorResultAllocation(machine.heap,frame.pending.state,identity));
  if(frame===undefined||frame.pending.$!=='callIdle')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual active allocation instruction'};
- const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);
  if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual source function'};
  const instruction=fn.instructions[frame.position];
- if(instruction===undefined||instruction.$!=='ordinaryAllocate'&&instruction.$!=='arrayAllocate'&&instruction.$!=='collectionAllocate'&&instruction.$!=='collectionIteratorAllocate')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual allocation instruction'};
+ if(instruction===undefined||instruction.$!=='ordinaryAllocate'&&instruction.$!=='arrayAllocate'&&instruction.$!=='collectionAllocate'&&instruction.$!=='collectionIteratorAllocate'&&instruction.$!=='closureAllocate')return {$:'machineInvalid',heap:machine.heap,reason:'Object resumption requires its actual allocation instruction'};
+ if(instruction.$==='closureAllocate'){
+  const allocation=allocateJavaScriptCallClosure(program,machine.heap,identity,instruction.owner,instruction.ordinal,instruction.captures.map(index=>frame.registers[index]??{$:'undefined'}),frame.registers[instruction.receiver]??{$:'undefined'});
+  if(allocation.$==='closureAllocationResourceLimit')return {$:'machineResourceLimit',machine,reason:allocation.reason};
+  if(allocation.$==='closureAllocationInvalid')return {$:'machineInvalid',heap:machine.heap,reason:allocation.reason};
+  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value))};
+ }
  const prototype=frame.registers[instruction.prototype]??{$:'undefined'};
  if(prototype.$!=='null'&&prototype.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'ordinary allocation requires its actual null or Object prototype'};
  if(machine.heap.objects.length>=4096)return {$:'machineResourceLimit',machine,reason:'ordinary heap identity directory exceeds its explicit resource budget'};
@@ -807,7 +847,7 @@ export function requestJavaScriptCallSourceError(program,machine,frame,instructi
  const messageError=readJavaScriptOrdinaryValueError(machine.heap,message);if(messageError!=='')return {$:'machineInvalid',heap:machine.heap,reason:messageError};
  if(present.$!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction requires actual own-message presence'};
  if(typeof present.value!=='boolean')return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction requires actual own-message presence'};
- const fn=program.functions[findJavaScriptCallFunction(program,frame.identity)];if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction retains its actual registered source owner'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'source Error construction retains its actual registered source owner'};
  const next={...frame,position:frame.position+1,pending:{$:'waitSourceError',realm:fn.realm,errorClass,message,messagePresent:present.value}};
  return {$:'machineAllocateSourceError',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,next),realm:fn.realm,errorClass,message,messagePresent:present.value};
 }
@@ -837,9 +877,9 @@ export function resumeJavaScriptCallSourceErrorAllocation(program,machine,realm,
  * @returns {JavaScriptCallMachineTransition} */
 export function pushJavaScriptErrorConstructor(program,machine,callee,arguments_){
  const parent=machine.frames[machine.frames.length-1];if(parent===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error construction needs its actual suspended caller'};
- const owner=program.functions[findJavaScriptCallFunction(program,parent.identity)];if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error construction needs its actual caller realm'};
+ const owner=readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity);if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error construction needs its actual caller realm'};
  if(callee.$!=='object'||!callee.callable)return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected Error class is not a constructor');
- const fn=program.functions[findJavaScriptCallFunction(program,callee.identity)];if(fn===undefined||!testJavaScriptErrorConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'Error construction requires the actual registered derived constructor definition'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined||!testJavaScriptErrorConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'Error construction requires the actual registered derived constructor definition'};
  let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
  if(machine.frames.length>=1024||slots>1048576||argumentSlots>1048576)return {$:'machineResourceLimit',machine,reason:'derived constructor frames exceed the explicit execution storage budget'};
  return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([createJavaScriptCallFrame(fn,{$:'undefined'},arguments_)])}};
@@ -851,10 +891,10 @@ export function pushJavaScriptErrorConstructor(program,machine,callee,arguments_
  * @param {JavaScriptSemanticValue} callee @param {JavaScriptSemanticValue} receiver
  * @param {JavaScriptSemanticValue[]} arguments_ @returns {JavaScriptCallMachineTransition} */
 export function pushJavaScriptOrdinaryClassConstructor(program,machine,callee,receiver,arguments_){
- const parent=machine.frames[machine.frames.length-1],owner=parent===undefined?undefined:program.functions[findJavaScriptCallFunction(program,parent.identity)];
+ const parent=machine.frames[machine.frames.length-1],owner=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity);
  if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'ordinary class construction needs its actual suspended caller'};
  if(callee.$!=='object'||!callee.callable)return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected class is not a constructor');
- const fn=program.functions[findJavaScriptCallFunction(program,callee.identity)];
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);
  if(fn===undefined||!testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'ordinary class construction requires its actual registered constructor body'};
  const invalid=readJavaScriptOrdinaryClassReceiverError(machine.heap,callee,receiver);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
  let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
@@ -865,9 +905,9 @@ export function pushJavaScriptOrdinaryClassConstructor(program,machine,callee,re
  * @param {JavaScriptSemanticValue} callee @param {JavaScriptSemanticValue[]} arguments_
  * @returns {JavaScriptCallMachineTransition} */
 export function pushJavaScriptCollectionConstructor(program,machine,callee,arguments_){
- const parent=machine.frames[machine.frames.length-1],owner=parent===undefined?undefined:program.functions[findJavaScriptCallFunction(program,parent.identity)];if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'collection construction needs its actual suspended caller'};
+ const parent=machine.frames[machine.frames.length-1],owner=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity);if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'collection construction needs its actual suspended caller'};
  if(callee.$!=='object'||!callee.callable)return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected collection is not a constructor');
- const fn=program.functions[findJavaScriptCallFunction(program,callee.identity)];if(fn===undefined||!testJavaScriptCollectionConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'collection construction requires its actual standard registered constructor'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined||!testJavaScriptCollectionConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'collection construction requires its actual standard registered constructor'};
  let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
  if(machine.frames.length>=1024||slots>1048576||argumentSlots>1048576)return {$:'machineResourceLimit',machine,reason:'collection constructor frames exceed their actual storage budget'};
  return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([createJavaScriptCallFrame(fn,{$:'undefined'},arguments_)])}};
@@ -880,7 +920,7 @@ export function acceptJavaScriptCollectionCompletion(program,machine,frame,desti
  switch(completion.$){
   case 'collectionNormal':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(completion.heap,machine.frames,writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),destination,completion.value))};
   case 'collectionInvalid':return {$:'machineInvalid',heap:completion.heap,reason:completion.reason};
-  case 'collectionTypeError':{const owner=program.functions[findJavaScriptCallFunction(program,frame.identity)];return owner===undefined?{$:'machineInvalid',heap:completion.heap,reason:'collection errors require their actual intrinsic realm'}:requestJavaScriptCallError(current,owner.realm,'TypeError',completion.reason);}
+  case 'collectionTypeError':{const owner=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);return owner===undefined?{$:'machineInvalid',heap:completion.heap,reason:'collection errors require their actual intrinsic realm'}:requestJavaScriptCallError(current,owner.realm,'TypeError',completion.reason);}
   case 'collectionResourceLimit':return {$:'machineResourceLimit',machine:current,reason:completion.reason};
   case 'collectionNeedIterable':return {$:'machineNeedCollectionIterable',machine:current,target:completion.target,input:completion.input};
  }
@@ -937,7 +977,7 @@ export function resumeJavaScriptErrorAllocationAbrupt(program,machine,realm,valu
 export function resumeJavaScriptErrorIntrinsic(program,machine,realm,identity,value,abrupt){
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitErrorIntrinsic'||frame.identity!==identity)return {$:'machineInvalid',heap:machine.heap,reason:'an Error intrinsic result retains its actual pending callable identity'};
- const fn=program.functions[findJavaScriptCallFunction(program,identity)];if(fn===undefined||fn.realm!==realm||!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'an Error intrinsic result retains its actual external realm authority'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,identity);if(fn===undefined||fn.realm!==realm||!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'an Error intrinsic result retains its actual external realm authority'};
  const invalid=readJavaScriptOrdinaryValueError(machine.heap,value);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
  if(abrupt)return throwJavaScriptCallValue(machine,value);
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,frame.pending.destination,value))};
@@ -951,7 +991,7 @@ export function resumeJavaScriptErrorIntrinsic(program,machine,realm,identity,va
 export function resumeJavaScriptHostCapability(program,machine,realm,identity,value,abrupt){
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitHostCapability'||frame.identity!==identity)return {$:'machineInvalid',heap:machine.heap,reason:'a capability result retains its actual pending callable identity'};
- const fn=program.functions[findJavaScriptCallFunction(program,identity)];if(fn===undefined||fn.realm!==realm||!testJavaScriptHostCapabilityMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'a capability result retains its actual qualified realm authority'};
+ const fn=readJavaScriptExecutableCallFunction(program,machine.heap,identity);if(fn===undefined||fn.realm!==realm||!testJavaScriptHostCapabilityMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'a capability result retains its actual qualified realm authority'};
  const invalid=readJavaScriptOrdinaryValueError(machine.heap,value);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
  if(abrupt)return throwJavaScriptCallValue(machine,value);
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,frame.pending.destination,value))};

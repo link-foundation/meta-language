@@ -714,6 +714,9 @@ is not incorrectly forwarded to an inner nominal method. Separate actual empty
 constructor helpers in the borrowed-vector modules precede the older owned Vec
 constructor reader. They verify the existing real vector namespace and select
 only an actual borrowed-vector expected result context.
+Wrong arity or an unsupported live-receiver projection on that genuine Box
+candidate explicitly refuses; it cannot fall through to an inner method with
+different arguments. Non-Box receivers leave their existing inherent path alone.
 
 `rust-borrowed-iterator-rules.js` owns the additive receiver, continuation,
 projection syntax, callback, canonical once/Box, collection and budget decisions.
@@ -757,7 +760,7 @@ cloned merely to parse a callback.
 `rust-borrowed-iterators.mjs` retains the exact `Type::children` method text from
 `rust/src/translation/types.rs` in a self-contained constructor/field inventory.
 That inventory is a method control, not the complete original `Type` declaration
-or whole-project source. It also declares five smaller pending originals and six
+or whole-project source. It also declares five smaller pending originals and seven
 refusals, classified as expected compiler acceptance or rejection for Rust
 1.90.0 through 1.99.x. These classifications are planned oracles, not compiler
 observations. The standalone JavaScript source test declares runtime stdout,
@@ -765,11 +768,12 @@ all four emissions, text/binary Links reloads and forged-facet checks. Native
 same-file source controls declare frontend, JSON reload, body-proof and four
 emitter assertions, including the retained own method. No assertions ran.
 
-Remaining work for the coordinator: generate all newly registered rule/schema
-products in the prescribed source-author order; inspect actual deferred failures
-once execution is authorized; connect the explicit model-3 originals to the
-compiler/original and native parity matrices without flattening their profile
-selection or compiler classifications. General iteration over an already
+The coordinator has also authored the compiler/original and native matrix
+selection, including paired version-plus-signature entry points; the older
+version-only selection is unchanged. These source connectors have not run.
+Remaining work is to generate all newly registered rule/schema products in the
+prescribed source-author order and inspect actual deferred failures once
+execution is authorized. General iteration over an already
 returned `Vec<&T>`, arbitrary iterator traits/chains, escaping or capturing
 callbacks, mutable references and place writes, reference indexing/observation,
 stored borrowed datatype fields and exact borrowed Rust source-header emission

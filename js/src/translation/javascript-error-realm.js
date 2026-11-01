@@ -33,6 +33,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
  let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[]};
  const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
+ let portableTemplateProgram={templates:undefined};
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
  const allocate=()=>{while(heap.objects.some(row=>row.identity===next)||heap.symbols.includes(next))next+=1n;if(next>18446744073709551615n)throw new RangeError('the authoritative global identity allocator exhausted unsigned64 identities');return next++;};
  const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0)};};
@@ -168,16 +169,22 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(array){if(length===null||length.value.$!=='number')return refuse('array materialization requires its actual length descriptor');Object.defineProperty(result,'length',{value:length.value.value,writable:length.writable,enumerable:length.enumerable,configurable:length.configurable});}
   if(!row.extensible)Object.preventExtensions(result);return result;
  }
+ function mergeSourceTemplates(...programs){
+  const templates=[];let selected=false;
+  for(const program of programs){if(program.templates!==undefined)selected=true;for(const template of program.templates??[]){const prior=templates.find(row=>row.owner===template.owner&&row.ordinal===template.ordinal);if(prior&&!isDeepStrictEqual(prior,template))throw new TypeError('one lexical code site cannot acquire conflicting templates during source composition');if(!prior)templates.push(template);if(templates.length>4096)throw new RangeError('source composition exceeds its static template budget');}}
+  return selected?{templates:templates.toSorted((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:a.ordinal-b.ordinal)}:{};
+ }
  function finishSourceCapabilities(capabilities,bindings){
   if(!sourceFunctions||module!==null)throw new TypeError('source function capability publication requires its actual unpublished source module');
   const compiled=compileJavaScriptErrorModulePlanWithCapabilities(capture.plan,registry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);
   const functions=[...compiled.program.functions];for(const fn of portableFunctions.values()){const previous=functions.find(row=>row.identity===fn.identity);if(previous&&!isDeepStrictEqual(previous,fn))throw new TypeError('portable operation frames cannot replace an actual source implementation');if(!previous)functions.push(fn);}
-  module={capture,registry,program:{...compiled.program,functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},sourceProgram:compiled.program,sourceUnits:[],bindings,capabilities};return module;
+  module={capture,registry,program:{...compiled.program,...mergeSourceTemplates(compiled.program,portableTemplateProgram),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},sourceProgram:compiled.program,sourceUnits:[],bindings,capabilities};return module;
  }
  function registerPortableProgram(program){
   if(!sourceFunctions||module!==null)throw new TypeError('portable operation frames must be linked before source publication');
   if(!isDeepStrictEqual(program.realms,registry.realms)||!testJavaScriptSemanticSameValue(program.exoticKey,registry.exoticKey))throw new TypeError('portable operation frames require the same actual source realm and primitive conversion Symbol');
   const invalid=readJavaScriptCallProgramError(program,heap);if(invalid)throw new TypeError(invalid);
+  portableTemplateProgram=mergeSourceTemplates(portableTemplateProgram,program);
   for(const fn of program.functions){const previous=portableFunctions.get(fn.identity);if(previous&&!isDeepStrictEqual(previous,fn))throw new TypeError('one actual operation identity cannot acquire conflicting portable implementations');portableFunctions.set(fn.identity,fn);}
  }
  function attachSourceUnit(input,definitions,capabilities,bindings=[]){
@@ -191,7 +198,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const unitRegistry={...registry,owners},compiled=compileJavaScriptErrorModulePlanWithCapabilities(actual.plan,unitRegistry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);
   const functions=[...module.program.functions];
   for(const fn of compiled.program.functions){const previous=functions.find(row=>row.identity===fn.identity);if(previous){if(!isDeepStrictEqual(previous,fn))throw new TypeError('supplied source units must agree on every shared actual callable implementation');}else functions.push(fn);}
-  const unit={capture:actual,registry:unitRegistry,bindings,capabilities,sourceProgram:compiled.program},program={...module.program,functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};module={...module,program,sourceUnits:[...module.sourceUnits,unit]};
+  const unit={capture:actual,registry:unitRegistry,bindings,capabilities,sourceProgram:compiled.program},program={...module.program,...mergeSourceTemplates(module.program,compiled.program),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};module={...module,program,sourceUnits:[...module.sourceUnits,unit]};
   return {...unit,program};
  }
  const authority={perform(request){

@@ -27,6 +27,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourcePrimitive',operation:string,arguments:JavaScriptCallSource[]} |
  * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
  * {$:'sourceAllocate',prototype:JavaScriptCallSource} |
+ * {$:'sourceClosure',owner:bigint,ordinal:number,captures:JavaScriptCallSource[],receiver:JavaScriptCallSource} |
  * {$:'sourceObject',prototype:JavaScriptCallSource,properties:JavaScriptCallSourceProperty[],realm:bigint} |
  * {$:'sourceArray',prototype:JavaScriptCallSource,length:number,elements:JavaScriptCallSourceArrayElement[],realm:bigint} |
  * {$:'sourcePropertyKey',input:JavaScriptCallSource,realm:bigint} |
@@ -40,7 +41,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
 /** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceBindingRegister',identity:number,register:number,mutable:boolean}} JavaScriptCallSourceBinding */
-/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string}} JavaScriptCallSourceBuilder */
+/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string,snapshotMutableBindings?:boolean}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
 /** @typedef {{$:'sourceCompiled',instructions:JavaScriptCallInstruction[],registers:number,error:string}} JavaScriptCallSourceCompilation */
 
@@ -98,6 +99,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:source.$==='sourceThrow'?'throw':'return',source:value.register})};
   }
   case 'sourceAssignBinding':{
+   if(state.snapshotMutableBindings!==true)return refuseJavaScriptCallSource(state,'mutable source bindings require their snapshot compilation pass');
    const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.register===0||!binding.mutable)return refuseJavaScriptCallSource(state,'a mutable assignment needs its actual mutable local lexical register');
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register})};
   }
@@ -116,7 +118,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   }
   case 'sourceBinding':{
    if(!testJavaScriptCallCodeCoordinate(source.identity,65536))return refuseJavaScriptCallSource(state,'source binding identities require exact nonnegative coordinates');
-   for(let index=bindings.length-1;index>=0;index-=1){const entry=bindings[index];if(entry!==undefined&&entry.identity===source.identity)return {$:'sourceResult',builder:state,register:entry.register};}
+   for(let index=bindings.length-1;index>=0;index-=1){const entry=bindings[index];if(entry!==undefined&&entry.identity===source.identity){if(state.snapshotMutableBindings===true&&entry.mutable){const saved=allocateJavaScriptCallSourceRegister(state);return {...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:entry.register})};}return {$:'sourceResult',builder:state,register:entry.register};}}
    return refuseJavaScriptCallSource(state,'a source binding reference has no actual lexical owner');
   }
   case 'sourceLet':case 'sourceLocalLet':{
@@ -129,6 +131,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:value.register,mutable:false}]),value.builder,depth+1);
   }
   case 'sourceParameterDefault':{
+   if(state.snapshotMutableBindings!==true)return refuseJavaScriptCallSource(state,'mutable source bindings require their snapshot compilation pass');
    const binding=bindings.find(entry=>entry.identity===source.identity);if(binding===undefined||binding.register<1||binding.register>state.parameters)return refuseJavaScriptCallSource(state,'a parameter default needs its actual initialized parameter coordinate');
    const condition=lowerJavaScriptCallSourceExpression({$:'sourceStrictEqual',left:{$:'sourceBinding',identity:source.identity},right:{$:'sourceConstant',value:{$:'undefined'}}},bindings,state,depth+1),branch=condition.builder.instructions.length;
    const start=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:0,no:0}),value=lowerJavaScriptCallSourceExpression(source.value,bindings,start,depth+1),copied=appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register}),end=copied.instructions.length;
@@ -173,6 +176,14 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
    const write=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinarySet',destination:result.register,object:object.register,key:key.register,value:value.register,receiver:object.register});
    return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(write,{$:'requireWrite',success:result.register}),register:value.register};
+  }
+  case 'sourceClosure':{
+   if(typeof source.owner!=='bigint'||source.owner<=0n||source.owner>18446744073709551615n||!testJavaScriptCallCodeCoordinate(source.ordinal,4096)||source.captures.length>4096)return refuseJavaScriptCallSource(state,'source closure requires its actual static owner, lexical site and bounded capture vector');
+   const receiver=lowerJavaScriptCallSourceExpression(source.receiver,bindings,state,depth+1),savedReceiver=allocateJavaScriptCallSourceRegister(receiver.builder);
+   let current=appendJavaScriptCallSourceInstruction(savedReceiver.builder,{$:'copy',destination:savedReceiver.register,source:receiver.register});const captures=[];
+   for(const capture of source.captures){const value=lowerJavaScriptCallSourceExpression(capture,bindings,current,depth+1),saved=allocateJavaScriptCallSourceRegister(value.builder);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});captures.push(saved.register);}
+   const result=allocateJavaScriptCallSourceRegister(current);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'closureAllocate',destination:result.register,owner:source.owner,ordinal:source.ordinal,captures,receiver:savedReceiver.register})};
   }
   case 'sourceArray':{
    if(!Number.isInteger(source.length)||source.length<0||source.length>4294967295||Object.is(source.length,-0)||source.elements.length>4096||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source Array construction requires its actual sparse length, bounded elements and realm');
@@ -285,11 +296,24 @@ export function compileJavaScriptCallSource(source,parameters){
  * @param {JavaScriptCallSource} source @param {number[]} parameters
  * @param {number[]} captures @returns {JavaScriptCallSourceCompilation} */
 export function compileJavaScriptCallSourceWithCaptures(source,parameters,captures){
+ const first=compileJavaScriptCallSourceBindingReads(source,parameters,captures,false);return first.error==='mutable source bindings require their snapshot compilation pass'?compileJavaScriptCallSourceBindingReads(source,parameters,captures,true):first;
+}
+/** Snapshot each read of a mutable lexical slot before later operand effects.
+ * Immutable captures keep their genuine shared handles; object data is not copied.
+ * @param {JavaScriptCallSource} source @param {number[]} parameters
+ * @param {number[]} captures @returns {JavaScriptCallSourceCompilation} */
+export function compileJavaScriptMutableCallSourceWithCaptures(source,parameters,captures){
+ return compileJavaScriptCallSourceBindingReads(source,parameters,captures,true);
+}
+/** @param {JavaScriptCallSource} source @param {number[]} parameters
+ * @param {number[]} captures @param {boolean} snapshotMutableBindings
+ * @returns {JavaScriptCallSourceCompilation} */
+export function compileJavaScriptCallSourceBindingReads(source,parameters,captures,snapshotMutableBindings){
  if(parameters.length+captures.length>=4096)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters exceed their explicit register budget'};
  for(let index=0;index<parameters.length;index+=1){const owner=parameters[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters require distinct actual lexical owners'};}
  for(let index=0;index<captures.length;index++){const owner=captures[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.includes(owner)||captures.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source captures require distinct actual lexical owners'};}
  const bindings=parameters.concat(captures).map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1,mutable:index<parameters.length}));
- const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+captures.length+1,visits:0,parameters:parameters.length,handlers:0,error:''},0);
+ const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+captures.length+1,visits:0,parameters:parameters.length,handlers:0,error:'',...(snapshotMutableBindings?{snapshotMutableBindings:true}:{})},0);
  const builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
  return {$:'sourceCompiled',instructions:builder.error===''?builder.instructions:[],registers:builder.error===''?builder.next:0,error:builder.error};
 }

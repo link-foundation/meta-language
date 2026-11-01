@@ -1,9 +1,10 @@
 // Source-class plans contain actual lexical binding coordinates. Runtime
 // identities/prototypes come from the supplied realm registry, never numbers
 // or class names invented by this compiler. No class body executes here.
-import {compileJavaScriptCallSourceWithCaptures} from './javascript-call-source.js';
+import {compileJavaScriptCallSourceWithCaptures,compileJavaScriptMutableCallSourceWithCaptures} from './javascript-call-source.js';
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 /** @typedef {{$:'errorConstant',value:JavaScriptSemanticValue} |
+ * {$:'errorClosure',owner:number,ordinal:number,captures:number[]} |
  * {$:'errorBinding',identity:number} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
  * {$:'errorConditional',condition:JavaScriptErrorExpression,yes:JavaScriptErrorExpression,no:JavaScriptErrorExpression} |
  * {$:'errorGet',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
@@ -40,7 +41,8 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorMethodFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]} |
  * {$:'errorMutableStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]} |
  * {$:'errorStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]}} JavaScriptErrorFunctionPlan */
-/** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number}} JavaScriptErrorModulePlan */
+/** @typedef {{$:'errorArrowTemplatePlan',owner:number,ordinal:number,name:string,length:number,parameters:JavaScriptErrorParameter[],captures:number[],statements:JavaScriptSourceStatement[]}} JavaScriptErrorArrowTemplatePlan */
+/** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number,templates?:JavaScriptErrorArrowTemplatePlan[]}} JavaScriptErrorModulePlan */
 /** @typedef {{$:'errorConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue,baseConstructor:JavaScriptSemanticValue,baseRealm:bigint} |
  * {$:'ordinaryConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue} |
  * {$:'errorFunctionOwner',source:number,identity:bigint,realm:bigint}} JavaScriptErrorFunctionOwner */
@@ -48,7 +50,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorIntrinsicOwner',identity:bigint,realm:bigint}} JavaScriptErrorIntrinsicOwner */
 /** @typedef {{$:'errorModuleRegistry',owners:JavaScriptErrorFunctionOwner[],operations:JavaScriptErrorRealmOperations[],intrinsics:JavaScriptErrorIntrinsicOwner[],realms:bigint[],exoticKey:JavaScriptSemanticValue}} JavaScriptErrorModuleRegistry */
 /** @typedef {{$:'sourceCapabilityOwner',source:string,identity:bigint,realm:bigint,operation:string,owner:string,callable:boolean,executable:boolean}} JavaScriptSourceCapabilityOwner */
-/** @typedef {{$:'errorSourceContext',registry:JavaScriptErrorModuleRegistry,realm:JavaScriptErrorRealmOperations,capabilities:JavaScriptSourceCapabilityOwner[],next:number,visits:number,error:string,mutableBindings:boolean}} JavaScriptErrorSourceContext */
+/** @typedef {{$:'errorSourceContext',registry:JavaScriptErrorModuleRegistry,realm:JavaScriptErrorRealmOperations,capabilities:JavaScriptSourceCapabilityOwner[],next:number,visits:number,error:string,mutableBindings:boolean,globalBindings?:number[]}} JavaScriptErrorSourceContext */
 /** @typedef {{$:'errorSourceExpression',source:JavaScriptCallSource,context:JavaScriptErrorSourceContext}} JavaScriptErrorSourceExpression */
 /** @typedef {{$:'errorModuleCompilation',program:JavaScriptCallProgram,error:string}} JavaScriptErrorModuleCompilation */
 /** @typedef {{$:'errorModuleBindingValue',identity:number,value:JavaScriptSemanticValue}} JavaScriptErrorModuleBinding */
@@ -87,6 +89,13 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
  switch(expression.$){
   case 'errorConstant':return {$:'errorSourceExpression',source:constant(expression.value),context:next};
   case 'errorSpecialNumber':return expression.form==='NaN'||expression.form==='Infinity'?{$:'errorSourceExpression',source:constant({$:'number',value:expression.form==='NaN'?NaN:Infinity}),context:next}:refuseJavaScriptErrorSource(next,'a special Number requires its actual unshadowed source global');
+  case 'errorClosure':{
+   const owner=next.registry.owners.find(row=>row.source===expression.owner);
+   if(owner===undefined||owner.realm!==next.realm.realm)return refuseJavaScriptErrorSource(next,'arrow creation retains its actual source function owner and realm');
+   const identities=(next.globalBindings??[]).concat(expression.captures);
+   if(identities.length>4096||identities.some((identity,index)=>identities.indexOf(identity)!==index))return refuseJavaScriptErrorSource(next,'arrow captures require distinct actual lexical coordinates within their budget');
+   return {$:'errorSourceExpression',source:{$:'sourceClosure',owner:owner.identity,ordinal:expression.ordinal,captures:identities.map(identity=>({$:'sourceBinding',identity})),receiver:{$:'sourceReceiver'}},context:next};
+  }
   case 'errorBinding':case 'errorModuleBinding':return {$:'errorSourceExpression',source:{$:'sourceBinding',identity:expression.identity},context:next};
   case 'errorThis':return {$:'errorSourceExpression',source:{$:'sourceDerivedReceiver'},context:next};
   case 'errorReceiver':return {$:'errorSourceExpression',source:{$:'sourceReceiver'},context:next};
@@ -201,7 +210,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   const matches=registry.owners.filter(owner=>owner.source===definition.identity);if(matches.length!==1)return {$:'errorModuleCompilation',program:empty,error:'every actual source definition needs exactly one supplied callable owner'};const owner=matches[0];if(owner===undefined)return {$:'errorModuleCompilation',program:empty,error:'source callable owners must be dense'};
   if(identities.includes(owner.identity)||!registry.realms.includes(owner.realm))return {$:'errorModuleCompilation',program:empty,error:'source callable owners need distinct identities and actual realms'};identities.push(owner.identity);
   const operations=registry.operations.filter(row=>row.realm===owner.realm);if(operations.length!==1)return {$:'errorModuleCompilation',program:empty,error:'Error source operations require their actual complete source realm'};const realm=operations[0];if(realm===undefined)return {$:'errorModuleCompilation',program:empty,error:'Error source realm rows must be dense'};
-  let context={$:'errorSourceContext',registry,realm,capabilities,next:plan.nextBinding,visits:0,error:'',mutableBindings:definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'},source=constructJavaScriptErrorConstant({$:'undefined'});
+  let context={$:'errorSourceContext',registry,realm,capabilities,next:plan.nextBinding,visits:0,error:'',globalBindings:bindings.map(binding=>binding.identity),mutableBindings:definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'},source=constructJavaScriptErrorConstant({$:'undefined'});
   if(definition.$==='errorConstructorPlan'){
    if(owner.$!=='errorConstructorOwner'||!registry.realms.includes(owner.baseRealm))return {$:'errorModuleCompilation',program:empty,error:'an Error subclass requires its actual base constructor and realm authority'};
    const message=lowerJavaScriptErrorExpression(definition.message,context,0);context=message.context;
@@ -226,11 +235,28 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
    }else if(parameter.$==='errorDefaultParameter'){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
   }
   if(context.error!=='')return {$:'errorModuleCompilation',program:empty,error:context.error};
-  const code=compileJavaScriptCallSourceWithCaptures(source,definition.parameters.map(parameter=>parameter.identity),bindings.map(binding=>binding.identity));if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
+  const code=context.mutableBindings?compileJavaScriptMutableCallSourceWithCaptures(source,definition.parameters.map(parameter=>parameter.identity),bindings.map(binding=>binding.identity)):compileJavaScriptCallSourceWithCaptures(source,definition.parameters.map(parameter=>parameter.identity),bindings.map(binding=>binding.identity));if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
   functions.push({$:'callFunction',identity:owner.identity,realm:owner.realm,receiverMode:definition.$==='errorConstructorPlan'?'derived Error':definition.$==='errorOrdinaryConstructorPlan'?'ordinary class':'strict',lexicalReceiver:{$:'undefined'},parameters:definition.parameters.length,registers:code.registers,captures:bindings.map(binding=>binding.value),instructions:code.instructions});
  }
+ /** @type {JavaScriptCallTemplate[]} */ const templates=[];
+ if((plan.templates??[]).length>4096)return {$:'errorModuleCompilation',program:empty,error:'source arrow template directory exceeds its budget'};
+ for(const definition of plan.templates??[]){
+  const owner=registry.owners.find(row=>row.source===definition.owner),sourceOwner=plan.functions.find(row=>row.identity===definition.owner);
+  if(owner===undefined||sourceOwner===undefined||sourceOwner.$==='errorConstructorPlan'||!Number.isSafeInteger(definition.ordinal)||definition.ordinal<0||definition.ordinal>=4096||Object.is(definition.ordinal,-0)||templates.some(row=>row.owner===owner.identity&&row.ordinal===definition.ordinal))return {$:'errorModuleCompilation',program:empty,error:'arrow templates retain unique actual source owners and lexical sites; derived-this cells are separate'};
+  const realm=registry.operations.find(row=>row.realm===owner.realm);
+  if(realm===undefined||realm.functionPrototype===undefined)return {$:'errorModuleCompilation',program:empty,error:'arrow source needs its actual realm Function prototype'};
+  if(definition.parameters.some(parameter=>parameter.$!=='errorRequiredParameter')||definition.length!==definition.parameters.length)return {$:'errorModuleCompilation',program:empty,error:'arrow parameter defaults, rest and binding patterns need their complete source lowering'};
+  const identities=bindings.map(binding=>binding.identity).concat(definition.captures),parameters=definition.parameters.map(parameter=>parameter.identity);
+  if(identities.length>4096||identities.some((identity,index)=>identities.indexOf(identity)!==index||parameters.includes(identity)))return {$:'errorModuleCompilation',program:empty,error:'arrow parameters and captures retain disjoint actual lexical bindings'};
+  const context={$:'errorSourceContext',registry,realm,capabilities,globalBindings:bindings.map(binding=>binding.identity),next:plan.nextBinding,visits:0,error:'',mutableBindings:true};
+  const lowered=lowerJavaScriptSourceStatements(definition.statements,0,context,constructJavaScriptErrorConstant({$:'undefined'}),0);
+  if(lowered.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:lowered.context.error};
+  const code=compileJavaScriptMutableCallSourceWithCaptures(lowered.source,parameters,identities);if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
+  templates.push({$:'callTemplate',owner:owner.identity,ordinal:definition.ordinal,realm:owner.realm,parameters:parameters.length,registers:code.registers,captureCount:identities.length,instructions:code.instructions,prototype:realm.functionPrototype,name:{$:'text',units:Array.from({length:definition.name.length},(_,index)=>definition.name.charCodeAt(index))},length:definition.length});
+ }
+ const orderedTemplates=templates.toSorted((left,right)=>left.owner<right.owner?-1:left.owner>right.owner?1:left.ordinal-right.ordinal);
  for(const intrinsic of registry.intrinsics){if(identities.includes(intrinsic.identity)||!registry.realms.includes(intrinsic.realm))return {$:'errorModuleCompilation',program:empty,error:'external Error callbacks require distinct actual callable/realm identities'};identities.push(intrinsic.identity);functions.push({$:'callFunction',identity:intrinsic.identity,realm:intrinsic.realm,receiverMode:'Error intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'invokeErrorIntrinsic',destination:1},{$:'return',source:1}]});}
  for(let at=0;at<capabilities.length;at++){const capability=capabilities[at];if(capability===undefined||!capability.executable||capabilities.findIndex(row=>row.identity===capability.identity)!==at)continue;if(identities.includes(capability.identity))return {$:'errorModuleCompilation',program:empty,error:'a host capability cannot replace an actual source or Error callable body'};identities.push(capability.identity);functions.push({$:'callFunction',identity:capability.identity,realm:capability.realm,receiverMode:'qualified host capability',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'invokeHostCapability',destination:1},{$:'return',source:1}]});}
  functions=functions.toSorted((left,right)=>left.identity<right.identity?-1:left.identity>right.identity?1:0);
- return {$:'errorModuleCompilation',program:{$:'callProgram',functions,realms:registry.realms,exoticKey:registry.exoticKey},error:''};
+ return {$:'errorModuleCompilation',program:{$:'callProgram',functions,realms:registry.realms,exoticKey:registry.exoticKey,...(plan.templates!==undefined?{templates:orderedTemplates}:{})},error:''};
 }
