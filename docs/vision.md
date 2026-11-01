@@ -57,6 +57,16 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Array push/pop use ordinary shared property instructions, not native Array
+bodies. They obtain length through actual Get/ToNumber/ToLength effects. Push
+reads the actual frame argument List, checks the safe-length limit before
+writes, performs ordered strict Sets and always Sets length, even with no
+arguments. Pop holds the selected element across strict own deletion and final
+length Set; an inherited element is read without deleting its prototype field.
+Generic Object receivers preserve getter/setter and partial-mutation effects.
+Primitive boxing, opaque deletion protocols and exact engine-specific failure
+messages require explicit extensions beyond this Object-receiver admission.
+
 Immutable lexical References permit reads and evaluate assignment operands in
 the ordinary order, but PutValue raises the actual realm TypeError. Prefix/
 postfix updates complete ToNumeric first; compound assignments complete their

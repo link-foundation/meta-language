@@ -49,6 +49,10 @@ Draft immutable lexical PutValue failures after RHS/numeric/compound effects,
 preserving logical short-circuiting and constant captures through failed writes.
 The prior refusal input remains as an authored TypeError original.
 
+Draft protected Array push/pop bodies using actual Call arguments, observable
+length conversion, strict ordinary property writes/deletion and held results.
+Object receivers and inherited accessors have deferred original controls.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

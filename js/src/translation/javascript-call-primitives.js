@@ -1,5 +1,6 @@
 // Reuse the existing complete UTF16 definitions; adapters never substitute
 // host scalar strings for code units or reimplement native operation bodies.
+import {readJavaScriptArrayLikeLength} from './javascript-array-index-rules.js';
 import {readJavaScriptSemanticValueError,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextString,constructJavaScriptSemanticTextUnits,constructJavaScriptSourceText} from './javascript-semantic-values.js';
 import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
@@ -26,8 +27,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['require collection adder','require Map entry object','require object coercible','test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
- const binary=['compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
+ const unary=['require array method object','read array like length','require delete success','require collection adder','require Map entry object','require object coercible','test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
+ const binary=['read checked array append length','compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
  const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
  return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
@@ -174,6 +175,15 @@ export function executeJavaScriptCallPrimitive(operation,values){
  if(operation==='compare relational values')return executeJavaScriptCallRelationalComparison(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
  if(operation==='convert primitive value'||operation==='convert number primitive value'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveInvalid',reason:'object ToPrimitive requires its actual selected-hint continuation'}:{$:'primitiveValue',value};}
  if(operation==='add primitive values')return executeJavaScriptCallPrimitiveAddition(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
+ if(operation==='require array method object'){
+  const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert undefined or null to object'}:{$:'primitiveInvalid',reason:'Array method receiver requires its actual primitive boxing protocol'};
+ }
+ if(operation==='read array like length'){const value=values[0]??{$:'undefined'};return value.$==='number'?{$:'primitiveValue',value:{$:'number',value:readJavaScriptArrayLikeLength(value.value)}}:{$:'primitiveInvalid',reason:'ToLength consumes its completed ToNumber value'};}
+ if(operation==='read checked array append length'){
+  const length=values[0]??{$:'undefined'},count=values[1]??{$:'undefined'};if(length.$!=='number'||count.$!=='number'||!Number.isSafeInteger(length.value)||length.value<0||!Number.isSafeInteger(count.value)||count.value<0)return {$:'primitiveInvalid',reason:'Array append length retains actual ToLength and argument count coordinates'};
+  return length.value>9007199254740991-count.value?{$:'primitiveError',errorClass:'TypeError',reason:'Array-like length exceeds the maximum safe integer'}:{$:'primitiveValue',value:{$:'number',value:length.value+count.value}};
+ }
+ if(operation==='require delete success'){const value=values[0]??{$:'undefined'};return value.$!=='boolean'?{$:'primitiveInvalid',reason:'strict deletion consumes its actual Boolean result'}:value.value?{$:'primitiveValue',value:{$:'undefined'}}:{$:'primitiveError',errorClass:'TypeError',reason:'Cannot delete a non-configurable property'};}
  if(operation==='require collection adder'){const value=values[0]??{$:'undefined'};return value.$==='object'&&value.callable?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Collection adder is not callable'};}
  if(operation==='require Map entry object'){const value=values[0]??{$:'undefined'};return value.$==='object'?{$:'primitiveValue',value}:{$:'primitiveError',errorClass:'TypeError',reason:'Iterator value is not an entry object'};}
  if(operation==='require object coercible'){const value=values[0]??{$:'undefined'};return value.$==='null'||value.$==='undefined'?{$:'primitiveError',errorClass:'TypeError',reason:'Cannot destructure null or undefined'}:{$:'primitiveValue',value:{$:'undefined'}};}

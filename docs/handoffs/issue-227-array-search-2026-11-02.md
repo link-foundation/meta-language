@@ -901,3 +901,22 @@ error precedence. Two deferred controls inspect the operand-before-raise
 instructions and immutable Reference policy. Diagnostic text is drafted for the
 existing Node >=22.15 <23 || >=24 <25 source profile; it is not evidence for
 uncovered engines. No execution/generation/validation occurred.
+
+### Shared push/pop standard bodies draft
+
+Protected Array push/pop owners now compile to shared property bytecode. New
+argumentCount/argumentAt instructions read the actual immutable Call List;
+ordinaryDelete uses the existing heap deletion kernel. Shared primitives retain
+completed ToLength, check safe append limits before writes and enforce strict
+delete failure. Push Sets every selected element and length even for zero
+arguments. Pop holds the selected value across own deletion and length update.
+No native Array body or represented host collection implements the mutations.
+
+Nine originals cover full arguments/new length, Object argument identity, sparse
+pop, generic receivers, zero-argument Get/Set, inherited setters/elements, held
+getter values and actual length conversion. Three deferred controls inspect
+bytecode ordering and primitive boundaries. Source/policy inputs are registered.
+No execution/generation/validation occurred. Primitive receiver boxing remains
+an explicit unsupported protocol, and exact write/delete/overflow diagnostics
+need engine-version policies. Shift/unshift/splice/slice/concat and remaining
+standard library surfaces still need their own drafts.

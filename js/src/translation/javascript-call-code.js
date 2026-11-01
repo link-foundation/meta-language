@@ -5,6 +5,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * @typedef {{$:'constant',destination:number,value:JavaScriptSemanticValue} |
  * {$:'copy',destination:number,source:number} |
  * {$:'argument',destination:number,index:number} |
+ * {$:'argumentCount',destination:number} | {$:'argumentAt',destination:number,index:number} |
  * {$:'pushFinally',target:number} | {$:'finishFinally'} | {$:'completeJump',target:number,depth:number} |
  * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
@@ -43,6 +44,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'objectSpread',destination:number,target:number,input:number,realm:bigint,excluded?:number[]} |
  * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
+ * {$:'ordinaryDelete',destination:number,object:number,key:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
  * {$:'propertyKey',destination:number,input:number,realm:bigint} |
  * {$:'propertyDefinition',destination:number,target:number,key:number,attributes:number,realm:bigint}} JavaScriptCallInstruction
@@ -73,7 +75,8 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
+    case 'constant':case 'argument':case 'argumentCount':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
+    case 'argumentAt':return [instruction.destination,instruction.index];
     case 'copy':return [instruction.destination,instruction.source];
     case 'jump':case 'popHandler':case 'pushFinally':case 'finishFinally':case 'completeJump':case 'argumentListOpen':return [];
     case 'argumentListAppend':return [instruction.value];
@@ -87,6 +90,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
+    case 'ordinaryDelete':return [instruction.destination,instruction.object,instruction.key];
     case 'literalPrototype':return [instruction.destination,instruction.object,instruction.value];
     case 'functionName':return [instruction.destination,instruction.object,instruction.key];
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'argumentRest':return [instruction.destination,instruction.prototype];
