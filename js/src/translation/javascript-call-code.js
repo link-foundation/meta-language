@@ -28,6 +28,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'ordinaryAllocate',destination:number,prototype:number} |
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
+ * {$:'objectSpread',destination:number,target:number,input:number,realm:bigint} |
  * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
@@ -78,6 +79,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'collectionCopy':return [instruction.destination,instruction.target,instruction.input,instruction.adder,instruction.iteratorKey,instruction.iteratorMethod,instruction.iteratorPrototype,instruction.nextMethod];
     case 'ordinaryDataProperty':return [instruction.destination,instruction.object,instruction.key,instruction.value];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
+    case 'objectSpread':return [instruction.destination,instruction.target,instruction.input];
     case 'propertyKey':return [instruction.destination,instruction.input];
     case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
   }

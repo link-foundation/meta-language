@@ -21,6 +21,9 @@ export const javascriptSourceControlCases=[
  {name:'labelled block break removes only the exited catch handler',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { try { exit: { try { break exit; } catch (error) { return "wrong"; } } throw "outside"; } catch (error) { return error; } }',
   expression:attempt(90,{$:'sourceControlBlock',target:10,body:attempt(91,transfer(10),returned('wrong')),after:{$:'sourceThrow',value:text('outside')}},binding(90)),expected:{kind:'value',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
 
+ {name:'object spread copy drives the same compiler and native machine',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { const input = { value: 3 }; const output = { ...input, value: 7 }; return output.value; }',
+  expression:{$:'sourceLet',identity:1,value:{$:'sourceObject',realm:1000n,prototype:{$:'sourceConstant',value:{$:'null'}},properties:[{$:'sourceObjectProperty',key:text('value'),value:number(3)}]},body:{$:'sourceLet',identity:2,value:{$:'sourceObject',realm:1000n,prototype:{$:'sourceConstant',value:{$:'null'}},properties:[{$:'sourceObjectSpread',input:binding(1)},{$:'sourceObjectProperty',key:text('value'),value:number(7)}]},body:{$:'sourceGet',object:binding(2),key:text('value')}}},expected:{kind:'value',value:{$:'number',value:7}}},
+
 ];
 export const javascriptSourceControlRefusals=[
  {name:'continue cannot select a labelled noniteration block',reason:'break and continue retain an active actual target and handler depth',expression:{$:'sourceControlBlock',target:10,body:transfer(10,true),after:number(0)}},

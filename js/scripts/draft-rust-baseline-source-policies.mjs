@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-object-spread.js',moduleName:'javascript_object_spread',model:'Actual object literal CopyDataProperties continuations 1',programAsset:'javascript-object-spread-program'},
  {sourcePath:'js/src/translation/javascript-call-templates.js',moduleName:'javascript_call_templates',model:'Actual runtime arrow closure identities and lexical code templates 1',programAsset:'javascript-call-templates-program'},
  {sourcePath:'js/src/translation/javascript-array-assignment.js',moduleName:'javascript_array_assignment',model:'Actual Array length assignment conversion continuations 1',programAsset:'javascript-array-assignment-program'},
  {sourcePath:'js/src/translation/javascript-collection-iterator-call-source.js',moduleName:'javascript_collection_iterator_call_source',model:'Actual JavaScript collection iterator callable owners 1',programAsset:'javascript-collection-iterator-call-source-program'},
@@ -152,6 +153,7 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/tests/translation-javascript-object-spread.test.js',
  'js/tests/translation-javascript-array-objects.test.js',
  'js/tests/translation-javascript-collection-iterator-results.test.js',
  'js/tests/translation-javascript-array-assignment.test.js',

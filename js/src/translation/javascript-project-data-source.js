@@ -136,7 +136,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    else if(take('{')){
     const properties=[];if(!take('}'))while(at<input.length){
-     if(take('[')){
+     if(take('...')){if(!classProfile)fail('object spread requires its actual closed source continuation');properties.push({$:'errorObjectSpread',input:parse(1)});}
+     else if(take('[')){
       if(!classProfile)fail('computed object fields require the closed source profile');
       const key=parse(0);if(!take(']')||!take(':'))fail('computed object fields retain their complete key and value');const field=parse(1);
       if(field.$==='errorClosure'){

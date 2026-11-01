@@ -94,6 +94,19 @@ comma expressions produce values and discard that reference. Comma operands run
 in order without consuming argument, field or element separators. Nullish
 coalescing snapshots its input and evaluates its fallback only for null/undefined.
 
+Object literal spread uses a bounded CopyDataProperties continuation in the
+shared heap. It snapshots actual ordered own keys, including Symbols, and reads
+each current own descriptor immediately before its Get. Only enumerable own
+properties are copied; deletions and descriptor changes by earlier getters are
+observed, and later newly created keys are excluded. Getters execute as actual
+source VM calls; copied values become writable, enumerable, configurable own data
+properties without invoking inherited setters. A completed getter value survives
+storage suspension. Nullish and keyless primitives contribute no properties;
+String sources contribute separate UTF16 code units without scalar normalization.
+The literal target is an actual ordinary object. Opaque host own-key/descriptor
+operations and Proxy traps need explicit protocols; no original-body fallback
+establishes translation. Object rest additionally needs excluded-key semantics.
+
 Source switches capture their input once, test selectors with strict equality in
 source order until selection, and enter adjacent clause bodies without repeating
 selector effects. A middle default remains a fallback after the remaining label

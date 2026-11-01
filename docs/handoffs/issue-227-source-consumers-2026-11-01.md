@@ -937,3 +937,39 @@ https://tc39.es/ecma262/2026/multipage/ecmascript-language-statements-and-declar
 and #sec-do-while-statement. No result is an execution observation. All native
 product generation, original/product comparison and parity execution remain
 deferred, as do finally completion handling and full iterator-close transfers.
+
+
+### Object spread continuation draft
+
+Added `javascript-object-spread.js`: bounded keys/read/getter/write phases, actual
+own-key ordering, latest enumerable own descriptors, actual getter calls, and
+CreateDataProperty through the common ordinary heap. String indices preserve
+UTF16 units and lone surrogates. Other primitives contribute no keys. Storage
+resource outcomes retain the completed getter value and cursor; the callback is
+not repeated after resumption. Source objects, Arrays, arrow callables and
+collections copy their enumerable ordinary properties rather than their slots.
+Opaque host own keys/descriptors refuse explicitly. The current kernel is for
+ordinary literal targets, not general Proxy/Array target writes or object rest.
+The algorithm follows ECMAScript 2026 section 7.3.25:
+https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-copydataproperties.
+
+The source reader, shared error-module lowering, call-source compiler, instruction
+register accounting, whole-machine validation, pending frames, getter return,
+step dispatch and completion adapter are drafted together. Pending validation
+retains exact source instruction, target, input, destination and realm. This is
+one shared JavaScript implementation, registered for automatic native policy
+translation; native semantic bodies were not handwritten.
+
+Ten original-source inputs, one compiler/native-machine control, six
+continuation controls and one direct whole-machine getter control are authored. They cover sparse indices, hidden metadata,
+class prototypes, internal collection slots, Symbols, getter mutation, abrupt
+completion, inherited setters, lone surrogates and resource resumption. All are
+unexecuted. Generated model codecs, Rust products/module publication and Links
+fixtures must be regenerated automatically together with the rest of the draft,
+then the original/compiled/native machine comparisons must run in CI. No tests,
+generation, validation, compilation or CI failure review ran in this phase.
+
+The machine also retains a selected getter when pushing its child call encounters
+stack resource limits. A later step retries that same unstarted call; completed
+getters resume at property creation. Whole-stack checks bind the actual getter
+identity, receiver mode and empty argument list to the suspended spread parent.

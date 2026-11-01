@@ -41,7 +41,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
-/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource}} JavaScriptCallSourceProperty */
+/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
 /** @typedef {{$:'sourceControlScope',identity:number,kind:string,handlers:number}} JavaScriptCallSourceControlScope */
@@ -205,6 +205,9 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(prototype.builder);
    let current=appendJavaScriptCallSourceInstruction(object.builder,{$:'ordinaryAllocate',destination:object.register,prototype:prototype.register});
    for(const property of source.properties){
+    if(property.$==='sourceObjectSpread'){
+     const input=lowerJavaScriptCallSourceExpression(property.input,bindings,current,depth+1),result=allocateJavaScriptCallSourceRegister(input.builder);current=appendJavaScriptCallSourceInstruction(result.builder,{$:'objectSpread',destination:result.register,target:object.register,input:input.register,realm:source.realm});continue;
+    }
     const key=lowerJavaScriptCallSourceExpression({$:'sourcePropertyKey',input:property.key,realm:source.realm},bindings,current,depth+1);
     const value=lowerJavaScriptCallSourceExpression(property.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
     current=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryDataProperty',destination:result.register,object:object.register,key:key.register,value:value.register,realm:source.realm});

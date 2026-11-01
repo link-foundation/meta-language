@@ -51,3 +51,7 @@ execution and parity are not yet established.
 Draft post-test loops and CST-owned labelled loop/switch/block transfers through
 the common bounded control-flow compiler; preserve exited catch-handler depth.
 Controls are authored but not executed; native products still require generation.
+
+Draft object-literal spread with shared own-key snapshots, fresh descriptor reads,
+source getter continuations and resumable data-property creation. Native policy
+registration and deferred controls accompany the draft; execution remains deferred.
