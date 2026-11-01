@@ -67,7 +67,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  function port(key,details){if(!capabilities.has(key))capabilities.set(key,{source:key,...details});return {$:'errorNativeReference',source:key};}
  const cellIDs=new Set(cells.map(row=>row.binding)),functionIDs=new Set([...selected]),importByID=new Map(imports.map(row=>[row.binding,row]));
  const classBinding=binding=>binding&&classes.find(row=>{const owner=bindings[row.binding];return selected.has(row.binding)&&(row.binding===binding.identity||owner&&owner.declaration.start===binding.declaration.start&&owner.declaration.end===binding.declaration.end);});
- let activeClass=null,activeFunction=null,initializingParameters=null,controlTargets=[];
+ let activeClass=null,activeFunction=null,initializingParameters=null,initializingParameterOwners=null,controlTargets=[];
  const arrowNodes=[...new Map(program.sourceMappings.filter(row=>row.term==='arrow_function').map(row=>[row.start+':'+row.end,row])).values()].sort((a,b)=>a.start-b.start||b.end-a.end),templates=[];
  if(arrowNodes.length>4096)fail('source lexical templates exceed their explicit site budget');
  function inferArrowName(value,name){if(value.$==='errorClosure'){const template=templates.find(row=>row.owner===value.owner&&row.ordinal===value.ordinal);if(template&&template.name==='')template.name=name;}return value;}
@@ -101,33 +101,35 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   if(!classProfile||offset!==0||activeFunction===null)return null;
   const node=arrowNodes.find(row=>row.start===input[first]?.start);if(!node)return null;
   if(input[first].value==='async')fail('async arrow continuations require their separate promise semantics');
-  let separator,parameterTokens;
-  if(input[first].value==='('){const close=findJavaScriptClassGroupEnd(input.map(token=>token.value),first);if(close<0||input[close+1]?.value!=='=>')fail('arrow parameters require their complete actual lexical head');separator=close+1;parameterTokens=input.slice(first+1,close);}
-  else{if(input[first].kind!=='identifier'||input[first+1]?.value!=='=>')fail('arrow parameters need their complete simple binding head');separator=first+1;parameterTokens=[input[first]];}
-  const parameters=[];for(let index=0;index<parameterTokens.length;index++){
-   const token=parameterTokens[index];if(index%2===1){if(token.value!==',')fail('arrow parameter defaults, rest and patterns need complete source lowering');continue;}
-   const binding=declared(token);if(token.kind!=='identifier'||!binding||binding.kind!=='parameter'||parameters.some(row=>row.identity===binding.identity))fail('arrow parameters retain distinct actual parameter bindings');parameters.push({$:'errorRequiredParameter',identity:binding.identity});
+  let separator,parameters;
+  if(input[first].value==='('){
+   const close=findJavaScriptClassGroupEnd(input.map(token=>token.value),first);if(close<0||input[close+1]?.value!=='=>')fail('arrow parameters require their complete actual lexical head');separator=close+1;
+   const openAt=tokens.findIndex(token=>token.start===input[first].start),closeAt=tokens.findIndex(token=>token.start===input[close].start);if(openAt<0||closeAt<openAt)fail('arrow parameter head retains its actual source coordinates');
+   parameters=readSourceParameters({open:openAt,close:closeAt});
+  }else{
+   const token=input[first],binding=declared(token);if(token.kind!=='identifier'||input[first+1]?.value!=='=>'||!binding||binding.kind!=='parameter')fail('arrow parameters need their actual binding head');separator=first+1;parameters=[{$:'errorRequiredParameter',identity:binding.identity}];
   }
-  let end=separator+1;while(end<input.length&&input[end].end<=node.end)end++;
-  if(end<=separator+1||input[end-1].end!==node.end)fail('arrow body retains its complete actual CST interval');
+  let end=separator+1;while(end<input.length&&input[end].start<node.end)end++;
+  if(end<=separator+1||input[end-1].end>node.end)fail('arrow body retains its complete actual CST interval');
   const captures=[];for(const binding of bindings){if(binding.scope==='scope:0'||binding.declaration.start>=node.start&&binding.declaration.end<=node.end)continue;if(!binding.references.some(row=>row.start>=node.start&&row.end<=node.end))continue;readonlyCapture(binding,node);captures.push(binding.identity);}
   if(captures.length>4096)fail('arrow lexical captures exceed their actual value budget');
-  const ordinal=arrowNodes.indexOf(node),owner=activeFunction,previous=initializingParameters,previousTargets=controlTargets;let body;
+  const ordinal=arrowNodes.indexOf(node),owner=activeFunction,previous=initializingParameters,previousOwners=initializingParameterOwners,previousTargets=controlTargets;let body;
   // Parameter default TDZ selection belongs to creation; body-local parameter
   // references belong to the deferred function body, not that outer phase.
-  if(previous!==null&&captures.some(identity=>bindings.find(row=>row.identity===identity)?.kind==='parameter'&&!previous.has(identity)))fail('capturing an uninitialized parameter requires its shared lexical cell');
-  initializingParameters=null;controlTargets=[];
-  try{if(input[separator+1].value==='{'){const begin=tokens.findIndex(token=>token.start===input[separator+1].start),last=tokens.findIndex(token=>token.end===node.end&&token.value==='}');if(begin<0||last<begin)fail('arrow block body retains its actual source token interval');body=statements(begin+1,last);}else body=[{$:'sourceReturnStatement',value:expression(input.slice(separator+1,end))}];}finally{initializingParameters=previous;controlTargets=previousTargets;}
-  templates.push({$:'errorArrowTemplatePlan',owner,ordinal,name:'',length:parameters.length,parameters,captures,statements:body});
+  if(previous!==null&&captures.some(identity=>previousOwners?.has(identity)&&!previous.has(identity)))fail('capturing an uninitialized parameter requires its shared lexical cell');
+  initializingParameters=null;initializingParameterOwners=null;controlTargets=[];
+  try{if(input[separator+1].value==='{'){const block=sourceField(node,'body'),begin=tokens.findIndex(token=>token.start===input[separator+1].start),last=begin<0?-1:findJavaScriptClassGroupEnd(values,begin);if(!block||block.term!=='statement_block'||begin<0||last<begin||tokens[last].end>block.end)fail('arrow block body retains its actual CST field and source token interval');body=statements(begin+1,last);}else body=[{$:'sourceReturnStatement',value:expression(input.slice(separator+1,end))}];}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;controlTargets=previousTargets;}
+  const firstDefault=parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||parameter.$==='errorObjectParameter'&&parameter.hasDefault);
+  templates.push({$:'errorArrowTemplatePlan',owner,ordinal,name:'',length:firstDefault<0?parameters.length:firstDefault,parameters,captures,statements:body});
   return {end,value:{$:'errorClosure',owner,ordinal,captures}};
  }
  function expression(input,offset=0){let at=0;const peek=()=>input[at],take=value=>{if(peek()?.value===value){at++;return true;}return false;};
-  function variable(token){const binding=reference(token,offset);if(binding){if(initializingParameters!==null&&binding.kind==='parameter'&&!initializingParameters.has(binding.identity))fail('parameter defaults require actual earlier initialized bindings; later/self parameter TDZ needs its explicit source continuation');const actualClass=classBinding(binding);if(actualClass)return {$:'errorFunctionReference',identity:actualClass.binding};if(cellIDs.has(binding.identity))return {$:'errorModuleCell',identity:binding.identity};if(functionIDs.has(binding.identity))return {$:'errorFunctionReference',identity:binding.identity};if(importByID.has(binding.identity)){const owner=importByID.get(binding.identity);return port('binding:'+binding.identity,{kind:'import',binding:binding.identity,specifier:owner.specifier,imported:owner.imported});}if(binding.scope!=='scope:0')return {$:'errorBinding',identity:binding.identity};fail('a selected source function refers to an unmodeled module binding');}if(token.value==='undefined'&&unresolved(token,offset))return absent();if(classProfile&&unresolved(token,offset)&&['NaN','Infinity'].includes(token.value))return {$:'errorSpecialNumber',form:token.value};if(!unresolved(token,offset)||!['URL','Buffer','JSON','structuredClone','TypeError','Error',...(classProfile?['Set','Map','Array']:[])].includes(token.value))fail('source globals need their actual unshadowed bounded operation owner');return port('global:'+token.value,{kind:'global',name:token.value});}
+  function variable(token){const binding=reference(token,offset);if(binding){if(initializingParameters!==null&&initializingParameterOwners?.has(binding.identity)&&!initializingParameters.has(binding.identity))fail('parameter defaults require actual earlier initialized bindings; later/self parameter TDZ needs its explicit source continuation');const actualClass=classBinding(binding);if(actualClass)return {$:'errorFunctionReference',identity:actualClass.binding};if(cellIDs.has(binding.identity))return {$:'errorModuleCell',identity:binding.identity};if(functionIDs.has(binding.identity))return {$:'errorFunctionReference',identity:binding.identity};if(importByID.has(binding.identity)){const owner=importByID.get(binding.identity);return port('binding:'+binding.identity,{kind:'import',binding:binding.identity,specifier:owner.specifier,imported:owner.imported});}if(binding.scope!=='scope:0')return {$:'errorBinding',identity:binding.identity};fail('a selected source function refers to an unmodeled module binding');}if(token.value==='undefined'&&unresolved(token,offset))return absent();if(classProfile&&unresolved(token,offset)&&['NaN','Infinity'].includes(token.value))return {$:'errorSpecialNumber',form:token.value};if(!unresolved(token,offset)||!['URL','Buffer','JSON','structuredClone','TypeError','Error',...(classProfile?['Set','Map','Array']:[])].includes(token.value))fail('source globals need their actual unshadowed bounded operation owner');return port('global:'+token.value,{kind:'global',name:token.value});}
   function arguments_(end){const result=[];if(take(end))return result;while(at<input.length){result.push(parse(0));if(take(end))return result;if(!take(','))fail('source arguments require complete separators');}fail('source arguments require their closing group');}
   function primary(){const token=peek();if(!token)fail('source expressions require a complete operand');let value,member=null;const closure=arrow(input,at,offset);
    if(closure){at=closure.end;value=closure.value;}
    else if(['!','typeof','-'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
-   if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');}
+   else if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');}
    else if(take('[')){
     if(classProfile){let length=0;const elements=[];if(!take(']'))while(at<input.length){if(take(']'))break;if(take(',')){length++;continue;}if(peek()?.value==='...')fail('Array literal spread requires its actual iterator and close continuations');elements.push({$:'errorArrayElement',index:length++,value:parse(0)});if(take(']'))break;if(!take(','))fail('Array literal elements need complete separators');if(take(']'))break;}if(input[at-1]?.value!==']')fail('Array literal needs its closing bracket');value={$:'errorArrayLiteral',length,elements};}
     else{port('syntax:array',{kind:'syntax',operation:'array literal'});value={$:'errorArray',factory:'syntax:array',items:arguments_(']')};}
@@ -160,15 +162,26 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   const result=parse(0);if(at!==input.length)fail('source expression cannot discard unconsumed syntax');return result;
  }
  function split(first,last,separator){const result=[];let start=first;for(let at=first;at<last;at++){if(['(','{','['].includes(values[at])){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>=last)fail('source groups must remain complete');at=end;}else if(values[at]===separator){result.push([start,at]);start=at+1;}}if(start<last)result.push([start,last]);return result;}
- function parameters(header){if(header.implicitConstructor)return [];initializingParameters=new Set();const result=split(header.open+1,header.close,',').map(([first,last])=>{
-  const token=tokens[first],binding=declared(token);if(token.value==='{'){
-   const close=findJavaScriptClassGroupEnd(values,first),fields=[];if(close<0||close>=last)fail('source object parameter must retain its complete binding pattern');
-   const hasDefault=close+1<last;if(hasDefault&&values[close+1]!=='=')fail('object parameter default needs its actual source expression');const value=hasDefault?expression(tokens.slice(close+2,last)):absent();
-   for(const [a,b]of split(first+1,close,',')){const key=tokens[a],owner=declared(key);if(!owner||owner.kind!=='parameter'||(b>a+1&&values[a+1]!=='='))fail('source object parameters currently require actual shorthand fields and optional defaults');fields.push({$:'errorParameterField',identity:owner.identity,key:units(key.value),hasDefault:b>a+1,value:b>a+1?expression(tokens.slice(a+2,b)):absent()});initializingParameters.add(owner.identity);}
-   return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault,value};
-  }
-  if(!binding||binding.kind!=='parameter'||(last>first+1&&values[first+1]!=='='))fail('source parameters need actual fixed binding identities');const parameter=last===first+1?{$:'errorRequiredParameter',identity:binding.identity}:{$:'errorDefaultParameter',identity:binding.identity,value:expression(tokens.slice(first+2,last))};if(parameter.$==='errorDefaultParameter')inferArrowName(parameter.value,binding.name);initializingParameters.add(binding.identity);return parameter;
- });initializingParameters=null;return result;}
+ function readSourceParameters(header){
+  if(header.implicitConstructor)return [];
+  const previous=initializingParameters,previousOwners=initializingParameterOwners;initializingParameters=new Set();
+  initializingParameterOwners=new Set(bindings.filter(binding=>binding.kind==='parameter'&&binding.declaration.start>=tokens[header.open].start&&binding.declaration.end<=tokens[header.close].end).map(binding=>binding.identity));
+  try{return split(header.open+1,header.close,',').map(([first,last])=>{
+   const token=tokens[first],binding=declared(token);
+   if(token.value==='{'){
+    const close=findJavaScriptClassGroupEnd(values,first),fields=[];if(close<0||close>=last)fail('source object parameter retains its complete binding pattern');
+    const hasDefault=close+1<last;if(hasDefault&&values[close+1]!=='=')fail('object parameter default needs its actual source expression');const value=hasDefault?expression(tokens.slice(close+2,last)):absent();
+    for(const [a,b]of split(first+1,close,',')){
+     const key=tokens[a],position=values[a+1]===':'?a+2:a,owner=declared(tokens[position]);if(!['identifier','string'].includes(key.kind)||!owner||owner.kind!=='parameter'||position>=b||b>position+1&&values[position+1]!=='=')fail('source object parameters need actual fixed field keys, binding aliases and optional defaults');
+     const hasDefault=b>position+1,defaultValue=hasDefault?inferArrowName(expression(tokens.slice(position+2,b)),owner.name):absent();fields.push({$:'errorParameterField',identity:owner.identity,key:key.stringUnits??units(key.value),hasDefault,value:defaultValue});initializingParameters.add(owner.identity);
+    }
+    if(fields.length===0)fail('empty object binding patterns require their explicit coercibility operation');
+    return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault,value};
+   }
+   if(!binding||binding.kind!=='parameter'||last>first+1&&values[first+1]!=='=')fail('source parameters need actual fixed binding identities; rest and other patterns need their own lowering');
+   const parameter=last===first+1?{$:'errorRequiredParameter',identity:binding.identity}:{$:'errorDefaultParameter',identity:binding.identity,value:inferArrowName(expression(tokens.slice(first+2,last)),binding.name)};initializingParameters.add(binding.identity);return parameter;
+  });}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;}
+ }
  function statements(first,last){if(++statementDepth>128)fail('project data statements exceed their explicit source depth');const result=[];let at=first;
   function one(){if(values[at]==='{'){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>last)fail('source blocks require complete groups');const body=statements(at+1,end);at=end+1;return body;}return [statement()];}
   function statement(){const word=values[at++];if(word==='if'){const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source if requires its complete condition');const condition=expression(tokens.slice(open+1,close));at=close+1;const yes=one(),no=values[at]==='else'?(at++,one()):[];return {$:'sourceIfStatement',condition,yes,no};}
@@ -221,7 +234,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  }
  const functions=[],origins=[];for(const header of headers.filter(row=>selected.has(row.binding.identity))){
   for(const member of [header,...(header.methods??[])]){
-   activeClass=member.classBinding??null;activeFunction=member.binding.identity;controlTargets=[];const params=parameters(member),body=member.implicitConstructor?[]:statements(member.body+1,member.last);
+   activeClass=member.classBinding??null;activeFunction=member.binding.identity;controlTargets=[];const params=readSourceParameters(member),body=member.implicitConstructor?[]:statements(member.body+1,member.last);
    functions.push({$:member.isConstructor?'errorOrdinaryConstructorPlan':member.classBinding!==undefined?'errorMethodFunctionPlan':classProfile?'errorMutableStatementFunctionPlan':'errorStatementFunctionPlan',identity:member.binding.identity,name:member.binding.name,parameters:params,statements:body});origins.push({identity:member.binding.identity,name:member.binding.name,start:member.node.start,end:member.node.end,coordinateUnit:'UTF-16 code units',...(member.classBinding!==undefined?{classBinding:member.classBinding,constructor:member.isConstructor}: {})});
   }
  }activeClass=null;activeFunction=null;

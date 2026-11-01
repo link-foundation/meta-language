@@ -851,3 +851,42 @@ products remain deferred under the existing phase instruction.
 
 The preceding workflow `41318713744` reported completed before this batch push;
 only its ID and status were read. Native CI conclusions remain uninspected.
+
+
+## Shared source parameter initialization continuation
+
+The root remains solo. Source-only review found an arrow-reader fallthrough
+introduced in the earlier draft: after recognizing an arrow, its head token
+could be parsed again as an ordinary operand. The primary operand chain now
+keeps the arrow branch exclusive. Arrow block bodies use their actual CST body
+field; trailing source trivia is not mistaken for a missing semantic token.
+No behavior was executed to discover or validate this correction.
+
+`lowerJavaScriptSourceParameters` now supplies the same ordered initialization
+for functions, methods and arrows. The CST reader reuses its declaration-owned
+parameter parser, accepts fixed renamed/string-named object fields and defaults,
+and distinguishes the current uninitialized parameter environment from initialized
+enclosing parameters. Whole-object and field defaults retain declaration order,
+only replace undefined, and preserve earlier bindings. Function length follows
+the first whole-parameter default, not the number of bound fields. Additional
+mutable function source units can use the checked class-source profile without
+claiming support for additional class declarations in that adapter.
+
+Ten new complete originals bring the flat inventory to seventy-three originals.
+Two additional boundaries bring refusal inputs to fourteen. The new cases cover
+`({parameter: value})`, earlier-parameter defaults, explicit zero, whole-object
+and field defaults, nested default closures, enclosing/default parameter scopes,
+shadowed names, inferred lengths and string keys. The native source consumer
+expands actual pattern-bound identifiers, excludes parameters owned by nested
+arrows and derives arity/default boundaries from its own concrete parameter
+nodes. None of these assertions ran.
+
+Remaining parameter work includes explicit empty-pattern coercibility, full
+nullable-pattern/source-error diagnostic compatibility, general rest/array/nested
+patterns, later/self parameter TDZ cells and complete body/parameter environment
+separation. Empty patterns explicitly refuse rather than pretending a no-op
+pattern needs no coercibility check. These remain implementation requirements,
+not delivered-language coverage. Object spread, Array callbacks and general
+iterator protocols remain the next own-code baseline dependencies. Native/formal
+products and source-register reconciliation are still deferred; no tests,
+validation, generation, compilation or CI feedback review ran.

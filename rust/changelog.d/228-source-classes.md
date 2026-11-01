@@ -36,3 +36,9 @@ Draft CST switch selection/fallthrough and lexical break/continue targets throug
 the shared source compiler. Preserve selector effects, for updates and catch
 handler depth on transfers. Extend existing deferred original/compiler/native
 state controls; shared TDZ environments, labels and finally remain separate work.
+
+Draft shared function/method/arrow parameter initialization with renamed object
+fields, ordered defaults and correct Function length boundaries. Correct the
+arrow reader's operand fallthrough and retain concrete parameter witnesses in
+deferred native controls. Coercibility, nullable diagnostics and general patterns
+remain separate obligations.

@@ -41,13 +41,24 @@ fn assert_source_arrow_inputs(capture:&Value){
  let mut unique=BTreeMap::new();for row in syntax.iter().filter(|row|row.term()=="arrow_function"){unique.insert((row.range().start(),row.range().end()),row);}
  let mut arrows=unique.into_values().collect::<Vec<_>>();arrows.sort_by_key(|row|(row.range().start(),std::cmp::Reverse(row.range().end())));assert!(arrows.len()<=4096);
  let units=|byte:usize|source[..byte].encode_utf16().count();let bindings=program.bindings();
+ let mut parameter_owners=BTreeMap::<usize,Vec<usize>>::new();
+ for(index,binding)in bindings.iter().enumerate().filter(|(_,binding)|binding.kind()=="parameter"){
+  if let Some((owner,_))=arrows.iter().enumerate().filter(|(_,arrow)|arrow.range().start()<=binding.declaration().start()&&arrow.range().end()>=binding.declaration().end()).min_by_key(|(_,arrow)|arrow.range().end()-arrow.range().start()){parameter_owners.entry(owner).or_default().push(index);}
+ }
+
  for template in templates.as_array().unwrap(){
   let arrow=arrows[template["ordinal"].as_u64().unwrap() as usize];let start=arrow.range().start();let end=arrow.range().end();
   let origin=capture["origins"].as_array().unwrap().iter().find(|row|row["identity"]==template["owner"]).unwrap();assert_eq!(origin["coordinateUnit"],"UTF-16 code units");assert!(origin["start"].as_u64().unwrap() as usize<=units(start));assert!(origin["end"].as_u64().unwrap() as usize>=units(end));
   assert!(syntax.iter().any(|row|matches!(row.term(),"function_declaration"|"method_definition"|"class_declaration")&&units(row.range().start())==origin["start"].as_u64().unwrap() as usize&&units(row.range().end())==origin["end"].as_u64().unwrap() as usize));
   let parameter=*by_id.get(fields.get(&(arrow.link_id(),"parameters".to_owned())).or_else(||fields.get(&(arrow.link_id(),"parameter".to_owned()))).expect("actual arrow parameter field")).unwrap();
-  let expected_parameters=bindings.iter().enumerate().filter(|(_,binding)|binding.kind()=="parameter"&&binding.declaration().start()>=parameter.range().start()&&binding.declaration().end()<=parameter.range().end()).map(|(index,_)|index).collect::<Vec<_>>();
-  assert_eq!(template["parameters"].as_array().unwrap().iter().map(|row|row["identity"].as_u64().unwrap() as usize).collect::<Vec<_>>(),expected_parameters);assert_eq!(template["length"].as_u64().unwrap() as usize,expected_parameters.len());
+  let ordinal=template["ordinal"].as_u64().unwrap() as usize;
+  let expected_parameters=parameter_owners.get(&ordinal).into_iter().flatten().copied().filter(|index|bindings[*index].declaration().start()>=parameter.range().start()&&bindings[*index].declaration().end()<=parameter.range().end()).collect::<Vec<_>>();
+  let mut declared_parameters=Vec::new();
+  for value in template["parameters"].as_array().unwrap(){if value["$"]=="errorObjectParameter"{let synthetic=value["identity"].as_u64().unwrap() as usize;assert!(synthetic>=bindings.len());for field in value["fields"].as_array().unwrap(){declared_parameters.push(field["identity"].as_u64().unwrap() as usize);}}else{declared_parameters.push(value["identity"].as_u64().unwrap() as usize);}}
+  assert_eq!(declared_parameters,expected_parameters);
+  let header=if parameter.term()=="formal_parameters"{network.links().filter(|link|link.metadata().link_type()==Some(meta_language::LinkType::Syntax)&&link.metadata().is_named()&&!link.metadata().flags().is_extra()&&link.references().len()==1&&link.references()[0].as_u64()==parameter.link_id()).map(|link|*by_id.get(&link.id().as_u64()).unwrap()).collect::<Vec<_>>()}else{vec![parameter]};
+  let mut header=header;header.sort_by_key(|row|row.range().start());assert_eq!(template["parameters"].as_array().unwrap().len(),header.len());
+  let length=header.iter().position(|row|matches!(row.term(),"assignment_pattern"|"rest_pattern")).unwrap_or(header.len());assert_eq!(template["length"].as_u64().unwrap() as usize,length);
   let mut expected_captures=Vec::new();
   for(index,binding)in bindings.iter().enumerate(){
    let declaration=binding.declaration();if binding.scope()=="scope:0"||declaration.start()>=start&&declaration.end()<=end||!binding.references().iter().any(|range|range.start()>=start&&range.end()<=end){continue;}

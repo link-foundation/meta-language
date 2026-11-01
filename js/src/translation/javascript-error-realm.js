@@ -192,7 +192,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const actual=checkJavaScriptProjectDataSource(input),owners=[];
   for(const definition of actual.plan.functions){
    const origin=actual.origins.find(row=>row.identity===definition.identity),descriptor=Reflect.getOwnPropertyDescriptor(definitions,definition.name),value=descriptor?.value;
-   if(definition.$!=='errorStatementFunctionPlan'||!origin||typeof value!=='function'||Function.prototype.toString.call(value)!==actual.source.slice(origin.start,origin.end)||Reflect.getOwnPropertyDescriptor(value,'name')?.value!==definition.name)throw new TypeError('an additional source unit needs its exact owned ordinary declarations');
+   if((definition.$!=='errorStatementFunctionPlan'&&!(definition.$==='errorMutableStatementFunctionPlan'&&actual.model==='actual closed source classes 1'))||!origin||typeof value!=='function'||Function.prototype.toString.call(value)!==actual.source.slice(origin.start,origin.end)||Reflect.getOwnPropertyDescriptor(value,'name')?.value!==definition.name)throw new TypeError('an additional source unit needs its exact owned ordinary declarations');
    const semantic=encode(value);if(sourceNames.has(semantic.identity))throw new TypeError('an additional source unit cannot replace an existing declaration owner');sourceNames.set(semantic.identity,definition.name);owners.push({$:'errorFunctionOwner',source:definition.identity,identity:semantic.identity,realm:identity});
   }
   const unitRegistry={...registry,owners},compiled=compileJavaScriptErrorModulePlanWithCapabilities(actual.plan,unitRegistry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);

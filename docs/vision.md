@@ -68,6 +68,14 @@ name/length metadata retains ordinary descriptor semantics. Initial source
 capture-by-value admission requires proof of immutable lexical bindings; mutable
 bindings and derived-this initialization require actual shared lexical cells.
 Nested code and static code share explicit instruction and capture budgets.
+Parameter initialization uses one shared lowerer for functions, methods and
+arrows. Fixed object-field aliases retain actual binding identities; defaults
+run in declaration order and only replace undefined. Function length stops at
+the first whole-parameter initializer, separately from nested field defaults.
+Parameter-initialization checks apply to the active parameter environment,
+without treating initialized enclosing parameters as uninitialized locals.
+Empty patterns, general rest/array patterns and nullable-pattern diagnostic
+compatibility need their explicit coercibility/iterator/source-error protocols.
 Mutable source reads snapshot their semantic value before later operand effects;
 this preserves referenced object identity while preventing a later binding write
 from replacing an earlier operand. Immutable expression compilation keeps its

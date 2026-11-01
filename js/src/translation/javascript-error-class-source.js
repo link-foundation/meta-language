@@ -194,6 +194,22 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
  if(statement.$==='sourceIfStatement'){const condition=lowerJavaScriptErrorExpression(statement.condition,rest.context,depth+1),yes=lowerJavaScriptSourceStatements(statement.yes,0,condition.context,rest.source,depth+1),no=lowerJavaScriptSourceStatements(statement.no,0,yes.context,rest.source,depth+1);return {$:'errorSourceExpression',source:{$:'sourceIf',condition:condition.source,yes:yes.source,no:no.source},context:no.context};}
  const local=statement.$==='sourceConstStatement'||statement.$==='sourceMutableStatement',value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1),identity=local?statement.identity:value.context.next,next=local?value.context:{...value.context,next:value.context.next+1};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,identity,value.source,rest.source,statement.$==='sourceMutableStatement'),context:next};
 }
+/** Shared ordered initialization for ordinary functions, methods and arrows.
+ * @param {JavaScriptErrorParameter[]} parameters @param {JavaScriptErrorSourceContext} first
+ * @param {JavaScriptCallSource} continuation @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptSourceParameters(parameters,first,continuation){
+ let context=first,source=continuation;
+  for(let at=parameters.length-1;at>=0;at-=1){const parameter=parameters[at];if(parameter===undefined)continue;
+   if(parameter.$==='errorObjectParameter'){
+    for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){const field=parameter.fields[fieldAt];if(field===undefined)continue;const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},constructJavaScriptErrorConstant({$:'text',units:field.key}),context);
+     if(field.hasDefault){const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};source=constructJavaScriptErrorLocalBinding(context,identity,raw,constructJavaScriptErrorLocalBinding(context,field.identity,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:saved,right:constructJavaScriptErrorConstant({$:'undefined'})},yes:value.source,no:saved},source,true),false);}
+     else source=constructJavaScriptErrorLocalBinding(context,field.identity,raw,source,true);
+    }
+    if(parameter.hasDefault){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
+   }else if(parameter.$==='errorDefaultParameter'){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
+  }
+ return {$:'errorSourceExpression',source,context};
+}
 /** @param {JavaScriptErrorModulePlan} plan @param {JavaScriptErrorModuleRegistry} registry @returns {JavaScriptErrorModuleCompilation} */
 export function compileJavaScriptErrorModulePlan(plan,registry){
  return compileJavaScriptErrorModulePlanWithBindings(plan,registry,[]);
@@ -238,15 +254,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
    if(definition.$==='errorStatementFunctionPlan'||definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'){const body=lowerJavaScriptSourceStatements(definition.statements,0,context,constructJavaScriptErrorConstant({$:'undefined'}),0);context=body.context;source=body.source;}
    else{const body=lowerJavaScriptErrorExpression(definition.body,context,0);context=body.context;source=definition.abrupt?{$:'sourceThrow',value:body.source}:body.source;}
   }
-  for(let at=definition.parameters.length-1;at>=0;at-=1){const parameter=definition.parameters[at];if(parameter===undefined)continue;
-   if(parameter.$==='errorObjectParameter'){
-    for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){const field=parameter.fields[fieldAt];if(field===undefined)continue;const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},constructJavaScriptErrorConstant({$:'text',units:field.key}),context);
-     if(field.hasDefault){const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};source=constructJavaScriptErrorLocalBinding(context,identity,raw,constructJavaScriptErrorLocalBinding(context,field.identity,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:saved,right:constructJavaScriptErrorConstant({$:'undefined'})},yes:value.source,no:saved},source,true),false);}
-     else source=constructJavaScriptErrorLocalBinding(context,field.identity,raw,source,true);
-    }
-    if(parameter.hasDefault){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
-   }else if(parameter.$==='errorDefaultParameter'){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
-  }
+  const initialized=lowerJavaScriptSourceParameters(definition.parameters,context,source);context=initialized.context;source=initialized.source;
   if(context.error!=='')return {$:'errorModuleCompilation',program:empty,error:context.error};
   const code=context.mutableBindings?compileJavaScriptMutableCallSourceWithCaptures(source,definition.parameters.map(parameter=>parameter.identity),bindings.map(binding=>binding.identity)):compileJavaScriptCallSourceWithCaptures(source,definition.parameters.map(parameter=>parameter.identity),bindings.map(binding=>binding.identity));if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
   functions.push({$:'callFunction',identity:owner.identity,realm:owner.realm,receiverMode:definition.$==='errorConstructorPlan'?'derived Error':definition.$==='errorOrdinaryConstructorPlan'?'ordinary class':'strict',lexicalReceiver:{$:'undefined'},parameters:definition.parameters.length,registers:code.registers,captures:bindings.map(binding=>binding.value),instructions:code.instructions});
@@ -258,13 +266,15 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   if(owner===undefined||sourceOwner===undefined||sourceOwner.$==='errorConstructorPlan'||!Number.isSafeInteger(definition.ordinal)||definition.ordinal<0||definition.ordinal>=4096||Object.is(definition.ordinal,-0)||templates.some(row=>row.owner===owner.identity&&row.ordinal===definition.ordinal))return {$:'errorModuleCompilation',program:empty,error:'arrow templates retain unique actual source owners and lexical sites; derived-this cells are separate'};
   const realm=registry.operations.find(row=>row.realm===owner.realm);
   if(realm===undefined||realm.functionPrototype===undefined)return {$:'errorModuleCompilation',program:empty,error:'arrow source needs its actual realm Function prototype'};
-  if(definition.parameters.some(parameter=>parameter.$!=='errorRequiredParameter')||definition.length!==definition.parameters.length)return {$:'errorModuleCompilation',program:empty,error:'arrow parameter defaults, rest and binding patterns need their complete source lowering'};
+  const firstDefault=definition.parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||parameter.$==='errorObjectParameter'&&parameter.hasDefault),length=firstDefault<0?definition.parameters.length:firstDefault;
+  if(definition.length!==length)return {$:'errorModuleCompilation',program:empty,error:'arrow Function length retains its actual parameter initializer boundary'};
   const identities=bindings.map(binding=>binding.identity).concat(definition.captures),parameters=definition.parameters.map(parameter=>parameter.identity);
   if(identities.length>4096||identities.some((identity,index)=>identities.indexOf(identity)!==index||parameters.includes(identity)))return {$:'errorModuleCompilation',program:empty,error:'arrow parameters and captures retain disjoint actual lexical bindings'};
   const context={$:'errorSourceContext',registry,realm,capabilities,globalBindings:bindings.map(binding=>binding.identity),next:plan.nextBinding,visits:0,error:'',mutableBindings:true};
   const lowered=lowerJavaScriptSourceStatements(definition.statements,0,context,constructJavaScriptErrorConstant({$:'undefined'}),0);
   if(lowered.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:lowered.context.error};
-  const code=compileJavaScriptMutableCallSourceWithCaptures(lowered.source,parameters,identities);if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
+  const initialized=lowerJavaScriptSourceParameters(definition.parameters,lowered.context,lowered.source);if(initialized.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:initialized.context.error};
+  const code=compileJavaScriptMutableCallSourceWithCaptures(initialized.source,parameters,identities);if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
   templates.push({$:'callTemplate',owner:owner.identity,ordinal:definition.ordinal,realm:owner.realm,parameters:parameters.length,registers:code.registers,captureCount:identities.length,instructions:code.instructions,prototype:realm.functionPrototype,name:{$:'text',units:Array.from({length:definition.name.length},(_,index)=>definition.name.charCodeAt(index))},length:definition.length});
  }
  const orderedTemplates=templates.toSorted((left,right)=>left.owner<right.owner?-1:left.owner>right.owner?1:left.ordinal-right.ordinal);
