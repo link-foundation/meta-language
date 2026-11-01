@@ -12,6 +12,10 @@ Draft colon-form literal prototype installation with decoded-key recognition,
 duplicate-setter rejection, null/Object prototype handling and primitive no-op
 semantics; computed/shorthand keys retain own data semantics.
 
+Draft fixed object-literal methods and accessor definitions with genuine runtime
+callable allocation, strict receiver binding, captured values, name/length and
+ordinary getter/setter descriptor merging. Source and native execution deferred.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

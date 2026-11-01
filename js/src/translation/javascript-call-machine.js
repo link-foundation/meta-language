@@ -1,3 +1,4 @@
+import {createJavaScriptPropertyDescriptor} from './javascript-property-descriptors.js';
 import {beginJavaScriptArgumentRest,stepJavaScriptArgumentRest,resumeJavaScriptArgumentRestAllocation,readJavaScriptArgumentRestStateError} from './javascript-argument-rest.js';
 import {findJavaScriptIteratorRegion,readJavaScriptIteratorRegionsError,insertJavaScriptIteratorRegion,updateJavaScriptIteratorRegion,removeJavaScriptIteratorRegion,testJavaScriptIteratorRegionSlot} from './javascript-iterator-regions.js';
 import {beginJavaScriptSynchronousIterator,beginJavaScriptSynchronousIteratorStep,beginJavaScriptSynchronousIteratorClose,stepJavaScriptIteratorProtocol,resumeJavaScriptIteratorProtocolCall,resumeJavaScriptIteratorPrimitiveGet,provideJavaScriptIteratorPrimitivePrototype,readJavaScriptIteratorProtocolStateError} from './javascript-iterator-protocol.js';
@@ -185,6 +186,7 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'arraySpread':if(instruction.realm!==fn.realm)return 'Array spread retains its actual active source realm';break;
         case 'objectSpread':if(!program.realms.includes(instruction.realm))return 'object spread retains its actual intrinsic realm';break;
         case 'ordinaryDataProperty':if(!program.realms.includes(instruction.realm))return 'a data property definition retains its actual intrinsic realm';break;
+        case 'literalAccessor':if(!program.realms.includes(instruction.realm)||!['get','set'].includes(instruction.kind))return 'literal accessors retain actual getter/setter kind and realm';break;
         case 'constructErrorValue':{if(!program.realms.includes(instruction.realm))return 'Error value construction retains its actual intrinsic realm';const error=readJavaScriptErrorConstructionKindError(instruction.errorClass,instruction.bindReceiver,fn.receiverMode);if(error!=='')return error;break;}
         case 'readDerivedReceiver':if(!testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived receiver reads retain their actual constructor source owner';break;
         case 'invokeErrorIntrinsic':if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'host Error intrinsic calls require an externally registered intrinsic owner';break;
@@ -348,7 +350,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
     for(const value of frame.arguments)if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'call arguments belong to the latest global context';
     const closure=heap.objects[findJavaScriptOrdinaryObject(heap.objects,frame.identity)];
     if(closure!==undefined&&closure.$==='closureObject'){
-      if(!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},closure.lexicalReceiver))return 'an arrow frame retains its actual lexical receiver';
+      if(fn.receiverMode==='lexical'&&!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},closure.lexicalReceiver))return 'an arrow frame retains its actual lexical receiver';
       for(let index=0;index<closure.captures.length;index++)if(!testJavaScriptSemanticSameValue(frame.registers[fn.parameters+1+index]??{$:'undefined'},closure.captures[index]??{$:'undefined'}))return 'an arrow frame retains its actual immutable captured values';
     }
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const receiver=frame.registers[0]??{$:'undefined'},object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;if(receiver.$!=='object'||receiver.callable||object?.$!=='ordinaryObject')return 'an active base constructor retains its actual allocated ordinary receiver';}
@@ -975,6 +977,13 @@ export function stepJavaScriptCallMachine(program,machine){
       return acceptJavaScriptCallArraySpread(program,current,instruction.destination,instruction.realm,beginJavaScriptArraySpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},index.value,registers[instruction.iteratorKey]??{$:'undefined'}));
     }
     case 'objectSpread':return acceptJavaScriptCallObjectSpread(program,current,instruction.destination,instruction.realm,beginJavaScriptObjectSpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},(instruction.excluded??[]).map(index=>registers[index]??{$:'undefined'})));
+    case 'literalAccessor':{
+      const descriptor=createJavaScriptPropertyDescriptor('accessor',true,true),value=registers[instruction.value]??{$:'undefined'};
+      // An absent opposite field preserves an existing accessor's counterpart;
+      // conversion from a data property supplies undefined through the kernel.
+      if(instruction.kind==='get'){descriptor.getter=value;descriptor.setterPresent=false;}else{descriptor.setter=value;descriptor.getterPresent=false;}
+      return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinition(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},descriptor));
+    }
     case 'literalPrototype':{
       const object=registers[instruction.object]??{$:'undefined'},value=registers[instruction.value]??{$:'undefined'};
       if(object.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'literal prototype installation requires its actual allocated Object'};

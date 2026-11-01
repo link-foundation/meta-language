@@ -69,7 +69,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  const classBinding=binding=>binding&&classes.find(row=>{const owner=bindings[row.binding];return selected.has(row.binding)&&(row.binding===binding.identity||owner&&owner.declaration.start===binding.declaration.start&&owner.declaration.end===binding.declaration.end);});
  let activeClass=null,activeFunction=null,initializingParameters=null,initializingParameterOwners=null,controlTargets=[];
  const arrowNodes=[...new Map(program.sourceMappings.filter(row=>row.term==='arrow_function').map(row=>[row.start+':'+row.end,row])).values()].sort((a,b)=>a.start-b.start||b.end-a.end),templates=[];
- if(arrowNodes.length>4096)fail('source lexical templates exceed their explicit site budget');
+ const methodNodes=[...new Map(program.sourceMappings.filter(row=>row.term==='method_definition').map(row=>[row.start+':'+row.end,row])).values()].sort((a,b)=>a.start-b.start||b.end-a.end);
+ if(arrowNodes.length+methodNodes.length>4096)fail('source lexical templates exceed their explicit site budget');
  function inferArrowName(value,name){if(value.$==='errorClosure'){const template=templates.find(row=>row.owner===value.owner&&row.ordinal===value.ordinal);if(template&&template.name==='')template.name=name;}return value;}
  let writeCoordinates=null,writeRanges=[],writeComparisonWork=0;
  function capturedBindingWrites(){
@@ -96,6 +97,24 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   if(!['parameter','const','let'].includes(binding.kind)||binding.declaration.end>node.start)fail('arrow capture requires its actual already initialized lexical source binding; later bindings need shared cells');
   const declaration=binding.kind==='parameter'?null:containing(binding,['variable_declarator']);if(declaration&&declaration.end>node.start)fail('capturing a binding during its initializer requires its shared lexical cell');
   const writes=capturedBindingWrites();for(const occurrence of binding.references)if(writes.has(occurrence.start+':'+occurrence.end)||writeRanges.some(([start,end])=>{if(++writeComparisonWork>1000000)fail('capture write ranges exceed their bounded comparison work');return occurrence.start>=start&&occurrence.end<=end;}))fail('mutable captured bindings require their actual shared lexical cells');
+ }
+ function objectMethod(input,first,keyAt,kind,offset){
+  if(!classProfile||offset!==0||activeFunction===null)fail('object methods require an actual closed source function owner');
+  const node=methodNodes.find(row=>row.start===input[first]?.start),openToken=input[keyAt+1];
+  if(!node||openToken?.value!=='(')fail('object methods retain their actual CST site and complete parameter head');
+  const open=tokens.findIndex(token=>token.start===openToken.start),close=findJavaScriptClassGroupEnd(values,open),body=close+1,last=findJavaScriptClassGroupEnd(values,body);
+  if(open<0||close<open||values[body]!=='{'||last<body||tokens[last].end!==node.end)fail('object methods require a complete synchronous ordinary body; async/generator/super semantics are separate');
+  const captures=[];for(const binding of bindings){if(binding.scope==='scope:0'||binding.declaration.start>=node.start&&binding.declaration.end<=node.end)continue;if(!binding.references.some(row=>row.start>=node.start&&row.end<=node.end))continue;readonlyCapture(binding,node);captures.push(binding.identity);}
+  if(captures.length>4096)fail('method captures exceed their actual immutable value budget');
+  const previous=initializingParameters,previousOwners=initializingParameterOwners,previousTargets=controlTargets;
+  if(previous!==null&&captures.some(identity=>previousOwners?.has(identity)&&!previous.has(identity)))fail('capturing an uninitialized parameter requires its shared lexical cell');
+  initializingParameters=null;initializingParameterOwners=null;controlTargets=[];let parameters,statements_;
+  try{parameters=readSourceParameters({open,close});statements_=statements(body+1,last);}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;controlTargets=previousTargets;}
+  if(kind==='get'&&parameters.length!==0||kind==='set'&&(parameters.length!==1||parameters[0].$==='errorRestParameter'))fail('literal accessors retain their required zero/one non-rest formal parameters');
+  const key=input[keyAt],keyUnits=key.stringUnits??units(key.kind==='number'?key.suffix==='n'?String(BigInt(key.value)):String(Number(key.value)):key.value),name=keyUnits.map(unit=>String.fromCharCode(unit)).join(''),firstDefault=parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||parameter.$==='errorRestParameter'||(parameter.$==='errorObjectParameter'||parameter.$==='errorArrayParameter')&&parameter.hasDefault),ordinal=arrowNodes.length+methodNodes.indexOf(node),owner=activeFunction;
+  templates.push({$:'errorArrowTemplatePlan',owner,ordinal,name:(kind===''?'':kind+' ')+name,length:firstDefault<0?parameters.length:firstDefault,parameters,captures,statements:statements_,receiverMode:'strict'});
+  let end=keyAt+1;while(end<input.length&&input[end].start<node.end)end++;if(end<=keyAt+1||input[end-1]?.end!==node.end)fail('literal methods retain their complete token interval');
+  return {end,key:keyUnits,value:{$:'errorClosure',owner,ordinal,captures,receiverMode:'strict'}};
  }
  function arrow(input,first,offset){
   if(!classProfile||offset!==0||activeFunction===null)return null;
@@ -162,12 +181,16 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       }
       properties.push({$:'errorComputedObjectProperty',key,value:field});
      }else{
-      const key=peek();if(!key||!['identifier','string','number'].includes(key.kind))fail('source object fields require their actual fixed or computed data key');at++;
+      const start=at,key=peek();if(!key||!['identifier','string','number'].includes(key.kind))fail('source object fields require their actual fixed or computed data key');
+      const accessor=['get','set'].includes(key.value)&&['identifier','string','number'].includes(input[at+1]?.kind)&&input[at+2]?.value==='(',method=input[at+1]?.value==='(';
+      if(accessor||method){const result=objectMethod(input,start,accessor?start+1:start,accessor?key.value:'',offset);at=result.end;properties.push(accessor?{$:'errorObjectAccessor',key:result.key,value:result.value,kind:key.value}:{$:'errorObjectProperty',key:result.key,value:result.value});}
+      else{at++;
       const pair=take(':');if(!pair&&key.kind!=='identifier')fail('only actual identifier bindings admit object shorthand');
       const name=key.kind==='number'?key.suffix==='n'?String(BigInt(key.value)):String(Number(key.value)):key.value;if(key.kind==='number'&&key.suffix!=='n'&&!Number.isFinite(Number(key.value)))fail('source numeric property names require their actual finite literal Number');
       const keyUnits=key.stringUnits??units(name),field=pair?parse(1):variable(key),prototype=pair&&keyUnits.length===9&&keyUnits.every((unit,index)=>unit===[95,95,112,114,111,116,111,95,95][index]);
       if(prototype){if(!classProfile)fail('literal prototype installation requires its closed source operation');if(prototypeSetter)fail('duplicate literal prototype setters are an early SyntaxError');prototypeSetter=true;properties.push({$:'errorLiteralPrototype',value:field});}
       else{if(pair)inferArrowName(field,keyUnits.map(unit=>String.fromCharCode(unit)).join(''));properties.push({$:'errorObjectProperty',key:keyUnits,value:field});}
+      }
      }
      if(take('}'))break;if(!take(','))fail('source object fields need complete separators');if(take('}'))break;
     }

@@ -712,3 +712,25 @@ cover inherited reads, null prototype, computed own data coexistence, quoted/
 escaped key decoding and source-order effects. One deferred compiler control
 checks allocation/data/prototype/spread ordering and register provenance.
 Nothing executed; generated codecs/native implementations remain deferred.
+
+### Fixed object-literal methods and accessors draft
+
+Runtime templates now optionally declare strict receiver binding; omitted mode
+preserves existing lexical arrows. Strict method creation stores no outer this
+capture, method invocation uses its actual receiver, and frame validation checks
+lexical receiver equality only for lexical functions. Source capture uses actual
+method CST intervals, shared formal initialization, immutable capture proofs,
+fixed name/length metadata and per-evaluation external callable allocation.
+Getter/setter descriptor instructions preserve an existing opposite accessor
+and ordinary data/accessor replacement behavior. Fixed methods named get/set/
+__proto__ remain ordinary methods. All behavior stays in JavaScript source for
+later automatic native translation.
+
+Eight original sources cover shared methods on different receivers, capture
+values, accessors and data replacement, name/length/identity, detached strict
+calls, arrows created inside methods, get/set spellings and __proto__ methods.
+Two authored controls cover template mode compatibility and ordered getter/
+setter source instructions. No execution/generation/compilation occurred.
+Computed method naming (including Symbol description authority), super/home
+objects, async/generators and mutable lexical capture still need their separate
+source extensions; this batch does not claim those surfaces are covered.

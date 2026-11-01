@@ -177,6 +177,7 @@ const consumers=[
  'js/tests/translation-javascript-argument-rest.test.js',
  'js/tests/translation-javascript-iterable-collections.test.js',
  'js/tests/translation-javascript-literal-prototypes.test.js',
+ 'js/tests/translation-javascript-object-methods.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

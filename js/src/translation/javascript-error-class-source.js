@@ -4,7 +4,7 @@
 import {compileJavaScriptCallSourceWithCaptures,compileJavaScriptMutableCallSourceWithCaptures} from './javascript-call-source.js';
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 /** @typedef {{$:'errorConstant',value:JavaScriptSemanticValue} |
- * {$:'errorClosure',owner:number,ordinal:number,captures:number[]} |
+ * {$:'errorClosure',owner:number,ordinal:number,captures:number[],receiverMode?:string} |
  * {$:'errorBinding',identity:number} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
  * {$:'errorConditional',condition:JavaScriptErrorExpression,yes:JavaScriptErrorExpression,no:JavaScriptErrorExpression} |
  * {$:'errorGet',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
@@ -31,7 +31,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorBindingSet',identity:number,value:JavaScriptErrorExpression} |
  * {$:'errorSpecialNumber',form:string} |
  * {$:'errorStrictEqual',left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,negate:boolean}} JavaScriptErrorExpression */
-/** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorLiteralPrototype',value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
+/** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorObjectAccessor',key:number[],value:JavaScriptErrorExpression,kind:string} | {$:'errorLiteralPrototype',value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
 /** @typedef {{$:'errorArrayValue',value:JavaScriptErrorExpression} | {$:'errorArraySpread',value:JavaScriptErrorExpression} | {$:'errorArrayHole'}} JavaScriptErrorArrayPart */
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
@@ -48,7 +48,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorMethodFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]} |
  * {$:'errorMutableStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]} |
  * {$:'errorStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]}} JavaScriptErrorFunctionPlan */
-/** @typedef {{$:'errorArrowTemplatePlan',owner:number,ordinal:number,name:string,length:number,parameters:JavaScriptErrorParameter[],captures:number[],statements:JavaScriptSourceStatement[]}} JavaScriptErrorArrowTemplatePlan */
+/** @typedef {{$:'errorArrowTemplatePlan',owner:number,ordinal:number,name:string,length:number,parameters:JavaScriptErrorParameter[],captures:number[],statements:JavaScriptSourceStatement[],receiverMode?:string}} JavaScriptErrorArrowTemplatePlan */
 /** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number,templates?:JavaScriptErrorArrowTemplatePlan[]}} JavaScriptErrorModulePlan */
 /** @typedef {{$:'errorConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue,baseConstructor:JavaScriptSemanticValue,baseRealm:bigint} |
  * {$:'ordinaryConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue} |
@@ -101,7 +101,8 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
    if(owner===undefined||owner.realm!==next.realm.realm)return refuseJavaScriptErrorSource(next,'arrow creation retains its actual source function owner and realm');
    const identities=(next.globalBindings??[]).concat(expression.captures);
    if(identities.length>4096||identities.some((identity,index)=>identities.indexOf(identity)!==index))return refuseJavaScriptErrorSource(next,'arrow captures require distinct actual lexical coordinates within their budget');
-   return {$:'errorSourceExpression',source:{$:'sourceClosure',owner:owner.identity,ordinal:expression.ordinal,captures:identities.map(identity=>({$:'sourceBinding',identity})),receiver:{$:'sourceReceiver'}},context:next};
+   if(expression.receiverMode!==undefined&&expression.receiverMode!=='strict'&&expression.receiverMode!=='lexical')return refuseJavaScriptErrorSource(next,'runtime function creation retains its actual strict or lexical receiver policy');
+   return {$:'errorSourceExpression',source:{$:'sourceClosure',owner:owner.identity,ordinal:expression.ordinal,captures:identities.map(identity=>({$:'sourceBinding',identity})),receiver:expression.receiverMode==='strict'?constant({$:'undefined'}):{$:'sourceReceiver'}},context:next};
   }
   case 'errorBinding':case 'errorModuleBinding':return {$:'errorSourceExpression',source:{$:'sourceBinding',identity:expression.identity},context:next};
   case 'errorThis':return {$:'errorSourceExpression',source:{$:'sourceDerivedReceiver'},context:next};
@@ -175,7 +176,7 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
     if(property.$==='errorLiteralPrototype'){const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push({$:'sourceLiteralPrototype',value:value.source});continue;}
     if(property.$==='errorObjectSpread'){const input=lowerJavaScriptErrorExpression(property.input,current,depth+1);current=input.context;properties.push({$:'sourceObjectSpread',input:input.source});continue;}
     let key=constant({$:'undefined'});if(property.$==='errorComputedObjectProperty'){const lowered=lowerJavaScriptErrorExpression(property.key,current,depth+1);current=lowered.context;key=lowered.source;}else key=constant({$:'text',units:property.key});
-    const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push({$:'sourceObjectProperty',key,value:value.source});
+    const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push(property.$==='errorObjectAccessor'?{$:'sourceObjectAccessor',key,value:value.source,kind:property.kind}:{$:'sourceObjectProperty',key,value:value.source});
    }
    return {$:'errorSourceExpression',source:{$:'sourceObject',prototype:constant(next.realm.objectPrototype),properties,realm:next.realm.realm},context:current};
   }
@@ -375,7 +376,8 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   if(lowered.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:lowered.context.error};
   const initialized=lowerJavaScriptSourceParameters(definition.parameters,lowered.context,lowered.source);if(initialized.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:initialized.context.error};
   const code=compileJavaScriptMutableCallSourceWithCaptures(initialized.source,parameters,identities);if(code.error!=='')return {$:'errorModuleCompilation',program:empty,error:code.error};
-  templates.push({$:'callTemplate',owner:owner.identity,ordinal:definition.ordinal,realm:owner.realm,parameters:parameters.length,registers:code.registers,captureCount:identities.length,instructions:code.instructions,prototype:realm.functionPrototype,name:{$:'text',units:Array.from({length:definition.name.length},(_,index)=>definition.name.charCodeAt(index))},length:definition.length});
+  if(definition.receiverMode!==undefined&&definition.receiverMode!=='strict'&&definition.receiverMode!=='lexical')return {$:'errorModuleCompilation',program:empty,error:'runtime source functions require explicit strict method or lexical arrow receiver mode'};
+  templates.push({$:'callTemplate',owner:owner.identity,ordinal:definition.ordinal,realm:owner.realm,parameters:parameters.length,registers:code.registers,captureCount:identities.length,instructions:code.instructions,prototype:realm.functionPrototype,name:{$:'text',units:Array.from({length:definition.name.length},(_,index)=>definition.name.charCodeAt(index))},length:definition.length,...(definition.receiverMode!==undefined?{receiverMode:definition.receiverMode}:{})});
  }
  const orderedTemplates=templates.toSorted((left,right)=>left.owner<right.owner?-1:left.owner>right.owner?1:left.ordinal-right.ordinal);
  for(const intrinsic of registry.intrinsics){if(identities.includes(intrinsic.identity)||!registry.realms.includes(intrinsic.realm))return {$:'errorModuleCompilation',program:empty,error:'external Error callbacks require distinct actual callable/realm identities'};identities.push(intrinsic.identity);functions.push({$:'callFunction',identity:intrinsic.identity,realm:intrinsic.realm,receiverMode:'Error intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'invokeErrorIntrinsic',destination:1},{$:'return',source:1}]});}

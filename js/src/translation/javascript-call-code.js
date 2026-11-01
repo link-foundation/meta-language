@@ -33,6 +33,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'primitive',destination:number,operation:string,arguments:number[]} |
  * {$:'ordinaryAllocate',destination:number,prototype:number} |
  * {$:'literalPrototype',destination:number,object:number,value:number} |
+ * {$:'literalAccessor',destination:number,object:number,key:number,value:number,kind:string,realm:bigint} |
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
  * {$:'arraySpread',destination:number,target:number,input:number,index:number,iteratorKey:number,realm:bigint} |
@@ -52,7 +53,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  */
 /** Code-only arrow templates have no heap identity. Their owner is the actual
  * registered source function; ordinals distinguish its nested lexical sites.
- * @typedef {{$:'callTemplate',owner:bigint,ordinal:number,realm:bigint,parameters:number,registers:number,captureCount:number,instructions:JavaScriptCallInstruction[],prototype:JavaScriptSemanticValue,name:JavaScriptSemanticValue,length:number}} JavaScriptCallTemplate
+ * @typedef {{$:'callTemplate',owner:bigint,ordinal:number,realm:bigint,parameters:number,registers:number,captureCount:number,instructions:JavaScriptCallInstruction[],prototype:JavaScriptSemanticValue,name:JavaScriptSemanticValue,length:number,receiverMode?:string}} JavaScriptCallTemplate
  */
 /** Realm identifiers are supplied by the actual intrinsic registry. Membership
  * checks do not prove authority or allocate a substitute realm/Error object.
@@ -88,7 +89,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'collectionIteratorResult':return [instruction.destination,instruction.arrayPrototype,instruction.objectPrototype];
     case 'closureAllocate':return [instruction.destination,instruction.receiver].concat(instruction.captures);
     case 'collectionCopy':return [instruction.destination,instruction.target,instruction.input,instruction.adder,instruction.iteratorKey,instruction.iteratorMethod,instruction.iteratorPrototype,instruction.nextMethod];
-    case 'ordinaryDataProperty':return [instruction.destination,instruction.object,instruction.key,instruction.value];
+    case 'ordinaryDataProperty':case 'literalAccessor':return [instruction.destination,instruction.object,instruction.key,instruction.value];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
     case 'arraySpread':return [instruction.destination,instruction.target,instruction.input,instruction.index,instruction.iteratorKey];
     case 'objectSpread':return [instruction.destination,instruction.target,instruction.input].concat(instruction.excluded??[]);

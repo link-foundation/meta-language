@@ -20,7 +20,7 @@ export function findJavaScriptCallTemplate(program,owner,ordinal){
  * @param {JavaScriptSemanticValue[]} captures @param {JavaScriptSemanticValue} receiver
  * @returns {JavaScriptCallFunction} */
 export function projectJavaScriptCallTemplateFunction(template,identity,captures,receiver){
- return {$:'callFunction',identity,realm:template.realm,receiverMode:'lexical',lexicalReceiver:receiver,parameters:template.parameters,registers:template.registers,captures,instructions:template.instructions};
+ return {$:'callFunction',identity,realm:template.realm,receiverMode:template.receiverMode??'lexical',lexicalReceiver:receiver,parameters:template.parameters,registers:template.registers,captures,instructions:template.instructions};
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @returns {JavaScriptCallFunction|undefined} */
 export function readJavaScriptExecutableCallFunction(program,heap,identity){
@@ -36,6 +36,7 @@ export function readJavaScriptCallTemplateDirectoryError(program,heap){
  const templates=program.templates??[];if(templates.length>4096)return 'call templates exceed their explicit static directory budget';
  let owner=0n,ordinal=-1,instructions=0,captures=0;
  for(const template of templates){
+  if(template.receiverMode!==undefined&&template.receiverMode!=='strict'&&template.receiverMode!=='lexical')return 'runtime templates retain explicit strict method or lexical arrow receiver binding';
   if(template.$!=='callTemplate'||typeof template.owner!=='bigint'||template.owner<=0n||template.owner>18446744073709551615n||!testJavaScriptCallCodeCoordinate(template.ordinal,4096)||template.owner<owner||template.owner===owner&&template.ordinal<=ordinal)return 'call templates retain ordered unique actual source owners and lexical site ordinals';
   owner=template.owner;ordinal=template.ordinal;
   const fn=program.functions[findJavaScriptCallCodeFunction(program,owner)];if(fn===undefined||fn.realm!==template.realm||!program.realms.includes(template.realm))return 'a template retains its actual registered source code owner and realm';

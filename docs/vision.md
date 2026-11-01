@@ -70,6 +70,17 @@ specified by [Map/AddEntriesFromIterable](https://tc39.es/ecma262/multipage/keye
 and [Set](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-set-iterable);
 observable engine diagnostic wording still requires version-qualified policies.
 
+Runtime method templates use explicit strict receiver binding; arrow templates
+default to lexical binding. Both allocate genuine common-heap callable identities
+and retain complete immutable capture vectors. Object-literal methods are
+nonconstructible runtime functions with fixed-key name/length metadata and their
+actual invocation receiver. Their getter/setter declarations use partial
+accessor descriptors through the same property-definition kernel: defining one
+side preserves an existing opposite accessor; replacing data/accessor forms
+uses the ordinary descriptor transition. Fixed methods named `get`, `set` or
+`__proto__` remain methods. Shared lexical cells, computed-name metadata,
+home-object/super, async and generator methods require their explicit extensions.
+
 Runtime arrow closures have genuine callable identities in the common heap,
 ordinary own properties, actual prototypes, lexical receivers and captured
 semantic values. A separate code-only directory names static lexical sites by
