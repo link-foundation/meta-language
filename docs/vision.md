@@ -12336,3 +12336,10 @@ catch; rethrows and handler failures reach their enclosing handlers. Catch
 bindings retain mutable lexical value semantics. Source loop/control exits
 unwind protected handlers using their existing explicit scope depths. Finally
 requires the separate full completion/unwinding protocol.
+
+Object catch bindings reuse the common recursive binding initialization protocol,
+including computed keys, defaults, coercibility and rest exclusions. Initialize
+the caught value after the protected handler has been removed; initialization
+failures therefore reach the enclosing catch. Catch default admission retains
+actual earlier-initialized parameter bindings and refuses later/self TDZ reads
+until their full environment protocol exists.

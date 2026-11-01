@@ -271,10 +271,18 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    const word=values[at++];if(word==='if'){const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source if requires its complete condition');const condition=expression(tokens.slice(open+1,close));at=close+1;const yes=one(),no=values[at]==='else'?(at++,one()):[];return {$:'sourceIfStatement',condition,yes,no};}
    if(word==='try'&&classProfile){
     const bodyOpen=at,bodyClose=findJavaScriptClassGroupEnd(values,bodyOpen);if(values[bodyOpen]!=='{'||bodyClose<0||bodyClose>=last)fail('source try retains its actual complete protected block');const body=statements(bodyOpen+1,bodyClose);at=bodyClose+1;
-    if(values[at]!=='catch')fail('try/finally requires its actual completion and unwinding protocol');const catchStart=tokens[at].start;at++;let identity=nextBinding++;
-    if(values[at]==='('){const open=at,close=findJavaScriptClassGroupEnd(values,open),token=tokens[open+1],owner=declared(token);if(close!==open+2||token?.kind!=='identifier'||!owner||owner.kind!=='parameter')fail('catch binding patterns require their actual initialization protocol');identity=owner.identity;at=close+1;}
+    if(values[at]!=='catch')fail('try/finally requires its actual completion and unwinding protocol');const catchStart=tokens[at].start;at++;let identity=nextBinding++,pattern;
+    if(values[at]==='('){
+     const open=at,close=findJavaScriptClassGroupEnd(values,open),token=tokens[open+1],owner=declared(token);if(close<0)fail('catch retains its complete binding head');
+     if(token?.value==='{'){
+      const end=findJavaScriptClassGroupEnd(values,open+1);if(end+1!==close)fail('catch object bindings retain their actual complete pattern without an outer initializer');
+      const previous=initializingParameters,previousOwners=initializingParameterOwners;initializingParameters=new Set();initializingParameterOwners=new Set(bindings.filter(binding=>binding.kind==='parameter'&&binding.declaration.start>=token.start&&binding.declaration.end<=tokens[end].end).map(binding=>binding.identity));
+      try{pattern=readObjectBinding(open+1,end,'parameter');identity=pattern.identity;}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;}
+     }else{if(close!==open+2||token?.kind!=='identifier'||!owner||owner.kind!=='parameter')fail('catch array bindings require their actual iterator initialization protocol');identity=owner.identity;}
+     at=close+1;
+    }
     const handlerOpen=at,handlerClose=findJavaScriptClassGroupEnd(values,handlerOpen),clause=program.sourceMappings.find(row=>row.term==='catch_clause'&&row.start===catchStart&&row.end===tokens[handlerClose]?.end);
-    if(values[handlerOpen]!=='{'||handlerClose<0||handlerClose>=last||!clause)fail('source catch retains its actual complete lexical clause');const handler=statements(handlerOpen+1,handlerClose);at=handlerClose+1;if(values[at]==='finally')fail('try/finally requires its actual completion and unwinding protocol');return {$:'sourceTryStatement',identity,body,handler};
+    if(values[handlerOpen]!=='{'||handlerClose<0||handlerClose>=last||!clause)fail('source catch retains its actual complete lexical clause');const handler=statements(handlerOpen+1,handlerClose);at=handlerClose+1;if(values[at]==='finally')fail('try/finally requires its actual completion and unwinding protocol');return {$:'sourceTryStatement',identity,body,handler,...(pattern===undefined?{}:{pattern})};
    }
    if((word==='return'||word==='throw')&&tokens[at]&&/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start))){if(word==='throw')fail('throw requires its actual same-line source operand');return {$:'sourceReturnStatement',value:absent()};}
    if((word==='break'||word==='continue')&&classProfile){

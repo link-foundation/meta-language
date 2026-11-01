@@ -63,3 +63,6 @@ prototype lookup, preserving original receivers in source/native replay.
 
 Draft complete source try/catch composition through shared handlers, retaining
 catch identities, mutable values and the boundary before following statements.
+
+Draft recursive catch object bindings through shared coercibility, default and
+rest initialization, preserving failures to the enclosing handler.

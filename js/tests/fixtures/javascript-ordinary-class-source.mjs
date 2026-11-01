@@ -9,6 +9,12 @@ export const javascriptOrdinaryClassDecisions=[
  {operation:'testJavaScriptOrdinaryClassReceiverResult',arguments:['strict','number'],expected:false}
 ];
 export const javascriptOrdinaryClassOriginals=[
+ {name:'catch object binding aliases defaults and rest reuse shared initialization',source:'export function read() { try { throw { other: 5 }; } catch ({ selected: alias = 3, ...rest }) { alias += 1; return alias + rest.other; } }',entries:['read'],entry:'read',arguments:[],expected:9},
+ {name:'catch recursively initializes nested object defaults and rest levels',source:'export function read() { try { throw { nested: { value: 2, extra: 4 }, last: 5 }; } catch ({ nested: { value, ...inside }, ...outside }) { return value + inside.extra + outside.last; } }',entries:['read'],entry:'read',arguments:[],expected:11},
+ {name:'catch computed binding keys use their actual enclosing lexical values',source:'export function read() { const key = "selected"; try { throw { selected: 2, other: 5 }; } catch ({ [key]: selected, ...rest }) { return selected + rest.other; } }',entries:['read'],entry:'read',arguments:[],expected:7},
+ {name:'catch pattern initialization failure reaches the enclosing catch',source:'export function read() { try { try { throw null; } catch ({}) { return 99; } } catch (outer) { return outer.name; } }',entries:['read'],entry:'read',arguments:[],expected:'TypeError'},
+ {name:'catch object rest on a String retains UTF16 own-index values',source:'export function read() { try { throw "😀"; } catch ({ "0": first, ...rest }) { return first.length === 1 && rest[1].length === 1 && rest[0] === undefined; } }',entries:['read'],entry:'read',arguments:[],expected:true},
+
  {name:'actual source catch preserves thrown Object identity through rethrow',source:'export function read() { const original = { value: 7 }; try { try { throw original; } catch (caught) { throw caught; } } catch (outer) { return outer === original && outer.value === 7; } }',entries:['read'],entry:'read',arguments:[],expected:true},
  {name:'actual source optional catch binding executes its own handler',source:'export function read() { try { throw 7; } catch { return 9; } }',entries:['read'],entry:'read',arguments:[],expected:9},
  {name:'actual source catch binding retains mutable lexical value semantics',source:'export function read() { try { throw 7; } catch (caught) { caught += 2; return caught; } }',entries:['read'],entry:'read',arguments:[],expected:9},

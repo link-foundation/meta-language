@@ -500,3 +500,17 @@ bindings, later statements outside protection, handler failure to the outer
 catch, loop break unwinding and a real intrinsic TypeError name. No original or
 portable body executed. Catch binding patterns and finally completion semantics
 remain required further source connections; generated products were untouched.
+
+
+### Recursive catch object binding draft
+
+Catch heads now admit the same fixed/computed/recursive object binding reader
+and initializer as parameters and lexical declarations. The caught value binds
+to the actual synthetic pattern owner; coercibility/default/field/rest work runs
+after the catch handler is removed. Initialization failures reach the enclosing
+catch. Temporary parameter initialization sets enforce the existing later/self
+TDZ refusal while reading pattern defaults. Five originals cover mutable alias
+defaults/rest, nested rest levels, enclosing computed keys, nullish pattern
+failure to an outer catch and UTF16 own String index/rest behavior. No code or
+assertion executed. Catch array bindings and finally/control completion machinery
+remain further drafting work; source/native generation and all gates are deferred.
