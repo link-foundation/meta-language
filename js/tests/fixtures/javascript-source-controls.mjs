@@ -16,8 +16,16 @@ export const javascriptSourceControlCases=[
   expression:attempt(90,oneCase(attempt(91,transfer(10),returned('wrong')),{$:'sourceThrow',value:text('outside')}),binding(90)),expected:{kind:'value',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
  {name:'continue executes the for update before testing its condition again',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 0; for (; value < 3; value += 1) { if (value === 1) continue; } return value; }',
   expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(0),body:{$:'sourceWhile',target:10,condition:{$:'sourceNumberBinary',operator:'lessThan',left:binding(1),right:number(3)},body:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:binding(1),right:number(1)},yes:transfer(10,true),no:number(0)},update:{$:'sourceAssignBinding',identity:1,value:{$:'sourceNumberBinary',operator:'add',left:binding(1),right:number(1)}},after:binding(1)}},expected:{kind:'value',value:{$:'number',value:3}}},
+ {name:'post-test continue selects the trailing condition',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 0; do { value += 1; continue; } while (value < 3); return value; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(0),body:{$:'sourceWhile',target:10,postTest:true,body:{$:'sourceLet',identity:2,value:{$:'sourceAssignBinding',identity:1,value:{$:'sourceNumberBinary',operator:'add',left:binding(1),right:number(1)}},body:transfer(10,true)},condition:{$:'sourceNumberBinary',operator:'lessThan',left:binding(1),right:number(3)},after:binding(1)}},expected:{kind:'value',value:{$:'number',value:3}}},
+ {name:'labelled block break removes only the exited catch handler',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { try { exit: { try { break exit; } catch (error) { return "wrong"; } } throw "outside"; } catch (error) { return error; } }',
+  expression:attempt(90,{$:'sourceControlBlock',target:10,body:attempt(91,transfer(10),returned('wrong')),after:{$:'sourceThrow',value:text('outside')}},binding(90)),expected:{kind:'value',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
+
 ];
 export const javascriptSourceControlRefusals=[
+ {name:'continue cannot select a labelled noniteration block',reason:'break and continue retain an active actual target and handler depth',expression:{$:'sourceControlBlock',target:10,body:transfer(10,true),after:number(0)}},
+ {name:'post-test loops cannot invent an update expression',reason:'a post-test loop retains its actual separate condition without an invented update',expression:{$:'sourceWhile',target:10,postTest:true,condition:number(0),body:number(0),update:number(0),after:number(0)}},
+
  {name:'continue cannot select a switch target',reason:'break and continue retain an active actual target and handler depth',expression:oneCase(transfer(10,true),number(0))},
  {name:'break cannot select an inactive target',reason:'break and continue retain an active actual target and handler depth',expression:transfer(999)},
  {name:'nested scopes cannot reuse one target identity',reason:'control scopes require unique actual source targets within their lexical budget',expression:{$:'sourceWhile',target:10,condition:number(1),body:oneCase(number(0),number(0)),after:number(0)}},

@@ -13,8 +13,9 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceThrow',value:JavaScriptCallSource} |
  * {$:'sourceReturn',value:JavaScriptCallSource} |
  * {$:'sourceAssignBinding',identity:number,value:JavaScriptCallSource} |
- * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource,target?:number,update?:JavaScriptCallSource} |
+ * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource,target?:number,update?:JavaScriptCallSource,postTest?:boolean} |
  * {$:'sourceControlJump',target:number,continuing:boolean} |
+ * {$:'sourceControlBlock',target:number,body:JavaScriptCallSource,after:JavaScriptCallSource} |
  * {$:'sourceSwitch',target:number,value:JavaScriptCallSource,clauses:JavaScriptCallSourceSwitchClause[],after:JavaScriptCallSource} |
  * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
@@ -109,6 +110,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register})};
   }
   case 'sourceWhile':return lowerJavaScriptCallSourceLoop(source,bindings,state,depth);
+  case 'sourceControlBlock':{const scoped=pushJavaScriptCallSourceControlScope(state,source.target,'block'),body=lowerJavaScriptCallSourceExpression(source.body,bindings,scoped,depth+1),finished=finishJavaScriptCallSourceControlScope(body.builder,state,source.target,body.builder.instructions.length,-1);return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);}
   case 'sourceSwitch':return lowerJavaScriptCallSourceSwitch(source,bindings,state,depth);
   case 'sourceControlJump':return lowerJavaScriptCallSourceControlJump(source,state);
   case 'sourceTry':return lowerJavaScriptCallSourceException(source,bindings,state,depth);
@@ -336,7 +338,7 @@ export function lowerJavaScriptCallSourceControlJump(source,builder){
  * @returns {JavaScriptCallSourceBuilder} */
 export function pushJavaScriptCallSourceControlScope(builder,target,kind){
  const scopes=builder.controlScopes??[];
- if(!['loop','switch'].includes(kind)||!testJavaScriptCallCodeCoordinate(target,65536)||scopes.length>=128||scopes.some(scope=>scope.identity===target))return {...builder,error:'control scopes require unique actual source targets within their lexical budget'};
+ if(!['loop','switch','block'].includes(kind)||!testJavaScriptCallCodeCoordinate(target,65536)||scopes.length>=128||scopes.some(scope=>scope.identity===target))return {...builder,error:'control scopes require unique actual source targets within their lexical budget'};
  return {...builder,controlScopes:scopes.concat([{$:'sourceControlScope',identity:target,kind,handlers:builder.handlers}])};
 }
 /** @param {JavaScriptCallSourceBuilder} builder @param {JavaScriptCallSourceBuilder} outer
@@ -356,6 +358,13 @@ export function finishJavaScriptCallSourceControlScope(builder,outer,target,end,
 export function lowerJavaScriptCallSourceLoop(source,bindings,builder,depth){
  if(source.$!=='sourceWhile')return refuseJavaScriptCallSource(builder,'loop lowering requires its actual condition and body');
  const scoped=source.target===undefined?builder:pushJavaScriptCallSourceControlScope(builder,source.target,'loop');
+ if(source.postTest===true){
+  if(source.update!==undefined)return refuseJavaScriptCallSource(scoped,'a post-test loop retains its actual separate condition without an invented update');
+  const start=scoped.instructions.length,body=lowerJavaScriptCallSourceExpression(source.body,bindings,scoped,depth+1),test=body.builder.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,body.builder,depth+1),end=condition.builder.instructions.length+1;
+  let finished=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:start,no:end});
+  if(source.target!==undefined)finished=finishJavaScriptCallSourceControlScope(finished,builder,source.target,end,test);
+  return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);
+ }
  const start=scoped.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,scoped,depth+1),branch=condition.builder.instructions.length;
  const test=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:branch+1,no:0}),body=lowerJavaScriptCallSourceExpression(source.body,bindings,test,depth+1),update=body.builder.instructions.length;
  const updated=source.update===undefined?body.builder:lowerJavaScriptCallSourceExpression(source.update,bindings,body.builder,depth+1).builder;

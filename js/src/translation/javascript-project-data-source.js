@@ -204,23 +204,46 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  }
  function statements(first,last){if(++statementDepth>128)fail('project data statements exceed their explicit source depth');const result=[];let at=first;
   function one(){if(values[at]==='{'){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>last)fail('source blocks require complete groups');const body=statements(at+1,end);at=end+1;return body;}return [statement()];}
-  function statement(){const word=values[at++];if(word==='if'){const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source if requires its complete condition');const condition=expression(tokens.slice(open+1,close));at=close+1;const yes=one(),no=values[at]==='else'?(at++,one()):[];return {$:'sourceIfStatement',condition,yes,no};}
+  function statement(){
+   const labels=[];
+   while(classProfile&&tokens[at]?.kind==='identifier'&&values[at+1]===':'){
+    const label=tokens[at],node=program.sourceMappings.find(row=>row.term==='labeled_statement'&&row.start===label.start),owned=node&&sourceField(node,'label'),body=node&&sourceField(node,'body');
+    if(!node||!owned||owned.start!==label.start||owned.end!==label.end||!body||body.start!==tokens[at+2]?.start)fail('labels retain their actual CST label and body fields');
+    if(labels.length>=128||labels.includes(label.value)||controlTargets.some(row=>row.labels?.includes(label.value)))fail('active source labels retain distinct bounded lexical owners');
+    labels.push(label.value);at+=2;
+   }
+   if(labels.length&&!['while','do','for','switch'].includes(values[at])){
+    const target=nextBinding++;controlTargets.push({identity:target,kind:'block',labels});let body;
+    try{body=one();}finally{controlTargets.pop();}return {$:'sourceControlBlockStatement',target,body};
+   }
+   const word=values[at++];if(word==='if'){const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source if requires its complete condition');const condition=expression(tokens.slice(open+1,close));at=close+1;const yes=one(),no=values[at]==='else'?(at++,one()):[];return {$:'sourceIfStatement',condition,yes,no};}
    if((word==='return'||word==='throw')&&tokens[at]&&/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start))){if(word==='throw')fail('throw requires its actual same-line source operand');return {$:'sourceReturnStatement',value:absent()};}
    if((word==='break'||word==='continue')&&classProfile){
-    const continuing=word==='continue',target=[...controlTargets].reverse().find(row=>!continuing||row.kind==='loop');if(!target)fail('source break/continue requires its actual enclosing control target');
-    if(values[at]===';')at++;else if(at<last&&values[at]!=='}'&&!/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start)))fail('labelled control transfers require their actual label resolution');
+    const continuing=word==='continue',sameLine=tokens[at]&&!/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start)),label=sameLine&&tokens[at]?.kind==='identifier'?tokens[at++].value:null;
+    const target=[...controlTargets].reverse().find(row=>label!==null?row.labels?.includes(label):continuing?row.kind==='loop':row.kind==='loop'||row.kind==='switch');
+    if(!target||continuing&&target.kind!=='loop')fail('source break/continue requires its actual enclosing labelled or iteration target');
+    if(values[at]===';')at++;else if(at<last&&values[at]!=='}'&&!/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start)))fail('control transfers retain their complete actual statement boundary');
     return {$:'sourceControlJumpStatement',target:target.identity,continuing};
+   }
+   if(word==='do'&&classProfile){
+    const start=tokens[at-1].start,node=program.sourceMappings.find(row=>row.term==='do_statement'&&row.start===start),target=nextBinding++;let body;
+    if(!node)fail('post-test loops retain their complete actual CST statement');
+    controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
+    if(values[at++]!=='while')fail('post-test loops retain their actual trailing while condition');const open=at,close=findJavaScriptClassGroupEnd(values,open);
+    if(values[open]!=='('||close<0||tokens[close].end>node.end)fail('post-test loop conditions retain their complete actual group');const condition=expression(tokens.slice(open+1,close));at=close+1;if(values[at]===';')at++;
+    if(tokens[at]?.start<node.end)fail('post-test loops cannot discard trailing source syntax');
+    return {$:'sourceWhileStatement',target,condition,body,postTest:true};
    }
    if(word==='while'&&classProfile){
     const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source while needs its actual complete condition');const condition=expression(tokens.slice(open+1,close)),target=nextBinding++;at=close+1;let body;
-    controlTargets.push({identity:target,kind:'loop'});try{body=one();}finally{controlTargets.pop();}
+    controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
     return {$:'sourceWhileStatement',target,condition,body};
    }
    if(word==='switch'&&classProfile){
     const start=tokens[at-1].start,open=at,close=findJavaScriptClassGroupEnd(values,open),body=close+1,end=findJavaScriptClassGroupEnd(values,body);
     if(values[open]!=='('||close<0||values[body]!=='{'||end<0||!program.sourceMappings.some(row=>row.term==='switch_statement'&&row.start===start&&row.end===tokens[end].end))fail('source switch needs its actual complete CST condition and case block');
     const value=expression(tokens.slice(open+1,close)),target=nextBinding++,clauses=[];let cursor=body+1,defaults=0;
-    controlTargets.push({identity:target,kind:'switch'});
+    controlTargets.push({identity:target,kind:'switch',labels});
     try{while(cursor<end){
      const term=values[cursor]==='case'?'switch_case':values[cursor]==='default'?'switch_default':'';const node=program.sourceMappings.find(row=>row.term===term&&row.start===tokens[cursor].start);if(!term||!node)fail('switch clauses require actual source CST boundaries');
      let next=cursor;while(next<end&&tokens[next].start<node.end)next++;
@@ -241,7 +264,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     if(values[open]!=='('||parts.length!==3||values[parts[0][0]]!=='let'||values[parts[0][0]+2]!=='=')fail('source class loops require their actual fixed let/condition/update operands');
     const owner=declared(tokens[parts[0][0]+1]);if(!owner||owner.kind!=='let')fail('source loop initialization requires its actual mutable lexical owner');
     const initial=expression(tokens.slice(parts[0][0]+3,parts[0][1])),condition=expression(tokens.slice(...parts[1])),update=expression(tokens.slice(...parts[2])),target=nextBinding++;at=close+1;let body;
-    controlTargets.push({identity:target,kind:'loop'});try{body=one();}finally{controlTargets.pop();}
+    controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
     return {$:'sourceBlockStatement',statements:[{$:'sourceMutableStatement',identity:owner.identity,value:initial},{$:'sourceWhileStatement',target,condition,update,body}]};
    }
    if(word==='{'){at--;return {$:'sourceBlockStatement',statements:one()};}

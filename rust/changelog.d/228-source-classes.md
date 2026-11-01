@@ -47,3 +47,7 @@ Draft computed/numeric object data fields, ordered comma expressions, lazy
 nullish selection and parenthesized method receiver preservation through shared
 JavaScript lowering. Added original-source controls for later native generation;
 execution and parity are not yet established.
+
+Draft post-test loops and CST-owned labelled loop/switch/block transfers through
+the common bounded control-flow compiler; preserve exited catch-handler depth.
+Controls are authored but not executed; native products still require generation.

@@ -914,3 +914,26 @@ executed or generated. Native/formal generation and source-register reconciliati
 remain deferred. Dynamic computed anonymous function names, literal prototype
 setters, spread, methods/accessors, general reference expressions and optional
 chain call boundaries retain their complete implementation obligations.
+
+
+### Post-test and labelled control continuation draft
+
+Shared source lowering now drafts post-test loops, sending continue to the
+trailing condition and break past it. A separate controlled-block source form
+reuses the bounded target/handler transfer kernel without adding VM instructions.
+The CST reader obtains labels from actual label/body field edges, bounds active
+labels, and maps chained iteration labels to one target. Labelled ordinary
+statements and switches accept breaks; continue requires a genuine loop target.
+Unlabelled break ignores ordinary labelled blocks. Source compilation retains
+all target/handler and unresolved-transfer guards.
+
+Twelve original source controls, two raw-source controls and two malformed-source
+IR controls are authored. The original `outer: while (true) { break outer; }`
+input moves from unsupported-front-end coverage to positive behavior coverage
+(expected 7); its input is retained rather than deleted. This updates an obsolete
+refusal because labelled break is defined by ECMAScript 2026 sections 14.9 and
+14.13.4, and the source now drafts its actual target lowering. See
+https://tc39.es/ecma262/2026/multipage/ecmascript-language-statements-and-declarations.html#sec-labelled-statements
+and #sec-do-while-statement. No result is an execution observation. All native
+product generation, original/product comparison and parity execution remain
+deferred, as do finally completion handling and full iterator-close transfers.

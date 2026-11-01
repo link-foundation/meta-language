@@ -102,7 +102,11 @@ break/continue to their actual enclosing constructs; for continues reach their
 update before retesting, while continues reach their condition. Transfers remove
 only catch handlers belonging to exited regions. Targets, pending transfers and
 syntax work have explicit bounds; source compilation cannot publish unresolved
-transfers. Switch-wide lexical TDZ environments and labelled transfers require
+transfers. Post-test loops enter their body before the condition and send continue to that
+trailing test. Actual CST label/body fields bind bounded active label sets to
+iteration, switch or ordinary-statement targets. Chained iteration labels share
+that loop's continue target; labelled blocks accept break only. Unlabelled breaks
+ignore labelled ordinary blocks. Switch-wide lexical TDZ environments still need
 their own binding representations rather than guessed scope or zero values.
 
 
