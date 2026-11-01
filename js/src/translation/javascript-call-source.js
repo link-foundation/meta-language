@@ -9,6 +9,8 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceConstructErrorClass',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceClassConstructorCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceConstructCollection',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
+ * {$:'sourceVariadicCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[],mode:string,receiverAfterArguments:boolean} |
+ * {$:'sourceArgumentSpread',value:JavaScriptCallSource,iteratorKey:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceConstructErrorValue',constructor:JavaScriptCallSource,newTarget:JavaScriptCallSource,prototype:JavaScriptCallSource,message:JavaScriptCallSource,present:JavaScriptCallSource,realm:bigint,errorClass:string,bindReceiver:boolean} |
  * {$:'sourceThrow',value:JavaScriptCallSource} |
  * {$:'sourceReturn',value:JavaScriptCallSource} |
@@ -92,12 +94,14 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   case 'sourceReceiver':return {$:'sourceResult',builder:state,register:0};
   case 'sourceDerivedReceiver':case 'sourceErrorIntrinsic':{const result=allocateJavaScriptCallSourceRegister(state);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,source.$==='sourceDerivedReceiver'?{$:'readDerivedReceiver',destination:result.register}:{$:'invokeErrorIntrinsic',destination:result.register})};}
   case 'sourceConstructErrorClass':case 'sourceConstructCollection':{
+   if(source.arguments.some(argument=>argument.$==='sourceArgumentSpread'))return lowerJavaScriptCallSourceArgumentList({$:'sourceVariadicCall',callee:source.callee,receiver:{$:'sourceConstant',value:{$:'undefined'}},arguments:source.arguments,mode:source.$==='sourceConstructCollection'?'collection':'error class',receiverAfterArguments:false},bindings,state,depth+1);
    if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'derived Error arguments exceed their explicit operand budget');
    let callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1);if(source.$==='sourceConstructCollection'){const saved=allocateJavaScriptCallSourceRegister(callee.builder);callee={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:callee.register})};}let current=callee.builder,arguments_=[];
    for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;if(source.$==='sourceConstructCollection'){const saved=allocateJavaScriptCallSourceRegister(current);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});arguments_.push(saved.register);}else arguments_.push(value.register);}
    const result=allocateJavaScriptCallSourceRegister(current);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:source.$==='sourceConstructCollection'?'constructCollection':'constructErrorClass',destination:result.register,callee:callee.register,arguments:arguments_})};
   }
   case 'sourceClassConstructorCall':{
+   if(source.arguments.some(argument=>argument.$==='sourceArgumentSpread'))return lowerJavaScriptCallSourceArgumentList({$:'sourceVariadicCall',callee:source.callee,receiver:source.receiver,arguments:source.arguments,mode:'ordinary class',receiverAfterArguments:false},bindings,state,depth+1);
    if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'ordinary class arguments exceed their explicit operand budget');
    const selected=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1),callee=allocateJavaScriptCallSourceRegister(selected.builder),heldCallee=appendJavaScriptCallSourceInstruction(callee.builder,{$:'copy',destination:callee.register,source:selected.register}),rawReceiver=lowerJavaScriptCallSourceExpression(source.receiver,bindings,heldCallee,depth+1),receiver=allocateJavaScriptCallSourceRegister(rawReceiver.builder);let current=appendJavaScriptCallSourceInstruction(receiver.builder,{$:'copy',destination:receiver.register,source:rawReceiver.register});const arguments_=[];
    for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1),saved=allocateJavaScriptCallSourceRegister(value.builder);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});arguments_.push(saved.register);}
@@ -295,6 +299,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryGet',destination:result.register,object:object.register,key:key.register,receiver:object.register})};
   }
   case 'sourceCall':case 'sourceSnapshotCall':{
+   if(source.arguments.some(argument=>argument.$==='sourceArgumentSpread'))return lowerJavaScriptCallSourceArgumentList({$:'sourceVariadicCall',callee:source.callee,receiver:source.receiver,arguments:source.arguments,mode:'call',receiverAfterArguments:false},bindings,state,depth+1);
    if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'source call operands exceed their explicit budget');
    let callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1);
    if(source.$==='sourceSnapshotCall'){const saved=allocateJavaScriptCallSourceRegister(callee.builder);callee={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:callee.register})};}
@@ -308,7 +313,32 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const result=allocateJavaScriptCallSourceRegister(current);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'call',destination:result.register,callee:callee.register,receiver:receiver.register,arguments:arguments_})};
   }
+  case 'sourceVariadicCall':return lowerJavaScriptCallSourceArgumentList(source,bindings,state,depth+1);
+  case 'sourceArgumentSpread':return refuseJavaScriptCallSource(state,'argument spread requires its actual surrounding argument List');
  }
+}
+
+/** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceArgumentList(source,bindings,builder,depth){
+ if(source.$!=='sourceVariadicCall'||!['call','collection','error class','ordinary class'].includes(source.mode)||typeof source.receiverAfterArguments!=='boolean'||source.receiverAfterArguments&&source.mode!=='ordinary class')return refuseJavaScriptCallSource(builder,'variadic source retains its actual invocation and receiver allocation policy');
+ if(source.arguments.length>4096)return refuseJavaScriptCallSource(builder,'variadic source exceeds its authored argument expression budget');
+ const selected=lowerJavaScriptCallSourceExpression(source.callee,bindings,builder,depth+1),callee=allocateJavaScriptCallSourceRegister(selected.builder);let current=appendJavaScriptCallSourceInstruction(callee.builder,{$:'copy',destination:callee.register,source:selected.register}),receiverRegister=0;
+ if(!source.receiverAfterArguments){const raw=lowerJavaScriptCallSourceExpression(source.receiver,bindings,current,depth+1),held=allocateJavaScriptCallSourceRegister(raw.builder);current=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:raw.register});receiverRegister=held.register;}
+ const slot=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'argumentListOpen',slot});
+ for(const argument of source.arguments){
+  if(argument.$!=='sourceArgumentSpread'){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=appendJavaScriptCallSourceInstruction(value.builder,{$:'argumentListAppend',slot,value:value.register});continue;}
+  const input=lowerJavaScriptCallSourceExpression(argument.value,bindings,current,depth+1),held=allocateJavaScriptCallSourceRegister(input.builder),saved=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:input.register}),key=lowerJavaScriptCallSourceExpression(argument.iteratorKey,bindings,saved,depth+1),heldKey=allocateJavaScriptCallSourceRegister(key.builder),keyed=appendJavaScriptCallSourceInstruction(heldKey.builder,{$:'copy',destination:heldKey.register,source:key.register}),value=allocateJavaScriptCallSourceRegister(keyed),done=allocateJavaScriptCallSourceRegister(value.builder);
+  let iterator=0;while(iterator<65536&&done.builder.instructions.some(row=>row.$==='iteratorProtocol'&&row.slot===iterator))iterator++;
+  if(iterator>=65536||current.handlers>=1024)return refuseJavaScriptCallSource(current,'argument spread exceeds its actual iterator slot or handler budget');
+  current=appendJavaScriptCallSourceInstruction(done.builder,{$:'iteratorProtocol',destination:value.register,done:done.register,input:held.register,iteratorKey:heldKey.register,slot:iterator,operation:'acquire',realm:argument.realm});
+  const protect=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'pushFinally',target:0});const start=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'iteratorProtocol',destination:value.register,done:done.register,input:0,iteratorKey:0,slot:iterator,operation:'step',realm:argument.realm});
+  const branch=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'branch',condition:done.register,yes:0,no:branch+1});current=appendJavaScriptCallSourceInstruction(current,{$:'argumentListAppend',slot,value:value.register});current=appendJavaScriptCallSourceInstruction(current,{$:'jump',target:start});
+  const leave=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'completeJump',target:0,depth:builder.handlers});const cleanup=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'iteratorProtocol',destination:value.register,done:done.register,input:0,iteratorKey:0,slot:iterator,operation:'close',realm:argument.realm});current=appendJavaScriptCallSourceInstruction(current,{$:'finishFinally'});const end=current.instructions.length;
+  current={...current,instructions:current.instructions.map((row,index)=>index===protect?{$:'pushFinally',target:cleanup}:index===branch?{$:'branch',condition:done.register,yes:leave,no:branch+1}:index===leave?{$:'completeJump',target:end,depth:builder.handlers}:row)};
+ }
+ if(source.receiverAfterArguments){const raw=lowerJavaScriptCallSourceExpression(source.receiver,bindings,current,depth+1),held=allocateJavaScriptCallSourceRegister(raw.builder);current=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:raw.register});receiverRegister=held.register;}
+ const result=allocateJavaScriptCallSourceRegister(current);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'argumentListCall',destination:result.register,slot,callee:callee.register,receiver:receiverRegister,mode:source.mode})};
 }
 
 /** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings

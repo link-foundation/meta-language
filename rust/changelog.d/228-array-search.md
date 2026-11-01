@@ -16,6 +16,10 @@ Draft fixed object-literal methods and accessor definitions with genuine runtime
 callable allocation, strict receiver binding, captured values, name/length and
 ordinary getter/setter descriptor merging. Source and native execution deferred.
 
+Draft iterable Call/constructor argument spread with internal frame argument
+Lists, selected callee/receiver snapshots, actual iterator traversal, abrupt scope
+release and base-class receiver allocation after arguments. Execution deferred.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

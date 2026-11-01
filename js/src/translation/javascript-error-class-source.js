@@ -5,6 +5,7 @@ import {compileJavaScriptCallSourceWithCaptures,compileJavaScriptMutableCallSour
 import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
 /** @typedef {{$:'errorConstant',value:JavaScriptSemanticValue} |
  * {$:'errorClosure',owner:number,ordinal:number,captures:number[],receiverMode?:string} |
+ * {$:'errorArgumentSpread',value:JavaScriptErrorExpression,iteratorKey:JavaScriptErrorExpression} |
  * {$:'errorBinding',identity:number} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
  * {$:'errorConditional',condition:JavaScriptErrorExpression,yes:JavaScriptErrorExpression,no:JavaScriptErrorExpression} |
  * {$:'errorGet',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
@@ -96,6 +97,7 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
  switch(expression.$){
   case 'errorConstant':return {$:'errorSourceExpression',source:constant(expression.value),context:next};
   case 'errorSpecialNumber':return expression.form==='NaN'||expression.form==='Infinity'?{$:'errorSourceExpression',source:constant({$:'number',value:expression.form==='NaN'?NaN:Infinity}),context:next}:refuseJavaScriptErrorSource(next,'a special Number requires its actual unshadowed source global');
+  case 'errorArgumentSpread':{const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1),key=lowerJavaScriptErrorExpression(expression.iteratorKey,value.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceArgumentSpread',value:value.source,iteratorKey:key.source,realm:next.realm.realm},context:key.context};}
   case 'errorClosure':{
    const owner=next.registry.owners.find(row=>row.source===expression.owner);
    if(owner===undefined||owner.realm!==next.realm.realm)return refuseJavaScriptErrorSource(next,'arrow creation retains its actual source function owner and realm');
@@ -111,6 +113,10 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
   case 'errorOrdinaryConstruction':{
    if(!next.mutableBindings)return refuseJavaScriptErrorSource(next,'ordinary class construction requires its explicit source profile');
    const owner=next.registry.owners.find(row=>row.source===expression.identity);if(owner===undefined||owner.$!=='ordinaryConstructorOwner')return refuseJavaScriptErrorSource(next,'ordinary construction requires its actual supplied class and prototype owner');
+   if(expression.arguments.some(argument=>argument.$==='errorArgumentSpread')){
+    let current=next;const arguments_=[];for(const argument of expression.arguments){const lowered=lowerJavaScriptErrorExpression(argument,current,depth+1);current=lowered.context;arguments_.push(lowered.source);}
+    return {$:'errorSourceExpression',source:{$:'sourceVariadicCall',callee:constant({$:'object',identity:owner.identity,callable:true}),receiver:{$:'sourceAllocate',prototype:constant(owner.prototype)},arguments:arguments_,mode:'ordinary class',receiverAfterArguments:true},context:current};
+   }
    let current=next;/** @type {{identity:number,value:JavaScriptCallSource}[]} */ const captures=[];
    for(const argument of expression.arguments){const value=lowerJavaScriptErrorExpression(argument,current,depth+1),identity=value.context.next;current={...value.context,next:identity+1};captures.push({identity,value:value.source});}
    const identity=current.next;current={...current,next:identity+1};const receiver={$:'sourceBinding',identity};

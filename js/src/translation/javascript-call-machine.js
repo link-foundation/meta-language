@@ -1,3 +1,4 @@
+import {findJavaScriptCallArgumentList,readJavaScriptCallArgumentListsError,openJavaScriptCallArgumentList,appendJavaScriptCallArgument,retainJavaScriptCallArgumentLists} from './javascript-call-argument-lists.js';
 import {createJavaScriptPropertyDescriptor} from './javascript-property-descriptors.js';
 import {beginJavaScriptArgumentRest,stepJavaScriptArgumentRest,resumeJavaScriptArgumentRestAllocation,readJavaScriptArgumentRestStateError} from './javascript-argument-rest.js';
 import {findJavaScriptIteratorRegion,readJavaScriptIteratorRegionsError,insertJavaScriptIteratorRegion,updateJavaScriptIteratorRegion,removeJavaScriptIteratorRegion,testJavaScriptIteratorRegionSlot} from './javascript-iterator-regions.js';
@@ -68,7 +69,7 @@ import {testJavaScriptArrayLength} from './javascript-array-objects.js';
  * {$:'waitError',realm:bigint,errorClass:string,reason:string}} JavaScriptCallPending
  */
 /** @typedef {{$:'callFrame',identity:bigint,position:number,registers:JavaScriptSemanticValue[],
- * arguments:JavaScriptSemanticValue[],handlers:JavaScriptCallHandler[],pending:JavaScriptCallPending,iterators?:JavaScriptCallIteratorRegion[]}} JavaScriptCallFrame
+ * arguments:JavaScriptSemanticValue[],handlers:JavaScriptCallHandler[],pending:JavaScriptCallPending,iterators?:JavaScriptCallIteratorRegion[],argumentLists?:JavaScriptCallArgumentList[]}} JavaScriptCallFrame
  */
 /** @typedef {{$:'callMachine',heap:JavaScriptOrdinaryHeap,frames:JavaScriptCallFrame[]}} JavaScriptCallMachine */
 /** @typedef {{$:'machineContinue',machine:JavaScriptCallMachine} |
@@ -194,6 +195,7 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind)||instruction.kind==='String'&&(instruction.iterationKind!=='values'||instruction.input===undefined)||instruction.kind!=='String'&&instruction.input!==undefined)return 'iterator allocation retains its actual standard operation kind and owner';break;
         case 'argumentRest':if(instruction.realm!==fn.realm||!testJavaScriptCallCoordinate(instruction.from,1048577)||instruction.destination!==instruction.from+1||instruction.destination>fn.parameters)return 'argument rest retains its actual formal parameter coordinate and source realm';break;
         case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done||instruction.readValue!==undefined&&(instruction.operation!=='step'||typeof instruction.readValue!=='boolean'))return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
+        case 'argumentListOpen':case 'argumentListAppend':case 'argumentListCall':if(!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.$==='argumentListCall'&&!['call','collection','error class','ordinary class'].includes(instruction.mode))return 'Call argument Lists retain actual source slots and operation kinds';break;
         case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
         case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
@@ -295,7 +297,7 @@ export function readJavaScriptCallMachineError(program,machine){
     const frame=machine.frames[index];if(frame===undefined)return 'call stacks must be dense';
     const fn=readJavaScriptExecutableCallFunction(program,machine.heap,frame.identity);if(fn===undefined)return 'every call frame retains its actual registered function';
     if(frame.registers.length!==fn.registers||!testJavaScriptCallCoordinate(frame.position,fn.instructions.length+1))return 'call frames retain their complete register and instruction coordinates';
-    slots+=frame.registers.length;argumentSlots+=frame.arguments.length;if(slots>1048576||argumentSlots>1048576||frame.handlers.length>1024)return 'call frame storage exceeds its explicit resource budget';
+    slots+=frame.registers.length;argumentSlots+=frame.arguments.length;for(const list of frame.argumentLists??[])argumentSlots+=list.values.length;if(slots>1048576||argumentSlots>1048576||frame.handlers.length>1024)return 'call frame storage exceeds its explicit resource budget';
     const frameError=readJavaScriptCallFrameError(program,machine.heap,frame,fn,index<machine.frames.length-1);
     if(frameError!=='')return frameError;
     const selectedParent=machine.frames[index-1];
@@ -355,6 +357,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
     }
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const receiver=frame.registers[0]??{$:'undefined'},object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;if(receiver.$!=='object'||receiver.callable||object?.$!=='ordinaryObject')return 'an active base constructor retains its actual allocated ordinary receiver';}
     const iteratorError=readJavaScriptIteratorRegionsError(heap,frame.iterators??[]);if(iteratorError!=='')return iteratorError;
+    const argumentListError=readJavaScriptCallArgumentListsError(heap,frame.argumentLists??[],frame.handlers.length);if(argumentListError!=='')return argumentListError;
     for(const handler of frame.handlers){
       if(handler.$==='callHandler'){if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';}
       else if(handler.$==='callFinallyHandler'){if(!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'finalizers retain their actual source instruction entry';}
@@ -575,11 +578,11 @@ export function unwindJavaScriptCallCompletion(machine,completion){
   while(handlers.length>(completion.kind==='jump'?completion.depth:0)){
    const handler=handlers[handlers.length-1];handlers=handlers.slice(0,-1);if(handler===undefined)return {$:'machineInvalid',heap,reason:'completion handler storage remains dense'};
    if(handler.$==='callDeferredCompletion')continue;
-   if(handler.$==='callFinallyHandler')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,position:handler.target,pending:{$:'callIdle'},handlers:handlers.concat([{$:'callDeferredCompletion',completion:{...completion}}])})};
-   if(completion.kind==='throw')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...writeJavaScriptCallRegister(frame,handler.destination,completion.value),position:handler.target,handlers})};
+   if(handler.$==='callFinallyHandler')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,argumentLists:retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),position:handler.target,pending:{$:'callIdle'},handlers:handlers.concat([{$:'callDeferredCompletion',completion:{...completion}}])})};
+   if(completion.kind==='throw')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...writeJavaScriptCallRegister(frame,handler.destination,completion.value),argumentLists:retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),position:handler.target,handlers})};
   }
-  const current=replaceJavaScriptCallFrame(heap,frames,{...frame,handlers});
-  if(completion.kind==='jump')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,position:completion.target,pending:{$:'callIdle'},handlers})};
+  const argumentLists=retainJavaScriptCallArgumentLists(frame.argumentLists??[],handlers.length),current=replaceJavaScriptCallFrame(heap,frames,{...frame,handlers,argumentLists});
+  if(completion.kind==='jump')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,position:completion.target,pending:{$:'callIdle'},handlers,argumentLists})};
   if(completion.kind==='return')return {$:'callReturn',machine:current,value:completion.value};
   if(frame.pending.$==='waitArrayIteratorNext')heap=finishJavaScriptArrayIteratorCursor(heap,frame.pending.state,true);
   frames=frames.slice(0,-1);
@@ -611,7 +614,7 @@ export function pushJavaScriptCall(program,machine,callee,receiver,arguments_){
   if(testJavaScriptErrorConstructorMode(fn.receiverMode))return requestJavaScriptCallError(machine,fn.realm,'TypeError','a derived Error constructor requires its actual new operation');
   if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const reason=readJavaScriptOrdinaryClassCallReason(machine.heap,fn.identity);return reason===''?{$:'machineInvalid',heap:machine.heap,reason:'an ordinary class call needs its actual named source declaration'}:requestJavaScriptCallError(machine,fn.realm,'TypeError',reason);}
   if(testJavaScriptCollectionConstructorMode(fn.receiverMode))return requestJavaScriptCallError(machine,fn.realm,'TypeError','Constructor '+readJavaScriptCollectionConstructorKind(fn)+" requires 'new'");
-  let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
+  let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;for(const list of active.argumentLists??[])argumentSlots+=list.values.length;}
   if(machine.frames.length>=1024||slots>1048576||argumentSlots>1048576)return {$:'machineResourceLimit',machine,reason:'call stack storage exceeds the selected execution resource budget'};
   return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([createJavaScriptCallFrame(fn,receiver,arguments_)])}};
 }
@@ -908,6 +911,21 @@ export function stepJavaScriptCallMachine(program,machine){
       if(frame.handlers[frame.handlers.length-1]?.$!=='callHandler')return {$:'machineInvalid',heap:machine.heap,reason:'a handler pop requires its actual active catch handler'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,handlers:frame.handlers.slice(0,-1)})};
     }
+    case 'argumentListOpen':case 'argumentListAppend':{
+      const lists=frame.argumentLists??[];
+      const update=instruction.$==='argumentListOpen'?openJavaScriptCallArgumentList(machine.heap,lists,instruction.slot,frame.handlers.length):appendJavaScriptCallArgument(machine.heap,lists,instruction.slot,frame.handlers.length,registers[instruction.value]??{$:'undefined'});
+      if(update.$==='argumentListsInvalid')return {$:'machineInvalid',heap:machine.heap,reason:update.reason};
+      if(update.$==='argumentListsResourceLimit')return {$:'machineResourceLimit',machine,reason:update.reason};
+      let count=0;for(const active of machine.frames){count+=active.arguments.length;for(const list of active===frame?update.lists:active.argumentLists??[])count+=list.values.length;}
+      if(count>1048576)return {$:'machineResourceLimit',machine,reason:'argument Lists share the complete actual stack argument storage budget'};
+      return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,argumentLists:update.lists})};
+    }
+    case 'argumentListCall':{
+      const lists=frame.argumentLists??[],at=findJavaScriptCallArgumentList(lists,instruction.slot),list=lists[at];if(list===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'a variadic Call consumes its actual opened argument List exactly once'};
+      const caller=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,argumentLists:lists.filter((row,index)=>index!==at),pending:{$:'waitCall',destination:instruction.destination}}),callee=registers[instruction.callee]??{$:'undefined'},receiver=registers[instruction.receiver]??{$:'undefined'};
+      const transition=instruction.mode==='collection'?pushJavaScriptCollectionConstructor(program,caller,callee,list.values):instruction.mode==='error class'?pushJavaScriptErrorConstructor(program,caller,callee,list.values):instruction.mode==='ordinary class'?pushJavaScriptOrdinaryClassConstructor(program,caller,callee,receiver,list.values):pushJavaScriptCall(program,caller,callee,receiver,list.values);
+      return transition.$==='machineResourceLimit'?{...transition,machine}:transition;
+    }
     case 'call':{
       const arguments_=instruction.arguments.map(index=>registers[index]??{$:'undefined'});
       return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitCall',destination:instruction.destination}}),registers[instruction.callee]??{$:'undefined'},registers[instruction.receiver]??{$:'undefined'},arguments_);
@@ -1138,7 +1156,7 @@ export function pushJavaScriptErrorConstructor(program,machine,callee,arguments_
  const owner=readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity);if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'Error construction needs its actual caller realm'};
  if(callee.$!=='object'||!callee.callable)return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected Error class is not a constructor');
  const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined||!testJavaScriptErrorConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'Error construction requires the actual registered derived constructor definition'};
- let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
+ let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;for(const list of active.argumentLists??[])argumentSlots+=list.values.length;}
  if(machine.frames.length>=1024||slots>1048576||argumentSlots>1048576)return {$:'machineResourceLimit',machine,reason:'derived constructor frames exceed the explicit execution storage budget'};
  return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([createJavaScriptCallFrame(fn,{$:'undefined'},arguments_)])}};
 }
@@ -1155,7 +1173,7 @@ export function pushJavaScriptOrdinaryClassConstructor(program,machine,callee,re
  const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);
  if(fn===undefined||!testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'ordinary class construction requires its actual registered constructor body'};
  const invalid=readJavaScriptOrdinaryClassReceiverError(machine.heap,callee,receiver);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
- let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
+ let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;for(const list of active.argumentLists??[])argumentSlots+=list.values.length;}
  if(machine.frames.length>=1024||slots>1048576||argumentSlots>1048576)return {$:'machineResourceLimit',machine,reason:'ordinary class frames exceed the explicit execution storage budget'};
  return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([createJavaScriptCallFrame(fn,receiver,arguments_)])}};
 }
@@ -1166,7 +1184,7 @@ export function pushJavaScriptCollectionConstructor(program,machine,callee,argum
  const parent=machine.frames[machine.frames.length-1],owner=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity);if(owner===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'collection construction needs its actual suspended caller'};
  if(callee.$!=='object'||!callee.callable)return requestJavaScriptCallError(machine,owner.realm,'TypeError','the selected collection is not a constructor');
  const fn=readJavaScriptExecutableCallFunction(program,machine.heap,callee.identity);if(fn===undefined||!testJavaScriptCollectionConstructorMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'collection construction requires its actual standard registered constructor'};
- let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;}
+ let slots=fn.registers,argumentSlots=arguments_.length;for(const active of machine.frames){slots+=active.registers.length;argumentSlots+=active.arguments.length;for(const list of active.argumentLists??[])argumentSlots+=list.values.length;}
  if(machine.frames.length>=1024||slots>1048576||argumentSlots>1048576)return {$:'machineResourceLimit',machine,reason:'collection constructor frames exceed their actual storage budget'};
  return {$:'machineContinue',machine:{$:'callMachine',heap:machine.heap,frames:machine.frames.concat([createJavaScriptCallFrame(fn,{$:'undefined'},arguments_)])}};
 }

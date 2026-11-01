@@ -734,3 +734,23 @@ setter source instructions. No execution/generation/compilation occurred.
 Computed method naming (including Symbol description authority), super/home
 objects, async/generators and mutable lexical capture still need their separate
 source extensions; this batch does not claim those surfaces are covered.
+
+### Call and constructor argument spread draft
+
+Frame-owned abstract argument Lists now support opening, ordered immutable append,
+single consumption by Call/collection/Error/base-class constructor operations,
+and handler-depth-based abandonment. They allocate no language Array. Validation
+and all Call stack admission paths include retained List storage in the shared
+argument budget. A resource refusal at invocation returns the original List and
+instruction so retry cannot lose arguments. Nested catches preserve outer Lists;
+crossed catch/finally boundaries release abandoned inner evaluation.
+
+Source argument lists recognize spread and lower fixed and iterable segments in
+order after holding callee/receiver. Iterable segments reuse the iterator-region
+instructions and finally cleanup of done records. Base-class construction lowers
+receiver allocation after all argument segments. Eleven originals cover ordered,
+String/sparse/nested/empty/multiple spreads, receiver/callee/value snapshots,
+class/collection constructors and catch recovery. Four deferred controls cover
+immutable List state, handler scope release, source instruction provenance and
+receiver allocation order. Kernel/control generation inputs are registered.
+Nothing executed; generated artifacts and native validation remain deferred.

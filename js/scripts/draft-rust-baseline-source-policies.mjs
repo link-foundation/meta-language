@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-call-argument-lists.js',moduleName:'javascript_call_argument_lists',model:'Actual frame owned abstract Call argument Lists and abrupt scope release 1',programAsset:'javascript-call-argument-lists-program'},
  {sourcePath:'js/src/translation/javascript-argument-rest.js',moduleName:'javascript_argument_rest',model:'Actual Call argument list rest parameter Array creation and copy continuations 1',programAsset:'javascript-argument-rest-program'},
  {sourcePath:'js/src/translation/javascript-iterator-regions.js',moduleName:'javascript_iterator_regions',model:'Actual per-frame synchronous iterator region ownership and cached identity updates 1',programAsset:'javascript-iterator-regions-program'},
  {sourcePath:'js/src/translation/javascript-string-iteration.js',moduleName:'javascript_string_iteration',model:'Exact UTF16 String iterator internal slots and code point advancement 1',programAsset:'javascript-string-iteration-program'},
@@ -178,6 +179,7 @@ const consumers=[
  'js/tests/translation-javascript-iterable-collections.test.js',
  'js/tests/translation-javascript-literal-prototypes.test.js',
  'js/tests/translation-javascript-object-methods.test.js',
+ 'js/tests/translation-javascript-call-argument-lists.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

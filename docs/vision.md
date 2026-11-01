@@ -57,6 +57,17 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Variadic invocation uses per-frame abstract argument Lists, separate from
+ECMAScript Array Objects. Callee/receiver selection precedes argument effects;
+fixed arguments append once and spread operands drain the shared synchronous
+iterator protocol in order. String code points and sparse Array undefined values
+retain their original semantics. Iterator advancement failures mark done and
+propagate without return. A completed List transfers once into the actual Call/
+constructor frame; resource refusal retains the pre-invocation List for retry.
+Base-class receiver allocation follows all argument evaluation. Unwinding drops
+Lists opened inside a crossed handler boundary while preserving outer argument
+evaluation through inner catches. Lists share the actual stack argument budget.
+
 Standard Map/Set construction lowers to shared iterator, ordinary property Get,
 Call and completion instructions. Nullish input returns an empty genuine
 collection before reading the adder; otherwise the actual `set`/`add` property is
