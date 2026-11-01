@@ -23,7 +23,7 @@ import {readJavaScriptTextProtocolOperationError} from './javascript-text-conver
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptCallPrimitiveArityError,executeJavaScriptCallPrimitive} from './javascript-call-primitives.js';
 import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJavaScriptCallCodeRegisters,readJavaScriptCallCodeDestination,testJavaScriptCallStrictEqual} from './javascript-call-code.js';
-import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
+import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor,setJavaScriptOrdinaryPrototype} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
 import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,completeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
@@ -975,6 +975,15 @@ export function stepJavaScriptCallMachine(program,machine){
       return acceptJavaScriptCallArraySpread(program,current,instruction.destination,instruction.realm,beginJavaScriptArraySpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},index.value,registers[instruction.iteratorKey]??{$:'undefined'}));
     }
     case 'objectSpread':return acceptJavaScriptCallObjectSpread(program,current,instruction.destination,instruction.realm,beginJavaScriptObjectSpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},(instruction.excluded??[]).map(index=>registers[index]??{$:'undefined'})));
+    case 'literalPrototype':{
+      const object=registers[instruction.object]??{$:'undefined'},value=registers[instruction.value]??{$:'undefined'};
+      if(object.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'literal prototype installation requires its actual allocated Object'};
+      if(value.$!=='object'&&value.$!=='null')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'undefined'}))};
+      const installed=setJavaScriptOrdinaryPrototype(machine.heap,object.identity,value);
+      if(installed.error!=='')return {$:'machineInvalid',heap:installed.heap,reason:installed.error};
+      if(!installed.success)return {$:'machineInvalid',heap:installed.heap,reason:'a fresh literal Object must admit its acyclic actual prototype'};
+      return {$:'machineContinue',machine:replaceJavaScriptCallFrame(installed.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'undefined'}))};
+    }
     case 'ordinaryDataProperty':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinition(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},createJavaScriptOrdinarySetDescriptor(registers[instruction.value]??{$:'undefined'},true)));
   }
 }

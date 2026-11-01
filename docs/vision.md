@@ -96,11 +96,19 @@ existing form; encountering a binding write selects the shared snapshot pass.
 Both typed Links transports must preserve optional template directories and
 all runtime closure slots, including through source-unit composition.
 
+Colon-form literal `__proto__` evaluates its value at the original position and
+installs an Object/null prototype through the shared ordinary prototype kernel;
+other primitive values have no effect. It creates no own property and performs
+no anonymous function name inference. The reader compares decoded key units,
+including quoted/escaped spellings, and rejects duplicate literal setters.
+Computed `__proto__` and shorthand fields retain ordinary data semantics and may
+coexist with one prototype setter. Opaque/exotic prototype traversal still needs
+its explicit protocol rather than host mutation.
+
 Source object data fields retain fixed, numeric and computed keys. Computed keys
 complete ToPropertyKey before their value expression; each field creates an own
 data descriptor through the shared property kernel, bypassing inherited setters.
-Computed `__proto__` and shorthand bindings are data fields; colon-form literal
-prototype setters require explicit prototype installation. Dynamic anonymous
+Computed `__proto__` and shorthand bindings are data fields. Dynamic anonymous
 function name inference needs its actual converted key and cannot borrow source
 spelling. Parenthesized property references retain the receiver through a call;
 comma expressions produce values and discard that reference. Comma operands run

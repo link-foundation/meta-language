@@ -695,3 +695,20 @@ ECMA page labels itself 2027; its constructor algorithms were read as supporting
 design context, not as proof of Node version parity. Exact engine diagnostic
 wording, mutable lexical cells, argument/constructor spread and the other
 previously recorded source surfaces still need their own drafts.
+
+### Literal prototype setter source/VM draft
+
+The source reader distinguishes colon-form decoded `__proto__` from computed
+keys/shorthand, rejects duplicate literal setters, and preserves value evaluation
+order without anonymous name inference. A dedicated source property/instruction
+uses the existing ordinary prototype kernel for Object/null values and ignores
+other primitives without creating a field. Opaque prototype traversal remains
+an explicit unsupported protocol, never native Object.setPrototypeOf fallback.
+
+The former prototype-setter refusal is retained byte-for-byte as a positive
+original with primitive input and an empty own-property result; the assertion
+changes because source and VM installation are now drafted. Five more originals
+cover inherited reads, null prototype, computed own data coexistence, quoted/
+escaped key decoding and source-order effects. One deferred compiler control
+checks allocation/data/prototype/spread ordering and register provenance.
+Nothing executed; generated codecs/native implementations remain deferred.

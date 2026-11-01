@@ -8,6 +8,10 @@ iterator-region and completion instructions, with ordered Map entry reads and
 actual IteratorClose effects. Arrays, Strings and source-defined iterables have
 authored controls; execution and generated native publication remain deferred.
 
+Draft colon-form literal prototype installation with decoded-key recognition,
+duplicate-setter rejection, null/Object prototype handling and primitive no-op
+semantics; computed/shorthand keys retain own data semantics.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

@@ -52,7 +52,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
-/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource,excluded?:JavaScriptCallSource[]}} JavaScriptCallSourceProperty */
+/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceLiteralPrototype',value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource,excluded?:JavaScriptCallSource[]}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceArrayValue',value:JavaScriptCallSource} | {$:'sourceArraySpread',value:JavaScriptCallSource} | {$:'sourceArrayHole'}} JavaScriptCallArrayPart */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
@@ -260,6 +260,9 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(prototype.builder);
    let current=appendJavaScriptCallSourceInstruction(object.builder,{$:'ordinaryAllocate',destination:object.register,prototype:prototype.register});
    for(const property of source.properties){
+    if(property.$==='sourceLiteralPrototype'){
+     const value=lowerJavaScriptCallSourceExpression(property.value,bindings,current,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);current=appendJavaScriptCallSourceInstruction(result.builder,{$:'literalPrototype',destination:result.register,object:object.register,value:value.register});continue;
+    }
     if(property.$==='sourceObjectSpread'){
      const input=lowerJavaScriptCallSourceExpression(property.input,bindings,current,depth+1);current=input.builder;
      if((property.excluded??[]).length>4096)return refuseJavaScriptCallSource(current,'object copy exclusions exceed their actual operand budget');

@@ -151,7 +151,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     else{port('syntax:array',{kind:'syntax',operation:'array literal'});value={$:'errorArray',factory:'syntax:array',items:arguments_(']')};}
    }
    else if(take('{')){
-    const properties=[];if(!take('}'))while(at<input.length){
+    const properties=[];let prototypeSetter=false;if(!take('}'))while(at<input.length){
      if(take('...')){if(!classProfile)fail('object spread requires its actual closed source continuation');properties.push({$:'errorObjectSpread',input:parse(1)});}
      else if(take('[')){
       if(!classProfile)fail('computed object fields require the closed source profile');
@@ -163,10 +163,11 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       properties.push({$:'errorComputedObjectProperty',key,value:field});
      }else{
       const key=peek();if(!key||!['identifier','string','number'].includes(key.kind))fail('source object fields require their actual fixed or computed data key');at++;
-      const pair=take(':');if(!pair&&key.kind!=='identifier')fail('only actual identifier bindings admit object shorthand');if(pair&&key.value==='__proto__')fail('object literal prototype setters require their explicit prototype installation operation');
+      const pair=take(':');if(!pair&&key.kind!=='identifier')fail('only actual identifier bindings admit object shorthand');
       const name=key.kind==='number'?key.suffix==='n'?String(BigInt(key.value)):String(Number(key.value)):key.value;if(key.kind==='number'&&key.suffix!=='n'&&!Number.isFinite(Number(key.value)))fail('source numeric property names require their actual finite literal Number');
-      const keyUnits=key.stringUnits??units(name),field=pair?parse(1):variable(key);if(pair)inferArrowName(field,keyUnits.map(unit=>String.fromCharCode(unit)).join(''));
-      properties.push({$:'errorObjectProperty',key:keyUnits,value:field});
+      const keyUnits=key.stringUnits??units(name),field=pair?parse(1):variable(key),prototype=pair&&keyUnits.length===9&&keyUnits.every((unit,index)=>unit===[95,95,112,114,111,116,111,95,95][index]);
+      if(prototype){if(!classProfile)fail('literal prototype installation requires its closed source operation');if(prototypeSetter)fail('duplicate literal prototype setters are an early SyntaxError');prototypeSetter=true;properties.push({$:'errorLiteralPrototype',value:field});}
+      else{if(pair)inferArrowName(field,keyUnits.map(unit=>String.fromCharCode(unit)).join(''));properties.push({$:'errorObjectProperty',key:keyUnits,value:field});}
      }
      if(take('}'))break;if(!take(','))fail('source object fields need complete separators');if(take('}'))break;
     }
