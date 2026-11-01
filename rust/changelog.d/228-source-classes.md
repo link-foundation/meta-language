@@ -31,3 +31,8 @@ callable heap allocation and shared machine dispatch, including lexical this,
 nested factory captures, ordinary name/length metadata and source-unit template
 composition. Mutable lexical cells and broader arrow/function forms remain
 separate work; all added controls remain unexecuted.
+
+Draft CST switch selection/fallthrough and lexical break/continue targets through
+the shared source compiler. Preserve selector effects, for updates and catch
+handler depth on transfers. Extend existing deferred original/compiler/native
+state controls; shared TDZ environments, labels and finally remain separate work.

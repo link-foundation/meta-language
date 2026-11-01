@@ -75,6 +75,17 @@ existing form; encountering a binding write selects the shared snapshot pass.
 Both typed Links transports must preserve optional template directories and
 all runtime closure slots, including through source-unit composition.
 
+Source switches capture their input once, test selectors with strict equality in
+source order until selection, and enter adjacent clause bodies without repeating
+selector effects. A middle default remains a fallback after the remaining label
+search. Clause bodies compile once. Explicit lexical control targets connect
+break/continue to their actual enclosing constructs; for continues reach their
+update before retesting, while continues reach their condition. Transfers remove
+only catch handlers belonging to exited regions. Targets, pending transfers and
+syntax work have explicit bounds; source compilation cannot publish unresolved
+transfers. Switch-wide lexical TDZ environments and labelled transfers require
+their own binding representations rather than guessed scope or zero values.
+
 
 The executable JavaScript call model uses the same globally identified ordinary
 heap for allocation, property access and calls. An ordinary-object allocation

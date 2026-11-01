@@ -21,6 +21,11 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  const reference=(token,offset=0)=>bindings.find(binding=>binding.references.some(row=>row.start===token.start+offset&&row.end===token.end+offset));
  const unresolved=(token,offset=0)=>program.unresolvedReferences.some(row=>row.name===token.value&&row.start===token.start+offset&&row.end===token.end+offset);
  const containing=(binding,terms)=>program.sourceMappings.filter(row=>terms.includes(row.term)&&row.start<=binding.declaration.start&&row.end>=binding.declaration.end).sort((a,b)=>(a.end-a.start)-(b.end-b.start))[0];
+ let sourceFields=null,sourceSyntax=null;
+ function sourceField(node,label){
+  if(sourceFields===null){const fields=program.network.fieldRelations();if(fields.length>100000||program.sourceMappings.length>100000)fail('source field witnesses exceed their explicit graph budget');sourceFields=new Map();sourceSyntax=new Map(program.sourceMappings.map(row=>[row.linkId,row]));for(const field of fields){const key=field.parent.asU64()+':'+field.label,child=field.child.asU64();const prior=sourceFields.get(key);if(prior!==undefined&&prior!==child&&['value','left','argument','parameter','parameters'].includes(field.label))fail('a source operand must retain its unique actual CST field');sourceFields.set(key,child);}}
+  return sourceSyntax.get(sourceFields.get(node.linkId+':'+label));
+ }
  const headers=[],imports=[],cells=[],covered=[],classes=[];
  for(const binding of bindings.filter(row=>row.scope==='scope:0')){
   if(binding.kind==='function'){
@@ -62,7 +67,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  function port(key,details){if(!capabilities.has(key))capabilities.set(key,{source:key,...details});return {$:'errorNativeReference',source:key};}
  const cellIDs=new Set(cells.map(row=>row.binding)),functionIDs=new Set([...selected]),importByID=new Map(imports.map(row=>[row.binding,row]));
  const classBinding=binding=>binding&&classes.find(row=>{const owner=bindings[row.binding];return selected.has(row.binding)&&(row.binding===binding.identity||owner&&owner.declaration.start===binding.declaration.start&&owner.declaration.end===binding.declaration.end);});
- let activeClass=null,activeFunction=null,initializingParameters=null;
+ let activeClass=null,activeFunction=null,initializingParameters=null,controlTargets=[];
  const arrowNodes=[...new Map(program.sourceMappings.filter(row=>row.term==='arrow_function').map(row=>[row.start+':'+row.end,row])).values()].sort((a,b)=>a.start-b.start||b.end-a.end),templates=[];
  if(arrowNodes.length>4096)fail('source lexical templates exceed their explicit site budget');
  function inferArrowName(value,name){if(value.$==='errorClosure'){const template=templates.find(row=>row.owner===value.owner&&row.ordinal===value.ordinal);if(template&&template.name==='')template.name=name;}return value;}
@@ -107,12 +112,12 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   if(end<=separator+1||input[end-1].end!==node.end)fail('arrow body retains its complete actual CST interval');
   const captures=[];for(const binding of bindings){if(binding.scope==='scope:0'||binding.declaration.start>=node.start&&binding.declaration.end<=node.end)continue;if(!binding.references.some(row=>row.start>=node.start&&row.end<=node.end))continue;readonlyCapture(binding,node);captures.push(binding.identity);}
   if(captures.length>4096)fail('arrow lexical captures exceed their actual value budget');
-  const ordinal=arrowNodes.indexOf(node),owner=activeFunction,previous=initializingParameters;let body;
+  const ordinal=arrowNodes.indexOf(node),owner=activeFunction,previous=initializingParameters,previousTargets=controlTargets;let body;
   // Parameter default TDZ selection belongs to creation; body-local parameter
   // references belong to the deferred function body, not that outer phase.
   if(previous!==null&&captures.some(identity=>bindings.find(row=>row.identity===identity)?.kind==='parameter'&&!previous.has(identity)))fail('capturing an uninitialized parameter requires its shared lexical cell');
-  initializingParameters=null;
-  try{if(input[separator+1].value==='{'){const begin=tokens.findIndex(token=>token.start===input[separator+1].start),last=tokens.findIndex(token=>token.end===node.end&&token.value==='}');if(begin<0||last<begin)fail('arrow block body retains its actual source token interval');body=statements(begin+1,last);}else body=[{$:'sourceReturnStatement',value:expression(input.slice(separator+1,end))}];}finally{initializingParameters=previous;}
+  initializingParameters=null;controlTargets=[];
+  try{if(input[separator+1].value==='{'){const begin=tokens.findIndex(token=>token.start===input[separator+1].start),last=tokens.findIndex(token=>token.end===node.end&&token.value==='}');if(begin<0||last<begin)fail('arrow block body retains its actual source token interval');body=statements(begin+1,last);}else body=[{$:'sourceReturnStatement',value:expression(input.slice(separator+1,end))}];}finally{initializingParameters=previous;controlTargets=previousTargets;}
   templates.push({$:'errorArrowTemplatePlan',owner,ordinal,name:'',length:parameters.length,parameters,captures,statements:body});
   return {end,value:{$:'errorClosure',owner,ordinal,captures}};
  }
@@ -168,11 +173,43 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   function one(){if(values[at]==='{'){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>last)fail('source blocks require complete groups');const body=statements(at+1,end);at=end+1;return body;}return [statement()];}
   function statement(){const word=values[at++];if(word==='if'){const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source if requires its complete condition');const condition=expression(tokens.slice(open+1,close));at=close+1;const yes=one(),no=values[at]==='else'?(at++,one()):[];return {$:'sourceIfStatement',condition,yes,no};}
    if((word==='return'||word==='throw')&&tokens[at]&&/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start))){if(word==='throw')fail('throw requires its actual same-line source operand');return {$:'sourceReturnStatement',value:absent()};}
+   if((word==='break'||word==='continue')&&classProfile){
+    const continuing=word==='continue',target=[...controlTargets].reverse().find(row=>!continuing||row.kind==='loop');if(!target)fail('source break/continue requires its actual enclosing control target');
+    if(values[at]===';')at++;else if(at<last&&values[at]!=='}'&&!/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start)))fail('labelled control transfers require their actual label resolution');
+    return {$:'sourceControlJumpStatement',target:target.identity,continuing};
+   }
+   if(word==='while'&&classProfile){
+    const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source while needs its actual complete condition');const condition=expression(tokens.slice(open+1,close)),target=nextBinding++;at=close+1;let body;
+    controlTargets.push({identity:target,kind:'loop'});try{body=one();}finally{controlTargets.pop();}
+    return {$:'sourceWhileStatement',target,condition,body};
+   }
+   if(word==='switch'&&classProfile){
+    const start=tokens[at-1].start,open=at,close=findJavaScriptClassGroupEnd(values,open),body=close+1,end=findJavaScriptClassGroupEnd(values,body);
+    if(values[open]!=='('||close<0||values[body]!=='{'||end<0||!program.sourceMappings.some(row=>row.term==='switch_statement'&&row.start===start&&row.end===tokens[end].end))fail('source switch needs its actual complete CST condition and case block');
+    const value=expression(tokens.slice(open+1,close)),target=nextBinding++,clauses=[];let cursor=body+1,defaults=0;
+    controlTargets.push({identity:target,kind:'switch'});
+    try{while(cursor<end){
+     const term=values[cursor]==='case'?'switch_case':values[cursor]==='default'?'switch_default':'';const node=program.sourceMappings.find(row=>row.term===term&&row.start===tokens[cursor].start);if(!term||!node)fail('switch clauses require actual source CST boundaries');
+     let next=cursor;while(next<end&&tokens[next].start<node.end)next++;
+     if(next<=cursor||tokens[next-1].end>node.end)fail('switch clause cannot discard source tokens');
+     let colon=cursor+1,test=null;
+     if(term==='switch_case'){
+      const selector=sourceField(node,'value');if(!selector)fail('a case selector requires its actual CST value field');
+      while(colon<next&&tokens[colon].start<selector.end)colon++;test=expression(tokens.slice(cursor+1,colon));
+     }else if(++defaults>1)fail('switch cannot contain duplicate default clauses');
+     if(values[colon]!==':')fail('switch selector requires its actual clause separator');
+     const statements_=statements(colon+1,next);if(statements_.some(row=>row.$==='sourceConstStatement'||row.$==='sourceMutableStatement'))fail('unbraced switch lexical declarations require their shared TDZ environment');
+     if(clauses.length>=4096)fail('switch clause source witnesses exceed their explicit directory budget');
+     clauses.push(test===null?{$:'sourceDefaultStatement',body:statements_}:{$:'sourceCaseStatement',value:test,body:statements_});cursor=next;
+    }}finally{controlTargets.pop();}
+    at=end+1;return {$:'sourceSwitchStatement',target,value,clauses};
+   }
    if(word==='for'&&classProfile){const open=at,close=findJavaScriptClassGroupEnd(values,open),parts=close>=0?split(open+1,close,';'):[];
     if(values[open]!=='('||parts.length!==3||values[parts[0][0]]!=='let'||values[parts[0][0]+2]!=='=')fail('source class loops require their actual fixed let/condition/update operands');
     const owner=declared(tokens[parts[0][0]+1]);if(!owner||owner.kind!=='let')fail('source loop initialization requires its actual mutable lexical owner');
-    const initial=expression(tokens.slice(parts[0][0]+3,parts[0][1])),condition=expression(tokens.slice(...parts[1])),update=expression(tokens.slice(...parts[2]));at=close+1;
-    return {$:'sourceBlockStatement',statements:[{$:'sourceMutableStatement',identity:owner.identity,value:initial},{$:'sourceWhileStatement',condition,body:[...one(),{$:'sourceExpressionStatement',value:update}]}]};
+    const initial=expression(tokens.slice(parts[0][0]+3,parts[0][1])),condition=expression(tokens.slice(...parts[1])),update=expression(tokens.slice(...parts[2])),target=nextBinding++;at=close+1;let body;
+    controlTargets.push({identity:target,kind:'loop'});try{body=one();}finally{controlTargets.pop();}
+    return {$:'sourceBlockStatement',statements:[{$:'sourceMutableStatement',identity:owner.identity,value:initial},{$:'sourceWhileStatement',target,condition,update,body}]};
    }
    if(word==='{'){at--;return {$:'sourceBlockStatement',statements:one()};}
    const begin=at-1;let end=at;for(;end<last&&values[end]!==';';end++)if(['(','{','['].includes(values[end])){const close=findJavaScriptClassGroupEnd(values,end);if(close<0||close>=last)fail('source statement groups must close');end=close;}if(end>=last)fail('this source statement profile requires explicit actual semicolons');at=end+1;
@@ -184,7 +221,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  }
  const functions=[],origins=[];for(const header of headers.filter(row=>selected.has(row.binding.identity))){
   for(const member of [header,...(header.methods??[])]){
-   activeClass=member.classBinding??null;activeFunction=member.binding.identity;const params=parameters(member),body=member.implicitConstructor?[]:statements(member.body+1,member.last);
+   activeClass=member.classBinding??null;activeFunction=member.binding.identity;controlTargets=[];const params=parameters(member),body=member.implicitConstructor?[]:statements(member.body+1,member.last);
    functions.push({$:member.isConstructor?'errorOrdinaryConstructorPlan':member.classBinding!==undefined?'errorMethodFunctionPlan':classProfile?'errorMutableStatementFunctionPlan':'errorStatementFunctionPlan',identity:member.binding.identity,name:member.binding.name,parameters:params,statements:body});origins.push({identity:member.binding.identity,name:member.binding.name,start:member.node.start,end:member.node.end,coordinateUnit:'UTF-16 code units',...(member.classBinding!==undefined?{classBinding:member.classBinding,constructor:member.isConstructor}: {})});
   }
  }activeClass=null;activeFunction=null;

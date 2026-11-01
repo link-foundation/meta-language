@@ -1,0 +1,24 @@
+// Authored inputs and independent literal outcomes; no execution observations.
+const number=value=>({$:'sourceConstant',value:{$:'number',value}});
+const text=value=>({$:'sourceConstant',value:{$:'text',units:Array.from(value,ch=>ch.charCodeAt(0))}});
+const binding=identity=>({$:'sourceBinding',identity});
+const transfer=(target,continuing=false)=>({$:'sourceControlJump',target,continuing});
+const attempt=(identity,body,handler)=>({$:'sourceTry',identity,body,handler});
+const returned=value=>({$:'sourceReturn',value:text(value)});
+const oneCase=(body,after)=>({$:'sourceSwitch',target:10,value:number(1),clauses:[{$:'sourceSwitchCase',value:number(1),body}],after});
+export const javascriptSourceControlCases=[
+ {name:'switch retains its input across a selector binding assignment',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 3; switch (value) { case (value = 9): return "changed"; case 3: return "initial"; } return "missing"; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(3),body:{$:'sourceSwitch',target:10,value:binding(1),clauses:[{$:'sourceSwitchCase',value:{$:'sourceAssignBinding',identity:1,value:number(9)},body:returned('changed')},{$:'sourceSwitchCase',value:number(3),body:returned('initial')}],after:returned('missing')}},
+  expected:{kind:'value',value:{$:'text',units:[105,110,105,116,105,97,108]}}},
+ {name:'break removes the exited inner catch before a following throw',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { switch (1) { case 1: try { break; } catch (error) { return "wrong"; } } throw "outside"; }',
+  expression:oneCase(attempt(50,transfer(10),returned('wrong')),{$:'sourceThrow',value:text('outside')}),expected:{kind:'throw',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
+ {name:'break retains the enclosing catch while removing the exited inner catch',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { try { switch (1) { case 1: try { break; } catch (error) { return "wrong"; } } throw "outside"; } catch (error) { return error; } }',
+  expression:attempt(90,oneCase(attempt(91,transfer(10),returned('wrong')),{$:'sourceThrow',value:text('outside')}),binding(90)),expected:{kind:'value',value:{$:'text',units:[111,117,116,115,105,100,101]}}},
+ {name:'continue executes the for update before testing its condition again',parameters:[],arguments:[],otherFunctions:[],functions:{},source:'(context) => { let value = 0; for (; value < 3; value += 1) { if (value === 1) continue; } return value; }',
+  expression:{$:'sourceLocalLet',identity:1,mutable:true,value:number(0),body:{$:'sourceWhile',target:10,condition:{$:'sourceNumberBinary',operator:'lessThan',left:binding(1),right:number(3)},body:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:binding(1),right:number(1)},yes:transfer(10,true),no:number(0)},update:{$:'sourceAssignBinding',identity:1,value:{$:'sourceNumberBinary',operator:'add',left:binding(1),right:number(1)}},after:binding(1)}},expected:{kind:'value',value:{$:'number',value:3}}},
+];
+export const javascriptSourceControlRefusals=[
+ {name:'continue cannot select a switch target',reason:'break and continue retain an active actual target and handler depth',expression:oneCase(transfer(10,true),number(0))},
+ {name:'break cannot select an inactive target',reason:'break and continue retain an active actual target and handler depth',expression:transfer(999)},
+ {name:'nested scopes cannot reuse one target identity',reason:'control scopes require unique actual source targets within their lexical budget',expression:{$:'sourceWhile',target:10,condition:number(1),body:oneCase(number(0),number(0)),after:number(0)}},
+];

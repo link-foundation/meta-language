@@ -13,7 +13,9 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceThrow',value:JavaScriptCallSource} |
  * {$:'sourceReturn',value:JavaScriptCallSource} |
  * {$:'sourceAssignBinding',identity:number,value:JavaScriptCallSource} |
- * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource} |
+ * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource,target?:number,update?:JavaScriptCallSource} |
+ * {$:'sourceControlJump',target:number,continuing:boolean} |
+ * {$:'sourceSwitch',target:number,value:JavaScriptCallSource,clauses:JavaScriptCallSourceSwitchClause[],after:JavaScriptCallSource} |
  * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
  * {$:'sourceLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
@@ -40,8 +42,11 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  */
 /** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
+/** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
+/** @typedef {{$:'sourceControlScope',identity:number,kind:string,handlers:number}} JavaScriptCallSourceControlScope */
+/** @typedef {{$:'sourceControlTransfer',position:number,target:number,continuing:boolean}} JavaScriptCallSourceControlTransfer */
 /** @typedef {{$:'sourceBindingRegister',identity:number,register:number,mutable:boolean}} JavaScriptCallSourceBinding */
-/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string,snapshotMutableBindings?:boolean}} JavaScriptCallSourceBuilder */
+/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string,snapshotMutableBindings?:boolean,controlScopes?:JavaScriptCallSourceControlScope[],controlTransfers?:JavaScriptCallSourceControlTransfer[]}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
 /** @typedef {{$:'sourceCompiled',instructions:JavaScriptCallInstruction[],registers:number,error:string}} JavaScriptCallSourceCompilation */
 
@@ -103,13 +108,9 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.register===0||!binding.mutable)return refuseJavaScriptCallSource(state,'a mutable assignment needs its actual mutable local lexical register');
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register})};
   }
-  case 'sourceWhile':{
-   const start=state.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,state,depth+1),branch=condition.builder.instructions.length;
-   const test=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:branch+1,no:0});
-   const body=lowerJavaScriptCallSourceExpression(source.body,bindings,test,depth+1),loop=appendJavaScriptCallSourceInstruction(body.builder,{$:'jump',target:start}),end=loop.instructions.length;
-   const updated={...loop,instructions:loop.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction)};
-   return lowerJavaScriptCallSourceExpression(source.after,bindings,updated,depth+1);
-  }
+  case 'sourceWhile':return lowerJavaScriptCallSourceLoop(source,bindings,state,depth);
+  case 'sourceSwitch':return lowerJavaScriptCallSourceSwitch(source,bindings,state,depth);
+  case 'sourceControlJump':return lowerJavaScriptCallSourceControlJump(source,state);
   case 'sourceTry':return lowerJavaScriptCallSourceException(source,bindings,state,depth);
   case 'sourceConstant':{
    const error=readJavaScriptCallConstantError(source.value);if(error!=='')return refuseJavaScriptCallSource(state,error);
@@ -314,6 +315,84 @@ export function compileJavaScriptCallSourceBindingReads(source,parameters,captur
  for(let index=0;index<captures.length;index++){const owner=captures[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.includes(owner)||captures.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source captures require distinct actual lexical owners'};}
  const bindings=parameters.concat(captures).map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1,mutable:index<parameters.length}));
  const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+captures.length+1,visits:0,parameters:parameters.length,handlers:0,error:'',...(snapshotMutableBindings?{snapshotMutableBindings:true}:{})},0);
- const builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
+ let builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
+ if((builder.controlTransfers??[]).length)builder={...builder,error:'completed source compilation cannot retain unresolved control transfers'};
  return {$:'sourceCompiled',instructions:builder.error===''?builder.instructions:[],registers:builder.error===''?builder.next:0,error:builder.error};
+}
+
+
+/** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBuilder} builder
+ * @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceControlJump(source,builder){
+ if(source.$!=='sourceControlJump'||typeof source.continuing!=='boolean')return refuseJavaScriptCallSource(builder,'a control jump requires its actual source target');
+ const scope=(builder.controlScopes??[]).find(row=>row.identity===source.target);
+ if(scope===undefined||source.continuing&&scope.kind!=='loop'||scope.handlers>builder.handlers)return refuseJavaScriptCallSource(builder,'break and continue retain an active actual target and handler depth');
+ let current=builder;for(let depth=builder.handlers;depth>scope.handlers;depth--)current=appendJavaScriptCallSourceInstruction(current,{$:'popHandler'});
+ const position=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'jump',target:0});
+ const transfers=current.controlTransfers??[];if(transfers.length>=65536)return refuseJavaScriptCallSource(current,'control transfers exceed their explicit transfer budget');
+ return {$:'sourceResult',builder:{...current,controlTransfers:transfers.concat([{$:'sourceControlTransfer',position,target:source.target,continuing:source.continuing}])},register:0};
+}
+/** @param {JavaScriptCallSourceBuilder} builder @param {number} target @param {string} kind
+ * @returns {JavaScriptCallSourceBuilder} */
+export function pushJavaScriptCallSourceControlScope(builder,target,kind){
+ const scopes=builder.controlScopes??[];
+ if(!['loop','switch'].includes(kind)||!testJavaScriptCallCodeCoordinate(target,65536)||scopes.length>=128||scopes.some(scope=>scope.identity===target))return {...builder,error:'control scopes require unique actual source targets within their lexical budget'};
+ return {...builder,controlScopes:scopes.concat([{$:'sourceControlScope',identity:target,kind,handlers:builder.handlers}])};
+}
+/** @param {JavaScriptCallSourceBuilder} builder @param {JavaScriptCallSourceBuilder} outer
+ * @param {number} target @param {number} end @param {number} update
+ * @returns {JavaScriptCallSourceBuilder} */
+export function finishJavaScriptCallSourceControlScope(builder,outer,target,end,update){
+ const transfers=builder.controlTransfers??[],selected=transfers.filter(row=>row.target===target);
+ if(selected.some(row=>row.continuing&&update<0))return {...builder,error:'continue requires its actual loop update or condition target'};
+ const positions=selected.map(row=>row.position);
+ let previous=-1;for(const position of positions){if(!testJavaScriptCallCodeCoordinate(position,builder.instructions.length)||position<=previous||builder.instructions[position]?.$!=='jump')return {...builder,error:'source control transfers retain ordered unique instruction positions'};previous=position;}
+ const instructions=builder.instructions.map((instruction,index)=>{const position=findJavaScriptCallSourceInstructionPosition(positions,index);if(position<0)return instruction;const transfer=selected[position];return transfer===undefined?instruction:{$:'jump',target:transfer.continuing?update:end};});
+ const remaining=transfers.filter(row=>row.target!==target);
+ return {...builder,instructions,...(outer.controlScopes!==undefined?{controlScopes:outer.controlScopes}:{controlScopes:[]}),...(remaining.length||outer.controlTransfers!==undefined?{controlTransfers:remaining}:{controlTransfers:[]})};
+}
+/** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceLoop(source,bindings,builder,depth){
+ if(source.$!=='sourceWhile')return refuseJavaScriptCallSource(builder,'loop lowering requires its actual condition and body');
+ const scoped=source.target===undefined?builder:pushJavaScriptCallSourceControlScope(builder,source.target,'loop');
+ const start=scoped.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,scoped,depth+1),branch=condition.builder.instructions.length;
+ const test=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:branch+1,no:0}),body=lowerJavaScriptCallSourceExpression(source.body,bindings,test,depth+1),update=body.builder.instructions.length;
+ const updated=source.update===undefined?body.builder:lowerJavaScriptCallSourceExpression(source.update,bindings,body.builder,depth+1).builder;
+ const loop=appendJavaScriptCallSourceInstruction(updated,{$:'jump',target:start}),end=loop.instructions.length;
+ let finished={...loop,instructions:loop.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction)};
+ if(source.target!==undefined)finished=finishJavaScriptCallSourceControlScope(finished,builder,source.target,end,source.update===undefined?start:update);
+ return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);
+}
+/** Switch statement sequencing: compare once-captured input to case selectors
+ * until a match, then execute adjacent clause blocks without re-testing labels.
+ * @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceSwitch(source,bindings,builder,depth){
+ if(source.$!=='sourceSwitch'||source.clauses.length>4096)return refuseJavaScriptCallSource(builder,'switch requires its actual bounded case directory');
+ const input=lowerJavaScriptCallSourceExpression(source.value,bindings,builder,depth+1),saved=allocateJavaScriptCallSourceRegister(input.builder);
+ let current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:input.register});current=pushJavaScriptCallSourceControlScope(current,source.target,'switch');
+ /** @type {number[]} */const branches=[];let fallback=-1;
+ for(let index=0;index<source.clauses.length;index++){
+  const clause=source.clauses[index];if(clause===undefined)return refuseJavaScriptCallSource(current,'switch clauses must be dense');
+  if(clause.$==='sourceSwitchDefault'){if(fallback>=0)return refuseJavaScriptCallSource(current,'switch cannot contain multiple default clauses');fallback=index;branches.push(-1);continue;}
+  const value=lowerJavaScriptCallSourceExpression(clause.value,bindings,current,depth+1),comparison=allocateJavaScriptCallSourceRegister(value.builder),compared=appendJavaScriptCallSourceInstruction(comparison.builder,{$:'strictEqual',destination:comparison.register,left:saved.register,right:value.register}),position=compared.instructions.length;
+  branches.push(position);current=appendJavaScriptCallSourceInstruction(compared,{$:'branch',condition:comparison.register,yes:0,no:position+1});
+ }
+ const dispatch=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'jump',target:0});
+ /** @type {number[]} */const bodies=[];
+ for(const clause of source.clauses){bodies.push(current.instructions.length);current=lowerJavaScriptCallSourceExpression(clause.body,bindings,current,depth+1).builder;}
+ const end=current.instructions.length,positions=branches.filter(position=>position>=0),indices=branches.map((_,index)=>index).filter(index=>(branches[index]??-1)>=0);
+ current={...current,instructions:current.instructions.map((instruction,index)=>{
+  if(index===dispatch)return {$:'jump',target:fallback<0?end:bodies[fallback]??end};
+  const selected=findJavaScriptCallSourceInstructionPosition(positions,index);if(selected<0)return instruction;const clause=indices[selected];if(clause===undefined||instruction.$!=='branch')return instruction;
+  return {$:'branch',condition:instruction.condition,yes:bodies[clause]??end,no:instruction.no};
+ })};
+ current=finishJavaScriptCallSourceControlScope(current,builder,source.target,end,-1);
+ return lowerJavaScriptCallSourceExpression(source.after,bindings,current,depth+1);
+}
+
+/** @param {number[]} positions @param {number} position @returns {number} */
+export function findJavaScriptCallSourceInstructionPosition(positions,position){
+ let low=0,high=positions.length;while(low<high){const middle=Math.floor((low+high)/2),value=positions[middle];if(value===undefined)return -1;if(value===position)return middle;if(value<position)low=middle+1;else high=middle;}return -1;
 }

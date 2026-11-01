@@ -804,3 +804,50 @@ are finished and root works alone. No CI feedback, local tests, validators,
 generators or compilation were run for these drafts. Native and formal products
 remain automatic future source generation. No full-requirement completion or
 whole-project translation claim is made.
+
+
+## Solo source switch and control-transfer batch
+
+The root-only continuation drafts switch, while, break and continue from actual
+CST boundaries through source plans and the shared source compiler. Fourteen
+new complete originals bring the flat class-source inventory to sixty-three
+originals; two additional valid-source boundaries bring refusals to twelve.
+They cover default placement and selector effects, grouped labels/fallthrough,
+strict NaN/Boolean/signed-zero selection, input snapshots, empty switches,
+distinct clause blocks, nested break targets and for/while continue behavior.
+No original or translated program was executed.
+
+`javascript-call-source.js` uses explicit source control scopes and ordered
+pending transfers. It compiles each switch body once and patches branches using
+binary instruction-position lookup. A jump records its actual target and emits
+only the catch-handler pops required to leave that region. For updates have a
+separate continuation position so continue cannot accidentally skip progress.
+Unresolved transfers, target reuse and continue-to-switch reject. Case selector
+and assignment operand witnesses use actual CST fields; source field lookup is
+indexed and bounded. Arrow bodies reset the lexical control-target stack.
+
+The four new source-expression controls in `javascript-source-controls.mjs`
+include two independent try/catch originals that detect missing/excess handler
+pops. Their deferred consumer reuses `observeCallSourceException`, exact codecs,
+original-engine comparison and complete machine-state traces. The existing
+`call-source-oracle.mjs` now includes every new positive and all three invalid-IR
+controls. Consequently the existing native source-compiler and native machine
+consumers retain the same inputs, full compilations and every state comparison;
+no handwritten native switch/control semantics were added. Fixture conversion
+is automatic through the existing source-author recipe. None of it ran.
+
+The behavior follows the ECMAScript 2026
+[switch algorithms](https://tc39.es/ecma262/2026/multipage/ecmascript-language-statements-and-declarations.html#sec-switch-statement).
+The current function-source profile excludes observable script/eval completion
+values, unbraced switch lexical declarations requiring one shared TDZ environment,
+labels, finally and per-iteration mutable binding cells. Those remain obligations.
+Object/array spread, Array callback protocols and for-of/IteratorClose still block
+full `renameExpr`; its source switch shape now has a connected draft path.
+
+Prior head `bed4f873` is pushed. This continuation contains source edits only:
+no tests, validation, generation, compilation or CI feedback review. All agents
+remain finished. Source-register reconciliation and generated native/formal
+products remain deferred under the existing phase instruction.
+
+The preceding workflow `41318713744` reported completed before this batch push;
+only its ID and status were read. Native CI conclusions remain uninspected.
