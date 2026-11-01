@@ -84,6 +84,7 @@ impl RustParser {
             ));
         }
         let segments = self.path_segments("implementation owner")?;
+        self.prepare_default_type_alias_owner(&segments,path,self.inherent_discovery)?;
         let segments = self.resolve_type_alias_path(&segments, path, "implementation owner");
         if self.cursor.is("<") || self.cursor.is("for") || self.cursor.is("where") {
             return Err(unsupported(
@@ -95,7 +96,7 @@ impl RustParser {
         let resolved = self.resolve(&segments, path);
         let found = self
             .origins
-            .lookup(&resolved, path)
+            .lookup_type_owner(&resolved, path)
             .filter(|entry| matches!(entry.declaration, SourceDeclaration::Data));
         if found.is_none() && !self.inherent_discovery {
             return Err(unsupported(

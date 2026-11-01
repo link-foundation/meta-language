@@ -67,6 +67,25 @@ impl RustParser {
         if self.cursor.eat(">").is_none() { return Err(self.alias_error("generic alias arguments need a complete closing delimiter", Some(row))); }
         Ok(())
     }
+    fn generic_alias_header_origin(&self,origin:&SourceOrigin)->bool{
+        if self.generic_alias_callable_template(origin,true){return true;}
+        let name=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.origins.lookup_type_owner(path,&origin.path).filter(|entry|matches!(entry.declaration,SourceDeclaration::Data)).map(|entry|entry.full_name),_=>None};
+        let stored=name.as_ref().and_then(|name|self.origins.standard_sum_source_origins.get(name));let sum=stored.and_then(|origin|origin.standard_sum_source.as_deref());let owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());
+        rules::accept_rust_generic_type_alias_header_standard_sum_origin(self.header_discovery,origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),stored.map_or(-1.0,|origin|origin.wrappers.len() as f64),sum.is_some_and(|sum|sum.provisional))
+    }
+    fn generic_alias_callable_template(&self,origin:&SourceOrigin,header:bool)->bool{
+        let owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());
+        let parameters=match origin.ty.as_ref(){Some(Type::Function {params,..})=>params.len() as f64,_=>-1.0};
+        let copies=origin.callable_parameters.iter().flatten().map(SourceOrigin::direct_copy_value).collect::<Vec<_>>();
+        let result_copy=origin.callable_result.as_deref().is_some_and(SourceOrigin::direct_copy_value);
+        let result_typed=origin.callable_result.as_deref().is_some_and(|result|result.ty.is_some());
+        let closure=origin.copy_closure_identity.is_some()||origin.copy_closure_capture_count.is_some();
+        if header{
+            rules::accept_rust_generic_type_alias_header_callable_template(self.ordinary_completion_context(),origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),owner.map_or(-1.0,|owner|owner.path.len() as f64),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),parameters,&copies,result_copy,result_typed,self.header_discovery,origin.source_function_pointer_header,closure)
+        }else{
+            rules::accept_rust_generic_type_alias_concrete_callable_template(self.ordinary_completion_context(),origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),owner.map_or(-1.0,|owner|owner.path.len() as f64),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),parameters,&copies,result_copy,result_typed,origin.proven,origin.copy_evidence.is_some(),closure)
+        }
+    }
     fn generic_alias_vector_owner(&self,segments:&[String])->String {
         let resolved=self.resolve(segments,&self.module_path);
         let mut shadowed=false;
@@ -209,8 +228,10 @@ impl RustParser {
         let stored=actual_data.as_ref().and_then(|name|self.origins.standard_sum_source_origins.get(name));
         let sum=stored.and_then(|origin|origin.standard_sum_source.as_deref());
         let sum_leaf=rules::accept_rust_generic_type_alias_standard_sum_leaf(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),origin.proven,stored.is_some_and(|origin|origin.proven),stored.is_some_and(|origin|origin.copy_evidence.is_some()),stored.map_or(-1.0,|origin|origin.wrappers.len() as f64));
+        let owned_profile=stored.map(|stored|self.origins.standard_sum_ownership_facts(stored).profile).unwrap_or_default();
+        let owned_sum_leaf=rules::accept_rust_generic_type_alias_owned_standard_sum_leaf(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),origin.proven,stored.is_some_and(|origin|origin.proven),stored.map_or(-1.0,|origin|origin.wrappers.len() as f64),&owned_profile);
         let string=rules::accept_rust_generic_type_alias_owned_string_template(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.proven,origin.text_source_model.unwrap_or(""));
-        if !accepted && !named && !sum_leaf && !string { return Err(self.alias_error("generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype",Some(row))); }
+        if !accepted && !named && !sum_leaf && !owned_sum_leaf && !self.generic_alias_callable_template(origin,false) && !self.generic_alias_header_origin(origin) && !string { return Err(self.alias_error("generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype",Some(row))); }
         let first = self.cursor.tokens.iter().position(|token|token.start == start_coordinate).expect("actual generic template source token");
         for index in first..self.cursor.index {
             let token=&self.cursor.tokens[index];let qualified=index>0&&self.cursor.tokens[index-1].value=="::";
@@ -320,6 +341,25 @@ impl RustParser {
     pub(super) fn read_generic_type_alias_default_value(&mut self,row:&AliasDeclaration)->Result<SourceOrigin>{
         self.read_generic_type_alias_value_arguments(row,false)
     }
+    pub(super) fn prepare_default_type_alias_access(&mut self,segments:&[String],path:&[String])->Result<()>{
+        if !self.ordinary_completion_context()||segments.len()<2{return Ok(());}
+        self.prepare_default_type_alias_owner(&segments[..segments.len()-1],path,false)
+    }
+    pub(super) fn prepare_default_type_alias_owner(&mut self,segments:&[String],path:&[String],discovery:bool)->Result<()>{
+        if !self.ordinary_completion_context()||rules::read_rust_generic_type_alias_default_owner_phase(self.origins.collecting,discovery)=="defer"{return Ok(());}
+        let Some(row)=self.generic_alias_source_row_at(segments,path).filter(|row|!row.parameters.is_empty())else{return Ok(());};
+        self.prepare_type_alias_default_origin(&row)
+    }
+    pub(super) fn prepare_default_type_alias_access_head(&mut self,path:&[String])->Result<()>{
+        if !self.ordinary_completion_context()||self.cursor.is("::"){return Ok(());}
+        let mut segments=Vec::new();let mut offset=0;
+        while self.cursor.peek_at(offset).kind==TokenKind::Identifier&&(segments.len() as f64)<rules::read_rust_generic_type_alias_default_access_head_limit(){
+            segments.push(self.cursor.peek_at(offset).value.clone());offset+=1;
+            if !self.cursor.is_at("::",offset){return self.prepare_default_type_alias_access(&segments,path);}
+            if self.cursor.peek_at(offset+1).kind!=TokenKind::Identifier{return Ok(());}
+            offset+=1;
+        }Ok(())
+    }
     fn read_generic_type_alias_value_arguments(&mut self,row:&AliasDeclaration,allow_argument_tokens:bool)->Result<SourceOrigin>{
         let template = self.prepare_generic_type_alias(row)?;
         let explicit=allow_argument_tokens&&self.cursor.eat("<").is_some();
@@ -346,7 +386,12 @@ impl RustParser {
         }
         let occurrences = self.generic_alias_template_bindings(&template,row)?;
         let proven = arguments.iter().map(|origin|origin.proven && origin.ty.is_some()).collect::<Vec<_>>();
-        let plan = rules::read_rust_generic_type_alias_substitution_plan(&row.parameter_bindings,&proven,&occurrences);
+        let mut plan = rules::read_rust_generic_type_alias_substitution_plan(&row.parameter_bindings,&proven,&occurrences);
+        if plan.first().map(String::as_str)!=Some("substitution"){
+            let typed=arguments.iter().map(|origin|origin.ty.is_some()&&origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).is_some()).collect::<Vec<_>>();
+            let provisional=arguments.iter().map(|origin|self.generic_alias_header_origin(origin)).collect::<Vec<_>>();
+            plan=rules::read_rust_generic_type_alias_header_substitution_plan(&row.parameter_bindings,self.header_discovery,&typed,&proven,&provisional,&occurrences);
+        }
         if plan.first().map(String::as_str) != Some("substitution") { return Err(self.alias_error(&plan[1],Some(row))); }
         let mut occurrence = 1;
         self.materialize_generic_alias_template(&template,&arguments,&plan,&mut occurrence,row,0)
@@ -372,7 +417,12 @@ impl RustParser {
         let stored=name.as_ref().and_then(|name|self.origins.standard_sum_source_origins.get(name));
         let sum=stored.and_then(|origin|origin.standard_sum_source.as_deref());
         let element=match origin.ty.as_ref(){Some(Type::Array {element,..})=>element.kind(),_=>""};
-        let plan=rules::read_rust_generic_type_alias_constructor_plan(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),element,origin.array_source_model.unwrap_or(""),origin.proven,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),stored.is_some_and(|origin|origin.proven),stored.is_some_and(|origin|origin.copy_evidence.is_some()),&member.value);
+        let mut plan=rules::read_rust_generic_type_alias_constructor_plan(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),element,origin.array_source_model.unwrap_or(""),origin.proven,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),stored.is_some_and(|origin|origin.proven),stored.is_some_and(|origin|origin.copy_evidence.is_some()),&member.value);
+        if plan.is_empty(){
+            let profile=stored.map(|stored|self.origins.standard_sum_ownership_facts(stored).profile).unwrap_or_default();
+            plan=rules::read_rust_generic_type_alias_owned_constructor_plan(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.proven,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),stored.is_some_and(|origin|origin.proven),&profile,&member.value);
+        }
+        if plan.is_empty(){plan=rules::read_rust_generic_type_alias_header_constructor_plan(self.header_discovery,sum.is_some_and(|sum|sum.provisional),origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),stored.map_or(-1.0,|origin|origin.wrappers.len() as f64),&member.value);}
         if plan.is_empty(){if !explicit{return Ok(None);}return Err(self.alias_error("generic alias associated construction needs its actual admitted vector or standard sum constructor",Some(&row)));}
         let arity=plan[1].parse::<usize>().expect("shared generic alias constructor arity");
         let constructor_path=sum.and_then(|sum|sum.constructor_paths.get(&member.value)).cloned();
@@ -397,6 +447,7 @@ impl RustParser {
         let span=Some(Span::new(start.start,end));self.origins.call(&constructor_path,&args,path,span)?;
         let name=SExpr::new(SNode::Name {path:constructor_path},span);
         let node=if args.is_empty(){name}else{SExpr::new(SNode::App {func:Box::new(name),args},span)};
-        self.origins.mark(&node,origin);Ok(Some(node))
+        let arguments=match &node.node{SNode::App {args,..}=>args.as_slice(),_=>&[]};
+        self.capture_standard_sum_constructor(&node,&origin,arguments,path,span)?;Ok(Some(node))
     }
 }

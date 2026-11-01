@@ -11640,3 +11640,35 @@ Recursive CST reuse validates the domain of supplied resource counters, limits,
 language identities and ancestor facts before selecting a reuse path. Reusing
 existing nodes may avoid a new parse charge, including valid zero-budget reuse;
 it cannot authorize malformed inputs or certify concept equivalence.
+
+Standard-sum ownership is independent of Copy evidence. An additional source
+profile may admit existing supported owned String/vector leaves and recursively
+nested standard sums only through their complete actual type and owner facts.
+The current profile reports unsupported versions outside Rust >=1.90.0
+<1.100.0 and bounds each memoized ownership traversal to 100000 nodes and depth
+256. These are explicit source-profile bounds, not measured resource results.
+Datatype child contracts cannot retain a particular value's binding identifier,
+loan union, temporary scope or fresh-result capability. Constructor payload
+transfers, actual function-call results and consuming field patterns use the
+existing move, branch-join and scope-expiry model. Shared field projections keep
+their parent root loan and lifetime, and explicit reference patterns cannot
+turn a borrowed place into an owned value. Nonbinding constructor inspection
+does not imply a move. This source profile does not provide custom Drop, general
+nominal ownership, unrestricted guarded patterns or owned callback semantics; those
+remain required extensions. The current integration and its controls are
+unexecuted drafts.
+
+Guarded owned patterns use a readonly preview of actual field origins while the
+guard runs. Preview scopes cannot allocate an owning binding for a borrowed
+place. Only the selected body path commits ordinary field transfers; failed
+guards retain the original root for later arms. The separate immediate-move
+policy still refuses owned guards. Alias/or-pattern guarded ownership outside
+the current deferred profile requires its complete additional interpretation.
+
+Borrowed fields validate root loans at scope expiry. Dereferencing an actual
+Copy field validates its current loans before detaching the copied value from
+them. Pattern projection cannot confer new temporary lifetime extension on a
+match scrutinee; existing named-root loans remain tied to their original scope.
+The current [Rust Reference](https://doc.rust-lang.org/reference/destructors.html#temporary-lifetime-extension)
+provides the syntax rationale; exact selected-version original-compiler checks
+remain separate deferred obligations.

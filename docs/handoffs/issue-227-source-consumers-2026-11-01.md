@@ -73,6 +73,55 @@ been refreshed.
 
 ## Continue after the checkpoint
 
+Checkpoint `2011b6f4` records the namespace, generic-default, conversion,
+predicate, nested-sum and recursive-reuse source batch. It was committed with
+hooks disabled and without any tests, generation or compilation. A status-only
+query still showed predecessor run `41254636343` queued at `f1b7f068`, so the
+next push is held. Its conclusion, jobs, logs and artifacts were not read.
+Drafting continues while that run is pending.
+
+After this checkpoint, defaulted alias owners are prepared from non-consuming
+actual path facts before primary member readers and before constant/range
+pattern readers. Direct callback readers prepare the same context, covering
+paths such as `Word::from` and preserving pointer-versus-fixed integer parameter
+owners. The declaration-default cache remains separate from explicit
+specializations. These entry seams and their additional original programs are
+authored and unexecuted; generated policy products still need automatic refresh.
+Combinator dispatch is wired ahead of ordinary methods while its separate
+source adapters and original controls are being drafted.
+
+The owned-sum batch connects a separate actual-ownership profile alongside the
+retained Copy gate. Complete String/vector and recursively nested standard-sum
+type roles must come from actual catalog definitions and existing owner rules;
+they never set Copy evidence. Stored datatype child origins recursively clear
+runtime binding/place/loan/temporary identities and fresh-production proofs.
+Direct and generic constructors use existing argument-transfer bookkeeping,
+function results need actual recorded calls, and pattern fields carry their
+parent owner or shared loan. Nonbinding inspection does not consume a payload.
+Reference-pattern stripping preserves borrowed-place provenance. Initial
+consuming guarded arms now have a separate deferred mode: preview scopes retain
+borrowed places, guards cannot manufacture owner identities, and ordinary field
+moves commit only for body paths. Alias/or-pattern extensions remain explicit
+gaps; ordinary Copy guards and shared projections are distinct. Parent-authored
+String/vector/nested-sum originals and move/borrow refusals are connected to the
+deferred matrix. The helper/caller source integration has been reviewed without
+execution; it establishes no observed ownership result. Owned profile admission
+reports uncovered source versions outside Rust 1.90 through 1.99; four literal
+version controls and both public frontend paths are authored. Per-invocation
+ownership facts memoize actual definition identities and bound visits to
+100000 nodes and depth 256; no performance measurement is claimed.
+
+The exact former guarded-source refusal is preserved with its previous index,
+allowed diagnostics, original text and compiler contract in a boundary-history
+directory. Its identical source is now an active deferred-guard positive. The
+old immediate-move policy still refuses the missing deferred interpretation.
+Five new invalid ownership originals declare compiler rejection; the moved
+guard declares compiler acceptance independently of interpreter admission.
+Future CI compiles classified refusals as metadata only at both selected
+snapshots, with normal exit status and primary source-diagnostic assertions;
+it never executes a refused program. Historical unclassified rows are reported
+as obligations. These are declared controls, not compiler observations.
+
 The next source batch after pushed checkpoint `f1b7f068` connects independent
 type/value namespace indexes through parser passes and temporary constant
 readers, preserves hidden homographs while finalizing sums, and resolves actual

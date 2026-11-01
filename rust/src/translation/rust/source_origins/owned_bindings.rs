@@ -3,6 +3,12 @@ use super::{Result, SExpr, SNode, SourceOrigin, SourceOrigins, Span, Type, unsup
 use crate::translation::rust_owned_binding_rules as rules;
 use std::collections::{HashMap, HashSet};
 impl SourceOrigins {
+    pub(in super::super) fn owned_standard_sum_argument_transferred(&self,node:&SExpr)->bool{
+        node.span.is_some_and(|span|self.owned_argument_transfers.contains(&span))
+    }
+    pub(in super::super) fn owned_standard_sum_recorded_call(&self,node:&SExpr)->bool{
+        node.span.is_some_and(|span|self.fresh_calls.contains(&span))
+    }
     pub(in super::super) fn track_owned_bindings(&self) -> bool {
         rules::accept_rust_owned_binding_tracking(
             self.collecting,
@@ -14,7 +20,7 @@ impl SourceOrigins {
     }
     pub(in super::super) fn owned_binding_value(&self, origin: &SourceOrigin) -> bool {
         self.track_owned_bindings()
-            && rules::accept_rust_owned_binding_value(
+            && (rules::accept_rust_owned_binding_value(
                 origin.ty.as_ref().map_or("", Type::kind),
                 origin
                     .array_source_model
@@ -22,7 +28,7 @@ impl SourceOrigins {
                     .unwrap_or(""),
                 origin.wrappers.len() as f64,
                 origin.proven,
-            )
+            ) || self.is_owned_standard_sum_value(origin))
     }
     pub(in super::super) fn check_owned_origin(
         &self,
@@ -55,7 +61,7 @@ impl SourceOrigins {
         &mut self,
         mut origin: SourceOrigin,
     ) -> SourceOrigin {
-        if self.owned_binding_value(&origin) {
+        if rules::accept_rust_owned_binding_registration(self.owned_binding_value(&origin),origin.source_borrowed_place) {
             let id = self.next_source_binding_identity.to_string();
             self.next_source_binding_identity += 1;
             origin.source_binding_identity = Some(id.clone());
@@ -63,6 +69,7 @@ impl SourceOrigins {
             origin.source_place_binding_identity = None;
             origin.source_loan_binding_identities.clear();
             origin.source_place_loan_binding_identities.clear();
+            origin.source_standard_sum_pattern_move=false;
             self.source_binding_states
                 .insert(id, "available".to_owned());
         }
@@ -214,7 +221,7 @@ impl SourceOrigins {
         &mut self,
         before: &HashMap<String, String>,
         result: &SourceOrigin,
-    ) {
+    ) -> Result<()> {
         let escaping = if self.owned_binding_value(result) {
             result.source_binding_identity.clone()
         } else {
@@ -228,6 +235,8 @@ impl SourceOrigins {
                 *state = rules::expire_rust_owned_binding_state(state);
             }
         }
+        self.validate_standard_sum_borrowed_result(result,None)?;
+        Ok(())
     }
     pub(in super::super) fn snapshot_owned_bindings(&self) -> HashMap<String, String> {
         self.source_binding_states.clone()

@@ -3,6 +3,9 @@
 export function acceptRustOwnedBindingTracking(collecting,excluded){return !collecting&&!excluded;}
 /** @param {string} kind @param {string} storage @param {number} layers @param {boolean} known @returns {boolean} */
 export function acceptRustOwnedBindingValue(kind,storage,layers,known){return (kind==='array'&&storage==='owned vector'||kind==='string'&&storage==='owned string')&&layers===0&&known;}
+/** Scope entry can preserve a borrowed place, but cannot turn it into an owner.
+ * @param {boolean} owned @param {boolean} borrowedPlace @returns {boolean} */
+export function acceptRustOwnedBindingRegistration(owned,borrowedPlace){return owned&&!borrowedPlace;}
 /** @param {string} state @returns {string} */
 export function readRustOwnedBindingReadError(state){return state==='available'?'':state==='moved'?'a moved source binding cannot be read or consumed again':state==='dropped'?'an owned source binding does not outlive this use':state==='possibly moved'?'a source binding moved on a returning branch cannot be reused':'a source binding needs its actual ownership state';}
 /** @param {string} state @returns {string} */

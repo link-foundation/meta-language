@@ -449,6 +449,14 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(sum)=self.read_owned_standard_sum_observer(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
+                if let Some(sum)=self.read_standard_sum_source_combinator(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
                 if let Some(sum)=self.read_standard_sum_source_nested(&value,&method,path)? {
                     value=sum;
                     continue;
@@ -1025,6 +1033,7 @@ impl RustParser {
 
     #[allow(clippy::too_many_lines)] // one branch per primary form, as in rust.js
     pub(super) fn primary(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        self.prepare_default_type_alias_access_head(path)?;
         if let Some(value) = self.read_primitive_function_value(path, None)? {
             return Ok(value);
         }

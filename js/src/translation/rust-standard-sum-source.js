@@ -5,6 +5,8 @@ import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustTypeAliasLookupKeys} from './rust-type-alias-rules.js';
 import {readRustSourceNamespacePathRole} from './rust-source-namespace-rules.js';
+import {readRustStandardSumOwnershipFacts,captureRustStandardSumConstructor} from './rust-standard-sum-ownership.js';
+import {acceptRustStandardSumOwnedArguments,readRustStandardSumOwnershipVersionError} from './rust-standard-sum-ownership-rules.js';
 import {readRustFunctionPointerTypeError} from './rust-function-pointer-rules.js';
 import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata} from './rust-standard-sum-source-metadata.js';
 import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
@@ -12,6 +14,23 @@ import {readRustStandardSumSourceOwner,readRustStandardSumSourcePathOwner,readRu
 
 const fail=(reason,span)=>{throw unsupported('Rust standard sum source',reason,span);};
 const copy=value=>structuredClone(value);
+// Datatype fields retain type contracts, never a particular value's owner ID
+// or temporary-production capability. Runtime ownership stays at the use site.
+function sourceTypeOrigin(origin){
+ const result=origin;
+ const pending=[result];
+ while(pending.length){
+  const value=pending.pop();
+  for(const key of ['sourceBindingIdentity','sourcePlaceBindingIdentity'])delete value[key];
+  for(const key of ['sourceLoanBindingIdentities','sourcePlaceLoanBindingIdentities','sourceExtendingTemporaryBindings'])value[key]=[];
+  value.sourceBorrowedPlace=false;value.sourceOwnedResultProof=false;value.freshArrayValue=false;
+  value.sourceStandardSumPatternMove=false;
+  value.sourceStandardSumBorrowedField=false;
+  pending.push(...(value.fields??[]),...(value.callableParameters??[]),...(value.standardSumSource?.arguments??[]));
+  if(value.callableResult)pending.push(value.callableResult);
+ }
+ return result;
+}
 const where=(parser,start)=>({start:start.start,end:parser.cursor.tokens[Math.max(0,parser.cursor.index-1)].end});
 
 export function initializeRustStandardSumSource(parser){
@@ -52,6 +71,12 @@ function resolvedOwner(parser,segments,path,valueNamespace=false){
 
 export function resolveRustStandardSumSourceOwner(parser,segments,path){
  return resolvedOwner(parser,segments,path)?.owner??'';
+}
+
+// Value-position lookup retains bare constructor shadows and qualified roots.
+export function resolveRustStandardSumSourceConstructor(parser,segments,path){
+ const selected=resolvedOwner(parser,segments,path,true);
+ return selected?.constructor?{owner:selected.owner,constructor:selected.constructor}:null;
 }
 
 export function readRustStandardSumSourceImport(parser,segments,path){
@@ -105,7 +130,7 @@ export function readRustStandardSumSourceIdentity(parser,origin){
   if(!value?.proven||value.diverging||!value.type)return null;
   const entry=value.type.kind==='named'?parser.origins.lookupTypeOwner(value.type.path,value.path):null;
   const stored=entry?.k==='data'?entry.standardSumSourceOrigin:null;
-  if(stored?.proven&&stored.copyEvidence&&stored.wrappers.length===0){
+  if(stored?.proven&&stored.wrappers.length===0&&(stored.copyEvidence||readRustStandardSumOwnershipFacts(parser.origins,stored).profile==='owned')){
    const children=stored.standardSumSource.arguments.map(child=>project(child,depth+1));
    return children.some(child=>child===null)?null:{owner:stored.standardSumSource.owner,arguments:children,wrappers:value.wrappers};
   }
@@ -125,7 +150,7 @@ function metadataCost(parser,origins,identities=false,header=false){
  try{
   const raw=measureRustStandardSumSourceMetadata(origins);
   if(!identities)return raw;
-  const identity=measureRustStandardSumSourceIdentityMetadata(origins,(names,path)=>parser.origins.lookupTypeOwner(names,path),header);
+  const identity=measureRustStandardSumSourceIdentityMetadata(origins,(names,path)=>parser.origins.lookupTypeOwner(names,path),header,stored=>readRustStandardSumOwnershipFacts(parser.origins,stored).profile==='owned');
   return [raw[0]+identity[0],raw[1]+identity[1]];
  }catch(error){if(error instanceof RangeError)fail(error.message);throw error;}
 }
@@ -143,7 +168,7 @@ export function readRustStandardSumSourceOrigin(parser,origin){
  const entry=parser.origins.lookupTypeOwner(origin.type.path,origin.path);
  if(entry?.k!=='data'||!entry.standardSumSourceOrigin)return null;
  const stored=entry.standardSumSourceOrigin;
- if(!stored.proven||!stored.copyEvidence||stored.wrappers.length!==0)return null;
+ if(!stored.proven||stored.wrappers.length!==0||(!stored.copyEvidence&&readRustStandardSumOwnershipFacts(parser.origins,stored).profile!=='owned'))return null;
  metadataCost(parser,[stored]);
  return {...copy(stored),wrappers:[...origin.wrappers]};
 }
@@ -155,8 +180,13 @@ function instantiate(parser,owner,arguments_,span){
  if(readRustStandardSumSourceDepth(arguments_.map(argument=>actualOriginSumDepth(parser,argument,new Set(),0)),true)<0)fail('the complete concrete sum type exceeds its shared nested depth bound',span);
  arguments_=provisional?cloneHeaderArguments(arguments_):arguments_.map(argument=>qualifiedOrigin(parser,argument));
  if(arguments_.some(argument=>!argument))fail('a concrete child needs its actual resolved datatype owner',span);
+ arguments_=arguments_.map(sourceTypeOrigin);
  const identities=provisional?arguments_.map(argument=>JSON.stringify([headerType(parser,argument.type,argument.path),argument.path,argument.expandedSourceOwner??argument.sourceOwner,argument.wrappers])):arguments_.map(argument=>readRustStandardSumSourceIdentity(parser,argument));
- if(!provisional&&!acceptRustStandardSumSourceArguments(owner,identities,arguments_.map(argument=>parser.origins.immutableProduct(argument))))fail('every explicit child needs a complete direct immutable Copy source type',span);
+ const copies=arguments_.map(argument=>parser.origins.immutableProduct(argument));
+ const roles=provisional?[]:arguments_.map(argument=>readRustStandardSumOwnershipFacts(parser.origins,argument).profile);
+ const ownedProfile=!provisional&&acceptRustStandardSumOwnedArguments(owner,identities,roles);
+ if(!provisional&&!acceptRustStandardSumSourceArguments(owner,identities,copies)&&!ownedProfile)fail('every child needs its complete direct Copy or supported owned source type and ownership model',span);
+ if(ownedProfile){const versionError=readRustStandardSumOwnershipVersionError(parser.sourceVersionMinor);if(versionError)fail(versionError,span);}
  const key=JSON.stringify([provisional?'private header':'admitted',owner,identities]);
  for(const row of parser.standardSumSourceRows)if(row.origin.standardSumSource.identity===key)return copy(row.origin);
  if(!parser.standardSumSourceUpgradeRow&&parser.standardSumSourceRows.length>=readRustStandardSumSourceInstantiationLimit())fail('the concrete standard sum inventory exceeds its shared bound',span);
@@ -171,7 +201,7 @@ function instantiate(parser,owner,arguments_,span){
   if(!actual)fail('each concrete child must retain its actual source owner',span);
   return copy(actual);
  })};
- const origin={...parser.origins.typeOrigin({kind:'named',path:typePath},[]),proven:!provisional,uncertain:false,diverging:false,copyEvidence:!provisional,wrappers:[],fields:null,sourceOwner,expandedSourceOwner:copy(sourceOwner),standardSumSource:{owner,arguments:copy(arguments_),typePath,constructorPaths,identity:key,provisional}};
+ const origin={...parser.origins.typeOrigin({kind:'named',path:typePath},[]),proven:!provisional,uncertain:false,diverging:false,copyEvidence:!provisional&&copies.every(Boolean),wrappers:[],fields:null,sourceOwner,expandedSourceOwner:copy(sourceOwner),standardSumSource:{owner,arguments:copy(arguments_),typePath,constructorPaths,identity:key,provisional}};
  parser.origins.registerCatalogEntry(name,{k:'data',standardSumSourceOrigin:copy(origin)});
  for(const constructor of constructors){
   const argument=readRustStandardSumSourceFieldArgument(owner,constructor),fields=argument<0?[]:[copy(arguments_[argument])];
@@ -375,7 +405,8 @@ export function readRustStandardSumSourceConstructor(parser,segments,path,start)
  // takes precedence over ambient context for a later postfix transformation.
  if(!explicit&&arity===1&&acceptRustStandardSumSourceInferredConstructor(selected.owner,selected.constructor)){
   const actual=parser.origins.origin(args[0],path);
-  const identity=parser.origins.immutableProduct(actual)?readRustStandardSumSourceIdentity(parser,actual):'';
+  const role=readRustStandardSumOwnershipFacts(parser.origins,actual).profile;
+  const identity=role==='copy'||role==='owned'?readRustStandardSumSourceIdentity(parser,actual):'';
   if(identity&&identity!==readRustStandardSumSourceIdentity(parser,expected?.standardSumSource.arguments[0]))expected=instantiate(parser,selected.owner,[actual],where(parser,start));
  }
  if(!expected){
@@ -386,7 +417,8 @@ export function readRustStandardSumSourceConstructor(parser,segments,path,start)
  if(arity===1)parser.origins.argument(parser.origins.origin(args[0],path),fields[argument],where(parser,start));
  const constructor=expected.standardSumSource.constructorPaths[selected.constructor],range=where(parser,start);
  const node=arity?{k:'app',fn:{k:'name',path:constructor,span:range},args,span:range}:{k:'name',path:constructor,span:range};
- return parser.origins.mark(node,expected);
+ captureRustStandardSumConstructor(parser,node,expected,args,path,range);
+ return node;
 }
 
 export function readRustStandardSumSourcePattern(parser,segments,path,start,aliases=[]){

@@ -29,6 +29,7 @@ impl RustParser {
         if segments.len() < 2 {
             return Ok(None);
         }
+        if !absolute{self.prepare_default_type_alias_access(&segments,path)?;}
         let expanded = if !absolute && self.ordinary_completion_context() {
             self.resolve_type_alias_path(&segments, path, "associated integer constant")
         } else {

@@ -46,6 +46,8 @@ pub(super) struct SourceOrigin {
     pub(super) source_loan_binding_identities: Vec<String>,
     pub(super) source_place_loan_binding_identities: Vec<String>,
     pub(super) source_owned_result_proof: bool,
+    pub(super) source_standard_sum_pattern_move: bool,
+    pub(super) source_standard_sum_borrowed_field: bool,
     pub(super) source_byte_iterator: bool,
     pub(super) source_borrowed_place: bool,
     pub(super) source_extending_temporary_bindings: Vec<String>,
@@ -153,6 +155,8 @@ impl SourceOrigin {
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
+            source_standard_sum_pattern_move: false,
+            source_standard_sum_borrowed_field: false,
             source_byte_iterator: false,
             source_borrowed_place: false,
             source_extending_temporary_bindings: Vec::new(),
@@ -210,6 +214,8 @@ impl SourceOrigin {
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
             source_owned_result_proof: false,
+            source_standard_sum_pattern_move: false,
+            source_standard_sum_borrowed_field: false,
             source_byte_iterator: false,
             source_borrowed_place: false,
             source_extending_temporary_bindings: Vec::new(),
@@ -792,7 +798,7 @@ impl SourceOrigins {
                             result.fresh_array_value.is_some(), result.fresh_vector_result_contract, self.fresh_calls.contains(span),
                         )
                     });
-                    return result;
+                    return self.standard_sum_owned_call_result(node,path,result);
                 }
                 SourceDeclaration::Constant { result } => return result,
                 SourceDeclaration::Constructor { result, .. } => return result,
@@ -1092,6 +1098,8 @@ impl SourceOrigins {
                 source_owned_result_proof: returning
                     .iter()
                     .all(|origin| origin.source_owned_result_proof),
+                source_standard_sum_pattern_move: returning.iter().any(|origin|origin.source_standard_sum_pattern_move),
+                source_standard_sum_borrowed_field: returning.iter().any(|origin|origin.source_standard_sum_borrowed_field),
                 source_binding_identity: if returning
                     .iter()
                     .all(|origin| origin.source_binding_identity == first.source_binding_identity)
@@ -1165,6 +1173,8 @@ impl SourceOrigins {
                 source_loan_binding_identities,
                 source_place_loan_binding_identities: Vec::new(),
                 text_source_model,
+                source_standard_sum_borrowed_field: returning.iter().any(|origin|origin.source_standard_sum_borrowed_field),
+                source_standard_sum_pattern_move: returning.iter().any(|origin|origin.source_standard_sum_pattern_move),
                 ..SourceOrigin::value()
             };
         }
@@ -1247,6 +1257,7 @@ impl SourceOrigins {
     }
 
     pub(super) fn mark_owned_string_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
+        origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;
         origin.source_binding_identity = None;
         origin.source_place_binding_identity = None;
         origin.source_extending_temporary_bindings.clear();
@@ -1263,6 +1274,7 @@ impl SourceOrigins {
         self.mark(node, origin);
     }
     pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) {
+        origin.source_standard_sum_borrowed_field=false;origin.source_standard_sum_pattern_move=false;
         if let Some(span) = node.span {
             self.fresh_vector_constructors.insert(span);
         }
@@ -1353,7 +1365,7 @@ impl SourceOrigins {
 
     pub(super) fn wrap(&mut self, node: &SExpr, path: &[String], layer: &str) -> Result<()> {
         let mut origin = self.origin(node, path);
-        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if !(origin.source_standard_sum_borrowed_field&&origin.source_borrowed_place)&&self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&origin.source_place_binding_identity.is_some(){origin.source_binding_identity=origin.source_place_binding_identity.clone();}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_loan_binding_identities=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_loan_binding_identities,&origin.source_place_loan_binding_identities);}
         origin.wrappers.insert(0, layer.to_owned());
@@ -1394,6 +1406,7 @@ impl SourceOrigins {
         if lifetime && !origin.source_lifetimes.is_empty() {
             origin.source_lifetimes.remove(0);
         }
+        origin=self.finish_standard_sum_field_dereference(origin,span)?;
         self.mark(node, origin);
         Ok(())
     }

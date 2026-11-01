@@ -9,7 +9,11 @@ import {retainRustNominalCopyOrigin} from './rust-nominal-copies.js';
 import {resolveRustStandardSumSourceOwner,createRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
 import {readRustStandardSumSourcePathConstructor} from './rust-standard-sum-source-rules.js';
 import {readRustContextualCallArguments} from './rust-copy-closures.js';
-import {readRustGenericTypeAliasDefaultSubstitutionPlan,readRustGenericTypeAliasDefaultArgumentPlan,acceptRustGenericTypeAliasConcreteIdentifier} from './rust-generic-type-alias-rules.js';
+import {captureRustStandardSumConstructor,readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
+import {acceptRustGenericTypeAliasOwnedStandardSumLeaf,readRustGenericTypeAliasOwnedConstructorPlan} from './rust-generic-type-alias-rules.js';
+import {readRustGenericTypeAliasHeaderSubstitutionPlan,acceptRustGenericTypeAliasHeaderStandardSumOrigin,readRustGenericTypeAliasHeaderConstructorPlan} from './rust-generic-type-alias-rules.js';
+import {acceptRustGenericTypeAliasConcreteCallableTemplate,acceptRustGenericTypeAliasHeaderCallableTemplate} from './rust-generic-type-alias-rules.js';
+import {readRustGenericTypeAliasDefaultSubstitutionPlan,readRustGenericTypeAliasDefaultArgumentPlan,acceptRustGenericTypeAliasConcreteIdentifier,readRustGenericTypeAliasDefaultAccessHeadLimit,readRustGenericTypeAliasDefaultOwnerPhase} from './rust-generic-type-alias-rules.js';
 import {readRustGenericTypeAliasBindingPlan,readRustGenericTypeAliasSubstitutionPlan,readRustGenericTypeAliasExpansionError,readRustGenericTypeAliasTemplateDepthError,readRustGenericTypeAliasUnusedParameterError,acceptRustGenericTypeAliasConcreteTemplate,acceptRustGenericTypeAliasNamedTemplate,readRustGenericTypeAliasStandardSumOwner,readRustGenericTypeAliasStandardSumDepthError,acceptRustGenericTypeAliasStandardSumLeaf,readRustGenericTypeAliasVectorOwner,acceptRustGenericTypeAliasVectorArguments,readRustGenericTypeAliasVectorElementError,acceptRustGenericTypeAliasOwnedStringTemplate,readRustGenericTypeAliasConstructorPlan} from './rust-generic-type-alias-rules.js';
 
 function charge(parser,context,row,count=1){
@@ -46,6 +50,18 @@ function closeArguments(parser,context,row){
  splitRustTypeClosingToken(parser);
  if(!parser.cursor.eat('>'))context.fail(parser,'generic alias arguments need a complete closing delimiter',row);
 }
+function headerOrigin(parser,origin){
+ if(headerCallable(parser,origin))return true;
+ const data=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null;
+ const stored=data?.standardSumSourceOrigin,sum=stored?.standardSumSource,owner=origin.expandedSourceOwner??origin.sourceOwner;
+ return acceptRustGenericTypeAliasHeaderStandardSumOrigin(parser.headerDiscovery===true,origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,sum?.owner??'',sum?.arguments.length??-1,stored?.wrappers.length??-1,sum?.provisional===true);
+}
+function callableFacts(parser,origin){
+ const owner=origin.expandedSourceOwner??origin.sourceOwner;
+ return [parser.ordinaryCompletionContext(),origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.length??-1,owner?.arguments.length??-1,origin.type?.kind==='function'?origin.type.params.length:-1,(origin.callableParameters??[]).map(parameter=>parser.origins.immutableProduct(parameter)),parser.origins.immutableProduct(origin.callableResult),Boolean(origin.callableResult?.type)];
+}
+function concreteCallable(parser,origin){return acceptRustGenericTypeAliasConcreteCallableTemplate(...callableFacts(parser,origin),origin.proven===true,origin.copyEvidence===true,origin.copyClosureIdentity!=null||origin.copyClosureCaptureCount!=null);}
+function headerCallable(parser,origin){return acceptRustGenericTypeAliasHeaderCallableTemplate(...callableFacts(parser,origin),parser.headerDiscovery===true,origin.sourceFunctionPointerHeader===true,origin.copyClosureIdentity!=null||origin.copyClosureCaptureCount!=null);}
 function symbolicApplication(parser,row,arguments_,context){
  const template=prepareRustGenericTypeAlias(parser,row,context),defaults=parser.sourceTypeAliasDefaults.get(row.key),completed=[...arguments_];
  const missing=readRustGenericTypeAliasDefaultArgumentPlan(defaults.map(Boolean),completed.length,true);if(missing[0]!=='arguments')context.fail(parser,missing[1],row);
@@ -131,7 +147,8 @@ function templateValue(parser,row,context,depth){
  const origin=parser.origins.type,owner=origin.expandedSourceOwner??origin.sourceOwner;
  const data=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null;
  const stored=data?.standardSumSourceOrigin,sum=stored?.standardSumSource;
- if(!acceptRustGenericTypeAliasConcreteTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',String(origin.type?.bits??''),origin.type?.signed===true,owner?.arguments.length??-1,origin.proven===true)&&!acceptRustGenericTypeAliasNamedTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,data?.fullName??'')&&!acceptRustGenericTypeAliasStandardSumLeaf(origin.type?.kind??'',origin.wrappers.length,sum?.owner??'',sum?.arguments.length??-1,origin.proven===true,stored?.proven===true,stored?.copyEvidence===true,stored?.wrappers.length??-1)&&!acceptRustGenericTypeAliasOwnedStringTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,origin.textSourceModel??''))context.fail(parser,'generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype',row);
+ const owned=stored?readRustStandardSumOwnershipFacts(parser.origins,stored).profile:'';
+ if(!acceptRustGenericTypeAliasConcreteTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',String(origin.type?.bits??''),origin.type?.signed===true,owner?.arguments.length??-1,origin.proven===true)&&!acceptRustGenericTypeAliasNamedTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,data?.fullName??'')&&!acceptRustGenericTypeAliasStandardSumLeaf(origin.type?.kind??'',origin.wrappers.length,sum?.owner??'',sum?.arguments.length??-1,origin.proven===true,stored?.proven===true,stored?.copyEvidence===true,stored?.wrappers.length??-1)&&!acceptRustGenericTypeAliasOwnedStandardSumLeaf(origin.type?.kind??'',origin.wrappers.length,sum?.owner??'',sum?.arguments.length??-1,origin.proven===true,stored?.proven===true,stored?.wrappers.length??-1,owned)&&!concreteCallable(parser,origin)&&!headerOrigin(parser,origin)&&!acceptRustGenericTypeAliasOwnedStringTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,origin.textSourceModel??''))context.fail(parser,'generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype',row);
  for(let at=c.tokens.indexOf(startToken);at<c.index;at+=1){if(c.tokens[at].kind==='identifier'&&!acceptRustGenericTypeAliasConcreteIdentifier(row.parameters,c.tokens[at].value,c.tokens[at-1]?.value==='::'))context.fail(parser,'parameter-dependent wrapper and library alias templates need their complete interpretation',row);}
  return {kind:'origin',origin:context.copyOrigin(parser,origin,row)};
 }
@@ -210,7 +227,9 @@ export function readRustGenericTypeAliasValue(parser,row,context,allowArgumentTo
   if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
   occurrence=1;arguments_.push(materialize(node,0));
  }
- plan=readRustGenericTypeAliasSubstitutionPlan(row.parameterBindings,arguments_.map(origin=>origin.proven===true&&Boolean(origin.type)),bindings(parser,template,row,context));
+ const concreteOccurrences=bindings(parser,template,row,context);
+ plan=readRustGenericTypeAliasSubstitutionPlan(row.parameterBindings,arguments_.map(origin=>origin.proven===true&&Boolean(origin.type)),concreteOccurrences);
+ if(plan[0]!=='substitution')plan=readRustGenericTypeAliasHeaderSubstitutionPlan(row.parameterBindings,parser.headerDiscovery===true,arguments_.map(origin=>Boolean(origin.type&&(origin.expandedSourceOwner??origin.sourceOwner))),arguments_.map(origin=>origin.proven===true),arguments_.map(origin=>headerOrigin(parser,origin)),concreteOccurrences);
  if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
  occurrence=1;return materialize(template,0);
 }
@@ -223,6 +242,27 @@ export function readRustGenericTypeAliasDefaultOrigin(parser,row,context){
  const origin=readRustGenericTypeAliasValue(parser,row,context,false);
  origin.expandedSourceOwner=structuredClone(origin.sourceOwner);
  parser.sourceTypeAliasCache.set(row.key,context.copyOrigin(parser,origin,row));return origin;
+}
+
+export function prepareRustGenericTypeAliasDefaultAccess(parser,segments,path,context){
+ if(!parser.ordinaryCompletionContext()||segments.length<2)return;
+ prepareRustGenericTypeAliasDefaultOwner(parser,segments.slice(0,-1),path,context);
+}
+export function prepareRustGenericTypeAliasDefaultOwner(parser,segments,path,context,discovery=false){
+ if(!parser.ordinaryCompletionContext()||readRustGenericTypeAliasDefaultOwnerPhase(parser.origins.collecting,discovery)==='defer')return;
+ const row=aliasRow(parser,segments,path);
+ if(!row?.parameters.length||parser.sourceTypeAliasCache.has(row.key))return;
+ readRustGenericTypeAliasDefaultOrigin(parser,row,context);
+}
+export function prepareRustGenericTypeAliasDefaultAccessHead(parser,path,context){
+ if(!parser.ordinaryCompletionContext()||parser.cursor.is('::'))return;
+ const c=parser.cursor,segments=[];let offset=0;
+ while(c.peek(offset).kind==='identifier'&&segments.length<readRustGenericTypeAliasDefaultAccessHeadLimit()){
+  segments.push(c.peek(offset).value);offset+=1;
+  if(!c.is('::',offset)){prepareRustGenericTypeAliasDefaultAccess(parser,segments,path,context);return;}
+  if(c.peek(offset+1).kind!=='identifier')return;
+  offset+=1;
+ }
 }
 
 /** Actual alias-qualified turbofish construction. Nothing is selected from
@@ -241,7 +281,9 @@ export function readRustGenericTypeAliasConstructor(parser,segments,path,start,c
  if(explicit)c.expect('::','generic alias associated constructor');
  const member=explicit?c.identifier('generic alias constructor member'):previousMember,owner=origin.expandedSourceOwner??origin.sourceOwner;
  const data=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null,stored=data?.standardSumSourceOrigin,sum=stored?.standardSumSource;
- const plan=readRustGenericTypeAliasConstructorPlan(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.type?.element?.kind??'',origin.arraySourceModel??'',origin.proven===true,sum?.owner??'',sum?.arguments.length??-1,stored?.proven===true,stored?.copyEvidence===true,member.value);
+ let plan=readRustGenericTypeAliasConstructorPlan(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.type?.element?.kind??'',origin.arraySourceModel??'',origin.proven===true,sum?.owner??'',sum?.arguments.length??-1,stored?.proven===true,stored?.copyEvidence===true,member.value);
+ if(plan.length===0)plan=readRustGenericTypeAliasOwnedConstructorPlan(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,sum?.owner??'',sum?.arguments.length??-1,stored?.proven===true,stored?readRustStandardSumOwnershipFacts(parser.origins,stored).profile:'',member.value);
+ if(plan.length===0)plan=readRustGenericTypeAliasHeaderConstructorPlan(parser.headerDiscovery===true,sum?.provisional===true,origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,sum?.owner??'',sum?.arguments.length??-1,stored?.wrappers.length??-1,member.value);
  if(plan.length===0){if(!explicit)return null;context.fail(parser,'generic alias associated construction needs its actual admitted vector or standard sum constructor',row);}
  const arity=Number(plan[1]);let end=member.end,args=[],constructorPath=null;
  if(plan[0]==='vector constructor'){
@@ -259,5 +301,6 @@ export function readRustGenericTypeAliasConstructor(parser,segments,path,start,c
  }
  const span={start:start.start,end};parser.origins.call(constructorPath,args,path,span);
  const name={k:'name',path:[...constructorPath],span};
- return parser.origins.mark(args.length?{k:'app',fn:name,args,span}:name,origin);
+ const node=args.length?{k:'app',fn:name,args,span}:name;
+ captureRustStandardSumConstructor(parser,node,origin,args,path,span);return node;
 }

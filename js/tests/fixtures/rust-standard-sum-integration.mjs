@@ -9,6 +9,11 @@ import {sourceNamespaceOriginals,sourceNamespaceRefusals,sourceNamespaceVersionR
 import {rustStandardSumConversionOriginals,rustStandardSumConversionRefusals} from './rust-standard-sum-conversions.mjs';
 import {genericAliasDefaultOriginals,genericAliasDefaultRefusals,genericAliasDefaultVersionRange} from './rust-generic-type-alias-defaults-draft.mjs';
 import {rustStandardSumNestedOriginals,rustStandardSumNestedRefusals} from './rust-standard-sum-nested.mjs';
+import {rustStandardSumOwnedOriginals,rustStandardSumOwnedRefusals} from './rust-standard-sum-owned-originals.mjs';
+import {rustStandardSumCombinatorOriginals,rustStandardSumCombinatorRefusals} from './rust-standard-sum-combinators.mjs';
+import {rustOwnedStandardSumObserverOriginals,rustOwnedStandardSumObserverRefusals} from './rust-owned-standard-sum-observers.mjs';
+import {rustStandardSumOwnershipOriginals,rustStandardSumOwnershipRefusals} from './rust-standard-sum-ownership-transitions.mjs';
+import {rustStandardSumGuardOriginals,rustStandardSumGuardRefusals} from './rust-standard-sum-guards.mjs';
 
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
@@ -211,6 +216,11 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...rustStandardSumPredicateOriginals,
  ...genericAliasDefaultOriginals.map(row=>({singleCallOwners:[],sourceVersionRange:genericAliasDefaultVersionRange,...row})),
  ...rustStandardSumNestedOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumOwnedOriginals,
+ ...rustStandardSumCombinatorOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedStandardSumObserverOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumOwnershipOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumGuardOriginals,
 ];
 rustStandardSumIntegrationOriginals.push(...rustStandardSumIntegrationAdditionalOriginals);
 
@@ -228,4 +238,9 @@ export const rustStandardSumIntegrationRefusals=[
  ...rustStandardSumPredicateRefusals,
  ...genericAliasDefaultRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],sourceVersionRange:genericAliasDefaultVersionRange,...row})),
  ...rustStandardSumNestedRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustStandardSumOwnedRefusals,
+ ...rustStandardSumCombinatorRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustOwnedStandardSumObserverRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustStandardSumOwnershipRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustStandardSumGuardRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
 ];

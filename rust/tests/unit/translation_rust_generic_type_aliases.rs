@@ -81,23 +81,79 @@ fn generic_type_defaults_select_only_earlier_complete_binding_identities(){
     assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_argument_plan(&[false,true],0.0,false)[0],"error");
     assert!(generic_alias_rules::accept_rust_generic_type_alias_concrete_identifier(&["T".into()],"T",true));
     assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_identifier(&["T".into()],"T",false));
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_owner_phase(true,true),"defer");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_owner_phase(true,false),"prepare");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_owner_phase(false,true),"prepare");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_owner_phase(false,false),"prepare");
+}
+
+#[test]
+fn owned_sum_alias_selection_never_fabricates_copy_evidence(){
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_standard_sum_leaf("named",0.0,"std::option::Option",1.0,true,true,false,0.0));
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_owned_standard_sum_leaf("named",0.0,"std::option::Option",1.0,true,true,0.0,"owned"));
+    for profile in ["","copy","borrowed","custom Drop"]{assert!(!generic_alias_rules::accept_rust_generic_type_alias_owned_standard_sum_leaf("named",0.0,"std::option::Option",1.0,true,true,0.0,profile));}
+    assert!(generic_alias_rules::read_rust_generic_type_alias_constructor_plan("named",0.0,"library","std::option::Option",1.0,"","",true,"std::option::Option",1.0,true,false,"Some").is_empty());
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_owned_constructor_plan("named",0.0,"library","std::option::Option",1.0,true,"std::option::Option",1.0,true,"owned","Some"),vec!["sum constructor".to_owned(),"1".to_owned()]);
+    assert!(generic_alias_rules::read_rust_generic_type_alias_owned_constructor_plan("named",0.0,"library","std::option::Option",1.0,true,"std::option::Option",1.0,true,"copy","Some").is_empty());
+}
+
+#[test]
+fn private_sum_alias_headers_are_not_concrete_origin_proofs(){
+    let parameters=vec!["actual/T".to_owned()];
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_substitution_plan(&parameters,&[false],&parameters)[0],"error");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_header_substitution_plan(&parameters,true,&[true],&[false],&[true],&parameters),vec!["substitution".to_owned(),"0".to_owned()]);
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_header_substitution_plan(&parameters,false,&[true],&[false],&[true],&parameters)[0],"error");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_header_substitution_plan(&parameters,true,&[true],&[false],&[false],&parameters)[0],"error");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_header_constructor_plan(true,true,"named",0.0,"library","std::option::Option",1.0,"std::option::Option",1.0,0.0,"Some"),vec!["sum constructor".to_owned(),"1".to_owned()]);
+    assert!(generic_alias_rules::read_rust_generic_type_alias_header_constructor_plan(false,true,"named",0.0,"library","std::option::Option",1.0,"std::option::Option",1.0,0.0,"Some").is_empty());
+    assert!(generic_alias_rules::read_rust_generic_type_alias_header_constructor_plan(true,false,"named",0.0,"library","std::option::Option",1.0,"std::option::Option",1.0,0.0,"Some").is_empty());
+}
+
+#[test]
+fn concrete_callable_alias_leaves_preserve_actual_pointer_profile_proofs(){
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_template("function",0.0,"function","","",false,2.0,true));
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_concrete_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[true],true,true,true,true,false));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[false],true,true,true,true,false));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[true],true,true,true,true,true));
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_header_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[false],false,true,true,true,false));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_header_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[false],false,true,false,true,false));
 }
 
 #[test]
 fn defaulted_declarations_and_actual_partial_applications_reach_native_frontend(){
     let options=meta_language::SelfTranslationOptions {semantic_translation:true,..meta_language::SelfTranslationOptions::default()};
     for source in [
+        "type Maybe<T=String>=Option<T>;fn main(){let value:Maybe=None;}",
         "type Identity<T=u8>=T;fn main(){}",
         "type Pair<T=u8,U=T>=(T,U);pub fn result()->u16{let value:Pair<u16>=(7u16,9u16);value.1}",
         "type Values<T=u8>=Vec<T>;fn make()->Values{vec![7u8]}pub fn result()->usize{make().len()}",
         "type Values<T=u8>=Vec<T>;pub fn result()->usize{Values::new().len()}",
         "type Maybe<T=u8>=Option<T>;pub fn result()->u8{let value=Maybe::Some(7u8);value.unwrap_or(0u8)}",
+        "type Maybe<T>=Option<T>;pub fn result()->u8{let value=Maybe::<u8>::Some(7u8);value.unwrap_or(0u8)}",
+        "type Identity<T>=T;pub fn result()->u8{let value:Identity<Option<u8>>=Some(7u8);value.unwrap_or(0u8)}",
+        "type Concrete=Option<u8>;type Pair<T>=(T,Concrete);pub fn result()->u8{let value:Pair<u8>=(7u8,Some(9u8));value.1.unwrap_or(0u8)}",
+        "type Maybe<T=String>=Option<T>;pub fn result()->usize{let value=Maybe::Some(String::from(\"abc\"));match value{Some(text)=>text.len(),None=>0usize}}",
+        "type Maybe<T>=Option<T>;pub fn result()->usize{let word=String::from(\"abc\");let value=Maybe::<String>::Some(word);match value{Some(text)=>text.len(),None=>0usize}}",
+        "type Callback<T=fn(u8)->u16>=T;fn widen(value:u8)->u16{u16::from(value)}pub fn result()->u16{let convert:Callback=widen;convert(7u8)}",
+        "type Callback<T=fn(u8)->u8>=T;pub fn result()->u8{let increment:Callback=|value|value.wrapping_add(1u8);increment(7u8)}",
+        "type Callback<T=fn()>=T;fn done(){}pub fn result()->u8{let run:Callback=done;run();7u8}",
+        "type Callback<T=fn()->Option<u8>>=T;fn make()->Option<u8>{Some(7u8)}pub fn result()->u8{let read:Callback=make;read().unwrap_or(0u8)}",
+        "type Identity<T>=T;fn make()->Option<u8>{Some(7u8)}pub fn result()->u8{let read:Identity<fn()->Option<u8>>=make;read().unwrap_or(0u8)}",
         "type Outcome<T=u8,E=i64>=Result<T,E>;pub fn result()->u8{let value=Outcome::Err(9i64);value.unwrap_or(7u8)}",
         "type Scalar<T=u8>=T;pub fn result()->u8{Scalar::MAX}",
         "type Scalar<T=u8>=T;pub fn result()->bool{Scalar::MAX<255u8}",
         "type Scalar<T=u8>=T;pub fn result()->u8{let make:fn()->u8=Scalar::default;make()}",
         "type Text<T=String>=T;pub fn result()->usize{Text::from(\"abc\").len()}",
         "#[derive(Copy,Clone)]enum State{Ready}type Value<T=State>=T;pub fn result()->u8{let value=Value::Ready;match value{State::Ready=>7u8}}",
+        "type Byte<T=u8>=T;pub fn result()->u8{match 255u8{Byte::MIN=>1u8,Byte::MAX=>2u8,_=>3u8}}",
+        "type Byte<T=u8>=T;pub fn result()->u8{match 9u8{Byte::MIN..=Byte::MAX=>7u8}}",
+        "#[derive(Copy,Clone)]enum State{Ready}type Value<T=State>=T;pub fn result()->u8{match State::Ready{Value::Ready=>7u8}}",
+        "type Maybe<T=u8>=Option<T>;pub fn result()->u8{let value:Maybe=Some(7u8);match value{Maybe::Some(inner)=>inner,Maybe::None=>0u8}}",
+        "type Word<T=u16>=T;pub fn result()->u16{let value:Option<u8>=Some(7u8);let mapped=value.map(Word::from);mapped.unwrap_or(0u16)}",
+        "type Item<T=u8>=T;pub fn result()->u32{let count:fn(u8)->u32=Item::count_ones;count(7u8)}",
+        "struct Value{value:u8}type Alias<T=Value>=T;impl Alias{fn new(value:u8)->Self{Self{value}}fn read(&self)->u8{self.value}}pub fn result()->u8{let value=Alias::new(7u8);value.read()}",
+        "type Alias<T=Value>=T;impl Alias{fn read(&self)->u8{self.value}}struct Value{value:u8}pub fn result()->u8{let value=Value{value:7u8};Alias::read(&value)}",
+        "mod values{pub struct Value{value:u8}pub type Alias<T=Value>=T;impl Alias{pub fn new(value:u8)->Self{Self{value}}pub fn read(&self)->u8{self.value}}}pub fn result()->u8{let value=values::Alias::new(7u8);value.read()}",
         "type Identity<T=u8>=T;type Pair<T=i64,U=Identity<T>>=(T,U);type Forward<T=u16>=Pair<T>;pub fn result()->u16{let value:Forward=(7u16,9u16);value.1}",
     ]{meta_language::self_translation_signatures(source,"Rust",&options).unwrap();}
     for source in [
@@ -108,6 +164,20 @@ fn defaulted_declarations_and_actual_partial_applications_reach_native_frontend(
         "type First<T=Second>=T;type Second<U=First>=U;fn main(){}",
         "type Values<T>=Vec<T>;pub fn result()->usize{Values::new().len()}",
         "type Maybe<T=u8>=Option<T>;fn main(){let value=Maybe::Err(7u8);}",
+        "type Index<T=usize>=T;fn read(value:u64)->u8{match value{Index::MAX=>7u8,_=>0u8}}fn main(){}",
+        "type Item<T=usize>=T;pub fn result()->u32{let count:fn(u64)->u32=Item::count_ones;count(7u64)}",
+        "type Item<T=usize>=T;pub fn result()->u32{let value:Option<u64>=Some(7u64);let mapped=value.map(Item::count_ones);mapped.unwrap_or(0u32)}",
+        "type Alias<T=Missing>=T;impl Alias{fn read()->u8{7u8}}fn main(){}",
+        "type Alias<T=Vec<u8>>=T;impl Alias{fn read()->u8{7u8}}fn main(){}",
+        "type Identity<T>=T;fn main(){let value:Identity<Option<Absent>>=None;}",
+        "type Maybe<T>=Option<T>;pub fn result()->usize{let word=String::from(\"abc\");let value=Maybe::<String>::Some(word);word.len()}",
+        "type Callback<T=fn(usize)->u64>=T;fn read(value:u64)->u64{value}pub fn result()->u64{let convert:Callback=read;convert(7usize)}",
+        "type Callback<T=fn(u8)->usize>=T;fn read(value:u8)->u64{u64::from(value)}pub fn result()->usize{let convert:Callback=read;convert(7u8)}",
+        "type Callback<T=fn(u8)->u8>=T;pub fn result()->u8{let offset=1u8;let read:Callback=|value|value.wrapping_add(offset);read(7u8)}",
+        "type Callback<T>=fn(T)->u8;fn main(){}",
+        "type Callback<T=&'static fn(u8)->u16>=T;fn main(){}",
+        "type Callback<T=fn(String)->u8>=T;fn main(){}",
+        "struct Value{value:u8}type Alias<T=Value>=T;impl<T> Alias<T>{fn read()->u8{7u8}}fn main(){}",
     ]{assert!(meta_language::self_translation_signatures(source,"Rust",&options).is_err());}
 }
 

@@ -25,6 +25,7 @@ impl RustParser {
         path: &[String],
         expected: Option<&super::SourceOrigin>,
     ) -> Result<Option<SExpr>> {
+        self.prepare_default_type_alias_access_head(path)?;
         let Some(head) = self.primitive_try_head(path) else {
             return Ok(None);
         };

@@ -3,12 +3,15 @@ import {acceptRustTypeAliasOwnedStringMember} from './rust-type-alias-rules.js';
 import {readRustTypeAliasPrimitiveMemberOwner} from './rust-type-alias-rules.js';
 import {readRustConstantPrimitiveAliasOwner} from './rust-constant-integer-rules.js';
 import {readRustGenericTypeAliasDeclarationPlan,readRustGenericTypeAliasParameterDirectory} from './rust-generic-type-alias-rules.js';
-import {prepareRustGenericTypeAlias,readRustGenericTypeAliasValue,readRustGenericTypeAliasConstructor as readGenericConstructor} from './rust-generic-type-aliases.js';
+import {prepareRustGenericTypeAlias,readRustGenericTypeAliasValue,readRustGenericTypeAliasConstructor as readGenericConstructor,prepareRustGenericTypeAliasDefaultAccess,prepareRustGenericTypeAliasDefaultAccessHead,prepareRustGenericTypeAliasDefaultOwner} from './rust-generic-type-aliases.js';
 // Token/type/source-origin transport. Alias lookup and bounds are shared rules.
 import {unsupported} from './diagnostics.js';
 import {readRustTypeAliasLookupKeys,readRustTypeAliasExpansionError,readRustTypeAliasCloneError,readRustTypeAliasAccessPrefixLengths,acceptRustTypeAliasNominalAccess,readRustTypeAliasNamespaceDisposition,readRustTypeAliasValueConstructorError} from './rust-type-alias-rules.js';
 function fail(parser,message,row){const token=row?.keywordSpan??parser.cursor.peek();throw unsupported('Rust type alias',message,{start:token.start,end:token.end});}
 export function readRustGenericTypeAliasConstructor(parser,segments,path,start){return readGenericConstructor(parser,segments,path,start,{fail,copyOrigin});}
+export function prepareRustTypeAliasDefaultAccess(parser,segments,path){prepareRustGenericTypeAliasDefaultAccess(parser,segments,path,{fail,copyOrigin});}
+export function prepareRustTypeAliasDefaultAccessHead(parser,path){prepareRustGenericTypeAliasDefaultAccessHead(parser,path,{fail,copyOrigin});}
+export function prepareRustTypeAliasDefaultOwner(parser,segments,path,discovery=false){prepareRustGenericTypeAliasDefaultOwner(parser,segments,path,{fail,copyOrigin},discovery);}
 export function initializeRustTypeAliases(parser){
  parser.sourceTypeAliases=new Map();parser.sourceTypeAliasCache=new Map();parser.sourceTypeAliasTemplates=new Map();parser.sourceTypeAliasDefaults=new Map();parser.sourceTypeAliasStack=new Set();parser.sourceTypeAliasExpansions=0;parser.sourceTypeAliasNodes=0;parser.sourceTypeAliasesChecked=false;
  if(!parser.ordinaryCompletionContext())return;

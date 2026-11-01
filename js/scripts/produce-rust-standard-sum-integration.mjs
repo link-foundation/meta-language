@@ -9,6 +9,7 @@ import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {createTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {encodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {readRustStandardSumConcreteControl} from '../tests/support/rust-standard-sum-concrete.js';
+import {readRustOriginalCompilerExpectation,describeRustOriginalCompilerClassificationCoverage} from '../tests/support/rust-original-compiler-classifications.js';
 import {rustStandardSumIntegrationOriginals as originals,rustStandardSumIntegrationRefusals as refusals,
  rustStandardSumIntegrationVersions as versions,rustStandardSumIntegrationTargets as targets,
  rustStandardSumIntegrationTransports as transports,rustStandardSumIntegrationPreviousRefusals as previousRefusals,
@@ -23,10 +24,16 @@ assert.ok(nodeMajor===24||nodeMajor===22&&nodeMinor>=15,`uncovered integration p
 async function write(text){if(!process.stdout.write(text))await once(process.stdout,'drain');}
 // Keep one complete original's observations live at a time. JSON is existing
 // process IPC, not a repository artifact; the graph values remain Links data.
-const header=JSON.stringify({versions,targets,transports,previousRefusals,nativeControls});
+const originalCompilerCoverage=describeRustOriginalCompilerClassificationCoverage(refusals,versions);
+// This reports declared source coverage/obligations only. No original compiler
+// outcome is known to this producer, and historical inputs are never relabeled.
+process.stderr.write('Declared original Rust refusal compiler coverage: '+JSON.stringify(originalCompilerCoverage)+'\n');
+const header=JSON.stringify({versions,targets,transports,previousRefusals,nativeControls,originalCompilerCoverage});
 await write(header.slice(0,-1)+',"cases":[');let first=true;
 for(const original of originals){
  assert.ok(Buffer.byteLength(original.source)<=65536,'finite complete original source input');
+ const compilerExpectation=readRustOriginalCompilerExpectation(original,versions);
+ if(compilerExpectation)assert.equal(compilerExpectation.outcome,'accept',original.name+': a retained positive original must keep its compiler acceptance contract');
  const selections=[],concrete=readRustStandardSumConcreteControl(original.source);
  for(const version of versions){
   const surface=parseRust(original.source,{sourceVersion:version}),program=checkProgram(surface);
@@ -41,11 +48,13 @@ for(const original of originals){
 }
 await write('],"refusals":[');first=true;
 for(const original of refusals){
+ const compilerExpectation=readRustOriginalCompilerExpectation(original,versions);
  const selections=[],concrete=readRustStandardSumConcreteControl(original.source);
  for(const version of versions){
   let failure;try{checkProgram(parseRust(original.source,{sourceVersion:version}));}catch(error){failure=error;}
   assert.ok(failure,original.name+': original refusal remains represented');
-  assert.ok(['unsupported','type'].includes(failure.kind),original.name);
+  assert.ok((original.diagnosticKinds??['unsupported','type']).includes(failure.kind),original.name);
+  if(compilerExpectation?.outcome==='accept')assert.equal(failure.kind,'unsupported',original.name+': valid original Rust refusal is an explicit interpreter profile boundary');
   if(original.reasonIncludes)assert.ok(failure.reason.includes(original.reasonIncludes),original.name);
   assert.throws(()=>createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version}),undefined,original.name);
   selections.push({version,kind:failure.kind,reason:failure.reason,span:failure.span??null});

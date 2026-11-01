@@ -77,7 +77,7 @@ impl Counter<'_>{
         let result=(||{
             let origins=self.origins.expect("identity metadata requires the actual source registry");
             let stored=match value.ty.as_ref(){Some(Type::Named {path,..})=>origins.standard_sum_metadata_lookup(path,&value.path).and_then(|(name,declaration)|matches!(declaration,SourceDeclaration::Data).then(||origins.standard_sum_source_origins.get(&name)).flatten()),_=>None};
-            if !header&&stored.is_some_and(|stored|stored.proven&&stored.copy_evidence.is_some()&&stored.wrappers.is_empty()){
+            if !header&&stored.is_some_and(|stored|stored.proven&&stored.wrappers.is_empty()&&(stored.copy_evidence.is_some()||origins.standard_sum_ownership_facts(stored).profile=="owned")){
                 let sum=stored.and_then(|stored|stored.standard_sum_source.as_deref()).ok_or_else(||"standard sum source metadata needs its actual argument directory".to_owned())?;
                 self.record("identity sum",depth)?;self.text(&sum.owner,depth+1)?;self.node(depth+1)?;for child in &sum.arguments{self.identity(child,depth+2,false)?;}self.strings(&value.wrappers,depth+1)?;return Ok(());
             }

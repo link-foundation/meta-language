@@ -12,6 +12,11 @@ contracts after family-changing postfix expressions.
 Draft declaration-scoped generic alias defaults, nested Option flatten and both
 transpose directions. Check recursive CST reuse inputs before selecting a reuse
 path, with corresponding deferred source controls in both runtimes.
+Extend the source draft with defaulted alias member, pattern, impl and callable
+owners; standard sum combinators; owned String/vector sum construction and
+patterns; shared observers; and deferred owned guard moves. Preserve actual
+loans and temporary scopes, and author independent original compiler oracles
+for ownership rejection versus interpreter support boundaries.
 
 These changes are unexecuted source drafts. New generated policy products and
 metadata reconciliation remain pending; no test or compilation result, complete

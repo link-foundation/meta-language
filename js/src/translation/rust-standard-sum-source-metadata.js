@@ -59,20 +59,20 @@ function counter(){
    if(sum==null)scalar(null,depth+1);else record('sum',sum,depth+1,()=>{scalar(sum.owner,depth+2);list(sum.arguments,depth+2,origin);});
   });
  };
- const identity=(value,depth,lookup,header)=>{
+ const identity=(value,depth,lookup,header,admitOwned)=>{
   if(!value?.type||!header&&(!value.proven||value.diverging)){scalar(null,depth);return;}
   const entry=value.type.kind==='named'?lookup(value.type.path,value.path):null,stored=entry?.k==='data'?entry.standardSumSourceOrigin:null;
-  if(!header&&stored?.proven&&stored.copyEvidence&&stored.wrappers.length===0){
-   record('identity sum',value,depth,()=>{scalar(stored.standardSumSource.owner,depth+1);list(stored.standardSumSource.arguments,depth+1,(child,next)=>identity(child,next,lookup,false));strings(value.wrappers,depth+1);});return;
+  if(!header&&stored?.proven&&stored.wrappers.length===0&&(stored.copyEvidence||admitOwned?.(stored)===true)){
+   record('identity sum',value,depth,()=>{scalar(stored.standardSumSource.owner,depth+1);list(stored.standardSumSource.arguments,depth+1,(child,next)=>identity(child,next,lookup,false,admitOwned));strings(value.wrappers,depth+1);});return;
   }
   record(header?'identity header':'identity value',value,depth,()=>{
    type(value.type,depth+1,value.path,lookup,header);
    if(header)strings(value.path,depth+1);
    owner(value.expandedSourceOwner??value.sourceOwner,depth+1);strings(value.wrappers,depth+1);
-   if(!header){if(value.fields==null)scalar(null,depth+1);else list(value.fields,depth+1,(child,next)=>identity(child,next,lookup,false));scalar(value.floatSourceModel??null,depth+1);scalar(value.textSourceModel??null,depth+1);}
+   if(!header){if(value.fields==null)scalar(null,depth+1);else list(value.fields,depth+1,(child,next)=>identity(child,next,lookup,false,admitOwned));scalar(value.floatSourceModel??null,depth+1);scalar(value.textSourceModel??null,depth+1);}
   });
  };
- return {origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header){list(values,0,(value,depth)=>identity(value,depth,lookup,header));return [nodes,units];}};
+ return {origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header,admitOwned){list(values,0,(value,depth)=>identity(value,depth,lookup,header,admitOwned));return [nodes,units];}};
 }
 export function measureRustStandardSumSourceMetadata(origins){return counter().origins(origins);}
-export function measureRustStandardSumSourceIdentityMetadata(origins,lookup,header=false){return counter().identities(origins,lookup,header);}
+export function measureRustStandardSumSourceIdentityMetadata(origins,lookup,header=false,admitOwned=null){return counter().identities(origins,lookup,header,admitOwned);}

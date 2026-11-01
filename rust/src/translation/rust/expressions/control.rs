@@ -317,8 +317,13 @@ impl RustParser {
             while self.cursor.eat("|").is_some() {
                 alternatives.push(self.pattern(path, &mut aliases)?);
             }
-            let scope = self.origins.cases(&mut alternatives, &scrutinee, path)?;
-            let previous = self.origins.enter(Some(scope));
+            let origin=self.origins.origin(&scrutinee,path);
+            let guarded_owned_sum=origin.wrappers.is_empty()&&self.origins.standard_sum_source_origin(&origin).is_some()&&self.origins.standard_sum_ownership_facts(&origin).profile=="owned";
+            let deferred_guard=self.defer_standard_sum_guard(&alternatives,&scrutinee,path,self.cursor.is("if"),aliases.len())?;
+            let owned_guard_error=if deferred_guard{String::new()}else{crate::translation::rust_standard_sum_ownership_rules::read_rust_standard_sum_owned_guard_error(guarded_owned_sum,self.cursor.is("if"))};
+            if !owned_guard_error.is_empty(){return Err(unsupported("Rust owned standard sum guard",&owned_guard_error,Some(self.peek().span())));}
+            let scope = if deferred_guard{self.origins.cases_readonly_guard(&mut alternatives,&scrutinee,path)?}else{self.origins.cases(&mut alternatives, &scrutinee, path)?};
+            let previous = if deferred_guard{std::mem::replace(&mut self.origins.scope,scope)}else{self.origins.enter(Some(scope))};
             let parsed = (|| {
                 for alias in &aliases {
                     self.origins.bind(&alias.name, &alias.value, path, None)?;
@@ -335,10 +340,15 @@ impl RustParser {
                     self.origins
                         .check_owned_guard(&ownership_guard, guard.span)?;
                 }
+                if deferred_guard{
+                    self.origins.scope=previous.clone();
+                    self.origins.restore_owned_bindings(ownership_base.clone());
+                    self.origins.scope=self.origins.cases(&mut alternatives,&scrutinee,path)?;
+                }
                 self.cursor.expect("=>", Some("match arm"))?;
                 let body = self.expr(path, Options::default())?;
                 let origin = self.origins.transfer_owned_result(&body, path)?;
-                self.origins.expire_owned_bindings(&ownership_base, &origin);
+                self.origins.expire_owned_bindings(&ownership_base, &origin)?;
                 ownership_arms.push((self.origins.snapshot_owned_bindings(), !origin.diverging));
                 Ok::<_, crate::translation::diagnostics::TranslationError>((body, origin, guard))
             })();

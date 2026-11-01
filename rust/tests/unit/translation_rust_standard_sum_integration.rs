@@ -12,6 +12,16 @@ use std::path::{Path,PathBuf};
 use std::process::Command;
 use std::collections::HashMap;
 
+#[test]
+fn owned_sum_source_frontends_report_uncovered_versions(){
+    let source="fn main(){let value:Option<String>=None;}";
+    for version in ["1.89.0","1.100.0"]{
+        let error=parse_rust_with_source_version(source,version).expect_err("owned source profile cannot claim uncovered versions");
+        assert_eq!(error.kind.as_str(),"unsupported");assert!(error.reason.contains("uncovered"));
+        assert!(create_typed_program_links_with_rust_source_version(source,version,None).is_err());
+    }
+}
+
 fn provision_selected_toolchains(){
     assert_eq!(std::env::var("CI").as_deref(),Ok("true"),"endpoint toolchain setup is CI-only");
     let setup=run(Command::new("rustup").args(["toolchain","install","1.90.0","1.99.0","--profile","minimal"]));
@@ -28,6 +38,68 @@ fn compile(directory:&Path,name:&str,source:&str,toolchain:&str)->PathBuf{
     let file=directory.join(format!("{name}.rs"));let binary=directory.join(format!("{name}{}",std::env::consts::EXE_SUFFIX));
     fs::write(&file,source).unwrap();let output=run(Command::new("rustup").args(["run",toolchain,"rustc","--edition","2024","--crate-type","bin"]).arg(&file).arg("-o").arg(&binary));
     assert!(output.ok,"{name}: {}",output.stderr);binary
+}
+fn assert_selected_compiler(toolchain:&str,label:&str){
+    let compiler=run(Command::new("rustup").args(["run",toolchain,"rustc","--version"]));
+    assert!(compiler.ok,"{label}: the exact declared native snapshot must be installed; {}",compiler.stderr);
+    assert_eq!(compiler.stdout.split_whitespace().nth(1),Some(toolchain),"{label}: actual compiler identity for every declared snapshot");
+}
+// This is original-source classification only: metadata emission runs parsing,
+// typing and borrow checking without linking or executing a refused program.
+fn assert_original_compiler_expectation(directory:&Path,name:&str,source:&str,toolchain:&str,expectation:&Value){
+    assert_eq!(std::env::var("CI").as_deref(),Ok("true"),"original compiler classification is CI-only");
+    assert!(source.len()<=65536,"finite complete classified source");
+    assert_selected_compiler(toolchain,name);
+    let file=directory.join(format!("{name}.rs"));let metadata=directory.join(format!("{name}.rmeta"));
+    fs::write(&file,source).unwrap();
+    let raw=Command::new("rustup").args(["run",toolchain,"rustc","--edition",expectation["edition"].as_str().unwrap(),"--crate-type","bin","--emit=metadata","--error-format=json","--crate-name",name]).arg(&file).arg("-o").arg(&metadata).output().unwrap_or_else(|error|panic!("{name}/{toolchain}: cannot start original compiler: {error}"));
+    let compiler_exit=raw.status.code().expect("a signal cannot substitute for an original compiler semantic result");
+    let output=super::issue_195_translation_pairs::Run {ok:raw.status.success(),stdout:String::from_utf8_lossy(&raw.stdout).into_owned(),stderr:String::from_utf8_lossy(&raw.stderr).into_owned()};
+    let diagnostics=output.stderr.lines().filter_map(|line|serde_json::from_str::<Value>(line).ok()).filter(|entry|entry["$message_type"]=="diagnostic").collect::<Vec<_>>();
+    let source_path=file.to_string_lossy();
+    let source_error=diagnostics.iter().any(|entry|entry["level"]=="error"&&entry["spans"].as_array().is_some_and(|spans|spans.iter().any(|span|span["is_primary"]==true&&span["file_name"].as_str()==Some(source_path.as_ref()))));
+    match expectation["outcome"].as_str().expect("explicit original compiler accept/reject expectation"){
+        "accept"=>{
+            assert!(output.ok,"{name}/{toolchain}: the valid original Rust must compile independently of interpreter refusal: {}\n{}",output.stdout,output.stderr);
+            assert!(!diagnostics.iter().any(|entry|entry["level"]=="error"),"{name}: accepted original compiler diagnostics must contain no error");
+            assert!(metadata.is_file(),"{name}: metadata-only accepted original artifact");
+        },
+        "reject"=>{
+            assert_eq!(compiler_exit,1,"{name}/{toolchain}: only the normal compiler error exit can witness original source rejection");
+            assert!(!output.ok,"{name}/{toolchain}: the ownership-invalid original unexpectedly compiled");
+            assert!(source_error,"{name}/{toolchain}: operational/compiler setup failure cannot substitute for an actual primary source diagnostic: {}\n{}",output.stdout,output.stderr);
+        },
+        other=>panic!("{name}: unregistered original compiler expectation {other}"),
+    }
+    eprintln!("original compiler classification {name}/{toolchain}: expected {}\nstdout:\n{}\nstderr:\n{}",expectation["outcome"],output.stdout,output.stderr);
+}
+fn assert_original_compiler_declaration(row:&Value,versions:&Value){
+    let expectation=&row["originalCompilerExpectation"];
+    let object=expectation.as_object().expect("complete original compiler expectation object");
+    assert_eq!(object.len(),5,"no hidden compiler observation/status fields in the declared expectation");
+    assert_eq!(expectation["model"],"Rust original compiler expectation 1");assert_eq!(expectation["edition"],"2024");
+    assert_eq!(&expectation["versions"],versions,"every selected original compiler endpoint remains mandatory");
+    assert_eq!(row["sourceVersionRange"],">=1.90.0 <1.100.0");
+    let category=match expectation["outcome"].as_str().unwrap(){"accept"=>"valid Rust source","reject"=>"invalid Rust ownership",other=>panic!("undeclared original compiler outcome {other}")};
+    assert_eq!(expectation["category"],category);
+}
+fn assert_declared_original_compiler_coverage(fixture:&Value)->usize{
+    let coverage=&fixture["originalCompilerCoverage"];
+    assert_eq!(coverage["model"],"declared original Rust refusal compiler coverage 1");
+    assert_eq!(coverage["selectedVersions"],fixture["versions"]);
+    let mut classified=Vec::new();let mut unclassified=Vec::new();
+    for row in fixture["refusals"].as_array().unwrap(){
+        if let Some(expectation)=row.get("originalCompilerExpectation"){
+            assert_original_compiler_declaration(row,&fixture["versions"]);
+            classified.push(json!({"name":row["name"],"sourceVersionRange":row["sourceVersionRange"],"versions":expectation["versions"],"outcome":expectation["outcome"],"category":expectation["category"]}));
+        }else{
+            unclassified.push(json!({"name":row["name"],"sourceVersionRange":row["sourceVersionRange"],"versions":fixture["versions"],"obligation":"Classify original Rust compiler acceptance or source rejection at every selected endpoint; frontend refusal alone supplies no original compiler result."}));
+        }
+    }
+    let classified_count=classified.len();
+    assert_eq!(coverage["classified"],json!(classified));assert_eq!(coverage["unclassified"],json!(unclassified));
+    eprintln!("declared original compiler coverage; unclassified originals remain obligations, not passing compiler cells: {coverage}");
+    classified_count
 }
 fn stdout(binary:&Path)->String{let output=run(&mut Command::new(binary));assert!(output.ok,"{}",output.stderr);output.stdout}
 fn javascript_stdout(code:&str)->String{
@@ -88,6 +160,7 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
     let fixture=producer();assert_eq!(fixture["versions"],json!(["1.90.0","1.99.0"]));
     assert_eq!(fixture["targets"],json!(["JavaScript","Rust","Lean","Rocq"]));assert_eq!(fixture["transports"],json!(["original","text","binary"]));
     assert_eq!(fixture["nativeControls"].as_array().unwrap().len(),7);
+    let classified_originals=assert_declared_original_compiler_coverage(&fixture);let mut original_compiler_cells=0;
     let version=run(Command::new("rustc").arg("--version"));assert!(version.ok,"{}",version.stderr);
     let active=version.stdout.split_whitespace().nth(1).unwrap();let parts=active.split('.').take(2).map(|part|part.parse::<u32>().unwrap()).collect::<Vec<_>>();
     assert!(parts[0]==1&&(90..100).contains(&parts[1]),"uncovered native source compiler {active}");
@@ -95,12 +168,12 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
         let label=row["name"].as_str().unwrap();let source=row["source"].as_str().unwrap();let expected=row["stdout"].as_str().unwrap();
         assert_concrete_source(source,&row["concrete"],label);
         assert_eq!(row["sourceVersionRange"],">=1.90.0 <1.100.0");assert!(source.len()<=65536);
+        if row.get("originalCompilerExpectation").is_some(){assert_original_compiler_declaration(row,&fixture["versions"]);assert_eq!(row["originalCompilerExpectation"]["outcome"],"accept","retained positive original compiler contract");}
         let directory=TemporaryDirectory::new(&format!("standard_sum_{index}"));
         assert_eq!(row["selections"].as_array().unwrap().len(),fixture["versions"].as_array().unwrap().len());
         for(selection_index,selection)in row["selections"].as_array().unwrap().iter().enumerate(){
             let selected=selection["version"].as_str().unwrap();assert_eq!(selection["version"],fixture["versions"][selection_index]);
-            let compiler=run(Command::new("rustup").args(["run",selected,"rustc","--version"]));assert!(compiler.ok,"{label}: the exact declared native snapshot must be installed; {}",compiler.stderr);
-            assert_eq!(compiler.stdout.split_whitespace().nth(1),Some(selected),"{label}: actual compiler identity for every declared snapshot");
+            assert_selected_compiler(selected,label);
             let original=compile(&directory.0,&format!("original_{selection_index}"),source,selected);
             assert_eq!(stdout(&original),expected,"{label}/{selected}: actual original Rust stdout");
             assert_eq!(selection["observedStdout"],expected,"{label}: actual future JS producer observation versus literal");
@@ -134,12 +207,21 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
             assert_eq!(encode_link_network_binary(&graphs[2],BinaryLinksOptions::default()).unwrap(),binary);
         }
     }
-    for row in fixture["refusals"].as_array().unwrap(){assert_concrete_source(row["source"].as_str().unwrap(),&row["concrete"],row["name"].as_str().unwrap());for selection in row["selections"].as_array().unwrap(){
+    for (row_index,row) in fixture["refusals"].as_array().unwrap().iter().enumerate(){assert_concrete_source(row["source"].as_str().unwrap(),&row["concrete"],row["name"].as_str().unwrap());
+    assert_eq!(row["selections"].as_array().unwrap().len(),fixture["versions"].as_array().unwrap().len(),"every original refusal frontend endpoint is mandatory");
+    let directory=TemporaryDirectory::new(&format!("standard_sum_refusal_{row_index}"));
+    for (selection_index,selection) in row["selections"].as_array().unwrap().iter().enumerate(){
         let source=row["source"].as_str().unwrap();let version=selection["version"].as_str().unwrap();
+        assert_eq!(selection["version"],fixture["versions"][selection_index]);
+        if let Some(expectation)=row.get("originalCompilerExpectation"){
+            assert_original_compiler_expectation(&directory.0,&format!("original_refusal_{row_index}_{selection_index}"),source,version,expectation);original_compiler_cells+=1;
+        }
         let error=parse_rust_with_source_version(source,version).and_then(|surface|check_program(&surface)).expect_err("actual original source obligation");
         assert_eq!(error.kind.as_str(),selection["kind"].as_str().unwrap());assert_eq!(error.reason,selection["reason"].as_str().unwrap());assert_eq!(serde_json::to_value(error.span).unwrap(),selection["span"]);
         if let Some(fragment)=row["reasonIncludes"].as_str(){assert!(error.reason.contains(fragment));}
+        if row["originalCompilerExpectation"]["outcome"]=="accept"{assert_eq!(error.kind.as_str(),"unsupported","valid original Rust remains an interpreter profile boundary");}
         assert!(create_typed_program_links_with_rust_source_version(source,version,None).is_err(),"all original typed-import refusals remain represented");
     }}
+    assert_eq!(original_compiler_cells,classified_originals*fixture["versions"].as_array().unwrap().len(),"every explicitly classified original compiler/version cell was checked; no declared endpoint is skipped");
     for previous in fixture["previousRefusals"].as_array().unwrap(){assert!(fixture["cases"].as_array().unwrap().iter().any(|row|row["source"]==previous["source"]),"retain each exact formerly refused original input");}
 }

@@ -9,7 +9,9 @@ import {projectRustPrimitiveAssociatedBody} from './rust-primitive-associated-ca
 import {readRustPrimitiveFromOwner} from './rust-primitive-from-rules.js';
 import {projectRustPrimitiveFrom} from './rust-primitive-from.js';
 import {readRustPrimitiveFunctionValueArity,readRustPrimitiveFunctionValueParameterOwner,readRustPrimitiveFunctionValueResultOwner,readRustPrimitiveFromFunctionSource} from './rust-primitive-function-value-rules.js';
+import {prepareRustTypeAliasDefaultAccessHead} from './rust-type-aliases.js';
 export function readRustPrimitiveFunctionValue(parser,path,expected=null){
+ prepareRustTypeAliasDefaultAccessHead(parser,path);
  const head=readRustPrimitiveConversionHead(parser,path),c=parser.cursor;if(!head||c.is('(',head.offset))return null;
  const method=head.resolved.at(-1),trait=parser.aliases.get(path.join('.'))?.get('Default'),traitConflict=method==='default'&&Boolean(parser.origins.lookup(['Default'],path)||parser.origins.scope.has('Default')||trait&&!acceptRustPrimitiveDefaultImport(trait.join('::'),true,false));
  const owner=method==='default'?readRustPrimitiveDefaultOwner(head.resolved,parser.ordinaryCompletionContext(),head.shadowed||traitConflict,head.absolute):method==='from'?readRustPrimitiveFromOwner(head.resolved,parser.ordinaryCompletionContext(),head.shadowed,head.absolute):readRustPrimitiveAssociatedOwner(head.resolved,parser.ordinaryCompletionContext(),head.shadowed,head.absolute);

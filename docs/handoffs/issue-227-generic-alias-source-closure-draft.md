@@ -44,7 +44,8 @@ silently shift a caller's resume index.
 
 `js/src/translation/rust-generic-type-aliases.js` transports actual tokens and
 complete source origins around the shared policies. It supports direct type
-parameters, scalar/Unit and actual named datatype leaves, grouping, tuple templates and explicit
+parameters, scalar/Unit, safe concrete fn-pointer and actual named datatype
+leaves, grouping, tuple templates and explicit
 applications of other supported generic aliases. For example, `Swap<T,U>=(U,T)`
 and `Pair<T>=Swap<T,i64>` compose actual declaration-scoped bindings. It prepares
 a target declaration before descending into symbolic arguments, retaining the
@@ -57,7 +58,8 @@ owner/constructor/arity selection; local aliases, datatypes and std modules
 cannot impersonate the library. Every symbolic argument is checked, but an
 unknown parameter is never declared Copy. Concrete materialization delegates
 complete origins to the existing standard-sum instantiator and enforces its
-actual direct-Copy admission and shared active nesting depth. Thus
+actual Copy or subsequently drafted owned admission and shared active nesting
+depth. Copy evidence remains limited to actual all-Copy children. Thus
 `Maybe<T>=Option<T>` and `Result<T>=std::result::Result<T,Error>` reuse the actual
 sum datatype/constructor representation. Nominal leaves preserve actual source
 datatype identities; their current real nominal-Copy proof is consulted only
@@ -341,9 +343,136 @@ remain symbolic: the accessor never eagerly materializes every default during
 declaration validation. Independent source controls retain associated scalar
 constants/default/conversion/callable values, alternating explicit widths,
 comparison punctuation, String construction/forwarding and nominal variants.
-Pattern-only associated constant paths precede the expression hook; that is
-the next concrete consumer seam after the parent's source checkpoint, and no
-pattern support extension is claimed in this expression batch.
+The subsequent source pass adds a bounded actual path-head preparation hook
+before the primary's early primitive readers, and calls the same accessor
+from the existing primitive-constant transport after it collects its actual
+segments. This common transport also reads direct and range constant patterns.
+The peek walk follows the existing sixteen-segment primitive-reader window;
+it consumes no occurrence tokens, interprets no member spelling and changes
+no caller punctuation. Only an actual generic alias prefix with complete
+authored defaults can populate the scoped cache. Definition template parsing
+still uses the preceding actual token/type parser and restores its caller.
+Cached preparation avoids repeat copies. Pattern-only nominal/sum aliases
+therefore also reach the existing actual variant-path resolver. New literal
+controls cover patterns without an earlier alias expression, both range ends,
+actual nominal/sum variants and same-width pointer/fixed owner refusal.
+These are source consumers and unexecuted assertions, not observed behavior.
+Parent-owned direct primitive-function-value entries invoke the same bounded
+head preparation for callbacks that bypass the primary reader. Literal
+controls preserve `Option<u8>.map(Word::from)` with defaulted `Word=u16`, a
+direct `Item::count_ones` function pointer, and refusals for same-width
+`usize`/`u64` callback parameter substitution. The preceding `Maybe<String>`
+default refusal now resides in explicit previous-boundary source history,
+including the exact input, fixture row, accepted error kinds and version range.
+That same input is retained once in the new owned-profile positive originals.
+This extends the source interpreter profile; it changes no claim about Rust
+validity and records no observed result. Old Copy-only false controls remain.
+
+An additional nominal-owner consumer now prepares the complete actual
+`impl Alias` type path before the existing inherent implementation resolver.
+`prepareRustTypeAliasDefaultOwner` and native
+`prepare_default_type_alias_owner` share the same checked all-default accessor;
+they do not infer required parameters or reinterpret the implementation body.
+The shared `readRustGenericTypeAliasDefaultOwnerPhase` defers this preparation
+only during collecting inherent discovery, allowing a later nominal datatype
+to enter the actual catalog. Complete `finishRustTypeAliases` checks every
+default afterward, and subsequent parser passes require the real nominal owner
+and existing implementation-location, receiver, Copy and borrow proofs. No
+parse errors are swallowed and no generic implementation/trait/where syntax
+is erased. Literal controls retain a forward nominal default, `Self` record
+construction, module scope, a value homograph, invalid unused defaults and
+non-nominal/generic/predicate implementation refusals. Source execution and
+original-Rust admission remain unobserved.
+
+Generic standard-sum constructor transport now delegates ownership capture to
+the same source helper as direct constructors, after real field/call checking
+and before return. Native argument facts borrow the completed App's actual
+argument slice rather than cloning the expression tree; no later origin mark
+overwrites the helper's ownership/freshness facts. The generic shared policy
+retains its preceding Copy-only operations and adds separate owned-sum leaf
+and constructor operations. These require the exact `owned` profile from the
+independently resolved stored datatype origin, while retaining canonical owner,
+arity, wrappers and proof checks. No false Copy premise is passed into the old
+gate. New direct policy controls preserve the old non-Copy refusal and reject
+unknown/copy/borrowed/custom-Drop profile substitutions in the owned gate.
+The ownership helper/actual stored-origin validation is the parent's
+coordinated source dependency; its matching source API is authored. This draft
+records no executed owned admission.
+
+Factory review also exposed private-header consumers that previously required
+concrete proofs before the final admission pass. Separate shared header-only
+substitution, standard-sum-origin and constructor plans now require actual
+header discovery plus the independently resolved stored provisional datatype,
+canonical complete source owner, type arguments, arity and direct wrappers.
+They transport the existing syntax origin with `proven`/Copy still false.
+Concrete/owned gates retain their preceding proof requirements. Actual sum
+leaves reached through aliases receive the same bounded header transport;
+argument-changing recursion, missing owners, reference payloads and final
+profile admission still refuse through existing finalization/later passes.
+The common ownership capture helper marks a provisional node and skips runtime
+consumption/freshness transitions in header mode. Exact originals cover
+`Maybe::<u8>::Some`, `Identity<Option<u8>>`, concrete sum leaves in tuple
+templates, owned generic constructors and actual moved String payloads;
+independent policy controls reject missing header flags and mismatched stored
+provisional facts. This stage distinction is source policy, not admission or
+execution evidence.
+
+Concrete callable defaults now have their own shared leaf operation instead
+of changing the preceding scalar/nominal leaf domain. Both adapters retain the
+actual parsed function type, complete function-owner argument tree, parameter
+and result origins, exact widths/source owners and actual Copy/proven facts.
+The operation delegates its source-domain check to the existing fn-pointer
+policy, checks complete owner/parameter/result shape, and admits no wrapper or
+closure capture witness. A separate private-header callable leaf accepts only
+the actual parser's `sourceFunctionPointerHeader` flag during header discovery,
+using the existing header fn-pointer rule while preserving false proofs.
+This also transports concrete callable arguments whose standard-sum results
+await final admission; later pointer-domain checks remain mandatory.
+
+Parameter-dependent callable templates such as `fn(T)->u8` still fail the
+existing actual-binding occurrence guard, and no unknown parameter receives
+Copy evidence. Literal controls retain fully concrete named/noncapturing
+callback defaults, implicit Unit return, private Option results, exact pointer
+parameter/result distinctions, captured closures, layers/lifetimes, owned
+parameter profile limits and unsafe qualifiers. The preceding scalar leaf's
+false function-kind assertion remains in the independent controls. No control
+or original Rust program has executed.
+
+New owned-sum refusal originals now carry explicit original-compiler
+expectations independently of frontend refusal. The first five move/borrow
+inputs expect compiler rejection; the exact guarded-field input expects Rust
+acceptance. The coordinated guarded-arm extension retains its preceding refusal
+row/coordinate/oracle in explicit boundary history and the identical input as a
+positive original, with the compiler acceptance contract still attached.
+All source/name text remains intact and classifications select both 1.90.0 and
+1.99.0, edition 2024. The literal metadata remains an expectation, never a
+recorded compiler observation. Classification declaration controls cover the
+union of positives/refusals so a later deliberate guard extension retains the
+same exact original and compiler oracle.
+
+`produce-rust-standard-sum-integration.mjs` now retains those declarations and
+reports classified originals separately from historical unclassified source
+obligations, using the small host support module
+`rust-original-compiler-classifications.js`. Existing unclassified rows and
+frontend assertions remain unchanged; explicit row diagnostic-kind controls
+are honored, with the preceding default gate retained for other inputs. A
+classified compiler-accepted refusal must have an unsupported-profile frontend
+diagnostic, rather than be presented as invalid Rust.
+
+The native integration source compiles every declared classified refusal at
+each exact selected compiler endpoint with `--emit=metadata` and JSON
+diagnostics, retaining the original bytes and checking accept/reject separately
+from JS/native diagnostic parity. It links no refused original and never runs
+one. A rejected outcome requires an actual primary diagnostic in that source
+file, so setup/operational failure cannot masquerade as the requested source
+rejection. Compiler identity, declaration schema, complete endpoint inventory
+and declared cell count are mandatory. Historical unclassified compiler
+outcomes remain explicitly reported obligations and supply no passing compiler
+claim. All compiler calls exist only as future CI runner source; none ran here.
+Positive originals with a retained compiler expectation validate its full schema,
+version inventory and acceptance outcome before entering the preceding positive
+original compiler/runtime matrix, so the moved guard retains both endpoint
+obligations without appearing among active refusals.
 
 Independent literal defaults originals/refusals and token-directory controls
 are authored in `rust-generic-type-alias-defaults-draft.mjs` and

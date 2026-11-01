@@ -1,12 +1,17 @@
 import {readRustTypeAliasEmptyVectorOrigin} from './rust-type-aliases.js';
 import {readRustTypeAliasStringMemberOwner} from './rust-type-aliases.js';
-import {readRustGenericTypeAliasConstructor} from './rust-type-aliases.js';
+import {readRustGenericTypeAliasConstructor,prepareRustTypeAliasDefaultAccessHead} from './rust-type-aliases.js';
 import {initializeRustStandardSumSource,readRustStandardSumSourceType,readRustStandardSumSourceConstructor,readRustStandardSumSourcePattern,readRustStandardSumSourceImport,finishRustStandardSumSource,finishRustStandardSumSourceDeclarations,withRustStandardSumSourceContext,refuseRustStandardSumSourcePatterns} from './rust-standard-sum-source.js';
 import {readRustStandardSumTryExpression,refuseRustStandardSumPrivateCompletions} from './rust-standard-sum-completions.js';
 import {readRustStandardSumSourceMethod} from './rust-standard-sum-methods.js';
 import {readRustStandardSumSourceConversion} from './rust-standard-sum-conversions.js';
 import {readRustStandardSumSourcePredicate} from './rust-standard-sum-predicates.js';
 import {readRustStandardSumSourceNested} from './rust-standard-sum-nested.js';
+import {readRustStandardSumSourceCombinator} from './rust-standard-sum-combinators.js';
+import {isRustOwnedStandardSumValue} from './rust-standard-sum-ownership.js';
+import {readRustStandardSumOwnedGuardError} from './rust-standard-sum-ownership-rules.js';
+import {deferRustStandardSumGuard} from './rust-standard-sum-guards.js';
+import {readRustOwnedStandardSumObserver} from './rust-owned-standard-sum-observers.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
@@ -1443,6 +1448,10 @@ class RustParser {
           continue;
         }
         const method = c.identifier('method');
+        const ownedStandardSumObserver=readRustOwnedStandardSumObserver(this,value,method,path);
+        if(ownedStandardSumObserver){value=ownedStandardSumObserver;continue;}
+        const standardSumCombinator=readRustStandardSumSourceCombinator(this,value,method,path);
+        if(standardSumCombinator){value=standardSumCombinator;continue;}
         const standardSumNested=readRustStandardSumSourceNested(this,value,method,path);
         if(standardSumNested){value=standardSumNested;continue;}
         const standardSumConversion=readRustStandardSumSourceConversion(this,value,method,path);
@@ -1634,6 +1643,7 @@ class RustParser {
   }
 
   primary(path, options) {
+    prepareRustTypeAliasDefaultAccessHead(this,path);
     const primitiveFunction=readRustPrimitiveFunctionValue(this,path);if(primitiveFunction)return primitiveFunction;
     const primitiveDefault=readRustPrimitiveDefault(this,path);if(primitiveDefault)return primitiveDefault;
     const falliblePrimitive=readRustPrimitiveTryFrom(this,path);if(falliblePrimitive)return falliblePrimitive;
@@ -1876,12 +1886,18 @@ class RustParser {
       const alternatives = withRustStandardSumSourceContext(this,this.origins.origin(scrutinee,path),()=>{
         const selected=[this.pattern(path,aliases)];while(c.eat('|'))selected.push(this.pattern(path,aliases));return selected;
       });
-      const previous = this.origins.enter(this.origins.cases(alternatives, scrutinee, path));
+      const deferredGuard=deferRustStandardSumGuard(this,alternatives,scrutinee,path,c.is('if'),aliases);
+      const ownedGuardError=deferredGuard?'':readRustStandardSumOwnedGuardError(isRustOwnedStandardSumValue(this.origins,this.origins.origin(scrutinee,path)),c.is('if'));
+      if(ownedGuardError)throw unsupported('Rust owned standard sum guard',ownedGuardError,c.peek());
+      const previous = this.origins.scope;
+      const armScope=this.origins.cases(alternatives,scrutinee,path,deferredGuard);
+      if(deferredGuard)this.origins.scope=armScope;else this.origins.enter(armScope);
       let body,bodyOrigin,guard;
       try{
         for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
         const ownershipGuard=this.origins.snapshotOwnedBindings();guard=c.eat('if')?withRustStandardSumSourceContext(this,null,()=>this.expr(path)):null;if(guard)this.origins.checkOwnedGuard(ownershipGuard,guard.span);
         if(guard)this.origins.direct(guard,path,guard.span);
+        if(deferredGuard){this.origins.scope=previous;this.origins.restoreOwnedBindings(ownershipBase);this.origins.scope=this.origins.cases(alternatives,scrutinee,path);}
         c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.transferOwnedResult(body,path);this.origins.expireOwnedBindings(ownershipBase,bodyOrigin);ownershipArms.push({states:this.origins.snapshotOwnedBindings(),returns:!bodyOrigin.diverging});
       }finally{this.origins.scope=previous;}
       if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');

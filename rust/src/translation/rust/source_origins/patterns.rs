@@ -60,6 +60,7 @@ impl SourceOrigins {
                 .is_some_and(|layer| layer == "reference")
             {
                 origin.wrappers.remove(0);
+                origin.source_borrowed_place=true;
                 if !origin.source_lifetimes.is_empty() {
                     origin.source_lifetimes.remove(0);
                 }
@@ -208,6 +209,7 @@ impl SourceOrigins {
                 };
                 let borrowed = !origin.wrappers.is_empty()
                     && origin.wrappers.iter().all(|layer| layer == "reference");
+                let standard_sum=type_entry.as_ref().is_some_and(|entry|self.standard_sum_source_origins.contains_key(&entry.full_name));
                 let fields = match (entry, type_entry) {
                     (
                         Some(SourceLookup {
@@ -229,7 +231,9 @@ impl SourceOrigins {
                         .and_then(|fields| fields.get(index))
                         .cloned()
                         .unwrap_or_else(SourceOrigin::unknown);
-                    if borrowed && fields.is_some() {
+                    if standard_sum&&fields.is_some(){
+                        field=self.project_standard_sum_pattern_field(&origin,&field,borrowed);
+                    }else if borrowed && fields.is_some() {
                         field.wrappers.insert(0, "reference".to_owned());
                     }
                     let argument_span = argument.span.or(source_span);
@@ -253,6 +257,20 @@ impl SourceOrigins {
         scrutinee: &SExpr,
         path: &[String],
     ) -> Result<HashMap<String, SourceOrigin>> {
+        self.cases_with_guard_mode(patterns,scrutinee,path,false)
+    }
+
+    pub(in super::super) fn cases_readonly_guard(&mut self,patterns:&mut [SPattern],scrutinee:&SExpr,path:&[String])->Result<HashMap<String,SourceOrigin>>{
+        // Wildcards without spans carry explicit reference-pattern layers in
+        // this parser-owned queue. The committing body traversal must see the
+        // same original records after this readonly preview.
+        let wildcard_references=self.wildcard_references.clone();
+        let result=self.cases_with_guard_mode(patterns,scrutinee,path,true);
+        self.wildcard_references=wildcard_references;
+        result
+    }
+
+    fn cases_with_guard_mode(&mut self,patterns:&mut [SPattern],scrutinee:&SExpr,path:&[String],deferred_guard:bool)->Result<HashMap<String,SourceOrigin>>{
         let origin = self.origin(scrutinee, path);
         let maps: Vec<_> = patterns
             .iter_mut()
@@ -307,7 +325,12 @@ impl SourceOrigins {
                 }
                 let mut binding = self.join(&candidates);
                 binding.source_extending_temporary_bindings.clear();
-                if self.owned_binding_value(&binding) {
+                let disposition=crate::translation::rust_standard_sum_guard_rules::read_rust_standard_sum_guard_binding_disposition(deferred_guard,self.owned_binding_value(&binding));
+                if disposition=="readonly"{
+                    binding.source_borrowed_place=true;
+                    scope.insert(name.clone(),binding);
+                } else if disposition=="transfer" {
+                    self.validate_standard_sum_pattern_transfer(&binding,span)?;
                     self.consume_owned_binding(&binding, span)?;
                     let binding = self.register_owned_binding(binding);
                     scope.insert(name.clone(), binding);

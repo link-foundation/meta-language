@@ -7,6 +7,8 @@ import {acceptRustSourceSignaturePrimitive} from './rust-source-signature-rules.
 import {readRustStandardSumSourceArgumentCount,readRustStandardSumSourceDepthLimit,readRustStandardSumSourceConstructorArity} from './rust-standard-sum-source-rules.js';
 import {acceptRustSourceArrayOwner,acceptRustSourceArrayElement} from './rust-array-rules.js';
 import {readRustTypeClosingTokenParts} from './rust-type-token-rules.js';
+import {readRustFunctionPointerTypeError,readRustFunctionPointerHeaderTypeError} from './rust-function-pointer-rules.js';
+import {acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
 
 /** Restrict this first declaration profile to explicit, unconstrained type
  * parameters. Raw spelling remains necessary to distinguish r#gen from gen.
@@ -145,6 +147,14 @@ export function readRustGenericTypeAliasDefaultArgumentPlan(defaults,count,expli
  * @param {string[]} parameters @param {string} name @param {boolean} qualified
  * @returns {boolean} */
 export function acceptRustGenericTypeAliasConcreteIdentifier(parameters,name,qualified){return qualified||!parameters.includes(name);}
+/** The existing primitive/member readers inspect at most sixteen actual path
+ * segments. This preparation walk follows that same bounded cursor window.
+ * @returns {number} */
+export function readRustGenericTypeAliasDefaultAccessHeadLimit(){return 16;}
+/** The first inherent discovery pass may precede its nominal declaration.
+ * Complete alias validation still runs after that catalog is collected.
+ * @param {boolean} collecting @param {boolean} discovery @returns {string} */
+export function readRustGenericTypeAliasDefaultOwnerPhase(collecting,discovery){return collecting&&discovery?'defer':'prepare';}
 
 /** A substitution plan indexes complete actual argument origins. It does not
  * copy types, re-resolve names, infer arguments, or prove a template well formed.
@@ -158,6 +168,27 @@ export function readRustGenericTypeAliasSubstitutionPlan(parameters,argumentsPro
  if(binding[0]!=='substitution')return binding;
  for(let at=0;at<argumentsProven.length;at+=1){if(!readRequiredBooleanFact(argumentsProven,at))return ['error','generic alias arguments need complete checked source origins'];}
  return binding;
+}
+/** Private syntax headers retain complete actual type/owner facts while their
+ * source sum inventory awaits final admission. This is never a proof of Copy.
+ * @param {string[]} parameters @param {boolean} header
+ * @param {boolean[]} argumentsTyped @param {boolean[]} argumentsProven
+ * @param {boolean[]} argumentsProvisional @param {string[]} occurrences
+ * @returns {string[]} */
+export function readRustGenericTypeAliasHeaderSubstitutionPlan(parameters,header,argumentsTyped,argumentsProven,argumentsProvisional,occurrences){
+ if(!header||argumentsTyped.length!==argumentsProven.length||argumentsTyped.length!==argumentsProvisional.length)return ['error','generic alias arguments need complete checked source origins'];
+ const plan=readRustGenericTypeAliasBindingPlan(parameters,argumentsTyped.length,occurrences);if(plan[0]!=='substitution')return plan;
+ for(let at=0;at<argumentsTyped.length;at+=1){if(!readRequiredBooleanFact(argumentsTyped,at)||!readRequiredBooleanFact(argumentsProven,at)&&!readRequiredBooleanFact(argumentsProvisional,at))return ['error','generic alias arguments need complete checked source origins'];}
+ return plan;
+}
+/** The provisional premise comes from the independently resolved actual data
+ * row, not a marker on the caller's expression origin.
+ * @param {boolean} header @param {string} kind @param {number} wrappers @param {string} ownerKind
+ * @param {string} owner @param {number} children @param {string} actualOwner
+ * @param {number} actualArguments @param {number} actualWrappers
+ * @param {boolean} provisional @returns {boolean} */
+export function acceptRustGenericTypeAliasHeaderStandardSumOrigin(header,kind,wrappers,ownerKind,owner,children,actualOwner,actualArguments,actualWrappers,provisional){
+ return header&&provisional&&kind==='named'&&wrappers===0&&actualWrappers===0&&ownerKind==='library'&&owner===actualOwner&&children===actualArguments&&readRustGenericTypeAliasStandardSumOwner(actualOwner,'',actualArguments)!=='';
 }
 
 /** Symbolic application selects whole argument templates, without claiming
@@ -198,6 +229,28 @@ export function readRustGenericTypeAliasUnusedParameterError(parameters,used){
 export function acceptRustGenericTypeAliasConcreteTemplate(kind,wrappers,ownerKind,owner,bits,signed,children,proven){
  return proven&&wrappers===0&&children===0&&(kind==='unit'?ownerKind==='unit'&&owner==='':ownerKind==='primitive'&&['fixed','bool','float'].includes(kind)&&acceptRustSourceSignaturePrimitive(kind,owner,bits,signed));
 }
+/** Concrete callable leaves retain the actual parsed safe fn pointer domain.
+ * This operation does not introduce parameter-dependent callable templates.
+ * @param {boolean} ordinary @param {string} kind @param {number} wrappers
+ * @param {string} ownerKind @param {number} ownerPaths @param {number} children
+ * @param {number} parameters @param {boolean[]} parameterCopies
+ * @param {boolean} resultCopy @param {boolean} resultTyped
+ * @param {boolean} proven @param {boolean} copy @param {boolean} closure
+ * @returns {boolean} */
+export function acceptRustGenericTypeAliasConcreteCallableTemplate(ordinary,kind,wrappers,ownerKind,ownerPaths,children,parameters,parameterCopies,resultCopy,resultTyped,proven,copy,closure){
+ return wrappers===0&&!closure&&resultTyped&&parameterCopies.length===parameters&&acceptRustRetainedFunctionOwner('Rust source function signature 2',ownerKind,kind,ownerPaths,children,parameters,false)&&proven&&copy&&readRustFunctionPointerTypeError(ordinary,parameterCopies,resultCopy)==='';
+}
+/** Private fn-pointer children may await nominal/sum admission. Their existing
+ * parser header flag is transported without upgrading proven or Copy facts.
+ * @param {boolean} ordinary @param {string} kind @param {number} wrappers
+ * @param {string} ownerKind @param {number} ownerPaths @param {number} children
+ * @param {number} parameters @param {boolean[]} parameterCopies
+ * @param {boolean} resultCopy @param {boolean} resultTyped
+ * @param {boolean} header @param {boolean} pointerHeader @param {boolean} closure
+ * @returns {boolean} */
+export function acceptRustGenericTypeAliasHeaderCallableTemplate(ordinary,kind,wrappers,ownerKind,ownerPaths,children,parameters,parameterCopies,resultCopy,resultTyped,header,pointerHeader,closure){
+ return header&&pointerHeader&&wrappers===0&&!closure&&resultTyped&&parameterCopies.length===parameters&&acceptRustRetainedFunctionOwner('Rust source function signature 2',ownerKind,kind,ownerPaths,children,parameters,false)&&readRustFunctionPointerHeaderTypeError(ordinary,parameterCopies,resultCopy,header)==='';
+}
 /** A concrete nominal leaf retains its actual checked definition identity.
  * Copy is deliberately not a premise of symbolic template wellformedness.
  * @param {string} kind @param {number} wrappers @param {string} ownerKind
@@ -219,6 +272,11 @@ export function readRustGenericTypeAliasStandardSumOwner(owner,constructor,count
  * @param {number} count @param {boolean} proven @param {boolean} actualProven
  * @param {boolean} actualCopy @param {number} actualWrappers @returns {boolean} */
 export function acceptRustGenericTypeAliasStandardSumLeaf(kind,wrappers,owner,count,proven,actualProven,actualCopy,actualWrappers){return kind==='named'&&wrappers===0&&proven&&actualProven&&actualCopy&&actualWrappers===0&&readRustGenericTypeAliasStandardSumOwner(owner,'',count)!=='';}
+/** Independent stored ownership admission never becomes Copy evidence.
+ * @param {string} kind @param {number} wrappers @param {string} owner
+ * @param {number} count @param {boolean} proven @param {boolean} actualProven
+ * @param {number} actualWrappers @param {string} profile @returns {boolean} */
+export function acceptRustGenericTypeAliasOwnedStandardSumLeaf(kind,wrappers,owner,count,proven,actualProven,actualWrappers,profile){return profile==='owned'&&kind==='named'&&wrappers===0&&proven&&actualProven&&actualWrappers===0&&readRustGenericTypeAliasStandardSumOwner(owner,'',count)!=='';}
 /** @param {number} depth @returns {string} */
 export function readRustGenericTypeAliasStandardSumDepthError(depth){return depth>readRustStandardSumSourceDepthLimit()?'generic alias standard sum exceeds its shared depth bound':'';}
 
@@ -254,8 +312,33 @@ export function readRustGenericTypeAliasVectorElementError(kind,wrappers,ownerKi
  * @param {boolean} actualCopy @param {string} member @returns {string[]} */
 export function readRustGenericTypeAliasConstructorPlan(kind,wrappers,ownerKind,owner,children,element,model,proven,actualSumOwner,actualArguments,actualProven,actualCopy,member){
  if(acceptRustTypeAliasEmptyVectorMember(kind,ownerKind,owner,children,element,model,proven,wrappers,member))return ['vector constructor','0'];
+ return actualCopy&&proven&&actualProven?standardSumConstructorShape(kind,wrappers,ownerKind,owner,children,actualSumOwner,actualArguments,member):[];
+}
+/** @param {string} kind @param {number} wrappers @param {string} ownerKind
+ * @param {string} owner @param {number} children
+ * @param {string} actualSumOwner @param {number} actualArguments
+ * @param {string} member @returns {string[]} */
+function standardSumConstructorShape(kind,wrappers,ownerKind,owner,children,actualSumOwner,actualArguments,member){
  const arity=readRustStandardSumSourceConstructorArity(actualSumOwner,member);
- return kind==='named'&&wrappers===0&&ownerKind==='library'&&proven&&actualProven&&actualCopy&&owner===actualSumOwner&&children===actualArguments&&actualArguments===readRustStandardSumSourceArgumentCount(actualSumOwner)&&arity>=0?['sum constructor',String(arity)]:[];
+ return kind==='named'&&wrappers===0&&ownerKind==='library'&&owner===actualSumOwner&&children===actualArguments&&actualArguments===readRustStandardSumSourceArgumentCount(actualSumOwner)&&arity>=0?['sum constructor',String(arity)]:[];
+}
+/** This separate operation admits only the actual stored owned-sum profile.
+ * @param {string} kind @param {number} wrappers @param {string} ownerKind
+ * @param {string} owner @param {number} children @param {boolean} proven
+ * @param {string} actualSumOwner @param {number} actualArguments
+ * @param {boolean} actualProven @param {string} profile @param {string} member
+ * @returns {string[]} */
+export function readRustGenericTypeAliasOwnedConstructorPlan(kind,wrappers,ownerKind,owner,children,proven,actualSumOwner,actualArguments,actualProven,profile,member){
+ return profile==='owned'&&proven&&actualProven?standardSumConstructorShape(kind,wrappers,ownerKind,owner,children,actualSumOwner,actualArguments,member):[];
+}
+/** Separate private-header path; no admitted/proven/Copy premise is supplied.
+ * @param {boolean} header @param {boolean} provisional @param {string} kind
+ * @param {number} wrappers @param {string} ownerKind @param {string} owner
+ * @param {number} children @param {string} actualOwner
+ * @param {number} actualArguments @param {number} actualWrappers
+ * @param {string} member @returns {string[]} */
+export function readRustGenericTypeAliasHeaderConstructorPlan(header,provisional,kind,wrappers,ownerKind,owner,children,actualOwner,actualArguments,actualWrappers,member){
+ return acceptRustGenericTypeAliasHeaderStandardSumOrigin(header,kind,wrappers,ownerKind,owner,children,actualOwner,actualArguments,actualWrappers,provisional)?standardSumConstructorShape(kind,wrappers,ownerKind,owner,children,actualOwner,actualArguments,member):[];
 }
 
 /** @param {string[]} kinds @param {string[]} values @param {number} position @returns {number} */

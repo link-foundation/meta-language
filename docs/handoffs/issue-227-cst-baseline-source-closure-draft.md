@@ -323,3 +323,105 @@ phase must review the whole drafted batch before executing its required checks.
 Coordinator integration adds a deferred aggregate policy-control file at
 `js/tests/rust-baseline-source-policies.test.js` for the separate alias/sum
 policies. It does not exercise or resolve the CST emission gaps above.
+
+## Direct Copy standard sum combinators
+
+`rust-standard-sum-combinator-rules.js` now supplies the shared decisions for
+Option `and`, `or`, `xor`, `or_else` and Result `and`, `or`, `or_else`.
+`rust-standard-sum-combinators.js` and native `standard_sum_combinators.rs`
+transport actual source origins into those decisions through the parent-owned
+postfix dispatchers. The receiver is captured before the eager right operand
+or callback factory, and each is captured once. Only the selected failure
+branch invokes `or_else`; Result passes its actual error payload and Option
+passes no arguments. Complete retained payload/error identities are checked
+against actual source owners before constructing the output datatype branches.
+The nominal Copy `Option<Span>.or` use in native copy-closure parsing is a
+concrete source dependency covered by a separate complete original.
+
+A direct Result `and(Ok(value))` obtains only its missing error argument from
+the actual receiver, and direct `or(Err(error))` obtains only its missing
+successful argument there. The new payload/error must have its own complete
+immutable Copy origin. Constructor recognition uses actual value-namespace
+resolution, including imports and local shadows. The constraint is limited to
+the entire direct right operand; it cannot cross a following method or infer
+an unsuffixed scalar type. Other generic-changing right operands and Result
+fallback callbacks must establish their complete output from actual syntax.
+An unestablished Err-only closure remains an explicit inference obligation.
+
+`rust-standard-sum-combinators.mjs` retains 35 independent rule decisions,
+13 complete originals with literal stdout and 13 complete refusal inputs.
+The originals cover eager evaluation on unselected operands, callback-factory
+order, selected lazy invocation, changed Result error families, all four xor
+presence combinations, Unit presence, imports and the actual Span owner.
+The version-sensitive source range is Rust `>=1.90.0 <1.100.0`. The coordinator
+owns appending these rows to the common default-CST/frontend/typed/four-target
+controls without moving existing fixture coordinates. The standalone policy
+test and all integration controls remain unexecuted source drafts; native
+shared-policy generation and every subsequent check are deferred.
+
+## Nonconsuming standard sum observers
+
+`rust-owned-standard-sum-observer-rules.js` and the JavaScript/native
+`rust-owned-standard-sum-observers.js` / `owned_standard_sum_observers.rs`
+adapters add actual `is_some`, `is_none`, `is_ok` and `is_err` consumers for
+owned String/vector/nested sum origins. They inspect the original root/loan
+state before using the declaration-owned constructor paths. The generated
+surface term matches the original receiver once and uses only wildcard fields:
+it creates no receiver binding, payload move or receiver Copy evidence. The
+receiver remains available to subsequent observations and consuming operations.
+
+Immutable reference layers retain their complete lifetime metadata, including
+checked elided parameter lifetimes, while local references continue to check
+all actual root/loan states. Referenced Copy sums use this same observer path
+because a Copy field projected from an owned enclosing constructor still has
+its real transitive root loan. Direct Copy sums retain the existing dispatcher.
+Unknown ownership, missing provenance, moved/dropped roots and illegal later
+moves from borrowed places keep their explicit refusals.
+
+`rust-owned-standard-sum-observers.mjs` contains 33 independent rule controls,
+nine complete original programs and nine complete refusal programs. The
+originals retain repeated observations before consuming String/vector/nested
+matches, shared parameters and locals, dereferenced borrowed places, a
+single-evaluation producer trace, and a borrowed `Option<u8>` field of an owned
+`Result<Option<u8>,String>`. Refusals retain direct and transitive use after
+move, an expired root loan, illegal shared payload extraction and arity/family
+errors. Every original and refusal is bounded to Rust `>=1.90.0 <1.100.0`.
+The coordinator owns appending these inputs to the common full source-CST,
+frontend and target controls. All controls and generated native policy work
+remain deferred; only source reads and edits were performed.
+
+## Delayed owned pattern transfers in guarded arms
+
+`rust-standard-sum-guard-rules.js`, `rust-standard-sum-guards.js` and native
+`standard_sum_guards.rs` supply the deferred-mode source decisions and actual
+pattern shape transport. The existing immediate-mode guarded-move refusal
+policy remains intact. Root match readers select deferred mode for a guarded
+owned standard sum, build a readonly pattern scope without owner allocation,
+check guard reads and preserve the original root states, then reconstruct the
+ordinary case scope to commit moves only for the body path. Every following
+arm starts from the original ownership snapshot. Constructor wildcards remain
+nonmoving. Native readonly preview restores its parser-owned wildcard-reference
+queue so the second committing traversal uses the same source records.
+
+The implementation uses actual source binding/loan and owned-producer facts,
+including readonly inspection of fresh nested sum producers with no fabricated
+owner identities. Alias and or-pattern delayed move agreement remain explicit
+refusals. The native constructor projection also corrects a misplaced
+`standard_sum` declaration that referred to a constructor-only type entry from
+the tuple arm; its actual declaration now belongs to the constructor arm.
+
+`rust-standard-sum-guards.mjs` retains ten guard decisions and four owned
+binding registration decisions, ten complete original programs with literal
+stdout and eight complete refusals, all bounded
+to Rust `>=1.90.0 <1.100.0`. One positive repeats the exact historical guarded
+input with its independently declared original compiler expectation and retained
+previous translation expectation. The old refusal fixture row has not been
+removed: coordinator routing must retain its history while reclassifying the
+now-admitted source. The new originals include false-guard fallthrough consuming
+the original root inside the same match, actual true-body moves, repeated
+readonly reads, nonbinding guards and nominal Copy behavior. Controls remain
+source drafts; no verification or runtime observation has occurred. Nested
+guard block scope entry uses the new shared owned-registration rule to leave a
+borrowed place unchanged; it cannot manufacture an ownership identity for a
+readonly payload projected from a fresh temporary. Positive readonly block and
+negative attempted-move originals retain that boundary explicitly.

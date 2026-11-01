@@ -359,7 +359,7 @@ impl RustParser {
             .finish_owned_expression(&body, path, &temporary_frame, false);
         let body_origin = self.origins.origin(&body, path);
         self.origins
-            .expire_owned_bindings(&function_ownership, &body_origin);
+            .expire_owned_bindings(&function_ownership, &body_origin)?;
         self.origins.transfer_owned_result(&body, path)?;
         if let Type::Array { element, .. } = &ret
             && !self.shared_array_origin(&source_result)

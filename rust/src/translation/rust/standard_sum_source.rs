@@ -6,10 +6,24 @@ use super::{Alias, Options, Result, RustParser, SCtor, SData, SExpr, SField, SIt
     SNode, SPattern, SPatternNode, SProgram, SourceDeclaration, SourceOrigin, SourceOrigins,
     Span, Token, Type, unsupported, type_error};
 use crate::translation::rust_standard_sum_source_rules as rules;
+use crate::translation::rust_standard_sum_ownership_rules as ownership_rules;
 use crate::translation::source_signatures::SourceOwner;
 use super::standard_sum_metadata::{measure_origins,measure_identities};
 
 pub(super) const DEFERRED_PATTERN: &str = "#rust-standard-sum-source";
+
+fn sanitize_source_type_origin(origin:&mut SourceOrigin){
+    origin.source_binding_identity=None;origin.source_place_binding_identity=None;
+    origin.source_loan_binding_identities.clear();origin.source_place_loan_binding_identities.clear();
+    origin.source_extending_temporary_bindings.clear();origin.source_owned_result_proof=false;
+    origin.source_standard_sum_pattern_move=false;
+    origin.source_standard_sum_borrowed_field=false;
+    origin.source_borrowed_place=false;origin.fresh_array_value=None;
+    if let Some(fields)=origin.fields.as_mut(){for field in fields{sanitize_source_type_origin(field);}}
+    if let Some(parameters)=origin.callable_parameters.as_mut(){for parameter in parameters{sanitize_source_type_origin(parameter);}}
+    if let Some(result)=origin.callable_result.as_mut(){sanitize_source_type_origin(result);}
+    if let Some(sum)=origin.standard_sum_source.as_mut(){for child in &mut sum.arguments{sanitize_source_type_origin(child);}}
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct StandardSumSource {
@@ -67,7 +81,7 @@ impl SourceOrigins {
         let (name,declaration) = self.standard_sum_metadata_lookup(path, &origin.path)?;
         if !matches!(declaration, SourceDeclaration::Data) { return None; }
         let stored = self.standard_sum_source_origins.get(&name)?;
-        if !stored.proven || stored.copy_evidence.is_none() || !stored.wrappers.is_empty() { return None; }
+        if !stored.proven || !stored.wrappers.is_empty() || stored.copy_evidence.is_none()&&self.standard_sum_ownership_facts(stored).profile!="owned" { return None; }
         measure_origins(&[stored]).ok()?;
         let mut stored=stored.clone();
         stored.wrappers = origin.wrappers.clone();
@@ -133,7 +147,7 @@ impl SourceOrigins {
     fn standard_sum_source_identity_project(&self, origin: &SourceOrigin) -> Option<StandardSumIdentity> {
         if !origin.proven || origin.diverging { return None; }
         let stored=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.standard_sum_metadata_lookup(path,&origin.path).and_then(|(name,declaration)|matches!(declaration,SourceDeclaration::Data).then(||self.standard_sum_source_origins.get(&name)).flatten()),_=>None};
-        if let Some(actual) = stored.filter(|actual|actual.proven&&actual.copy_evidence.is_some()&&actual.wrappers.is_empty()) {
+        if let Some(actual) = stored.filter(|actual|actual.proven&&actual.wrappers.is_empty()&&(actual.copy_evidence.is_some()||self.standard_sum_ownership_facts(actual).profile=="owned")) {
             let sum = actual.standard_sum_source.as_deref()?;
             return Some(StandardSumIdentity::Sum { owner:sum.owner.clone(),
                 arguments:sum.arguments.iter().map(|child|self.standard_sum_source_identity_project(child)).collect::<Option<Vec<_>>>()?,
@@ -211,6 +225,10 @@ impl RustParser {
         self.standard_sum_resolved_owner(segments,path,false).map_or_else(String::new,|(owner,_)|owner)
     }
 
+    pub(super) fn resolve_standard_sum_source_constructor(&self,segments:&[String],path:&[String])->Option<(String,String)>{
+        self.standard_sum_resolved_owner(segments,path,true).filter(|(_,variant)|!variant.is_empty())
+    }
+
     pub(super) fn read_standard_sum_source_import(&self,segments:&[String],path:&[String]) -> bool {
         self.ordinary_completion_context() && segments.first().is_some_and(|root|root=="std"||root=="core")
             && self.standard_sum_resolved_owner(segments,path,false).is_some()
@@ -225,17 +243,21 @@ impl RustParser {
         self.origins.standard_sum_metadata_budget.reserve(cost).map_err(|error|failure(&error,span))?;
         let depths=arguments.iter().map(|argument|self.origins.actual_standard_sum_depth(argument,&mut HashSet::new(),0)).collect::<Vec<_>>();
         if rules::read_rust_standard_sum_source_depth(&depths,true)<0.0{return Err(failure("the complete concrete sum exceeds its shared nested depth bound",span));}
-        let arguments = if provisional { arguments } else { arguments.iter().map(|argument|self.origins.standard_sum_qualified_origin(argument)).collect::<Option<Vec<_>>>()
+        let mut arguments = if provisional { arguments } else { arguments.iter().map(|argument|self.origins.standard_sum_qualified_origin(argument)).collect::<Option<Vec<_>>>()
             .ok_or_else(||failure("every child needs its actual resolved source type",span))? };
+        for argument in &mut arguments{sanitize_source_type_origin(argument);}
         let identities = arguments.iter().map(|argument|if provisional {self.origins.standard_sum_header_identity(argument)}else{self.origins.standard_sum_source_identity(argument)}).collect::<Option<Vec<_>>>()
             .ok_or_else(||failure("every child needs complete checked source identity",span))?;
         // These labels project the already established typed identities into the
         // shared nonempty-identity admission gate; equality uses the structures.
         let labels = identities.iter().map(|_|"complete checked source identity".to_owned()).collect::<Vec<_>>();
         let copies = arguments.iter().map(SourceOrigin::direct_copy_value).collect::<Vec<_>>();
-        if !provisional&&!rules::accept_rust_standard_sum_source_arguments(owner,&labels,&copies) {
-            return Err(failure("every child needs a direct immutable Copy source type",span));
+        let roles=if provisional{Vec::new()}else{arguments.iter().map(|argument|self.origins.standard_sum_ownership_facts(argument).profile).collect::<Vec<_>>()};
+        let owned_profile=!provisional&&ownership_rules::accept_rust_standard_sum_owned_arguments(owner,&labels,&roles);
+        if !provisional&&!rules::accept_rust_standard_sum_source_arguments(owner,&labels,&copies)&&!owned_profile {
+            return Err(failure("every child needs its complete direct Copy or supported owned source type and ownership model",span));
         }
+        if owned_profile{let error=ownership_rules::read_rust_standard_sum_ownership_version_error(self.source_version_minor);if !error.is_empty(){return Err(failure(&error,span));}}
         for (_,origin) in &self.standard_sum_source.rows {
             let sum = origin.standard_sum_source.as_ref().expect("registered sum");
             if sum.provisional==provisional&&sum.owner==owner && sum.arguments.iter().map(|child|if provisional{self.origins.standard_sum_header_identity(child)}else{self.origins.standard_sum_source_identity(child)}).collect::<Option<Vec<_>>>().as_ref()==Some(&identities) {
@@ -261,7 +283,7 @@ impl RustParser {
             .ok_or_else(||failure("every child must retain its actual source owner",span))?;
         let source_owner=SourceOwner { kind:"library".into(),path:owner.split("::").map(str::to_owned).collect(),arguments:owners };
         let mut origin=SourceOrigin::with_type(Type::Named { path:type_path.clone(),span:None },&[],Vec::new());
-        origin.proven=!provisional;origin.copy_evidence=(!provisional).then_some(());origin.source_owner=Some(source_owner.clone());origin.expanded_source_owner=Some(source_owner);
+        origin.proven=!provisional;origin.copy_evidence=(!provisional&&copies.iter().all(|copy|*copy)).then_some(());origin.source_owner=Some(source_owner.clone());origin.expanded_source_owner=Some(source_owner);
         let ordinal=self.standard_sum_source.rows.iter().find(|(existing,_)|existing==&name).and_then(|(_,origin)|origin.standard_sum_source.as_ref()).map_or(self.standard_sum_source.rows.len(),|sum|sum.ordinal);
         origin.standard_sum_source=Some(Box::new(StandardSumSource { owner:owner.into(),arguments:arguments.clone(),type_path,constructor_paths,ordinal,provisional }));
         self.origins.register_catalog_entry(name.clone(),SourceDeclaration::Data);
@@ -480,7 +502,8 @@ impl RustParser {
         // ambient return types may describe the result of a later postfix.
         if !has_explicit&&arity==1.0&&rules::accept_rust_standard_sum_source_inferred_constructor(&owner,&variant){
             let actual=self.origins.origin(&args[0],path);
-            let identity=if actual.direct_copy_value(){self.origins.standard_sum_source_identity(&actual)}else{None};
+            let role=self.origins.standard_sum_ownership_facts(&actual).profile;
+            let identity=if role=="copy"||role=="owned"{self.origins.standard_sum_source_identity(&actual)}else{None};
             let contextual=expected.as_ref().and_then(|origin|origin.standard_sum_source.as_ref()).and_then(|sum|sum.arguments.first()).and_then(|origin|self.origins.standard_sum_source_identity(origin));
             if identity.is_some()&&identity!=contextual{expected=Some(self.instantiate_standard_sum_source(&owner,vec![actual],self.standard_sum_range(start))?);}
         }
@@ -492,7 +515,10 @@ impl RustParser {
         if arity==1.0 { self.origins.argument(&self.origins.origin(&args[0],path),&sum.arguments[argument as usize],self.standard_sum_range(start))?; }
         let target=sum.constructor_paths.get(&variant).cloned().expect("actual variant path");let range=self.standard_sum_range(start);
         let node=if arity==0.0 { SNode::Name { path:target } } else { SNode::App { func:Box::new(SExpr::new(SNode::Name { path:target },range)),args } };
-        let value=SExpr::new(node,range);self.origins.mark(&value,expected);Ok(Some(value))
+        let value=SExpr::new(node,range);
+        let arguments=match &value.node{SNode::App {args,..}=>args.as_slice(),_=>&[]};
+        self.capture_standard_sum_constructor(&value,&expected,arguments,path,range)?;
+        Ok(Some(value))
     }
 
     pub(super) fn read_standard_sum_source_pattern(&mut self,segments:&[String],path:&[String],start:&Token,aliases:&mut Vec<Alias>) -> Result<Option<SPattern>> {

@@ -277,6 +277,10 @@ impl RustParser {
         origin.expanded_source_owner=origin.source_owner.clone();
         let cached=self.copy_type_alias_origin(&origin,row)?;self.source_type_aliases.cache.insert(row.key.clone(),cached);Ok(Some(origin))
     }
+    pub(super) fn prepare_type_alias_default_origin(&mut self,row:&AliasDeclaration)->Result<()>{
+        if self.source_type_aliases.cache.contains_key(&row.key){return Ok(());}
+        self.default_type_alias_access_origin(row).map(|_|())
+    }
     pub(super) fn copy_current_type_alias_origin(&mut self, row: &AliasDeclaration) -> Result<SourceOrigin> {
         let needed = self.measure_alias_origin(&self.origins.current_type, row)?;
         self.source_type_aliases.nodes += needed;
