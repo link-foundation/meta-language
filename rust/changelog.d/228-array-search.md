@@ -71,6 +71,9 @@ preserving accessor functions, primitive behavior and collection internal slots.
 Draft Object prototype operations with ordinary cycle/extensibility behavior
 and authenticated primitive realm-root metadata replayed by shared semantics.
 
+Draft public Object.defineProperty through shared descriptor conversion and
+ArraySetLength continuation, preserving both conversions and partial error heaps.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

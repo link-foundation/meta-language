@@ -191,6 +191,8 @@ const consumers=[
  'js/tests/translation-javascript-property-operators.test.js',
  'js/tests/translation-javascript-object-enumeration.test.js',
  'js/tests/translation-javascript-object-integrity.test.js',
+ 'js/tests/translation-javascript-public-definitions.test.js',
+ 'js/src/translation/javascript-property-definition.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

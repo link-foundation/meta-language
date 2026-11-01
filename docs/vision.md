@@ -57,6 +57,16 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Public Object.defineProperty uses the shared target check, ToPropertyKey and
+ordered ToPropertyDescriptor pipeline. Array length definitions compose that
+pipeline with the existing two-conversion ArraySetLength continuation. Completed
+descriptors, actual primitive-conversion authority, partial deletion heaps and
+write witnesses survive calls, errors and resource pauses. DefinePropertyOrThrow
+returns its original target on success; rejection preserves prior partial effects
+before raising the actual realm error. Existing four-argument helper entry points
+remain aliases; symbol-aware composition extends them without replacing native
+semantics by hand.
+
 Object.hasOwn checks source coercibility before key conversion and observes only
 own descriptors, including String indexed properties and its nonenumerable length.
 Object.is uses the common SameValue relation. Integrity operations preserve

@@ -10,7 +10,7 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
  * {$:'arrayAssignmentPrimitive',definition:JavaScriptArrayDefinitionState,exoticKey:JavaScriptSemanticValue,value:JavaScriptSemanticValue}} JavaScriptArrayAssignmentState */
 /** @typedef {{$:'arrayAssignmentContinue',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayAssignmentState} |
  * {$:'arrayAssignmentCall',heap:JavaScriptOrdinaryHeap,state:JavaScriptArrayAssignmentState,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]} |
- * {$:'arrayAssignmentCompleted',heap:JavaScriptOrdinaryHeap,success:boolean} |
+ * {$:'arrayAssignmentCompleted',heap:JavaScriptOrdinaryHeap,success:boolean,writes?:string[]} |
  * {$:'arrayAssignmentThrow',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'arrayAssignmentError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'arrayAssignmentInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
@@ -51,7 +51,7 @@ export function continueJavaScriptArrayAssignmentDefinition(exoticKey,transition
  switch(transition.$){
   case 'arrayDefinitionContinue':return {$:'arrayAssignmentContinue',heap:transition.heap,state:{$:'arrayAssignmentDefinition',definition:transition.state,exoticKey}};
   case 'arrayNumberRequest':return continueJavaScriptArrayAssignmentNumber(transition.heap,transition.state,exoticKey,beginJavaScriptScalarProtocol(transition.heap,transition.input,exoticKey,'coerce primitive number'));
-  case 'arrayPropertyComplete':return {$:'arrayAssignmentCompleted',heap:transition.heap,success:transition.success};
+  case 'arrayPropertyComplete':return {$:'arrayAssignmentCompleted',heap:transition.heap,success:transition.success,writes:transition.writes};
   case 'arrayError':return {$:'arrayAssignmentError',heap:transition.heap,errorClass:transition.errorClass,reason:transition.reason};
   case 'arrayInvalid':return {$:'arrayAssignmentInvalid',heap:transition.heap,reason:transition.reason};
   case 'arrayResourceLimit':return transition.state===undefined?{$:'arrayAssignmentInvalid',heap:transition.heap,reason:'an allocation resource outcome cannot substitute an Array definition continuation'}:{$:'arrayAssignmentResourceLimit',heap:transition.heap,state:{$:'arrayAssignmentDefinition',definition:transition.state,exoticKey},reason:transition.reason};

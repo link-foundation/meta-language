@@ -1052,3 +1052,24 @@ primitive realm roots and prototype validation, and bypassing own proto setters.
 Two deferred controls inspect ordinary transitions and source-bound VM metadata
 resumption. No execution/generation/compilation/validation occurred. Exact engine
 error wording and opaque/Proxy prototype protocols remain explicit extensions.
+
+### Public Object.defineProperty and composed Array descriptors draft
+
+The protected Object directory now publishes a body using the existing single
+propertyDefinition opcode. Target checking, key conversion and ordered/inherited
+descriptor reads stay in one shared pipeline. Array length definitions extend
+that pipeline with the existing ArrayAssignment continuation, retaining actual
+Symbol authority and both numeric conversion effects. Partial deletion heaps
+and write witnesses propagate through rejection, rather than restoring a stale
+pre-definition heap. Resource pauses retain their completed descriptor and array
+state. Existing four-argument completion/continuation aliases remain available;
+new symbol-aware helpers compose the public path. VM pending state now validates
+the actual selected target, conversion state and authority.
+
+Ten originals cover default/explicit descriptors, inherited fields, real
+accessors, key/descriptor order, invalid targets/getters and Array conversion/
+RangeError/partial deletion behavior. Three deferred controls inspect public
+body delegation, both selected numeric requests, write/heap transport and legacy
+entry points. Source capture admits the remaining standard Error namespace names
+for version-qualified checks; their namespace/operator linkage is the next
+source consumer integration batch. No execution/generation/validation occurred.

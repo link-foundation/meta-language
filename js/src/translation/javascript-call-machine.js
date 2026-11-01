@@ -31,7 +31,7 @@ import {testJavaScriptCallCodeCoordinate,findJavaScriptCallCodeFunction,readJava
 import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,planJavaScriptOrdinarySetWithArrayDefinition,insertJavaScriptOrdinaryObject,createJavaScriptOrdinarySetDescriptor,setJavaScriptOrdinaryPrototype,deleteJavaScriptOrdinaryProperty,readJavaScriptOrdinaryKeyError} from './javascript-ordinary-heap.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversion.js';
-import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,completeJavaScriptPropertyDefinition} from './javascript-property-definition.js';
+import {beginJavaScriptPropertyDefinition,stepJavaScriptPropertyDefinition,resumeJavaScriptPropertyDefinition,completeJavaScriptPropertyDefinitionWithSymbol,readJavaScriptPropertyDefinitionStateError} from './javascript-property-definition.js';
 import {beginJavaScriptPropertyKeyConversion,stepJavaScriptPropertyKeyConversion,resumeJavaScriptPropertyKeyConversion} from './javascript-property-key-conversion.js';
 import {readJavaScriptNumberProtocolOperationError} from './javascript-number-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
@@ -532,7 +532,14 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         break;
       }
       case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';break;
-      case 'waitDefinition':if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';break;
+      case 'waitDefinition':{
+        if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';const invalid=readJavaScriptPropertyDefinitionStateError(heap,pending.state);if(invalid!=='')return invalid;
+        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined,target=instruction?.$==='propertyDefinition'?frame.registers[instruction.target]:instruction?.$==='ordinaryDataProperty'||instruction?.$==='literalAccessor'?frame.registers[instruction.object]:undefined;
+        if(target===undefined||!testJavaScriptSemanticSameValue(target,pending.state.target))return 'property definition retains its actual selected source target';
+        if(pending.state.$==='propertyDefinitionArray'&&!testJavaScriptSemanticSameValue(pending.state.assignment.exoticKey,program.exoticKey))return 'Array definition retains its actual primitive conversion Symbol';
+        if(pending.state.$==='propertyDefinitionKey'&&!testJavaScriptSemanticSameValue(pending.state.conversion.exoticKey,program.exoticKey)||pending.state.$==='propertyDefinitionDescriptor'&&pending.state.exoticKey!==undefined&&!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'property definition retains its actual primitive conversion authority';
+        if(suspended&&pending.state.$==='propertyDefinitionArray'&&pending.state.assignment.$!=='arrayAssignmentNumber')return 'Array definition child retains its actual numeric callback phase';break;
+      }
       case 'waitNumber':{
         if(!program.realms.includes(pending.realm))return 'pending number conversion retains its actual intrinsic realm';
         const numberState=pending.state;
@@ -661,7 +668,7 @@ export function finishJavaScriptCallFunctionName(program,machine,destination,obj
  const entry=object.$==='object'?machine.heap.objects[findJavaScriptOrdinaryObject(machine.heap.objects,object.identity)]:undefined;
  if(object.$!=='object'||!object.callable||entry?.$!=='closureObject')return {$:'machineInvalid',heap:machine.heap,reason:'source function naming retains its actual newly allocated runtime callable'};
  const descriptor=createJavaScriptPropertyDescriptor('data',true,false);descriptor.value=name;descriptor.writable=false;
- return acceptJavaScriptCallDefinition(program,machine,destination,realm,completeJavaScriptPropertyDefinition(machine.heap,object,{$:'text',units:[110,97,109,101]},descriptor));
+ return acceptJavaScriptCallDefinition(program,machine,destination,realm,completeJavaScriptPropertyDefinitionWithSymbol(machine.heap,object,{$:'text',units:[110,97,109,101]},descriptor,program.exoticKey));
 }
 /** Actual embedding metadata supplies only the selected Symbol description.
  * No selected key conversion, method body or property Get is re-executed.
@@ -690,14 +697,15 @@ export function acceptJavaScriptCallKey(program,machine,destination,realm,transi
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {number} destination
  * @param {bigint} realm @param {JavaScriptPropertyDefinitionTransition} transition @returns {JavaScriptCallMachineTransition} */
 export function acceptJavaScriptCallDefinition(program,machine,destination,realm,transition){
-  const frame=machine.frames[machine.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'property definition needs its actual active frame'};
+  const heap=transition.heap??machine.heap,current={$:'callMachine',heap,frames:machine.frames},frame=current.frames[current.frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap,reason:'property definition needs its actual active frame'};
   switch(transition.$){
-    case 'definitionContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state}))};
-    case 'definitionCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(machine.heap,machine.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state})),transition.callee,transition.receiver,transition.arguments);
+    case 'definitionContinuation':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state}))};
+    case 'definitionCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state})),transition.callee,transition.receiver,transition.arguments);
     case 'definitionCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,machine.frames,writeJavaScriptCallRegister(frame,destination,transition.value))};
-    case 'definitionThrow':return throwJavaScriptCallValue(machine,transition.value);
-    case 'definitionIntrinsicError':return requestJavaScriptCallError(machine,realm,transition.errorClass,transition.reason);
-    case 'definitionInvalid':return {$:'machineInvalid',heap:machine.heap,reason:transition.reason};
+    case 'definitionThrow':return throwJavaScriptCallValue(current,transition.value);
+    case 'definitionIntrinsicError':return requestJavaScriptCallError(current,realm,transition.errorClass,transition.reason);
+    case 'definitionInvalid':return {$:'machineInvalid',heap,reason:transition.reason};
+    case 'definitionResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitDefinition',destination,realm,state:transition.state})),reason:transition.reason};
   }
 }
 
@@ -1086,7 +1094,7 @@ export function stepJavaScriptCallMachine(program,machine){
       // An absent opposite field preserves an existing accessor's counterpart;
       // conversion from a data property supplies undefined through the kernel.
       if(instruction.kind==='get'){descriptor.getter=value;descriptor.setterPresent=false;}else{descriptor.setter=value;descriptor.getterPresent=false;}
-      return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinition(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},descriptor));
+      return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinitionWithSymbol(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},descriptor,program.exoticKey));
     }
     case 'literalPrototype':{
       const object=registers[instruction.object]??{$:'undefined'},value=registers[instruction.value]??{$:'undefined'};
@@ -1097,7 +1105,7 @@ export function stepJavaScriptCallMachine(program,machine){
       if(!installed.success)return {$:'machineInvalid',heap:installed.heap,reason:'a fresh literal Object must admit its acyclic actual prototype'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(installed.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'undefined'}))};
     }
-    case 'ordinaryDataProperty':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinition(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},createJavaScriptOrdinarySetDescriptor(registers[instruction.value]??{$:'undefined'},true)));
+    case 'ordinaryDataProperty':return acceptJavaScriptCallDefinition(program,current,instruction.destination,instruction.realm,completeJavaScriptPropertyDefinitionWithSymbol(machine.heap,registers[instruction.object]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},createJavaScriptOrdinarySetDescriptor(registers[instruction.value]??{$:'undefined'},true),program.exoticKey));
   }
 }
 
