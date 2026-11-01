@@ -72,6 +72,13 @@ descending indices before reading/inserting the supplied arguments. Absent
 source properties strictly delete the corresponding own target properties,
 preserving holes instead of filling them with undefined. Zero-argument unshift
 skips indexed movement while still performing length Set.
+Reverse preserves separate lower/upper presence and values, obtaining the lower
+value before inspecting the upper property and selecting strict Set/Delete
+operations for each presence combination. Fill converts relative bounds in order
+and writes the supplied value without HasProperty. CopyWithin converts target,
+start and end in order, chooses overlap-safe movement direction and strictly
+deletes targets whose source properties are absent. These methods return the
+actual receiver and do not explicitly Set length or allocate result Arrays.
 
 Immutable lexical References permit reads and evaluate assignment operands in
 the ordinary order, but PutValue raises the actual realm TypeError. Prefix/

@@ -938,3 +938,22 @@ controls inspect presence branches, common target keys and direction. Inputs
 flow through the already registered mutation source/control files. Nothing
 executed. Remaining mutation/library surfaces and primitive boxing/opaque
 protocols still require their own source extensions.
+
+### Reverse/fill/copyWithin shared body draft
+
+The same protected directory now emits reverse/fill/copyWithin bytecode. Reverse
+retains lower/upper presence separately, gets lower before inspecting upper and
+selects the correct strict Set/Delete combination. Fill converts relative bounds
+in order, then writes actual values without presence tests. CopyWithin converts
+target/start/end in order, moves backward for overlap and otherwise forward,
+preserving holes through strict target deletion. All return the actual receiver
+without explicit length Set or result allocation. The shared relative-index
+primitive consumes completed numeric conversions, including infinities/NaN.
+
+Ten originals cover holes/identity, getter/setter order, length-one omission,
+negative fill bounds, filled Object identity, empty-range conversions, both
+copy directions, sparse deletion and target/start/end conversion order. Two
+additional deferred controls inspect bytecode ordering/direction and relative
+index boundaries. No execution/generation/validation occurred. Remaining source
+library, primitive boxing, opaque protocols and full lexical TDZ/recursion
+continue as separate drafting work.

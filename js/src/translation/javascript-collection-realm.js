@@ -11,7 +11,7 @@ const stringIteratorMethod=Reflect.getOwnPropertyDescriptor(actualString.prototy
 const actualArray=Array,arrayPrototype=Array.prototype,isArray=Reflect.getOwnPropertyDescriptor(Array,'isArray')?.value;
 const arraySpeciesGetter=Reflect.getOwnPropertyDescriptor(actualArray,actualSymbol.species)?.get;
 const arrayCallbackOwners=['forEach','some','every','find','findIndex','findLast','findLastIndex','reduce','reduceRight'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
-const arrayMutationOwners=['push','pop','shift','unshift'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
+const arrayMutationOwners=['push','pop','shift','unshift','reverse','fill','copyWithin'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
 const arrayTransformOwners=['map','filter'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
 const arrayIterationOwners=['keys','values','entries'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
 const arraySearchOwners=['includes','indexOf','lastIndexOf','at'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));

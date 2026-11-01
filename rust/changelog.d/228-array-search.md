@@ -56,6 +56,9 @@ Object receivers and inherited accessors have deferred original controls.
 Draft shift/unshift through shared presence/Get/Set/delete bytecode, retaining
 sparse holes, inherited elements, ordered effects and bounded resumable loops.
 
+Draft reverse/fill/copyWithin shared bodies with preserved hole presence,
+ordered bound conversion, overlap-safe copying and receiver identity returns.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target
