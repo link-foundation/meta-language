@@ -35,6 +35,9 @@ Draft shared captured mutable leaves/rest in recursive Object/Array binding
 patterns with actual source binding identity directories and immutable cell
 holder registers. Execution and generated native publication remain deferred.
 
+Draft shared catch parameter cells, including recursive patterns and fresh
+storage per handler activation for closures retained beyond catch scope.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

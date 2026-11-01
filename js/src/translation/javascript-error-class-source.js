@@ -243,7 +243,12 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
   return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,identity,{$:'sourceFinally',body:body.source,finalizer:finalizer.source},rest.source,false),context:next};
  }
  if(statement.$==='sourceTryStatement'){
-  const body=lowerJavaScriptSourceStatements(statement.body,0,rest.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1),handler=lowerJavaScriptSourceStatements(statement.handler,0,body.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1),initialized=statement.pattern===undefined?handler:lowerJavaScriptSourceBindingPattern(statement.pattern,handler.context,handler.source,true),identity=initialized.context.next,next={...initialized.context,next:identity+1};
+  const body=lowerJavaScriptSourceStatements(statement.body,0,rest.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1),handler=lowerJavaScriptSourceStatements(statement.handler,0,body.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);let initialized=statement.pattern===undefined?handler:lowerJavaScriptSourceBindingPattern(statement.pattern,handler.context,handler.source,true);
+  if(statement.pattern===undefined&&(handler.context.sharedBindings??[]).includes(statement.identity)){
+   const temporary=initialized.context.next,next={...initialized.context,next:temporary+1},cell={$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:next.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value:{$:'sourceBinding',identity:statement.identity}}]};
+   initialized={$:'errorSourceExpression',context:next,source:constructJavaScriptErrorLocalBinding(next,temporary,{$:'sourceAssignBinding',identity:statement.identity,value:cell},initialized.source,false)};
+  }
+  const identity=initialized.context.next,next={...initialized.context,next:identity+1};
   return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,identity,{$:'sourceTry',identity:statement.identity,body:body.source,handler:initialized.source},rest.source,false),context:next};
  }
  if(statement.$==='sourceObjectBindingStatement'||statement.$==='sourceArrayBindingStatement'){

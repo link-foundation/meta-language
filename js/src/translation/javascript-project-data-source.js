@@ -81,8 +81,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    const declaration=containing(binding,['variable_declarator']);if(!declaration)continue;
    const loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);if(loop){const body=sourceField(loop,'body');if(!body||binding.declaration.start<body.start)continue;}
   }else{
-   const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>');
-   if(position<0||!singleArrow&&!formal)continue;
+   const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>'),clause=containing(binding,['catch_clause']),caught=clause?sourceField(clause,'parameter'):null,inCatch=caught&&binding.declaration.start>=caught.start&&binding.declaration.end<=caught.end;
+   if(position<0||!singleArrow&&!formal&&!inCatch)continue;
   }
   if([...arrowNodes,...methodNodes].some(node=>!(binding.declaration.start>=node.start&&binding.declaration.end<=node.end)&&binding.references.some(row=>row.start>=node.start&&row.end<=node.end))){sharedBindingCells.add(binding.identity);cellIDs.add(binding.identity);}
  }

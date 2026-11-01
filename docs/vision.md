@@ -131,6 +131,11 @@ directory into their common initializer. Captured mutable leaves and rest
 bindings initialize private cell holders; Array output scopes keep the holder
 identity immutable while later user assignment updates its value. Unshared
 leaves preserve their ordinary binding representation and mutability.
+Captured catch bindings use the same storage after the handler receives its
+actual thrown value. Simple catches install a holder in their handler register;
+recursive catch patterns initialize shared leaves through the common pattern
+initializer. Each handler activation allocates fresh storage, so retained
+closures from repeated catches share no accidental mutable binding.
 Nested code and static code share explicit instruction and capture budgets.
 Parameter initialization uses one shared lowerer for functions, methods and
 arrows. Fixed object-field aliases retain actual binding identities; defaults

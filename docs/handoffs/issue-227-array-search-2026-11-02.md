@@ -837,3 +837,15 @@ additional deferred control checks output mutability and cell initialization.
 No execution or generation occurred. This drafts shared pattern storage after
 initialization; runtime TDZ, capture during initialization, catch-cell storage,
 and for-head environment cloning remain further work.
+
+### Shared catch binding cells draft
+
+Shared source binding discovery now recognizes actual catch parameter CST fields.
+Simple catches wrap their received thrown value before handler body execution;
+recursive catch patterns reuse shared leaf initialization. Allocation occurs on
+each actual catch activation so closures retained from repeated handler entries
+keep separate mutable storage. Three originals cover simple returned catch
+closures, nested destructured catches and independent loop catch activations.
+One additional deferred control checks handler-register cell initialization.
+Nothing executed. Runtime TDZ, initialization-time recursive captures and
+for-head environment cloning remain further source work.
