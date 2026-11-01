@@ -571,3 +571,37 @@ and trace/native replay should extend the existing common API rather than
 introduce host iterator execution. Then connect for-of source heads/body/bindings
 and Array binding/default/IteratorClose consumers through the same primitives.
 No tests, generation or compilation ran; these connections remain drafting work.
+
+
+### Source for-of region/VM integration drafted
+
+The region ownership foundation is now connected through the iteratorProtocol
+instruction's acquire/step/close operations and actual optional per-frame region
+directories. Pending/frame validation retains source slot, realm, distinct
+private result coordinates, operand/key, cached record and deferred cleanup
+completion. Primitive prototype response and source/native replay reuse the
+existing checked API. Return/step compose the common iterator continuation with
+region opening/update/release; step failures mark done before finalization.
+Selected callback throws are resumed through the protocol before ordinary
+unwinding. Close preserves an original body throw across return getter/call
+failures; intrinsic call failures follow the same precedence. Source regions
+release on normal, exhausted and failed closing paths.
+
+Source for-of admits const/let identifiers and recursive object binding heads.
+The compiler holds input/key before callbacks, opens outside a generated
+sourceFinally, steps each actual yielded value/done pair, and closes only an
+unfinished record. Own continues target the next step without closing; exits
+crossing a region use common deferred completion unwinding. Object pattern
+default failures occur inside the protected region and therefore close it.
+
+Fourteen complete originals cover sparse Array and String iteration, recursive
+head binding/defaults/rest, mutable local heads, nested and labelled loop exits,
+user iterator break/continue/return, body-vs-cleanup throw precedence, cleanup
+throw replacing break, step failure without return, pattern failure with close,
+and natural exhaustion without return. Two deferred compiler/control tests cover
+actual acquire/step/close/finalizer composition, held operands and nearest
+deferred completion selection. Automatic native generation inputs are updated.
+No source program, original oracle, test, validation, generation or compilation
+executed. Array binding heads/parameters, iterable call-argument spread, full
+shared lexical environments, version-qualified diagnostics and the remaining
+recorded language/library surfaces still require further source drafts.

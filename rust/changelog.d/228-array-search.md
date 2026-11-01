@@ -72,3 +72,6 @@ including loop exit unwinding and constructor normalization after finalizers.
 
 Draft bounded per-frame iterator region ownership and preserve Array spread
 operand/key snapshots before callbacks.
+
+Draft complete source for-of composition through actual per-frame iterator
+regions, shared callbacks and finalizer-based closing with throw precedence.

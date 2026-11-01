@@ -334,6 +334,16 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    if(word==='for'&&classProfile){
     const open=at,close=findJavaScriptClassGroupEnd(values,open),parts=close>=0?split(open+1,close,';',true):[];
+    if(values[open]==='('&&close>=0&&parts.length===1&&['const','let'].includes(values[open+1])){
+     const kind=values[open+1],first=open+2,end=values[first]==='{'?findJavaScriptClassGroupEnd(values,first):first;
+     if(values[end+1]==='of'){
+      if(!program.sourceMappings.some(row=>['for_in_statement','for_of_statement'].includes(row.term)&&row.start===tokens[open-1].start))fail('for-of retains its actual complete source CST');
+      const pattern=values[first]==='{'?readObjectBinding(first,end,kind):undefined,owner=pattern===undefined?declared(tokens[first]):undefined;if(pattern===undefined&&(tokens[first]?.kind!=='identifier'||!owner||owner.kind!==kind))fail('for-of array bindings and assignment heads require their actual initialization protocol');
+      const input=expression(tokens.slice(end+2,close)),target=nextBinding++,iteratorKey={$:'errorGet',object:port('intrinsic:iterator namespace',{kind:'global',name:'Symbol'}),key:constant({$:'text',units:units('iterator')})};at=close+1;let body;
+      controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
+      return {$:'sourceForOfStatement',target,binding:pattern?.identity??owner.identity,mutable:kind==='let',input,iteratorKey,body,...(pattern===undefined?{}:{pattern})};
+     }
+    }
     if(values[open]!=='('||parts.length!==3)fail('ordinary for loops retain their actual initialization, test and update clauses; iterable loops need their separate protocol');
     const initializers=[],[first,lastInitial]=parts[0];
     if(first<lastInitial){

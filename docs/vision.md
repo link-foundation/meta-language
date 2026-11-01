@@ -12361,3 +12361,16 @@ preserves cached iterator/next identities and cannot revive exhaustion; release
 is explicit. Each frame shares a bounded region directory. Source iterator
 operands and keys are held before callbacks so later mutable binding writes
 cannot replace an already selected value.
+
+Source for-of opens its iterator region before entering a generated finalizer,
+steps the actual cached iterator into private value/done registers, and closes
+the unfinished record on exits crossing the region. Continues targeting that
+loop stay within the region. Primitive sources use the same authenticated
+prototype protocol as spread. Identifier and recursive object head bindings
+initialize from each actual yielded value. Step failures update done before
+cleanup; natural exhaustion skips return. Selected cleanup getter/method throws
+resume the shared close protocol before ordinary handler unwinding, preserving
+a body throw over cleanup failure and allowing cleanup failure to replace a
+return or loop exit. Closing releases the actual frame region. Per-iteration
+closures retain the existing immutable capture proof; mutable shared cells and
+array binding heads need their explicit environment/iterator protocols.
