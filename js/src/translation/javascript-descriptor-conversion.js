@@ -30,6 +30,7 @@ export function convertJavaScriptSemanticBoolean(value) {
     case 'number':return value.value!==0&&!Number.isNaN(value.value);
     case 'integer':return value.value!==0n;
     case 'text':return value.units.length!==0;
+    case 'sourceText':return value.text.length!==0;
     case 'symbol':return true;
     case 'object':return true;
   }
@@ -101,7 +102,7 @@ export function stepJavaScriptDescriptorConversion(heap,state){
     const key={$:'text',units:field.units};
     const receiver=current.receiver;
     if(receiver.$!=='object')return {$:'descriptorInvalid',reason:'descriptor conversion retains its actual Object receiver'};
-    const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];if(actual!==undefined&&actual.$==='hostErrorObject')return {$:'descriptorInvalid',reason:'opaque Error descriptor reflection requires its actual host protocol'};
+    const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];if(actual!==undefined&&actual.$!=='ordinaryObject')return {$:'descriptorInvalid',reason:'opaque Error descriptor reflection requires its actual host protocol'};
     const property=locateJavaScriptOrdinaryProperty(heap,receiver.identity,key);
     if(!property.found){current={$:'descriptorConversion',receiver,next:current.next+1,descriptor:current.descriptor,pending:false};continue;}
     const plan=planJavaScriptOrdinaryGet(heap,receiver.identity,key,receiver);

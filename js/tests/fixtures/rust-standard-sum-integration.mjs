@@ -40,7 +40,10 @@ import {rustOwnedRecordEffectOriginals,rustOwnedRecordEffectRetainedOriginals,ru
 import {rustOwnedRecordCompletionOriginals,rustOwnedRecordCompletionRefusals} from './rust-owned-record-completions.mjs';
 import {rustOwnedRecursiveContainerOriginals,rustOwnedRecursiveContainerRefusals} from './rust-owned-recursive-containers.mjs';
 import {rustSourceOwnerQualificationOriginals,rustSourceOwnerQualificationRefusals} from './rust-source-owner-qualification.mjs';
-import {rustOwnedRecordLoopPreservedOriginals} from './rust-owned-record-loops.mjs';
+import {rustOwnedRecordNestedLoopOriginals,rustOwnedRecordNestedLoopRefusals} from './rust-owned-record-nested-loops.mjs';
+import {rustMutableRecordLoanOriginals,rustMutableRecordLoanRefusals} from './rust-mutable-record-loans.mjs';
+import {rustOwnedRecordLoopExitOriginals,rustOwnedRecordLoopExitRefusals} from './rust-owned-record-loop-exits.mjs';
+import {rustOwnedRecordLoopOriginals,rustOwnedRecordLoopRefusals,rustOwnedRecordLoopPreservedOriginals} from './rust-owned-record-loops.mjs';
 
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
@@ -272,6 +275,10 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...rustOwnedRecursiveContainerOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustSourceOwnerQualificationOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordLoopPreservedOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordLoopOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordLoopExitOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustMutableRecordLoanOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordNestedLoopOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordPlaceOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordUpdateOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustCopyClosureValueOriginals.map(row=>({singleCallOwners:[],...row})),
@@ -281,6 +288,10 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
 rustStandardSumIntegrationOriginals.push(...rustStandardSumIntegrationAdditionalOriginals);
 
 export const rustStandardSumIntegrationRefusals=[
+ ...rustOwnedRecordLoopRefusals.map(retainedOriginalCompilerDeclaration),
+ ...rustOwnedRecordLoopExitRefusals.map(retainedOriginalCompilerDeclaration),
+ ...rustMutableRecordLoanRefusals.map(retainedOriginalCompilerDeclaration),
+ ...rustOwnedRecordNestedLoopRefusals.map(retainedOriginalCompilerDeclaration),
  ...rustStandardSumSourceRefusals,
  ...rustStandardSumMethodSourceRefusals,
  ...rustArrayLookupOptionRefusals,

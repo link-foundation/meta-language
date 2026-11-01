@@ -1,0 +1,16 @@
+// Deferred consumers; this source draft records no executed observations.
+import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
+import * as rules from '../src/translation/rust-mutable-record-loan-rules.js';
+import {parseRust} from '../src/translation/rust.js';import {checkProgram} from '../src/translation/check.js';import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {createTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';import {LinkNetwork} from '../src/network.js';import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import {rustMutableRecordLoanDecisions as decisions,rustMutableRecordLoanOriginals as originals,rustMutableRecordLoanRefusals as refusals} from './fixtures/rust-mutable-record-loans.mjs';
+function stdout(code){const lines=[];vm.runInNewContext(code,{console:{log:(...args)=>lines.push(args.map(String).join(' '))},process:{argv:[]}},{timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
+function pure(program){const pending=[program],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;assert.ok(seen.size<100000);seen.add(value);assert.ok(!['cellAllocate','cellRead','cellWrite'].includes(value.k));pending.push(...(value instanceof Map?[...value.values()]:Object.values(value)));}}
+test('mutable record loans keep complete independent controls',()=>{assert.equal(decisions.length,20);assert.equal(originals.length,7);assert.equal(refusals.length,6);for(const row of decisions)assert.deepEqual(rules[row.operation](...row.arguments),row.expected);});
+for(const row of originals)for(const sourceVersion of ['1.90.0','1.99.0'])test('mutable record value loans '+row.name+'/'+sourceVersion,()=>{
+ const checked=checkProgram(parseRust(row.source,{sourceVersion}));pure(checked);assert.equal(stdout(emitJavaScript(checked).text),row.stdout);
+ const concrete=LinkNetwork.parse(row.source,'Rust');for(const graph of [concrete,LinkNetwork.fromLino(concrete.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(concrete))])assert.equal(graph.reconstructText(),row.source);
+ const packet=createTypedProgramLinks(row.source,'Rust',{rustSourceVersion:sourceVersion,provenance:{fixture:row.name}}),text=packet.network.toLino(),binary=encodeLinkNetworkBinary(packet.network),targets=['JavaScript','Rust','Lean','Rocq'],baseline=Object.fromEntries(targets.map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)]));
+ for(const graph of [packet.network,LinkNetwork.fromLino(text),decodeLinkNetworkBinary(binary)]){assert.equal(graph.toLino(),text);assert.deepEqual(encodeLinkNetworkBinary(graph),binary);for(const target of targets){const emitted=emitTypedProgramLinks(graph,packet.root,target);assert.deepEqual(emitted,baseline[target]);assert.ok(emitted.code.length>0);if(target==='JavaScript')assert.equal(stdout(emitted.code),row.stdout);}}
+});
+for(const row of refusals)for(const sourceVersion of ['1.90.0','1.99.0'])test('mutable record loan refusal '+row.name+'/'+sourceVersion,()=>assert.throws(()=>checkProgram(parseRust(row.source,{sourceVersion})),error=>['unsupported','syntax','type'].includes(error.kind)));

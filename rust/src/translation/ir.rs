@@ -76,6 +76,7 @@ pub struct Expr {
     pub node: Node,
     pub ty: Type,
     pub span: Option<Span>,
+    pub source_position: Option<Box<super::source_signatures::RustSourceExpressionPosition>>,
 }
 
 impl Expr {
@@ -85,6 +86,7 @@ impl Expr {
             node,
             ty,
             span: None,
+            source_position: None,
         }
     }
 
@@ -523,6 +525,7 @@ impl Expr {
             node,
             ty: self.ty.clone(),
             span: self.span,
+            source_position: self.source_position.clone(),
         }
     }
 }

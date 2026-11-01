@@ -216,6 +216,10 @@ mod translation_closed_class_prototype_methods;
 mod translation_closed_class_owner_witnesses;
 mod translation_proposition_values;
 mod translation_javascript_module_initialization;
+mod source_module_compilation;
+mod collection_source_compilation;
+mod translation_javascript_ordinary_class_source;
+mod translation_javascript_project_data_source;
 mod translation_callable_data;
 #[path = "../generated/rust_baseline_native_policy_assertions.rs"]
 mod rust_baseline_native_policy_assertions;

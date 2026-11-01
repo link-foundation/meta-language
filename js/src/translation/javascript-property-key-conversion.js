@@ -20,7 +20,7 @@ export function readJavaScriptPrimitivePropertyKeySpelling(value){
     case 'boolean':return value.value?'true':'false';
     case 'number':return String(value.value);
     case 'integer':return String(value.value);
-    case 'text':throw new TypeError('semantic text keys retain their exact units');
+    case 'text':case 'sourceText':throw new TypeError('semantic text keys retain their exact units');
     case 'symbol':throw new TypeError('semantic Symbol keys retain their exact identity');
     case 'object':throw new TypeError('a property key needs its completed actual primitive conversion');
   }
@@ -41,7 +41,7 @@ export function finishJavaScriptPropertyKeyConversion(transition){
     case 'primitiveInvalid':return {$:'propertyKeyInvalid',reason:transition.reason};
     case 'primitiveCompleted':{
       const value=transition.value;
-      if(value.$==='text'||value.$==='symbol')return {$:'propertyKeyCompleted',key:value};
+      if(value.$==='text'||value.$==='sourceText'||value.$==='symbol')return {$:'propertyKeyCompleted',key:value};
       if(value.$==='object')return {$:'propertyKeyInvalid',reason:'a completed primitive conversion cannot contain an Object'};
       const spelling=readJavaScriptPrimitivePropertyKeySpelling(value);
       if(spelling.length>1048576)return {$:'propertyKeyInvalid',reason:'property key text exceeds the explicit UTF16 unit budget'};

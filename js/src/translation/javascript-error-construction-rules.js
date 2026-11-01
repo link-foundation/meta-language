@@ -29,7 +29,7 @@ export function readJavaScriptErrorConstructionOperandsError(heap,constructor,ne
  for(const value of [constructor,newTarget,prototype,message,present]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(constructor.$!=='object'||!constructor.callable||newTarget.$!=='object'||!newTarget.callable)return 'Error construction needs actual constructor and newTarget Object identities';
  if(prototype.$!=='object'||prototype.callable)return 'the selected Error subclass retains its actual noncallable prototype Object';
- if(message.$!=='text'||present.$!=='boolean')return 'Error allocation retains normalized UTF16 text and independent own-message presence';
+ if((message.$!=='text'&&message.$!=='sourceText')||present.$!=='boolean')return 'Error allocation retains normalized UTF16 text and independent own-message presence';
  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,newTarget.identity)];if(object===undefined)return 'newTarget must remain in the actual global heap';
  const property=object.properties[findJavaScriptOrdinaryProperty(object.properties,{$:'text',units:[112,114,111,116,111,116,121,112,101]})];
  if(property===undefined||!property.descriptor.valuePresent||!testJavaScriptSemanticSameValue(property.descriptor.value,prototype))return 'this profile needs the actual newTarget own data prototype rather than an invented descriptor or getter';

@@ -626,7 +626,7 @@ impl Threader<'_> {
                 ty,
             )
         };
-        let Expr { node, ty, span } = e;
+        let Expr { node, ty, span, source_position } = e;
         let result = match node {
             Node::Cast {
                 arg,
@@ -651,6 +651,7 @@ impl Threader<'_> {
                     },
                     ty: ty.clone(),
                     span,
+                    source_position,
                 });
                 let rest = self.make_as(out.clone(), node, &ty);
                 guard(self, cond, &text, rest)
@@ -666,6 +667,7 @@ impl Threader<'_> {
                     },
                     ty: ty.clone(),
                     span,
+                    source_position,
                 });
                 let rest = self.make_as(out.clone(), node, &ty);
                 guard(self, cond, overflow_message("neg"), rest)
@@ -693,6 +695,7 @@ impl Threader<'_> {
                     },
                     ty: ty.clone(),
                     span,
+                    source_position,
                 });
                 let rep = representation(&ty);
                 if division(op) {

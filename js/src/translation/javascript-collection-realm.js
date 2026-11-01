@@ -1,0 +1,34 @@
+// Node authority supplies only actual standard identity/prototype witnesses.
+// Every REPRESENTED collection allocation, mutation and copy uses the shared
+// inspectable heap kernel; no host Map/Set stores represented collection data.
+import {compileJavaScriptCollectionCallDirectory} from './javascript-collection-call-source.js';
+const actualMap=Map,actualSet=Set,actualSymbol=Symbol;
+const actualString=String,startsWith=Reflect.getOwnPropertyDescriptor(String.prototype,'startsWith')?.value;
+const kinds=[{kind:'Map',constructor:actualMap,operations:['get','set','has','delete','clear']},{kind:'Set',constructor:actualSet,operations:['add','has','delete','clear']}];
+const methodOwners=kinds.map(row=>({...row,prototype:row.constructor.prototype,methods:row.operations.map(name=>({name,value:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,name)?.value})),size:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,'size')?.get,iterator:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,actualSymbol.iterator)?.value}));
+
+export function linkJavaScriptCollectionRealm(embedding,requirements,{realmIdentity}={}){
+ if(globalThis.Map!==actualMap||globalThis.Set!==actualSet||globalThis.Symbol!==actualSymbol||typeof realmIdentity!=='bigint'||realmIdentity<=0n)throw new TypeError('standard collections require their actual protected Node realm and explicit identity');
+ const requested=new Set(requirements.filter(row=>(row.kind==='construct'||row.kind==='global')&&['Map','Set'].includes(row.name)).map(row=>row.name)),constructors=[],references=[],iteratorOwners=[];
+ for(const owner of methodOwners.filter(row=>requested.has(row.kind))){
+  if(owner.constructor.prototype!==owner.prototype||typeof owner.size!=='function'||typeof owner.iterator!=='function'||Reflect.getOwnPropertyDescriptor(owner.prototype,'size')?.get!==owner.size||Reflect.getOwnPropertyDescriptor(owner.prototype,actualSymbol.iterator)?.value!==owner.iterator)throw new TypeError('collection intrinsics retain their actual standard prototype, size getter and iterator method');
+  for(const method of owner.methods)if(typeof method.value!=='function'||Reflect.getOwnPropertyDescriptor(owner.prototype,method.name)?.value!==method.value)throw new TypeError('a collection operation cannot be certified by a method spelling or modified prototype');
+  // This empty native probe establishes engine-owned iterator PROTOTYPE
+  // identity only. It never carries represented values or implements copying.
+  const probe=Reflect.apply(owner.iterator,Reflect.construct(owner.constructor,[]),[]),iteratorPrototype=Reflect.getPrototypeOf(probe),next=Reflect.getOwnPropertyDescriptor(iteratorPrototype,'next')?.value;
+  if(typeof next!=='function')throw new TypeError('a collection copy needs its actual native iterator prototype and next owner');
+  iteratorOwners.push({prototype:iteratorPrototype,next});
+  const callable=embedding.encode(owner.constructor),prototype=embedding.encode(owner.prototype),adder=embedding.encode(owner.methods.find(row=>row.name===(owner.kind==='Map'?'set':'add')).value);
+  constructors.push({$:'collectionConstructorOwner',kind:owner.kind,identity:callable.identity,realm:realmIdentity,prototype,adder,iteratorKey:embedding.encode(actualSymbol.iterator),iteratorMethod:embedding.encode(owner.iterator),iteratorPrototype:embedding.encode(iteratorPrototype),nextMethod:embedding.encode(next),methods:[...owner.methods.map(row=>({$:'collectionMethodOwner',identity:embedding.encode(row.value).identity,operation:owner.kind+'.'+row.name})),{$:'collectionMethodOwner',identity:embedding.encode(owner.size).identity,operation:owner.kind+'.size'}]});
+  for(const requirement of requirements.filter(row=>(row.kind==='construct'||row.kind==='global')&&row.name===owner.kind))references.push(embedding.capabilityReference(requirement.source,owner.constructor,{operation:'actual standard '+owner.kind+' constructor',owner:'actual Node collection intrinsics 1'}));
+ }
+ if(references.length!==requirements.length)throw new TypeError('every class source capability needs its actual supplied source or standard collection implementation');
+ if(globalThis.String!==actualString||typeof startsWith!=='function'||Reflect.getOwnPropertyDescriptor(actualString.prototype,'startsWith')?.value!==startsWith)throw new TypeError('primitive methods require their actual protected standard function owner');
+ const directory={$:'collectionCallableDirectory',realms:[realmIdentity],exoticKey:embedding.encode(actualSymbol.toPrimitive),constructors,primitiveMethods:[{$:'primitiveMethodOwner',identity:embedding.encode(startsWith).identity,realm:realmIdentity,operation:'String.startsWith'}]},compiled=compileJavaScriptCollectionCallDirectory(directory);if(compiled.error)throw new TypeError(compiled.error);embedding.registerPortableProgram(compiled.program);
+ return {directory,program:compiled.program,references,verify(){
+  if(globalThis.Map!==actualMap||globalThis.Set!==actualSet||globalThis.Symbol!==actualSymbol)throw new TypeError('the actual collection realm cannot change its registered standard owners');
+  if(globalThis.String!==actualString||Reflect.getOwnPropertyDescriptor(actualString.prototype,'startsWith')?.value!==startsWith)throw new TypeError('the actual primitive method owner has changed');
+  for(const owner of methodOwners.filter(row=>requested.has(row.kind))){if(owner.constructor.prototype!==owner.prototype||Reflect.getOwnPropertyDescriptor(owner.prototype,'size')?.get!==owner.size||Reflect.getOwnPropertyDescriptor(owner.prototype,actualSymbol.iterator)?.value!==owner.iterator)throw new TypeError('the actual collection prototype or iterator owner has changed');for(const method of owner.methods)if(Reflect.getOwnPropertyDescriptor(owner.prototype,method.name)?.value!==method.value)throw new TypeError('the actual standard collection method owner has changed');}
+  for(const owner of iteratorOwners)if(Reflect.getOwnPropertyDescriptor(owner.prototype,'next')?.value!==owner.next)throw new TypeError('the actual standard iterator next owner has changed');
+ }};
+}

@@ -160,3 +160,77 @@ fn call_machine_keeps_all_original_calls_states_values_and_heaps() {
         );
     }
 }
+
+// Reuse this generated namespace across actual source-module consumers rather
+// than compiling another complete generated machine per consumer module.
+pub(super) fn assert_source_machine_trace(program_wire:&serde_json::Value,trace:&serde_json::Value){
+    use serde_json::Value;
+    let program=decode_java_script_call_program(program_wire);
+    assert_eq!(encode_java_script_call_program(&program),*program_wire);
+    let mut actual=decode_java_script_call_machine_transition(&trace["initial"]);
+    let initial=encode_java_script_call_machine_transition(&actual);
+    assert_eq!(initial,trace["initial"]);assert_eq!(initial["$"],"machineContinue");
+    let machine=&initial["machine"];
+    let frames=machine["frames"].as_array().unwrap();assert_eq!(frames.len(),1);
+    let frame=&frames[0];assert_eq!(frame["position"],0);
+    let heap=decode_java_script_ordinary_heap(&machine["heap"]);
+    let identity=native::ml::Big::parse(frame["identity"].as_str().unwrap());
+    let receiver=decode_java_script_semantic_value(&frame["registers"][0]);
+    let arguments=frame["arguments"].as_array().unwrap().iter().map(decode_java_script_semantic_value).collect();
+    let begun=native::begin_java_script_call_machine(program.clone(),heap,identity,receiver,arguments);
+    assert_eq!(encode_java_script_call_machine_transition(&begun),initial);
+    let events=trace["events"].as_array().unwrap();assert!(!events.is_empty()&&events.len()<=4096);
+    let budget=trace["budget"].as_f64().unwrap();assert!(budget>=0.0&&budget<=1048576.0&&budget.fract()==0.0);let mut used=0.0;
+    for event in events{
+        let before=encode_java_script_call_machine_transition(&actual);
+        let machine=decode_java_script_call_machine(&before["machine"]);
+        actual=match event["operation"].as_str().unwrap(){
+            "run"=>{
+                assert_eq!(before["$"],"machineContinue");
+                let limit=event["steps"].as_f64().unwrap();assert!(limit>0.0&&limit<=4096.0&&limit.fract()==0.0);
+                let execution=native::run_java_script_call_machine(program.clone(),machine,limit,Vec::new());
+                let wire=encode_java_script_call_execution(&execution);assert_eq!(wire,event["expected"]);used+=wire["steps"].as_f64().unwrap();
+                decode_java_script_call_machine_transition(&wire["transition"])
+            },
+            "resumeBatch"=>{
+                assert_eq!(before["$"],"machineResourceLimit");assert_eq!(before["reason"],"execution exhausted its explicit transition budget");assert!(used<budget);
+                decode_java_script_call_machine_transition(&serde_json::json!({"$":"machineContinue","machine":before["machine"]}))
+            },
+            "allocateObject"=>{
+                used+=1.0;assert_eq!(before["$"],"machineAllocateObject");
+                native::resume_java_script_call_object_allocation(program.clone(),machine,native::ml::Big::parse(event["identity"].as_str().unwrap()))
+            },
+            "external"=>{
+                used+=1.0;assert_eq!(before["$"],event["requestKind"]);assert_eq!(before["realm"],event["realm"]);
+                let mut resumed=before["machine"].clone();resumed["heap"]=event["response"]["heap"].clone();
+                let machine=decode_java_script_call_machine(&resumed);
+                let realm=native::ml::Big::parse(event["realm"].as_str().unwrap());
+                let value=decode_java_script_semantic_value(&event["response"]["value"]);
+                let abrupt=event["response"]["abrupt"].as_bool().unwrap();
+                match event["requestKind"].as_str().unwrap(){
+                    "machineInvokeHostCapability"|"machineInvokeErrorIntrinsic"=>{
+                        assert_eq!(before["callee"]["identity"],event["callee"]);
+                        let identity=native::ml::Big::parse(event["callee"].as_str().unwrap());
+                        if event["requestKind"]=="machineInvokeHostCapability"{native::resume_java_script_host_capability(program.clone(),machine,realm,identity,value,abrupt)}
+                        else{native::resume_java_script_error_intrinsic(program.clone(),machine,realm,identity,value,abrupt)}
+                    },
+                    "machineAllocateErrorValue"|"machineAllocateSourceError"|"machineAllocateError"=>{
+                        assert_eq!(event["callee"],Value::Null);
+                        if abrupt{native::resume_java_script_error_allocation_abrupt(program.clone(),machine,realm,value)}
+                        else if event["requestKind"]=="machineAllocateErrorValue"{native::resume_java_script_error_value_allocation(program.clone(),machine,realm,value)}
+                        else if event["requestKind"]=="machineAllocateSourceError"{native::resume_java_script_call_source_error_allocation(program.clone(),machine,realm,value)}
+                        else{native::resume_java_script_call_error_allocation(program.clone(),machine,realm,value)}
+                    },
+                    other=>panic!("unrepresented external source event {other}"),
+                }
+            },
+            other=>panic!("unrepresented source event {other}"),
+        };
+        if event["operation"]!="run"{assert_eq!(encode_java_script_call_machine_transition(&actual),event["expected"]);}
+    }
+    assert!(used<=budget);assert_eq!(trace["used"].as_f64().unwrap(),used);
+    assert_eq!(trace["budgetExhausted"],false,"source originals must complete rather than exhaust their resource budget");
+    let final_state=encode_java_script_call_machine_transition(&actual);
+    assert_eq!(final_state,trace["final"]);
+    assert!(["machineCompleted","machineThrow"].contains(&final_state["$"].as_str().unwrap()));
+}

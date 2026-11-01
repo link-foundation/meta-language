@@ -1,5 +1,6 @@
 // Additive source-position decisions. Historical signature profiles remain exact.
 import {acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
+import {readRustStandardSumSourceMaterializationError} from './rust-standard-sum-source-rules.js';
 /** The existing ordinary profile stays exact. This successor composes only
  * its own signature with the complete otherwise-empty source profile vector.
  * @param {string} signature @param {string[]} profiles @returns {boolean} */
@@ -67,6 +68,10 @@ export function readRustBorrowedVectorProductionError(same,reference,available,c
 export function readRustBorrowedVectorResultError(same,produced,allowed,collecting){return !same||!collecting&&(!produced||!allowed)?'a borrowed vector result needs an actual producer and parameter-derived or static element regions':'';}
 /** @param {number} count @returns {string} */
 export function readRustBorrowedVectorElementCountError(count){return !Number.isSafeInteger(count)||count<0||count>65536?'borrowed vector construction exceeds its finite actual element profile':'';}
+/** Only the actual selected vector position supplies an empty/coercing context.
+ * @param {boolean} selected @param {boolean} expected @param {boolean} reference
+ * @param {number} count @returns {boolean} */
+export function acceptRustBorrowedVectorLiteralContext(selected,expected,reference,count){return selected&&expected&&Number.isSafeInteger(count)&&count>=0&&count<=65536&&(count===0||reference);}
 /** @param {boolean} actual @param {boolean} expected @param {boolean} same
  * @param {boolean} owner @param {string} lifetime @param {string} required
  * @returns {string} */
@@ -79,3 +84,33 @@ export function acceptRustBorrowedVectorProducedValue(selected,shape,proven,prod
 /** @param {boolean} reference @param {number} regions @param {boolean} collecting
  * @returns {string} */
 export function readRustBorrowedVectorCallRegionError(reference,regions,collecting){if(!Number.isSafeInteger(regions)||regions<0||regions>65536)return 'borrowed vector calls exceed their finite actual argument region profile';return !collecting&&reference&&regions===0?'a borrowed vector call needs actual argument region provenance; anonymous temporary references need their separate promotion or extension proof':'';}
+/** @param {string} model @param {string} language @returns {string} */
+export function readRustBorrowedExpressionPositionModelError(model,language){return model!=='Rust borrowed expression source position 1'||language!=='Rust'?'a borrowed expression source position needs its exact Rust source interpretation':'';}
+/** @param {string} lifetime @param {string[]} bindings @returns {string} */
+export function readRustBorrowedExpressionLifetimeScopeError(lifetime,bindings){return lifetime!==''&&lifetime!=='_'&&lifetime!=='static'&&!bindings.includes(lifetime)?'a borrowed expression source lifetime needs its actual enclosing function binder':'';}
+/** @param {string} result @param {string[]} arguments_ @returns {string} */
+export function readRustBorrowedVectorCallLifetime(result,arguments_){if(result==='static')return 'static';if(arguments_.length===0)return '';const first=arguments_[0]??'';return first!=='_'&&arguments_.every(value=>value===first)?first:'';}
+/** Explicit first-profile boundary; labels never establish a static region.
+ * @param {boolean} selected @param {string[]} wrappers @param {string[]} lifetimes
+ * @returns {string} */
+export function readRustBorrowedVectorStaticReferenceError(selected,wrappers,lifetimes){return selected&&wrappers[0]==='reference'&&lifetimes[0]==='static'?'static source reference demands need their independent global or parameter region proof':'';}
+/** @param {boolean} selected @returns {string} */
+export function readRustBorrowedVectorMutationError(selected){return selected?'the borrowed vector source profile requires immutable bindings and explicit place-write provenance before source mutation':'';}
+/** Four conservatively charged copies cover position creation and checked
+ * transport, independent of the existing sum allocation reservation factor.
+ * @param {number} nodes @param {number} units @param {number} addedNodes
+ * @param {number} addedUnits @returns {number[]} */
+export function readRustBorrowedExpressionPositionReservation(nodes,units,addedNodes,addedUnits){
+ for(const value of [nodes,units,addedNodes,addedUnits])if(!Number.isSafeInteger(value)||value<0)return [];
+ const nextNodes=nodes+(addedNodes+2)*4,nextUnits=units+(addedUnits+13+'Rust borrowed expression source position 1'.length)*4;
+ return readRustStandardSumSourceMaterializationError(0,0,nextNodes,nextUnits)?[]:[nextNodes,nextUnits];
+}
+/** Structural transport of already selected authentic inherent receiver layers.
+ * @param {string[]} actual @param {string[]} target @returns {number[]} */
+export function planRustBorrowedInherentPosition(actual,target){
+ let actualBoxes=0,targetBoxes=0,actualReferences=0,targetReferences=0;
+ for(const layer of actual){if(layer==='box')actualBoxes+=1;else if(layer==='reference')actualReferences+=1;else return [];}
+ for(const layer of target){if(layer==='box')targetBoxes+=1;else if(layer==='reference')targetReferences+=1;else return [];}
+ if(actual.length>256||target.length>256||targetBoxes>actualBoxes)return [];
+ return [actualBoxes-targetBoxes,Math.max(actualReferences-targetReferences,0),Math.max(targetReferences-actualReferences,0)];
+}

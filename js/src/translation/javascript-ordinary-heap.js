@@ -1,14 +1,29 @@
-import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
+import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition} from './javascript-array-objects.js';
+import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,constructJavaScriptSemanticTextUnits,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';
 import {createJavaScriptPropertyDescriptor,testCompleteJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} from './javascript-property-descriptors.js';
+import {testJavaScriptCollectionKey,orderJavaScriptCollectionKeys} from './javascript-collection-rules.js';
 import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-rules.js';
 
-/** An ordered property list preserves creation order independently of lookup.
- * Keys are actual UTF16 text or globally identified Symbols, never coerced here.
- * @typedef {{$:'ordinaryProperty',key:JavaScriptSemanticValue,descriptor:JavaScriptPropertyDescriptor}} JavaScriptOrdinaryProperty
- */
-/** @typedef {{$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+/** Tombstones retain stable insertion ordinals after releasing deleted values.
+ * @typedef {{$:'collectionEntry',key:JavaScriptSemanticValue,value:JavaScriptSemanticValue,present:boolean}} JavaScriptCollectionEntry */
+/** @typedef {JavaScriptArrayObject | {$:'collectionIteratorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],collection:bigint,cursor:number,kind:string} |
+ * {$:'mapObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
+ * {$:'setObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
+ * {$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[]} |
  * {$:'hostErrorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
+ * hostSet:JavaScriptSemanticValue} |
+ * {$:'hostURLObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
+ * hostSet:JavaScriptSemanticValue} |
+ * {$:'hostArrayObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
+ * hostSet:JavaScriptSemanticValue} |
+ * {$:'hostByteBufferObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
  * hostSet:JavaScriptSemanticValue}} JavaScriptOrdinaryObject
  */
@@ -64,7 +79,7 @@ export function readJavaScriptOrdinaryValueError(heap, value) {
 
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} key @returns {string} */
 export function readJavaScriptOrdinaryKeyError(heap, key) {
-  if (key.$ !== 'text' && key.$ !== 'symbol') return 'an ordinary property key must be text or Symbol without implicit coercion';
+  if (key.$ !== 'text' && key.$ !== 'sourceText' && key.$ !== 'symbol') return 'an ordinary property key must be text or Symbol without implicit coercion';
   return readJavaScriptOrdinaryValueError(heap, key);
 }
 
@@ -86,19 +101,55 @@ export function readJavaScriptOrdinaryHeapError(heap) {
   if (heap.objects.length > 4096 || heap.symbols.length > 16384) return 'ordinary heap identity directory exceeds its explicit resource budget';
   let previous = 0n;
   for (const object of heap.objects) {
-    if (object.identity <= previous || object.identity > 18446744073709551615n) return 'ordinary Objects need strictly ordered unique positive unsigned64 identities';
+    if(!['ordinaryObject','arrayObject','mapObject','setObject','collectionIteratorObject','hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(object.$))return 'ordinary heap objects require their actual registered object kind';
+    if (typeof object.identity !== 'bigint' || object.identity <= previous || object.identity > 18446744073709551615n) return 'ordinary Objects need strictly ordered unique positive unsigned64 identities';
     previous = object.identity;
   }
   previous = 0n;
   for (const symbol of heap.symbols) {
-    if (symbol <= previous || symbol > 18446744073709551615n || findJavaScriptOrdinaryObject(heap.objects, symbol) >= 0) return 'Symbols and Objects need distinct strictly ordered positive unsigned64 identities';
+    if (typeof symbol !== 'bigint' || symbol <= previous || symbol > 18446744073709551615n || findJavaScriptOrdinaryObject(heap.objects, symbol) >= 0) return 'Symbols and Objects need distinct strictly ordered positive unsigned64 identities';
     previous = symbol;
   }
   let propertyCount = 0;
+  let collectionEntryCount = 0;
+  let collectionKeyUnits = 0;
+  let collectionStoredUnits = 0;
   for (const object of heap.objects) {
-    if(object.$==='hostErrorObject'){
+    if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject'){
       if(object.callable||object.properties.length!==0)return 'opaque Error objects keep host properties outside ordinary descriptor snapshots';
       for(const hook of [object.hostGet,object.hostSet]){const error=readJavaScriptOrdinaryValueError(heap,hook);if(error!=='')return error;if(hook.$!=='object'||!hook.callable)return 'opaque Error access requires its actual externally registered call hooks';}
+    }
+    if(object.$==='collectionIteratorObject'){
+      if(object.callable||!Number.isSafeInteger(object.cursor)||object.cursor<0||Object.is(object.cursor,-0)||object.cursor>65536||!['keys','values','entries'].includes(object.kind))return 'collection iterators require their exact bounded cursor and iteration kind';
+      if(object.collection!==0n){
+        const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,object.collection)];
+        if(collection===undefined||collection.$!=='mapObject'&&collection.$!=='setObject'||object.cursor>collection.entries.length)return 'a live collection iterator retains its actual collection identity and insertion position';
+      }else if(object.cursor!==0)return 'an exhausted collection iterator releases its collection and cursor';
+    }
+    if(object.$==='mapObject'||object.$==='setObject'){
+      if(object.callable||object.entries.length>65536)return 'collection objects require noncallable inspectable bounded internal slots';
+      collectionEntryCount+=object.entries.length;
+      if(collectionEntryCount>1048576)return 'collection entry history exceeds the shared heap storage budget';
+      const keys=[];
+      for(const entry of object.entries){
+        if(entry===undefined||entry.$!=='collectionEntry'||typeof entry.present!=='boolean')return 'collection insertion history requires dense explicit entry records';
+        const keyError=readJavaScriptOrdinaryValueError(heap,entry.key),valueError=readJavaScriptOrdinaryValueError(heap,entry.value);
+        if(keyError!==''||valueError!=='')return keyError!==''?keyError:valueError;
+        collectionStoredUnits+=Math.max(0,readJavaScriptSemanticTextLength(entry.key))+Math.max(0,readJavaScriptSemanticTextLength(entry.value));
+        if(collectionStoredUnits>67108864)return 'collection entries exceed their shared UTF16 storage budget';
+        if(entry.key.$==='number'&&Object.is(entry.key.value,-0))return 'collection stored keys normalize negative Number zero';
+        if(object.$==='setObject'&&!testJavaScriptSemanticSameValue(entry.key,entry.value))return 'Set entries retain the same normalized key and value';
+        if(entry.present){
+          collectionKeyUnits+=Math.max(0,readJavaScriptSemanticTextLength(entry.key));
+          if(collectionKeyUnits>16777216)return 'active collection keys exceed their shared UTF16 comparison budget';
+          keys.push(entry.key);
+        }
+      }
+      const orderedKeys=orderJavaScriptCollectionKeys(keys);
+      for(let at=1;at<orderedKeys.length;at++){
+        const prior=orderedKeys[at-1],current=orderedKeys[at];
+        if(prior!==undefined&&current!==undefined&&testJavaScriptCollectionKey(prior,current))return 'active collection keys must be unique under SameValueZero';
+      }
     }
     if (object.prototype.$ !== 'null' && object.prototype.$ !== 'object') return 'an ordinary prototype must be null or a declared Object';
     const prototypeError = readJavaScriptOrdinaryValueError(heap, object.prototype);
@@ -126,6 +177,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
         if (error !== '') return error;
       }
     }
+    if(object.$==='arrayObject'){const error=readJavaScriptArrayObjectError(object);if(error!=='')return error;}
     let prototype = object.prototype;
     let depth = 0;
     while (prototype.$ === 'object') {
@@ -134,7 +186,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
       const index = findJavaScriptOrdinaryObject(heap.objects, prototype.identity);
       const parent = heap.objects[index];
       if (parent === undefined) return 'every ordinary prototype must remain in the global directory';
-      if(parent.$==='hostErrorObject')return 'opaque host Errors need explicit prototype traversal rather than ordinary descriptor lookup';
+      if(parent.$!=='ordinaryObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return 'opaque host Errors need explicit prototype traversal rather than ordinary descriptor lookup';
       prototype = parent.prototype;
     }
   }
@@ -182,7 +234,7 @@ export function planJavaScriptOrdinaryGet(heap, identity, key, receiver) {
     : findJavaScriptOrdinaryObject(heap.objects, identity) < 0 ? 'an ordinary Get needs its actual Object identity' : '';
   if (error !== '') return {action:'error',error,value:{$:'undefined'},callee:{$:'undefined'},receiver,arguments:[]};
   const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];
-  if(target!==undefined&&target.$==='hostErrorObject')return {action:'call',error:'',value:{$:'undefined'},callee:target.hostGet,receiver:{$:'object',identity,callable:false},arguments:[key,receiver]};
+  if(target!==undefined&&target.$!=='ordinaryObject'&&target.$!=='mapObject'&&target.$!=='setObject'&&target.$!=='collectionIteratorObject'&&target.$!=='arrayObject')return {action:'call',error:'',value:{$:'undefined'},callee:target.hostGet,receiver:{$:'object',identity,callable:false},arguments:[key,receiver]};
   const property = locateJavaScriptOrdinaryProperty(heap, identity, key);
   if (!property.found) return {action:'value',error:'',value:{$:'undefined'},callee:{$:'undefined'},receiver,arguments:[]};
   if (property.descriptor.valuePresent) return {action:'value',error:'',value:property.descriptor.value,callee:{$:'undefined'},receiver,arguments:[]};
@@ -208,7 +260,14 @@ export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) 
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'DefineOwnProperty needs its actual Object identity',writes:[]};
-  if(object.$==='hostErrorObject')return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
+  if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
+  if(object.$==='arrayObject'){
+    const plan=planJavaScriptArrayPropertyDefinition(object,key,proposed);
+    if(plan.errorClass!=='')return {heap,success:false,error:plan.error,writes:[]};
+    let count=0;for(const entry of heap.objects)count+=entry.properties.length;
+    if(count-object.properties.length+plan.object.properties.length>16384)return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[]};
+    return {heap:replaceJavaScriptOrdinaryObject(heap,plan.object),success:plan.success,error:plan.error,writes:plan.writes};
+  }
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
   const property = object.properties[at];
   const current = property === undefined ? createJavaScriptPropertyDescriptor('data',false,false) : property.descriptor;
@@ -221,7 +280,7 @@ export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) 
   if (at < 0 && count >= 16384) return {heap,success:false,error:'ordinary properties exceed their explicit ordered storage budget',writes:[]};
   const updated = {$:'ordinaryProperty',key,descriptor:transition.descriptor};
   const properties = at < 0 ? object.properties.concat([updated]) : object.properties.map((entry,position) => position === at ? updated : entry);
-  const replacement = {$:'ordinaryObject',identity:object.identity,prototype:object.prototype,extensible:object.extensible,callable:object.callable,properties};
+  const replacement = {...object,properties};
   return {heap:replaceJavaScriptOrdinaryObject(heap,replacement),success:true,error:'',writes:transition.writes};
 }
 
@@ -235,13 +294,13 @@ export function deleteJavaScriptOrdinaryProperty(heap, identity, key) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'Delete needs its actual Object identity'};
-  if(object.$==='hostErrorObject')return {heap,success:false,error:'opaque Error deletion requires its actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error deletion requires its actual host protocol'};
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
   const property = object.properties[at];
   if (property === undefined) return {heap,success:true,error:''};
   if (!property.descriptor.configurable) return {heap,success:false,error:''};
   const properties = object.properties.filter((entry,position) => position !== at);
-  const replacement = {$:'ordinaryObject',identity:object.identity,prototype:object.prototype,extensible:object.extensible,callable:object.callable,properties};
+  const replacement = {...object,properties};
   return {heap:replaceJavaScriptOrdinaryObject(heap,replacement),success:true,error:''};
 }
 
@@ -253,8 +312,8 @@ export function preventJavaScriptOrdinaryExtensions(heap, identity) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'PreventExtensions needs its actual Object identity'};
-  if(object.$==='hostErrorObject')return {heap,success:false,error:'opaque Error extensibility requires its actual host protocol'};
-  const replacement = {$:'ordinaryObject',identity:object.identity,prototype:object.prototype,extensible:false,callable:object.callable,properties:object.properties};
+  if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error extensibility requires its actual host protocol'};
+  const replacement = {...object,extensible:false};
   return {heap:replaceJavaScriptOrdinaryObject(heap,replacement),success:true,error:''};
 }
 
@@ -269,7 +328,7 @@ export function setJavaScriptOrdinaryPrototype(heap, identity, prototype) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'SetPrototypeOf needs its actual Object identity'};
-  if(object.$==='hostErrorObject')return {heap,success:false,error:'opaque Error prototypes require their actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error prototypes require their actual host protocol'};
   if (testJavaScriptSemanticSameValue(object.prototype, prototype)) return {heap,success:true,error:''};
   if (!object.extensible) return {heap,success:false,error:''};
   let next = prototype;
@@ -279,10 +338,10 @@ export function setJavaScriptOrdinaryPrototype(heap, identity, prototype) {
     const at = findJavaScriptOrdinaryObject(heap.objects, next.identity);
     const parent = heap.objects[at];
     if (parent === undefined) return {heap,success:false,error:'every ordinary prototype must remain in the global directory'};
-    if(parent.$==='hostErrorObject')return {heap,success:false,error:'ordinary prototype mutation cannot silently traverse an opaque Error'};
+    if(parent.$!=='ordinaryObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return {heap,success:false,error:'ordinary prototype mutation cannot silently traverse an opaque Error'};
     next = parent.prototype;
   }
-  const replacement = {$:'ordinaryObject',identity:object.identity,prototype,extensible:object.extensible,callable:object.callable,properties:object.properties};
+  const replacement = {...object,prototype};
   return {heap:replaceJavaScriptOrdinaryObject(heap,replacement),success:true,error:''};
 }
 
@@ -314,7 +373,7 @@ export function planJavaScriptOrdinarySet(heap, identity, key, value, receiver) 
     : findJavaScriptOrdinaryObject(heap.objects, identity) < 0 ? 'an ordinary Set needs its actual Object identity' : '';
   if (error !== '') return {heap,action:'error',error,success:false,callee:{$:'undefined'},receiver,arguments:[]};
   const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];
-  if(target!==undefined&&target.$==='hostErrorObject')return {heap,action:'host call',error:'',success:false,callee:target.hostSet,receiver:{$:'object',identity,callable:false},arguments:[key,value,receiver]};
+  if(target!==undefined&&target.$!=='ordinaryObject'&&target.$!=='mapObject'&&target.$!=='setObject'&&target.$!=='collectionIteratorObject'&&target.$!=='arrayObject')return {heap,action:'host call',error:'',success:false,callee:target.hostSet,receiver:{$:'object',identity,callable:false},arguments:[key,value,receiver]};
   const located = locateJavaScriptOrdinaryProperty(heap, identity, key);
   const own = located.found ? located.descriptor : createJavaScriptOrdinarySetDescriptor({$:'undefined'},true);
   if (own.getterPresent) {
@@ -327,7 +386,7 @@ export function planJavaScriptOrdinarySet(heap, identity, key, value, receiver) 
   const index = findJavaScriptOrdinaryObject(heap.objects, receiver.identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,action:'error',error:'Set needs its actual receiver Object',success:false,callee:{$:'undefined'},receiver,arguments:[]};
-  if(object.$==='hostErrorObject')return {heap,action:'error',error:'a borrowed ordinary descriptor cannot replace an opaque Error receiver protocol',success:false,callee:{$:'undefined'},receiver,arguments:[]};
+  if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,action:'error',error:'a borrowed ordinary descriptor cannot replace an opaque Error receiver protocol',success:false,callee:{$:'undefined'},receiver,arguments:[]};
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
   const property = object.properties[at];
   if (property !== undefined && (!property.descriptor.valuePresent || !property.descriptor.writable))
@@ -348,15 +407,15 @@ export function readJavaScriptOrdinaryOwnKeys(heap, identity) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {keys:[],error:'OwnPropertyKeys needs its actual Object identity'};
-  if(object.$==='hostErrorObject')return {keys:[],error:'opaque Error own keys require their actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {keys:[],error:'opaque Error own keys require their actual host protocol'};
   let numeric = [];
   let positions = [];
   let text = [];
   let symbols = [];
   for (const property of object.properties) {
     const key = property.key;
-    if (key.$ === 'text') {
-      const position = readJavaScriptLiteralPropertyIndex(key.units);
+    if (key.$ === 'text'||key.$==='sourceText') {
+      const position = readJavaScriptSemanticTextLength(key)>10?-1:readJavaScriptLiteralPropertyIndex(constructJavaScriptSemanticTextUnits(key,10));
       if (position < 0) text = text.concat([key]);
       else {
         let at = 0;
@@ -383,7 +442,7 @@ export function insertJavaScriptOrdinaryObject(heap, identity, prototype) {
   if (prototype.$ !== 'null' && prototype.$ !== 'object') return {heap,success:false,error:'an ordinary prototype must be null or a declared Object'};
   const error = readJavaScriptOrdinaryValueError(heap,prototype);
   if (error !== '') return {heap,success:false,error};
-  if(prototype.$==='object'&&heap.objects[findJavaScriptOrdinaryObject(heap.objects,prototype.identity)]?.$==='hostErrorObject')return {heap,success:false,error:'ordinary allocation with an opaque Error prototype needs its explicit host traversal protocol'};
+  if(prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,prototype.identity)];if(parent!==undefined&&parent.$!=='ordinaryObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return {heap,success:false,error:'ordinary allocation with an opaque Error prototype needs its explicit host traversal protocol'};}
   let at = 0;
   for (const object of heap.objects) if (object.identity < identity) at += 1;
   const object = {$:'ordinaryObject',identity,prototype,extensible:true,callable:false,properties:[]};

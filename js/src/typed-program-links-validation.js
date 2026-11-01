@@ -1,3 +1,4 @@
+import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
 import {checkJavaScriptClassOwners} from './translation/javascript-class-owners.js';
 import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
@@ -43,6 +44,7 @@ import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.
 import { acceptUnionTypeCount, acceptUnionTypeField } from './translation/type-syntax-rules.js';
 import {checkProgramDeclarationOwners} from './typed-program-declaration-owners.js';
 import { acceptProgramDivisionRounding, acceptProgramExpressionField, acceptProgramExpressionOperation, acceptProgramOptionalAbsence, acceptProgramTupleProductModel, readProgramReferenceRole } from './typed-program-link-rules.js';
+import {checkRustSourceExpressionPosition} from './translation/rust-source-expression-positions.js';
 
 const primitives = new Set(['nat', 'int', 'bool', 'string', 'unit', 'float', 'output']);
 const operationKinds = new Set(['math', 'stringMap', 'stringTest', 'method', 'collectionRead', 'collectionItems', 'optionalPredicate']);
@@ -195,6 +197,11 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptRustStringByteLengthOperation(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
+    if(Object.hasOwn(node,'sourcePosition')){
+      const facet=checkRustSourceExpressionPosition(node.sourcePosition,node.type,program.sourceLanguage,value=>value,value=>declarations.get(value.name));
+      let position=facet.position;
+      while(position){type(position.type);position=position.arrayElementPosition;}
+    }
     if (node.k === 'none') {
       if (!acceptOptionalLiteralAbsence(node.absence)) throw new TypeError('an absent optional value requires its concrete null or undefined tag');
       if (node.type?.kind !== 'option' || !acceptOptionalAbsence(node.type.absence ?? 'both', node.absence)) throw new TypeError('an absent optional value disagrees with its retained absence policy');
@@ -514,5 +521,6 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   }
   expression(program.main, new Map());
   validateRustTypeNamespace(program);
+  checkRustBorrowedVectorSourceRegions(program);
   return program;
 }

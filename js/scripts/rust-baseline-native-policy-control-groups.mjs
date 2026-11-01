@@ -2,6 +2,19 @@
 // author must reconcile each selected fixture coordinate before publishing.
 const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
 export const rustBaselineNativePolicyControlGroups=[
+ {sourcePath:'js/src/translation/javascript-array-objects.js',moduleName:'authored_array_object_controls',testName:'all_literal_array_object_controls',fixtureSelections:[{...selection('javascript-array-objects','javascriptArrayObjectDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/rust-mutable-record-loan-rules.js',moduleName:'authored_mutable_record_loan_controls',testName:'all_literal_mutable_record_loan_controls',fixtureSelections:[selection('rust-mutable-record-loans','rustMutableRecordLoanDecisions')]},
+ {sourcePath:'js/src/translation/rust-borrowed-source-region-rules.js',moduleName:'authored_borrowed_source_region_controls',testName:'all_literal_borrowed_source_region_controls',fixtureSelections:[selection('rust-borrowed-source-regions','rustBorrowedSourceRegionDecisions')]},
+ {sourcePath:'js/src/translation/javascript-primitive-methods.js',moduleName:'authored_primitive_method_controls',testName:'all_literal_primitive_method_controls',fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveMethodDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-call-primitives.js',moduleName:'authored_primitive_addition_controls',testName:'all_literal_primitive_addition_controls',fixtureSelections:[{...selection('javascript-primitive-methods','javascriptPrimitiveAdditionDecisions'),profile:'exact pure fixture data 2'}]},
+ {sourcePath:'js/src/translation/javascript-collection-rules.js',moduleName:'authored_inspectable_collection_controls',testName:'all_literal_inspectable_collection_controls',fixtureSelections:[{...selection('javascript-inspectable-collections','javascriptInspectableCollectionDecisions'),profile:'exact pure fixture data 2'}]},
+ ...[
+  ['javascript-source-text-rules','source_text_profile','javascriptSourceTextProfileDecisions'],
+  ['javascript-semantic-values','source_text_semantic','javascriptSourceTextSemanticDecisions'],
+  ['javascript-descriptor-conversion','source_text_boolean','javascriptSourceTextBooleanDecisions'],
+  ['javascript-call-primitives','source_text_primitive','javascriptSourceTextPrimitiveDecisions'],
+ ].map(([source,name,exportName])=>({sourcePath:'js/src/translation/'+source+'.js',moduleName:'authored_'+name+'_controls',testName:'all_literal_'+name+'_controls',fixtureSelections:[{...selection('javascript-source-text',exportName),profile:'exact pure fixture data 2'}]})),
+ {sourcePath:'js/src/translation/javascript-ordinary-class-rules.js',moduleName:'authored_ordinary_class_controls',testName:'all_literal_ordinary_class_controls',fixtureSelections:[selection('javascript-ordinary-class-source','javascriptOrdinaryClassDecisions')]},
  {sourcePath:'js/src/translation/javascript-host-capability-rules.js',moduleName:'authored_host_capability_mode_controls',testName:'all_literal_host_capability_mode_controls',fixtureSelections:[
   selection('javascript-host-capabilities','javascriptHostCapabilityDecisions'),
  ]},
@@ -14,6 +27,7 @@ export const rustBaselineNativePolicyControlGroups=[
  {sourcePath:'js/src/translation/rust-owned-record-loop-rules.js',moduleName:'authored_owned_record_loop_controls',testName:'all_literal_owned_record_loop_controls',fixtureSelections:[
   selection('rust-owned-record-loops','rustOwnedRecordLoopDecisions'),
   selection('rust-owned-record-loops','rustOwnedRecordLoopMalformedNumbers'),
+  selection('rust-owned-record-nested-loops','rustOwnedRecordNestedLoopDecisions'),
  ]},
  {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'authored_source_library_error_controls',testName:'all_literal_source_library_error_controls',aliases:true,fixtureSelections:[
   selection('source-library-error-composition','sourceLibraryErrorDecisions'),

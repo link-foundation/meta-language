@@ -329,6 +329,8 @@ pub(super) fn validate(program: &Program) -> Result<()> {
     crate::translation::class_owners::validate_program(program).map_err(|failure|error(failure.to_string()))?;
     crate::translation::source_const_functions::validate_const_functions(program)
         .map_err(|failure| error(failure.to_string()))?;
+    crate::translation::source_expression_regions::validate_borrowed_vector_source_regions(program)
+        .map_err(|failure|error(failure.to_string()))?;
     if crate::translation::runtime_shell::validate_program(program)
         .map_err(|failure| error(failure.to_string()))?
         .is_some()

@@ -77,6 +77,49 @@ construction profiles; their representation is never inferred from a record
 shape. Descriptor-definition sources preserve operand evaluation order before
 the existing key/descriptor conversion continuation.
 
+Map and Set internal slots belong to that same inspectable global heap. Their
+keys use SameValueZero, normalize Number zero, and retain insertion ordinals.
+Deletion releases the deleted key/value references while retaining a tombstone;
+re-insertion appends a new ordinal. Iterators carry their actual collection
+identity and next ordinal, observe later insertions, skip tombstones, and release
+the source permanently on exhaustion. Own property and prototype operations
+preserve these internal slots. Constructor copy optimization requires the actual
+registered standard adder, source iterator and iterator-next owners; an override
+or accessor retains the ordinary iterable protocol obligation. Iterator kernels
+return components; the call machine must allocate genuine entry arrays and
+iterator-result objects before exposing JavaScript results. Resource limits are
+explicit outcomes and never fabricated language exceptions or empty results.
+
+Arrays have an inspectable exotic brand, explicit prototype and actual ordered
+property descriptors. Their nonconfigurable, nonenumerable length data property
+bounds sparse own indices; holes remain absent properties. Index definition may
+extend length, while shrinking length deletes higher configurable indices and
+retains the exact partial rollback at the first nonconfigurable index. A length
+value performs two actual numeric conversions before reading the current length
+descriptor, retaining effects and abrupt completion from each conversion. The
+shared kernel exposes resumable requests for those operations; machine/source
+adapters must drive them rather than inventing conversion results or treating
+an unsupported continuation as a successful write. The algorithm follows the
+[ECMAScript Array exotic operations](https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#sec-arraysetlength)
+reviewed November 1, 2026; independent version-qualified runtime controls remain
+required. Sparse length is not permission to allocate a dense buffer of that
+size. Shared identity/property/storage budgets remain explicit.
+
+Semantic text may select the additive `inspectable UTF16 source text 1` profile,
+which stores a complete inspectable String with at most 16,777,216 UTF16 code
+units. Historical unit-array bounds remain unchanged. Cross-profile equality,
+property keys and conversion preserve exact code units, including unpaired
+surrogates. A consumer needing expanded units must honor its own operation
+budget; compact representation does not grant unbounded expansion.
+
+Actual supplied provider source bodies may run through the portable call model,
+including helper closures and a module's shared mutable cache binding. The raw
+filesystem, URL, structured-clone and shared Links decoder ports retain their
+explicit capability owners. Running the provider source does not establish that
+the decoder's implementation body has been translated. Source-owner, transport
+and resource failures retain their frontend classification rather than becoming
+cached IO exceptions.
+
 Within the selected Rust owned-container source profile, nongeneric enum and
 struct declarations bind `Self` to their actual nominal owner while reading
 fields. This binding ends on both success and failure, remains separate from
@@ -91,6 +134,21 @@ explicitly selected source-signature successor may add an optional
 profiles remain independently selectable. This persisted contract contains no
 runtime binding identity, loan capability or fabricated Copy evidence; actual
 value loans and return-region checks remain separate executable obligations.
+Expression-level borrowed positions use the additive
+`Rust borrowed expression source position 1` facet. It persists only the
+recursive type contract. Whole-program validation must rebuild regions from
+actual lexical binders and producers, including body-local vectors without
+borrowed function signatures; type metadata alone grants no lifetime proof.
+The immutable source-position body checker rebuilds lexical binder regions,
+actual constructor projections and selected-call lifetime substitutions. It
+must inspect proposition/assertion paths as well as ordinary function/main
+expressions, and reject unsupported selected-profile combinations. Discovery
+of an absent profile does not impose that profile's new proof budget on older
+programs. Mutable-record value loans additionally follow actual root/field
+bindings across lexical shadowing, argument evaluation and shared inherent
+receivers; writes and moves consult overlapping live places, while disjoint
+fields retain their separate permissions. These source lifetimes are distinct
+from target Copy/Clone facts or arbitrary spelling-based owner guesses.
 Erasing `Vec<&Self>` into an unqualified array of values does not satisfy the
 source contract.
 
@@ -527,6 +585,13 @@ destructor and callback observations. This lowering erases the source reference
 interface; it does not preserve an original Rust borrowed-vector header. The
 existing exact source-header emission profiles remain unchanged. Metadata
 transport alone does not establish these producer, region or target proofs.
+Its initial source profile admits immutable binder flow only. Source assignment,
+field reinitialization and state updates require separate place-write decorators
+and actual root relationships before composition with borrowed vectors; earlier
+state profiles retain their own boundaries. Owned expression-position decorators
+retain source qualifiers on actual expressions so source-free region checking
+can follow actual binder links. They contain no runtime binding identities or
+loan capabilities and do not substitute for that region proof.
 Unshadowed standard vectors and immutable slices now have bounded source
 admission for direct scalar and string elements, with read-only empty checks and
 length conversion explicitly projected to the Number model. Ownership moves,
@@ -2645,6 +2710,15 @@ minimization and the modern research obligations still require the remaining
 paired implementation work; these regular learners do not discharge them.
 
 ### Critical conversation requirements
+
+The November 1 development-pace instruction additionally requires a repository
+case study of delivered versus drafted scope, measured intervals between
+commits, detailed inherited/new requirements, causes of delay and realistic
+conditional completion estimates while implementation continues. This is a
+critical documentation duty, not a substitute for executable delivery. The
+[case study](case-studies/issue-227/development-pace-and-remaining-scope.md)
+retains its sources, assumptions and uncertainty; Git cadence never counts as
+requirement execution evidence.
 
 Every requirement-bearing conversation message is captured verbatim, hashed,
 registered and mapped to atomic ledger obligations. New messages append records;

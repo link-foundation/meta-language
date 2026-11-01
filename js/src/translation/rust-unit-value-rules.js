@@ -114,6 +114,10 @@ export function acceptRustOrdinaryCompletedAlternative(kind){return kind==='retu
  * statement. Completed branches retain their separate result/borrow checks.
  * @param {string} kind @returns {boolean} */
 export function testRustOrdinaryCompletionFallsThrough(kind){return !acceptRustOrdinaryCompletedAlternative(kind);}
+/** Existing actual leaf transfers justify a new expression result. This
+ * predicate is not a producer certificate supplied by source input.
+ * @param {boolean[]} transfers @returns {boolean} */
+export function testRustOrdinaryCompletionTransferredResult(transfers){if(transfers.length===0)return false;for(const transfer of transfers)if(!transfer)return false;return true;}
 /** Private source exit snapshots are charged before cloning real owner maps.
  * @param {number} entries @param {number} addedEntries @param {number} text @param {number} addedText @returns {string} */
 export function readRustOrdinaryCompletionSnapshotError(entries,addedEntries,text,addedText){return entries%1!==0||addedEntries%1!==0||text%1!==0||addedText%1!==0||entries<0||addedEntries<0||text<0||addedText<0||entries>100000-addedEntries||text>16777216-addedText?'the actual completion exit snapshots exceed their finite source budget':'';}

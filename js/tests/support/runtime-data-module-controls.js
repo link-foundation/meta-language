@@ -59,7 +59,7 @@ function runEntry(instance,name,args=[]){
  assert.equal(current.$,'machineCompleted',current.reason);return instance.embedding.decode(current.value);
 }
 
-export async function readRuntimeDataOriginalDiagnostic(definition){
+export async function readRuntimeDataOriginalDiagnostic(definition,{readerProfile='qualified runtime Links data IO adapter 1',readerRealmIdentity}={}){
  const diagnostic=createControlDiagnostics(),attempt=diagnostic.attempt,attemptAsync=diagnostic.attemptAsync;
  const version=attempt('active Node/dependency qualification',readActiveRuntimeDataVersions),concrete=attempt('default CST exact source bytes/text/binary/AST projection',()=>readCollectionCopyConcreteControl(definition.source)),context=attempt('complete owned source/file setup',()=>input(definition));
  let capture,plan,initialState,events=[],finalState,bindingReads=[],ioRequests=[],functionCompilation=null,originalResult,originalRequests=[];const transports=[];
@@ -76,7 +76,7 @@ export async function readRuntimeDataOriginalDiagnostic(definition){
   for(let index=0;index<variants.length;index++){
    const label=['original','text','binary'][index],restored=variants[index];attempt(label+'/reset literal file inputs',()=>files(product(context,'complete owned source/file setup').directory,definition.files));
    const functions=attempt(label+'/actual captured source functions',()=>captureJavaScriptRuntimeDataFunctions(product(restored,label+' source input'))),authority=attempt(label+'/real source realm declarations',()=>({...createActualErrorSourceDeclarations(product(functions,label+'/actual captured source functions')),identity:1n})),scope=createRuntimeDataModuleScope();
-   const instance=attempt(label+'/actual qualified module instance',()=>prepareJavaScriptRuntimeDataModule(product(restored,label+' source input'),product(authority,label+'/real source realm declarations'),{moduleURL:product(context,'complete owned source/file setup').url,scope,trace:true}));
+   const instance=attempt(label+'/actual qualified module instance',()=>prepareJavaScriptRuntimeDataModule(product(restored,label+' source input'),product(authority,label+'/real source realm declarations'),{moduleURL:product(context,'complete owned source/file setup').url,scope,trace:true,readerProfile,readerRealmIdentity}));
    const before=attempt(label+'/actual initial state',()=>codecs.encodeJavaScriptModuleInitializationState(product(instance,label+'/actual qualified module instance').state()));
    if(index===0){plan=attempt('wire actual source plan',()=>codecs.encodeJavaScriptModuleInitializationPlan(product(restored,label+' source input').plan));initialState=before;}
    attempt(label+'/actual exported binding starts in TDZ',()=>{const item=product(restored,label+' source input').exports.find(row=>row.kind==='data');if(item)assert.equal(product(instance,label+'/actual qualified module instance').readExport(item.name).$,'moduleBindingUninitialized');});
@@ -93,7 +93,7 @@ export async function readRuntimeDataOriginalDiagnostic(definition){
     if(index===0)functionCompilation={plan:compiledPlan,registry,bindings,expected};
    }
    attempt(label+'/later file writes do not reinitialize a module',()=>{files(product(context,'complete owned source/file setup').directory,definition.afterEvaluation);const value=product(instance,label+'/actual qualified module instance'),count=value.requests().length,repeated=value.initialize();assert.equal(value.requests().length,count);if(definition.expectedError){assert.equal(repeated.$,'moduleAbrupt');assert.equal(value.embedding.decode(repeated.value),product(result,label+'/source completion and literal result').error);}else assert.equal(runEntry(value,'read'),definition.mutate?definition.mutate.expected:definition.expected);});
-   attempt(label+'/same actual module and realm reuse one instance',()=>assert.equal(prepareJavaScriptRuntimeDataModule(product(restored,label+' source input'),product(authority,label+'/real source realm declarations'),{moduleURL:product(context,'complete owned source/file setup').url,scope}),product(instance,label+'/actual qualified module instance')));
+   attempt(label+'/same actual module and realm reuse one instance',()=>assert.equal(prepareJavaScriptRuntimeDataModule(product(restored,label+' source input'),product(authority,label+'/real source realm declarations'),{moduleURL:product(context,'complete owned source/file setup').url,scope,readerProfile,readerRealmIdentity}),product(instance,label+'/actual qualified module instance')));
    const state=attempt(label+'/wire final state',()=>codecs.encodeJavaScriptModuleInitializationState(product(instance,label+'/actual qualified module instance').state()));
    const history=attempt(label+'/every actual initialization event',()=>product(instance,label+'/actual qualified module instance').trace().map(event=>({operation:event.operation,transition:codecs.encodeJavaScriptModuleInitializationTransition(event.transition),value:event.value===null?null:codecs.encodeJavaScriptSemanticValue(event.value),abrupt:event.abrupt})));
    const reads=(restored?.plan.bindings??[]).map(binding=>({binding,result:attempt(label+'/actual binding read '+binding,()=>{const value=product(instance,label+'/actual qualified module instance');return codecs.encodeJavaScriptModuleBindingRead(machine.readJavaScriptModuleBinding(product(restored,label+' source input').plan,value.state(),binding));})}));
@@ -101,7 +101,7 @@ export async function readRuntimeDataOriginalDiagnostic(definition){
    transports.push({transport:label,finalState:state,result:result?.error?{error:Object.fromEntries(Object.keys(definition.expectedError).map(key=>[key,result.error[key]]))}:result&&Object.hasOwn(result,'value')?{value:result.value}:null});
   }
  }finally{if(context)attempt('release owned source control scratch',()=>fs.rmSync(context.directory,{recursive:true,force:true}));}
- return {definition,concrete,capture,plan,initialState,events,finalState,bindingReads,ioRequests,functionCompilation,originalResult,originalRequests,transports,diagnostics:diagnostics(diagnostic)};
+ return {definition,concrete,capture,plan,initialState,events,finalState,bindingReads,ioRequests,functionCompilation,originalResult,originalRequests,transports,...(readerProfile==='qualified runtime Links data IO adapter 1'?{}:{readerProfile}),diagnostics:diagnostics(diagnostic)};
 }
 
 export function readRuntimeDataRefusalDiagnostic(definition){

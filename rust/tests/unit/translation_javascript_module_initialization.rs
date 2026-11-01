@@ -4,8 +4,7 @@
 mod codecs;
 #[path="../../src/translation/javascript_module_initialization.rs"]
 mod native;
-#[path="module_initialization_error_compilation.rs"]
-mod error_compilation;
+use super::source_module_compilation::assert_source_module_compilation;
 use codecs::*;
 use super::issue_195_translation_pairs::run;
 use super::translation_collection_copies::{Diagnostics,concrete};
@@ -70,7 +69,7 @@ fn drive_literal_model(row:&Value)->Value{
  json!({"initialState":first,"events":events,"finalState":final_state,"bindingReads":reads})
 }
 
-fn replay_peer(diagnostic:&mut Diagnostics,label:&str,row:&Value){
+pub(super) fn replay_peer(diagnostic:&mut Diagnostics,label:&str,row:&Value){
  let plan=diagnostic.attempt(format!("{label}/complete plan transport"),||{let plan=decode_java_script_module_initialization_plan(&row["plan"]);assert_eq!(encode_java_script_module_initialization_plan(&plan),row["plan"]);assert!(native::read_java_script_module_initialization_plan_error(plan.clone()).is_empty());plan});
  let mut state=diagnostic.attempt(format!("{label}/complete initial state transport"),||{let state=decode_java_script_module_initialization_state(&row["initialState"]);assert_eq!(encode_java_script_module_initialization_state(&state),row["initialState"]);assert!(native::read_java_script_module_initialization_state_error(required(&plan,"plan").clone(),state.clone()).is_empty());state});
  let events=diagnostic.attempt(format!("{label}/complete nonempty event inventory"),||{let events=row["events"].as_array().unwrap();assert!(!events.is_empty()&&events.len()<=8192);events});
@@ -110,7 +109,7 @@ fn portable_module_initialization_preserves_all_literal_models_and_source_transp
    if group!="refusals"{replay_peer(&mut diagnostic,&label,row);}
    if group=="cases"{
     if definition.get("expectedError").is_some(){diagnostic.attempt(format!("{label}/failed initialization does not publish function captures"),||assert!(row["functionCompilation"].is_null()));}
-    else{diagnostic.attempt(format!("{label}/actual initialized source function compilation"),||error_compilation::assert_initialized_function_compilation(&row["functionCompilation"]));}
+    else{diagnostic.attempt(format!("{label}/actual initialized source function compilation"),||assert_source_module_compilation(&row["functionCompilation"]));}
    }
   }
  }

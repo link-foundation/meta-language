@@ -15,6 +15,10 @@ export const rustOwnedRecordLoopDecisions=[
  {operation:'readRustOwnedRecordLoopExpansionError',arguments:[0,1,0,256],expected:expansion},
  {operation:'readRustOwnedRecordLoopChunkName',arguments:[0,1,0],expected:'ml_finite_record_loop_chunk_0_1'},
  {operation:'readRustOwnedRecordLoopChunkName',arguments:[-1,0,0],expected:''},
+ {operation:'readRustOwnedRecordLoopExpansionReservation',arguments:[100,20],expected:[264,40]},
+ {operation:'readRustOwnedRecordLoopExpansionReservation',arguments:[-1,20],expected:[]},
+ {operation:'readRustOwnedRecordLoopProgressError',arguments:[['unclassified'],[0]],expected:progress},
+ {operation:'readRustOwnedRecordLoopProgressError',arguments:[['return','break','continue'],[0,0,1]],expected:''},
 ];
 // Nonfinite numbers and signed zero have no lossless JSON number transport.
 // Keep their literal source controls separate from the shared Links fixtures.
@@ -31,6 +35,8 @@ export const rustOwnedRecordLoopMalformedNumbers=[
  {operation:'readRustOwnedRecordLoopChunkName',arguments:[NaN,0,0],expected:''},
  {operation:'readRustOwnedRecordLoopChunkName',arguments:[0,Infinity,0],expected:''},
  {operation:'readRustOwnedRecordLoopChunkName',arguments:[0,0,-0],expected:''},
+ {operation:'readRustOwnedRecordLoopExpansionReservation',arguments:[NaN,0],expected:[]},
+ {operation:'readRustOwnedRecordLoopExpansionReservation',arguments:[0,-0],expected:[]},
 ];
 export const rustOwnedRecordLoopPreservedOriginals=[
  {name:'ordinary user function with generated chunk prefix stays ordinary',sourceVersionRange:'>=1.90.0 <1.100.0',source:'fn ml_finite_record_loop_chunk_user()->u8{7u8}fn main(){println!("{}",ml_finite_record_loop_chunk_user());}',stdout:'7\n'},

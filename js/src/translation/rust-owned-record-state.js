@@ -11,6 +11,9 @@ import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {captureRustOwnedStandardSumMethodValue} from './rust-owned-standard-sum-methods.js';
 import {readRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js';
 import {readRustRecordSourceType} from './rust-records.js';
+import {readRustBorrowedVectorMutationError} from './rust-borrowed-vector-rules.js';
+import {registerRustMutableRecordLoanRoot,testRustMutableRecordLiveLoan} from './rust-mutable-record-loans.js';
+import {acceptRustMutableRecordValueLoans} from './rust-mutable-record-loan-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust owned record state',reason,span);};
 const copy=value=>structuredClone(value);
 function state(parser){return parser.ownedRecordState??= {slots:new Map(),frames:[],declarations:new Map(),nextFrame:0,nextCallable:1,currentCallable:0,request:null};}
@@ -55,6 +58,7 @@ export function registerRustOwnedRecordMutableBinding(parser,name,span){
  if(profile!=='owned')throw unsupported('mutable binding','mutation is outside the portable core',span);
  const error=readRustOwnedRecordMutableBindingError(parser.ordinaryCompletionContext(),true,profile,Boolean(origin?.sourceBindingIdentity),Boolean(origin?.sourceLexicalBindingIdentity),origin?.wrappers.length??-1);if(error)fail(error,span);
  const frame=current.frames.at(-1);if(!frame)fail('a mutable record needs its actual source block state frame',span);const version=readRustOwnedRecordUpdateVersionError(parser.sourceVersionMinor);if(version)fail(version,span);requireStorage(parser,origin,span);if(!readRustStandardSumSourceIdentity(parser,origin))fail('mutable storage needs its actual complete source identity',span);
+ registerRustMutableRecordLoanRoot(table,origin,span);
  const binding=parser.freshProductBinding(),slot={name,lexical:origin.sourceLexicalBindingIdentity,root:origin.sourceBindingIdentity,origin:copy(origin),currentName:binding,frame:frame.id,callable:current.currentCallable,sequence:current.nextFrame++};current.slots.set(origin.sourceLexicalBindingIdentity,slot);readRustOwnedRecordStateDeclarations(parser).set(binding,slot);return binding;
 }
 export function readRustOwnedRecordMutableName(parser,node,path){
@@ -104,15 +108,17 @@ function reconstruct(parser,path,layouts,depth,object,replacement,span){
  const constructor=['crate',...layout.constructor.split('.')];return {k:'match',scrutinees:[object],rows:[{patterns:[{k:'ctor',path:constructor,args:names.map((name,position)=>position===index&&depth+1===layouts.length?{k:'wild',span}:{k:'bind',name,span}),span}],body:args.length?{k:'app',fn:{k:'name',path:constructor,span},args,span}:{k:'name',path:constructor,span},span}],span};
 }
 function overlaps(parser,slot,target){
+ if(testRustMutableRecordLiveLoan(parser.origins,slot.root,target))return true;
  for(const origin of parser.origins.scope.values()){
-  const loans=[origin.sourceBindingIdentity,origin.sourcePlaceBindingIdentity,...(origin.sourceLoanBindingIdentities??[]),...(origin.sourcePlaceLoanBindingIdentities??[])].filter(Boolean),lexical=readRustCopyClosureValueBorrows(origin).includes(slot.lexical);
-  if(!origin.wrappers?.includes('reference')&&!origin.sourceBorrowedPlace&&!lexical)continue;
+  const valueLoans=readRustCopyClosureValueBorrows(origin),loans=[origin.sourceBindingIdentity,origin.sourcePlaceBindingIdentity,...(origin.sourceLoanBindingIdentities??[]),...(origin.sourcePlaceLoanBindingIdentities??[]),...valueLoans].filter(Boolean),lexical=valueLoans.includes(slot.lexical);
+  if(!acceptRustMutableRecordValueLoans(origin.wrappers?.includes('reference')===true,origin.sourceBorrowedPlace===true,parser.origins.immutableProduct(origin),valueLoans.length))continue;
   if(testRustOwnedRecordStateLoanOverlap(slot.root,target,loans,lexical))return true;
  }return false;
 }
 export function readRustOwnedRecordStateAssignment(parser,path){
  const c=parser.cursor,tokens=c.tokens.slice(c.index,c.index+1025),forms=tokens.map(token=>['(',')','.','=','}'].includes(token.value)?token.value:token.kind==='identifier'?'name':token.kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(token.raw)?'number':'other'),count=readRustOwnedRecordStateAssignmentTokenCount(forms);if(count<0)return null;
  const used=tokens.slice(0,count),rootToken=used.find(token=>token.value!=='('),source=parser.origins.scope.get(rootToken?.value);if(!source||!record(parser,source))return null;
+ const mutation=readRustBorrowedVectorMutationError(parser.origins.borrowedVectorSourceEnabled===true);if(mutation)throw unsupported('Rust borrowed vector source',mutation,{start:used[0].start,end:used.at(-1).end});
  const fields=[];for(let at=0;at<used.length;at+=1)if(used[at].value==='.')fields.push(used[++at].kind==='number'?used[at].raw:used[at].value);
  const span={start:used[0].start,end:used.at(-1).end},layouts=layoutPath(parser,source,fields,span),field=layouts.at(-1).field,current=state(parser),slot=sourceSlot(parser,source,rootToken.value),frame=current.frames.at(-1);
  for(let at=0;at<=count;at+=1)c.next();

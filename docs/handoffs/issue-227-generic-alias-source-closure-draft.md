@@ -649,3 +649,57 @@ target module dependencies retain explicit boundaries.
 No generator, test, validator, compiler, target kernel or represented program
 ran in this source batch. All controls and target output assertions remain
 deferred; none establishes an observed result.
+
+### Borrowed vector body source draft
+
+The additive `Rust source function signature 3` retains optional recursive
+`arrayElementPosition` source positions and actual expression `sourcePosition`
+decorators. Historical signature profiles 1 and 2 retain their exact fields and
+refusal boundaries. Stored positions contain type, wrappers, lifetimes and full
+owners; runtime binder identities, producer proofs and loans never persist there.
+The source interface is intentionally erased by ordinary target emission; this
+does not extend either published exact source-header profile.
+
+`rust-borrowed-source-regions.js` and native `source_expression_regions.rs`
+reconstruct immutable regions from actual checked lexical binders, constructor
+fields and selected function interfaces, using the automatically sourced
+`rust-borrowed-source-region-rules.js` decisions. Their public entry points are
+`checkRustBorrowedVectorSourceRegions(program)` and
+`validate_borrowed_vector_source_regions(&Program)`. The checker/linked-program
+endpoints consume these after structural expression/type validation. A selected
+runtime shell explicitly refuses before this separate body adapter is used.
+
+Current body transport covers literal/variable/let, actual selected calls,
+array and nominal constructors, length, bounded scalar observations and borrowed
+nominal matches. Match fields derive references and loans from the actual parent
+and complete declaration-owned field positions. Branch-local binders and
+temporaries expire before result union; shared ownership joins govern later
+outer-binding uses. Native copies reserve the same semantic position projection
+as JavaScript, with conservative four-copy accounting; branch snapshots have an
+independent cumulative bound. Absent-profile discovery does not apply this new
+profile's proof resource gate to predecessor programs.
+
+Readonly producers retain actual root/place loans, owning vector transfers and
+parameter-derived result regions. Assignment and record updates refuse under
+this initial immutable model. Borrowing does not grant source Clone/Copy or
+ownership of a referent. Target structural copying independently requires a
+closed finite constructor witness. Nominal/reference observations without a
+source trait or explicit value interpretation refuse; canonical `&str` text is
+classified separately. Caller arguments instantiate callee lifetime binders
+from actual loans rather than comparing binder spellings across functions.
+
+Contextual `vec!` readers now use only an actual selected result position for
+empty literals and canonical `&Box<T>` to `&T` projection. They preserve the
+element's actual loans and record its projected expression position before
+ordinary constructor checks; declaration types merely spelled Box cannot supply
+this authority. The standalone body proof uses the same additive projection
+decision over complete actual owners, without changing its earlier generic
+qualifier-adjustment refusal.
+
+The exact own-project `Type::children` source remains a broader pending
+obligation: iterator item regions, reference callback result projection,
+map/chain/collect, and remaining source representation consumers are unfinished.
+The original Rust examples in both borrowed-vector fixtures remain pending
+source controls. Independent forged-static, unbound-binder/lifetime,
+assertion-only facet, runtime-shell and JSON-reload assertions are authored in
+both runtimes. Nothing in this section records an executed observation.

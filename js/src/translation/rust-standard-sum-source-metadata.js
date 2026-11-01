@@ -78,8 +78,10 @@ function counter(){
    if(value.arrayElementPosition)record('array element position',{},depth+1,()=>sourcePosition(value.arrayElementPosition,depth+2));
   });
  };
- return {typeOnly(value,path){type(value,0);strings(path,0);return [nodes,units];},origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header,admitOwned){list(values,0,(value,depth)=>identity(value,depth,lookup,header,admitOwned));return [nodes,units];}};
+ return {position(value){sourcePosition(value,0);return [nodes,units];},typeOnly(value,path){type(value,0);strings(path,0);return [nodes,units];},origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header,admitOwned){list(values,0,(value,depth)=>identity(value,depth,lookup,header,admitOwned));return [nodes,units];}};
 }
+export function measureRustSourcePositionMetadata(position){return counter().position(position);}
+export function measureRustSourceOriginPositionMetadata(origin){return counter().position({type:origin.type,wrappers:origin.wrappers,lifetimes:origin.sourceLifetimes??[],owner:origin.sourceOwner,arrayElementPosition:origin.arrayElementPosition});}
 export function measureRustSourceExpressionType(type,path){return counter().typeOnly(type,path);}
 export function measureRustStandardSumSourceMetadata(origins){return counter().origins(origins);}
 export function measureRustStandardSumSourceIdentityMetadata(origins,lookup,header=false,admitOwned=null){return counter().identities(origins,lookup,header,admitOwned);}

@@ -15,6 +15,8 @@ impl Threader<'_> {
             node,
             ty: ty.clone(),
             span: e.span,
+            // The effect packet is generated; its value children retain source facets.
+            source_position: None,
         };
         match &e.node {
             Node::Print { text, body } => {
@@ -56,6 +58,7 @@ impl Threader<'_> {
                         },
                         ty: e.ty.clone(),
                         span: e.span,
+                        source_position: e.source_position.clone(),
                     };
                     self.make(after, call)
                 };

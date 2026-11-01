@@ -194,7 +194,7 @@ impl RustParser {
             self.source_type_owner(&head, children, &ty)
         };
         self.origins.current_type.source_owner = Some(owner.clone());
-        if self.origins.borrowed_vector_source_enabled&&self.origins.current_type.array_element_position.is_some(){self.origins.borrowed_vector_needs_final_admission=true;}
+        if self.origins.borrowed_vector_source_enabled&&(self.origins.current_type.array_element_position.is_some()||self.origins.current_type.wrappers.first().is_some_and(|wrapper|wrapper=="reference")&&self.origins.current_type.source_lifetimes.first().and_then(Option::as_deref)==Some("static")){self.origins.borrowed_vector_needs_final_admission=true;}
         self.check_owned_box_source_type(&self.origins.current_type,Some(super::super::Span::new(self.cursor.peek().start,self.cursor.peek().end)))?;
         let namespace_spelling = if head[0] != "&" && head[0] != "(" {
             head

@@ -395,6 +395,7 @@ impl Builder<'_> {
     }
 }
 pub(super) fn construct(parser: &mut RustParser, pipeline: Pipeline<'_>) -> Result<SExpr> {
+    let borrowed=crate::translation::rust_borrowed_vector_rules::read_rust_borrowed_vector_observation_error(parser.origins.borrowed_vector_source_enabled&&pipeline.source.array_element_position.is_some(),"iteration");if !borrowed.is_empty(){return Err(unsupported("Rust borrowed vector source",&borrowed,pipeline.span));}
     let mut captures = Vec::new();
     let mut stage_names = Vec::new();
     let mut names = BTreeMap::new();

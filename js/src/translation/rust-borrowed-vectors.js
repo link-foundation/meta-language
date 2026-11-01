@@ -9,8 +9,23 @@ import {readRustCopyClosureValueBorrows,validateRustCopyClosureValueBorrows} fro
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings} from './rust-owned-binding-rules.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {unsupported} from './diagnostics.js';
-import {readRustBorrowedVectorElementCountError,readRustBorrowedVectorProductionError,readRustBorrowedVectorResultError,readRustBorrowedVectorObservationError,acceptRustBorrowedVectorProducedValue,readRustBorrowedVectorCallRegionError} from './rust-borrowed-vector-rules.js';
+import {readRustBorrowedVectorElementCountError,readRustBorrowedVectorProductionError,readRustBorrowedVectorResultError,readRustBorrowedVectorObservationError,acceptRustBorrowedVectorProducedValue,readRustBorrowedVectorCallRegionError,readRustBorrowedVectorCallLifetime} from './rust-borrowed-vector-rules.js';
 import {qualifyRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
+import {captureRustMutableRecordValueLoans} from './rust-mutable-record-loans.js';
+import {acceptRustBorrowedVectorLiteralContext} from './rust-borrowed-vector-rules.js';
+import {acceptRustBorrowedSourceBoxReference} from './rust-borrowed-source-region-rules.js';
+import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
+import {noteRustBorrowedExpressionSourcePosition} from './rust-borrowed-expression-positions.js';
+function sameElementOwner(left,right){return left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((part,index)=>part===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((child,index)=>sameElementOwner(child,right.arguments[index]));}
+function projectBorrowedElement(parser,node,path,expected){
+ const table=parser.origins,actual=table.origin(node,path);if(!expected||actual.wrappers[0]!=='reference'||expected.wrappers[0]!=='reference'||actual.wrappers.length<=expected.wrappers.length)return actual;
+ reserveRustOwnedContainerCopies(table,[actual,expected]);const qualified=qualifyRustStandardSumSourceOrigin(table,actual),target=qualifyRustStandardSumSourceOrigin(table,expected);if(!qualified?.sourceOwner||!target?.sourceOwner)return actual;
+ const drop=qualified.wrappers.length-target.wrappers.length,project=source=>{let owner=source;for(let index=0;index<drop;index+=1){if(!owner||!acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length))return null;owner=owner.arguments[0];}return owner;},owner=project(qualified.sourceOwner),expanded=qualified.expandedSourceOwner?project(qualified.expandedSourceOwner):null;
+ if(!acceptRustBorrowedSourceBoxReference(qualified.wrappers,target.wrappers,Boolean(owner)&&(!qualified.expandedSourceOwner||Boolean(expanded)),Boolean(owner)&&sameElementOwner(owner,target.sourceOwner)))return actual;
+ const projected={...qualified,wrappers:[...target.wrappers],sourceOwner:owner,...(expanded?{expandedSourceOwner:expanded}:{}),sourceBoxLayers:(qualified.sourceBoxLayers??[]).slice(drop)};
+ if(!table.same(projected,target))fail('a contextual Box reference needs its actual matching referent type',node.span);
+ table.mark(node,projected);noteRustBorrowedExpressionSourcePosition(parser,node,path);return projected;
+}
 export function rustBorrowedVectorPositionOrigin(position,path){return {type:position.type,path:[...path],wrappers:[...position.wrappers],sourceLifetimes:[...position.lifetimes],sourceOwner:position.owner,arrayElementPosition:position.arrayElementPosition,proven:true,copyEvidence:position.wrappers[0]==='reference',fields:null};}
 export function readRustBorrowedVectorElementAdmission(parser,origin){
  const reference=acceptRustBorrowedVectorElement(parser.origins.borrowedVectorSourceEnabled,parser.sourceVersionMinor,origin.wrappers,(origin.sourceLifetimes??[]).map(value=>value??''),origin.proven===true,false);
@@ -29,6 +44,9 @@ export function validateRustBorrowedVectorArgument(table,actual,expected,span){
  const left=isRustBorrowedVectorSourceOrigin(table,actual),right=isRustBorrowedVectorSourceOrigin(table,expected);if(!left&&!right)return;
  const a=actual.arrayElementPosition,b=expected.arrayElementPosition;
  const error=readRustBorrowedVectorArgumentError(left,right,Boolean(a&&b)&&table.same(rustBorrowedVectorPositionOrigin(a,actual.path),rustBorrowedVectorPositionOrigin(b,expected.path)),Boolean(a&&b)&&JSON.stringify(a.owner)===JSON.stringify(b.owner),a?.lifetimes?.[0]??'',b?.lifetimes?.[0]??'');if(error)throw typeError(error,span);
+ // A transferred vector container still carries live referent loans. Recheck
+ // those after later call arguments without rereading its moved owner root.
+ validateRustCopyClosureValueBorrows(table,actual,span);
 }
 const fail=(message,span)=>{throw unsupported('Rust borrowed vector source',message,span);};
 export function guardRustBorrowedVectorObservation(parser,node,path,operation,span=node.span){
@@ -66,12 +84,17 @@ export function captureRustBorrowedVectorConstructor(table,node,origin){
   table.argument(actual,expected,item.value.span);loans=mergeRustOwnedLoanBindings(loans,child);fields.push(child);
  }
  const produced={...origin,copyEvidence:false,sourceLexicalBindingIdentity:null,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceBorrowedPlace:false,sourceValueBorrowBindings:loans,sourceValueFieldBorrowBindings:fields,sourceOwnedResultProof:true};
- if(node.span)table.freshVectorConstructors.add(`${node.span.start}:${node.span.end}`);table.mark(node,produced);return true;
+ if(node.span)table.freshVectorConstructors.add(`${node.span.start}:${node.span.end}`);table.mark(node,captureRustMutableRecordValueLoans(table,produced,node.span));return true;
 }
 export function readRustBorrowedVectorLiteral(parser,args,path,span){
- if(!parser.origins.borrowedVectorSourceEnabled||args.length===0)return null;
+ if(!parser.origins.borrowedVectorSourceEnabled)return null;
  const count=readRustBorrowedVectorElementCountError(args.length);if(count)fail(count,span);
- const first=parser.origins.origin(args[0],path);if(readRustBorrowedVectorElementAdmission(parser,first)!=='admit')return null;
+ const expected=parser.standardSumExpectedOrigin,firstActual=args.length?parser.origins.origin(args[0],path):null,context=acceptRustBorrowedVectorLiteralContext(true,isRustBorrowedVectorSourceOrigin(parser.origins,expected),firstActual?.wrappers[0]==='reference',args.length);
+ if(args.length===0&&!context)return null;
+ if(context)reserveRustOwnedContainerCopies(parser.origins,[expected]);
+ const target=context?rustBorrowedVectorPositionOrigin(expected.arrayElementPosition,expected.path):null;
+ const first=args.length?projectBorrowedElement(parser,args[0],path,target):target;if(readRustBorrowedVectorElementAdmission(parser,first)!=='admit')return null;
+ if(target)for(const argument of args.slice(1))projectBorrowedElement(parser,argument,path,target);
  reserveRustOwnedContainerCopies(parser.origins,[first]);const actual=qualifyRustStandardSumSourceOrigin(parser,first);if(!actual)fail('a borrowed vector referent needs its actual qualified source owner',span);
  const position=createRustBorrowedVectorElementPosition(actual),origin={type:{kind:'array',element:actual.type,reference:false},path:[...path],wrappers:[],fields:null,arraySourceModel:'owned vector',arrayElementCopyEvidence:true,arrayElementPosition:position,sourceOwner:{kind:'library',path:['std','vec','Vec'],arguments:[actual.sourceOwner]},sourceLifetimes:[],copyEvidence:false,proven:true};
  const node={k:'array',items:args.map(value=>({value,spread:false})),span};captureRustBorrowedVectorConstructor(parser.origins,node,origin);return node;
@@ -88,8 +111,9 @@ export function markRustBorrowedVectorCallResult(table,node,path,entry,origin){
  if(!isRustBorrowedVectorSourceOrigin(table,origin)||node.k!=='app'||node.fn.k!=='name'||node.fn.path.length===1&&table.scope.has(node.fn.path[0]))return origin;
  const recorded=Boolean(node.span)&&table.freshCalls.has(`${node.span.start}:${node.span.end}`),parameters=entry.parameters??[],plan=readRustBorrowedVectorResultParameters(origin,parameters);if(!recorded)return origin;
  if(plan.includes(-1))fail('a borrowed vector call needs its actual source parameter region plan',node.span);
- let loans=[];for(const index of plan){const arg=node.args[index];if(!arg)fail('a borrowed vector call needs every selected actual argument',node.span);const actual=table.origin(arg,path);validateRustCopyClosureValueBorrows(table,actual,arg.span);const regions=readRustBorrowedVectorArgumentRegions(actual),error=readRustBorrowedVectorCallRegionError(actual.wrappers[0]==='reference',regions.length,table.collecting);if(error)fail(error,arg.span);loans=mergeRustOwnedLoanBindings(loans,regions);}
- return {...origin,freshArrayValue:false,sourceLexicalBindingIdentity:null,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceValueBorrowBindings:loans,sourceValueFieldBorrowBindings:null,sourceOwnedResultProof:true};
+ let loans=[];const lifetimes=[];for(const index of plan){const arg=node.args[index];if(!arg)fail('a borrowed vector call needs every selected actual argument',node.span);const actual=table.origin(arg,path);validateRustCopyClosureValueBorrows(table,actual,arg.span);const regions=readRustBorrowedVectorArgumentRegions(actual),error=readRustBorrowedVectorCallRegionError(actual.wrappers[0]==='reference',regions.length,table.collecting);if(error)fail(error,arg.span);loans=mergeRustOwnedLoanBindings(loans,regions);lifetimes.push(actual.arrayElementPosition?.lifetimes?.[0]??actual.sourceLifetimes?.[0]??'');}
+ const lifetime=readRustBorrowedVectorCallLifetime(origin.arrayElementPosition.lifetimes[0]??'',lifetimes),position={...origin.arrayElementPosition,lifetimes:[lifetime||null]};
+ return {...origin,arrayElementPosition:position,freshArrayValue:false,sourceLexicalBindingIdentity:null,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceValueBorrowBindings:loans,sourceValueFieldBorrowBindings:null,sourceOwnedResultProof:true};
 }
 export function validateRustBorrowedVectorCallRegions(table,args,path,parameters,result,span){
  if(!isRustBorrowedVectorSourceOrigin(table,result)||table.collecting)return;

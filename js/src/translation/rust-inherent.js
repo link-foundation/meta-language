@@ -1,5 +1,7 @@
 import {readRustReferenceTokenParts} from './rust-type-token-rules.js';
+import {captureRustMutableRecordValueLoans} from './rust-mutable-record-loans.js';
 import {acceptRustBorrowedVectorInherentProfiles} from './rust-borrowed-vector-rules.js';
+import {noteRustBorrowedExpressionSourcePosition,prepareRustBorrowedInherentReceiverPosition} from './rust-borrowed-expression-positions.js';
 // Tokens and source origins are transported into ordinary module/function terms.
 import{unsupported}from'./diagnostics.js';
 import{prepareRustRecordMethodNamespace}from'./rust-records.js';
@@ -118,6 +120,17 @@ export function resolveRustInherentPath(parser,segments,path){
  return found?['crate',...found.fullName.split('.')]:resolved;
 }
 
+// Capture an authentic shared receiver loan before later call arguments parse.
+export function captureRustInherentReceiverValueLoan(parser,receiver,method,path){
+ const table=parser.origins;if(table.collecting)return;
+ const origin=table.origin(receiver,path),owner=origin.type?.kind==='named'?table.lookup(origin.type.path,origin.path,['data']):null;
+ const selected=owner?parser.inherentMethods.get([...owner.fullName.split('.'),method.value].join('.')):null;
+ if(!selected?.mode||selected.owner!==owner.fullName)return;
+ const plan=planRustInherentReceiverLayers(origin.wrappers,selected.receiver);if(plan[0]!==1)return;
+ const wrappers=plan.slice(1).map(layer=>layer===1?'reference':'box');if(!wrappers.includes('reference'))return;
+ const borrowed=captureRustMutableRecordValueLoans(table,{...origin,wrappers},receiver.span);
+ table.mark(receiver,{...origin,sourceValueBorrowBindings:borrowed.sourceValueBorrowBindings});
+}
 export function readRustInherentMethod(parser,receiver,method,args,where,path){
  const origin=parser.origins.origin(receiver,path);
  const owner=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null;
@@ -127,7 +140,8 @@ export function readRustInherentMethod(parser,receiver,method,args,where,path){
   const plan=planRustInherentReceiverLayers(origin.wrappers,selected.receiver);
   if(owner.fullName!==selected.owner||plan[0]!==1)throw unsupported('Rust inherent receiver','the method needs its actual nominal receiver and supported immutable dereference or borrow layers',where);
   const argument={...receiver};
-  parser.origins.mark(argument,{...origin,wrappers:plan.slice(1).map(layer=>layer===1?'reference':'box')});
+  parser.origins.mark(argument,prepareRustBorrowedInherentReceiverPosition(parser.origins,origin,plan.slice(1).map(layer=>layer===1?'reference':'box'),where));
+  noteRustBorrowedExpressionSourcePosition(parser,argument,path);
   const values=[argument,...args],rooted=['crate',...methodPath];
   parser.origins.call(rooted,values,path,where);
   return{k:'app',fn:{k:'name',path:rooted,span:where},args:values,span:where};

@@ -374,6 +374,7 @@ pub(super) fn split_natural(
             },
             ty: expr.ty.clone(),
             span: expr.span,
+            source_position: expr.source_position.clone(),
         });
     }
     match &expr.node {
@@ -441,6 +442,7 @@ impl Predecessor<'_> {
             ),
             ty: self.ty.clone(),
             span: like.span,
+            source_position: like.source_position.clone(),
         }
     }
 
@@ -512,6 +514,7 @@ impl Predecessor<'_> {
                 ),
                 ty: self.ty.clone(),
                 span: node.span,
+                source_position: node.source_position.clone(),
             };
             return self.minus(&k, &like);
         }

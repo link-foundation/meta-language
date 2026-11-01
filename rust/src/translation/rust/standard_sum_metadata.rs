@@ -64,6 +64,11 @@ impl Counter<'_>{
         self.node(depth+1)?;for lifetime in &value.lifetimes{self.optional_text(lifetime.as_deref(),depth+2)?;}self.owner(Some(&value.owner),depth+1)?;
         if let Some(child)=value.array_element_position.as_deref(){self.record("array element position",depth+1)?;self.source_position(child,depth+2)?;}Ok(())
     }
+    fn origin_position(&mut self,value:&SourceOrigin,depth:usize)->Result<(),String>{
+        self.record("source position",depth)?;self.ty(value.ty.as_ref(),depth+1,None,false)?;self.strings(&value.wrappers,depth+1)?;
+        self.node(depth+1)?;for lifetime in &value.source_lifetimes{self.optional_text(lifetime.as_deref(),depth+2)?;}self.owner(value.source_owner.as_ref(),depth+1)?;
+        if let Some(child)=value.array_element_position.as_deref(){self.record("array element position",depth+1)?;self.source_position(child,depth+2)?;}Ok(())
+    }
     fn origin(&mut self,value:&SourceOrigin,depth:usize)->Result<(),String>{
         self.record("origin",depth)?;self.ty(value.ty.as_ref(),depth+1,None,false)?;self.strings(&value.path,depth+1)?;self.strings(&value.wrappers,depth+1)?;
         self.owner(value.source_owner.as_ref(),depth+1)?;self.owner(value.expanded_source_owner.as_ref(),depth+1)?;
@@ -97,6 +102,8 @@ impl Counter<'_>{
     }
 }
 pub(super) fn measure_origins(values:&[&SourceOrigin])->Result<MetadataCost,String>{let mut counter=Counter {cost:MetadataCost::default(),origins:None,active:HashSet::new()};counter.node(0)?;for value in values{counter.origin(value,1)?;}Ok(counter.cost)}
+pub(crate) fn measure_source_position_metadata(position:&SourceTypeSignature)->Result<(usize,usize),String>{let mut counter=Counter{cost:MetadataCost::default(),origins:None,active:HashSet::new()};counter.source_position(position,0)?;Ok((counter.cost.nodes,counter.cost.units))}
+pub(super) fn measure_origin_position_metadata(origin:&SourceOrigin)->Result<MetadataCost,String>{let mut counter=Counter{cost:MetadataCost::default(),origins:None,active:HashSet::new()};counter.origin_position(origin,0)?;Ok(counter.cost)}
 pub(super) fn measure_expression_type(value:&Type,path:&[String])->Result<MetadataCost,String>{let mut counter=Counter {cost:MetadataCost::default(),origins:None,active:HashSet::new()};counter.ty(Some(value),0,None,false)?;counter.strings(path,0)?;Ok(counter.cost)}
 pub(super) fn measure_identities(origins:&SourceOrigins,values:&[&SourceOrigin],header:bool)->Result<MetadataCost,String>{let mut counter=Counter {cost:MetadataCost::default(),origins:Some(origins),active:HashSet::new()};counter.node(0)?;for value in values{counter.identity(value,1,header)?;}Ok(counter.cost)}
 

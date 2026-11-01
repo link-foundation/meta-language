@@ -56,9 +56,11 @@ mod owned_record_places;
 mod owned_record_state;
 mod owned_record_effects;
 pub(super) mod owned_record_loops;
+pub(super) mod mutable_record_loans;
 mod owned_containers;
 mod owned_vectors;
 mod borrowed_vectors;
+mod borrowed_expression_positions;
 mod source_expression_types;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;
@@ -74,6 +76,7 @@ mod scalar_parameter_rules;
 mod scalar_parameters;
 mod standard_sum_source;
 mod standard_sum_metadata;
+pub(crate) use standard_sum_metadata::measure_source_position_metadata;
 mod source_type_origins;
 mod standard_sum_methods;
 mod standard_sum_conversions;
@@ -228,8 +231,9 @@ struct SourceProfiles<'a> {
 
 fn parse_rust_with_selected_profiles(
     source: &str,
-    profiles: SourceProfiles<'_>,
+    mut profiles: SourceProfiles<'_>,
 ) -> Result<SProgram> {
+    if super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(profiles.source_signature){profiles.retain_source_type_owners=true;}
     let source_version_minor = source_versions::minor(profiles.source_version)?;
     let SourceProfiles {
         source_version: _,

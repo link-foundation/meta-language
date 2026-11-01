@@ -558,3 +558,85 @@ portable initializer/source-capture consumers, and the generic capability
 machine protocol. General loader CST lowering/provider qualification and
 completed/nested loop handling continue afterward. No source draft or future
 control is represented as an observation or completion certificate.
+
+## Development-pace analysis during continued drafting
+
+The user requested detailed repository analysis while three agents continue
+source work. The [case study](../case-studies/issue-227/development-pace-and-remaining-scope.md)
+retains earlier/current commit ranges, individual timestamps and gaps, concrete
+source-draft boundaries, every historical work-package family, new conversation
+obligations and conditional effort/calendar estimates. It neither claims a
+current delivered-row count nor substitutes historical mapping coverage for a
+draft percentage. The full source audit/register reconciliation remains
+pending; its original instructions are captured separately. No code tests,
+generators, compilation, validation gates or new CI feedback were used for
+this analysis. Actual source integration continues; this is not a stop request.
+
+## Continued ordinary classes, collections and complete native replay draft
+
+The continuing source batch adds inspectable Map/Set entries and live iterator
+slots to the shared global heap. Deletion releases key/value references and
+retains insertion ordinals; ordinary property transitions preserve internal
+slots. Constructor copying checks actual standard adder/iterator/next owners;
+other iterable inputs remain an explicit machine obligation. Ordinary source
+classes now have distinct call/new behavior, fresh mutable lexical register
+copies and preserved operand evaluation order. Compact exact UTF16 text and
+actual project-data provider/helper bodies are connected to the source runner,
+with raw IO and decoder bodies retained as explicit capability boundaries.
+
+The deferred class producer carries all nineteen current originals and four
+refusals through source/text/binary input transports, exact source and standard
+collection compilation inputs, combined programs, and full portable machine
+traces. The native consumers independently recompile root and attached source
+units, verify frame composition, reconstruct actual begin states, and replay
+pure batches, externally supplied allocation identities and qualified external
+responses. Bounded batch resumption is explicit and counted against the total
+budget; a resource boundary is never a successful result. Existing generated
+machine/compiler namespaces are reused by consumers to avoid duplicate native
+compilation units. Actual Scope closure integration and source-free borrowed
+body proof remain active source work. None of these consumers was executed.
+
+Checkpoint `a14ce9a1` was pushed; workflow `41292148049` subsequently reached
+terminal status, read as status only. Documentation checkpoint `76c44bf7` adds
+the requested pace/forecast case study and was pushed afterward. Current code
+continues in the shared checkout with three agents. No local tests, generators,
+compilation, validation gates or new CI feedback were used.
+
+## Coherent source checkpoint: Scope, body regions, loans, nested loops, arrays
+
+Current class controls retain23 originals/7 refusals, supplied closure controls3
+and exact selected-Scope workloads2. The native consumer independently parses
+all original modules, extracts the exact Scope class declaration from the
+current ir.js and selected example, checks resolved public entry names, compiles
+all supplied units and standard operation owners, and replays the portable
+machine/allocator/external-response trace. The complete ir.js module remains a
+separate untranslated workload; this is not whole-project translation evidence.
+
+Paired borrowed-body source code now reaches frontend and reloaded-program
+checkers, including assertion-only facets, borrowed match fields, canonical
+Box reference projection, contextual empty vec! and result-region checks. Its
+57 literal decisions and contextual vector additions are independent deferred
+controls. The next adapters are actual reference iterators, callback regions,
+fields, collect and chain for Type::children. Unsupported body operations and
+profile combinations remain explicit; no blanket Copy or lifetime claim is made.
+
+Mutable-record loan controls now20 decisions/7 originals/6 refusals, including
+shadowed references, earlier arguments, shared self receivers, disjoint fields,
+scope expiry and whole/field moves. Nested loop controls14 decisions/5 originals/
+2 refusals retain all3 historical refusals. Actual child footprints, independent
+counters, nearest-loop exits, scalar/owned returns and memoized chunk families
+are source-connected. Match-arm and question-mark completion adapters remain.
+
+The shared sparse Array kernel has15 exact literal decisions and deferred
+index/length/holes, partial deletion and two-conversion controls. Array storage
+is now a distinct heap brand with real length descriptors. Its allocation and
+length-definition continuation APIs are authored, with automatic native library
+registration. Actual array VM/source/realm connections are the next batch; they
+are not claimed delivered merely because the kernel exists. Original native
+array inputs and Array.prototype still need the explicit Node encoder adapter.
+
+Agents held source mutations for this coherent checkpoint while root integrated
+registrations and source-only consumers. No represented program, tests,
+generators, validation gates or Rust compilation ran. Current free disk was
+about789MiB; no builds, clones, generated payloads or unrelated cleanup occurred.
+The broader requirements remain active and drafting continues after the push.

@@ -1,6 +1,6 @@
 // Reuse the existing complete UTF16 definitions; adapters never substitute
 // host scalar strings for code units or reimplement native operation bodies.
-import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js';
+import {readJavaScriptSemanticValueError,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextString,constructJavaScriptSemanticTextUnits,constructJavaScriptSourceText} from './javascript-semantic-values.js';
 import {readJavaScriptCallIntegerArity,executeJavaScriptCallIntegerPrimitive,readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
 import {executeJavaScriptCallNumberConversion} from './javascript-call-number-conversion.js';
 import {executeJavaScriptCallIntegerConversion} from './javascript-call-integer-conversion.js';
@@ -26,8 +26,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['test object value','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer'];
- const binary=['repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion'];
+ const unary=['test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','convert primitive text','convert explicit integer','coerce primitive integer'];
+ const binary=['repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
  const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
  return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
@@ -61,6 +61,7 @@ export function executeJavaScriptCallUnaryNumber(operation,number){
 }
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextPrimitive(operation,values){
+ if(values.some(value=>value.$==='sourceText'))return executeJavaScriptCallPrimitive(operation,values);
  if(operation==='repeat text'||operation==='pad text start'||operation==='pad text end')return executeJavaScriptCallTextExpansion(operation,values);
  if(operation==='replace text'||operation==='replace all text')return executeJavaScriptCallTextReplacementOperands(values,operation==='replace all text');
  const receiver=values[0]??{$:'undefined'};if(receiver.$!=='text')return {$:'primitiveInvalid',reason:'text primitives require their actual complete UTF16 receiver'};
@@ -73,6 +74,7 @@ export function executeJavaScriptCallTextPrimitive(operation,values){
 /** Converted operands only. Resource limits remain distinct from exceptions.
  * @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextExpansion(operation,values){
+ if(values.some(value=>value.$==='sourceText'))return executeJavaScriptCallPrimitive(operation,values);
  const receiver=values[0]??{$:'undefined'};
  if(receiver.$!=='text')return {$:'primitiveInvalid',reason:'text expansion requires its actual complete UTF16 receiver'};
  const count=values[1]??{$:'undefined'};
@@ -131,6 +133,7 @@ export function executeJavaScriptCallTextPair(operation,text,values){
 /** Keep the new operand match independent of existing text-search continuations.
  * @param {JavaScriptSemanticValue[]} values @param {boolean} all @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallTextReplacementOperands(values,all){
+ if(values.some(value=>value.$==='sourceText'))return executeJavaScriptCallPrimitive(all?'replace all text':'replace text',values);
  const text=values[0]??{$:'undefined'},search=values[1]??{$:'undefined'},replacement=values[2]??{$:'undefined'};
  if(text.$!=='text')return {$:'primitiveInvalid',reason:'text replacement requires its three actual converted UTF16 operands'};
  if(search.$!=='text')return {$:'primitiveInvalid',reason:'text replacement requires its three actual converted UTF16 operands'};
@@ -166,13 +169,44 @@ export function executeJavaScriptCallTextReplacement(text,search,replacement,all
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(operation==='add primitive values')return executeJavaScriptCallPrimitiveAddition(values[0]??{$:'undefined'},values[1]??{$:'undefined'});
  if(operation==='test object value')return {$:'primitiveValue',value:{$:'boolean',value:(values[0]??{$:'undefined'}).$==='object'}};
+ if(operation==='read semantic type'){
+  const value=values[0]??{$:'undefined'},kind=value.$==='null'?'object':value.$==='object'?(value.callable?'function':'object'):value.$==='integer'?'bigint':value.$==='text'||value.$==='sourceText'?'string':value.$,units=[];
+  for(let at=0;at<kind.length;at++)units.push(kind.charCodeAt(at));return {$:'primitiveValue',value:{$:'text',units}};
+ }
  if(readJavaScriptSourceExceptionClass(operation)!=='')return {$:'primitiveInvalid',reason:'source Error allocation requires its actual registered realm'};
  if(operation==='convert explicit number'||operation==='coerce primitive number')return executeJavaScriptCallNumberConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert explicit integer'||operation==='coerce primitive integer')return executeJavaScriptCallIntegerConversion(operation,values[0]??{$:'undefined'});
  if(operation==='convert primitive text')return executeJavaScriptCallTextConversion(values[0]??{$:'undefined'});
+ if(values.some(value=>value.$==='sourceText')){
+  const first=values[0]??{$:'undefined'},second=values[1]??{$:'undefined'};
+  if(operation==='read text length'&&readJavaScriptSemanticTextLength(first)>=0)return {$:'primitiveValue',value:{$:'number',value:readJavaScriptSemanticTextLength(first)}};
+  if(operation==='concatenate text'&&readJavaScriptSemanticTextLength(first)>=0&&readJavaScriptSemanticTextLength(second)>=0){
+   if(readJavaScriptSemanticTextLength(first)+readJavaScriptSemanticTextLength(second)>16777216)return {$:'primitiveResourceLimit',reason:'source text concatenation exceeds the selected 16777216 UTF16 unit profile'};
+   return {$:'primitiveValue',value:constructJavaScriptSourceText(readJavaScriptSemanticTextString(first)+readJavaScriptSemanticTextString(second))};
+  }
+  if(values.some(value=>value.$==='sourceText'&&value.text.length>1048576))return {$:'primitiveResourceLimit',reason:'this text operation requires its separate bounded unit-array algorithm; source text remains inspectable and resumable'};
+  return executeJavaScriptCallPrimitive(operation,values.map(value=>value.$==='sourceText'?{$:'text',units:constructJavaScriptSemanticTextUnits(value,1048576)}:value));
+ }
  if(readJavaScriptCallIntegerArity(operation)!==0)return executeJavaScriptCallIntegerPrimitive(operation,values);
  return testJavaScriptCallUnaryNumberOperation(operation)||['read minimum number','read maximum number','construct text units'].includes(operation)?executeJavaScriptCallNumericPrimitive(operation,values):executeJavaScriptCallTextPrimitive(operation,values);
+}
+/** Primitive Add follows the actual string-vs-numeric branch after evaluation.
+ * Objects require the source-ordered ToPrimitive continuation, never erasure.
+ * @param {JavaScriptSemanticValue} left @param {JavaScriptSemanticValue} right
+ * @returns {JavaScriptCallPrimitiveResult} */
+export function executeJavaScriptCallPrimitiveAddition(left,right){
+ if(left.$==='object'||right.$==='object')return {$:'primitiveInvalid',reason:'addition requires its actual ordered object ToPrimitive continuations'};
+ if(left.$==='text'||left.$==='sourceText'||right.$==='text'||right.$==='sourceText'){
+  const first=executeJavaScriptCallTextConversion(left);if(first.$!=='primitiveValue')return first;const second=executeJavaScriptCallTextConversion(right);if(second.$!=='primitiveValue')return second;return executeJavaScriptCallPrimitive('concatenate text',[first.value,second.value]);
+ }
+ if(left.$==='symbol'||right.$==='symbol')return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert a Symbol value to a number'};
+ if(left.$==='integer'&&right.$==='integer')return executeJavaScriptCallIntegerPrimitive('add integers',[left,right]);
+ if(left.$==='integer'||right.$==='integer')return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot mix BigInt and other types, use explicit conversions'};
+ const first=executeJavaScriptCallNumberConversion('coerce primitive number',left);if(first.$!=='primitiveValue')return first;const second=executeJavaScriptCallNumberConversion('coerce primitive number',right);if(second.$!=='primitiveValue')return second;
+ if(first.value.$!=='number'||second.value.$!=='number')return {$:'primitiveInvalid',reason:'numeric addition retains its actual Number conversion results'};
+ return {$:'primitiveValue',value:{$:'number',value:first.value.value+second.value.value}};
 }
 
 /** Primitive ToString uses the existing scalar formatting definitions. Symbol
@@ -182,7 +216,7 @@ export function executeJavaScriptCallPrimitive(operation,values){
 export function executeJavaScriptCallTextConversion(value){
  let text='';
  switch(value.$){
-  case 'text':return {$:'primitiveValue',value};
+  case 'text':case 'sourceText':return {$:'primitiveValue',value};
   case 'undefined':text='undefined';break;
   case 'null':text='null';break;
   case 'boolean':text=value.value?'true':'false';break;

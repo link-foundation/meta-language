@@ -7,7 +7,7 @@ const versions=['1.90.0','1.99.0'],targets=['JavaScript','Rust','Lean','Rocq'];
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===24||major===22&&minor>=15,'uncovered record completion Node '+process.versions.node);
 function stdout(code){const lines=[];vm.runInNewContext(code,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}},{timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const[index,row]of decisions.entries())test('record completion source policy '+index,()=>assert.equal(rules[row.operation](...row.arguments),row.expected));
-test('all completion inputs remain independent and complete',()=>{assert.equal(decisions.length,7);assert.equal(originals.length,9);assert.equal(refusals.length,5);});
+test('all completion inputs remain independent and complete',()=>{assert.equal(decisions.length,10);assert.equal(originals.length,9);assert.equal(refusals.length,5);});
 for(const row of originals)for(const sourceVersion of versions)test('record ordinary completion '+row.name+'/'+sourceVersion,()=>{
  assert.equal(row.sourceVersionRange,'>=1.90.0 <1.100.0');const concrete=LinkNetwork.parse(row.source,'Rust'),text=concrete.toLino(),binary=encodeLinkNetworkBinary(concrete);for(const graph of [concrete,LinkNetwork.fromLino(text),decodeLinkNetworkBinary(binary)])assert.equal(graph.reconstructText(),row.source);
  const checked=checkProgram(parseRust(row.source,{sourceVersion}));assert.equal(stdout(emitJavaScript(checked).text),row.stdout);

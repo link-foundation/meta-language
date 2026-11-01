@@ -1,4 +1,5 @@
 import {planRustIteratorArithmeticSeed} from './rust-iterator-arithmetic-rules.js';
+import {readRustBorrowedVectorObservationError} from './rust-borrowed-vector-rules.js';
 // Actual syntax/origin facts and common-node construction. Shared rules own
 // stage meaning, lazy branching, terminal terms and capture order.
 import {BOOL,UNIT,rustFixedType} from './types.js';
@@ -21,6 +22,7 @@ export function readRustIteratorPipelineStage(parser,item,method,path){
 }
 export function createRustIteratorPipelineCountOrigin(parser,path){const owner=readRustIteratorReductionCountResultOwner(),type=rustFixedType(owner);return {...parser.origins.typeOrigin(type,path),sourceOwner:{kind:'primitive',path:[owner],arguments:[]}};}
 export function constructRustIteratorPipeline(parser,{receiver,source,stages,consumer,direction,inputElement,item,initial,initialOrigin,callback,callable,resultOrigin,range,constructReceiver}){
+ const borrowed=readRustBorrowedVectorObservationError(parser.origins.borrowedVectorSourceEnabled&&Boolean(source.arrayElementPosition),'iteration');if(borrowed)throw unsupported('Rust borrowed vector source',borrowed,range);
  const values={receiver:{value:receiver,type:source.type},initial:{value:initial,type:initialOrigin?.type},callback:{value:callback,type:callable?.type}},captures=[],stageNames=[];let stageIndex=0;
  for(const role of planRustIteratorPipelineCaptures(consumer,stages.length)){
   const actual=role==='stage'?{value:stages[stageIndex].callback,type:stages[stageIndex++].type}:values[role],name=parser.freshProductBinding();

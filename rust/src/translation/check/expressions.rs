@@ -76,6 +76,7 @@ impl Checker {
                 || node.block
                 || node.tag_test.is_some()
                 || node.parenthesized.is_some()
+                || node.source_position.is_some()
                 || matches!(value.node, SNode::ReferencePayload { .. })
             {
                 return Err(type_error(
@@ -111,6 +112,13 @@ impl Checker {
         let span = node.span.or(if payload { expression.span } else { None });
         if span.is_some() && result.span.is_none() {
             result.span = span;
+        }
+        if let Some(position)=node.source_position.as_deref(){
+            result.source_position=Some(Box::new(super::super::source_expression_positions::check_rust_source_expression_position(
+                position,&result.ty,self.language.as_str(),
+                |ty|self.resolve_type(Some(ty),path,node.span),
+                |ty|match ty{Type::Data{name}=>match self.decls.get(name){Some(super::Decl::Data(data))=>Some(data),_=>None},_=>None},
+            )?));
         }
         Ok(result)
     }
@@ -299,6 +307,7 @@ impl Checker {
                         parenthesized: arg.parenthesized.clone(),
                         block: arg.block,
                         tag_test: None,
+                        source_position: arg.source_position.clone(),
                     };
                     let literal = self.expr(&flipped, env, path, expected, allow_literal)?;
                     if !accept_rust_numeric_literal_negation(

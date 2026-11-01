@@ -43,6 +43,7 @@ impl RustParser {
         ) {
             return Ok(None);
         }
+        self.guard_borrowed_vector_observation(receiver,path,"iteration",range)?;
         let actual = self.origins.origin(receiver, path);
         let result = self.iterator_reduction_value(receiver, method, args, range, path)?;
         if result.is_some() && method.value != "into_iter" {

@@ -10,7 +10,7 @@ import {acceptRustStandardSumOwnedArguments,readRustStandardSumOwnershipVersionE
 import {readRustFunctionPointerDomainError} from './rust-function-pointer-rules.js';
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
 import {sanitizeRustSourceTypeOrigin as sourceTypeOrigin} from './rust-source-type-origins.js';
-import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata} from './rust-standard-sum-source-metadata.js';
+import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata,measureRustSourcePositionMetadata} from './rust-standard-sum-source-metadata.js';
 import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
 import {readRustStandardSumSourceOwner,readRustStandardSumSourcePathOwner,readRustStandardSumSourcePathConstructor,readRustStandardSumSourceArgumentCount,acceptRustStandardSumSourceArguments,readRustStandardSumSourceConstructors,readRustStandardSumSourceFieldArgument,readRustStandardSumSourceConstructorArity,acceptRustStandardSumSourceInferredConstructor,readRustStandardSumSourceInstantiationLimit,readRustStandardSumSourceDepthLimit,readRustStandardSumSourceSpecializationName,readRustStandardSumSourcePhase,readRustStandardSumSourceDepth} from './rust-standard-sum-source-rules.js';
 
@@ -151,6 +151,7 @@ export function qualifyRustStandardSumSourceOrigin(parserOrOrigins,origin){
  metadataCost(parser,[origin]);
  return qualifiedOrigin(parser,origin);
 }
+export function qualifyRustStandardSumSourcePosition(parserOrOrigins,position,path){const parser=parserOrOrigins.origins?parserOrOrigins:{origins:parserOrOrigins};measureRustSourcePositionMetadata(position);return qualifiedPosition(parser,position,path,0);}
 
 // Identity comes from complete checked source types/owners. Source coordinates,
 // lexical aliases and incidental binding identities are not type meanings.

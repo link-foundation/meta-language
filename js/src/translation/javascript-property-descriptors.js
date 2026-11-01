@@ -1,5 +1,10 @@
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,testJavaScriptSemanticAccessor} from './javascript-semantic-values.js';
 
+/** An ordered property list preserves creation order independently of lookup.
+ * Keys are actual UTF16 text or globally identified Symbols, never coerced here.
+ * @typedef {{$:'ordinaryProperty',key:JavaScriptSemanticValue,descriptor:JavaScriptPropertyDescriptor}} JavaScriptOrdinaryProperty
+ */
+
 /** A normalized Property Descriptor keeps field presence independent of value.
  * Its values belong to one checked semantic-value/global-identity context.
  * @typedef {{ configurablePresent:boolean, configurable:boolean,

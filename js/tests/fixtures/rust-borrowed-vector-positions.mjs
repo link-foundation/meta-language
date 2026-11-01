@@ -35,10 +35,18 @@ export const rustBorrowedVectorPositionDecisions=[
  {operation:'readRustBorrowedVectorArgumentError',arguments:[true,true,true,true,'a','static'],expected:'borrowed vector arguments must retain their actual reference element owner and region contract'},
  {operation:'readRustBorrowedVectorArgumentError',arguments:[true,false,true,true,'a',''],expected:'borrowed vector arguments must retain their actual reference element owner and region contract'},
  {operation:'readRustBorrowedVectorArgumentError',arguments:[true,true,true,true,'a','b'],expected:''},
+ {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,true,false,0],expected:true},
+ {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,true,true,2],expected:true},
+ {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,true,false,1],expected:false},
+ {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,false,false,0],expected:false},
+ {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[false,true,false,0],expected:false},
+ {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,true,true,65537],expected:false},
 ];
 // Valid Rust originals remain explicit frontend boundaries until actual value
 // loans, source-result outlives checks and target representation are connected.
 export const rustBorrowedVectorPositionPendingOriginals=[
  {name:'a borrowed vector result retains its actual argument lifetime',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'1\n',source:"fn children<'a>(value:&'a u8)->Vec<&'a u8>{vec![value]}fn main(){let value=7u8;let values=children(&value);println!(\"{}\",values.len());}"},
  {name:'declaration Self borrowed vector elements retain nominal identity',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'1\n',source:'struct Node(u8);impl Node{fn children(&self)->Vec<&Self>{vec![self]}}fn main(){let node=Node(7u8);let values=node.children();println!("{}",values.len());}'},
+ {name:'an empty borrowed vector uses its actual method result context',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'0\n',source:'struct Node(u8);impl Node{fn children(&self)->Vec<&Self>{vec![]}}fn main(){let node=Node(7u8);println!("{}",node.children().len());}'},
+ {name:'a canonical Box reference coerces under the actual borrowed result context',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'1\n',source:"struct Node(u8);fn children<'a>(value:&'a Box<Node>)->Vec<&'a Node>{vec![value]}fn main(){let node=Box::new(Node(7u8));println!(\"{}\",children(&node).len());}"},
 ];

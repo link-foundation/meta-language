@@ -19,8 +19,10 @@ export function readRustOwnedRecordLoopCounterError(kind,bits,signed,wrappers,ow
 export function planRustOwnedRecordLoopIterations(bits){const result=[];if(bits!==8)return result;for(let index=0;index<255;index+=1)result.push(index);return result;}
 /** @param {string} kind @returns {boolean} */
 export function testRustOwnedRecordLoopContinuingExit(kind){return kind==='value'||kind==='continue';}
+/** @param {string} kind @returns {boolean} */
+export function acceptRustOwnedRecordLoopExit(kind){return kind==='value'||kind==='continue'||kind==='break'||kind==='return'||kind==='abort';}
 /** @param {string[]} exits @param {number[]} counts @returns {string} */
-export function readRustOwnedRecordLoopProgressError(exits,counts){if(exits.length!==counts.length||exits.length===0||exits.length>256)return 'the complete record loop exits exceed their finite source budget';for(let index=0;index<exits.length;index+=1){if(!acceptRustOwnedRecordLoopCount(counts[index])||counts[index]>256)return 'the complete record loop exits exceed their finite source budget';if(testRustOwnedRecordLoopContinuingExit(exits[index])&&counts[index]!==1)return 'every continuing record loop path must decrement its actual counter exactly once';}return '';}
+export function readRustOwnedRecordLoopProgressError(exits,counts){if(exits.length!==counts.length||exits.length===0||exits.length>256)return 'the complete record loop exits exceed their finite source budget';for(let index=0;index<exits.length;index+=1){if(!acceptRustOwnedRecordLoopExit(exits[index])||!acceptRustOwnedRecordLoopCount(counts[index])||counts[index]>256)return 'the complete record loop exits exceed their finite source budget';if(testRustOwnedRecordLoopContinuingExit(exits[index])&&counts[index]!==1)return 'every continuing record loop path must decrement its actual counter exactly once';}return '';}
 /** Finite nonnegative safe integers, with negative zero rejected explicitly.
  * @param {number} value @returns {boolean} */
 export function acceptRustOwnedRecordLoopCount(value){return value>=0&&value<=9007199254740991&&value%1===0&&(value!==0||1/value>0);}
@@ -37,3 +39,19 @@ export function readRustOwnedRecordLoopExitDisposition(constructor){return const
 /** Full generated expression work/text is charged before copying instances.
  * @param {number} used @param {number} nodes @param {number} text @param {number} copies @returns {string} */
 export function readRustOwnedRecordLoopExpansionError(used,nodes,text,copies){return !acceptRustOwnedRecordLoopCount(used)||!acceptRustOwnedRecordLoopCount(nodes)||!acceptRustOwnedRecordLoopCount(text)||!acceptRustOwnedRecordLoopCount(copies)||copies>255||nodes>100000||used>100000-nodes*copies||text>16777216/(copies+1)?'the complete finite record loop expansion exceeds its source budget':'';}
+/** Two retained template forms and bounded per-iteration carrier syntax.
+ * @param {number} nodes @param {number} text @returns {number[]} */
+export function readRustOwnedRecordLoopExpansionReservation(nodes,text){if(!acceptRustOwnedRecordLoopCount(nodes)||!acceptRustOwnedRecordLoopCount(text)||nodes>100000||text>16777216)return [];return [nodes*2+64,text*2];}
+/** Authenticated nested loops have their own finite progress derivation. Their
+ * writes cannot contribute a variable number of outer-counter decrements.
+ * @param {boolean} admitted @param {number} returns @param {boolean} overlap
+ * @returns {string} */
+export function readRustOwnedRecordNestedLoopError(admitted,returns,overlap){if(!admitted||!acceptRustOwnedRecordLoopCount(returns))return 'a nested loop needs its actual complete finite source admission';if(returns!==0)return 'a nested function return needs its complete enclosing loop exit continuation';return overlap?'a nested loop cannot write its enclosing progress counter':'';}
+/** @param {number} depth @returns {string} */
+export function readRustOwnedRecordNestedLoopDepthError(depth){return !acceptRustOwnedRecordLoopCount(depth)||depth>8?'the actual nested finite loops exceed their source depth budget':'';}
+/** A completed child has actual retained return origins and a separately
+ * retained zero-iteration continuation; its enclosing tracer supplies both.
+ * @param {boolean} admitted @param {boolean} overlap @returns {string} */
+export function readRustOwnedRecordNestedCompletionError(admitted,overlap){return !admitted?'a nested loop needs its actual complete finite source admission':overlap?'a nested loop cannot write its enclosing progress counter':'';}
+/** @param {number} nodes @param {number} text @returns {string} */
+export function readRustOwnedRecordLoopFootprintError(nodes,text){return !acceptRustOwnedRecordLoopCount(nodes)||!acceptRustOwnedRecordLoopCount(text)||nodes>100000||text>16777216?'the complete loop write footprint exceeds its source budget':'';}

@@ -1,4 +1,5 @@
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {guardRustBorrowedVectorObservation} from './rust-borrowed-vectors.js';
 import {readRustStringByteIteratorError} from './rust-string-byte-view-rules.js';
 import {acceptRustIteratorArithmeticConsumer} from './rust-iterator-arithmetic-rules.js';
 import {readRustIteratorArithmetic} from './rust-iterator-arithmetic.js';
@@ -18,6 +19,7 @@ import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import {readRustIteratorReductionResultContext,acceptRustIteratorReductionFusedTerminal,readRustIteratorOwnedReceiverError,readRustIteratorReductionInitialState,readRustIteratorCountReceiverError,readRustIteratorCollectionError,readRustIteratorReductionCountResultOwner,planRustIteratorReductionCount,acceptRustIteratorReductionStart,acceptRustIteratorReductionAdapter,readRustIteratorReductionAdapterState,planRustIteratorReductionReceiver,planRustIteratorReductionReverseIndex,readRustIteratorReductionCallbackArity,readRustIteratorReductionOperation,readRustIteratorReductionCaptureRoles,readRustIteratorReductionReceiverError,readRustIteratorReductionAccumulatorError,readRustIteratorReductionCallbackError} from './rust-iterator-reduction-rules.js';
 export function readRustIteratorReduction(parser,receiver,method,args,range,path){
  if(!acceptRustIteratorReductionStart(method.value,args.length,parser.ordinaryCompletionContext()))return null;
+ guardRustBorrowedVectorObservation(parser,receiver,path,'iteration',range);
  const actual=parser.origins.origin(receiver,path),result=readRustIteratorReductionValue(parser,receiver,method,args,range,path);
  if(result&&method.value!=='into_iter')checkRustOwnedOrigin(parser.origins,actual,range);
  return result;

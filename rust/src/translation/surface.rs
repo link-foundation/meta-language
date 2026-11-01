@@ -52,6 +52,8 @@ pub struct SExpr {
     pub node: SNode,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
+    #[serde(rename="sourcePosition",skip_serializing_if="Option::is_none")]
+    pub source_position: Option<Box<super::source_signatures::RustSourceExpressionPosition>>,
     /// Grouping is raw source metadata, with absence independent of its value.
     #[serde(
         default,
@@ -87,6 +89,7 @@ impl SExpr {
             parenthesized: None,
             block: false,
             tag_test: None,
+            source_position: None,
         }
     }
 

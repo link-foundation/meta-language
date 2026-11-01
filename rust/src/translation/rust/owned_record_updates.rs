@@ -34,6 +34,7 @@ impl RustParser{
   let Some(owner)=self.origins.lookup_type_owner(path,&origin.path)else{return false;};self.named_records.get(&owner.full_name).is_some_and(|record|record.names.contains(&self.cursor.peek_at(1).value))
  }
  pub(super) fn owned_record_update_base(&mut self,path:&[String])->Result<SExpr>{
+  let mutation=crate::translation::rust_borrowed_vector_rules::read_rust_borrowed_vector_mutation_error(self.origins.borrowed_vector_source_enabled);if !mutation.is_empty(){let token=self.cursor.peek();return Err(unsupported("Rust borrowed vector source",&mutation,Some(Span::new(token.start,token.end))));}
   if let Some(place)=self.read_owned_record_place_base(path)?{return Ok(place);}
   let token=self.cursor.peek().clone();let origin=self.origins.scope.get(&token.value).cloned();
   if self.cursor.peek_at(1).value=="}"&&origin.as_ref().is_some_and(|origin|self.origins.nominal_ownership_facts(origin).profile=="owned"){

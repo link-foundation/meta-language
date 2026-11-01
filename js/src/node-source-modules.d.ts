@@ -2,7 +2,7 @@
 export type JavaScriptSemanticValue =
  | {$:'undefined'} | {$:'null'} | {$:'boolean';value:boolean}
  | {$:'number';value:number} | {$:'integer';value:bigint}
- | {$:'text';units:number[]} | {$:'symbol';identity:bigint}
+ | {$:'text';units:number[]} | {$:'sourceText';profile:'inspectable UTF16 source text 1';text:string} | {$:'symbol';identity:bigint}
  | {$:'object';identity:bigint;callable:boolean};
 export interface JavaScriptSourceRealmAuthority {
  identity:bigint;
@@ -15,6 +15,7 @@ export type JavaScriptSourceTransition =
  | {$:'machineResourceLimit';machine:unknown;reason:string}
  | {$:'machineContinue';machine:unknown}
  | {$:'machineAllocateObject';machine:unknown;prototype:JavaScriptSemanticValue}
+ | {$:'machineNeedCollectionIterable';machine:unknown;target:JavaScriptSemanticValue;input:JavaScriptSemanticValue}
  | {$:'machineAllocateError'|'machineAllocateSourceError'|'machineAllocateErrorValue'|'machineInvokeErrorIntrinsic'|'machineInvokeHostCapability';machine:unknown;[field:string]:unknown};
 export interface JavaScriptSourceEmbedding {
  readonly module:unknown;
@@ -25,6 +26,7 @@ export interface JavaScriptSourceEmbedding {
  encode(value:unknown):JavaScriptSemanticValue;
  decode(value:JavaScriptSemanticValue):unknown;
  encodeHostError(value:unknown):JavaScriptSemanticValue;
+ materializeData(value:JavaScriptSemanticValue):unknown;
 }
 export interface PreparedJavaScriptErrorClosure {archive:unknown;embedding:JavaScriptSourceEmbedding}
 export interface JavaScriptSourceExecution {$:'callExecution';transition:JavaScriptSourceTransition;steps:number;objectIdentitiesUsed:number}
@@ -65,5 +67,40 @@ export function readShippedRuntimeDataAdapterContract():unknown;
 export function captureJavaScriptRuntimeDataModule(source:string,options:{identifier:string;readerContract:unknown;model?:string}):unknown;
 export function checkJavaScriptRuntimeDataModule(capture:unknown):unknown;
 export function createRuntimeDataModuleScope():RuntimeDataModuleScope;
-export function prepareJavaScriptRuntimeDataModule(capture:unknown,authority:JavaScriptSourceRealmAuthority,options:{moduleURL:string|URL;scope?:RuntimeDataModuleScope;trace?:boolean}):PreparedJavaScriptRuntimeDataModule;
+export function prepareJavaScriptRuntimeDataModule(capture:unknown,authority:JavaScriptSourceRealmAuthority,options:{moduleURL:string|URL;scope?:RuntimeDataModuleScope;trace?:boolean;readerProfile?:'qualified runtime Links data IO adapter 1'|'actual project data source functions 1';readerRealmIdentity?:bigint}):PreparedJavaScriptRuntimeDataModule;
+export interface PreparedJavaScriptProjectDataModule {
+ readonly capture:unknown;
+ readonly embedding:JavaScriptSourceEmbedding;
+ readonly qualification:{model:'actual project data source execution 1';versions:{nodeMajor:number;nodeMinor:number;linksVersion:string};providerSourceSha256:string;decoderSourceSha256:string;externalOperations:readonly {source:string;operation:string;owner:string}[];remainingBoundary:string};
+ begin(name:string,args:JavaScriptSemanticValue[]):JavaScriptSourceTransition;
+ encode(value:unknown):JavaScriptSemanticValue;
+ events():readonly unknown[];
+}
+export function captureJavaScriptProjectDataSource(source:string,options:{identifier:string;entries?:readonly string[]}):unknown;
+export function checkJavaScriptProjectDataSource(capture:unknown):unknown;
+export function readShippedJavaScriptProjectDataSource(options?:{entries?:readonly string[]}):unknown;
+export function prepareJavaScriptProjectDataModule(capture:unknown,options:{realmIdentity:bigint;trace?:boolean}):PreparedJavaScriptProjectDataModule;
 export function runJavaScriptSourceTransition(embedding:JavaScriptSourceEmbedding,transition:JavaScriptSourceTransition,options?:{steps?:number}):JavaScriptSourceExecution;
+
+/** Explicit actual-source profile; unsupported constructs retain diagnostics. */
+export function captureJavaScriptOrdinaryClassModule(source:string,options:{identifier:string;entries:string[]}):unknown;
+export function checkJavaScriptOrdinaryClassModule(capture:unknown):unknown;
+export interface PreparedJavaScriptOrdinaryClassModule {
+ readonly capture:unknown;
+ readonly embedding:JavaScriptSourceEmbedding;
+ readonly collection:unknown;
+ callable(name:string):JavaScriptSemanticValue;
+ begin(name:string,args:JavaScriptSemanticValue[]):JavaScriptSourceTransition;
+}
+export function prepareJavaScriptOrdinaryClassModule(capture:unknown,options:{realmIdentity:bigint}):PreparedJavaScriptOrdinaryClassModule;
+
+export function captureJavaScriptOrdinaryClassSourceClosure(closure:unknown,options:{entryPath:string}):unknown;
+export function checkJavaScriptOrdinaryClassSourceClosure(archive:unknown):unknown;
+export interface PreparedJavaScriptOrdinaryClassSourceClosure {
+ readonly archive:unknown;
+ readonly capture:unknown;
+ readonly embedding:JavaScriptSourceEmbedding;
+ readonly collection:unknown;
+ begin(exported:string,args:JavaScriptSemanticValue[]):JavaScriptSourceTransition;
+}
+export function prepareJavaScriptOrdinaryClassSourceClosure(archive:unknown,options:{realmIdentity:bigint}):PreparedJavaScriptOrdinaryClassSourceClosure;

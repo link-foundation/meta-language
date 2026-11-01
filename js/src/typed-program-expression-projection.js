@@ -35,6 +35,12 @@ export function projectLinkedProgramDeclarationPath(name, declarations, rooted =
 }
 
 export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false, sourceLanguage = ''} = {}) {
+  const result=projectLinkedProgramExpressionValue(value,declarations,{rootedNamespace,referenceSemantics,sourceLanguage});
+  if(Object.hasOwn(value,'sourcePosition'))result.sourcePosition=structuredClone(value.sourcePosition);
+  return result;
+}
+
+function projectLinkedProgramExpressionValue(value, declarations, {rootedNamespace, referenceSemantics, sourceLanguage}) {
   const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics, sourceLanguage});
   if(acceptRustExactArrayLengthResult(value?.k??'',value?.type?.kind??'',value?.type?.bits??0,value?.type?.signed===true,value?.array?.type?.kind??''))return {k:'cast',arg:{k:'length',object:project(value.array),integer:true},to:value.type,flavor:'exact',...(value.span!==undefined?{span:value.span}:{})};
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;

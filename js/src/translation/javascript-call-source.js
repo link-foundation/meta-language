@@ -7,16 +7,23 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceReceiver'} | {$:'sourceArgument',index:number} |
  * {$:'sourceDerivedReceiver'} | {$:'sourceErrorIntrinsic'} |
  * {$:'sourceConstructErrorClass',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
+ * {$:'sourceClassConstructorCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
+ * {$:'sourceConstructCollection',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceConstructErrorValue',constructor:JavaScriptCallSource,newTarget:JavaScriptCallSource,prototype:JavaScriptCallSource,message:JavaScriptCallSource,present:JavaScriptCallSource,realm:bigint,errorClass:string,bindReceiver:boolean} |
  * {$:'sourceThrow',value:JavaScriptCallSource} |
+ * {$:'sourceReturn',value:JavaScriptCallSource} |
+ * {$:'sourceAssignBinding',identity:number,value:JavaScriptCallSource} |
+ * {$:'sourceWhile',condition:JavaScriptCallSource,body:JavaScriptCallSource,after:JavaScriptCallSource} |
  * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
  * {$:'sourceLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
+ * {$:'sourceLocalLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource,mutable:boolean} |
  * {$:'sourceParameterDefault',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceIf',condition:JavaScriptCallSource,yes:JavaScriptCallSource,no:JavaScriptCallSource} |
  * {$:'sourceNumberBinary',operator:string,left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceSameValue',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceStrictEqual',left:JavaScriptCallSource,right:JavaScriptCallSource} |
+ * {$:'sourceSnapshotStrictEqual',left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourcePrimitive',operation:string,arguments:JavaScriptCallSource[]} |
  * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
  * {$:'sourceAllocate',prototype:JavaScriptCallSource} |
@@ -24,11 +31,13 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourcePropertyKey',input:JavaScriptCallSource,realm:bigint} |
  * {$:'sourcePropertyDefinition',target:JavaScriptCallSource,key:JavaScriptCallSource,attributes:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
+ * {$:'sourceSnapshotSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
- * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
+ * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
+ * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
 /** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource}} JavaScriptCallSourceProperty */
-/** @typedef {{$:'sourceBindingRegister',identity:number,register:number}} JavaScriptCallSourceBinding */
+/** @typedef {{$:'sourceBindingRegister',identity:number,register:number,mutable:boolean}} JavaScriptCallSourceBinding */
 /** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
 /** @typedef {{$:'sourceCompiled',instructions:JavaScriptCallInstruction[],registers:number,error:string}} JavaScriptCallSourceCompilation */
@@ -60,11 +69,17 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
  switch(source.$){
   case 'sourceReceiver':return {$:'sourceResult',builder:state,register:0};
   case 'sourceDerivedReceiver':case 'sourceErrorIntrinsic':{const result=allocateJavaScriptCallSourceRegister(state);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,source.$==='sourceDerivedReceiver'?{$:'readDerivedReceiver',destination:result.register}:{$:'invokeErrorIntrinsic',destination:result.register})};}
-  case 'sourceConstructErrorClass':{
+  case 'sourceConstructErrorClass':case 'sourceConstructCollection':{
    if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'derived Error arguments exceed their explicit operand budget');
-   const callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1);let current=callee.builder,arguments_=[];
-   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;arguments_.push(value.register);}
-   const result=allocateJavaScriptCallSourceRegister(current);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'constructErrorClass',destination:result.register,callee:callee.register,arguments:arguments_})};
+   let callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1);if(source.$==='sourceConstructCollection'){const saved=allocateJavaScriptCallSourceRegister(callee.builder);callee={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:callee.register})};}let current=callee.builder,arguments_=[];
+   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;if(source.$==='sourceConstructCollection'){const saved=allocateJavaScriptCallSourceRegister(current);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});arguments_.push(saved.register);}else arguments_.push(value.register);}
+   const result=allocateJavaScriptCallSourceRegister(current);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:source.$==='sourceConstructCollection'?'constructCollection':'constructErrorClass',destination:result.register,callee:callee.register,arguments:arguments_})};
+  }
+  case 'sourceClassConstructorCall':{
+   if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'ordinary class arguments exceed their explicit operand budget');
+   const selected=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1),callee=allocateJavaScriptCallSourceRegister(selected.builder),heldCallee=appendJavaScriptCallSourceInstruction(callee.builder,{$:'copy',destination:callee.register,source:selected.register}),rawReceiver=lowerJavaScriptCallSourceExpression(source.receiver,bindings,heldCallee,depth+1),receiver=allocateJavaScriptCallSourceRegister(rawReceiver.builder);let current=appendJavaScriptCallSourceInstruction(receiver.builder,{$:'copy',destination:receiver.register,source:rawReceiver.register});const arguments_=[];
+   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1),saved=allocateJavaScriptCallSourceRegister(value.builder);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});arguments_.push(saved.register);}
+   const result=allocateJavaScriptCallSourceRegister(current);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'callClassConstructor',destination:result.register,callee:callee.register,receiver:receiver.register,arguments:arguments_})};
   }
   case 'sourceConstructErrorValue':{
    if(source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'Error construction needs its actual unsigned64 intrinsic realm');
@@ -76,9 +91,20 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const result=allocateJavaScriptCallSourceRegister(state);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'argument',destination:result.register,index:source.index})};
   }
-  case 'sourceThrow':{
+  case 'sourceThrow':case 'sourceReturn':{
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);
-   return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'throw',source:value.register})};
+   return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:source.$==='sourceThrow'?'throw':'return',source:value.register})};
+  }
+  case 'sourceAssignBinding':{
+   const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.register===0||!binding.mutable)return refuseJavaScriptCallSource(state,'a mutable assignment needs its actual mutable local lexical register');
+   const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register})};
+  }
+  case 'sourceWhile':{
+   const start=state.instructions.length,condition=lowerJavaScriptCallSourceExpression(source.condition,bindings,state,depth+1),branch=condition.builder.instructions.length;
+   const test=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:branch+1,no:0});
+   const body=lowerJavaScriptCallSourceExpression(source.body,bindings,test,depth+1),loop=appendJavaScriptCallSourceInstruction(body.builder,{$:'jump',target:start}),end=loop.instructions.length;
+   const updated={...loop,instructions:loop.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction)};
+   return lowerJavaScriptCallSourceExpression(source.after,bindings,updated,depth+1);
   }
   case 'sourceTry':return lowerJavaScriptCallSourceException(source,bindings,state,depth);
   case 'sourceConstant':{
@@ -91,10 +117,14 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    for(let index=bindings.length-1;index>=0;index-=1){const entry=bindings[index];if(entry!==undefined&&entry.identity===source.identity)return {$:'sourceResult',builder:state,register:entry.register};}
    return refuseJavaScriptCallSource(state,'a source binding reference has no actual lexical owner');
   }
-  case 'sourceLet':{
+  case 'sourceLet':case 'sourceLocalLet':{
    if(!testJavaScriptCallCodeCoordinate(source.identity,65536)||bindings.some(entry=>entry.identity===source.identity))return refuseJavaScriptCallSource(state,'a source binding owner must be unique in its lexical scope');
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);
-   return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:value.register}]),value.builder,depth+1);
+   if(source.$==='sourceLocalLet'){
+    const local=allocateJavaScriptCallSourceRegister(value.builder),copied=appendJavaScriptCallSourceInstruction(local.builder,{$:'copy',destination:local.register,source:value.register});
+    return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:local.register,mutable:source.mutable}]),copied,depth+1);
+   }
+   return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:value.register,mutable:false}]),value.builder,depth+1);
   }
   case 'sourceParameterDefault':{
    const binding=bindings.find(entry=>entry.identity===source.identity);if(binding===undefined||binding.register<1||binding.register>state.parameters)return refuseJavaScriptCallSource(state,'a parameter default needs its actual initialized parameter coordinate');
@@ -104,13 +134,15 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    return lowerJavaScriptCallSourceExpression(source.body,bindings,updated,depth+1);
   }
   case 'sourceIf':return lowerJavaScriptCallSourceBranch(source,bindings,state,depth);
-  case 'sourceNumberBinary':case 'sourceSameValue':case 'sourceStrictEqual':{
-   const left=lowerJavaScriptCallSourceExpression(source.left,bindings,state,depth+1),right=lowerJavaScriptCallSourceExpression(source.right,bindings,left.builder,depth+1),result=allocateJavaScriptCallSourceRegister(right.builder);
+  case 'sourceNumberBinary':case 'sourceSameValue':case 'sourceStrictEqual':case 'sourceSnapshotStrictEqual':{
+   let left=lowerJavaScriptCallSourceExpression(source.left,bindings,state,depth+1);
+   if(source.$==='sourceSnapshotStrictEqual'){const saved=allocateJavaScriptCallSourceRegister(left.builder);left={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:left.register})};}
+   const right=lowerJavaScriptCallSourceExpression(source.right,bindings,left.builder,depth+1),result=allocateJavaScriptCallSourceRegister(right.builder);
    if(source.$==='sourceNumberBinary'){
     if(!['add','subtract','multiply','divide','remainder','power','lessThan','equal'].includes(source.operator))return refuseJavaScriptCallSource(result.builder,'source Number lowering requires its exact registered operator');
     return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'numberBinary',destination:result.register,left:left.register,right:right.register,operator:source.operator})};
    }
-   if(source.$==='sourceStrictEqual')return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'strictEqual',destination:result.register,left:left.register,right:right.register})};
+   if(source.$==='sourceStrictEqual'||source.$==='sourceSnapshotStrictEqual')return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'strictEqual',destination:result.register,left:left.register,right:right.register})};
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'sameValue',destination:result.register,left:left.register,right:right.register})};
   }
   case 'sourcePrimitive':{
@@ -131,8 +163,12 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    for(let index=0;index<arguments_.length;index+=1)current=appendJavaScriptCallSourceInstruction(current,{$:'copy',destination:index+1,source:arguments_[index]??0});
    return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(current,{$:'jump',target:0}),register:0};
   }
-  case 'sourceSet':{
-   const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),value=lowerJavaScriptCallSourceExpression(source.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
+  case 'sourceSet':case 'sourceSnapshotSet':{
+   let object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1);
+   if(source.$==='sourceSnapshotSet'){const saved=allocateJavaScriptCallSourceRegister(object.builder);object={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:object.register})};}
+   let key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1);
+   if(source.$==='sourceSnapshotSet'){const saved=allocateJavaScriptCallSourceRegister(key.builder);key={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:key.register})};}
+   const value=lowerJavaScriptCallSourceExpression(source.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
    const write=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinarySet',destination:result.register,object:object.register,key:key.register,value:value.register,receiver:object.register});
    return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(write,{$:'requireWrite',success:result.register}),register:value.register};
   }
@@ -166,11 +202,17 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const object=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),key=lowerJavaScriptCallSourceExpression(source.key,bindings,object.builder,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryGet',destination:result.register,object:object.register,key:key.register,receiver:object.register})};
   }
-  case 'sourceCall':{
+  case 'sourceCall':case 'sourceSnapshotCall':{
    if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'source call operands exceed their explicit budget');
-   const callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1),receiver=lowerJavaScriptCallSourceExpression(source.receiver,bindings,callee.builder,depth+1);
+   let callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1);
+   if(source.$==='sourceSnapshotCall'){const saved=allocateJavaScriptCallSourceRegister(callee.builder);callee={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:callee.register})};}
+   let receiver=lowerJavaScriptCallSourceExpression(source.receiver,bindings,callee.builder,depth+1);
+   if(source.$==='sourceSnapshotCall'){const saved=allocateJavaScriptCallSourceRegister(receiver.builder);receiver={...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:receiver.register})};}
    let current=receiver.builder,arguments_=[];
-   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;arguments_.push(value.register);}
+   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;
+    if(source.$==='sourceSnapshotCall'){const saved=allocateJavaScriptCallSourceRegister(current);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});arguments_.push(saved.register);}
+    else arguments_.push(value.register);
+   }
    const result=allocateJavaScriptCallSourceRegister(current);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'call',destination:result.register,callee:callee.register,receiver:receiver.register,arguments:arguments_})};
   }
@@ -193,7 +235,7 @@ export function lowerJavaScriptCallSourceException(source,bindings,builder,depth
  const popped=appendJavaScriptCallSourceInstruction({...body.builder,handlers:builder.handlers},{$:'popHandler'});
  const copied=appendJavaScriptCallSourceInstruction(popped,{$:'copy',destination:result.register,source:body.register}),jump=copied.instructions.length;
  const alternative=appendJavaScriptCallSourceInstruction(copied,{$:'jump',target:0}),target=alternative.instructions.length;
- const handler=lowerJavaScriptCallSourceExpression(source.handler,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:caught.register}]),alternative,depth+1);
+ const handler=lowerJavaScriptCallSourceExpression(source.handler,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:caught.register,mutable:true}]),alternative,depth+1);
  const finished=appendJavaScriptCallSourceInstruction(handler.builder,{$:'copy',destination:result.register,source:handler.register}),end=finished.instructions.length;
  if(finished.error!=='')return {$:'sourceResult',builder:finished,register:0};
  const instructions=finished.instructions.map((entry,index)=>index===position?{$:'pushHandler',destination:caught.register,target}:index===jump?{$:'jump',target:end}:entry);
@@ -233,7 +275,7 @@ export function compileJavaScriptCallSourceWithCaptures(source,parameters,captur
  if(parameters.length+captures.length>=4096)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters exceed their explicit register budget'};
  for(let index=0;index<parameters.length;index+=1){const owner=parameters[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters require distinct actual lexical owners'};}
  for(let index=0;index<captures.length;index++){const owner=captures[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.includes(owner)||captures.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source captures require distinct actual lexical owners'};}
- const bindings=parameters.concat(captures).map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1}));
+ const bindings=parameters.concat(captures).map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1,mutable:index<parameters.length}));
  const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+captures.length+1,visits:0,parameters:parameters.length,handlers:0,error:''},0);
  const builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
  return {$:'sourceCompiled',instructions:builder.error===''?builder.instructions:[],registers:builder.error===''?builder.next:0,error:builder.error};

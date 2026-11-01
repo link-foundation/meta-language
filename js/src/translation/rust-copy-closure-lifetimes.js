@@ -3,9 +3,10 @@
 import {unsupported} from './diagnostics.js';
 import {mergeRustOwnedLoanBindings} from './rust-owned-binding-rules.js';
 import {readRustCopyClosureValueBorrowError,readRustCopyClosureReturnedBorrowError} from './rust-copy-closure-rules.js';
+import {promoteRustMutableRecordValueLoans} from './rust-mutable-record-loans.js';
 export function assignRustCopyClosureLexicalBinding(table,origin){
  if(table.collecting)return origin;
- const identity='lexical '+String(table.nextSourceBindingIdentity++);origin.sourceLexicalBindingIdentity=identity;table.sourceBindingStates.set(identity,'available');return origin;
+ const identity='lexical '+String(table.nextSourceBindingIdentity++);origin.sourceLexicalBindingIdentity=identity;table.sourceBindingStates.set(identity,'available');return promoteRustMutableRecordValueLoans(table,origin);
 }
 export function readRustCopyClosureValueBorrows(origin){
  const pending=origin?[origin]:[],seen=new Set();let result=[];

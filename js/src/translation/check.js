@@ -1,6 +1,8 @@
+import {checkRustBorrowedVectorSourceRegions} from './rust-borrowed-source-regions.js';
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {checkPropositionValue} from './proposition-values.js';
 import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
+import {checkRustSourceExpressionPosition} from './rust-source-expression-positions.js';
 import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
 import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
 import {checkDisjointCollectionIterations} from './disjoint-collection-iterations.js';
@@ -299,6 +301,7 @@ class Checker {
     validateRustTypeNamespace(program);
     checkRustPureUnitCalls(program);
     checkRustOwnedLocalStateProof(program);
+    checkRustBorrowedVectorSourceRegions(program);
     checkDisjointCollectionIterations(program,this.closedCollectionIterationMarkers);
     checkCollectionCopySnapshotCallbacks(program);
     checkJavaScriptClassOwners(program);
@@ -633,6 +636,7 @@ class Checker {
       result = { k: 'referenceAllocate', value: result, type: { ...result.type, reference: true } };
     }
     if ((node.span || (payload && expression.span)) && !result.span) result.span = node.span || expression.span;
+    if(Object.hasOwn(node,'sourcePosition'))result.sourcePosition=checkRustSourceExpressionPosition(node.sourcePosition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     return result;
   }
 

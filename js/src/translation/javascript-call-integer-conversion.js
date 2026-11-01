@@ -2,6 +2,7 @@
 // exact integral binary64 definitions. Objects need a represented continuation.
 import {convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger,readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces} from './big-integer-conversion-rules.js';
 import {readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
+import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 
 /** @param {string} operation @returns {string} */
 export function readJavaScriptIntegerProtocolOperationError(operation){return operation==='convert explicit integer'||operation==='coerce primitive integer'?'':'integer conversion requires its actual registered source operation';}
@@ -41,6 +42,10 @@ export function executeJavaScriptCallIntegerConversion(operation,value){
    const integer=converted[0]??0n;
    if(readJavaScriptCallIntegerWidth(integer)<0)return {$:'primitiveResourceLimit',reason:'BigInt conversion output exceeds the selected 4096-bit work profile'};
    return {$:'primitiveValue',value:{$:'integer',value:integer}};
+  }
+  case 'sourceText':{
+   if(value.text.length>4096)return {$:'primitiveResourceLimit',reason:'BigInt text conversion exceeds the selected 4096-unit work profile'};
+   return executeJavaScriptCallIntegerConversion(operation,{$:'text',units:constructJavaScriptSemanticTextUnits(value,4096)});
   }
  }
 }

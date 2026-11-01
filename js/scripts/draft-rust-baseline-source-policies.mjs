@@ -12,6 +12,14 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-array-objects.js',moduleName:'javascript_array_objects',model:'Inspectable sparse Array property definitions 1',programAsset:'javascript-array-objects-program'},
+ {sourcePath:'js/src/translation/javascript-arrays.js',moduleName:'javascript_arrays',model:'Resumable global Array allocation and length conversion 1',programAsset:'javascript-arrays-program'},
+ {sourcePath:'js/src/translation/rust-mutable-record-loan-rules.js',moduleName:'rust_mutable_record_loan_rules',model:'Rust mutable record value loan scopes 1',programAsset:'rust-mutable-record-loan-program'},
+ {sourcePath:'js/src/translation/rust-borrowed-source-region-rules.js',moduleName:'rust_borrowed_source_region_rules',model:'Rust immutable source binder region proof 1',programAsset:'rust-borrowed-source-region-program'},
+ {sourcePath:'js/src/translation/javascript-collection-iteration.js',moduleName:'javascript_collection_iteration',model:'Inspectable JavaScript live collection iterator slots 1',programAsset:'javascript-collection-iteration-program'},
+ {sourcePath:'js/src/translation/javascript-source-text-rules.js',moduleName:'javascript_source_text_rules',model:'Inspectable UTF16 source text resource profile 1',programAsset:'javascript-source-text-program'},
+ {sourcePath:'js/src/translation/javascript-ordinary-class-rules.js',moduleName:'javascript_ordinary_class_rules',model:'Actual JavaScript ordinary class receiver rules 1',programAsset:'javascript-ordinary-class-program'},
+ {sourcePath:'js/src/translation/javascript-collection-rules.js',moduleName:'javascript_collection_rules',model:'Inspectable JavaScript collection key semantics 1',programAsset:'javascript-collection-rules-program'},
  {sourcePath:'js/src/translation/javascript-host-capability-rules.js',moduleName:'javascript_host_capability_rules',model:'Qualified JavaScript host capability receiver modes 1',programAsset:'javascript-host-capability-program'},
  {sourcePath:'js/src/translation/rust-borrowed-vector-rules.js',moduleName:'rust_borrowed_vector_rules',model:'Rust recursive borrowed vector source positions 1',programAsset:'rust-borrowed-vector-program',sourceDependencies:true,sourceAliases:true},
  {sourcePath:'js/src/translation/rust-owned-record-loop-rules.js',moduleName:'rust_owned_record_loop_rules',model:'Rust finite owned record loop source obligations 1',programAsset:'rust-owned-record-loop-program'},
@@ -61,6 +69,12 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-source-text.mjs',
+ 'js/tests/fixtures/javascript-array-objects.mjs',
+ 'js/tests/fixtures/javascript-primitive-methods.mjs',
+ 'js/tests/fixtures/javascript-inspectable-collections.mjs',
+ 'js/tests/fixtures/javascript-ordinary-class-source.mjs',
+ 'js/tests/fixtures/javascript-ordinary-class-closures.mjs',
  'js/tests/fixtures/source-library-class-composition.mjs',
  'js/tests/fixtures/source-library-class-re-exports.mjs',
  'js/tests/fixtures/source-library-error-composition.mjs',
@@ -79,11 +93,16 @@ const fixtures=[
  'js/tests/fixtures/rust-owned-record-effects.mjs',
  'js/tests/fixtures/rust-owned-record-completions.mjs',
  'js/tests/fixtures/rust-owned-record-loops.mjs',
+ 'js/tests/fixtures/rust-owned-record-loop-exits.mjs',
+ 'js/tests/fixtures/rust-owned-record-nested-loops.mjs',
+ 'js/tests/fixtures/rust-mutable-record-loans.mjs',
  'js/tests/fixtures/rust-borrowed-vector-positions.mjs',
+ 'js/tests/fixtures/rust-borrowed-source-regions.mjs',
  'js/tests/fixtures/proposition-values.mjs',
  'js/tests/fixtures/javascript-error-classes.mjs',
  'js/tests/fixtures/javascript-host-capabilities.mjs',
  'js/tests/fixtures/runtime-data-module-initialization.mjs',
+ 'js/tests/fixtures/project-data-source-execution.mjs',
  'js/tests/fixtures/formal-mutual-datatypes.mjs',
  'js/tests/fixtures/formal-datatype-aliases.mjs',
  'js/tests/fixtures/rust-owned-recursive-containers.mjs',
@@ -124,6 +143,28 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/tests/translation-javascript-array-objects.test.js',
+ 'js/tests/translation-rust-owned-record-nested-loops.test.js',
+ 'js/tests/translation-rust-owned-record-loop-exits.test.js',
+ 'js/tests/translation-rust-mutable-record-loans.test.js',
+ 'js/src/translation/javascript-collections.js',
+ 'js/src/translation/javascript-collection-call-source.js',
+ 'js/src/translation/javascript-collection-realm.js',
+ 'js/src/translation/javascript-primitive-methods.js',
+ 'js/scripts/produce-javascript-ordinary-class-source.mjs',
+ 'js/tests/support/ordinary-class-source-controls.js',
+ 'js/tests/support/source-machine-trace.js',
+ 'js/tests/support/source-module-compilation.js',
+ 'js/src/translation/javascript-collection-iteration.js',
+ 'js/tests/translation-javascript-collections.test.js',
+ 'js/src/translation/javascript-ordinary-class-source.js',
+ 'js/src/translation/javascript-ordinary-class-closure-source.js',
+ 'js/src/translation/javascript-ordinary-class-closure.js',
+ 'js/tests/support/ordinary-class-closure-controls.js',
+ 'js/tests/translation-javascript-ordinary-class-closures.test.js',
+ 'js/src/translation/javascript-ordinary-class-module.js',
+ 'js/tests/translation-javascript-ordinary-class-source.test.js',
+ 'js/tests/translation-javascript-source-text.test.js',
  'js/src/node-source-modules.js',
  'js/src/translation/javascript-host-capabilities.js',
  'js/tests/translation-javascript-host-capabilities.test.js',
@@ -175,6 +216,11 @@ const consumers=[
  'js/src/translation/formal-datatype-aliases.js',
  'js/src/translation/rust-owned-record-effects.js',
  'js/src/translation/rust-borrowed-vectors.js',
+ 'js/src/translation/rust-source-expression-positions.js',
+ 'js/src/translation/rust-borrowed-expression-positions.js',
+ 'js/src/translation/rust-borrowed-source-regions.js',
+ 'js/tests/translation-rust-borrowed-source-regions.test.js',
+ 'js/src/translation/rust-mutable-record-loans.js',
  'js/src/translation/finite-record-loop-helpers.js',
  'js/src/translation/rust-owned-record-loops.js',
  'js/src/translation/proposition-values.js',
@@ -192,6 +238,11 @@ const consumers=[
  'js/src/translation/javascript-module-initialization.js',
  'js/src/translation/runtime-data-module-source.js',
  'js/src/translation/runtime-data-module.js',
+ 'js/src/translation/javascript-project-data-source.js',
+ 'js/src/translation/javascript-project-data-module.js',
+ 'js/tests/translation-javascript-project-data-source.test.js',
+ 'js/tests/support/project-data-source-controls.js',
+ 'js/scripts/produce-javascript-project-data-source.mjs',
  'js/src/translation/source-receipt-data.js',
  'js/tests/translation-runtime-data-module-initialization.test.js',
  'js/scripts/produce-runtime-data-module-initialization.mjs',
@@ -348,8 +399,14 @@ for(const [source,target] of [
  ['rust-owned-record-state','rust-owned-record-state'],
  ['rust-owned-record-effects','rust-owned-record-effects'],
  ['rust-owned-record-completions','rust-owned-record-completions'],
+ ['rust-owned-record-loop-exits','rust-owned-record-loop-exits'],
+ ['rust-owned-record-nested-loops','rust-owned-record-nested-loops'],
+ ['rust-mutable-record-loans','rust-mutable-record-loans'],
  ['runtime-data-module-initialization','runtime-data-module-initialization'],
+ ['project-data-source-execution','project-data-source-execution'],
  ['javascript-host-capabilities','javascript-host-capabilities'],
+ ['javascript-ordinary-class-source','javascript-ordinary-class-source'],
+ ['javascript-ordinary-class-closures','javascript-ordinary-class-closures'],
  ['rust-source-owner-qualification','rust-source-owner-qualification'],
  ['proposition-values','proposition-values'],
  ['formal-mutual-datatypes','formal-mutual-datatypes'],
@@ -409,6 +466,7 @@ for(const [source,exports,model]of [
  ['formal-datatype-aliases',['formalDatatypeAliasDecisions'],'Formal datatype alias exact source literals 1'],
  ['rust-owned-record-loops',['rustOwnedRecordLoopMalformedNumbers'],'Rust finite record loop exact source literals 1'],
  ['rust-borrowed-vector-positions',['rustBorrowedVectorPositionDecisions'],'Rust borrowed vector position exact source literals 1'],
+ ['rust-borrowed-source-regions',['rustBorrowedSourceRegionDecisions'],'Rust source binder region exact source literals 1'],
 ]){
  const path='js/tests/fixtures/'+source+'.mjs',text=readFileSync(new URL(path,root),'utf8');
  const namespace=await import('../tests/fixtures/'+source+'.mjs');
@@ -424,6 +482,31 @@ writeProjectData(new URL('parity/fixtures/javascript-error-classes.lino',root),{
  schemaVersion:1,model:'Actual Error class exact source fixture data 2',boundary,
  profile:'exact pure fixture data 2',
  exports:['javascriptErrorClassVersions','translationErrorSource','javascriptErrorClassDecisions','javascriptErrorClassAllocationDecisions','javascriptErrorClassOriginals','javascriptErrorClassRefusals','javascriptErrorClassRequiredHostBoundaries'].map(exportName=>readExactFixtureExport(errorFixtureSource,{path:errorFixturePath,exportName,profile:'exact pure fixture data 2'})),
+});
+const sourceTextFixturePath='js/tests/fixtures/javascript-source-text.mjs';
+const sourceTextFixtureSource=readFileSync(new URL(sourceTextFixturePath,root),'utf8');
+writeProjectData(new URL('parity/fixtures/javascript-source-text.lino',root),{
+ schemaVersion:1,model:'Inspectable UTF16 exact source fixture data 2',boundary,
+ profile:'exact pure fixture data 2',
+ exports:['javascriptSourceTextVersions','javascriptSourceTextProfileDecisions','javascriptSourceTextSemanticDecisions','javascriptSourceTextBooleanDecisions','javascriptSourceTextPrimitiveDecisions','javascriptSourceTextLargeControls'].map(exportName=>readExactFixtureExport(sourceTextFixtureSource,{path:sourceTextFixturePath,exportName,profile:'exact pure fixture data 2'})),
+});
+const collectionFixturePath='js/tests/fixtures/javascript-inspectable-collections.mjs';
+const collectionFixtureSource=readFileSync(new URL(collectionFixturePath,root),'utf8');
+writeProjectData(new URL('parity/fixtures/javascript-inspectable-collections.lino',root),{
+ schemaVersion:1,model:'Inspectable collections exact source fixture data 2',boundary,profile:'exact pure fixture data 2',
+ exports:['javascriptInspectableCollectionVersions','javascriptInspectableCollectionDecisions'].map(exportName=>readExactFixtureExport(collectionFixtureSource,{path:collectionFixturePath,exportName,profile:'exact pure fixture data 2'})),
+});
+const primitiveMethodFixturePath='js/tests/fixtures/javascript-primitive-methods.mjs';
+const primitiveMethodFixtureSource=readFileSync(new URL(primitiveMethodFixturePath,root),'utf8');
+writeProjectData(new URL('parity/fixtures/javascript-primitive-methods.lino',root),{
+ schemaVersion:1,model:'Actual primitive methods exact source fixture data 2',boundary,profile:'exact pure fixture data 2',
+ exports:['javascriptPrimitiveMethodVersions','javascriptPrimitiveMethodDecisions','javascriptPrimitiveAdditionDecisions'].map(exportName=>readExactFixtureExport(primitiveMethodFixtureSource,{path:primitiveMethodFixturePath,exportName,profile:'exact pure fixture data 2'})),
+});
+const arrayFixturePath='js/tests/fixtures/javascript-array-objects.mjs';
+const arrayFixtureSource=readFileSync(new URL(arrayFixturePath,root),'utf8');
+writeProjectData(new URL('parity/fixtures/javascript-array-objects.lino',root),{
+ schemaVersion:1,model:'Sparse Array exact source fixture data 2',boundary,profile:'exact pure fixture data 2',
+ exports:['javascriptArrayObjectVersions','javascriptArrayObjectDecisions'].map(exportName=>readExactFixtureExport(arrayFixtureSource,{path:arrayFixturePath,exportName,profile:'exact pure fixture data 2'})),
 });
 draftRustBaselineNativePolicyControls({publish:true});globalThis.gc?.();
 process.argv.splice(2,process.argv.length-2,'--draft');

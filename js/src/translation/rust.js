@@ -14,6 +14,7 @@ import {createRustOwnedBoxConstructor,readRustOwnedBoxClone,checkRustOwnedBoxSou
 import {acceptRustOwnedVectorNamedOrigin,readRustOwnedVectorLiteral,readRustOwnedVectorSignature,acceptRustOwnedVectorFunctionBody,readRustOwnedVectorEmptyConstructor,readRustOwnedVectorClone} from './rust-owned-vectors.js';
 import {createRustBorrowedVectorElementPosition,guardRustBorrowedVectorObservation,seedRustBorrowedVectorParameterRegions,validateRustBorrowedVectorFunctionResultRegions,readRustBorrowedVectorSignature} from './rust-borrowed-vectors.js';
 import {readRustBorrowedVectorElementAdmission,readRustBorrowedVectorLiteral} from './rust-borrowed-vectors.js';
+import {noteRustBorrowedExpressionSourcePosition} from './rust-borrowed-expression-positions.js';
 import {readRustOwnedRecordFiniteLoop} from './rust-owned-record-loops.js';
 import {retainRustBorrowedVectorElementPosition,acceptRustBorrowedVectorSignatureModel,acceptRustBorrowedVectorCompletionProfiles,acceptRustBorrowedVectorSource} from './rust-borrowed-vector-rules.js';
 import {readRustOwnedVectorNamedAdmission} from './rust-owned-recursive-datatype-rules.js';
@@ -88,7 +89,7 @@ import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjectio
 import { planTuplePatternFields, readRustLetElseInitializerError } from './rust-record-rules.js';
 import { readRustConditionalPattern } from './rust-pattern-conditions.js';
 import {hasRustConditionalChain,readRustConditionalChain,lowerRustGuardedMatch} from './rust-conditional-chains.js';
-import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
+import { captureRustInherentReceiverValueLoan, readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustOwnedRecordEffectExpression,beginRustOwnedRecordShortCircuit,endRustOwnedRecordShortCircuit,finishRustOwnedRecordEffects} from './rust-owned-record-effects.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
@@ -164,6 +165,7 @@ export function parseRustWithSourceTypeOwners(source,options={}){return parseRus
 export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='',retainSourceTypeOwners=false,sourceVersion='' } = {}) {
   readRustSourceVersion(sourceVersion);
   if(typeof retainSourceTypeOwners!=='boolean')throw new TypeError('retainSourceTypeOwners must be Boolean');
+  retainSourceTypeOwners=retainSourceTypeOwners||acceptRustBorrowedVectorSignatureModel(sourceSignatureModel);
   if(retainSourceTypeOwners&&(runtimeShellModel||sharedArrayHandleSourceModel))throw unsupported('Rust source owner retention','runtime shells and shared handle signatures need an independent owner composition');
   if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the legacy model or standard Rust shared array identity handles 1');
   if(sharedArrayHandleSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,runtimeShellModel].some(Boolean))throw unsupported('Rust shared array handle source model','other source interpretations require independent composition proofs');
@@ -193,6 +195,7 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
 export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '',retainSourceTypeOwners=false,sourceVersion='' } = {}, source = null) {
   const sourceVersionFacts=readRustSourceVersion(sourceVersion);
   if(typeof retainSourceTypeOwners!=='boolean')throw new TypeError('retainSourceTypeOwners must be Boolean');
+  retainSourceTypeOwners=retainSourceTypeOwners||acceptRustBorrowedVectorSignatureModel(sourceSignatureModel);
   if(retainSourceTypeOwners&&sharedArrayHandleSourceModel)throw unsupported('Rust source owner retention','runtime shells and shared handle signatures need an independent owner composition');
   if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the installed source model');
   if(sharedArrayHandleSourceModel){
@@ -625,7 +628,7 @@ class RustParser {
       this.origins.type.primitiveOwnerPosition=this.origins.type.expandedSourceOwner?this.origins.type.primitiveOwnerPosition??position:position;
       const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:this.origins.type.expandedSourceOwner??readRustSourceTypeOwner(this, head, children, result);
       this.origins.type.sourceOwner = owner;
-      if(this.origins.borrowedVectorSourceEnabled&&this.origins.type.arrayElementPosition)this.origins.borrowedVectorNeedsFinalAdmission=true;
+      if(this.origins.borrowedVectorSourceEnabled&&(this.origins.type.arrayElementPosition||this.origins.type.wrappers[0]==='reference'&&this.origins.type.sourceLifetimes?.[0]==='static'))this.origins.borrowedVectorNeedsFinalAdmission=true;
       checkRustOwnedBoxSourceType(this,this.origins.type,span(this.cursor.tokens[Math.max(0,this.cursor.index-1)],this.cursor.peek()));
       this.origins.type.namespaceSpelling = !['&', '('].includes(head[0]) ? [...head]
         : namespaceChildren.length === 1 && !head.includes('[') ? [...namespaceChildren[0]]
@@ -1379,7 +1382,7 @@ class RustParser {
   /** Expressions, by Rust precedence. */
   expr(path, options = {}) {
     const value=readRustOwnedRecordEffectExpression(this,path,options,()=>this.or(path,options));
-    return this.origins.recordExpressionType(value,path);
+    this.origins.recordExpressionType(value,path);return noteRustBorrowedExpressionSourcePosition(this,value,path);
   }
 
   or(path, options) {
@@ -1587,6 +1590,7 @@ class RustParser {
           if(recordProjection){value=recordProjection;continue;}
           throw unsupported('field access', `field ${method.value} is outside the portable core`, span(token, method));
         }
+        captureRustInherentReceiverValueLoan(this,value,method,path);
         c.next();
         const args = [];
         while (!c.is(')')) {

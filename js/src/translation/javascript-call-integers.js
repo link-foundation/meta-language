@@ -2,6 +2,7 @@
 import {applyBigIntegerBitwiseOperation} from './big-integer-bitwise-rules.js';
 import {applyJavaScriptNumberBitwiseOperation} from './number-bitwise-rules.js';
 import {divideJavaScriptBigInteger,powerJavaScriptBigInteger,compareJavaScriptNumberBigInteger,compareJavaScriptStringBigIntegerUnits} from './big-integer-conversion-rules.js';
+import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 
 /** @param {string} operation @returns {number} */
 export function readJavaScriptCallIntegerArity(operation){
@@ -83,6 +84,10 @@ export function executeJavaScriptCallMixedIntegerComparison(operation,values){
   return {$:'primitiveValue',value:{$:'number',value:compareJavaScriptNumberBigInteger(first.value,second.value)}};
  }
  if(operation==='compare text integer'){
+  if(first.$==='sourceText'){
+   if(first.text.length>4096)return {$:'primitiveResourceLimit',reason:'mixed comparison text exceeds the selected 4096-unit work profile'};
+   return executeJavaScriptCallMixedIntegerComparison(operation,[{$:'text',units:constructJavaScriptSemanticTextUnits(first,4096)},second]);
+  }
   if(first.$!=='text')return {$:'primitiveInvalid',reason:'mixed text comparison requires its actual UTF16 operand'};
   if(first.units.length>4096)return {$:'primitiveResourceLimit',reason:'mixed comparison text exceeds the selected 4096-unit work profile'};
   return {$:'primitiveValue',value:{$:'number',value:compareJavaScriptStringBigIntegerUnits(first.units,second.value)}};

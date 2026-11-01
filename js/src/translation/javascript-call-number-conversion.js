@@ -3,6 +3,7 @@
 // ToPrimitive protocol, never an invented host conversion or property read.
 import {convertJavaScriptStringNumberUnits,convertJavaScriptBigIntegerNumber} from './string-number-rules.js';
 import {readJavaScriptCallIntegerWidth} from './javascript-call-integers.js';
+import {constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 
 /** @param {string} operation @param {JavaScriptSemanticValue} value @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptCallNumberConversion(operation,value){
@@ -20,6 +21,10 @@ export function executeJavaScriptCallNumberConversion(operation,value){
   case 'text':{
    if(value.units.length>4096)return {$:'primitiveResourceLimit',reason:'Number text conversion exceeds the selected 4096-unit work profile'};
    return {$:'primitiveValue',value:{$:'number',value:convertJavaScriptStringNumberUnits(value.units)}};
+  }
+  case 'sourceText':{
+   if(value.text.length>4096)return {$:'primitiveResourceLimit',reason:'Number text conversion exceeds the selected 4096-unit work profile'};
+   return executeJavaScriptCallNumberConversion(operation,{$:'text',units:constructJavaScriptSemanticTextUnits(value,4096)});
   }
   case 'symbol':return {$:'primitiveError',errorClass:'TypeError',reason:'Cannot convert a Symbol value to a number'};
   case 'object':return {$:'primitiveInvalid',reason:'object Number conversion requires the actual suspended ToPrimitive protocol'};

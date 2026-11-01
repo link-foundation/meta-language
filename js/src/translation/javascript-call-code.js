@@ -8,6 +8,12 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'constructErrorClass',destination:number,callee:number,arguments:number[]} |
+ * {$:'callClassConstructor',destination:number,callee:number,receiver:number,arguments:number[]} |
+ * {$:'constructCollection',destination:number,callee:number,arguments:number[]} |
+ * {$:'collectionAllocate',destination:number,prototype:number,kind:string} |
+ * {$:'collectionOperation',destination:number,operation:string} |
+ * {$:'primitiveMethod',destination:number,operation:string} |
+ * {$:'collectionCopy',destination:number,target:number,input:number,adder:number,iteratorKey:number,iteratorMethod:number,iteratorPrototype:number,nextMethod:number} |
  * {$:'constructErrorValue',destination:number,constructor:number,newTarget:number,prototype:number,message:number,present:number,realm:bigint,errorClass:string,bindReceiver:boolean} |
  * {$:'readDerivedReceiver',destination:number} | {$:'invokeErrorIntrinsic',destination:number} | {$:'invokeHostCapability',destination:number} |
  * {$:'return',source:number} | {$:'throw',source:number} |
@@ -46,19 +52,20 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':return [instruction.destination];
+    case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':return [instruction.destination];
     case 'copy':return [instruction.destination,instruction.source];
     case 'jump':case 'popHandler':return [];
     case 'branch':return [instruction.condition];
-    case 'call':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
-    case 'constructErrorClass':return [instruction.destination,instruction.callee].concat(instruction.arguments);
+    case 'call':case 'callClassConstructor':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
+    case 'constructErrorClass':case 'constructCollection':return [instruction.destination,instruction.callee].concat(instruction.arguments);
     case 'constructErrorValue':return [instruction.destination,instruction.constructor,instruction.newTarget,instruction.prototype,instruction.message,instruction.present];
     case 'primitive':return [instruction.destination].concat(instruction.arguments);
     case 'return':case 'throw':return [instruction.source];
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
-    case 'ordinaryAllocate':return [instruction.destination,instruction.prototype];
+    case 'ordinaryAllocate':case 'collectionAllocate':return [instruction.destination,instruction.prototype];
+    case 'collectionCopy':return [instruction.destination,instruction.target,instruction.input,instruction.adder,instruction.iteratorKey,instruction.iteratorMethod,instruction.iteratorPrototype,instruction.nextMethod];
     case 'ordinaryDataProperty':return [instruction.destination,instruction.object,instruction.key,instruction.value];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
     case 'propertyKey':return [instruction.destination,instruction.input];

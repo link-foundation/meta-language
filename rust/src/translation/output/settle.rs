@@ -110,7 +110,7 @@ pub(super) fn aborts(e: &Expr) -> bool {
 /// computed on its representation. The result keeps its source type, whose
 /// Lean and Rocq representation is the same.
 pub(super) fn total(e: Expr) -> Expr {
-    let Expr { node, ty, span } = e;
+    let Expr { node, ty, span, source_position } = e;
     let (node, ty) = match node {
         Node::Cast {
             arg,
@@ -171,7 +171,7 @@ pub(super) fn total(e: Expr) -> Expr {
         }
         other => (other, ty),
     };
-    Expr { node, ty, span }
+    Expr { node, ty, span, source_position }
 }
 
 /// True when the node is an operation `total` rewrites.

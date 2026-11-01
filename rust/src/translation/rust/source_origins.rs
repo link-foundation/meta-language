@@ -29,6 +29,7 @@ use crate::translation::rust_pointer_integer_owner_rules::{
 };
 
 mod callable_owners;
+mod mutable_record_loans;
 mod nominal_copies;
 mod owned_bindings;
 mod patterns;
@@ -383,11 +384,14 @@ pub(super) struct SourceOrigins {
     pub(super) owned_container_source_enabled: bool,
     pub(super) borrowed_vector_source_enabled: bool,
     pub(super) borrowed_vector_needs_final_admission: bool,
+    pub(super) source_position_materialized_nodes: usize,
+    pub(super) source_position_materialized_units: usize,
     pub(super) owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget,
     source_binding_states: HashMap<String, String>,
     next_source_binding_identity: usize,
     owned_argument_transfers: HashSet<Span>,
     source_temporary_bindings: HashSet<String>,
+    mutable_record_loans:super::mutable_record_loans::MutableRecordLoans,
     pub(super) collecting: bool,
     pub(super) catalog: HashMap<String, SourceDeclaration>,
     pub(super) nominal_copy_derivations: HashMap<String, nominal_copies::NominalCopyDerivation>,
@@ -442,11 +446,14 @@ impl SourceOrigins {
             owned_container_source_enabled: false,
             borrowed_vector_source_enabled: false,
             borrowed_vector_needs_final_admission: false,
+            source_position_materialized_nodes: 0,
+            source_position_materialized_units: 0,
             owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget::default(),
             source_binding_states: HashMap::new(),
             next_source_binding_identity: 0,
             owned_argument_transfers: HashSet::new(),
             source_temporary_bindings: HashSet::new(),
+            mutable_record_loans:super::mutable_record_loans::MutableRecordLoans::default(),
             catalog: catalog.unwrap_or_default(),
             unit_clone_facts: HashMap::new(),
             nominal_copy_derivations: HashMap::new(),
@@ -1443,6 +1450,7 @@ impl SourceOrigins {
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_value_borrow_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&super::copy_closure_lifetimes::value_borrows(&origin),&crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&crate::translation::rust_owned_binding_rules::project_rust_owned_loan_bindings(origin.source_binding_identity.as_deref().unwrap_or(""),&origin.source_loan_binding_identities),&crate::translation::rust_owned_binding_rules::project_rust_owned_loan_bindings(origin.source_place_binding_identity.as_deref().unwrap_or(""),&origin.source_place_loan_binding_identities)));}
         origin.wrappers.insert(0, layer.to_owned());
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_lifetimes.insert(0,None);}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin=self.capture_mutable_record_value_loans(origin,node.span)?;}
         self.mark(node, origin);
         Ok(())
     }
@@ -1602,6 +1610,7 @@ impl SourceOrigins {
         if actual.diverging {
             return Ok(());
         }
+        let static_region=crate::translation::rust_borrowed_vector_rules::read_rust_borrowed_vector_static_reference_error(self.borrowed_vector_source_enabled,&expected.wrappers,&expected.source_lifetimes.iter().map(|value|value.clone().unwrap_or_default()).collect::<Vec<_>>());if !static_region.is_empty(){return Err(unsupported("Rust borrowed vector source",&static_region,span));}
         self.validate_borrowed_vector_argument(actual,expected,span)?;
         if crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_argument_read_check(actual.wrappers.len() as f64,transferred) {
             self.check_owned_origin(actual, span)?;

@@ -1399,7 +1399,8 @@ node js/scripts/draft-rust-baseline-complete-source.mjs --draft
 Do not invoke it during the current source-edit-only phase. It starts separate
 Node processes for class-owner schema/source-profile publication, shared
 classifier regeneration and baseline source libraries, followed by Error source
-kernels, the module-initialization machine, JavaScript call-machine and
+kernels and standard collection-call compilation, the module-initialization
+machine, JavaScript call-machine and
 call-source libraries, exact Error
 declarations, and supplied Error-module composition. A final process publishes
 the complete source catalog and packaged assets after these products exist.
@@ -1415,7 +1416,9 @@ proposition-comparison expression bridge. The original class-only extension
 remains independently available; the successor composes both extensions.
 The same pending successor registers an optional recursive array element
 source-position edge. Its signature profile controls admission independently;
-historical source-signature profiles retain their original field sets. Child
+historical source-signature profiles retain their original field sets. The pending schema also carries body expression source positions; source-free
+binder/region validation is a separate mandatory consumer, not a claim made
+by the facet itself. Child
 type records participate in ordinary owned datatype references when encoding
 Links, rather than retaining a detached nominal name.
 

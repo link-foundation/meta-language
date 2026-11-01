@@ -7,6 +7,7 @@ import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {readRustOwnedRecordPlaceBase} from './rust-owned-record-places.js';
 import {readRustOwnedRecordPlaceDepthLimit} from './rust-owned-record-place-rules.js';
 import {readRustOwnedBoxRecordOwner} from './rust-owned-containers.js';
+import {readRustBorrowedVectorMutationError} from './rust-borrowed-vector-rules.js';
 export function acceptRustOwnedRecordProjectionName(parser,node,path){
  if(node.k!=='name'||node.path.length!==1||!parser.cursor.is('.')||parser.cursor.is('(',2))return false;
  const origin=parser.origins.scope.get(node.path[0]),owner=origin?.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,record=owner?parser.namedRecords.get(owner.fullName):null;
@@ -61,6 +62,7 @@ export function createRustOwnedRecordUpdateOrigin(parser,record,entries,base,pos
  }finally{table.scope=previous;}
 }
 export function readRustOwnedRecordUpdateBase(parser,path){
+ const mutation=readRustBorrowedVectorMutationError(parser.origins.borrowedVectorSourceEnabled===true);if(mutation){const token=parser.cursor.peek();throw unsupported('Rust borrowed vector source',mutation,{start:token.start,end:token.end});}
  const place=readRustOwnedRecordPlaceBase(parser,path);if(place)return place;
  const c=parser.cursor,token=c.peek(),origin=parser.origins.scope.get(token.value);
  // A simple place base is not a whole-value read: only omitted fields move.

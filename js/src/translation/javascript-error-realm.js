@@ -5,10 +5,15 @@
 import {createJavaScriptPropertyDescriptor} from './javascript-property-descriptors.js';
 import {planJavaScriptOrdinaryGet,planJavaScriptOrdinarySet,readJavaScriptOrdinaryValueError} from './javascript-ordinary-heap.js';
 import {prepareJavaScriptErrorModule,prepareJavaScriptInitializedErrorModule} from './javascript-error-module.js';
-import {types as nativeTypes} from 'node:util';
+import {types as nativeTypes,isDeepStrictEqual} from 'node:util';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
 import {validateJavaScriptErrorClassModule} from './javascript-error-classes.js';
 import {readSourceLibraryErrorDeclarationWitness} from './javascript-error-closure-source.js';
+import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordinary-class-closure-source.js';
+import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
+import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
+import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
+import {readJavaScriptCallProgramError} from './javascript-call-machine.js';
 
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
 const string=units=>{let result='';for(const unit of units)result+=String.fromCharCode(unit);return result;};
@@ -20,17 +25,20 @@ const string=units=>{let result='';for(const unit of units)result+=String.fromCh
  * execution path. Modified prototypes, proxies and reflection on VM ordinary
  * objects require successor host protocols and are refused here. */
 export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1n,declarationWitness=null,deferModule=false}){
- capture=validateJavaScriptErrorClassModule(capture);
- const declarationOwners=declarationWitness===null?null:readSourceLibraryErrorDeclarationWitness(capture,declarationWitness);
+ const ordinaryClasses=capture.model==='actual closed source classes 1';
+ const sourceFunctions=capture.model==='actual project data source functions 1'||ordinaryClasses;
+ capture=sourceFunctions?checkJavaScriptProjectDataSource(capture):validateJavaScriptErrorClassModule(capture);
+ if(sourceFunctions&&(!deferModule||!ordinaryClasses&&declarationWitness!==null))throw new TypeError('source capabilities must be bound before source entry publication');
+ const declarationOwners=declarationWitness===null?null:ordinaryClasses?readJavaScriptOrdinaryClassDeclarationWitness(capture,declarationWitness):readSourceLibraryErrorDeclarationWitness(capture,declarationWitness);
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
  let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[]};
- const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map();
+ const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
  const allocate=()=>{while(heap.objects.some(row=>row.identity===next)||heap.symbols.includes(next))next+=1n;if(next>18446744073709551615n)throw new RangeError('the authoritative global identity allocator exhausted unsigned64 identities');return next++;};
  const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0)};};
  function encode(value){
   if(value===undefined)return {$:'undefined'};if(value===null)return {$:'null'};
-  if(typeof value==='string')return text(value);if(typeof value==='boolean')return {$:'boolean',value};if(typeof value==='number')return {$:'number',value};if(typeof value==='bigint')return {$:'integer',value};
+  if(typeof value==='string')return sourceFunctions&&value.length>1048576?constructJavaScriptSourceText(value):text(value);if(typeof value==='boolean')return {$:'boolean',value};if(typeof value==='number')return {$:'number',value};if(typeof value==='bigint')return {$:'integer',value};
   if(forward.has(value)){const id=forward.get(value);return typeof value==='symbol'?{$:'symbol',identity:id}:{$:'object',identity:id,callable:typeof value==='function'};}
   if(typeof value==='symbol'){const id=allocate();forward.set(value,id);reverse.set(id,value);heap.symbols.push(id);sorted();return {$:'symbol',identity:id};}
   if(typeof value!=='object'&&typeof value!=='function')throw new TypeError('unmodeled host semantic value');
@@ -46,10 +54,10 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   return {$:'object',identity:id,callable:typeof value==='function'};
  }
  function decode(value){
-  if(value.$==='undefined')return undefined;if(value.$==='null')return null;if(value.$==='text')return string(value.units);
+  if(value.$==='undefined')return undefined;if(value.$==='null')return null;if(value.$==='text')return string(value.units);if(value.$==='sourceText')return value.text;
   if(['number','integer','boolean'].includes(value.$))return value.value;
   if(value.$==='object'&&value.callable){
-   if(intrinsics.has(value.identity))return reverse.get(value.identity);
+   if(intrinsics.has(value.identity)||capabilityOwners.has(value.identity))return reverse.get(value.identity);
    if(vmProxies.has(value.identity))return vmProxies.get(value.identity);
    const handle=function representedSourceCallable(){return refuse('an engine callback needs a portable source-call continuation; original bodies are never a host fallback');};
    if(sourceNames.has(value.identity))Object.defineProperty(handle,'name',{value:sourceNames.get(value.identity),configurable:true,enumerable:false,writable:false});
@@ -89,7 +97,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  }
  const owners=[],declarations=[];
  for(const definition of capture.plan.functions){
-  const supplied=Reflect.getOwnPropertyDescriptor(definitions,definition.name),actual=supplied&&Object.hasOwn(supplied,'value')?supplied.value:null,origin=capture.origins.find(row=>row.identity===definition.identity);
+  const supplied=Reflect.getOwnPropertyDescriptor(definitions,ordinaryClasses?String(definition.identity):definition.name),actual=supplied&&Object.hasOwn(supplied,'value')?supplied.value:null,origin=capture.origins.find(row=>row.identity===definition.identity);
   if(typeof actual!=='function'||!origin||Function.prototype.toString.call(actual)!==capture.source.slice(origin.start,origin.end))throw new TypeError('each callable must retain its exact actual captured declaration text');
   const name=declarationOwners===null?definition.name:declarationOwners.find(row=>row.identity===definition.identity&&row.compiledName===definition.name)?.originalName;
   const descriptor=Reflect.getOwnPropertyDescriptor(actual,'name');
@@ -105,7 +113,8 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(definition.$==='errorConstructorPlan'){
    const base=bases.get(definition.baseClass);
    owners.push({$:'errorConstructorOwner',source:definition.identity,identity:callable.identity,realm:identity,prototype:encode(actual.prototype),baseConstructor:encode(base),baseRealm:identity});
-  }else owners.push({$:'errorFunctionOwner',source:definition.identity,identity:callable.identity,realm:identity});
+  }else if(definition.$==='errorOrdinaryConstructorPlan')owners.push({$:'ordinaryConstructorOwner',source:definition.identity,identity:callable.identity,realm:identity,prototype:encode(actual.prototype)});
+  else owners.push({$:'errorFunctionOwner',source:definition.identity,identity:callable.identity,realm:identity});
  }
  const registry={$:'errorModuleRegistry',owners,operations:[{$:'errorRealmOperations',realm:identity,objectPrototype:encode(realm.objectPrototype),get:primitiveGet,assign}],intrinsics:[...intrinsics.keys()].map(id=>({$:'errorIntrinsicOwner',identity:id,realm:identity})),realms:[identity],exoticKey:encode(realm.toPrimitive)};
  let module=deferModule?null:prepareJavaScriptErrorModule(capture,registry);
@@ -117,14 +126,72 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const id=allocate();forward.set(value,id);reverse.set(id,value);hostOwned.add(id);
   const prototype=encode(Reflect.getPrototypeOf(value));heap.objects.push({$:'hostErrorObject',identity:id,prototype,extensible:Reflect.isExtensible(value),callable:false,properties:[],hostGet,hostSet});sorted();return {$:'object',identity:id,callable:false};
  }
+ function registerCapability(source,value,{operation,owner,verify,invoke}){
+  if(typeof source!=='string'||!source||typeof operation!=='string'||!operation||typeof owner!=='string'||!owner||typeof value!=='function'||typeof verify!=='function'||typeof invoke!=='function')throw new TypeError('a capability requires independent actual callable, qualification and verification authority');
+  verify();const semantic=encode(value),previous=capabilityOwners.get(semantic.identity);
+  if(previous&&(previous.value!==value||previous.operation!==operation||previous.owner!==owner||previous.verify!==verify||previous.invoke!==invoke))throw new TypeError('one actual callable cannot acquire conflicting capability authority');
+  capabilityOwners.set(semantic.identity,{value,operation,owner,verify,invoke});hostOwned.add(semantic.identity);
+  return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:true};
+ }
+ const opaqueGetCapability=sourceFunctions?registerCapability('internal:opaque-get',function sourceOpaqueGet(){},{operation:'opaque property get',owner:'actual registered live host objects 1',verify(){},invoke(receiver,args){return Reflect.get(receiver,args[0],args[1]);}}):null;
+ const opaqueSetCapability=sourceFunctions?registerCapability('internal:opaque-set',function sourceOpaqueSet(){},{operation:'opaque property set',owner:'actual registered live host objects 1',verify(){},invoke(receiver,args){return Reflect.set(receiver,args[0],args[1],args[2]);}}):null;
+ const capabilityValue=owner=>({$:'object',identity:owner.identity,callable:owner.callable});
+ function encodeOpaqueHost(value,kind,verify){
+  if(!opaqueGetCapability||!opaqueSetCapability||!['hostURLObject','hostArrayObject','hostByteBufferObject'].includes(kind)||typeof verify!=='function')throw new TypeError('opaque host values require their explicit registered native object kind');
+  verify(value);if(forward.has(value)){const id=forward.get(value),row=heap.objects.find(row=>row.identity===id);if(row?.$!==kind||opaqueOwners.get(id)?.value!==value)throw new TypeError('an opaque native value cannot retag an existing ordinary or Error identity');return {$:'object',identity:id,callable:false};}
+  const id=allocate();forward.set(value,id);reverse.set(id,value);hostOwned.add(id);const prototype=encode(Reflect.getPrototypeOf(value));
+  heap.objects.push({$:kind,identity:id,prototype,extensible:Reflect.isExtensible(value),callable:false,properties:[],hostGet:capabilityValue(opaqueGetCapability),hostSet:capabilityValue(opaqueSetCapability)});opaqueOwners.set(id,{value,kind,verify,prototype});sorted();return {$:'object',identity:id,callable:false};
+ }
+ function verifyOpaqueHeap(){for(const [id,owner]of opaqueOwners){const row=heap.objects.find(row=>row.identity===id);owner.verify(owner.value);if(row?.$!==owner.kind||row.callable||row.prototype.$!==owner.prototype.$||(row.prototype.$==='object'&&row.prototype.identity!==owner.prototype.identity)||row.properties.length!==0||row.hostGet?.identity!==opaqueGetCapability.identity||row.hostSet?.identity!==opaqueSetCapability.identity)refuse('an archived heap cannot replace an actual opaque host object or its native property authority');}}
+ function materializeData(value,memo=new Map()){
+  if(value.$!=='object')return decode(value);
+  if(value.callable)return refuse('plain data materialization cannot execute a represented callable');
+  if(opaqueOwners.has(value.identity)){const owner=opaqueOwners.get(value.identity);owner.verify(owner.value);return owner.value;}
+  if(memo.has(value.identity))return memo.get(value.identity);
+  const row=heap.objects.find(row=>row.identity===value.identity),prototype=encode(realm.objectPrototype);
+  if(!row||row.$!=='ordinaryObject'||(row.prototype.$!=='null'&&(row.prototype.$!=='object'||row.prototype.identity!==prototype.identity)))return refuse('data materialization requires actual plain ordinary records or registered native data');
+  const result=Object.create(row.prototype.$==='null'?null:realm.objectPrototype);memo.set(value.identity,result);
+  for(const property of row.properties){const descriptor=property.descriptor;if(descriptor.getterPresent||descriptor.setterPresent||!descriptor.valuePresent)return refuse('plain data materialization cannot bypass an accessor continuation');Object.defineProperty(result,decode(property.key),{value:materializeData(descriptor.value,memo),writable:descriptor.writable,enumerable:descriptor.enumerable,configurable:descriptor.configurable});}return result;
+ }
+ function finishSourceCapabilities(capabilities,bindings){
+  if(!sourceFunctions||module!==null)throw new TypeError('source function capability publication requires its actual unpublished source module');
+  const compiled=compileJavaScriptErrorModulePlanWithCapabilities(capture.plan,registry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);
+  const functions=[...compiled.program.functions];for(const fn of portableFunctions.values()){const previous=functions.find(row=>row.identity===fn.identity);if(previous&&!isDeepStrictEqual(previous,fn))throw new TypeError('portable operation frames cannot replace an actual source implementation');if(!previous)functions.push(fn);}
+  module={capture,registry,program:{...compiled.program,functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},sourceProgram:compiled.program,sourceUnits:[],bindings,capabilities};return module;
+ }
+ function registerPortableProgram(program){
+  if(!sourceFunctions||module!==null)throw new TypeError('portable operation frames must be linked before source publication');
+  if(!isDeepStrictEqual(program.realms,registry.realms)||!testJavaScriptSemanticSameValue(program.exoticKey,registry.exoticKey))throw new TypeError('portable operation frames require the same actual source realm and primitive conversion Symbol');
+  const invalid=readJavaScriptCallProgramError(program,heap);if(invalid)throw new TypeError(invalid);
+  for(const fn of program.functions){const previous=portableFunctions.get(fn.identity);if(previous&&!isDeepStrictEqual(previous,fn))throw new TypeError('one actual operation identity cannot acquire conflicting portable implementations');portableFunctions.set(fn.identity,fn);}
+ }
+ function attachSourceUnit(input,definitions,capabilities,bindings=[]){
+  if(!sourceFunctions||module===null)throw new TypeError('a supplied source unit requires its already published actual source realm');
+  const actual=checkJavaScriptProjectDataSource(input),owners=[];
+  for(const definition of actual.plan.functions){
+   const origin=actual.origins.find(row=>row.identity===definition.identity),descriptor=Reflect.getOwnPropertyDescriptor(definitions,definition.name),value=descriptor?.value;
+   if(definition.$!=='errorStatementFunctionPlan'||!origin||typeof value!=='function'||Function.prototype.toString.call(value)!==actual.source.slice(origin.start,origin.end)||Reflect.getOwnPropertyDescriptor(value,'name')?.value!==definition.name)throw new TypeError('an additional source unit needs its exact owned ordinary declarations');
+   const semantic=encode(value);if(sourceNames.has(semantic.identity))throw new TypeError('an additional source unit cannot replace an existing declaration owner');sourceNames.set(semantic.identity,definition.name);owners.push({$:'errorFunctionOwner',source:definition.identity,identity:semantic.identity,realm:identity});
+  }
+  const unitRegistry={...registry,owners},compiled=compileJavaScriptErrorModulePlanWithCapabilities(actual.plan,unitRegistry,bindings,capabilities);if(compiled.error)throw new TypeError(compiled.error);
+  const functions=[...module.program.functions];
+  for(const fn of compiled.program.functions){const previous=functions.find(row=>row.identity===fn.identity);if(previous){if(!isDeepStrictEqual(previous,fn))throw new TypeError('supplied source units must agree on every shared actual callable implementation');}else functions.push(fn);}
+  const unit={capture:actual,registry:unitRegistry,bindings,capabilities,sourceProgram:compiled.program},program={...module.program,functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};module={...module,program,sourceUnits:[...module.sourceUnits,unit]};
+  return {...unit,program};
+ }
  const authority={perform(request){
   heap=request.machine.heap;
+  const qualified=request.$==='machineInvokeHostCapability'?capabilityOwners.get(request.callee.identity):null;
+  if(request.$==='machineInvokeHostCapability'){if(!qualified)refuse('the requested operation lacks independently registered host capability authority');qualified.verify();}
+  verifyOpaqueHeap();
   // The independent allocator skips actual occupied identities. A sparse high
   // identity never establishes that every smaller identity has been consumed.
   try{
    if(request.realm!==identity)return refuse('the request belongs to a different actual host realm');
    let result;
-   if(request.$==='machineInvokeErrorIntrinsic'){
+   if(request.$==='machineInvokeHostCapability'){
+    result=qualified.invoke(decode(request.receiver),request.arguments.map(decode),request.arguments);
+   }else if(request.$==='machineInvokeErrorIntrinsic'){
     const invoke=intrinsics.get(request.callee.identity);if(!invoke)return refuse('the requested callable is not a registered actual Error host operation');
     result=invoke(decode(request.receiver),request.arguments.map(decode));
    }else{
@@ -141,7 +208,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
     else result=Reflect.construct(base,[request.reason]);
     const value=opaque(result);return {heap,value,abrupt:false};
    }
-   const value=encode(result);return {heap,value,abrupt:false};
+   const value=nativeTypes.isNativeError(result)?opaque(result):encode(result);return {heap,value,abrupt:false};
   }catch(error){
    if(refusals.has(error))throw error;
    // Genuine engine exceptions retain their original live objects. Authority
@@ -150,6 +217,11 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,
+  refuseCapability:refuse,
+  sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
+  capabilityReference(source,value,{operation,owner}){const semantic=encode(value);if(semantic.$!=='object')throw new TypeError('a capability reference requires its actual native namespace or source callable identity');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:semantic.callable,executable:false};},
+  opaqueCapabilities:()=>opaqueGetCapability&&opaqueSetCapability?[opaqueGetCapability,opaqueSetCapability]:[],
   encodeHostError(value){if(!nativeTypes.isNativeError(value))throw new TypeError('an IO Error result requires actual engine Error authority');return opaque(value);},
   finishModuleInitialization(state){if(module!==null)throw new TypeError('actual source module initialization is completed exactly once');for(const slot of state.slots){const error=readJavaScriptOrdinaryValueError(heap,slot.value);if(error)throw new TypeError(error);}module=prepareJavaScriptInitializedErrorModule(capture,registry,state);return module;}
  };

@@ -30,12 +30,13 @@ test('the pending complete successor includes proposition values without changin
  const before={...source(),expressionFields:{bool:['k','value','type']},expressionOperands:{bool:[]},expressionOperations:{},expressionProjections:{bool:{construct:'bool',fields:[]}}};
  const saved=structuredClone(before),after=extendCurrentTypedProgramSourceSchema(before);
  assert.deepEqual(before,saved);
- assert.deepEqual(after.expressionFields,{bool:['k','value','type'],propositionValue:['k','op','left','right','domain','sameValue','type','span']});
+ assert.deepEqual(after.expressionFields,{bool:['k','value','type','sourcePosition'],propositionValue:['k','op','left','right','domain','sameValue','type','span','sourcePosition']});
  assert.deepEqual(after.expressionOperands,{bool:[],propositionValue:['left','right']});
  assert.deepEqual(after.expressionOperations,{propositionValue:['eq','ne','lt','le','gt','ge']});
  assert.deepEqual(after.expressionProjections,{bool:{construct:'bool',fields:[]},propositionValue:{construct:'propositionValue',fields:[['prop','proposition-comparison','left']]}});
  assert.equal(after.references.classConstructor,'source class constructor reference');
  assert.equal(after.fields.arrayElementPosition,'array element source position');
+ assert.equal(after.fields.sourcePosition,'source expression position');
  assert.deepEqual(extendCurrentTypedProgramSourceSchema(after),after);
  const conflicting={...saved,expressionOperands:{...saved.expressionOperands,propositionValue:['right','left']}};
  const snapshot=structuredClone(conflicting);assert.throws(()=>extendCurrentTypedProgramSourceSchema(conflicting),TypeError);assert.deepEqual(conflicting,snapshot);

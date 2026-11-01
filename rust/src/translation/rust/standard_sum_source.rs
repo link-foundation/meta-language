@@ -127,7 +127,7 @@ impl SourceOrigins {
         Some(SourceOwner{kind:owner.kind.clone(),path:owner.path.clone(),arguments})
     }
 
-    fn standard_sum_qualified_position(&self,position:&SourceTypeSignature,path:&[String],depth:usize)->Option<Box<SourceTypeSignature>>{
+    pub(super) fn standard_sum_qualified_position(&self,position:&SourceTypeSignature,path:&[String],depth:usize)->Option<Box<SourceTypeSignature>>{
         if depth>128{return None;}let ty=self.standard_sum_qualified_type(&position.ty,path)?;
         let mut context=SourceOrigin::unknown();context.ty=Some(ty.clone());context.path=path.to_vec();context.wrappers=position.wrappers.clone();context.source_owner=Some(position.owner.clone());context.array_element_position=position.array_element_position.clone();
         let owner=self.standard_sum_qualified_owner(&position.owner,&ty,path,&context,0)?;

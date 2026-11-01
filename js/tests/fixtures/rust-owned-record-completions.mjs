@@ -10,6 +10,9 @@ export const rustOwnedRecordCompletionDecisions=[
  {operation:'readRustOrdinaryCompletionSnapshotError',arguments:[99999,1,16777215,1],expected:''},
  {operation:'readRustOrdinaryCompletionSnapshotError',arguments:[100000,1,0,0],expected:'the actual completion exit snapshots exceed their finite source budget'},
  {operation:'readRustOrdinaryCompletionSnapshotError',arguments:[0,0,16777216,1],expected:'the actual completion exit snapshots exceed their finite source budget'},
+ {operation:'testRustOrdinaryCompletionTransferredResult',arguments:[[]],expected:false},
+ {operation:'testRustOrdinaryCompletionTransferredResult',arguments:[[true]],expected:true},
+ {operation:'testRustOrdinaryCompletionTransferredResult',arguments:[[true,false]],expected:false},
 ];
 export const rustOwnedRecordCompletionOriginals=[
  {name:'returning branch publishes its result without moving the continuing root',sourceVersionRange,stdout:'early\nlate\n',source:record+'fn choose(flag:bool)->Record{'+initial+'if flag{value.text=String::from("early");return value;}value.text=String::from("late");value}fn main(){let early=choose(true);let late=choose(false);println!("{}",early.text);println!("{}",late.text);}'},

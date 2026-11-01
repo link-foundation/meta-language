@@ -42,6 +42,17 @@ pub struct SourceTypeSignature {
     pub array_element_position: Option<Box<Self>>,
 }
 
+/// An owned expression decorator for the selected borrowed-vector source model.
+/// Actual lexical binder links supply regions; runtime identities never persist.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RustSourceExpressionPosition {
+    /// Explicit bounded source interpretation, independent of header-only models.
+    pub model: String,
+    /// Complete parsed source position of this actual value expression.
+    pub position: SourceTypeSignature,
+}
+
 /// A source function signature, owned by its checked declaration.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -69,6 +80,16 @@ pub(crate) fn resolve_source_position(position:&mut SourceTypeSignature,resolve:
         current.ty=resolve(&current.ty)?;
         match current.array_element_position.as_deref_mut(){Some(child)=>{current=child;depth+=1;},None=>return Ok(())}
     }
+}
+
+/// Check a borrowed TYPE position without cloning it before recursive bounds.
+/// Enclosing source lifetime scope is validated separately by the body proof.
+pub(crate) fn validate_source_position_with_bindings<'data>(position:&SourceTypeSignature,expected:&Type,language:&str,bindings:Vec<String>,mut resolve_type:impl FnMut(&Type)->Result<Type>,mut resolve_data:impl FnMut(&Type)->Option<&'data DataDecl>)->Result<SourceTypeSignature>{
+    if language!="Rust"{return Err(fail("a borrowed expression source position requires Rust source"));}
+    let signature=SourceSignature{model:"Rust source function signature 3".into(),language:language.into(),parameters:Vec::new(),result:SourceTypeSignature{ty:Type::Unit,wrappers:Vec::new(),lifetimes:Vec::new(),owner:SourceOwner{kind:"unit".into(),path:Vec::new(),arguments:Vec::new()},array_element_position:None},lifetime_bindings:bindings};
+    if signature.lifetime_bindings.iter().any(|name|!accept_rust_source_lifetime_binding(name,false,false)){return Err(fail("a borrowed expression source position has an invalid lifetime name"));}
+    {let mut validation=SignatureValidation{signature:&signature,resolve_type:&mut resolve_type,resolve_data:&mut resolve_data,visits:0};validation.position(position,expected,0)?;}
+    let mut checked=position.clone();resolve_source_position(&mut checked,&mut resolve_type)?;Ok(checked)
 }
 
 struct SignatureValidation<'data,'call> {

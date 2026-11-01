@@ -6,9 +6,11 @@ import {assignRustCopyClosureLexicalBinding,readRustCopyClosureValueBorrows,carr
 import {readRustNominalOwnershipFacts,projectRustNominalPatternField,prepareRustNominalPatternTransfers,acceptRustNominalVectorElement} from './rust-nominal-ownership.js';
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
+import {captureRustMutableRecordValueLoans,restoreRustMutableRecordLoanIndex} from './rust-mutable-record-loans.js';
 import {finishRustOwnedBoxDereference,reserveRustOwnedContainerCopies} from './rust-owned-containers.js';
 import {captureRustOwnedVectorConstructor,isRustOwnedVectorProducedValue} from './rust-owned-vectors.js';
 import {validateRustBorrowedVectorArgument,captureRustBorrowedVectorConstructor,isRustBorrowedVectorSourceOrigin,isRustBorrowedVectorProducedValue,markRustBorrowedVectorCallResult,validateRustBorrowedVectorCallRegions} from './rust-borrowed-vectors.js';
+import {readRustBorrowedVectorStaticReferenceError} from './rust-borrowed-vector-rules.js';
 import {acceptRustOwnedArgumentReadCheck} from './rust-owned-recursive-datatype-rules.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {readRustStandardSumGuardBindingDisposition,readRustStandardSumGuardAlternativeBindingError,readRustStandardSumGuardAliasTransferError} from './rust-standard-sum-guard-rules.js';
@@ -68,6 +70,7 @@ export class RustSourceOrigins {
     this.ownedContainerSourceEnabled=false;
     this.borrowedVectorSourceEnabled=false;
     this.borrowedVectorNeedsFinalAdmission=false;
+    this.sourcePositionMaterializedNodes=0;this.sourcePositionMaterializedUnits=0;
     this.ownedContainerMaterializedNodes=0;this.ownedContainerMaterializedUnits=0;
     this.scope = new Map();
     this.sourceTemporaryBindings=new Set();this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
@@ -93,7 +96,7 @@ export class RustSourceOrigins {
   prepareOwnedArgument(node,parameter,path){if(!parameter||!isRustOwnedBindingValue(this,parameter))return;const actual=this.origin(node,path);if(consumeRustOwnedOrigin(this,actual,node.span))this.ownedArgumentTransfers.add(node);}
   expireOwnedBindings(before,result,retainedRegions=[]){expireRustOwnedBindings(this,before,result,retainedRegions);}
   snapshotOwnedBindings(){return new Map(this.sourceBindingStates);}
-  restoreOwnedBindings(snapshot){this.sourceBindingStates=new Map(snapshot);}
+  restoreOwnedBindings(snapshot){this.sourceBindingStates=new Map(snapshot);restoreRustMutableRecordLoanIndex(this);}
   joinOwnedBindings(left,right,leftReturns,rightReturns){joinRustOwnedBindings(this,left,right,leftReturns,rightReturns);}
   checkOwnedGuard(snapshot,span){checkRustOwnedGuard(this,snapshot,span);}
   availableOwnedBinding(origin){return availableRustOwnedOrigin(this,origin);}
@@ -399,7 +402,7 @@ export class RustSourceOrigins {
     if(testRustSourceReferenceLifetimeLayer(layer)){if(origin.sourcePlaceBindingIdentity!=null)origin.sourceBindingIdentity=origin.sourcePlaceBindingIdentity;origin.sourceLoanBindingIdentities=mergeRustOwnedLoanBindings(origin.sourceLoanBindingIdentities??[],origin.sourcePlaceLoanBindingIdentities??[]);}
     if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceValueBorrowBindings=mergeRustOwnedLoanBindings(readRustCopyClosureValueBorrows(origin),mergeRustOwnedLoanBindings(projectRustOwnedLoanBindings(origin.sourceBindingIdentity??'',origin.sourceLoanBindingIdentities??[]),projectRustOwnedLoanBindings(origin.sourcePlaceBindingIdentity??'',origin.sourcePlaceLoanBindingIdentities??[])));
     origin.wrappers.unshift(layer);if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceLifetimes=[null,...(origin.sourceLifetimes??[])];
-    return this.mark(node, origin);
+    return this.mark(node, testRustSourceReferenceLifetimeLayer(layer)?captureRustMutableRecordValueLoans(this,origin,node.span):origin);
   }
 
   dereference(node, path, span) {
@@ -442,6 +445,7 @@ export class RustSourceOrigins {
   argument(actualOrigin, expectedOrigin, span,transferred=false) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    const staticRegion=readRustBorrowedVectorStaticReferenceError(this.borrowedVectorSourceEnabled,expectedOrigin.wrappers,(expectedOrigin.sourceLifetimes??[]).map(value=>value??''));if(staticRegion)throw unsupported('Rust borrowed vector source',staticRegion,span);
     validateRustBorrowedVectorArgument(this,actualOrigin,expectedOrigin,span);
     if(acceptRustOwnedArgumentReadCheck(actualOrigin.wrappers.length,transferred))checkRustOwnedOrigin(this,actualOrigin,span);
     this.pointerIntegerArgument(actualOrigin,expectedOrigin,span);

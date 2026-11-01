@@ -1,0 +1,137 @@
+// Actual checked AST and lexical binder transport into shared source decisions.
+// Region numbers below are local proof coordinates, never archived runtime IDs.
+import {typeError,unsupported} from './diagnostics.js';
+import {readFormalDatatypeConstructiveProfiles} from './callable-data.js';
+import {readRustBorrowedExpressionLifetimeScopeError,readRustBorrowedVectorObservationError,planRustBorrowedVectorResultParameters} from './rust-borrowed-vector-rules.js';
+import * as rules from './rust-borrowed-source-region-rules.js';
+import {measureRustSourcePositionMetadata} from './rust-standard-sum-source-metadata.js';
+import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
+const model='Rust source function signature 3';
+const references=position=>position?.wrappers.filter(value=>value==='reference').length??0;
+// Compare actual owner records structurally, independent of JSON key order.
+// Facet shape checking bounds these trees before the body visitor is entered.
+const sameOwnerRecord=(left,right)=>Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((part,index)=>part===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((part,index)=>sameOwnerRecord(part,right.arguments[index]));
+const sameOwner=(left,right)=>Boolean(left&&right)&&sameOwnerRecord(left.owner,right.owner)&&Boolean(left.arrayElementPosition)===Boolean(right.arrayElementPosition)&&(!left.arrayElementPosition||(left.arrayElementPosition.wrappers.join('/')===right.arrayElementPosition.wrappers.join('/')&&sameOwner(left.arrayElementPosition,right.arrayElementPosition)));
+const inner=position=>!position?null:position.wrappers[0]==='reference'?{...position,wrappers:position.wrappers.slice(1),lifetimes:position.lifetimes.slice(1)}:position.wrappers[0]==='box'?{...position,wrappers:position.wrappers.slice(1),owner:position.owner.arguments[0]}:null;
+const role=position=>position?rules.readRustBorrowedSourceValueRole(position.type.kind,String(position.type.bits??''),position.type.signed===true,position.owner.kind,position.owner.path.join('::'),position.owner.arguments.length,position.wrappers,Boolean(position.arrayElementPosition)):'';
+const lifetime=position=>role(position)==='borrowed vector'?position.arrayElementPosition.lifetimes[0]??'':position?.lifetimes?.[0]??'';
+const observationRole=value=>value.position?rules.readRustBorrowedSourceObservationRole(value.role,value.position.type.kind,value.position.owner.kind,value.position.owner.path.join('::'),value.position.owner.arguments.length,value.position.wrappers):value.role;
+// Callee binder names are not caller binder names. Nonstatic parameter regions
+// are instantiated by actual argument loans; static remains an exact demand.
+const callParameter=position=>({...position,lifetimes:position.lifetimes.map(value=>value==='static'?'static':null),...(position.arrayElementPosition?{arrayElementPosition:callParameter(position.arrayElementPosition)}:{})});
+const fail=(message,node)=>{throw unsupported('Rust source binder regions',message,node?.span);};
+
+class SourceRegions{
+ constructor(program){this.program=program;this.states=['available'];this.lifetimes=['static'];this.visits=0;this.loans=0;this.binders=[];this.temporaries=[];this.constraints=new Map();this.closed=new Set();this.positionNodes=0;this.positionUnits=0;this.branchCells=0;this.discovery=true;}
+ branches(addition){const next=rules.reserveRustBorrowedSourceBranches(this.branchCells,addition);if(next<0)fail('source branch snapshots exceed their finite binder profile');this.branchCells=next;}
+ position(p){const cost=measureRustSourcePositionMetadata(p),next=rules.reserveRustBorrowedSourcePosition(this.positionNodes,this.positionUnits,cost[0],cost[1]);if(next.length!==2)fail('source binder position transport exceeds its materialization budget');[this.positionNodes,this.positionUnits]=next;return p;}
+ inner(p){if(!p?.wrappers.length)return null;this.position(p);return inner(p);}
+ budget(depth=0){if(this.discovery)return;const error=rules.readRustBorrowedSourceRegionBudgetError(this.visits,depth,this.states.length,this.loans);if(error)fail(error);}
+ root(life='',temporary=false){const id=this.states.length;this.states.push('available');this.lifetimes.push(life);if(temporary)this.temporaries.push(id);this.budget();return id;}
+ union(values){const found=new Set();for(const value of values)for(const id of value){found.add(id);this.loans+=1;this.budget();}return [...found];}
+ resolved(value){return value.inference!==null&&this.constraints.has(value.inference)?{...value,position:this.constraints.get(value.inference),role:'copy'}:value;}
+ read(value,mode='read',node){value=this.resolved(value);const error=rules.readRustBorrowedSourceReadError(value.root===null?'':this.states[value.root],value.regions.map(id=>this.states[id]));if(error)fail(error,node);const plan=rules.readRustBorrowedSourceUsePlan(value.role,mode);if(plan==='unsupported')fail('the source value needs its independent ownership domain',node);if(plan==='consume'){if(value.root===null&&!value.producer)fail('an owned source value needs an actual producer or available lexical binder',node);if(value.root!==null)this.states[value.root]=rules.consumeRustBorrowedSourceRegion(this.states[value.root]);return {...value,root:null,producer:true};}return value;}
+ value(position,root=null,regions=[],producer=false,inference=null){return {position,root,regions,producer,inference,role:position?role(position):'inferred numeric'};}
+ scope(position,bindings,node){if(!position)return;let current=position;for(let depth=0;current;depth+=1){this.budget(depth);for(const value of current.lifetimes){const error=readRustBorrowedExpressionLifetimeScopeError(value??'',bindings);if(error)throw typeError(error,node?.span);}current=current.arrayElementPosition;}}
+ closedTarget(position,node){
+  let value=this.position(position);while(value?.wrappers.length)value=this.inner(value);if(!value)fail('a borrowed referent needs its complete source position',node);
+  const pending=[value];let visits=0;
+  while(pending.length){const current=pending.pop();if(++visits>100000)fail('the closed referent field graph exceeds its source budget',node);const error=rules.readRustBorrowedSourceTargetFieldError(current.type.kind,current.wrappers,Boolean(current.arrayElementPosition));if(error)fail(error,node);
+   if(current.type.kind==='data'){
+    if(this.closed.has(current.type.name))continue;const declaration=this.program.declarations.get(current.type.name),fields=declaration?.sourceFieldSignatures;
+    if(declaration?.k!=='data'||!fields||fields.model!=='Rust data type field signatures 1')fail('the actual referent datatype needs its complete retained source field inventory',node);
+    readFormalDatatypeConstructiveProfiles(current.type,this.program.declarations);this.closed.add(current.type.name);for(const constructor of fields.ctors)for(const field of constructor.fields)pending.push(this.position(field));
+   }else if(current.type.kind==='array'){
+    if(current.owner.kind!=='library'||current.owner.path.join('::')!=='std::vec::Vec'||current.owner.arguments.length!==1)fail('a referent array needs its actual standard vector owner',node);
+    pending.push(this.position({type:current.type.element,wrappers:[],lifetimes:[],owner:current.owner.arguments[0]}));
+   }
+  }
+ }
+ checkLifetime(value,position,node){const error=rules.readRustBorrowedSourceLifetimeError(lifetime(position),value.regions.map(id=>this.lifetimes[id]));if(error)throw typeError(error,node?.span);}
+ boxReference(value,target){const source=value.position;if(!source||source.wrappers[0]!=='reference'||target.wrappers[0]!=='reference'||source.wrappers.length<=target.wrappers.length)return value;let owner=source.owner,canonical=true;const drop=source.wrappers.length-target.wrappers.length;for(let index=0;index<drop;index+=1){if(!acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length)){canonical=false;break;}owner=owner.arguments[0];}const projected={...source,owner,wrappers:['reference',...source.wrappers.slice(1+drop)]};if(!rules.acceptRustBorrowedSourceBoxReference(source.wrappers,target.wrappers,canonical,sameOwner(projected,target)))return value;return {...value,position:{...this.position(source),owner,wrappers:projected.wrappers}};}
+ adjust(value,position,node){
+  value=this.resolved(value);if(!position)return value;value=this.boxReference(value,position);const wanted=role(position);if(!wanted)fail('the actual expression source position needs a separate value domain',node);
+  let same=sameOwner(value.position,position),targetInner=this.inner(position);
+  if(value.role==='inferred numeric'&&value.inference!==null&&wanted==='reference'&&role(targetInner)==='copy'){this.constraints.set(value.inference,targetInner);value=this.resolved(value);same=sameOwner(value.position,position);}
+  const sourceInner=this.inner(value.position);const plan=rules.readRustBorrowedSourceAdjustment(value.role,wanted,same,sameOwner(value.position,targetInner),sameOwner(sourceInner,position),value.root!==null,node.k==='lit'&&role(targetInner)==='copy',role(sourceInner)==='text',references(value.position),references(position));
+  switch(plan){
+   case 'preserve':case 'project reference':break;
+   case 'constrain primitive':if(value.inference===null)fail('an inferred primitive needs its actual literal dependency',node);this.constraints.set(value.inference,position);value=this.resolved(value);break;
+   case 'borrow':case 'temporary borrow':this.closedTarget(position,node);value=this.read(value,'read',node);value={...value,regions:this.union([value.regions,[value.root??this.root('',true)]]),producer:false};break;
+   case 'static literal':this.closedTarget(position,node);value={...value,regions:[0],producer:false};break;
+   case 'copy referent':value=this.read(value,'read',node);value={...value,root:null,regions:[],producer:false};break;
+   case 'construct box':value=this.read(value,'move',node);value={...value,root:this.root('',true),producer:true};break;
+   case 'copy box payload':value=this.read(value,'read',node);value={...value,root:null,producer:false};break;
+   case 'move box payload':value=this.read(value,'move',node);value={...value,root:this.root('',true),producer:true};break;
+   case 'materialize text':value=this.read(value,'read',node);value={...value,root:this.root('',true),regions:[],producer:true};break;
+   default:fail('the expression qualifier change needs its explicit source operation proof',node);
+  }
+  if(wanted==='reference')this.closedTarget(position,node);
+  if(wanted==='borrowed vector')this.closedTarget(position.arrayElementPosition,node);
+  value={...value,position,role:wanted};this.checkLifetime(value,position,node);return value;
+ }
+ compatible(value,expected,node){value=this.resolved(value);if(!expected)return value;
+  if(value.role==='inferred numeric'&&role(expected)==='copy'){this.constraints.set(value.inference,this.position(expected));value=this.resolved(value);}
+  const same=sameOwner(value.position,expected)&&value.role===role(expected)&&references(value.position)>=references(expected);
+  const error=rules.readRustBorrowedSourcePositionFlowError(value.role,same,lifetime(expected)==='static',value.regions.every(id=>this.lifetimes[id]==='static'));if(error)throw typeError(error,node?.span);this.checkLifetime(value,expected,node);return value;
+ }
+ bind(env,name,value,node){value=this.read(value,'move',node);const id=this.root();this.binders.push(id);env.set(name,{...value,root:id,producer:false});return id;}
+ finishExpression(value,start,node){for(const id of this.temporaries.slice(start))this.states[id]=rules.expireRustBorrowedSourceRegion(this.states[id]);return this.read(value,'read',node);}
+ expression(node,env,bindings,expected=null,depth=0){
+  this.visits+=1;this.budget(depth);const operation=rules.readRustBorrowedSourceOperation(node.k)||rules.readRustBorrowedSourceMatchOperation(node.k);if(!operation)fail('this checked expression needs its actual source binder operation adapter',node);
+  const position=node.sourcePosition?.position??null;this.scope(position,bindings,node);let value;
+  if(operation==='var'){if(!env.has(node.name))fail('the source variable needs its actual lexical binder',node);value=this.read(env.get(node.name),'read',node);}
+  else if(operation==='lit'||operation==='unit'){
+   if(node.type.kind==='string'){const p=this.position({type:node.type,wrappers:['reference'],lifetimes:['static'],owner:{kind:'primitive',path:['str'],arguments:[]}});value=this.value(p,null,[0]);}
+   else value=this.value(null,null,[],false,this.visits);
+  }else if(operation==='let'){
+   const before=this.temporaries.length,initial=this.expression(node.value,env,bindings,null,depth+1),scope=new Map(env),id=this.bind(scope,node.name,initial,node.value);this.finishExpression(scope.get(node.name),before,node.value);
+   value=this.read(this.expression(node.body,scope,bindings,expected,depth+1),'move',node.body);this.states[id]=rules.expireRustBorrowedSourceRegion(this.states[id]);this.read(value,'read',node);
+  }else if(operation==='match'){
+   const scrutinee=this.read(this.expression(node.scrutinee,env,bindings,null,depth+1),'read',node.scrutinee),count=this.states.length;
+   this.branches(2*count);const base=this.states.slice(),outcomes=[],results=[];
+   if(node.cases.length===0)fail('a source match requires its actual inhabited case inventory',node);
+   for(const arm of node.cases){for(let index=0;index<count;index+=1)this.states[index]=base[index];const local=new Map(env),ids=[],pattern=arm.pattern,start=this.temporaries.length;
+    let fields=[];if(pattern.k==='ctor'){const data=this.program.declarations.get(pattern.data),index=data?.ctors.findIndex(ctor=>ctor.name===pattern.ctor)??-1;if(data?.k!=='data'||scrutinee.position?.type.name!==pattern.data||index<0)fail('a source pattern needs its actual nominal constructor identity',node);fields=data.sourceFieldSignatures?.ctors?.[index]?.fields??[];}
+    const error=rules.readRustBorrowedSourceMatchError(scrutinee.role,scrutinee.position?.type.kind??'',pattern.k,fields.length,pattern.binds?.length??0);if(error)fail(error,node);
+    if(pattern.k==='bind')ids.push(this.bind(local,pattern.name,scrutinee,node.scrutinee));
+    if(pattern.k==='ctor')for(let index=0;index<fields.length;index+=1){const name=pattern.binds[index];if(name===null)continue;const field=this.position(fields[index]),projected={...field,wrappers:['reference',...field.wrappers],lifetimes:[scrutinee.position.lifetimes[0]??null,...field.lifetimes]};ids.push(this.bind(local,name,this.value(projected,null,[...scrutinee.regions]),node.scrutinee));}
+    const result=this.read(this.expression(arm.body,local,bindings,expected,depth+1),'move',arm.body);for(const id of ids)this.states[id]=rules.expireRustBorrowedSourceRegion(this.states[id]);this.finishExpression(result,start,arm.body);results.push(result);this.branches(2*count);outcomes.push(this.states.slice(0,count));
+   }
+   for(let index=0;index<count;index+=1){let state=outcomes[0][index];for(const outcome of outcomes.slice(1))state=rules.mergeRustBorrowedSourceRegion(state,outcome[index]);this.states[index]=state;}
+   const first=results[0];for(const result of results)if(!sameOwner(result.position,first.position)||result.role!==first.role)fail('source match results need their complete common source position',node);
+   value={...first,root:null,producer:true,regions:this.union(results.map(result=>result.regions))};
+  }else if(operation==='array'){
+   const wanted=position??expected,element=wanted?this.position(wanted.arrayElementPosition??{type:wanted.type.element,wrappers:[],lifetimes:[],owner:wanted.owner.arguments[0]}):null,values=[];
+   if(!wanted||!['owned','borrowed vector'].includes(role(wanted)))fail('an array source constructor needs its complete element position',node);
+   for(const item of node.items){const actual=this.compatible(this.expression(item,env,bindings,element,depth+1),element,item);values.push(this.read(actual,'move',item));}
+   value=this.value(this.position(wanted),this.root('',true),this.union(values.map(item=>item.regions)),true);
+  }else if(operation==='ctor'){
+   const data=this.program.declarations.get(node.data),index=data?.ctors.findIndex(item=>item.name===node.ctor)??-1,fields=data?.sourceFieldSignatures?.ctors?.[index]?.fields;
+   if(data?.k!=='data'||index<0||!fields||fields.length!==node.args.length)fail('a source constructor needs its actual complete field positions',node);
+   const values=node.args.map((arg,index)=>this.read(this.compatible(this.expression(arg,env,bindings,fields[index],depth+1),fields[index],arg),'move',arg));
+   value=this.value(this.position({type:node.type,wrappers:[],lifetimes:[],owner:{kind:'declaration',path:node.data.split('.'),arguments:[]}}),this.root('',true),this.union(values.map(item=>item.regions)),true);
+  }else if(operation==='call'){
+   const entry=this.program.declarations.get(node.fn),signature=entry?.sourceSignature;if(entry?.k!=='fn'||signature?.model!==model||signature.parameters.length!==node.args.length)fail('a source call needs its actual complete selected function interface',node);
+   const values=node.args.map((arg,index)=>{const parameter=callParameter(this.position(signature.parameters[index]));return this.read(this.compatible(this.expression(arg,env,bindings,parameter,depth+1),parameter,arg),'move',arg);});for(const actual of values)this.read({...actual,root:null,producer:true},'read',node);
+   const result=signature.result,sources=this.resultSources(result,signature.parameters);if(sources.includes(-1))fail('a source call needs its actual parameter region interface',node);
+   value=this.value(this.position(result),this.root('',true),this.union(sources.map(index=>values[index].regions)),true);
+  }else if(operation==='length'){
+   const array=this.read(this.expression(node.array,env,bindings,null,depth+1),'read',node.array);const error=readRustBorrowedVectorObservationError(array.role==='borrowed vector','len');if(error)fail(error,node);value=this.value(null,null,[],false,this.visits);
+  }else{
+   const children=operation==='binary'?[node.left,node.right]:operation==='concat'?node.parts:operation==='math'?node.args:[node.arg];
+   for(const child of children??[]){const actual=this.read(this.expression(child,env,bindings,null,depth+1),'read',child);const error=readRustBorrowedVectorObservationError(actual.role==='borrowed vector',operation)||rules.readRustBorrowedSourceObservationError(observationRole(actual),operation);if(error)fail(error,node);}
+   value=this.value(null,null,[],false,this.visits);
+  }
+  value=this.adjust(value,position?this.position(position):null,node);return expected?this.compatible(value,expected,node):value;
+ }
+ resultSources(result,parameters){const output=role(result);if(output!=='reference'&&output!=='borrowed vector')return [];return planRustBorrowedVectorResultParameters(lifetime(result),parameters.map(position=>['reference','borrowed vector'].includes(role(position))),parameters.map(lifetime));}
+ function(entry){
+  const signature=entry.sourceSignature;if(signature?.model!==model){if(this.contains(entry.body))fail('an expression source position needs its enclosing selected function interface',entry.body);return;}
+  const env=new Map(),parameters=[];for(let index=0;index<entry.params.length;index+=1){const p=signature.parameters[index];this.scope(p,signature.lifetimeBindings,entry.body);const r=role(p);if(!r)fail('a source parameter needs its separate value-domain proof',entry.body);if(r==='reference')this.closedTarget(p,entry.body);if(r==='borrowed vector')this.closedTarget(p.arrayElementPosition,entry.body);const regions=['reference','borrowed vector'].includes(r)?[this.root(lifetime(p))]:[],value=this.value(this.position(p),this.root(),regions);env.set(entry.params[index].name,value);parameters.push(value);}
+  const value=this.read(this.expression(entry.body,env,signature.lifetimeBindings,signature.result),'move',entry.body),sources=this.resultSources(signature.result,signature.parameters),allowed=this.union(sources.filter(index=>index>=0).map(index=>parameters[index].regions)),statics=this.lifetimes.flatMap((life,index)=>life==='static'?[index]:[]),error=rules.readRustBorrowedSourceReturnError(value.regions,allowed,statics,!sources.includes(-1));if(error)throw typeError(error,entry.body.span);
+ }
+ contains(root){const pending=[root],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);this.visits+=1;this.budget();if(value.sourcePosition)return true;for(const[key,child]of Object.entries(value))if(!['type','sourcePosition'].includes(key)){if(Array.isArray(child)){for(const item of child)pending.push(item);}else pending.push(child);}}return false;}
+ run(){for(const entry of this.program.declarations.values()){if(entry.k==='fn')this.function(entry);else if(this.contains(entry.prop))fail('source positions in proof propositions need their independent binder adapter');}const env=new Map();for(const effect of this.program.main?.effects??[]){const before=this.temporaries.length;if(effect.k==='let'){const actual=this.expression(effect.value,env,[]);this.bind(env,effect.name,actual,effect.value);this.finishExpression(env.get(effect.name),before,effect.value);}else if(effect.k==='print'){const actual=this.read(this.expression(effect.expr,env,[]),'read',effect.expr),error=readRustBorrowedVectorObservationError(actual.role==='borrowed vector','display')||rules.readRustBorrowedSourceObservationError(observationRole(actual),'display');if(error)fail(error,effect.expr);this.finishExpression(actual,before,effect.expr);}else fail('this source effect needs its independent binder region adapter',effect);}return this.program;}
+}
+export function checkRustBorrowedVectorSourceRegions(program){const visitor=new SourceRegions(program);let selected=visitor.contains(program.main);for(const entry of program.declarations.values()){if(entry.sourceSignature?.model===model||visitor.contains(entry.body)||visitor.contains(entry.prop))selected=true;}if(!selected)return program;const runtimeError=rules.readRustBorrowedSourceRuntimeError(selected,program.sourceRuntimeShell!==undefined);if(runtimeError)fail(runtimeError);if(program.sourceLanguage!=='Rust')throw typeError('source binder regions require Rust source');visitor.discovery=false;visitor.visits=0;return visitor.run();}

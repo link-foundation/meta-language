@@ -56,8 +56,9 @@ pub(in super::super) fn source_completion_kind(node: &SExpr) -> String {
 
 impl RustParser {
     pub(super) fn expr(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        let value=if let Some(value)=self.read_owned_record_effect_assignment(path)?{value}else{self.or(path,options)?};
+        let mut value=if let Some(value)=self.read_owned_record_effect_assignment(path)?{value}else{self.or(path,options)?};
         self.origins.record_expression_type(&value,path)?;
+        self.note_borrowed_expression_source_position(&mut value,path)?;
         Ok(value)
     }
 
@@ -524,6 +525,7 @@ impl RustParser {
                         span(&token, &method),
                     ));
                 }
+                self.capture_inherent_receiver_value_loan(&value,&method,path)?;
                 self.cursor.advance();
                 let args = self.call_arguments(path)?;
                 self.cursor.expect(")", Some(&method.value))?;

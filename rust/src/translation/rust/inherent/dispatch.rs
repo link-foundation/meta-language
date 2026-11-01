@@ -5,6 +5,17 @@ use super::super::{
 use crate::translation::rust_inherent_rules::plan_rust_inherent_receiver_layers;
 
 impl RustParser {
+    pub(in super::super) fn capture_inherent_receiver_value_loan(&mut self,receiver:&SExpr,method:&Token,path:&[String])->Result<()> {
+        if self.origins.collecting{return Ok(());}
+        let origin=self.origins.origin(receiver,path);
+        let Some(Type::Named{path:names,..})=origin.ty.as_ref() else{return Ok(());};
+        let Some(owner)=self.origins.lookup(names,&origin.path).filter(|entry|matches!(entry.declaration,SourceDeclaration::Data))else{return Ok(());};
+        let Some(selected)=self.inherent_methods.get(&format!("{}.{}",owner.full_name,method.value)).filter(|selected|selected.mode!=0.0&&selected.owner==owner.full_name)else{return Ok(());};
+        let plan=plan_rust_inherent_receiver_layers(&origin.wrappers,&selected.receiver);if plan.first()!=Some(&1.0){return Ok(());}
+        let wrappers=plan.iter().skip(1).map(|layer|if *layer==1.0{"reference".into()}else{"box".into()}).collect::<Vec<String>>();if !wrappers.iter().any(|layer|layer=="reference"){return Ok(());}
+        let mut borrowed=origin.clone();borrowed.wrappers=wrappers;let borrowed=self.origins.capture_mutable_record_value_loans(borrowed,receiver.span)?;
+        let mut actual=origin;actual.source_value_borrow_bindings=borrowed.source_value_borrow_bindings;self.origins.mark(receiver,actual);Ok(())
+    }
     pub(in super::super) fn inherent_method(
         &mut self,
         receiver: &SExpr,
@@ -43,9 +54,8 @@ impl RustParser {
                     range,
                 ));
             }
-            let argument = receiver.clone();
-            let mut origin = origin;
-            origin.wrappers = plan
+            let mut argument = receiver.clone();
+            let wrappers = plan
                 .iter()
                 .skip(1)
                 .map(|layer| {
@@ -56,7 +66,9 @@ impl RustParser {
                     }
                 })
                 .collect();
+            let origin=self.prepare_borrowed_inherent_receiver_position(origin,wrappers,range)?;
             self.origins.mark(&argument, origin);
+            self.note_borrowed_expression_source_position(&mut argument,path)?;
             let mut values = vec![argument];
             values.extend_from_slice(args);
             let mut rooted = vec!["crate".to_owned()];

@@ -6,6 +6,134 @@ architecture specification and supplies no execution or completion evidence.
 The requirement ledger and its source register were not read or changed: their
 online prerequisite is deferred with runtime execution in this drafting phase.
 
+## Actual project-data source execution draft
+
+`javascript-project-data-source.js` captures complete original providers and
+selects exported functions plus their actual CST binding dependency closure.
+The source plan retains original bytes/hash, declaration spans, import owners,
+uninitialized module cells and exact lexical identities. The shared Error
+source compiler now also lowers ordinary statement functions, destructured
+defaults, ordered local bindings, early return/throw, lazy conditions, primitive
+unary/Number operators, array allocation capabilities and mutable module cells.
+The old Error constructor and expression-only source profiles remain separate.
+
+`javascript-project-data-module.js` connects these plans to the real portable
+call machine. Actual `readProjectData`, `resolveProjectDataPath`, their selected
+helpers and the imported `readRuntimeProjectData` forwarding body run as VM
+frames. The last function references the real provider frame through its
+resolved import owner; its body is not a host fallback. Raw Node filesystem,
+native URL/Array operations, JSON parsing, actual structured cloning and the
+shared Links decoder remain explicit qualified capabilities. Complete current
+provider/loader/decoder source hashes, active versions and protected operation
+identities are checked before effects. These host adapters are not claimed
+self-translated decoder or filesystem implementations.
+
+The runtime initializer has an opt-in successor reader profile, `actual project
+data source functions 1`. Its predecessor qualified adapter remains the default.
+A module scope shares one source-provider instance and cache. An importer in a
+different realm must supply a distinct actual Node reader realm identity.
+Initialized plain data crosses the explicit bridge with within-graph alias
+preservation; caller const aliases retain their shared initialized handle.
+TDZ, cached failure identity, exact source ownership and exactly-once module
+initialization continue through the existing shared state machine. Generic
+resource/qualification failures do not become fabricated loader exceptions.
+
+Live native URL/Array/Buffer objects have separate opaque heap variants and
+private authority witnesses. Edited heap retagging cannot grant native property
+authority. Source bodies are never invoked through represented host handles;
+unknown callbacks, accessors and reflective operations remain explicit bounds.
+
+`project-data-source-execution.mjs` supplies ten independent direct originals,
+five complete source refusals and one exact large-cache input recipe. The
+deferred JS consumer and failure-accumulating producer also retain all eight
+existing initializer originals under the successor. Source input Links
+text/binary transport and the full physical source CST are distinguished from
+checked Core. Per-transport compilation records retain plan, registry, bindings,
+capability owners and the actual compiled program for future native replay.
+
+Source inspection initially found that the existing semantic unit-array text
+profile stops at 1,048,576 code units, below the actual cache threshold. The
+additive `sourceText` variant now carries a real inspectable source String under
+the explicit `inspectable UTF16 source text 1` profile, bounded at 16,777,216
+code units. The existing exact model text wire preserves unpaired surrogates;
+this is neither an opaque host object nor a policy-content snapshot. Old
+unit-array bounds and controls remain unchanged. Validation of the successor
+uses its exact profile and String length without allocating a unit array.
+Equality crosses the two representations by exact code units. Truth, typeof,
+ToString, ordinary property keys and call frames retain string semantics.
+Unimplemented large unit-array algorithms produce explicit resource boundaries.
+The actual reader selects compact text for large file contents, so the retained
+8,388,608-space cache recipe reaches its real source branch without flattening
+each validation. Clone/current-text/decoder-count assertions remain positive
+requirements, not observations. Shared decoder body lowering, complete opaque
+reflection and native raw IO adapters remain work. No tests, generation,
+compilation, validation or CI feedback were run or read for this batch, and no
+observations were recorded.
+
+## Ordinary source classes and actual Scope workload draft
+
+The explicit `actual closed source classes 1` profile now captures complete
+ordinary class/member CST spans, actual lexical parameters and locals, receiver
+reads, self construction, ordered defaults, mutable locals and bounded ordinary
+`for` loops. It uses a distinct source plan from the existing typed closed-class
+lowering. The ordinary base constructor protocol allocates the genuine selected
+prototype after all arguments, prohibits ordinary calls from running class
+defaults/body, retains `this` across methods, chooses `this` for primitive base
+constructor returns and preserves explicit object returns. Restored constructor
+frames must retain the actual suspended source-new instruction, callee, receiver
+and argument list. Derived Error classes keep their separate protocol.
+
+The additive local/snapshot source nodes preserve parameter/local value copies,
+callee/receiver/argument order, assignment targets and strict equality when a
+later operand reassigns a binding. The previous immutable `sourceLet` path keeps
+its existing register behavior. Source default parsing admits only initialized
+earlier parameter bindings; later/self parameter TDZ requires an actual successor
+continuation rather than reading an eagerly populated argument register.
+
+The root-authored inspectable Map/Set kernel and heap slots are now consumed by
+actual collection construction, operation and same-kind copy bytecodes. Actual
+Node standard constructor/method/iterator identities select portable frames;
+represented values never live in host Map/Set objects. An empty native iterator
+probe authenticates only its engine-owned prototype/next identity. It does not
+implement represented construction or copying. Unknown iterable construction
+surfaces `machineNeedCollectionIterable`, preserving its real continuation need.
+The separate live iterator kernel remains to be connected to genuine VM iterator
+results and entry arrays. Primitive `String.startsWith` uses existing exact UTF16
+and Number-position rules, and scalar addition reuses actual primitive conversion
+and Number/BigInt algebra. Object conversion/RegExp protocols remain explicit.
+
+`javascript-ordinary-class-closure-source.js` reuses the existing complete
+supplied-module CST alias/re-export composition. Full original sources, hashes,
+edit intervals, public entry ownership and class/helper/method provenance remain
+in the source archive. Authenticated transient witnesses restore original own
+names only after exact standard descriptor/source proofs. They never infer
+authority from generated prefixes. The actual existing selected Scope example,
+its re-export, its entry and the complete `source-identifier-rules.js` module now
+have a portable source consumer. The entire selected Scope declaration is checked
+against the complete original `ir.js`, which remains a separate whole-module
+translation obligation; the selected example is not represented as full `ir.js`.
+
+The class fixture retains 23 complete positive originals and seven explicit
+profile refusals. Additional supplied closures retain three alias/name/self
+controls and two actual selected Scope workloads. The 700-iteration original
+requires multiple bounded pure batches and literal result 700; a separate low
+budget control prohibits partial-state success. The failure-accumulating class
+producer retains every original/text/binary source input, source and standard
+operation compilation, exact joined program, physical CST, pure/external machine
+trace, original ESM result and literal oracle. The root-authored native consumer
+independently recompiles each supplied source unit and operation directory and
+replays actual trace/resumption events. All of these are deferred control SOURCE,
+not runtime, parity, formal-target or requirement-completion evidence.
+
+The next concrete whole consumer is `ir.js:renameExpr`, whose real body needs
+switch/fallthrough and early completion, computed property reads/writes and
+object spread, real array/object enumeration, callback closure environments,
+destructuring and recursive calls, alongside its actual callable/source-rule
+dependencies. Whole-module initialization/import completeness, full native raw
+IO/decoder bodies, larger resource profiles and formal target reference lowering
+remain separate requirements. No tests, generators, validation, compilation or
+CI feedback were run/read for this source batch.
+
 ## Disjoint collection iteration source batch
 
 The own-source anchor is `EmitState.assign` in `emit-common.js`: it reads

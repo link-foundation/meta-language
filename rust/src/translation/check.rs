@@ -675,6 +675,7 @@ impl Checker {
             super::runtime_shell::capture_program(&mut program, source)?;
         }
         super::runtime_shell::validate_program(&program)?;
+        super::source_expression_regions::validate_borrowed_vector_source_regions(&program)?;
         Ok(program)
     }
 
