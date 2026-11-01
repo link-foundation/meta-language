@@ -12204,3 +12204,10 @@ constructor kinds require their explicit specialization, never host body replay.
 Constructor authority additions preserve every established realm root as well as
 constructor classification. Source Symbol namespace access names the actual
 well-known species key without implying general Symbol allocation support.
+
+The Node source driver may respond to missing constructor authority using a
+metadata provider registered once before publication. It re-derives the actual
+suspended request, uses the adopted latest heap, and publishes only the common
+machine's monotonic authority extension. Subsequent steps and Error operations
+use the updated program. Unknown constructors stay suspended when no new
+authenticated facts exist; metadata absence never authorizes host body execution.

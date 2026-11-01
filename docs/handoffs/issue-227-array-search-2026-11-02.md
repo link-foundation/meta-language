@@ -242,3 +242,21 @@ in the Node driver, authenticated update publication and transport remain next.
 Derived constructors, bound/Proxy protocols and standard collection/Error
 constructor specializations remain explicit requests. Generated Rust/Links and
 codec artifacts remain deferred with every test and compilation.
+
+
+### Node constructor authority response drafted
+
+The collection linker now registers its protected species metadata provider
+exactly once before source publication. The embedding re-derives an actual
+`machineNeedConstructorAuthority`, checks the selected constructor, requires the
+latest adopted heap, and publishes only the shared monotonic program update.
+The Node driver refreshes both module and program after that response. Unchanged
+authority returns the original request without retry loops or host constructor
+execution. Public TypeScript declarations include both constructor boundaries.
+Two deferred controls cover authenticated source-unit additions, real portable
+constructor execution, unknown constructor suspension, replacement authority
+refusal and forged selected-constructor refusal. No control executed.
+
+Portable trace/codec transport of authority updates, exotic constructor protocols
+and native artifact regeneration remain further work; these are not claimed as
+observations or completed requirements.

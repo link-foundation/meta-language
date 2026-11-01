@@ -1,3 +1,4 @@
+import {runJavaScriptSourceTransition} from '../src/node-source-modules.js';
 import {captureJavaScriptProjectDataSource} from '../src/translation/javascript-project-data-source.js';
 import {captureJavaScriptOrdinaryClassModule} from '../src/translation/javascript-ordinary-class-source.js';
 import {prepareJavaScriptOrdinaryClassModule} from '../src/translation/javascript-ordinary-class-module.js';
@@ -65,4 +66,20 @@ test('an authenticated additional ordinary source unit extends constructor facts
  function helper() { return 7; }
  const source=captureJavaScriptProjectDataSource('export function helper() { return 7; }',{identifier:'literal-species-added-unit.js',entries:['helper']}),before=instance.collection.speciesDirectory(),unit=instance.embedding.attachSourceUnit(source,{helper},[]),owner=unit.registry.owners.find(row=>row.source===source.plan.functions[0].identity),after=instance.collection.speciesDirectory();
  assert.equal(before.constructors.some(row=>row.identity===owner.identity),false);assert.equal(after.constructors.find(row=>row.identity===owner.identity).constructable,true);assert.equal(after.constructors.find(row=>row.identity===owner.identity).realm,127n);
+});
+
+
+test('Node driver publishes authenticated added constructor facts and executes its portable body',()=>{
+ const source='export function transform(input, selected) { input.constructor = {[Symbol.species]: selected}; return input.map(value => value * 2); }',capture=captureJavaScriptOrdinaryClassModule(source,{identifier:'literal-species-driver-update.js',entries:['transform']}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:131n});
+ function helper(length) { return length; }
+ const added=captureJavaScriptProjectDataSource('export function helper(length) { return length; }',{identifier:'literal-species-driver-added.js',entries:['helper']}),unit=instance.embedding.attachSourceUnit(added,{helper},[]),owner=unit.registry.owners.find(row=>row.source===added.plan.functions[0].identity),before=instance.embedding.module.program;
+ const started=instance.begin('transform',[instance.embedding.encode([2,4]),object(owner.identity,true)]),actual=runJavaScriptSourceTransition(instance.embedding,started,{steps:8192});assert.equal(actual.transition.$,'machineCompleted');assert.equal(actual.transition.value.$,'object');assert.notEqual(instance.embedding.module.program,before);
+ const output=actual.transition.heap.objects.find(row=>row.identity===actual.transition.value.identity);assert.equal(output.$,'ordinaryObject');for(const [key,value] of [['0',4],['1',8]])assert.deepEqual(output.properties.find(row=>row.key.$==='text'&&row.key.units.join(',')===text(key).units.join(',')).descriptor.value,number(value));
+ const methods=instance.embedding.module.program.functions.flatMap(fn=>fn.instructions).filter(row=>row.$==='arrayTransform');assert.equal(methods.some(row=>row.species.constructors.some(fact=>fact.identity===owner.identity&&fact.constructable)),true);
+});
+test('unregistered constructors remain suspended and metadata authority cannot be replaced after publication',()=>{
+ const capture=captureJavaScriptOrdinaryClassModule('export function transform(input, selected) { input.constructor = {[Symbol.species]: selected}; return input.map(value => value); }',{identifier:'literal-species-driver-unknown.js',entries:['transform']}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:137n});
+ function unavailable() { throw new Error('original constructor body must never run'); }
+ const selected=instance.embedding.encode(unavailable),started=instance.begin('transform',[instance.embedding.encode([2]),selected]),actual=runJavaScriptSourceTransition(instance.embedding,started,{steps:8192});assert.equal(actual.transition.$,'machineNeedConstructorAuthority');assert.deepEqual(actual.transition.constructor,selected);const prior=instance.embedding.module.program,again=instance.embedding.resumeArrayConstructorAuthority(actual.transition);assert.equal(again.updated,false);assert.equal(again.transition,actual.transition);assert.equal(instance.embedding.module.program,prior);assert.throws(()=>instance.embedding.registerArrayConstructorAuthority(()=>instance.collection.speciesDirectory()),/before source publication/);
+ assert.throws(()=>instance.embedding.resumeArrayConstructorAuthority({...actual.transition,constructor:instance.collection.speciesDirectory().arrayConstructor}),/actual selected constructor/);
 });

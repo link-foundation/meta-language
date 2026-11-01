@@ -50,6 +50,7 @@ export function linkJavaScriptCollectionRealm(embedding,requirements,{realmIdent
  const standardConstructorFacts=[...constructors.map(owner=>({$:'arrayConstructorFact',identity:owner.identity,realm:owner.realm,constructable:true,intrinsicArray:false})),...constructors.flatMap(owner=>owner.methods.map(method=>({$:'arrayConstructorFact',identity:method.identity,realm:owner.realm,constructable:false,intrinsicArray:false}))),...iteratorMethods.map(method=>({$:'arrayConstructorFact',identity:method.identity,realm:method.realm,constructable:false,intrinsicArray:false})),...directory.primitiveMethods.map(method=>({$:'arrayConstructorFact',identity:method.identity,realm:method.realm,constructable:false,intrinsicArray:false}))];
  const species=captureJavaScriptArraySpeciesDirectory(embedding,realmIdentity,standardConstructorFacts);for(const method of directory.primitiveMethods)if(method.operation==='Array.map'||method.operation==='Array.filter')method.species=species;
  const compiled=compileJavaScriptCollectionCallDirectory(directory);if(compiled.error)throw new TypeError(compiled.error);embedding.registerPortableProgram(compiled.program);
+ embedding.registerArrayConstructorAuthority(()=>captureJavaScriptArraySpeciesDirectory(embedding,realmIdentity,standardConstructorFacts));
  return {directory,program:compiled.program,references,speciesDirectory(){
   return captureJavaScriptArraySpeciesDirectory(embedding,realmIdentity,standardConstructorFacts);
  },verify(){

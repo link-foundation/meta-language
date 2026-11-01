@@ -23,7 +23,7 @@ import {resumeJavaScriptSourceHostCapability} from './translation/javascript-hos
  * @param {{steps?:number}} options */
 export function runJavaScriptSourceTransition(embedding,transition,{steps=65536}={}){
  if(!Number.isSafeInteger(steps)||Object.is(steps,-0)||steps<0||steps>1048576)throw new RangeError('source execution needs an explicit step budget from zero through 1048576');
- const module=embedding.module,program=module.program;let current=transition,used=0,allocated=0;
+ let module=embedding.module,program=module.program,current=transition,used=0,allocated=0;
  function adopt(value){
   if(value.$==='machineInvalid')return;
   const heap=value.machine?.heap??value.heap;if(!heap)return;
@@ -44,6 +44,12 @@ export function runJavaScriptSourceTransition(embedding,transition,{steps=65536}
    if(pending.$!=='machineAllocateObject'||!testJavaScriptSemanticSameValue(pending.prototype,current.prototype))throw new TypeError('source allocation must retain its actual pending prototype');
    current=resumeJavaScriptCallObjectAllocation(program,current.machine,embedding.allocateIdentity());
    if(current.$==='machineContinue')allocated+=1;
+  }else if(current.$==='machineNeedConstructorAuthority'){
+   if(typeof embedding.resumeArrayConstructorAuthority!=='function')break;
+   const response=embedding.resumeArrayConstructorAuthority(current);
+   if(!response||typeof response.updated!=='boolean'||!response.transition)throw new TypeError('constructor authority retains an explicit update and suspended transition');
+   if(!response.updated)break;
+   module=embedding.module;program=module.program;current=response.transition;
   }else if(current.$==='machineInvokeHostCapability'){
    current=resumeJavaScriptSourceHostCapability(module,current,embedding.authority);
   }else if(['machineAllocateErrorValue','machineInvokeErrorIntrinsic','machineAllocateError','machineAllocateSourceError'].includes(current.$)){

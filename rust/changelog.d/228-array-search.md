@@ -24,3 +24,6 @@ portable constructor execution and generated parity remain separate work.
 Draft actual source species Construct through the shared call stack, including
 prototype getter continuations, realm fallback, receiver allocation and constructor
 return selection. Preserve current effects without replaying original host bodies.
+
+Draft Node driver responses to authenticated constructor metadata additions,
+retaining suspended effects and publishing monotonic shared program updates.

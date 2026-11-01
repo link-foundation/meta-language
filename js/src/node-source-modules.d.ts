@@ -15,6 +15,8 @@ export type JavaScriptSourceTransition =
  | {$:'machineResourceLimit';machine:unknown;reason:string}
  | {$:'machineContinue';machine:unknown}
  | {$:'machineAllocateObject';machine:unknown;prototype:JavaScriptSemanticValue}
+ | {$:'machineNeedConstructorAuthority';machine:unknown;constructor:JavaScriptSemanticValue}
+ | {$:'machineConstructArraySpecies';machine:unknown;constructor:JavaScriptSemanticValue;arguments:JavaScriptSemanticValue[];fact:unknown}
  | {$:'machineNeedCollectionIterable';machine:unknown;target:JavaScriptSemanticValue;input:JavaScriptSemanticValue}
  | {$:'machineAllocateError'|'machineAllocateSourceError'|'machineAllocateErrorValue'|'machineInvokeErrorIntrinsic'|'machineInvokeHostCapability';machine:unknown;[field:string]:unknown};
 export interface JavaScriptSourceEmbedding {
@@ -23,6 +25,8 @@ export interface JavaScriptSourceEmbedding {
  heap():unknown;
  adoptHeap(heap:unknown):void;
  allocateIdentity():bigint;
+ sourceConstructorFacts():readonly {identity:bigint;realm:bigint;constructable:boolean;intrinsicArray:boolean}[];
+ resumeArrayConstructorAuthority?(request:JavaScriptSourceTransition):{updated:boolean;transition:JavaScriptSourceTransition};
  encode(value:unknown):JavaScriptSemanticValue;
  decode(value:JavaScriptSemanticValue):unknown;
  encodeHostError(value:unknown):JavaScriptSemanticValue;

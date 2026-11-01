@@ -13,7 +13,7 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError} from './javascript-call-machine.js';
+import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority} from './javascript-call-machine.js';
 
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
 const string=units=>{let result='';for(const unit of units)result+=String.fromCharCode(unit);return result;};
@@ -39,7 +39,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
  let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[]};
  const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
- let portableTemplateProgram={templates:undefined};
+ let portableTemplateProgram={templates:undefined},arrayConstructorAuthority=null;
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
  const allocate=()=>{while(heap.objects.some(row=>row.identity===next)||heap.symbols.includes(next))next+=1n;if(next>18446744073709551615n)throw new RangeError('the authoritative global identity allocator exhausted unsigned64 identities');return next++;};
  const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0)};};
@@ -194,6 +194,27 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   portableTemplateProgram=mergeSourceTemplates(portableTemplateProgram,program);
   for(const fn of program.functions){const previous=portableFunctions.get(fn.identity);if(previous&&!isDeepStrictEqual(previous,fn))throw new TypeError('one actual operation identity cannot acquire conflicting portable implementations');portableFunctions.set(fn.identity,fn);}
  }
+ // Register metadata authority before publication, independently of mutable
+ // module/capture records. It never executes a represented constructor body.
+ function registerArrayConstructorAuthority(provider){
+  if(!sourceFunctions||module!==null||arrayConstructorAuthority!==null||typeof provider!=='function')throw new TypeError('constructor metadata authority is registered once before source publication');
+  arrayConstructorAuthority=provider;
+ }
+ function resumeArrayConstructorAuthority(request){
+  if(module===null||request?.$!=='machineNeedConstructorAuthority'||!request.machine)throw new TypeError('constructor metadata response requires its actual published pending request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);
+  const pending=stepJavaScriptCallMachine(module.program,request.machine);
+  if(pending.$!=='machineNeedConstructorAuthority'||!testJavaScriptSemanticSameValue(pending.constructor,request.constructor))throw new TypeError('constructor metadata response cannot substitute the actual selected constructor');
+  if(arrayConstructorAuthority===null)return {updated:false,transition:request};
+  // The caller first adopts the complete pending heap. Capturing actual roots
+  // cannot resurrect an older embedding heap or discard represented effects.
+  if(heap!==request.machine.heap)throw new TypeError('constructor metadata response requires the adopted current shared heap');
+  const directory=arrayConstructorAuthority(),updated=extendJavaScriptCallArrayAuthority(module.program,request.machine,directory);
+  if(updated.error)throw new TypeError(updated.error);
+  if(isDeepStrictEqual(updated.program,module.program))return {updated:false,transition:request};
+  module={...module,program:updated.program};
+  return {updated:true,transition:{$:'machineContinue',machine:updated.machine}};
+ }
  function attachSourceUnit(input,definitions,capabilities,bindings=[]){
   if(!sourceFunctions||module===null)throw new TypeError('a supplied source unit requires its already published actual source realm');
   const actual=checkJavaScriptProjectDataSource(input),owners=[];
@@ -247,7 +268,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   capabilityReference(source,value,{operation,owner}){const semantic=encode(value);if(semantic.$!=='object')throw new TypeError('a capability reference requires its actual native namespace or source callable identity');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:semantic.callable,executable:false};},
