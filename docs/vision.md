@@ -12294,3 +12294,13 @@ as specified by [ArrayAccumulation](https://tc39.es/ecma262/2026/multipage/ecmas
 without inserting an extra iterator return call. Accumulation indices remain
 exact within the declared safe-coordinate resource profile. Primitive iterator
 method reads retain their actual receiver and key as explicit protocol requests.
+
+Source Array literals with spreads retain an ordered accumulation sequence of
+values, elisions and spread operands. A private Number coordinate advances after
+each successful own-data write or completed spread; elisions explicitly update
+length, preserving holes and RangeError behavior before following expressions.
+The VM holds the original target, input, iterator key and starting coordinate
+while the shared spread kernel advances. The intrinsic iterator key comes from
+the protected namespace independently of a lexical binding named Symbol.
+Primitive iterator property responses have an explicit checked resumption API.
+Static literals retain their existing source representation.

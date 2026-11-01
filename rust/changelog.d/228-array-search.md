@@ -51,3 +51,6 @@ including result allocation and source release during exception unwinding.
 
 Draft Array spread accumulation through shared iterator continuations and own
 indexed writes, retaining completed values across storage resource suspension.
+
+Draft source Array spread literals through ordered accumulation, shared VM
+continuations, private coordinates and explicit hole length writes.

@@ -19,6 +19,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorCompoundAssignment',operator:string,target:JavaScriptErrorExpression,value:JavaScriptErrorExpression} |
  * {$:'errorBinary',operator:string,left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,port:string} |
  * {$:'errorArray',factory:string,items:JavaScriptErrorExpression[]} |
+ * {$:'errorArrayAccumulation',parts:JavaScriptErrorArrayPart[],iteratorKey:JavaScriptErrorExpression} |
  * {$:'errorArrayLiteral',length:number,elements:JavaScriptErrorArrayElement[]} |
  * {$:'errorObject',properties:JavaScriptErrorObjectProperty[]} |
  * {$:'errorTemplate',parts:JavaScriptErrorTemplatePart[]} |
@@ -31,6 +32,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorSpecialNumber',form:string} |
  * {$:'errorStrictEqual',left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,negate:boolean}} JavaScriptErrorExpression */
 /** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
+/** @typedef {{$:'errorArrayValue',value:JavaScriptErrorExpression} | {$:'errorArraySpread',value:JavaScriptErrorExpression} | {$:'errorArrayHole'}} JavaScriptErrorArrayPart */
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
 /** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression,keyExpression?:JavaScriptErrorExpression,pattern?:JavaScriptErrorParameter}} JavaScriptErrorParameterField */
@@ -154,6 +156,12 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
   case 'errorBinary':return lowerJavaScriptSourceBinary(expression,next,depth+1);
   case 'errorConditional':{const condition=lowerJavaScriptErrorExpression(expression.condition,next,depth+1),yes=lowerJavaScriptErrorExpression(expression.yes,condition.context,depth+1),no=lowerJavaScriptErrorExpression(expression.no,yes.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceIf',condition:condition.source,yes:yes.source,no:no.source},context:no.context};}
   case 'errorStrictEqual':{const left=lowerJavaScriptErrorExpression(expression.left,next,depth+1),right=lowerJavaScriptErrorExpression(expression.right,left.context,depth+1),source={$:next.mutableBindings?'sourceSnapshotStrictEqual':'sourceStrictEqual',left:left.source,right:right.source};return {$:'errorSourceExpression',source:expression.negate?{$:'sourceIf',condition:source,yes:constant({$:'boolean',value:false}),no:constant({$:'boolean',value:true})}:source,context:right.context};}
+  case 'errorArrayAccumulation':{
+   if(!next.mutableBindings||next.realm.arrayPrototype===undefined)return refuseJavaScriptErrorSource(next,'Array accumulation requires its actual ordinary-source realm');
+   const iteratorKey=lowerJavaScriptErrorExpression(expression.iteratorKey,next,depth+1);let current=iteratorKey.context;const parts=[];
+   for(const part of expression.parts){if(part.$==='errorArrayHole'){parts.push({$:'sourceArrayHole'});continue;}const value=lowerJavaScriptErrorExpression(part.value,current,depth+1);current=value.context;parts.push({$:part.$==='errorArraySpread'?'sourceArraySpread':'sourceArrayValue',value:value.source});}
+   return {$:'errorSourceExpression',source:{$:'sourceArrayAccumulation',prototype:constant(next.realm.arrayPrototype),parts,iteratorKey:iteratorKey.source,realm:next.realm.realm},context:current};
+  }
   case 'errorArrayLiteral':{
    if(!next.mutableBindings||next.realm.arrayPrototype===undefined)return refuseJavaScriptErrorSource(next,'Array literals require the actual ordinary-source realm Array prototype');
    let current=next;const elements=[];for(const element of expression.elements){const value=lowerJavaScriptErrorExpression(element.value,current,depth+1);current=value.context;elements.push({$:'sourceArrayElement',index:element.index,value:value.source});}

@@ -15,6 +15,7 @@ export type JavaScriptSourceTransition =
  | {$:'machineResourceLimit';machine:unknown;reason:string}
  | {$:'machineContinue';machine:unknown}
  | {$:'machineAllocateObject';machine:unknown;prototype:JavaScriptSemanticValue}
+ | {$:'machineNeedPrimitiveIteratorGet';machine:unknown;receiver:JavaScriptSemanticValue;key:JavaScriptSemanticValue}
  | {$:'machineNeedArrayIteratorBoxing';machine:unknown;receiver:JavaScriptSemanticValue}
  | {$:'machineNeedConstructorAuthority';machine:unknown;constructor:JavaScriptSemanticValue}
  | {$:'machineConstructArraySpecies';machine:unknown;constructor:JavaScriptSemanticValue;arguments:JavaScriptSemanticValue[];fact:unknown}

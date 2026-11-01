@@ -137,7 +137,17 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    else if(['!','typeof','-','+'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
    else if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');if(value.$==='errorGet'||value.$==='errorComputedGet')member={object:value.object,key:value.key,computed:value.$==='errorComputedGet'};}
    else if(take('[')){
-    if(classProfile){let length=0;const elements=[];if(!take(']'))while(at<input.length){if(take(']'))break;if(take(',')){length++;continue;}if(peek()?.value==='...')fail('Array literal spread requires its actual iterator and close continuations');elements.push({$:'errorArrayElement',index:length++,value:parse(1)});if(take(']'))break;if(!take(','))fail('Array literal elements need complete separators');if(take(']'))break;}if(input[at-1]?.value!==']')fail('Array literal needs its closing bracket');value={$:'errorArrayLiteral',length,elements};}
+    if(classProfile){
+     let length=0,spread=false;const elements=[],parts=[];
+     if(!take(']'))while(at<input.length){
+      if(take(']'))break;if(take(',')){length++;parts.push({$:'errorArrayHole'});continue;}
+      if(take('...')){spread=true;parts.push({$:'errorArraySpread',value:parse(1)});}else{const value=parse(1);elements.push({$:'errorArrayElement',index:length++,value});parts.push({$:'errorArrayValue',value});}
+      if(take(']'))break;if(!take(','))fail('Array literal elements need complete separators');if(take(']'))break;
+     }
+     if(input[at-1]?.value!==']')fail('Array literal needs its closing bracket');
+     const iteratorKey=spread?{$:'errorGet',object:port('intrinsic:iterator namespace',{kind:'global',name:'Symbol'}),key:constant({$:'text',units:units('iterator')})}:absent();
+     value=spread?{$:'errorArrayAccumulation',parts,iteratorKey}:{$:'errorArrayLiteral',length,elements};
+    }
     else{port('syntax:array',{kind:'syntax',operation:'array literal'});value={$:'errorArray',factory:'syntax:array',items:arguments_(']')};}
    }
    else if(take('{')){

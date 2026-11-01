@@ -1,3 +1,4 @@
+import {compileJavaScriptMutableCallSourceWithCaptures} from '../src/translation/javascript-call-source.js';
 // Deferred ArrayAccumulation controls. No represented body runs on import.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {beginJavaScriptArraySpread,stepJavaScriptArraySpread,resumeJavaScriptArraySpread} from '../src/translation/javascript-array-spread.js';
@@ -23,4 +24,9 @@ test('spread exposes original primitive receiver Get and refuses a non-Array tar
 test('spread retains a completed value across property budget suspension without another next call',()=>{
  const request=firstNext(setup());let current=resumeJavaScriptArraySpread(request.heap,request.state,normal(object(7n)),false);for(let at=0;at<32&&current.$==='arraySpreadContinue'&&current.state.phase!=='write';at++)current=stepJavaScriptArraySpread(current.heap,current.state);assert.equal(current.state.phase,'write');
  const descriptor=createJavaScriptOrdinarySetDescriptor(number(1),true),heap={...current.heap,objects:current.heap.objects.map(row=>row.identity===2n?{...row,properties:row.properties.concat(Array.from({length:4095},(_,index)=>({$:'ordinaryProperty',key:text('field'+index),descriptor})))}:row)},limited=stepJavaScriptArraySpread(heap,current.state);assert.equal(limited.$,'arraySpreadResourceLimit');assert.equal(limited.state.phase,'write');assert.deepEqual(limited.state.value,number(7));assert.equal(limited.state.index,0);const released={...limited.heap,objects:limited.heap.objects.map(row=>row.identity===2n?{...row,properties:row.properties.slice(0,-1)}:row)},resumed=stepJavaScriptArraySpread(released,limited.state);assert.equal(resumed.$,'arraySpreadContinue');assert.equal(resumed.state.phase,'step');assert.equal(resumed.state.index,1);
+});
+
+
+test('source accumulation emits shared spread and explicit hole writes with a held index register',()=>{
+ const source={$:'sourceArrayAccumulation',prototype:{$:'sourceConstant',value:object(1n)},iteratorKey:{$:'sourceConstant',value:symbol},realm:1n,parts:[{$:'sourceArrayValue',value:{$:'sourceConstant',value:number(2)}},{$:'sourceArraySpread',value:{$:'sourceBinding',identity:1}},{$:'sourceArrayHole'},{$:'sourceArrayValue',value:{$:'sourceConstant',value:number(7)}}]},compiled=compileJavaScriptMutableCallSourceWithCaptures(source,[1],[]);assert.equal(compiled.error,'');const spreads=compiled.instructions.filter(instruction=>instruction.$==='arraySpread');assert.equal(spreads.length,1);assert.equal(spreads[0].destination,spreads[0].index);assert.equal(compiled.instructions.some(instruction=>instruction.$==='ordinarySet'),true);assert.equal(compiled.instructions.some(instruction=>instruction.$==='requireWrite'),true);assert.equal(compiled.instructions.filter(instruction=>instruction.$==='ordinaryDataProperty').length,2);
 });

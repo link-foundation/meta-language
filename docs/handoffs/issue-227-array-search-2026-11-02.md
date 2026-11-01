@@ -417,3 +417,23 @@ controls cover actual accumulation/index completion, cached next mutation, throw
 without return, primitive/target boundaries and held-write resource retry. Source
 library/native control inputs are registered. VM instructions and source literal
 composition are the next connections; no generation or tests ran.
+
+
+### Array literal spread source/VM composition draft
+
+Spreading literals now retain ordered value/hole/spread parts in source plans.
+The shared source compiler emits actual Array allocation, an internal Number
+coordinate, own-data writes, explicit hole length writes and the common
+`arraySpread` opcode. A protected intrinsic namespace supplies the true iterator
+key independently of lexical Symbol shadowing. Static literals keep their
+previous shape. The opcode/pending state validate actual registers, source realm,
+target/input/key, starting coordinate and selected child operands. Step/return,
+throw/resource paths and primitive Get suspension/resumption are drafted together.
+
+Five originals cover sparse spread values, dynamic offsets/trailing holes,
+multiple-spread evaluation order, nested iterator operands and lexical Symbol
+shadowing. A source compiler control asserts shared opcode/counter composition
+and explicit hole writes. Automatic native generation consumes the common source
+model; no generated output was edited and no check ran. Primitive String
+iteration authority/builtins, spread call arguments, array binding IteratorClose
+and for-of control unwinding remain further required source connections.

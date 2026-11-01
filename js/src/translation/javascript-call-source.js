@@ -32,6 +32,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceAllocate',prototype:JavaScriptCallSource} |
  * {$:'sourceClosure',owner:bigint,ordinal:number,captures:JavaScriptCallSource[],receiver:JavaScriptCallSource} |
  * {$:'sourceObject',prototype:JavaScriptCallSource,properties:JavaScriptCallSourceProperty[],realm:bigint} |
+ * {$:'sourceArrayAccumulation',prototype:JavaScriptCallSource,parts:JavaScriptCallArrayPart[],iteratorKey:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceArray',prototype:JavaScriptCallSource,length:number,elements:JavaScriptCallSourceArrayElement[],realm:bigint} |
  * {$:'sourcePropertyKey',input:JavaScriptCallSource,realm:bigint} |
  * {$:'sourcePropertyDefinition',target:JavaScriptCallSource,key:JavaScriptCallSource,attributes:JavaScriptCallSource,realm:bigint} |
@@ -42,6 +43,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
 /** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource,excluded?:JavaScriptCallSource[]}} JavaScriptCallSourceProperty */
+/** @typedef {{$:'sourceArrayValue',value:JavaScriptCallSource} | {$:'sourceArraySpread',value:JavaScriptCallSource} | {$:'sourceArrayHole'}} JavaScriptCallArrayPart */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
 /** @typedef {{$:'sourceControlScope',identity:number,kind:string,handlers:number}} JavaScriptCallSourceControlScope */
@@ -187,6 +189,27 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    for(const capture of source.captures){const value=lowerJavaScriptCallSourceExpression(capture,bindings,current,depth+1),saved=allocateJavaScriptCallSourceRegister(value.builder);current=appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:value.register});captures.push(saved.register);}
    const result=allocateJavaScriptCallSourceRegister(current);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'closureAllocate',destination:result.register,owner:source.owner,ordinal:source.ordinal,captures,receiver:savedReceiver.register})};
+  }
+  case 'sourceArrayAccumulation':{
+   if(source.parts.length>4096||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'Array accumulation retains its bounded parts and actual realm');
+   const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(prototype.builder);let current=appendJavaScriptCallSourceInstruction(object.builder,{$:'arrayAllocate',destination:object.register,prototype:prototype.register,length:0});
+   const iteratorKey=lowerJavaScriptCallSourceExpression(source.iteratorKey,bindings,current,depth+1),index=allocateJavaScriptCallSourceRegister(iteratorKey.builder);current=appendJavaScriptCallSourceInstruction(index.builder,{$:'constant',destination:index.register,value:{$:'number',value:0}});
+   for(const part of source.parts){
+    if(!['sourceArraySpread','sourceArrayValue','sourceArrayHole'].includes(part.$))return refuseJavaScriptCallSource(current,'Array accumulation retains every actual part kind');
+    if(part.$==='sourceArraySpread'){
+     const input=lowerJavaScriptCallSourceExpression(part.value,bindings,current,depth+1);current=appendJavaScriptCallSourceInstruction(input.builder,{$:'arraySpread',destination:index.register,target:object.register,input:input.register,index:index.register,iteratorKey:iteratorKey.register,realm:source.realm});continue;
+    }
+    if(part.$==='sourceArrayValue'){
+     const key=allocateJavaScriptCallSourceRegister(current),keyed=appendJavaScriptCallSourceInstruction(key.builder,{$:'propertyKey',destination:key.register,input:index.register,realm:source.realm}),value=lowerJavaScriptCallSourceExpression(part.value,bindings,keyed,depth+1),written=allocateJavaScriptCallSourceRegister(value.builder);
+     current=appendJavaScriptCallSourceInstruction(written.builder,{$:'ordinaryDataProperty',destination:written.register,object:object.register,key:key.register,value:value.register,realm:source.realm});
+    }
+    current=appendJavaScriptCallSourceInstruction(current,{$:'primitive',destination:index.register,operation:'increment numeric value',arguments:[index.register]});
+    if(part.$==='sourceArrayHole'){
+     const key=lowerJavaScriptCallSourceExpression({$:'sourceConstant',value:{$:'text',units:[108,101,110,103,116,104]}},bindings,current,depth+1),written=allocateJavaScriptCallSourceRegister(key.builder);
+     current=appendJavaScriptCallSourceInstruction(written.builder,{$:'ordinarySet',destination:written.register,object:object.register,key:key.register,value:index.register,receiver:object.register});current=appendJavaScriptCallSourceInstruction(current,{$:'requireWrite',success:written.register});
+    }
+   }
+   return {$:'sourceResult',builder:current,register:object.register};
   }
   case 'sourceArray':{
    if(!Number.isInteger(source.length)||source.length<0||source.length>4294967295||Object.is(source.length,-0)||source.elements.length>4096||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source Array construction requires its actual sparse length, bounded elements and realm');
