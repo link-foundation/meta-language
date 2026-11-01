@@ -38,9 +38,9 @@ for(const original of originals){
  if(compilerExpectation)assert.equal(compilerExpectation.outcome,'accept',original.name+': a retained positive original must keep its compiler acceptance contract');
  const selections=[],concrete=readRustStandardSumConcreteControl(original.source);
  for(const version of versions){
-  const surface=parseRust(original.source,{sourceVersion:version}),program=checkProgram(surface);
+  const surface=parseRust(original.source,{sourceVersion:version,...(original.sourceSignatureModel!==undefined?{sourceSignatureModel:original.sourceSignatureModel}:{})}),program=checkProgram(surface);
   const observedStdout=stdout(emitJavaScript(program).text);assert.equal(observedStdout,original.stdout,original.name);
-  const packet=createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version,provenance:{fixture:original.name}});
+  const packet=createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version,...(original.sourceSignatureModel!==undefined?{rustSourceSignatureModel:original.sourceSignatureModel}:{}),provenance:{fixture:original.name}});
   const emissions=Object.fromEntries(targets.map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)]));
   assert.equal(stdout(emissions.JavaScript.code),original.stdout,original.name+': actual typed emission');
   selections.push({version,surface,root:packet.root.asU64(),links:packet.network.toLino(),
@@ -53,12 +53,12 @@ for(const original of refusals){
  const compilerExpectation=readRustOriginalCompilerExpectation(original,versions);
  const selections=[],concrete=readRustStandardSumConcreteControl(original.source);
  for(const version of versions){
-  let failure;try{checkProgram(parseRust(original.source,{sourceVersion:version}));}catch(error){failure=error;}
+  let failure;try{checkProgram(parseRust(original.source,{sourceVersion:version,...(original.sourceSignatureModel!==undefined?{sourceSignatureModel:original.sourceSignatureModel}:{})}));}catch(error){failure=error;}
   assert.ok(failure,original.name+': original refusal remains represented');
   assert.ok((original.diagnosticKinds??['unsupported','type']).includes(failure.kind),original.name);
   if(compilerExpectation?.outcome==='accept')assert.equal(failure.kind,'unsupported',original.name+': valid original Rust refusal is an explicit interpreter profile boundary');
   if(original.reasonIncludes)assert.ok(failure.reason.includes(original.reasonIncludes),original.name);
-  assert.throws(()=>createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version}),undefined,original.name);
+  assert.throws(()=>createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version,...(original.sourceSignatureModel!==undefined?{rustSourceSignatureModel:original.sourceSignatureModel}:{})}),undefined,original.name);
   selections.push({version,kind:failure.kind,reason:failure.reason,span:failure.span??null});
  }
  await write((first?'':',')+JSON.stringify({...original,concrete,selections}));first=false;
@@ -68,8 +68,8 @@ for(const original of emissionRefusals){
  const compilerExpectation=readRustOriginalCompilerExpectation(original,versions);assert.equal(compilerExpectation.outcome,'accept');
  const selections=[],concrete=readRustStandardSumConcreteControl(original.source);
  for(const version of versions){
-  const surface=parseRust(original.source,{sourceVersion:version}),program=checkProgram(surface);
-  const packet=createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version});
+  const surface=parseRust(original.source,{sourceVersion:version,...(original.sourceSignatureModel!==undefined?{sourceSignatureModel:original.sourceSignatureModel}:{})}),program=checkProgram(surface);
+  const packet=createTypedProgramLinks(original.source,'Rust',{rustSourceVersion:version,...(original.sourceSignatureModel!==undefined?{rustSourceSignatureModel:original.sourceSignatureModel}:{})});
   const text=packet.network.toLino(),binary=encodeLinkNetworkBinary(packet.network);
   const graphs=[packet.network,LinkNetwork.fromLino(text),decodeLinkNetworkBinary(binary)],diagnostics=[];
   for(let at=0;at<graphs.length;at+=1){

@@ -28,6 +28,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceRecur',arguments:JavaScriptCallSource[]} |
  * {$:'sourceAllocate',prototype:JavaScriptCallSource} |
  * {$:'sourceObject',prototype:JavaScriptCallSource,properties:JavaScriptCallSourceProperty[],realm:bigint} |
+ * {$:'sourceArray',prototype:JavaScriptCallSource,length:number,elements:JavaScriptCallSourceArrayElement[],realm:bigint} |
  * {$:'sourcePropertyKey',input:JavaScriptCallSource,realm:bigint} |
  * {$:'sourcePropertyDefinition',target:JavaScriptCallSource,key:JavaScriptCallSource,attributes:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
@@ -37,6 +38,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
 /** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource}} JavaScriptCallSourceProperty */
+/** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceBindingRegister',identity:number,register:number,mutable:boolean}} JavaScriptCallSourceBinding */
 /** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
@@ -171,6 +173,17 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
    const write=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinarySet',destination:result.register,object:object.register,key:key.register,value:value.register,receiver:object.register});
    return {$:'sourceResult',builder:appendJavaScriptCallSourceInstruction(write,{$:'requireWrite',success:result.register}),register:value.register};
+  }
+  case 'sourceArray':{
+   if(!Number.isInteger(source.length)||source.length<0||source.length>4294967295||Object.is(source.length,-0)||source.elements.length>4096||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source Array construction requires its actual sparse length, bounded elements and realm');
+   const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(prototype.builder);
+   let current=appendJavaScriptCallSourceInstruction(object.builder,{$:'arrayAllocate',destination:object.register,prototype:prototype.register,length:source.length}),previous=-1;
+   for(const element of source.elements){
+    if(!Number.isSafeInteger(element.index)||Object.is(element.index,-0)||element.index<=previous||element.index>=source.length)return refuseJavaScriptCallSource(current,'source Array elements retain their actual strictly increasing literal coordinates');previous=element.index;
+    const key=lowerJavaScriptCallSourceExpression({$:'sourcePropertyKey',input:{$:'sourceConstant',value:{$:'number',value:element.index}},realm:source.realm},bindings,current,depth+1),value=lowerJavaScriptCallSourceExpression(element.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
+    current=appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryDataProperty',destination:result.register,object:object.register,key:key.register,value:value.register,realm:source.realm});
+   }
+   return {$:'sourceResult',builder:current,register:object.register};
   }
   case 'sourceObject':{
    if(source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'source object construction requires its actual unsigned64 realm identity');

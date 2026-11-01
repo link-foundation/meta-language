@@ -41,6 +41,11 @@ export const rustBorrowedVectorPositionDecisions=[
  {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,false,false,0],expected:false},
  {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[false,true,false,0],expected:false},
  {operation:'acceptRustBorrowedVectorLiteralContext',arguments:[true,true,true,65537],expected:false},
+ {operation:'readRustBorrowedVectorEmptyConstructor',arguments:[true,'Vec','new',0],expected:'construct'},
+ {operation:'readRustBorrowedVectorEmptyConstructor',arguments:[true,'std::vec::Vec','new',0],expected:'construct'},
+ {operation:'readRustBorrowedVectorEmptyConstructor',arguments:[true,'std::vec::Vec','new',1],expected:'arity'},
+ {operation:'readRustBorrowedVectorEmptyConstructor',arguments:[false,'Vec','new',0],expected:''},
+ {operation:'readRustBorrowedVectorEmptyConstructor',arguments:[true,'my::Vec','new',0],expected:''},
 ];
 // Valid Rust originals remain explicit frontend boundaries until actual value
 // loans, source-result outlives checks and target representation are connected.

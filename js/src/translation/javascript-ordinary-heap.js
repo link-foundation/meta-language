@@ -1,4 +1,4 @@
-import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition} from './javascript-array-objects.js';
+import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,constructJavaScriptSemanticTextUnits,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';
 import {createJavaScriptPropertyDescriptor,testCompleteJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} from './javascript-property-descriptors.js';
 import {testJavaScriptCollectionKey,orderJavaScriptCollectionKeys} from './javascript-collection-rules.js';
@@ -7,7 +7,7 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
 /** Tombstones retain stable insertion ordinals after releasing deleted values.
  * @typedef {{$:'collectionEntry',key:JavaScriptSemanticValue,value:JavaScriptSemanticValue,present:boolean}} JavaScriptCollectionEntry */
 /** @typedef {JavaScriptArrayObject | {$:'collectionIteratorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
- * callable:boolean,properties:JavaScriptOrdinaryProperty[],collection:bigint,cursor:number,kind:string} |
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],collection:bigint,cursor:number,kind:string,collectionKind:string} |
  * {$:'mapObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
  * {$:'setObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
@@ -120,10 +120,10 @@ export function readJavaScriptOrdinaryHeapError(heap) {
       for(const hook of [object.hostGet,object.hostSet]){const error=readJavaScriptOrdinaryValueError(heap,hook);if(error!=='')return error;if(hook.$!=='object'||!hook.callable)return 'opaque Error access requires its actual externally registered call hooks';}
     }
     if(object.$==='collectionIteratorObject'){
-      if(object.callable||!Number.isSafeInteger(object.cursor)||object.cursor<0||Object.is(object.cursor,-0)||object.cursor>65536||!['keys','values','entries'].includes(object.kind))return 'collection iterators require their exact bounded cursor and iteration kind';
+      if(!['Map','Set'].includes(object.collectionKind)||object.callable||!Number.isSafeInteger(object.cursor)||object.cursor<0||Object.is(object.cursor,-0)||object.cursor>65536||!['keys','values','entries'].includes(object.kind))return 'collection iterators require their exact bounded cursor and iteration kind';
       if(object.collection!==0n){
         const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,object.collection)];
-        if(collection===undefined||collection.$!=='mapObject'&&collection.$!=='setObject'||object.cursor>collection.entries.length)return 'a live collection iterator retains its actual collection identity and insertion position';
+        if(collection===undefined||!(object.collectionKind==='Map'&&collection.$==='mapObject'||object.collectionKind==='Set'&&collection.$==='setObject')||object.cursor>collection.entries.length)return 'a live collection iterator retains its actual collection identity and insertion position';
       }else if(object.cursor!==0)return 'an exhausted collection iterator releases its collection and cursor';
     }
     if(object.$==='mapObject'||object.$==='setObject'){
@@ -363,8 +363,24 @@ export function createJavaScriptOrdinarySetDescriptor(value, creation) {
  * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity
  * @param {JavaScriptSemanticValue} key @param {JavaScriptSemanticValue} value
  * @param {JavaScriptSemanticValue} receiver
- * @returns {{heap:JavaScriptOrdinaryHeap,action:string,error:string,success:boolean,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} */
+ * @returns {JavaScriptOrdinarySetPlan} */
 export function planJavaScriptOrdinarySet(heap, identity, key, value, receiver) {
+ return planJavaScriptOrdinarySetDefinition(heap,identity,key,value,receiver,false);
+}
+/** @typedef {{heap:JavaScriptOrdinaryHeap,action:string,error:string,success:boolean,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[],definition?:JavaScriptPropertyDescriptor}} JavaScriptOrdinarySetPlan */
+/** Keep the legacy synchronous planner for its pure controls. The machine uses
+ * this selector to execute genuine Array length conversion callbacks.
+ * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity
+ * @param {JavaScriptSemanticValue} key @param {JavaScriptSemanticValue} value
+ * @param {JavaScriptSemanticValue} receiver @returns {JavaScriptOrdinarySetPlan} */
+export function planJavaScriptOrdinarySetWithArrayDefinition(heap,identity,key,value,receiver){
+ return planJavaScriptOrdinarySetDefinition(heap,identity,key,value,receiver,true);
+}
+/** @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity
+ * @param {JavaScriptSemanticValue} key @param {JavaScriptSemanticValue} value
+ * @param {JavaScriptSemanticValue} receiver @param {boolean} deferArrayLength
+ * @returns {JavaScriptOrdinarySetPlan} */
+export function planJavaScriptOrdinarySetDefinition(heap, identity, key, value, receiver,deferArrayLength) {
   const heapError = readJavaScriptOrdinaryHeapError(heap);
   const keyError = readJavaScriptOrdinaryKeyError(heap, key);
   const valueError = readJavaScriptOrdinaryValueError(heap, value);
@@ -392,6 +408,7 @@ export function planJavaScriptOrdinarySet(heap, identity, key, value, receiver) 
   if (property !== undefined && (!property.descriptor.valuePresent || !property.descriptor.writable))
     return {heap,action:'complete',error:'',success:false,callee:{$:'undefined'},receiver,arguments:[]};
   const proposed = createJavaScriptOrdinarySetDescriptor(value,property === undefined);
+  if(deferArrayLength&&object.$==='arrayObject'&&testJavaScriptArrayLengthKey(key))return {heap,action:'array definition',error:'',success:false,callee:{$:'undefined'},receiver,arguments:[],definition:proposed};
   const transition = defineJavaScriptOrdinaryProperty(heap,receiver.identity,key,proposed);
   return {heap:transition.heap,action:transition.error === '' ? 'complete' : 'error',error:transition.error,success:transition.success,callee:{$:'undefined'},receiver,arguments:[]};
 }

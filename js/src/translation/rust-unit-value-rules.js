@@ -99,6 +99,7 @@ export function readRustOrdinaryCompletionConstruction(kind,terminal){
  if(kind==='value')return terminal?'value':'continuation';
  if(kind==='binding')return 'binding';
  if(kind==='conditional')return 'conditional';
+ if(kind==='match')return 'match';
  return kind==='sequence'?'join':'';
 }
 /** @param {string} first @param {string} second @returns {string} */
@@ -114,6 +115,12 @@ export function acceptRustOrdinaryCompletedAlternative(kind){return kind==='retu
  * statement. Completed branches retain their separate result/borrow checks.
  * @param {string} kind @returns {boolean} */
 export function testRustOrdinaryCompletionFallsThrough(kind){return !acceptRustOrdinaryCompletedAlternative(kind);}
+/** Actual token columns; strings and raw identifiers cannot supply keywords.
+ * 1 complete selected match, 0 closed match without completion, -1 more source.
+ * @param {string[]} kinds @param {string[]} values @returns {number} */
+export function readRustOrdinaryMatchCompletionPresence(kinds,values){if(kinds.length!==values.length||values[0]!=='match'||kinds[0]!=='identifier')return 0;let depth=0,opened=false,selected=false;for(let index=1;index<values.length;index+=1){if(kinds[index]==='punct'&&values[index]==='{'){depth+=1;opened=true;}if(opened&&(kinds[index]==='identifier'&&(values[index]==='return'||values[index]==='break'||values[index]==='continue')||kinds[index]==='punct'&&values[index]==='?'))selected=true;if(kinds[index]==='punct'&&values[index]==='}'&&opened){depth-=1;if(depth===0)return selected?1:0;}}return -1;}
+/** @param {number} count @returns {string} */
+export function readRustOrdinaryMatchArmCountError(count){return count>=1&&count<=256&&count%1===0?'':'the complete ordinary match arms exceed their source budget';}
 /** Existing actual leaf transfers justify a new expression result. This
  * predicate is not a producer certificate supplied by source input.
  * @param {boolean[]} transfers @returns {boolean} */

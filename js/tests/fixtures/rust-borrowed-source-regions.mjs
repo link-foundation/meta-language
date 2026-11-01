@@ -58,6 +58,11 @@ export const rustBorrowedSourceRegionDecisions=[
  {operation:'acceptRustBorrowedSourceBoxReference',arguments:[['reference','reference'],['reference'],true,true],expected:false},
  {operation:'acceptRustBorrowedSourceBoxReference',arguments:[['reference'],['reference','box'],true,true],expected:false},
  {operation:'readRustBorrowedSourceAdjustment',arguments:['reference','reference',false,false,false,true,false,false,1,1],expected:'unsupported'},
+ {operation:'readRustBorrowedSourceIteratorOperation',arguments:['method','map'],expected:'iterator map'},
+ {operation:'readRustBorrowedSourceIteratorOperation',arguments:['method','slice'],expected:'iterator slice'},
+ {operation:'readRustBorrowedSourceIteratorOperation',arguments:['append',''],expected:'iterator concat'},
+ {operation:'readRustBorrowedSourceIteratorOperation',arguments:['method','concat'],expected:''},
+ {operation:'readRustBorrowedSourceIteratorOperation',arguments:['method','reduce'],expected:''},
 ];
 // Valid Rust source remains pending until all frontend/representation consumers
 // and the future compiler/codec/target assertions execute at a recorded commit.

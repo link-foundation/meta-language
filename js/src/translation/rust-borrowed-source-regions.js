@@ -6,6 +6,8 @@ import {readRustBorrowedExpressionLifetimeScopeError,readRustBorrowedVectorObser
 import * as rules from './rust-borrowed-source-region-rules.js';
 import {measureRustSourcePositionMetadata} from './rust-standard-sum-source-metadata.js';
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
+import {sameType} from './types.js';
+import {readRustBorrowedIteratorProjectionSyntax,readRustBorrowedIteratorCollectionError,acceptRustBorrowedIteratorWholeSlice} from './rust-borrowed-iterator-rules.js';
 const model='Rust source function signature 3';
 const references=position=>position?.wrappers.filter(value=>value==='reference').length??0;
 // Compare actual owner records structurally, independent of JSON key order.
@@ -76,9 +78,11 @@ class SourceRegions{
   const error=rules.readRustBorrowedSourcePositionFlowError(value.role,same,lifetime(expected)==='static',value.regions.every(id=>this.lifetimes[id]==='static'));if(error)throw typeError(error,node?.span);this.checkLifetime(value,expected,node);return value;
  }
  bind(env,name,value,node){value=this.read(value,'move',node);const id=this.root();this.binders.push(id);env.set(name,{...value,root:id,producer:false});return id;}
+ iteratorItem(source,node){const p=source.position;if(!p||p.type.kind!=='array'||p.owner.kind!=='library'||p.owner.path.join('::')!=='std::vec::Vec'||p.owner.arguments.length!==1||!['reference','borrowed vector'].includes(source.role))fail('a readonly source method needs its actual borrowed vector receiver position',node);if(p.arrayElementPosition)return this.position(p.arrayElementPosition);let owner=p.owner.arguments[0],boxes=[];while(acceptRustOwnedBoxTypeNode(['box'],owner.kind,owner.path.join('::'),owner.arguments.length)){boxes.push('box');owner=owner.arguments[0];if(boxes.length>128)fail('readonly iterator element nesting exceeds its finite position profile',node);}return this.position({type:p.type.element,wrappers:['reference',...boxes],lifetimes:[p.lifetimes[0]??null],owner:p.owner.arguments[0]});}
+ callbackProjection(node){const pending=[node];while(pending.length){const value=pending.pop();this.visits+=1;this.budget();const operation=readRustBorrowedIteratorProjectionSyntax(value.k==='var'?'name':value.k);if(operation==='name')continue;if(operation!=='match'||value.cases.some(arm=>!['ctor','wild','bind'].includes(arm.pattern.k)))return false;pending.push(value.scrutinee);for(const arm of value.cases)pending.push(arm.body);}return true;}
  finishExpression(value,start,node){for(const id of this.temporaries.slice(start))this.states[id]=rules.expireRustBorrowedSourceRegion(this.states[id]);return this.read(value,'read',node);}
  expression(node,env,bindings,expected=null,depth=0){
-  this.visits+=1;this.budget(depth);const operation=rules.readRustBorrowedSourceOperation(node.k)||rules.readRustBorrowedSourceMatchOperation(node.k);if(!operation)fail('this checked expression needs its actual source binder operation adapter',node);
+  this.visits+=1;this.budget(depth);const operation=rules.readRustBorrowedSourceOperation(node.k)||rules.readRustBorrowedSourceMatchOperation(node.k)||rules.readRustBorrowedSourceIteratorOperation(node.k,node.op??'');if(!operation)fail('this checked expression needs its actual source binder operation adapter',node);
   const position=node.sourcePosition?.position??null;this.scope(position,bindings,node);let value;
   if(operation==='var'){if(!env.has(node.name))fail('the source variable needs its actual lexical binder',node);value=this.read(env.get(node.name),'read',node);}
   else if(operation==='lit'||operation==='unit'){
@@ -87,6 +91,16 @@ class SourceRegions{
   }else if(operation==='let'){
    const before=this.temporaries.length,initial=this.expression(node.value,env,bindings,null,depth+1),scope=new Map(env),id=this.bind(scope,node.name,initial,node.value);this.finishExpression(scope.get(node.name),before,node.value);
    value=this.read(this.expression(node.body,scope,bindings,expected,depth+1),'move',node.body);this.states[id]=rules.expireRustBorrowedSourceRegion(this.states[id]);this.read(value,'read',node);
+  }else if(operation.startsWith('iterator ')){
+   const receiver=node.k==='append'?node.left:node.object,source=this.read(this.expression(receiver,env,bindings,null,depth+1),'read',receiver),item=this.iteratorItem(source,node),wanted=position??expected;
+   if(!wanted||role(wanted)!=='borrowed vector')fail('a readonly method needs its complete owning borrowed-vector result position',node);let regions=source.regions,output=item;
+   if(operation==='iterator map'){
+    const callback=node.args[0];if(node.args.length!==1||callback?.k!=='lambda'||callback.params.length!==1||!sameType(callback.params[0].type,item.type)||!this.callbackProjection(callback.body))fail('a readonly map needs its actual capture-free one-parameter projection lambda',node);
+    const id=this.root(),local=new Map([[callback.params[0].name,this.value(item,id,[...source.regions])]]),before=this.temporaries.length;this.closedTarget(item,node);const result=this.read(this.expression(callback.body,local,bindings,wanted.arrayElementPosition,depth+1),'move',callback.body);this.states[id]=rules.expireRustBorrowedSourceRegion(this.states[id]);this.finishExpression(result,before,callback.body);output=result.position;regions=result.regions;
+   }else if(operation==='iterator concat'){
+    const operand=node.right;if(!operand)fail('readonly chain needs its one actual borrowed iterator operand',node);const right=this.read(this.expression(operand,env,bindings,null,depth+1),'read',operand),child=this.iteratorItem(right,node);if(!sameOwner(item,child)||item.wrappers.join('/')!==child.wrappers.join('/'))fail('readonly chain item source positions disagree',node);regions=this.union([regions,right.regions]);
+   }else if(!acceptRustBorrowedIteratorWholeSlice(node.args.map(arg=>arg?.k??''),node.args.map(arg=>arg?.type.kind??''),node.args.map(arg=>String(arg?.value??''))))fail('readonly collect materialization requires its exact whole-vector slice',node);
+   const error=readRustBorrowedIteratorCollectionError(sameType(output.type,wanted.type.element),sameOwner(output,wanted.arrayElementPosition),output.wrappers.length===1&&output.wrappers[0]==='reference',true);if(error)fail(error,node);this.closedTarget(output,node);value=this.value(this.position(wanted),this.root('',true),regions,true);
   }else if(operation==='match'){
    const scrutinee=this.read(this.expression(node.scrutinee,env,bindings,null,depth+1),'read',node.scrutinee),count=this.states.length;
    this.branches(2*count);const base=this.states.slice(),outcomes=[],results=[];

@@ -78,3 +78,5 @@ export function readRustBorrowedSourceMatchOperation(kind){return kind==='match'
  * @param {string[]} source @param {string[]} target @param {boolean} canonical
  * @param {boolean} sameLeaf @returns {boolean} */
 export function acceptRustBorrowedSourceBoxReference(source,target,canonical,sameLeaf){if(!canonical||!sameLeaf||source[0]!=='reference'||target[0]!=='reference'||source.length<=target.length)return false;for(let index=1;index<source.length;index+=1)if(source[index]!=='box')return false;for(let index=1;index<target.length;index+=1)if(target[index]!=='box')return false;return true;}
+/** @param {string} kind @param {string} operation @returns {string} */
+export function readRustBorrowedSourceIteratorOperation(kind,operation){if(kind==='append')return 'iterator concat';return kind==='method'&&['map','slice'].includes(operation)?'iterator '+operation:'';}

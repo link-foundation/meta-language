@@ -8,6 +8,7 @@ use crate::translation::rust_unit_value_rules as rules;
 use crate::translation::surface::{SCase, SCasePattern};
 use super::expression_completions::{CompletionContinuation,has_expression_completion};
 use std::collections::HashMap;
+mod matches;
 
 pub(super) struct CompletionTree {
     pub(super) kind: String,
@@ -21,6 +22,7 @@ pub(super) enum CompletionNode {
     Break(SExpr, SourceOrigin),
     Continue(SExpr, SourceOrigin),
     Loop{expression:SExpr,exits:Vec<super::owned_record_loops::LoopPath>,continuation:Box<CompletionTree>},
+    Match{scrutinee:SExpr,arms:Vec<CompletionArm>,span:Option<Span>},
     Binding(Binding, Box<CompletionTree>),
     Conditional {
         condition: Option<SExpr>,
@@ -35,6 +37,7 @@ pub(super) enum CompletionNode {
         span: Option<Span>,
     },
 }
+pub(super) struct CompletionArm{pub(super) patterns:Vec<super::SPattern>,pub(super) body:Box<CompletionTree>,pub(super) span:Option<Span>}
 impl CompletionNode {
     fn name(&self) -> &str {
         match self {
@@ -44,6 +47,7 @@ impl CompletionNode {
             Self::Break(..)=>"break",
             Self::Continue(..)=>"continue",
             Self::Loop{..}=>"loop",
+            Self::Match{..}=>"match",
             Self::Binding(..) => "binding",
             Self::Conditional { .. } => "conditional",
             Self::Sequence { .. } => "sequence",
@@ -80,6 +84,7 @@ fn tree_span(tree: &CompletionTree) -> Option<Span> {
         | CompletionNode::Break(expr,_)
         | CompletionNode::Continue(expr,_)=>expr.span,
         CompletionNode::Loop{expression,..}=>expression.span,
+        CompletionNode::Match{span,..}=>*span,
         CompletionNode::Binding(binding, _) => binding.span,
         CompletionNode::Conditional { span, .. } | CompletionNode::Sequence { span, .. } => *span,
     }
@@ -91,6 +96,9 @@ impl RustParser {
     }
     pub(super) fn ordinary_completion_snapshot(&mut self)->Result<HashMap<String,String>>{
         let entries=self.origins.owned_binding_state_count();let text=self.origins.owned_binding_state_text_size();let state=&mut self.owned_record_state;let error=rules::read_rust_ordinary_completion_snapshot_error(state.completion_snapshot_entries as f64,entries as f64,state.completion_snapshot_text as f64,text as f64);if !error.is_empty(){return Err(unsupported("ordinary Rust completion ownership",&error,None));}state.completion_snapshot_entries+=entries;state.completion_snapshot_text+=text;Ok(self.origins.snapshot_owned_bindings())
+    }
+    pub(super) fn ordinary_completion_branch_snapshot(&mut self)->Result<super::standard_sum_completions::TryBranchSnapshot>{
+        let ownership=self.ordinary_completion_snapshot()?;let(entries,text)=self.origins.owned_temporary_state_cost();let budget=&mut self.owned_record_state;let error=rules::read_rust_ordinary_completion_snapshot_error(budget.completion_snapshot_entries as f64,entries as f64,budget.completion_snapshot_text as f64,text as f64);if !error.is_empty(){return Err(unsupported("ordinary Rust completion ownership",&error,None));}budget.completion_snapshot_entries+=entries;budget.completion_snapshot_text+=text;Ok(super::standard_sum_completions::TryBranchSnapshot{ownership,temporaries:self.origins.owned_temporary_frame()})
     }
     fn has_let_else_completion(&self) -> bool {
         let mut count = 64usize;
@@ -338,10 +346,10 @@ impl RustParser {
         let source_result=self.standard_sum_source.return_origin.clone().filter(|origin|origin.ty.is_some()).ok_or_else(||unsupported("Rust finite record loop","completed loop exits need their actual enclosing callable result type",guard.span))?;
         let callable=self.owned_record_state_callable();let previous=self.owned_record_state.effects.get_or_insert_with(Default::default).loop_scope.replace(callable);
         let tree=self.ordinary_completion_block(path);self.owned_record_state.effects.as_mut().expect("actual loop state transport").loop_scope=previous;let tree=tree?;
-        let mut pending=vec![(&tree,0_usize)];let mut work=0_usize;while let Some((tree,depth))=pending.pop(){work+=1;if work>crate::translation::rust_expression_completion_rules::read_rust_expression_completion_limit("work") as usize||depth>crate::translation::rust_expression_completion_rules::read_rust_expression_completion_limit("depth") as usize{return Err(unsupported("Rust finite record loop","the complete loop completion tree exceeds its source budget",None));}match &tree.node{CompletionNode::Binding(_,body)=>pending.push((body,depth+1)),CompletionNode::Conditional{first,second,..}|CompletionNode::Sequence{first,rest:second,..}=>{pending.push((first,depth+1));pending.push((second,depth+1));},_=>{}}}
-        let paths=if self.origins.collecting{Vec::new()}else{super::owned_record_loops::trace_completed_loop(self,&tree,guard,path)?};
+        let mut pending=vec![(&tree,0_usize)];let mut work=0_usize;while let Some((tree,depth))=pending.pop(){work+=1;if work>crate::translation::rust_expression_completion_rules::read_rust_expression_completion_limit("work") as usize||depth>crate::translation::rust_expression_completion_rules::read_rust_expression_completion_limit("depth") as usize{return Err(unsupported("Rust finite record loop","the complete loop completion tree exceeds its source budget",None));}match &tree.node{CompletionNode::Binding(_,body)=>pending.push((body,depth+1)),CompletionNode::Conditional{first,second,..}|CompletionNode::Sequence{first,rest:second,..}=>{pending.push((first,depth+1));pending.push((second,depth+1));},CompletionNode::Match{arms,..}=>pending.extend(arms.iter().map(|arm|(arm.body.as_ref(),depth+1))),CompletionNode::Loop{continuation,..}=>pending.push((continuation,depth+1)),_=>{}}}
+        let pending=if self.origins.collecting{Vec::new()}else{super::owned_record_loops::trace_completed_loop(self,&tree,guard,path)?};
         let mut context=CompletionContext{loop_control:true,path:path.to_vec(),ret:source_result.ty.as_ref().expect("actual enclosing return type").clone(),source_result,outputs:Vec::new(),data:None};
-        let expression=self.lower_ordinary_completion(tree,false,&mut context)?;let owner=self.ordinary_completion_data(&mut context);let returns=context.outputs.iter().filter(|origin|!origin.diverging).count();Ok(super::owned_record_loops::LoopCompletion{expression:Some(expression),owner,returns,paths})
+        let expression=self.lower_ordinary_completion(tree,false,&mut context)?;let paths=self.resolve_completed_loop_paths(pending)?;let owner=self.ordinary_completion_data(&mut context);let returns=context.outputs.iter().filter(|origin|!origin.diverging).count();Ok(super::owned_record_loops::LoopCompletion{expression:Some(expression),owner,returns,paths})
     }
     fn completion_leaf(&mut self, kind: &str, expression: SExpr, path: &[String]) -> Result<CompletionTree> {
         let origin = self.origins.transfer_owned_result(&expression, path)?;
@@ -380,7 +388,7 @@ impl RustParser {
     }
     fn expire_ordinary_completion_paths(&mut self,tree:&mut CompletionTree,before:&HashMap<String,String>)->Result<Vec<SourceOrigin>>{
         if let Some(states)=tree.ownership.take(){let(origin,continuing)=match &tree.node{CompletionNode::Value(_,origin)=>(origin.clone(),true),CompletionNode::Return(_,origin)|CompletionNode::Abort(_,origin)|CompletionNode::Break(_,origin)|CompletionNode::Continue(_,origin)=>(origin.clone(),false),_=>return Err(unsupported("ordinary Rust completion ownership","only an actual leaf owns its exit state",None))};self.origins.restore_owned_bindings(states);self.origins.expire_owned_bindings(before,&origin)?;tree.ownership=Some(self.ordinary_completion_snapshot()?);return Ok(if continuing{vec![origin]}else{Vec::new()});}
-        let mut values=Vec::new();match &mut tree.node{CompletionNode::Binding(_,body)=>values.extend(self.expire_ordinary_completion_paths(body,before)?),CompletionNode::Conditional{first,second,..}=>{values.extend(self.expire_ordinary_completion_paths(first,before)?);values.extend(self.expire_ordinary_completion_paths(second,before)?);},CompletionNode::Sequence{first,rest,..}=>{self.expire_ordinary_completion_paths(first,before)?;values.extend(self.expire_ordinary_completion_paths(rest,before)?);},CompletionNode::Loop{exits,continuation,..}=>{for exit in exits{self.origins.restore_owned_bindings(std::mem::take(&mut exit.ownership));self.origins.expire_owned_bindings(before,&exit.origin)?;exit.ownership=self.ordinary_completion_snapshot()?;}values.extend(self.expire_ordinary_completion_paths(continuation,before)?);},_=>return Err(unsupported("ordinary Rust completion ownership","an actual leaf needs its retained exit state",None))}Ok(values)
+        let mut values=Vec::new();match &mut tree.node{CompletionNode::Binding(_,body)=>values.extend(self.expire_ordinary_completion_paths(body,before)?),CompletionNode::Conditional{first,second,..}=>{values.extend(self.expire_ordinary_completion_paths(first,before)?);values.extend(self.expire_ordinary_completion_paths(second,before)?);},CompletionNode::Sequence{first,rest,..}=>{self.expire_ordinary_completion_paths(first,before)?;values.extend(self.expire_ordinary_completion_paths(rest,before)?);},CompletionNode::Match{arms,..}=>{for arm in arms{values.extend(self.expire_ordinary_completion_paths(&mut arm.body,before)?);}},CompletionNode::Loop{exits,continuation,..}=>{for exit in exits{self.origins.restore_owned_bindings(std::mem::take(&mut exit.ownership));self.origins.expire_owned_bindings(before,&exit.origin)?;exit.ownership=self.ordinary_completion_snapshot()?;}values.extend(self.expire_ordinary_completion_paths(continuation,before)?);},_=>return Err(unsupported("ordinary Rust completion ownership","an actual leaf needs its retained exit state",None))}Ok(values)
     }
     fn ordinary_completion_sequence(
         &mut self,
@@ -471,6 +479,9 @@ impl RustParser {
                     };
                 }
                 break first;
+            }
+            if self.has_ordinary_match_completion()?{
+                let first=self.ordinary_match_completion(path)?;let terminated=self.cursor.eat(";").is_some();let continuation=!self.cursor.is("}");if rules::accept_rust_ordinary_completed_alternative(&first.kind){if continuation{return Err(unsupported("unreachable continuation","statements after a completed return are not removed by this model",tree_span(&first)));}break first;}if continuation||terminated{let rest=self.ordinary_completion_sequence(path,open)?;let kind=rules::read_rust_ordinary_completion_sequence_kind(&first.kind,&rest.kind);let span=tree_span(&first);break CompletionTree{kind,ownership:None,node:CompletionNode::Sequence{first:Box::new(first),rest:Box::new(rest),span}};}break first;
             }
             if let Some(expression)=self.read_owned_record_finite_loop(path)?{
                 let _=self.cursor.eat(";");let span=expression.span;if let Some(exits)=self.take_owned_record_loop_returns(&expression){let continuation=Box::new(self.completion_leaf("value",SExpr::new(SNode::Unit,span),path)?);let first=CompletionTree{kind:"mixed".to_owned(),ownership:None,node:CompletionNode::Loop{expression,exits,continuation}};if self.cursor.is("}"){break first;}let rest=self.ordinary_completion_sequence(path,open)?;let kind=rules::read_rust_ordinary_completion_sequence_kind(&first.kind,&rest.kind);break CompletionTree{kind,ownership:None,node:CompletionNode::Sequence{first:Box::new(first),rest:Box::new(rest),span}};}bindings.push(Binding{name:self.fresh_product_binding(),ty:Some(super::UNIT),value:expression,span});continue;
@@ -794,6 +805,10 @@ impl RustParser {
                     span,
                 );
                 self.lift_ordinary_expression(expression,terminal,context,CompletionContinuation{hole,expression:continued})
+            }
+            CompletionNode::Match{scrutinee,arms,span}if form=="match"=>{
+                let mut rows=Vec::new();for arm in arms{let body=self.lower_ordinary_completion(*arm.body,terminal,context)?;for pattern in arm.patterns{rows.push(super::SRow{patterns:vec![pattern],body:body.clone(),span:arm.span});}}
+                let hole="#rust-ordinary-value-hole".to_owned();let expression=SExpr::new(SNode::Match{scrutinees:vec![name(vec![hole.clone()])],rows},span);self.lift_ordinary_expression(scrutinee,terminal,context,CompletionContinuation{hole,expression})
             }
             CompletionNode::Sequence { first, rest, span } if form == "join" => {
                 let first = self.lower_ordinary_completion(*first, false, context)?;

@@ -86,8 +86,16 @@ the source permanently on exhaustion. Own property and prototype operations
 preserve these internal slots. Constructor copy optimization requires the actual
 registered standard adder, source iterator and iterator-next owners; an override
 or accessor retains the ordinary iterable protocol obligation. Iterator kernels
-return components; the call machine must allocate genuine entry arrays and
-iterator-result objects before exposing JavaScript results. Resource limits are
+return components; the call machine allocates genuine entry arrays and
+iterator-result objects before exposing JavaScript results. Actual registered
+Map/Set keys, values, entries and next owners select those portable frames.
+Set keys/values aliases share code only through their actual common function
+identity. Iterator brands survive exhaustion. A next continuation retains the
+original receiver, operation brand, realm prototypes and yielded components;
+external identity suspension cannot advance its cursor twice. Each completed
+next, including exhaustion, allocates a fresh result record. Iterator-protocol
+loops, callbacks and IteratorClose require their separate source continuations.
+Resource limits are
 explicit outcomes and never fabricated language exceptions or empty results.
 
 Arrays have an inspectable exotic brand, explicit prototype and actual ordered
@@ -97,9 +105,14 @@ extend length, while shrinking length deletes higher configurable indices and
 retains the exact partial rollback at the first nonconfigurable index. A length
 value performs two actual numeric conversions before reading the current length
 descriptor, retaining effects and abrupt completion from each conversion. The
-shared kernel exposes resumable requests for those operations; machine/source
-adapters must drive them rather than inventing conversion results or treating
-an unsupported continuation as a successful write. The algorithm follows the
+shared kernel exposes resumable requests for those operations. Array length
+assignment drives both through the existing scalar conversion and source call
+continuations. Callback effects remain in the current heap, including on
+RangeError, and a primitive retained after a resource limit never repeats its
+completed conversion callbacks. Readonly Set rejection precedes conversion;
+partial deletion remains visible when a later strict-write guard throws.
+Descriptor-definition adapters must also drive these requests, retaining
+conversion results and reporting an unsupported continuation explicitly. The algorithm follows the
 [ECMAScript Array exotic operations](https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#sec-arraysetlength)
 reviewed November 1, 2026; independent version-qualified runtime controls remain
 required. Sparse length is not permission to allocate a dense buffer of that
@@ -592,6 +605,22 @@ state profiles retain their own boundaries. Owned expression-position decorators
 retain source qualifiers on actual expressions so source-free region checking
 can follow actual binder links. They contain no runtime binding identities or
 loan capabilities and do not substitute for that region proof.
+The same separately selected draft has a readonly iterator source path for an
+actual standard vector with a closed element field graph and an actual borrowed
+result context. It transports shared item references through immediate collect,
+capture-free reference projection map, and chain with authentic standard
+`std::iter::once`. Canonical Box reference projection and `as_ref` retain actual
+receiver loans. Constructor-field matching supplies field positions; callback
+locals cannot create referents that escape. The source-free body proof follows
+the actual receiver, lambda parameter and constructor binder links through the
+ordinary Core map, append and whole-slice terms. It checks their exact shapes
+and returned region union independently after reload. This does not extend the
+earlier scalar/owned callback gates, admit arbitrary closures or iterator traits,
+or give source Clone to immutable values copied by the target representation.
+Stages, projection syntax, regions, source metadata and ownership snapshots have
+explicit cumulative bounds. The actual own-project `Type::children` method is
+an authored deferred source control with its declared datatype dependencies;
+that control is not evidence of whole-project source or target support.
 Unshadowed standard vectors and immutable slices now have bounded source
 admission for direct scalar and string elements, with read-only empty checks and
 length conversion explicitly projected to the Number model. Ownership moves,

@@ -2,6 +2,7 @@
 // author must reconcile each selected fixture coordinate before publishing.
 const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
 export const rustBaselineNativePolicyControlGroups=[
+ {sourcePath:'js/src/translation/rust-borrowed-iterator-rules.js',moduleName:'authored_borrowed_iterator_controls',testName:'all_literal_borrowed_iterator_controls',fixtureSelections:[{...selection('rust-borrowed-iterators','rustBorrowedIteratorDecisions'),profile:'exact pure fixture data 2'}]},
  {sourcePath:'js/src/translation/javascript-array-objects.js',moduleName:'authored_array_object_controls',testName:'all_literal_array_object_controls',fixtureSelections:[{...selection('javascript-array-objects','javascriptArrayObjectDecisions'),profile:'exact pure fixture data 2'}]},
  {sourcePath:'js/src/translation/rust-mutable-record-loan-rules.js',moduleName:'authored_mutable_record_loan_controls',testName:'all_literal_mutable_record_loan_controls',fixtureSelections:[selection('rust-mutable-record-loans','rustMutableRecordLoanDecisions')]},
  {sourcePath:'js/src/translation/rust-borrowed-source-region-rules.js',moduleName:'authored_borrowed_source_region_controls',testName:'all_literal_borrowed_source_region_controls',fixtureSelections:[selection('rust-borrowed-source-regions','rustBorrowedSourceRegionDecisions')]},
@@ -28,6 +29,7 @@ export const rustBaselineNativePolicyControlGroups=[
   selection('rust-owned-record-loops','rustOwnedRecordLoopDecisions'),
   selection('rust-owned-record-loops','rustOwnedRecordLoopMalformedNumbers'),
   selection('rust-owned-record-nested-loops','rustOwnedRecordNestedLoopDecisions'),
+  selection('rust-owned-record-loop-residuals','rustOwnedRecordLoopResidualDecisions'),
  ]},
  {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'authored_source_library_error_controls',testName:'all_literal_source_library_error_controls',aliases:true,fixtureSelections:[
   selection('source-library-error-composition','sourceLibraryErrorDecisions'),
@@ -48,6 +50,7 @@ export const rustBaselineNativePolicyControlGroups=[
  ]},
  {sourcePath:'js/src/translation/rust-unit-value-rules.js',moduleName:'authored_owned_record_completion_controls',testName:'all_literal_owned_record_completion_controls',fixtureSelections:[
   selection('rust-owned-record-completions','rustOwnedRecordCompletionDecisions'),
+  selection('rust-ordinary-match-completions','rustOrdinaryMatchCompletionDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-record-effect-rules.js',moduleName:'authored_owned_record_effect_controls',testName:'all_literal_owned_record_effect_controls',aliases:true,fixtureSelections:[
   selection('rust-owned-record-effects','rustOwnedRecordEffectDecisions'),

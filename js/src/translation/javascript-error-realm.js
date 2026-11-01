@@ -42,8 +42,11 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(forward.has(value)){const id=forward.get(value);return typeof value==='symbol'?{$:'symbol',identity:id}:{$:'object',identity:id,callable:typeof value==='function'};}
   if(typeof value==='symbol'){const id=allocate();forward.set(value,id);reverse.set(id,value);heap.symbols.push(id);sorted();return {$:'symbol',identity:id};}
   if(typeof value!=='object'&&typeof value!=='function')throw new TypeError('unmodeled host semantic value');
+  if(nativeTypes.isProxy(value))return refuse('capturing a Proxy requires its actual trap continuations before reflection');
   const id=allocate();forward.set(value,id);reverse.set(id,value);
-  const row={$:'ordinaryObject',identity:id,prototype:{$:'null'},extensible:Reflect.isExtensible(value),callable:typeof value==='function',properties:[]};heap.objects.push(row);sorted();
+  // Only the successor ordinary-source profile exposes inspectable arrays.
+  // Qualified opaque loader arrays retain their distinct explicit host port.
+  const row={$:ordinaryClasses&&Array.isArray(value)?'arrayObject':'ordinaryObject',identity:id,prototype:{$:'null'},extensible:Reflect.isExtensible(value),callable:typeof value==='function',properties:[]};heap.objects.push(row);sorted();
   row.prototype=encode(Reflect.getPrototypeOf(value));
   for(const key of Reflect.ownKeys(value)){
    const descriptor=Reflect.getOwnPropertyDescriptor(value,key);if(!descriptor)throw new TypeError('actual host descriptors must remain stable during capture');
@@ -116,7 +119,10 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }else if(definition.$==='errorOrdinaryConstructorPlan')owners.push({$:'ordinaryConstructorOwner',source:definition.identity,identity:callable.identity,realm:identity,prototype:encode(actual.prototype)});
   else owners.push({$:'errorFunctionOwner',source:definition.identity,identity:callable.identity,realm:identity});
  }
- const registry={$:'errorModuleRegistry',owners,operations:[{$:'errorRealmOperations',realm:identity,objectPrototype:encode(realm.objectPrototype),get:primitiveGet,assign}],intrinsics:[...intrinsics.keys()].map(id=>({$:'errorIntrinsicOwner',identity:id,realm:identity})),realms:[identity],exoticKey:encode(realm.toPrimitive)};
+ if(ordinaryClasses&&(!Array.isArray(realm.arrayPrototype)||typeof realm.functionPrototype!=='function'))throw new TypeError('ordinary source arrays and closures require their actual realm Array and Function prototypes');
+ const operations={$:'errorRealmOperations',realm:identity,objectPrototype:encode(realm.objectPrototype),get:primitiveGet,assign};
+ if(ordinaryClasses){operations.arrayPrototype=encode(realm.arrayPrototype);operations.functionPrototype=encode(realm.functionPrototype);}
+ const registry={$:'errorModuleRegistry',owners,operations:[operations],intrinsics:[...intrinsics.keys()].map(id=>({$:'errorIntrinsicOwner',identity:id,realm:identity})),realms:[identity],exoticKey:encode(realm.toPrimitive)};
  let module=deferModule?null:prepareJavaScriptErrorModule(capture,registry);
  // Only actual initial realm/declaration objects bypass live machine handles.
  // Caller data encoded afterward stays an alias of the mutable semantic heap.
@@ -148,10 +154,19 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(value.callable)return refuse('plain data materialization cannot execute a represented callable');
   if(opaqueOwners.has(value.identity)){const owner=opaqueOwners.get(value.identity);owner.verify(owner.value);return owner.value;}
   if(memo.has(value.identity))return memo.get(value.identity);
-  const row=heap.objects.find(row=>row.identity===value.identity),prototype=encode(realm.objectPrototype);
-  if(!row||row.$!=='ordinaryObject'||(row.prototype.$!=='null'&&(row.prototype.$!=='object'||row.prototype.identity!==prototype.identity)))return refuse('data materialization requires actual plain ordinary records or registered native data');
-  const result=Object.create(row.prototype.$==='null'?null:realm.objectPrototype);memo.set(value.identity,result);
-  for(const property of row.properties){const descriptor=property.descriptor;if(descriptor.getterPresent||descriptor.setterPresent||!descriptor.valuePresent)return refuse('plain data materialization cannot bypass an accessor continuation');Object.defineProperty(result,decode(property.key),{value:materializeData(descriptor.value,memo),writable:descriptor.writable,enumerable:descriptor.enumerable,configurable:descriptor.configurable});}return result;
+  if(memo.size>=4096)return refuse('plain data materialization exceeds its explicit shared object budget');
+  const row=heap.objects.find(row=>row.identity===value.identity),prototype=encode(realm.objectPrototype),array=ordinaryClasses&&row?.$==='arrayObject';
+  const arrayPrototype=array&&realm.arrayPrototype?encode(realm.arrayPrototype):null;
+  const expected=array?arrayPrototype:prototype;
+  if(!row||(!array&&row.$!=='ordinaryObject')||(row.prototype.$!=='null'&&(row.prototype.$!=='object'||expected?.$!=='object'||row.prototype.identity!==expected.identity)))return refuse('data materialization requires actual plain records, supplied realm arrays or registered native data');
+  const result=array?[]:Object.create(row.prototype.$==='null'?null:realm.objectPrototype);if(array)Object.setPrototypeOf(result,row.prototype.$==='null'?null:realm.arrayPrototype);memo.set(value.identity,result);
+  // Defining an Array's potentially readonly length before its existing indices
+  // would reject a valid snapshot. Create the actual sparse own indices first,
+  // then install the authentic length descriptor without filling holes.
+  let length=null;
+  for(const property of row.properties){const descriptor=property.descriptor;if(descriptor.getterPresent||descriptor.setterPresent||!descriptor.valuePresent)return refuse('plain data materialization cannot bypass an accessor continuation');const key=decode(property.key);if(array&&key==='length'){length=descriptor;continue;}Object.defineProperty(result,key,{value:materializeData(descriptor.value,memo),writable:descriptor.writable,enumerable:descriptor.enumerable,configurable:descriptor.configurable});}
+  if(array){if(length===null||length.value.$!=='number')return refuse('array materialization requires its actual length descriptor');Object.defineProperty(result,'length',{value:length.value.value,writable:length.writable,enumerable:length.enumerable,configurable:length.configurable});}
+  if(!row.extensible)Object.preventExtensions(result);return result;
  }
  function finishSourceCapabilities(capabilities,bindings){
   if(!sourceFunctions||module!==null)throw new TypeError('source function capability publication requires its actual unpublished source module');

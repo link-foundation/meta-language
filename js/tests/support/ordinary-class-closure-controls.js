@@ -24,8 +24,8 @@ export async function readOrdinaryClassClosureOriginalDiagnostic(definition){
  const original=await attemptAsync('genuine original complete ESM module completion',async()=>{
   directory=mkdtempSync(join(tmpdir(),'meta-ordinary-class-modules-'));writeFileSync(join(directory,'package.json'),'{"type":"module"}');
   for(const module of product(modules,'complete supplied original module bytes')){sourceLibraryLogicalModuleURL(module.path);const target=join(directory,module.path);mkdirSync(dirname(target),{recursive:true});writeFileSync(target,module.source,'utf8');}
-  let namespace,result,error;try{namespace=await import(pathToFileURL(join(directory,definition.entryPath)).href);result=namespace[definition.entry](...structuredClone(definition.arguments));}catch(value){error=value;}
-  if(definition.expectedError){assert.ok(error);for(const [key,value]of Object.entries(definition.expectedError))assert.equal(error[key],value);}else{assert.equal(error,undefined);assert.deepEqual(result,definition.expected);}return {result,error};
+  const args=structuredClone(definition.arguments);let namespace,result,error;try{namespace=await import(pathToFileURL(join(directory,definition.entryPath)).href);result=namespace[definition.entry](...args);}catch(value){error=value;}
+  if(definition.expectedError){assert.ok(error);for(const [key,value]of Object.entries(definition.expectedError))assert.equal(error[key],value);}else{assert.equal(error,undefined);assert.deepEqual(result,definition.expected);}return {result,error,argumentState:args};
  });
  let record;
  try{

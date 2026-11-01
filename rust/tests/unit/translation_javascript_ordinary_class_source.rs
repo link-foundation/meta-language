@@ -97,8 +97,9 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
     diagnostic.attempt(format!("{label}/exact shared owner frame composition"),||assert_joined_program(transport));
     diagnostic.attempt(format!("{label}/actual native source execution and external responses"),||assert_source_machine_trace(&transport["combinedProgram"],&transport["trace"]));
     if definition["expectedBatchResumption"]==true{diagnostic.attempt(format!("{label}/real bounded batch resumption"),||assert!(transport["trace"]["events"].as_array().unwrap().iter().any(|event|event["operation"]=="resumeBatch")));}
+    if let Some(expected)=definition.get("expectedArgumentState"){diagnostic.attempt(format!("{label}/every retained argument effect"),||{assert_eq!(&transport["argumentState"],expected);assert_eq!(&row["originalArgumentState"],expected);});}
     diagnostic.attempt(format!("{label}/independent literal result or exception"),||{
-     if definition.get("expectedError").is_some(){assert_eq!(transport["error"],definition["expectedError"]);assert_eq!(transport["trace"]["final"]["$"],"machineThrow");}
+     if let Some(expected)=definition.get("expectedError"){for(key,value)in expected.as_object().unwrap(){assert_eq!(&transport["error"][key],value);}assert_eq!(transport["trace"]["final"]["$"],"machineThrow");}
      else{assert_eq!(transport["result"],definition["expected"]);assert_eq!(transport["error"],Value::Null);assert_eq!(transport["trace"]["final"]["$"],"machineCompleted");}
      assert_eq!(transport["result"],row["originalResult"]);assert_eq!(transport["error"],row["originalError"]);
     });

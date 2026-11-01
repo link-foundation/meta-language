@@ -6,7 +6,7 @@ export type JavaScriptSemanticValue =
  | {$:'object';identity:bigint;callable:boolean};
 export interface JavaScriptSourceRealmAuthority {
  identity:bigint;
- realm:{errors:Readonly<Record<string,Function>>;objectPrototype:object;toPrimitive:symbol;getPrimitive:Function;assign:Function;raiseUninitializedBinding?:Function};
+ realm:{errors:Readonly<Record<string,Function>>;objectPrototype:object;arrayPrototype?:object;functionPrototype?:object;toPrimitive:symbol;getPrimitive:Function;assign:Function;raiseUninitializedBinding?:Function};
  definitions:Readonly<Record<string,Function>>;
 }
 export type JavaScriptSourceTransition =

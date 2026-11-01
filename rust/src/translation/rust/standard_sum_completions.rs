@@ -3,6 +3,7 @@ use super::{Result,RustParser,SExpr,SNode,SourceOrigin,Token,Type,unsupported};
 use crate::translation::surface::{SArrayItem,SCase,SCasePattern};
 use crate::translation::rust_standard_sum_source_rules as rules;
 use super::expression_completions::CompletionContinuation;
+use std::{collections::{HashMap,HashSet},sync::Arc};
 
 pub(super) const PRIVATE_TRY: &str = "rustStandardSumTry";
 #[derive(Clone)]
@@ -12,7 +13,11 @@ pub(super) struct StandardSumTryAttempt {
     pub(super) payload: SExpr,
     pub(super) owned_operand_consumed: bool,
     pub(super) operand_value_origin: SourceOrigin,
+    pub(super) failure_base:Option<Arc<TryBranchSnapshot>>,
+    pub(super) residuals:Vec<Arc<TryResidualExit>>,
 }
+pub(super) struct TryBranchSnapshot{pub(super) ownership:HashMap<String,String>,pub(super) temporaries:HashSet<String>}
+pub(super) struct TryResidualExit{pub(super) origin:SourceOrigin,pub(super) ownership:HashMap<String,String>}
 
 #[cfg(test)]
 mod deferred_controls{
@@ -74,6 +79,7 @@ impl RustParser {
         let payload=name(vec![self.fresh_product_binding()],place);
         self.origins.check_owned_origin(&actual,operand.span)?;
         let captured=if owned{self.owned_standard_sum_method_capture(&operand,path)?}else{actual};let consumed=!owned||self.origins.consume_owned_binding(&captured,operand.span)?;
+        let failure_base=if self.origins.collecting{None}else{Some(Arc::new(self.ordinary_completion_branch_snapshot()?))};
         let mut payload_origin=self.origins.project_standard_sum_pattern_field(&captured,&origin.standard_sum_source.as_ref().expect("validated actual sum").arguments[0],false);
         if owned&&self.origins.standard_sum_ownership_facts(&payload_origin).profile=="owned"{
             let produced=self.owned_standard_sum_method_output(payload_origin,consumed,true);payload_origin=self.origins.register_owned_binding(produced);
@@ -81,7 +87,7 @@ impl RustParser {
         }
         self.origins.mark(&payload,payload_origin.clone());
         let ordinal=self.standard_sum_try_attempts.len();
-        self.standard_sum_try_attempts.push(StandardSumTryAttempt{operand_origin:origin,callable_origin:callable,payload,owned_operand_consumed:owned&&consumed,operand_value_origin:captured});
+        self.standard_sum_try_attempts.push(StandardSumTryAttempt{operand_origin:origin,callable_origin:callable,payload,owned_operand_consumed:owned&&consumed,operand_value_origin:captured,failure_base,residuals:Vec::new()});
         let marker=SExpr::new(SNode::Math{op:PRIVATE_TRY.to_owned(),name:ordinal.to_string(),args:vec![SArrayItem::new(operand,false)]},place);
         self.origins.mark(&marker,payload_origin);Ok(marker)
     }
@@ -112,6 +118,7 @@ impl RustParser {
             let (binds,body)=if disposition=="continue field"{(vec![payload_name.clone()],continued.clone())}else{
                 if disposition!="return absent"&&disposition!="return error field"{return Err(unsupported("Rust question-mark completion","unrepresented actual constructor completion",place));}
                 let binds=if disposition=="return error field"{vec![self.fresh_product_binding()]}else{Vec::new()};
+                let before=if let Some(base)=attempt.failure_base.as_ref(){let before=self.ordinary_completion_branch_snapshot()?;let restored=self.clone_ordinary_completion_snapshot(&base.ownership)?;self.origins.restore_owned_bindings(restored);self.origins.restore_owned_temporary_frame(base.temporaries.clone());Some(before)}else{None};
                 let mut saved=Vec::new();
                 let built=(||->Result<SExpr>{
                     let mut args=Vec::new();let mut projection=None;
@@ -129,11 +136,14 @@ impl RustParser {
                     // never replace the successful '?' payload's span origin.
                     let value=SExpr::new(SNode::App{func:Box::new(name(right.constructor_paths[&variant].clone(),None)),args},None);
                     let actual_args=match &value.node{SNode::App{args,..}=>args.as_slice(),_=>unreachable!("actual residual constructor")};
-                    let produced=self.standard_sum_constructor_origin(&value,&target,actual_args,path,None)?;residual_origins.push(produced);
+                    let produced=self.standard_sum_constructor_origin(&value,&target,actual_args,path,None)?;
+                    if attempt.failure_base.is_some(){let count=crate::translation::rust_owned_record_loop_rules::read_rust_owned_record_loop_residual_count_error((self.standard_sum_try_attempts[ordinal].residuals.len()+1) as f64);if !count.is_empty(){return Err(unsupported("Rust question-mark completion",&count,place));}let ownership=self.ordinary_completion_snapshot()?;let cost=super::standard_sum_metadata::measure_origins(&[&produced]).map_err(|error|unsupported("Rust question-mark completion",&error,place))?;self.origins.standard_sum_metadata_budget.reserve(cost).map_err(|error|unsupported("Rust question-mark completion",&error,place))?;self.standard_sum_try_attempts[ordinal].residuals.push(Arc::new(TryResidualExit{origin:produced.clone(),ownership}));}
+                    residual_origins.push(produced);
                     let body=returned.apply(&value)?;
                     Ok(if let Some((binding,projected))=projection{SExpr::new(SNode::Let{name:binding,ty:right.arguments[1].ty.clone().map(Into::into),value:Box::new(projected),body:Box::new(body)},None)}else{body})
                 })();
                 for(binding,previous)in saved.into_iter().rev(){if let Some(previous)=previous{self.origins.scope.insert(binding,previous);}else{self.origins.scope.remove(&binding);}}
+                if let Some(before)=before{self.origins.restore_owned_bindings(before.ownership);self.origins.restore_owned_temporary_frame(before.temporaries);}
                 (binds,built?)
             };
             cases.push(SCase{pattern:SCasePattern::Ctor{path:left.constructor_paths[&variant].clone(),binds:binds.into_iter().map(Some).collect()},body,span:None});

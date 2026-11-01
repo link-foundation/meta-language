@@ -1060,3 +1060,80 @@ stack frames, source function text reflection and additional opaque host
 operations remain explicit requirements. Broader `ir.js` body constructs and
 its runtime policy-loading initializer remain separate work. No source author,
 test, generator, validator, compiler, runtime, CI feedback or Git command ran.
+
+## Ordinary-source Array and computed-property connection
+
+The source-only successor after checkpoint `d9cb8f0f` connects the previously
+authored inspectable Array kernel to ordinary-class source execution. The actual
+next whole-source anchor is `ir.js:renameExpr`; this batch does not claim that
+the complete function or module translates.
+
+`javascript-call-code.js` adds `arrayAllocate` with an explicit sparse length.
+`javascript-call-machine.js` validates that length, suspends through its existing
+external global identity request and resumes using `allocateJavaScriptArray`.
+The shared kernel retains global freshness, real Array internal branding,
+nonconfigurable length and absent holes. `javascript-call-source.js` lowers
+`sourceArray` elements in source order, creates only present indices, converts
+their actual numeric coordinates through the existing property-key operation
+and uses ordinary own-data-property definition. Negative-zero, duplicate,
+unordered and out-of-range element coordinates refuse.
+
+`javascript-project-data-source.js` captures ordinary-class-profile array
+literals as `errorArrayLiteral`, including elisions and trailing commas. The
+predecessor qualified-loader `errorArray` capability path is unchanged. The
+source compiler consumes optional actual realm `arrayPrototype` and
+`functionPrototype` metadata; older realm rows omit these fields.
+`javascript-ordinary-class-module.js` supplies the actual realm prototypes.
+The Node encoder in `javascript-error-realm.js` preserves the genuine Array
+brand, including `Array.prototype`, only in this successor class profile.
+New Proxy inputs refuse before reflective capture. Plain data materialization
+preserves sparse holes, nested aliases, actual descriptors, readonly length and
+nonextensibility, and accepts only the supplied realm Array prototype or null.
+The qualified opaque loader-array boundary remains distinct.
+
+`javascript-collection-realm.js` authenticates the actual standard
+`Array.isArray` identity, rather than certifying the property spelling. Its
+registered intrinsic frame uses the shared heap-brand operation in
+`javascript-arrays.js`; arraylike ordinary records remain non-Arrays. Surplus
+argument effects occur through the normal ordered call lowering. A lexical
+binding named `Array` never obtains this standard global capability.
+
+Computed reads, assignments and method calls have separate source nodes.
+Lowering retains receiver and raw key before later effects, performs the actual
+property-key conversion and retains the original receiver on invocation.
+Reads perform the nullish receiver check before key conversion. Simple
+assignment captures receiver and raw key, then captures the RHS, then performs
+the nullish receiver check and key conversion during PutValue. A preceding draft
+incorrectly checked the assignment receiver before the RHS. The exact null-base
+input and old `rhs:0` expectation remain as correction history in the JS control;
+its corrected oracle requires `rhs:1`, with no key coercion. This follows
+[EvaluatePropertyAccessWithExpressionKey](https://tc39.es/ecma262/2026/multipage/ecmascript-language-expressions.html#sec-evaluate-property-access-with-expression-key)
+and [PutValue](https://tc39.es/ecma262/2026/multipage/ecmascript-data-types-and-values.html#sec-putvalue),
+read as primary sources; neither original nor translated code was executed.
+Conversion calls stay in the portable machine; an unimplemented callable or
+conversion is an explicit boundary.
+
+Nine complete originals append to `javascript-ordinary-class-source.mjs`
+(32 originals total), preserving all preceding inputs. They cover dense output,
+elisions, native input branding, arraylike negatives, element evaluation order,
+computed class calls, assignment receiver retention, shared nested handles and
+literal key-expression/RHS/coercion order `KRC`.
+The existing producer and native source consumer retain all three transports
+and every original automatically. The JS test source adds sparse/readonly/
+nonextensible materialization, a zero-trap Proxy refusal and the exact null-base
+assignment order counterexample. These are deferred
+assertions, not observations.
+
+Remaining work for the complete `renameExpr` consumer includes real runtime
+closure allocation and code templates, immutable capture proofs from lexical
+bindings, switch/fallthrough and early completion, object/Array spread with
+actual iterator and close continuations, registered Array methods and the
+additional imported helper bodies. No closure/template source was started in
+this batch. Static templates must not be represented by fake callable heap
+objects; runtime closure identities and captured values need their own actual
+heap slots. Array length writes involving objects still require wiring both
+existing ToNumber requests into the call machine. Live collection iterator
+result allocation is a separate shared kernel awaiting machine linkage. All
+new transitive model codecs and native semantics remain deferred automatic
+generation from shared JavaScript. No tests, generation, validation,
+compilation, CI feedback or Git commands ran in this batch.

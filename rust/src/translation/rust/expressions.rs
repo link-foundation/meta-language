@@ -538,6 +538,7 @@ impl RustParser {
                     value = shared;
                     continue;
                 }
+                if let Some(iterator)=self.read_borrowed_iterator(&value,&method,&args,span(&token,self.cursor.peek()),path)?{value=iterator;continue;}
                 if let Some(inherent) = self.inherent_method(
                     &value,
                     &method,

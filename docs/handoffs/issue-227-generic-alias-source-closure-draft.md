@@ -696,10 +696,83 @@ this authority. The standalone body proof uses the same additive projection
 decision over complete actual owners, without changing its earlier generic
 qualifier-adjustment refusal.
 
-The exact own-project `Type::children` source remains a broader pending
-obligation: iterator item regions, reference callback result projection,
-map/chain/collect, and remaining source representation consumers are unfinished.
-The original Rust examples in both borrowed-vector fixtures remain pending
-source controls. Independent forged-static, unbound-binder/lifetime,
+The subsequent source batch drafts iterator item regions, reference callback
+result projection and map/chain/collect for the actual `Type::children` method
+shape, as detailed below. The original Rust examples in both borrowed-vector
+fixtures remain pending source controls. Independent forged-static, unbound-binder/lifetime,
 assertion-only facet, runtime-shell and JSON-reload assertions are authored in
 both runtimes. Nothing in this section records an executed observation.
+
+### Readonly iterator source handoff
+
+The paired frontend entry is
+`readRustBorrowedIterator(parser,receiver,method,args,range,path)` in
+`js/src/translation/rust-borrowed-iterators.js`, with native
+`RustParser::read_borrowed_iterator` in `rust/borrowed_iterators.rs`. The root
+hooks select it before inherent dispatch, so a genuine Box `as_ref` candidate
+is not incorrectly forwarded to an inner nominal method. Separate actual empty
+constructor helpers in the borrowed-vector modules precede the older owned Vec
+constructor reader. They verify the existing real vector namespace and select
+only an actual borrowed-vector expected result context.
+
+`rust-borrowed-iterator-rules.js` owns the additive receiver, continuation,
+projection syntax, callback, canonical once/Box, collection and budget decisions.
+Native generated policy products remain deferred. The native host modules
+`borrowed_iterators.rs` and `borrowed_iterator_callbacks.rs` transport actual
+tokens, owners, field inventories, binders and common AST nodes; they do not
+introduce a replacement native runtime. JavaScript/native callback helpers keep
+the scalar and owned callback admission gates unchanged.
+
+The current source path covers immediate standard `.iter()` followed by
+capture-free single-reference projection maps, `.chain(std::iter::once(...))`
+and collect with an actual borrowed result context or explicit `Vec<_>`. Standard
+Box `as_ref` and contextual Box dereference preserve actual receiver regions.
+Callback bodies are direct parameter names or borrowed constructor-field
+projections. Blocks, local referent construction, calls, captured values and
+constructor/constant/declared-type parameter patterns refuse in this initial
+path. Runtime callback-local region coordinates are mapped only after the
+projection check to the actual receiver regions; stored callable TYPE origins
+and inferred collection TYPE contexts use the common sanitizer and contain no
+runtime loans. Target value copying remains separate from source Copy/Clone.
+
+The source-free body visitors now consume the actual checked lambda, map,
+constructor match, append and whole-slice forms. Whole slices must have the
+primitive rules' exact checked default arguments; source chain lowers through
+the existing ordered array append representation. The visitor independently
+binds each lambda's parameter to actual receiver regions, checks its field
+projection and result owner, expires local binders, and checks the returned loan
+union. A forged static callback result is an explicit JS/native reload control.
+
+Stages are bounded at 64, cumulative callback expression/pattern nodes at
+100,000, and topology region counts at 65,536. A separate 256-input region-union
+work bound runs before the older array-based loan helpers and before production.
+Ownership/temporary snapshots are bounded before copying at 100,000 combined
+entries and 16 MiB of generated ASCII identity/state text. Actual-state map
+membership is projected to the relevant result loans rather than copied into a
+quadratic shared comparison domain. Existing source-position and complete-origin
+pre-copy reservations remain in force. Fresh generated iterator scope names are
+removed on both success and error; the caller's entire origin directory is not
+cloned merely to parse a callback.
+
+`rust-borrowed-iterators.mjs` retains the exact `Type::children` method text from
+`rust/src/translation/types.rs` in a self-contained constructor/field inventory.
+That inventory is a method control, not the complete original `Type` declaration
+or whole-project source. It also declares five smaller pending originals and six
+refusals, classified as expected compiler acceptance or rejection for Rust
+1.90.0 through 1.99.x. These classifications are planned oracles, not compiler
+observations. The standalone JavaScript source test declares runtime stdout,
+all four emissions, text/binary Links reloads and forged-facet checks. Native
+same-file source controls declare frontend, JSON reload, body-proof and four
+emitter assertions, including the retained own method. No assertions ran.
+
+Remaining work for the coordinator: generate all newly registered rule/schema
+products in the prescribed source-author order; inspect actual deferred failures
+once execution is authorized; connect the explicit model-3 originals to the
+compiler/original and native parity matrices without flattening their profile
+selection or compiler classifications. General iteration over an already
+returned `Vec<&T>`, arbitrary iterator traits/chains, escaping or capturing
+callbacks, mutable references and place writes, reference indexing/observation,
+stored borrowed datatype fields and exact borrowed Rust source-header emission
+remain separate boundaries. Full own `types.rs` also includes source declarations,
+attributes and `map_children<E>`/`FnMut` requirements beyond this method control.
+No whole-project admission, parity, target compilation or completion is claimed.

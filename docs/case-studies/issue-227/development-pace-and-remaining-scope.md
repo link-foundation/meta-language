@@ -438,3 +438,23 @@ separate actual verified, partially drafted, undrafted and ongoing operational
 obligations. This case and its timing appendix must never be used as executable
 acceptance evidence. The work continues while this analysis is written; a case
 study, checkpoint or handoff does not finish the translator requirements.
+
+## Capacity update after the November 1 analysis
+
+The later user instruction is: “Slowly allow subagents to finish and continue
+yourself.” Existing agents finish only their active coherent batches, without
+new assignments; root then continues alone. The earlier two-effective-worker
+calendar scenario is therefore historical and must not be quoted as the current
+operating plan. The [verbatim steering](../../../parity/sources/agent-wind-down-2026-11-01.txt)
+is retained for the later source reconciliation.
+
+If the same uncalibrated effort ranges were retained and a solo contributor
+provided eight focused hours per weekday, remaining calendar durations would be
+approximately twice the earlier two-worker scenario. For example 300–700 hours
+of own-project draft effort would mean roughly 38–88 solo days, while 1,500–3,500
+hours of complete-scope drafting would mean roughly 188–438 solo days. These are
+capacity arithmetic, not measured forecasts of this model's runtime. Actual
+remaining effort may decrease as current batches finish; different daily active
+hours change the conversion. The project still lacks an empirical conversion
+from commit cadence or model throughput to verified end-to-end delivery. A
+reliable current finish date cannot be inferred from the agent-count change.

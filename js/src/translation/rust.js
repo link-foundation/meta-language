@@ -13,7 +13,7 @@ import {isRustOwnedStandardSumValue} from './rust-standard-sum-ownership.js';
 import {createRustOwnedBoxConstructor,readRustOwnedBoxClone,checkRustOwnedBoxSourceType,checkRustOwnedContainerSourceDepth} from './rust-owned-containers.js';
 import {acceptRustOwnedVectorNamedOrigin,readRustOwnedVectorLiteral,readRustOwnedVectorSignature,acceptRustOwnedVectorFunctionBody,readRustOwnedVectorEmptyConstructor,readRustOwnedVectorClone} from './rust-owned-vectors.js';
 import {createRustBorrowedVectorElementPosition,guardRustBorrowedVectorObservation,seedRustBorrowedVectorParameterRegions,validateRustBorrowedVectorFunctionResultRegions,readRustBorrowedVectorSignature} from './rust-borrowed-vectors.js';
-import {readRustBorrowedVectorElementAdmission,readRustBorrowedVectorLiteral} from './rust-borrowed-vectors.js';
+import {readRustBorrowedVectorElementAdmission,readRustBorrowedVectorLiteral,readRustBorrowedVectorEmptySourceConstructor} from './rust-borrowed-vectors.js';
 import {noteRustBorrowedExpressionSourcePosition} from './rust-borrowed-expression-positions.js';
 import {readRustOwnedRecordFiniteLoop} from './rust-owned-record-loops.js';
 import {retainRustBorrowedVectorElementPosition,acceptRustBorrowedVectorSignatureModel,acceptRustBorrowedVectorCompletionProfiles,acceptRustBorrowedVectorSource} from './rust-borrowed-vector-rules.js';
@@ -43,6 +43,7 @@ import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock,registerRust
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {acceptRustIteratorItemInferredType} from './rust-iterator-reduction-rules.js';
 import {readRustIteratorReduction} from './rust-iterator-reductions.js';
+import {readRustBorrowedIterator} from './rust-borrowed-iterators.js';
 import {readRustByteStringExpression,readRustByteStringSliceView} from './rust-byte-string-expressions.js';
 import {readRustSourceNumericPatternOwner,readRustSourceNumericPatternLexicalError} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceBytePatternToken} from './rust-byte-pattern-rules.js';
@@ -1647,6 +1648,7 @@ class RustParser {
     const sharedMethod=readRustSharedArrayHandleMethod(this,receiver,method,args,range);
     if(sharedMethod)return sharedMethod;
     const byteView=readRustByteStringSliceView(this,receiver,method,args,range,path);if(byteView)return byteView;
+    const borrowedIterator=readRustBorrowedIterator(this,receiver,method,args,range,path);if(borrowedIterator)return borrowedIterator;
     const inherent=readRustInherentMethod(this,receiver,method,args,range,path);
     if(inherent)return inherent;
     const stringBytes=readRustStringByteView(this,receiver,method,args,range,path);if(stringBytes)return stringBytes;
@@ -1892,6 +1894,7 @@ class RustParser {
       const args = readRustContextualCallArguments(this,{k:'name',path:segments,span:span(token,token)},path);
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      const borrowedEmpty=readRustBorrowedVectorEmptySourceConstructor(this,segments,args,path,range);if(borrowedEmpty)return borrowedEmpty;
       const contextualVector=readRustOwnedVectorEmptyConstructor(this,segments,args,path,range);if(contextualVector)return contextualVector;
       const emptyVector=readRustTypeAliasEmptyVectorOrigin(this,segments,path);
       if(emptyVector){

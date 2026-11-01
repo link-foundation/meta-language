@@ -923,7 +923,20 @@ pub fn create_typed_program_links_with_rust_source_version(
     version: &str,
     provenance: Option<&Value>,
 ) -> Result<TypedProgramLinks> {
-    let surface = crate::translation::rust::parse_rust_with_source_version(source, version)
+    create_typed_program_links_with_rust_source_version_and_signature_model(source,version,None,provenance)
+}
+
+/// Retain both source std version and independently selected signature witness.
+///
+/// # Errors
+/// Propagates both selectors, source/checker diagnostics and Links encoding errors.
+pub fn create_typed_program_links_with_rust_source_version_and_signature_model(
+    source: &str,
+    version: &str,
+    model: Option<&str>,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    let surface = crate::translation::rust::parse_rust_with_source_version_and_signature_model(source,version,model.unwrap_or(""))
         .map_err(|error| TypedProgramLinksError {
             message: error.to_string(),
         })?;
@@ -932,6 +945,7 @@ pub fn create_typed_program_links_with_rust_source_version(
             message: error.to_string(),
         }
     })?;
-    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSourceVersion":crate::translation::rust::source_versions::canonical(version).map_err(|error|TypedProgramLinksError{message:error.to_string()})?},"userProvenance":provenance});
+    let mut selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSourceVersion":crate::translation::rust::source_versions::canonical(version).map_err(|error|TypedProgramLinksError{message:error.to_string()})?},"userProvenance":provenance});
+    if let Some(model)=model {selected["sourceProfile"]["rustSourceSignatureModel"]=Value::String(model.into());}
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }

@@ -241,6 +241,22 @@ pub fn parse_rust_with_source_version(source: &str, version: &str) -> Result<SPr
         },
     )
 }
+/// Select a source signature witness without discarding the active std version.
+///
+/// # Errors
+/// Retains every version, model, ownership and source admission check.
+pub fn parse_rust_with_source_version_and_signature_model(
+    source: &str,
+    version: &str,
+    model: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(source,SourceProfiles {
+        source_version: version,
+        source_signature: model,
+        ..SourceProfiles::default()
+    })
+}
+
 /// Retain source type owners under an explicit stable source std version.
 ///
 /// # Errors

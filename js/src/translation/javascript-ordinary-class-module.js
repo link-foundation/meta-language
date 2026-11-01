@@ -16,7 +16,7 @@ export function createJavaScriptOrdinaryClassDeclarations(input){
   else value=create(origin);
   Object.defineProperty(definitions,String(origin.identity),{value,enumerable:true});
  }
- const realm={objectPrototype:Object.prototype,toPrimitive:Symbol.toPrimitive,errors:{Error,TypeError,RangeError,ReferenceError,SyntaxError,URIError,EvalError},getPrimitive:function sourceClassPrimitiveGet(key){'use strict';return this[key];},assign:function sourceClassAssign(key,value){'use strict';this[key]=value;return value;}};
+ const realm={objectPrototype:Object.prototype,arrayPrototype:Array.prototype,functionPrototype:Function.prototype,toPrimitive:Symbol.toPrimitive,errors:{Error,TypeError,RangeError,ReferenceError,SyntaxError,URIError,EvalError},getPrimitive:function sourceClassPrimitiveGet(key){'use strict';return this[key];},assign:function sourceClassAssign(key,value){'use strict';this[key]=value;return value;}};
  return {capture,definitions,realm};
 }
 

@@ -1,3 +1,4 @@
+import {rustBorrowedIteratorPendingOriginals,rustTypeChildrenPendingOriginal,rustBorrowedIteratorRefusals} from './rust-borrowed-iterators.mjs';
 // Complete original Rust inputs and independent literal expectations. No
 // observation or execution status is stored in this authoring fixture.
 import {rustStandardSumSourceOriginals,rustStandardSumSourceRefusals} from './rust-standard-sum-source-rules.mjs';
@@ -40,6 +41,8 @@ import {rustOwnedRecordEffectOriginals,rustOwnedRecordEffectRetainedOriginals,ru
 import {rustOwnedRecordCompletionOriginals,rustOwnedRecordCompletionRefusals} from './rust-owned-record-completions.mjs';
 import {rustOwnedRecursiveContainerOriginals,rustOwnedRecursiveContainerRefusals} from './rust-owned-recursive-containers.mjs';
 import {rustSourceOwnerQualificationOriginals,rustSourceOwnerQualificationRefusals} from './rust-source-owner-qualification.mjs';
+import {rustOwnedRecordLoopResidualOriginals,rustOwnedRecordLoopResidualRefusals} from './rust-owned-record-loop-residuals.mjs';
+import {rustOrdinaryMatchCompletionOriginals,rustOrdinaryMatchCompletionRefusals} from './rust-ordinary-match-completions.mjs';
 import {rustOwnedRecordNestedLoopOriginals,rustOwnedRecordNestedLoopRefusals} from './rust-owned-record-nested-loops.mjs';
 import {rustMutableRecordLoanOriginals,rustMutableRecordLoanRefusals} from './rust-mutable-record-loans.mjs';
 import {rustOwnedRecordLoopExitOriginals,rustOwnedRecordLoopExitRefusals} from './rust-owned-record-loop-exits.mjs';
@@ -76,6 +79,7 @@ export const rustStandardSumIntegrationPreviousRefusals=[
 ];
 
 export const rustStandardSumIntegrationOriginals=[
+ ...[...rustBorrowedIteratorPendingOriginals,rustTypeChildrenPendingOriginal].map(row=>({singleCallOwners:[],...row})),
  ...rustStandardSumSourceOriginals.map(row=>({...retainedOriginalCompilerDeclaration(row),singleCallOwners:[]})),
  ...rustStandardSumMethodOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustStandardSumMethodSourceOriginals,
@@ -279,6 +283,8 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...rustOwnedRecordLoopExitOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustMutableRecordLoanOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordNestedLoopOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOrdinaryMatchCompletionOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordLoopResidualOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordPlaceOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordUpdateOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustCopyClosureValueOriginals.map(row=>({singleCallOwners:[],...row})),
@@ -288,10 +294,13 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
 rustStandardSumIntegrationOriginals.push(...rustStandardSumIntegrationAdditionalOriginals);
 
 export const rustStandardSumIntegrationRefusals=[
+ ...rustBorrowedIteratorRefusals.map(row=>retainedOriginalCompilerDeclaration({...row,sourceSignatureModel:'Rust source function signature 3'})),
  ...rustOwnedRecordLoopRefusals.map(retainedOriginalCompilerDeclaration),
  ...rustOwnedRecordLoopExitRefusals.map(retainedOriginalCompilerDeclaration),
  ...rustMutableRecordLoanRefusals.map(retainedOriginalCompilerDeclaration),
  ...rustOwnedRecordNestedLoopRefusals.map(retainedOriginalCompilerDeclaration),
+ ...rustOrdinaryMatchCompletionRefusals.map(retainedOriginalCompilerDeclaration),
+ ...rustOwnedRecordLoopResidualRefusals.map(retainedOriginalCompilerDeclaration),
  ...rustStandardSumSourceRefusals,
  ...rustStandardSumMethodSourceRefusals,
  ...rustArrayLookupOptionRefusals,

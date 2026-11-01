@@ -55,3 +55,5 @@ export function readRustOwnedRecordNestedLoopDepthError(depth){return !acceptRus
 export function readRustOwnedRecordNestedCompletionError(admitted,overlap){return !admitted?'a nested loop needs its actual complete finite source admission':overlap?'a nested loop cannot write its enclosing progress counter':'';}
 /** @param {number} nodes @param {number} text @returns {string} */
 export function readRustOwnedRecordLoopFootprintError(nodes,text){return !acceptRustOwnedRecordLoopCount(nodes)||!acceptRustOwnedRecordLoopCount(text)||nodes>100000||text>16777216?'the complete loop write footprint exceeds its source budget':'';}
+/** @param {number} count @returns {string} */
+export function readRustOwnedRecordLoopResidualCountError(count){return acceptRustOwnedRecordLoopCount(count)&&count>=1&&count<=256?'':'a propagated loop exit needs every actual produced residual branch within its source budget';}

@@ -640,3 +640,84 @@ registrations and source-only consumers. No represented program, tests,
 generators, validation gates or Rust compilation ran. Current free disk was
 about789MiB; no builds, clones, generated payloads or unrelated cleanup occurred.
 The broader requirements remain active and drafting continues after the push.
+
+
+## Agent wind-down and iterator source batch
+
+The latest conversation directs existing agents to finish their current batches
+and root to continue alone. No new agents or assignments are planned. The
+verbatim source is `parity/sources/agent-wind-down-2026-11-01.txt`; registration
+waits for the authorized source-audit phase. The case study now distinguishes
+its earlier parallel-capacity scenario from the current single-worker phase.
+No project tests, generation, validation, compilation or CI feedback review ran.
+
+The completed-match and loop-residual batch is detailed in
+[its source handoff](issue-227-completed-match-loop-residual-source-draft.md).
+It retains fourteen match decisions, five originals and three refusals, plus
+four loop-residual decisions, seven originals and three refusals. These are
+unexecuted inputs and assertions. Guarded completion arms, block-valued match
+scrutinees and general loop/effect paths remain separate work.
+
+Array/computed source changes add actual Array allocation, elisions, branding
+and computed method/property continuations. The null-base computed-assignment
+counterexample now retains both key and RHS argument effects; its TypeError
+name and original/product message parity remain asserted. The producer and
+native consumer independently compare supplied expected argument states.
+
+The root iterator batch adds `javascript-collection-iterator-results.js` and
+`javascript-collection-iterator-call-source.js`. Actual Map/Set creation methods,
+next methods and the shared iterator identity method compile into portable
+frames. Node only witnesses protected standard identities and prototypes; it
+never executes a represented collection iterator. Cursor advancement precedes
+an explicit pending result allocation, and fresh global identities allocate
+actual entry Arrays and ordered ordinary value/done records. Validation binds
+pending state to the instruction, receiver, brand and actual realm prototypes.
+Set.keys/values aliases deduplicate by genuine function identity and operation;
+conflicting owners refuse. Exhaustion releases the source and retains the brand.
+Five iterator originals and three Array length conversion originals bring the
+class-source inventory to forty-one originals; seven refusal inputs remain. Kernel and compiler tests are written
+but unexecuted. Native code and codecs remain automatic future generation from
+these JavaScript declarations; no handwritten native iterator semantics added.
+
+Readonly Rust iterator dispatch precedes inherent-method lookup in both frontends,
+so an inner nominal `as_ref` cannot replace the actual standard Box candidate.
+Array length assignment now drives both ToNumber requests through actual
+source callbacks using `javascript-array-assignment.js` and one validated pending
+machine continuation. The shared Set planner defers only after its ordinary
+receiver/descriptor checks. Numeric conversion errors retain actual heap effects;
+readonly rejection precedes conversion and partial deletion survives a false Set
+completion. Separate descriptor-definition entry points still need that linkage. Runtime closure templates, full renameExpr, switch/fallthrough, spread,
+for-of/IteratorClose, callback-driven Array methods, general Rust iterators and
+all previously recorded architecture/grammar obligations remain active work.
+
+
+Array assignment details: `planJavaScriptOrdinarySetWithArrayDefinition` retains
+the prior ordinary setter/writable/receiver checks before deferring a length
+value descriptor. The legacy synchronous planner remains available for its
+existing pure controls. `javascript-array-assignment.js` wraps the shared Array
+definition state and actual scalar protocol; a completed primitive on resource
+exhaustion has its own state. The call machine binds this continuation to the
+actual Set instruction, receiver, key, RHS, destination, realm and primitive
+conversion Symbol. Child completion uses the latest shared heap. Both numeric
+conversions precede applying the current descriptor; a false result feeds the
+existing strict-write guard. Five protocol tests and three complete originals
+are authored for later execution. These are drafts, not verified behavior.
+
+The retained second Number is an existing `JavaScriptSemanticValue` number,
+so NaN, infinities and signed zero use the established qualified IEEE wire
+codec. It is never an unqualified finite-only JSON number. Array definition
+resource outcomes retain their exact definition state; allocation outcomes
+remain distinct. Neither wire generation nor runtime comparison was run.
+
+
+The readonly iterator fixtures are registered with the automatic fixture author,
+exact native literal group and shared original/compiler/native parity matrix.
+The five smaller originals and retained Type::children method retain signature
+model 3. All six refusal rows keep their declared compiler classification and
+select model 3 explicitly. The common JavaScript producer now passes that
+selector into both parsing and typed import. The additive native parser and
+typed importer `*_with_source_version_and_signature_model` retain both selectors
+and their provenance; the legacy version-only API keeps its prior profile shape.
+The native matrix uses each row's actual selector. Old uncovered-version
+assertions remain, with an additional version-plus-model rejection assertion.
+These are unexecuted source integrations, not compiler observations.

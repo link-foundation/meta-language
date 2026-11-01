@@ -11,6 +11,8 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'callClassConstructor',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'constructCollection',destination:number,callee:number,arguments:number[]} |
  * {$:'collectionAllocate',destination:number,prototype:number,kind:string} |
+ * {$:'collectionIteratorAllocate',destination:number,prototype:number,kind:string,iterationKind:string} |
+ * {$:'collectionIteratorResult',destination:number,kind:string,arrayPrototype:number,objectPrototype:number} |
  * {$:'collectionOperation',destination:number,operation:string} |
  * {$:'primitiveMethod',destination:number,operation:string} |
  * {$:'collectionCopy',destination:number,target:number,input:number,adder:number,iteratorKey:number,iteratorMethod:number,iteratorPrototype:number,nextMethod:number} |
@@ -24,6 +26,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'requireWrite',success:number} |
  * {$:'primitive',destination:number,operation:string,arguments:number[]} |
  * {$:'ordinaryAllocate',destination:number,prototype:number} |
+ * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
@@ -64,7 +67,8 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
-    case 'ordinaryAllocate':case 'collectionAllocate':return [instruction.destination,instruction.prototype];
+    case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype];
+    case 'collectionIteratorResult':return [instruction.destination,instruction.arrayPrototype,instruction.objectPrototype];
     case 'collectionCopy':return [instruction.destination,instruction.target,instruction.input,instruction.adder,instruction.iteratorKey,instruction.iteratorMethod,instruction.iteratorPrototype,instruction.nextMethod];
     case 'ordinaryDataProperty':return [instruction.destination,instruction.object,instruction.key,instruction.value];
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];

@@ -1,0 +1,38 @@
+// Actual one-parameter projection lambdas. This is an independent nonescaping
+// reference domain; the old scalar/owned closure gates stay unchanged.
+import {unsupported} from './diagnostics.js';
+import {readRustBorrowedIteratorProjectionSyntax,readRustBorrowedIteratorCallbackError,projectRustBorrowedIteratorCallbackRegions,readRustBorrowedIteratorRegionError,readRustBorrowedIteratorBudgetError,readRustBorrowedIteratorSnapshotError,readRustBorrowedIteratorParameterError,readRustBorrowedIteratorBindingOwnerError} from './rust-borrowed-iterator-rules.js';
+import {requireRustNonconstantBinding} from './rust-source-constants.js';
+import {readRustTypeAliasLookupKeys} from './rust-type-alias-rules.js';
+import {projectRustBorrowedVectorElement,rustBorrowedVectorPositionOrigin} from './rust-borrowed-vectors.js';
+import {readRustBorrowedIteratorArgumentRegions} from './rust-borrowed-iterators.js';
+import {assignRustCopyClosureLexicalBinding,validateRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js';
+import {reserveRustOwnedContainerCopies,readRustOwnedContainerFacts} from './rust-owned-containers.js';
+import {cloneRustCallableTypeOrigin} from './rust-function-pointers.js';
+import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
+import {readCallableStatementCaptures} from './callable-source.js';
+function fail(message,span){throw unsupported('Rust readonly iterator callback',message,span);}
+function projection(parser,node,path,allowed,depth=0,budget={nodes:0}){
+ const error=readRustBorrowedIteratorBudgetError(0,++budget.nodes,0);if(error||depth>128)fail(error||'readonly callback projection nesting exceeds its finite profile',node.span);
+ if(node.block===true)return false;const operation=readRustBorrowedIteratorProjectionSyntax(node.k);
+ if(operation==='name')return node.path.length===1&&allowed.has(node.path[0]);
+ if(operation!=='match'||node.scrutinees.length!==1)return false;
+ const source=parser.origins.origin(node.scrutinees[0],path);if(source.wrappers[0]!=='reference'||!projection(parser,node.scrutinees[0],path,allowed,depth+1,budget))return false;
+ for(const row of node.rows){if(row.patterns.length!==1||row.patterns[0].k!=='ctor')return false;const local=new Set(allowed);for(const argument of row.patterns[0].args){const error=readRustBorrowedIteratorBudgetError(0,++budget.nodes,0);if(error)fail(error,node.span);if(argument.k==='bind')local.add(argument.name);else if(argument.k!=='wild')return false;}if(!projection(parser,row.body,path,local,depth+1,budget))return false;}return node.rows.length>0;
+}
+export function inspectRustBorrowedIteratorProjection(parser,node,path,allowed){const budget={nodes:0};return {valid:projection(parser,node,path,allowed,0,budget),nodes:budget.nodes};}
+export function readRustBorrowedIteratorCallback(parser,path,parameter,receiverRegions){
+ const c=parser.cursor,start=c.peek();if(!c.is('|'))fail('the readonly profile requires an immediate immutable projection lambda',start);
+ let stateText=0;for(const[id,state]of parser.origins.sourceBindingStates)stateText+=id.length+state.length;for(const id of parser.origins.sourceTemporaryBindings)stateText+=id.length;const snapshotError=readRustBorrowedIteratorSnapshotError(parser.origins.sourceBindingStates.size+parser.origins.sourceTemporaryBindings.size,stateText);if(snapshotError)fail(snapshotError,start);reserveRustOwnedContainerCopies(parser.origins,[parameter]);const before=parser.origins.snapshotOwnedBindings(),outer=parser.origins.scope,temporaries=new Set(parser.origins.sourceTemporaryBindings);parser.origins.scope=new Map();let body,result,name,parameterBinding;const syntaxBudget={nodes:0};
+ try{c.expect('|','readonly iterator callback');const token=c.identifier('readonly callback parameter');name=token.value;const error=readRustBorrowedIteratorParameterError(name,token.raw??name);if(error)fail(error,token);const resolved=parser.resolve([name],path),declaredType=parser.origins.lookupTypeOwner(resolved,path)?.k==='data'||readRustTypeAliasLookupKeys(resolved,path).some(key=>parser.sourceTypeAliases.has(key)),ownerError=readRustBorrowedIteratorBindingOwnerError(parser.origins.lookupValueOwner(resolved,path)?.k??'',declaredType);if(ownerError)fail(ownerError,token);requireRustNonconstantBinding(parser,name,path,token);if(c.is(':')||c.is(',')||c.is('mut'))fail('the readonly callback uses its one actual iterator parameter context',c.peek());c.expect('|','readonly iterator callback');
+  parameterBinding=assignRustCopyClosureLexicalBinding(parser.origins,{...structuredClone(parameter),sourceValueBorrowBindings:[...receiverRegions],sourceValueFieldBorrowBindings:null});parser.origins.scope.set(name,parameterBinding);
+  body=withRustStandardSumSourceContext(parser,null,()=>parser.expr(path));const target=parser.standardSumReturnOrigin?.arrayElementPosition;if(target)projectRustBorrowedVectorElement(parser,body,path,rustBorrowedVectorPositionOrigin(target,path));result=parser.origins.origin(body,path);
+  const projected=projection(parser,body,path,new Set([name]),0,syntaxBudget);if(!projected)fail('the readonly callback body must project its actual borrowed parameter',body.span);const captures=readCallableStatementCaptures([{s:'return',expr:body}],[name],outer.keys());reserveRustOwnedContainerCopies(parser.origins,[result]);const referent={...result,wrappers:result.wrappers.slice(1),sourceLifetimes:[],copyEvidence:false},facts=readRustOwnedContainerFacts(parser.origins,referent);
+  const error=readRustBorrowedIteratorCallbackError(parser.origins.borrowedVectorSourceEnabled,1,true,result.wrappers.length===1&&result.wrappers[0]==='reference',result.proven===true&&facts.closed,captures.captures.length+captures.assignedCaptures.length,projected);if(error)fail(error,body.span);
+  validateRustCopyClosureValueBorrows(parser.origins,result,body.span);let text=0;for(const[id,state]of parser.origins.sourceBindingStates)text+=id.length+state.length;for(const id of parser.origins.sourceTemporaryBindings)text+=id.length;const budget=readRustBorrowedIteratorSnapshotError(parser.origins.sourceBindingStates.size+parser.origins.sourceTemporaryBindings.size,text);if(budget)fail(budget,body.span);const actual=readRustBorrowedIteratorArgumentRegions(result),existing=actual.filter(identity=>before.has(identity)),local=actual.filter(identity=>!before.has(identity)&&parser.origins.sourceBindingStates.get(identity)==='available'),regions=projectRustBorrowedIteratorCallbackRegions(actual,existing,local,receiverRegions),regionError=readRustBorrowedIteratorRegionError(actual.length,regions.length,parser.origins.collecting);if(regionError)fail(regionError,body.span);
+  result={...result,sourceValueBorrowBindings:regions,sourceValueFieldBorrowBindings:null,sourceLexicalBindingIdentity:null,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[]};parser.origins.expireOwnedBindings(before,result,regions);
+ }finally{parser.origins.scope=outer;parser.origins.restoreOwnedBindings(before);parser.origins.sourceTemporaryBindings=temporaries;}
+ const span={start:start.start,end:c.peek(-1).end},node={k:'lambda',params:[{name,type:parameter.type,span}],ret:result.type,captures:[],body,span};
+ const origin={...parser.origins.typeOrigin({kind:'function',params:[parameter.type],ret:result.type},path),copyEvidence:true,copyClosureSpan:span,copyClosureCaptureCount:0,callableParameters:[cloneRustCallableTypeOrigin(parameter)],callableResult:cloneRustCallableTypeOrigin(result),sourceValueBorrowBindings:[]};
+ return {node:parser.origins.mark(node,origin),result,nodes:syntaxBudget.nodes};
+}

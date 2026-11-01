@@ -12,6 +12,10 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-array-assignment.js',moduleName:'javascript_array_assignment',model:'Actual Array length assignment conversion continuations 1',programAsset:'javascript-array-assignment-program'},
+ {sourcePath:'js/src/translation/javascript-collection-iterator-call-source.js',moduleName:'javascript_collection_iterator_call_source',model:'Actual JavaScript collection iterator callable owners 1',programAsset:'javascript-collection-iterator-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-collection-iterator-results.js',moduleName:'javascript_collection_iterator_results',model:'Inspectable collection iterator entry and result objects 1',programAsset:'javascript-collection-iterator-results-program'},
+ {sourcePath:'js/src/translation/rust-borrowed-iterator-rules.js',moduleName:'rust_borrowed_iterator_rules',model:'Rust readonly iterator source regions 1',programAsset:'rust-borrowed-iterator-program'},
  {sourcePath:'js/src/translation/javascript-array-objects.js',moduleName:'javascript_array_objects',model:'Inspectable sparse Array property definitions 1',programAsset:'javascript-array-objects-program'},
  {sourcePath:'js/src/translation/javascript-arrays.js',moduleName:'javascript_arrays',model:'Resumable global Array allocation and length conversion 1',programAsset:'javascript-arrays-program'},
  {sourcePath:'js/src/translation/rust-mutable-record-loan-rules.js',moduleName:'rust_mutable_record_loan_rules',model:'Rust mutable record value loan scopes 1',programAsset:'rust-mutable-record-loan-program'},
@@ -95,9 +99,12 @@ const fixtures=[
  'js/tests/fixtures/rust-owned-record-loops.mjs',
  'js/tests/fixtures/rust-owned-record-loop-exits.mjs',
  'js/tests/fixtures/rust-owned-record-nested-loops.mjs',
+ 'js/tests/fixtures/rust-ordinary-match-completions.mjs',
+ 'js/tests/fixtures/rust-owned-record-loop-residuals.mjs',
  'js/tests/fixtures/rust-mutable-record-loans.mjs',
  'js/tests/fixtures/rust-borrowed-vector-positions.mjs',
  'js/tests/fixtures/rust-borrowed-source-regions.mjs',
+ 'js/tests/fixtures/rust-borrowed-iterators.mjs',
  'js/tests/fixtures/proposition-values.mjs',
  'js/tests/fixtures/javascript-error-classes.mjs',
  'js/tests/fixtures/javascript-host-capabilities.mjs',
@@ -144,7 +151,12 @@ const fixtures=[
 ];
 const consumers=[
  'js/tests/translation-javascript-array-objects.test.js',
+ 'js/tests/translation-javascript-collection-iterator-results.test.js',
+ 'js/tests/translation-javascript-array-assignment.test.js',
+ 'js/tests/translation-javascript-collection-iterator-call-source.test.js',
  'js/tests/translation-rust-owned-record-nested-loops.test.js',
+ 'js/tests/translation-rust-ordinary-match-completions.test.js',
+ 'js/tests/translation-rust-owned-record-loop-residuals.test.js',
  'js/tests/translation-rust-owned-record-loop-exits.test.js',
  'js/tests/translation-rust-mutable-record-loans.test.js',
  'js/src/translation/javascript-collections.js',
@@ -219,8 +231,12 @@ const consumers=[
  'js/src/translation/rust-source-expression-positions.js',
  'js/src/translation/rust-borrowed-expression-positions.js',
  'js/src/translation/rust-borrowed-source-regions.js',
+ 'js/src/translation/rust-borrowed-iterators.js',
+ 'js/src/translation/rust-borrowed-iterator-callbacks.js',
  'js/tests/translation-rust-borrowed-source-regions.test.js',
+ 'js/tests/translation-rust-borrowed-iterators.test.js',
  'js/src/translation/rust-mutable-record-loans.js',
+ 'js/src/translation/rust-ordinary-match-completions.js',
  'js/src/translation/finite-record-loop-helpers.js',
  'js/src/translation/rust-owned-record-loops.js',
  'js/src/translation/proposition-values.js',
@@ -401,6 +417,8 @@ for(const [source,target] of [
  ['rust-owned-record-completions','rust-owned-record-completions'],
  ['rust-owned-record-loop-exits','rust-owned-record-loop-exits'],
  ['rust-owned-record-nested-loops','rust-owned-record-nested-loops'],
+ ['rust-ordinary-match-completions','rust-ordinary-match-completions'],
+ ['rust-owned-record-loop-residuals','rust-owned-record-loop-residuals'],
  ['rust-mutable-record-loans','rust-mutable-record-loans'],
  ['runtime-data-module-initialization','runtime-data-module-initialization'],
  ['project-data-source-execution','project-data-source-execution'],
@@ -467,6 +485,7 @@ for(const [source,exports,model]of [
  ['rust-owned-record-loops',['rustOwnedRecordLoopMalformedNumbers'],'Rust finite record loop exact source literals 1'],
  ['rust-borrowed-vector-positions',['rustBorrowedVectorPositionDecisions'],'Rust borrowed vector position exact source literals 1'],
  ['rust-borrowed-source-regions',['rustBorrowedSourceRegionDecisions'],'Rust source binder region exact source literals 1'],
+ ['rust-borrowed-iterators',['rustBorrowedIteratorDecisions'],'Rust readonly iterator exact source literals 1'],
 ]){
  const path='js/tests/fixtures/'+source+'.mjs',text=readFileSync(new URL(path,root),'utf8');
  const namespace=await import('../tests/fixtures/'+source+'.mjs');

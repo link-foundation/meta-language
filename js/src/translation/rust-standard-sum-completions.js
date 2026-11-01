@@ -8,6 +8,10 @@ import {readRustStandardSumSourceOrigin,readRustStandardSumSourceIdentity} from 
 import {acceptRustStandardSumQuestionContext,acceptRustStandardSumOwnedQuestionContext,readRustStandardSumSourceConstructors,readRustStandardSumQuestionBranch,readRustStandardSumPrimitiveQuestionConversionPlan,acceptRustStandardSumPrimitiveQuestionCompletion} from './rust-standard-sum-source-rules.js';
 import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 import {projectRustPrimitiveFrom} from './rust-primitive-from.js';
+import {readRustOrdinaryCompletionBranchSnapshot,readRustOrdinaryCompletionOwnershipSnapshot,reserveRustOrdinaryCompletionOwnershipSnapshot} from './rust-ordinary-completions.js';
+import {readRustOwnedRecordLoopResidualCountError} from './rust-owned-record-loop-rules.js';
+import {measureRustStandardSumSourceMetadata} from './rust-standard-sum-source-metadata.js';
+import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
 
 const name=(path,span)=>({k:'name',path,span});
 const refuse=(message,span)=>{throw unsupported('Rust question-mark completion',message,span);};
@@ -36,6 +40,7 @@ export function readRustStandardSumTryExpression(parser,operand,path,token){
  checkRustOwnedOrigin(parser.origins,actual,operand.span);
  const captured=owned?captureRustOwnedStandardSumMethodValue(parser,operand,path):actual;
  const consumed=!owned||parser.origins.consumeOwnedBinding(captured,operand.span);
+ const failureBase=parser.origins.collecting?null:readRustOrdinaryCompletionBranchSnapshot(parser);
  let payloadOrigin=projectRustStandardSumPatternField(parser.origins,captured,sum.arguments[0],false);
  if(owned&&readRustStandardSumOwnershipFacts(parser.origins,payloadOrigin).profile==='owned'){
   // This identity exists on the successful continuation only. It is the
@@ -44,8 +49,10 @@ export function readRustStandardSumTryExpression(parser,operand,path,token){
   parser.origins.sourceTemporaryBindings.add(payloadOrigin.sourceBindingIdentity);
  }
  const payload=parser.origins.mark(name([parser.freshProductBinding()],span),payloadOrigin);
- return parser.origins.mark({k:'rustStandardSumTry',operand,payload,operandOrigin:origin,operandValueOrigin:captured,callableResultOrigin:callable,ownedOperandConsumed:owned&&consumed,span},payloadOrigin);
+ const arena=parser.standardSumTrySourceBranches??=[],ordinal=String(arena.length);arena.push({failureBase,residuals:[]});
+ return parser.origins.mark({k:'rustStandardSumTry',trySourceOrdinal:ordinal,operand,payload,operandOrigin:origin,operandValueOrigin:captured,callableResultOrigin:callable,ownedOperandConsumed:owned&&consumed,span},payloadOrigin);
 }
+export function readRustStandardSumTrySourceBranches(parser,attempt){const text=attempt?.trySourceOrdinal,index=Number(text);return typeof text==='string'&&Number.isSafeInteger(index)&&index>=0&&String(index)===text?parser.standardSumTrySourceBranches?.[index]??null:null;}
 
 /** Build both alternatives from actual validated source owners. The operand
  * lives in exactly one ordered binding; only its matching branch executes.
@@ -72,6 +79,8 @@ export function lowerRustStandardSumTryCompletion(parser,attempt,path,sourceResu
   }
   if(branch!=='return absent'&&branch!=='return error field')refuse('the actual standard sum branch has no represented completion',attempt.span);
   const error=branch==='return error field'?parser.freshProductBinding():null;
+  const retained=readRustStandardSumTrySourceBranches(parser,attempt),before=retained?.failureBase?readRustOrdinaryCompletionBranchSnapshot(parser):null;
+  if(before){reserveRustOrdinaryCompletionOwnershipSnapshot(parser,retained.failureBase.ownership);parser.origins.restoreOwnedBindings(retained.failureBase.ownership);parser.origins.sourceTemporaryBindings=new Set(retained.failureBase.temporaries);}
   const saved=[];let projected=null,convertedName=null;
   const bind=(binding,origin)=>{saved.push({binding,present:parser.origins.scope.has(binding),previous:parser.origins.scope.get(binding)});parser.origins.scope.set(binding,origin);};
   try{
@@ -84,8 +93,9 @@ export function lowerRustStandardSumTryCompletion(parser,attempt,path,sourceResu
    }
    const failureValue={k:'app',fn:name(result.constructorPaths[variant],null),args,span:null},produced=createRustStandardSumConstructorOrigin(parser,failureValue,target,args,path,null);parser.origins.mark(failureValue,produced);
    const body=returned(failureValue,produced);
+   if(retained?.failureBase){const count=readRustOwnedRecordLoopResidualCountError(retained.residuals.length+1);if(count)refuse(count,attempt.span);let cost;try{cost=measureRustStandardSumSourceMetadata([produced]);}catch(error){if(!(error instanceof RangeError))throw error;refuse(error.message,attempt.span);}const next=readRustStandardSumSourceMetadataReservation(parser.standardSumSourceMaterializedNodes??0,parser.standardSumSourceMaterializedUnits??0,cost[0],cost[1]);if(next.length!==2)refuse('the actual residual origin exceeds its materialization budget',attempt.span);parser.standardSumSourceMaterializedNodes=next[0];parser.standardSumSourceMaterializedUnits=next[1];retained.residuals.push({node:'return',kind:'returned',expression:failureValue,origin:structuredClone(produced),ownership:readRustOrdinaryCompletionOwnershipSnapshot(parser)});}
    cases.push({pattern:{k:'ctor',path:source.constructorPaths[variant],binds:error===null?[]:[error]},body:projected?{k:'let',name:convertedName,type:result.arguments[1].type,value:projected,body,span:null}:body});
-  }finally{for(const entry of saved.toReversed())if(entry.present)parser.origins.scope.set(entry.binding,entry.previous);else parser.origins.scope.delete(entry.binding);}
+  }finally{for(const entry of saved.toReversed())if(entry.present)parser.origins.scope.set(entry.binding,entry.previous);else parser.origins.scope.delete(entry.binding);if(before){parser.origins.restoreOwnedBindings(before.ownership);parser.origins.sourceTemporaryBindings=before.temporaries;}}
  }
  return {k:'let',name:captured,value:attempt.operand,body:{k:'match1',scrutinee:name([captured],attempt.span),cases,span:attempt.span},span:attempt.span};
 }

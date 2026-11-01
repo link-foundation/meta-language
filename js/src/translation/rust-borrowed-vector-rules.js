@@ -1,6 +1,7 @@
 // Additive source-position decisions. Historical signature profiles remain exact.
 import {acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
 import {readRustStandardSumSourceMaterializationError} from './rust-standard-sum-source-rules.js';
+import {acceptRustSourceArrayOwner} from './rust-array-rules.js';
 /** The existing ordinary profile stays exact. This successor composes only
  * its own signature with the complete otherwise-empty source profile vector.
  * @param {string} signature @param {string[]} profiles @returns {boolean} */
@@ -72,6 +73,9 @@ export function readRustBorrowedVectorElementCountError(count){return !Number.is
  * @param {boolean} selected @param {boolean} expected @param {boolean} reference
  * @param {number} count @returns {boolean} */
 export function acceptRustBorrowedVectorLiteralContext(selected,expected,reference,count){return selected&&expected&&Number.isSafeInteger(count)&&count>=0&&count<=65536&&(count===0||reference);}
+/** @param {boolean} selected @param {string} owner @param {string} method
+ * @param {number} count @returns {string} */
+export function readRustBorrowedVectorEmptyConstructor(selected,owner,method,count){return selected&&acceptRustSourceArrayOwner(owner,false)&&method==='new'?(count===0?'construct':'arity'):'';}
 /** @param {boolean} actual @param {boolean} expected @param {boolean} same
  * @param {boolean} owner @param {string} lifetime @param {string} required
  * @returns {string} */

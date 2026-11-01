@@ -60,6 +60,8 @@ pub(super) mod mutable_record_loans;
 mod owned_containers;
 mod owned_vectors;
 mod borrowed_vectors;
+mod borrowed_iterators;
+mod borrowed_iterator_callbacks;
 mod borrowed_expression_positions;
 mod source_expression_types;
 pub(crate) mod owned_local_state_rules;
@@ -171,7 +173,7 @@ pub use source_profiles::{
     parse_rust_with_shared_array_handle_source_model_and_version, parse_rust_with_source_models,
     parse_rust_with_source_profiles, parse_rust_with_source_signature_model,
     parse_rust_with_source_type_owners, parse_rust_with_source_type_owners_and_version,
-    parse_rust_with_source_version, parse_rust_with_type_namespace_model,
+    parse_rust_with_source_version, parse_rust_with_source_version_and_signature_model, parse_rust_with_type_namespace_model,
 };
 
 /// Read explicit owned String local state and its exact source interface.

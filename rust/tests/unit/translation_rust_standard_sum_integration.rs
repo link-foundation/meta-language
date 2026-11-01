@@ -3,8 +3,8 @@
 //! Source-generated sum/expression policy products must be emitted first.
 use super::issue_195_translation_pairs::{TemporaryDirectory,run};
 use meta_language::translation::check::check_program;
-use meta_language::translation::rust::parse_rust_with_source_version;
-use meta_language::{BinaryLinksOptions,LinkId,LinkNetwork,LinkType,NetworkProjection,ParseConfiguration,create_typed_program_links_with_rust_source_version,
+use meta_language::translation::rust::{parse_rust_with_source_version,parse_rust_with_source_version_and_signature_model};
+use meta_language::{BinaryLinksOptions,LinkId,LinkNetwork,LinkType,NetworkProjection,ParseConfiguration,create_typed_program_links_with_rust_source_version,create_typed_program_links_with_rust_source_version_and_signature_model,
  decode_link_network_binary,decode_typed_program_links,emit_typed_program_links,encode_link_network_binary};
 use serde_json::{Value,json};
 use std::fs;
@@ -19,6 +19,7 @@ fn owned_sum_source_frontends_report_uncovered_versions(){
         let error=parse_rust_with_source_version(source,version).expect_err("owned source profile cannot claim uncovered versions");
         assert_eq!(error.kind.as_str(),"unsupported");assert!(error.reason.contains("uncovered"));
         assert!(create_typed_program_links_with_rust_source_version(source,version,None).is_err());
+        assert!(create_typed_program_links_with_rust_source_version_and_signature_model(source,version,Some("Rust source function signature 3"),None).is_err());
     }
 }
 
@@ -180,10 +181,10 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
             let original=compile(&directory.0,&format!("original_{selection_index}"),source,selected);
             assert_eq!(stdout(&original),expected,"{label}/{selected}: actual original Rust stdout");
             assert_eq!(selection["observedStdout"],expected,"{label}: actual future JS producer observation versus literal");
-            let surface=parse_rust_with_source_version(source,selected).unwrap_or_else(|error|panic!("{label}/{selected}: {error}"));
+            let surface=parse_rust_with_source_version_and_signature_model(source,selected,row["sourceSignatureModel"].as_str().unwrap_or("")).unwrap_or_else(|error|panic!("{label}/{selected}: {error}"));
             let raw=serde_json::to_value(&surface).unwrap();assert_no_private(&raw,label);assert_eq!(raw,selection["surface"],"{label}/{selected}: full actual surface parity");
             let checked=check_program(&surface).unwrap();
-            let packet=create_typed_program_links_with_rust_source_version(source,selected,Some(&json!({"fixture":label}))).unwrap();
+            let packet=create_typed_program_links_with_rust_source_version_and_signature_model(source,selected,row["sourceSignatureModel"].as_str(),Some(&json!({"fixture":label}))).unwrap();
             assert_eq!(packet.root.as_u64(),selection["root"].as_u64().unwrap());assert_eq!(packet.network.to_lino(),selection["links"].as_str().unwrap(),"{label}: actual complete typed Links parity");
             let binary=encode_link_network_binary(&packet.network,BinaryLinksOptions::default()).unwrap();assert_eq!(serde_json::to_value(&binary).unwrap(),selection["binary"]);
             let canonical=emit_typed_program_links(&packet.network,packet.root,"Rust").unwrap();let target=compile(&directory.0,&format!("translated_{selection_index}"),&canonical.code,selected);
@@ -219,11 +220,11 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
         if let Some(expectation)=row.get("originalCompilerExpectation"){
             assert_original_compiler_expectation(&directory.0,&format!("original_refusal_{row_index}_{selection_index}"),source,version,expectation);original_compiler_cells+=1;
         }
-        let error=parse_rust_with_source_version(source,version).and_then(|surface|check_program(&surface)).expect_err("actual original source obligation");
+        let error=parse_rust_with_source_version_and_signature_model(source,version,row["sourceSignatureModel"].as_str().unwrap_or("")).and_then(|surface|check_program(&surface)).expect_err("actual original source obligation");
         assert_eq!(error.kind.as_str(),selection["kind"].as_str().unwrap());assert_eq!(error.reason,selection["reason"].as_str().unwrap());assert_eq!(serde_json::to_value(error.span).unwrap(),selection["span"]);
         if let Some(fragment)=row["reasonIncludes"].as_str(){assert!(error.reason.contains(fragment));}
         if row["originalCompilerExpectation"]["outcome"]=="accept"{assert_eq!(error.kind.as_str(),"unsupported","valid original Rust remains an interpreter profile boundary");}
-        assert!(create_typed_program_links_with_rust_source_version(source,version,None).is_err(),"all original typed-import refusals remain represented");
+        assert!(create_typed_program_links_with_rust_source_version_and_signature_model(source,version,row["sourceSignatureModel"].as_str(),None).is_err(),"all original typed-import refusals remain represented");
     }}
     for (row_index,row) in fixture["emissionRefusals"].as_array().unwrap().iter().enumerate(){
         let source=row["source"].as_str().unwrap();assert_concrete_source(source,&row["concrete"],row["name"].as_str().unwrap());
@@ -235,10 +236,10 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
         for (selection_index,selection) in row["selections"].as_array().unwrap().iter().enumerate(){
             let version=selection["version"].as_str().unwrap();assert_eq!(selection["version"],fixture["versions"][selection_index]);
             assert_original_compiler_expectation(&directory.0,&format!("original_emission_refusal_{row_index}_{selection_index}"),source,version,&row["originalCompilerExpectation"]);original_compiler_cells+=1;
-            let surface=parse_rust_with_source_version(source,version).expect("backend boundary must pass the actual frontend");
+            let surface=parse_rust_with_source_version_and_signature_model(source,version,row["sourceSignatureModel"].as_str().unwrap_or("")).expect("backend boundary must pass the actual frontend");
             let program=check_program(&surface).expect("backend boundary must pass the actual checker");
             assert_eq!(serde_json::to_value(&surface).unwrap(),selection["surface"]);
-            let packet=create_typed_program_links_with_rust_source_version(source,version,None).expect("backend boundary must retain typed Links");
+            let packet=create_typed_program_links_with_rust_source_version_and_signature_model(source,version,row["sourceSignatureModel"].as_str(),None).expect("backend boundary must retain typed Links");
             assert_eq!(packet.network.to_lino(),selection["links"].as_str().unwrap());
             let binary=encode_link_network_binary(&packet.network,BinaryLinksOptions::default()).unwrap();
             let expected_binary=selection["binary"].as_array().unwrap().iter().map(|byte|u8::try_from(byte.as_u64().unwrap()).unwrap()).collect::<Vec<_>>();assert_eq!(binary,expected_binary);
