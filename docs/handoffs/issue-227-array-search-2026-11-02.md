@@ -754,3 +754,26 @@ class/collection constructors and catch recovery. Four deferred controls cover
 immutable List state, handler scope release, source instruction provenance and
 receiver allocation order. Kernel/control generation inputs are registered.
 Nothing executed; generated artifacts and native validation remain deferred.
+
+### Computed methods and runtime Function names draft
+
+Computed method/accessor syntax now uses the actual method CST site and the
+completed property key. Anonymous computed Arrow fields no longer require a
+literal key. Before property publication, the shared functionName instruction
+installs exact text names or suspends for actual Symbol description metadata.
+The name kernel preserves lone UTF16 surrogates, distinguishes absent/empty
+Symbol descriptions and assembles accessor prefixes within its metadata budget.
+The private Node response verifies the live request, latest adopted heap and
+actual Symbol identity before using the protected intrinsic description getter.
+It never invokes a represented method or a user description accessor. Unknown
+symbols remain explicit requests for another embedding. Driver declarations,
+source replay events and native replay orchestration are authored together.
+
+The former dynamic-computed-name refusal remains byte-for-byte as a positive
+original with key pick and expected Function name pick. Five further originals
+cover computed receiver/name, Symbol.iterator name, paired computed accessors,
+single Object key conversion and computed __proto__ alongside null prototype.
+Three deferred controls cover name assembly/metadata boundaries and converted
+key/function provenance. This also connects previously drafted custom iterable
+method syntax to the generic collection/for-of/spread paths. Generation inputs
+are registered; generated code, all execution and validation remain deferred.

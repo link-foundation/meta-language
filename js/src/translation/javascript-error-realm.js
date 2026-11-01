@@ -13,9 +13,10 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype} from './javascript-call-machine.js';
+import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallFunctionNameSymbolDescription} from './javascript-call-machine.js';
 
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
+const symbolDescriptionGetter=Reflect.getOwnPropertyDescriptor(Symbol.prototype,'description')?.get;
 const string=units=>{let result='';for(const unit of units)result+=String.fromCharCode(unit);return result;};
 
 /** `realm` is embedding authority, not serialized source metadata. It supplies
@@ -210,6 +211,16 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(heap!==request.machine.heap)throw new TypeError('primitive iterator metadata requires the adopted latest heap');
   const prototype={...root.prototype},transition=resumeJavaScriptCallPrimitiveIteratorPrototype(module.program,request.machine,prototype);return {resumed:true,prototype,transition};
  }
+ function resumeFunctionNameSymbolDescription(request){
+  if(module===null||request?.$!=='machineNeedFunctionNameSymbolDescription'||!request.machine)throw new TypeError('Symbol name metadata requires its actual published suspended request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
+  if(actual.$!=='machineNeedFunctionNameSymbolDescription'||!testJavaScriptSemanticSameValue(actual.object,request.object)||!testJavaScriptSemanticSameValue(actual.key,request.key)||actual.prefix!==request.prefix)throw new TypeError('Symbol name metadata retains its actual function key and prefix');
+  if(heap!==request.machine.heap)throw new TypeError('Symbol name metadata requires the adopted latest heap');
+  const symbol=reverse.get(request.key.identity);if(typeof symbol!=='symbol')return {resumed:false,transition:request};
+  if(typeof symbolDescriptionGetter!=='function'||Reflect.getOwnPropertyDescriptor(Symbol.prototype,'description')?.get!==symbolDescriptionGetter)throw new TypeError('Symbol name metadata requires its protected actual description getter');
+  const value=Reflect.apply(symbolDescriptionGetter,symbol,[]),description=value===undefined?{$:'undefined'}:value.length>65536?constructJavaScriptSourceText(value):text(value);
+  return {resumed:true,description,transition:resumeJavaScriptCallFunctionNameSymbolDescription(module.program,request.machine,description)};
+ }
  function registerArrayConstructorAuthority(provider){
   if(!sourceFunctions||module!==null||arrayConstructorAuthority!==null||typeof provider!=='function')throw new TypeError('constructor metadata authority is registered once before source publication');
   arrayConstructorAuthority=provider;
@@ -282,7 +293,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeFunctionNameSymbolDescription,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   capabilityReference(source,value,{operation,owner}){const semantic=encode(value);if(semantic.$!=='object')throw new TypeError('a capability reference requires its actual native namespace or source callable identity');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:semantic.callable,executable:false};},

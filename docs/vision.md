@@ -89,8 +89,19 @@ actual invocation receiver. Their getter/setter declarations use partial
 accessor descriptors through the same property-definition kernel: defining one
 side preserves an existing opposite accessor; replacing data/accessor forms
 uses the ordinary descriptor transition. Fixed methods named `get`, `set` or
-`__proto__` remain methods. Shared lexical cells, computed-name metadata,
-home-object/super, async and generator methods require their explicit extensions.
+`__proto__` remain methods. Shared lexical cells, home-object/super, async and
+generator methods require their explicit extensions.
+
+Computed methods/accessors and anonymous property functions use their completed
+ToPropertyKey result for runtime Function name installation before publishing
+the property. Text names retain exact UTF16 units; Symbol names consume actual
+description metadata, distinguishing absent from empty descriptions, with get/
+set prefixes when appropriate. Symbol metadata requests bind the actual fresh
+callable, Symbol identity, prefix and source instruction. The Node boundary
+reads only the actual registered Symbol's protected intrinsic description;
+unknown identities remain suspended. Replay records that metadata explicitly
+and native execution calls the translated shared name resumer. Key conversion,
+property getters and method bodies are never repeated to obtain a name.
 
 Runtime arrow closures have genuine callable identities in the common heap,
 ordinary own properties, actual prototypes, lexical receivers and captured

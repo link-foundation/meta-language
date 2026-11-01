@@ -36,6 +36,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'ordinaryAllocate',destination:number,prototype:number} |
  * {$:'literalPrototype',destination:number,object:number,value:number} |
  * {$:'literalAccessor',destination:number,object:number,key:number,value:number,kind:string,realm:bigint} |
+ * {$:'functionName',destination:number,object:number,key:number,prefix:string,realm:bigint} |
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
  * {$:'arraySpread',destination:number,target:number,input:number,index:number,iteratorKey:number,realm:bigint} |
@@ -87,6 +88,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
     case 'literalPrototype':return [instruction.destination,instruction.object,instruction.value];
+    case 'functionName':return [instruction.destination,instruction.object,instruction.key];
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'argumentRest':return [instruction.destination,instruction.prototype];
     case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype].concat(instruction.input===undefined?[]:[instruction.input]);
     case 'iteratorProtocol':return [instruction.destination,instruction.done,instruction.input,instruction.iteratorKey];

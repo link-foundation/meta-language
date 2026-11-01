@@ -98,7 +98,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   const declaration=binding.kind==='parameter'?null:containing(binding,['variable_declarator']);if(declaration&&declaration.end>node.start)fail('capturing a binding during its initializer requires its shared lexical cell');
   const writes=capturedBindingWrites();for(const occurrence of binding.references)if(writes.has(occurrence.start+':'+occurrence.end)||writeRanges.some(([start,end])=>{if(++writeComparisonWork>1000000)fail('capture write ranges exceed their bounded comparison work');return occurrence.start>=start&&occurrence.end<=end;}))fail('mutable captured bindings require their actual shared lexical cells');
  }
- function objectMethod(input,first,keyAt,kind,offset){
+ function objectMethod(input,first,keyAt,kind,offset,computedKeyUnits=null){
   if(!classProfile||offset!==0||activeFunction===null)fail('object methods require an actual closed source function owner');
   const node=methodNodes.find(row=>row.start===input[first]?.start),openToken=input[keyAt+1];
   if(!node||openToken?.value!=='(')fail('object methods retain their actual CST site and complete parameter head');
@@ -111,7 +111,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   initializingParameters=null;initializingParameterOwners=null;controlTargets=[];let parameters,statements_;
   try{parameters=readSourceParameters({open,close});statements_=statements(body+1,last);}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;controlTargets=previousTargets;}
   if(kind==='get'&&parameters.length!==0||kind==='set'&&(parameters.length!==1||parameters[0].$==='errorRestParameter'))fail('literal accessors retain their required zero/one non-rest formal parameters');
-  const key=input[keyAt],keyUnits=key.stringUnits??units(key.kind==='number'?key.suffix==='n'?String(BigInt(key.value)):String(Number(key.value)):key.value),name=keyUnits.map(unit=>String.fromCharCode(unit)).join(''),firstDefault=parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||parameter.$==='errorRestParameter'||(parameter.$==='errorObjectParameter'||parameter.$==='errorArrayParameter')&&parameter.hasDefault),ordinal=arrowNodes.length+methodNodes.indexOf(node),owner=activeFunction;
+  const key=input[keyAt],keyUnits=computedKeyUnits??key.stringUnits??units(key.kind==='number'?key.suffix==='n'?String(BigInt(key.value)):String(Number(key.value)):key.value),name=keyUnits.map(unit=>String.fromCharCode(unit)).join(''),firstDefault=parameters.findIndex(parameter=>parameter.$==='errorDefaultParameter'||parameter.$==='errorRestParameter'||(parameter.$==='errorObjectParameter'||parameter.$==='errorArrayParameter')&&parameter.hasDefault),ordinal=arrowNodes.length+methodNodes.indexOf(node),owner=activeFunction;
   templates.push({$:'errorArrowTemplatePlan',owner,ordinal,name:(kind===''?'':kind+' ')+name,length:firstDefault<0?parameters.length:firstDefault,parameters,captures,statements:statements_,receiverMode:'strict'});
   let end=keyAt+1;while(end<input.length&&input[end].start<node.end)end++;if(end<=keyAt+1||input[end-1]?.end!==node.end)fail('literal methods retain their complete token interval');
   return {end,key:keyUnits,value:{$:'errorClosure',owner,ordinal,captures,receiverMode:'strict'}};
@@ -174,14 +174,13 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
      if(take('...')){if(!classProfile)fail('object spread requires its actual closed source continuation');properties.push({$:'errorObjectSpread',input:parse(1)});}
      else if(take('[')){
       if(!classProfile)fail('computed object fields require the closed source profile');
-      const key=parse(0);if(!take(']')||!take(':'))fail('computed object fields retain their complete key and value');const field=parse(1);
-      if(field.$==='errorClosure'){
-       if(key.$!=='errorConstant'||!['text','number','integer'].includes(key.value.$))fail('computed anonymous function names require their actual runtime property-key naming continuation');
-       inferArrowName(field,key.value.$==='text'?key.value.units.map(unit=>String.fromCharCode(unit)).join(''):String(key.value.value));
-      }
-      properties.push({$:'errorComputedObjectProperty',key,value:field});
+      const start=at-1,key=parse(0);if(!take(']'))fail('computed object fields retain their complete actual key');
+      if(peek()?.value==='('){const method=objectMethod(input,start,at-1,'',offset,[]);at=method.end;properties.push({$:'errorComputedObjectProperty',key,value:method.value,inferName:true});}
+      else{if(!take(':'))fail('computed object fields retain their complete key and value');const field=parse(1);properties.push({$:'errorComputedObjectProperty',key,value:field,...(field.$==='errorClosure'?{inferName:true}:{})});}
      }else{
       const start=at,key=peek();if(!key||!['identifier','string','number'].includes(key.kind))fail('source object fields require their actual fixed or computed data key');
+      if(['get','set'].includes(key.value)&&input[at+1]?.value==='['){at+=2;const computed=parse(0);if(!take(']')||peek()?.value!=='(')fail('computed accessor retains its complete actual key and parameter head');const method=objectMethod(input,start,at-1,key.value,offset,[]);at=method.end;properties.push({$:'errorComputedObjectProperty',key:computed,value:method.value,inferName:true,kind:key.value});}
+      else{
       const accessor=['get','set'].includes(key.value)&&['identifier','string','number'].includes(input[at+1]?.kind)&&input[at+2]?.value==='(',method=input[at+1]?.value==='(';
       if(accessor||method){const result=objectMethod(input,start,accessor?start+1:start,accessor?key.value:'',offset);at=result.end;properties.push(accessor?{$:'errorObjectAccessor',key:result.key,value:result.value,kind:key.value}:{$:'errorObjectProperty',key:result.key,value:result.value});}
       else{at++;
@@ -190,6 +189,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       const keyUnits=key.stringUnits??units(name),field=pair?parse(1):variable(key),prototype=pair&&keyUnits.length===9&&keyUnits.every((unit,index)=>unit===[95,95,112,114,111,116,111,95,95][index]);
       if(prototype){if(!classProfile)fail('literal prototype installation requires its closed source operation');if(prototypeSetter)fail('duplicate literal prototype setters are an early SyntaxError');prototypeSetter=true;properties.push({$:'errorLiteralPrototype',value:field});}
       else{if(pair)inferArrowName(field,keyUnits.map(unit=>String.fromCharCode(unit)).join(''));properties.push({$:'errorObjectProperty',key:keyUnits,value:field});}
+      }
       }
      }
      if(take('}'))break;if(!take(','))fail('source object fields need complete separators');if(take('}'))break;

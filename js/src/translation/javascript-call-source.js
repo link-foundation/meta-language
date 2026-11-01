@@ -54,7 +54,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
  */
-/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource} | {$:'sourceObjectAccessor',key:JavaScriptCallSource,value:JavaScriptCallSource,kind:string} | {$:'sourceLiteralPrototype',value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource,excluded?:JavaScriptCallSource[]}} JavaScriptCallSourceProperty */
+/** @typedef {{$:'sourceObjectProperty',key:JavaScriptCallSource,value:JavaScriptCallSource,inferName?:boolean} | {$:'sourceObjectAccessor',key:JavaScriptCallSource,value:JavaScriptCallSource,kind:string,inferName?:boolean} | {$:'sourceLiteralPrototype',value:JavaScriptCallSource} | {$:'sourceObjectSpread',input:JavaScriptCallSource,excluded?:JavaScriptCallSource[]}} JavaScriptCallSourceProperty */
 /** @typedef {{$:'sourceArrayValue',value:JavaScriptCallSource} | {$:'sourceArraySpread',value:JavaScriptCallSource} | {$:'sourceArrayHole'}} JavaScriptCallArrayPart */
 /** @typedef {{$:'sourceArrayElement',index:number,value:JavaScriptCallSource}} JavaScriptCallSourceArrayElement */
 /** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
@@ -276,7 +276,8 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
     }
     const key=lowerJavaScriptCallSourceExpression({$:'sourcePropertyKey',input:property.key,realm:source.realm},bindings,current,depth+1);
     const value=lowerJavaScriptCallSourceExpression(property.value,bindings,key.builder,depth+1),result=allocateJavaScriptCallSourceRegister(value.builder);
-    current=appendJavaScriptCallSourceInstruction(result.builder,property.$==='sourceObjectAccessor'?{$:'literalAccessor',destination:result.register,object:object.register,key:key.register,value:value.register,kind:property.kind,realm:source.realm}:{$:'ordinaryDataProperty',destination:result.register,object:object.register,key:key.register,value:value.register,realm:source.realm});
+    let prepared=result.builder;if(property.inferName){const named=allocateJavaScriptCallSourceRegister(prepared);prepared=appendJavaScriptCallSourceInstruction(named.builder,{$:'functionName',destination:named.register,object:value.register,key:key.register,prefix:property.$==='sourceObjectAccessor'?property.kind:'',realm:source.realm});}
+    current=appendJavaScriptCallSourceInstruction(prepared,property.$==='sourceObjectAccessor'?{$:'literalAccessor',destination:result.register,object:object.register,key:key.register,value:value.register,kind:property.kind,realm:source.realm}:{$:'ordinaryDataProperty',destination:result.register,object:object.register,key:key.register,value:value.register,realm:source.realm});
    }
    return {$:'sourceResult',builder:current,register:object.register};
   }

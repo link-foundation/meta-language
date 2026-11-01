@@ -32,7 +32,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorBindingSet',identity:number,value:JavaScriptErrorExpression} |
  * {$:'errorSpecialNumber',form:string} |
  * {$:'errorStrictEqual',left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,negate:boolean}} JavaScriptErrorExpression */
-/** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorObjectAccessor',key:number[],value:JavaScriptErrorExpression,kind:string} | {$:'errorLiteralPrototype',value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
+/** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorObjectAccessor',key:number[],value:JavaScriptErrorExpression,kind:string} | {$:'errorLiteralPrototype',value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression,inferName?:boolean,kind?:string} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
 /** @typedef {{$:'errorArrayValue',value:JavaScriptErrorExpression} | {$:'errorArraySpread',value:JavaScriptErrorExpression} | {$:'errorArrayHole'}} JavaScriptErrorArrayPart */
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
@@ -182,7 +182,8 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
     if(property.$==='errorLiteralPrototype'){const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push({$:'sourceLiteralPrototype',value:value.source});continue;}
     if(property.$==='errorObjectSpread'){const input=lowerJavaScriptErrorExpression(property.input,current,depth+1);current=input.context;properties.push({$:'sourceObjectSpread',input:input.source});continue;}
     let key=constant({$:'undefined'});if(property.$==='errorComputedObjectProperty'){const lowered=lowerJavaScriptErrorExpression(property.key,current,depth+1);current=lowered.context;key=lowered.source;}else key=constant({$:'text',units:property.key});
-    const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push(property.$==='errorObjectAccessor'?{$:'sourceObjectAccessor',key,value:value.source,kind:property.kind}:{$:'sourceObjectProperty',key,value:value.source});
+    const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;const inferName=property.$==='errorComputedObjectProperty'&&property.inferName?{inferName:true}:{};
+    properties.push(property.$==='errorObjectAccessor'||property.$==='errorComputedObjectProperty'&&property.kind!==undefined&&property.kind!==''?{$:'sourceObjectAccessor',key,value:value.source,kind:property.kind??'',...inferName}:{$:'sourceObjectProperty',key,value:value.source,...inferName});
    }
    return {$:'errorSourceExpression',source:{$:'sourceObject',prototype:constant(next.realm.objectPrototype),properties,realm:next.realm.realm},context:current};
   }
