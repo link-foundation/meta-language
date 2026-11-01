@@ -12343,3 +12343,13 @@ the caught value after the protected handler has been removed; initialization
 failures therefore reach the enclosing catch. Catch default admission retains
 actual earlier-initialized parameter bindings and refuses later/self TDZ reads
 until their full environment protocol exists.
+
+Finally uses the common call frame's ordered handler stack. A finalizer handler
+defers the actual return, throw or control jump as an explicit completion record
+while finalizer code executes in the same source frame. Normal finalizer exit
+resumes that record; an abrupt finalizer exit replaces it. Catch handlers above
+a deferred completion can catch finalizer-local throws without losing the
+original completion. Return normalization for constructors follows finalizer
+execution. Loop exits retain their actual destination and handler depth and run
+crossed finalizers before reaching that destination. All completion values and
+coordinates remain bounded, inspectable common data.

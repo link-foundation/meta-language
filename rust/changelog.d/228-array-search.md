@@ -66,3 +66,6 @@ catch identities, mutable values and the boundary before following statements.
 
 Draft recursive catch object bindings through shared coercibility, default and
 rest initialization, preserving failures to the enclosing handler.
+
+Draft source finally and common deferred return/throw/control completions,
+including loop exit unwinding and constructor normalization after finalizers.

@@ -514,3 +514,32 @@ defaults/rest, nested rest levels, enclosing computed keys, nullish pattern
 failure to an outer catch and UTF16 own String index/rest behavior. No code or
 assertion executed. Catch array bindings and finally/control completion machinery
 remain further drafting work; source/native generation and all gates are deferred.
+
+
+### Shared finally/completion source and VM draft
+
+Finally now uses ordered actual handler records and explicit deferred
+return/throw/jump completions in the same source frame. Common unwinding enters
+crossed finalizers, preserves primitive values/Object identities and current
+heap effects, resumes normal finalizer exits and discards overridden completions
+on abrupt finalizer exit. Catch handlers nested inside a finalizer retain the
+deferred outer completion. Constructor return normalization follows finalizers.
+Array next abandonment still releases its source while throwing across frames.
+Completion values, source entries, destinations and handler depths validate.
+
+Source finally lowering emits pushFinally, completion jumps and finishFinally.
+Existing source loop/control transfers now retain their scope handler depth and
+use common completion jumps when crossing handlers. The CST reader/lowerer
+composes try/finally and try/catch/finally with the same machinery; following
+statements remain outside the completed protected region. Eleven originals cover
+return snapshots/overrides, original throw identity/current effects, throw
+override, catch/finally order, loop exits, nested finalizers, internal catch,
+finalizer break/continue overrides and constructor normalization. Three deferred
+VM/source controls cover actual return override, finalizer-local catch and
+malformed completion coordinates. Native generation inputs include the controls;
+no generated files were edited and no test or compilation ran.
+
+This provides completion machinery for the still-required iterator-region
+connections in for-of and array binding/default evaluation. Those consumer
+connections, general shared lexical environments and remaining language surfaces
+continue to require source drafting. No ledger/evidence status was changed.

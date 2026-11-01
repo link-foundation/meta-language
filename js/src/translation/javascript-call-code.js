@@ -5,6 +5,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * @typedef {{$:'constant',destination:number,value:JavaScriptSemanticValue} |
  * {$:'copy',destination:number,source:number} |
  * {$:'argument',destination:number,index:number} |
+ * {$:'pushFinally',target:number} | {$:'finishFinally'} | {$:'completeJump',target:number,depth:number} |
  * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'constructErrorClass',destination:number,callee:number,arguments:number[]} |
@@ -67,7 +68,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
     case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
     case 'copy':return [instruction.destination,instruction.source];
-    case 'jump':case 'popHandler':return [];
+    case 'jump':case 'popHandler':case 'pushFinally':case 'finishFinally':case 'completeJump':return [];
     case 'branch':return [instruction.condition];
     case 'call':case 'callClassConstructor':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
     case 'constructErrorClass':case 'constructCollection':return [instruction.destination,instruction.callee].concat(instruction.arguments);
@@ -91,7 +92,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
   }
 }
 /** @param {JavaScriptCallInstruction} instruction @returns {number} */
-export function readJavaScriptCallCodeDestination(instruction){switch(instruction.$){case 'jump':case 'branch':case 'popHandler':case 'return':case 'throw':case 'requireWrite':return -1;default:return instruction.destination;}}
+export function readJavaScriptCallCodeDestination(instruction){switch(instruction.$){case 'jump':case 'branch':case 'popHandler':case 'pushFinally':case 'finishFinally':case 'completeJump':case 'return':case 'throw':case 'requireWrite':return -1;default:return instruction.destination;}}
 /** Preserve a real typed dependency on the shared semantic operand model.
  * @param {JavaScriptSemanticValue} value @returns {string} */
 export function readJavaScriptCallConstantError(value){return readJavaScriptSemanticValueError(value);}

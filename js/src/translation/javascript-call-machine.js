@@ -38,7 +38,9 @@ import {readJavaScriptCollectionOperationKind} from './javascript-collection-rul
 import {allocateJavaScriptArray,testJavaScriptArrayValue,testJavaScriptArrayIntrinsicOperation} from './javascript-arrays.js';
 import {testJavaScriptArrayLength} from './javascript-array-objects.js';
 
-/** @typedef {{$:'callHandler',target:number,destination:number}} JavaScriptCallHandler */
+/** @typedef {{$:'callCompletion',kind:string,value:JavaScriptSemanticValue,target:number,depth:number}} JavaScriptCallCompletion */
+/** @typedef {{$:'callHandler',target:number,destination:number} | {$:'callFinallyHandler',target:number} | {$:'callDeferredCompletion',completion:JavaScriptCallCompletion}} JavaScriptCallHandler */
+/** @typedef {JavaScriptCallMachineTransition | {$:'callReturn',machine:JavaScriptCallMachine,value:JavaScriptSemanticValue}} JavaScriptCallCompletionTransition */
 /** @typedef {{$:'callIdle'} | {$:'waitCall',destination:number} |
  * {$:'waitGet',destination:number} | {$:'waitSet',destination:number} | {$:'waitHostSet',destination:number} |
  * {$:'waitArraySpread',destination:number,realm:bigint,state:JavaScriptArraySpreadState} |
@@ -161,9 +163,10 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
       if(instruction.$==='objectSpread'&&(instruction.excluded??[]).length>4096)return 'object copy exclusions retain their bounded actual register operands';
       for(const register of readJavaScriptCallRegisters(instruction))if(!testJavaScriptCallCoordinate(register,fn.registers))return 'call instructions require actual in-range register coordinates';
       switch(instruction.$){
+        case 'completeJump':if(!Number.isSafeInteger(instruction.depth)||instruction.depth<0||instruction.depth>1024||Object.is(instruction.depth,-0)||!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'completion jumps retain their actual bounded handler depth and target';break;
         case 'jump':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call jumps require actual instruction targets';break;
         case 'branch':if(!testJavaScriptCallCoordinate(instruction.yes,fn.instructions.length)||!testJavaScriptCallCoordinate(instruction.no,fn.instructions.length))return 'call branches require both actual instruction targets';break;
-        case 'pushHandler':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call handlers require actual instruction targets';break;
+        case 'pushHandler':case 'pushFinally':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call handlers require actual instruction targets';break;
         case 'argument':if(!testJavaScriptCallCoordinate(instruction.index,1048576))return 'call argument reads require exact bounded coordinates';break;
         case 'constant':if(readJavaScriptOrdinaryValueError(heap,instruction.value)!=='')return 'call constants belong to the latest global context';break;
         case 'primitive':{const error=readJavaScriptCallPrimitiveArityError(instruction.operation,instruction.arguments.length);if(error!=='')return error;break;}
@@ -338,7 +341,12 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       for(let index=0;index<closure.captures.length;index++)if(!testJavaScriptSemanticSameValue(frame.registers[fn.parameters+1+index]??{$:'undefined'},closure.captures[index]??{$:'undefined'}))return 'an arrow frame retains its actual immutable captured values';
     }
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)){const receiver=frame.registers[0]??{$:'undefined'},object=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;if(receiver.$!=='object'||receiver.callable||object?.$!=='ordinaryObject')return 'an active base constructor retains its actual allocated ordinary receiver';}
-    for(const handler of frame.handlers)if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';
+    for(const handler of frame.handlers){
+      if(handler.$==='callHandler'){if(!testJavaScriptCallCoordinate(handler.destination,fn.registers)||!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'call handlers retain their complete register and instruction coordinates';}
+      else if(handler.$==='callFinallyHandler'){if(!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'finalizers retain their actual source instruction entry';}
+      else if(handler.$==='callDeferredCompletion'){const completion=handler.completion;if(!['return','throw','jump'].includes(completion.kind)||readJavaScriptOrdinaryValueError(heap,completion.value)!==''||!Number.isSafeInteger(completion.depth)||completion.depth<0||completion.depth>1024||Object.is(completion.depth,-0)||completion.kind==='jump'&&!testJavaScriptCallCoordinate(completion.target,fn.instructions.length)||completion.kind!=='jump'&&(completion.target!==-1||completion.depth!==0))return 'deferred completions retain actual values, kinds and bounded control coordinates';}
+      else return 'handlers retain their actual registered catch, finalizer or deferred completion kind';
+    }
     const pending=frame.pending;
     if(!testJavaScriptCallPendingDestination(pending,fn.registers))return 'pending calls retain their actual destination register';
     switch(pending.$){
@@ -521,15 +529,29 @@ export function readJavaScriptTextCallStateError(heap,state){
 
 /** @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function throwJavaScriptCallValue(machine,value){
-  let frames=machine.frames,heap=machine.heap;
-  while(frames.length>0){
-    const frame=frames[frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap,reason:'call stacks must be dense'};
-    const handler=frame.handlers[frame.handlers.length-1];
-    if(handler!==undefined){const restored={...writeJavaScriptCallRegister(frame,handler.destination,value),position:handler.target,handlers:frame.handlers.slice(0,-1)};return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,restored)};}
-    if(frame.pending.$==='waitArrayIteratorNext')heap=finishJavaScriptArrayIteratorCursor(heap,frame.pending.state,true);
-    frames=frames.slice(0,-1);
+ const transition=unwindJavaScriptCallCompletion(machine,{$:'callCompletion',kind:'throw',value,target:-1,depth:0});return transition.$==='callReturn'?{$:'machineInvalid',heap:transition.machine.heap,reason:'throw unwinding cannot become a return'}:transition;
+}
+/** @param {JavaScriptCallMachine} machine @param {JavaScriptCallCompletion} completion @returns {JavaScriptCallCompletionTransition} */
+export function unwindJavaScriptCallCompletion(machine,completion){
+ if(!['return','throw','jump'].includes(completion.kind)||readJavaScriptOrdinaryValueError(machine.heap,completion.value)!==''||!Number.isSafeInteger(completion.depth)||Object.is(completion.depth,-0)||completion.depth<0||completion.depth>1024||completion.kind==='jump'&&(!Number.isSafeInteger(completion.target)||completion.target<0||completion.target>=65536||Object.is(completion.target,-0))||completion.kind!=='jump'&&(completion.target!==-1||completion.depth!==0))return {$:'machineInvalid',heap:machine.heap,reason:'completion unwinding requires actual values and exact bounded control coordinates'};
+ let frames=machine.frames,heap=machine.heap;
+ while(frames.length>0){
+  const frame=frames[frames.length-1];if(frame===undefined)return {$:'machineInvalid',heap,reason:'completion unwinding retains its complete actual stack'};
+  let handlers=frame.handlers;
+  if(completion.kind==='jump'&&completion.depth>handlers.length)return {$:'machineInvalid',heap,reason:'completion jump cannot invent an enclosing handler depth'};
+  while(handlers.length>(completion.kind==='jump'?completion.depth:0)){
+   const handler=handlers[handlers.length-1];handlers=handlers.slice(0,-1);if(handler===undefined)return {$:'machineInvalid',heap,reason:'completion handler storage remains dense'};
+   if(handler.$==='callDeferredCompletion')continue;
+   if(handler.$==='callFinallyHandler')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,position:handler.target,pending:{$:'callIdle'},handlers:handlers.concat([{$:'callDeferredCompletion',completion:{...completion}}])})};
+   if(completion.kind==='throw')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...writeJavaScriptCallRegister(frame,handler.destination,completion.value),position:handler.target,handlers})};
   }
-  return {$:'machineThrow',heap,value};
+  const current=replaceJavaScriptCallFrame(heap,frames,{...frame,handlers});
+  if(completion.kind==='jump')return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,frames,{...frame,position:completion.target,pending:{$:'callIdle'},handlers})};
+  if(completion.kind==='return')return {$:'callReturn',machine:current,value:completion.value};
+  if(frame.pending.$==='waitArrayIteratorNext')heap=finishJavaScriptArrayIteratorCursor(heap,frame.pending.state,true);
+  frames=frames.slice(0,-1);
+ }
+ return completion.kind==='throw'?{$:'machineThrow',heap,value:completion.value}:{$:'machineInvalid',heap,reason:'return/control completion requires its actual active frame'};
 }
 /** @param {JavaScriptCallMachine} machine @param {bigint} realm @param {string} errorClass @param {string} reason @returns {JavaScriptCallMachineTransition} */
 export function requestJavaScriptCallError(machine,realm,errorClass,reason){
@@ -662,6 +684,11 @@ export function resumeJavaScriptCallText(program,machine,destination,realm,state
 }
 /** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
 export function returnJavaScriptCallValue(program,machine,value){
+ const transition=unwindJavaScriptCallCompletion(machine,{$:'callCompletion',kind:'return',value,target:-1,depth:0});return transition.$==='callReturn'?finishJavaScriptCallReturn(program,transition.machine,transition.value):transition;
+}
+/** Normalize constructor returns only after all active finalizers complete.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine @param {JavaScriptSemanticValue} value @returns {JavaScriptCallMachineTransition} */
+export function finishJavaScriptCallReturn(program,machine,value){
   const active=machine.frames[machine.frames.length-1],owner=active===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,active.identity);
   if(active!==undefined&&owner!==undefined&&testJavaScriptOrdinaryClassReceiverResult(owner.receiverMode,value.$)){const receiver=active.registers[0]??{$:'undefined'};if(receiver.$!=='object')return {$:'machineInvalid',heap:machine.heap,reason:'an ordinary class completion needs its actual allocated receiver'};value=receiver;}
   if(active!==undefined&&owner!==undefined&&testJavaScriptErrorConstructorMode(owner.receiverMode)){
@@ -822,12 +849,21 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'branch':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,position:convertJavaScriptSemanticBoolean(registers[instruction.condition]??{$:'undefined'})?instruction.yes:instruction.no})};
     case 'return':return returnJavaScriptCallValue(program,current,registers[instruction.source]??{$:'undefined'});
     case 'throw':return throwJavaScriptCallValue(current,registers[instruction.source]??{$:'undefined'});
+    case 'pushFinally':{
+      if(frame.handlers.length>=1024)return {$:'machineResourceLimit',machine,reason:'finalizer storage exceeds its actual handler budget'};
+      return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,handlers:frame.handlers.concat([{$:'callFinallyHandler',target:instruction.target}])})};
+    }
+    case 'completeJump':return acceptJavaScriptCallCompletion(program,unwindJavaScriptCallCompletion(current,{$:'callCompletion',kind:'jump',value:{$:'undefined'},target:instruction.target,depth:instruction.depth}));
+    case 'finishFinally':{
+      const handler=frame.handlers[frame.handlers.length-1];if(handler?.$!=='callDeferredCompletion')return {$:'machineInvalid',heap:machine.heap,reason:'finalizer exit retains its actual deferred completion'};
+      const resumed=replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,handlers:frame.handlers.slice(0,-1)});return acceptJavaScriptCallCompletion(program,unwindJavaScriptCallCompletion(resumed,handler.completion));
+    }
     case 'pushHandler':{
       if(frame.handlers.length>=1024)return {$:'machineResourceLimit',machine,reason:'handler storage exceeds the selected execution resource budget'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,handlers:frame.handlers.concat([{$:'callHandler',target:instruction.target,destination:instruction.destination}])})};
     }
     case 'popHandler':{
-      if(frame.handlers.length===0)return {$:'machineInvalid',heap:machine.heap,reason:'a handler pop requires its actual active handler'};
+      if(frame.handlers[frame.handlers.length-1]?.$!=='callHandler')return {$:'machineInvalid',heap:machine.heap,reason:'a handler pop requires its actual active catch handler'};
       return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,handlers:frame.handlers.slice(0,-1)})};
     }
     case 'call':{
@@ -1369,3 +1405,7 @@ export function resumeJavaScriptCallPrimitiveIteratorPrototype(program,machine,p
  const request=stepJavaScriptCallMachine(program,machine);if(request.$!=='machineNeedPrimitiveIteratorGet')return {$:'machineInvalid',heap:machine.heap,reason:'primitive prototype response cannot replace a live getter or iterator call'};
  return acceptJavaScriptCallArraySpread(program,machine,frame.pending.destination,frame.pending.realm,provideJavaScriptArraySpreadPrimitivePrototype(machine.heap,frame.pending.state,prototype));
 }
+
+
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallCompletionTransition} transition @returns {JavaScriptCallMachineTransition} */
+export function acceptJavaScriptCallCompletion(program,transition){return transition.$==='callReturn'?finishJavaScriptCallReturn(program,transition.machine,transition.value):transition;}

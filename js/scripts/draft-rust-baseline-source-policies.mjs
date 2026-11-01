@@ -168,6 +168,7 @@ const consumers=[
  'js/tests/translation-javascript-array-iteration.test.js',
  'js/tests/translation-javascript-array-spread.test.js',
  'js/tests/translation-javascript-string-iteration.test.js',
+ 'js/tests/translation-javascript-finally.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

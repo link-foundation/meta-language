@@ -17,6 +17,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceControlJump',target:number,continuing:boolean} |
  * {$:'sourceControlBlock',target:number,body:JavaScriptCallSource,after:JavaScriptCallSource} |
  * {$:'sourceSwitch',target:number,value:JavaScriptCallSource,clauses:JavaScriptCallSourceSwitchClause[],after:JavaScriptCallSource} |
+ * {$:'sourceFinally',body:JavaScriptCallSource,finalizer:JavaScriptCallSource} |
  * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
  * {$:'sourceLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
@@ -115,6 +116,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   case 'sourceControlBlock':{const scoped=pushJavaScriptCallSourceControlScope(state,source.target,'block'),body=lowerJavaScriptCallSourceExpression(source.body,bindings,scoped,depth+1),finished=finishJavaScriptCallSourceControlScope(body.builder,state,source.target,body.builder.instructions.length,-1);return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);}
   case 'sourceSwitch':return lowerJavaScriptCallSourceSwitch(source,bindings,state,depth);
   case 'sourceControlJump':return lowerJavaScriptCallSourceControlJump(source,state);
+  case 'sourceFinally':return lowerJavaScriptCallSourceFinally(source,bindings,state,depth);
   case 'sourceTry':return lowerJavaScriptCallSourceException(source,bindings,state,depth);
   case 'sourceConstant':{
    const error=readJavaScriptCallConstantError(source.value);if(error!=='')return refuseJavaScriptCallSource(state,error);
@@ -276,6 +278,15 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
  }
 }
 
+/** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceFinally(source,bindings,builder,depth){
+ if(source.$!=='sourceFinally')return refuseJavaScriptCallSource(builder,'finally lowering retains its actual protected body and finalizer');
+ if(builder.handlers>=1024)return refuseJavaScriptCallSource(builder,'finally exceeds its actual shared handler budget');
+ const result=allocateJavaScriptCallSourceRegister(builder),position=result.builder.instructions.length,protectedBuilder=appendJavaScriptCallSourceInstruction({...result.builder,handlers:builder.handlers+1},{$:'pushFinally',target:0}),body=lowerJavaScriptCallSourceExpression(source.body,bindings,protectedBuilder,depth+1),copied=appendJavaScriptCallSourceInstruction(body.builder,{$:'copy',destination:result.register,source:body.register}),jump=copied.instructions.length,normal=appendJavaScriptCallSourceInstruction(copied,{$:'completeJump',target:0,depth:builder.handlers}),entry=normal.instructions.length,finalizer=lowerJavaScriptCallSourceExpression(source.finalizer,bindings,normal,depth+1),finished=appendJavaScriptCallSourceInstruction(finalizer.builder,{$:'finishFinally'}),end=finished.instructions.length;
+ const instructions=finished.instructions.map((instruction,index)=>index===position?{$:'pushFinally',target:entry}:index===jump?{$:'completeJump',target:end,depth:builder.handlers}:instruction);
+ return {$:'sourceResult',builder:{...finished,instructions,handlers:builder.handlers},register:result.register};
+}
 /** Catch binding identity is local to the handler, never the protected body.
  * Normal evaluation pops exactly its own handler. The machine removes that
  * handler before entering catch; exceptions in catch reach the outer handler.
@@ -359,8 +370,7 @@ export function lowerJavaScriptCallSourceControlJump(source,builder){
  if(source.$!=='sourceControlJump'||typeof source.continuing!=='boolean')return refuseJavaScriptCallSource(builder,'a control jump requires its actual source target');
  const scope=(builder.controlScopes??[]).find(row=>row.identity===source.target);
  if(scope===undefined||source.continuing&&scope.kind!=='loop'||scope.handlers>builder.handlers)return refuseJavaScriptCallSource(builder,'break and continue retain an active actual target and handler depth');
- let current=builder;for(let depth=builder.handlers;depth>scope.handlers;depth--)current=appendJavaScriptCallSourceInstruction(current,{$:'popHandler'});
- const position=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'jump',target:0});
+ let current=builder;const position=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,builder.handlers>scope.handlers?{$:'completeJump',target:0,depth:scope.handlers}:{$:'jump',target:0});
  const transfers=current.controlTransfers??[];if(transfers.length>=65536)return refuseJavaScriptCallSource(current,'control transfers exceed their explicit transfer budget');
  return {$:'sourceResult',builder:{...current,controlTransfers:transfers.concat([{$:'sourceControlTransfer',position,target:source.target,continuing:source.continuing}])},register:0};
 }
@@ -378,8 +388,8 @@ export function finishJavaScriptCallSourceControlScope(builder,outer,target,end,
  const transfers=builder.controlTransfers??[],selected=transfers.filter(row=>row.target===target);
  if(selected.some(row=>row.continuing&&update<0))return {...builder,error:'continue requires its actual loop update or condition target'};
  const positions=selected.map(row=>row.position);
- let previous=-1;for(const position of positions){if(!testJavaScriptCallCodeCoordinate(position,builder.instructions.length)||position<=previous||builder.instructions[position]?.$!=='jump')return {...builder,error:'source control transfers retain ordered unique instruction positions'};previous=position;}
- const instructions=builder.instructions.map((instruction,index)=>{const position=findJavaScriptCallSourceInstructionPosition(positions,index);if(position<0)return instruction;const transfer=selected[position];return transfer===undefined?instruction:{$:'jump',target:transfer.continuing?update:end};});
+ let previous=-1;for(const position of positions){if(!testJavaScriptCallCodeCoordinate(position,builder.instructions.length)||position<=previous||!['jump','completeJump'].includes(builder.instructions[position]?.$??''))return {...builder,error:'source control transfers retain ordered unique instruction positions'};previous=position;}
+ const instructions=builder.instructions.map((instruction,index)=>{const position=findJavaScriptCallSourceInstructionPosition(positions,index);if(position<0)return instruction;const transfer=selected[position];return transfer===undefined?instruction:{...instruction,target:transfer.continuing?update:end};});
  const remaining=transfers.filter(row=>row.target!==target);
  return {...builder,instructions,...(outer.controlScopes!==undefined?{controlScopes:outer.controlScopes}:{controlScopes:[]}),...(remaining.length||outer.controlTransfers!==undefined?{controlTransfers:remaining}:{controlTransfers:[]})};
 }
