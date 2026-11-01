@@ -721,7 +721,9 @@ impl RustParser {
                     span(&token, &token),
                 ));
             }
-            if token.kind == TokenKind::Identifier
+            let temporary_frame = self.origins.owned_temporary_frame();
+            let finite_loop=if ordinary{self.read_owned_record_finite_loop(path)?}else{None};
+            if finite_loop.is_none() && token.kind == TokenKind::Identifier
                 && ["while", "loop", "for"].contains(&token.value.as_str())
             {
                 return Err(unsupported(
@@ -730,9 +732,7 @@ impl RustParser {
                     span(&token, &token),
                 ));
             }
-            let temporary_frame = self.origins.owned_temporary_frame();
-            let state_statement=self.read_owned_record_state_statement(path)?;
-            let expr=if let Some(statement)=state_statement{lets.extend(statement.bindings);statement.value}else{self.expr(
+            let expr=if let Some(loop_expression)=finite_loop{loop_expression}else if let Some(statement)=self.read_owned_record_state_statement(path)?{lets.extend(statement.bindings);statement.value}else{self.expr(
                 path,
                 Options {
                     statement: true,
@@ -887,9 +887,10 @@ impl RustParser {
                 self.cursor.expect(";", Some(&token.value))?;
                 continue;
             }
-            let state_statement=self.read_owned_record_state_statement(&[])?;
-            let is_state_statement=state_statement.is_some();
-            let value=if let Some(statement)=state_statement{for binding in statement.bindings{effects.push(SEffect::Let{name:binding.name,ty:binding.ty,value:binding.value,span:binding.span,constant:false,source_pure_unit_call:None});}statement.value}else{self.expr(
+            let finite_loop=if self.ordinary_completion_context(){self.read_owned_record_finite_loop(&[])?}else{None};
+            let state_statement=if finite_loop.is_some(){None}else{self.read_owned_record_state_statement(&[])?};
+            let is_state_statement=finite_loop.is_some()||state_statement.is_some();
+            let value=if let Some(loop_expression)=finite_loop{loop_expression}else if let Some(statement)=state_statement{for binding in statement.bindings{effects.push(SEffect::Let{name:binding.name,ty:binding.ty,value:binding.value,span:binding.span,constant:false,source_pure_unit_call:None});}statement.value}else{self.expr(
                 &[],
                 Options {
                     statement: true,
@@ -973,6 +974,9 @@ impl RustParser {
         } else {
             (self.macro_arguments(&token, path)?, None)
         };
+        if ["println","assert","assert_eq","assert_ne"].contains(&token.value.as_str()){
+            for argument in &args{self.guard_borrowed_vector_observation(argument,path,&token.value,argument.span)?;}
+        }
         match token.value.as_str() {
             "println" => {
                 for value in args.iter().skip(1) {

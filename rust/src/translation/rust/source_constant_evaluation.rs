@@ -184,6 +184,7 @@ impl RustParser {
             reader.origins.nominal_ownership_declarations=self.origins.nominal_ownership_declarations.clone();
             reader.origins.nominal_ownership_scope_complete=self.origins.nominal_ownership_scope_complete;
             reader.origins.owned_container_source_enabled=self.origins.owned_container_source_enabled;
+            reader.origins.borrowed_vector_source_enabled=self.origins.borrowed_vector_source_enabled;
             reader.source_constant_initializers = self.source_constant_initializers.clone();
             reader.source_constant_functions = self.source_constant_functions.clone();
             reader.source_constant_read_stack = self.source_constant_read_stack.clone();

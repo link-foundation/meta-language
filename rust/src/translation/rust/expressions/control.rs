@@ -38,6 +38,7 @@ impl RustParser {
         match token.value.as_str() {
             "vec" => {
                 if self.origins.owned_container_source_enabled{let error=crate::translation::rust_owned_recursive_datatype_rules::read_rust_owned_vector_element_count_error(args.len() as f64);if !error.is_empty(){return Err(unsupported("Rust owned vector source",&error,range));}}
+                if self.borrowed_vector_literal_selected(&args,path){return self.create_borrowed_vector_literal(args,path,range);}
                 if self.owned_vector_literal_selected(&args,path){return self.create_owned_vector_literal(args,path,range);}
                 let argument_origins = args
                     .iter()

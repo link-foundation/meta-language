@@ -195,8 +195,10 @@ impl RustParser {
                 }
             }
         }
+        let borrowed_vector_result_phase=self.borrowed_vector_signature_phase(&source_result);
         if let Type::Array { element, .. } = &ret
             && !self.shared_array_origin(&source_result)
+            && borrowed_vector_result_phase.is_empty()
             && !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
@@ -234,7 +236,7 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        source_result.fresh_vector_result_contract = crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_declaration(
+        source_result.fresh_vector_result_contract = source_result.array_element_position.is_none() && crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_declaration(
             self.ordinary_completion_context(), source_result.array_source_model.unwrap_or(""),
             u32::try_from(source_result.wrappers.len()).map_or(f64::INFINITY, f64::from),
             if let Type::Array { element, .. } = &ret { element.kind() } else { "" },
@@ -303,7 +305,10 @@ impl RustParser {
             .map(|(parameter, origin)| (parameter.name.clone(), origin))
             .collect();
         let function_ownership = self.origins.snapshot_owned_bindings();
+        let function_temporaries = self.origins.owned_temporary_frame();
         let previous = self.origins.enter(Some(scope));
+        let parameter_names=params.iter().map(|parameter|parameter.name.clone()).collect::<Vec<_>>();
+        if !borrowed_vector_result_phase.is_empty(){self.seed_borrowed_vector_parameter_regions(&parameter_names);}
         let mut source_loop = None;
         let mut source_local_state = None;
         let temporary_frame = self.origins.owned_temporary_frame();
@@ -360,14 +365,20 @@ impl RustParser {
         });
         self.origins
             .finish_owned_expression(&body, path, &temporary_frame, false);
-        let body_origin = self.origins.origin(&body, path);
-        self.origins
-            .expire_owned_bindings(&function_ownership, &body_origin)?;
-        self.origins.transfer_owned_result(&body, path)?;
+        let borrowed_result=self.validate_borrowed_vector_function_result_regions(&body,&source_result,&parameter_names)?;
+        if let Some(regions)=borrowed_result.as_ref(){
+            self.origins.transfer_owned_result(&body,path)?;
+            let origin=self.origins.origin(&body,path);
+            self.origins.expire_owned_bindings_with_retained_regions(&function_ownership,&origin,regions)?;
+        }else{
+            let body_origin=self.origins.origin(&body,path);
+            self.origins.expire_owned_bindings(&function_ownership,&body_origin)?;
+            self.origins.transfer_owned_result(&body,path)?;
+        }
         if let Type::Array { element, .. } = &ret
             && !self.shared_array_origin(&source_result)
         {
-            let owned_vector_body=self.owned_vector_function_body(&body,path,&source_result);
+            let owned_vector_body=borrowed_result.is_some()||self.owned_vector_function_body(&body,path,&source_result);
             if !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
@@ -413,6 +424,7 @@ impl RustParser {
         // Exit only after validating return transfers and capturing source contracts.
         // Restore live outer states without rewinding binding identity allocation.
         self.origins.restore_owned_bindings(function_ownership);
+        self.origins.restore_owned_temporary_frame(function_temporaries);
         Ok(SFn {
             source_finite_record_loop_helper:false,
             source_finite_record_loop_witness:None,

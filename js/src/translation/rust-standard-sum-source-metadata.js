@@ -47,6 +47,10 @@ function counter(){
   });
  };
  const optionalOrigins=(values,depth)=>{if(values==null)scalar(null,depth);else list(values,depth,origin);};
+ const sourcePosition=(value,depth)=>record('source position',value,depth,()=>{
+  type(value.type,depth+1);strings(value.wrappers,depth+1);strings(value.lifetimes,depth+1);owner(value.owner,depth+1);
+  if(value.arrayElementPosition)record('array element position',{},depth+1,()=>sourcePosition(value.arrayElementPosition,depth+2));
+ });
  const origin=(value,depth)=>{
   if(value==null){scalar(null,depth);return;}
   record('origin',value,depth,()=>{
@@ -57,6 +61,7 @@ function counter(){
    strings(value.sourceLifetimes??[],depth+1);strings(value.namespaceSpelling??[],depth+1);
    const sum=value.standardSumSource;
    if(sum==null)scalar(null,depth+1);else record('sum',sum,depth+1,()=>{scalar(sum.owner,depth+2);list(sum.arguments,depth+2,origin);});
+   if(value.arrayElementPosition)record('array element position',{},depth+1,()=>sourcePosition(value.arrayElementPosition,depth+2));
   });
  };
  const identity=(value,depth,lookup,header,admitOwned)=>{
@@ -70,6 +75,7 @@ function counter(){
    if(header)strings(value.path,depth+1);
    owner(value.expandedSourceOwner??value.sourceOwner,depth+1);strings(value.wrappers,depth+1);
    if(!header){if(value.fields==null)scalar(null,depth+1);else list(value.fields,depth+1,(child,next)=>identity(child,next,lookup,false,admitOwned));scalar(value.floatSourceModel??null,depth+1);scalar(value.textSourceModel??null,depth+1);}
+   if(value.arrayElementPosition)record('array element position',{},depth+1,()=>sourcePosition(value.arrayElementPosition,depth+2));
   });
  };
  return {typeOnly(value,path){type(value,0);strings(path,0);return [nodes,units];},origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header,admitOwned){list(values,0,(value,depth)=>identity(value,depth,lookup,header,admitOwned));return [nodes,units];}};

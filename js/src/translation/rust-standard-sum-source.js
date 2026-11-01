@@ -133,6 +133,16 @@ function qualifiedOrigin(parser,origin,depth=0){
  if(!type)return null;
  result.type=type;
  for(const key of ['sourceOwner','expandedSourceOwner'])if(result[key]){result[key]=qualifiedOwner(parser,result[key],type,result.path,result);if(!result[key])return null;}
+ if(result.arrayElementPosition){result.arrayElementPosition=qualifiedPosition(parser,result.arrayElementPosition,result.path,depth+1);if(!result.arrayElementPosition)return null;}
+ return result;
+}
+function qualifiedPosition(parser,position,path,depth){
+ if(depth>128)fail('the retained array element position exceeds its finite depth profile');
+ const type=qualifiedType(parser,position.type,path);if(!type)return null;
+ const context={type,path,wrappers:position.wrappers,sourceOwner:position.owner,arrayElementPosition:position.arrayElementPosition};
+ const owner=qualifiedOwner(parser,position.owner,type,path,context);if(!owner)return null;
+ const result={type,wrappers:[...position.wrappers],lifetimes:[...position.lifetimes],owner};
+ if(position.arrayElementPosition){result.arrayElementPosition=qualifiedPosition(parser,position.arrayElementPosition,path,depth+1);if(!result.arrayElementPosition)return null;}
  return result;
 }
 
@@ -161,7 +171,8 @@ export function readRustStandardSumSourceIdentity(parser,origin){
   if(fields?.some(child=>child===null))return null;
   const originalOwner=value.expandedSourceOwner??value.sourceOwner,owner=originalOwner?qualifiedOwner(parser,originalOwner,type,value.path,value):null;
   if(originalOwner&&!owner)return null;
-  return {type,owner,wrappers:value.wrappers,fields,float:value.floatSourceModel??null,text:value.textSourceModel??null};
+  const position=value.arrayElementPosition?qualifiedPosition(parser,value.arrayElementPosition,value.path,depth+1):null;if(value.arrayElementPosition&&!position)return null;
+  return {type,owner,wrappers:value.wrappers,fields,float:value.floatSourceModel??null,text:value.textSourceModel??null,...(position?{arrayElementPosition:position}:{})};
  };
  // Build child structures rather than repeatedly encoding identity strings.
  // One final encoding avoids recursive JSON escaping growth.
@@ -205,7 +216,7 @@ function instantiate(parser,owner,arguments_,span){
  arguments_=provisional?cloneHeaderArguments(arguments_):arguments_.map(argument=>qualifiedOrigin(parser,argument));
  if(arguments_.some(argument=>!argument))fail('a concrete child needs its actual resolved datatype owner',span);
  arguments_=arguments_.map(sourceTypeOrigin);
- const identities=provisional?arguments_.map(argument=>JSON.stringify([headerType(parser,argument.type,argument.path),argument.path,argument.expandedSourceOwner??argument.sourceOwner,argument.wrappers])):arguments_.map(argument=>readRustStandardSumSourceIdentity(parser,argument));
+ const identities=provisional?arguments_.map(argument=>JSON.stringify([headerType(parser,argument.type,argument.path),argument.path,argument.expandedSourceOwner??argument.sourceOwner,argument.wrappers,...(argument.arrayElementPosition?[qualifiedPosition(parser,argument.arrayElementPosition,argument.path,0)]:[])])):arguments_.map(argument=>readRustStandardSumSourceIdentity(parser,argument));
  const copies=arguments_.map(argument=>parser.origins.immutableProduct(argument));
  const roles=provisional?[]:arguments_.map(argument=>readRustStandardSumOwnershipFacts(parser.origins,argument).profile);
  const ownedProfile=!provisional&&acceptRustStandardSumOwnedArguments(owner,identities,roles);

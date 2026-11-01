@@ -117,6 +117,8 @@ impl RustParser {
         {
             self.cursor.advance();
             let right = self.primitive_bitwise(path, Options::default(), 0)?;
+            self.guard_borrowed_vector_observation(&left,path,"comparison",joined(left.span,right.span,&token))?;
+            self.guard_borrowed_vector_observation(&right,path,"comparison",joined(left.span,right.span,&token))?;
             self.refuse_callable_observation(&left, path, joined(left.span, right.span, &token))?;
             self.refuse_callable_observation(&right, path, joined(left.span, right.span, &token))?;
             self.refuse_shared_value_observation(
@@ -457,6 +459,7 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                self.guard_borrowed_vector_observation(&value,path,&method.value,Some(Span::new(value.span.map_or(token.start,|span|span.start),method.end)))?;
                 if let Some(boxed)=self.read_owned_box_clone(&value,&method,path)? {
                     value=boxed;continue;
                 }

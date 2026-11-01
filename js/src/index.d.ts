@@ -941,7 +941,7 @@ export function createTypedProgramLinks(
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
     rustConstFunctionModel?: 'closed pure Rust const predicates 1' | 'closed Boolean Rust const decision trees 1';
     /** Retains owned source header facts; does not promise source ABI emission. */
-    rustSourceSignatureModel?: 'Rust source function signature 1',
+    rustSourceSignatureModel?: 'Rust source function signature 1' | 'Rust source function signature 3',
     /** Resolves qualified and imported standard binary64 owners under explicit source checks. */
     rustPrimitiveOwnerModel?: 'standard primitive Rust binary64 owner 1',
     /** Retains checked owned text state, source moves and canonical local copies. */

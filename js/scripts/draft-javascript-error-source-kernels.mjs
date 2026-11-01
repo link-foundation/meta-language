@@ -12,7 +12,7 @@ for(const specification of [
  if(specification.moduleName==='javascript_error_class_source'){
   const definition=readProjectData(new URL('../../parity/translation/native-model-wire-rules.lino',import.meta.url));
   if(definition.schemaVersion!==1||definition.model!=='JavaScript semantic model exact Number wire fields 1')throw new TypeError('actual qualified semantic model wire rules are required');
-  draftNativeModelCodecs({...result,roots:['JavaScriptErrorModulePlan','JavaScriptErrorModuleRegistry','JavaScriptErrorModuleCompilation'],wireRules:definition.rules,output:'rust/tests/unit/javascript_error_class_source_codecs.rs',receipt:'parity/self-translation/javascript-error-class-source-model-codecs.lino',javascriptOutput:'experiments/javascript-properties/error-class-source-codecs.mjs'});
+  draftNativeModelCodecs({...result,roots:['JavaScriptErrorModulePlan','JavaScriptErrorModuleRegistry','JavaScriptErrorModuleCompilation','JavaScriptErrorModuleBinding','JavaScriptSourceCapabilityOwner'],wireRules:definition.rules,output:'rust/tests/unit/javascript_error_class_source_codecs.rs',receipt:'parity/self-translation/javascript-error-class-source-model-codecs.lino',javascriptOutput:'experiments/javascript-properties/error-class-source-codecs.mjs'});
  }
  globalThis.gc?.();
 }

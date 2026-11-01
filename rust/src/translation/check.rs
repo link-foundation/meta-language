@@ -661,6 +661,7 @@ impl Checker {
             source_pure_unit_calls: surface.source_pure_unit_calls.clone(),
             source_runtime_shell: surface.source_runtime_shell.clone(),
         };
+        super::finite_record_loop_helpers::validate(surface,&program,self.checked_projection)?;
         super::source_unit_clone_derivations::validate_source_unit_clone_derivations(&program)?;
         super::source_primitive_owners::validate_source_primitive_owners(&program)?;
         super::source_empty_options::validate_source_empty_options(&program)?;

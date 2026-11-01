@@ -504,3 +504,57 @@ claimed as self-translated. The automatic machine/model recipe is included in
 the ten-step source batch. Source controls and pure path/decode lowering continue.
 Workflow `41281425008` for `3b572e01` is terminal; only its status was read before
 preparing this next source checkpoint.
+
+Source checkpoint `8aec2da7` is committed and pushed (156 files, including new
+source files). Work continued on the optional recursive position schema,
+nominal datatype reference traversal, exact profile-three parser selection and
+independent version-qualified borrowed-vector eligibility. Profile three
+composes only with the complete otherwise-empty source profile vector; legacy
+profile decisions remain unchanged. The finite helper restriction validators
+are connected after recursion analysis in both checkers. Their authentic source
+witnesses and bounded checked call graph do not themselves admit a source loop;
+the actual loop reader and chunk factory remain active drafting work.
+
+Function-local temporary IDs are released together with their move states only
+after return/loan checks and source-contract capture. Outer state and monotonic
+identity supplies remain intact. Deferred source-position transport controls
+cover distinct nominal datatype references, complete recursive lifetime/owner
+facets, physical text/binary graphs and all-target transport emission. These
+controls have not run and grant no frontend or parity evidence.
+
+The first finite-loop source subset is now connected in both normal blocks,
+ordinary completion sequences and main. Its actual u8 record field counter and
+one decrement per continuing path justify at most 255 iterations. Pure acyclic
+chunks carry actual record state; Unit tail effects remain eager. Completed
+and nested exits are the next active loop batch. Source controls retain prior
+refusals and ordinary user identifiers with generated-name prefixes.
+
+Borrowed-vector function exits now validate actual result loans while formal
+regions are live, transfer only the owning vector container, and expire other
+locals with an explicit list of proven result formal regions. Other result
+paths retain their earlier ordering. Temporary/state cleanup still occurs only
+after contract checks. Actual borrowed positions force final source admission;
+the collecting pass is not a loan proof or a fresh-vector certificate.
+
+Runtime initializer JS tests/producer and native consumers are drafted together.
+The native consumer independently drives literal models, replays every source
+case's portable transitions and binding reads, checks source CST transports,
+and recompiles actual initialized function captures through the automatically
+translated Error source compiler. Host IO remains an explicitly qualified Node
+boundary. The npm Node subpath now exposes source profiles and a bounded runner.
+
+Actual loader-body work continues through general CST statement lowering and a
+new qualified host-capability continuation. The machine, external request
+validator/resumer, global directory retention, runner dispatch and deferred
+operand-forgery/resource controls are drafted. Actual source/version/operation
+provider ownership remains independent from bytecode flags. The latest checked
+workflow status for checkpoint `8aec2da7` was queued (`41288200438`); no CI
+feedback, tests, generation or compilation have been inspected or run.
+
+Workflow `41288200438` subsequently reached terminal status. Only status was
+read. The next source checkpoint includes the first complete finite-loop subset,
+recursive source positions and borrowed-result exit seams, public Node APIs,
+portable initializer/source-capture consumers, and the generic capability
+machine protocol. General loader CST lowering/provider qualification and
+completed/nested loop handling continue afterward. No source draft or future
+control is represented as an observation or completion certificate.

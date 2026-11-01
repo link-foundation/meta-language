@@ -16,6 +16,7 @@ impl RustParser {
             close.end,
         ));
         let actual = self.origins.origin(&object, path);
+        self.guard_borrowed_vector_observation(&object,path,"index",range)?;
         self.origins.check_owned_origin(&actual, range)?;
         let receiver = actual
             .static_byte_array_read_view()

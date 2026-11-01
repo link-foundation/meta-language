@@ -144,9 +144,10 @@ pub(crate) fn check<'data>(
             ));
         }
         for position in &mut fields.fields {
-            position.ty = resolve_type(&position.ty)?;
+            super::source_signatures::resolve_source_position(position,&mut resolve_type)?;
         }
         let unit = SourceTypeSignature {
+            array_element_position: None,
             ty: Type::Unit,
             wrappers: Vec::new(),
             lifetimes: Vec::new(),

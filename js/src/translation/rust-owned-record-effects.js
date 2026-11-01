@@ -6,6 +6,8 @@ import {readRustOwnedRecordEffectForm,readRustOwnedRecordEffectChildren,readRust
 import {readRustExpressionCompletionPacketOperation,acceptRustExpressionCompletionInertLeaf,readRustExpressionCompletionShortCircuitValue} from './rust-expression-completion-rules.js';
 import {readRustRecordSourceType} from './rust-records.js';
 import {expandSurfacePropositionValue} from './proposition-values.js';
+import {readRustOwnedRecordFiniteLoopSource,lowerRustOwnedRecordFiniteLoop,appendRustOwnedRecordFiniteLoopHelpers} from './rust-owned-record-loops.js';
+import {readRustOwnedRecordLoopOperation} from './rust-owned-record-loop-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust ordered record state',reason,span);};
 function effects(parser){
  if(parser.ownedRecordEffects)return parser.ownedRecordEffects;
@@ -18,8 +20,8 @@ function effects(parser){
 export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdinary){effects(parser);return readRustOwnedRecordStateAssignment(parser,path)?.value??readOrdinary();}
 export function beginRustOwnedRecordShortCircuit(parser){return parser.ownedRecordEffects?parser.origins.snapshotOwnedBindings():null;}
 export function endRustOwnedRecordShortCircuit(parser,before){if(before!==null)parser.origins.joinOwnedBindings(before,parser.origins.snapshotOwnedBindings(),true,true);}
-export function readRustOwnedRecordEffectSource(parser,node){if(node?.k!=='math'||!parser.ownedRecordEffects)return null;const index=Number(node.name);if(!Number.isSafeInteger(index)||index<0||String(index)!==node.name)return null;if(node.op===readRustOwnedRecordEffectOperation('read')&&node.args.length===0)return {form:'read',slot:parser.ownedRecordEffects.reads[index]};if(node.op===readRustOwnedRecordEffectOperation('write')&&node.args.length===1)return {form:'write',...parser.ownedRecordEffects.writes[index]};return null;}
-function marker(node){return node?.k==='math'&&(node.op===readRustOwnedRecordEffectOperation('read')||node.op===readRustOwnedRecordEffectOperation('write'));}
+export function readRustOwnedRecordEffectSource(parser,node){if(node?.k!=='math'||!parser.ownedRecordEffects)return null;const index=Number(node.name);if(!Number.isSafeInteger(index)||index<0||String(index)!==node.name)return null;if(node.op===readRustOwnedRecordEffectOperation('read')&&node.args.length===0){const slot=parser.ownedRecordEffects.reads[index];return slot?{form:'read',slot}:null;}if(node.op===readRustOwnedRecordEffectOperation('write')&&node.args.length===1){const source=parser.ownedRecordEffects.writes[index];return source?{form:'write',...source}:null;}return null;}
+function marker(node){return node?.k==='math'&&(node.op===readRustOwnedRecordEffectOperation('read')||node.op===readRustOwnedRecordEffectOperation('write')||node.op===readRustOwnedRecordLoopOperation());}
 function contains(node,callables=false,budget={nodes:0}){const pending=[node],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;if(++budget.nodes>readRustOwnedRecordEffectLimit('inspection'))fail('the actual state expression exceeds its inspection budget',node?.span);seen.add(value);if(marker(value))return true;if(!callables&&value.k==='lambda')continue;for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);}return false;}
 function typeOf(parser,node,path,expected=null,seen=new Set()){
  if(expected)return expected;if(!node||seen.has(node))return null;seen.add(node);
@@ -60,6 +62,7 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
  function visit(value,environment,next,depth,want){if(++arena.work>readRustOwnedRecordEffectLimit('work')||depth>readRustOwnedRecordEffectLimit('depth'))fail('ordered state construction exceeds its finite source budget',value.span);
   if(value.k==='lambda'){const body=visit(value.body,new Map(),result=>result,depth+1,value.ret);return next(mark({...value,body},value),environment);}
   if(!has(value,true))return next(value,environment);
+  if(readRustOwnedRecordFiniteLoopSource(parser,value))return lowerRustOwnedRecordFiniteLoop(parser,value,environment,next,(source,initial,expected,finished)=>{const renamed=alpha(parser,source,new Map(),declarations,path,arena.inspection);return lower(parser,renamed,path,declarations,initial,expected,finished);});
   const form=readRustOwnedRecordEffectForm(value.k,value.op??'');
   if(form==='proposition comparison')return ordered({k:'tuple',items:[value.prop.left,value.prop.right]},['items'],environment,(pair,after)=>next(mark({...value,prop:{...value.prop,left:pair.items[0],right:pair.items[1]}},value),after),depth,null);
   if(form==='read state'){const slot=arena.reads[Number(value.name)],actual=slot?environment.get(slot.lexical):null;if(!actual)fail('a mutable read needs its actual initialized lexical state in this callable',value.span);return next(mark({k:'name',path:[actual.name]},value),environment);}
@@ -121,11 +124,12 @@ function lowerMain(parser,main,budget){
  return {...main,effects:output};
 }
 export function finishRustOwnedRecordEffects(parser,program){
+ if(parser.origins.collecting&&parser.ownedRecordFiniteLoops?.entries.some(row=>row.provisional))return program;
  if(!parser.ownedRecordEffects||!contains(program,true))return program;const inventory=new Map(),budget={nodes:0};
  const data=[];const collect=(items,path)=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='data')data.push({path,declaration:item});};collect(program.items,[]);effects(parser).data=data;
  const expression=(node,path,expected=null)=>{if(!contains(node,true))return node;const renamed=alpha(parser,node,new Map(),inventory,path,budget);return lower(parser,renamed,path,inventory,new Map(),expected);};
  const items=(values,path)=>values.map(item=>item.k==='module'?{...item,items:items(item.items,[...path,item.name])}:item.k==='fn'?{...item,body:expression(item.body,path,item.ret)}:item);
- const result={...program,items:items(program.items,[]),...(program.main?{main:lowerMain(parser,program.main,budget)}:{})};
+ const result=appendRustOwnedRecordFiniteLoopHelpers(parser,{...program,items:items(program.items,[]),...(program.main?{main:lowerMain(parser,program.main,budget)}:{})});
  if(contains(result,true))fail('a private record state operation escaped its ordered consumer',program.main?.span);
  return result;
 }

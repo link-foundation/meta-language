@@ -35,7 +35,12 @@ test('the pending complete successor includes proposition values without changin
  assert.deepEqual(after.expressionOperations,{propositionValue:['eq','ne','lt','le','gt','ge']});
  assert.deepEqual(after.expressionProjections,{bool:{construct:'bool',fields:[]},propositionValue:{construct:'propositionValue',fields:[['prop','proposition-comparison','left']]}});
  assert.equal(after.references.classConstructor,'source class constructor reference');
+ assert.equal(after.fields.arrayElementPosition,'array element source position');
  assert.deepEqual(extendCurrentTypedProgramSourceSchema(after),after);
  const conflicting={...saved,expressionOperands:{...saved.expressionOperands,propositionValue:['right','left']}};
  const snapshot=structuredClone(conflicting);assert.throws(()=>extendCurrentTypedProgramSourceSchema(conflicting),TypeError);assert.deepEqual(conflicting,snapshot);
+ for(const fields of [{...saved.fields,arrayElementPosition:'other'},{...saved.fields,other:'array element source position'}]){
+  const invalid={...saved,fields},preserved=structuredClone(invalid);
+  assert.throws(()=>extendCurrentTypedProgramSourceSchema(invalid),TypeError);assert.deepEqual(invalid,preserved);
+ }
 });

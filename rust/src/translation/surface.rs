@@ -18,6 +18,7 @@ mod raw_metadata;
 pub use raw_metadata::SurfaceRawMetadata;
 mod nodes;
 pub use nodes::SNode;
+pub use super::finite_record_loop_helpers::FiniteRecordLoopWitness;
 pub(crate) mod array_bindings;
 mod record_entry;
 pub use record_entry::SRecordEntry;
@@ -620,7 +621,7 @@ pub struct SFn {
     pub source_finite_record_loop_helper: bool,
     /// Transient source proof transport, never reconstructible from JSON/Links.
     #[serde(skip)]
-    pub source_finite_record_loop_witness: Option<std::sync::Arc<super::finite_record_loop_helpers::FiniteRecordLoopWitness>>,
+    pub source_finite_record_loop_witness: Option<std::sync::Arc<FiniteRecordLoopWitness>>,
     /// Actual complete pure Unit header and body sites under the selected model.
     #[serde(
         default,

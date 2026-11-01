@@ -6,16 +6,12 @@ import {readSuppliedSourceLibraryClosure} from './source-library-closure.js';
 import {projectSourceLibraryOriginalInterval} from './source-library-classes.js';
 import {captureJavaScriptErrorClassModule} from './javascript-error-classes.js';
 import {acceptSourceLibraryErrorDeclarationOwner,acceptSourceLibraryErrorEntryOwner} from './source-library-error-rules.js';
+import {assertPlainSourceReceipt} from './source-receipt-data.js';
 const model='resolved supplied Error source modules 1',digest=source=>createHash('sha256').update(source).digest('hex');
 const witnesses=new WeakSet();
-function plainArchive(value){
- const active=new Set(),seen=new Set();let visits=0,bytes=0;
- function walk(item,depth){if(++visits>262144||depth>256)throw new RangeError('Error closure source data exceeds its explicit structural budget');if(typeof item==='string'){bytes+=Buffer.byteLength(item);if(bytes>128*1024*1024)throw new RangeError('Error closure source receipts exceed their explicit byte budget');return;}if(item===null||typeof item==='boolean'||typeof item==='number'&&Number.isFinite(item))return;if(typeof item!=='object'||![Object.prototype,Array.prototype,null].includes(Object.getPrototypeOf(item))||active.has(item))throw new TypeError('Error closure archives require acyclic plain source data');if(seen.has(item))return;active.add(item);const keys=Reflect.ownKeys(item);if(Array.isArray(item)&&(keys.length!==item.length+1||!Array.from({length:item.length},(_,index)=>String(index)).every(key=>Object.hasOwn(item,key))))throw new TypeError('Error closure archive arrays must retain every actual dense data element');for(const key of keys){const descriptor=Object.getOwnPropertyDescriptor(item,key);if(typeof key!=='string'||!descriptor||!Object.hasOwn(descriptor,'value'))throw new TypeError('Error closure archives cannot evaluate accessor or symbol metadata');if(Array.isArray(item)&&key==='length')continue;if(!descriptor.enumerable)throw new TypeError('Error closure archives cannot hide nonenumerable metadata');walk(descriptor.value,depth+1);}active.delete(item);seen.add(item);}
- walk(value,0);
-}
 
 export function captureSourceLibraryErrorClosure(closure){
- plainArchive(closure);
+ assertPlainSourceReceipt(closure);
  if(closure?.sourceErrorClasses!==model||typeof closure.entryPath!=='string'||!Array.isArray(closure.inputs))throw new TypeError('an actual explicitly selected Error source closure is required');
  const actual=readSuppliedSourceLibraryClosure(closure.entryPath,closure.inputs.map(input=>({path:input.path,source:input.source})),{aliases:true,errorClasses:model,reExports:closure.sourceReExports??''});
  if(JSON.stringify(actual)!==JSON.stringify(closure))throw new TypeError('the complete source closure must recompose from its actual original modules and CST bindings');
@@ -46,7 +42,7 @@ export function captureSourceLibraryErrorClosure(closure){
 }
 
 export function checkSourceLibraryErrorClosure(archive){
- plainArchive(archive);
+ assertPlainSourceReceipt(archive);
  const actual=captureSourceLibraryErrorClosure(archive.sourceClosure);if(JSON.stringify(actual)!==JSON.stringify(archive))throw new TypeError('Error linkage owners, public entries and complete source receipts must match actual recomposition');return actual;
 }
 

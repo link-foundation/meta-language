@@ -1,4 +1,5 @@
 import {readRustReferenceTokenParts} from './rust-type-token-rules.js';
+import {acceptRustBorrowedVectorInherentProfiles} from './rust-borrowed-vector-rules.js';
 // Tokens and source origins are transported into ordinary module/function terms.
 import{unsupported}from'./diagnostics.js';
 import{prepareRustRecordMethodNamespace}from'./rust-records.js';
@@ -18,7 +19,7 @@ export function readRustInherentItem(parser,path){
  const models=[parser.arrayResultModel??parser.origins.arrayResultModel,parser.completionModel,parser.sourceSignatureModel,parser.scalarLoopModel,
   parser.primitiveOwnerModel,parser.emptyOptionSourceModel,parser.typeNamespaceModel,parser.pureUnitCallModel,parser.localValueStateModel,
   parser.constFunctionModel,parser.sharedArrayHandleSourceModel];
- if(!acceptRustInherentSourceProfiles(models))throw unsupported('Rust inherent profile composition','closed source models need an explicit method composition proof',span(start,c.peek()));
+ if(!acceptRustInherentSourceProfiles(models)&&!acceptRustBorrowedVectorInherentProfiles(models))throw unsupported('Rust inherent profile composition','closed source models need an explicit method composition proof',span(start,c.peek()));
  if(c.is('<'))throw unsupported('generic Rust implementation','type parameters require their complete trait and ownership interpretation',span(start,c.peek()));
  const sourceOwner=parser.pathSegments('implementation owner');
  prepareRustTypeAliasDefaultOwner(parser,sourceOwner,path,parser.inherentDiscovery);

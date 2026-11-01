@@ -1,7 +1,7 @@
 //! Borrowed transport of the shared semantic metadata cost projection.
 //! No serde tree, source-origin clone or identity allocation precedes this walk.
 use super::{SourceDeclaration,SourceOrigin,SourceOrigins,Type};
-use crate::translation::source_signatures::SourceOwner;
+use crate::translation::source_signatures::{SourceOwner,SourceTypeSignature};
 use crate::translation::rust_standard_sum_source_metadata_rules as rules;
 use std::collections::HashSet;
 
@@ -59,6 +59,11 @@ impl Counter<'_>{
             Type::Nat|Type::Int|Type::Bool|Type::String|Type::Unit|Type::Float|Type::Literal|Type::Hypothesis|Type::Output=>{},
         }Ok(())
     }
+    fn source_position(&mut self,value:&SourceTypeSignature,depth:usize)->Result<(),String>{
+        self.record("source position",depth)?;self.ty(Some(&value.ty),depth+1,None,false)?;self.strings(&value.wrappers,depth+1)?;
+        self.node(depth+1)?;for lifetime in &value.lifetimes{self.optional_text(lifetime.as_deref(),depth+2)?;}self.owner(Some(&value.owner),depth+1)?;
+        if let Some(child)=value.array_element_position.as_deref(){self.record("array element position",depth+1)?;self.source_position(child,depth+2)?;}Ok(())
+    }
     fn origin(&mut self,value:&SourceOrigin,depth:usize)->Result<(),String>{
         self.record("origin",depth)?;self.ty(value.ty.as_ref(),depth+1,None,false)?;self.strings(&value.path,depth+1)?;self.strings(&value.wrappers,depth+1)?;
         self.owner(value.source_owner.as_ref(),depth+1)?;self.owner(value.expanded_source_owner.as_ref(),depth+1)?;
@@ -68,6 +73,7 @@ impl Counter<'_>{
         self.node(depth+1)?;for lifetime in &value.source_lifetimes{self.optional_text(lifetime.as_deref(),depth+2)?;}
         self.strings(&value.namespace_spelling,depth+1)?;
         if let Some(sum)=value.standard_sum_source.as_deref(){self.record("sum",depth+1)?;self.text(&sum.owner,depth+2)?;self.node(depth+2)?;for child in &sum.arguments{self.origin(child,depth+3)?;}}else{self.node(depth+1)?;}
+        if let Some(child)=value.array_element_position.as_deref(){self.record("array element position",depth+1)?;self.source_position(child,depth+2)?;}
         Ok(())
     }
     fn optional_origins(&mut self,values:Option<&[SourceOrigin]>,depth:usize)->Result<(),String>{if let Some(values)=values{self.node(depth)?;for value in values{self.origin(value,depth+1)?;}}else{self.node(depth)?;}Ok(())}
@@ -85,6 +91,7 @@ impl Counter<'_>{
             if header{self.strings(&value.path,depth+1)?;}
             self.owner(value.expanded_source_owner.as_ref().or(value.source_owner.as_ref()),depth+1)?;self.strings(&value.wrappers,depth+1)?;
             if !header{if let Some(fields)=&value.fields{self.node(depth+1)?;for child in fields{self.identity(child,depth+2,false)?;}}else{self.node(depth+1)?;}self.optional_text(value.float_source_model,depth+1)?;self.optional_text(value.text_source_model,depth+1)?;}
+            if let Some(child)=value.array_element_position.as_deref(){self.record("array element position",depth+1)?;self.source_position(child,depth+2)?;}
             Ok(())
         })();self.active.remove(&key);result
     }

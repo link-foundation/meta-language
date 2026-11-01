@@ -121,6 +121,7 @@ impl RustParser {
             let result = self.origins.typed(inner, &origin.path, wrappers);
             self.origins.current_type.text_source_model = origin.text_source_model;
             self.origins.current_type.array_source_model = origin.array_source_model;
+            self.origins.current_type.array_element_position = origin.array_element_position;
             self.origins.current_type.source_lifetimes = origin.source_lifetimes;
             self.origins
                 .current_type
@@ -262,6 +263,7 @@ impl RustParser {
             self.cursor.expect("<", Some("Vec"))?;
             let element_token = self.peek();
             let inner = self.parse_type()?;
+            let element_position=if crate::translation::rust_borrowed_vector_rules::retain_rust_borrowed_vector_element_position(&self.origins.current_type.wrappers,self.origins.current_type.array_element_position.is_some()){Some(Box::new(super::super::borrowed_vectors::source_type_position(&self.origins.current_type)?))}else{None};
             let element_copy=self.array_element(&token, &element_token)?;
             self.split_type_closing_token();
             self.cursor.expect(">", Some("Vec"))?;
@@ -272,7 +274,7 @@ impl RustParser {
                 },
                 &self.module_path,
                 Vec::new(),
-            );self.origins.current_type.array_element_copy_evidence=element_copy;return Ok(result);
+            );self.origins.current_type.array_element_copy_evidence=element_copy;self.origins.current_type.array_element_position=element_position;return Ok(result);
         }
         if accept_rust_source_box_owner(&name, false)
             || accept_rust_source_box_owner(&resolved.join("::"), false)
@@ -293,6 +295,7 @@ impl RustParser {
             let result = self.origins.typed(inner, &origin.path, wrappers);
             self.origins.current_type.text_source_model = origin.text_source_model;
             self.origins.current_type.array_source_model = origin.array_source_model;
+            self.origins.current_type.array_element_position = origin.array_element_position;
             self.origins.current_type.source_lifetimes = origin.source_lifetimes;
             if self.origins.owned_container_source_enabled{self.origins.current_type.copy_evidence=None;}
             return Ok(result);
@@ -342,6 +345,7 @@ impl RustParser {
         token: &Token,
         element_token: &Token,
     ) -> Result<bool> {
+        let borrowed=self.borrowed_vector_element_admission(&self.origins.current_type);if borrowed=="admit"{return Ok(true);}if borrowed=="defer"{self.origins.current_type.proven=false;self.origins.current_type.copy_evidence=None;return Ok(false);}
         let origin = &self.origins.current_type;
         let shadowed = !self.origins.collecting
             && element_token.kind == TokenKind::Identifier

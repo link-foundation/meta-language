@@ -1,5 +1,6 @@
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
 import {checkPropositionValue} from './proposition-values.js';
+import {validateFiniteRecordLoopHelpers} from './finite-record-loop-helpers.js';
 import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
 import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
 import {checkDisjointCollectionIterations} from './disjoint-collection-iterations.js';
@@ -291,6 +292,7 @@ class Checker {
       if (entry.k === 'fn') entry.body = reuseSuccessors(entry.body, new Map());
     }
     analyseRecursion(program);
+    validateFiniteRecordLoopHelpers(surface,program,this.checkedProjection);
     checkRustPrimitiveOwnerProof(program);
     checkRustConstFunctionProof(program);
     checkRustEmptyOptionProof(program);

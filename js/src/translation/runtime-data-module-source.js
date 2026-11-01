@@ -5,6 +5,8 @@ import {analyzeProgram} from '../program-representation.js';
 import {tokenize} from './lexer.js';
 import {sourceLibraryLogicalModuleURL,sourceLibraryLogicalModulePath} from './source-library-closure.js';
 import {readJavaScriptRuntimeDataVersionError,readJavaScriptModuleInitializationProfileError} from './javascript-module-initialization-rules.js';
+import {assertPlainSourceReceipt} from './source-receipt-data.js';
+import {readJavaScriptModuleInitializationPlanError} from './javascript-module-initialization.js';
 const digest=source=>createHash('sha256').update(source).digest('hex'),profile='actual runtime Links policy initializers 1';
 function syntax(source){if(typeof source!=='string'||Buffer.byteLength(source)>131072)throw new TypeError('runtime module source must retain its bounded complete bytes');const program=analyzeProgram(source,'JavaScript');if(!program.network.verifyFullMatch().isClean())throw new TypeError('runtime module source requires complete actual CST without recovery');return program;}
 function declaration(program,binding,terms){return program.sourceMappings.filter(node=>terms.includes(node.term)&&node.start<=binding.declaration.start&&node.end>=binding.declaration.end).sort((left,right)=>(left.end-left.start)-(right.end-right.start))[0];}
@@ -29,6 +31,7 @@ function constructRuntimeDataAdapterSource({loaderPath,loaderSource,delegatePath
 }
 
 export function checkRuntimeDataAdapterSource(contract){
+ assertPlainSourceReceipt(contract);
  const actual=constructRuntimeDataAdapterSource({loaderPath:contract.loader.path,loaderSource:contract.loader.source,delegatePath:contract.delegate.path,delegateSource:contract.delegate.source});if(JSON.stringify(actual)!==JSON.stringify(contract))throw new TypeError('runtime data adapter qualification must retain complete actual provider sources and hashes');return actual;
 }
 
@@ -61,7 +64,8 @@ export function captureJavaScriptRuntimeDataModule(source,{identifier,readerCont
  for(const binding of bindings)if(!['import','const','function','class'].includes(binding.kind))throw new TypeError('mutable/reassigned module bindings require their actual cell initialization model');
  for(const token of tokens)if(token.value!==';'&&!ranges.some(range=>token.start>=range.start&&token.end<=range.end))throw new TypeError('module initialization cannot omit an actual top-level source effect');
  if(initializers.some(row=>row.$==='moduleConstAlias'&&!dataBindings.includes(row.target)))throw new TypeError('a const alias target must retain an actual modeled data binding');
- return {schemaVersion:1,artifactKind:'authenticated semantic source plan/input 1',model:profile,identifier,source,sourceBytes:Buffer.byteLength(source),sourceSha256:digest(source),readerContract:contract,readerImport,ignoredRanges,functions,exports,plan:{$:'moduleInitializationPlan',profile,moduleIdentity:identifier,sourceSha256:digest(source),bindings:dataBindings,names,initializers}};
+ const plan={$:'moduleInitializationPlan',profile,moduleIdentity:identifier,sourceSha256:digest(source),bindings:dataBindings,names,initializers},invalid=readJavaScriptModuleInitializationPlanError(plan);if(invalid)throw new TypeError(invalid);
+ return {schemaVersion:1,artifactKind:'authenticated semantic source plan/input 1',model:profile,identifier,source,sourceBytes:Buffer.byteLength(source),sourceSha256:digest(source),readerContract:contract,readerImport,ignoredRanges,functions,exports,plan};
 }
 
-export function checkJavaScriptRuntimeDataModule(capture){const actual=captureJavaScriptRuntimeDataModule(capture.source,{identifier:capture.identifier,readerContract:capture.readerContract,model:capture.model});if(JSON.stringify(actual)!==JSON.stringify(capture))throw new TypeError('module initializer bindings and source receipts must match their complete actual CST');return actual;}
+export function checkJavaScriptRuntimeDataModule(capture){assertPlainSourceReceipt(capture);const actual=captureJavaScriptRuntimeDataModule(capture.source,{identifier:capture.identifier,readerContract:capture.readerContract,model:capture.model});if(JSON.stringify(actual)!==JSON.stringify(capture))throw new TypeError('module initializer bindings and source receipts must match their complete actual CST');return actual;}

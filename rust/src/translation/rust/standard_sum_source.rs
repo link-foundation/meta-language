@@ -7,7 +7,7 @@ use super::{Alias, Options, Result, RustParser, SCtor, SData, SExpr, SField, SIt
     Span, Token, Type, unsupported, type_error};
 use crate::translation::rust_standard_sum_source_rules as rules;
 use crate::translation::rust_standard_sum_ownership_rules as ownership_rules;
-use crate::translation::source_signatures::SourceOwner;
+use crate::translation::source_signatures::{SourceOwner,SourceTypeSignature};
 use super::standard_sum_metadata::{measure_origins,measure_identities};
 use super::source_type_origins::sanitize_source_type_origin;
 
@@ -32,10 +32,10 @@ pub(super) struct StandardSumSource {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) enum StandardSumIdentity {
     /// Private header syntax identity; never an admitted type equivalence.
-    Header { ty:Type, path:Vec<String>, owner:Option<SourceOwner>, wrappers:Vec<String> },
+    Header { ty:Type, path:Vec<String>, owner:Option<SourceOwner>, wrappers:Vec<String>, array_element_position:Option<Box<SourceTypeSignature>> },
     Sum { owner: String, arguments: Vec<Self>, wrappers: Vec<String> },
     Value { ty: Type, owner: Option<SourceOwner>, wrappers: Vec<String>,
-        fields: Option<Vec<Self>>, float: Option<&'static str>, text: Option<&'static str> },
+        fields: Option<Vec<Self>>, float: Option<&'static str>, text: Option<&'static str>, array_element_position:Option<Box<SourceTypeSignature>> },
 }
 
 #[derive(Default)]
@@ -127,6 +127,13 @@ impl SourceOrigins {
         Some(SourceOwner{kind:owner.kind.clone(),path:owner.path.clone(),arguments})
     }
 
+    fn standard_sum_qualified_position(&self,position:&SourceTypeSignature,path:&[String],depth:usize)->Option<Box<SourceTypeSignature>>{
+        if depth>128{return None;}let ty=self.standard_sum_qualified_type(&position.ty,path)?;
+        let mut context=SourceOrigin::unknown();context.ty=Some(ty.clone());context.path=path.to_vec();context.wrappers=position.wrappers.clone();context.source_owner=Some(position.owner.clone());context.array_element_position=position.array_element_position.clone();
+        let owner=self.standard_sum_qualified_owner(&position.owner,&ty,path,&context,0)?;
+        let child=match position.array_element_position.as_deref(){Some(child)=>Some(self.standard_sum_qualified_position(child,path,depth+1)?),None=>None};
+        Some(Box::new(SourceTypeSignature{ty,wrappers:position.wrappers.clone(),lifetimes:position.lifetimes.clone(),owner,array_element_position:child}))
+    }
     pub(super) fn standard_sum_qualified_origin(&self, origin: &SourceOrigin) -> Option<SourceOrigin> {
         let mut result = origin.clone();
         result.fields = match result.fields.as_ref() {
@@ -146,6 +153,7 @@ impl SourceOrigins {
         result.ty = Some(self.standard_sum_qualified_type(result.ty.as_ref()?, &result.path)?);
         if let Some(owner)=result.source_owner.as_ref(){result.source_owner=Some(self.standard_sum_qualified_owner(owner,result.ty.as_ref()?,&result.path,&result,0)?);}
         if let Some(owner)=result.expanded_source_owner.as_ref(){result.expanded_source_owner=Some(self.standard_sum_qualified_owner(owner,result.ty.as_ref()?,&result.path,&result,0)?);}
+        if let Some(position)=origin.array_element_position.as_deref(){result.array_element_position=Some(self.standard_sum_qualified_position(position,&origin.path,0)?);}
         Some(result)
     }
 
@@ -162,7 +170,7 @@ impl SourceOrigins {
     fn standard_sum_header_identity(&self,origin:&SourceOrigin)->Option<StandardSumIdentity>{
         measure_origins(&[origin]).ok()?;measure_identities(self,&[origin],true).ok()?;
         let ty=self.standard_sum_header_type(origin.ty.as_ref()?,&origin.path);
-        Some(StandardSumIdentity::Header {ty,path:origin.path.clone(),owner:origin.expanded_source_owner.clone().or_else(||origin.source_owner.clone()),wrappers:origin.wrappers.clone()})
+        Some(StandardSumIdentity::Header {ty,path:origin.path.clone(),owner:origin.expanded_source_owner.clone().or_else(||origin.source_owner.clone()),wrappers:origin.wrappers.clone(),array_element_position:match origin.array_element_position.as_deref(){Some(position)=>Some(self.standard_sum_qualified_position(position,&origin.path,0)?),None=>None}})
     }
 
     pub(super) fn standard_sum_source_identity(&self, origin: &SourceOrigin) -> Option<StandardSumIdentity> {
@@ -185,7 +193,7 @@ impl SourceOrigins {
         };
         let owner=match origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()){Some(owner)=>Some(self.standard_sum_qualified_owner(owner,&ty,&origin.path,origin,0)?),None=>None};
         Some(StandardSumIdentity::Value { ty, owner,
-            wrappers:origin.wrappers.clone(), fields, float:origin.float_source_model, text:origin.text_source_model })
+            wrappers:origin.wrappers.clone(), fields, float:origin.float_source_model, text:origin.text_source_model,array_element_position:match origin.array_element_position.as_deref(){Some(position)=>Some(self.standard_sum_qualified_position(position,&origin.path,0)?),None=>None} })
     }
 
     pub(super) fn resolve_standard_sum_source_pattern(&mut self, pattern: &mut SPattern, origin: &SourceOrigin) -> Result<()> {

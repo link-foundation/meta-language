@@ -2,6 +2,19 @@
 // author must reconcile each selected fixture coordinate before publishing.
 const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
 export const rustBaselineNativePolicyControlGroups=[
+ {sourcePath:'js/src/translation/javascript-host-capability-rules.js',moduleName:'authored_host_capability_mode_controls',testName:'all_literal_host_capability_mode_controls',fixtureSelections:[
+  selection('javascript-host-capabilities','javascriptHostCapabilityDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-module-initialization-rules.js',moduleName:'authored_runtime_module_initialization_controls',testName:'all_literal_runtime_module_initialization_controls',fixtureSelections:[
+  selection('runtime-data-module-initialization','runtimeDataModuleDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-borrowed-vector-rules.js',moduleName:'authored_borrowed_vector_position_controls',testName:'all_literal_borrowed_vector_position_controls',aliases:true,fixtureSelections:[
+  selection('rust-borrowed-vector-positions','rustBorrowedVectorPositionDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-loop-rules.js',moduleName:'authored_owned_record_loop_controls',testName:'all_literal_owned_record_loop_controls',fixtureSelections:[
+  selection('rust-owned-record-loops','rustOwnedRecordLoopDecisions'),
+  selection('rust-owned-record-loops','rustOwnedRecordLoopMalformedNumbers'),
+ ]},
  {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'authored_source_library_error_controls',testName:'all_literal_source_library_error_controls',aliases:true,fixtureSelections:[
   selection('source-library-error-composition','sourceLibraryErrorDecisions'),
  ]},

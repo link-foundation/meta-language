@@ -199,7 +199,7 @@ impl Checker {
                 let mut signature = signature.clone();
                 for constructor in &mut signature.ctors {
                     for position in &mut constructor.fields {
-                        position.ty = self.resolve_type(Some(&position.ty),path,item.span)?;
+                        super::super::source_signatures::resolve_source_position(position,&mut |ty|self.resolve_type(Some(ty),path,item.span))?;
                     }
                 }
                 Some(Box::new(signature))
@@ -254,7 +254,7 @@ impl Checker {
                     .iter_mut()
                     .chain(std::iter::once(&mut signature.result))
                 {
-                    position.ty = self.resolve_type(Some(&position.ty), path, item.span)?;
+                    super::super::source_signatures::resolve_source_position(position,&mut |ty|self.resolve_type(Some(ty),path,item.span))?;
                 }
                 super::super::source_signatures::validate_source_signature_with_data(
                     signature,

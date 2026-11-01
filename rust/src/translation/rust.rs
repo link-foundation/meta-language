@@ -55,8 +55,10 @@ mod owned_record_updates;
 mod owned_record_places;
 mod owned_record_state;
 mod owned_record_effects;
+pub(super) mod owned_record_loops;
 mod owned_containers;
 mod owned_vectors;
+mod borrowed_vectors;
 mod source_expression_types;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;
@@ -384,12 +386,17 @@ fn parse_rust_with_selected_profiles(
             None,
         ));
     }
-    if !super::source_signature_rules::accept_rust_source_signature_model(source_signature_model) {
+    if !super::source_signature_rules::accept_rust_source_signature_model(source_signature_model)
+        && !super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(source_signature_model) {
         return Err(unsupported(
             "Rust source signature model",
-            "select the legacy model or Rust source function signature 1",
+            "select the legacy model, Rust source function signature 1, or the explicit borrowed vector signature 3",
             None,
         ));
+    }
+    if super::rust_borrowed_vector_rules::accept_rust_borrowed_vector_signature_model(source_signature_model)
+        && [completion_model,scalar_loop_model,primitive_owner_model,empty_option_source_model,type_namespace_model,pure_unit_call_model,local_value_state_model,const_function_model,shared_array_handle_source_model,array_result_model].iter().any(|model|!model.is_empty()) {
+        return Err(unsupported("Rust borrowed vector profile composition","other source profiles need an independent borrowed element interpretation",None));
     }
     if !empty_option_rules::accept_rust_empty_option_source_model(empty_option_source_model) {
         return Err(unsupported(
@@ -430,6 +437,7 @@ fn parse_rust_with_selected_profiles(
     );
     declarations.source_version_minor = source_version_minor;
     declarations.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(declarations.ordinary_completion_context(),source_version_minor);
+    declarations.origins.borrowed_vector_source_enabled=crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(source_signature_model,declarations.ordinary_completion_context(),source_version_minor);
     declarations.header_discovery = declarations.ordinary_completion_context();
     declarations.file()?;
     declarations.origins.nominal_ownership_scope_complete=true;
@@ -463,6 +471,7 @@ fn parse_rust_with_selected_profiles(
     );
     syntax.source_version_minor = source_version_minor;
     syntax.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(syntax.ordinary_completion_context(),source_version_minor);
+    syntax.origins.borrowed_vector_source_enabled=crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(source_signature_model,syntax.ordinary_completion_context(),source_version_minor);
     syntax.source_constant_initializers = declarations.source_constant_initializers;
     syntax.source_constant_functions = declarations.source_constant_functions;
     syntax.source_constant_tokens = Arc::clone(&declarations.source_constant_tokens);
@@ -481,6 +490,7 @@ fn parse_rust_with_selected_profiles(
     // every public Rust source pipeline checks this identical Surface again.
     if super::check::check_program(&surface).is_err() && shared_array_handle_source_model.is_empty()
         && !syntax.origins.standard_sum_source_needs_final_admission
+        && !syntax.origins.borrowed_vector_needs_final_admission
     {
         return Ok(surface);
     }
@@ -493,6 +503,7 @@ fn parse_rust_with_selected_profiles(
     );
     parser.source_version_minor = source_version_minor;
     parser.origins.owned_container_source_enabled=crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_container_source(parser.ordinary_completion_context(),source_version_minor);
+    parser.origins.borrowed_vector_source_enabled=crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_source(source_signature_model,parser.ordinary_completion_context(),source_version_minor);
     parser.origins.type_catalog = syntax.origins.type_catalog;
     parser.origins.value_catalog = syntax.origins.value_catalog;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;

@@ -1413,6 +1413,11 @@ selected. Version three adds a separately declared optional class-constructor
 owner instead of inventing a Boolean neutral default, and carries the exact
 proposition-comparison expression bridge. The original class-only extension
 remains independently available; the successor composes both extensions.
+The same pending successor registers an optional recursive array element
+source-position edge. Its signature profile controls admission independently;
+historical source-signature profiles retain their original field sets. Child
+type records participate in ordinary owned datatype references when encoding
+Links, rather than retaining a detached nominal name.
 
 The baseline author also translates complete literal policy assertion programs
 into native test sources. Each fixture/export/index retains its actual owner,
@@ -1429,3 +1434,16 @@ contents through Links. A repeated aggregate in one native assertion is refused
 until its compiler can preserve reference identity; a structural rendering is
 not an identity-preserving executable oracle. Error-module assets explicitly
 identify semantic source plans rather than posing as ordinary checked Core.
+
+The npm subpath `meta-language/node-source-modules` exposes these supplied-source
+and runtime-initialization profiles with TypeScript declarations. It takes the
+actual realm and declaration definitions from the embedding; archived names or
+shapes never supply intrinsic authority. `readSuppliedSourceLibraryClosure`
+recomposes the exact supplied module directory without executing its bodies.
+The Error-closure capture/check/prepare functions connect it to the portable
+machine. `runJavaScriptSourceTransition` drives a prepared call through ordinary
+allocation and qualified Error operations, adopts the current shared heap, and
+retains the resumable transition on resource exhaustion. It never runs a
+represented source function as a host fallback. The runtime-data profile
+retains its separately qualified actual shipped reader path and IO boundary;
+this subpath does not turn semantic plans into ordinary checked Core.

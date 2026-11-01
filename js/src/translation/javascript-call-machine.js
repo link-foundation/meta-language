@@ -14,6 +14,7 @@ import {readJavaScriptNumberProtocolOperationError} from './javascript-number-co
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
 import {readJavaScriptSourceExceptionClass} from './source-exception-rules.js';
 import {testJavaScriptErrorConstructorMode,testJavaScriptErrorIntrinsicMode,readJavaScriptErrorConstructionKindError,readJavaScriptErrorConstructionOperandsError,readJavaScriptErrorAllocationDirectory,readJavaScriptErrorPriorDirectoryError,readJavaScriptErrorAllocationResultError} from './javascript-error-construction-rules.js';
+import {testJavaScriptHostCapabilityMode} from './javascript-host-capability-rules.js';
 
 /** @typedef {{$:'callHandler',target:number,destination:number}} JavaScriptCallHandler */
 /** @typedef {{$:'callIdle'} | {$:'waitCall',destination:number} |
@@ -24,7 +25,7 @@ import {testJavaScriptErrorConstructorMode,testJavaScriptErrorIntrinsicMode,read
  * {$:'waitText',destination:number,realm:bigint,state:JavaScriptTextCallState} |
  * {$:'waitSourceError',realm:bigint,errorClass:string,message:JavaScriptSemanticValue,messagePresent:boolean} |
  * {$:'waitErrorValue',destination:number,realm:bigint,errorClass:string,constructor:JavaScriptSemanticValue,newTarget:JavaScriptSemanticValue,prototype:JavaScriptSemanticValue,message:JavaScriptSemanticValue,messagePresent:boolean,bindReceiver:boolean,beforeDirectory:JavaScriptErrorAllocationDirectory} |
- * {$:'waitErrorIntrinsic',destination:number} |
+ * {$:'waitErrorIntrinsic',destination:number} | {$:'waitHostCapability',destination:number,beforeDirectory:JavaScriptErrorAllocationDirectory} |
  * {$:'waitError',realm:bigint,errorClass:string,reason:string}} JavaScriptCallPending
  */
 /** @typedef {{$:'callFrame',identity:bigint,position:number,registers:JavaScriptSemanticValue[],
@@ -39,6 +40,7 @@ import {testJavaScriptErrorConstructorMode,testJavaScriptErrorIntrinsicMode,read
  * {$:'machineAllocateSourceError',machine:JavaScriptCallMachine,realm:bigint,errorClass:string,message:JavaScriptSemanticValue,messagePresent:boolean} |
  * {$:'machineAllocateErrorValue',machine:JavaScriptCallMachine,realm:bigint,errorClass:string,constructor:JavaScriptSemanticValue,newTarget:JavaScriptSemanticValue,prototype:JavaScriptSemanticValue,message:JavaScriptSemanticValue,messagePresent:boolean} |
  * {$:'machineInvokeErrorIntrinsic',machine:JavaScriptCallMachine,realm:bigint,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]} |
+ * {$:'machineInvokeHostCapability',machine:JavaScriptCallMachine,realm:bigint,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]} |
  * {$:'machineInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'machineResourceLimit',machine:JavaScriptCallMachine,reason:string}} JavaScriptCallMachineTransition
  */
@@ -94,7 +96,7 @@ export function readJavaScriptCallProgramError(program,heap){
     if(fn.identity<=previous||fn.identity>18446744073709551615n)return 'call functions require ordered unique positive unsigned64 identities';previous=fn.identity;
     if(!program.realms.includes(fn.realm))return 'call functions require their actual declared source realm';
     const callable=readJavaScriptOrdinaryValueError(heap,{$:'object',identity:fn.identity,callable:true});if(callable!=='')return callable;
-    if(fn.receiverMode!=='strict'&&fn.receiverMode!=='lexical'&&!testJavaScriptErrorConstructorMode(fn.receiverMode)&&!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'call code requires explicit strict, lexical or registered Error receiver binding';
+    if(fn.receiverMode!=='strict'&&fn.receiverMode!=='lexical'&&!testJavaScriptErrorConstructorMode(fn.receiverMode)&&!testJavaScriptErrorIntrinsicMode(fn.receiverMode)&&!testJavaScriptHostCapabilityMode(fn.receiverMode))return 'call code requires explicit strict, lexical or registered Error receiver binding';
     if(readJavaScriptOrdinaryValueError(heap,fn.lexicalReceiver)!=='')return 'lexical receivers belong to the latest global context';
     if(!testJavaScriptCallCoordinate(fn.registers,4097)||fn.registers===0||!testJavaScriptCallCoordinate(fn.parameters,fn.registers)||fn.parameters+fn.captures.length+1>fn.registers)return 'call function register and parameter coordinates must be complete';
     for(const capture of fn.captures)if(readJavaScriptOrdinaryValueError(heap,capture)!=='')return 'call captures belong to the latest global context';
@@ -116,6 +118,7 @@ export function readJavaScriptCallProgramError(program,heap){
         case 'constructErrorValue':{if(!program.realms.includes(instruction.realm))return 'Error value construction retains its actual intrinsic realm';const error=readJavaScriptErrorConstructionKindError(instruction.errorClass,instruction.bindReceiver,fn.receiverMode);if(error!=='')return error;break;}
         case 'readDerivedReceiver':if(!testJavaScriptErrorConstructorMode(fn.receiverMode))return 'derived receiver reads retain their actual constructor source owner';break;
         case 'invokeErrorIntrinsic':if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'host Error intrinsic calls require an externally registered intrinsic owner';break;
+        case 'invokeHostCapability':if(!testJavaScriptHostCapabilityMode(fn.receiverMode))return 'host capability calls require their explicitly qualified external source owner';break;
         default:break;
       }
     }
@@ -217,7 +220,7 @@ export function readJavaScriptCallMachineError(program,machine){
  * @param {JavaScriptCallPending} pending @param {number} registers @returns {boolean} */
 export function testJavaScriptCallPendingDestination(pending,registers){
  switch(pending.$){
-  case 'waitCall':case 'waitGet':case 'waitSet':case 'waitHostSet':case 'waitKey':case 'waitDefinition':case 'waitNumber':case 'waitText':case 'waitErrorValue':case 'waitErrorIntrinsic':
+  case 'waitCall':case 'waitGet':case 'waitSet':case 'waitHostSet':case 'waitKey':case 'waitDefinition':case 'waitNumber':case 'waitText':case 'waitErrorValue':case 'waitErrorIntrinsic':case 'waitHostCapability':
    return testJavaScriptCallCoordinate(pending.destination,registers);
   case 'callIdle':case 'waitError':case 'waitSourceError':return true;
  }
@@ -269,6 +272,12 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
         if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode)||instruction===undefined||instruction.$!=='invokeErrorIntrinsic'||instruction.destination!==pending.destination)return 'an external Error callback retains its actual registered source instruction';
         break;
       }
+      case 'waitHostCapability':{
+        const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
+        if(!testJavaScriptHostCapabilityMode(fn.receiverMode)||instruction===undefined||instruction.$!=='invokeHostCapability'||instruction.destination!==pending.destination)return 'an external capability retains its actual qualified source instruction';
+        const prior=readJavaScriptErrorPriorDirectoryError(heap,pending.beforeDirectory);if(prior!=='')return prior;
+        break;
+      }
       case 'waitKey':if(!program.realms.includes(pending.realm))return 'pending key conversion retains its actual intrinsic realm';break;
       case 'waitDefinition':if(!program.realms.includes(pending.realm))return 'pending property definition retains its actual intrinsic realm';break;
       case 'waitNumber':{
@@ -299,7 +308,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       }
       default:break;
     }
-    if(suspended&&(pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'||pending.$==='waitErrorValue'||pending.$==='waitErrorIntrinsic'))return 'a suspended parent frame retains its actual pending call';
+    if(suspended&&(pending.$==='callIdle'||pending.$==='waitError'||pending.$==='waitSourceError'||pending.$==='waitErrorValue'||pending.$==='waitErrorIntrinsic'||pending.$==='waitHostCapability'))return 'a suspended parent frame retains its actual pending call';
   return '';
 }
 
@@ -488,7 +497,7 @@ export function returnJavaScriptCallValue(program,machine,value){
     case 'waitDefinition':return acceptJavaScriptCallDefinition(program,current,pending.destination,pending.realm,resumeJavaScriptPropertyDefinition(machine.heap,pending.state,{$:'normalCompletion',value}));
     case 'waitNumber':return resumeJavaScriptCallNumber(program,current,pending.destination,pending.realm,pending.state,value);
     case 'waitText':return resumeJavaScriptCallText(program,current,pending.destination,pending.realm,pending.state,value);
-    case 'callIdle':case 'waitError':case 'waitSourceError':case 'waitErrorValue':case 'waitErrorIntrinsic':return {$:'machineInvalid',heap:machine.heap,reason:'a returning call needs its actual suspended parent continuation'};
+    case 'callIdle':case 'waitError':case 'waitSourceError':case 'waitErrorValue':case 'waitErrorIntrinsic':case 'waitHostCapability':return {$:'machineInvalid',heap:machine.heap,reason:'a returning call needs its actual suspended parent continuation'};
   }
 }
 
@@ -605,6 +614,7 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'constructErrorValue':return requestJavaScriptErrorValue(program,machine,frame,instruction);
     case 'readDerivedReceiver':{const receiver=registers[0]??{$:'undefined'};if(receiver.$==='undefined')return requestJavaScriptCallError(current,fn.realm,'ReferenceError','derived this requires its actual completed super construction');return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,receiver))};}
     case 'invokeErrorIntrinsic':return {$:'machineInvokeErrorIntrinsic',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitErrorIntrinsic',destination:instruction.destination}}),realm:fn.realm,callee:{$:'object',identity:fn.identity,callable:true},receiver:registers[0]??{$:'undefined'},arguments:frame.arguments};
+    case 'invokeHostCapability':return {$:'machineInvokeHostCapability',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,{...next,pending:{$:'waitHostCapability',destination:instruction.destination,beforeDirectory:readJavaScriptErrorAllocationDirectory(machine.heap)}}),realm:fn.realm,callee:{$:'object',identity:fn.identity,callable:true},receiver:registers[0]??{$:'undefined'},arguments:frame.arguments};
     case 'strictEqual':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:testJavaScriptCallStrictEqual(registers[instruction.left]??{$:'undefined'},registers[instruction.right]??{$:'undefined'})}))};
     case 'sameValue':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,{$:'boolean',value:testJavaScriptSemanticSameValue(registers[instruction.left]??{$:'undefined'},registers[instruction.right]??{$:'undefined'})}))};
     case 'numberBinary':{
@@ -777,6 +787,20 @@ export function resumeJavaScriptErrorIntrinsic(program,machine,realm,identity,va
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
  const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitErrorIntrinsic'||frame.identity!==identity)return {$:'machineInvalid',heap:machine.heap,reason:'an Error intrinsic result retains its actual pending callable identity'};
  const fn=program.functions[findJavaScriptCallFunction(program,identity)];if(fn===undefined||fn.realm!==realm||!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'an Error intrinsic result retains its actual external realm authority'};
+ const invalid=readJavaScriptOrdinaryValueError(machine.heap,value);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
+ if(abrupt)return throwJavaScriptCallValue(machine,value);
+ return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,frame.pending.destination,value))};
+}
+
+/** Transport the actual qualified operation result without executing a source
+ * body. The saved global directory forbids identity removal/retyping/reuse.
+ * @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {bigint} realm @param {bigint} identity @param {JavaScriptSemanticValue} value
+ * @param {boolean} abrupt @returns {JavaScriptCallMachineTransition} */
+export function resumeJavaScriptHostCapability(program,machine,realm,identity,value,abrupt){
+ const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitHostCapability'||frame.identity!==identity)return {$:'machineInvalid',heap:machine.heap,reason:'a capability result retains its actual pending callable identity'};
+ const fn=program.functions[findJavaScriptCallFunction(program,identity)];if(fn===undefined||fn.realm!==realm||!testJavaScriptHostCapabilityMode(fn.receiverMode))return {$:'machineInvalid',heap:machine.heap,reason:'a capability result retains its actual qualified realm authority'};
  const invalid=readJavaScriptOrdinaryValueError(machine.heap,value);if(invalid!=='')return {$:'machineInvalid',heap:machine.heap,reason:invalid};
  if(abrupt)return throwJavaScriptCallValue(machine,value);
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(frame,frame.pending.destination,value))};

@@ -18,6 +18,7 @@ impl SourceOrigins{
         self.standard_sum_ownership_facts_bounded(origin,&mut HashSet::new(),&mut HashMap::new(),0,&mut 0)
     }
     fn standard_sum_ownership_facts_bounded(&self,origin:&SourceOrigin,active:&mut HashSet<String>,memo:&mut HashMap<String,StandardSumOwnershipFacts>,depth:usize,visits:&mut usize)->StandardSumOwnershipFacts{
+        if !crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_owned_interpretation(origin.array_element_position.is_some()){return StandardSumOwnershipFacts::default();}
         *visits+=1;if (*visits as f64)>rules::read_rust_standard_sum_ownership_node_limit()||!origin.proven||origin.ty.is_none()||(depth as f64)>rules::read_rust_standard_sum_ownership_depth_limit(){return StandardSumOwnershipFacts::default();}
         if !origin.wrappers.is_empty(){
             use crate::translation::rust_owned_recursive_datatype_rules as containers;

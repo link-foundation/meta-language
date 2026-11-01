@@ -8,6 +8,7 @@ use super::rust_source_owner_retention_rules::{accept_rust_retained_function_own
 use super::source_signature_rules::{accept_rust_source_signature_model,accept_rust_source_signature_owner_kind,accept_rust_source_signature_primitive,accept_rust_source_signature_wrapper};
 use super::rust_standard_sum_signature_rules::read_rust_standard_sum_signature_argument_constructors;
 use super::types::Type;
+use super::rust_borrowed_vector_rules as borrowed;
 use serde::{Deserialize, Serialize};
 
 /// A resolved owner of a source type, including owned generic children.
@@ -35,6 +36,10 @@ pub struct SourceTypeSignature {
     pub lifetimes: Vec<Option<String>>,
     /// Actual header owner, including resolved declaration identities.
     pub owner: SourceOwner,
+    /// Optional complete element position in the additive borrowed-vector profile.
+    /// This stores source type facts only, never value loans or producer proofs.
+    #[serde(rename = "arrayElementPosition", default, skip_serializing_if = "Option::is_none")]
+    pub array_element_position: Option<Box<Self>>,
 }
 
 /// A source function signature, owned by its checked declaration.
@@ -55,6 +60,17 @@ pub struct SourceSignature {
 
 fn fail(message: &str) -> super::diagnostics::TranslationError { type_error(message,None) }
 
+/// Resolve every separately retained TYPE node before checked persistence.
+/// Child positions contain no runtime capability or loan state.
+pub(crate) fn resolve_source_position(position:&mut SourceTypeSignature,resolve:&mut impl FnMut(&Type)->Result<Type>)->Result<()>{
+    let mut depth=0;let mut visits=0;let mut current=position;
+    loop{
+        visits+=1;let error=borrowed::read_rust_borrowed_vector_position_budget_error(visits as f64,depth as f64);if !error.is_empty(){return Err(fail(&error));}
+        current.ty=resolve(&current.ty)?;
+        match current.array_element_position.as_deref_mut(){Some(child)=>{current=child;depth+=1;},None=>return Ok(())}
+    }
+}
+
 struct SignatureValidation<'data,'call> {
     signature: &'call SourceSignature,
     resolve_type: &'call mut dyn FnMut(&Type) -> Result<Type>,
@@ -69,7 +85,7 @@ impl SignatureValidation<'_,'_> {
     }
     fn value_type(&mut self, ty: &Type, depth: usize) -> Result<()> {
         self.visit(depth)?;
-        if matches!(ty,Type::Function {..}) && !accept_rust_retained_source_signature_model(&self.signature.model) { return Err(fail("an owned Rust source type has an unsupported value type")); }
+        if matches!(ty,Type::Function {..}) && !(accept_rust_retained_source_signature_model(&self.signature.model)||borrowed::accept_rust_borrowed_vector_signature_model(&self.signature.model)) { return Err(fail("an owned Rust source type has an unsupported value type")); }
         for child in ty.children() { self.value_type(child,depth+1)?; }
         Ok(())
     }
@@ -87,13 +103,13 @@ impl SignatureValidation<'_,'_> {
     fn owner(&mut self, owner: &SourceOwner, ty: &Type, depth: usize) -> Result<()> {
         self.visit(depth)?;
         let model = self.signature.model.as_str();
-        if matches!(ty,Type::Function {..}) && !accept_rust_retained_source_signature_model(model) { return Err(fail("an owned Rust source type has an unsupported value type")); }
-        if !(accept_rust_source_signature_owner_kind(&owner.kind) || accept_rust_retained_source_signature_model(model) && owner.kind == "function") || owner.path.iter().any(String::is_empty) { return Err(fail("an owned Rust source type has an invalid owner")); }
+        if matches!(ty,Type::Function {..}) && !(accept_rust_retained_source_signature_model(model)||borrowed::accept_rust_borrowed_vector_signature_model(model)) { return Err(fail("an owned Rust source type has an unsupported value type")); }
+        if !(accept_rust_source_signature_owner_kind(&owner.kind) || (accept_rust_retained_source_signature_model(model)||borrowed::accept_rust_borrowed_vector_signature_model(model)) && owner.kind == "function") || owner.path.iter().any(String::is_empty) { return Err(fail("an owned Rust source type has an invalid owner")); }
         let path = owner.path.join("::");
         match owner.kind.as_str() {
             "function" => {
                 let Type::Function {params,ret} = ty else { return Err(fail("an owned Rust source function differs from its value type")); };
-                if !accept_rust_retained_function_owner(model,&owner.kind,ty.kind(),owner.path.len() as f64,owner.arguments.len() as f64,params.len() as f64,false) { return Err(fail("an owned Rust source function differs from its value type")); }
+                if !(accept_rust_retained_function_owner(model,&owner.kind,ty.kind(),owner.path.len() as f64,owner.arguments.len() as f64,params.len() as f64,false)||borrowed::accept_rust_borrowed_vector_function_owner(model,&owner.kind,ty.kind(),owner.path.len() as f64,owner.arguments.len() as f64,params.len() as f64,false)) { return Err(fail("an owned Rust source function differs from its value type")); }
                 for (child,actual) in owner.arguments.iter().zip(params.iter().chain(std::iter::once(ret.as_ref()))) { self.owner(child,actual,depth+1)?; }
             }
             "primitive" => {
@@ -164,6 +180,14 @@ impl SignatureValidation<'_,'_> {
         if !ty.same(expected) { return Err(fail("an owned Rust source signature differs from its function type")); }
         if position.wrappers.iter().any(|wrapper|!accept_rust_source_signature_wrapper(wrapper)) || position.lifetimes.len()!=position.wrappers.iter().filter(|wrapper|*wrapper=="reference").count() || position.lifetimes.iter().flatten().any(|lifetime|lifetime!="static" && lifetime!="_" && !self.signature.lifetime_bindings.contains(lifetime)) { return Err(fail("an owned Rust source type has inconsistent wrapper or lifetime facts")); }
         self.owner(&position.owner,&ty,depth+1)?;
+        let profile=borrowed::read_rust_borrowed_vector_position_error(&self.signature.model,position.array_element_position.is_some());if !profile.is_empty(){return Err(fail(&profile));}
+        if let Some(child)=position.array_element_position.as_deref(){
+            let budget=borrowed::read_rust_borrowed_vector_position_budget_error(self.visits as f64,depth as f64);if !budget.is_empty(){return Err(fail(&budget));}
+            let Type::Array{element,..}=&ty else{return Err(fail("a retained array element position requires an array value type"));};
+            self.position(child,element,depth+1)?;
+            let actual=(self.resolve_type)(&child.ty)?;
+            let error=borrowed::read_rust_borrowed_vector_element_position_error(ty.kind(),&position.owner.kind,&position.owner.path.join("::"),position.owner.arguments.len() as f64,actual.same(element),position.owner.arguments.first()==Some(&child.owner));if !error.is_empty(){return Err(fail(&error));}
+        }
         let mut boxed = 0;
         let mut leaf = &position.owner;
         while leaf.kind=="library" && ["std::boxed::Box","alloc::boxed::Box"].contains(&leaf.path.join("::").as_str()) { boxed+=1;leaf=&leaf.arguments[0]; }
@@ -187,7 +211,7 @@ pub fn validate_source_signature(signature:&SourceSignature,parameters:&[Type],r
 /// # Errors
 /// Refuses incomplete or mismatched data layouts, source owners and qualifiers.
 pub fn validate_source_signature_with_data<'data>(signature:&SourceSignature,parameters:&[Type],result:&Type,language:&str,mut resolve_type:impl FnMut(&Type)->Result<Type>,mut resolve_data:impl FnMut(&Type)->Option<&'data DataDecl>)->Result<()> {
-    if signature.model.is_empty() || !(accept_rust_source_signature_model(&signature.model) || accept_rust_retained_source_signature_model(&signature.model)) || signature.language!="Rust" || language!="Rust" { return Err(fail("an owned Rust source signature has an unsupported model or language")); }
+    if signature.model.is_empty() || !(accept_rust_source_signature_model(&signature.model) || accept_rust_retained_source_signature_model(&signature.model)||borrowed::accept_rust_borrowed_vector_signature_model(&signature.model)) || signature.language!="Rust" || language!="Rust" { return Err(fail("an owned Rust source signature has an unsupported model or language")); }
     let unique:std::collections::HashSet<_> = signature.lifetime_bindings.iter().collect();
     if signature.parameters.len()!=parameters.len() || unique.len()!=signature.lifetime_bindings.len() || signature.lifetime_bindings.iter().any(|name|!accept_rust_source_lifetime_binding(name,false,false)) { return Err(fail("an owned Rust source signature has inconsistent parameter or lifetime bindings")); }
     let mut validation=SignatureValidation {signature,resolve_type:&mut resolve_type,resolve_data:&mut resolve_data,visits:0};

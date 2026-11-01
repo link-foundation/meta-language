@@ -8,6 +8,8 @@ export function readRustStandardSumSourceMetadataKeys(form){
  if(form==='origin')return ['type','path','wrappers','sourceOwner','expandedSourceOwner','fields','callableParameters','callableResult','floatSourceModel','textSourceModel','arraySourceModel','sourceLifetimes','namespaceSpelling','standardSum'];
  if(form==='owner')return ['kind','path','arguments'];
  if(form==='sum')return ['owner','arguments'];
+ if(form==='source position')return ['type','wrappers','lifetimes','owner'];
+ if(form==='array element position')return ['arrayElementPosition'];
  if(form==='identity value')return ['type','owner','wrappers','fields','float','text'];
  if(form==='identity sum')return ['owner','arguments','wrappers'];
  if(form==='identity header')return ['type','path','owner','wrappers'];

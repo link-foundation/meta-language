@@ -94,6 +94,30 @@ value loans and return-region checks remain separate executable obligations.
 Erasing `Vec<&Self>` into an unqualified array of values does not satisfy the
 source contract.
 
+Source module initialization retains ordered lexical slots, temporal dead
+zones, aliases to the same mutable handles, and the actual cached abrupt
+completion for one module instance and realm. A runtime policy load suspends
+the portable machine at an explicit IO request. The embedding qualifies the
+actual shipped loader and delegate by complete source, hash and active version,
+then supplies the observed value or throw; source capture never preloads or
+freezes policy contents. This qualified host adapter is a stated boundary,
+not a claim that its loader, filesystem, URL or Links decoder source bodies
+have already been translated. Finishing that translation must lower their
+operations through the shared semantic machinery without falling back to
+represented source bodies in the host.
+
+Qualified external operations have a distinct call-machine receiver mode,
+instruction and suspended continuation. The continuation retains the original
+global Object/Symbol directory; resumption cannot remove or retype those
+identities. Before invoking a provider, the embedding checks the actual pending
+instruction, callable, realm, receiver and ordered arguments. The provider then
+checks independently supplied source, operation and version owners. A bytecode
+mode or archived owner name supplies no host authority. Normal values and
+abrupt values resume the same machine without manufacturing source Errors.
+This port supports filesystem, URL and decoder boundaries while the actual
+loader control flow is translated; it does not authorize calling represented
+source bodies as a fallback.
+
 Formal targets may place an actual mutually recursive datatype component in
 its source modules' longest common ancestor. This is a target placement plan:
 nominal source identities and the original checked graph remain intact, target
@@ -489,6 +513,20 @@ Scoped lifetime-only function headers now retain ordered input binders and
 immutable reference spelling. Reference-bearing results with named binders still
 require an instantiation and outlives proof before admission. Type and constant
 generics, lifetime bounds and mutable references remain separate obligations.
+The separately selected draft `Rust source function signature 3` extends owned
+function positions with optional recursive `arrayElementPosition` records. Each
+record retains its actual element type, owner, reference layers and lifetimes;
+runtime binding identities, loans and allocation proofs never enter that facet.
+Earlier signature profiles retain their exact field boundaries. Borrowed-vector
+admission additionally requires actual source producers, live source regions and
+result lifetimes derived from real argument regions. A bounded read-only target
+representation may copy immutable referent values without granting source Copy,
+Clone or ownership of those referents. It requires an independently available
+target structural-copy representation and refuses unsupported mutation, identity,
+destructor and callback observations. This lowering erases the source reference
+interface; it does not preserve an original Rust borrowed-vector header. The
+existing exact source-header emission profiles remain unchanged. Metadata
+transport alone does not establish these producer, region or target proofs.
 Unshadowed standard vectors and immutable slices now have bounded source
 admission for direct scalar and string elements, with read-only empty checks and
 length conversion explicitly projected to the Number model. Ownership moves,

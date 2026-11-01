@@ -56,6 +56,17 @@ function bindingTargets(program) {
     else if (type.kind === 'map') { walkType(type.key); walkType(type.value); }
     else if (type.kind === 'function') { type.params.forEach(walkType); walkType(type.ret); }
   }
+  function walkSourcePosition(position) {
+    const pending=[position],seen=new WeakSet();
+    while(pending.length){
+      const current=pending.pop();
+      if(!current||typeof current!=='object'||seen.has(current))continue;
+      seen.add(current);
+      if(++referenceVisits>100_000)throw new TypeError('the linked source positions exceed their reference resource limit');
+      walkType(current.type);
+      if(current.arrayElementPosition!==undefined)pending.push(current.arrayElementPosition);
+    }
+  }
   function walk(node, environment) {
     if (!node || typeof node !== 'object') return;
     if (++referenceVisits > 100_000) throw new TypeError('the linked program exceeds its reference resource limit');
@@ -115,10 +126,10 @@ function bindingTargets(program) {
     for (const parameter of entry.params ?? entry.binders ?? []) walkType(parameter.type);
     walkType(entry.ret ?? entry.type);
     if (entry.k === 'fn' && entry.sourceSignature !== undefined) {
-      for (const position of [...entry.sourceSignature.parameters, entry.sourceSignature.result]) walkType(position.type);
+      for (const position of [...entry.sourceSignature.parameters, entry.sourceSignature.result]) walkSourcePosition(position);
     }
     for (const constructor of entry.ctors ?? []) for (const field of constructor.fields) walkType(field.type);
-    for(const constructor of entry.sourceFieldSignatures?.ctors??[])for(const field of constructor.fields)walkType(field.type);
+    for(const constructor of entry.sourceFieldSignatures?.ctors??[])for(const field of constructor.fields)walkSourcePosition(field);
     const environment = new Map((entry.params ?? []).map((parameter) => [parameter.name, parameter]));
     walk(entry.body ?? entry.value, environment);
   }

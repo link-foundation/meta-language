@@ -9,6 +9,10 @@
     "meta-language": "./src/cli.js"
   },
   "exports": {
+    "./node-source-modules": {
+      "types": "./src/node-source-modules.d.ts",
+      "import": "./src/node-source-modules.js"
+    },
     ".": {
       "types": "./src/index.d.ts",
       "import": "./src/index.js"

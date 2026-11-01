@@ -8,14 +8,16 @@ import {lowerRustExpressionCompletions,hasRustExpressionCompletion} from './rust
 import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 // Actual token/term transport into shared ordinary completion constructions.
 import {unsupported} from './diagnostics.js';
-import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock} from './rust-owned-record-state.js';
+import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock,readRustOwnedRecordStateCallable} from './rust-owned-record-state.js';
+import {readRustOwnedRecordFiniteLoop,readRustOwnedRecordFiniteLoopSource,lowerRustOwnedRecordLoopCompletion} from './rust-owned-record-loops.js';
+import {readRustOwnedRecordLoopLeafKind,readRustOwnedRecordLoopSignal} from './rust-owned-record-loop-rules.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative,testRustOrdinaryCompletionFallsThrough,readRustOrdinaryCompletionSnapshotError} from './rust-unit-value-rules.js';
 const range=(from,to)=>({start:from.start,end:Math.max(from.end,to?.kind==='eof'?from.end:to.start)});
 const name=path=>({k:'name',path});
 function snapshot(parser){const budget=parser.ordinaryCompletionOwnershipBudget??={entries:0,text:0},entries=parser.origins.sourceBindingStates.size;let text=0;for(const[key,value]of parser.origins.sourceBindingStates)text+=key.length+value.length;const error=readRustOrdinaryCompletionSnapshotError(budget.entries,entries,budget.text,text);if(error)throw unsupported('ordinary Rust completion ownership',error);budget.entries+=entries;budget.text+=text;return parser.origins.snapshotOwnedBindings();}
 export function readRustOrdinaryCompletionOwnershipSnapshot(parser){return snapshot(parser);}
 function leaf(parser,kind,expression,path){
- const success=kind==='return'?'returned':kind==='abort'?'aborted':'value';
+ const success=readRustOwnedRecordLoopLeafKind(kind)||(kind==='return'?'returned':kind==='abort'?'aborted':'value');
  const origin=parser.origins.transferOwnedResult(expression,path);parser.origins.mark(expression,origin);
  return {node:kind,kind:hasRustExpressionCompletion(expression)?readRustOrdinaryCompletionAlternativeKind(success,'returned'):success,expression,origin,ownership:snapshot(parser)};
 }
@@ -25,6 +27,16 @@ export function readRustOrdinaryFunctionCompletion(parser,path,ret,sourceResult)
  refuseRustStandardSumPrivateCompletions(expression);
  parser.origins.mark(expression,parser.origins.join(context.outputs));
  return expression;
+}
+// The source reader retains the tree itself until progress and path ownership
+// are authenticated. Its generated control type does not certify any value.
+export function readRustOrdinaryLoopCompletion(parser,path){
+ const sourceResult=parser.standardSumReturnOrigin;if(!sourceResult?.type)throw unsupported('Rust finite record loop','completed loop exits need their actual enclosing callable result type');
+ const previous=parser.ordinaryCompletionLoop;parser.ordinaryCompletionLoop={callable:readRustOwnedRecordStateCallable(parser)};let tree;
+ try{tree=block(parser,path);}finally{parser.ordinaryCompletionLoop=previous;}
+ const context={parser,path,ret:sourceResult.type,sourceResult,outputs:[],data:null,loop:true};
+ const expression=lower(tree,false,context),owner=data(context);
+ return {tree,expression,owner,returns:context.outputs.filter(origin=>!origin.diverging)};
 }
 function block(parser,path){
  const before=snapshot(parser),frame=beginRustOwnedRecordStateBlock(parser),c=parser.cursor,previous=parser.origins.enter();
@@ -40,6 +52,12 @@ function sequence(parser,path,open){
   if(c.is('let')){if(hasLetElseCompletion(parser)){result=letElseCompletion(parser,path,open);break;}bindings.push(...parser.letStatement(path));continue;}
   const token=c.peek();
   if(c.is('}')){result=leaf(parser,'value',{k:'unit',span:range(open,token)},path);break;}
+  if(token.kind==='identifier'&&['break','continue'].includes(token.raw)){
+   if(parser.ordinaryCompletionLoop?.callable!==readRustOwnedRecordStateCallable(parser))throw unsupported('Rust loop exit','a loop exit needs its actual enclosing callable and loop scope',range(token,token));
+   c.next();if(!c.eat(';')&&!c.is('}'))throw unsupported('Rust loop exit','labelled exits and break values need their explicit value and target interpretation',range(token,c.peek()));while(c.eat(';')){}
+   if(!c.is('}'))throw unsupported('unreachable continuation','statements after a completed loop exit are not removed by this model',range(token,c.peek()));
+   result=leaf(parser,token.raw,{k:'unit',span:range(token,token)},path);break;
+  }
   if(c.is('return')){
    const bare=c.is(';',1)||c.is('}',1);
    if(!bare&&!parser.isTerminalReturn())throw unsupported('early return','write the result as the tail expression of the block',range(token,token));
@@ -59,6 +77,7 @@ function sequence(parser,path,open){
    else result=first;
    break;
   }
+  const finiteLoop=readRustOwnedRecordFiniteLoop(parser,path);if(finiteLoop){c.eat(';');const source=readRustOwnedRecordFiniteLoopSource(parser,finiteLoop);if(source?.returns?.length){const first={node:'loop',expression:finiteLoop,kind:'mixed',span:finiteLoop.span};if(c.is('}'))result=first;else{const rest=sequence(parser,path,open);result={node:'sequence',first,rest,kind:readRustOrdinaryCompletionSequenceKind(first.kind,rest.kind),span:first.span};}break;}bindings.push({name:parser.freshProductBinding(),type:{kind:'unit'},value:finiteLoop,span:finiteLoop.span});continue;}
   if(['while','loop','for'].includes(token.value)&&token.kind==='identifier')throw unsupported(`${token.value} loop`,'loops over mutable state are outside the portable core; use recursion',range(token,token));
   const expression=token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print'?parser.functionPrintValue(path):parser.expr(path,{statement:true});
   const terminated=Boolean(c.eat(';')),completionKind=readRustPanicCompletionKind(expression.k,expression.op??'');
@@ -129,7 +148,7 @@ function letElseCompletion(parser,path,open){
 function data(context){
  if(context.data)return context.data;
  const {parser,path,ret}=context,identifier=parser.freshProductBinding();
- const declaration={k:'data',name:identifier,generated:true,ctors:[{name:'FunctionResult',fields:[{name:'result',type:ret}]},{name:'StatementContinuation',fields:[]}]};
+ const declaration={k:'data',name:identifier,generated:true,ctors:[{name:'FunctionResult',fields:[{name:'result',type:ret}]},{name:'StatementContinuation',fields:[]},...(context.loop?[{name:'LoopBreak',fields:[]},{name:'LoopContinue',fields:[]}]:[])]};
  context.data=[...path,identifier];
  parser.ordinaryCompletionDeclarations.push({path:[...path],declaration});
  return context.data;
@@ -137,6 +156,8 @@ function data(context){
 function constructor(context,variant,args,span){return {k:'app',fn:name(['crate',...data(context),variant]),args,...(span?{span}:{})};}
 function lower(tree,terminal,context){
  const {parser,path}=context,form=readRustOrdinaryCompletionConstruction(tree.node,terminal);
+ if(form==='loop signal'){if(!context.loop)throw unsupported('Rust loop exit','a loop signal cannot escape its actual loop completion context',tree.expression.span);return constructor(context,readRustOwnedRecordLoopSignal(tree.node),[],tree.expression.span);}
+ if(form==='finite loop'){const source=readRustOwnedRecordFiniteLoopSource(parser,tree.expression);context.outputs.push(...source.returns);return lowerRustOwnedRecordLoopCompletion(parser,tree.expression,['crate',...data(context)],terminal,context.sourceResult);}
  const lift=(expression,next)=>{
   if(!terminal&&hasRustExpressionCompletion(expression))data(context);
   return lowerRustExpressionCompletions(parser,expression,path,context.sourceResult,next,(value,origin)=>lower({node:'return',kind:'returned',expression:value,origin},terminal,context));
@@ -159,7 +180,7 @@ function lower(tree,terminal,context){
   const first=lower(tree.first,false,context),binding=parser.freshProductBinding(),result=parser.freshProductBinding();
   const completed=terminal?name([result]):constructor(context,'FunctionResult',[name([result])],tree.span);
   const rest=lower(tree.rest,terminal,context),owner=['crate',...data(context)];
-  return {k:'let',name:binding,value:first,body:{k:'match1',scrutinee:name([binding]),cases:[{pattern:{k:'ctor',path:[...owner,'FunctionResult'],binds:[result]},body:completed},{pattern:{k:'ctor',path:[...owner,'StatementContinuation'],binds:[]},body:rest}]},span:tree.span};
+  return {k:'let',name:binding,value:first,body:{k:'match1',scrutinee:name([binding]),cases:[{pattern:{k:'ctor',path:[...owner,'FunctionResult'],binds:[result]},body:completed},{pattern:{k:'ctor',path:[...owner,'StatementContinuation'],binds:[]},body:rest},...(context.loop?['LoopBreak','LoopContinue'].map(variant=>({pattern:{k:'ctor',path:[...owner,variant],binds:[]},body:constructor(context,variant,[],tree.span)})):[])]},span:tree.span};
  }
  throw new TypeError('unknown shared Rust ordinary completion construction');
 }

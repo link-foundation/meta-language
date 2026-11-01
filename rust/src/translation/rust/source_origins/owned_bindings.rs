@@ -240,6 +240,17 @@ impl SourceOrigins {
         before: &HashMap<String, String>,
         result: &SourceOrigin,
     ) -> Result<()> {
+        self.expire_owned_bindings_with_retained_regions(before,result,&[])
+    }
+    /// Transport only: callers establish the actual outlives proof before
+    /// selecting these exact IDs. All ordinary escaping-loan checks still run.
+    pub(in super::super) fn expire_owned_bindings_with_retained_regions(
+        &mut self,
+        before: &HashMap<String, String>,
+        result: &SourceOrigin,
+        retained_regions: &[String],
+    ) -> Result<()> {
+        let retained=retained_regions.iter().map(String::as_str).collect::<HashSet<_>>();
         let escaping = if self.owned_binding_value(result) {
             result.source_binding_identity.clone()
         } else {
@@ -247,7 +258,7 @@ impl SourceOrigins {
         };
         let surviving_fields=self.source_binding_states.keys().filter(|id|{let root=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_ultimate_root(id);!root.is_empty()&&self.source_binding_states.get(&root).is_some_and(|state|state=="available")&&(before.contains_key(&root)||escaping.as_ref()==Some(&root)||result.source_extending_temporary_bindings.contains(&root))}).cloned().collect::<HashSet<_>>();
         for (id, state) in &mut self.source_binding_states {
-            if !before.contains_key(id)&&!surviving_fields.contains(id)
+            if !retained.contains(id.as_str())&&!before.contains_key(id)&&!surviving_fields.contains(id)
                 && escaping.as_ref() != Some(id)
                 && !result.source_extending_temporary_bindings.contains(id)
             {

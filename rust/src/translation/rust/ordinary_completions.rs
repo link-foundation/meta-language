@@ -259,6 +259,7 @@ impl RustParser {
             self.origins.array_result_model.clone(),
         ];
         rules::accept_rust_ordinary_completion_profiles(&profiles)
+            || crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_completion_profiles(&self.source_signature_model,&profiles)
     }
     pub(super) fn ordinary_completion_selected(&self) -> bool {
         if !self.ordinary_completion_context() {
@@ -437,6 +438,9 @@ impl RustParser {
                     };
                 }
                 break first;
+            }
+            if let Some(expression)=self.read_owned_record_finite_loop(path)?{
+                let _=self.cursor.eat(";");let span=expression.span;bindings.push(Binding{name:self.fresh_product_binding(),ty:Some(super::UNIT),value:expression,span});continue;
             }
             if token.kind == TokenKind::Identifier
                 && ["while", "loop", "for"].contains(&token.value.as_str())

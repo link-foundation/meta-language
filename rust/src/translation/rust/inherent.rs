@@ -69,7 +69,7 @@ impl RustParser {
         .into_iter()
         .cloned()
         .collect::<Vec<_>>();
-        if !accept_rust_inherent_source_profiles(&models) {
+        if !accept_rust_inherent_source_profiles(&models)&&!crate::translation::rust_borrowed_vector_rules::accept_rust_borrowed_vector_inherent_profiles(&models) {
             return Err(unsupported(
                 "Rust inherent profile composition",
                 "closed source models need an explicit method composition proof",

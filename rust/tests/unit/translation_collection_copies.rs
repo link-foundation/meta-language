@@ -20,7 +20,7 @@ fn concrete_rows(network:&LinkNetwork,root:LinkId)->Vec<Value>{
  while let Some((id,depth,field))=pending.pop(){assert!(rows.len()<100000);let metadata=network.link(id).unwrap().metadata();let flags=metadata.flags();let range=metadata.span().unwrap().byte_range();rows.push(json!([depth,field,metadata.term(),i32::from(metadata.is_named()),range.start(),range.end(),flags.is_error(),flags.is_missing(),flags.is_extra(),flags.has_error()]));for child in children.get(&id).into_iter().flatten().rev(){pending.push((*child,depth+1,fields.get(&(id,*child)).cloned()));}}
  rows
 }
-fn concrete(source:&str)->Value{
+pub(super) fn concrete(source:&str)->Value{
  assert!(source.len()<=65536);let network=LinkNetwork::parse(source,"JavaScript",ParseConfiguration::default());assert!(network.verify_full_match(None).is_clean());
  let document=network.links().find(|link|link.metadata().link_type()==Some(LinkType::Document)).unwrap().id();
  let roots=network.links().filter(|link|link.metadata().link_type()==Some(LinkType::Syntax)&&link.metadata().language()==Some("JavaScript")&&link.references()==[document]).collect::<Vec<_>>();assert_eq!(roots.len(),1);let root=roots[0].id();

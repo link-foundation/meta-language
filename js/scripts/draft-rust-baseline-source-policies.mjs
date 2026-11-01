@@ -12,6 +12,9 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-host-capability-rules.js',moduleName:'javascript_host_capability_rules',model:'Qualified JavaScript host capability receiver modes 1',programAsset:'javascript-host-capability-program'},
+ {sourcePath:'js/src/translation/rust-borrowed-vector-rules.js',moduleName:'rust_borrowed_vector_rules',model:'Rust recursive borrowed vector source positions 1',programAsset:'rust-borrowed-vector-program',sourceDependencies:true,sourceAliases:true},
+ {sourcePath:'js/src/translation/rust-owned-record-loop-rules.js',moduleName:'rust_owned_record_loop_rules',model:'Rust finite owned record loop source obligations 1',programAsset:'rust-owned-record-loop-program'},
  {sourcePath:'js/src/translation/javascript-module-initialization-rules.js',moduleName:'javascript_module_initialization_rules',model:'actual runtime Links policy initialization rules 1',programAsset:'javascript-module-initialization-rules-program'},
  {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'source_library_error_rules',model:'resolved supplied Error source module linkage 1',programAsset:'source-library-error-program',sourceAliases:true},
  {sourcePath:'js/src/translation/source-library-class-rules.js',moduleName:'source_library_class_rules',model:'resolved supplied JavaScript class module ownership 1',programAsset:'source-library-class-program',sourceAliases:true,sourceLints:'preserve',sourceFormatting:'preserve',valueSharing:'exact scalars, types and source spans 1',programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1'},
@@ -75,8 +78,12 @@ const fixtures=[
  'js/tests/fixtures/rust-owned-record-state.mjs',
  'js/tests/fixtures/rust-owned-record-effects.mjs',
  'js/tests/fixtures/rust-owned-record-completions.mjs',
+ 'js/tests/fixtures/rust-owned-record-loops.mjs',
+ 'js/tests/fixtures/rust-borrowed-vector-positions.mjs',
  'js/tests/fixtures/proposition-values.mjs',
  'js/tests/fixtures/javascript-error-classes.mjs',
+ 'js/tests/fixtures/javascript-host-capabilities.mjs',
+ 'js/tests/fixtures/runtime-data-module-initialization.mjs',
  'js/tests/fixtures/formal-mutual-datatypes.mjs',
  'js/tests/fixtures/formal-datatype-aliases.mjs',
  'js/tests/fixtures/rust-owned-recursive-containers.mjs',
@@ -117,6 +124,9 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/src/node-source-modules.js',
+ 'js/src/translation/javascript-host-capabilities.js',
+ 'js/tests/translation-javascript-host-capabilities.test.js',
  'js/src/translation/disjoint-collection-iterations.js',
  'js/src/translation/source-collection-iterations.js',
  'js/src/translation/collection-items.js',
@@ -143,6 +153,9 @@ const consumers=[
  'js/tests/translation-rust-owned-record-state.test.js',
  'js/tests/translation-rust-owned-record-effects.test.js',
  'js/tests/translation-rust-owned-record-completions.test.js',
+ 'js/tests/translation-rust-owned-record-loops.test.js',
+ 'js/tests/translation-rust-borrowed-vector-positions.test.js',
+ 'js/tests/translation-source-position-links.test.js',
  'js/tests/translation-proposition-values.test.js',
  'js/tests/translation-javascript-error-classes.test.js',
  'js/scripts/draft-javascript-error-source-kernels.mjs',
@@ -161,6 +174,9 @@ const consumers=[
  'js/src/translation/formal-datatype-modules.js',
  'js/src/translation/formal-datatype-aliases.js',
  'js/src/translation/rust-owned-record-effects.js',
+ 'js/src/translation/rust-borrowed-vectors.js',
+ 'js/src/translation/finite-record-loop-helpers.js',
+ 'js/src/translation/rust-owned-record-loops.js',
  'js/src/translation/proposition-values.js',
  'js/src/translation/javascript-error-construction-rules.js',
  'js/src/translation/javascript-error-class-rules.js',
@@ -176,12 +192,16 @@ const consumers=[
  'js/src/translation/javascript-module-initialization.js',
  'js/src/translation/runtime-data-module-source.js',
  'js/src/translation/runtime-data-module.js',
+ 'js/src/translation/source-receipt-data.js',
+ 'js/tests/translation-runtime-data-module-initialization.test.js',
+ 'js/scripts/produce-runtime-data-module-initialization.mjs',
  'js/scripts/draft-javascript-module-initialization.mjs',
  'js/scripts/draft-native-policy-assertion-controls.mjs',
  'js/scripts/draft-rust-baseline-native-policy-controls.mjs',
  'js/scripts/rust-baseline-native-policy-control-groups.mjs',
  'js/scripts/class-owner-schema-extension.mjs',
  'js/scripts/proposition-value-schema-extension.mjs',
+ 'js/scripts/source-position-schema-extension.mjs',
  'js/scripts/draft-rust-baseline-source-publication.mjs',
  'js/scripts/draft-javascript-error-source-closure.mjs',
  'js/scripts/draft-closed-source-error-composition.mjs',
@@ -328,6 +348,8 @@ for(const [source,target] of [
  ['rust-owned-record-state','rust-owned-record-state'],
  ['rust-owned-record-effects','rust-owned-record-effects'],
  ['rust-owned-record-completions','rust-owned-record-completions'],
+ ['runtime-data-module-initialization','runtime-data-module-initialization'],
+ ['javascript-host-capabilities','javascript-host-capabilities'],
  ['rust-source-owner-qualification','rust-source-owner-qualification'],
  ['proposition-values','proposition-values'],
  ['formal-mutual-datatypes','formal-mutual-datatypes'],
@@ -385,6 +407,8 @@ writeProjectData(new URL('parity/fixtures/native-policy-authoring-controls.lino'
 for(const [source,exports,model]of [
  ['rust-owned-recursive-containers',['rustOwnedRecursiveContainerDecisions'],'Rust owned recursive container exact source literals 1'],
  ['formal-datatype-aliases',['formalDatatypeAliasDecisions'],'Formal datatype alias exact source literals 1'],
+ ['rust-owned-record-loops',['rustOwnedRecordLoopMalformedNumbers'],'Rust finite record loop exact source literals 1'],
+ ['rust-borrowed-vector-positions',['rustBorrowedVectorPositionDecisions'],'Rust borrowed vector position exact source literals 1'],
 ]){
  const path='js/tests/fixtures/'+source+'.mjs',text=readFileSync(new URL(path,root),'utf8');
  const namespace=await import('../tests/fixtures/'+source+'.mjs');

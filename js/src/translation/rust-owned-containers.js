@@ -11,6 +11,7 @@ import {readRustStandardSumSourceMetadataReservation,readRustStandardSumSourceMe
 import {readRustOwnedBoxTypeError,acceptRustOwnedBoxCallResult} from './rust-owned-recursive-datatype-rules.js';
 import {readRustOwnedBoxCloneSourceError} from './rust-owned-recursive-datatype-rules.js';
 import {readRustOwnedNominalFieldLifetimeError} from './rust-owned-recursive-datatype-rules.js';
+import {acceptRustBorrowedVectorOwnedInterpretation} from './rust-borrowed-vector-rules.js';
 import {acceptRustOwnedBoxTypeNode,readRustOwnedContainerTypeNode,readRustOwnedContainerSumNode,readRustOwnedContainerNodeRole,acceptRustOwnedContainerClone,readRustOwnedContainerLeafRole,readRustOwnedContainerChildModel,readRustOwnedBoxCanonicalOwner,readRustOwnedBoxConstructorError,readRustOwnedBoxMoveError,acceptRustOwnedBoxIntrinsicCopyValue,acceptRustOwnedBoxValueLayers,acceptRustOwnedNominalVectorElement,readRustOwnedContainerRuntimeMetadataCost,readRustOwnedBoxCloneError,acceptRustOwnedBoxLayerClone,acceptRustOwnedContainerValueLoanRole,readRustOwnedBoxPayloadError,readRustOwnedContainerDepthError,acceptRustOwnedContainerClosed} from './rust-owned-recursive-datatype-rules.js';
 const empty=()=>({profile:'',cloneImplemented:false,closed:false,node:'unknown',owner:'',inner:null});
 const sourceOwner=origin=>origin?.expandedSourceOwner??origin?.sourceOwner;
@@ -18,6 +19,7 @@ const copy=value=>structuredClone(value);
 const fail=(message,span)=>{throw unsupported('Rust owned container',message,span);};
 
 export function readRustOwnedContainerFacts(table,origin){
+ if(!acceptRustBorrowedVectorOwnedInterpretation(Boolean(origin?.arrayElementPosition)))return empty();
  let visits=0;const active=new Set();
  function walk(value,wrappers,owner,depth){
   if(!table.ownedContainerSourceEnabled||!table.nominalOwnershipScopeComplete||!value?.proven||!value.type||!owner||++visits>65536||depth>256)return empty();

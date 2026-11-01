@@ -194,6 +194,7 @@ impl RustParser {
             self.source_type_owner(&head, children, &ty)
         };
         self.origins.current_type.source_owner = Some(owner.clone());
+        if self.origins.borrowed_vector_source_enabled&&self.origins.current_type.array_element_position.is_some(){self.origins.borrowed_vector_needs_final_admission=true;}
         self.check_owned_box_source_type(&self.origins.current_type,Some(super::super::Span::new(self.cursor.peek().start,self.cursor.peek().end)))?;
         let namespace_spelling = if head[0] != "&" && head[0] != "(" {
             head
@@ -231,26 +232,7 @@ impl RustParser {
         {
             return Ok(None);
         }
-        let position = |origin: &SourceOrigin| -> Result<SourceTypeSignature> {
-            Ok(SourceTypeSignature {
-                ty: origin.ty.clone().ok_or_else(|| {
-                    unsupported(
-                        "Rust source signature",
-                        "a parsed header needs its value type",
-                        None,
-                    )
-                })?,
-                wrappers: origin.wrappers.clone(),
-                lifetimes: origin.source_lifetimes.clone(),
-                owner: origin.source_owner.clone().ok_or_else(|| {
-                    unsupported(
-                        "Rust source signature",
-                        "a parsed header needs its actual type owner",
-                        None,
-                    )
-                })?,
-            })
-        };
+        let position = |origin: &SourceOrigin| -> Result<SourceTypeSignature> {super::super::borrowed_vectors::source_type_position(origin)};
         Ok(Some(SourceSignature {
             model: if scalar_loop && self.source_signature_model.is_empty() {
                 "Rust source function signature 1".to_owned()

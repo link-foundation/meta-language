@@ -1,5 +1,6 @@
 // Source-authored vocabulary succession. No graph, policy or fixture executes.
 import {extendPropositionValueSchema} from './proposition-value-schema-extension.mjs';
+import {extendSourcePositionSchema} from './source-position-schema-extension.mjs';
 export function extendClassOwnerSchema(before){
  const after=structuredClone(before);
  if(!after.references||!after.referenceSourceFields||!after.referenceTargetFields||!after.fields)throw new TypeError('class owners require the complete typed program schema');
@@ -20,5 +21,5 @@ export function extendClassOwnerSchema(before){
 // Publish one complete pending successor while preserving the independent
 // input contracts of the individual additive extensions.
 export function extendCurrentTypedProgramSourceSchema(before){
- return extendPropositionValueSchema(extendClassOwnerSchema(before));
+ return extendSourcePositionSchema(extendPropositionValueSchema(extendClassOwnerSchema(before)));
 }

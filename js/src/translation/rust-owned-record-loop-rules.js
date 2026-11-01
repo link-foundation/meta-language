@@ -5,7 +5,7 @@ export function readRustOwnedRecordLoopOperation(){return 'rustOwnedRecordFinite
 /** @returns {number} */
 export function readRustOwnedRecordLoopChunkSize(){return 8;}
 /** @param {number} loop @param {number} chunk @param {number} collision @returns {string} */
-export function readRustOwnedRecordLoopChunkName(loop,chunk,collision){return 'ml_finite_record_loop_chunk_'+String(loop)+'_'+String(chunk)+(collision===0?'':'_'+String(collision));}
+export function readRustOwnedRecordLoopChunkName(loop,chunk,collision){if(!acceptRustOwnedRecordLoopCount(loop)||!acceptRustOwnedRecordLoopCount(chunk)||!acceptRustOwnedRecordLoopCount(collision))return '';return 'ml_finite_record_loop_chunk_'+String(loop)+'_'+String(chunk)+(collision===0?'':'_'+String(collision));}
 /** @param {string} name @returns {boolean} */
 export function testRustOwnedRecordLoopChunkName(name){return name.startsWith('ml_finite_record_loop_chunk_');}
 /** This is an additional restriction on actual checked helpers, never a
@@ -20,7 +20,10 @@ export function planRustOwnedRecordLoopIterations(bits){const result=[];if(bits!
 /** @param {string} kind @returns {boolean} */
 export function testRustOwnedRecordLoopContinuingExit(kind){return kind==='value'||kind==='continue';}
 /** @param {string[]} exits @param {number[]} counts @returns {string} */
-export function readRustOwnedRecordLoopProgressError(exits,counts){if(exits.length!==counts.length||exits.length===0||exits.length>256)return 'the complete record loop exits exceed their finite source budget';for(let index=0;index<exits.length;index+=1){if(testRustOwnedRecordLoopContinuingExit(exits[index])&&counts[index]!==1)return 'every continuing record loop path must decrement its actual counter exactly once';if(counts[index]<0||counts[index]%1!==0||counts[index]>256)return 'the complete record loop exits exceed their finite source budget';}return '';}
+export function readRustOwnedRecordLoopProgressError(exits,counts){if(exits.length!==counts.length||exits.length===0||exits.length>256)return 'the complete record loop exits exceed their finite source budget';for(let index=0;index<exits.length;index+=1){if(!acceptRustOwnedRecordLoopCount(counts[index])||counts[index]>256)return 'the complete record loop exits exceed their finite source budget';if(testRustOwnedRecordLoopContinuingExit(exits[index])&&counts[index]!==1)return 'every continuing record loop path must decrement its actual counter exactly once';}return '';}
+/** Finite nonnegative safe integers, with negative zero rejected explicitly.
+ * @param {number} value @returns {boolean} */
+export function acceptRustOwnedRecordLoopCount(value){return value>=0&&value<=9007199254740991&&value%1===0&&(value!==0||1/value>0);}
 /** @param {boolean} overlaps @param {boolean} exactDecrement @returns {string} */
 export function readRustOwnedRecordLoopWriteError(overlaps,exactDecrement){return overlaps&&!exactDecrement?'a record loop cannot replace or alias-write its progress counter':'';}
 /** @param {string} before @param {string} after @returns {string} */
@@ -33,4 +36,4 @@ export function readRustOwnedRecordLoopLeafKind(kind){return kind==='break'?'bro
 export function readRustOwnedRecordLoopExitDisposition(constructor){return constructor==='FunctionResult'?'return':constructor==='LoopBreak'?'break':constructor==='LoopContinue'||constructor==='StatementContinuation'?'continue':'';}
 /** Full generated expression work/text is charged before copying instances.
  * @param {number} used @param {number} nodes @param {number} text @param {number} copies @returns {string} */
-export function readRustOwnedRecordLoopExpansionError(used,nodes,text,copies){return used<0||nodes<0||text<0||copies<0||used%1!==0||nodes%1!==0||text%1!==0||copies%1!==0||copies>255||nodes>100000||used>100000-nodes*copies||text>16777216/(copies+1)?'the complete finite record loop expansion exceeds its source budget':'';}
+export function readRustOwnedRecordLoopExpansionError(used,nodes,text,copies){return !acceptRustOwnedRecordLoopCount(used)||!acceptRustOwnedRecordLoopCount(nodes)||!acceptRustOwnedRecordLoopCount(text)||!acceptRustOwnedRecordLoopCount(copies)||copies>255||nodes>100000||used>100000-nodes*copies||text>16777216/(copies+1)?'the complete finite record loop expansion exceeds its source budget':'';}

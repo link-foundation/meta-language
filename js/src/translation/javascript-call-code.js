@@ -9,7 +9,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'constructErrorClass',destination:number,callee:number,arguments:number[]} |
  * {$:'constructErrorValue',destination:number,constructor:number,newTarget:number,prototype:number,message:number,present:number,realm:bigint,errorClass:string,bindReceiver:boolean} |
- * {$:'readDerivedReceiver',destination:number} | {$:'invokeErrorIntrinsic',destination:number} |
+ * {$:'readDerivedReceiver',destination:number} | {$:'invokeErrorIntrinsic',destination:number} | {$:'invokeHostCapability',destination:number} |
  * {$:'return',source:number} | {$:'throw',source:number} |
  * {$:'pushHandler',destination:number,target:number} | {$:'popHandler'} |
  * {$:'numberBinary',destination:number,left:number,right:number,operator:string} |
@@ -46,7 +46,7 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':return [instruction.destination];
+    case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':return [instruction.destination];
     case 'copy':return [instruction.destination,instruction.source];
     case 'jump':case 'popHandler':return [];
     case 'branch':return [instruction.condition];

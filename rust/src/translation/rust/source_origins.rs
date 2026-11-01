@@ -37,6 +37,7 @@ mod type_owners;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct SourceOrigin {
+    pub(super) array_element_position: Option<Box<crate::translation::source_signatures::SourceTypeSignature>>,
     pub(super) source_function_pointer_header: bool,
     /// Actual concrete standard sum source children, retained independently of
     /// the generated datatype spelling and re-resolved against the catalog.
@@ -142,6 +143,7 @@ impl SourceOrigin {
 
     pub(super) const fn unknown() -> Self {
         Self {
+            array_element_position: None,
             source_function_pointer_header: false,
             standard_sum_source: None,
             ty: None,
@@ -379,6 +381,8 @@ pub(super) struct SourceOrigins {
     fresh_vector_constructors: HashSet<Span>,
     pub(super) owned_binding_excluded: bool,
     pub(super) owned_container_source_enabled: bool,
+    pub(super) borrowed_vector_source_enabled: bool,
+    pub(super) borrowed_vector_needs_final_admission: bool,
     pub(super) owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget,
     source_binding_states: HashMap<String, String>,
     next_source_binding_identity: usize,
@@ -436,6 +440,8 @@ impl SourceOrigins {
             collecting: catalog.is_none(),
             owned_binding_excluded: false,
             owned_container_source_enabled: false,
+            borrowed_vector_source_enabled: false,
+            borrowed_vector_needs_final_admission: false,
             owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget::default(),
             source_binding_states: HashMap::new(),
             next_source_binding_identity: 0,
@@ -830,7 +836,7 @@ impl SourceOrigins {
         };
         if let Some(entry) = names.and_then(|names| self.lookup_value_owner(names, path)) {
             match entry.declaration {
-                SourceDeclaration::Function { mut result, .. } => {
+                SourceDeclaration::Function { parameters,mut result } => {
                     result.fresh_array_value = node.span.filter(|span| {
                         crate::translation::rust_fresh_vector_call_result_rules::accept_rust_fresh_vector_result_call(
                             node.kind(), result.array_source_model.unwrap_or(""),
@@ -838,7 +844,7 @@ impl SourceOrigins {
                             result.fresh_array_value.is_some(), result.fresh_vector_result_contract, self.fresh_calls.contains(span),
                         )
                     });
-                    return self.standard_sum_owned_call_result(node,path,result);
+                    return self.borrowed_vector_call_result(node,path,&parameters,self.standard_sum_owned_call_result(node,path,result));
                 }
                 SourceDeclaration::Constant { result } => return result,
                 SourceDeclaration::Constructor { result, .. } => return result,
@@ -1329,6 +1335,7 @@ impl SourceOrigins {
         self.mark(node, origin);
     }
     pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) ->Result<()> {
+        if self.borrowed_vector_source_origin(&origin){return self.capture_borrowed_vector_constructor(node,origin);}
         if self.owned_container_source_enabled{return self.capture_owned_vector_constructor(node,origin);}
         let values=match &node.node{SNode::Array{items,..}=>items.iter().map(|item|self.origin(&item.value,&origin.path)).collect::<Vec<_>>(),_=>Vec::new()};
         let element=match origin.ty.as_ref(){Some(Type::Array{element,..})=>{let mut value=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());self.retain_nominal_copy_origin(&mut value);if let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|owner|owner.kind=="library"&&owner.path.join("::")=="std::vec::Vec"&&owner.arguments.len()==1){value.source_owner=Some(owner.arguments[0].clone());}Some(value)},_=>None};
@@ -1356,6 +1363,7 @@ impl SourceOrigins {
         allow_calls: bool,
     ) -> bool {
         let origin = self.origin(node, path);
+        if self.borrowed_vector_produced_value(&origin){return true;}
         if self.owned_vector_produced_value(&origin){return true;}
         if matches!(origin.ty, Some(Type::Array { .. }))
             && origin.source_owned_result_proof
@@ -1510,6 +1518,7 @@ impl SourceOrigins {
             && actual.fresh_array_value.is_none()
             && !self.available_owned_binding(&actual)
             && !self.owned_vector_produced_value(&actual)
+            && !self.borrowed_vector_produced_value(&actual)
         {
             return Err(unsupported(
                 "owned vector binding",
@@ -1593,6 +1602,7 @@ impl SourceOrigins {
         if actual.diverging {
             return Ok(());
         }
+        self.validate_borrowed_vector_argument(actual,expected,span)?;
         if crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_argument_read_check(actual.wrappers.len() as f64,transferred) {
             self.check_owned_origin(actual, span)?;
         }
@@ -1744,14 +1754,15 @@ impl SourceOrigins {
         if self.collecting {
             return Ok(());
         }
-        let expected = match self.lookup_value_owner(segments, path).map(|entry| entry.declaration) {
-            Some(SourceDeclaration::Function { parameters, .. }) => parameters,
-            Some(SourceDeclaration::Constructor { fields, .. }) => fields,
+        let (expected,result) = match self.lookup_value_owner(segments, path).map(|entry| entry.declaration) {
+            Some(SourceDeclaration::Function { parameters,result }) => (parameters,Some(result)),
+            Some(SourceDeclaration::Constructor { fields, .. }) => (fields,None),
             _ => return Ok(()),
         };
         if args.len() != expected.len() {
             return Ok(());
         }
+        if let Some(result)=&result{self.validate_borrowed_vector_call_regions(args,path,&expected,result,span)?;}
         // References can coerce through Box; owned Box cannot become its owned
         // inner value until the source explicitly dereferences it.
         for (argument, expected) in args.iter().zip(&expected) {
@@ -1766,8 +1777,8 @@ impl SourceOrigins {
             if !transferred {
                 self.check_owned_origin(&actual, span)?;
             }
-            let consumable = transferred || self.available_owned_binding(&actual)||self.owned_vector_produced_value(&actual);
-            let fresh = expected.array_source_model == Some("owned vector")
+            let consumable = transferred || self.available_owned_binding(&actual)||self.owned_vector_produced_value(&actual)||self.borrowed_vector_produced_value(&actual);
+            let fresh = expected.array_element_position.is_none()&&expected.array_source_model == Some("owned vector")
                 && expected.wrappers.is_empty()
                 && accept_rust_fresh_owned_vector_argument(
                     ordinary,

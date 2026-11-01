@@ -195,6 +195,7 @@ impl RustParser {
                 .ok_or_else(|| malformed(template_span))?;
             self.refuse_shared_value_observation(&value, None, path, value.span)?;
             self.refuse_callable_observation(&value, path, value.span)?;
+            self.guard_borrowed_vector_observation(&value,path,"format",value.span)?;
             let name = self.fresh_product_binding();
             let reference = SExpr::new(
                 SNode::Name {
@@ -243,6 +244,7 @@ impl RustParser {
                     let value=if let Some(reference)=self.read_function_reference(std::slice::from_ref(&name),path,template_span)?{reference}else{self.owned_record_mutable_name(SExpr::new(SNode::Name{path:vec![name]},template_span),path)?};
                     self.refuse_callable_observation(&value, path, value.span)?;
                     self.refuse_shared_value_observation(&value, None, path, value.span)?;
+                    self.guard_borrowed_vector_observation(&value,path,"format",value.span)?;
                     value
                 }
                 _ => return Err(malformed(template_span)),

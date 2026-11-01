@@ -7,9 +7,11 @@ import {rustFixedType} from './types.js';
 import {readRustScalarArrayIndexReceiverError,readRustScalarArrayIndexOperandError} from './rust-array-index-rules.js';
 import {readRustUsizeIndexExpression} from './rust-usize-index-expressions.js';
 import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
+import {guardRustBorrowedVectorObservation} from './rust-borrowed-vectors.js';
 export function readRustScalarArrayIndex(parser,object,path){
  const open=parser.cursor.next(),index=parser.expr(path),close=parser.cursor.expect(']','array index');
  const span={start:object.span?.start??open.start,end:close.end},actual=parser.origins.origin(object,path),receiver=projectRustStaticByteArrayReadOrigin(actual)??actual;
+ guardRustBorrowedVectorObservation(parser,object,path,'index',span);
  checkRustOwnedOrigin(parser.origins,actual,span);
  const element=receiver.type?.kind==='array'?receiver.type.element:null;
  const receiverError=readRustScalarArrayIndexReceiverError(receiver.type?.kind??'',element?.kind??'',receiver.arraySourceModel??'',receiver.proven===true,receiver.wrappers.every(layer=>layer==='reference'||layer==='box'),receiver.arrayElementCopyEvidence===true);
