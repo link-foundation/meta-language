@@ -45,6 +45,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinaryDelete',destination:number,object:number,key:number} |
+ * {$:'ordinaryHas',destination:number,object:number,key:number} |
  * {$:'ordinarySet',destination:number,object:number,key:number,value:number,receiver:number} |
  * {$:'propertyKey',destination:number,input:number,realm:bigint} |
  * {$:'propertyDefinition',destination:number,target:number,key:number,attributes:number,realm:bigint}} JavaScriptCallInstruction
@@ -90,7 +91,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
-    case 'ordinaryDelete':return [instruction.destination,instruction.object,instruction.key];
+    case 'ordinaryDelete':case 'ordinaryHas':return [instruction.destination,instruction.object,instruction.key];
     case 'literalPrototype':return [instruction.destination,instruction.object,instruction.value];
     case 'functionName':return [instruction.destination,instruction.object,instruction.key];
     case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'argumentRest':return [instruction.destination,instruction.prototype];

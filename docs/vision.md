@@ -66,6 +66,12 @@ length Set; an inherited element is read without deleting its prototype field.
 Generic Object receivers preserve getter/setter and partial-mutation effects.
 Primitive boxing, opaque deletion protocols and exact engine-specific failure
 messages require explicit extensions beyond this Object-receiver admission.
+Shift/unshift use the same instructions with actual HasProperty before Get.
+Shift moves ascending indices and retains its first element; unshift moves
+descending indices before reading/inserting the supplied arguments. Absent
+source properties strictly delete the corresponding own target properties,
+preserving holes instead of filling them with undefined. Zero-argument unshift
+skips indexed movement while still performing length Set.
 
 Immutable lexical References permit reads and evaluate assignment operands in
 the ordinary order, but PutValue raises the actual realm TypeError. Prefix/

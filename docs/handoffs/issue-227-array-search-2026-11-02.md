@@ -920,3 +920,21 @@ No execution/generation/validation occurred. Primitive receiver boxing remains
 an explicit unsupported protocol, and exact write/delete/overflow diagnostics
 need engine-version policies. Shift/unshift/splice/slice/concat and remaining
 standard library surfaces still need their own drafts.
+
+### Shared shift/unshift standard bodies draft
+
+The protected mutation directory now includes shift/unshift. Both lower to the
+same inspectable property instructions. A new ordinaryHas opcode uses the shared
+prototype presence kernel with actual converted-key validation. Ascending shift
+retains the first result; descending unshift moves existing properties before
+inserting actual arguments. Missing source properties delete the corresponding
+own targets strictly; inherited fields remain actual Get/HasProperty inputs.
+Zero-argument unshift skips traversal but Sets length. Safe-length checking
+precedes any unshift move/write; source loops remain step-budget resumable.
+
+Seven originals cover sparse movement, inherited fields, complete getter/setter
+ordering, zero-argument traversal omission and safe-limit refusal. Two deferred
+controls inspect presence branches, common target keys and direction. Inputs
+flow through the already registered mutation source/control files. Nothing
+executed. Remaining mutation/library surfaces and primitive boxing/opaque
+protocols still require their own source extensions.

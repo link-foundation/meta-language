@@ -53,6 +53,9 @@ Draft protected Array push/pop bodies using actual Call arguments, observable
 length conversion, strict ordinary property writes/deletion and held results.
 Object receivers and inherited accessors have deferred original controls.
 
+Draft shift/unshift through shared presence/Get/Set/delete bytecode, retaining
+sparse holes, inherited elements, ordered effects and bounded resumable loops.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target
