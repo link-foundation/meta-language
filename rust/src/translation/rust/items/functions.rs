@@ -213,6 +213,7 @@ impl RustParser {
                 element.kind(),
                 true,
             )
+            && self.owned_vector_signature_phase(&source_result).is_empty()
         {
             return Err(unsupported(
                 "Rust array result",
@@ -268,6 +269,8 @@ impl RustParser {
         if self.header_discovery {
             let close = self.declaration_body_boundary()?;
             return Ok(SFn {
+                source_finite_record_loop_helper:false,
+                source_finite_record_loop_witness:None,
                 source_diagnostic_attributes: None,
                 semantic_ret: None,
                 name,
@@ -364,6 +367,7 @@ impl RustParser {
         if let Type::Array { element, .. } = &ret
             && !self.shared_array_origin(&source_result)
         {
+            let owned_vector_body=self.owned_vector_function_body(&body,path,&source_result);
             if !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
@@ -378,21 +382,20 @@ impl RustParser {
                     .expect("actual result wrapper count"),
                 element.kind(),
                 self.origins.fresh_vector_argument(&body, path, true),
-            ) {
+            ) && !owned_vector_body {
                 return Err(unsupported(
                     "fresh Rust array result",
                     "every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs",
                     body.span,
                 ));
             }
-            source_result.fresh_array_value = body.span;
+            if !owned_vector_body{source_result.fresh_array_value = body.span;}
             self.origins.pointer_integer_argument(
                 &self.origins.origin(&body, path),
                 &source_result,
                 body.span,
             )?;
-            self.origins.certify_array_result(&name, path, body.span);
-            self.origins.mark(&body, source_result.clone());
+            if !owned_vector_body{self.origins.certify_array_result(&name, path, body.span);self.origins.mark(&body, source_result.clone());}
         }
         self.origins
             .argument(&self.origins.origin(&body, path), &source_result, body.span)?;
@@ -407,7 +410,12 @@ impl RustParser {
         let source_type_namespace = self
             .capture_type_namespace(&source_params, &source_result)
             .map(Box::new);
+        // Exit only after validating return transfers and capturing source contracts.
+        // Restore live outer states without rewinding binding identity allocation.
+        self.origins.restore_owned_bindings(function_ownership);
         Ok(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,
             semantic_ret: None,
             name,

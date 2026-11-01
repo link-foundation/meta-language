@@ -112,6 +112,10 @@ impl Expr {
             _ => None,
         }
     }
+    /// Reuses the existing proposition emitter/checker semantics for the
+    /// atomic value bridge; no new equality decision is inferred from type.
+    #[must_use]
+    pub fn proposition_value_atom(&self)->Option<Prop>{match &self.node{Node::PropositionValue{op,left,right,domain,same_value}if crate::translation::proposition_value_rules::accept_proposition_value_comparison(op.name())=>Some(Prop::compare(*op,Comparison{left:(**left).clone(),right:(**right).clone(),domain:domain.clone(),same_value:*same_value})),_=>None}}
 
     /// The `k` discriminant.
     #[must_use]
@@ -185,6 +189,7 @@ impl Expr {
                 ..
             }
             | Node::Binary { left, right, .. }
+            | Node::PropositionValue { left, right, .. }
             | Node::Coalesce { left, right }
             | Node::StrictEqual { left, right, .. }
             | Node::Append { left, right }
@@ -457,6 +462,7 @@ impl Expr {
                 message: message.clone(),
                 order: *order,
             },
+            Node::PropositionValue{op,left,right,domain,same_value}=>Node::PropositionValue{op:*op,left:Box::new(visit(left)),right:Box::new(visit(right)),domain:domain.clone(),same_value:*same_value},
             Node::Binary {
                 op,
                 left,

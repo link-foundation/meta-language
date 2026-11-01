@@ -615,6 +615,12 @@ pub struct SData {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SFn {
+    /// Restriction selector; only an opaque admitted-loop witness authenticates it.
+    #[serde(default,rename="sourceFiniteRecordLoopHelper",skip_serializing_if="is_false")]
+    pub source_finite_record_loop_helper: bool,
+    /// Transient source proof transport, never reconstructible from JSON/Links.
+    #[serde(skip)]
+    pub source_finite_record_loop_witness: Option<std::sync::Arc<super::finite_record_loop_helpers::FiniteRecordLoopWitness>>,
     /// Actual complete pure Unit header and body sites under the selected model.
     #[serde(
         default,

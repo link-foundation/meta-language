@@ -1,6 +1,6 @@
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticAccessor} from './javascript-semantic-values.js';
 import {readJavaScriptPropertyDescriptorError} from './javascript-property-descriptors.js';
-import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,locateJavaScriptOrdinaryProperty,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
+import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,locateJavaScriptOrdinaryProperty,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {readJavaScriptDescriptorField} from './javascript-descriptor-field-rules.js';
 
 /** @typedef {{$:'descriptorConversion',receiver:JavaScriptSemanticValue,next:number,
@@ -101,6 +101,7 @@ export function stepJavaScriptDescriptorConversion(heap,state){
     const key={$:'text',units:field.units};
     const receiver=current.receiver;
     if(receiver.$!=='object')return {$:'descriptorInvalid',reason:'descriptor conversion retains its actual Object receiver'};
+    const actual=heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)];if(actual!==undefined&&actual.$==='hostErrorObject')return {$:'descriptorInvalid',reason:'opaque Error descriptor reflection requires its actual host protocol'};
     const property=locateJavaScriptOrdinaryProperty(heap,receiver.identity,key);
     if(!property.found){current={$:'descriptorConversion',receiver,next:current.next+1,descriptor:current.descriptor,pending:false};continue;}
     const plan=planJavaScriptOrdinaryGet(heap,receiver.identity,key,receiver);

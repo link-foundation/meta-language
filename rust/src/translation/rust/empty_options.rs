@@ -193,6 +193,8 @@ impl RustParser {
         let policy = crate::translation::source_empty_options::policy();
         let proof = json!({"model":self.empty_option_source_model,"language":policy["language"],"sourceName":name,"namespace":{"declaredTypeOwners":[],"externalOptionRoots":policy["externalOptionRoots"],"imports":[],"declarationNames":[]},"parameters":[],"result":result,"construction":{"owner":owner,"span":construction_span,"path":[]}});
         Ok(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,
             semantic_ret: None,
             name,

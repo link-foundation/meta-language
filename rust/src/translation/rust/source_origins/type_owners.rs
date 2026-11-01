@@ -98,7 +98,9 @@ impl SourceOrigins {
         self.lookup_namespace_filtered(segments,path,if type_owner{"type"}else{"any"},catalog_owner)
     }
 
-    fn lookup_namespace_filtered(&self,segments:&[String],path:&[String],role:&str,catalog_owner:Option<fn(&str)->bool>)->Option<SourceLookup>{
+    fn lookup_namespace_filtered(&self,segments:&[String],path:&[String],role:&str,catalog_owner:Option<fn(&str)->bool>)->Option<SourceLookup>{let(full_name,declaration)=self.lookup_namespace_borrowed(segments,path,role,catalog_owner)?;Some(SourceLookup{full_name,declaration:declaration.clone()})}
+    pub(in super::super) fn lookup_value_owner_ref(&self,segments:&[String],path:&[String])->Option<(String,&SourceDeclaration)>{self.lookup_namespace_borrowed(segments,path,"value",None)}
+    fn lookup_namespace_borrowed(&self,segments:&[String],path:&[String],role:&str,catalog_owner:Option<fn(&str)->bool>)->Option<(String,&SourceDeclaration)>{
         let mut names = segments.to_vec();
         let mut start = path.to_vec();
         let mut absolute = false;
@@ -133,7 +135,7 @@ impl SourceOrigins {
                 let kind=namespace_kind(declaration);
                 let action=namespace::read_rust_source_namespace_candidate(kind,role,&[]);
                 if action=="select"{
-                    if catalog_owner.is_none_or(|accept|accept(kind)){return Some(SourceLookup {declaration:declaration.clone(),full_name});}
+                    if catalog_owner.is_none_or(|accept|accept(kind)){return Some((full_name,declaration));}
                     return None;
                 }
                 if action=="stop"{return None;}

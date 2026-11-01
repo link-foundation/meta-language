@@ -92,6 +92,8 @@ export function findRustTerminalReturnBoundary(values,start){
  * every branch's lexical bindings.
  * @param {string} kind @param {boolean} terminal @returns {string} */
 export function readRustOrdinaryCompletionConstruction(kind,terminal){
+ if(kind==='break'||kind==='continue')return 'loop signal';
+ if(kind==='loop')return 'finite loop';
  if(kind==='abort')return 'value';
  if(kind==='return')return terminal?'value':'completed';
  if(kind==='value')return terminal?'value':'continuation';
@@ -101,19 +103,25 @@ export function readRustOrdinaryCompletionConstruction(kind,terminal){
 }
 /** @param {string} first @param {string} second @returns {string} */
 export function readRustOrdinaryCompletionAlternativeKind(first,second){
+ if(first==='broken'||first==='continued'||first==='completed loop alternatives'||second==='broken'||second==='continued'||second==='completed loop alternatives'){if(first===second)return first;return acceptRustOrdinaryCompletedAlternative(first)&&acceptRustOrdinaryCompletedAlternative(second)?'completed loop alternatives':'mixed';}
  if(first==='aborted'&&second==='aborted')return 'aborted';
  if((first==='returned'||first==='aborted')&&(second==='returned'||second==='aborted'))return 'returned';
  return first==='value'&&second==='value'?'value':'mixed';
 }
 /** @param {string} kind @returns {boolean} */
-export function acceptRustOrdinaryCompletedAlternative(kind){return kind==='returned'||kind==='aborted';}
+export function acceptRustOrdinaryCompletedAlternative(kind){return kind==='returned'||kind==='aborted'||kind==='broken'||kind==='continued'||kind==='completed loop alternatives';}
 /** Only actual continuing alternatives contribute state to a following source
  * statement. Completed branches retain their separate result/borrow checks.
  * @param {string} kind @returns {boolean} */
 export function testRustOrdinaryCompletionFallsThrough(kind){return !acceptRustOrdinaryCompletedAlternative(kind);}
+/** Private source exit snapshots are charged before cloning real owner maps.
+ * @param {number} entries @param {number} addedEntries @param {number} text @param {number} addedText @returns {string} */
+export function readRustOrdinaryCompletionSnapshotError(entries,addedEntries,text,addedText){return entries%1!==0||addedEntries%1!==0||text%1!==0||addedText%1!==0||entries<0||addedEntries<0||text<0||addedText<0||entries>100000-addedEntries||text>16777216-addedText?'the actual completion exit snapshots exceed their finite source budget':'';}
 /** @param {string} first @param {string} second @returns {string} */
 export function readRustOrdinaryCompletionSequenceKind(first,second){
  if(first==='value')return second;
+ if(first==='broken'||first==='continued'||first==='completed loop alternatives')return first;
+ if(second==='broken'||second==='continued'||second==='completed loop alternatives')return 'completed loop alternatives';
  if(first==='returned'||first==='aborted')return first;
  return second==='returned'||second==='aborted'?'returned':'mixed';
 }

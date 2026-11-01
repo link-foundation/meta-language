@@ -95,3 +95,7 @@ export function renderCallableDataLeanDefault(name,constructor,fields){let value
  * @param {boolean} callable @param {boolean} output @param {boolean} undecidable
  * @returns {string} */
 export function readFormalDatatypeLeanBlockDerivation(callable,output,undecidable){return callable||output?'':undecidable?'Repr':'Repr, DecidableEq';}
+/** The attribute belongs to the whole mutual command, including nested list
+ * fields appearing only in later members.
+ * @param {string[]} definitions @returns {string} */
+export function renderFormalDatatypeRocqMutualBlock(definitions){return '#[warnings="-register-all"]\n'+definitions.join('\n');}

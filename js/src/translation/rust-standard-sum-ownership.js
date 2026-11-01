@@ -5,6 +5,7 @@ import {unsupported} from './diagnostics.js';
 import {readRustNominalOwnershipFacts} from './rust-nominal-ownership.js';
 import {readRustNominalConstructorError} from './rust-nominal-ownership-rules.js';
 import {readRustOwnedContainerFacts,markRustOwnedBoxCallResult} from './rust-owned-containers.js';
+import {markRustOwnedVectorCallResult} from './rust-owned-vectors.js';
 import {acceptRustOwnedBoxTypeNode,acceptRustOwnedStandardSumBoxPayload} from './rust-owned-recursive-datatype-rules.js';
 import {readRustCopyClosureValueBorrows,projectRustCopyClosureValueField} from './rust-copy-closure-lifetimes.js';
 import {acceptRustOwnedBindingTracking,acceptRustOwnedBindingValue,projectRustOwnedLoanBindings,mergeRustOwnedLoanBindings,readRustOwnedLoanReadError} from './rust-owned-binding-rules.js';
@@ -45,7 +46,7 @@ export function createRustStandardSumConstructorOrigin(parser,node,origin,args,p
  const values=args.map(argument=>table.origin(argument,path));
  for(let at=0;at<args.length;at+=1){
   const argument=args[at],value=values[at],owned=readRustStandardSumOwnershipFacts(table,entry.fields[at]).profile==='owned',transferred=table.ownedArgumentTransfers.has(argument);
-  table.argument(value,entry.fields[at],argument.span??span);
+  table.argument(value,entry.fields[at],argument.span??span,transferred);
   const called=argument.k==='app'&&argument.fn.k==='name'?table.lookupValueOwner(argument.fn.path,path):null,recorded=Boolean(argument.span&&table.freshCalls.has(`${argument.span.start}:${argument.span.end}`));
   const callProducer=called?.k==='fn'&&readRustStandardSumOwnershipFacts(table,called.result).profile==='owned'&&recorded&&table.same(value,called.result);
   const producer=value.sourceOwnedResultProof===true||value.freshArrayValue===true||table.freshVectorConstructors.has(`${argument.span?.start}:${argument.span?.end}`)||callProducer;
@@ -97,6 +98,6 @@ export function finishRustStandardSumFieldDereference(table,origin,span){
 export function markRustStandardSumOwnedCallResult(table,node,path,origin){
  const facts=readRustStandardSumOwnershipFacts(table,origin),owned=facts.profile==='owned'&&facts.definitionName!=='',names=node.k==='app'&&node.fn.k==='name'?node.fn.path:node.k==='name'?node.path:[];
  const actual=table.lookupValueOwner(names,path),output=actual?.k==='fn'?readRustStandardSumOwnershipFacts(table,actual.result):empty(),recorded=Boolean(node.span&&table.freshCalls.has(`${node.span.start}:${node.span.end}`));
- if(!acceptRustStandardSumOwnedCallResult(owned,actual?.k==='fn'&&output.profile==='owned'&&output.definitionName===facts.definitionName,recorded))return markRustOwnedBoxCallResult(table,node,path,origin);
+ if(!acceptRustStandardSumOwnedCallResult(owned,actual?.k==='fn'&&output.profile==='owned'&&output.definitionName===facts.definitionName,recorded))return markRustOwnedVectorCallResult(table,node,path,markRustOwnedBoxCallResult(table,node,path,origin));
  return {...origin,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceExtendingTemporaryBindings:[],sourceBorrowedPlace:false,sourceOwnedResultProof:true};
 }

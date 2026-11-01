@@ -101,8 +101,7 @@ impl RustParser {
                 return Ok(result);
             }
             if self.cursor.is("str")
-                && (self.type_namespace_model.is_empty()
-                    || self
+                && (self
                         .origins
                         .lookup_type_owner(&["str".to_owned()], &self.module_path)
                         .is_none())
@@ -230,6 +229,18 @@ impl RustParser {
                 ));
             }
         }
+        // Source datatype ownership precedes primitive spelling in every profile.
+        // Do not manufacture primitive Copy evidence for a shadowing declaration.
+        if let Some(declared) = self.origins.lookup_type_owner(&segments, &self.module_path) {
+            if matches!(declared.declaration, super::super::SourceDeclaration::Data) {
+                if self.cursor.is("<") {
+                    return Err(unsupported("Rust generic datatype", "an actual user datatype needs its complete parameter interpretation", span(&token, self.cursor.peek())));
+                }
+                let path = std::iter::once("crate".to_owned())
+                    .chain(declared.full_name.split('.').map(str::to_owned)).collect();
+                return Ok(self.origins.typed(Type::Named { path, span: span(&token, &token) }, &self.module_path, Vec::new()));
+            }
+        }
         if self
             .read_standard_primitive_position(&segments, &self.module_path)?
             .is_some()
@@ -342,10 +353,11 @@ impl RustParser {
                 )
                 .is_some();
         let nominal=self.origins.nominal_vector_element(origin);
-        let disposition=crate::translation::rust_nominal_ownership_rules::read_rust_nominal_vector_element_admission(!shadowed&&accept_rust_source_array_element(
+        let previous=crate::translation::rust_nominal_ownership_rules::read_rust_nominal_vector_element_admission(!shadowed&&accept_rust_source_array_element(
                 origin.ty.as_ref().map_or("", Type::kind),
                 !origin.wrappers.is_empty(),
             ),nominal,self.header_discovery,self.origins.collecting,self.origins.nominal_ownership_scope_complete,origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64);
+        let disposition=crate::translation::rust_owned_recursive_datatype_rules::read_rust_owned_vector_named_admission(&previous,self.origins.owned_vector_named_origin(origin));
         if disposition=="defer"{self.origins.current_type.proven=false;self.origins.current_type.copy_evidence=None;return Ok(false);}
         if disposition!="admit" {
             return Err(unsupported(

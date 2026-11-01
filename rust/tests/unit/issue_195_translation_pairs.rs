@@ -164,11 +164,11 @@ fn rocq_lines(stdout: &str) -> Vec<String> {
         .collect()
 }
 
-struct Execution {
-    accepted: bool,
-    diagnostics: String,
-    ran: bool,
-    lines: Vec<String>,
+pub(super) struct Execution {
+    pub(super) accepted: bool,
+    pub(super) diagnostics: String,
+    pub(super) ran: bool,
+    pub(super) lines: Vec<String>,
     theorems: Option<Run>,
 }
 
@@ -203,7 +203,7 @@ impl Drop for TemporaryDirectory {
 
 /// Validates `code` as a `language` program with its toolchain and observes it:
 /// the printed lines, and for program targets the `--ml-check-theorems` report.
-fn execute(language: &str, code: &str, directory: &Path, name: &str) -> Execution {
+pub(super) fn execute(language: &str, code: &str, directory: &Path, name: &str) -> Execution {
     let extension = corpus()["sources"][language]["extension"]
         .as_str()
         .expect("extension");

@@ -628,6 +628,8 @@ impl<'a> LeanParser<'a> {
             let body = self.with_bound(0, Self::expr)?;
             self.end_decl(&start, "termination_by")?;
             return Ok(Definition::Fn(Box::new(SFn {
+                source_finite_record_loop_helper:false,
+                source_finite_record_loop_witness:None,
                 semantic_ret: None,
                 name,
                 params,
@@ -666,6 +668,8 @@ impl<'a> LeanParser<'a> {
         );
         self.end_decl(&start, "termination_by")?;
         Ok(Definition::Fn(Box::new(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params.into_iter().chain(extra).collect(),

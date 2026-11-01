@@ -1,4 +1,5 @@
 import {retainRustNominalCopyOrigin} from './rust-nominal-copies.js';
+import {recordRustSourceExpressionType,readRustSourceExpressionType,reuseRustSourceExpressionType} from './rust-source-expression-types.js';
 import {resolveRustStandardSumSourcePattern,readRustStandardSumSourceIdentity} from './rust-standard-sum-source.js';
 import {projectRustStandardSumPatternField,markRustStandardSumOwnedCallResult,requireRustStandardSumPatternTransfer,finishRustStandardSumFieldDereference} from './rust-standard-sum-ownership.js';
 import {assignRustCopyClosureLexicalBinding,readRustCopyClosureValueBorrows,carryRustCopyClosureValueBorrows,projectRustCopyClosureValueField,validateRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js';
@@ -6,6 +7,8 @@ import {readRustNominalOwnershipFacts,projectRustNominalPatternField,prepareRust
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {finishRustOwnedBoxDereference,reserveRustOwnedContainerCopies} from './rust-owned-containers.js';
+import {captureRustOwnedVectorConstructor,isRustOwnedVectorProducedValue} from './rust-owned-vectors.js';
+import {acceptRustOwnedArgumentReadCheck} from './rust-owned-recursive-datatype-rules.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {readRustStandardSumGuardBindingDisposition,readRustStandardSumGuardAlternativeBindingError,readRustStandardSumGuardAliasTransferError} from './rust-standard-sum-guard-rules.js';
 import {countRustStandardSumGuardAliases,sameRustStandardSumGuardLineage} from './rust-standard-sum-guards.js';
@@ -338,6 +341,16 @@ export class RustSourceOrigins {
     this.expressions.set(node, clone(origin));
     return node;
   }
+  // Pure source alpha-renaming/instance copies preserve the same expression
+  // witness. Cache entries are immutable; origin() returns an independent
+  // clone before any caller can alter facts. This allocates no type tree and
+  // never manufactures a producer or binding identity from a type contract.
+  reuseExpressionOrigin(from,to){const origin=this.expressions.get(from);if(origin)this.expressions.set(to,origin);reuseRustSourceExpressionType(this,from,to);return to;}
+  // Read-only host inspection for type selection. Callers never alter this
+  // retained witness; public origin() remains the independent mutable view.
+  recordedExpressionOrigin(node){return this.expressions.get(node);}
+  recordExpressionType(node,path){return recordRustSourceExpressionType(this,node,path);}
+  recordedExpressionType(node){return readRustSourceExpressionType(this,node);}
 
   // The parser retains constructor evidence while each lexical scope is live.
   // A named vector is never a constructor, even if its binding was fresh.
@@ -352,6 +365,7 @@ export class RustSourceOrigins {
   markOwnedStringConstructor(node,origin){return this.mark(node,{...origin,sourceLexicalBindingIdentity:null,sourceValueBorrowBindings:[],sourceValueFieldBorrowBindings:null,sourceStandardSumBorrowedField:false,sourceStandardSumPatternMove:false,sourceNominalBorrowedField:false,sourceNominalPatternMove:false,sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[],sourceExtendingTemporaryBindings:[],sourceBorrowedPlace:false,sourceOwnedResultProof:acceptRustOwnedBindingValue(origin.type?.kind??'',origin.textSourceModel??'',origin.wrappers.length,origin.proven===true)});}
 
   markVectorConstructor(node,origin) {
+    if(this.ownedContainerSourceEnabled)return captureRustOwnedVectorConstructor(this,node,origin);
     const values=node.k==='array'?node.items.map(item=>this.origin(item.value,origin.path)):[];
     const owner=origin.expandedSourceOwner??origin.sourceOwner,element=origin.type?.kind==='array'?this.typeOrigin(origin.type.element,origin.path):null;if(element&&owner?.kind==='library'&&owner.path.join('::')==='std::vec::Vec'&&owner.arguments.length===1)element.sourceOwner=structuredClone(owner.arguments[0]);
     if(element&&!acceptRustSourceArrayElement(element.type.kind,false)&&!acceptRustNominalVectorElement(this,element)||values.some(value=>(value.type||value.fields||value.wrappers.length)&&!acceptRustSourceArrayElement(value.type?.kind??'tuple',value.wrappers.length>0)&&!acceptRustNominalVectorElement(this,value)))throw unsupported('Rust array element','only direct immutable scalar, owned string or verified nominal Copy vector elements are admitted',node.span);
@@ -361,6 +375,7 @@ export class RustSourceOrigins {
 
   freshVectorArgument(node,path,allowCalls=true) {
     const origin=this.origin(node,path);
+    if(isRustOwnedVectorProducedValue(this,origin))return true;
     if(origin.type?.kind==='array'&&origin.sourceOwnedResultProof===true&&this.availableOwnedBinding(origin))return true;
     if(acceptRustScalarVectorCopyOccurrence(node.k,origin.arraySourceModel??'',origin.wrappers.length,this.freshVectorConstructors.has(`${node.span?.start}:${node.span?.end}`)))return true;
     if(allowCalls&&acceptRustKnownFreshVectorCall(node.k,origin.arraySourceModel??'',origin.wrappers.length,Boolean(origin.freshArrayValue)))return true;
@@ -400,7 +415,7 @@ export class RustSourceOrigins {
     this.pointerIntegerArgument(actual,value(),node.span);
     if(this.sharedArrayHandleSourceModel&&!this.collecting&&actual.type?.kind==='array'&&!acceptRustSharedArrayHandleTransfer(actual.arraySourceModel,actual.arraySourceModel,actual.wrappers.length,actual.wrappers.length))throw unsupported('Rust shared array handle source','a binding requires an actual owned shared handle, not its vector payload',node.span);
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
-    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue&&!this.availableOwnedBinding(actual)) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
+    if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue&&!this.availableOwnedBinding(actual)&&!isRustOwnedVectorProducedValue(this,actual)) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
     if(isRustOwnedBindingValue(this,actual))this.consumeOwnedBinding(actual,node.span);
     const binding={...clone(declared??actual),sourceBoxLayers:structuredClone(actual.sourceBoxLayers??[]),...(actual.wrappers.length?{sourceBindingIdentity:actual.sourceBindingIdentity,sourceLoanBindingIdentities:actual.sourceLoanBindingIdentities??[]}:{}),...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue:false,freshVectorResultContract:false,sourceExtendingTemporaryBindings:[],sourcePlaceBindingIdentity:null,sourcePlaceLoanBindingIdentities:[]};
@@ -419,10 +434,10 @@ export class RustSourceOrigins {
     const origin=this.origin(node,path);this.pointerIntegerArgument(origin,value(),node.span);
     return this.mark(node,origin);
   }
-  argument(actualOrigin, expectedOrigin, span) {
+  argument(actualOrigin, expectedOrigin, span,transferred=false) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
-    if(actualOrigin.wrappers.length)checkRustOwnedOrigin(this,actualOrigin,span);
+    if(acceptRustOwnedArgumentReadCheck(actualOrigin.wrappers.length,transferred))checkRustOwnedOrigin(this,actualOrigin,span);
     this.pointerIntegerArgument(actualOrigin,expectedOrigin,span);
     const callableError=readRustCallableOwnerError(projectRustCallableOwnerDescriptor(actualOrigin),projectRustCallableOwnerDescriptor(expectedOrigin));if(callableError)throw unsupported('Rust callable source owner',callableError,span);
     const pointerError=readRustFunctionPointerCoercionError(expectedOrigin.type?.kind==='function'&&expectedOrigin.copyEvidence===true,actualOrigin.type?.kind??'',Boolean(actualOrigin.copyClosureSpan),actualOrigin.copyClosureCaptureCount??-1,actualOrigin.proven);if(pointerError)throw unsupported('Rust function pointer coercion',pointerError,span);
@@ -471,13 +486,13 @@ export class RustSourceOrigins {
     if (!expected || args.length !== expected.length) return;
     for (let index = 0; index < args.length; index += 1) {
       const parameter=expected[index];
-      const actual=this.origin(args[index],path),transferred=this.ownedArgumentTransfers.has(args[index]);if(!transferred)checkRustOwnedOrigin(this,actual,span);const consumable=transferred||this.availableOwnedBinding(actual);
+      const actual=this.origin(args[index],path),transferred=this.ownedArgumentTransfers.has(args[index]);if(!transferred)checkRustOwnedOrigin(this,actual,span);const consumable=transferred||this.availableOwnedBinding(actual)||isRustOwnedVectorProducedValue(this,actual);
       const fresh=parameter.arraySourceModel==='owned vector'&&parameter.wrappers.length===0&&acceptRustFreshOwnedVectorArgument(ordinary,parameter.arraySourceModel,parameter.wrappers.length,parameter.type?.kind==='array'?parameter.type.element.kind:'',this.freshVectorArgument(args[index],path));
       if (parameter.arraySourceModel === 'owned vector' && parameter.wrappers.length === 0
         && !fresh&&!consumable) throw unsupported('owned vector argument', 'passing a vector by value needs an explicit consumption proof', span);
       // Immutable reference coercions may dereference Box behind a reference;
       // an owned Box never coerces into its owned inner value.
-      this.argument(fresh?{...actual,proven:true,uncertain:false,wrappers:[],arraySourceModel:'owned vector'}:actual, expected[index], span);
+      this.argument(fresh?{...actual,proven:true,uncertain:false,wrappers:[],arraySourceModel:'owned vector'}:actual, expected[index], span,transferred);
       if(!transferred&&isRustOwnedBindingValue(this,parameter))this.consumeOwnedBinding(actual,span);
     }
   }

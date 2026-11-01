@@ -6,9 +6,11 @@ import {projectRustCopyClosureValueField,readRustCopyClosureValueBorrows} from '
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings} from './rust-owned-binding-rules.js';
 import {consumeRustOwnedOrigin,isRustOwnedBindingValue,checkRustOwnedOrigin,trackRustOwnedBindings} from './rust-owned-bindings.js';
 import {planRustNominalPatternTransfers,readRustNominalPatternAlternativeError,readRustNominalCloneError} from './rust-nominal-ownership-rules.js';
+import {acceptRustNominalCloneInherentOverride} from './rust-nominal-ownership-rules.js';
 import {acceptRustNominalVectorElementLeaf,planRustNominalVectorElementOwners,acceptRustNominalVectorElement as acceptVectorElementFacts} from './rust-nominal-ownership-rules.js';
 import {readRustNominalOwnershipVectorTemplateNode,planRustNominalOwnershipVectorNodes,acceptRustNominalVerifiedVectorClone} from './rust-nominal-ownership-rules.js';
-import {planRustOwnedRecursiveNominalOwners,acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
+import {planRustOwnedRecursiveNominalOwners,acceptRustOwnedBoxTypeNode,planRustOwnedNominalRuntimeFacts} from './rust-owned-recursive-datatype-rules.js';
+import {readRustOwnedContainerFacts} from './rust-owned-containers.js';
 import {readRustNominalOwnershipGraphError,readRustNominalOwnershipLeaf,readRustNominalOwnershipSumNode,planRustNominalOwnershipOwners,acceptRustNominalOwnershipDeclarationOwner} from './rust-nominal-ownership-rules.js';
 const empty=()=>({profile:'',cloneImplemented:false,owner:'',definitionName:'',roles:[]});
 function actualDeclarationOwner(origins,origin,source,declared){if(source?.kind==='declaration'&&source.arguments.length===0&&declared?.k==='data'&&origins.lookupTypeOwner(source.path,origin.path)?.fullName===declared.fullName)return {...source,path:declared.fullName.split('.')};return source;}
@@ -33,9 +35,7 @@ function graph(origins,rows){
  const resolved=planRustNominalOwnershipVectorNodes(kinds,ends,edges,targets,elements);if(resolved.length!==kinds.length)throw unsupported('Rust nominal vector element','the actual vector field edges need their complete finite element witness');
  const plan=planRustNominalOwnershipOwners(owners,owners.map(name=>rows.get(name).copy),owners.map(name=>rows.get(name).derivesClone),resolved,ends,edges,targets,roots);if(plan[0]==='error')throw unsupported('Rust nominal ownership',plan[1]);
  const recursive=planRustOwnedRecursiveNominalOwners(owners,owners.map(name=>rows.get(name).copy),owners.map(name=>rows.get(name).derivesClone),kinds,ends,edges,targets,roots,elementLeaves);if(recursive[0]==='error')throw unsupported('Rust recursive nominal ownership',recursive[1]);
- // Recursive capabilities remain TYPE-only until Box value transport and all
- // recursive datatype backends are connected; the old runtime gate stays exact.
- owners.forEach((name,index)=>{const row=rows.get(name);row.profile=plan[1+2*index];row.cloneImplemented=plan[2+2*index]==='Clone';row.recursiveProfile=recursive[1+5*index];row.recursiveCloneImplemented=recursive[2+5*index]==='Clone';row.vectorElement=elements[index];row.closedOwnedContainer=recursive[3+5*index]==='closed';row.constructorWitnessRank=Number(recursive[4+5*index]);row.constructorWitness=Number(recursive[5+5*index]);});
+ owners.forEach((name,index)=>{const row=rows.get(name);row.recursiveProfile=recursive[1+5*index];row.recursiveCloneImplemented=recursive[2+5*index]==='Clone';row.vectorElement=elements[index];row.closedOwnedContainer=recursive[3+5*index]==='closed';row.constructorWitnessRank=Number(recursive[4+5*index]);row.constructorWitness=Number(recursive[5+5*index]);const runtime=planRustOwnedNominalRuntimeFacts(origins.ownedContainerSourceEnabled===true,plan[1+2*index],plan[2+2*index]==='Clone',row.recursiveProfile,row.recursiveCloneImplemented,row.closedOwnedContainer,row.constructorWitnessRank,row.constructorWitness);row.profile=runtime[0];row.cloneImplemented=runtime[1]==='Clone';});
 }
 export function finishRustNominalOwnershipDeclarations(origins){
  if(origins.nominalOwnershipScopeComplete!==true)throw unsupported('Rust nominal ownership','the complete declaration scope must succeed before destructor-free source ownership is selected');
@@ -90,6 +90,7 @@ export function prepareRustNominalPatternTransfers(table,maps,span,deferredGuard
 export function readRustNominalClone(parser,receiver,method,path){
  if(!parser.ordinaryCompletionContext()||method.value!=='clone')return null;
  const table=parser.origins,actual=table.origin(receiver,path),facts=readRustNominalOwnershipFacts(table,actual);if(!facts.profile)return null;
+ const selected=parser.inherentMethods.get(facts.owner+'.clone');if(acceptRustNominalCloneInherentOverride(facts.owner,selected?.owner??'',selected?.mode??0))return null;
  checkRustOwnedOrigin(table,actual,receiver.span);const error=readRustNominalCloneError(true,facts.profile,readRustSourceCloneImplementation(table,actual),actual.wrappers.length,actual.sourceBorrowedPlace===true,trackRustOwnedBindings(table),table.availableOwnedBinding(actual),actual.sourceOwnedResultProof===true);if(error)throw unsupported('Rust nominal Clone',error,receiver.span);
  const c=parser.cursor;c.expect('(','nominal Clone');const close=c.expect(')','nominal Clone'),span={start:receiver.span?.start??method.start,end:close.end},name=parser.freshProductBinding();
  const local=table.mark({k:'name',path:[name],span},actual),node={k:'let',name,type:actual.type,value:receiver,body:local,span};
@@ -97,6 +98,7 @@ export function readRustNominalClone(parser,receiver,method,path){
 }
 export function readRustSourceCloneImplementation(origins,origin,depth=0,active=new Set(),context={visits:0}){
  if(readRustNominalOwnershipGraphError(++context.visits,0,depth)!==''||!origin?.proven)return false;
+ const container=readRustOwnedContainerFacts(origins,origin);if(container.node==='box'||container.node==='vector')return container.profile==='owned'&&container.closed&&container.cloneImplemented;
  const owner=origin.type?.kind==='named'?origins.lookupTypeOwner(origin.type.path,origin.path):null,stored=owner?.standardSumSourceOrigin,sum=stored?.standardSumSource;
  if(sum){if(stored.proven!==true||sum.provisional||active.has(owner.fullName))return false;active.add(owner.fullName);try{return sum.arguments.every(origin=>readRustSourceCloneImplementation(origins,origin,depth+1,active,context));}finally{active.delete(owner.fullName);}}
  if(owner)return origins.nominalCopyOwners.has(owner.fullName)||readRustNominalOwnershipFacts(origins,origin).cloneImplemented;

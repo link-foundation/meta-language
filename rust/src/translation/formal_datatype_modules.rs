@@ -26,16 +26,38 @@ fn scope_key(path:&[String])->String {
 
 pub(crate) fn formal_datatype_module_dependencies(plan:&FormalDatatypeModules<'_>)->Result<HashMap<String,HashSet<String>>> {
     let mut scopes=HashMap::<String,HashSet<String>>::new();
+    let mut target_scopes=HashMap::<String,Vec<String>>::new();
     for alias in &plan.aliases {
         let boundary=&alias.source_module_path[..alias.target_module_path.len()+1];
         scopes.entry(scope_key(boundary)).or_default().insert(alias.target_full_name.clone());
+        for depth in 1..=alias.target_module_path.len(){let path=alias.target_module_path[..depth].to_vec();let key=scope_key(&path);if !target_scopes.contains_key(&key)&&target_scopes.len()>=8192{return Err(unsupported("target declaration dependencies","datatype scope prerequisites exceed their finite traversal budget",None));}target_scopes.insert(key,path);}
     }
-    let known=plan.program.declarations.iter().map(|entry|entry.full_name()).collect::<HashSet<_>>();
+    if !plan.aliases.is_empty(){for entry in &plan.program.declarations{if matches!(entry,Decl::Data(_)){for depth in 1..=entry.module_path().len(){
+        let path=entry.module_path()[..depth].to_vec();let key=scope_key(&path);
+        if !target_scopes.contains_key(&key)&&target_scopes.len()>=8192{return Err(unsupported("target declaration dependencies","datatype scope prerequisites exceed their finite traversal budget",None));}
+        target_scopes.insert(key,path);
+    }}}}
+    let known=plan.program.declarations.iter().map(|entry|(entry.full_name(),entry)).collect::<HashMap<_,_>>();
+    let mut external_scopes=HashMap::<String,HashSet<String>>::new();let mut visits=0usize;
+    for(key,path)in target_scopes{
+        let mut pending=plan.program.declarations.iter().filter(|entry|matches!(entry,Decl::Data(_))&&entry.module_path().starts_with(&path)).collect::<Vec<_>>();
+        let mut seen=HashSet::new();let mut outside=HashSet::new();
+        while let Some(entry)=pending.pop(){
+            if !seen.insert(entry.full_name()){continue;}
+            visits+=1;if visits>1048576{return Err(unsupported("target declaration dependencies","datatype scope prerequisites exceed their finite traversal budget",None));}
+            for name in super::emit_common::dependencies(entry){
+                let Some(dependency)=known.get(name.as_str()).copied().filter(|entry|matches!(entry,Decl::Data(_)))else{continue;};
+                if !dependency.module_path().starts_with(&path){outside.insert(name);}
+                if !seen.contains(dependency.full_name()){pending.push(dependency);}
+            }
+        }
+        external_scopes.insert(key,outside);
+    }
     let mut result=HashMap::new();let mut edges=0usize;
     for entry in &plan.program.declarations {
         let mut required=HashSet::new();
-        for depth in 1..=entry.module_path().len(){if let Some(owners)=scopes.get(&scope_key(&entry.module_path()[..depth])){for owner in owners{
-            if !known.contains(owner.as_str()){return Err(unsupported("target declaration dependencies","extra ordering dependencies require actual declared owners",None));}
+        for depth in 1..=entry.module_path().len(){let key=scope_key(&entry.module_path()[..depth]);for owners in [scopes.get(&key),external_scopes.get(&key)].into_iter().flatten(){for owner in owners{
+            if !known.contains_key(owner.as_str()){return Err(unsupported("target declaration dependencies","extra ordering dependencies require actual declared owners",None));}
             if required.insert(owner.clone()){edges+=1;if edges>131072{return Err(unsupported("target declaration dependencies","extra ordering dependencies require bounded actual declaration edges",None));}}
         }}}
         if !required.is_empty(){result.insert(entry.full_name().to_owned(),required);}

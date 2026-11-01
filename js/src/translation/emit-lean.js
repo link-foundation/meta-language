@@ -48,7 +48,7 @@ import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, datatypeGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
+import { EmitState, mutualGroups, datatypeGroups, dependencies, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
 import {readCallableDataFacts,readCallableDataRecursiveProfile,readFormalDatatypeConstructiveProfiles} from './callable-data.js';
 import {readCallableDataDerivation,renderCallableDataLeanDefault,readFormalDatatypeLeanBlockDerivation} from './callable-data-derivation-rules.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
@@ -348,6 +348,7 @@ class LeanEmitter {
 
   data(entry,mutual=false) {
     const facts=readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations),profile=facts.callable&&!mutual?readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations):null;
+    const selfProfile=!mutual&&!facts.callable&&dependencies(entry).has(entry.fullName)?readFormalDatatypeConstructiveProfiles({kind:'data',name:entry.fullName},this.program.declarations).get(entry.fullName):null;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const ctors = entry.ctors.map((ctor) => {
@@ -356,8 +357,9 @@ class LeanEmitter {
     });
     // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
     // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-    const deriving = mutual?readFormalDatatypeLeanBlockDerivation(facts.callable,Boolean(entry.output),this.undecidable(entry.fullName)):readCallableDataDerivation('Lean',facts.callable,false,Boolean(entry.output),this.undecidable(entry.fullName));
+    const deriving = mutual||selfProfile?readFormalDatatypeLeanBlockDerivation(facts.callable,Boolean(entry.output),this.undecidable(entry.fullName)):readCallableDataDerivation('Lean',facts.callable,false,Boolean(entry.output),this.undecidable(entry.fullName));
     if(profile?.recursive){const witness=entry.ctors[profile.witness];return [`inductive ${name} where`,...ctors,renderCallableDataLeanDefault(name,this.state.ctorRef(entry.fullName,witness.name),witness.fields.length)].join('\n');}
+    if(selfProfile){const witness=entry.ctors[selfProfile.witness];return [`inductive ${name} where`,...ctors,...(deriving?[`  deriving ${deriving}`]:[]),renderCallableDataLeanDefault(name,this.state.ctorRef(entry.fullName,witness.name),witness.fields.length)].join('\n');}
     return [`inductive ${name} where`, ...ctors, ...(deriving?[`  deriving ${deriving}`]:[])].join('\n');
   }
   mutualData(group){
@@ -474,6 +476,7 @@ class LeanEmitter {
   }
 
   expr(e, depth) {
+    if(e.k==='propositionValue')return this.check({p:e.op,left:e.left,right:e.right,domain:e.domain,...(e.sameValue?{sameValue:true}:{})});
     const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
     if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Lean',this.expr(copy,depth));}
     const units=readFormalUnitStringExpression(this,e,depth);

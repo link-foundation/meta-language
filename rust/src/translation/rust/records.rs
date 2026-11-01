@@ -295,7 +295,8 @@ impl RustParser {
                 self.cursor.expect(":", Some("tuple record field"))?;
             }
             let value = if colon {
-                self.expr(path, Options::default())?
+                let expected=record.as_ref().and_then(|record|{let index=record.names.iter().position(|field|field==&name)?;let mut constructor=vec!["crate".to_owned()];constructor.extend(record.constructor.split('.').map(str::to_owned));let entry=self.origins.lookup_value_owner(&constructor,&[])?;match entry.declaration{SourceDeclaration::Constructor{owner,fields,..}if owner==record.owner=>fields.get(index).cloned(),_=>None}});
+                let previous=std::mem::replace(&mut self.standard_sum_source.expected_origin,expected.clone());let read=self.read_expected_copy_closure(path,expected.as_ref());self.standard_sum_source.expected_origin=previous;read?
             } else {
                 let value=SExpr::new(
                     SNode::Name {

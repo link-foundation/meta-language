@@ -787,3 +787,148 @@ select ECMAScript 2024-2025 on Node `>=22.15 <23 || >=24 <25`, and report
 uncovered Node versions; native target controls select Rust `>=1.90 <1.100`.
 These are authored controls and producer recipes, not observed results. No
 test, generator, validator, compilation, runtime execution or Git command ran.
+
+## Actual Error subclass source consumer
+
+`javascript-error-classes.js` captures complete declaration sources and actual
+CST lexical bindings for the explicit `actual intrinsic Error subclasses 1`
+profile. The concrete anchor is the whole current `diagnostics.js`, including
+`TranslationError`, `unsupported` and `typeError`; no constructor/helper body
+is evaluated by capture. Its source/hash/UTF16 spans and complete symbolic plan
+are retained. The separate ordinary closed-class inheritance gate remains.
+`javascript-error-class-rules.js` selects the bounded dominant-super/ordered
+field profile; unknown bases, shadowed globals, additional statements, options,
+prototype mutation and alternate returns keep exact source refusals.
+
+`javascript-error-class-source.js` compiles actual parameter defaults, source
+expressions, helpers, dominant `super`, and ordered fields to the existing call
+machine. Defaults run at call time, once, in parameter order; object defaults
+use the actual realm Object prototype. Object property reads retain machine
+getter dispatch. Primitive boxing remains an explicit real-realm operation.
+`javascript-error-module.js` connects capture, registry compilation, call/new
+entries, bounded execution and host resumptions. The new value-producing Error
+allocation protocol is distinct from the existing always-throwing source Error
+protocol. Actual host allocator exceptions enter the existing throw/handler
+algebra instead of initializing `this` with the wrong value.
+
+`javascript-error-realm.js` is an engine boundary, not a handwritten native
+constructor replacement. Supplied declaration values must retain the actual
+captured function text and base/prototype relationships. Only actual registered
+realm intrinsics execute in the host; represented constructor/helper bodies
+always execute in the portable machine. `Reflect.construct` invokes the actual
+base Error with the actual derived newTarget. Live Error handles use the narrow
+opaque heap protocol, retaining lazy stack access and later source field writes.
+Ordinary data passed into/out of those fields remains a live machine handle,
+not a copied record. Reflection and source accessor callbacks through host
+operations retain explicit unsupported boundaries.
+
+Error allocation freshness uses the prior Object identity/kind/callability and
+Symbol directory, never a maximum numeric ID. The result must be absent from
+both prior directories and preserve every prior identity kind. In particular a
+MAX_U64 Symbol leaves unused smaller IDs available; five independent decisions
+retain that case, prior reuse, removal and retyping. The external allocator
+remains the authority for globally fresh live objects; structural heap flags
+alone cannot establish authentic Error internal slots.
+
+The deferred `draft-javascript-error-class-source.mjs` author retains the full
+actual diagnostics source plan as matching runtime assets. Pure source kernels
+must be self-translated by the existing automatic author; no generated Rust
+file or handwritten native Error body was authored here. The new fixture has
+eight constructor-policy decisions, five allocation-directory decisions, five
+complete originals and eight complete source refusals. The connected test
+retains real original constructor results, live prototype/newTarget checks,
+fresh defaults, lazy stack first lines, complete source identity and all four
+kernel emission/codec obligations. Node coverage is explicitly bounded to
+`>=22.15 <23 || >=24 <25` and reports uncovered versions.
+
+Full original source stack frames (file/function/line/column) still require
+actual engine source-frame mapping. Engine allocator frames are not substitute
+source frames. General Error reflection, additional constructor syntax and
+source accessor callbacks crossing host operations also remain retained exact
+requirements. This dedicated executable module profile does not yet link an
+imported diagnostics constructor into an otherwise ordinary typed source
+closure. The fixture's required-host-boundary rows retain these obligations;
+they are not evidence cells. No test, runtime execution, author, validator,
+compiler, formatter, ledger operation or Git command ran in this source batch.
+
+The native control author now has the separate `exact pure fixture data 2`
+selection. Its default reader and existing BigInt/undefined refusal controls
+remain unchanged. `read-exact-fixture-data.mjs` interprets only bounded literal
+data syntax, local aggregate constructor arrows, actual array/record spreads,
+safe-integer slice bounds and pure scalar-equality filter selectors. It never
+imports a fixture, evaluates JavaScript or invokes a policy. It checks every
+top-level initializer, including unselected ones, so an unnoticed dynamic
+initializer cannot mutate the selected export. Arithmetic, arbitrary methods,
+statement bodies, coercive slice bounds, sparse arrays, unknown references,
+cyclic dependencies and default-parameter temporal dead zones stay explicit.
+
+`readExactFixtureExport` returns tagged descriptors distinguishing undefined,
+null, signed Number source, exact BigInt decimal digits and UTF16 text. Full
+source/hash/bytes, selected export interval, dependency declarations and data
+construction derivations accompany the expanded JavaScript assertion source.
+All descriptor values are plain serializable Links data; BigInt and undefined
+are never coerced through JSON null. Native selections retain the explicit
+profile, revalidate both controls and whole-export capture, and record selected
+literal profiles in their author receipt. The same original coordinate cannot
+silently select conflicting profiles. Original receipt fields/default-profile
+assertions remain available. Eleven independent positive author inputs and 17
+negative inputs, plus every Error fixture export, are retained in the new
+deferred `exact-fixture-authoring.test.js`; none has executed.
+
+Native assertion rendering now refuses any repeated aggregate descriptor in one
+invocation's complete arguments/expected DAG, including nested sharing within
+one argument. This prevents a duplicated literal from silently losing an
+identity observable. Whole-export Links retain the actual descriptor DAG;
+their rendered text is explicitly labeled structural display, not execution
+equivalence. A retained repeated-input counterexample exercises the narrower
+assertion refusal. The original literal-author profile is unchanged.
+
+## Supplied Error module linkage
+
+The explicit `resolved supplied Error source modules 1` closure profile reuses
+the same CST lexical binding aliases, provider resolution and source edit
+receipts as ordinary closed-class composition. The filesystem author is now a
+thin adapter; the single reusable in-memory implementation ships under
+`src/translation/source-library-closure.js`, `source-library-classes.js` and
+`compose-source-library-aliases.js`. Compatibility script exports preserve old
+callers. Runtime imports no longer depend on unpublished author scripts.
+
+`javascript-error-closure-source.js` recomposes every archived source from the
+complete supplied original module directory before accepting declaration,
+entry or edit metadata. Each compiled callable is tied to its actual original
+CST declaration, source hash and interval. Public entries come only from the
+actual entry module's resolved exports. Whole original sources, hashes, bytes
+and composition receipts remain in `completeSourceReceipts`. Accessor metadata,
+nonenumerable/sparse hidden archive fields, missing modules, forged owner rows
+and forged public entries cannot certify source ownership.
+
+`javascript-error-closure.js` connects those importer entries to the existing
+Error source compiler, call machine and opaque host authority. Ordinary
+importer calls and throws run in the same semantic program as the complete
+actual diagnostics dependency. This does not pass an opaque Error off as a
+typed record or Unit; the ordinary typed checker's old rejection remains.
+`draftSourceLibrary` selects this semantic asset author only through the
+explicit `sourceErrorClasses` option, and refuses an implied ordinary generated
+native library/projection. The real example importer loads the full current
+`js/src/translation/diagnostics.js`; it is not a rewritten diagnostic stub.
+
+Renaming preserves original function/class `.name` only through an authenticated
+transient witness rebuilt from those complete sources. Before changing any
+name, the host proves every supplied declaration's actual text and standard
+configurable own-name descriptor. Refusing host handles expose the authenticated
+original name and refuse direct body invocation and source-text reflection.
+`prototype.constructor` observations encode the same semantic source callable
+identity; they do not invoke the raw represented constructor. Actual source
+calls back through returned helper handles re-enter the portable machine.
+
+`source-library-error-composition.mjs` retains 11 shared decisions, eight
+complete multi-module originals, six complete refusals and two real source
+anchors. Future controls retain original importer results and throws, distinct
+same-spelled providers, aliases/facades/shadows, actual constructor identity and
+names, callback re-entry, default CST/codecs, semantic Links text/binary reloads,
+complete source receipts and ownership tamper refusals. The automatic semantic
+kernels retain their existing four-target obligations. Full original source
+stack frames, source function text reflection and additional opaque host
+operations remain explicit requirements. Broader `ir.js` body constructs and
+its runtime policy-loading initializer remain separate work. No source author,
+test, generator, validator, compiler, runtime, CI feedback or Git command ran.

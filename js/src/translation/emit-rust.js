@@ -1318,6 +1318,7 @@ class RustEmitter {
   }
 
   expr(e) {
+    if(e.k==='propositionValue')return this.prop({p:e.op,left:e.left,right:e.right,domain:e.domain,...(e.sameValue?{sameValue:true}:{})});
     const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
     if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Rust',this.borrow(copy));}
     const projection = emitReferenceArrayProjection(this, e);

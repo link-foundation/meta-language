@@ -145,6 +145,7 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
         let source = rule[2].as_str();
         let child = source.map_or(&Value::Null, |source| &value[source]);
         let projected = match mode {
+            "proposition-comparison"=>{let mut prop=json!({"p":value["op"],"left":expression(&value["left"],program)?,"right":expression(&value["right"],program)?});if value["sameValue"]==true{prop["sameValue"]=json!(true);}prop},
             "copy" => {
                 if source.and_then(|source| value.get(source)).is_none() {
                     continue;

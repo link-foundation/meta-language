@@ -10,7 +10,7 @@ pub(super) struct Slot{pub(super) lexical:String,root:String,pub(super) origin:S
 struct Request{slots:Vec<Slot>}
 struct Frame{id:usize,before:Vec<Slot>,callable_before:usize,request:Option<Request>}
 #[derive(Default)]
-pub(super) struct OwnedRecordState{slots:Vec<Slot>,frames:Vec<Frame>,next:usize,current_callable:usize,next_callable:usize,request:Option<Request>,completed:Vec<(usize,Vec<Slot>)>,pub(super) declarations:std::collections::HashMap<String,Slot>,pub(super) effects:Option<super::owned_record_effects::OwnedRecordEffects>}
+pub(super) struct OwnedRecordState{slots:Vec<Slot>,frames:Vec<Frame>,next:usize,current_callable:usize,next_callable:usize,request:Option<Request>,completed:Vec<(usize,Vec<Slot>)>,pub(super) declarations:std::collections::HashMap<String,Slot>,pub(super) effects:Option<super::owned_record_effects::OwnedRecordEffects>,pub(super) completion_snapshot_entries:usize,pub(super) completion_snapshot_text:usize}
 pub(super) struct OwnedRecordStateStatement{pub(super) bindings:Vec<Binding>,pub(super) value:SExpr}
 struct StateRead{node:SExpr,origin:SourceOrigin,slots:Vec<Slot>}
 #[derive(Clone)]

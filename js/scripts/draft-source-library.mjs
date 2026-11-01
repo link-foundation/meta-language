@@ -19,9 +19,14 @@ import {projectSourceLibraryEntryPoints} from './source-library-entry-points.mjs
 import {shareSourceConditionalConstructors} from './source-conditional-constructors.mjs';
 import {shareSourceBooleanConstructorMatches,shareSourceClosedConstructorMatches} from './source-boolean-match-sharing.mjs';
 import {readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError} from '../src/translation/source-library-class-rules.js';
+import {draftJavaScriptErrorSourceClosure} from './draft-javascript-error-source-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceErrorClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+  if(sourceErrorClasses!==''){
+    if(moduleName!==undefined||nativeEntryPoints!==''||programEntryPoints!=='')throw new TypeError('semantic Error source assets use their interpreted module entry ownership; an ordinary generated native library or export projection is not implied');
+    return draftJavaScriptErrorSourceClosure({sourcePath,programAsset,sourceDependencies,sourceAliases,sourceClasses,sourceErrorClasses,sourceReExports});
+  }
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');

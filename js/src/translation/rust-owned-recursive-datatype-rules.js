@@ -121,3 +121,78 @@ export function readRustOwnedBoxTypeError(selected,header,complete,role,closed){
 /** @param {boolean} actual @param {boolean} function_ @param {boolean} owner
  * @param {boolean} type @param {boolean} recorded @returns {boolean} */
 export function acceptRustOwnedBoxCallResult(actual,function_,owner,type,recorded){return actual&&function_&&owner&&type&&recorded;}
+/** An actual nominal graph may extend the earlier acyclic ownership profile.
+ * Clone remains a separate actual implementation witness.
+ * @param {boolean} selected @param {string} oldRole @param {boolean} oldClone
+ * @param {string} role @param {boolean} clone @param {boolean} closed
+ * @param {number} rank @param {number} constructor @returns {string[]} */
+export function planRustOwnedNominalRuntimeFacts(selected,oldRole,oldClone,role,clone,closed,rank,constructor){
+ if(oldRole==='copy'||oldRole==='owned')return [oldRole,oldClone?'Clone':''];
+ if(!selected||role!=='owned'||!closed||!Number.isInteger(rank)||rank<1||rank>65536||!Number.isInteger(constructor)||constructor<0||constructor>65536)return ['',''];
+ return ['owned',clone?'Clone':''];
+}
+/** @param {boolean} selected @param {boolean} header @param {boolean} complete
+ * @param {string} kind @param {number} wrappers @param {string} owner
+ * @param {string} path @param {number} arguments_ @param {string} element
+ * @param {string} profile @param {boolean} closed @returns {string} */
+export function readRustOwnedVectorSignaturePhase(selected,header,complete,kind,wrappers,owner,path,arguments_,element,profile,closed){
+ if(!selected||kind!=='array'||wrappers!==0||owner!=='library'||!['std::vec::Vec','alloc::vec::Vec'].includes(path)||arguments_!==1||element!=='named')return '';
+ if(header&&!complete)return 'defer';
+ return complete&&profile==='owned'&&closed?'admit':'';
+}
+/** @param {string} role @param {boolean} same @param {boolean} transferred
+ * @param {boolean} available @param {boolean} produced @param {boolean} collecting @returns {string} */
+export function readRustOwnedVectorElementProductionError(role,same,transferred,available,produced,collecting){
+ if(!['copy','owned'].includes(role)||!same)return 'owned vector construction needs each actual complete matching element type';
+ return collecting||role==='copy'||transferred||available||produced?'':'an owned vector element needs its actual available binding or completed producer';
+}
+/** @param {boolean} actual @param {boolean} function_ @param {boolean} owner
+ * @param {boolean} type @param {boolean} recorded @returns {boolean} */
+export function acceptRustOwnedVectorCallResult(actual,function_,owner,type,recorded){return actual&&function_&&owner&&type&&recorded;}
+/** @param {string} role @param {boolean} closed @param {number} wrappers @returns {boolean} */
+export function acceptRustOwnedVectorNamedElement(role,closed,wrappers){return wrappers===0&&closed&&(role==='copy'||role==='owned');}
+/** @param {number} count @returns {string} */
+export function readRustOwnedVectorElementCountError(count){return !Number.isSafeInteger(count)||count<0||count>65536?'owned vector construction exceeds its finite actual element profile':'';}
+/** @param {string} previous @param {boolean} actual @returns {string} */
+export function readRustOwnedVectorNamedAdmission(previous,actual){return previous==='refuse'&&actual?'admit':previous;}
+/** @param {string} node @param {string} role @param {boolean} closed @param {boolean} produced @returns {boolean} */
+export function acceptRustOwnedVectorProducedValue(node,role,closed,produced){return node==='vector'&&role==='owned'&&closed&&produced;}
+/** @param {string} phase @param {boolean} actual @param {boolean} owner
+ * @param {boolean} type @param {boolean} value @param {boolean} borrowed
+ * @param {boolean} collecting @returns {boolean} */
+export function acceptRustOwnedVectorFunctionResult(phase,actual,owner,type,value,borrowed,collecting){return phase==='admit'&&actual&&owner&&type&&(collecting||value)&&!borrowed;}
+/** @param {string} phase @param {string} owner @param {string} method
+ * @param {number} arguments_ @returns {string} */
+export function readRustOwnedVectorEmptyConstructorDisposition(phase,owner,method,arguments_){return phase!=='admit'||!['Vec','std::vec::Vec','alloc::vec::Vec'].includes(owner)||method!=='new'?'':arguments_!==0?'arity':'construct';}
+/** Private syntax discovery defers only actual value availability.
+ * @param {boolean} collecting @param {boolean} actual @param {boolean} clone
+ * @param {boolean} readonly @param {boolean} closed @param {boolean} available
+ * @param {boolean} produced @returns {string} */
+export function readRustOwnedBoxCloneSourceError(collecting,actual,clone,readonly,closed,available,produced){const error=readRustOwnedBoxCloneError(actual,clone,readonly,closed,available,produced);return collecting&&actual&&clone&&(!readonly||closed)?'':error;}
+/** @param {boolean} collecting @param {boolean} actual @param {boolean} clone
+ * @param {boolean} closed @param {boolean} readonly @param {boolean} available
+ * @param {boolean} produced @returns {string} */
+export function readRustOwnedVectorCloneError(collecting,actual,clone,closed,readonly,available,produced){return !actual||!clone||!closed?'vector Clone needs its actual closed element Clone implementation':collecting||readonly||available||produced?'':'vector Clone needs its actual available source value or actual producer';}
+/** @param {number} wrappers @param {boolean} transferred @returns {boolean} */
+export function acceptRustOwnedArgumentReadCheck(wrappers,transferred){return wrappers>0&&!transferred;}
+/** Nongeneric datatype fields cannot use function-style lifetime elision.
+ * @param {boolean} field @param {string[]} wrappers @param {string[]} lifetimes
+ * @returns {string} */
+export function readRustOwnedNominalFieldLifetimeError(field,wrappers,lifetimes){if(!field)return '';const references=wrappers.filter(layer=>layer==='reference').length;return references!==lifetimes.length||lifetimes.some(lifetime=>lifetime!=='static')?'a nongeneric datatype reference field requires its explicit static lifetime':'';}
+/** Numeric source expressions may retain their real value Copy evidence while
+ * literal inference awaits the existing checker. No type/owner is invented.
+ * @param {string} kind @param {boolean} copy @param {boolean} direct
+ * @param {boolean} fields @param {string} actual @returns {string} */
+export function readRustOwnedVectorElementRole(kind,copy,direct,fields,actual){return actual==='copy'||actual==='owned'?actual:kind===''&&copy&&direct&&!fields?'copy':'';}
+/** @param {string} actual @param {string} expected @param {boolean} same
+ * @param {boolean} copy @returns {boolean} */
+export function acceptRustOwnedVectorElementTypeMatch(actual,expected,same,copy){return same||actual===''&&expected==='fixed'&&copy;}
+/** Identities come only from actual data declarations in one checked directory.
+ * @param {string} left @param {string} right @param {boolean} references
+ * @returns {boolean} */
+export function acceptRustOwnedVectorNominalTypeIdentity(left,right,references){return references&&left!==''&&left===right;}
+/** Additive canonical alloc Box transport; the previous pointer-owner gate
+ * retains its original standard-owner boundary.
+ * @param {string} kind @param {string} path @param {number} argumentsCount
+ * @returns {boolean} */
+export function acceptRustOwnedBoxPointerOwnerChild(kind,path,argumentsCount){return kind==='library'&&path==='alloc::boxed::Box'&&argumentsCount===1;}

@@ -69,7 +69,8 @@ export function readRustStandardSumSourceImport(parser,segments,path){
  return Boolean(resolvedOwner(parser,segments,path));
 }
 
-function qualifiedType(parser,type,path){
+function qualifiedType(parser,type,path,depth=0){
+ if(depth>256)return null;
  if(!type)return null;
  if(type.kind==='named'){
   const entry=parser.origins.lookupTypeOwner(type.path,path);
@@ -77,20 +78,47 @@ function qualifiedType(parser,type,path){
   return {kind:'named',path:['crate',...entry.fullName.split('.')]};
  }
  if(type.kind==='tuple'){
-  const elements=type.elements.map(element=>qualifiedType(parser,element,path));
-  return elements.every(Boolean)?{kind:'tuple',elements}:null;
+  const elements=type.elements.map(element=>qualifiedType(parser,element,path,depth+1));
+  return elements.every(Boolean)?{...type,elements}:null;
  }
  if(type.kind==='function'){
-  const params=type.params.map(parameter=>qualifiedType(parser,parameter,path)),ret=qualifiedType(parser,type.ret,path);
-  return params.every(Boolean)&&ret?{kind:'function',params,ret}:null;
+  const params=type.params.map(parameter=>qualifiedType(parser,parameter,path,depth+1)),ret=qualifiedType(parser,type.ret,path,depth+1);
+  return params.every(Boolean)&&ret?{...type,params,ret}:null;
  }
+ if(type.kind==='array'){const element=qualifiedType(parser,type.element,path,depth+1);return element?{...type,element}:null;}
  return copy(type);
 }
 
-function qualifiedOrigin(parser,origin){
+// Canonicalize retained TYPE owners through actual declarations, including the
+// children erased by Box. This operation never adds Copy/value/loan evidence.
+function qualifiedOwner(parser,owner,type,path,origin,depth=0){
+ if(!owner||!type||depth>256)return null;
+ if(owner.kind==='declaration'&&owner.arguments.length===0&&type.kind==='named'){
+  const actual=parser.origins.lookupTypeOwner(type.path,path);
+  return actual?.k==='data'?{...owner,path:actual.fullName.split('.'),arguments:[]}:null;
+ }
+ let types=null,contexts=null;
+ if(owner.kind==='tuple'&&type.kind==='tuple'&&owner.arguments.length===type.elements.length){types=type.elements;contexts=origin.fields;}
+ else if(owner.kind==='function'&&type.kind==='function'&&owner.arguments.length===type.params.length+1){types=[...type.params,type.ret];contexts=[...type.params.map((_,index)=>origin.callableParameters?.[index]??origin),origin.callableResult??origin];}
+ else if(owner.kind==='library'&&['std::boxed::Box','alloc::boxed::Box'].includes(owner.path.join('::'))&&owner.arguments.length===1){types=[type];contexts=[origin];}
+ else if(owner.kind==='library'&&owner.path.join('::')==='std::vec::Vec'&&type.kind==='array'&&owner.arguments.length===1){types=[type.element];}
+ else if(owner.kind==='library'&&type.kind==='named'){
+  const actual=parser.origins.lookupTypeOwner(type.path,path),sum=actual?.k==='data'?actual.standardSumSourceOrigin?.standardSumSource:null;
+  const canonical=readRustStandardSumSourceOwner(owner.path.join('::'),Boolean(sum),0);
+  if(sum&&canonical===sum.owner&&owner.arguments.length===sum.arguments.length){types=sum.arguments.map(child=>child.type);contexts=sum.arguments;}
+ }
+ if(!types)return owner;
+ const arguments_=owner.arguments.map((child,index)=>{const context=contexts?.[index]??origin;return qualifiedOwner(parser,child,types[index],context.path??path,context,depth+1);});
+ return arguments_.every(Boolean)?{...owner,path:[...owner.path],arguments:arguments_}:null;
+}
+
+function qualifiedOrigin(parser,origin,depth=0){
+ if(depth>256)return null;
  if(!origin)return null;
  const result=copy(origin);
- if(result.fields){result.fields=result.fields.map(field=>qualifiedOrigin(parser,field));if(result.fields.some(field=>!field))return null;}
+ if(result.fields){result.fields=result.fields.map(field=>qualifiedOrigin(parser,field,depth+1));if(result.fields.some(field=>!field))return null;}
+ if(result.callableParameters){result.callableParameters=result.callableParameters.map(child=>qualifiedOrigin(parser,child,depth+1));if(result.callableParameters.some(child=>!child))return null;}
+ if(result.callableResult){result.callableResult=qualifiedOrigin(parser,result.callableResult,depth+1);if(!result.callableResult)return null;}
  // Product expression origins already retain every actual field. Recover a
  // tuple only when all of those fields have complete independent source types;
  // this does not default unsuffixed children or infer a nominal owner.
@@ -99,10 +127,19 @@ function qualifiedOrigin(parser,origin){
   result.sourceOwner={kind:'tuple',path:[],arguments:result.fields.map(field=>copy(field.expandedSourceOwner??field.sourceOwner))};
  }
  if(!result.type)return null;
+ if(result.type.kind==='tuple'&&result.fields?.length===result.type.elements.length)result.type={...result.type,elements:result.fields.map(field=>field.type)};
+ if(result.type.kind==='function'&&result.callableParameters?.length===result.type.params.length&&result.callableResult)result.type={...result.type,params:result.callableParameters.map(child=>child.type),ret:result.callableResult.type};
  const type=qualifiedType(parser,result.type,result.path);
  if(!type)return null;
  result.type=type;
+ for(const key of ['sourceOwner','expandedSourceOwner'])if(result[key]){result[key]=qualifiedOwner(parser,result[key],type,result.path,result);if(!result[key])return null;}
  return result;
+}
+
+export function qualifyRustStandardSumSourceOrigin(parserOrOrigins,origin){
+ const parser=parserOrOrigins.origins?parserOrOrigins:{origins:parserOrOrigins};
+ metadataCost(parser,[origin]);
+ return qualifiedOrigin(parser,origin);
 }
 
 // Identity comes from complete checked source types/owners. Source coordinates,
@@ -122,7 +159,9 @@ export function readRustStandardSumSourceIdentity(parser,origin){
   const type=qualifiedType(parser,value.type,value.path);if(!type)return null;
   const fields=value.fields?.map(child=>project(child,depth+1))??null;
   if(fields?.some(child=>child===null))return null;
-  return {type,owner:value.expandedSourceOwner??value.sourceOwner??null,wrappers:value.wrappers,fields,float:value.floatSourceModel??null,text:value.textSourceModel??null};
+  const originalOwner=value.expandedSourceOwner??value.sourceOwner,owner=originalOwner?qualifiedOwner(parser,originalOwner,type,value.path,value):null;
+  if(originalOwner&&!owner)return null;
+  return {type,owner,wrappers:value.wrappers,fields,float:value.floatSourceModel??null,text:value.textSourceModel??null};
  };
  // Build child structures rather than repeatedly encoding identity strings.
  // One final encoding avoids recursive JSON escaping growth.
@@ -216,6 +255,7 @@ function headerType(parser,type,path){
  if(type.kind==='named')return qualifiedType(parser,type,path)??{kind:'named',path:[...type.path]};
  if(type.kind==='tuple')return {kind:'tuple',elements:type.elements.map(element=>headerType(parser,element,path))};
  if(type.kind==='function')return {kind:'function',params:type.params.map(parameter=>headerType(parser,parameter,path)),ret:headerType(parser,type.ret,path)};
+ if(type.kind==='array')return {...type,element:headerType(parser,type.element,path)};
  return copy(type);
 }
 
@@ -284,6 +324,10 @@ export function finishRustStandardSumSourceDeclarations(parser){
   };
   const rewrite=origin=>{
    if(origin.sourceFunctionPointerHeader)origin=refresh(origin);
+   const outer=origin.expandedSourceOwner??origin.sourceOwner;
+   if(outer&&acceptRustOwnedBoxTypeNode(origin.wrappers,outer.kind,outer.path.join('::'),outer.arguments.length)){
+    const child=copy(origin);child.wrappers.shift();child.sourceOwner=copy(outer.arguments[0]);delete child.expandedSourceOwner;const result=rewrite(child),inner=result.expandedSourceOwner??result.sourceOwner;if(!inner)fail('the rewritten Box child must retain its actual source owner');result.wrappers.unshift('box');result.sourceOwner={kind:outer.kind,path:[...outer.path],arguments:[copy(inner)]};delete result.expandedSourceOwner;result.copyEvidence=false;return result;
+   }
    const entry=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null;
    const sum=entry?resolved.get(entry.fullName):null;
    if(sum)return {...copy(sum),wrappers:[...origin.wrappers]};

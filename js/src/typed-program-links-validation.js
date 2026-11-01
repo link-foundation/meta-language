@@ -442,6 +442,11 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       same(node.type, node.k === 'tupleIndex' ? entry : node.k === 'optionalField'
         ? { kind: 'option', element: entry.type, absence: 'undefined' } : entry.type, 'positional field type');
     }
+    if(node.k==='propositionValue'){
+      same(node.type,{kind:'bool'},'proposition value result');same(node.left.type,node.right.type,'proposition value operand types');same(node.domain,node.left.type,'proposition value domain');
+      if(!['eq','ne','lt','le','gt','ge'].includes(node.op))throw new TypeError('a proposition value needs an actual comparison');
+      if(node.sameValue!==undefined&&(typeof node.sameValue!=='boolean'||node.sameValue&&(node.domain.kind!=='float'||!['eq','ne'].includes(node.op))))throw new TypeError('a proposition value has an inconsistent SameValue policy');
+    }
     if (node.k === 'binary') {
       if (node.rounding !== undefined && !acceptProgramDivisionRounding(node.rounding)) throw new TypeError('a linked division has an unsupported rounding policy');
       same(node.left.type, node.right.type, 'binary operand types');

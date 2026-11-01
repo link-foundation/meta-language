@@ -2,12 +2,25 @@
 // author must reconcile each selected fixture coordinate before publishing.
 const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
 export const rustBaselineNativePolicyControlGroups=[
+ {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'authored_source_library_error_controls',testName:'all_literal_source_library_error_controls',aliases:true,fixtureSelections:[
+  selection('source-library-error-composition','sourceLibraryErrorDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/javascript-error-construction-rules.js',moduleName:'authored_error_construction_controls',testName:'all_literal_error_construction_controls',aliases:true,fixtureSelections:[
+  {path:'js/tests/fixtures/javascript-error-classes.mjs',exportName:'javascriptErrorClassDecisions',profile:'exact pure fixture data 2'},
+  {path:'js/tests/fixtures/javascript-error-classes.mjs',exportName:'javascriptErrorClassAllocationDecisions',profile:'exact pure fixture data 2'},
+ ]},
  {sourcePath:'js/src/translation/source-library-class-rules.js',moduleName:'authored_source_library_class_controls',testName:'all_literal_source_library_class_controls',aliases:true,fixtureSelections:[
   selection('source-library-class-composition','sourceLibraryClassDecisions'),
   selection('source-library-class-re-exports','sourceLibraryClassReExportDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-recursive-datatype-rules.js',moduleName:'authored_owned_recursive_container_controls',testName:'all_literal_owned_recursive_container_controls',fixtureSelections:[
   selection('rust-owned-recursive-containers','rustOwnedRecursiveContainerDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/proposition-value-rules.js',moduleName:'authored_proposition_value_controls',testName:'all_literal_proposition_value_controls',fixtureSelections:[
+  selection('proposition-values','propositionValueDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-unit-value-rules.js',moduleName:'authored_owned_record_completion_controls',testName:'all_literal_owned_record_completion_controls',fixtureSelections:[
+  selection('rust-owned-record-completions','rustOwnedRecordCompletionDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-record-effect-rules.js',moduleName:'authored_owned_record_effect_controls',testName:'all_literal_owned_record_effect_controls',aliases:true,fixtureSelections:[
   selection('rust-owned-record-effects','rustOwnedRecordEffectDecisions'),

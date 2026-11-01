@@ -2,6 +2,10 @@ import {readRequiredNumberFact,readRequiredTextFact,readRequiredBooleanFact} fro
 import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 import {acceptRustSourceArrayElement} from './rust-array-rules.js';
 import {acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
+/** An actual receiver method precedes structural trait Clone lowering.
+ * @param {string} owner @param {string} selectedOwner @param {number} mode
+ * @returns {boolean} */
+export function acceptRustNominalCloneInherentOverride(owner,selectedOwner,mode){return owner!==''&&owner===selectedOwner&&mode>0;}
 /** Source syntax/capability projection only. Header pointer Copy is a trait
  * fact about an actual fn pointer, never a parameter-domain Copy assumption.
  * @param {string} kind @param {string} bits @param {boolean} signed

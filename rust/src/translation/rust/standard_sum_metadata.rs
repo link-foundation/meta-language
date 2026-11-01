@@ -90,6 +90,7 @@ impl Counter<'_>{
     }
 }
 pub(super) fn measure_origins(values:&[&SourceOrigin])->Result<MetadataCost,String>{let mut counter=Counter {cost:MetadataCost::default(),origins:None,active:HashSet::new()};counter.node(0)?;for value in values{counter.origin(value,1)?;}Ok(counter.cost)}
+pub(super) fn measure_expression_type(value:&Type,path:&[String])->Result<MetadataCost,String>{let mut counter=Counter {cost:MetadataCost::default(),origins:None,active:HashSet::new()};counter.ty(Some(value),0,None,false)?;counter.strings(path,0)?;Ok(counter.cost)}
 pub(super) fn measure_identities(origins:&SourceOrigins,values:&[&SourceOrigin],header:bool)->Result<MetadataCost,String>{let mut counter=Counter {cost:MetadataCost::default(),origins:Some(origins),active:HashSet::new()};counter.node(0)?;for value in values{counter.identity(value,1,header)?;}Ok(counter.cost)}
 
 impl SourceOrigins{

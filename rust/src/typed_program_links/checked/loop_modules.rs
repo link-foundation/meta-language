@@ -9,6 +9,8 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
     let (ret, semantic_ret) =
         super::declarations::project_function_result_types(function, program)?;
     Ok(SItem::Fn(SFn {
+        source_finite_record_loop_helper:false,
+        source_finite_record_loop_witness:None,
         semantic_ret,
         name: function.name.clone(),
         params: function

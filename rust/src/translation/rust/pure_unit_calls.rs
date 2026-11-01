@@ -145,6 +145,8 @@ impl RustParser {
             proof["visibility"] = json!({"form":"public","span":public_token.span()});
         }
         Ok(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             source_diagnostic_attributes: None,
             semantic_ret: None,
             name,

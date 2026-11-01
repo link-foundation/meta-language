@@ -454,3 +454,53 @@ the Rocq [9.0 abbreviation syntax](https://rocq-prover.org/doc/V9.0.0/refman/use
 uses constructor notation aliases. The 9.2 manual names the newer command
 `Abbreviation`. These are source reviews, not compiler observations or a claim
 that every target version has been covered.
+
+Checkpoint `3b572e01` was pushed after predecessor run `41278581011` became
+terminal; only workflow status was read. It includes actual supplied class and
+named-reexport composition, recursive owned-container consumers, and ordered
+record effects. Source drafting continued immediately afterward, with the same
+three agents and no tests, generators, compilation or CI-feedback inspection.
+
+The next source batch connects actual Error class/module call plans to the
+semantic call machine, including suspended host allocation and authenticated
+freshness checks, actual declaration/export ownership and shared source-bound
+module identities. The packaged source owns closure/alias composition instead
+of importing excluded authoring scripts. An exact fixture profile preserves
+BigInt, undefined and aggregate alias descriptors without JSON coercion; native
+assertions explicitly reject repeated aggregate identities until supported.
+
+Formal datatype output now reserves original public names before relocating
+private declarations, closes protected source-module boundaries and supplies
+bounded target ordering dependencies. Both emitters consume alias obligations
+at their genuine module boundaries. These are source implementations, not
+compiler observations. The proposition-to-Boolean bridge and its typed schema
+successor, all four emitters, transport visitors and future JS/native controls
+are drafted together. The future baseline source author uses ten isolated
+processes and publishes catalogs/assets last.
+
+Rust source owner qualification recursively preserves actual declaration
+contexts for Box, Vec, tuples and callable fields. It grants no Copy proof.
+Default type reading now consults actual datatype ownership before primitive
+spelling, including reference-to-str shadowing; optional namespace profiles
+retain their separate restrictions. Function exits validate transfers and
+capture source contracts before releasing function-local move states, without
+rewinding identity allocation. Independent source-owner fixtures and native
+structural controls are authored but unexecuted.
+
+Active source work continues finite record-loop lowering and authenticated
+helper restrictions, actual module IO initialization, recursive container
+ownership and nominal method resolution. Borrowed recursive vectors, general
+formal reference-state backends, ordinary typed opaque Error representation,
+and complete own-module frontend composition still need their actual source
+consumers. Source/ledger reconciliation and all generated products remain
+deferred under the current no-gates phase; this inventory grants no verified
+completion or instruction to stop drafting.
+
+The initializer draft now has a separate portable machine and qualified host
+adapter: actual source-bound const order, lexical binding slots, TDZ suspension,
+alias handles and cached abrupt completion. Captured loader/delegate hashes and
+active version ranges qualify the host IO boundary; their bodies are not yet
+claimed as self-translated. The automatic machine/model recipe is included in
+the ten-step source batch. Source controls and pure path/decode lowering continue.
+Workflow `41281425008` for `3b572e01` is terminal; only its status was read before
+preparing this next source checkpoint.

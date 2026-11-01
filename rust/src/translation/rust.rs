@@ -56,6 +56,8 @@ mod owned_record_places;
 mod owned_record_state;
 mod owned_record_effects;
 mod owned_containers;
+mod owned_vectors;
+mod source_expression_types;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;
 pub(crate) mod primitive_owner_rules;

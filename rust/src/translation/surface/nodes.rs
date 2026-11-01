@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    BinaryOp, ConstructorPrototypeDefinition, Flavor, Rounding, SArrayItem, SCase, SExpr,
+    BinaryOp, ConstructorPrototypeDefinition, Flavor, Rounding, SArrayItem, SCase, SExpr, SProp,
     SRecordEntry, SRow, ShowStyle, SurfaceBindingTypeAnnotation, SurfaceRawMetadata, UnaryOp,
     binding_type_annotation, is_false, ordered_fields, raw_metadata,
 };
@@ -43,6 +43,8 @@ pub enum SNode {
     BooleanValue {
         arg: Box<SExpr>,
     },
+    /// Exact value of an existing proposition; finite quantifiers are checked.
+    PropositionValue { prop: Box<SProp> },
     /// Internal reconstruction of the represented JavaScript numeric conversion.
     NumberValue {
         arg: Box<SExpr>,
@@ -347,6 +349,7 @@ impl SNode {
             Self::None { .. } => "none",
             Self::Some { .. } => "some",
             Self::BooleanValue { .. } => "booleanValue",
+            Self::PropositionValue { .. } => "propositionValue",
             Self::NumberValue { .. } => "numberValue",
             Self::ReferencePayload { .. } => "referencePayload",
             Self::FlattenOption { .. } => "flattenOption",

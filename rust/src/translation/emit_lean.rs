@@ -16,7 +16,7 @@ use std::fmt::Write as _;
 use super::Language;
 use super::diagnostics::{Result, type_error, unsupported};
 use super::emit_common::{
-    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, order_declarations_with_dependencies,
+    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, dependencies, order_declarations_with_dependencies,
     unthreaded,
 };
 use super::ir::{
@@ -359,6 +359,7 @@ impl LeanEmitter<'_> {
     fn data_definition(&mut self, entry: &Decl, data: &DataDecl, mutual:bool) -> Result<String> {
         let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
         let profile=if facts.callable&&!mutual{Some(crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?)}else{None};
+        let self_profile=if !mutual&&!facts.callable&&dependencies(entry).contains(&data.full_name){crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?.remove(&data.full_name)}else{None};
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         let mut lines = vec![format!("inductive {name} where")];
@@ -374,8 +375,9 @@ impl LeanEmitter<'_> {
         // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
         // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
         let undecidable=self.undecidable(&data.full_name,&mut HashSet::new());
-        let deriving = if mutual{crate::translation::callable_data_derivation_rules::read_formal_datatype_lean_block_derivation(facts.callable,data.output,undecidable)}else{crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,undecidable)};
+        let deriving = if mutual||self_profile.is_some(){crate::translation::callable_data_derivation_rules::read_formal_datatype_lean_block_derivation(facts.callable,data.output,undecidable)}else{crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,undecidable)};
         if let Some(profile)=profile.filter(|profile|profile.recursive){let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}else if !deriving.is_empty(){lines.push(format!("  deriving {deriving}"));}
+        if let Some(profile)=self_profile{let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}
         Ok(lines.join("\n"))
     }
     fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
@@ -809,6 +811,7 @@ impl LeanEmitter<'_> {
                     "Lean", op, &object, &search,
                 )
             }
+            Node::PropositionValue{..}=>self.check(&e.proposition_value_atom().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",e.span))?)?,
             Node::ToString { arg, console } => {
                 if arg.ty == Type::String {
                     self.expr(arg, depth)?

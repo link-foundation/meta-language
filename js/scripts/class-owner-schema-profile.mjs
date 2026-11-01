@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
-import {extendClassOwnerSchema} from './class-owner-schema-extension.mjs';
+import {extendCurrentTypedProgramSourceSchema as extendClassOwnerSchema} from './class-owner-schema-extension.mjs';
 export const classOwnerSourceProfileReceipt='parity/self-translation/class-owner-source-profiles.lino';
 export const classOwnerSourceProfilePredecessorRevision='397c2ea47e8531558857dc54caf88358fd51033a';
 const classOwnerSourceProfileReceiptSha256='PENDING';

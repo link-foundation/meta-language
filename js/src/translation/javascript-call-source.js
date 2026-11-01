@@ -12,6 +12,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
  * {$:'sourceLet',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
+ * {$:'sourceParameterDefault',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceIf',condition:JavaScriptCallSource,yes:JavaScriptCallSource,no:JavaScriptCallSource} |
  * {$:'sourceNumberBinary',operator:string,left:JavaScriptCallSource,right:JavaScriptCallSource} |
  * {$:'sourceSameValue',left:JavaScriptCallSource,right:JavaScriptCallSource} |
@@ -94,6 +95,13 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    if(!testJavaScriptCallCodeCoordinate(source.identity,65536)||bindings.some(entry=>entry.identity===source.identity))return refuseJavaScriptCallSource(state,'a source binding owner must be unique in its lexical scope');
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);
    return lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:value.register}]),value.builder,depth+1);
+  }
+  case 'sourceParameterDefault':{
+   const binding=bindings.find(entry=>entry.identity===source.identity);if(binding===undefined||binding.register<1||binding.register>state.parameters)return refuseJavaScriptCallSource(state,'a parameter default needs its actual initialized parameter coordinate');
+   const condition=lowerJavaScriptCallSourceExpression({$:'sourceStrictEqual',left:{$:'sourceBinding',identity:source.identity},right:{$:'sourceConstant',value:{$:'undefined'}}},bindings,state,depth+1),branch=condition.builder.instructions.length;
+   const start=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:0,no:0}),value=lowerJavaScriptCallSourceExpression(source.value,bindings,start,depth+1),copied=appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register}),end=copied.instructions.length;
+   const updated={...copied,instructions:copied.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction)};
+   return lowerJavaScriptCallSourceExpression(source.body,bindings,updated,depth+1);
   }
   case 'sourceIf':return lowerJavaScriptCallSourceBranch(source,bindings,state,depth);
   case 'sourceNumberBinary':case 'sourceSameValue':case 'sourceStrictEqual':{
@@ -215,10 +223,18 @@ export function lowerJavaScriptCallSourceBranch(source,bindings,builder,depth){
  * @param {JavaScriptCallSource} source @param {number[]} parameters
  * @returns {JavaScriptCallSourceCompilation} */
 export function compileJavaScriptCallSource(source,parameters){
- if(parameters.length>=4096)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters exceed their explicit register budget'};
+ return compileJavaScriptCallSourceWithCaptures(source,parameters,[]);
+}
+/** Actual module const captures retain semantic handles in the existing frame
+ * capture slots. They are not copied object literals or guessed Unit values.
+ * @param {JavaScriptCallSource} source @param {number[]} parameters
+ * @param {number[]} captures @returns {JavaScriptCallSourceCompilation} */
+export function compileJavaScriptCallSourceWithCaptures(source,parameters,captures){
+ if(parameters.length+captures.length>=4096)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters exceed their explicit register budget'};
  for(let index=0;index<parameters.length;index+=1){const owner=parameters[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source parameters require distinct actual lexical owners'};}
- const bindings=parameters.map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1}));
- const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+1,visits:0,parameters:parameters.length,handlers:0,error:''},0);
+ for(let index=0;index<captures.length;index++){const owner=captures[index]??-1;if(!testJavaScriptCallCodeCoordinate(owner,65536)||parameters.includes(owner)||captures.indexOf(owner)!==index)return {$:'sourceCompiled',instructions:[],registers:0,error:'source captures require distinct actual lexical owners'};}
+ const bindings=parameters.concat(captures).map((identity,index)=>({$:'sourceBindingRegister',identity,register:index+1}));
+ const result=lowerJavaScriptCallSourceExpression(source,bindings,{$:'sourceBuilder',instructions:[],next:parameters.length+captures.length+1,visits:0,parameters:parameters.length,handlers:0,error:''},0);
  const builder=appendJavaScriptCallSourceInstruction(result.builder,{$:'return',source:result.register});
  return {$:'sourceCompiled',instructions:builder.error===''?builder.instructions:[],registers:builder.error===''?builder.next:0,error:builder.error};
 }

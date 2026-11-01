@@ -1398,16 +1398,21 @@ node js/scripts/draft-rust-baseline-complete-source.mjs --draft
 
 Do not invoke it during the current source-edit-only phase. It starts separate
 Node processes for class-owner schema/source-profile publication, shared
-classifier regeneration and baseline source libraries, followed by the actual
-JavaScript call-machine and call-source libraries and their automatic model
-codecs. The latter regenerate the allocation/property source constructors and
-machine transitions together; generated native codecs are never patched by
-hand. Separate processes avoid
+classifier regeneration and baseline source libraries, followed by Error source
+kernels, the module-initialization machine, JavaScript call-machine and
+call-source libraries, exact Error
+declarations, and supplied Error-module composition. A final process publishes
+the complete source catalog and packaged assets after these products exist.
+The ten-step sequence regenerates allocation/property/Error constructors,
+machine transitions and automatic model codecs together; generated native
+codecs are never patched by hand. Separate processes avoid
 using a predecessor schema cached by earlier static imports. The profile author
 preserves complete committed predecessors and publishes an exact successor
 receipt; existing version-one/version-two assertions remain independently
 selected. Version three adds a separately declared optional class-constructor
-owner instead of inventing a Boolean neutral default.
+owner instead of inventing a Boolean neutral default, and carries the exact
+proposition-comparison expression bridge. The original class-only extension
+remains independently available; the successor composes both extensions.
 
 The baseline author also translates complete literal policy assertion programs
 into native test sources. Each fixture/export/index retains its actual owner,
@@ -1416,3 +1421,11 @@ spellings. The bounded publisher retains source/closure hashes, ownership
 receipts and edited-file refusals. These are generation recipes and future
 controls, not observed results. No original fixture, test, compilation or
 validation gate is invoked by the outer source-authoring runner.
+
+The opt-in `exact pure fixture data 2` reader captures source ranges, hashes,
+declaration dependencies and bounded pure aggregate construction without
+importing a fixture. Tagged values preserve `undefined`, BigInt and UTF-16
+contents through Links. A repeated aggregate in one native assertion is refused
+until its compiler can preserve reference identity; a structural rendering is
+not an identity-preserving executable oracle. Error-module assets explicitly
+identify semantic source plans rather than posing as ordinary checked Core.

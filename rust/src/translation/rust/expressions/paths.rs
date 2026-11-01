@@ -187,6 +187,7 @@ impl RustParser {
         let mut args = self.contextual_call_arguments(path, &callee)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if let Some(vector)=self.read_owned_vector_empty_constructor(&segments,&args,path,range)?{return Ok(vector);}
         if let Some(mut origin) = self.type_alias_empty_vector_origin(&segments, path) {
             if !args.is_empty() {
                 return Err(type_error("Vec::new expects 0 arguments", range));

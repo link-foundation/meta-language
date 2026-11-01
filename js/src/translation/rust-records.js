@@ -8,6 +8,8 @@ import {createRustNominalConstructorOrigin,readRustNominalOwnershipFacts,project
 import {readRustOwnedRecordUpdateBase,prepareRustOwnedRecordEntry,createRustOwnedRecordUpdateOrigin,projectRustOwnedRecordField} from './rust-owned-record-updates.js';
 import {readRustOwnedRecordMutableName} from './rust-owned-record-state.js';
 import {readRustOwnedBoxRecordParent} from './rust-owned-containers.js';
+import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
+import {readRustExpectedCopyClosure} from './rust-copy-closures.js';
 import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -100,7 +102,8 @@ export function readRustRecordConstruction(parser,segments,path,start){
   const field=numeric?c.next():c.identifier('record field'),name=numeric?field.raw:field.value;
   const colon=Boolean(c.eat(':'));
   if(numeric&&!colon)c.expect(':','tuple record field');
-  const value=colon?parser.expr(path):readRustOwnedRecordMutableName(parser,{k:'name',path:[field.value],span:span(field,field)},path);
+  const constructor=record?parser.origins.lookupValueOwner(['crate',...record.constructor.split('.')],[]):null,index=record?.names.indexOf(name)??-1,expected=constructor?.k==='ctor'&&constructor.owner===record.owner&&index>=0?constructor.fields[index]??null:null;
+  const value=colon?withRustStandardSumSourceContext(parser,expected,()=>readRustExpectedCopyClosure(parser,path,expected)):readRustOwnedRecordMutableName(parser,{k:'name',path:[field.value],span:span(field,field)},path);
   prepareRustOwnedRecordEntry(parser,record,name,value,path);entries.push({name,value});if(!c.eat(','))break;
  }
  c.expect('}','record construction');

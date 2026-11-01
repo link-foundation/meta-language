@@ -157,6 +157,7 @@ impl Checker {
                 let value = self.expr(arg, env, path, None, false)?;
                 self.boolean_value(value, span)
             }
+            SNode::PropositionValue { prop } => self.proposition_value(prop,env,path,span),
             SNode::NumberValue { arg } => {
                 let value = self.expr(arg, env, path, None, false)?;
                 let value = self.number_value(value, span)?;

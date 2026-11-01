@@ -34,14 +34,15 @@ export const rustOwnedRecordEffectOriginals=[
  {name:'main structural assertions preserve both operand evaluation order and data equality',sourceVersionRange,stdout:'2\n',source:record+'#[derive(Clone,Copy,PartialEq)]struct Number{number:u8}fn main(){'+initial+'assert_eq!(Number{number:1u8},{value.number=2u8;Number{number:1u8}});println!("{}",value.number);}'},
  {name:'main Boolean assertion evaluates its actual state block once',sourceVersionRange,stdout:'5\n',source:record+'fn main(){'+initial+'assert!({value.number=5u8;value.number==5u8});println!("{}",value.number);}'},
 ];
-export const rustOwnedRecordEffectRefusals=[
+export const rustOwnedRecordEffectPreviousRefusals=[
  {name:'ordered expression cannot move an expired whole record',sourceVersionRange,originalCompilerOutcome:'reject',source:record+'fn main(){'+initial+'let old=value;let next={value.number=2u8;value};}'},
  {name:'earlier argument loan remains active during a later overlapping write',sourceVersionRange,originalCompilerOutcome:'reject',source:record+'fn observe(first:&String,second:u8){}fn main(){'+initial+'observe(&value.text,{value.text=String::from("new");2u8});}'},
  {name:'a conditional write cannot restore a moved field on its skipped path',sourceVersionRange,originalCompilerOutcome:'reject',source:record+'fn main(){'+initial+'let moved=value.text;let ignored:bool=false&&{value.text=String::from("new");true};println!("{}",value.text);}'},
  {name:'stateful captured closure retains its actual FnMut boundary',sourceVersionRange,originalCompilerOutcome:'accept',source:record+'fn main(){'+initial+'let change=||{value.number=2u8;};}'},
  {name:'logical assertion state writes await proposition continuations',sourceVersionRange,originalCompilerOutcome:'accept',source:record+'fn main(){'+initial+'assert!(true&&{value.number=2u8;true});}'},
 ];
+export const rustOwnedRecordEffectRefusals=rustOwnedRecordEffectPreviousRefusals.filter((row,index)=>index!==4).map((row,index)=>({...row,previousFixture:'rustOwnedRecordEffectRefusals',previousIndex:index}));
 // Exact previous valid boundary input is retained byte for byte as an active
 // positive above; this history is a declaration, not an observed result.
-export const rustOwnedRecordEffectRefusalHistory=[{fixture:'rustOwnedRecordStateRefusals',index:7,name:'uncomposed initializer state effects retain their valid source',sourceVersionRange,originalCompilerOutcome:'accept',source:'struct Pair{left:String,right:String}fn main(){let mut value=Pair{left:String::from("left"),right:String::from("right")};let flag={value.left=String::from("new");true};println!("{}",flag);}'}];
-export const rustOwnedRecordEffectRetainedOriginals=[{...rustOwnedRecordEffectRefusalHistory[0],name:'the retained initializer boundary now has an explicit ordered continuation',stdout:'true\n'}];
+export const rustOwnedRecordEffectRefusalHistory=[{fixture:'rustOwnedRecordStateRefusals',index:7,name:'uncomposed initializer state effects retain their valid source',sourceVersionRange,originalCompilerOutcome:'accept',source:'struct Pair{left:String,right:String}fn main(){let mut value=Pair{left:String::from("left"),right:String::from("right")};let flag={value.left=String::from("new");true};println!("{}",flag);}'},{...rustOwnedRecordEffectPreviousRefusals[4],fixture:'rustOwnedRecordEffectRefusals',index:4}];
+export const rustOwnedRecordEffectRetainedOriginals=[{...rustOwnedRecordEffectRefusalHistory[0],name:'the retained initializer boundary now has an explicit ordered continuation',stdout:'true\n'},{...rustOwnedRecordEffectRefusalHistory[1],name:'the retained logical assertion boundary now uses its ordered continuation',stdout:''}];

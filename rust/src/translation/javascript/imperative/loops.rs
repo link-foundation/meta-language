@@ -247,6 +247,8 @@ impl Lowering {
             test(self, body)?
         };
         self.generated.push(SItem::Fn(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params

@@ -2,9 +2,10 @@
 // snapshots in the common core; source ownership remains checked during read.
 import {unsupported} from './diagnostics.js';
 import {installRustOwnedRecordEffectTransport,readRustOwnedRecordStateAssignment,readRustOwnedRecordStateDeclarations,reconstructRustOwnedRecordState} from './rust-owned-record-state.js';
-import {readRustOwnedRecordEffectForm,readRustOwnedRecordEffectChildren,readRustOwnedRecordEffectOperation,readRustOwnedRecordEffectLimit,acceptRustOwnedRecordAssertionComparison} from './rust-owned-record-effect-rules.js';
+import {readRustOwnedRecordEffectForm,readRustOwnedRecordEffectChildren,readRustOwnedRecordEffectOperation,readRustOwnedRecordEffectLimit} from './rust-owned-record-effect-rules.js';
 import {readRustExpressionCompletionPacketOperation,acceptRustExpressionCompletionInertLeaf,readRustExpressionCompletionShortCircuitValue} from './rust-expression-completion-rules.js';
 import {readRustRecordSourceType} from './rust-records.js';
+import {expandSurfacePropositionValue} from './proposition-values.js';
 const fail=(reason,span)=>{throw unsupported('Rust ordered record state',reason,span);};
 function effects(parser){
  if(parser.ownedRecordEffects)return parser.ownedRecordEffects;
@@ -17,12 +18,14 @@ function effects(parser){
 export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdinary){effects(parser);return readRustOwnedRecordStateAssignment(parser,path)?.value??readOrdinary();}
 export function beginRustOwnedRecordShortCircuit(parser){return parser.ownedRecordEffects?parser.origins.snapshotOwnedBindings():null;}
 export function endRustOwnedRecordShortCircuit(parser,before){if(before!==null)parser.origins.joinOwnedBindings(before,parser.origins.snapshotOwnedBindings(),true,true);}
+export function readRustOwnedRecordEffectSource(parser,node){if(node?.k!=='math'||!parser.ownedRecordEffects)return null;const index=Number(node.name);if(!Number.isSafeInteger(index)||index<0||String(index)!==node.name)return null;if(node.op===readRustOwnedRecordEffectOperation('read')&&node.args.length===0)return {form:'read',slot:parser.ownedRecordEffects.reads[index]};if(node.op===readRustOwnedRecordEffectOperation('write')&&node.args.length===1)return {form:'write',...parser.ownedRecordEffects.writes[index]};return null;}
 function marker(node){return node?.k==='math'&&(node.op===readRustOwnedRecordEffectOperation('read')||node.op===readRustOwnedRecordEffectOperation('write'));}
 function contains(node,callables=false,budget={nodes:0}){const pending=[node],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;if(++budget.nodes>readRustOwnedRecordEffectLimit('inspection'))fail('the actual state expression exceeds its inspection budget',node?.span);seen.add(value);if(marker(value))return true;if(!callables&&value.k==='lambda')continue;for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);}return false;}
 function typeOf(parser,node,path,expected=null,seen=new Set()){
  if(expected)return expected;if(!node||seen.has(node))return null;seen.add(node);
- const origin=parser.origins.origin(node,path);if(origin.proven&&origin.type)return readRustRecordSourceType(parser,origin.type,origin.path);
+ const origin=parser.origins.recordedExpressionOrigin(node)??parser.origins.recordedExpressionType(node)??parser.origins.origin(node,path);if(origin.proven&&origin.type)return readRustRecordSourceType(parser,origin.type,origin.path);
  if(node.k==='unit')return {kind:'unit'};if(node.k==='bool')return {kind:'bool'};if(node.k==='str')return {kind:'string'};if(node.k==='num'&&node.type)return node.type;
+ if(node.k==='propositionValue')return {kind:'bool'};
  if(node.k==='lambda'&&node.ret&&node.params.every(parameter=>parameter.type))return {kind:'function',params:node.params.map(parameter=>parameter.type),ret:node.ret};
  if(node.k==='tuple'){const elements=node.items.map(value=>typeOf(parser,value,path,null,new Set(seen)));return elements.every(Boolean)?{kind:'tuple',elements}:null;}
  if(node.k==='tupleIndex'){const tuple=typeOf(parser,node.object,path,null,new Set(seen));return tuple?.kind==='tuple'?tuple.elements[node.index]??null:null;}
@@ -38,8 +41,9 @@ function typeOf(parser,node,path,expected=null,seen=new Set()){
 function childSlots(node,roles){const result=[];for(const role of roles){const value=node[role];if(Array.isArray(value))value.forEach((child,index)=>{const wrapped=child&&typeof child==='object'&&!child.k&&child.value&&typeof child.value==='object';result.push({role,index,child:wrapped?child.value:child,wrapper:wrapped?child:null});});else if(value&&typeof value==='object')result.push({role,index:null,child:value,wrapper:null});}return result;}
 function alpha(parser,node,environment,declarations,path,budget){
  if(++budget.nodes>readRustOwnedRecordEffectLimit('work'))fail('state lexical renaming exceeds its source budget',node.span);
- const mark=value=>parser.origins.mark(value,parser.origins.origin(node,path));
+ const mark=value=>parser.origins.reuseExpressionOrigin(node,value);
  if(node.k==='name')return node.path.length===1&&environment.has(node.path[0])?mark({...node,path:[environment.get(node.path[0])]}):node;
+ if(node.k==='propositionValue'){if(!['eq','ne','lt','le','gt','ge'].includes(node.prop.p))return alpha(parser,expandSurfacePropositionValue(node.prop),environment,declarations,path,budget);return mark({...node,prop:{...node.prop,left:alpha(parser,node.prop.left,environment,declarations,path,budget),right:alpha(parser,node.prop.right,environment,declarations,path,budget)}});}
  if(node.k==='let'){const name=parser.freshProductBinding(),inner=new Map(environment);inner.set(node.name,name);const slot=readRustOwnedRecordStateDeclarations(parser).get(node.name);if(slot)declarations.set(name,slot);return mark({...node,name,value:alpha(parser,node.value,environment,declarations,path,budget),body:alpha(parser,node.body,inner,declarations,path,budget)});}
  if(node.k==='lambda'){const inner=new Map(environment),params=node.params.map(parameter=>{const name=parser.freshProductBinding();inner.set(parameter.name,name);return {...parameter,name};});return mark({...node,params,captures:(node.captures??[]).map(name=>environment.get(name)??name),body:alpha(parser,node.body,inner,declarations,path,budget)});}
  const renamePattern=(pattern,scope)=>{if(pattern.k==='bind'||pattern.k==='bindOrCtor'||pattern.k==='alias'||pattern.k==='natSucc'){const name=parser.freshProductBinding();scope.set(pattern.name,name);pattern={...pattern,name};}if(pattern.binds)pattern={...pattern,binds:pattern.binds.map(name=>{if(name===null)return null;const next=parser.freshProductBinding();scope.set(name,next);return next;})};if(pattern.args)pattern={...pattern,args:pattern.args.map(child=>renamePattern(child,scope))};if(pattern.pattern)pattern={...pattern,pattern:renamePattern(pattern.pattern,scope)};if(pattern.inner)pattern={...pattern,inner:renamePattern(pattern.inner,scope)};return pattern;};
@@ -48,7 +52,7 @@ function alpha(parser,node,environment,declarations,path,budget){
 }
 function lower(parser,node,path,declarations,initial=new Map(),expected=null,finished=(value,environment)=>value){
  const arena=effects(parser),has=(node,callables=false)=>contains(node,callables,arena.inspection);
- const mark=(value,original)=>parser.origins.mark(value,parser.origins.origin(original,path));
+ const mark=(value,original)=>parser.origins.reuseExpressionOrigin(original,value);
  function capture(value,origin,next){if(acceptRustExpressionCompletionInertLeaf(value.k))return next(value);const want=typeOf(parser,value,path,origin);if(!want)fail('an earlier evaluated operand needs its actual complete type before a later state effect',value.span);const name=parser.freshProductBinding(),reference=mark({k:'name',path:[name]},value);return {k:'let',name,type:want,value,body:next(reference),span:value.span};}
  function packet(value,environment,keys,resultType,span){const items=[value,...keys.map(key=>({k:'name',path:[environment.get(key).name]}))];return {k:'tuple',items,span};}
  function phi(original,environment,build,next,depth,want){const keys=[...environment.keys()],resultType=typeOf(parser,original,path,want);if(!resultType)fail('a branch state join needs its actual complete result type or actual enclosing annotation',original.span);const tuple={kind:'tuple',elements:[resultType,...keys.map(key=>readRustRecordSourceType(parser,environment.get(key).slot.origin.type,environment.get(key).slot.origin.path))]},value=build((result,branch)=>packet(result,branch,keys,resultType,original.span)),name=parser.freshProductBinding(),reference={k:'name',path:[name]},bindings=[],joined=new Map(environment);for(let index=0;index<keys.length;index+=1){const fresh=parser.freshProductBinding();bindings.push({name:fresh,value:{k:'tupleIndex',object:reference,index:index+1}});joined.set(keys[index],{...environment.get(keys[index]),name:fresh});}let body=next(mark({k:'tupleIndex',object:reference,index:0},original),joined);for(const binding of bindings.toReversed())body={k:'let',...binding,body};return {k:'let',name,type:tuple,value,body,span:original.span};}
@@ -57,6 +61,7 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
   if(value.k==='lambda'){const body=visit(value.body,new Map(),result=>result,depth+1,value.ret);return next(mark({...value,body},value),environment);}
   if(!has(value,true))return next(value,environment);
   const form=readRustOwnedRecordEffectForm(value.k,value.op??'');
+  if(form==='proposition comparison')return ordered({k:'tuple',items:[value.prop.left,value.prop.right]},['items'],environment,(pair,after)=>next(mark({...value,prop:{...value.prop,left:pair.items[0],right:pair.items[1]}},value),after),depth,null);
   if(form==='read state'){const slot=arena.reads[Number(value.name)],actual=slot?environment.get(slot.lexical):null;if(!actual)fail('a mutable read needs its actual initialized lexical state in this callable',value.span);return next(mark({k:'name',path:[actual.name]},value),environment);}
   if(form==='write state'){const info=arena.writes[Number(value.name)];if(!info||!environment.has(info.slot.lexical))fail('a mutable write cannot leave its actual lexical declaration scope',value.span);return visit(value.args[0].value,environment,(rhs,after)=>{const previous=after.get(info.slot.lexical),rhsName=parser.freshProductBinding(),stateName=parser.freshProductBinding(),updated=new Map(after);updated.set(info.slot.lexical,{slot:info.slot,name:stateName});const snapshot=reconstructRustOwnedRecordState(parser,path,info.layouts,{k:'name',path:[previous.name]},{k:'name',path:[rhsName]},value.span),body=next({k:'unit',span:value.span},updated);return {k:'let',name:rhsName,type:readRustRecordSourceType(parser,info.field.type,info.field.path),value:rhs,body:{k:'let',name:stateName,type:readRustRecordSourceType(parser,info.slot.origin.type,info.slot.origin.path),value:snapshot,body},span:value.span};},depth+1,info.field.type);}
   if(form==='binding')return visit(value.value,environment,(rhs,after)=>{const inner=new Map(after),slot=declarations.get(value.name);if(slot)inner.set(slot.lexical,{slot,name:value.name});return mark({...value,value:rhs,body:visit(value.body,inner,(result,done)=>{const outer=new Map(done);if(slot)outer.delete(slot.lexical);return next(result,outer);},depth+1,want)},value);},depth+1,value.type??null);
@@ -100,17 +105,10 @@ function lowerMain(parser,main,budget){
   // Assertions have their own structural equality and quantifier semantics.
   // Pure state reads can remain in that algebra; writes under logical or
   // quantified propositions await a proposition continuation consumer.
-  const renamed=renameProp(prop);if(hasWrite(renamed))return {p:'bool',expr:evaluate(propositionExpression(renamed),{kind:'bool'})};return pureRead(renamed);
+  if(hasWrite(prop))return {p:'bool',expr:evaluate(rename(propositionExpression(prop)),{kind:'bool'})};return pureRead(renameProp(prop));
  };
  const hasWrite=node=>{const pending=[node];let count=0;while(pending.length){const value=pending.pop();if(!value||typeof value!=='object')continue;if(++count>readRustOwnedRecordEffectLimit('inspection'))fail('the assertion exceeds its source inspection budget');if(marker(value)&&value.op===readRustOwnedRecordEffectOperation('write'))return true;pending.push(...Object.values(value));}return false;};
- const propositionExpression=prop=>{
-  if(prop.p==='bool')return prop.expr;
-  if(['eq','ne','lt','le','gt','ge'].includes(prop.p)){const left=typeOf(parser,prop.left,[]),right=typeOf(parser,prop.right,[]);if(!acceptRustOwnedRecordAssertionComparison(left?.kind??right?.kind??''))fail('stateful structural assertions need the checked proposition value bridge',prop.span);return {k:'binary',op:prop.p,left:prop.left,right:prop.right,span:prop.span};}
-  if(prop.p==='not')return {k:'unary',op:'not',arg:propositionExpression(prop.arg),span:prop.span};
-  if(prop.p==='and'||prop.p==='or')return {k:'binary',op:prop.p,left:propositionExpression(prop.left),right:propositionExpression(prop.right),span:prop.span};
-  if(prop.p==='implies')return {k:'binary',op:'or',left:{k:'unary',op:'not',arg:propositionExpression(prop.left)},right:propositionExpression(prop.right),span:prop.span};
-  fail('a stateful quantified assertion needs its checked proposition continuation',prop.span);
- };
+ const propositionExpression=expandSurfacePropositionValue;
  const renameProp=prop=>prop.p==='bool'?{...prop,expr:rename(prop.expr)}:['eq','ne','lt','le','gt','ge'].includes(prop.p)?{...prop,left:rename(prop.left),right:rename(prop.right)}:prop.p==='not'?{...prop,arg:renameProp(prop.arg)}:['and','or','implies'].includes(prop.p)?{...prop,left:renameProp(prop.left),right:renameProp(prop.right)}:prop;
  for(const effect of main.effects){
   if(effect.k==='let'){

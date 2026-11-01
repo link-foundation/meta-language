@@ -84,6 +84,16 @@ inherent-implementation receivers, and grants no `Copy`, clone or recursive-size
 proof. Recursive declarations still require their actual guarded ownership and
 finite-constructor witnesses.
 
+Borrowed collection elements retain their complete recursive source position:
+element type, wrappers, lifetime declarations and actual nominal owner. An
+explicitly selected source-signature successor may add an optional
+`arrayElementPosition` edge to another source position. Historical readers and
+profiles remain independently selectable. This persisted contract contains no
+runtime binding identity, loan capability or fabricated Copy evidence; actual
+value loans and return-region checks remain separate executable obligations.
+Erasing `Vec<&Self>` into an unqualified array of values does not satisfy the
+source contract.
+
 Formal targets may place an actual mutually recursive datatype component in
 its source modules' longest common ancestor. This is a target placement plan:
 nominal source identities and the original checked graph remain intact, target
@@ -93,6 +103,16 @@ The placement planner grants no strict-positivity, ownership, Clone or default
 proof. The target emitter must prove admission, emit the complete mutual block
 and all aliases together. Ordinary dependency ordering retains its explicit
 cross-module refusal when this complete projection is not selected.
+
+Effectful assertions use an explicit proposition-to-Boolean expression bridge.
+Atomic comparisons retain their checked domain and existing proposition
+semantics in every target. Logical evaluation lowers to ordered Boolean control
+flow so record state follows actual short-circuit paths. Executable quantifiers
+require an exhaustive finite domain; Boolean and Unit domains can be expanded
+exactly. Sampling an infinite or data domain does not establish equivalence.
+The theorem proposition language remains distinct. The pending typed-program
+source-profile successor includes this expression alongside class-owner
+references, while preserving complete historical schemas and their readers.
 
 Meta-language provides **one common, extensible language, represented
 recursively as links and serialized in Links Notation**. It covers:

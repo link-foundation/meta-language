@@ -8,10 +8,15 @@ export const formalMutualDatatypeDecisions=[
  {operation:'readFormalDatatypeLeanBlockDerivation',arguments:[false,false,true],expected:'Repr'},
  {operation:'readFormalDatatypeLeanBlockDerivation',arguments:[true,false,false],expected:''},
  {operation:'readFormalDatatypeLeanBlockDerivation',arguments:[false,true,false],expected:''},
+ {operation:'renderFormalDatatypeRocqMutualBlock',arguments:[['Inductive First : Type :=','| End : First','with Second : Type :=','| More : First -> Second.']],expected:'#[warnings="-register-all"]\nInductive First : Type :=\n| End : First\nwith Second : Type :=\n| More : First -> Second.'},
 ];
 export const formalMutualDatatypeSurfaces=[
  {name:'finite mutual defaults follow the real constructor dependency rather than source order',surface:{language:'Rust',items:[
   {k:'data',name:'First',ctors:[{name:'Wrap',fields:[{name:'value',type:{kind:'data',name:'Second'}}]}]},
   {k:'data',name:'Second',ctors:[{name:'End',fields:[]},{name:'More',fields:[{name:'value',type:{kind:'data',name:'First'}}]}]},
  ]}},
+ {name:'a self vector has its own finite empty constructive witness',surface:{language:'Rust',items:[{k:'data',name:'Tree',ctors:[{name:'Node',fields:[{name:'children',type:{kind:'array',element:{kind:'data',name:'Tree'}}}]}]}]}},
+];
+export const formalMutualDatatypeEmissionRefusals=[
+ {name:'a direct noncallable cycle cannot supply a fabricated default inhabitant',surface:{language:'Rust',items:[{k:'data',name:'Endless',ctors:[{name:'More',fields:[{name:'value',type:{kind:'data',name:'Endless'}}]}]}]}},
 ];

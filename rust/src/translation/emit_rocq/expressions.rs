@@ -239,6 +239,15 @@ impl RocqEmitter<'_> {
                     ),
                 )
             }
+            Node::PropositionValue{op,left,right,domain,same_value}=>{
+                let prop=e.proposition_value_atom().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",e.span))?;
+                if matches!(op,BinaryOp::Eq|BinaryOp::Ne)&&*domain!=Type::Float{
+                    let (_,comparison)=prop.comparison().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",e.span))?;
+                    let equality=crate::translation::ir::Prop::Eq(comparison.clone());let text=self.prop(&equality)?;
+                    Ok(crate::translation::proposition_value_rules::render_rocq_proposition_equality_value(&text,*op==BinaryOp::Ne))
+                }else if *same_value{self.helpers.insert(super::Helper::FloatSame);let left=self.expr(left)?;let right=self.expr(right)?;Ok(format!("({}(ml_float_same {left} {right}))",if *op==BinaryOp::Ne{"negb "}else{""}))}
+                else{let left=self.expr(left)?;let right=self.expr(right)?;self.comparison(*op,domain,&left,&right)}
+            },
             Node::ToString { arg, console } => self.text_of(arg, *console),
             Node::Cast {
                 arg,

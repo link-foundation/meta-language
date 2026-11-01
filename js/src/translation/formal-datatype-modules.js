@@ -1,4 +1,4 @@
-import {datatypeGroups} from './emit-common.js';
+import {datatypeGroups,dependencies} from './emit-common.js';
 import {planFormalDatatypeModulePrefixes,planFormalDatatypeModuleClosure} from './formal-datatype-module-rules.js';
 import {unsupported} from './diagnostics.js';
 
@@ -36,17 +36,36 @@ const scopeKey=path=>path.map(part=>String(part.length)+':'+part).join('');
 /** Ordering obligations are separate from source type dependencies. A module
  * containing public aliases cannot open before all their private blocks exist. */
 export function formalDatatypeModuleDependencies(plan){
- const scopes=new Map();
+ const scopes=new Map(),targetScopes=new Map();
  for(const alias of plan.aliases){
   const boundary=alias.sourceModulePath.slice(0,alias.targetModulePath.length+1),key=scopeKey(boundary);
   const owners=scopes.get(key)??new Set();owners.add(alias.targetFullName);scopes.set(key,owners);
+  for(let depth=1;depth<=alias.targetModulePath.length;depth+=1){const path=alias.targetModulePath.slice(0,depth),scope=scopeKey(path);if(!targetScopes.has(scope)&&targetScopes.size>=8192)throw unsupported('target declaration dependencies','datatype scope prerequisites exceed their finite traversal budget');targetScopes.set(scope,path);}
+ }
+ if(plan.aliases.length)for(const entry of plan.program.declarations.values())if(entry.k==='data')for(let depth=1;depth<=entry.modulePath.length;depth+=1){
+  const path=entry.modulePath.slice(0,depth),key=scopeKey(path);
+  if(!targetScopes.has(key)&&targetScopes.size>=8192)throw unsupported('target declaration dependencies','datatype scope prerequisites exceed their finite traversal budget');
+  targetScopes.set(key,path);
+ }
+ // Do not open an ancestor target module while a datatype prerequisite still
+ // requires leaving it. These edges affect emission order, never source types.
+ const externalScopes=new Map();let visits=0;
+ const beneath=(path,prefix)=>path.length>=prefix.length&&prefix.every((part,index)=>part===path[index]);
+ for(const [key,path]of targetScopes){
+  const pending=[...plan.program.declarations.values()].filter(entry=>entry.k==='data'&&beneath(entry.modulePath,path)),seen=new Set(),outside=new Set();
+  while(pending.length){
+   const entry=pending.pop();if(seen.has(entry.fullName))continue;seen.add(entry.fullName);
+   if(++visits>1048576)throw unsupported('target declaration dependencies','datatype scope prerequisites exceed their finite traversal budget');
+   for(const name of dependencies(entry)){const dependency=plan.program.declarations.get(name);if(dependency?.k!=='data')continue;if(!beneath(dependency.modulePath,path))outside.add(name);if(!seen.has(name))pending.push(dependency);}
+  }
+  externalScopes.set(key,outside);
  }
  const result=new Map();let edges=0;
  for(const entry of plan.program.declarations.values()){
   const required=new Set();
   for(let depth=1;depth<=entry.modulePath.length;depth+=1){
-   const owners=scopes.get(scopeKey(entry.modulePath.slice(0,depth)));
-   if(owners)for(const owner of owners){if(!plan.program.declarations.has(owner))throw unsupported('target declaration dependencies','extra ordering dependencies require actual declared owners');if(!required.has(owner)){if(++edges>131072)throw unsupported('target declaration dependencies','extra ordering dependencies require bounded actual declaration edges');required.add(owner);}}
+   const key=scopeKey(entry.modulePath.slice(0,depth));
+   for(const owners of [scopes.get(key),externalScopes.get(key)])if(owners)for(const owner of owners){if(!plan.program.declarations.has(owner))throw unsupported('target declaration dependencies','extra ordering dependencies require actual declared owners');if(!required.has(owner)){if(++edges>131072)throw unsupported('target declaration dependencies','extra ordering dependencies require bounded actual declaration edges');required.add(owner);}}
   }
   if(required.size)result.set(entry.fullName,required);
  }

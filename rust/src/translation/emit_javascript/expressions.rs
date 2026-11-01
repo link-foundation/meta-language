@@ -398,6 +398,7 @@ impl JavaScriptEmitter<'_> {
                     ),
                 )
             }
+            Node::PropositionValue{..}=>self.prop(&e.proposition_value_atom().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",e.span))?),
             Node::ToString { arg, console } => {
                 if *console && arg.ty.is_float() {
                     self.helpers.insert(Helper::ShowNumber);

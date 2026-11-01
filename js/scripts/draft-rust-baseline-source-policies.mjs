@@ -6,11 +6,14 @@ import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {draftSourceLibrary} from './draft-source-library.mjs';
 import {writeProjectData} from './project-data.mjs';
 import {draftRustBaselineNativePolicyControls} from './draft-rust-baseline-native-policy-controls.mjs';
-import {readNativePolicyLiteralControls} from './draft-native-policy-assertion-controls.mjs';
+import {readNativePolicyLiteralControls,readExactFixtureExport} from './draft-native-policy-assertion-controls.mjs';
 
-if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArguments==='--draft --defer-publication';
+if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-module-initialization-rules.js',moduleName:'javascript_module_initialization_rules',model:'actual runtime Links policy initialization rules 1',programAsset:'javascript-module-initialization-rules-program'},
+ {sourcePath:'js/src/translation/source-library-error-rules.js',moduleName:'source_library_error_rules',model:'resolved supplied Error source module linkage 1',programAsset:'source-library-error-program',sourceAliases:true},
  {sourcePath:'js/src/translation/source-library-class-rules.js',moduleName:'source_library_class_rules',model:'resolved supplied JavaScript class module ownership 1',programAsset:'source-library-class-program',sourceAliases:true,sourceLints:'preserve',sourceFormatting:'preserve',valueSharing:'exact scalars, types and source spans 1',programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1'},
  {sourcePath:'examples/closed-source-class-composition/entry.js',moduleName:'closed_source_class_composition',model:'actual selected Scope supplied class module composition 1',programAsset:'closed-source-class-composition-program',sourceAliases:true,sourceClasses:'closed local class declarations 1',sourceReExports:'resolved named module providers 1',referenceSemantics:true,sourceLints:'preserve',sourceFormatting:'preserve',valueSharing:'exact scalars, types and source spans 1',programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1'},
  {sourcePath:'js/src/translation/rust-owned-recursive-datatype-rules.js',moduleName:'rust_owned_recursive_datatype_rules',model:'Rust finite recursive owned datatype witnesses 1',programAsset:'rust-owned-recursive-datatype-program'},
@@ -20,6 +23,7 @@ const libraries=[
  {sourcePath:'js/src/translation/formal-datatype-module-rules.js',moduleName:'formal_datatype_module_rules',model:'Actual mutual datatype common module prefixes 1',programAsset:'formal-datatype-module-program'},
  {sourcePath:'js/src/translation/formal-datatype-alias-rules.js',moduleName:'formal_datatype_alias_rules',model:'Formal datatype public target aliases 1',programAsset:'formal-datatype-alias-program'},
  {sourcePath:'js/src/translation/rust-owned-record-effect-rules.js',moduleName:'rust_owned_record_effect_rules',model:'Rust ordered owned record expression and main effects 1',programAsset:'rust-owned-record-effect-program'},
+ {sourcePath:'js/src/translation/proposition-value-rules.js',moduleName:'proposition_value_rules',model:'Proposition comparisons as exact Boolean values 1',programAsset:'proposition-value-program'},
  {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'javascript_class_owner_rules',model:'closed JavaScript class data owners 1',programAsset:'javascript-class-owner-program'},
  {sourcePath:'js/src/translation/rust-owned-record-update-rules.js',moduleName:'rust_owned_record_update_rules',model:'Rust destructor-free record field moves and updates 1',programAsset:'rust-owned-record-update-program'},
  {sourcePath:'js/src/translation/rust-copy-closure-rules.js',moduleName:'rust_copy_closure_rules',model:'ordinary explicitly typed immutable Rust Copy closures 1',programAsset:'rust-copy-closure-program'},
@@ -56,6 +60,8 @@ const libraries=[
 const fixtures=[
  'js/tests/fixtures/source-library-class-composition.mjs',
  'js/tests/fixtures/source-library-class-re-exports.mjs',
+ 'js/tests/fixtures/source-library-error-composition.mjs',
+ 'js/tests/fixtures/exact-fixture-authoring.mjs',
  'js/tests/fixtures/disjoint-collection-iterations.mjs',
  'js/tests/fixtures/disjoint-collection-item-iterations.mjs',
  'js/tests/fixtures/disjoint-collection-spreads.mjs',
@@ -68,9 +74,13 @@ const fixtures=[
  'js/tests/fixtures/rust-owned-record-places.mjs',
  'js/tests/fixtures/rust-owned-record-state.mjs',
  'js/tests/fixtures/rust-owned-record-effects.mjs',
+ 'js/tests/fixtures/rust-owned-record-completions.mjs',
+ 'js/tests/fixtures/proposition-values.mjs',
+ 'js/tests/fixtures/javascript-error-classes.mjs',
  'js/tests/fixtures/formal-mutual-datatypes.mjs',
  'js/tests/fixtures/formal-datatype-aliases.mjs',
  'js/tests/fixtures/rust-owned-recursive-containers.mjs',
+ 'js/tests/fixtures/rust-source-owner-qualification.mjs',
  'js/tests/fixtures/datatype-dependency-groups.mjs',
  'js/tests/fixtures/formal-datatype-modules.mjs',
  'js/tests/fixtures/native-policy-authoring-controls.mjs',
@@ -132,9 +142,17 @@ const consumers=[
  'js/tests/translation-rust-owned-record-places.test.js',
  'js/tests/translation-rust-owned-record-state.test.js',
  'js/tests/translation-rust-owned-record-effects.test.js',
+ 'js/tests/translation-rust-owned-record-completions.test.js',
+ 'js/tests/translation-proposition-values.test.js',
+ 'js/tests/translation-javascript-error-classes.test.js',
+ 'js/scripts/draft-javascript-error-source-kernels.mjs',
+ 'js/scripts/draft-javascript-error-class-source.mjs',
+ 'js/scripts/read-exact-fixture-data.mjs',
+ 'js/scripts/produce-proposition-values.mjs',
  'js/tests/translation-formal-mutual-datatypes.test.js',
  'js/tests/translation-formal-datatype-aliases.test.js',
  'js/tests/translation-rust-owned-recursive-containers.test.js',
+ 'js/tests/translation-rust-source-owner-qualification.test.js',
  'js/tests/translation-control-diagnostics.test.js',
  'js/tests/translation-javascript-call-allocation.test.js',
  'js/scripts/produce-control-diagnostic-failures.mjs',
@@ -143,10 +161,34 @@ const consumers=[
  'js/src/translation/formal-datatype-modules.js',
  'js/src/translation/formal-datatype-aliases.js',
  'js/src/translation/rust-owned-record-effects.js',
+ 'js/src/translation/proposition-values.js',
+ 'js/src/translation/javascript-error-construction-rules.js',
+ 'js/src/translation/javascript-error-class-rules.js',
+ 'js/src/translation/javascript-error-class-source.js',
+ 'js/src/translation/javascript-error-classes.js',
+ 'js/src/translation/javascript-error-module.js',
+ 'js/src/translation/javascript-error-realm.js',
+ 'js/src/translation/source-library-closure.js',
+ 'js/src/translation/source-library-classes.js',
+ 'js/src/translation/compose-source-library-aliases.js',
+ 'js/src/translation/javascript-error-closure-source.js',
+ 'js/src/translation/javascript-error-closure.js',
+ 'js/src/translation/javascript-module-initialization.js',
+ 'js/src/translation/runtime-data-module-source.js',
+ 'js/src/translation/runtime-data-module.js',
+ 'js/scripts/draft-javascript-module-initialization.mjs',
  'js/scripts/draft-native-policy-assertion-controls.mjs',
  'js/scripts/draft-rust-baseline-native-policy-controls.mjs',
  'js/scripts/rust-baseline-native-policy-control-groups.mjs',
  'js/scripts/class-owner-schema-extension.mjs',
+ 'js/scripts/proposition-value-schema-extension.mjs',
+ 'js/scripts/draft-rust-baseline-source-publication.mjs',
+ 'js/scripts/draft-javascript-error-source-closure.mjs',
+ 'js/scripts/draft-closed-source-error-composition.mjs',
+ 'js/scripts/source-library-errors.mjs',
+ 'js/tests/source-library-error-composition.test.js',
+ 'js/tests/exact-fixture-authoring.test.js',
+ 'js/tests/support/error-source-module-controls.js',
  'js/scripts/source-library-classes.mjs',
  'js/scripts/draft-source-library-class-rules.mjs',
  'js/scripts/draft-closed-source-class-composition.mjs',
@@ -198,6 +240,8 @@ const consumers=[
  'js/src/translation/rust-owned-record-places.js',
  'js/src/translation/rust-owned-record-state.js',
  'js/src/translation/rust-owned-containers.js',
+ 'js/src/translation/rust-owned-vectors.js',
+ 'js/src/translation/rust-source-expression-types.js',
  'js/src/translation/rust-owned-standard-sum-callbacks.js',
  'js/src/translation/rust-source-type-origins.js',
  'js/src/translation/rust-standard-sum-guards.js',
@@ -269,6 +313,8 @@ writeProjectData(new URL('parity/fixtures/rust-standard-sum-source-draft.lino',r
 for(const [source,target] of [
  ['source-library-class-composition','source-library-class-composition'],
  ['source-library-class-re-exports','source-library-class-re-exports'],
+ ['source-library-error-composition','source-library-error-composition'],
+ ['exact-fixture-authoring','exact-fixture-authoring'],
  ['disjoint-collection-iterations','disjoint-collection-iterations'],
  ['disjoint-collection-item-iterations','disjoint-collection-item-iterations'],
  ['disjoint-collection-spreads','disjoint-collection-spreads'],
@@ -281,8 +327,10 @@ for(const [source,target] of [
  ['rust-owned-record-places','rust-owned-record-places'],
  ['rust-owned-record-state','rust-owned-record-state'],
  ['rust-owned-record-effects','rust-owned-record-effects'],
+ ['rust-owned-record-completions','rust-owned-record-completions'],
+ ['rust-source-owner-qualification','rust-source-owner-qualification'],
+ ['proposition-values','proposition-values'],
  ['formal-mutual-datatypes','formal-mutual-datatypes'],
- ['formal-datatype-aliases','formal-datatype-aliases'],
  ['datatype-dependency-groups','datatype-dependency-groups'],
  ['formal-datatype-modules','formal-datatype-modules'],
  ['callable-data-originals','callable-data-originals'],
@@ -334,23 +382,31 @@ writeProjectData(new URL('parity/fixtures/native-policy-authoring-controls.lino'
 });
 // Keep nonfinite inputs as exact authored literal descriptors, alongside the
 // complete finite source inventories. Never coerce NaN/Infinity to JSON null.
-const recursiveLiteralPath='js/tests/fixtures/rust-owned-recursive-containers.mjs';
-const recursiveLiteralSource=readFileSync(new URL(recursiveLiteralPath,root),'utf8');
-const recursiveNamespace=await import('../tests/fixtures/rust-owned-recursive-containers.mjs');
-writeProjectData(new URL('parity/fixtures/rust-owned-recursive-containers.lino',root),{
- schemaVersion:1,model:'Rust owned recursive container exact source literals 1',boundary,
- declarations:Object.fromEntries(Object.entries(recursiveNamespace).filter(([name])=>name!=='rustOwnedRecursiveContainerDecisions')),
- selections:[readNativePolicyLiteralControls(recursiveLiteralSource,{path:recursiveLiteralPath,exportName:'rustOwnedRecursiveContainerDecisions'})],
+for(const [source,exports,model]of [
+ ['rust-owned-recursive-containers',['rustOwnedRecursiveContainerDecisions'],'Rust owned recursive container exact source literals 1'],
+ ['formal-datatype-aliases',['formalDatatypeAliasDecisions'],'Formal datatype alias exact source literals 1'],
+]){
+ const path='js/tests/fixtures/'+source+'.mjs',text=readFileSync(new URL(path,root),'utf8');
+ const namespace=await import('../tests/fixtures/'+source+'.mjs');
+ writeProjectData(new URL('parity/fixtures/'+source+'.lino',root),{
+  schemaVersion:1,model,boundary,
+  declarations:Object.fromEntries(Object.entries(namespace).filter(([name])=>!exports.includes(name))),
+  selections:exports.map(exportName=>readNativePolicyLiteralControls(text,{path,exportName})),
+ });
+}
+const errorFixturePath='js/tests/fixtures/javascript-error-classes.mjs';
+const errorFixtureSource=readFileSync(new URL(errorFixturePath,root),'utf8');
+writeProjectData(new URL('parity/fixtures/javascript-error-classes.lino',root),{
+ schemaVersion:1,model:'Actual Error class exact source fixture data 2',boundary,
+ profile:'exact pure fixture data 2',
+ exports:['javascriptErrorClassVersions','translationErrorSource','javascriptErrorClassDecisions','javascriptErrorClassAllocationDecisions','javascriptErrorClassOriginals','javascriptErrorClassRefusals','javascriptErrorClassRequiredHostBoundaries'].map(exportName=>readExactFixtureExport(errorFixtureSource,{path:errorFixturePath,exportName,profile:'exact pure fixture data 2'})),
 });
 draftRustBaselineNativePolicyControls({publish:true});globalThis.gc?.();
+process.argv.splice(2,process.argv.length-2,'--draft');
 await import('./draft-rust-type-alias-fixtures.mjs');globalThis.gc?.();
 await import('./draft-javascript-classes-fixtures.mjs');globalThis.gc?.();
 await import('./draft-javascript-classes-inventory.mjs');globalThis.gc?.();
 await import('./draft-rust-baseline-inventory.mjs');
 // Assemble generated products into both actual source-definition catalogs and
 // the native package manifest. These are declaration writers, not test runners.
-process.argv.splice(2,process.argv.length-2,'--draft','--reuse-roots');
-await import('./draft-source-definition-catalog.mjs');globalThis.gc?.();
-const {draftRustPackageSourceAssets}=await import('./rust-package-source-assets.mjs');
-draftRustPackageSourceAssets();
-process.argv.splice(2,process.argv.length-2,'--draft');
+if(!deferPublication)await import('./draft-rust-baseline-source-publication.mjs');

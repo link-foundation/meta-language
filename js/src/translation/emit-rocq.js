@@ -1,4 +1,5 @@
 import {checkJavaScriptClassOwners} from './javascript-class-owners.js';
+import {renderRocqPropositionEqualityValue} from './proposition-value-rules.js';
 import {readRustScalarVectorCopyValue} from './scalar-vector-copy.js';
 import {renderRustScalarVectorCopyValue,readRustScalarVectorCopyEncoding,readRustScalarVectorCopyStatement} from './rust-scalar-vector-copy-rules.js';
 import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal-runtime.js';
@@ -49,8 +50,9 @@ import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, datatypeGroups, orderDeclarations, unthreaded } from './emit-common.js';
+import { EmitState, mutualGroups, datatypeGroups, dependencies, orderDeclarations, unthreaded } from './emit-common.js';
 import {readFormalDatatypeConstructiveProfiles,readCallableDataFacts,readCallableDataRecursiveProfile} from './callable-data.js';
+import {renderFormalDatatypeRocqMutualBlock} from './callable-data-derivation-rules.js';
 import {planFormalDatatypeModules,formalDatatypeModuleDependencies} from './formal-datatype-modules.js';
 import {captureFormalDatatypeAliases,FormalDatatypeAliases} from './formal-datatype-aliases.js';
 
@@ -439,7 +441,8 @@ class RocqEmitter {
     }
   }
 
-  data(entry,keyword='Inductive',terminator='.') {
+  data(entry,keyword='Inductive',terminator='.',mutual=false) {
+    if(!mutual&&dependencies(entry).has(entry.fullName))readFormalDatatypeConstructiveProfiles({kind:'data',name:entry.fullName},this.program.declarations);
     const name = this.state.localName(entry.fullName);
     const ctors = entry.ctors.map((ctor) => {
       const fields = ctor.fields.map((field) => `${this.type(field.type)} -> `).join('');
@@ -449,9 +452,9 @@ class RocqEmitter {
     // A type nested through list has no registered All scheme, which Rocq would warn of on every definition.
     const lists = (type) => type.kind === 'array' && (type.element.kind === 'data' || lists(type.element));
     const nested = entry.ctors.some((ctor) => ctor.fields.some((field) => lists(field.type)));
-    return [...(nested&&keyword==='Inductive' ? ['#[warnings="-register-all"]'] : []), `${keyword} ${name} : Type :=`, ...ctors].join('\n') + terminator;
+    return [...(nested&&keyword==='Inductive'&&!mutual ? ['#[warnings="-register-all"]'] : []), `${keyword} ${name} : Type :=`, ...ctors].join('\n') + terminator;
   }
-  mutualData(group){for(const entry of group)if(readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations).callable)readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations);readFormalDatatypeConstructiveProfiles({kind:'data',name:group[0].fullName},this.program.declarations);return group.map((entry,index)=>this.data(entry,index===0?'Inductive':'with',index===group.length-1?'.':'')).join('\n');}
+  mutualData(group){for(const entry of group)if(readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations).callable)readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations);readFormalDatatypeConstructiveProfiles({kind:'data',name:group[0].fullName},this.program.declarations);return renderFormalDatatypeRocqMutualBlock(group.map((entry,index)=>this.data(entry,index===0?'Inductive':'with',index===group.length-1?'.':'',true)));}
 
   fn(entry) {
     const general = entry.recursive && entry.decreasing === null && !entry.mutual;
@@ -684,6 +687,12 @@ class RocqEmitter {
   }
 
   expr(e) {
+    if(e.k==='propositionValue'){
+      const prop={p:e.op,left:e.left,right:e.right,domain:e.domain,...(e.sameValue?{sameValue:true}:{})};
+      if((e.op==='eq'||e.op==='ne')&&e.domain.kind!=='float')return renderRocqPropositionEqualityValue(this.prop({...prop,p:'eq'}),e.op==='ne');
+      if(e.sameValue){this.helpers.add('floatSame');return `(${e.op==='ne'?'negb ':''}(ml_float_same ${this.expr(e.left)} ${this.expr(e.right)}))`;}
+      return this.comparison(e.op,e.domain,this.expr(e.left),this.expr(e.right));
+    }
     const copy=readRustScalarVectorCopyValue(this.program.sourceLanguage,e);
     if(copy){this.state.encode(readRustScalarVectorCopyEncoding(),readRustScalarVectorCopyStatement());return renderRustScalarVectorCopyValue('Rocq',this.expr(copy));}
     const units=readFormalUnitStringExpression(this,e,0);

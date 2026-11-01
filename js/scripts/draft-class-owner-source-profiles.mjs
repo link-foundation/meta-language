@@ -7,7 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData} from './project-data.mjs';
-import {extendClassOwnerSchema} from './class-owner-schema-extension.mjs';
+import {extendCurrentTypedProgramSourceSchema as extendClassOwnerSchema} from './class-owner-schema-extension.mjs';
 import {classOwnerSourceProfileReceipt,classOwnerSourceProfilePredecessorRevision} from './class-owner-schema-profile.mjs';
 const project=realpathSync(fileURLToPath(new URL('../../',import.meta.url)));
 const schemas=['js/src/data/typed-program-links-schema.lino','rust/src/data/typed-program-links-schema.lino'];

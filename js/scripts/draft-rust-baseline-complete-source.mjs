@@ -6,9 +6,14 @@ import {fileURLToPath} from 'node:url';
 export const rustBaselineSourceAuthoringSteps=Object.freeze([
  Object.freeze(['js/scripts/draft-class-owner-source-profiles.mjs','--draft']),
  Object.freeze(['js/scripts/generate-typed-program-link-rules.mjs','--draft']),
- Object.freeze(['js/scripts/draft-rust-baseline-source-policies.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-rust-baseline-source-policies.mjs','--draft','--defer-publication']),
+ Object.freeze(['js/scripts/draft-javascript-error-source-kernels.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-javascript-module-initialization.mjs','--draft']),
  Object.freeze(['js/scripts/draft-javascript-call-machine.mjs','--draft']),
  Object.freeze(['js/scripts/draft-javascript-call-source.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-javascript-error-class-source.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-closed-source-error-composition.mjs','--draft']),
+ Object.freeze(['js/scripts/draft-rust-baseline-source-publication.mjs','--draft']),
 ]);
 export function draftRustBaselineCompleteSource({run=spawnSync}={}){
  const cwd=fileURLToPath(new URL('../../',import.meta.url));

@@ -56,8 +56,9 @@ pub(in super::super) fn source_completion_kind(node: &SExpr) -> String {
 
 impl RustParser {
     pub(super) fn expr(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        if let Some(value)=self.read_owned_record_effect_assignment(path)?{return Ok(value);}
-        self.or(path, options)
+        let value=if let Some(value)=self.read_owned_record_effect_assignment(path)?{value}else{self.or(path,options)?};
+        self.origins.record_expression_type(&value,path)?;
+        Ok(value)
     }
 
     pub(super) fn or(&mut self, path: &[String], options: Options) -> Result<SExpr> {
@@ -458,6 +459,9 @@ impl RustParser {
                 let method = self.cursor.identifier(Some("method"))?;
                 if let Some(boxed)=self.read_owned_box_clone(&value,&method,path)? {
                     value=boxed;continue;
+                }
+                if let Some(vector)=self.read_owned_vector_clone(&value,&method,path)? {
+                    value=vector;continue;
                 }
                 if let Some(sum)=self.read_owned_standard_sum_observer(&value,&method,path)? {
                     value=sum;

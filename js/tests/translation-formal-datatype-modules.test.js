@@ -78,3 +78,15 @@ test('relocation rejects edited source facts before consuming public name reserv
  assert.equal(state.program,source);assert.equal(state.ref(a.fullName),before);
  state.relocateDatatypes(plan.program,plan.aliases);assert.notEqual(state.ref(a.fullName),before);
 });
+
+test('a target ancestor waits for external datatype prerequisites before opening',()=>{
+ const early={k:'fn',name:'early',fullName:'x.early',modulePath:['x'],params:[],ret:{kind:'bool'},body:{k:'bool',value:true,type:{kind:'bool'}}};
+ const a=data(['x','inner'],'A','x.B'),b=data(['x'],'B','x.inner.A'),outside=data(['z'],'Dependency','none');
+ outside.ctors[0].fields[0].type={kind:'bool'};
+ a.ctors[0].fields.push({name:'external',type:{kind:'data',name:'z.Dependency'}});
+ const source={declarations:new Map([early,a,b,outside].map(entry=>[entry.fullName,entry]))};
+ const plan=planFormalDatatypeModules(source),extraDependencies=formalDatatypeModuleDependencies(plan);
+ assert.ok(extraDependencies.get(early.fullName).has(outside.fullName));
+ const order=orderDeclarations(plan.program,{requireContiguousModules:true,extraDependencies});
+ assert.deepEqual(order.map(entry=>entry.fullName),['z.Dependency','x.early','x.inner.A','x.B']);
+});

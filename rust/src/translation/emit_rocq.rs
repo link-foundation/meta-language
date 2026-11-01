@@ -17,7 +17,7 @@ use std::rc::Rc;
 use super::Language;
 use super::diagnostics::{ErrorKind, Result, TranslationError, unsupported};
 use super::emit_common::{
-    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, order_declarations_with_dependencies, unthreaded,
+    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, dependencies, order_declarations_with_dependencies, unthreaded,
 };
 use super::ir::{
     ByZero, Case, DataDecl, Decl, Effect, Expr, FnDecl, Hints, LitValue, Main, Node, Param,
@@ -651,9 +651,10 @@ impl RocqEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
-        self.data_definition(entry,data,"Inductive",".")
+        self.data_definition(entry,data,"Inductive",".",false)
     }
-    fn data_definition(&mut self, entry: &Decl, data: &DataDecl,keyword:&str,terminator:&str) -> Result<String> {
+    fn data_definition(&mut self, entry: &Decl, data: &DataDecl,keyword:&str,terminator:&str,mutual:bool) -> Result<String> {
+        if !mutual&&dependencies(entry).contains(&data.full_name){crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;}
         fn lists(ty: &Type) -> bool {
             ty.element()
                 .is_some_and(|element| matches!(element, Type::Data { .. }) || lists(element))
@@ -675,7 +676,7 @@ impl RocqEmitter<'_> {
             .ctors
             .iter()
             .any(|ctor| ctor.fields.iter().any(|field| lists(&field.ty)));
-        if nested&&keyword=="Inductive" {
+        if nested&&keyword=="Inductive"&&!mutual {
             lines.insert(0, "#[warnings=\"-register-all\"]".to_owned());
         }
         Ok(lines.join("\n") + terminator)
@@ -683,7 +684,7 @@ impl RocqEmitter<'_> {
     fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
         for entry in group{let ty=Type::Data{name:entry.full_name().to_owned()};let lookup=|name:&str|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None};if crate::translation::callable_data::read_callable_data_facts(&ty,&lookup)?.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&ty,&lookup)?;}}
         crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:group[0].full_name().to_owned()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
-        let mut lines=Vec::new();for(index,entry)in group.iter().enumerate(){let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,if index==0{"Inductive"}else{"with"},if index+1==group.len(){"."}else{""})?);}Ok(lines.join("\n"))
+        let mut lines=Vec::new();for(index,entry)in group.iter().enumerate(){let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,if index==0{"Inductive"}else{"with"},if index+1==group.len(){"."}else{""},true)?);}Ok(crate::translation::callable_data_derivation_rules::render_formal_datatype_rocq_mutual_block(&lines))
     }
 
     /// Recursion that decreases a natural by one each call, in a function whose

@@ -1,4 +1,5 @@
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
+import {checkPropositionValue} from './proposition-values.js';
 import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
 import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
 import {checkDisjointCollectionIterations} from './disjoint-collection-iterations.js';
@@ -828,6 +829,8 @@ class Checker {
       }
       case 'booleanValue':
         return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
+      case 'propositionValue':
+        return checkPropositionValue(this,node,env,path);
       case 'numberValue':
         return coerce(this.numberValue(this.expr(node.arg, env, path, undefined), node.span), FLOAT, this.language, node.span);
       case 'none':

@@ -10,6 +10,16 @@ use super::{
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum Node {
+    /// Atomic checked proposition comparison. Connectives and exhaustive
+    /// Bool/Unit quantifiers lower to ordinary pure if/let expressions.
+    PropositionValue {
+        op: BinaryOp,
+        left: Box<Expr>,
+        right: Box<Expr>,
+        domain: Type,
+        #[serde(default,skip_serializing_if="is_false")]
+        same_value: bool,
+    },
     Lit {
         value: LitValue,
     },
@@ -317,6 +327,7 @@ impl Node {
             Self::Ctor { .. } => "ctor",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
+            Self::PropositionValue { .. } => "propositionValue",
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",

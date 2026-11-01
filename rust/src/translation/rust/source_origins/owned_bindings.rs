@@ -3,6 +3,8 @@ use super::{Result, SExpr, SNode, SourceOrigin, SourceOrigins, Span, Type, unsup
 use crate::translation::rust_owned_binding_rules as rules;
 use std::collections::{HashMap, HashSet};
 impl SourceOrigins {
+    pub(in super::super) fn owned_binding_state_count(&self)->usize{self.source_binding_states.len()}
+    pub(in super::super) fn owned_binding_state_text_size(&self)->usize{self.source_binding_states.iter().map(|(identity,state)|identity.len()+state.len()).sum()}
     pub(in super::super) fn ensure_owned_record_field_state(&mut self,identity:&str){self.source_binding_states.entry(identity.to_owned()).or_insert_with(||"available".to_owned());}
     pub(in super::super) fn set_owned_record_field_state(&mut self,identity:&str,state:&str){self.source_binding_states.insert(identity.to_owned(),state.to_owned());}
     pub(in super::super) fn check_owned_record_whole(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{

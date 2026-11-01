@@ -13,6 +13,10 @@ use super::source_type_origins::sanitize_source_type_origin;
 
 pub(super) const DEFERRED_PATTERN: &str = "#rust-standard-sum-source";
 
+#[cfg(test)]
+#[path="standard_sum_source_qualification_tests.rs"]
+mod qualification_controls;
+
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct StandardSumSource {
@@ -93,24 +97,55 @@ impl SourceOrigins {
                 params: params.iter().map(|ty| self.standard_sum_qualified_type(ty,path)).collect::<Option<Vec<_>>>()?,
                 ret: Box::new(self.standard_sum_qualified_type(ret,path)?),
             },
+            Type::Array {element,reference}=>Type::Array{element:Box::new(self.standard_sum_qualified_type(element,path)?),reference:*reference},
             _ => ty.clone(),
         })
     }
 
-    fn standard_sum_qualified_origin(&self, origin: &SourceOrigin) -> Option<SourceOrigin> {
+    fn standard_sum_qualified_owner(&self,owner:&SourceOwner,ty:&Type,path:&[String],origin:&SourceOrigin,depth:usize)->Option<SourceOwner>{
+        if depth>256{return None;}
+        if owner.kind=="declaration"&&owner.arguments.is_empty(){if let Type::Named{path:names,..}=ty{
+            let(name,declaration)=self.standard_sum_metadata_lookup(names,path)?;
+            if !matches!(declaration,SourceDeclaration::Data){return None;}
+            return Some(SourceOwner{kind:owner.kind.clone(),path:name.split('.').map(str::to_owned).collect(),arguments:Vec::new()});
+        }}
+        let mut children=Vec::<(&Type,&SourceOrigin)>::new();
+        let recognized=if owner.kind=="tuple"{if let Type::Tuple{elements}=ty{
+            if elements.len()!=owner.arguments.len(){false}else{for(index,child)in elements.iter().enumerate(){children.push((child,origin.fields.as_ref().and_then(|fields|fields.get(index)).unwrap_or(origin)));}true}
+        }else{false}}else if owner.kind=="function"{if let Type::Function{params,ret}=ty{
+            if owner.arguments.len()!=params.len()+1{false}else{for(index,child)in params.iter().enumerate(){children.push((child,origin.callable_parameters.as_ref().and_then(|fields|fields.get(index)).unwrap_or(origin)));}children.push((ret,origin.callable_result.as_deref().unwrap_or(origin)));true}
+        }else{false}}else if owner.kind=="library"&&matches!(owner.path.join("::").as_str(),"std::boxed::Box"|"alloc::boxed::Box")&&owner.arguments.len()==1{children.push((ty,origin));true}
+        else if owner.kind=="library"&&owner.path.join("::")=="std::vec::Vec"&&owner.arguments.len()==1{if let Type::Array{element,..}=ty{children.push((element,origin));true}else{false}}
+        else if owner.kind=="library"{if let Type::Named{path:names,..}=ty{
+            let stored=self.standard_sum_metadata_lookup(names,path).and_then(|(name,declaration)|matches!(declaration,SourceDeclaration::Data).then(||self.standard_sum_source_origins.get(&name)).flatten());
+            if let Some(sum)=stored.and_then(|stored|stored.standard_sum_source.as_deref()){
+                if rules::read_rust_standard_sum_source_owner(&owner.path.join("::"),true,0.0)!=sum.owner||owner.arguments.len()!=sum.arguments.len(){false}else{for child in &sum.arguments{children.push((child.ty.as_ref()?,child));}true}
+            }else{false}
+        }else{false}}else{false};
+        if !recognized{return Some(owner.clone());}
+        let arguments=owner.arguments.iter().zip(children).map(|(child,(ty,context))|self.standard_sum_qualified_owner(child,ty,&context.path,context,depth+1)).collect::<Option<Vec<_>>>()?;
+        Some(SourceOwner{kind:owner.kind.clone(),path:owner.path.clone(),arguments})
+    }
+
+    pub(super) fn standard_sum_qualified_origin(&self, origin: &SourceOrigin) -> Option<SourceOrigin> {
         let mut result = origin.clone();
         result.fields = match result.fields.as_ref() {
             Some(fields)=>Some(fields.iter().map(|field|self.standard_sum_qualified_origin(field)).collect::<Option<Vec<_>>>()?),
             None=>None,
         };
+        result.callable_parameters=match result.callable_parameters.as_ref(){Some(fields)=>Some(fields.iter().map(|field|self.standard_sum_qualified_origin(field)).collect::<Option<Vec<_>>>()?),None=>None};
+        result.callable_result=match result.callable_result.as_deref(){Some(child)=>Some(Box::new(self.standard_sum_qualified_origin(child)?)),None=>None};
         if result.ty.is_none() {
             let fields = result.fields.as_ref()?;
             let owners = fields.iter().map(|field| field.expanded_source_owner.clone().or_else(||field.source_owner.clone())).collect::<Option<Vec<_>>>()?;
             result.ty = Some(Type::Tuple { elements: fields.iter().map(|field|field.ty.clone()).collect::<Option<Vec<_>>>()? });
             result.source_owner = Some(SourceOwner { kind:"tuple".into(), path:Vec::new(), arguments:owners });
         }
+        if let Some(Type::Tuple{elements})=result.ty.as_ref(){if let Some(fields)=result.fields.as_ref().filter(|fields|fields.len()==elements.len()){result.ty=Some(Type::Tuple{elements:fields.iter().map(|field|field.ty.clone()).collect::<Option<Vec<_>>>()?});}}
+        if let Some(Type::Function{params,..})=result.ty.as_ref(){if let(Some(parameters),Some(ret))=(result.callable_parameters.as_ref().filter(|fields|fields.len()==params.len()),result.callable_result.as_deref()){result.ty=Some(Type::Function{params:parameters.iter().map(|parameter|parameter.ty.clone()).collect::<Option<Vec<_>>>()?,ret:Box::new(ret.ty.clone()?)});}}
         result.ty = Some(self.standard_sum_qualified_type(result.ty.as_ref()?, &result.path)?);
-        self.retain_nominal_copy_origin(&mut result);
+        if let Some(owner)=result.source_owner.as_ref(){result.source_owner=Some(self.standard_sum_qualified_owner(owner,result.ty.as_ref()?,&result.path,&result,0)?);}
+        if let Some(owner)=result.expanded_source_owner.as_ref(){result.expanded_source_owner=Some(self.standard_sum_qualified_owner(owner,result.ty.as_ref()?,&result.path,&result,0)?);}
         Some(result)
     }
 
@@ -119,6 +154,7 @@ impl SourceOrigins {
             Type::Named {path:names,..}=>self.standard_sum_qualified_type(ty,path).unwrap_or_else(||Type::Named {path:names.clone(),span:None}),
             Type::Tuple {elements}=>Type::Tuple {elements:elements.iter().map(|ty|self.standard_sum_header_type(ty,path)).collect()},
             Type::Function {params,ret}=>Type::Function {params:params.iter().map(|ty|self.standard_sum_header_type(ty,path)).collect(),ret:Box::new(self.standard_sum_header_type(ret,path))},
+            Type::Array{element,reference}=>Type::Array{element:Box::new(self.standard_sum_header_type(element,path)),reference:*reference},
             _=>ty.clone(),
         }
     }
@@ -147,7 +183,8 @@ impl SourceOrigins {
             Some(fields) => Some(fields.iter().map(|field| self.standard_sum_source_identity_project(field)).collect::<Option<Vec<_>>>()?),
             None => None,
         };
-        Some(StandardSumIdentity::Value { ty, owner:origin.expanded_source_owner.clone().or_else(||origin.source_owner.clone()),
+        let owner=match origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()){Some(owner)=>Some(self.standard_sum_qualified_owner(owner,&ty,&origin.path,origin,0)?),None=>None};
+        Some(StandardSumIdentity::Value { ty, owner,
             wrappers:origin.wrappers.clone(), fields, float:origin.float_source_model, text:origin.text_source_model })
     }
 
@@ -362,6 +399,9 @@ impl RustParser {
     }
 
     fn rewrite_standard_sum_header_origin(&self,origin:&SourceOrigin,resolved:&HashMap<String,SourceOrigin>)->SourceOrigin{
+        if let Some(outer)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|outer|crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(&origin.wrappers,&outer.kind,&outer.path.join("::"),outer.arguments.len() as f64)){
+            let mut child=origin.clone();child.wrappers.remove(0);child.source_owner=Some(outer.arguments[0].clone());child.expanded_source_owner=None;let mut actual=self.rewrite_standard_sum_header_origin(&child,resolved);let inner=actual.expanded_source_owner.as_ref().or(actual.source_owner.as_ref()).cloned();actual.wrappers.insert(0,"box".into());actual.source_owner=inner.map(|inner|SourceOwner{kind:outer.kind.clone(),path:outer.path.clone(),arguments:vec![inner]});actual.expanded_source_owner=None;actual.copy_evidence=None;return actual;
+        }
         if let Some(Type::Named {path,..})=origin.ty.as_ref(){
             if let Some(mut actual)=self.origins.lookup_type_owner(path,&origin.path).and_then(|entry|resolved.get(&entry.full_name)).cloned(){actual.wrappers=origin.wrappers.clone();return actual;}
         }

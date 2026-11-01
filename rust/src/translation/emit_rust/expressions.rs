@@ -422,6 +422,7 @@ impl RustEmitter<'_> {
                     ),
                 )
             }
+            Node::PropositionValue{..}=>self.prop(&expr.proposition_value_atom().ok_or_else(||unsupported("proposition value","an actual checked comparison is required",expr.span))?),
             Node::ToString { arg, console } => {
                 match arg.ty {
                     Type::String => return self.expr(arg),

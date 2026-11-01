@@ -1,6 +1,6 @@
 import {readRustExpressionCompletionForm,readRustExpressionCompletionChildRoles,readRustExpressionCompletionLimit} from './rust-expression-completion-rules.js';
 /** @param {string} kind @param {string} operation @returns {string} */
-export function readRustOwnedRecordEffectForm(kind,operation){if(kind==='math'&&operation==='rustOwnedRecordStateRead')return 'read state';if(kind==='math'&&operation==='rustOwnedRecordStateWrite')return 'write state';return readRustExpressionCompletionForm(kind,operation);}
+export function readRustOwnedRecordEffectForm(kind,operation){if(kind==='math'&&operation==='rustOwnedRecordStateRead')return 'read state';if(kind==='math'&&operation==='rustOwnedRecordStateWrite')return 'write state';if(kind==='propositionValue')return 'proposition comparison';return readRustExpressionCompletionForm(kind,operation);}
 /** All added roles are ordinary source operand order. Lazy branches remain
  * separate forms and callable bodies remain separate callable boundaries.
  * @param {string} kind @returns {string[]} */

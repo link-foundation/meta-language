@@ -5,6 +5,7 @@ use super::{
 };
 use crate::translation::conditional_chain_rules as rules;
 use crate::translation::frontend_rules::ml_array::number_index;
+use std::collections::HashMap;
 struct Stage {
     patterns: Vec<SPattern>,
     scrutinee: Option<SExpr>,
@@ -15,8 +16,10 @@ struct Stage {
 pub(in crate::translation::rust) struct ConditionalStages {
     stages: Vec<Stage>,
     forms: Vec<f64>,
+    failure_states:HashMap<String,String>,
 }
 impl ConditionalStages {
+    pub(in crate::translation::rust) fn take_ownership_failure(&mut self)->HashMap<String,String>{std::mem::take(&mut self.failure_states)}
     pub(in crate::translation::rust) fn has_expression_completion(&self)->Result<bool>{
         use crate::translation::rust::expression_completions::has_expression_completion;
         for stage in &self.stages {
@@ -36,6 +39,7 @@ impl ConditionalStages {
         span: Option<Span>,
     ) -> Self {
         Self {
+            failure_states:HashMap::new(),
             forms: vec![1.0],
             stages: vec![Stage {
                 patterns: vec![pattern],
@@ -110,6 +114,7 @@ impl RustParser {
     ) -> Result<ConditionalStages> {
         let mut stages = Vec::new();
         let mut forms = Vec::new();
+        let mut failures=Vec::new();
         loop {
             let token = self.cursor.peek().clone();
             if self.cursor.eat("let").is_some() {
@@ -133,6 +138,7 @@ impl RustParser {
                         statement: false,
                     },
                 ))?;
+                failures.push(self.ordinary_completion_snapshot()?);
                 let scope = self.origins.cases(&mut patterns, &scrutinee, path)?;
                 self.origins.enter(Some(scope));
                 for alias in &aliases {
@@ -155,6 +161,7 @@ impl RustParser {
                     },
                 ))?;
                 self.origins.direct(&condition, path, condition.span)?;
+                failures.push(self.ordinary_completion_snapshot()?);
                 stages.push(Stage {
                     patterns: Vec::new(),
                     scrutinee: None,
@@ -186,7 +193,8 @@ impl RustParser {
                 break;
             }
         }
-        Ok(ConditionalStages { stages, forms })
+        let success=self.ordinary_completion_snapshot()?;let mut failures=failures.into_iter();let mut failure_states=failures.next().unwrap_or_default();for failure in failures{self.origins.join_owned_bindings(&failure_states,&failure,true,true);failure_states=self.ordinary_completion_snapshot()?;}self.origins.restore_owned_bindings(success);
+        Ok(ConditionalStages { stages, forms, failure_states })
     }
     pub(in crate::translation::rust) fn lower_conditional_chain_stages(
         &self,
@@ -195,7 +203,7 @@ impl RustParser {
         otherwise: SExpr,
         range: Option<Span>,
     ) -> Result<SExpr> {
-        let ConditionalStages { stages, forms } = syntax;
+        let ConditionalStages { stages, forms, .. } = syntax;
         let failed = operation("failure", Vec::new(), range);
         let mut result = operation("success", vec![body], range);
         let plan = rules::plan_conditional_chain_layers(&forms);
@@ -263,7 +271,7 @@ impl RustParser {
         Ok(result)
     }
     pub(super) fn conditional_chain(&mut self, path: &[String], start: &Token) -> Result<SExpr> {
-        let ownership_base=self.origins.snapshot_owned_bindings();
+        let ownership_base=self.ordinary_completion_snapshot()?;
         let previous = self.origins.enter(None);
         let parsed = (|| {
             let syntax = self.conditional_chain_stages(path, start)?;
@@ -273,7 +281,8 @@ impl RustParser {
             Ok::<_, crate::translation::diagnostics::TranslationError>((syntax, body, origin))
         })();
         self.origins.scope = previous;
-        let (syntax, body, origin) = parsed?;
+        let (mut syntax, body, origin) = parsed?;
+        let then_states=self.ordinary_completion_snapshot()?;self.origins.restore_owned_bindings(syntax.take_ownership_failure());
         if self.cursor.eat("else").is_none() {
             return Err(unsupported(
                 "if without else",
@@ -287,9 +296,8 @@ impl RustParser {
             self.block(path)?
         };
         let range = span(start, self.cursor.peek());
-        let origin = self
-            .origins
-            .checked_join(&[origin, self.origins.origin(&otherwise, path)])?;
+        let otherwise_origin=self.origins.origin(&otherwise,path);self.origins.expire_owned_bindings(&ownership_base,&otherwise_origin)?;let otherwise_states=self.ordinary_completion_snapshot()?;self.origins.join_owned_bindings(&then_states,&otherwise_states,!origin.diverging,!otherwise_origin.diverging);
+        let origin = self.origins.checked_join(&[origin,otherwise_origin])?;
         let result = self.lower_conditional_chain_stages(syntax, body, otherwise, range)?;
         self.origins.mark(&result, origin);
         Ok(result)

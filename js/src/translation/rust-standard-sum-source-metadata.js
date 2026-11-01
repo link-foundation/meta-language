@@ -72,7 +72,8 @@ function counter(){
    if(!header){if(value.fields==null)scalar(null,depth+1);else list(value.fields,depth+1,(child,next)=>identity(child,next,lookup,false,admitOwned));scalar(value.floatSourceModel??null,depth+1);scalar(value.textSourceModel??null,depth+1);}
   });
  };
- return {origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header,admitOwned){list(values,0,(value,depth)=>identity(value,depth,lookup,header,admitOwned));return [nodes,units];}};
+ return {typeOnly(value,path){type(value,0);strings(path,0);return [nodes,units];},origins(values){list(values,0,origin);return [nodes,units];},identities(values,lookup,header,admitOwned){list(values,0,(value,depth)=>identity(value,depth,lookup,header,admitOwned));return [nodes,units];}};
 }
+export function measureRustSourceExpressionType(type,path){return counter().typeOnly(type,path);}
 export function measureRustStandardSumSourceMetadata(origins){return counter().origins(origins);}
 export function measureRustStandardSumSourceIdentityMetadata(origins,lookup,header=false,admitOwned=null){return counter().identities(origins,lookup,header,admitOwned);}

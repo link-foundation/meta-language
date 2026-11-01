@@ -280,6 +280,10 @@ impl SourceOrigin {
                 serde_json::Number::from(current.arguments.len())
                     .as_f64()
                     .expect("actual source owner argument count"),
+            ) && !crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_pointer_owner_child(
+                &current.kind,
+                &current.path.join("::"),
+                current.arguments.len() as f64,
             ) {
                 return String::new();
             }
@@ -393,6 +397,7 @@ pub(super) struct SourceOrigins {
     // Erased wrapper expressions deliberately retain their operand's range, so
     // successive wraps and dereferences update the same source evidence.
     expressions: HashMap<Span, SourceOrigin>,
+    pub(super) expression_type_cache:super::source_expression_types::ExpressionTypeCache,
     pattern_references: HashMap<Span, usize>,
     literal_pattern_aliases: HashMap<Span, Vec<SExpr>>,
     wildcard_references: VecDeque<usize>,
@@ -445,6 +450,7 @@ impl SourceOrigins {
             scope: HashMap::new(),
             current_type: SourceOrigin::unknown(),
             expressions: HashMap::new(),
+            expression_type_cache:super::source_expression_types::ExpressionTypeCache::default(),
             pattern_references: HashMap::new(),
             literal_pattern_aliases: HashMap::new(),
             wildcard_references: VecDeque::new(),
@@ -801,6 +807,9 @@ impl SourceOrigins {
         }
     }
 
+    /// Immutable host type inspection avoids cloning a retained metadata tree.
+    pub(super) fn recorded_expression_origin(&self,node:&SExpr)->Option<&SourceOrigin>{node.span.and_then(|span|self.expressions.get(&span))}
+    pub(super) fn recorded_expression_origin_at_span(&self,span:Option<Span>)->Option<&SourceOrigin>{span.and_then(|span|self.expressions.get(&span))}
     pub(super) fn origin(&self, node: &SExpr, path: &[String]) -> SourceOrigin {
         if let Some(origin) = node.span.and_then(|span| self.expressions.get(&span)) {
             return origin.clone();
@@ -1320,6 +1329,7 @@ impl SourceOrigins {
         self.mark(node, origin);
     }
     pub(super) fn mark_vector_constructor(&mut self, node: &SExpr, mut origin: SourceOrigin) ->Result<()> {
+        if self.owned_container_source_enabled{return self.capture_owned_vector_constructor(node,origin);}
         let values=match &node.node{SNode::Array{items,..}=>items.iter().map(|item|self.origin(&item.value,&origin.path)).collect::<Vec<_>>(),_=>Vec::new()};
         let element=match origin.ty.as_ref(){Some(Type::Array{element,..})=>{let mut value=SourceOrigin::with_type(element.as_ref().clone(),&origin.path,Vec::new());self.retain_nominal_copy_origin(&mut value);if let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|owner|owner.kind=="library"&&owner.path.join("::")=="std::vec::Vec"&&owner.arguments.len()==1){value.source_owner=Some(owner.arguments[0].clone());}Some(value)},_=>None};
         let invalid_type=element.as_ref().is_some_and(|element|!accept_rust_source_array_element(element.ty.as_ref().map_or("",Type::kind),false)&&!self.nominal_vector_element(element));
@@ -1346,6 +1356,7 @@ impl SourceOrigins {
         allow_calls: bool,
     ) -> bool {
         let origin = self.origin(node, path);
+        if self.owned_vector_produced_value(&origin){return true;}
         if matches!(origin.ty, Some(Type::Array { .. }))
             && origin.source_owned_result_proof
             && self.available_owned_binding(&origin)
@@ -1498,6 +1509,7 @@ impl SourceOrigins {
             && !matches!(node.node, SNode::Array { .. })
             && actual.fresh_array_value.is_none()
             && !self.available_owned_binding(&actual)
+            && !self.owned_vector_produced_value(&actual)
         {
             return Err(unsupported(
                 "owned vector binding",
@@ -1572,13 +1584,16 @@ impl SourceOrigins {
         expected: &SourceOrigin,
         span: Option<Span>,
     ) -> Result<()> {
+        self.argument_with_transfer(actual,expected,span,false)
+    }
+    pub(super) fn argument_with_transfer(&self,actual:&SourceOrigin,expected:&SourceOrigin,span:Option<Span>,transferred:bool)->Result<()>{
         if self.collecting {
             return Ok(());
         }
         if actual.diverging {
             return Ok(());
         }
-        if !actual.wrappers.is_empty() {
+        if crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_argument_read_check(actual.wrappers.len() as f64,transferred) {
             self.check_owned_origin(actual, span)?;
         }
         self.pointer_integer_argument(actual, expected, span)?;
@@ -1751,7 +1766,7 @@ impl SourceOrigins {
             if !transferred {
                 self.check_owned_origin(&actual, span)?;
             }
-            let consumable = transferred || self.available_owned_binding(&actual);
+            let consumable = transferred || self.available_owned_binding(&actual)||self.owned_vector_produced_value(&actual);
             let fresh = expected.array_source_model == Some("owned vector")
                 && expected.wrappers.is_empty()
                 && accept_rust_fresh_owned_vector_argument(
@@ -1779,7 +1794,7 @@ impl SourceOrigins {
                 actual.wrappers.clear();
                 actual.array_source_model = Some("owned vector");
             }
-            self.argument(&actual, expected, span)?;
+            self.argument_with_transfer(&actual, expected, span,transferred)?;
             if !transferred && self.owned_binding_value(expected) {
                 self.consume_owned_binding(&actual, span)?;
             }

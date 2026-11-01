@@ -618,8 +618,34 @@ shared policies in `formal-datatype-alias-rules.js`.
 New independent literal source controls are in
 `rust-owned-recursive-containers.mjs`, `formal-mutual-datatypes.mjs` and
 `formal-datatype-aliases.mjs`, with paired authored native backend controls.
-The recursive Shape/Self and actual Expr/Node Rust originals remain explicitly
-pending: runtime recursive nominal ownership and owned Vec element production
-are not activated by the TYPE-only recursive graph witness. No generator,
-test, validator, compiler, target kernel or represented program ran in this
-source batch; none of these authored controls establishes an observed result.
+The later source batch connects finite recursive nominal runtime ownership and
+owned named-element Vec production to the actual closed registry witness. The
+recursive Shape/Self and actual Expr/Node originals now occur unchanged in the
+active deferred original inventory; their exact previous pending rows remain in
+`rustOwnedRecursiveContainerPreviousPendingOriginals`. This is source admission
+drafting, not a compiler or runtime observation.
+
+`rust-owned-vectors.js` and native `owned_vectors.rs` carry actual element
+origins, source-owner identity, recorded function production, moves and Clone
+facts through vector literals, contextual empty construction, ordinary named
+element vector signatures and result forwarding. They retain real value borrow
+summaries, check each owned element once and keep allocation freshness separate
+from returned owned-value proof. Qualification preserves declaration scope
+without upgrading Copy or proven facts. Nominal recursive runtime rows require
+the shared finite constructive witness; actual derive Clone remains independent.
+Former nominal Box and owning-vector refusal rows remain verbatim in refusal
+history and become positive original controls with their prior empty stdout.
+
+Independent controls additionally retain scalar literal inference, foreign
+declaration scopes, canonical alloc Box pointer-width identity, nonCopy datatypes
+named `usize`, and actual inherent Clone method precedence. Canonical alloc Box
+pointer traversal uses a new additive shared decision; the old pointer child
+gate remains unchanged. Box type metadata is measured before admission, and
+complete element/source origins are charged before copies. Nongeneric reference
+fields require explicit static lifetimes; reference/Fn vector storage, owning
+tuple extensions, recursive types without a finite witness and general cyclic
+target module dependencies retain explicit boundaries.
+
+No generator, test, validator, compiler, target kernel or represented program
+ran in this source batch. All controls and target output assertions remain
+deferred; none establishes an observed result.

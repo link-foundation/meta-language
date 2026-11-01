@@ -9,8 +9,11 @@ import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {encodeTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {rustOwnedRecursiveContainerDecisions as decisions,rustOwnedRecursiveContainerOriginals as originals,rustOwnedRecursiveContainerRefusals as refusals} from './fixtures/rust-owned-recursive-containers.mjs';
+import {rustOwnedRecursiveContainerDecisions as decisions,rustOwnedRecursiveContainerOriginals as originals,rustOwnedRecursiveContainerRefusals as refusals,rustOwnedRecursiveContainerPreviousPendingOriginals as previousPending} from './fixtures/rust-owned-recursive-containers.mjs';
 const versions=['1.90.0','1.99.0'];
+test('previous pending originals retain their complete independent source and stdout controls',()=>{
+ for(const previous of previousPending){const selected=originals.filter(row=>row.name===previous.name);assert.equal(selected.length,1);assert.deepEqual(selected[0],previous);}
+});
 function observe(source){const lines=[];vm.runInNewContext(source,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}},{timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const [index,row]of decisions.entries())test('independent recursive container source policy '+index,()=>{assert.equal(typeof rules[row.operation],'function');assert.deepEqual(rules[row.operation](...row.arguments),row.expected);});
 for(const row of originals)for(const sourceVersion of versions)test(row.name+'/'+sourceVersion,()=>{

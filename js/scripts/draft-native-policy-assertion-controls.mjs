@@ -11,6 +11,8 @@ import {emitRust} from '../src/translation/emit-rust.js';
 import {structuredDataToLino} from '../src/structured-data-links.js';
 import {readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from './read-source-library-closure.mjs';
 import {readPortableLibraryRelocation} from './record-rule-library.mjs';
+import {readExactFixturePolicyControls} from './read-exact-fixture-data.mjs';
+export {readExactFixtureExport,renderExactFixtureData} from './read-exact-fixture-data.mjs';
 
 const project=realpathSync(fileURLToPath(new URL('../../',import.meta.url)));
 const digest=text=>createHash('sha256').update(text).digest('hex');
@@ -29,7 +31,9 @@ function boundedReceipt(value){let bytes=0,visits=0;const pending=[value];while(
 /** Read a selected literal export, primitive/array/record const references and
  * direct literal collection .push appends. Other expressions never execute.
  * Original lexical text remains distinct from substituted assertion text. */
-export function readNativePolicyLiteralControls(source,{path,exportName}){
+export function readNativePolicyLiteralControls(source,{path,exportName,profile=''}){
+ if(profile==='exact pure fixture data 2')return readExactFixturePolicyControls(source,{path,exportName,profile});
+ if(profile!=='')throw new TypeError('unknown native fixture literal authoring profile');
  if(typeof source!=='string'||!identifier(exportName)||typeof path!=='string')throw new TypeError('a complete literal fixture export is required');
  limit(Buffer.byteLength(source),4*1024*1024,'literal policy fixture exceeds 4 MiB');
  const tokens=tokenize(source,'JavaScript').tokens;limit(tokens.length,262144,'literal policy fixture exceeds its token budget');
@@ -104,7 +108,7 @@ export function readNativePolicyLiteralControls(source,{path,exportName}){
 function compose({sourcePath,closure,fixtures,operationOwners=[],assignment=null,moduleName=''}){
  if(!Array.isArray(fixtures)||fixtures.length===0||fixtures.length>128||!Array.isArray(operationOwners)||operationOwners.length>4096)throw new TypeError('native policy controls need bounded actual fixture selections');
  requirePlainData(fixtures);requirePlainData(operationOwners);
- for(const fixture of fixtures){limit(Buffer.byteLength(fixture.source),4*1024*1024,'literal policy fixture exceeds 4 MiB');if(fixture.sourceSha256!==digest(fixture.source))throw new TypeError('literal fixture source hash is not exact');const actual=readNativePolicyLiteralControls(fixture.source,{path:fixture.path,exportName:fixture.exportName});if(JSON.stringify(actual.controls)!==JSON.stringify(fixture.controls))throw new TypeError('policy control rows must match their complete original literal source');}
+ for(const fixture of fixtures){limit(Buffer.byteLength(fixture.source),4*1024*1024,'literal policy fixture exceeds 4 MiB');if(fixture.sourceSha256!==digest(fixture.source))throw new TypeError('literal fixture source hash is not exact');const actual=readNativePolicyLiteralControls(fixture.source,{path:fixture.path,exportName:fixture.exportName,profile:fixture.profile??''});const sameCapture=fixture.profile==='exact pure fixture data 2'?structuredDataToLino(actual.exportCapture)===structuredDataToLino(fixture.exportCapture):JSON.stringify(actual.exportCapture)===JSON.stringify(fixture.exportCapture);if(JSON.stringify(actual.controls)!==JSON.stringify(fixture.controls)||!sameCapture)throw new TypeError('policy control rows and exact descriptors must match their complete original literal source');}
  const root=closure.inputs.find(input=>input.path===sourcePath);if(!root)throw new TypeError('native controls need their actual complete source root');
  const overrides=new Map();for(const owner of operationOwners){if(!identifier(owner.operation)||overrides.has(owner.operation))throw new TypeError('policy operations need unique explicit owners');overrides.set(owner.operation,owner.sourcePath);}
  const controls=fixtures.flatMap(fixture=>fixture.controls).filter(row=>!assignment||assignment.get(row.fixture+'\0'+row.exportName+'\0'+row.index)?.moduleName===moduleName).map(row=>({...row}));if(controls.length===0)throw new TypeError('native policy assertion programs require at least one control');limit(controls.length,4096,'native policy assertion program exceeds 4096 controls');
@@ -115,7 +119,8 @@ function compose({sourcePath,closure,fixtures,operationOwners=[],assignment=null
   row.owner={path:owner.path,sourceSha256:owner.sourceSha256};row.compiledOperation=owner.declarationAliases?.find(alias=>alias.original===row.operation)?.compiled??row.operation;
   const assertion='assert.deepEqual('+row.compiledOperation+'('+row.args.map(value=>value.source).join(',')+'),'+row.expected.source+');';assertionBytes+=Buffer.byteLength(assertion)+1;limit(assertionBytes,8*1024*1024,'complete native assertion source exceeds 8 MiB');assertions.push(assertion);
  }
- if(closure.inputs.some(input=>(input.compiledDeclarations??input.declarations).some(name=>['assert','main','NaN','Infinity'].includes(name))))throw new TypeError('complete policy closure collides with its assertion module, generated entry or literal Number globals');
+ const reserved=['assert','main','NaN','Infinity',...(fixtures.some(fixture=>fixture.profile==='exact pure fixture data 2')?['undefined']:[])];
+ if(closure.inputs.some(input=>(input.compiledDeclarations??input.declarations).some(name=>reserved.includes(name))))throw new TypeError('complete policy closure collides with its assertion module, generated entry or literal Number globals / exact undefined');
  const source=closure.source+"\n\nimport assert from 'node:assert/strict';\n"+assertions.join('\n')+'\n';limit(Buffer.byteLength(source),8*1024*1024,'complete native assertion source exceeds 8 MiB');
  return {source,controls,bytes:Buffer.byteLength(source),sourceSha256:digest(source)};
 }
@@ -131,10 +136,11 @@ function translate({sourcePath,closure,fixtures,moduleName,testName,operationOwn
  const rust=relocation.source+'\n#[test]\nfn '+testName+'() { main(); }\n',output='rust/tests/generated/'+moduleName+'.rs';
  limit(Buffer.byteLength(rust),8*1024*1024,'native assertion output with test entry exceeds 8 MiB');
  const excludedControls=assignment?fixtures.flatMap(fixture=>fixture.controls).filter(row=>assignment.get(row.fixture+'\0'+row.exportName+'\0'+row.index).moduleName!==moduleName).map(row=>({...row,assignedTo:assignment.get(row.fixture+'\0'+row.exportName+'\0'+row.index)})):[];
- const receipt={schemaVersion:1,model:'complete independently authored native policy assertions 1',sourceRoot:sourcePath,sourceClosure:closure,sourceDeclarationOwners,fixtures,controls:program.controls,excludedControls,assertionProgram:{source:program.source,bytes:program.bytes,sha256:program.sourceSha256},translation:{language:'Rust',source:emitted.text,bytes:Buffer.byteLength(emitted.text),sha256:digest(emitted.text)},relocation,output:{path:output,source:rust,bytes:Buffer.byteLength(rust),sha256:digest(rust)},testName};
+ const literalProfiles=[...new Set(fixtures.map(fixture=>fixture.profile??'').filter(Boolean))];
+ const receipt={schemaVersion:1,model:'complete independently authored native policy assertions 1',...(literalProfiles.length?{literalProfiles}:{}),sourceRoot:sourcePath,sourceClosure:closure,sourceDeclarationOwners,fixtures,controls:program.controls,excludedControls,assertionProgram:{source:program.source,bytes:program.bytes,sha256:program.sourceSha256},translation:{language:'Rust',source:emitted.text,bytes:Buffer.byteLength(emitted.text),sha256:digest(emitted.text)},relocation,output:{path:output,source:rust,bytes:Buffer.byteLength(rust),sha256:digest(rust)},testName};
  return {source:program.source,rust,output,receipt,receiptLino:boundedReceipt(receipt),registration:'#[path = "../generated/'+moduleName+'.rs"]\nmod '+moduleName+';\n'};
 }
-function readFixture(selection){const input=projectFile(selection.path);limit(statSync(input.absolute).size,4*1024*1024,'literal policy fixture exceeds 4 MiB');return readNativePolicyLiteralControls(readFileSync(input.absolute,'utf8'),{path:input.path,exportName:selection.exportName});}
+function readFixture(selection){const input=projectFile(selection.path);limit(statSync(input.absolute).size,4*1024*1024,'literal policy fixture exceeds 4 MiB');return readNativePolicyLiteralControls(readFileSync(input.absolute,'utf8'),{path:input.path,exportName:selection.exportName,profile:selection.profile??''});}
 function moduleRequest({moduleName,testName='native_policy_literal_assertions',aliases=false}){if(!/^[a-z][a-z_0-9]*$/u.test(moduleName)||!/^[a-z][a-z_0-9]*$/u.test(testName)||typeof aliases!=='boolean')throw new TypeError('invalid native policy assertion module');return {moduleName,testName,aliases};}
 export function draftNativePolicyAssertionControls(options){
  const request=moduleRequest(options),{fixtureSelections,operationOwners=[]}=options;if(!Array.isArray(fixtureSelections)||fixtureSelections.length===0||fixtureSelections.length>128||fixtureSelections.some(selection=>'operations' in selection))throw new TypeError('single-root controls require complete bounded unfiltered fixture exports');
@@ -155,6 +161,7 @@ export function draftNativePolicyAssertionBatch({groups}){
   for(const selection of group.fixtureSelections){
    if(!Array.isArray(selection.operations)||selection.operations.length===0||selection.operations.length>4096||selection.operations.some(operation=>!identifier(operation))||new Set(selection.operations).size!==selection.operations.length)throw new TypeError('batch policy selections need unique explicit operation names');
    const input=projectFile(selection.path),key=input.path+'\0'+selection.exportName;let fixture=fixtures.get(key);
+   if(fixture&&(fixture.profile??'')!==(selection.profile??''))throw new TypeError('the same fixture export cannot select conflicting literal authoring profiles');
    if(!fixture){fixture=readFixture(selection);fixtures.set(key,fixture);fixtureBytes+=fixture.bytes;limit(fixtureBytes,16*1024*1024,'native assertion batch fixtures exceed 16 MiB');}
    captures.push(fixture);
    for(const operation of selection.operations)if(!fixture.controls.some(row=>row.operation===operation))throw new TypeError('batch operation selection has no original fixture coordinates: '+operation);

@@ -9,9 +9,12 @@ import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {encodeTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {rustNominalStandardSumOwnershipDecisions as decisions,rustNominalStandardSumOwnershipOriginals as originals,rustNominalStandardSumOwnershipRefusals as refusals} from './fixtures/rust-nominal-standard-sum-ownership.mjs';
+import {rustNominalStandardSumOwnershipDecisions as decisions,rustNominalStandardSumOwnershipOriginals as originals,rustNominalStandardSumOwnershipRefusals as refusals,rustNominalStandardSumOwnershipRefusalHistory as history} from './fixtures/rust-nominal-standard-sum-ownership.mjs';
 import {rustStandardDefaultOriginals} from './fixtures/rust-standard-default-values.mjs';
 const versions=['1.90.0','1.99.0'];
+test('extended nominal Box and owning-vector boundaries retain their exact prior originals',()=>{
+ for(const previousIndex of [5,9]){const selected=history.filter(row=>row.previousIndex===previousIndex);assert.equal(selected.length,1);const previous=selected[0].control;const current=originals.filter(row=>row.name===previous.name);assert.equal(current.length,1);assert.equal(current[0].source,previous.source);assert.equal(current[0].sourceVersionRange,previous.sourceVersionRange);assert.equal(previous.originalCompilerOutcome,'accept');assert.equal(current[0].stdout,'');}
+});
 function observe(source){const lines=[];vm.runInNewContext(source,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}},{timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const[index,row]of decisions.entries())test('independent nominal field ownership decision '+index,()=>{assert.equal(typeof rules[row.operation],'function');assert.deepEqual(rules[row.operation](...row.arguments),row.expected);});
 for(const row of originals)for(const sourceVersion of versions)test(row.name+'/'+sourceVersion,()=>{

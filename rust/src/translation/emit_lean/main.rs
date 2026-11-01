@@ -213,7 +213,7 @@ impl LeanEmitter<'_> {
     }
 
     /// A proposition as a Bool computed at run time.
-    fn check(&mut self, prop: &Prop) -> Result<String> {
+    pub(super) fn check(&mut self, prop: &Prop) -> Result<String> {
         Ok(match prop {
             Prop::And { left, right } => {
                 format!("({} && {})", self.check(left)?, self.check(right)?)

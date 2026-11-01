@@ -2,28 +2,32 @@
 // failure never evaluates or captures an else expression under a matched binder.
 import {unsupported} from './diagnostics.js';
 import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
+import {readRustOrdinaryCompletionOwnershipSnapshot as snapshot} from './rust-ordinary-completions.js';
 import {findRustConditionalChainPattern,planConditionalChainLayers,readConditionalChainOperation,readConditionalChainStageLimit,planConditionalMatchArms} from './conditional-chain-rules.js';
 const where=(from,to)=>({start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)});
 const operation=(role,values,span)=>({k:'math',op:readConditionalChainOperation(role),name:'',args:values.map(value=>({value,spread:false})),span});
 export function hasRustConditionalChain(parser){const tokens=parser.cursor.tokens;return findRustConditionalChainPattern(tokens.map(token=>token.kind),tokens.map(token=>token.value),parser.cursor.index)>=0;}
 export function readRustConditionalChainStages(parser,path,start){
- const c=parser.cursor,stages=[],forms=[];
+ const c=parser.cursor,stages=[],forms=[],failures=[];
   do{
    const token=c.peek();
    if(c.eat('let')){
     const aliases=[],patterns=[parser.pattern(path,aliases)];while(c.eat('|'))patterns.push(parser.pattern(path,aliases));
     if(patterns.length>1&&aliases.length)throw unsupported('binding in an or-pattern','bind the value in each alternative separately',where(start,c.peek()));
     c.expect('=','conditional pattern');const scrutinee=withRustStandardSumSourceContext(parser,null,()=>parser.comparison(path,{noStruct:true}));
+    failures.push(snapshot(parser));
     parser.origins.enter(parser.origins.cases(patterns,scrutinee,path));for(const alias of aliases)parser.origins.bind(alias.name,alias.value,path);
     stages.push({patterns,scrutinee,aliases,span:where(token,c.peek())});forms.push(1);
    }else{
     const condition=withRustStandardSumSourceContext(parser,null,()=>parser.comparison(path,{noStruct:true}));parser.origins.direct(condition,path,condition.span);
+    failures.push(snapshot(parser));
     stages.push({condition,span:where(token,c.peek())});forms.push(0);
    }
    if(c.is('||'))throw unsupported('Rust conditional pattern disjunction','a let condition requires parentheses around each Boolean disjunction',where(start,c.peek()));
    if(stages.length>readConditionalChainStageLimit())throw unsupported('Rust conditional pattern chain depth','the actual condition exceeds its shared stage budget',where(start,c.peek()));
   }while(c.eat('&&'));
- return {stages,forms};
+ const success=snapshot(parser);let ownershipFailure=failures[0];for(const failure of failures.slice(1)){parser.origins.joinOwnedBindings(ownershipFailure,failure,true,true);ownershipFailure=snapshot(parser);}parser.origins.restoreOwnedBindings(success);
+ return {stages,forms,ownershipFailure};
 }
 export function lowerRustConditionalChainStages({stages,forms},body,otherwise,span){
  let result=operation('success',[body],span);const failed=operation('failure',[],span),plan=planConditionalChainLayers(forms);
@@ -35,11 +39,13 @@ export function lowerRustConditionalChainStages({stages,forms},body,otherwise,sp
  return {...operation('result',[result,otherwise],span),block:true};
 }
 export function readRustConditionalChain(parser,path,start){
- const c=parser.cursor,ownershipBase=parser.origins.snapshotOwnedBindings(),previous=parser.origins.enter();let syntax,body,bodyOrigin;
+ const c=parser.cursor,ownershipBase=snapshot(parser),previous=parser.origins.enter();let syntax,body,bodyOrigin;
  try{syntax=readRustConditionalChainStages(parser,path,start);body=parser.block(path);bodyOrigin=parser.origins.origin(body,path);parser.origins.expireOwnedBindings(ownershipBase,bodyOrigin);}
  finally{parser.origins.scope=previous;}
+ const thenStates=snapshot(parser);parser.origins.restoreOwnedBindings(syntax.ownershipFailure);
  if(!c.eat('else'))throw unsupported('if without else','the value of an if must be defined on both branches',where(start,c.peek()));
- const otherwise=c.is('if')?parser.ifExpr(path):parser.block(path),span=where(start,c.peek()),origin=parser.origins.join([bodyOrigin,parser.origins.origin(otherwise,path)]);
+ const otherwise=c.is('if')?parser.ifExpr(path):parser.block(path),span=where(start,c.peek()),otherwiseOrigin=parser.origins.origin(otherwise,path),origin=parser.origins.join([bodyOrigin,otherwiseOrigin]);
+ parser.origins.expireOwnedBindings(ownershipBase,otherwiseOrigin);parser.origins.joinOwnedBindings(thenStates,snapshot(parser),!bodyOrigin.diverging,!otherwiseOrigin.diverging);
  return parser.origins.mark(lowerRustConditionalChainStages(syntax,body,otherwise,span),origin);
 }
 

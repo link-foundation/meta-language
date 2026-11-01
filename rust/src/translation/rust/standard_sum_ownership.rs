@@ -92,7 +92,7 @@ impl SourceOrigins{
         if rules::accept_rust_standard_sum_owned_call_result(owned,function,self.owned_standard_sum_recorded_call(node)){
             origin.source_binding_identity=None;origin.source_place_binding_identity=None;origin.source_loan_binding_identities.clear();origin.source_place_loan_binding_identities.clear();origin.source_extending_temporary_bindings.clear();origin.source_borrowed_place=false;origin.source_owned_result_proof=true;
         }
-        self.owned_box_call_result(node,path,origin)
+        self.owned_vector_call_result(node,path,self.owned_box_call_result(node,path,origin))
     }
 }
 
@@ -111,7 +111,7 @@ impl RustParser{
         let error=if !nominal.profile.is_empty()&&nominal.owner==facts.definition_name{crate::translation::rust_nominal_ownership_rules::read_rust_nominal_constructor_error(actual,fields.len() as f64,args.len() as f64)}else{rules::read_rust_standard_sum_owned_constructor_error(actual,fields.len() as f64,args.len() as f64)};if !error.is_empty(){return Err(unsupported("Rust owned standard sum",&error,span));}
         let values=args.iter().map(|argument|self.origins.origin(argument,path)).collect::<Vec<_>>();
         for ((argument,field),value) in args.iter().zip(&fields).zip(&values){
-            let owned=self.origins.standard_sum_ownership_facts(field).profile=="owned";let transferred=self.origins.owned_standard_sum_argument_transferred(argument);self.origins.argument(value,field,argument.span.or(span))?;
+            let owned=self.origins.standard_sum_ownership_facts(field).profile=="owned";let transferred=self.origins.owned_standard_sum_argument_transferred(argument);self.origins.argument_with_transfer(value,field,argument.span.or(span),transferred)?;
             let called=match &argument.node{SNode::App{func,..}=>match &func.node{SNode::Name{path:names}=>self.origins.lookup_value_owner(names,path),_=>None},_=>None};
             let call_producer=called.is_some_and(|entry|match entry.declaration{SourceDeclaration::Function{result,..}=>self.origins.standard_sum_ownership_facts(&result).profile=="owned"&&self.origins.owned_standard_sum_recorded_call(argument)&&self.origins.same_origin(value,&result),_=>false});
             let producer=value.source_owned_result_proof||value.fresh_array_value.is_some()||self.origins.owned_standard_sum_recorded_vector(argument)||call_producer;

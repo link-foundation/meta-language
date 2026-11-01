@@ -37,7 +37,9 @@ import {rustOwnedRecordPlaceOriginals,rustOwnedRecordPlaceRefusals} from './rust
 
 import {rustOwnedRecordStateOriginals,rustOwnedRecordStateRefusals} from './rust-owned-record-state.mjs';
 import {rustOwnedRecordEffectOriginals,rustOwnedRecordEffectRetainedOriginals,rustOwnedRecordEffectRefusals} from './rust-owned-record-effects.mjs';
+import {rustOwnedRecordCompletionOriginals,rustOwnedRecordCompletionRefusals} from './rust-owned-record-completions.mjs';
 import {rustOwnedRecursiveContainerOriginals,rustOwnedRecursiveContainerRefusals} from './rust-owned-recursive-containers.mjs';
+import {rustSourceOwnerQualificationOriginals,rustSourceOwnerQualificationRefusals} from './rust-source-owner-qualification.mjs';
 
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
@@ -265,7 +267,9 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...rustOwnedRecordStateOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordEffectOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordEffectRetainedOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordCompletionOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecursiveContainerOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustSourceOwnerQualificationOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordPlaceOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordUpdateOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustCopyClosureValueOriginals.map(row=>({singleCallOwners:[],...row})),
@@ -324,7 +328,9 @@ export const rustStandardSumIntegrationRefusals=[
  outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
  ...rustOwnedRecordStateRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustOwnedRecordEffectRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustOwnedRecordCompletionRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustOwnedRecursiveContainerRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustSourceOwnerQualificationRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustOwnedRecordPlaceRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustOwnedRecordUpdateRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustCopyClosureValueRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),

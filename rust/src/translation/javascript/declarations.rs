@@ -710,6 +710,8 @@ impl JavaScriptParser {
             self.top_level = outer_top_level;
             let (body, proof) = read?;
             return Ok(SFn {
+                source_finite_record_loop_helper:false,
+                source_finite_record_loop_witness:None,
                 semantic_ret: None,
                 name,
                 params,
@@ -852,6 +854,8 @@ impl JavaScriptParser {
             )?
         };
         let declaration = SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params,

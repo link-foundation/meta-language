@@ -440,6 +440,8 @@ impl RocqParser {
             self.skip_obligations(&start, annotation)?;
         }
         Ok(Definition::Fn(Box::new(SFn {
+            source_finite_record_loop_helper:false,
+            source_finite_record_loop_witness:None,
             semantic_ret: None,
             name,
             params: params
