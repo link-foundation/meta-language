@@ -28,7 +28,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorBindingSet',identity:number,value:JavaScriptErrorExpression} |
  * {$:'errorSpecialNumber',form:string} |
  * {$:'errorStrictEqual',left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,negate:boolean}} JavaScriptErrorExpression */
-/** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
+/** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
 /** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression}} JavaScriptErrorParameterField */
@@ -148,7 +148,14 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
    let current=next;const elements=[];for(const element of expression.elements){const value=lowerJavaScriptErrorExpression(element.value,current,depth+1);current=value.context;elements.push({$:'sourceArrayElement',index:element.index,value:value.source});}
    return {$:'errorSourceExpression',source:{$:'sourceArray',prototype:constant(next.realm.arrayPrototype),length:expression.length,elements,realm:next.realm.realm},context:current};
   }
-  case 'errorObject':{let current=next;const properties=[];for(const property of expression.properties){const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push({$:'sourceObjectProperty',key:constant({$:'text',units:property.key}),value:value.source});}return {$:'errorSourceExpression',source:{$:'sourceObject',prototype:constant(next.realm.objectPrototype),properties,realm:next.realm.realm},context:current};}
+  case 'errorObject':{
+   let current=next;const properties=[];
+   for(const property of expression.properties){
+    let key=constant({$:'undefined'});if(property.$==='errorComputedObjectProperty'){const lowered=lowerJavaScriptErrorExpression(property.key,current,depth+1);current=lowered.context;key=lowered.source;}else key=constant({$:'text',units:property.key});
+    const value=lowerJavaScriptErrorExpression(property.value,current,depth+1);current=value.context;properties.push({$:'sourceObjectProperty',key,value:value.source});
+   }
+   return {$:'errorSourceExpression',source:{$:'sourceObject',prototype:constant(next.realm.objectPrototype),properties,realm:next.realm.realm},context:current};
+  }
   case 'errorTemplate':{let current=next,source=constant({$:'text',units:[]});for(const part of expression.parts){if(part.$==='errorTemplateText')source={$:'sourcePrimitive',operation:'concatenate text',arguments:[source,constant({$:'text',units:part.units})]};else{const value=lowerJavaScriptErrorExpression(part.value,current,depth+1);current=value.context;source={$:'sourcePrimitive',operation:'concatenate text',arguments:[source,{$:'sourcePrimitive',operation:'convert primitive text',arguments:[value.source]}]};}}return {$:'errorSourceExpression',source,context:current};}
   case 'errorCall':{const callee=lowerJavaScriptErrorExpression(expression.callee,next,depth+1),receiver=lowerJavaScriptErrorExpression(expression.receiver,callee.context,depth+1);let current=receiver.context,arguments_=[];for(const argument of expression.arguments){const value=lowerJavaScriptErrorExpression(argument,current,depth+1);current=value.context;arguments_.push(value.source);}return {$:'errorSourceExpression',source:expression.construct?{$:'sourceConstructErrorClass',callee:callee.source,arguments:arguments_}:{$:next.mutableBindings?'sourceSnapshotCall':'sourceCall',callee:callee.source,receiver:receiver.source,arguments:arguments_},context:current};}
   case 'errorMethodCall':{const object=lowerJavaScriptErrorExpression(expression.object,next,depth+1),key=lowerJavaScriptErrorExpression(expression.key,object.context,depth+1),identity=key.context.next;let current={...key.context,next:identity+1},arguments_=[];for(const argument of expression.arguments){const value=lowerJavaScriptErrorExpression(argument,current,depth+1);current=value.context;arguments_.push(value.source);}const receiver={$:'sourceBinding',identity};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(current,identity,object.source,{$:next.mutableBindings?'sourceSnapshotCall':'sourceCall',callee:constructJavaScriptErrorPropertyRead(receiver,key.source,next),receiver,arguments:arguments_},false),context:current};}
@@ -158,6 +165,11 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
 export function lowerJavaScriptSourceBinary(expression,context,depth){
  if(expression.$!=='errorBinary')return refuseJavaScriptErrorSource(context,'binary source lowering needs its actual operator node');
  const left=lowerJavaScriptErrorExpression(expression.left,context,depth+1),first=left.context.next,right=lowerJavaScriptErrorExpression(expression.right,{...left.context,next:first+1},depth+1),second=right.context.next,next={...right.context,next:second+1},a={$:'sourceBinding',identity:first},b={$:'sourceBinding',identity:second},constant=constructJavaScriptErrorConstant;
+ if(expression.operator===',')return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,first,left.source,right.source,false),context:next};
+ if(expression.operator==='??'){
+  const nullish={$:'sourceIf',condition:{$:'sourceStrictEqual',left:a,right:constant({$:'null'})},yes:constant({$:'boolean',value:true}),no:{$:'sourceStrictEqual',left:a,right:constant({$:'undefined'})}};
+  return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,first,left.source,{$:'sourceIf',condition:nullish,yes:right.source,no:a},false),context:next};
+ }
  if(expression.operator==='&&'||expression.operator==='||')return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,first,left.source,{$:'sourceIf',condition:a,yes:expression.operator==='&&'?right.source:a,no:expression.operator==='&&'?a:right.source},false),context:next};
  let body=constant({$:'undefined'});
  if(expression.operator==='instanceof'){const owner=context.capabilities.find(owner=>owner.source===expression.port);if(owner===undefined||!owner.executable)return refuseJavaScriptErrorSource(next,'instanceof needs its actual qualified constructor/operator owner');body={$:'sourceCall',callee:constant({$:'object',identity:owner.identity,callable:true}),receiver:constant({$:'undefined'}),arguments:[a,b]};}

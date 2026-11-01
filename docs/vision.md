@@ -83,6 +83,17 @@ existing form; encountering a binding write selects the shared snapshot pass.
 Both typed Links transports must preserve optional template directories and
 all runtime closure slots, including through source-unit composition.
 
+Source object data fields retain fixed, numeric and computed keys. Computed keys
+complete ToPropertyKey before their value expression; each field creates an own
+data descriptor through the shared property kernel, bypassing inherited setters.
+Computed `__proto__` and shorthand bindings are data fields; colon-form literal
+prototype setters require explicit prototype installation. Dynamic anonymous
+function name inference needs its actual converted key and cannot borrow source
+spelling. Parenthesized property references retain the receiver through a call;
+comma expressions produce values and discard that reference. Comma operands run
+in order without consuming argument, field or element separators. Nullish
+coalescing snapshots its input and evaluates its fallback only for null/undefined.
+
 Source switches capture their input once, test selectors with strict equality in
 source order until selection, and enter adjacent clause bodies without repeating
 selector effects. A middle default remains a fallback after the remaining label

@@ -42,3 +42,8 @@ fields, ordered defaults and correct Function length boundaries. Correct the
 arrow reader's operand fallthrough and retain concrete parameter witnesses in
 deferred native controls. Coercibility, nullable diagnostics and general patterns
 remain separate obligations.
+
+Draft computed/numeric object data fields, ordered comma expressions, lazy
+nullish selection and parenthesized method receiver preservation through shared
+JavaScript lowering. Added original-source controls for later native generation;
+execution and parity are not yet established.

@@ -125,16 +125,36 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  }
  function expression(input,offset=0){let at=0;const peek=()=>input[at],take=value=>{if(peek()?.value===value){at++;return true;}return false;};
   function variable(token){const binding=reference(token,offset);if(binding){if(initializingParameters!==null&&initializingParameterOwners?.has(binding.identity)&&!initializingParameters.has(binding.identity))fail('parameter defaults require actual earlier initialized bindings; later/self parameter TDZ needs its explicit source continuation');const actualClass=classBinding(binding);if(actualClass)return {$:'errorFunctionReference',identity:actualClass.binding};if(cellIDs.has(binding.identity))return {$:'errorModuleCell',identity:binding.identity};if(functionIDs.has(binding.identity))return {$:'errorFunctionReference',identity:binding.identity};if(importByID.has(binding.identity)){const owner=importByID.get(binding.identity);return port('binding:'+binding.identity,{kind:'import',binding:binding.identity,specifier:owner.specifier,imported:owner.imported});}if(binding.scope!=='scope:0')return {$:'errorBinding',identity:binding.identity};fail('a selected source function refers to an unmodeled module binding');}if(token.value==='undefined'&&unresolved(token,offset))return absent();if(classProfile&&unresolved(token,offset)&&['NaN','Infinity'].includes(token.value))return {$:'errorSpecialNumber',form:token.value};if(!unresolved(token,offset)||!['URL','Buffer','JSON','structuredClone','TypeError','Error',...(classProfile?['Set','Map','Array']:[])].includes(token.value))fail('source globals need their actual unshadowed bounded operation owner');return port('global:'+token.value,{kind:'global',name:token.value});}
-  function arguments_(end){const result=[];if(take(end))return result;while(at<input.length){result.push(parse(0));if(take(end))return result;if(!take(','))fail('source arguments require complete separators');}fail('source arguments require their closing group');}
+  function arguments_(end){const result=[];if(take(end))return result;while(at<input.length){result.push(parse(1));if(take(end))return result;if(!take(','))fail('source arguments require complete separators');}fail('source arguments require their closing group');}
   function primary(){const token=peek();if(!token)fail('source expressions require a complete operand');let value,member=null;const closure=arrow(input,at,offset);
    if(closure){at=closure.end;value=closure.value;}
    else if(['!','typeof','-'].includes(token.value)){at++;return {$:'errorUnary',operator:token.value,value:parse(9)};}
-   else if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');}
+   else if(take('(')){value=parse(0);if(!take(')'))fail('source parentheses must close');if(value.$==='errorGet'||value.$==='errorComputedGet')member={object:value.object,key:value.key,computed:value.$==='errorComputedGet'};}
    else if(take('[')){
-    if(classProfile){let length=0;const elements=[];if(!take(']'))while(at<input.length){if(take(']'))break;if(take(',')){length++;continue;}if(peek()?.value==='...')fail('Array literal spread requires its actual iterator and close continuations');elements.push({$:'errorArrayElement',index:length++,value:parse(0)});if(take(']'))break;if(!take(','))fail('Array literal elements need complete separators');if(take(']'))break;}if(input[at-1]?.value!==']')fail('Array literal needs its closing bracket');value={$:'errorArrayLiteral',length,elements};}
+    if(classProfile){let length=0;const elements=[];if(!take(']'))while(at<input.length){if(take(']'))break;if(take(',')){length++;continue;}if(peek()?.value==='...')fail('Array literal spread requires its actual iterator and close continuations');elements.push({$:'errorArrayElement',index:length++,value:parse(1)});if(take(']'))break;if(!take(','))fail('Array literal elements need complete separators');if(take(']'))break;}if(input[at-1]?.value!==']')fail('Array literal needs its closing bracket');value={$:'errorArrayLiteral',length,elements};}
     else{port('syntax:array',{kind:'syntax',operation:'array literal'});value={$:'errorArray',factory:'syntax:array',items:arguments_(']')};}
    }
-   else if(take('{')){const properties=[];if(!take('}'))while(at<input.length){const key=peek();if(!key||!['identifier','string'].includes(key.kind)||key.value==='__proto__')fail('source object fields require fixed own data keys');at++;const field=take(':')?parse(0):variable(key);inferArrowName(field,(key.stringUnits??units(key.value)).map(unit=>String.fromCharCode(unit)).join(''));properties.push({$:'errorObjectProperty',key:key.stringUnits??units(key.value),value:field});if(take('}'))break;if(!take(','))fail('source object fields need complete separators');}value={$:'errorObject',properties};}
+   else if(take('{')){
+    const properties=[];if(!take('}'))while(at<input.length){
+     if(take('[')){
+      if(!classProfile)fail('computed object fields require the closed source profile');
+      const key=parse(0);if(!take(']')||!take(':'))fail('computed object fields retain their complete key and value');const field=parse(1);
+      if(field.$==='errorClosure'){
+       if(key.$!=='errorConstant'||!['text','number'].includes(key.value.$))fail('computed anonymous function names require their actual runtime property-key naming continuation');
+       inferArrowName(field,key.value.$==='text'?key.value.units.map(unit=>String.fromCharCode(unit)).join(''):String(key.value.value));
+      }
+      properties.push({$:'errorComputedObjectProperty',key,value:field});
+     }else{
+      const key=peek();if(!key||!['identifier','string','number'].includes(key.kind))fail('source object fields require their actual fixed or computed data key');at++;
+      const pair=take(':');if(!pair&&key.kind!=='identifier')fail('only actual identifier bindings admit object shorthand');if(pair&&key.value==='__proto__')fail('object literal prototype setters require their explicit prototype installation operation');
+      const name=key.kind==='number'?String(Number(key.value)):key.value;if(key.kind==='number'&&!Number.isFinite(Number(key.value)))fail('source numeric property names require their actual finite literal Number');
+      const keyUnits=key.stringUnits??units(name),field=pair?parse(1):variable(key);if(pair)inferArrowName(field,keyUnits.map(unit=>String.fromCharCode(unit)).join(''));
+      properties.push({$:'errorObjectProperty',key:keyUnits,value:field});
+     }
+     if(take('}'))break;if(!take(','))fail('source object fields need complete separators');if(take('}'))break;
+    }
+    if(input[at-1]?.value!=='}')fail('source object fields retain their actual closing group');value={$:'errorObject',properties};
+   }
    else if(take('this')){if(activeClass===null&&!classProfile)fail('this requires its actual captured strict function or class receiver');value={$:'errorReceiver'};}
    else if(take('new')){const name=peek(),owner=name&&reference(name,offset),classOwner=classBinding(owner);
     if(name?.kind!=='identifier')fail('construction needs its actual fixed lexical callee');at++;if(!take('('))fail('source construction needs complete arguments');
@@ -148,9 +168,9 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    else if(token.kind==='identifier'){at++;value=variable(token);}else fail('this source operand requires an additional actual semantic operation');
    while(at<input.length){if(peek()?.value==='.'||peek()?.value==='?.'){const optional=take('?.');if(!optional)take('.');const key=peek();if(key?.kind!=='identifier')fail('source member reads require a complete fixed key');at++;const property=constant({$:'text',units:units(key.value)});member=optional?null:{object:value,key:property};value={$:optional?'errorOptionalGet':'errorGet',object:value,key:property};}else if(classProfile&&take('[')){const key=parse(0);if(!take(']'))fail('computed source member access needs its complete key');member={object:value,key,computed:true};value={$:'errorComputedGet',object:value,key};}else if(take('(')){const args=arguments_(')');value=member?{$:member.computed?'errorComputedMethodCall':'errorMethodCall',object:member.object,key:member.key,arguments:args}:{$:'errorCall',callee:value,receiver:absent(),arguments:args,construct:false};member=null;}else break;}return value;
   }
-  const levels={'=':1,'+=':1,'?':2,'||':3,'&&':4,'===':5,'!==':5,'<':6,'<=':6,'>':6,'>=':6,'instanceof':6,'+':7,'-':7,'*':8,'/':8,'%':8};
+  const levels={',':0,'=':1,'+=':1,'?':2,'||':3,'??':3,'&&':4,'===':5,'!==':5,'<':6,'<=':6,'>':6,'>=':6,'instanceof':6,'+':7,'-':7,'*':8,'/':8,'%':8};
   function parse(minimum){if(++expressionDepth>128)fail('project data expressions exceed their explicit source depth');let left=primary();while(at<input.length){const operator=peek().value,level=levels[operator];if(level===undefined||level<minimum)break;at++;
-    if(operator==='?'){const yes=parse(0);if(!take(':'))fail('source conditional needs both branches');left={$:'errorConditional',condition:left,yes,no:parse(level)};continue;}
+    if(operator==='?'){const yes=parse(1);if(!take(':'))fail('source conditional needs both branches');left={$:'errorConditional',condition:left,yes,no:parse(level)};continue;}
     let right=parse(operator==='='||operator==='+='?level:level+1);if(operator==='='||operator==='+='){
      if(operator==='+='){if(!classProfile||left.$!=='errorBinding')fail('compound assignment currently requires its actual class-local Number binding');right={$:'errorBinary',operator:'+',left,right,port:''};}
      if(left.$==='errorModuleCell'){inferArrowName(right,bindings.find(row=>row.identity===left.identity).name);left={$:'errorModuleCellSet',identity:left.identity,value:right};}else if(left.$==='errorGet'||left.$==='errorComputedGet')left={$:left.$==='errorComputedGet'?'errorComputedSet':'errorSet',object:left.object,key:left.key,value:right};

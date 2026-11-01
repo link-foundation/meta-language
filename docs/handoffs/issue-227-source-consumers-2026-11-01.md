@@ -890,3 +890,27 @@ not delivered-language coverage. Object spread, Array callbacks and general
 iterator protocols remain the next own-code baseline dependencies. Native/formal
 products and source-register reconciliation are still deferred; no tests,
 validation, generation, compilation or CI feedback review ran.
+
+
+### Computed fields and expression continuation draft
+
+The actual-CST source reader now drafts computed and numeric object data keys,
+trailing object separators, shorthand `__proto__`, comma expressions and nullish
+coalescing. Shared object lowering performs key conversion before evaluating the
+value through the existing property-key instruction and own-data-property kernel.
+A computed `__proto__` is an ordinary own property. Colon-form prototype setting
+remains an explicit refusal. Parentheses preserve a property reference receiver;
+a comma expression yields a callable value without retaining that receiver.
+Argument, Array and object-field separators use AssignmentExpression precedence;
+parenthesized and computed-key expressions admit comma sequencing. Nullish
+selection preserves false, zero, empty text and NaN and does not execute an
+unselected fallback. No new VM opcode or handwritten Rust semantic replacement.
+
+Eighteen original-source controls and two refusals are authored for the existing
+JavaScript/native consumer pipeline. They include source `toString` key effects,
+field order, Function name inference for constant computed names, receiver
+preservation, comma reference erasure and lazy fallback mutation. No fixture was
+executed or generated. Native/formal generation and source-register reconciliation
+remain deferred. Dynamic computed anonymous function names, literal prototype
+setters, spread, methods/accessors, general reference expressions and optional
+chain call boundaries retain their complete implementation obligations.
