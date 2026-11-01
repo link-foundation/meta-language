@@ -883,3 +883,21 @@ destructured heads, multiple bindings and final-false-condition capture. One
 authored compiler control checks two clone sites and the continue/back-edge
 targets. No execution/generation/validation occurred. Runtime TDZ and recursive
 capture during initialization remain further source drafting work.
+
+### Abrupt immutable lexical PutValue draft
+
+Constant bindings now retain an explicit immutable Reference policy in source
+plans. Assignment lowers RHS evaluation before an actual source TypeError
+request. Update/compound operations retain the existing GetValue/conversion
+ordering before attempting that write; logical operations retain short-circuit
+branches without inventing a write. Captured constants remain immutable values
+after failed assignments, so syntactic attempted writes no longer incorrectly
+disqualify their capture-by-value proof. Runtime TDZ is still a separate need.
+
+The former constant-update refusal is preserved byte-for-byte as a positive
+original requiring TypeError. Six more originals cover RHS/conversion effects,
+short-circuit behavior, compound ordering, preserved captures and conversion
+error precedence. Two deferred controls inspect the operand-before-raise
+instructions and immutable Reference policy. Diagnostic text is drafted for the
+existing Node >=22.15 <23 || >=24 <25 source profile; it is not evidence for
+uncovered engines. No execution/generation/validation occurred.

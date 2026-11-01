@@ -6,7 +6,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorConstant',value:JavaScriptSemanticValue} |
  * {$:'errorClosure',owner:number,ordinal:number,captures:number[],receiverMode?:string} |
  * {$:'errorArgumentSpread',value:JavaScriptErrorExpression,iteratorKey:JavaScriptErrorExpression} |
- * {$:'errorBinding',identity:number} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
+ * {$:'errorBinding',identity:number,immutable?:boolean} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
  * {$:'errorConditional',condition:JavaScriptErrorExpression,yes:JavaScriptErrorExpression,no:JavaScriptErrorExpression} |
  * {$:'errorGet',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
  * {$:'errorComputedGet',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
@@ -29,7 +29,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorFunctionReference',identity:number} | {$:'errorNativeReference',source:string} |
  * {$:'errorReceiver'} | {$:'errorOrdinaryConstruction',identity:number,arguments:JavaScriptErrorExpression[]} |
  * {$:'errorCollectionConstruction',source:string,arguments:JavaScriptErrorExpression[]} |
- * {$:'errorBindingSet',identity:number,value:JavaScriptErrorExpression} |
+ * {$:'errorBindingSet',identity:number,value:JavaScriptErrorExpression,immutable?:boolean} |
  * {$:'errorSpecialNumber',form:string} |
  * {$:'errorStrictEqual',left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,negate:boolean}} JavaScriptErrorExpression */
 /** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorObjectAccessor',key:number[],value:JavaScriptErrorExpression,kind:string} | {$:'errorLiteralPrototype',value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression,inferName?:boolean,kind?:string} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
@@ -109,7 +109,7 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
   case 'errorBinding':case 'errorModuleBinding':return {$:'errorSourceExpression',source:{$:'sourceBinding',identity:expression.identity},context:next};
   case 'errorThis':return {$:'errorSourceExpression',source:{$:'sourceDerivedReceiver'},context:next};
   case 'errorReceiver':return {$:'errorSourceExpression',source:{$:'sourceReceiver'},context:next};
-  case 'errorBindingSet':{if(!next.mutableBindings)return refuseJavaScriptErrorSource(next,'mutable lexical assignment requires its explicit source profile');const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);return {...value,source:{$:'sourceAssignBinding',identity:expression.identity,value:value.source}};}
+  case 'errorBindingSet':{if(!next.mutableBindings)return refuseJavaScriptErrorSource(next,'mutable lexical assignment requires its explicit source profile');const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);return {...value,source:expression.immutable?{$:'sourceImmutableBindingWrite',value:value.source}:{$:'sourceAssignBinding',identity:expression.identity,value:value.source}};}
   case 'errorOrdinaryConstruction':{
    if(!next.mutableBindings)return refuseJavaScriptErrorSource(next,'ordinary class construction requires its explicit source profile');
    const owner=next.registry.owners.find(row=>row.source===expression.identity);if(owner===undefined||owner.$!=='ordinaryConstructorOwner')return refuseJavaScriptErrorSource(next,'ordinary construction requires its actual supplied class and prototype owner');
@@ -423,7 +423,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
 export function lowerJavaScriptSourceReference(target,context,depth){
  const constant=constructJavaScriptErrorConstant;let current=context,read=constant({$:'undefined'}),receiver=constant({$:'undefined'}),key=constant({$:'undefined'}),kind='',identity=0;
  const captures=[];
- if(target.$==='errorBinding'){kind='binding';identity=target.identity;read={$:'sourceBinding',identity:target.identity};}
+ if(target.$==='errorBinding'){kind=target.immutable?'immutable binding':'binding';identity=target.identity;read={$:'sourceBinding',identity:target.identity};}
  else if(target.$==='errorModuleCell'){kind='property';receiver={$:'sourceBinding',identity:target.identity};key=constructJavaScriptSourceFieldKey('value');read={$:'sourceGet',object:receiver,key};}
  else if(target.$==='errorGet'||target.$==='errorComputedGet'){
   kind='property';const object=lowerJavaScriptErrorExpression(target.object,current,depth+1),property=lowerJavaScriptErrorExpression(target.key,object.context,depth+1),receiverID=property.context.next,keyID=receiverID+1,convertedID=keyID+1;current={...property.context,next:convertedID+1};receiver={$:'sourceBinding',identity:receiverID};const rawKey={$:'sourceBinding',identity:keyID};key={$:'sourceBinding',identity:convertedID};
@@ -435,6 +435,7 @@ export function lowerJavaScriptSourceReference(target,context,depth){
 }
 /** @param {JavaScriptSourceReference} reference @param {JavaScriptCallSource} value @returns {JavaScriptCallSource} */
 export function constructJavaScriptSourceReferenceWrite(reference,value){
+ if(reference.kind==='immutable binding')return {$:'sourceImmutableBindingWrite',value};
  return reference.kind==='binding'?{$:'sourceAssignBinding',identity:reference.identity,value}:{$:'sourceIf',condition:{$:'sourcePrimitive',operation:'test object value',arguments:[reference.receiver]},yes:{$:'sourceSnapshotSet',object:reference.receiver,key:reference.key,value},no:{$:'sourceCall',callee:constructJavaScriptErrorConstant(reference.context.realm.assign),receiver:reference.receiver,arguments:[reference.key,value]}};
 }
 /** @param {JavaScriptSourceReference} reference @param {JavaScriptErrorSourceContext} context

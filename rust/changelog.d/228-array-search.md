@@ -45,6 +45,10 @@ Draft normal lexical for-head environment cloning before the first test and
 each update, preserving initializer/condition/body closure environments and
 continue/finally control flow. Execution remains deferred.
 
+Draft immutable lexical PutValue failures after RHS/numeric/compound effects,
+preserving logical short-circuiting and constant captures through failed writes.
+The prior refusal input remains as an authored TypeError original.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target

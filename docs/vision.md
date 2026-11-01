@@ -57,6 +57,14 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Immutable lexical References permit reads and evaluate assignment operands in
+the ordinary order, but PutValue raises the actual realm TypeError. Prefix/
+postfix updates complete ToNumeric first; compound assignments complete their
+operand work first. Logical assignments only attempt PutValue on the selected
+branch. Failed writes preserve captured constant values. The current diagnostic
+spelling policy is bounded by the source fixture's Node 22.15–22.x and 24.x
+profiles; other engine/version profiles need their own diagnostic selection.
+
 Variadic invocation uses per-frame abstract argument Lists, separate from
 ECMAScript Array Objects. Callee/receiver selection precedes argument effects;
 fixed arguments append once and spread operands drain the shared synchronous
