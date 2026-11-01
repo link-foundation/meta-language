@@ -1,3 +1,5 @@
+import {compileJavaScriptCollectionIteratorCallDirectory} from '../src/translation/javascript-collection-iterator-call-source.js';
+import {beginJavaScriptCallMachine,runJavaScriptCallMachine} from '../src/translation/javascript-call-machine.js';
 // Deferred Array iterator continuation controls; no represented code on import.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {allocateJavaScriptArrayIterator,beginJavaScriptArrayIteratorNext,stepJavaScriptArrayIteratorNext,resumeJavaScriptArrayIteratorCall} from '../src/translation/javascript-array-iteration.js';
@@ -29,4 +31,10 @@ test('primitive Array method receivers require actual boxing and nullish receive
 
 test('Array live length ToNumber retains actual conversion callback and current heap effects',()=>{
  const allocated=setup(),added=insertJavaScriptOrdinaryObject(allocated.heap,6n,{$:'null'});let heap=defineJavaScriptOrdinaryProperty(added.heap,6n,symbol,createJavaScriptOrdinarySetDescriptor(object(4n,true),true)).heap;heap=data(heap,3n,'length',object(6n));const request=advance(beginJavaScriptArrayIteratorNext(heap,allocated.value,symbol));assert.equal(request.$,'arrayIteratorCall');assert.deepEqual(request.receiver,object(6n));assert.deepEqual(request.arguments,[text('number')]);heap=data(request.heap,3n,'effect',number(9));const actual=advance(resumeJavaScriptArrayIteratorCall(heap,request.state,{$:'normalCompletion',value:number(1)}));assert.equal(actual.$,'arrayIteratorComponents');assert.equal(actual.done,false);assert.deepEqual(actual.value,absent);assert.deepEqual(actual.heap.objects.find(row=>row.identity===3n).properties.find(row=>row.key.units?.join(',')===text('effect').units.join(',')).descriptor.value,number(9));
+});
+
+
+test('VM getter unwinding closes its Array iterator before propagating the original throw',()=>{
+ const allocated=setup(),array=allocateJavaScriptArray(allocated.heap,6n,object(1n),0),nextOwner=insertJavaScriptOrdinaryObject(array.heap,7n,{$:'null'});let heap={...nextOwner.heap,objects:nextOwner.heap.objects.map(row=>row.identity===7n?{...row,callable:true}:row)};heap=getter(heap,3n,'0');
+ const compiled=compileJavaScriptCollectionIteratorCallDirectory({$:'collectionIteratorCallableDirectory',realms:[1n],exoticKey:symbol,methods:[{$:'collectionIteratorMethodOwner',identity:7n,realm:1n,operation:'ArrayIterator.next',iteratorPrototype:object(2n),arrayPrototype:array.value,objectPrototype:object(1n)}]});assert.equal(compiled.error,'');const getterFunction={$:'callFunction',identity:4n,realm:1n,receiverMode:'strict',lexicalReceiver:absent,parameters:0,registers:2,captures:[],instructions:[{$:'constant',destination:1,value:text('original')},{$:'throw',source:1}]},program={...compiled.program,functions:[getterFunction,...compiled.program.functions]},started=beginJavaScriptCallMachine(program,heap,7n,allocated.value,[]);assert.equal(started.$,'machineContinue');const actual=runJavaScriptCallMachine(program,started.machine,256,[]).transition;assert.equal(actual.$,'machineThrow');assert.deepEqual(actual.value,text('original'));const iterator=actual.heap.objects.find(row=>row.identity===allocated.value.identity);assert.equal(iterator.executing,false);assert.equal(iterator.collection,0n);assert.equal(advance(beginJavaScriptArrayIteratorNext(actual.heap,allocated.value,symbol)).done,true);
 });

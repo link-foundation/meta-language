@@ -45,3 +45,6 @@ with cached methods, original receivers and exact cleanup completion precedence.
 
 Draft genuine live Array iterator slots, reentry protection and getter/conversion
 continuations, reusing shared entry/result allocation and native generation inputs.
+
+Draft protected Array iterator builtin linkage and resumable VM integration,
+including result allocation and source release during exception unwinding.

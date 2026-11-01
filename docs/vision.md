@@ -12273,3 +12273,15 @@ suspended getter/conversion throws. Entries and value/done results reuse the
 shared genuine Array/Object result allocator, preserving held components across
 identity suspension. Primitive Array-method receivers require actual boxing
 authority. Builtin owner linkage and VM composition must use these continuations.
+
+The protected standard directory supplies actual Array keys/values/entries, the
+Symbol.iterator alias, Array Iterator next and shared iterator self identities.
+The common VM composes Array next's getter/conversion pending state with shared
+result allocation, validates selected child operands, and preflights actual
+result prototypes before cursor effects. Unwinding past an Array next frame
+releases its source and executing slot before propagating the original throw;
+intrinsic failures do so before Error allocation replaces pending work. Native
+replay uses the same translated machine and identity allocation protocol.
+Base constructor receiver/prototype proofs apply at construction entry. An
+active constructor retains its actual allocated receiver without imposing an
+immutable prototype invariant after source code can legally mutate it.

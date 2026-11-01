@@ -10,7 +10,7 @@ export function testJavaScriptCollectionIteratorIntrinsicMode(mode){return mode=
 /** @param {string} operation @returns {string} */
 export function normalizeJavaScriptCollectionIteratorOperation(operation){return operation==='Set.keys'?'Set.values':operation;}
 /** @param {string} operation @returns {string} */
-export function readJavaScriptCollectionIteratorOperationKind(operation){if(['Map.keys','Map.values','Map.entries','MapIterator.next'].includes(operation))return 'Map';if(['Set.keys','Set.values','Set.entries','SetIterator.next'].includes(operation))return 'Set';return operation==='Iterator.self'?'self':'';}
+export function readJavaScriptCollectionIteratorOperationKind(operation){if(['Array.keys','Array.values','Array.entries','ArrayIterator.next'].includes(operation))return 'Array';if(['Map.keys','Map.values','Map.entries','MapIterator.next'].includes(operation))return 'Map';if(['Set.keys','Set.values','Set.entries','SetIterator.next'].includes(operation))return 'Set';return operation==='Iterator.self'?'self':'';}
 /** @param {string} operation @returns {string} */
 export function readJavaScriptCollectionIteratorOperationStrategy(operation){const actual=normalizeJavaScriptCollectionIteratorOperation(operation);return actual.endsWith('.keys')?'keys':actual.endsWith('.values')?'values':actual.endsWith('.entries')?'entries':'';}
 /** @param {JavaScriptCollectionIteratorMethodOwner} left @param {JavaScriptCollectionIteratorMethodOwner} right @returns {boolean} */

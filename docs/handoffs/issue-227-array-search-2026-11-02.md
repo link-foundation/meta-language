@@ -373,3 +373,32 @@ are registered. Nothing executed or compiled; generated products remain stale
 until the later regeneration phase. Actual Array builtin owner registration and
 VM next continuations, String iteration, for-of/array-spread/pattern consumer
 unwinding and version-qualified diagnostic controls still need drafting.
+
+
+### Actual Array iterator builtin/VM source integration draft
+
+The existing iterator instruction family now admits the distinct Array brand.
+Creation preflights the actual receiver before requesting identity; primitives
+remain `machineNeedArrayIteratorBoxing`. Array next composes its resumable
+getter/conversion state with the existing pair/result allocation pending state.
+Frame admission binds the actual opcode, receiver, conversion Symbol and child
+callee/receiver/arguments. Independent result prototypes validate before any
+cursor effects. Return/step and native generator inputs use the common path.
+
+The Node linker records actual keys/values/entries owners, verifies the true
+Symbol.iterator alias, captures only native empty-probe prototype witnesses,
+and links actual Array Iterator next/shared-self owners to portable code. These
+probes are future linkage code; none executed during drafting. Six original
+source fixtures cover holes, live growth, permanent exhaustion, keys, genuine
+entries and Symbol/self aliases. A deferred VM control throws from an actual
+selected getter and checks that the original throw propagates after iterator
+source/executing state release.
+
+Source review also corrected two related invariants: machine throw unwinding
+releases an abandoned Array next, and intrinsic TypeError requests release it
+before replacing the pending state. Constructor frame validation now retains
+receiver identity/kind rather than reasserting its initial prototype forever;
+initial constructor entry proof remains. No checks executed, generated products
+were not edited, and no CI feedback was reviewed. Primitive boxing, String
+iterator builtins and structured iterator consumer unwinding for spread, array
+patterns and for-of remain required further source connections.
