@@ -24,6 +24,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'arrayCallback',destination:number,operation:string} |
  * {$:'arraySearch',destination:number,operation:string} |
  * {$:'arrayTransform',destination:number,operation:string,species:JavaScriptArraySpeciesDirectory} |
+ * {$:'objectEnumeration',destination:number,operation:string,prototype:number} |
  * {$:'collectionCopy',destination:number,target:number,input:number,adder:number,iteratorKey:number,iteratorMethod:number,iteratorPrototype:number,nextMethod:number} |
  * {$:'constructErrorValue',destination:number,constructor:number,newTarget:number,prototype:number,message:number,present:number,realm:bigint,errorClass:string,bindReceiver:boolean} |
  * {$:'readDerivedReceiver',destination:number} | {$:'invokeErrorIntrinsic',destination:number} | {$:'invokeHostCapability',destination:number} |
@@ -94,7 +95,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'ordinaryDelete':case 'ordinaryHas':return [instruction.destination,instruction.object,instruction.key];
     case 'literalPrototype':return [instruction.destination,instruction.object,instruction.value];
     case 'functionName':return [instruction.destination,instruction.object,instruction.key];
-    case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'argumentRest':return [instruction.destination,instruction.prototype];
+    case 'ordinaryAllocate':case 'arrayAllocate':case 'collectionAllocate':case 'argumentRest':case 'objectEnumeration':return [instruction.destination,instruction.prototype];
     case 'collectionIteratorAllocate':return [instruction.destination,instruction.prototype].concat(instruction.input===undefined?[]:[instruction.input]);
     case 'iteratorProtocol':return [instruction.destination,instruction.done,instruction.input,instruction.iteratorKey];
     case 'collectionIteratorResult':return [instruction.destination,instruction.arrayPrototype,instruction.objectPrototype];

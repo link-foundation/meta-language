@@ -57,6 +57,18 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Object keys/values/entries snapshot actual own-key order, exclude Symbols and
+check each current own descriptor's enumerability. Keys never Get a selected
+property; values/entries invoke the selected actual getter once. Getter mutation
+can remove later keys; keys added afterward stay outside the snapshot. Entries
+allocate fresh genuine length-two pair Arrays during collection. The final
+result Array is created from the complete internal List after all selected
+getters finish. String specialization enumerates UTF16 indexed own properties;
+other non-nullish primitives have no enumerable own fields. Nullish input raises
+TypeError. Allocation/resource suspension retains keys, values and completed
+getter results without invoking represented host Object methods. Opaque/Proxy
+own-key/descriptor protocols require explicit extensions.
+
 Source delete evaluates its actual property Reference without GetValue of the
 selected property, converts a computed key once after the receiver check and
 requires strict deletion success. Optional deletion skips property/key work for

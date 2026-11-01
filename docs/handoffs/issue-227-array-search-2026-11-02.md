@@ -975,3 +975,38 @@ conversion, optional deletion, void and non-Reference effects. Two new early
 error refusals and three deferred source/provenance controls accompany them.
 No execution/generation/validation occurred. Primitive property boxing and
 opaque/Proxy protocols remain explicit unsupported boundaries.
+
+### Shared Object keys/values/entries source/VM draft
+
+`javascript-own-enumeration.js` drafts own-key snapshot ordering, current
+descriptor enumerability, Symbol exclusion and actual selected Get continuations.
+Key-only enumeration never invokes getters. Entry pairs are genuine fresh Arrays
+created during enumeration; the final Array is allocated from the completed
+internal List after all getters finish. String primitives expose their UTF16
+indexed own properties; other non-nullish primitives contribute no own fields.
+Nullish inputs raise actual TypeError. Held keys/values/pairs/write coordinates
+survive resource suspension, without host Object method fallback.
+
+The shared call machine drafts the opcode, pending validation, selected-child
+binding, result allocation, getter completion and error paths together. The
+private Node directory verifies actual Object static method owners, supplies its
+actual realm Array prototype and publishes the Object namespace. Source capture
+admits that namespace through the existing qualified capability path.
+
+Ten originals cover numeric/text order, Symbols, accessor omission/order,
+getter mutations, fresh pair identity, prototype/Array-length exclusion, UTF16
+String values, primitive empty results, nullish errors and thrown getter values.
+Four deferred kernel controls inspect key-only behavior, selected getter
+completion, pair-before-result allocation and UTF16/nullish behavior. Generation
+inputs are registered. No execution/generation/validation occurred.
+
+The existing compiler adapter `javascript-object-enumeration.js` is preserved;
+the runtime kernel lives separately in `javascript-own-enumeration.js`. Source
+diff review caught and corrected a working-tree filename collision before any
+commit or push of the new kernel.
+
+Resource care: the required project-owned cleanup ran with both inherited Cargo
+target variables unset and --project-owned-only --no-preflight --no-docker.
+It reported 510.2 KiB before/after, zero removed and zero reclaimed; its receipt
+is retained under .git/meta-language-cache. No dependencies, worktrees, workload
+clones, builds or generated artifacts were created. Disk last showed 71 GiB free.

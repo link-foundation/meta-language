@@ -62,6 +62,9 @@ ordered bound conversion, overlap-safe copying and receiver identity returns.
 Draft source delete/in/void with held property References, strict deletion,
 accessor-free presence, optional deletion and actual operand evaluation order.
 
+Draft Object keys/values/entries with shared own-property snapshots, actual
+getter continuations, UTF16 String keys and genuine entry/result Array creation.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target
