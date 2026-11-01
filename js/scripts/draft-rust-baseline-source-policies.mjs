@@ -12,6 +12,8 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-array-index-rules.js',moduleName:'javascript_array_index_rules',model:'Actual Array length and relative search index rules 1',programAsset:'javascript-array-index-rules-program'},
+ {sourcePath:'js/src/translation/javascript-array-search.js',moduleName:'javascript_array_search',model:'Actual Array search getter and index conversion continuations 1',programAsset:'javascript-array-search-program'},
  {sourcePath:'js/src/translation/javascript-array-callbacks.js',moduleName:'javascript_array_callbacks',model:'Actual Array callback getter and predicate continuations 1',programAsset:'javascript-array-callbacks-program'},
  {sourcePath:'js/src/translation/javascript-object-spread.js',moduleName:'javascript_object_spread',model:'Actual object literal CopyDataProperties continuations 1',programAsset:'javascript-object-spread-program'},
  {sourcePath:'js/src/translation/javascript-call-templates.js',moduleName:'javascript_call_templates',model:'Actual runtime arrow closure identities and lexical code templates 1',programAsset:'javascript-call-templates-program'},
@@ -154,6 +156,7 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/tests/translation-javascript-array-search.test.js',
  'js/tests/translation-javascript-array-callbacks.test.js',
  'js/tests/translation-javascript-numeric-updates.test.js',
  'js/tests/translation-javascript-object-spread.test.js',

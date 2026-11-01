@@ -1,6 +1,7 @@
+import {readJavaScriptArrayLikeLength,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 // Shared inspectable-object Array callback algorithms without species creation.
 // Boxed primitive receivers and opaque HasProperty need explicit protocols.
-import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
+import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,planJavaScriptOrdinaryGet} from './javascript-ordinary-heap.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
 import {readJavaScriptPrimitiveConversionStateError} from './javascript-primitive-conversion.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
@@ -57,7 +58,7 @@ export function continueJavaScriptArrayCallbackLength(heap,state,transition){
   case 'scalarCall':return requestJavaScriptArrayCallbackCall(heap,{...base,phase:'length conversion',conversion:transition.state},transition.callee,transition.receiver,transition.arguments);
   case 'scalarCompleted':{
    if(transition.value.$!=='number')return {$:'arrayCallbackInvalid',heap,reason:'Array LengthOfArrayLike retains its actual ToNumber result'};
-   const number=transition.value.value,length=Number.isNaN(number)||number<=0?0:Math.min(Math.floor(number),9007199254740991);
+   const length=readJavaScriptArrayLikeLength(transition.value.value);
    if(state.callback.$!=='object'||!state.callback.callable)return {$:'arrayCallbackError',heap,errorClass:'TypeError',reason:'Array callback must be callable'};
    return {$:'arrayCallbackContinue',heap,state:{...base,phase:'ready',length,index:testJavaScriptArrayCallbackReverse(state.operation)?length-1:0,element:{$:'undefined'}}};
   }
@@ -80,14 +81,7 @@ export function beginJavaScriptArrayCallback(heap,operation,receiver,callback,th
  * inferring absence from an incomplete descriptor snapshot.
  * @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity @param {JavaScriptSemanticValue} key
  * @returns {{present:boolean,error:string}} */
-export function readJavaScriptArrayCallbackPropertyPresence(heap,identity,key){
- let current=identity;for(let depth=0;depth<heap.objects.length;depth++){
-  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,current)];if(object===undefined)return {present:false,error:'Array callback property lookup retains its actual global Object'};
-  if(!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','collectionIteratorObject'].includes(object.$))return {present:false,error:'Array callback HasProperty requires the actual opaque host protocol'};
-  if(findJavaScriptOrdinaryProperty(object.properties,key)>=0)return {present:true,error:''};
-  if(object.prototype.$!=='object')return {present:false,error:''};current=object.prototype.identity;
- }return {present:false,error:'Array callback property lookup exceeds its actual prototype directory'};
-}
+export function readJavaScriptArrayCallbackPropertyPresence(heap,identity,key){return readJavaScriptIndexedPropertyPresence(heap,identity,key);}
 /** @param {JavaScriptArrayCallbackState} state @returns {JavaScriptSemanticValue} */
 export function readJavaScriptArrayCallbackEmptyResult(state){if(testJavaScriptArrayCallbackReduction(state.operation))return state.accumulator;return state.operation==='Array.some'?{$:'boolean',value:false}:state.operation==='Array.every'?{$:'boolean',value:true}:state.operation==='Array.findIndex'||state.operation==='Array.findLastIndex'?{$:'number',value:-1}:{$:'undefined'};}
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptArrayCallbackState} state

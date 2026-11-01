@@ -187,6 +187,19 @@ portable implementation; spelling is not authority. Primitive receiver boxing,
 opaque host HasProperty/Proxy traps, complete version-qualified error messages
 and map/filter species/output construction require their explicit protocols.
 
+Array search and relative access use the same captured ToLength and ordinary
+property-presence rules as callback traversal. includes performs Get on holes
+and uses SameValueZero; indexOf/lastIndexOf use HasProperty and strict equality.
+lastIndexOf preserves omitted versus explicit undefined fromIndex. Index
+conversion runs after length capture and before element reads, retaining its
+actual callbacks and effects. Empty searches return before converting fromIndex;
+at still converts its relative index on empty input. Relative indices truncate
+toward zero, normalize negative zero and bound infinities without inventing
+property coordinates. Getter results and abrupt completions retain the latest
+shared heap. Actual protected callable owners select each operation. Primitive
+receiver boxing, opaque HasProperty/Proxy traps and version-qualified diagnostics
+retain their separate implementation obligations.
+
 Map and Set internal slots belong to that same inspectable global heap. Their
 keys use SameValueZero, normalize Number zero, and retain insertion ordinals.
 Deletion releases the deleted key/value references while retaining a tombstone;

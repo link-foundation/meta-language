@@ -1105,3 +1105,13 @@ generation and native comparisons remain deferred. map/filter/flatMap still need
 actual species and result construction; this extension does not replace those
 obligations. Primary algorithm source: ECMAScript 2026 reduce/reduceRight,
 https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-array.prototype.reduce.
+
+
+### Array search continuation, November 2
+
+Source-only drafting continues in
+[the November 2 continuation](issue-227-array-search-2026-11-02.md). The new
+shared search and index modules draft includes/indexOf/lastIndexOf/at through
+actual protected standard owners, shared scalar continuations and full VM state
+transport. The existing callback presence API remains available as a wrapper.
+No execution, generation, validation, compilation or CI feedback review ran.
