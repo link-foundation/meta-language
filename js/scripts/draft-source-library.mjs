@@ -18,13 +18,16 @@ import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 import {projectSourceLibraryEntryPoints} from './source-library-entry-points.mjs';
 import {shareSourceConditionalConstructors} from './source-conditional-constructors.mjs';
 import {shareSourceBooleanConstructorMatches,shareSourceClosedConstructorMatches} from './source-boolean-match-sharing.mjs';
+import {readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError} from '../src/translation/source-library-class-rules.js';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
-  const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath,{aliases:sourceAliases}) : null;
+  const classError=readSourceLibraryClassProfileError(sourceClasses,sourceDependencies,sourceAliases,referenceSemantics);if(classError)throw new TypeError(classError);
+  const reExportError=readSourceLibraryReExportProfileError(sourceReExports,sourceDependencies,sourceAliases);if(reExportError)throw new TypeError(reExportError);
+  const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath,{aliases:sourceAliases,classes:sourceClasses,reExports:sourceReExports}) : null;
   const source = sourceClosure?.source ?? readFileSync(new URL(sourcePath, root), 'utf8');
   const sourceSyntax=parseAuthoredJavaScriptModule(source,sourcePath);
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
@@ -106,7 +109,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sharedConstructors?{conditionalConstructorSharing:sharedConstructors.proof}:{}), ...(sharedMatches?{[constructorMatchSharing?'constructorMatchSharing':'booleanMatchSharing']:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sourceClasses?{sourceClasses}:{}), ...(sourceReExports?{sourceReExports}:{}), ...(sharedConstructors?{conditionalConstructorSharing:sharedConstructors.proof}:{}), ...(sharedMatches?{[constructorMatchSharing?'constructorMatchSharing':'booleanMatchSharing']:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     ...(programAsset===undefined?{}:{programAsset:{path:'js/src/data/'+programAsset+'.lino',bytes:Buffer.byteLength(programText),sha256:createHash('sha256').update(programText).digest('hex')}}),

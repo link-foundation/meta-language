@@ -10,6 +10,7 @@ export function readRustExpressionCompletionForm(kind,operation){
  if(kind==='match'||kind==='match1')return 'match';
  if(kind==='let')return 'binding';
  if(kind==='print')return 'print';
+ if(kind==='math'&&operation==='rustOwnedRecordStateWrite')return 'ordered';
  if(kind==='math'&&readRustExpressionCompletionPacketOperation(operation)!=='')return 'packet';
  return readRustExpressionCompletionChildRoles(kind).length?'ordered':'opaque';
 }
@@ -21,6 +22,7 @@ export function readRustExpressionCompletionChildRoles(kind){
  if(kind==='unary'||kind==='cast')return ['arg'];
  if(kind==='tuple'||kind==='array')return ['items'];
  if(kind==='tupleIndex'||kind==='field')return ['object'];
+ if(kind==='math')return ['args'];
  return [];
 }
 /** These leaves have no evaluation effects, traps or mutable reads in the

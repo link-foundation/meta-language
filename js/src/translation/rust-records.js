@@ -7,6 +7,7 @@ import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatur
 import {createRustNominalConstructorOrigin,readRustNominalOwnershipFacts,projectRustNominalPatternField} from './rust-nominal-ownership.js';
 import {readRustOwnedRecordUpdateBase,prepareRustOwnedRecordEntry,createRustOwnedRecordUpdateOrigin,projectRustOwnedRecordField} from './rust-owned-record-updates.js';
 import {readRustOwnedRecordMutableName} from './rust-owned-record-state.js';
+import {readRustOwnedBoxRecordParent} from './rust-owned-containers.js';
 import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
@@ -36,9 +37,16 @@ function braceOwner(parser,segments,path){
 }
 
 export function readRustRecordItem(parser,path,derivations=[]){
+ const previous=parser.declarationSelfOwner;
+ if(parser.origins.ownedContainerSourceEnabled)parser.declarationSelfOwner={path:[...path,parser.cursor.peek(1).value],modulePath:[...path]};
+ try{return readRustRecordDeclaration(parser,path,derivations);}finally{parser.declarationSelfOwner=previous;}
+}
+
+function readRustRecordDeclaration(parser,path,derivations){
  const c=parser.cursor,start=c.next(),token=c.identifier('struct'),name=token.value;
  if(!acceptRustRecordSourceName(name))throw unsupported('Rust record type owner','a builtin-shadowing record needs its complete namespace interpretation',span(token,token));
  if(c.is('<')||c.is('where'))throw unsupported('generic Rust record','record parameters and predicates need their complete ownership interpretation',span(start,c.peek()));
+ if(parser.origins.ownedContainerSourceEnabled)parser.origins.declaration(name,path,{k:'data'});
  const fields=[],origins=[],names=[];
  let syntax='unit';
  if(c.eat('{')){
@@ -118,7 +126,7 @@ export function readRustRecordConstruction(parser,segments,path,start){
 }
 
 export function readRustRecordProjection(parser,object,field,path,where){
- const origin=parser.origins.origin(object,path);
+ const origin=readRustOwnedBoxRecordParent(parser.origins,parser.origins.origin(object,path));
  const owner=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null;
  const record=owner?parser.namedRecords.get(owner.fullName):null;
  if(!record)return parser.origins.collecting&&parser.hasRecordDeclarations?{k:'field',object,field,span:where}:null;

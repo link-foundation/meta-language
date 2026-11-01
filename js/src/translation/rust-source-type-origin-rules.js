@@ -10,5 +10,6 @@ export function readRustSourceTypeOriginRuntimeFieldPlan(){return [
  'sourceBorrowedPlace','false','sourceOwnedResultProof','false',
  'sourceStandardSumPatternMove','false','sourceStandardSumBorrowedField','false',
  'sourceNominalPatternMove','false','sourceNominalBorrowedField','false',
+ 'sourceBoxLayers','empty list',
  'freshArrayValue','absent fresh array',
 ];}

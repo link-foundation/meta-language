@@ -272,6 +272,9 @@ impl RustParser {
             self.origins
                 .box_owner(owner, &resolved_owner, path, range)?;
             let result = args.remove(0);
+            if self.origins.owned_container_source_enabled {
+                return self.create_owned_box_constructor(result, &resolved_owner, path, range);
+            }
             self.origins.wrap(&result, path, "box")?;
             return Ok(result);
         }

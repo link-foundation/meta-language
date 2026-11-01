@@ -7,6 +7,9 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'argument',destination:number,index:number} |
  * {$:'jump',target:number} | {$:'branch',condition:number,yes:number,no:number} |
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
+ * {$:'constructErrorClass',destination:number,callee:number,arguments:number[]} |
+ * {$:'constructErrorValue',destination:number,constructor:number,newTarget:number,prototype:number,message:number,present:number,realm:bigint,errorClass:string,bindReceiver:boolean} |
+ * {$:'readDerivedReceiver',destination:number} | {$:'invokeErrorIntrinsic',destination:number} |
  * {$:'return',source:number} | {$:'throw',source:number} |
  * {$:'pushHandler',destination:number,target:number} | {$:'popHandler'} |
  * {$:'numberBinary',destination:number,left:number,right:number,operator:string} |
@@ -43,11 +46,13 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'pushHandler':return [instruction.destination];
+    case 'constant':case 'argument':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':return [instruction.destination];
     case 'copy':return [instruction.destination,instruction.source];
     case 'jump':case 'popHandler':return [];
     case 'branch':return [instruction.condition];
     case 'call':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
+    case 'constructErrorClass':return [instruction.destination,instruction.callee].concat(instruction.arguments);
+    case 'constructErrorValue':return [instruction.destination,instruction.constructor,instruction.newTarget,instruction.prototype,instruction.message,instruction.present];
     case 'primitive':return [instruction.destination].concat(instruction.arguments);
     case 'return':case 'throw':return [instruction.source];
     case 'requireWrite':return [instruction.success];
@@ -60,6 +65,8 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
   }
 }
+/** @param {JavaScriptCallInstruction} instruction @returns {number} */
+export function readJavaScriptCallCodeDestination(instruction){switch(instruction.$){case 'jump':case 'branch':case 'popHandler':case 'return':case 'throw':case 'requireWrite':return -1;default:return instruction.destination;}}
 /** Preserve a real typed dependency on the shared semantic operand model.
  * @param {JavaScriptSemanticValue} value @returns {string} */
 export function readJavaScriptCallConstantError(value){return readJavaScriptSemanticValueError(value);}

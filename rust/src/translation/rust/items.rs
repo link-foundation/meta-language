@@ -63,7 +63,7 @@ impl RustParser {
         let source_pure_unit_calls = self.finish_pure_unit_source(&items, &main)?;
         self.require_owned_local_program(&items, &main)?;
         self.require_const_function_program(&items, &main)?;
-        let program = SProgram {
+        let mut program = SProgram {
             source_class_owners: None,
         source_class_methods:Vec::new(),
             reference_semantics: None,
@@ -75,6 +75,7 @@ impl RustParser {
             source_pure_unit_calls,
             source_runtime_shell: None,
         };
+        self.finish_owned_record_effects(&mut program)?;
         self.refuse_standard_sum_private_completions(&program)?;
         if !self.origins.collecting {
             self.refuse_standard_sum_source_patterns(&program)?;
@@ -442,6 +443,22 @@ impl RustParser {
     }
 
     pub(super) fn enum_item(
+        &mut self,
+        path: &[String],
+        derivations: &[serde_json::Value],
+    ) -> Result<SItem> {
+        let previous = self.declaration_self_owner.clone();
+        if self.origins.owned_container_source_enabled {
+            let mut owner = path.to_vec();
+            owner.push(self.cursor.peek_at(1).value.clone());
+            self.declaration_self_owner = Some(super::inherent::InherentOwner { path: owner, module_path: path.to_vec() });
+        }
+        let result = self.enum_declaration(path, derivations);
+        self.declaration_self_owner = previous;
+        result
+    }
+
+    fn enum_declaration(
         &mut self,
         path: &[String],
         derivations: &[serde_json::Value],

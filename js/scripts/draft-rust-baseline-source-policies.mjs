@@ -11,10 +11,15 @@ import {readNativePolicyLiteralControls} from './draft-native-policy-assertion-c
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/source-library-class-rules.js',moduleName:'source_library_class_rules',model:'resolved supplied JavaScript class module ownership 1',programAsset:'source-library-class-program',sourceAliases:true,sourceLints:'preserve',sourceFormatting:'preserve',valueSharing:'exact scalars, types and source spans 1',programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1'},
+ {sourcePath:'examples/closed-source-class-composition/entry.js',moduleName:'closed_source_class_composition',model:'actual selected Scope supplied class module composition 1',programAsset:'closed-source-class-composition-program',sourceAliases:true,sourceClasses:'closed local class declarations 1',sourceReExports:'resolved named module providers 1',referenceSemantics:true,sourceLints:'preserve',sourceFormatting:'preserve',valueSharing:'exact scalars, types and source spans 1',programEntryPoints:'source module exports 1',nativeEntryPoints:'source module exports 1'},
  {sourcePath:'js/src/translation/rust-owned-recursive-datatype-rules.js',moduleName:'rust_owned_recursive_datatype_rules',model:'Rust finite recursive owned datatype witnesses 1',programAsset:'rust-owned-recursive-datatype-program'},
  {sourcePath:'js/src/translation/rust-owned-record-state-rules.js',moduleName:'rust_owned_record_state_rules',model:'Rust scoped owned record state through explicit value carriers 1',programAsset:'rust-owned-record-state-program'},
  {sourcePath:'js/src/translation/rust-owned-record-place-rules.js',moduleName:'rust_owned_record_place_rules',model:'Rust exact local record update places 1',programAsset:'rust-owned-record-place-program'},
  {sourcePath:'js/src/translation/datatype-dependency-group-rules.js',moduleName:'datatype_dependency_group_rules',model:'Source-ordered datatype dependency components 1',programAsset:'datatype-dependency-group-program'},
+ {sourcePath:'js/src/translation/formal-datatype-module-rules.js',moduleName:'formal_datatype_module_rules',model:'Actual mutual datatype common module prefixes 1',programAsset:'formal-datatype-module-program'},
+ {sourcePath:'js/src/translation/formal-datatype-alias-rules.js',moduleName:'formal_datatype_alias_rules',model:'Formal datatype public target aliases 1',programAsset:'formal-datatype-alias-program'},
+ {sourcePath:'js/src/translation/rust-owned-record-effect-rules.js',moduleName:'rust_owned_record_effect_rules',model:'Rust ordered owned record expression and main effects 1',programAsset:'rust-owned-record-effect-program'},
  {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'javascript_class_owner_rules',model:'closed JavaScript class data owners 1',programAsset:'javascript-class-owner-program'},
  {sourcePath:'js/src/translation/rust-owned-record-update-rules.js',moduleName:'rust_owned_record_update_rules',model:'Rust destructor-free record field moves and updates 1',programAsset:'rust-owned-record-update-program'},
  {sourcePath:'js/src/translation/rust-copy-closure-rules.js',moduleName:'rust_copy_closure_rules',model:'ordinary explicitly typed immutable Rust Copy closures 1',programAsset:'rust-copy-closure-program'},
@@ -49,6 +54,8 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/source-library-class-composition.mjs',
+ 'js/tests/fixtures/source-library-class-re-exports.mjs',
  'js/tests/fixtures/disjoint-collection-iterations.mjs',
  'js/tests/fixtures/disjoint-collection-item-iterations.mjs',
  'js/tests/fixtures/disjoint-collection-spreads.mjs',
@@ -59,7 +66,13 @@ const fixtures=[
  'js/tests/fixtures/rust-copy-closure-values.mjs',
  'js/tests/fixtures/rust-owned-record-updates.mjs',
  'js/tests/fixtures/rust-owned-record-places.mjs',
+ 'js/tests/fixtures/rust-owned-record-state.mjs',
+ 'js/tests/fixtures/rust-owned-record-effects.mjs',
+ 'js/tests/fixtures/formal-mutual-datatypes.mjs',
+ 'js/tests/fixtures/formal-datatype-aliases.mjs',
+ 'js/tests/fixtures/rust-owned-recursive-containers.mjs',
  'js/tests/fixtures/datatype-dependency-groups.mjs',
+ 'js/tests/fixtures/formal-datatype-modules.mjs',
  'js/tests/fixtures/native-policy-authoring-controls.mjs',
  'js/tests/fixtures/callable-data-originals.mjs',
  'js/tests/fixtures/collection-copies.mjs',
@@ -117,11 +130,34 @@ const consumers=[
  'js/tests/translation-rust-copy-closure-values.test.js',
  'js/tests/translation-rust-owned-record-updates.test.js',
  'js/tests/translation-rust-owned-record-places.test.js',
+ 'js/tests/translation-rust-owned-record-state.test.js',
+ 'js/tests/translation-rust-owned-record-effects.test.js',
+ 'js/tests/translation-formal-mutual-datatypes.test.js',
+ 'js/tests/translation-formal-datatype-aliases.test.js',
+ 'js/tests/translation-rust-owned-recursive-containers.test.js',
+ 'js/tests/translation-control-diagnostics.test.js',
+ 'js/tests/translation-javascript-call-allocation.test.js',
+ 'js/scripts/produce-control-diagnostic-failures.mjs',
  'js/tests/translation-datatype-dependency-groups.test.js',
+ 'js/tests/translation-formal-datatype-modules.test.js',
+ 'js/src/translation/formal-datatype-modules.js',
+ 'js/src/translation/formal-datatype-aliases.js',
+ 'js/src/translation/rust-owned-record-effects.js',
  'js/scripts/draft-native-policy-assertion-controls.mjs',
  'js/scripts/draft-rust-baseline-native-policy-controls.mjs',
  'js/scripts/rust-baseline-native-policy-control-groups.mjs',
  'js/scripts/class-owner-schema-extension.mjs',
+ 'js/scripts/source-library-classes.mjs',
+ 'js/scripts/draft-source-library-class-rules.mjs',
+ 'js/scripts/draft-closed-source-class-composition.mjs',
+ 'js/scripts/draft-source-library.mjs',
+ 'js/tests/source-library-class-composition.test.js',
+ 'examples/closed-source-class-composition/entry.js',
+ 'examples/closed-source-class-composition/scope.js',
+ 'examples/closed-source-class-composition/public-scope.js',
+ 'js/scripts/read-source-library-closure.mjs',
+ 'js/scripts/compose-source-library-aliases.mjs',
+ 'js/scripts/source-library-entry-points.mjs',
  'js/scripts/class-owner-schema-profile.mjs',
  'js/scripts/draft-class-owner-source-profiles.mjs',
  'js/scripts/ordered-record-schema-profile.mjs',
@@ -139,6 +175,7 @@ const consumers=[
  'js/src/translation/collection-copies.js',
  'js/tests/translation-collection-copies.test.js',
  'js/tests/support/collection-copy-concrete.js','js/tests/support/collection-copy-integration.js',
+ 'js/tests/support/control-diagnostics.js','js/scripts/collection-control-producer.mjs',
  'js/scripts/produce-collection-copies.mjs',
  'js/src/translation/rust.js','js/src/translation/rust-type-aliases.js',
  'js/src/translation/rust-generic-type-aliases.js','js/src/translation/rust-standard-sum-source.js',
@@ -160,6 +197,7 @@ const consumers=[
  'js/src/translation/rust-owned-record-updates.js',
  'js/src/translation/rust-owned-record-places.js',
  'js/src/translation/rust-owned-record-state.js',
+ 'js/src/translation/rust-owned-containers.js',
  'js/src/translation/rust-owned-standard-sum-callbacks.js',
  'js/src/translation/rust-source-type-origins.js',
  'js/src/translation/rust-standard-sum-guards.js',
@@ -229,6 +267,8 @@ writeProjectData(new URL('parity/fixtures/rust-standard-sum-source-draft.lino',r
 // Every remaining fixture namespace is an independently authored literal data
 // module. Convert all of its exports automatically without dropping any rows.
 for(const [source,target] of [
+ ['source-library-class-composition','source-library-class-composition'],
+ ['source-library-class-re-exports','source-library-class-re-exports'],
  ['disjoint-collection-iterations','disjoint-collection-iterations'],
  ['disjoint-collection-item-iterations','disjoint-collection-item-iterations'],
  ['disjoint-collection-spreads','disjoint-collection-spreads'],
@@ -239,7 +279,12 @@ for(const [source,target] of [
  ['rust-copy-closure-values','rust-copy-closure-values'],
  ['rust-owned-record-updates','rust-owned-record-updates'],
  ['rust-owned-record-places','rust-owned-record-places'],
+ ['rust-owned-record-state','rust-owned-record-state'],
+ ['rust-owned-record-effects','rust-owned-record-effects'],
+ ['formal-mutual-datatypes','formal-mutual-datatypes'],
+ ['formal-datatype-aliases','formal-datatype-aliases'],
  ['datatype-dependency-groups','datatype-dependency-groups'],
+ ['formal-datatype-modules','formal-datatype-modules'],
  ['callable-data-originals','callable-data-originals'],
  ['collection-copies','collection-copies'],
  ['rust-source-namespaces-draft','rust-source-namespaces-draft'],
@@ -286,6 +331,16 @@ const nativeLiteralSource=readFileSync(new URL(nativeLiteralPath,root),'utf8');
 writeProjectData(new URL('parity/fixtures/native-policy-authoring-controls.lino',root),{
  schemaVersion:1,model:'literal native policy assertion source controls 1',boundary,
  selections:['nativeLiteralAssertions','mixedLiteralAssertions'].map(exportName=>readNativePolicyLiteralControls(nativeLiteralSource,{path:nativeLiteralPath,exportName})),
+});
+// Keep nonfinite inputs as exact authored literal descriptors, alongside the
+// complete finite source inventories. Never coerce NaN/Infinity to JSON null.
+const recursiveLiteralPath='js/tests/fixtures/rust-owned-recursive-containers.mjs';
+const recursiveLiteralSource=readFileSync(new URL(recursiveLiteralPath,root),'utf8');
+const recursiveNamespace=await import('../tests/fixtures/rust-owned-recursive-containers.mjs');
+writeProjectData(new URL('parity/fixtures/rust-owned-recursive-containers.lino',root),{
+ schemaVersion:1,model:'Rust owned recursive container exact source literals 1',boundary,
+ declarations:Object.fromEntries(Object.entries(recursiveNamespace).filter(([name])=>name!=='rustOwnedRecursiveContainerDecisions')),
+ selections:[readNativePolicyLiteralControls(recursiveLiteralSource,{path:recursiveLiteralPath,exportName:'rustOwnedRecursiveContainerDecisions'})],
 });
 draftRustBaselineNativePolicyControls({publish:true});globalThis.gc?.();
 await import('./draft-rust-type-alias-fixtures.mjs');globalThis.gc?.();

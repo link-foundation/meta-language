@@ -92,9 +92,10 @@ export function readRustInherentReceiver(parser,name,path,index){
 }
 
 export function readRustInherentSelfType(parser){
- if(!parser.inherentOwner||!parser.cursor.is('Self'))return null;
+ const owner=parser.declarationSelfOwner??parser.inherentOwner;
+ if(!owner||!parser.cursor.is('Self'))return null;
  parser.cursor.next();
- return parser.origins.typed({kind:'named',path:['crate',...parser.inherentOwner.path]},parser.inherentOwner.modulePath);
+ return parser.origins.typed({kind:'named',path:['crate',...owner.path]},owner.modulePath);
 }
 
 export function resolveRustInherentPath(parser,segments,path){

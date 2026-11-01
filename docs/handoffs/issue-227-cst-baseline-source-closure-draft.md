@@ -174,6 +174,114 @@ remains required target work: existing four-target positive assertions are
 retained and are not presented as passing. No source generation, tests,
 compilation, validation or runtime observation ran for this batch.
 
+The next source-only control batch replaces fail-fast collection/class producer
+streams with `collection-control-producer.mjs` and bounded
+`control-diagnostics.js` records. The seven existing producers retain literal
+fixture definitions and every declared target/transport. Each case attempts
+physical CST, independent original stdout, frontend, typed archive and every
+transport/target independently. Missing measured dependencies become explicit
+failed assertions, never successful empty products. Available measurements
+remain attached to their case; producer output finishes as valid JSON before
+the nonzero exit is set. One case is serialized at a time. Original strict JS
+test entrypoints still fail, after accumulating their case assertions.
+
+The shared native collection consumer reads that complete envelope even when
+the producer exits nonzero. It accumulates JavaScript diagnostics and attempts
+native CST/frontend/typed construction, every native transport/target, actual
+emitted Rust compilation/stdout and all refusal inputs before aggregate
+failure. Native products are computed independently of missing peer products;
+peer equality remains an explicit failing assertion when a peer is absent.
+Native original emission, native transport equality and original JS emission
+parity remain separately checked. The class-owner malformed/archive consumer
+uses the same accumulator and requires an actual edited input before serde
+rejection can satisfy a negative assertion. Intentionally failing diagnostic
+producer and JS/native control sources retain late fixtures/targets and verify
+dependency failures without claiming translation behavior. None were run.
+
+The supplied-class module batch adds the opt-in source-library profile
+`closed local class declarations 1`. It requires complete dependencies,
+resolved alias composition and shared reference semantics. The old
+function/constant-function classifier and export policy remain unchanged.
+`source-library-class-rules.js`, `source-library-classes.mjs` and the narrow
+capture/composer/author/entry-point seams admit actual named class bindings,
+validate their CST declaration owners and existing closed class directory,
+reuse resolved lexical renaming for constructors/self references/imports, and
+remove only actual owned class export prefixes after composition. Cycles,
+namespace/default/re-export forms, unrepresented module state, static
+initialization/inheritance and unproved class descriptors still refuse.
+
+Actual class declarations and their leading comments are stably placed before
+ordinary function declarations, retaining the existing frontend ordering gate.
+This applies only after declaration-only module and closed class checks; class
+definition effects are not erased. Each original module/source/hash/export set
+remains captured. Exact rename/import/export edit phases retain before/after
+hashes; `closureRanges` map moved chunks to complete compiled module ranges.
+Reverse interval projection retains original occurrences through replacements.
+Private bindings that would capture another module's actual unresolved builtin
+are renamed through the same resolved CST operation. A public entry export
+with that conflict refuses pending an actual export wrapper, preserving its
+public spelling rather than silently renaming it.
+
+Checked class spans intentionally remain conservative, so source ownership
+does not treat their start positions as exact module identities. The new
+profile seeds owners from actual compiled CST declaration bindings and
+validated constructor/method witnesses, then follows real checked
+call/function/type edges to assign private generated helpers. Conflicting or
+unreachable helper ownership refuses. Cross-module helper calls require the
+actual imported interface's class owner, exact witness helper and receiver
+owner. Original source spans come from the captured CST declaration root and
+its reversible edit chain. Source export projection retains actual owner and
+helper dependencies and prunes only unreachable witness rows; complete
+original inputs remain in provenance. Explicit documentation datatype binding
+composition and general module initialization remain separate obligations.
+
+`source-library-class-composition.mjs` retains two actual Scope source anchors,
+24 pure decisions, ten complete positive multi-module inventories and nine
+refusal inventories, bounded to ECMAScript 2024–2025 and Node >=22.15 <23 or
+>=24 <25. The future test retains original module imports/results, physical
+CST, exact edit/hash replay, declaration/owner projection, typed text/binary
+reload and all four target requirements. The selected example workload uses
+the complete Scope body plus the actual imported `source-identifier-rules.js`
+module. `draft-source-library-class-rules.mjs` and
+`draft-closed-source-class-composition.mjs` author automatic native source and
+linked assets only when later invoked. Full `ir.js`, broad imports and formal
+reference/state emission remain required work; this selected closure supplies
+no whole-module, target parity or completion evidence. No capture, generation,
+test, validation, compiler or product execution ran while drafting this batch.
+
+The following additive `resolved named module providers 1` source profile
+addresses the real named re-export in `rust-scalar-loops.js`. Capture records
+actual named export/provider statements and traverses their supplied relative
+files. The existing CST alias composer resolves each public name transitively
+to one actual declaration owner before renaming/import substitution. Re-export
+syntax is removed only after that resolution and remains in original sources
+and hashed edit receipts. Entry projection uses the resulting actual export
+owner table. Default function and class-only profiles keep their existing
+refusal inputs; this new profile requires explicit dependency and alias
+selection. Default/star exports, duplicate/missing/cyclic owners and public
+entry aliases without actual callable/constructor wrappers still refuse. A
+public API name never silently becomes a private provider name.
+
+`source-library-class-re-exports.mjs` adds eleven pure decisions, five complete
+positive module inventories, six refusal inventories and the exact real source
+anchor. Their existing class test consumer retains all original modules/CST,
+original module-import results, exact edit/hash replay, typed reloads and all
+four target requirements. The selected Scope workload now uses an actual
+facade rather than a handwritten alias rewrite. Static method helpers also
+retain their original class module through the existing shared source lowering
+table, with distinct static-call admission rather than a fabricated receiver.
+The omnibus registers both fixture namespaces, exact policy/workload models,
+consumer/recipe/example sources and generated native literal controls. Source
+generation, native controls and every behavior assertion remain unexecuted.
+
+Full `ir.js` is still blocked by further actual dependencies, including
+`readRuntimeProjectData(new URL(..., import.meta.url))` policy initialization in
+`rust-scalar-loops.js`/`rust-source-signatures.js`, the `TranslationError extends
+Error` descriptor/exception boundary and broad IR-as-data traversal. This batch
+does not execute loaders, freeze mutable exported policy objects into guessed
+literals, replace signatures, or claim that the selected Scope module closes
+those whole-module requirements.
+
 ## Drafted files
 
 - `rust/src/link_network.rs`: corrected the documentation of `LinkNetwork::parse`

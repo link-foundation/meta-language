@@ -8,12 +8,14 @@ import {lowerRustExpressionCompletions,hasRustExpressionCompletion} from './rust
 import {withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 // Actual token/term transport into shared ordinary completion constructions.
 import {unsupported} from './diagnostics.js';
-import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative} from './rust-unit-value-rules.js';
+import {beginRustOwnedRecordStateBlock,endRustOwnedRecordStateBlock} from './rust-owned-record-state.js';
+import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative,testRustOrdinaryCompletionFallsThrough} from './rust-unit-value-rules.js';
 const range=(from,to)=>({start:from.start,end:Math.max(from.end,to?.kind==='eof'?from.end:to.start)});
 const name=path=>({k:'name',path});
 function leaf(parser,kind,expression,path){
  const success=kind==='return'?'returned':kind==='abort'?'aborted':'value';
- return {node:kind,kind:hasRustExpressionCompletion(expression)?readRustOrdinaryCompletionAlternativeKind(success,'returned'):success,expression,origin:parser.origins.origin(expression,path)};
+ const origin=parser.origins.transferOwnedResult(expression,path);parser.origins.mark(expression,origin);
+ return {node:kind,kind:hasRustExpressionCompletion(expression)?readRustOrdinaryCompletionAlternativeKind(success,'returned'):success,expression,origin};
 }
 export function readRustOrdinaryFunctionCompletion(parser,path,ret,sourceResult){
  const tree=block(parser,path),context={parser,path,ret,sourceResult,outputs:[],data:null};
@@ -23,10 +25,11 @@ export function readRustOrdinaryFunctionCompletion(parser,path,ret,sourceResult)
  return expression;
 }
 function block(parser,path){
- const c=parser.cursor,open=c.expect('{','block'),previous=parser.origins.enter();
- try{const result=sequence(parser,path,open);c.expect('}','block');return result;}
- finally{parser.origins.scope=previous;}
+ const frame=beginRustOwnedRecordStateBlock(parser),c=parser.cursor,before=parser.origins.snapshotOwnedBindings(),previous=parser.origins.enter();
+ try{const open=c.expect('{','block'),result=sequence(parser,path,open);c.expect('}','block');for(const origin of completionOrigins(result))parser.origins.expireOwnedBindings(before,origin);return result;}
+ finally{parser.origins.scope=previous;endRustOwnedRecordStateBlock(parser,frame);}
 }
+function completionOrigins(tree){const result=[],pending=[tree];while(pending.length){const tree=pending.pop();if(tree.origin)result.push(tree.origin);if(tree.body)pending.push(tree.body);if(tree.first)pending.push(tree.first);if(tree.rest)pending.push(tree.rest);if(tree.then)pending.push(tree.then);if(tree.otherwise)pending.push(tree.otherwise);}return result;}
 function sequence(parser,path,open){
  const c=parser.cursor,bindings=[];
  let result;
@@ -80,14 +83,16 @@ function sequence(parser,path,open){
 }
 function conditional(parser,path){
  const c=parser.cursor,token=c.next();
- let cond,stages,then;
+ let cond,stages,then,before=parser.origins.snapshotOwnedBindings();
  if(hasRustConditionalChain(parser)){
   const previous=parser.origins.enter();
   try{stages=withRustStandardSumSourceContext(parser,null,()=>readRustConditionalChainStages(parser,path,token));then=block(parser,path);}
   finally{parser.origins.scope=previous;}
- }else{cond=withRustStandardSumSourceContext(parser,null,()=>parser.expr(path,{noStruct:true}));parser.origins.direct(cond,path,cond.span);then=block(parser,path);}
+ }else{cond=withRustStandardSumSourceContext(parser,null,()=>parser.expr(path,{noStruct:true}));parser.origins.direct(cond,path,cond.span);before=parser.origins.snapshotOwnedBindings();then=block(parser,path);}
+ const thenStates=parser.origins.snapshotOwnedBindings();parser.origins.restoreOwnedBindings(before);
  const hasElse=Boolean(c.eat('else'));
  const otherwise=hasElse?(c.is('if')?conditional(parser,path):block(parser,path)):leaf(parser,'value',{k:'unit',span:range(token,token)},path);
+ parser.origins.joinOwnedBindings(thenStates,parser.origins.snapshotOwnedBindings(),testRustOrdinaryCompletionFallsThrough(then.kind),testRustOrdinaryCompletionFallsThrough(otherwise.kind));
  const success=readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind);
  return {node:'conditional',cond,stages,then,otherwise,kind:hasRustExpressionCompletion(cond??stages)?readRustOrdinaryCompletionAlternativeKind(success,'returned'):success,span:range(token,c.peek())};
 }
@@ -107,8 +112,9 @@ function letElseCompletion(parser,path,open){
  c.expect('=','let');const first=c.index,value=withRustStandardSumSourceContext(parser,sourceType,()=>parser.expr(path)),tokens=c.tokens.slice(first,c.index);
  const reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));
  if(reason)throw unsupported('Rust let-else initializer',reason,range(start,c.peek()));
- c.expect('else','let-else');const otherwise=block(parser,path);
+ c.expect('else','let-else');const beforeFallback=parser.origins.snapshotOwnedBindings(),otherwise=block(parser,path);
  if(!acceptRustOrdinaryCompletedAlternative(otherwise.kind))throw unsupported('Rust let-else fallback','the fallback needs a represented diverging completion',range(start,c.peek()));
+ parser.origins.restoreOwnedBindings(beforeFallback);
  c.expect(';','let');
  const span=range(start,c.peek()),capture=parser.freshProductBinding(),scrutinee={k:'name',path:[capture],span};
  parser.origins.bind(capture,value,path,sourceType);

@@ -16,7 +16,7 @@ use std::fmt::Write as _;
 use super::Language;
 use super::diagnostics::{Result, type_error, unsupported};
 use super::emit_common::{
-    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations,
+    CtorStyle, Dependence, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, order_declarations_with_dependencies,
     unthreaded,
 };
 use super::ir::{
@@ -199,7 +199,7 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
     let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Lean")?;
     let utf16_strings = super::formal_unit_strings::requires(program);
-    let state = EmitState::new(
+    let mut state = EmitState::new(
         program,
         Language::Lean,
         ident,
@@ -211,9 +211,16 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
+    let plan=super::formal_datatype_modules::plan_formal_datatype_modules(program)?;
+    let aliases=super::formal_datatype_aliases::capture_formal_datatype_aliases(&plan.aliases,&state)?;
+    let alias_dependencies=super::formal_datatype_modules::formal_datatype_module_dependencies(&plan)?;
+    state.relocate_datatypes(&plan.program,&plan.aliases)?;
+    let program=&plan.program;
     LeanEmitter {
         program,
         state,
+        aliases:super::formal_datatype_aliases::FormalDatatypeAliases::new(aliases,"Lean"),
+        alias_dependencies,
         helpers: if utf16_strings {
             HashSet::from(["utf16Text"])
         } else {
@@ -231,6 +238,8 @@ struct LeanEmitter<'p> {
     utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
+    aliases:super::formal_datatype_aliases::FormalDatatypeAliases,
+    alias_dependencies:HashMap<String,HashSet<String>>,
     helpers: HashSet<&'static str>,
     // Inside `| p + 1 =>` of a match on `x`, `x` is written `p + 1`: Lean's
     // structural recursion sees through the pattern but not the variable.
@@ -245,20 +254,24 @@ impl LeanEmitter<'_> {
             self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
         }
         let mut blocks = Vec::new();
+        blocks.extend(self.aliases.open(&[],&self.state)?);
         let mut open: Vec<String> = Vec::new();
         let groups = mutual_groups(self.program);
-        for entry in order_declarations(self.program, false)? {
-            self.move_to(&mut open, entry.module_path(), &mut blocks);
+        let data_groups=datatype_groups(self.program)?;
+        for entry in order_declarations_with_dependencies(self.program,self.aliases.has_aliases(),&self.alias_dependencies)? {
+            self.move_to(&mut open, entry.module_path(), &mut blocks)?;
             let block = match (entry, groups.get(entry.full_name())) {
                 (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
                 (_, Some(_)) => continue,
-                (Decl::Data(data), None) => self.data(entry, data)?,
+                (Decl::Data(data), None) => if let Some(group)=data_groups.get(entry.full_name()){if std::ptr::eq(group[0],entry){self.mutual_data(group)?}else{continue;}}else{self.data(entry,data)?},
                 (Decl::Fn(function), None) => self.function(entry, function)?,
                 (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             };
+            if let Some(group)=data_groups.get(entry.full_name()){self.aliases.complete(group);}else{self.aliases.complete(&[entry]);}
             blocks.push(block);
         }
-        self.move_to(&mut open, &[], &mut blocks);
+        self.move_to(&mut open, &[], &mut blocks)?;
+        blocks.extend(self.aliases.close(&[],&self.state)?);self.aliases.finish()?;
         let main = match &self.program.main {
             Some(main) => Some(self.main(main)?),
             None => None,
@@ -317,20 +330,23 @@ impl LeanEmitter<'_> {
     }
 
     /// Closes and opens namespaces so that `path` is the open one.
-    fn move_to(&self, open: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>) {
+    fn move_to(&mut self, open: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>)->Result<()> {
         let common = open
             .iter()
             .zip(path)
             .take_while(|(left, right)| left == right)
             .count();
         while open.len() > common {
+            blocks.extend(self.aliases.close(open,&self.state)?);
             blocks.push(format!("end {}", self.module_name(open)));
             open.pop();
         }
         while open.len() < path.len() {
             open.push(path[open.len()].clone());
             blocks.push(format!("namespace {}", self.module_name(open)));
+            blocks.extend(self.aliases.open(open,&self.state)?);
         }
+        Ok(())
     }
 
     fn module_name(&self, path: &[String]) -> String {
@@ -338,8 +354,11 @@ impl LeanEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
+        self.data_definition(entry,data,false)
+    }
+    fn data_definition(&mut self, entry: &Decl, data: &DataDecl, mutual:bool) -> Result<String> {
         let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
-        let profile=if facts.callable{Some(crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?)}else{None};
+        let profile=if facts.callable&&!mutual{Some(crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?)}else{None};
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         let mut lines = vec![format!("inductive {name} where")];
@@ -354,9 +373,16 @@ impl LeanEmitter<'_> {
         }
         // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
         // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-        let deriving = crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,self.undecidable(&data.full_name,&mut HashSet::new()));
-        if let Some(profile)=profile.filter(|profile|profile.recursive){let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}else{lines.push(format!("  deriving {deriving}"));}
+        let undecidable=self.undecidable(&data.full_name,&mut HashSet::new());
+        let deriving = if mutual{crate::translation::callable_data_derivation_rules::read_formal_datatype_lean_block_derivation(facts.callable,data.output,undecidable)}else{crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,undecidable)};
+        if let Some(profile)=profile.filter(|profile|profile.recursive){let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}else if !deriving.is_empty(){lines.push(format!("  deriving {deriving}"));}
         Ok(lines.join("\n"))
+    }
+    fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
+        for entry in group{let ty=Type::Data{name:entry.full_name().to_owned()};let lookup=|name:&str|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None};if crate::translation::callable_data::read_callable_data_facts(&ty,&lookup)?.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&ty,&lookup)?;}}
+        let profiles=crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:group[0].full_name().to_owned()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let mut lines=vec!["mutual".to_owned()];for entry in group{let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,true)?);}lines.push("end".to_owned());
+        let mut defaults=group.to_vec();defaults.sort_by_key(|entry|profiles[entry.full_name()].rank);for entry in defaults{let Decl::Data(data)=entry else{unreachable!("validated actual data component")};let witness=&data.ctors[profiles[entry.full_name()].witness];lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(self.state.local_name(&data.full_name),&self.state.ctor_ref(&data.full_name,&witness.name,"."),witness.fields.len() as f64));}Ok(lines.join("\n"))
     }
 
     fn definition(&mut self, entry: &Decl, function: &FnDecl) -> Result<String> {

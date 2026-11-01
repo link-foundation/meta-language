@@ -54,6 +54,8 @@ mod owned_local_state;
 mod owned_record_updates;
 mod owned_record_places;
 mod owned_record_state;
+mod owned_record_effects;
+mod owned_containers;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;
 pub(crate) mod primitive_owner_rules;
@@ -590,6 +592,7 @@ struct RustParser {
     named_records: HashMap<String, records::NamedRecord>,
     owned_record_state: owned_record_state::OwnedRecordState,
     inherent_owner: Option<inherent::InherentOwner>,
+    declaration_self_owner: Option<inherent::InherentOwner>,
     inherent_methods: HashMap<String, inherent::InherentMethod>,
     inherent_discovery: bool,
     has_record_declarations: bool,
@@ -701,6 +704,7 @@ impl RustParser {
             named_records: HashMap::new(),
             owned_record_state: owned_record_state::OwnedRecordState::default(),
             inherent_owner: None,
+            declaration_self_owner: None,
             inherent_methods: HashMap::new(),
             inherent_discovery,
             has_record_declarations,

@@ -6,7 +6,7 @@ impl SourceOrigins {
     pub(in super::super) fn ensure_owned_record_field_state(&mut self,identity:&str){self.source_binding_states.entry(identity.to_owned()).or_insert_with(||"available".to_owned());}
     pub(in super::super) fn set_owned_record_field_state(&mut self,identity:&str,state:&str){self.source_binding_states.insert(identity.to_owned(),state.to_owned());}
     pub(in super::super) fn check_owned_record_whole(&self,origin:&SourceOrigin,span:Option<Span>)->Result<()>{
-        if self.collecting||origin.source_binding_identity.is_none(){return Ok(());}let mut direct=origin.clone();direct.wrappers.clear();if self.nominal_ownership_facts(&direct).profile!="owned"{return Ok(());}let (identities,states):(Vec<_>,Vec<_>)=self.source_binding_states.iter().map(|(identity,state)|(identity.clone(),state.clone())).unzip();let error=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_whole_error(origin.source_binding_identity.as_deref().unwrap_or(""),&identities,&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust record field ownership",&error,span))}
+        if self.collecting||origin.source_binding_identity.is_none(){return Ok(());}let boxed=self.owned_box_record_owner(origin).is_some();if !boxed{let mut direct=origin.clone();direct.wrappers.clear();if self.nominal_ownership_facts(&direct).profile!="owned"{return Ok(());}}let (identities,states):(Vec<_>,Vec<_>)=self.source_binding_states.iter().map(|(identity,state)|(identity.clone(),state.clone())).unzip();let error=crate::translation::rust_owned_record_update_rules::read_rust_owned_record_whole_error(origin.source_binding_identity.as_deref().unwrap_or(""),&identities,&states);if error.is_empty(){Ok(())}else{Err(unsupported("Rust record field ownership",&error,span))}
     }
     pub(in super::super) fn assign_copy_closure_lexical_binding(&mut self,mut origin:SourceOrigin)->SourceOrigin{
         if !self.collecting{let identity=format!("lexical {}",self.next_source_binding_identity);self.next_source_binding_identity+=1;origin.source_lexical_binding_identity=Some(identity.clone());self.source_binding_states.insert(identity,"available".to_owned());}origin
@@ -38,7 +38,7 @@ impl SourceOrigins {
                     .unwrap_or(""),
                 origin.wrappers.len() as f64,
                 origin.proven,
-            ) || self.is_owned_standard_sum_value(origin) || self.is_owned_nominal_value(origin))
+            ) || self.is_owned_standard_sum_value(origin) || self.is_owned_nominal_value(origin) || self.is_owned_box_value(origin))
     }
     pub(in super::super) fn check_owned_origin(
         &self,

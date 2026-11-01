@@ -88,7 +88,7 @@ impl Transport<'_>{
         }
     }
     fn ordered(&mut self,node:Value,roles:Vec<String>,next:Continuation,depth:usize)->Result<SExpr>{
-        let mut slots=Vec::new();for role in roles{if let Some(Value::Array(values))=node.get(&role){for(index,value)in values.iter().enumerate(){let wrapper=node["k"]=="array"&&value.get("value").is_some_and(Value::is_object);slots.push(Slot{role:role.clone(),index:Some(index),wrapper,value:if wrapper{value["value"].clone()}else{value.clone()}});}}else if let Some(value)=node.get(&role).filter(|value|value.is_object()){slots.push(Slot{role,index:None,wrapper:false,value:value.clone()});}}
+        let mut slots=Vec::new();for role in roles{if let Some(Value::Array(values))=node.get(&role){for(index,value)in values.iter().enumerate(){let wrapper=value.get("k").is_none()&&value.get("value").is_some_and(Value::is_object);slots.push(Slot{role:role.clone(),index:Some(index),wrapper,value:if wrapper{value["value"].clone()}else{value.clone()}});}}else if let Some(value)=node.get(&role).filter(|value|value.is_object()){slots.push(Slot{role,index:None,wrapper:false,value:value.clone()});}}
         self.ordered_step(node,slots,0,next,depth)
     }
     fn ordered_step(&mut self,node:Value,slots:Vec<Slot>,at:usize,next:Continuation,depth:usize)->Result<SExpr>{

@@ -359,7 +359,7 @@ impl RustParser {
     }
 
     pub(super) fn inherent_self_type(&mut self) -> Option<Type> {
-        let owner = self.inherent_owner.as_ref()?;
+        let owner = self.declaration_self_owner.as_ref().or(self.inherent_owner.as_ref())?;
         if !self.cursor.is("Self") {
             return None;
         }

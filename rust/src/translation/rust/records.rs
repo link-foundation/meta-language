@@ -98,6 +98,22 @@ impl RustParser {
         path: &[String],
         derivations: &[serde_json::Value],
     ) -> Result<SData> {
+        let previous = self.declaration_self_owner.clone();
+        if self.origins.owned_container_source_enabled {
+            let mut owner = path.to_vec();
+            owner.push(self.cursor.peek_at(1).value.clone());
+            self.declaration_self_owner = Some(super::inherent::InherentOwner { path: owner, module_path: path.to_vec() });
+        }
+        let result = self.record_declaration(path, derivations);
+        self.declaration_self_owner = previous;
+        result
+    }
+
+    fn record_declaration(
+        &mut self,
+        path: &[String],
+        derivations: &[serde_json::Value],
+    ) -> Result<SData> {
         let start = self.cursor.advance();
         let token = self.cursor.identifier(Some("struct"))?;
         let name = token.value.clone();
@@ -114,6 +130,9 @@ impl RustParser {
                 "record parameters and predicates need their complete ownership interpretation",
                 span(&start, self.cursor.peek()),
             ));
+        }
+        if self.origins.owned_container_source_enabled {
+            self.origins.declaration(&name, path, SourceDeclaration::Data)?;
         }
         let mut fields = Vec::new();
         let mut origins = Vec::new();
@@ -414,7 +433,7 @@ impl RustParser {
         path: &[String],
         range: Option<Span>,
     ) -> Result<Option<SExpr>> {
-        let origin = self.origins.origin(object, path);
+        let origin = self.origins.owned_box_record_parent(&self.origins.origin(object,path))?;
         let record = if let Some(Type::Named { path: owner, .. }) = &origin.ty {
             self.record_owner(owner, &origin.path)
         } else {

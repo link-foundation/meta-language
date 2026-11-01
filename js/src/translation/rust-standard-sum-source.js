@@ -8,6 +8,7 @@ import {readRustSourceNamespacePathRole} from './rust-source-namespace-rules.js'
 import {readRustStandardSumOwnershipFacts,captureRustStandardSumConstructor} from './rust-standard-sum-ownership.js';
 import {acceptRustStandardSumOwnedArguments,readRustStandardSumOwnershipVersionError} from './rust-standard-sum-ownership-rules.js';
 import {readRustFunctionPointerDomainError} from './rust-function-pointer-rules.js';
+import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
 import {sanitizeRustSourceTypeOrigin as sourceTypeOrigin} from './rust-source-type-origins.js';
 import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata} from './rust-standard-sum-source-metadata.js';
 import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
@@ -223,6 +224,12 @@ export function finishRustStandardSumSourceDeclarations(parser){
  const active=new Set(),resolved=new Map(),rows=[...parser.standardSumSourceRows];
  const priorProvisionalNames=new Set(rows.filter(row=>row.origin.standardSumSource.provisional).map(row=>row.name));
  const refresh=origin=>{
+  const outer=origin.expandedSourceOwner??origin.sourceOwner;
+  if(outer&&acceptRustOwnedBoxTypeNode(origin.wrappers,outer.kind,outer.path.join('::'),outer.arguments.length)){
+   const child=copy(origin);child.wrappers.shift();child.sourceOwner=copy(outer.arguments[0]);delete child.expandedSourceOwner;
+   const result=refresh(child),inner=result.expandedSourceOwner??result.sourceOwner;if(!inner)fail('the refreshed Box child must retain its actual source owner');
+   result.wrappers.unshift('box');result.sourceOwner={kind:outer.kind,path:[...outer.path],arguments:[copy(inner)]};delete result.expandedSourceOwner;result.copyEvidence=false;return result;
+  }
   const entry=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null;
   if(entry?.standardSumSourceOrigin){
    const row=rows.find(row=>row.name===entry.fullName);

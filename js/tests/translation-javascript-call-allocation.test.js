@@ -121,6 +121,7 @@ test('actual JavaScript frontend records use supplied realm prototypes through t
  const {ordinaryPrototypes,...withoutPrototype}=registry;
  assert.throws(()=>lowerCheckedJavaScriptCallModule(checked,withoutPrototype),/actual Object prototype/);
  assert.throws(()=>lowerCheckedJavaScriptCallModule(checked,{...registry,ordinaryPrototypes:[...ordinaryPrototypes,...ordinaryPrototypes]}),/one supplied actual Object identity/);
+ assert.throws(()=>lowerCheckedJavaScriptCallModule(checked,{...registry,ordinaryPrototypes:[{realm:3n,prototype:{$:'object',identity:4n,callable:true}}]}),/one supplied actual Object identity/);
 });
 
 test('bounded execution suspends for allocator supply and consumes only successful identities',()=>{

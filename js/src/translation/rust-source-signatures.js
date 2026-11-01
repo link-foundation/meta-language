@@ -7,6 +7,7 @@ import {acceptRustSourceLifetimeBinding} from './rust-indirection-rules.js';
 import {acceptRustSourceSignatureModel,acceptRustSourceSignaturePrimitive,acceptRustSourceSignatureWrapper,acceptRustSourceSignatureOwnerKind} from './rust-source-signature-rules.js';
 import {acceptRustRetainedSourceSignatureModel,acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
 import {readRustStandardSumSignatureArgumentConstructors} from './rust-standard-sum-signature-rules.js';
+import {acceptRustOwnedBoxTypeNode,acceptRustOwnedStandardSumBoxPayload} from './rust-owned-recursive-datatype-rules.js';
 export const RUST_SOURCE_SIGNATURE_POLICY=readRuntimeProjectData(new URL('./data/rust-source-signatures.lino',import.meta.url));
 
 export function readRustSourceTypeOwner(parser,head,children,type) {
@@ -120,7 +121,7 @@ export function checkRustSourceSignature(signature,parameters,result,language,re
       for(let index=0;index<selected.length;index+=1){
         const constructor=selected[index],actual=declaration.ctors[constructor].fields[0].type,field=fields.ctors[constructor].fields[0];
         const checked=position(field,actual,depth+1);
-        if(checked.wrappers.length||checked.lifetimes.length)throw typeError('an owned Rust standard sum payload requires a direct source origin');
+        if(checked.wrappers.length||checked.lifetimes.length){let child=checked.owner,boxes=0;while(boxes<256&&acceptRustOwnedBoxTypeNode(['box'],child.kind,child.path.join('::'),child.arguments.length)){boxes+=1;child=child.arguments[0];}if(!acceptRustOwnedStandardSumBoxPayload(checked.wrappers,checked.lifetimes.length,checked.owner.kind,checked.owner.path.join('::'),checked.owner.arguments.length,boxes))throw typeError('an owned Rust standard sum payload requires a direct source origin or an actual closed standard Box chain');}
         owner(value.arguments[index],actual,depth+1);
         const pairs=[[value.arguments[index],checked.owner]];
         for(let at=0;at<pairs.length;at+=1){

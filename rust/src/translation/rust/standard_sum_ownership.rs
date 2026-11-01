@@ -18,7 +18,14 @@ impl SourceOrigins{
         self.standard_sum_ownership_facts_bounded(origin,&mut HashSet::new(),&mut HashMap::new(),0,&mut 0)
     }
     fn standard_sum_ownership_facts_bounded(&self,origin:&SourceOrigin,active:&mut HashSet<String>,memo:&mut HashMap<String,StandardSumOwnershipFacts>,depth:usize,visits:&mut usize)->StandardSumOwnershipFacts{
-        *visits+=1;if (*visits as f64)>rules::read_rust_standard_sum_ownership_node_limit()||!origin.proven||origin.ty.is_none()||!origin.wrappers.is_empty()||(depth as f64)>rules::read_rust_standard_sum_ownership_depth_limit(){return StandardSumOwnershipFacts::default();}
+        *visits+=1;if (*visits as f64)>rules::read_rust_standard_sum_ownership_node_limit()||!origin.proven||origin.ty.is_none()||(depth as f64)>rules::read_rust_standard_sum_ownership_depth_limit(){return StandardSumOwnershipFacts::default();}
+        if !origin.wrappers.is_empty(){
+            use crate::translation::rust_owned_recursive_datatype_rules as containers;
+            let Some(owner)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref())else{return StandardSumOwnershipFacts::default();};let mut child=owner;let mut boxes=0;
+            while boxes<256&&containers::accept_rust_owned_box_type_node(&["box".to_owned()],&child.kind,&child.path.join("::"),child.arguments.len() as f64){boxes+=1;child=&child.arguments[0];}
+            if !containers::accept_rust_owned_standard_sum_box_payload(&origin.wrappers,origin.source_lifetimes.len() as f64,&owner.kind,&owner.path.join("::"),owner.arguments.len() as f64,boxes as f64){return StandardSumOwnershipFacts::default();}
+            let facts=self.owned_container_facts(origin);return if facts.node=="box"&&facts.profile=="owned"&&facts.closed{StandardSumOwnershipFacts{profile:"owned".into(),owner:owner.path.join("::"),..StandardSumOwnershipFacts::default()}}else{StandardSumOwnershipFacts::default()};
+        }
         let declared=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.lookup_type_owner(path,&origin.path),_=>None};
         let stored=declared.as_ref().filter(|entry|matches!(entry.declaration,SourceDeclaration::Data)).and_then(|entry|self.standard_sum_source_origins.get(&entry.full_name));
         if let Some((stored,sum))=stored.and_then(|origin|origin.standard_sum_source.as_deref().map(|sum|(origin,sum))){
@@ -85,7 +92,7 @@ impl SourceOrigins{
         if rules::accept_rust_standard_sum_owned_call_result(owned,function,self.owned_standard_sum_recorded_call(node)){
             origin.source_binding_identity=None;origin.source_place_binding_identity=None;origin.source_loan_binding_identities.clear();origin.source_place_loan_binding_identities.clear();origin.source_extending_temporary_bindings.clear();origin.source_borrowed_place=false;origin.source_owned_result_proof=true;
         }
-        origin
+        self.owned_box_call_result(node,path,origin)
     }
 }
 

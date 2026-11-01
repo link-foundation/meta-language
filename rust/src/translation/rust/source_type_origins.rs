@@ -22,6 +22,7 @@ pub(super) fn sanitize_source_type_origin(origin:&mut SourceOrigin){
                 ("sourceStandardSumBorrowedField","false")=>value.source_standard_sum_borrowed_field=false,
                 ("sourceNominalPatternMove","false")=>value.source_nominal_pattern_move=false,
                 ("sourceNominalBorrowedField","false")=>value.source_nominal_borrowed_field=false,
+                ("sourceBoxLayers","empty list")=>value.source_box_layers.clear(),
                 ("freshArrayValue","absent fresh array")=>value.fresh_array_value=None,
                 _=>panic!("the shared source type origin clearing plan has no native structural field"),
             }

@@ -17,7 +17,7 @@ use std::rc::Rc;
 use super::Language;
 use super::diagnostics::{ErrorKind, Result, TranslationError, unsupported};
 use super::emit_common::{
-    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, order_declarations, unthreaded,
+    CtorStyle, EmitOptions, EmitState, Emitted, mutual_groups, datatype_groups, order_declarations_with_dependencies, unthreaded,
 };
 use super::ir::{
     ByZero, Case, DataDecl, Decl, Effect, Expr, FnDecl, Hints, LitValue, Main, Node, Param,
@@ -381,7 +381,7 @@ pub fn emit_rocq(source: &Program) -> Result<Emitted> {
     let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Rocq")?;
     let utf16_strings = super::formal_unit_strings::requires(program);
-    let state = EmitState::new(
+    let mut state = EmitState::new(
         program,
         Language::Rocq,
         ident,
@@ -392,9 +392,16 @@ pub fn emit_rocq(source: &Program) -> Result<Emitted> {
             ..EmitOptions::default()
         },
     );
+    let plan=super::formal_datatype_modules::plan_formal_datatype_modules(program)?;
+    let aliases=super::formal_datatype_aliases::capture_formal_datatype_aliases(&plan.aliases,&state)?;
+    let alias_dependencies=super::formal_datatype_modules::formal_datatype_module_dependencies(&plan)?;
+    state.relocate_datatypes(&plan.program,&plan.aliases)?;
+    let program=&plan.program;
     RocqEmitter {
         program,
         state,
+        aliases:super::formal_datatype_aliases::FormalDatatypeAliases::new(aliases,"Rocq"),
+        alias_dependencies,
         helpers: if utf16_strings {
             HashSet::from([Helper::Tactics, Helper::Utf16Text, Helper::FloatIndex])
         } else {
@@ -425,6 +432,8 @@ struct RocqEmitter<'p> {
     utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
+    aliases:super::formal_datatype_aliases::FormalDatatypeAliases,
+    alias_dependencies:HashMap<String,HashSet<String>>,
     helpers: HashSet<Helper>,
     /// Functions recursive on a natural: the decreasing parameter and the arity.
     nat_functions: HashMap<String, (usize, usize)>,
@@ -440,20 +449,24 @@ impl RocqEmitter<'_> {
         }
         let program = self.program;
         let mut blocks: Vec<String> = Vec::new();
-        let order = order_declarations(program, true)?;
+        blocks.extend(self.aliases.open(&[],&self.state)?);
+        let order = order_declarations_with_dependencies(program,true,&self.alias_dependencies)?;
         let mut open_modules: Vec<String> = Vec::new();
         let groups = mutual_groups(program);
+        let data_groups=datatype_groups(program)?;
         for entry in order {
-            self.move_to(&mut open_modules, entry.module_path(), &mut blocks);
+            self.move_to(&mut open_modules, entry.module_path(), &mut blocks)?;
             blocks.push(match (entry, groups.get(entry.full_name())) {
                 (_, Some(group)) if std::ptr::eq(group[0], entry) => self.mutual(group)?,
                 (_, Some(_)) => continue,
-                (Decl::Data(data), None) => self.data(entry, data)?,
+                (Decl::Data(data), None) => if let Some(group)=data_groups.get(entry.full_name()){if std::ptr::eq(group[0],entry){self.mutual_data(group)?}else{continue;}}else{self.data(entry,data)?},
                 (Decl::Fn(function), None) => self.function(entry, function)?,
                 (Decl::Theorem(theorem), None) => self.theorem(entry, theorem)?,
             });
+            if let Some(group)=data_groups.get(entry.full_name()){self.aliases.complete(group);}else{self.aliases.complete(&[entry]);}
         }
-        self.move_to(&mut open_modules, &[], &mut blocks);
+        self.move_to(&mut open_modules, &[], &mut blocks)?;
+        blocks.extend(self.aliases.close(&[],&self.state)?);self.aliases.finish()?;
         let main_text = match &program.main {
             Some(main) => Some(self.main(main)?),
             None => None,
@@ -494,20 +507,23 @@ impl RocqEmitter<'_> {
     }
 
     /// Closes and opens `Module` blocks until `path` is the open module.
-    fn move_to(&self, open_modules: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>) {
+    fn move_to(&mut self, open_modules: &mut Vec<String>, path: &[String], blocks: &mut Vec<String>)->Result<()> {
         let common = open_modules
             .iter()
             .zip(path)
             .take_while(|(open, wanted)| open == wanted)
             .count();
         while open_modules.len() > common {
+            blocks.extend(self.aliases.close(open_modules,&self.state)?);
             blocks.push(format!("End {}.", self.module_name(open_modules)));
             open_modules.pop();
         }
         while open_modules.len() < path.len() {
             open_modules.push(path[open_modules.len()].clone());
             blocks.push(format!("Module {}.", self.module_name(open_modules)));
+            blocks.extend(self.aliases.open(open_modules,&self.state)?);
         }
+        Ok(())
     }
 
     fn module_name(&self, path: &[String]) -> &str {
@@ -635,12 +651,15 @@ impl RocqEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
+        self.data_definition(entry,data,"Inductive",".")
+    }
+    fn data_definition(&mut self, entry: &Decl, data: &DataDecl,keyword:&str,terminator:&str) -> Result<String> {
         fn lists(ty: &Type) -> bool {
             ty.element()
                 .is_some_and(|element| matches!(element, Type::Data { .. }) || lists(element))
         }
         let name = self.state.local_name(&data.full_name).to_owned();
-        let mut lines = vec![format!("Inductive {name} : Type :=")];
+        let mut lines = vec![format!("{keyword} {name} : Type :=")];
         for ctor in &data.ctors {
             let mut fields = String::new();
             for field in &ctor.fields {
@@ -656,10 +675,15 @@ impl RocqEmitter<'_> {
             .ctors
             .iter()
             .any(|ctor| ctor.fields.iter().any(|field| lists(&field.ty)));
-        if nested {
+        if nested&&keyword=="Inductive" {
             lines.insert(0, "#[warnings=\"-register-all\"]".to_owned());
         }
-        Ok(lines.join("\n") + ".")
+        Ok(lines.join("\n") + terminator)
+    }
+    fn mutual_data(&mut self,group:&[&Decl])->Result<String>{
+        for entry in group{let ty=Type::Data{name:entry.full_name().to_owned()};let lookup=|name:&str|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None};if crate::translation::callable_data::read_callable_data_facts(&ty,&lookup)?.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&ty,&lookup)?;}}
+        crate::translation::callable_data::read_formal_datatype_constructive_profiles(&Type::Data{name:group[0].full_name().to_owned()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let mut lines=Vec::new();for(index,entry)in group.iter().enumerate(){let Decl::Data(data)=entry else{return Err(unsupported("formal mutual datatype","the complete component needs actual data declarations",None));};lines.push(self.data_definition(entry,data,if index==0{"Inductive"}else{"with"},if index+1==group.len(){"."}else{""})?);}Ok(lines.join("\n"))
     }
 
     /// Recursion that decreases a natural by one each call, in a function whose

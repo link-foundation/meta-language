@@ -235,8 +235,13 @@ impl<'p> EmitState<'p> {
         for alias in aliases {
             let (Some(Decl::Data(source)),Some(Decl::Data(target)))=(self.program.declaration(&alias.source_full_name),program.declaration(&alias.target_full_name))else{return Err(unsupported("formal datatype target names","relocation requires its exact original nominal owner and target prefix",None));};
             if !seen.insert(alias.source_full_name.as_str())||source.full_name!=target.full_name||source.name!=target.name||source.ctors!=target.ctors||source.module_path!=alias.source_module_path||target.module_path!=alias.target_module_path||target.module_path.len()>=source.module_path.len()||!source.module_path.starts_with(&target.module_path){return Err(unsupported("formal datatype target names","relocation requires its exact original nominal owner and target prefix",None));}
+            if alias.source_name!=source.name||alias.constructors!=source.ctors.iter().map(|ctor|ctor.name.clone()).collect::<Vec<_>>(){return Err(unsupported("formal datatype target names","target placement must preserve every original datatype fact and constructor alias",None));}
             for depth in 1..=target.module_path.len(){if !self.module_names.contains_key(&target.module_path[..depth].join(".")){return Err(unsupported("formal datatype target names","a lifted module prefix must belong to the original source",None));}}
         }
+        let placements=aliases.iter().map(|alias|(alias.source_full_name.as_str(),&alias.target_module_path)).collect::<HashMap<_,_>>();
+        let mut expected=self.program.clone();
+        for entry in &mut expected.declarations{if let Decl::Data(data)=entry{if let Some(path)=placements.get(data.full_name.as_str()){data.module_path=(*path).clone();}}}
+        if expected!=*program{return Err(unsupported("formal datatype target names","target placement must preserve the complete original program",None));}
         self.program=program;
         for alias in aliases {
             let Some(Decl::Data(entry))=program.declaration(&alias.target_full_name)else{unreachable!("preflight retained the nominal owner")};
@@ -793,13 +798,27 @@ pub fn order_declarations(
     program: &Program,
     require_contiguous_modules: bool,
 ) -> Result<Vec<&Decl>> {
+    order_declarations_with_dependencies(program,require_contiguous_modules,&HashMap::new())
+}
+
+pub(crate) fn order_declarations_with_dependencies<'a>(
+    program:&'a Program,
+    require_contiguous_modules:bool,
+    extra_dependencies:&HashMap<String,HashSet<String>>,
+)->Result<Vec<&'a Decl>> {
     let entries = &program.declarations;
     let position: HashMap<&str, usize> = entries
         .iter()
         .enumerate()
         .map(|(index, entry)| (entry.full_name(), index))
         .collect();
-    let pending: Vec<HashSet<String>> = entries.iter().map(dependencies).collect();
+    let mut pending: Vec<HashSet<String>> = entries.iter().map(dependencies).collect();
+    if extra_dependencies.len()>8192{return Err(unsupported("target declaration dependencies","extra ordering dependencies require a bounded actual declaration directory",None));}
+    let mut extra_edges=0usize;
+    for(name,edges)in extra_dependencies{
+        let Some(index)=position.get(name.as_str())else{return Err(unsupported("target declaration dependencies","extra ordering dependencies require actual declared owners",None));};
+        for edge in edges{extra_edges+=1;if !position.contains_key(edge.as_str())||extra_edges>131072{return Err(unsupported("target declaration dependencies","extra ordering dependencies require bounded actual declaration edges",None));}pending[*index].insert(edge.clone());}
+    }
     // A group of mutually recursive functions is ready, and placed, as one.
     let mut groups = mutual_groups(program);
     groups.extend(datatype_groups(program)?);

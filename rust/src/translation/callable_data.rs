@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use std::collections::HashMap;
 pub(crate) struct CallableDataFacts{pub callable:bool,pub constructive:bool,pub acyclic:bool}
 pub(crate) struct CallableDataRecursiveProfile{pub recursive:bool,pub witness:usize}
-pub(crate) fn read_callable_data_recursive_profile<'a,F>(ty:&Type,lookup:&F)->Result<CallableDataRecursiveProfile> where F:Fn(&str)->Option<&'a DataDecl>{
+fn datatype_constructive_plan<'a,F>(ty:&Type,lookup:&F,mutual:bool)->Result<(Vec<String>,Vec<String>)> where F:Fn(&str)->Option<&'a DataDecl>{
     #[derive(Default)]
     struct Projection{kinds:Vec<String>,ends:Vec<f64>,edges:Vec<f64>,references:Vec<f64>,roots:Vec<f64>,names:Vec<String>,positions:HashMap<String,usize>,visits:usize}
     impl Projection{
@@ -22,9 +22,19 @@ pub(crate) fn read_callable_data_recursive_profile<'a,F>(ty:&Type,lookup:&F)->Re
         let mut constructors=Vec::new();for ctor in &data.ctors{let fields=ctor.fields.iter().map(|field|projection.walk(&field.ty,0)).collect::<Result<Vec<_>>>()?;constructors.push(projection.node("constructor",fields,-1.0)?);}
         let node=projection.node("data",constructors,-1.0)?;projection.roots[at]=node as f64;at+=1;
     }
-    let plan=rules::read_callable_data_recursive_plan(&projection.kinds,&projection.ends,&projection.edges,&projection.references,&projection.roots,root as f64);
+    let plan=if mutual{rules::read_formal_datatype_constructive_plan(&projection.kinds,&projection.ends,&projection.edges,&projection.references,&projection.roots,root as f64)}else{rules::read_callable_data_recursive_plan(&projection.kinds,&projection.ends,&projection.edges,&projection.references,&projection.roots,root as f64)};
     if plan[0]=="error"{return Err(unsupported("callable data field",&plan[1],None));}
+    Ok((projection.names,plan))
+}
+pub(crate) fn read_callable_data_recursive_profile<'a,F>(ty:&Type,lookup:&F)->Result<CallableDataRecursiveProfile> where F:Fn(&str)->Option<&'a DataDecl>{
+    let (_,plan)=datatype_constructive_plan(ty,lookup,false)?;
     Ok(CallableDataRecursiveProfile{recursive:plan[2]=="true",witness:plan[4].parse().expect("shared actual data constructor witness")})
+}
+pub(crate) struct FormalDatatypeConstructiveProfile{pub witness:usize,pub rank:usize}
+pub(crate) fn read_formal_datatype_constructive_profiles<'a,F>(ty:&Type,lookup:&F)->Result<HashMap<String,FormalDatatypeConstructiveProfile>> where F:Fn(&str)->Option<&'a DataDecl>{
+ let (names,plan)=datatype_constructive_plan(ty,lookup,true)?;
+ if plan.first().is_none_or(|tag|tag!="witnesses")||plan.len()!=1+2*names.len(){return Err(unsupported("formal mutual datatype","the actual complete graph needs each finite constructor witness",None));}
+ names.into_iter().enumerate().map(|(index,name)|{let witness=plan[1+index*2].parse().map_err(|_|unsupported("formal mutual datatype","invalid shared constructor witness",None))?;let rank=plan[2+index*2].parse().map_err(|_|unsupported("formal mutual datatype","invalid shared constructor witness rank",None))?;Ok((name,FormalDatatypeConstructiveProfile{witness,rank}))}).collect()
 }
 fn node(kind:&str,children:Vec<CallableDataFacts>,acyclic:bool)->CallableDataFacts{
     CallableDataFacts {callable:rules::accept_callable_data_node(kind,&children.iter().map(|child|child.callable).collect::<Vec<_>>()),constructive:rules::accept_callable_data_constructive_node(kind,&children.iter().map(|child|child.constructive).collect::<Vec<_>>()),acyclic:acyclic&&children.iter().all(|child|child.acyclic)}

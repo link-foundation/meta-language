@@ -17,7 +17,7 @@ const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major
 function stdout(code){const lines=[];vm.runInNewContext(code,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}}, {timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const [index,row]of decisions.entries())test('actual record field state decision '+index+' '+row.operation,()=>assert.deepEqual(rules[row.operation](...row.arguments),row.expected));
 test('all independent field move inputs and exact prior refusal stay represented',()=>{
- assert.equal(decisions.length,29);assert.equal(originals.length,11);assert.equal(refusals.length,10);
+ assert.equal(decisions.length,37);assert.equal(originals.length,11);assert.equal(refusals.length,10);
  const prior=history.find(row=>row.previousExport==='rustNominalStandardSumOwnershipRefusals'&&row.previousIndex===6);
  assert.equal(prior.previousFixture,'rust-nominal-standard-sum-ownership.mjs');assert.equal(prior.control.originalCompilerOutcome,'accept');assert.equal(prior.control.source,originals[0].source);assert.equal(prior.control.sourceVersionRange,originals[0].sourceVersionRange);assert.equal(originals[0].stdout,'');
 });

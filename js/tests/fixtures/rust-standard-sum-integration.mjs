@@ -35,6 +35,10 @@ import {rustOwnedRecordUpdateOriginals,rustOwnedRecordUpdateRefusals} from './ru
 
 import {rustOwnedRecordPlaceOriginals,rustOwnedRecordPlaceRefusals} from './rust-owned-record-places.mjs';
 
+import {rustOwnedRecordStateOriginals,rustOwnedRecordStateRefusals} from './rust-owned-record-state.mjs';
+import {rustOwnedRecordEffectOriginals,rustOwnedRecordEffectRetainedOriginals,rustOwnedRecordEffectRefusals} from './rust-owned-record-effects.mjs';
+import {rustOwnedRecursiveContainerOriginals,rustOwnedRecursiveContainerRefusals} from './rust-owned-recursive-containers.mjs';
+
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
 export const rustStandardSumIntegrationTransports=['original','text','binary'];
@@ -258,6 +262,10 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...rustStandardSumCopyOwnedCallbackOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustStandardSumOwnedPropagationOriginals.map(row=>({singleCallOwners:[],...retainedOriginalCompilerDeclaration(row)})),
  ...rustStandardSumCloneOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordStateOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordEffectOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecordEffectRetainedOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedRecursiveContainerOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordPlaceOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustOwnedRecordUpdateOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustCopyClosureValueOriginals.map(row=>({singleCallOwners:[],...row})),
@@ -314,6 +322,9 @@ export const rustStandardSumIntegrationRefusals=[
  ...rustStandardSumCloneRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
  originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
  outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustOwnedRecordStateRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustOwnedRecordEffectRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
+ ...rustOwnedRecursiveContainerRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustOwnedRecordPlaceRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustOwnedRecordUpdateRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),
  ...rustCopyClosureValueRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...retainedOriginalCompilerDeclaration(row)})),

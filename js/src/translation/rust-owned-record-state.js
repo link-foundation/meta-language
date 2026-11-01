@@ -13,7 +13,9 @@ import {readRustCopyClosureValueBorrows} from './rust-copy-closure-lifetimes.js'
 import {readRustRecordSourceType} from './rust-records.js';
 const fail=(reason,span)=>{throw unsupported('Rust owned record state',reason,span);};
 const copy=value=>structuredClone(value);
-function state(parser){return parser.ownedRecordState??= {slots:new Map(),frames:[],nextFrame:0,nextCallable:1,currentCallable:0,request:null};}
+function state(parser){return parser.ownedRecordState??= {slots:new Map(),frames:[],declarations:new Map(),nextFrame:0,nextCallable:1,currentCallable:0,request:null};}
+export function installRustOwnedRecordEffectTransport(parser,transport){state(parser).effectTransport=transport;}
+export function readRustOwnedRecordStateDeclarations(parser){return state(parser).declarations??=new Map();}
 function clonedSlots(slots){return new Map([...slots].map(([key,value])=>[key,{...value}]));}
 function activeSlots(parser){const current=state(parser);return [...current.slots.values()].filter(slot=>slot.callable===current.currentCallable).sort((left,right)=>left.sequence-right.sequence);}
 function sourceSlot(parser,origin,name){const current=state(parser);if(origin?.sourceLexicalBindingIdentity)return current.slots.get(origin.sourceLexicalBindingIdentity);const site=origin?.sourceRecordStateCollectingSite;return parser.origins.collecting&&site?[...current.slots.values()].find(slot=>slot.site?.start===site.start&&slot.site?.end===site.end):null;}
@@ -45,17 +47,17 @@ export function registerRustOwnedRecordMutableBinding(parser,name,span){
  if(table.collecting){
   const frame=current.frames.at(-1);if(!origin||!record(parser,origin)||origin.wrappers.length)throw unsupported('mutable binding','mutation is outside the portable core',span);if(!frame)fail('the private mutable header needs its actual complete record layout',span);
   table.standardSumSourceNeedsFinalAdmission=true;const lexical='private collecting record slot '+String(current.nextFrame++),binding=parser.freshProductBinding();
-  origin.sourceRecordStateCollectingSite={start:span.start,end:span.end};current.slots.set(lexical,{name,lexical,root:'',site:origin.sourceRecordStateCollectingSite,origin:copy(origin),currentName:binding,frame:frame.id,callable:current.currentCallable,sequence:current.nextFrame++,provisional:true});return binding;
+  origin.sourceRecordStateCollectingSite={start:span.start,end:span.end};const slot={name,lexical,root:'',site:origin.sourceRecordStateCollectingSite,origin:copy(origin),currentName:binding,frame:frame.id,callable:current.currentCallable,sequence:current.nextFrame++,provisional:true};current.slots.set(lexical,slot);readRustOwnedRecordStateDeclarations(parser).set(binding,slot);return binding;
  }
  if(profile!=='owned')throw unsupported('mutable binding','mutation is outside the portable core',span);
  const error=readRustOwnedRecordMutableBindingError(parser.ordinaryCompletionContext(),true,profile,Boolean(origin?.sourceBindingIdentity),Boolean(origin?.sourceLexicalBindingIdentity),origin?.wrappers.length??-1);if(error)fail(error,span);
  const frame=current.frames.at(-1);if(!frame)fail('a mutable record needs its actual source block state frame',span);const version=readRustOwnedRecordUpdateVersionError(parser.sourceVersionMinor);if(version)fail(version,span);requireStorage(parser,origin,span);if(!readRustStandardSumSourceIdentity(parser,origin))fail('mutable storage needs its actual complete source identity',span);
- const binding=parser.freshProductBinding();current.slots.set(origin.sourceLexicalBindingIdentity,{name,lexical:origin.sourceLexicalBindingIdentity,root:origin.sourceBindingIdentity,origin:copy(origin),currentName:binding,frame:frame.id,callable:current.currentCallable,sequence:current.nextFrame++});return binding;
+ const binding=parser.freshProductBinding(),slot={name,lexical:origin.sourceLexicalBindingIdentity,root:origin.sourceBindingIdentity,origin:copy(origin),currentName:binding,frame:frame.id,callable:current.currentCallable,sequence:current.nextFrame++};current.slots.set(origin.sourceLexicalBindingIdentity,slot);readRustOwnedRecordStateDeclarations(parser).set(binding,slot);return binding;
 }
 export function readRustOwnedRecordMutableName(parser,node,path){
- if(node.k!=='name'||node.path.length!==1)return node;const origin=parser.origins.scope.get(node.path[0]),current=state(parser),slot=sourceSlot(parser,origin,node.path[0]);if(!slot)return node;
+ if(node.k!=='name'||node.path.length!==1)return node;const origin=parser.origins.scope.get(node.path[0]),current=state(parser),slot=sourceSlot(parser,origin,node.path[0]);if(!slot)return origin?parser.origins.mark(node,origin):node;
  if(!parser.origins.collecting&&slot.callable!==current.currentCallable)fail('a captured mutable record needs its separate callable environment state interpretation',node.span);
- return parser.origins.mark({...node,path:[slot.currentName]},slot.origin);
+ return current.effectTransport?current.effectTransport.read(slot,node):parser.origins.mark({...node,path:[slot.currentName]},slot.origin);
 }
 function packet(parser,node,slots,span){
  const plan=planRustOwnedRecordStatePacket(slots.length);if(plan.length!==slots.length+1)fail('the complete record state result exceeds its carrier budget',span);
@@ -105,7 +107,7 @@ function overlaps(parser,slot,target){
   if(testRustOwnedRecordStateLoanOverlap(slot.root,target,loans,lexical))return true;
  }return false;
 }
-function assignment(parser,path){
+export function readRustOwnedRecordStateAssignment(parser,path){
  const c=parser.cursor,tokens=c.tokens.slice(c.index,c.index+1025),forms=tokens.map(token=>['(',')','.','=','}'].includes(token.value)?token.value:token.kind==='identifier'?'name':token.kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(token.raw)?'number':'other'),count=readRustOwnedRecordStateAssignmentTokenCount(forms);if(count<0)return null;
  const used=tokens.slice(0,count),rootToken=used.find(token=>token.value!=='('),source=parser.origins.scope.get(rootToken?.value);if(!source||!record(parser,source))return null;
  const fields=[];for(let at=0;at<used.length;at+=1)if(used[at].value==='.')fields.push(used[++at].kind==='number'?used[at].raw:used[at].value);
@@ -115,9 +117,11 @@ function assignment(parser,path){
  let actual=parser.origins.origin(value,path);if(!parser.origins.collecting&&readRustStandardSumOwnershipFacts(parser.origins,field).profile==='owned'){actual=captureRustOwnedStandardSumMethodValue(parser,value,path);parser.origins.consumeOwnedBinding(actual,value.span);}
  const identity=parser.origins.collecting?null:readRustStandardSumSourceIdentity(parser,actual),expected=parser.origins.collecting?null:readRustStandardSumSourceIdentity(parser,field),same=Boolean(identity&&identity===expected),rootState=slot?parser.origins.sourceBindingStates.get(slot.root)??'':'',indices=layouts.map(item=>item.index),target=slot?readRustOwnedRecordStateFieldIdentity(slot.root,indices):'';
  let parentState=rootState;for(let index=1;index<indices.length;index+=1){const parent=readRustOwnedRecordStateFieldIdentity(slot?.root??'',indices.slice(0,index));if(rustOwnedRecordFieldState(parser.origins.sourceBindingStates,parent)!=='available')parentState='moved';}
- const allowed=Boolean(slot&&frame&&(slot.frame===frame.id||frame.request?.slots.some(outer=>outer.lexical===slot.lexical))),error=parser.origins.collecting?'':readRustOwnedRecordStateWriteError(Boolean(slot),slot?.callable===current.currentCallable,allowed,parentState,target?rustOwnedRecordFieldState(parser.origins.sourceBindingStates,target):'',same,slot?overlaps(parser,slot,target):false);if(error)fail(error,span);if(!slot)fail('field assignment needs its actual source mutable declaration',span);
+ const allowed=Boolean(slot&&frame&&(slot.frame===frame.id||frame.request?.slots.some(outer=>outer.lexical===slot.lexical)||current.effectTransport)),error=parser.origins.collecting?'':readRustOwnedRecordStateWriteError(Boolean(slot),slot?.callable===current.currentCallable,allowed,parentState,target?rustOwnedRecordFieldState(parser.origins.sourceBindingStates,target):'',same,slot?overlaps(parser,slot,target):false);if(error)fail(error,span);if(!slot)fail('field assignment needs its actual source mutable declaration',span);
+ if(current.effectTransport){if(!parser.origins.collecting)parser.origins.sourceBindingStates.set(target,'available');const result=current.effectTransport.write({slot,layouts,value,field,path,span:{start:span.start,end:value.span?.end??span.end}});parser.origins.finishOwnedExpression(result,path,temporaryFrame,false);return {bindings:[],value:result};}
  const rhs=parser.freshProductBinding(),next=parser.freshProductBinding(),reference={k:'name',path:[rhs]},object={k:'name',path:[slot.currentName]},snapshot=reconstruct(parser,path,layouts,0,object,reference,span),bindings=[{name:rhs,type:readRustRecordSourceType(parser,field.type,field.path),value,span:value.span},{name:next,type:readRustRecordSourceType(parser,slot.origin.type,slot.origin.path),value:snapshot,span}];
  if(!parser.origins.collecting)parser.origins.sourceBindingStates.set(target,'available');current.slots.set(slot.lexical,{...slot,currentName:next});
  const unit={k:'unit',span:{start:span.start,end:value.span?.end??span.end}};parser.origins.finishOwnedExpression(unit,path,temporaryFrame,false);return {bindings,value:unit};
 }
-export function readRustOwnedRecordStateStatement(parser,path){return assignment(parser,path)??readStateControl(parser,path);}
+export function readRustOwnedRecordStateStatement(parser,path){if(state(parser).effectTransport)return null;return readRustOwnedRecordStateAssignment(parser,path)??readStateControl(parser,path);}
+export function reconstructRustOwnedRecordState(parser,path,layouts,object,replacement,span){return reconstruct(parser,path,layouts,0,object,replacement,span);}

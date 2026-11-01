@@ -283,6 +283,7 @@ impl RustParser {
             self.origins.current_type.text_source_model = origin.text_source_model;
             self.origins.current_type.array_source_model = origin.array_source_model;
             self.origins.current_type.source_lifetimes = origin.source_lifetimes;
+            if self.origins.owned_container_source_enabled{self.origins.current_type.copy_evidence=None;}
             return Ok(result);
         }
         if self.cursor.is("<") {

@@ -5,6 +5,7 @@ import {assignRustCopyClosureLexicalBinding,readRustCopyClosureValueBorrows,carr
 import {readRustNominalOwnershipFacts,projectRustNominalPatternField,prepareRustNominalPatternTransfers,acceptRustNominalVectorElement} from './rust-nominal-ownership.js';
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
+import {finishRustOwnedBoxDereference,reserveRustOwnedContainerCopies} from './rust-owned-containers.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
 import {readRustStandardSumGuardBindingDisposition,readRustStandardSumGuardAlternativeBindingError,readRustStandardSumGuardAliasTransferError} from './rust-standard-sum-guard-rules.js';
 import {countRustStandardSumGuardAliases,sameRustStandardSumGuardLineage} from './rust-standard-sum-guards.js';
@@ -61,6 +62,7 @@ export class RustSourceOrigins {
     this.nominalCopyDerivations=new Map();this.nominalCopyOwners=new Set();
     this.nominalOwnershipDeclarations=new Map();this.nominalOwnershipScopeComplete=false;
     this.ownedContainerSourceEnabled=false;
+    this.ownedContainerMaterializedNodes=0;this.ownedContainerMaterializedUnits=0;
     this.scope = new Map();
     this.sourceTemporaryBindings=new Set();this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
     this.expressions = new WeakMap();
@@ -375,11 +377,13 @@ export class RustSourceOrigins {
     if(testRustSourceReferenceLifetimeLayer(layer)&&origin.sourceLexicalBindingIdentity!=null)origin.sourceValueBorrowBindings=mergeRustOwnedLoanBindings(readRustCopyClosureValueBorrows(origin),[origin.sourceLexicalBindingIdentity]);
     if(testRustSourceReferenceLifetimeLayer(layer)&&isRustOwnedBindingValue(this,origin)){origin=captureRustOwnedBorrow(this,origin);if(!((origin.sourceStandardSumBorrowedField||origin.sourceNominalBorrowedField)&&origin.sourceBorrowedPlace)&&this.sourceTemporaryBindings.has(origin.sourceBindingIdentity))origin.sourceExtendingTemporaryBindings=mergeRustOwnedLoanBindings(origin.sourceExtendingTemporaryBindings??[],[origin.sourceBindingIdentity]);}
     if(testRustSourceReferenceLifetimeLayer(layer)){if(origin.sourcePlaceBindingIdentity!=null)origin.sourceBindingIdentity=origin.sourcePlaceBindingIdentity;origin.sourceLoanBindingIdentities=mergeRustOwnedLoanBindings(origin.sourceLoanBindingIdentities??[],origin.sourcePlaceLoanBindingIdentities??[]);}
+    if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceValueBorrowBindings=mergeRustOwnedLoanBindings(readRustCopyClosureValueBorrows(origin),mergeRustOwnedLoanBindings(projectRustOwnedLoanBindings(origin.sourceBindingIdentity??'',origin.sourceLoanBindingIdentities??[]),projectRustOwnedLoanBindings(origin.sourcePlaceBindingIdentity??'',origin.sourcePlaceLoanBindingIdentities??[])));
     origin.wrappers.unshift(layer);if(testRustSourceReferenceLifetimeLayer(layer))origin.sourceLifetimes=[null,...(origin.sourceLifetimes??[])];
     return this.mark(node, origin);
   }
 
   dereference(node, path, span) {
+    const boxed=finishRustOwnedBoxDereference(this,node,path,span);if(boxed)return boxed;
     const origin = this.origin(node, path);
     if (!this.collecting && origin.arraySourceModel && origin.wrappers.length === 1) throw unsupported('array dereference', 'moving an owned vector or an unsized slice needs a separate source ownership proof', span);
     if (!this.collecting && (!origin.proven || !acceptRustImmutableIndirectionLayer(origin.wrappers[0] ?? ''))) {
@@ -392,13 +396,14 @@ export class RustSourceOrigins {
 
   bind(name, node, path, declared = null) {
     const actual = this.origin(node, path);
+    if(actual.sourceBoxLayers?.length)reserveRustOwnedContainerCopies(this,[actual]);
     this.pointerIntegerArgument(actual,value(),node.span);
     if(this.sharedArrayHandleSourceModel&&!this.collecting&&actual.type?.kind==='array'&&!acceptRustSharedArrayHandleTransfer(actual.arraySourceModel,actual.arraySourceModel,actual.wrappers.length,actual.wrappers.length))throw unsupported('Rust shared array handle source','a binding requires an actual owned shared handle, not its vector payload',node.span);
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
     if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue&&!this.availableOwnedBinding(actual)) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
     if(isRustOwnedBindingValue(this,actual))this.consumeOwnedBinding(actual,node.span);
-    const binding={...clone(declared??actual),...(actual.wrappers.length?{sourceBindingIdentity:actual.sourceBindingIdentity,sourceLoanBindingIdentities:actual.sourceLoanBindingIdentities??[]}:{}),...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue:false,freshVectorResultContract:false,sourceExtendingTemporaryBindings:[],sourcePlaceBindingIdentity:null,sourcePlaceLoanBindingIdentities:[]};
+    const binding={...clone(declared??actual),sourceBoxLayers:structuredClone(actual.sourceBoxLayers??[]),...(actual.wrappers.length?{sourceBindingIdentity:actual.sourceBindingIdentity,sourceLoanBindingIdentities:actual.sourceLoanBindingIdentities??[]}:{}),...(this.localValueStateModel?{localValueCopy:false}:{}),freshArrayValue:false,freshVectorResultContract:false,sourceExtendingTemporaryBindings:[],sourcePlaceBindingIdentity:null,sourcePlaceLoanBindingIdentities:[]};
     delete binding.sourceRecordStateCollectingSite;
     this.scope.set(name,assignRustCopyClosureLexicalBinding(this,carryRustCopyClosureValueBorrows(registerRustOwnedBinding(this,binding),actual)));
   }

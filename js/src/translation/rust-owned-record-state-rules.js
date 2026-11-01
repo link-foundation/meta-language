@@ -21,7 +21,7 @@ export function readRustOwnedRecordStateWriteError(mutable,callable,scope,root,f
  if(!mutable)return 'record field assignment needs its actual mutable root binding';
  if(!callable)return 'a captured mutable record needs its separate callable environment state interpretation';
  if(!scope)return 'this expression needs an explicit record state result continuation before an outer place can be changed';
- if(root!=='available'||field!=='available'&&field!=='moved')return 'field reinitialization needs its still initialized record root and exact available or moved field';
+ if(root!=='available'||field!=='available'&&field!=='moved'&&field!=='possibly moved')return 'field reinitialization needs its still initialized record root and exact available or moved field';
  if(!type)return 'field assignment must preserve its actual complete source type and owner';
  return loan?'field assignment overlaps an actual surviving whole or field loan':'';
 }

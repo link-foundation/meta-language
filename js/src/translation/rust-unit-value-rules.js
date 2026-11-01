@@ -107,6 +107,10 @@ export function readRustOrdinaryCompletionAlternativeKind(first,second){
 }
 /** @param {string} kind @returns {boolean} */
 export function acceptRustOrdinaryCompletedAlternative(kind){return kind==='returned'||kind==='aborted';}
+/** Only actual continuing alternatives contribute state to a following source
+ * statement. Completed branches retain their separate result/borrow checks.
+ * @param {string} kind @returns {boolean} */
+export function testRustOrdinaryCompletionFallsThrough(kind){return !acceptRustOrdinaryCompletedAlternative(kind);}
 /** @param {string} first @param {string} second @returns {string} */
 export function readRustOrdinaryCompletionSequenceKind(first,second){
  if(first==='value')return second;

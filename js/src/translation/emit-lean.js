@@ -48,10 +48,12 @@ import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
-import {readCallableDataFacts,readCallableDataRecursiveProfile} from './callable-data.js';
-import {readCallableDataDerivation,renderCallableDataLeanDefault} from './callable-data-derivation-rules.js';
+import { EmitState, mutualGroups, datatypeGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
+import {readCallableDataFacts,readCallableDataRecursiveProfile,readFormalDatatypeConstructiveProfiles} from './callable-data.js';
+import {readCallableDataDerivation,renderCallableDataLeanDefault,readFormalDatatypeLeanBlockDerivation} from './callable-data-derivation-rules.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
+import {planFormalDatatypeModules,formalDatatypeModuleDependencies} from './formal-datatype-modules.js';
+import {captureFormalDatatypeAliases,FormalDatatypeAliases} from './formal-datatype-aliases.js';
 import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
@@ -216,11 +218,14 @@ export function emitLean(source) {
     generated: (name) => [`${name}.eq_1`],
     rootReserved: LEAN_ROOT_NAMES,
   });
-  return new LeanEmitter(program, state).file();
+  const plan=planFormalDatatypeModules(program),aliases=captureFormalDatatypeAliases(plan.aliases,state);
+  state.relocateDatatypes(plan.program,plan.aliases);
+  return new LeanEmitter(plan.program,state,new FormalDatatypeAliases(aliases,'Lean',state),formalDatatypeModuleDependencies(plan)).file();
 }
 
 class LeanEmitter {
-  constructor(program, state) {
+  constructor(program, state,aliases,aliasDependencies) {
+    this.aliases=aliases;this.aliasDependencies=aliasDependencies;
     this.program = program;
     this.target='Lean';
     this.utf16Strings=requireFormalUnitStrings(program);
@@ -236,30 +241,36 @@ class LeanEmitter {
   file() {
     prepareFormalUnitStrings(this);
     const blocks = [];
+    blocks.push(...this.aliases.open([]));
     let open = [];
     const moveTo = (path) => {
       let common = 0;
       while (common < open.length && common < path.length && open[common] === path[common]) common += 1;
       while (open.length > common) {
+        blocks.push(...this.aliases.close(open));
         blocks.push(`end ${this.state.moduleName(open)}`);
         open = open.slice(0, -1);
       }
       while (open.length < path.length) {
         open = [...open, path[open.length]];
         blocks.push(`namespace ${this.state.moduleName(open)}`);
+        blocks.push(...this.aliases.open(open));
       }
     };
     const groups = mutualGroups(this.program);
-    for (const entry of orderDeclarations(this.program)) {
+    const dataGroups=datatypeGroups(this.program);
+    for (const entry of orderDeclarations(this.program,{requireContiguousModules:this.aliases.rows.length>0,extraDependencies:this.aliasDependencies})) {
       moveTo(entry.modulePath);
       const group = groups.get(entry.fullName);
       if (group) {
         if (group[0] === entry) blocks.push(this.mutual(group));
-      } else if (entry.k === 'data') blocks.push(this.data(entry));
+      } else if (entry.k === 'data') {const dataGroup=dataGroups.get(entry.fullName);if(!dataGroup)blocks.push(this.data(entry));else if(dataGroup[0]===entry)blocks.push(this.mutualData(dataGroup));}
       else if (entry.k === 'fn') blocks.push(this.fn(entry));
       else blocks.push(this.theorem(entry));
+      this.aliases.complete(dataGroups.get(entry.fullName)??[entry]);
     }
     moveTo([]);
+    blocks.push(...this.aliases.close([]));this.aliases.finish();
     const main = this.program.main ? this.main(this.program.main) : null;
     const text = [
       `-- Translated from ${this.program.sourceLanguage} by meta-language: portable core, Lean target.`,
@@ -335,8 +346,8 @@ class LeanEmitter {
     }
   }
 
-  data(entry) {
-    const facts=readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations),profile=facts.callable?readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations):null;
+  data(entry,mutual=false) {
+    const facts=readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations),profile=facts.callable&&!mutual?readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations):null;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const ctors = entry.ctors.map((ctor) => {
@@ -345,9 +356,17 @@ class LeanEmitter {
     });
     // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
     // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-    const deriving = readCallableDataDerivation('Lean',facts.callable,false,Boolean(entry.output),this.undecidable(entry.fullName));
+    const deriving = mutual?readFormalDatatypeLeanBlockDerivation(facts.callable,Boolean(entry.output),this.undecidable(entry.fullName)):readCallableDataDerivation('Lean',facts.callable,false,Boolean(entry.output),this.undecidable(entry.fullName));
     if(profile?.recursive){const witness=entry.ctors[profile.witness];return [`inductive ${name} where`,...ctors,renderCallableDataLeanDefault(name,this.state.ctorRef(entry.fullName,witness.name),witness.fields.length)].join('\n');}
-    return [`inductive ${name} where`, ...ctors, `  deriving ${deriving}`].join('\n');
+    return [`inductive ${name} where`, ...ctors, ...(deriving?[`  deriving ${deriving}`]:[])].join('\n');
+  }
+  mutualData(group){
+    // The pre-existing callable mutual boundary remains until all target
+    // callable containers share the new profile, including Rust emission.
+    for(const entry of group)if(readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations).callable)readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations);
+    const profiles=readFormalDatatypeConstructiveProfiles({kind:'data',name:group[0].fullName},this.program.declarations);
+    const defaults=[...group].sort((left,right)=>profiles.get(left.fullName).rank-profiles.get(right.fullName).rank).map(entry=>{const witness=entry.ctors[profiles.get(entry.fullName).witness];return renderCallableDataLeanDefault(this.state.localName(entry.fullName),this.state.ctorRef(entry.fullName,witness.name),witness.fields.length);});
+    return ['mutual',...group.map(entry=>this.data(entry,true)),'end',...defaults].join('\n');
   }
 
   undecidable(name, seen = new Set()) {

@@ -424,3 +424,33 @@ appending aliases by reopening a closed module is insufficient. The recursive
 type agent owns this emitter integration together with actual positivity,
 finite-constructor and default-instance witnesses. Placement alone is not
 semantic or compiler evidence.
+
+The placement planner now closes protected module boundaries over their datatype
+declarations. This prevents an `x.Dependency` from forcing `Module x` to close
+before a lifted recursive block needs public alias `x.A`. Separate bounded
+target-order dependencies defer unchanged declarations in those scopes until
+their alias blocks exist; source type dependencies and default ordering remain
+unchanged. Naming relocation preflights complete source preservation before
+consuming any reserved name. The original 17 placement decisions are retained,
+with eight additional module-closure decisions and source-first function,
+dependency and mutation-refusal controls.
+
+Ordered record-expression/main consumers are connected to both parser expression
+entries, short-circuit ownership joins and finalization after completion lowering
+and before private guards. Their actual child-order/conditional packet visitor
+uses pure SSA tuples, preserving main assertion propositions. The exact former
+state refusal at index seven is now an active retained positive. All ten old
+refusal inputs and coordinates remain in the previous/history inventories;
+the other nine current refusals carry explicit predecessor coordinates. The
+automatic native policy group and shared original/refusal matrices include the
+new 16 decisions and 12+1 originals, without executing them. Loop/return/question
+completion and state writes under lazy/quantified assertion propositions are
+the next active source work, not claims of supported behavior.
+
+Alias syntax was reviewed against primary references: Lean
+[pattern attributes](https://lean-lang.org/doc/reference/latest/Terms/Pattern-Matching/)
+require constructor aliases intended for patterns to carry `match_pattern`;
+the Rocq [9.0 abbreviation syntax](https://rocq-prover.org/doc/V9.0.0/refman/user-extensions/syntax-extensions.html)
+uses constructor notation aliases. The 9.2 manual names the newer command
+`Abbreviation`. These are source reviews, not compiler observations or a claim
+that every target version has been covered.

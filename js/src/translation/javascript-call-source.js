@@ -5,6 +5,9 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * The compiler never derives binding identity from equal source spellings.
  * @typedef {{$:'sourceConstant',value:JavaScriptSemanticValue} |
  * {$:'sourceReceiver'} | {$:'sourceArgument',index:number} |
+ * {$:'sourceDerivedReceiver'} | {$:'sourceErrorIntrinsic'} |
+ * {$:'sourceConstructErrorClass',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
+ * {$:'sourceConstructErrorValue',constructor:JavaScriptCallSource,newTarget:JavaScriptCallSource,prototype:JavaScriptCallSource,message:JavaScriptCallSource,present:JavaScriptCallSource,realm:bigint,errorClass:string,bindReceiver:boolean} |
  * {$:'sourceThrow',value:JavaScriptCallSource} |
  * {$:'sourceTry',identity:number,body:JavaScriptCallSource,handler:JavaScriptCallSource} |
  * {$:'sourceBinding',identity:number} |
@@ -55,6 +58,18 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
  const state={...builder,visits:builder.visits+1};
  switch(source.$){
   case 'sourceReceiver':return {$:'sourceResult',builder:state,register:0};
+  case 'sourceDerivedReceiver':case 'sourceErrorIntrinsic':{const result=allocateJavaScriptCallSourceRegister(state);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,source.$==='sourceDerivedReceiver'?{$:'readDerivedReceiver',destination:result.register}:{$:'invokeErrorIntrinsic',destination:result.register})};}
+  case 'sourceConstructErrorClass':{
+   if(source.arguments.length>4096)return refuseJavaScriptCallSource(state,'derived Error arguments exceed their explicit operand budget');
+   const callee=lowerJavaScriptCallSourceExpression(source.callee,bindings,state,depth+1);let current=callee.builder,arguments_=[];
+   for(const argument of source.arguments){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=value.builder;arguments_.push(value.register);}
+   const result=allocateJavaScriptCallSourceRegister(current);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'constructErrorClass',destination:result.register,callee:callee.register,arguments:arguments_})};
+  }
+  case 'sourceConstructErrorValue':{
+   if(source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'Error construction needs its actual unsigned64 intrinsic realm');
+   const constructor=lowerJavaScriptCallSourceExpression(source.constructor,bindings,state,depth+1),newTarget=lowerJavaScriptCallSourceExpression(source.newTarget,bindings,constructor.builder,depth+1),prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,newTarget.builder,depth+1),message=lowerJavaScriptCallSourceExpression(source.message,bindings,prototype.builder,depth+1),present=lowerJavaScriptCallSourceExpression(source.present,bindings,message.builder,depth+1),result=allocateJavaScriptCallSourceRegister(present.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'constructErrorValue',destination:result.register,constructor:constructor.register,newTarget:newTarget.register,prototype:prototype.register,message:message.register,present:present.register,realm:source.realm,errorClass:source.errorClass,bindReceiver:source.bindReceiver})};
+  }
   case 'sourceArgument':{
    if(!testJavaScriptCallCodeCoordinate(source.index,1048576))return refuseJavaScriptCallSource(state,'source argument reads require an actual bounded nonnegative coordinate');
    const result=allocateJavaScriptCallSourceRegister(state);

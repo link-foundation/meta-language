@@ -578,8 +578,48 @@ defaults from the unresolved list while retaining trait/lifetime/const bounds.
 All source assertions remain bounded to Rust >=1.90.0 <1.100.0. No controls,
 generation, compilation or validation have run in this batch.
 
-Generic nominal datatypes, other parameter-dependent library/wrapper/callable
-templates, trait bounds, lifetime/const arguments, local/associated
+Generic nominal datatypes, parameter-dependent templates outside the explicitly
+drafted scalar/tuple/Vec/Option/Result/safe-function-pointer profiles, trait
+bounds, lifetime/const arguments, local/associated
 aliases, qualified projections, general inference and full namespace/privacy
 semantics remain obligations. This source batch establishes no execution,
 JavaScript/Rust parity, semantic equivalence or overall requirement completion.
+
+The subsequent recursive-container source batch adds authentic canonical Box
+allocation, owned binding tracking, explicit dereference, Clone dispatch and
+record-parent projection in paired JavaScript/native adapters. Concrete Box
+function result production requires the actual recorded function, complete
+source-owner equality and retained type equality. Stored runtime allocation
+layers are cleared from TYPE metadata. Their copies have a cumulative semantic
+projection budget; reference wrapping also carries actual root/place loan IDs
+through per-VALUE borrow summaries. Abstract Box types require a closed actual
+payload graph after declaration discovery. Stored references and captures keep
+their explicit separate lifetime/destructor boundary.
+
+Standard Option/Result fields can select a separate actual all-Box-chain payload
+profile. The prior direct-payload policy controls remain exact. Header refresh
+peels and reconstructs canonical Box source owners around refreshed child sum
+identities, and source-signature validation checks matching complete owners and
+wrapper counts. This does not infer missing scalar widths or nominal owners.
+
+Formal Lean/Rocq source emission now groups actual same-module noncallable
+datatype SCCs, checks shared strict positivity and finite constructor witnesses,
+and gives Lean explicit defaults in witness rank order. Cross-module emission
+uses the original-name reservation state followed by private target relocation.
+It emits complete original-scope type/constructor aliases and alias-only child
+scopes before closing their parent; missing ready blocks and scope reopening
+refuse. Lean constructors use `@[match_pattern]` aliases, and the selected Rocq
+syntax uses constructor `Notation` aliases. Original source graphs, nominal
+identities, prior ordinary cross-module ordering refusal and old mutually
+callable emission refusals remain intact. The target projection is never
+serialized as source evidence. Alias output and scope traversal are bounded by
+shared policies in `formal-datatype-alias-rules.js`.
+
+New independent literal source controls are in
+`rust-owned-recursive-containers.mjs`, `formal-mutual-datatypes.mjs` and
+`formal-datatype-aliases.mjs`, with paired authored native backend controls.
+The recursive Shape/Self and actual Expr/Node Rust originals remain explicitly
+pending: runtime recursive nominal ownership and owned Vec element production
+are not activated by the TYPE-only recursive graph witness. No generator,
+test, validator, compiler, target kernel or represented program ran in this
+source batch; none of these authored controls establishes an observed result.

@@ -28,6 +28,19 @@ export function readCallableDataObservationError(operation,callable){return call
  * @param {number[]} references @param {number[]} roots @param {number} root
  * @returns {string[]} */
 export function readCallableDataRecursivePlan(kinds,ends,edges,references,roots,root){
+ return readDatatypeConstructivePlan(kinds,ends,edges,references,roots,root,false);
+}
+/** Independent mutual-inductive profile; old callable admission is unchanged.
+ * @param {string[]} kinds @param {number[]} ends @param {number[]} edges
+ * @param {number[]} references @param {number[]} roots @param {number} root
+ * @returns {string[]} */
+export function readFormalDatatypeConstructivePlan(kinds,ends,edges,references,roots,root){
+ return readDatatypeConstructivePlan(kinds,ends,edges,references,roots,root,true);
+}
+/** @param {string[]} kinds @param {number[]} ends @param {number[]} edges
+ * @param {number[]} references @param {number[]} roots @param {number} root
+ * @param {boolean} mutual @returns {string[]} */
+function readDatatypeConstructivePlan(kinds,ends,edges,references,roots,root,mutual){
  const count=kinds.length;
  if(count===0||count>65536||edges.length>65536||roots.length>count||ends.length!==count||references.length!==count||!Number.isInteger(root)||root<0||root>=count)return ['error','incomplete callable data graph'];
  let previous=0;
@@ -39,7 +52,7 @@ export function readCallableDataRecursivePlan(kinds,ends,edges,references,roots,
   previous=end;
  }
  if(previous!==edges.length||roots.some(value=>!Number.isInteger(value)||value<0||value>=count||readRequiredTextFact(kinds,value)!=='data'))return ['error','incomplete callable data declaration roots'];
- const callable=kinds.includes('function');if(!callable)return ['profile','false','false','true','-1'];
+ const callable=kinds.includes('function');if(!callable&&!mutual)return ['profile','false','false','true','-1'];
  let work=0,recursive=false;
  for(let declaration=0;declaration<roots.length;declaration+=1){
   work+=count*4;if(work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
@@ -50,16 +63,16 @@ export function readCallableDataRecursivePlan(kinds,ends,edges,references,roots,
    if(readRequiredBooleanFact(seen,key))continue;seen[key]=true;
    const reference=readRequiredNumberFact(references,at);
    if(reference>=0){
-    if(reference===declaration){if(domain)return ['error','recursive callable data in a function domain lacks strict positivity'];if(crossed)return ['error','mutually recursive callable data needs a mutual-inductive backend profile'];recursive=true;continue;}
+    if(reference===declaration){if(domain)return ['error','recursive callable data in a function domain lacks strict positivity'];if(crossed&&!mutual)return ['error','mutually recursive callable data needs a mutual-inductive backend profile'];recursive=true;continue;}
     pending.push(readRequiredNumberFact(roots,reference));domains.push(domain);crossings.push(true);continue;
    }
    const start=at===0?0:readRequiredNumberFact(ends,at-1),end=readRequiredNumberFact(ends,at);
    for(let child=start;child<end;child+=1){pending.push(readRequiredNumberFact(edges,child));domains.push(domain||readRequiredTextFact(kinds,at)==='function'&&child<end-1);crossings.push(crossed);}
   }
  }
- const known=roots.map(()=>false),witnesses=roots.map(()=>-1);let changed=true;
+ const known=roots.map(()=>false),witnesses=roots.map(()=>-1),ranks=roots.map(()=>-1);let changed=true,rank=0;
  while(changed){
-  changed=false;const values=[];
+  changed=false;rank+=1;const values=[];
   for(let at=0;at<count;at+=1){
    if(++work>1048576)return ['error','callable data graph reasoning exceeds its finite source profile'];
    const start=at===0?0:readRequiredNumberFact(ends,at-1),children=[];for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)children.push(readRequiredBooleanFact(values,readRequiredNumberFact(edges,edge)));
@@ -68,12 +81,17 @@ export function readCallableDataRecursivePlan(kinds,ends,edges,references,roots,
   }
   for(let declaration=0;declaration<roots.length;declaration+=1)if(!readRequiredBooleanFact(known,declaration)){
    const at=readRequiredNumberFact(roots,declaration),start=at===0?0:readRequiredNumberFact(ends,at-1);
-   for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)if(readRequiredBooleanFact(values,readRequiredNumberFact(edges,edge))){known[declaration]=true;witnesses[declaration]=edge-start;changed=true;break;}
+   for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)if(readRequiredBooleanFact(values,readRequiredNumberFact(edges,edge))){known[declaration]=true;witnesses[declaration]=edge-start;ranks[declaration]=rank;changed=true;break;}
   }
  }
  if(!known.every(value=>value))return ['error','callable data has no finite constructive witness for every referenced datatype'];
+ if(mutual){const result=['witnesses'];for(let at=0;at<roots.length;at+=1){result.push(String(readRequiredNumberFact(witnesses,at)));result.push(String(readRequiredNumberFact(ranks,at)));}return result;}
  const declaration=readRequiredNumberFact(references,root);
  return ['profile','true',recursive?'true':'false','true',String(declaration<0?-1:readRequiredNumberFact(witnesses,declaration))];
 }
 /** @param {string} name @param {string} constructor @param {number} fields @returns {string} */
 export function renderCallableDataLeanDefault(name,constructor,fields){let value=constructor;for(let at=0;at<fields;at+=1)value+=' default';return 'instance : Inhabited '+name+' := ⟨'+value+'⟩';}
+/** Mutual blocks provide finite default instances afterward in witness order.
+ * @param {boolean} callable @param {boolean} output @param {boolean} undecidable
+ * @returns {string} */
+export function readFormalDatatypeLeanBlockDerivation(callable,output,undecidable){return callable||output?'':undecidable?'Repr':'Repr, DecidableEq';}

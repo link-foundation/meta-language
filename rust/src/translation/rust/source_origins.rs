@@ -46,6 +46,7 @@ pub(super) struct SourceOrigin {
     pub(super) source_record_state_collecting_site: Option<Span>,
     pub(super) source_value_borrow_bindings: Vec<String>,
     pub(super) source_value_field_borrow_bindings: Option<Vec<Vec<String>>>,
+    pub(super) source_box_layers: Vec<super::owned_containers::SourceBoxLayer>,
     pub(super) source_place_binding_identity: Option<String>,
     pub(super) source_loan_binding_identities: Vec<String>,
     pub(super) source_place_loan_binding_identities: Vec<String>,
@@ -161,6 +162,7 @@ impl SourceOrigin {
             source_record_state_collecting_site: None,
             source_value_borrow_bindings: Vec::new(),
             source_value_field_borrow_bindings: None,
+            source_box_layers: Vec::new(),
             source_place_binding_identity: None,
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
@@ -226,6 +228,7 @@ impl SourceOrigin {
             source_record_state_collecting_site: None,
             source_value_borrow_bindings: Vec::new(),
             source_value_field_borrow_bindings: None,
+            source_box_layers: Vec::new(),
             source_place_binding_identity: None,
             source_loan_binding_identities: Vec::new(),
             source_place_loan_binding_identities: Vec::new(),
@@ -372,6 +375,7 @@ pub(super) struct SourceOrigins {
     fresh_vector_constructors: HashSet<Span>,
     pub(super) owned_binding_excluded: bool,
     pub(super) owned_container_source_enabled: bool,
+    pub(super) owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget,
     source_binding_states: HashMap<String, String>,
     next_source_binding_identity: usize,
     owned_argument_transfers: HashSet<Span>,
@@ -427,6 +431,7 @@ impl SourceOrigins {
             collecting: catalog.is_none(),
             owned_binding_excluded: false,
             owned_container_source_enabled: false,
+            owned_container_metadata_budget: super::standard_sum_metadata::MetadataBudget::default(),
             source_binding_states: HashMap::new(),
             next_source_binding_identity: 0,
             owned_argument_transfers: HashSet::new(),
@@ -1416,6 +1421,7 @@ impl SourceOrigins {
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&self.owned_binding_value(&origin){origin=self.capture_owned_borrow(origin);if let Some(id)=origin.source_binding_identity.as_ref(){if !((origin.source_standard_sum_borrowed_field||origin.source_nominal_borrowed_field)&&origin.source_borrowed_place)&&self.source_temporary_bindings.contains(id){origin.source_extending_temporary_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_extending_temporary_bindings,&[id.clone()]);}}}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer)&&origin.source_place_binding_identity.is_some(){origin.source_binding_identity=origin.source_place_binding_identity.clone();}
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_loan_binding_identities=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&origin.source_loan_binding_identities,&origin.source_place_loan_binding_identities);}
+        if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_value_borrow_bindings=crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&super::copy_closure_lifetimes::value_borrows(&origin),&crate::translation::rust_owned_binding_rules::merge_rust_owned_loan_bindings(&crate::translation::rust_owned_binding_rules::project_rust_owned_loan_bindings(origin.source_binding_identity.as_deref().unwrap_or(""),&origin.source_loan_binding_identities),&crate::translation::rust_owned_binding_rules::project_rust_owned_loan_bindings(origin.source_place_binding_identity.as_deref().unwrap_or(""),&origin.source_place_loan_binding_identities)));}
         origin.wrappers.insert(0, layer.to_owned());
         if crate::translation::rust_copy_closure_parameter_rules::test_rust_source_reference_lifetime_layer(layer){origin.source_lifetimes.insert(0,None);}
         self.mark(node, origin);
@@ -1428,6 +1434,7 @@ impl SourceOrigins {
         path: &[String],
         span: Option<Span>,
     ) -> Result<()> {
+        if self.finish_owned_box_dereference(node,path,span)? {return Ok(());}
         let mut origin = self.origin(node, path);
         if !self.collecting && origin.array_source_model.is_some() && origin.wrappers.len() == 1 {
             return Err(unsupported(
@@ -1469,6 +1476,7 @@ impl SourceOrigins {
         declared: Option<&SourceOrigin>,
     ) -> Result<()> {
         let actual = self.origin(node, path);
+        if !actual.source_box_layers.is_empty(){self.reserve_owned_container_copies(&[&actual])?;}
         self.pointer_integer_argument(&actual, &SourceOrigin::value(), node.span)?;
         if self.shared_array_handles && !self.collecting && matches!(actual.ty, Some(Type::Array {..}))
             && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(
@@ -1504,6 +1512,7 @@ impl SourceOrigins {
             self.consume_owned_binding(&actual, node.span)?;
         }
         let mut binding = declared.cloned().unwrap_or_else(|| actual.clone());
+        binding.source_box_layers=actual.source_box_layers.clone();
         if !actual.wrappers.is_empty() {
             binding.source_binding_identity = actual.source_binding_identity.clone();
             binding.source_loan_binding_identities = actual.source_loan_binding_identities.clone();

@@ -90,12 +90,16 @@ export class EmitState {
    * All original names remain reserved for the explicit emitted aliases. */
   relocateDatatypes(program,aliases){
     const seen=new Set();
+    const sourceKeys=Object.keys(this.program);
+    if(sourceKeys.length!==Object.keys(program).length||sourceKeys.some(key=>key!=='declarations'&&this.program[key]!==program[key])||this.program.declarations.size!==program.declarations.size)throw unsupported('formal datatype target names','target placement must preserve the complete original program');
     for(const alias of aliases){
       const source=this.program.declarations.get(alias.sourceFullName),target=program.declarations.get(alias.targetFullName);
       if(seen.has(alias.sourceFullName)||source?.k!=='data'||target?.k!=='data'||source.fullName!==target.fullName||source.name!==target.name||source.ctors!==target.ctors||source.modulePath.join('.')!==alias.sourceModulePath.join('.')||target.modulePath.join('.')!==alias.targetModulePath.join('.')||target.modulePath.length>=source.modulePath.length||!target.modulePath.every((part,index)=>part===source.modulePath[index]))throw unsupported('formal datatype target names','relocation requires its exact original nominal owner and target prefix');
+      if(Object.keys(source).length!==Object.keys(target).length||Object.keys(source).some(key=>key!=='modulePath'&&source[key]!==target[key])||alias.sourceName!==source.name||alias.constructors.length!==source.ctors.length||alias.constructors.some((name,index)=>name!==source.ctors[index].name))throw unsupported('formal datatype target names','target placement must preserve every original datatype fact and constructor alias');
       for(let depth=1;depth<=target.modulePath.length;depth+=1)if(!this.moduleNames.has(target.modulePath.slice(0,depth).join('.')))throw unsupported('formal datatype target names','a lifted module prefix must belong to the original source');
       seen.add(alias.sourceFullName);
     }
+    for(const [name,entry]of this.program.declarations)if(!seen.has(name)&&program.declarations.get(name)!==entry)throw unsupported('formal datatype target names','target placement must preserve every unmoved declaration');
     this.program=program;
     for(const alias of aliases){
       const entry=program.declarations.get(alias.targetFullName),space=`term:${entry.modulePath.join('.')}`;
@@ -382,10 +386,16 @@ export function datatypeGroups(program){
  * order is kept where possible and, among ready declarations, the ones in
  * the module being emitted come first so modules stay contiguous.
  */
-export function orderDeclarations(program, { requireContiguousModules = false } = {}) {
+export function orderDeclarations(program, { requireContiguousModules = false,extraDependencies=new Map() } = {}) {
   const entries = [...program.declarations.values()];
   const position = new Map(entries.map((entry, index) => [entry.fullName, index]));
   const pending = new Map(entries.map((entry) => [entry.fullName, dependencies(entry)]));
+  if(!(extraDependencies instanceof Map)||extraDependencies.size>8192)throw unsupported('target declaration dependencies','extra ordering dependencies require a bounded actual declaration directory');
+  let extraEdges=0;
+  for(const [name,edges]of extraDependencies){
+    if(!position.has(name)||!(edges instanceof Set))throw unsupported('target declaration dependencies','extra ordering dependencies require actual declared owners');
+    for(const edge of edges){if(!position.has(edge)||++extraEdges>131072)throw unsupported('target declaration dependencies','extra ordering dependencies require bounded actual declaration edges');pending.get(name).add(edge);}
+  }
   // A group of mutually recursive functions is ready, and placed, as one.
   const groups = new Map([...mutualGroups(program),...datatypeGroups(program)]);
   const unit = (entry) => groups.get(entry.fullName) ?? [entry];

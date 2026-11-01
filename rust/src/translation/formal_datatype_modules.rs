@@ -1,6 +1,6 @@
 //! Target placement transport. The shared JavaScript policy decides prefixes;
 //! this does not establish ownership, positivity, defaults or emit aliases.
-use std::collections::HashMap;
+use std::collections::{HashMap,HashSet};
 use super::diagnostics::{Result,unsupported};
 use super::ir::{Decl,Program};
 
@@ -20,6 +20,29 @@ pub(crate) struct FormalDatatypeModules<'a> {
     pub aliases:Vec<FormalDatatypeAlias>,
 }
 
+fn scope_key(path:&[String])->String {
+    path.iter().map(|part|format!("{}:{part}",part.encode_utf16().count())).collect::<Vec<_>>().concat()
+}
+
+pub(crate) fn formal_datatype_module_dependencies(plan:&FormalDatatypeModules<'_>)->Result<HashMap<String,HashSet<String>>> {
+    let mut scopes=HashMap::<String,HashSet<String>>::new();
+    for alias in &plan.aliases {
+        let boundary=&alias.source_module_path[..alias.target_module_path.len()+1];
+        scopes.entry(scope_key(boundary)).or_default().insert(alias.target_full_name.clone());
+    }
+    let known=plan.program.declarations.iter().map(|entry|entry.full_name()).collect::<HashSet<_>>();
+    let mut result=HashMap::new();let mut edges=0usize;
+    for entry in &plan.program.declarations {
+        let mut required=HashSet::new();
+        for depth in 1..=entry.module_path().len(){if let Some(owners)=scopes.get(&scope_key(&entry.module_path()[..depth])){for owner in owners{
+            if !known.contains(owner.as_str()){return Err(unsupported("target declaration dependencies","extra ordering dependencies require actual declared owners",None));}
+            if required.insert(owner.clone()){edges+=1;if edges>131072{return Err(unsupported("target declaration dependencies","extra ordering dependencies require bounded actual declaration edges",None));}}
+        }}}
+        if !required.is_empty(){result.insert(entry.full_name().to_owned(),required);}
+    }
+    Ok(result)
+}
+
 pub(crate) fn plan_formal_datatype_modules(program:&Program)->Result<FormalDatatypeModules<'_>> {
     let data=program.declarations.iter().filter_map(|entry|match entry{Decl::Data(data)=>Some(data),_=>None}).collect::<Vec<_>>();
     let positions=data.iter().enumerate().map(|(index,entry)|(entry.full_name.as_str(),index)).collect::<HashMap<_,_>>();
@@ -32,7 +55,8 @@ pub(crate) fn plan_formal_datatype_modules(program:&Program)->Result<FormalDatat
         for index in indices{groups[index]=representative as f64;}
     }
     let paths=data.iter().map(|entry|entry.module_path.clone()).collect::<Vec<_>>();
-    let depths=super::formal_datatype_module_rules::plan_formal_datatype_module_prefixes(&paths,&groups);
+    let prefixes=super::formal_datatype_module_rules::plan_formal_datatype_module_prefixes(&paths,&groups);
+    let depths=super::formal_datatype_module_rules::plan_formal_datatype_module_closure(&paths,&prefixes);
     if depths.len()!=data.len(){return Err(unsupported("formal datatype modules","actual module paths exceed the bounded placement profile",None));}
     let mut aliases=Vec::new();
     let mut projected=program.clone();
@@ -57,7 +81,7 @@ mod tests {
     fn placement_preserves_actual_source_ids_and_explicit_public_aliases(){
         // Structural projection control, not a claim that unguarded Rust
         // recursive fields form a valid source-sized declaration.
-        let surface=crate::translation::rust::parse_rust("mod left { enum A { Value(bool) } } mod right { enum B { Value(bool) } } fn main() {}").unwrap();
+        let surface=crate::translation::rust::parse_rust("mod left { fn unrelated()->bool { true } enum A { Value(bool) } } mod right { enum B { Value(bool) } } fn main() {}").unwrap();
         let mut original=crate::translation::check::check_program(&surface).unwrap();
         for entry in &mut original.declarations {
             if let Decl::Data(data)=entry {
@@ -79,6 +103,10 @@ mod tests {
         }
         assert!(crate::translation::emit_common::order_declarations(&original,true).is_err());
         assert!(crate::translation::emit_common::order_declarations(&projected.program,true).is_ok());
+        let extra=formal_datatype_module_dependencies(&projected).unwrap();
+        assert_eq!(extra["left.unrelated"],HashSet::from(["left.A".to_owned()]));
+        let order=crate::translation::emit_common::order_declarations_with_dependencies(&projected.program,true,&extra).unwrap();
+        assert_eq!(order.last().unwrap().full_name(),"left.unrelated");
         let mut state=crate::translation::emit_common::EmitState::new(&original,crate::translation::Language::Rocq,str::to_owned,&[],crate::translation::emit_common::EmitOptions{ctor_style:crate::translation::emit_common::CtorStyle::Module,modules_share_term_space:true,..Default::default()});
         let public=projected.aliases.iter().flat_map(|alias|[state.reference(&alias.source_full_name,"."),state.ctor_ref(&alias.source_full_name,"Value",".")]).collect::<Vec<_>>();
         state.relocate_datatypes(&projected.program,&projected.aliases).unwrap();

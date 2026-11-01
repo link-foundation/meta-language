@@ -8,7 +8,7 @@ const versions=['1.90.0','1.99.0'],targets=['JavaScript','Rust','Lean','Rocq'];
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===24||major===22&&minor>=15,'uncovered nested record place Node '+process.versions.node);
 function stdout(code){const lines=[];vm.runInNewContext(code,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}}, {timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const [index,row]of decisions.entries())test('record place syntax decision '+index+' '+row.operation,()=>assert.deepEqual(rules[row.operation](...row.arguments),row.expected));
-test('all independent nested place inputs stay represented',()=>{assert.equal(decisions.length,12);assert.equal(originals.length,6);assert.equal(refusals.length,4);});
+test('all independent nested place inputs stay represented',()=>{assert.equal(decisions.length,12);assert.equal(originals.length,8);assert.equal(refusals.length,5);});
 test('an absent nested field inherits only an actually available ancestor',()=>{
  const identity='record field record field 7 0 1';
  assert.equal(rustOwnedRecordFieldState(new Map([['7','available']]),identity),'available');

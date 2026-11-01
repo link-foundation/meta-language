@@ -32,7 +32,7 @@ export function lowerRustExpressionCompletions(parser,expression,path,sourceResu
   for(const role of roles){
    const value=node[role];
    if(Array.isArray(value))value.forEach((child,index)=>{
-    const wrapper=node.k==='array'&&role==='items'&&child?.value&&typeof child.value==='object'?child:null;
+    const wrapper=!child?.k&&child?.value&&typeof child.value==='object'?child:null;
     slots.push({role,index,child:wrapper?wrapper.value:child,wrapper});
    });
    else if(value&&typeof value==='object')slots.push({role,index:null,child:value});

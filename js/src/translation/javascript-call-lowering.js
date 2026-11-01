@@ -39,7 +39,7 @@ export function lowerCheckedJavaScriptCallModule(program,{functions,realms,exoti
  if(!Array.isArray(ordinaryPrototypes)||ordinaryPrototypes.length>4096)refuse(null,'ordinary prototypes require a bounded actual realm registry');
  const prototypes=new Map();
  for(const row of ordinaryPrototypes){
-  if(!realms.includes(row.realm)||prototypes.has(row.realm)||row.prototype?.$!=='object'||typeof row.prototype.identity!=='bigint'||row.prototype.identity<=0n||row.prototype.identity>18446744073709551615n||typeof row.prototype.callable!=='boolean')refuse(null,'ordinary prototypes require one supplied actual Object identity per registered realm');
+  if(!realms.includes(row.realm)||prototypes.has(row.realm)||row.prototype?.$!=='object'||typeof row.prototype.identity!=='bigint'||row.prototype.identity<=0n||row.prototype.identity>18446744073709551615n||row.prototype.callable!==false)refuse(null,'ordinary prototypes require one supplied actual Object identity per registered realm');
   prototypes.set(row.realm,row.prototype);
  }
  const directory=new Map(),identities=new Set();

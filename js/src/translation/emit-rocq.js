@@ -49,7 +49,10 @@ import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
-import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-common.js';
+import { EmitState, mutualGroups, datatypeGroups, orderDeclarations, unthreaded } from './emit-common.js';
+import {readFormalDatatypeConstructiveProfiles,readCallableDataFacts,readCallableDataRecursiveProfile} from './callable-data.js';
+import {planFormalDatatypeModules,formalDatatypeModuleDependencies} from './formal-datatype-modules.js';
+import {captureFormalDatatypeAliases,FormalDatatypeAliases} from './formal-datatype-aliases.js';
 
 const KEYWORDS = new Set([
   'MLStringNumber',
@@ -304,7 +307,9 @@ export function emitRocq(source) {
     generated: (name) => ['_ind', '_rect', '_rec', '_sind', '_equation', '_tcc', '_terminate', '_F', '_graph', '_complete', '_correct', '_ind_', '_rect_']
       .map((suffix) => `${name}${suffix}`).concat([`R_${name}`]),
   });
-  const emitter = new RocqEmitter(program, state);
+  const plan=planFormalDatatypeModules(program),aliases=captureFormalDatatypeAliases(plan.aliases,state);
+  state.relocateDatatypes(plan.program,plan.aliases);
+  const emitter = new RocqEmitter(plan.program,state,new FormalDatatypeAliases(aliases,'Rocq',state),formalDatatypeModuleDependencies(plan));
   return emitter.file();
 }
 
@@ -316,7 +321,8 @@ function injection(index, count, text) {
 }
 
 class RocqEmitter {
-  constructor(program, state) {
+  constructor(program, state,aliases,aliasDependencies) {
+    this.aliases=aliases;this.aliasDependencies=aliasDependencies;
     this.program = program;
     this.target='Rocq';
     this.utf16Strings=requireFormalUnitStrings(program);
@@ -330,28 +336,33 @@ class RocqEmitter {
   file() {
     prepareFormalUnitStrings(this);
     const blocks = [];
-    const order = orderDeclarations(this.program, { requireContiguousModules: true });
+    blocks.push(...this.aliases.open([]));
+    const order = orderDeclarations(this.program, { requireContiguousModules: true,extraDependencies:this.aliasDependencies });
     let openModules = [];
     const moveTo = (path) => {
       let common = 0;
       while (common < openModules.length && common < path.length && openModules[common] === path[common]) common += 1;
-      while (openModules.length > common) blocks.push(`End ${this.state.moduleName(openModules.slice(0, openModules.length))}.`) && openModules.pop();
+      while (openModules.length > common) {blocks.push(...this.aliases.close(openModules));blocks.push(`End ${this.state.moduleName(openModules)}.`);openModules.pop();}
       while (openModules.length < path.length) {
         openModules.push(path[openModules.length]);
         blocks.push(`Module ${this.state.moduleName(openModules)}.`);
+        blocks.push(...this.aliases.open(openModules));
       }
     };
     const groups = mutualGroups(this.program);
+    const dataGroups=datatypeGroups(this.program);
     for (const entry of order) {
       moveTo(entry.modulePath);
       const group = groups.get(entry.fullName);
       if (group) {
         if (group[0] === entry) blocks.push(this.mutual(group));
-      } else if (entry.k === 'data') blocks.push(this.data(entry));
+      } else if (entry.k === 'data') {const dataGroup=dataGroups.get(entry.fullName);if(!dataGroup)blocks.push(this.data(entry));else if(dataGroup[0]===entry)blocks.push(this.mutualData(dataGroup));}
       else if (entry.k === 'fn') blocks.push(this.fn(entry));
       else if (entry.k === 'theorem') blocks.push(this.theorem(entry));
+      this.aliases.complete(dataGroups.get(entry.fullName)??[entry]);
     }
     moveTo([]);
+    blocks.push(...this.aliases.close([]));this.aliases.finish();
     const mainText = this.program.main ? this.main(this.program.main) : null;
     const helperText = ['digits', 'zToString', 'boolToString', 'euclid', 'jsNumber', 'jsConsole', 'floatSame', 'floatRem', 'math', 'listAt', 'stringStartsWith', 'stringEndsWith', 'stringIncludes', 'floatIndex', 'fix', 'tactics', 'decide', 'emit']
       .filter((name) => this.helpers.has(name) || (name === 'digits' && (this.helpers.has('zToString') || this.helpers.has('jsNumber'))))
@@ -428,7 +439,7 @@ class RocqEmitter {
     }
   }
 
-  data(entry) {
+  data(entry,keyword='Inductive',terminator='.') {
     const name = this.state.localName(entry.fullName);
     const ctors = entry.ctors.map((ctor) => {
       const fields = ctor.fields.map((field) => `${this.type(field.type)} -> `).join('');
@@ -438,8 +449,9 @@ class RocqEmitter {
     // A type nested through list has no registered All scheme, which Rocq would warn of on every definition.
     const lists = (type) => type.kind === 'array' && (type.element.kind === 'data' || lists(type.element));
     const nested = entry.ctors.some((ctor) => ctor.fields.some((field) => lists(field.type)));
-    return [...(nested ? ['#[warnings="-register-all"]'] : []), `Inductive ${name} : Type :=`, ...ctors].join('\n') + '.';
+    return [...(nested&&keyword==='Inductive' ? ['#[warnings="-register-all"]'] : []), `${keyword} ${name} : Type :=`, ...ctors].join('\n') + terminator;
   }
+  mutualData(group){for(const entry of group)if(readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations).callable)readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations);readFormalDatatypeConstructiveProfiles({kind:'data',name:group[0].fullName},this.program.declarations);return group.map((entry,index)=>this.data(entry,index===0?'Inductive':'with',index===group.length-1?'.':'')).join('\n');}
 
   fn(entry) {
     const general = entry.recursive && entry.decreasing === null && !entry.mutual;

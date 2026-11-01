@@ -139,6 +139,7 @@ impl RustParser {
     }
 
     pub(in super::super) fn parse_type(&mut self) -> Result<Type> {
+        if self.origins.owned_container_source_enabled{let error=crate::translation::rust_owned_recursive_datatype_rules::read_rust_owned_container_depth_error((self.source_owner_frames.len()+1) as f64,0.0);if !error.is_empty(){return Err(unsupported("Rust owned container",&error,None));}}
         self.split_reference_type_token();
         // Readonly dispatch also needs actual owners; publishing the captured
         // header facet remains independently opt-in.
@@ -193,6 +194,7 @@ impl RustParser {
             self.source_type_owner(&head, children, &ty)
         };
         self.origins.current_type.source_owner = Some(owner.clone());
+        self.check_owned_box_source_type(&self.origins.current_type,Some(super::super::Span::new(self.cursor.peek().start,self.cursor.peek().end)))?;
         let namespace_spelling = if head[0] != "&" && head[0] != "(" {
             head
         } else if namespace_children.len() == 1 && !head.iter().any(|part| part == "[") {

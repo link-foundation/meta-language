@@ -3,16 +3,17 @@
 import {unsupported} from './diagnostics.js';
 import {readRustOwnedRecordFieldIdentity,readRustOwnedRecordFieldRoot,readRustOwnedRecordWholeError,readRustOwnedRecordFieldError,readRustOwnedRecordUpdateError,readRustOwnedRecordAbsentFieldState,readRustOwnedRecordUltimateRoot,readRustOwnedRecordUpdateVersionError,testRustOwnedRecordFieldCopy,readRustOwnedRecordFieldMode} from './rust-owned-record-update-rules.js';
 import {readRustNominalOwnershipFacts,createRustNominalConstructorOrigin,projectRustNominalPatternField} from './rust-nominal-ownership.js';
-import {isRustOwnedBindingValue,checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {readRustOwnedRecordPlaceBase} from './rust-owned-record-places.js';
 import {readRustOwnedRecordPlaceDepthLimit} from './rust-owned-record-place-rules.js';
+import {readRustOwnedBoxRecordOwner} from './rust-owned-containers.js';
 export function acceptRustOwnedRecordProjectionName(parser,node,path){
  if(node.k!=='name'||node.path.length!==1||!parser.cursor.is('.')||parser.cursor.is('(',2))return false;
  const origin=parser.origins.scope.get(node.path[0]),owner=origin?.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,record=owner?parser.namedRecords.get(owner.fullName):null;
  return Boolean(record?.names.includes(parser.cursor.peek(1).value));
 }
 export function checkRustOwnedRecordWhole(table,origin,span){
- if(table.collecting||origin.sourceBindingIdentity==null||readRustNominalOwnershipFacts(table,{...origin,wrappers:[]}).profile!=='owned')return;const error=readRustOwnedRecordWholeError(origin.sourceBindingIdentity, [...table.sourceBindingStates.keys()],[...table.sourceBindingStates.values()]);if(error)throw unsupported('Rust record field ownership',error,span);
+ if(table.collecting||origin.sourceBindingIdentity==null)return;const boxed=readRustOwnedBoxRecordOwner(table,origin);if(!boxed&&readRustNominalOwnershipFacts(table,{...origin,wrappers:[]}).profile!=='owned')return;const error=readRustOwnedRecordWholeError(origin.sourceBindingIdentity, [...table.sourceBindingStates.keys()],[...table.sourceBindingStates.values()]);if(error)throw unsupported('Rust record field ownership',error,span);
 }
 export function rustOwnedRecordFieldState(snapshot,identity){if(snapshot.has(identity))return snapshot.get(identity);let root=readRustOwnedRecordFieldRoot(identity);for(let depth=0;depth<readRustOwnedRecordPlaceDepthLimit()&&root!=='';depth+=1){if(snapshot.has(root))return readRustOwnedRecordAbsentFieldState(snapshot.get(root));root=readRustOwnedRecordFieldRoot(root);}return 'absent';}
 export function rustOwnedRecordFieldSurvives(table,identity,before,result){const root=readRustOwnedRecordUltimateRoot(identity);return root!==''&&table.sourceBindingStates.get(root)==='available'&&(before.has(root)||result.sourceBindingIdentity===root||(result.sourceExtendingTemporaryBindings??[]).includes(root));}

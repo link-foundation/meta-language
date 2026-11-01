@@ -2,11 +2,33 @@
 // author must reconcile each selected fixture coordinate before publishing.
 const selection=(name,exportName)=>({path:'js/tests/fixtures/'+name+'.mjs',exportName});
 export const rustBaselineNativePolicyControlGroups=[
+ {sourcePath:'js/src/translation/source-library-class-rules.js',moduleName:'authored_source_library_class_controls',testName:'all_literal_source_library_class_controls',aliases:true,fixtureSelections:[
+  selection('source-library-class-composition','sourceLibraryClassDecisions'),
+  selection('source-library-class-re-exports','sourceLibraryClassReExportDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-recursive-datatype-rules.js',moduleName:'authored_owned_recursive_container_controls',testName:'all_literal_owned_recursive_container_controls',fixtureSelections:[
+  selection('rust-owned-recursive-containers','rustOwnedRecursiveContainerDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-effect-rules.js',moduleName:'authored_owned_record_effect_controls',testName:'all_literal_owned_record_effect_controls',aliases:true,fixtureSelections:[
+  selection('rust-owned-record-effects','rustOwnedRecordEffectDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/formal-datatype-alias-rules.js',moduleName:'authored_formal_datatype_alias_controls',testName:'all_literal_formal_datatype_alias_controls',fixtureSelections:[
+  selection('formal-datatype-aliases','formalDatatypeAliasDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/callable-data-derivation-rules.js',moduleName:'authored_formal_mutual_datatype_controls',testName:'all_literal_formal_mutual_datatype_controls',fixtureSelections:[
+  selection('formal-mutual-datatypes','formalMutualDatatypeDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/rust-owned-record-state-rules.js',moduleName:'authored_owned_record_state_controls',testName:'all_literal_owned_record_state_controls',fixtureSelections:[
+  selection('rust-owned-record-state','rustOwnedRecordStateDecisions'),
+ ]},
  {sourcePath:'js/src/translation/javascript-class-owner-rules.js',moduleName:'authored_class_owner_controls',testName:'all_literal_class_owner_controls',fixtureSelections:[
   selection('closed-class-owner-witnesses','closedClassOwnerDecisions'),
  ]},
  {sourcePath:'js/src/translation/rust-owned-record-place-rules.js',moduleName:'authored_owned_record_place_controls',testName:'all_literal_owned_record_place_controls',fixtureSelections:[
   selection('rust-owned-record-places','rustOwnedRecordPlaceDecisions'),
+ ]},
+ {sourcePath:'js/src/translation/formal-datatype-module-rules.js',moduleName:'authored_formal_datatype_module_controls',testName:'all_literal_formal_datatype_module_controls',fixtureSelections:[
+  selection('formal-datatype-modules','formalDatatypeModuleDecisions'),
  ]},
  {sourcePath:'js/src/translation/datatype-dependency-group-rules.js',moduleName:'authored_datatype_dependency_group_controls',testName:'all_literal_datatype_dependency_group_controls',fixtureSelections:[
   selection('datatype-dependency-groups','datatypeDependencyGroupDecisions'),

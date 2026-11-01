@@ -8,6 +8,8 @@ import { tokenize } from '../src/translation/lexer.js';
 import {readJavaScriptDocumentationTags,testJavaScriptSourceFunctionStart} from '../src/translation/javascript.js';
 import {readSourceLibraryDeclarationBindingKind,readSourceLibraryFunctionDeclarationOffset} from '../src/translation/source-library-binding-rules.js';
 import {acceptSourceLibraryFunctionExport} from '../src/translation/source-library-export-rules.js';
+import {readSourceLibraryClassBindingKind,acceptSourceLibraryClassExport,readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError,acceptSourceLibraryReExportName} from '../src/translation/source-library-class-rules.js';
+import {readSourceLibraryClassFacts,finishSourceLibraryClassComposition,composeSourceLibraryClassDeclarations,readSourceLibraryClassOwnership} from './source-library-classes.mjs';
 
 const root = new URL('../../', import.meta.url);
 const rootPath = realpathSync(fileURLToPath(root));
@@ -15,9 +17,11 @@ const digest = source => createHash('sha256').update(source).digest('hex');
 const actual = (source, token, value) => token?.kind === 'identifier' && token.value === value
   && source.slice(token.start, token.end) === value;
 
-export function readSourceLibraryModuleFacts(source,path,aliases=false) {
+export function readSourceLibraryModuleFacts(source,path,aliases=false,classes='',reExports='') {
+  if(classes!==''&&classes!=='closed local class declarations 1')throw new TypeError('unknown source closure class profile');
+  const reExportError=readSourceLibraryReExportProfileError(reExports,true,aliases);if(reExportError)throw new TypeError(reExportError);
   const tokens = tokenize(source, 'JavaScript').tokens;
-  const imports = [], exports = new Set(), declarations = new Set(), declarationBindings=new Map(), expressionHeads=new Set();
+  const imports = [], namedReExports=[],exports = new Set(),directExports=[],declarations = new Set(), declarationBindings=new Map(), expressionHeads=new Set();
   function form(index){
     const word=at=>tokens[at]?.kind==='identifier'&&source.slice(tokens[at].start,tokens[at].end)===tokens[at].value?tokens[at].value:'';
     const offset=readSourceLibraryFunctionDeclarationOffset(word(index),word(index+1),/[\r\n\u2028\u2029]/u.test(source.slice(tokens[index]?.end??0,tokens[index+1]?.start??0)));
@@ -29,8 +33,8 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
       initializer=actual(source,tokens[at],'function')?'function expression':'arrow';
       if(initializer==='function expression'){expressionHeads.add(at);if(tokens[at+1]?.kind==='identifier')expressionName=tokens[at+1].value;}
     }
-    const keyword=actual(source,head,'function')?'function':actual(source,head,'const')?'const':'';
-    return {name:name?.value??'',nameKind:name?.kind??'',kind:readSourceLibraryDeclarationBindingKind(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{}),...(expressionName?{expressionName}:{})};
+    const keyword=actual(source,head,'function')?'function':actual(source,head,'const')?'const':classes&&actual(source,head,'class')?'class':'';
+    return {name:name?.value??'',nameKind:name?.kind??'',kind:(classes?readSourceLibraryClassBindingKind:readSourceLibraryDeclarationBindingKind)(keyword,name?.kind??'',name?.value??'',callable),keyword,callable,...(initializer?{initializer}:{}),...(expressionName?{expressionName}:{})};
   }
   let depth = 0;
   for (let index = 0; index < tokens.length; index += 1) {
@@ -41,15 +45,30 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
       continue;
     }
     if (depth !== 0) continue;
-    if(!expressionHeads.has(index)&&(actual(source,token,'function')||actual(source,token,'const'))){
+    if(!expressionHeads.has(index)&&(actual(source,token,'function')||actual(source,token,'const')||classes&&actual(source,token,'class'))){
       const binding=form(index);
       if(binding.kind){if(declarations.has(binding.name))throw new TypeError('source closure needs unique actual module declarations at '+path+':'+token.start);declarations.add(binding.name);declarationBindings.set(binding.name,{name:binding.name,kind:binding.kind,...(binding.initializer?{initializer:binding.initializer}:{}),...(binding.expressionName?{expressionName:binding.expressionName}:{})});}
     }
     if (actual(source, token, 'export')) {
+      if(reExports&&tokens[index+1]?.value==='{'){
+        let at=index+2;const bindings=[];
+        while(tokens[at]?.kind==='identifier'){
+          const imported=tokens[at++];let exported=imported;
+          if(actual(source,tokens[at],'as')){at+=1;exported=tokens[at++];}
+          if(!acceptSourceLibraryReExportName(imported.kind,imported.value)||!acceptSourceLibraryReExportName(exported?.kind??'',exported?.value??''))throw new TypeError('named re-exports require actual ordinary provider and public identifiers in '+path);
+          if(exports.has(exported.value))throw new TypeError('named re-exports need unique actual public owners in '+path);exports.add(exported.value);bindings.push({imported:imported.value,exported:exported.value});
+          if(tokens[at]?.value===','){at+=1;continue;}break;
+        }
+        if(!bindings.length||tokens[at]?.value!=='}'||!actual(source,tokens[at+1],'from')||tokens[at+2]?.kind!=='string')throw new TypeError('named re-exports need complete actual relative provider statements in '+path);
+        const specifier=tokens[at+2].value;if(!specifier.startsWith('./')&&!specifier.startsWith('../')||!specifier.endsWith('.js')||specifier.includes('?')||specifier.includes('#'))throw new TypeError('named re-exports require explicit actual relative JavaScript files');
+        at+=3;const end=tokens[at]?.value===';'?tokens[at++].end:tokens[at-1].end;
+        namedReExports.push({statement:source.slice(token.start,end),start:token.start,end,coordinateUnit:'UTF-16 code units',specifier,names:bindings.map(binding=>binding.imported),bindings});index=at-1;continue;
+      }
       const binding=form(index+1);
-      if (!acceptSourceLibraryFunctionExport(binding.keyword,binding.nameKind,binding.name,binding.callable))
+      if (!(classes?acceptSourceLibraryClassExport:acceptSourceLibraryFunctionExport)(binding.keyword,binding.nameKind,binding.name,binding.callable))
         throw new TypeError('source closure exports need actual named function declarations or constant function bindings at '+path+':'+token.start);
-      exports.add(binding.name);
+      if(reExports&&exports.has(binding.name))throw new TypeError('named re-exports need unique actual public owners in '+path);
+      exports.add(binding.name);directExports.push(binding.name);
     }
     if (!actual(source, token, 'import')) continue;
     let at = index + 1;
@@ -85,14 +104,18 @@ export function readSourceLibraryModuleFacts(source,path,aliases=false) {
     if (importedNames.has(name) || declarations.has(name)) throw new TypeError('source closure import has a duplicate actual binding '+name+' in '+path);
     importedNames.add(name);
   }
-  return {imports,exports:[...exports],declarations:[...declarations],...([...declarationBindings.values()].some(binding=>binding.kind==='const')?{declarationBindings:[...declarationBindings.values()]}:{})};
+  const facts={imports,exports:[...exports],declarations:[...declarations],...([...declarationBindings.values()].some(binding=>binding.kind==='const'||binding.kind==='class')?{declarationBindings:[...declarationBindings.values()]}:{}),...(reExports?{namedReExports,directExports}:{})};
+  if(classes){const actual=readSourceLibraryClassFacts(source,path,facts);facts.classDeclarations=actual.classes;facts.classUnresolvedNames=actual.unresolvedNames;}
+  return facts;
 }
 
 /** Capture complete named-function modules. The optional CST alias profile
  * keeps original sources and compiles actual lexical owners automatically. */
-export function readSourceLibraryClosure(sourcePath,{aliases=false}={}) {
+export function readSourceLibraryClosure(sourcePath,{aliases=false,classes='',reExports=''}={}) {
   if(typeof aliases!=='boolean')throw new TypeError('source alias composition needs an explicit Boolean');
-  const states = new Map(), captures = [], parts = [];
+  const profileError=readSourceLibraryClassProfileError(classes,true,aliases,true);if(profileError)throw new TypeError(profileError);
+  const reExportError=readSourceLibraryReExportProfileError(reExports,true,aliases);if(reExportError)throw new TypeError(reExportError);
+  const states = new Map(), captures = [], parts = [],active=new Set();
   let bytes = 0;
   function visit(url) {
     const absolute = realpathSync(fileURLToPath(url));
@@ -100,15 +123,15 @@ export function readSourceLibraryClosure(sourcePath,{aliases=false}={}) {
     const path = relative(rootPath, absolute).split(sep).join('/');
     if (path === '..' || path.startsWith('../')) throw new TypeError('source library dependencies must remain in the actual project');
     const previous = states.get(absolute);
-    if (previous) return previous;
+    if (previous){if(classes&&active.has(absolute))throw new TypeError('closed class source composition needs acyclic actual module initialization');return previous;}
     if (states.size >= 128) throw new RangeError('source library closure exceeds 128 actual modules');
     const source = readFileSync(absolute, 'utf8');
     bytes += Buffer.byteLength(source);
     if (bytes > 16 * 1024 * 1024) throw new RangeError('source library closure exceeds 16 MiB');
-    const {imports,exports,declarations,declarationBindings}=readSourceLibraryModuleFacts(source,path,aliases);
-    const capture = {path,source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),removedImports:imports,exports:[...exports],...(declarationBindings?{declarationBindings}:{})};
-    states.set(absolute,capture);
-    for (const imported of imports) {
+    const {imports,exports,declarations,declarationBindings,classDeclarations,classUnresolvedNames,namedReExports,directExports}=readSourceLibraryModuleFacts(source,path,aliases,classes,reExports);
+    const capture = {path,source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),removedImports:imports,exports:[...exports],...(declarationBindings?{declarationBindings}:{}),...(classes?{classDeclarations,classUnresolvedNames}:{}),...(reExports?{removedReExports:namedReExports,directExports}:{})};
+    states.set(absolute,capture);active.add(absolute);
+    for (const imported of [...imports,...(namedReExports??[])]) {
       const dependency = visit(new URL(imported.specifier,url));
       for (const name of imported.names) if (!dependency.exports.includes(name))
         throw new TypeError('source closure import '+name+' has no actual exported owner in '+dependency.path);
@@ -119,28 +142,31 @@ export function readSourceLibraryClosure(sourcePath,{aliases=false}={}) {
     const start = parts.reduce((length,part)=>length+part.length+2,0);
     capture.closureRange = {start,end:start+body.length,coordinateUnit:'UTF-16 code units'};
     capture.declarations = [...declarations];
-    captures.push(capture);parts.push(body);
+    captures.push(capture);parts.push(body);active.delete(absolute);
     return capture;
   }
   const entry=visit(new URL(sourcePath,root));
   if(aliases){
-    const compiled=composeSourceLibraryAliases(captures,entry.path,source=>readSourceLibraryModuleFacts(source,entry.path,true).imports);
+    let compiled=composeSourceLibraryAliases(captures,entry.path,source=>{const facts=readSourceLibraryModuleFacts(source,entry.path,true,classes,reExports);return reExports?facts:facts.imports;},{classes:Boolean(classes),reExports:Boolean(reExports)});
+    if(classes)compiled=compiled.map((source,index)=>finishSourceLibraryClassComposition(captures[index],source,text=>readSourceLibraryModuleFacts(text,captures[index].path,true,classes,reExports)));
     parts.splice(0,parts.length,...compiled);
     let offset=0;
     for(let index=0;index<captures.length;index+=1){captures[index].closureRange={start:offset,end:offset+parts[index].length,coordinateUnit:'UTF-16 code units'};offset+=parts[index].length+2;}
+    if(classes)parts.splice(0,parts.length,...composeSourceLibraryClassDeclarations(captures,[...parts]));
   }
   const source = parts.join('\n\n');
-  return {source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:captures};
+  return {source,bytes:Buffer.byteLength(source),sourceSha256:digest(source),inputs:captures,...(classes?{sourceClasses:classes}:{}),...(reExports?{sourceReExports:reExports}:{})};
 }
 
 /** Retain actual complete definitions for ownership/effect analysis, while
  * excluding accidental cross-module capture introduced by concatenation. */
 export function readSourceLibraryDeclarationOwnership(closure,program) {
+  if(closure.sourceClasses==='closed local class declarations 1')return readSourceLibraryClassOwnership(closure,program);
   if (program.main?.effects.length) throw new TypeError('source dependency closure needs declaration-only modules');
   const owners = new Map(), rows = [];
   for (const [name,entry] of program.declarations) {
     const input = closure.inputs.find(input=>Number.isSafeInteger(entry.span?.start)
-      && entry.span.start >= input.closureRange.start && entry.span.start < input.closureRange.end);
+      && (input.closureRanges??[input.closureRange]).some(range=>entry.span.start>=range.start&&entry.span.start<range.end));
     if (!input || !['fn','data'].includes(entry.k))
       throw new TypeError('source dependency needs a represented declaration owner: '+name);
     const declaredType=entry.k==='data'&&!entry.generated;

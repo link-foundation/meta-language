@@ -56,6 +56,7 @@ pub(in super::super) fn source_completion_kind(node: &SExpr) -> String {
 
 impl RustParser {
     pub(super) fn expr(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        if let Some(value)=self.read_owned_record_effect_assignment(path)?{return Ok(value);}
         self.or(path, options)
     }
 
@@ -63,7 +64,10 @@ impl RustParser {
         let mut left = self.and(path, options)?;
         while self.cursor.is("||") {
             let token = self.cursor.advance();
-            let right = self.and(path, Options::default())?;
+            let before=self.begin_owned_record_short_circuit();
+            let right=self.and(path,Options::default());
+            self.end_owned_record_short_circuit(before);
+            let right=right?;
             left = binary(BinaryOp::Or, left, right, &token);
             self.origins.pointer_integer_expression(&left, path)?;
         }
@@ -74,7 +78,10 @@ impl RustParser {
         let mut left = self.comparison(path, options)?;
         while self.cursor.is("&&") {
             let token = self.cursor.advance();
-            let right = self.comparison(path, Options::default())?;
+            let before=self.begin_owned_record_short_circuit();
+            let right=self.comparison(path,Options::default());
+            self.end_owned_record_short_circuit(before);
+            let right=right?;
             left = binary(BinaryOp::And, left, right, &token);
             self.origins.pointer_integer_expression(&left, path)?;
         }
@@ -449,6 +456,9 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(boxed)=self.read_owned_box_clone(&value,&method,path)? {
+                    value=boxed;continue;
+                }
                 if let Some(sum)=self.read_owned_standard_sum_observer(&value,&method,path)? {
                     value=sum;
                     continue;

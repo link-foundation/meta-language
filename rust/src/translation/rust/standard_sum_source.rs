@@ -287,6 +287,11 @@ impl RustParser {
     }
 
     fn refresh_standard_sum_header_argument(&mut self,origin:&SourceOrigin,rows:&[(String,SourceOrigin)],resolved:&mut HashMap<String,SourceOrigin>,active:&mut HashSet<String>)->Result<SourceOrigin>{
+        if let Some(outer)=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref()).filter(|outer|crate::translation::rust_owned_recursive_datatype_rules::accept_rust_owned_box_type_node(&origin.wrappers,&outer.kind,&outer.path.join("::"),outer.arguments.len() as f64)){
+            let mut child=origin.clone();child.wrappers.remove(0);child.source_owner=Some(outer.arguments[0].clone());child.expanded_source_owner=None;
+            let mut result=self.refresh_standard_sum_header_argument(&child,rows,resolved,active)?;let inner=result.expanded_source_owner.as_ref().or(result.source_owner.as_ref()).cloned().ok_or_else(||failure("the refreshed Box child must retain its actual source owner",None))?;
+            result.wrappers.insert(0,"box".into());result.source_owner=Some(SourceOwner{kind:outer.kind.clone(),path:outer.path.clone(),arguments:vec![inner]});result.expanded_source_owner=None;result.copy_evidence=None;return Ok(result);
+        }
         let entry=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.origins.lookup_type_owner(path,&origin.path),_=>None};
         if let Some(entry)=entry {
             if self.origins.standard_sum_source_origins.contains_key(&entry.full_name){

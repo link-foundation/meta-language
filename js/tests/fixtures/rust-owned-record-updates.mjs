@@ -32,6 +32,14 @@ export const rustOwnedRecordUpdateDecisions=[
  {operation:'readRustOwnedRecordUpdateError',arguments:['copy',true,0,2,2],expected:''},
  {operation:'readRustOwnedRecordUpdateError',arguments:['owned',false,0,2,2],expected:'an owned record update needs its actual destructor-free struct and complete field layout'},
  {operation:'readRustOwnedRecordUpdateError',arguments:['owned',true,1,2,2],expected:'an owned record update needs its actual destructor-free struct and complete field layout'},
+ {operation:'testRustOwnedRecordFieldCopy',arguments:[true,true,[]],expected:true},
+ {operation:'testRustOwnedRecordFieldCopy',arguments:[true,false,['reference']],expected:true},
+ {operation:'testRustOwnedRecordFieldCopy',arguments:[true,false,['reference','box']],expected:true},
+ {operation:'testRustOwnedRecordFieldCopy',arguments:[true,true,['box']],expected:false},
+ {operation:'testRustOwnedRecordFieldCopy',arguments:[false,true,[]],expected:false},
+ {operation:'readRustOwnedRecordFieldMode',arguments:[true,true],expected:'copied value'},
+ {operation:'readRustOwnedRecordFieldMode',arguments:[false,true],expected:'borrowed place'},
+ {operation:'readRustOwnedRecordFieldMode',arguments:[false,false],expected:'owned place'},
 ];
 export const rustOwnedRecordUpdateOriginals=[
  // Identical historical refused input, retained unchanged as a positive.

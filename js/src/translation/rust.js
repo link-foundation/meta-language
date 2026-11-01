@@ -10,6 +10,7 @@ import {readRustStandardSumSourcePredicate} from './rust-standard-sum-predicates
 import {readRustStandardSumSourceNested} from './rust-standard-sum-nested.js';
 import {readRustStandardSumSourceCombinator} from './rust-standard-sum-combinators.js';
 import {isRustOwnedStandardSumValue} from './rust-standard-sum-ownership.js';
+import {createRustOwnedBoxConstructor,readRustOwnedBoxClone,checkRustOwnedBoxSourceType,checkRustOwnedContainerSourceDepth} from './rust-owned-containers.js';
 import {readRustStandardSumOwnedGuardError} from './rust-standard-sum-ownership-rules.js';
 import {deferRustStandardSumGuard} from './rust-standard-sum-guards.js';
 import {readRustOwnedStandardSumObserver} from './rust-owned-standard-sum-observers.js';
@@ -82,6 +83,7 @@ import { planTuplePatternFields, readRustLetElseInitializerError } from './rust-
 import { readRustConditionalPattern } from './rust-pattern-conditions.js';
 import {hasRustConditionalChain,readRustConditionalChain,lowerRustGuardedMatch} from './rust-conditional-chains.js';
 import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
+import {readRustOwnedRecordEffectExpression,beginRustOwnedRecordShortCircuit,endRustOwnedRecordShortCircuit,finishRustOwnedRecordEffects} from './rust-owned-record-effects.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
@@ -280,6 +282,7 @@ class RustParser {
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.namedRecords = new Map();
     this.inherentOwner = null;
+    this.declarationSelfOwner = null;
     this.inherentMethods = new Map();
     this.inherentDiscovery = catalog === null && tokens.some(token => token.kind === 'identifier' && token.value === 'impl');
     this.hasRecordDeclarations = tokens.some(token => token.kind === 'identifier' && token.value === 'struct');
@@ -312,7 +315,8 @@ class RustParser {
     finishRustEmptyOptionSource(this,root);
     finishRustPureUnitSource(this,root);
     finishRustSharedArrayHandleSource(this,root);
-    const program={ language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
+    let program={ language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
+    program=finishRustOwnedRecordEffects(this,program);
     refuseRustStandardSumPrivateCompletions(program);
     if(!this.origins.collecting)refuseRustStandardSumSourcePatterns(program);
     return program;
@@ -538,6 +542,12 @@ class RustParser {
   }
 
   enumItem(path,derivations=[]) {
+    const previous=this.declarationSelfOwner;
+    if(this.origins.ownedContainerSourceEnabled)this.declarationSelfOwner={path:[...path,this.cursor.peek(1).value],modulePath:[...path]};
+    try{return this.enumDeclaration(path,derivations);}finally{this.declarationSelfOwner=previous;}
+  }
+
+  enumDeclaration(path,derivations=[]) {
     const c = this.cursor;
     const start = c.next();
     const name = c.identifier('enum').value;
@@ -587,6 +597,7 @@ class RustParser {
    * is immutable.
    */
   type() {
+    checkRustOwnedContainerSourceDepth(this,this.sourceOwnerFrames.length+1,span(this.cursor.peek(),this.cursor.peek()));
     splitRustReferenceToken(this);
     // Actual source owners also prove readonly method dispatch. Capturing a
     // public source-signature facet remains opt-in, independently of this fact.
@@ -604,6 +615,7 @@ class RustParser {
       this.origins.type.primitiveOwnerPosition=this.origins.type.expandedSourceOwner?this.origins.type.primitiveOwnerPosition??position:position;
       const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:this.origins.type.expandedSourceOwner??readRustSourceTypeOwner(this, head, children, result);
       this.origins.type.sourceOwner = owner;
+      checkRustOwnedBoxSourceType(this,this.origins.type,span(this.cursor.tokens[Math.max(0,this.cursor.index-1)],this.cursor.peek()));
       this.origins.type.namespaceSpelling = !['&', '('].includes(head[0]) ? [...head]
         : namespaceChildren.length === 1 && !head.includes('[') ? [...namespaceChildren[0]]
           : head[0] === '&' && !head.includes('[') ? ['str'] : [];
@@ -727,6 +739,7 @@ class RustParser {
       const result = this.origins.typed(inner, this.origins.type.path, ['box', ...this.origins.type.wrappers], this.origins.type.fields, this.origins.type.textSourceModel);
       if (lifetimes) this.origins.type.sourceLifetimes = lifetimes;
       if (arraySourceModel) this.origins.type.arraySourceModel = arraySourceModel;
+      if(this.origins.ownedContainerSourceEnabled)this.origins.type.copyEvidence=false;
       return result;
     }
     if (c.is('<')) throw unsupported(`type ${name}<…>`, 'generic types are outside the portable core', span(token, c.peek()));
@@ -1318,14 +1331,15 @@ class RustParser {
 
   /** Expressions, by Rust precedence. */
   expr(path, options = {}) {
-    return this.or(path, options);
+    return readRustOwnedRecordEffectExpression(this,path,options,()=>this.or(path,options));
   }
 
   or(path, options) {
     let left = this.and(path, options);
     while (this.cursor.is('||')) {
       const token = this.cursor.next();
-      const right = this.and(path, {});
+      const before=beginRustOwnedRecordShortCircuit(this);let right;
+      try{right=this.and(path,{});}finally{endRustOwnedRecordShortCircuit(this,before);}
       left = { k: 'binary', op: 'or', left, right, span: joined(left, right, token) };
       this.origins.pointerIntegerExpression(left,path);
     }
@@ -1336,7 +1350,8 @@ class RustParser {
     let left = this.comparison(path, options);
     while (this.cursor.is('&&')) {
       const token = this.cursor.next();
-      const right = this.comparison(path, {});
+      const before=beginRustOwnedRecordShortCircuit(this);let right;
+      try{right=this.comparison(path,{});}finally{endRustOwnedRecordShortCircuit(this,before);}
       left = { k: 'binary', op: 'and', left, right, span: joined(left, right, token) };
       this.origins.pointerIntegerExpression(left,path);
     }
@@ -1489,6 +1504,8 @@ class RustParser {
           continue;
         }
         const method = c.identifier('method');
+        const ownedBoxClone=readRustOwnedBoxClone(this,value,method,path);
+        if(ownedBoxClone){value=ownedBoxClone;continue;}
         const ownedStandardSumObserver=readRustOwnedStandardSumObserver(this,value,method,path);
         if(ownedStandardSumObserver){value=ownedStandardSumObserver;continue;}
         const standardSumClone=readRustStandardSumClone(this,value,method,path);
@@ -1840,6 +1857,7 @@ class RustParser {
         if(this.localValueStateModel&&!acceptRustOwnedLocalSourceOperation('box construction'))throw unsupported('Rust owned local state','Box allocation requires a separate source ownership interpretation',range);
         if (args.length !== 1) throw new TranslationError('type', 'Box::new expects 1 argument', range);
         this.origins.box(segments.slice(0, -1), resolvedOwner, path, range);
+        if(this.origins.ownedContainerSourceEnabled)return createRustOwnedBoxConstructor(this,args[0],resolvedOwner,path,range);
         return this.origins.wrap(args[0], path, 'box');
       }
       if (name === 'String::from'||segments.at(-1)==='from'&&readRustTypeAliasStringMemberOwner(this,segments,path)) {

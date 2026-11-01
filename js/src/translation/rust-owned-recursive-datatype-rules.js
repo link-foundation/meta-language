@@ -2,6 +2,7 @@
 // No Copy implementation or runtime producer follows from this type profile.
 import {readRequiredNumberFact,readRequiredTextFact,readRequiredBooleanFact} from './fact-column-rules.js';
 import {planRustNominalOwnershipOwners,readRustNominalOwnershipGraphError} from './rust-nominal-ownership-rules.js';
+import {acceptRustPrimitiveFromSource} from './rust-primitive-from-rules.js';
 /** @param {string[]} owners @param {boolean[]} copies @param {boolean[]} clones
  * @param {string[]} kinds @param {number[]} ends @param {number[]} edges
  * @param {number[]} targets @param {number[]} roots @param {boolean[]} leaves
@@ -15,7 +16,7 @@ export function planRustOwnedRecursiveNominalOwners(owners,copies,clones,kinds,e
  // Source Rust requires every infinite-size cycle to cross actual Box/Vec.
  // The emitter's independent indirection is never evidence for this property.
  for(let owner=0;owner<size;owner+=1){work+=count;if(work>1048576)return ['error','recursive datatype reasoning exceeds its finite source profile'];const pending=[readRequiredNumberFact(roots,owner)],seen=[];for(let at=0;at<count;at+=1)seen.push(false);
-  while(pending.length){if(++work>1048576)return ['error','recursive datatype reasoning exceeds its finite source profile'];const at=readRequiredNumberFact(pending,pending.length-1);pending.pop();if(readRequiredBooleanFact(seen,at))continue;seen[at]=true;const kind=readRequiredTextFact(kinds,at),target=readRequiredNumberFact(targets,at);if(target>=0){if(target===owner){eligible[owner]=false;break;}pending.push(readRequiredNumberFact(roots,target));continue;}if(kind==='box'||kind==='vector'||kind==='pending vector')continue;const start=at===0?0:readRequiredNumberFact(ends,at-1);for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)pending.push(readRequiredNumberFact(edges,edge));}
+  while(pending.length){if(++work>1048576)return ['error','recursive datatype reasoning exceeds its finite source profile'];const at=readRequiredNumberFact(pending,pending.length-1);pending.pop();if(readRequiredBooleanFact(seen,at))continue;seen[at]=true;const kind=readRequiredTextFact(kinds,at),target=readRequiredNumberFact(targets,at);if(target>=0){if(target===owner)return ['error','a recursive source datatype size cycle needs an actual Box or Vec indirection'];pending.push(readRequiredNumberFact(roots,target));continue;}if(kind==='box'||kind==='vector'||kind==='pending vector')continue;const start=at===0?0:readRequiredNumberFact(ends,at-1);for(let edge=start;edge<readRequiredNumberFact(ends,at);edge+=1)pending.push(readRequiredNumberFact(edges,edge));}
  }
  let changed=true;
  while(changed){changed=false;const safe=[];
@@ -79,3 +80,44 @@ export function readRustOwnedBoxMoveError(tracking,available,produced){return tr
 export function acceptRustOwnedNominalVectorElement(role,closed){return role==='owned'&&closed;}
 /** @param {boolean} ordinary @param {number} minor @returns {boolean} */
 export function acceptRustOwnedContainerSource(ordinary,minor){return ordinary&&Number.isInteger(minor)&&minor>=90&&minor<100;}
+/** Canonical actual primitive owners prove their language traits directly;
+ * no guessed Copy boolean is passed through the old leaf admission gate.
+ * @param {string} kind @param {string} bits @param {boolean} signed
+ * @param {boolean} proven @param {string} owner @param {string} path
+ * @param {number} arguments_ @param {string} model @returns {string} */
+export function readRustOwnedContainerLeafRole(kind,bits,signed,proven,owner,path,arguments_,model){if(!proven)return '';if(acceptRustPrimitiveFromSource(kind,bits,signed,owner,path,arguments_,proven,0)||kind==='unit'&&owner==='unit'&&path===''&&arguments_===0)return 'copy';return kind==='string'&&owner==='library'&&['std::string::String','alloc::string::String'].includes(path)&&arguments_===0&&model==='owned string'?'owned':'';}
+/** @param {string} kind @param {boolean} actualCopy @returns {boolean} */
+export function acceptRustOwnedBoxIntrinsicCopyValue(kind,actualCopy){return ['num','bool','unit','str'].includes(kind)||kind==='tuple'&&actualCopy;}
+/** @param {string[]} wrappers @param {string[]} owners @returns {boolean} */
+export function acceptRustOwnedBoxValueLayers(wrappers,owners){return wrappers.length>0&&readRequiredTextFact(wrappers,0)==='box'&&owners.length>0&&owners.length<=256&&owners.length<=wrappers.length&&owners.every(owner=>['std::boxed::Box','alloc::boxed::Box'].includes(owner));}
+/** @param {string} kind @param {string} owner @param {string} path @param {number} arguments_ @returns {string} */
+export function readRustOwnedContainerChildModel(kind,owner,path,arguments_){return owner==='library'&&kind==='string'&&['std::string::String','alloc::string::String'].includes(path)&&arguments_===0?'owned string':owner==='library'&&kind==='array'&&['std::vec::Vec','alloc::vec::Vec'].includes(path)&&arguments_===1?'owned vector':'';}
+/** Semantic runtime projection events are identical across hosts. The fixed
+ * origin event conservatively includes bounded scalar binding/span flags.
+ * @param {string} role @param {number} units @returns {number[]} */
+export function readRustOwnedContainerRuntimeMetadataCost(role,units){if(!Number.isInteger(units)||units<0||units>8388608||!['origin','list','binding','layer','owner','intrinsic copy','payload loans','payload field loans','value loans','value field loans','place loans','loans','temporary loans'].includes(role))return [];return role==='origin'?[16,256+units]:[1,role.length+units];}
+/** @param {boolean} actual @param {boolean} clone @param {boolean} readonly
+ * @param {boolean} closed @param {boolean} available @param {boolean} produced
+ * @returns {string} */
+export function readRustOwnedBoxCloneError(actual,clone,readonly,closed,available,produced){return !actual||!clone?'Box Clone needs its actual admitted payload Clone implementation':readonly&&!closed?'a borrowed Box Clone needs its closed payload lifetime projection':readonly||available||produced?'':'Box Clone needs its actual available source value or actual producer';}
+/** @param {string[]} wrappers @param {string[]} owners @param {boolean[]} copied @returns {boolean} */
+export function acceptRustOwnedBoxLayerClone(wrappers,owners,copied){if(!acceptRustOwnedBoxValueLayers(wrappers,owners)||owners.length!==copied.length)return false;for(let at=0;at<owners.length;at+=1){if(readRequiredTextFact(wrappers,at)!=='box')return false;if(readRequiredBooleanFact(copied,at))return true;}return false;}
+/** @param {string[]} wrappers @param {number} lifetimes @param {string} owner
+ * @param {string} path @param {number} arguments_ @param {number} boxes
+ * @returns {boolean} */
+export function acceptRustOwnedStandardSumBoxPayload(wrappers,lifetimes,owner,path,arguments_,boxes){return acceptRustOwnedBoxTypeNode(wrappers,owner,path,arguments_)&&wrappers.every(layer=>layer==='box')&&lifetimes===0&&Number.isInteger(boxes)&&boxes===wrappers.length;}
+/** @param {string} role @returns {boolean} */
+export function acceptRustOwnedContainerValueLoanRole(role){return ['value loans','value field loans','payload loans','payload field loans'].includes(role);}
+/** @param {boolean} closed @param {boolean} intrinsic @param {boolean} borrowed
+ * @param {boolean} produced @returns {string} */
+export function readRustOwnedBoxPayloadError(closed,intrinsic,borrowed,produced){return closed||(intrinsic||produced)&&!borrowed?'':'stored Box payload references or callable captures need their complete lifetime/drop profile';}
+/** @param {number} wrappers @param {number} layers @returns {string} */
+export function readRustOwnedContainerDepthError(wrappers,layers){return !Number.isInteger(wrappers)||!Number.isInteger(layers)||wrappers<0||layers<0||wrappers>256||layers>256?'owned container source syntax and value lineage exceed their finite depth profile':'';}
+/** @param {string} kind @param {boolean[]} children @param {boolean} nominal @returns {boolean} */
+export function acceptRustOwnedContainerClosed(kind,children,nominal){return kind==='copy'||kind==='string'||kind==='named'&&nominal||['box','vector','tuple','option','result'].includes(kind)&&children.every(value=>value);}
+/** @param {boolean} selected @param {boolean} header @param {boolean} complete
+ * @param {string} role @param {boolean} closed @returns {string} */
+export function readRustOwnedBoxTypeError(selected,header,complete,role,closed){return !selected||header||!complete||role==='owned'&&closed?'':'an owned Box source type needs its complete closed payload ownership graph';}
+/** @param {boolean} actual @param {boolean} function_ @param {boolean} owner
+ * @param {boolean} type @param {boolean} recorded @returns {boolean} */
+export function acceptRustOwnedBoxCallResult(actual,function_,owner,type,recorded){return actual&&function_&&owner&&type&&recorded;}
