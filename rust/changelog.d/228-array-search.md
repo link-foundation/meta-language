@@ -30,3 +30,6 @@ retaining suspended effects and publishing monotonic shared program updates.
 
 Draft shared object binding/rest initialization for parameters and lexical
 declarations, including empty-pattern coercibility, defaults and own-key exclusions.
+
+Draft computed object binding keys with held String/Symbol keys shared between
+field access and rest exclusion, preserving key and default evaluation order.

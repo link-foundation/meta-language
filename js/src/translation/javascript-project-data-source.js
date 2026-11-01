@@ -204,8 +204,10 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     const owner=declared(tokens[a+1]);if(!classProfile||rest!==undefined||b!==close||values[close-1]===','||b!==a+2||tokens[a+1]?.kind!=='identifier'||!owner||owner.kind!==kind)fail('object rest retains one final actual identifier binding without an initializer');
     rest=owner.identity;if(kind==='parameter')initializingParameters.add(rest);continue;
    }
-   const key=tokens[a],position=values[a+1]===':'?a+2:a,owner=declared(tokens[position]);if(!['identifier','string'].includes(key.kind)||!owner||owner.kind!==kind||position>=b||b>position+1&&values[position+1]!=='=')fail('source object bindings need actual fixed field keys, binding aliases and optional defaults');
-   const hasDefault=b>position+1,defaultValue=hasDefault?inferArrowName(expression(tokens.slice(position+2,b)),owner.name):absent();fields.push({$:'errorParameterField',identity:owner.identity,key:key.stringUnits??units(key.value),hasDefault,value:defaultValue});if(kind==='parameter')initializingParameters.add(owner.identity);
+   const key=tokens[a],computed=key.value==='[',keyEnd=computed?findJavaScriptClassGroupEnd(values,a):-1;
+   if(computed&&(!classProfile||keyEnd<0||keyEnd+2>=b||values[keyEnd+1]!==':'))fail('computed object binding keys retain their complete key expression and actual alias');
+   const position=computed?keyEnd+2:values[a+1]===':'?a+2:a,owner=declared(tokens[position]);if(!computed&&!['identifier','string'].includes(key.kind)||!owner||owner.kind!==kind||position>=b||b>position+1&&values[position+1]!=='=')fail('source object bindings need actual field keys, binding aliases and optional defaults');
+   const keyExpression=computed?expression(tokens.slice(a+1,keyEnd)):undefined,hasDefault=b>position+1,defaultValue=hasDefault?inferArrowName(expression(tokens.slice(position+2,b)),owner.name):absent();fields.push({$:'errorParameterField',identity:owner.identity,key:computed?[]:key.stringUnits??units(key.value),hasDefault,value:defaultValue,...(computed?{keyExpression}:{})});if(kind==='parameter')initializingParameters.add(owner.identity);
   }
   if(fields.length===0&&rest===undefined&&!classProfile)fail('empty object binding patterns require their explicit coercibility operation');
   return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault:false,value:absent(),...(rest===undefined?{}:{rest})};

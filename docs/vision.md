@@ -12224,3 +12224,9 @@ TypeError without property access; exact engine diagnostic text remains an
 explicit version-qualified compatibility obligation. See the normative
 [coercibility operation](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-requireobjectcoercible)
 and [rest binding initialization](https://tc39.es/ecma262/2026/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-restbindinginitialization).
+
+Computed object binding keys complete ToPropertyKey in source order before the
+associated Get/default. The converted String or Symbol identity is retained in
+an immutable binding and reused for rest exclusion, even when later defaults
+mutate the original key expression's bindings. Key expressions are never replayed
+while copying rest properties.

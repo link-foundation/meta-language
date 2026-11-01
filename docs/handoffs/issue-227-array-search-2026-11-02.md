@@ -285,3 +285,14 @@ other value categories and wrong arity. No assertion executed.
 Computed/nested object patterns, array/rest iterators, general TDZ cells and exact
 engine nullish-pattern diagnostics remain further work. Generated products and
 source-register reconciliation remain deferred, as do all tests and compilation.
+
+
+### Computed object binding key draft
+
+The shared reader/lowerer now admits actual computed binding keys with explicit
+aliases. Each key expression completes the existing ToPropertyKey protocol once;
+an immutable internal binding retains the converted key for both Get and rest
+exclusion. Four further originals cover earlier-parameter keys, later defaults
+mutating the key binding, genuine well-known Symbol identities, and a counted
+key expression. These are authored inputs only. Nested patterns, array iterators
+and exact engine diagnostics still require further drafting; no tests ran.

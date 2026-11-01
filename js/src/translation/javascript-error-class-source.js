@@ -33,7 +33,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorObjectProperty',key:number[],value:JavaScriptErrorExpression} | {$:'errorComputedObjectProperty',key:JavaScriptErrorExpression,value:JavaScriptErrorExpression} | {$:'errorObjectSpread',input:JavaScriptErrorExpression}} JavaScriptErrorObjectProperty */
 /** @typedef {{$:'errorArrayElement',index:number,value:JavaScriptErrorExpression}} JavaScriptErrorArrayElement */
 /** @typedef {{$:'errorTemplateText',units:number[]} | {$:'errorTemplateValue',value:JavaScriptErrorExpression}} JavaScriptErrorTemplatePart */
-/** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression}} JavaScriptErrorParameterField */
+/** @typedef {{$:'errorParameterField',identity:number,key:number[],hasDefault:boolean,value:JavaScriptErrorExpression,keyExpression?:JavaScriptErrorExpression}} JavaScriptErrorParameterField */
 /** @typedef {{$:'errorRequiredParameter',identity:number} | {$:'errorDefaultParameter',identity:number,value:JavaScriptErrorExpression} | {$:'errorObjectParameter',identity:number,hasDefault:boolean,value:JavaScriptErrorExpression,fields:JavaScriptErrorParameterField[],rest?:number}} JavaScriptErrorParameter */
 /** @typedef {{$:'sourceObjectBindingStatement',pattern:JavaScriptErrorParameter,value:JavaScriptErrorExpression,mutable:boolean} | {$:'sourceConstStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceMutableStatement',identity:number,value:JavaScriptErrorExpression} | {$:'sourceExpressionStatement',value:JavaScriptErrorExpression} | {$:'sourceReturnStatement',value:JavaScriptErrorExpression} | {$:'sourceThrowStatement',value:JavaScriptErrorExpression} | {$:'sourceIfStatement',condition:JavaScriptErrorExpression,yes:JavaScriptSourceStatement[],no:JavaScriptSourceStatement[]} | {$:'sourceBlockStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceDeclarationGroupStatement',statements:JavaScriptSourceStatement[]} | {$:'sourceWhileStatement',condition:JavaScriptErrorExpression,body:JavaScriptSourceStatement[],target?:number,update?:JavaScriptErrorExpression,postTest?:boolean} | {$:'sourceControlBlockStatement',target:number,body:JavaScriptSourceStatement[]} | {$:'sourceControlJumpStatement',target:number,continuing:boolean} | {$:'sourceSwitchStatement',target:number,value:JavaScriptErrorExpression,clauses:JavaScriptSourceSwitchClause[]}} JavaScriptSourceStatement */
 /** @typedef {{$:'sourceCaseStatement',value:JavaScriptErrorExpression,body:JavaScriptSourceStatement[]} | {$:'sourceDefaultStatement',body:JavaScriptSourceStatement[]}} JavaScriptSourceSwitchClause */
@@ -247,16 +247,25 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
 export function lowerJavaScriptSourceObjectBinding(parameter,first,continuation,mutable){
  if(parameter.$!=='errorObjectParameter')return refuseJavaScriptErrorSource(first,'object binding retains its actual object pattern');
  let context=first,source=continuation;
-    if(parameter.rest!==undefined){
-     const input={$:'sourceBinding',identity:parameter.identity},excluded=parameter.fields.map(field=>constructJavaScriptErrorConstant({$:'text',units:field.key}));
-     const value={$:'sourceObject',prototype:constructJavaScriptErrorConstant(context.realm.objectPrototype),realm:context.realm.realm,properties:[{$:'sourceObjectSpread',input,excluded}]};
-     source=constructJavaScriptErrorLocalBinding(context,parameter.rest,value,source,mutable);
-    }
-    for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){const field=parameter.fields[fieldAt];if(field===undefined)continue;const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},constructJavaScriptErrorConstant({$:'text',units:field.key}),context);
-     if(field.hasDefault){const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};source=constructJavaScriptErrorLocalBinding(context,identity,raw,constructJavaScriptErrorLocalBinding(context,field.identity,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:saved,right:constructJavaScriptErrorConstant({$:'undefined'})},yes:value.source,no:saved},source,mutable),false);}
-     else source=constructJavaScriptErrorLocalBinding(context,field.identity,raw,source,mutable);
-    }
-    {const identity=context.next;context={...context,next:identity+1};source=constructJavaScriptErrorLocalBinding(context,identity,{$:'sourcePrimitive',operation:'require object coercible',arguments:[{$:'sourceBinding',identity:parameter.identity}]},source,false);}
+ const keys=[];
+ for(const field of parameter.fields){
+  if(field.keyExpression===undefined)keys.push({source:constructJavaScriptErrorConstant({$:'text',units:field.key}),identity:-1});
+  else{const identity=context.next;context={...context,next:identity+1};keys.push({source:{$:'sourceBinding',identity},identity});}
+ }
+ if(parameter.rest!==undefined){
+  const input={$:'sourceBinding',identity:parameter.identity},excluded=keys.map(key=>key.source),value={$:'sourceObject',prototype:constructJavaScriptErrorConstant(context.realm.objectPrototype),realm:context.realm.realm,properties:[{$:'sourceObjectSpread',input,excluded}]};
+  source=constructJavaScriptErrorLocalBinding(context,parameter.rest,value,source,mutable);
+ }
+ for(let fieldAt=parameter.fields.length-1;fieldAt>=0;fieldAt--){
+  const field=parameter.fields[fieldAt],key=keys[fieldAt];if(field===undefined||key===undefined)continue;
+  const raw=constructJavaScriptErrorPropertyRead({$:'sourceBinding',identity:parameter.identity},key.source,context);
+  if(field.hasDefault){
+   const value=lowerJavaScriptErrorExpression(field.value,context,0),identity=value.context.next;context={...value.context,next:identity+1};const saved={$:'sourceBinding',identity};
+   source=constructJavaScriptErrorLocalBinding(context,identity,raw,constructJavaScriptErrorLocalBinding(context,field.identity,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:saved,right:constructJavaScriptErrorConstant({$:'undefined'})},yes:value.source,no:saved},source,mutable),false);
+  }else source=constructJavaScriptErrorLocalBinding(context,field.identity,raw,source,mutable);
+  if(field.keyExpression!==undefined){const value=lowerJavaScriptErrorExpression(field.keyExpression,context,0);context=value.context;source=constructJavaScriptErrorLocalBinding(context,key.identity,{$:'sourcePropertyKey',input:value.source,realm:context.realm.realm},source,false);}
+ }
+ {const identity=context.next;context={...context,next:identity+1};source=constructJavaScriptErrorLocalBinding(context,identity,{$:'sourcePrimitive',operation:'require object coercible',arguments:[{$:'sourceBinding',identity:parameter.identity}]},source,false);}
  return {$:'errorSourceExpression',source,context};
 }
 /** Shared ordered initialization for ordinary functions, methods and arrows.
