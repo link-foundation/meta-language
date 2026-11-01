@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-object-integrity.js',moduleName:'javascript_object_integrity',model:'Actual own-property SameValue and resumable ordinary Object integrity operations 1',programAsset:'javascript-object-integrity-program'},
  {sourcePath:'js/src/translation/javascript-own-enumeration.js',moduleName:'javascript_own_enumeration',model:'Actual own enumerable property key value entry Lists and Array allocation 1',programAsset:'javascript-own-enumeration-program'},
  {sourcePath:'js/src/translation/javascript-array-mutation-call-source.js',moduleName:'javascript_array_mutation_call_source',model:'Actual Array push pop ordinary property and Call argument bytecode 1',programAsset:'javascript-array-mutation-call-source-program'},
  {sourcePath:'js/src/translation/javascript-function-names.js',moduleName:'javascript_function_names',model:'Actual converted property key and Symbol description Function name assembly 1',programAsset:'javascript-function-names-program'},
@@ -189,6 +190,7 @@ const consumers=[
  'js/tests/translation-javascript-array-mutations.test.js',
  'js/tests/translation-javascript-property-operators.test.js',
  'js/tests/translation-javascript-object-enumeration.test.js',
+ 'js/tests/translation-javascript-object-integrity.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

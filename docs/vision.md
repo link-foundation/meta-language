@@ -57,6 +57,17 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Object.hasOwn checks source coercibility before key conversion and observes only
+own descriptors, including String indexed properties and its nonenumerable length.
+Object.is uses the common SameValue relation. Integrity operations preserve
+modern primitive behavior: primitives are nonextensible and already sealed/
+frozen, while freeze/seal/preventExtensions return them unchanged. Ordinary
+Object mutations prevent extension first, snapshot own keys, then change one
+descriptor per resumable step. Seal clears configurability; freeze also clears
+data writability while retaining accessor functions and internal collection
+slots. Tests of integrity inspect descriptors without invoking getters. Opaque/
+Proxy extensibility and descriptor traps need explicit protocol extensions.
+
 Object keys/values/entries snapshot actual own-key order, exclude Symbols and
 check each current own descriptor's enumerability. Keys never Get a selected
 property; values/entries invoke the selected actual getter once. Getter mutation

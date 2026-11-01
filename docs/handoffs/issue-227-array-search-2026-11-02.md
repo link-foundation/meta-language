@@ -1010,3 +1010,27 @@ target variables unset and --project-owned-only --no-preflight --no-docker.
 It reported 510.2 KiB before/after, zero removed and zero reclaimed; its receipt
 is retained under .git/meta-language-cache. No dependencies, worktrees, workload
 clones, builds or generated artifacts were created. Disk last showed 71 GiB free.
+
+### Object own-property/SameValue/integrity source draft
+
+`javascript-object-integrity.js` drafts Object.hasOwn/is and the six integrity
+operations through the shared heap. HasOwn performs coercibility before key
+conversion, supports actual own descriptors and String indices/length, and never
+substitutes prototype presence. SameValue preserves NaN/negative-zero/Object
+identity behavior. Modern primitive integrity behavior returns primitives
+unchanged and reports their nonextensible/sealed/frozen state. Ordinary mutations
+prevent extension, snapshot keys and change one descriptor per step. Seal keeps
+data writable; freeze clears data writability while retaining accessor functions
+and mutable Map/Set internal slots. Opaque protocols remain explicit boundaries.
+
+The protected Object directory, bytecode, pending/source validation, step/result/
+error paths and automatic source policy inputs are authored together. Ten
+originals cover own versus inherited fields, String metadata, nullish/key order,
+SameValue, frozen/sealed writes, retained setters, Array deletion, Map internals
+and primitive integrity. Five deferred controls cover descriptor step ordering,
+primitive behavior, own keys/SameValue, Map state and hasOwn key ordering.
+
+Source review also corrected enumeration validation/control code to use the
+existing readJavaScriptArrayLength descriptor helper: Array length is an own
+descriptor, not a separate record field. All fixture inputs/expectations remain.
+No execution, compilation, generation or validation ran.

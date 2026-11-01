@@ -65,6 +65,9 @@ accessor-free presence, optional deletion and actual operand evaluation order.
 Draft Object keys/values/entries with shared own-property snapshots, actual
 getter continuations, UTF16 String keys and genuine entry/result Array creation.
 
+Draft Object.hasOwn/is and resumable freeze/seal/extensibility operations,
+preserving accessor functions, primitive behavior and collection internal slots.
+
 Draft Array species selection with real getter effects, foreign-realm rules,
 private declaration-based constructor facts and explicit construction/allocation
 requests. Authenticated source units extend facts dynamically; map/filter target
