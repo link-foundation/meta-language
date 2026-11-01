@@ -12285,3 +12285,12 @@ replay uses the same translated machine and identity allocation protocol.
 Base constructor receiver/prototype proofs apply at construction entry. An
 active constructor retains its actual allocated receiver without imposing an
 immutable prototype invariant after source code can legally mutate it.
+
+Array literal spread delegates acquisition and advancement to the shared
+synchronous iterator protocol. It creates actual own indexed data properties
+without inherited setter dispatch and retains each completed value across
+property resource suspension. It propagates IteratorStepValue failures directly,
+as specified by [ArrayAccumulation](https://tc39.es/ecma262/2026/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-arrayaccumulation),
+without inserting an extra iterator return call. Accumulation indices remain
+exact within the declared safe-coordinate resource profile. Primitive iterator
+method reads retain their actual receiver and key as explicit protocol requests.

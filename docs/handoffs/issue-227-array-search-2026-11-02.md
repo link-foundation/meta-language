@@ -402,3 +402,18 @@ initial constructor entry proof remains. No checks executed, generated products
 were not edited, and no CI feedback was reviewed. Primitive boxing, String
 iterator builtins and structured iterator consumer unwinding for spread, array
 patterns and for-of remain required further source connections.
+
+
+### Shared Array spread accumulation kernel draft
+
+`javascript-array-spread.js` composes the common synchronous iterator protocol
+with shared indexed own-data creation. It holds each completed value across
+property storage refusal and resumes writing before another next call. Cached
+next, actual receiver/key identity, direct iteration throws and primitive Get
+requests remain intact. It does not inject IteratorClose where the normative
+ArrayAccumulation algorithm propagates IteratorStepValue failure directly.
+Independent target/index validation precedes getter/call effects. Five authored
+controls cover actual accumulation/index completion, cached next mutation, throw
+without return, primitive/target boundaries and held-write resource retry. Source
+library/native control inputs are registered. VM instructions and source literal
+composition are the next connections; no generation or tests ran.

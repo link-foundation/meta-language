@@ -48,3 +48,6 @@ continuations, reusing shared entry/result allocation and native generation inpu
 
 Draft protected Array iterator builtin linkage and resumable VM integration,
 including result allocation and source release during exception unwinding.
+
+Draft Array spread accumulation through shared iterator continuations and own
+indexed writes, retaining completed values across storage resource suspension.

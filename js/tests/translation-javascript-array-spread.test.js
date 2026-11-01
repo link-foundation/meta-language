@@ -1,0 +1,26 @@
+// Deferred ArrayAccumulation controls. No represented body runs on import.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {beginJavaScriptArraySpread,stepJavaScriptArraySpread,resumeJavaScriptArraySpread} from '../src/translation/javascript-array-spread.js';
+import {allocateJavaScriptArray} from '../src/translation/javascript-arrays.js';
+import {insertJavaScriptOrdinaryObject,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from '../src/translation/javascript-ordinary-heap.js';
+const object=(identity,callable=false)=>({$:'object',identity,callable}),number=value=>({$:'number',value}),absent={$:'undefined'},symbol={$:'symbol',identity:99n},text=value=>({$:'text',units:Array.from(value,ch=>ch.charCodeAt(0))}),normal=value=>({$:'normalCompletion',value});
+function data(heap,id,key,value){return defineJavaScriptOrdinaryProperty(heap,id,typeof key==='string'?text(key):key,createJavaScriptOrdinarySetDescriptor(value,true)).heap;}
+function setup(){let heap={$:'ordinaryHeap',objects:[],symbols:[99n]};for(const id of [1n,3n,4n,5n,6n,7n,8n])heap=insertJavaScriptOrdinaryObject(heap,id,{$:'null'}).heap;heap={...heap,objects:heap.objects.map(row=>[4n,6n].includes(row.identity)?{...row,callable:true}:row)};heap=allocateJavaScriptArray(heap,2n,object(1n),0).heap;heap=data(heap,3n,symbol,object(4n,true));heap=data(heap,5n,'next',object(6n,true));heap=data(heap,7n,'done',{$:'boolean',value:false});heap=data(heap,7n,'value',number(7));heap=data(heap,8n,'done',{$:'boolean',value:true});return heap;}
+function advance(transition){let current=transition;for(let at=0;at<64&&current.$==='arraySpreadContinue';at++)current=stepJavaScriptArraySpread(current.heap,current.state);assert.notEqual(current.$,'arraySpreadContinue');return current;}
+function firstNext(heap){const method=advance(beginJavaScriptArraySpread(heap,object(2n),object(3n),0,symbol));assert.equal(method.$,'arraySpreadCall');assert.deepEqual(method.callee,object(4n,true));return advance(resumeJavaScriptArraySpread(method.heap,method.state,normal(object(5n)),false));}
+test('spread writes actual iterator values and returns its next accumulation index',()=>{
+ const request=firstNext(setup());assert.deepEqual(request.callee,object(6n,true));const next=advance(resumeJavaScriptArraySpread(request.heap,request.state,normal(object(7n)),false));assert.equal(next.$,'arraySpreadCall');const target=next.heap.objects.find(row=>row.identity===2n);assert.deepEqual(target.properties.find(row=>row.key.$==='text'&&row.key.units.join(',')==='48').descriptor.value,number(7));const done=advance(resumeJavaScriptArraySpread(next.heap,next.state,normal(object(8n)),false));assert.equal(done.$,'arraySpreadCompleted');assert.equal(done.index,1);
+});
+test('spread retains its cached next even when the live property changes after acquisition',()=>{
+ const request=firstNext(setup()),heap=data(request.heap,5n,'next',object(4n,true)),next=advance(resumeJavaScriptArraySpread(heap,request.state,normal(object(7n)),false));assert.equal(next.$,'arraySpreadCall');assert.deepEqual(next.callee,object(6n,true));assert.deepEqual(next.receiver,object(5n));
+});
+test('spread propagates a next throw without an extra iterator return operation',()=>{
+ const request=firstNext(data(setup(),5n,'return',object(4n,true))),heap=data(request.heap,3n,'effect',number(9)),actual=resumeJavaScriptArraySpread(heap,request.state,{$:'throwCompletion',value:text('original')},false);assert.equal(actual.$,'arraySpreadThrow');assert.deepEqual(actual.value,text('original'));assert.deepEqual(actual.heap,heap);
+});
+test('spread exposes original primitive receiver Get and refuses a non-Array target before acquisition effects',()=>{
+ const heap=setup(),input=text('text'),request=advance(beginJavaScriptArraySpread(heap,object(2n),input,0,symbol));assert.equal(request.$,'arraySpreadPrimitiveGet');assert.deepEqual(request.receiver,input);assert.deepEqual(request.key,symbol);assert.equal(beginJavaScriptArraySpread(heap,object(1n),object(3n),0,symbol).$,'arraySpreadInvalid');
+});
+test('spread retains a completed value across property budget suspension without another next call',()=>{
+ const request=firstNext(setup());let current=resumeJavaScriptArraySpread(request.heap,request.state,normal(object(7n)),false);for(let at=0;at<32&&current.$==='arraySpreadContinue'&&current.state.phase!=='write';at++)current=stepJavaScriptArraySpread(current.heap,current.state);assert.equal(current.state.phase,'write');
+ const descriptor=createJavaScriptOrdinarySetDescriptor(number(1),true),heap={...current.heap,objects:current.heap.objects.map(row=>row.identity===2n?{...row,properties:row.properties.concat(Array.from({length:4095},(_,index)=>({$:'ordinaryProperty',key:text('field'+index),descriptor})))}:row)},limited=stepJavaScriptArraySpread(heap,current.state);assert.equal(limited.$,'arraySpreadResourceLimit');assert.equal(limited.state.phase,'write');assert.deepEqual(limited.state.value,number(7));assert.equal(limited.state.index,0);const released={...limited.heap,objects:limited.heap.objects.map(row=>row.identity===2n?{...row,properties:row.properties.slice(0,-1)}:row)},resumed=stepJavaScriptArraySpread(released,limited.state);assert.equal(resumed.$,'arraySpreadContinue');assert.equal(resumed.state.phase,'step');assert.equal(resumed.state.index,1);
+});
