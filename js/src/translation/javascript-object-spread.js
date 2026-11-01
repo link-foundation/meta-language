@@ -84,7 +84,7 @@ export function stepJavaScriptObjectSpread(heap,state){
 export function resumeJavaScriptObjectSpread(heap,state,completion){
  const error=readJavaScriptObjectSpreadStateError(heap,state);if(error!=='')return {$:'objectSpreadInvalid',heap,reason:error};
  if(state.phase!=='getter')return {$:'objectSpreadInvalid',heap,reason:'only a suspended object spread getter accepts a child completion'};
- if(completion.$==='throwCompletion')return {$:'objectSpreadThrow',heap,value:completion.value};
  const valueError=readJavaScriptOrdinaryValueError(heap,completion.value);if(valueError!=='')return {$:'objectSpreadInvalid',heap,reason:valueError};
+ if(completion.$==='throwCompletion')return {$:'objectSpreadThrow',heap,value:completion.value};
  return {$:'objectSpreadContinue',heap,state:{...state,phase:'write',value:completion.value,callee:{$:'undefined'}}};
 }

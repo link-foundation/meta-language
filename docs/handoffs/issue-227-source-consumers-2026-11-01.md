@@ -1045,3 +1045,41 @@ selected runtime/version controls; the draft declarations are not observations.
 Remaining own-code priorities include Array callbacks/species, iterator loops and
 IteratorClose, general lexical cells/TDZ, source import/decode bodies, object rest,
 async/generator execution and all remaining architecture/grammar obligations.
+
+
+### Array callback traversal continuation draft
+
+Added shared `javascript-array-callbacks.js` with forEach/some/every, find/findIndex
+and findLast/findLastIndex. Actual length getters and number-hint conversion run
+before ToLength and callback callability checks. Traversal captures length once,
+reads current presence/descriptors, skips holes only for the first three methods,
+visits holes for find methods, and retains each element/index/source/thisArg call.
+Find returns the element held before callback mutation; reverse find descends
+from the captured end. some/every and find short circuit. Huge lengths do not
+allocate dense arrays: every machine transition stays under its selected run
+budget. Primitive receiver boxing, opaque HasProperty/Proxy and complete
+version-qualified error messages remain explicit obligations.
+
+The actual Node standard-method registry captures and verifies seven separate
+Array prototype callable owners and emits portable callback instructions. VM
+instruction/register checks, pending-state validation, selected callback operands,
+length conversion receiver/Symbol, whole child frames, callback return/throw and
+stack-resource retry are drafted together. Newly created arrows execute through
+the existing runtime closure templates. The new shared module is registered for
+automatic native translation; native semantic bodies are not handwritten.
+
+Ten original-source fixtures and six continuation controls are authored. They
+cover thisArg, all callback arguments, inherited indices, holes, length changes,
+filled holes, ignored appends, element snapshots, reverse order, early results,
+length getter ordering, huge/fractional lengths, current effects on throws and
+exact retry operands. They have not been executed. Automatic codec/native/model
+and Links fixture generation remains deferred with all original/product/native
+checks. map/filter/flatMap species and result creation, reduce accumulators,
+iterator-based traversal and the broader remaining requirements are not implied
+by these seven drafted operations.
+
+Algorithm references: ECMAScript 2026 Array.prototype.forEach and FindViaPredicate,
+https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-array.prototype.foreach
+and https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-findviapredicate.
+Source/runtime version selection remains required, including the availability of
+findLast/findLastIndex; no observation or completion percentage is manufactured.

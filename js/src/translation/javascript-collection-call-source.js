@@ -1,3 +1,4 @@
+import {testJavaScriptArrayCallbackOperation} from './javascript-array-callbacks.js';
 import {compileJavaScriptCollectionIteratorCallDirectory} from './javascript-collection-iterator-call-source.js';
 // Structural bytecode transport to the shared inspectable collection kernel.
 // Actual standard function/prototype/iterator identities come from the realm.
@@ -40,8 +41,8 @@ export function compileJavaScriptCollectionCallDirectory(directory){
   }
  }
  for(const method of directory.primitiveMethods){
-  if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||!directory.realms.includes(method.realm)||!testJavaScriptPrimitiveMethodOperation(method.operation)&&!testJavaScriptArrayIntrinsicOperation(method.operation))return {$:'collectionCallCompilation',program:empty,error:'primitive methods require their actual distinct standard identity, realm and operation'};
-  identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:method.realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'primitiveMethod',destination:1,operation:method.operation},{$:'return',source:1}]});
+  if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||!directory.realms.includes(method.realm)||!testJavaScriptPrimitiveMethodOperation(method.operation)&&!testJavaScriptArrayIntrinsicOperation(method.operation)&&!testJavaScriptArrayCallbackOperation(method.operation))return {$:'collectionCallCompilation',program:empty,error:'primitive methods require their actual distinct standard identity, realm and operation'};
+  identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:method.realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:testJavaScriptArrayCallbackOperation(method.operation)?'arrayCallback':'primitiveMethod',destination:1,operation:method.operation},{$:'return',source:1}]});
  }
  const iterators=compileJavaScriptCollectionIteratorCallDirectory({$:'collectionIteratorCallableDirectory',realms:directory.realms,exoticKey:directory.exoticKey,methods:directory.iteratorMethods??[]});
  if(iterators.error!=='')return {$:'collectionCallCompilation',program:empty,error:iterators.error};

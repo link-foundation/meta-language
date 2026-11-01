@@ -64,3 +64,8 @@ Draft ordered object/primitive arithmetic conversion, exact mixed relational
 comparison, arithmetic compound references and lazy logical assignment. Reuse
 shared numeric kernels and source-reference helpers; generated native parity
 and original-runtime observations remain deferred.
+
+Draft seven Array callback traversals with genuine source callback calls, captured
+length, live holes/properties, thisArg, early results and resource-safe retries.
+Protected standard owner linkage and deferred controls accompany shared native
+translation registration; execution and generated parity remain deferred.

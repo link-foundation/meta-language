@@ -169,6 +169,19 @@ construction profiles; their representation is never inferred from a record
 shape. Descriptor-definition sources preserve operand evaluation order before
 the existing key/descriptor conversion continuation.
 
+Array callback traversal uses explicit shared length/Get/ToNumber/ToLength,
+property-presence, element-getter and callback continuations. forEach/some/every
+skip absent properties through actual HasProperty; find/findIndex/findLast and
+findLastIndex visit holes through Get. Length is captured once before callback
+callability is checked. Each callback receives the retained element, exact index
+and original Object, with its actual thisArg; getter/callback mutations use the
+latest shared heap. Predicates short circuit with their operation's own result,
+and reverse find walks descending indices. Large lengths remain bounded machine
+work rather than dense storage. Actual standard callable identities select the
+portable implementation; spelling is not authority. Primitive receiver boxing,
+opaque host HasProperty/Proxy traps, complete version-qualified error messages
+and map/filter species/output construction require their explicit protocols.
+
 Map and Set internal slots belong to that same inspectable global heap. Their
 keys use SameValueZero, normalize Number zero, and retain insertion ordinals.
 Deletion releases the deleted key/value references while retaining a tombstone;
