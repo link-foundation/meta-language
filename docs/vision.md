@@ -57,6 +57,19 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Standard Map/Set construction lowers to shared iterator, ordinary property Get,
+Call and completion instructions. Nullish input returns an empty genuine
+collection before reading the adder; otherwise the actual `set`/`add` property is
+read and checked once before iterator acquisition. Map reads each genuine
+Object entry's `0` then `1` property, retaining each completed value across
+effects. Entry and adder failures close the actual iterator with original throw
+precedence. Iterator advancement failures and normal exhaustion retain their
+protocol done state and do not invoke return. No native constructor body or
+collection snapshot substitutes for traversal. This is the constructor sequence
+specified by [Map/AddEntriesFromIterable](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-add-entries-from-iterable)
+and [Set](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-set-iterable);
+observable engine diagnostic wording still requires version-qualified policies.
+
 Runtime arrow closures have genuine callable identities in the common heap,
 ordinary own properties, actual prototypes, lexical receivers and captured
 semantic values. A separate code-only directory names static lexical sites by

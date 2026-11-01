@@ -672,3 +672,26 @@ Iterable argument spread/constructor spread, full lexical environments/cells,
 version-qualified diagnostics and remaining standard/library/language surfaces
 remain further source drafting work. Generated artifacts and all verification
 continue to be deferred; no ledger/evidence status or closing directive changed.
+
+### Generic iterable Map/Set constructor draft
+
+The standard callable directory now emits ordinary Get/Call/iterator-region/
+finally bytecode for both constructors. This replaces its restrictive certified
+same-kind collection copy path; the old explicit copy kernel/opcode remains
+available for existing controls. Nullish input exits before adder access. A
+non-nullish constructor reads and checks its actual adder once before acquiring
+the input iterator. Map requires an Object entry and reads properties zero then
+one in order. Normal exhaustion releases the done region without return;
+advancement failure retains the protocol done marker. Entry/adder throws cross
+the finalizer and use existing IteratorClose original-throw precedence.
+
+Ten original sources cover sparse Array/Unicode String Set inputs, duplicate Map
+keys, entry getters, custom iteration, primitive-entry cleanup, throwing entry
+getter versus throwing return, step failure without close, missing entry values,
+and nullish inputs. Three authored controls cover both instruction graphs and
+primitive guard boundaries. Their generation input is registered. No tests,
+behavioral imports, generation, compilation or validation ran. The latest live
+ECMA page labels itself 2027; its constructor algorithms were read as supporting
+design context, not as proof of Node version parity. Exact engine diagnostic
+wording, mutable lexical cells, argument/constructor spread and the other
+previously recorded source surfaces still need their own drafts.

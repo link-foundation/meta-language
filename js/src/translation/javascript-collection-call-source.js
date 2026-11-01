@@ -25,6 +25,35 @@ export function readJavaScriptCollectionConstructorKind(fn){
  if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return '';
  let kind='';for(const instruction of fn.instructions)if(instruction.$==='collectionAllocate'){if(kind!==''||!['Map','Set'].includes(instruction.kind))return '';kind=instruction.kind;}return kind;
 }
+/** General constructors share the actual iterator/ordinary Get/call/finally
+ * instructions. The adder is selected once before GetIterator. Nullish input
+ * returns before either protocol is observed. No native collection body runs.
+ * @param {JavaScriptCollectionConstructorOwner} owner @returns {JavaScriptCallFunction} */
+export function compileJavaScriptIterableCollectionConstructor(owner){
+ /** @type {JavaScriptCallInstruction[]} */const instructions=[
+  {$:'argument',destination:1,index:0},{$:'constant',destination:2,value:owner.prototype},{$:'collectionAllocate',destination:3,prototype:2,kind:owner.kind},
+  {$:'constant',destination:7,value:{$:'undefined'}},{$:'strictEqual',destination:8,left:1,right:7},{$:'branch',condition:8,yes:0,no:6},
+  {$:'constant',destination:7,value:{$:'null'}},{$:'strictEqual',destination:8,left:1,right:7},{$:'branch',condition:8,yes:0,no:9},
+  {$:'constant',destination:4,value:{$:'text',units:owner.kind==='Map'?[115,101,116]:[97,100,100]}},
+  {$:'ordinaryGet',destination:5,object:3,key:4,receiver:3},{$:'primitive',destination:5,operation:'require collection adder',arguments:[5]},
+  {$:'constant',destination:6,value:owner.iteratorKey},{$:'iteratorProtocol',destination:7,done:8,input:1,iteratorKey:6,slot:0,operation:'acquire',realm:owner.realm},
+  {$:'pushFinally',target:0}
+ ];
+ const start=instructions.length;
+ instructions.push({$:'iteratorProtocol',destination:9,done:8,input:0,iteratorKey:0,slot:0,operation:'step',realm:owner.realm});
+ const exhausted=instructions.length;instructions.push({$:'branch',condition:8,yes:0,no:exhausted+1});
+ if(owner.kind==='Map')instructions.push(
+  {$:'primitive',destination:9,operation:'require Map entry object',arguments:[9]},
+  {$:'constant',destination:13,value:{$:'text',units:[48]}},{$:'ordinaryGet',destination:10,object:9,key:13,receiver:9},
+  {$:'constant',destination:13,value:{$:'text',units:[49]}},{$:'ordinaryGet',destination:11,object:9,key:13,receiver:9}
+ );
+ instructions.push({$:'call',destination:12,callee:5,receiver:3,arguments:owner.kind==='Map'?[10,11]:[9]},{$:'jump',target:start});
+ const leave=instructions.length;instructions.push({$:'completeJump',target:0,depth:0});
+ const cleanup=instructions.length;instructions.push({$:'iteratorProtocol',destination:7,done:8,input:0,iteratorKey:0,slot:0,operation:'close',realm:owner.realm},{$:'finishFinally'});
+ const end=instructions.length;instructions.push({$:'return',source:3});
+ instructions[5]={$:'branch',condition:8,yes:end,no:6};instructions[8]={$:'branch',condition:8,yes:end,no:9};instructions[14]={$:'pushFinally',target:cleanup};instructions[exhausted]={$:'branch',condition:8,yes:leave,no:exhausted+1};instructions[leave]={$:'completeJump',target:end,depth:0};
+ return {$:'callFunction',identity:owner.identity,realm:owner.realm,receiverMode:'collection constructor',lexicalReceiver:{$:'undefined'},parameters:0,registers:14,captures:[],instructions};
+}
 /** @param {JavaScriptCollectionCallableDirectory} directory @returns {JavaScriptCollectionCallCompilation} */
 export function compileJavaScriptCollectionCallDirectory(directory){
  const empty={$:'callProgram',functions:[],realms:directory.realms,exoticKey:directory.exoticKey};
@@ -34,11 +63,7 @@ export function compileJavaScriptCollectionCallDirectory(directory){
  for(const owner of directory.constructors){
   if(!['Set','Map'].includes(owner.kind)||owner.identity<=0n||owner.identity>18446744073709551615n||!directory.realms.includes(owner.realm)||identities.includes(owner.identity)||owner.prototype.$!=='object'||owner.prototype.callable||owner.methods.length>16)return {$:'collectionCallCompilation',program:empty,error:'collection constructors require actual unique callable, realm, kind and prototype owners'};
   identities.push(owner.identity);
-  functions.push({$:'callFunction',identity:owner.identity,realm:owner.realm,receiverMode:'collection constructor',lexicalReceiver:{$:'undefined'},parameters:0,registers:10,captures:[],instructions:[
-   {$:'argument',destination:1,index:0},{$:'constant',destination:2,value:owner.prototype},{$:'collectionAllocate',destination:3,prototype:2,kind:owner.kind},
-   {$:'constant',destination:4,value:owner.adder},{$:'constant',destination:5,value:owner.iteratorKey},{$:'constant',destination:6,value:owner.iteratorMethod},{$:'constant',destination:7,value:owner.iteratorPrototype},{$:'constant',destination:8,value:owner.nextMethod},
-   {$:'collectionCopy',destination:9,target:3,input:1,adder:4,iteratorKey:5,iteratorMethod:6,iteratorPrototype:7,nextMethod:8},{$:'return',source:9}
-  ]});
+  functions.push(compileJavaScriptIterableCollectionConstructor(owner));
   for(const method of owner.methods){
    if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||readJavaScriptCollectionOperationKind(method.operation)!==owner.kind)return {$:'collectionCallCompilation',program:empty,error:'collection methods require their actual distinct standard function identities and operation owners'};
    identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:owner.realm,receiverMode:'collection intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:'collectionOperation',destination:1,operation:method.operation},{$:'return',source:1}]});
