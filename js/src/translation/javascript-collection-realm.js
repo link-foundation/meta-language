@@ -6,7 +6,7 @@ const actualMap=Map,actualSet=Set,actualSymbol=Symbol;
 const actualString=String,startsWith=Reflect.getOwnPropertyDescriptor(String.prototype,'startsWith')?.value;
 const actualObject=Object,objectPrototype=Object.prototype;
 const actualArray=Array,arrayPrototype=Array.prototype,isArray=Reflect.getOwnPropertyDescriptor(Array,'isArray')?.value;
-const arrayCallbackOwners=['forEach','some','every','find','findIndex','findLast','findLastIndex'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
+const arrayCallbackOwners=['forEach','some','every','find','findIndex','findLast','findLastIndex','reduce','reduceRight'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(arrayPrototype,name)?.value}));
 const kinds=[{kind:'Map',constructor:actualMap,operations:['get','set','has','delete','clear']},{kind:'Set',constructor:actualSet,operations:['add','has','delete','clear']}];
 const methodOwners=kinds.map(row=>({...row,prototype:row.constructor.prototype,methods:row.operations.map(name=>({name,value:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,name)?.value})),iterationMethods:['keys','values','entries'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,name)?.value})),size:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,'size')?.get,iterator:Reflect.getOwnPropertyDescriptor(row.constructor.prototype,actualSymbol.iterator)?.value}));
 

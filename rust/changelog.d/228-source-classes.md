@@ -69,3 +69,7 @@ Draft seven Array callback traversals with genuine source callback calls, captur
 length, live holes/properties, thisArg, early results and resource-safe retries.
 Protected standard owner linkage and deferred controls accompany shared native
 translation registration; execution and generated parity remain deferred.
+
+Draft reduce/reduceRight on the shared Array traversal, preserving initial-value
+presence, sparse accumulator selection, four callback operands and reverse order.
+Original/protocol controls are authored; generated native checks remain deferred.

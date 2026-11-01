@@ -176,7 +176,12 @@ findLastIndex visit holes through Get. Length is captured once before callback
 callability is checked. Each callback receives the retained element, exact index
 and original Object, with its actual thisArg; getter/callback mutations use the
 latest shared heap. Predicates short circuit with their operation's own result,
-and reverse find walks descending indices. Large lengths remain bounded machine
+and reverse find walks descending indices. Reduction uses the same traversal with an explicit accumulator and initial-value
+presence. A missing initializer selects the first present element without a
+callback; an explicit undefined initializer remains present. Reducers receive
+(accumulator, element, index, source) with undefined this and retain descending
+order for reduceRight. An empty reduction without an initializer throws.
+Large lengths remain bounded machine
 work rather than dense storage. Actual standard callable identities select the
 portable implementation; spelling is not authority. Primitive receiver boxing,
 opaque host HasProperty/Proxy traps, complete version-qualified error messages

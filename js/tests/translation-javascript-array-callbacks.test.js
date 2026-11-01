@@ -31,3 +31,19 @@ test('selected call suspension retains exact callback operands and can retry an 
  const first=start(setup(),'Array.forEach');assert.equal(first.$,'arrayCallbackCall');assert.deepEqual(stepJavaScriptArrayCallback(first.heap,first.state),first);
  const state={...first.state,call:{...first.state.call,arguments:[number(9),number(0),object(1n)]}};assert.notEqual(readJavaScriptArrayCallbackStateError(first.heap,state),'');
 });
+
+test('reduce without an initializer selects the first present value without calling its reducer',()=>{
+ const first=advance(beginJavaScriptArrayCallback(setup(),'Array.reduce',object(1n),object(2n,true),absent,key,false));assert.equal(first.$,'arrayCallbackCall');assert.deepEqual(first.receiver,absent);assert.deepEqual(first.arguments,[number(1),number(3),number(2),object(1n)]);assert.equal(first.state.hasAccumulator,true);assert.equal(first.state.initialPresent,false);
+ const done=advance(resumeJavaScriptArrayCallback(first.heap,first.state,{$:'normalCompletion',value:number(4)}));assert.equal(done.$,'arrayCallbackCompleted');assert.deepEqual(done.value,number(4));
+});
+test('reduceRight visits present indices in descending order with four actual operands',()=>{
+ const first=advance(beginJavaScriptArrayCallback(setup(),'Array.reduceRight',object(1n),object(2n,true),number(0),key,true));assert.equal(first.$,'arrayCallbackCall');assert.deepEqual(first.arguments,[number(0),number(3),number(2),object(1n)]);assert.deepEqual(first.receiver,absent);
+ const second=advance(resumeJavaScriptArrayCallback(first.heap,first.state,{$:'normalCompletion',value:number(3)}));assert.equal(second.$,'arrayCallbackCall');assert.deepEqual(second.arguments,[number(3),number(1),number(0),object(1n)]);
+ const done=advance(resumeJavaScriptArrayCallback(second.heap,second.state,{$:'normalCompletion',value:number(4)}));assert.equal(done.$,'arrayCallbackCompleted');assert.deepEqual(done.value,number(4));
+});
+test('empty reductions distinguish missing from explicit undefined initial values',()=>{
+ const heap=data(setup(),1n,'length',number(0));for(const operation of ['Array.reduce','Array.reduceRight']){
+  const missing=advance(beginJavaScriptArrayCallback(heap,operation,object(1n),object(2n,true),absent,key,false));assert.equal(missing.$,'arrayCallbackError');assert.equal(missing.errorClass,'TypeError');assert.deepEqual(missing.heap,heap);
+  const present=advance(beginJavaScriptArrayCallback(heap,operation,object(1n),object(2n,true),absent,key,true));assert.equal(present.$,'arrayCallbackCompleted');assert.deepEqual(present.value,absent);
+ }
+});

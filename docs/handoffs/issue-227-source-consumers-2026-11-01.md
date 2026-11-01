@@ -1083,3 +1083,25 @@ https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-array.protot
 and https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-findviapredicate.
 Source/runtime version selection remains required, including the availability of
 findLast/findLastIndex; no observation or completion percentage is manufactured.
+
+
+### Reduction reuse continuation draft
+
+Extended the shared Array traversal with reduce/reduceRight. Initial argument
+presence is distinct from its semantic value and bound to the intrinsic frame's
+actual argument count. An omitted initializer selects the first present indexed
+value without calling the reducer; an explicit undefined initializer is present.
+Reducer calls retain four operands and undefined this. Reverse reduction skips
+holes in descending order, while findLast continues to visit holes. Returning
+from a reducer commits its actual accumulator exactly once. Empty reductions
+without a selected/explicit accumulator produce TypeError after callback
+callability checks. The protected standard-method directory now admits nine
+callback/reduction owners through the existing single instruction/continuation.
+
+Seven original-source controls and three continuation controls are authored for
+initial presence, sparse selection, accumulator direction, strict this, four
+callback arguments, source length mutation and empty input. All execution,
+generation and native comparisons remain deferred. map/filter/flatMap still need
+actual species and result construction; this extension does not replace those
+obligations. Primary algorithm source: ECMAScript 2026 reduce/reduceRight,
+https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-array.prototype.reduce.
