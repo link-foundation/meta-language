@@ -199,3 +199,20 @@ unregistered profile refuses. No observations or verified support are claimed.
 Native/model/codec/Links generation remains deferred with all tests, compilation
 and validation. The source register and ledger were not used because their
 required online audit is deferred under the active drafting instruction.
+
+
+### Dynamic constructor authority update drafted
+
+`extendJavaScriptCallArrayAuthority` now drafts an explicit program/metadata
+extension at an actual suspended transform species selection. It preserves realm
+roots, every prior constructor classification, the executable instruction and
+all machine values, while adding newly authenticated classifications. The caller
+continues with the returned program and identical held machine. A new deferred
+VM control changes the original species property while authority is absent,
+then adds the missing fact and checks that selection retains its earlier
+constructor rather than rereading the property. Rebinding roots or changing an
+established classification refuses with the original program retained.
+
+This is the explicit core response API. Node automatic response handling, trace
+transport of program/authority updates and generic portable Construct execution
+remain further drafting work. No tests or generation ran.

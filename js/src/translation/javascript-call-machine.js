@@ -1,4 +1,4 @@
-import {readJavaScriptArraySpeciesDirectoryError} from './javascript-array-species.js';
+import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
 import {testJavaScriptArrayTransformOperation,beginJavaScriptArrayTransform,stepJavaScriptArrayTransform,resumeJavaScriptArrayTransformCall,resumeJavaScriptArrayTransformAllocation,resumeJavaScriptArrayTransformConstruction,readJavaScriptArrayTransformStateError} from './javascript-array-transform.js';
 import {testJavaScriptArraySearchOperation} from './javascript-array-index-rules.js';
 import {beginJavaScriptArraySearch,stepJavaScriptArraySearch,resumeJavaScriptArraySearch,readJavaScriptArraySearchStateError} from './javascript-array-search.js';
@@ -1192,4 +1192,20 @@ export function acceptJavaScriptCallArrayTransform(program,machine,destination,r
 export function resumeJavaScriptCallArrayConstruction(program,machine,completion){
  const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'machineInvalid',heap:machine.heap,reason:error};const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitArrayTransform')return {$:'machineInvalid',heap:machine.heap,reason:'species construction resumption retains its actual pending transform'};
  const pending=frame.pending,directory=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);return directory===undefined?{$:'machineInvalid',heap:machine.heap,reason:'species construction retains its actual source directory'}:acceptJavaScriptCallArrayTransform(program,machine,pending.destination,pending.realm,resumeJavaScriptArrayTransformConstruction(machine.heap,directory,pending.state,completion));
+}
+
+/** Metadata extension is explicit and preserves every prior owner/root fact.
+ * It updates no executable operation, register, callback or held machine value.
+ * @typedef {{$:'arrayAuthorityUpdate',program:JavaScriptCallProgram,machine:JavaScriptCallMachine,error:string}} JavaScriptArrayAuthorityUpdate */
+/** @param {JavaScriptCallProgram} program @param {JavaScriptCallMachine} machine
+ * @param {JavaScriptArraySpeciesDirectory} directory @returns {JavaScriptArrayAuthorityUpdate} */
+export function extendJavaScriptCallArrayAuthority(program,machine,directory){
+ const error=readJavaScriptCallMachineError(program,machine);if(error!=='')return {$:'arrayAuthorityUpdate',program,machine,error};
+ const frame=machine.frames[machine.frames.length-1];if(frame===undefined||frame.pending.$!=='waitArrayTransform'||frame.pending.state.phase!=='species'||frame.pending.state.call!==undefined)return {$:'arrayAuthorityUpdate',program,machine,error:'constructor authority extension retains an actual suspended species selection'};
+ const pending=frame.pending,prior=readJavaScriptCallArrayTransformDirectory(program,machine,pending.destination,pending.realm);if(prior===undefined)return {$:'arrayAuthorityUpdate',program,machine,error:'constructor authority extension retains its actual source directory'};
+ const invalid=readJavaScriptArraySpeciesDirectoryError(machine.heap,directory);if(invalid!=='')return {$:'arrayAuthorityUpdate',program,machine,error:invalid};
+ if(prior.realm!==directory.realm||!testJavaScriptSemanticSameValue(prior.arrayConstructor,directory.arrayConstructor)||!testJavaScriptSemanticSameValue(prior.arrayPrototype,directory.arrayPrototype)||!testJavaScriptSemanticSameValue(prior.speciesKey,directory.speciesKey))return {$:'arrayAuthorityUpdate',program,machine,error:'constructor authority extension cannot replace the selected realm roots'};
+ for(const fact of prior.constructors){const next=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,fact.identity)];if(next===undefined||next.constructable!==fact.constructable||next.realm!==fact.realm||next.intrinsicArray!==fact.intrinsicArray)return {$:'arrayAuthorityUpdate',program,machine,error:'constructor authority extension preserves every established classification'};}
+ const functions=program.functions.map(fn=>fn.identity!==frame.identity?fn:{...fn,instructions:fn.instructions.map((instruction,index)=>index===frame.position-1&&instruction.$==='arrayTransform'?{...instruction,species:directory}:instruction)}),next={...program,functions},stateError=readJavaScriptCallMachineError(next,machine);
+ return stateError===''?{$:'arrayAuthorityUpdate',program:next,machine,error:''}:{$:'arrayAuthorityUpdate',program,machine,error:stateError};
 }

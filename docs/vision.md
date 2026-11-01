@@ -237,6 +237,10 @@ output index. Callbacks retain actual source, index, element and thisArg. Indexe
 CreateDataPropertyOrThrow bypasses inherited setters and preserves Array exotic
 index/length behavior, with explicit rejection versus storage-limit outcomes.
 Completed callback values and filter selections survive suspended writes.
+Constructor authority can extend at a held species selection without replacing
+realm roots or any established classification. The update changes metadata on
+the selected actual instruction and preserves executable operations and all
+held machine values. A completed constructor/species Get is not repeated.
 Custom species construction and missing constructor authority are explicit
 resumable VM requests; fulfilling Construct requires actual portable constructor
 execution and its receiver/return rules, never an original-host-body fallback.
