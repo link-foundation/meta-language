@@ -200,6 +200,21 @@ shared heap. Actual protected callable owners select each operation. Primitive
 receiver boxing, opaque HasProperty/Proxy traps and version-qualified diagnostics
 retain their separate implementation obligations.
 
+Array species selection preserves actual constructor and well-known species-key
+identities. Constructor/species getters run through selected calls and retain
+their current effects. A foreign realm's intrinsic Array constructor normalizes
+to the current realm's default before species access. A nonconstructor Object
+may still supply a valid constructor through its species property. Null species
+means default; null constructor does not. Constructability comes from protected
+builtin witnesses and checked declaration kinds, never names or prototype-field
+shape. Private copied classifications survive edits to published data and extend
+with authenticated additional source units. Missing classification authority
+suspends selection at the exact held candidate for later directory extension.
+Selection yields explicit ArrayCreate/Construct requests rather than a fabricated
+result Object. Array length limits apply during ArrayCreate, while custom species
+constructors retain their actual requested length. Generic Construct, target
+allocation and map/filter callback/result composition remain separate protocols.
+
 Map and Set internal slots belong to that same inspectable global heap. Their
 keys use SameValueZero, normalize Number zero, and retain insertion ordinals.
 Deletion releases the deleted key/value references while retaining a tombstone;

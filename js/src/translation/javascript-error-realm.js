@@ -28,6 +28,12 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  const ordinaryClasses=capture.model==='actual closed source classes 1';
  const sourceFunctions=capture.model==='actual project data source functions 1'||ordinaryClasses;
  capture=sourceFunctions?checkJavaScriptProjectDataSource(capture):validateJavaScriptErrorClassModule(capture);
+ // Keep declaration classifications private and copied before publishing any
+ // mutable capture/registry data. Function spelling/prototype shape is no proof.
+ const constructorDeclarations=capture.plan.functions.map(definition=>{
+  if(!['errorOrdinaryConstructorPlan','errorConstructorPlan','errorStatementFunctionPlan','errorMutableStatementFunctionPlan','errorFunctionPlan','errorMethodFunctionPlan'].includes(definition.$))throw new TypeError('constructor classification requires its actual checked source declaration kind');
+  return {source:definition.identity,constructable:definition.$!=='errorMethodFunctionPlan'};
+ });
  if(sourceFunctions&&(!deferModule||!ordinaryClasses&&declarationWitness!==null))throw new TypeError('source capabilities must be bound before source entry publication');
  const declarationOwners=declarationWitness===null?null:ordinaryClasses?readJavaScriptOrdinaryClassDeclarationWitness(capture,declarationWitness):readSourceLibraryErrorDeclarationWitness(capture,declarationWitness);
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
@@ -124,6 +130,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  const operations={$:'errorRealmOperations',realm:identity,objectPrototype:encode(realm.objectPrototype),get:primitiveGet,assign};
  if(ordinaryClasses){operations.arrayPrototype=encode(realm.arrayPrototype);operations.functionPrototype=encode(realm.functionPrototype);}
  const registry={$:'errorModuleRegistry',owners,operations:[operations],intrinsics:[...intrinsics.keys()].map(id=>({$:'errorIntrinsicOwner',identity:id,realm:identity})),realms:[identity],exoticKey:encode(realm.toPrimitive)};
+ const constructorFacts=constructorDeclarations.map(declaration=>{const owner=owners.find(row=>row.source===declaration.source);if(!owner)throw new TypeError('constructor facts require their actual validated source owner');return {$:'arrayConstructorFact',identity:owner.identity,realm:owner.realm,constructable:declaration.constructable,intrinsicArray:false};});
  let module=deferModule?null:prepareJavaScriptErrorModule(capture,registry);
  // Only actual initial realm/declaration objects bypass live machine handles.
  // Caller data encoded afterward stays an alias of the mutable semantic heap.
@@ -199,6 +206,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const functions=[...module.program.functions];
   for(const fn of compiled.program.functions){const previous=functions.find(row=>row.identity===fn.identity);if(previous){if(!isDeepStrictEqual(previous,fn))throw new TypeError('supplied source units must agree on every shared actual callable implementation');}else functions.push(fn);}
   const unit={capture:actual,registry:unitRegistry,bindings,capabilities,sourceProgram:compiled.program},program={...module.program,...mergeSourceTemplates(module.program,compiled.program),functions:functions.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};module={...module,program,sourceUnits:[...module.sourceUnits,unit]};
+  for(const owner of owners)constructorFacts.push({$:'arrayConstructorFact',identity:owner.identity,realm:owner.realm,constructable:true,intrinsicArray:false});
   return {...unit,program};
  }
  const authority={perform(request){
@@ -238,7 +246,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
    const value=opaque(error);return {heap,value,abrupt:true};
   }
  }};
- return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
+ return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
   registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},

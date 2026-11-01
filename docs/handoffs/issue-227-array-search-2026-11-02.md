@@ -56,3 +56,68 @@ Array species/result construction for map/filter/flatMap, general constructor
 execution, IteratorClose/for-of and lexical cells/TDZ remain explicit obligations.
 All earlier requirements and controls remain binding; this file is not a new
 architecture specification or a replacement ledger.
+
+
+## Species selection foundation drafted in the same continuation
+
+`javascript-array-species.js` now drafts ArraySpeciesCreate selection through the
+actual constructor Get, constructability/realm classification, foreign intrinsic
+normalization and species Get. It preserves null-versus-undefined distinctions
+and permits a nonconstructor Object to provide a genuine species constructor.
+Its outputs are explicit ArrayCreate or Construct requests, not completed result
+Objects. Unknown function authority produces `arraySpeciesNeedAuthority` with the
+held candidate/phase so adding registry facts never repeats a completed getter.
+The directory binds stable current-realm roots, globally identified Symbols,
+ordered classifications and one intrinsic Array constructor identity per realm.
+
+Node metadata capture seeds protected builtin classifications and checked source
+declaration classifications. The latter are copied privately before publishing
+mutable module records; returned facts are copies. An authenticated ordinary
+source unit extends those private facts after successful source-unit publication.
+An own prototype property or function name is not constructability proof. The
+actual protected Array species getter is separately admitted to the portable
+standard directory and compiled as `copy this; return`, preserving its real
+callable identity without invoking an original host body as translated semantics.
+
+Eleven deferred controls cover non-Array bypass, actual getter/receiver requests,
+foreign intrinsic normalization, nonconstructor species containers, missing
+facts/dynamic extension, null distinctions, nonconstructor rejection, current
+abrupt effects, ArrayCreate-versus-custom length boundaries, the species getter
+VM code and private/dynamic source facts. They are not observations. The shared
+source library and test consumer are registered for later automatic generation.
+
+Normative source: ECMAScript 2026 ArraySpeciesCreate and Array species getter,
+https://tc39.es/ecma262/2026/multipage/ordinary-and-exotic-objects-behaviours.html#sec-arrayspeciescreate
+and https://tc39.es/ecma262/2026/multipage/indexed-collections.html#sec-get-array-%symbol.species%.
+Engine-specific diagnostics, Proxy classification and bound/proxy constructor
+realm traversal still need their explicit authorities and version profiles.
+
+### Concrete next map/filter composition work
+
+1. Carry protected per-realm species directories through portable program/model
+   composition and native codecs. Bind each operation's directory to its actual
+   intrinsic owner realm and preserve dynamically added source-unit facts.
+2. Add shared map/filter frames in order: ToObject, captured LengthOfArrayLike,
+   callback IsCallable, species selection, actual target creation, HasProperty,
+   Get, callback and CreateDataPropertyOrThrow. Preserve callback arguments,
+   thisArg, getter effects and every abrupt completion.
+3. Drive ArrayCreate requests through the existing external global identity
+   allocator and sparse Array kernel. Enforce its 32-bit length RangeError there,
+   without rejecting a custom constructor's larger valid requested length.
+4. Drive Construct requests through actual portable constructor metadata,
+   prototype acquisition and constructor return/receiver rules. Extend the VM's
+   class/new instruction proof to these explicitly owned constructor frames;
+   implement ordinary/derived/proxy construction rather than host-body fallback.
+5. Retain completed map values or filter predicates across allocation/property
+   resource limits. Map keeps original sparse result positions; filter advances
+   its output index only after successful selected property creation. Custom
+   species results may be ordinary Objects and need not have an Array brand.
+6. Author source and raw-state controls for species getter ordering, thrown or
+   nonconstructable species, foreign realm Arrays, custom result objects, holes,
+   callback mutation, length limits and resume-without-replay. Regenerate the
+   model/native/Links products automatically once the full drafting phase ends,
+   then run all retained assertion cells at one recorded commit in CI.
+
+This selection foundation does not claim completed map/filter execution. Earlier
+iterator/IteratorClose, lexical cells/TDZ, source import/decoder, full grammar and
+architecture obligations remain binding and keep their prior detailed plans.

@@ -1,3 +1,4 @@
+import {testJavaScriptArraySpeciesGetterOperation} from './javascript-array-species.js';
 import {testJavaScriptArraySearchOperation} from './javascript-array-index-rules.js';
 import {testJavaScriptArrayCallbackOperation} from './javascript-array-callbacks.js';
 import {compileJavaScriptCollectionIteratorCallDirectory} from './javascript-collection-iterator-call-source.js';
@@ -42,8 +43,8 @@ export function compileJavaScriptCollectionCallDirectory(directory){
   }
  }
  for(const method of directory.primitiveMethods){
-  if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||!directory.realms.includes(method.realm)||!testJavaScriptPrimitiveMethodOperation(method.operation)&&!testJavaScriptArrayIntrinsicOperation(method.operation)&&!testJavaScriptArrayCallbackOperation(method.operation)&&!testJavaScriptArraySearchOperation(method.operation))return {$:'collectionCallCompilation',program:empty,error:'primitive methods require their actual distinct standard identity, realm and operation'};
-  identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:method.realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:[{$:testJavaScriptArrayCallbackOperation(method.operation)?'arrayCallback':testJavaScriptArraySearchOperation(method.operation)?'arraySearch':'primitiveMethod',destination:1,operation:method.operation},{$:'return',source:1}]});
+  if(method.identity<=0n||method.identity>18446744073709551615n||identities.includes(method.identity)||!directory.realms.includes(method.realm)||!testJavaScriptPrimitiveMethodOperation(method.operation)&&!testJavaScriptArrayIntrinsicOperation(method.operation)&&!testJavaScriptArrayCallbackOperation(method.operation)&&!testJavaScriptArraySearchOperation(method.operation)&&!testJavaScriptArraySpeciesGetterOperation(method.operation))return {$:'collectionCallCompilation',program:empty,error:'primitive methods require their actual distinct standard identity, realm and operation'};
+  identities.push(method.identity);functions.push({$:'callFunction',identity:method.identity,realm:method.realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:2,captures:[],instructions:testJavaScriptArraySpeciesGetterOperation(method.operation)?[{$:'copy',destination:1,source:0},{$:'return',source:1}]:[{$:testJavaScriptArrayCallbackOperation(method.operation)?'arrayCallback':testJavaScriptArraySearchOperation(method.operation)?'arraySearch':'primitiveMethod',destination:1,operation:method.operation},{$:'return',source:1}]});
  }
  const iterators=compileJavaScriptCollectionIteratorCallDirectory({$:'collectionIteratorCallableDirectory',realms:directory.realms,exoticKey:directory.exoticKey,methods:directory.iteratorMethods??[]});
  if(iterators.error!=='')return {$:'collectionCallCompilation',program:empty,error:iterators.error};
