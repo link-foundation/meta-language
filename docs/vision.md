@@ -102,9 +102,12 @@ the new value. Number and BigInt retain separate arithmetic, including Number
 zero signs and exact integer steps. Unary minus uses ToNumeric; unary plus uses
 ToNumber and rejects BigInt. BigInt literals and property names retain exact
 digits within their explicit source budget. Ordinary for loops admit omitted
-clauses, expression initialization, a single lexical initializer, and empty
-bodies. Captured per-iteration mutable cells, var hoisting, multiple declaration
-initializers and abrupt constant-binding writes still need their own protocols.
+clauses, expression initialization, ordered lexical declaration groups and empty
+bodies. Uninitialized let bindings begin as undefined; each const declarator has
+its own actual initializer. Declaration groups retain actual binding identities,
+source order and anonymous function names. Unbraced switch declaration groups
+remain subject to the shared TDZ requirement. Captured per-iteration mutable
+cells, var hoisting and abrupt constant-binding writes need their own protocols.
 
 Shared source arithmetic evaluates both operand values before performing their
 ordered conversions. Addition uses default-hint ToPrimitive and then String or

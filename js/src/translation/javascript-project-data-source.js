@@ -215,6 +215,16 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    const parameter=last===first+1?{$:'errorRequiredParameter',identity:binding.identity}:{$:'errorDefaultParameter',identity:binding.identity,value:inferArrowName(expression(tokens.slice(first+2,last)),binding.name)};initializingParameters.add(binding.identity);return parameter;
   });}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;}
  }
+ function lexicalDeclarations(first,last,kind){
+  if(!['let','const'].includes(kind)||kind==='let'&&!classProfile)fail('lexical declaration groups require their actual source initialization profile');
+  const result=[];
+  for(const [start,end]of split(first,last,',')){
+   const token=tokens[start],owner=declared(token),hasInitializer=start+1<end;
+   if(token?.kind!=='identifier'||!owner||owner.kind!==kind||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
+   result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent()});
+  }
+  if(result.length===0)fail('a lexical declaration group requires its actual declarators');return result;
+ }
  function statements(first,last){if(++statementDepth>128)fail('project data statements exceed their explicit source depth');const result=[];let at=first;
   function one(){if(values[at]===';'){at++;return [];}if(values[at]==='{'){const end=findJavaScriptClassGroupEnd(values,at);if(end<0||end>last)fail('source blocks require complete groups');const body=statements(at+1,end);at=end+1;return body;}return [statement()];}
   function statement(){
@@ -267,7 +277,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       while(colon<next&&tokens[colon].start<selector.end)colon++;test=expression(tokens.slice(cursor+1,colon));
      }else if(++defaults>1)fail('switch cannot contain duplicate default clauses');
      if(values[colon]!==':')fail('switch selector requires its actual clause separator');
-     const statements_=statements(colon+1,next);if(statements_.some(row=>row.$==='sourceConstStatement'||row.$==='sourceMutableStatement'))fail('unbraced switch lexical declarations require their shared TDZ environment');
+     const statements_=statements(colon+1,next);if(statements_.some(row=>row.$==='sourceConstStatement'||row.$==='sourceMutableStatement'||row.$==='sourceDeclarationGroupStatement'))fail('unbraced switch lexical declarations require their shared TDZ environment');
      if(clauses.length>=4096)fail('switch clause source witnesses exceed their explicit directory budget');
      clauses.push(test===null?{$:'sourceDefaultStatement',body:statements_}:{$:'sourceCaseStatement',value:test,body:statements_});cursor=next;
     }}finally{controlTargets.pop();}
@@ -279,8 +289,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     const initializers=[],[first,lastInitial]=parts[0];
     if(first<lastInitial){
      if(values[first]==='let'||values[first]==='const'){
-      const kind=values[first],owner=declared(tokens[first+1]);if(!owner||owner.kind!==kind||split(first,lastInitial,',').length!==1||lastInitial>first+2&&values[first+2]!=='='||kind==='const'&&lastInitial===first+2)fail('for lexical initialization retains one actual binding and its complete initializer');
-      initializers.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:lastInitial===first+2?absent():inferArrowName(expression(tokens.slice(first+3,lastInitial)),owner.name)});
+      initializers.push(...lexicalDeclarations(first+1,lastInitial,values[first]));
      }else if(values[first]==='var')fail('function-scoped var initialization requires its actual hoisting environment');
      else initializers.push({$:'sourceExpressionStatement',value:expression(tokens.slice(first,lastInitial))});
     }
@@ -290,7 +299,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    if(word==='{'){at--;return {$:'sourceBlockStatement',statements:one()};}
    const begin=at-1;let end=at;for(;end<last&&values[end]!==';';end++)if(['(','{','['].includes(values[end])){const close=findJavaScriptClassGroupEnd(values,end);if(close<0||close>=last)fail('source statement groups must close');end=close;}if(end>=last)fail('this source statement profile requires explicit actual semicolons');at=end+1;
-   if(word==='const'||word==='let'&&classProfile){const owner=declared(tokens[begin+1]);if(!owner||owner.kind!==word||values[begin+2]!=='=')fail('source local declarations need one actual ordinary binding');return {$:word==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:inferArrowName(expression(tokens.slice(begin+3,end)),owner.name)};}
+   if(word==='const'||word==='let'&&classProfile){const declarations=lexicalDeclarations(begin+1,end,word);return declarations.length===1?declarations[0]:{$:'sourceDeclarationGroupStatement',statements:declarations};}
    if(word==='return'||word==='throw')return {$:word==='return'?'sourceReturnStatement':'sourceThrowStatement',value:end===begin+1?absent():expression(tokens.slice(begin+1,end))};
    return {$:'sourceExpressionStatement',value:expression(tokens.slice(begin,end))};
   }

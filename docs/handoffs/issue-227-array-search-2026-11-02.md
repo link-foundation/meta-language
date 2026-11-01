@@ -139,3 +139,22 @@ source IR; it does not claim that the CST object-rest binding reader is drafted.
 General rest-pattern binding, RequireObjectCoercible/diagnostics, prior field read
 order and lexical environment construction remain explicit next work. Automatic
 codec/native/Links regeneration and all behavioral assertions remain deferred.
+
+
+## Ordinary lexical declaration groups drafted
+
+The CST reader now drafts uninitialized local let and multiple identifier
+const/let declarators in statements and for initializers. One shared reader
+preserves each actual declaration binding, initializer expression and inferred
+anonymous arrow name. Initializers lower in source order, so later initializers
+see earlier completed declarations. A dedicated declaration-group statement
+shares the existing binding lowerer without pretending that the group is a new
+syntactic block. Original single-declarator source plan forms remain unchanged.
+
+Switch's unbraced declaration guard also recognizes the new group form, retaining
+the requirement for a real shared lexical TDZ environment. Var hoisting,
+read-before-initialization, mutable per-iteration captured cells and general
+binding patterns remain separate protocols; this change does not silently assign
+undefined to those cases. Eight original-source controls and one explicit switch
+boundary refusal are authored. Source/native/model generation and all execution
+remain deferred. No assertions, existing inputs or gates were removed.

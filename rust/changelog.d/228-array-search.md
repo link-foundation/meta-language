@@ -11,3 +11,7 @@ creation and traversal composition remain to be drafted.
 Draft excluded String/Symbol keys in shared CopyDataProperties, including exact
 instruction/register binding and skipping excluded getters. General source rest
 pattern binding and execution checks remain deferred.
+
+Draft ordered identifier declaration groups and uninitialized local let in
+ordinary statements/for heads, preserving binding identities and initializer
+order while retaining explicit switch TDZ refusal.
