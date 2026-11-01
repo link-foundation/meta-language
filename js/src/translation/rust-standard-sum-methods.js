@@ -1,9 +1,7 @@
 // Actual receiver/callable origins into the common constructor/match algebra.
-import {BOOL,UNIT} from './types.js';
+import {BOOL} from './types.js';
 import {unsupported} from './diagnostics.js';
-import {readRustExpectedCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
-import {readRustPrimitiveFunctionValue} from './rust-primitive-function-values.js';
-import {findRustContextualClosureParenthesisCount} from './rust-contextual-closure-rules.js';
+import {readRustExpectedCopyClosure,readRustParameterOnlyCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
 import {readRustStandardSumSourceOrigin,readRustStandardSumSourceIdentity,createRustStandardSumSourceOrigin,withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {readRustStandardSumSourceConstructors,readRustStandardSumSourceFieldArgument,readRustStandardSumSourceConstructorArity} from './rust-standard-sum-source-rules.js';
 import {readRustStandardSumMethodArity,readRustStandardSumMethodCallbackArgument,readRustStandardSumMethodResult,readRustStandardSumMethodBranch,readRustStandardSumMethodCallbackError,readRustStandardSumMethodSourceVersionError,readRustStandardSumMethodPanicMessageRole} from './rust-standard-sum-method-rules.js';
@@ -14,21 +12,8 @@ const clone=value=>structuredClone(value);
 
 function callback(parser,path,parameter,result,span){
  const parameters=parameter?[parameter]:[];
- const expected={...parser.origins.typeOrigin({kind:'function',params:parameters.map(origin=>origin.type),ret:result?.type??UNIT},path),copyEvidence:true,callableParameters:parameters.map(clone),callableResult:result?clone(result):null};
- let value;
- if(result!==null)value=readRustExpectedCopyClosure(parser,path,expected);
- else{
-  // The primitive function-item adapter uses only actual parameter context to
-  // select a real From implementation; it never reads the placeholder return.
-  value=readRustPrimitiveFunctionValue(parser,path,expected);
-  if(!value){
-   const c=parser.cursor;let closure=['|','||','move'].some(role=>c.is(role));
-   if(!closure&&c.is('(')){
-    let count=64;for(;;){const tokens=c.tokens.slice(c.index,c.index+count),syntax=tokens.map((_,index)=>['(','|','||','move'].find(role=>c.is(role,index))??''),depth=findRustContextualClosureParenthesisCount(syntax);if(depth>0){closure=true;break;}if(depth!==-2||tokens.length<count)break;count*=2;}
-   }
-   value=closure?readRustExpectedCopyClosure(parser,path,expected,true):withRustStandardSumSourceContext(parser,null,()=>parser.expr(path));
-  }
- }
+ const expected=result?{...parser.origins.typeOrigin({kind:'function',params:parameters.map(origin=>origin.type),ret:result.type},path),copyEvidence:true,callableParameters:parameters.map(clone),callableResult:clone(result)}:null;
+ const value=result?readRustExpectedCopyClosure(parser,path,expected):readRustParameterOnlyCopyClosure(parser,path,parameters);
  const origin=parser.origins.origin(value,path);
  const actual=origin.callableParameters??[],output=origin.callableResult;
  const error=readRustStandardSumMethodCallbackError(origin.type?.kind??'',origin.type?.params?.length??-1,parameters.length,origin.wrappers.length,parser.origins.immutableProduct(origin),Boolean(output&&parser.origins.immutableProduct(output)&&readRustStandardSumSourceIdentity(parser,output)));
@@ -78,8 +63,9 @@ export function readRustStandardSumSourceMethod(parser,receiver,method,path){
   parser.origins.argument(parser.origins.origin(argument,path),sum.arguments[0],argument.span);
   captures.push({name:parser.freshProductBinding(),value:argument,origin:sum.arguments[0]});
  }else if(callbackArgument!==-2){
-  const expected=readRustStandardSumSourceOrigin(parser,parser.standardSumExpectedOrigin);
-  const result=method.value==='unwrap_or_else'?sum.arguments[0]:method.value==='map'?expected?.standardSumSource.owner===sum.owner?expected.standardSumSource.arguments[0]:null:expected?.standardSumSource.owner===sum.owner?expected:null;
+  // The enclosing return context can describe a later expression. A mapper's
+  // result comes from its actual callable; fallback results use receiver T.
+  const result=method.value==='unwrap_or_else'?sum.arguments[0]:null;
   callable=callback(parser,path,callbackArgument<0?null:sum.arguments[callbackArgument],result,{start,end:method.end});
   captures.push({name:parser.freshProductBinding(),value:callable.value,origin:callable.origin});
  }

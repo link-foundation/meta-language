@@ -2,8 +2,13 @@
 // observation or execution status is stored in this authoring fixture.
 import {rustStandardSumSourceOriginals,rustStandardSumSourceRefusals} from './rust-standard-sum-source-rules.mjs';
 import {rustStandardSumMethodOriginals} from './rust-standard-sum-methods.mjs';
-import {rustStandardSumMethodSourceOriginals,rustStandardSumMethodSourceRefusals} from './rust-standard-sum-method-source-originals.mjs';
+import {rustStandardSumMethodSourceOriginals,rustStandardSumMethodSourceRefusals,rustStandardSumMethodContextOriginals} from './rust-standard-sum-method-source-originals.mjs';
 import {rustArrayLookupOptionOriginals,rustArrayLookupOptionRefusals} from './rust-array-lookup-options.mjs';
+import {rustStandardSumPredicateOriginals,rustStandardSumPredicateRefusals} from './rust-standard-sum-predicates.mjs';
+import {sourceNamespaceOriginals,sourceNamespaceRefusals,sourceNamespaceVersionRange} from './rust-source-namespaces-draft.mjs';
+import {rustStandardSumConversionOriginals,rustStandardSumConversionRefusals} from './rust-standard-sum-conversions.mjs';
+import {genericAliasDefaultOriginals,genericAliasDefaultRefusals,genericAliasDefaultVersionRange} from './rust-generic-type-alias-defaults-draft.mjs';
+import {rustStandardSumNestedOriginals,rustStandardSumNestedRefusals} from './rust-standard-sum-nested.mjs';
 
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
@@ -199,6 +204,16 @@ fn main() {
 `},
 ];
 
+export const rustStandardSumIntegrationAdditionalOriginals=[
+ ...rustStandardSumMethodContextOriginals,
+ ...sourceNamespaceOriginals.map(row=>({singleCallOwners:[],sourceVersionRange:sourceNamespaceVersionRange,...row})),
+ ...rustStandardSumConversionOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumPredicateOriginals,
+ ...genericAliasDefaultOriginals.map(row=>({singleCallOwners:[],sourceVersionRange:genericAliasDefaultVersionRange,...row})),
+ ...rustStandardSumNestedOriginals.map(row=>({singleCallOwners:[],...row})),
+];
+rustStandardSumIntegrationOriginals.push(...rustStandardSumIntegrationAdditionalOriginals);
+
 export const rustStandardSumIntegrationRefusals=[
  ...rustStandardSumSourceRefusals,
  ...rustStandardSumMethodSourceRefusals,
@@ -206,4 +221,11 @@ export const rustStandardSumIntegrationRefusals=[
  {name:'question cannot return from a nonsum callable',reasonIncludes:'nearest actual callable',source:'fn bad(value: Option<u8>) -> u8 { let number = value?; number } fn main() {}'},
  {name:'closure cannot propagate into enclosing callable',reasonIncludes:'nearest actual callable',source:'fn bad(value: Option<u8>) -> Option<u8> { let local = || -> u8 { value? }; Some(local()) } fn main() {}'},
  {name:'unconstrained unsuffixed tuple child retains inference refusal',reasonIncludes:'complete',source:'fn later() -> u8 { let value = Some((1,true)); match value { Some((number,_)) => number, None => 0 } } fn main() {}'},
+ ...sourceNamespaceRefusals.map(row=>({sourceVersionRange:sourceNamespaceVersionRange,...row})),
+ // These new controls include absent argument syntax as well as type/domain
+ // refusals. Existing rows keep their original semantic-only classification.
+ ...rustStandardSumConversionRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustStandardSumPredicateRefusals,
+ ...genericAliasDefaultRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],sourceVersionRange:genericAliasDefaultVersionRange,...row})),
+ ...rustStandardSumNestedRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
 ];

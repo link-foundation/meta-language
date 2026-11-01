@@ -163,7 +163,9 @@ impl RustParser {
         }
         self.source_constant_read_stack.insert(row.owner.clone());
         let result = (|| {
-            let origins = super::SourceOrigins::new(Some(self.origins.catalog.clone()), "");
+            let mut origins = super::SourceOrigins::new(Some(self.origins.catalog.clone()), "");
+            origins.type_catalog = self.origins.type_catalog.clone();
+            origins.value_catalog = self.origins.value_catalog.clone();
             let mut reader = Self::new(
                 self.source_constant_tokens.as_ref().clone(),
                 origins,
@@ -248,7 +250,7 @@ impl RustParser {
         }
         let Some(entry) = self
             .origins
-            .lookup(&self.source_value_path(&segments, path), path)
+            .lookup_value_owner(&self.source_value_path(&segments, path), path)
         else {
             return Ok(None);
         };
@@ -476,7 +478,7 @@ fn project(
         if !(names.len() == 1 && locals.contains(&names[0]))
             && let Some(entry) = reader
                 .origins
-                .lookup(&reader.source_value_path(&names, path), path)
+                .lookup_value_owner(&reader.source_value_path(&names, path), path)
             && matches!(
                 entry.declaration,
                 SourceDeclaration::Constant { .. } | SourceDeclaration::Function { .. }

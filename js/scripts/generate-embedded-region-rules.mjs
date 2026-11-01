@@ -25,7 +25,7 @@ export function embeddedRegionRulesPolicy() {
     primitiveBasis: {
       coordinates: 'Every planner bound is an absolute UTF-8 byte offset in the original host source. Child bounds stay inside their immediate host.',
       ancestry: 'A dense parent column names strictly earlier frames; canonical language identifiers and both byte bounds must agree for an ancestry match.',
-      reuse: 'The current whole host is not parsed again, except the original first-level alias view when the requested root spelling differs. Nested already-attached views add no duplicate self-boundary. A more distant identical invocation reports a non-consuming cycle.',
+      reuse: 'Resource counters, limits, language identities and ancestor facts must have valid domains before reuse. The current whole host is not parsed again, except the original first-level alias view when the requested root spelling differs. Nested already-attached views add no duplicate self-boundary. A more distant identical invocation reports a non-consuming cycle.',
       order: 'Hosts are processed in FIFO order; each original direct region is inserted before descendants and every descendant names its containing Region.',
       charges: 'Every admitted child parse attempt charges one region and its complete physical byte length. The root parse is excluded; overlapping child bytes are charged again for each parse.',
       diagnostics: 'A refused region retains its boundary and an error Relation with the reason, current counters and applicable observed value and limit.',

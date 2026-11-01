@@ -14,12 +14,14 @@ pub(super) struct AliasDeclaration {
     pub(super) path: Vec<String>,
     pub(super) parameters: Vec<String>,
     pub(super) parameter_bindings: Vec<String>,
+    pub(super) default_spans: Vec<Option<(usize,usize)>>,
 }
 #[derive(Default)]
 pub(super) struct SourceTypeAliases {
     pub(super) declarations: BTreeMap<String, AliasDeclaration>,
     cache: BTreeMap<String, SourceOrigin>,
     pub(super) templates: BTreeMap<String, Rc<super::generic_type_aliases::GenericAliasTemplate>>,
+    pub(super) defaults: BTreeMap<String,Vec<Option<Rc<super::generic_type_aliases::GenericAliasTemplate>>>>,
     pub(super) stack: HashSet<String>,
     pub(super) expansions: usize,
     pub(super) nodes: usize,
@@ -94,6 +96,13 @@ impl RustParser {
             let key = fields[0].clone();
             let count = fields[5].parse::<usize>().expect("shared alias parameter count");
             let parameters = fields[6..6 + count].to_vec();
+            let directory=if count>0 {generic_rules::read_rust_generic_type_alias_parameter_directory(&kinds,&values,&raws,(fields[1].parse::<usize>().unwrap()+2) as f64)}else{Vec::new()};
+            let default_spans=(0..count).map(|index|{
+                if directory[5+index*4]=="-1" {None}else{
+                    let start=directory[5+index*4].parse::<usize>().unwrap();let end=directory[6+index*4].parse::<usize>().unwrap();let offset=directory[7+index*4].parse::<usize>().unwrap();
+                    Some((self.cursor.tokens[start].start,self.cursor.tokens[end].start+offset))
+                }
+            }).collect();
             let keyword = self.cursor.tokens[fields[1].parse::<usize>().unwrap()].span();
             let parameter_bindings = parameters.iter().enumerate().map(|(index, _)|format!("{key}/parameter/{}/{index}", keyword.start)).collect();
             let mut path = key.split('.').map(str::to_owned).collect::<Vec<_>>();
@@ -108,6 +117,7 @@ impl RustParser {
                     path,
                     parameters,
                     parameter_bindings,
+                    default_spans,
                 },
             );
             position += 6 + count;
@@ -127,7 +137,7 @@ impl RustParser {
         None
     }
     pub(super) fn alias_namespace_kind(&self, key: &str) -> &'static str {
-        match self.origins.catalog.get(key) {
+        match self.origins.namespace_entry(key,"type") {
             Some(SourceDeclaration::Data) => "data",
             Some(SourceDeclaration::Module) => "module",
             Some(SourceDeclaration::ExternalCrate) => "externalCrate",
@@ -258,6 +268,15 @@ impl RustParser {
         self.source_type_aliases.nodes += needed;
         Ok(self.qualify_alias_origin(origin))
     }
+    pub(super) fn default_type_alias_access_origin(&mut self,row:&AliasDeclaration)->Result<Option<SourceOrigin>>{
+        let defaults=row.default_spans.iter().map(Option::is_some).collect::<Vec<_>>();
+        let plan=generic_rules::read_rust_generic_type_alias_default_argument_plan(&defaults,0.0,false);
+        if plan.first().map(String::as_str)!=Some("arguments"){return Ok(None);}
+        if self.source_type_aliases.cache.contains_key(&row.key){return self.copy_cached_alias_origin(row).map(Some);}
+        let mut origin=self.read_generic_type_alias_default_value(row)?;
+        origin.expanded_source_owner=origin.source_owner.clone();
+        let cached=self.copy_type_alias_origin(&origin,row)?;self.source_type_aliases.cache.insert(row.key.clone(),cached);Ok(Some(origin))
+    }
     pub(super) fn copy_current_type_alias_origin(&mut self, row: &AliasDeclaration) -> Result<SourceOrigin> {
         let needed = self.measure_alias_origin(&self.origins.current_type, row)?;
         self.source_type_aliases.nodes += needed;
@@ -374,6 +393,7 @@ impl RustParser {
         }
         self.source_type_aliases.cache.clear();
         self.source_type_aliases.templates.clear();
+        self.source_type_aliases.defaults.clear();
         let mut rows = self
             .source_type_aliases
             .declarations
@@ -383,7 +403,7 @@ impl RustParser {
         rows.sort_by_key(|row| row.keyword.start);
         for row in rows {
             if matches!(
-                self.origins.catalog.get(&row.key),
+                self.origins.namespace_entry(&row.key,"type"),
                 Some(SourceDeclaration::Data | SourceDeclaration::Module)
             ) {
                 return Err(self.alias_error(
@@ -506,7 +526,7 @@ impl RustParser {
         let keys = rules::read_rust_type_alias_lookup_keys(&resolved, &self.module_path);
         let value = keys.iter().any(|key| {
             matches!(
-                self.origins.catalog.get(key),
+                self.origins.namespace_entry(key,"value"),
                 Some(
                     SourceDeclaration::Function { .. }
                         | SourceDeclaration::Constant { .. }

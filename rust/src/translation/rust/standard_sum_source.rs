@@ -191,11 +191,12 @@ impl RustParser {
         let selected = rules::read_rust_standard_sum_source_path_owner(&resolved.join("::"));
         if selected.is_empty() { return None; }
         for names in [segments, resolved.as_slice()] {
-            if self.origins.lookup(names,path).is_some() || names.first().is_some_and(|root|self.origins.lookup(std::slice::from_ref(root),path).is_some()) {
+            let role=crate::translation::rust_source_namespace_rules::read_rust_source_namespace_path_role(names.len() as f64,value_namespace);
+            if self.origins.lookup_namespace(names,path,&role).is_some() || names.first().is_some_and(|root|self.origins.lookup_namespace(std::slice::from_ref(root),path,&role).is_some()) {
                 return None;
             }
-            if value_namespace && names.first().is_some_and(|root|self.origins.scope.contains_key(root)) { return None; }
-            if let Some(root)=names.first() {
+            if role=="value" && names.first().is_some_and(|root|self.origins.scope.contains_key(root)) { return None; }
+            if let Some(root)=names.first().filter(|_|role=="type") {
                 let keys=crate::translation::rust_type_alias_rules::read_rust_type_alias_lookup_keys(std::slice::from_ref(root),path);
                 if keys.iter().any(|key|self.source_type_aliases.declarations.contains_key(key)) { return None; }
             }
@@ -263,19 +264,19 @@ impl RustParser {
         origin.proven=!provisional;origin.copy_evidence=(!provisional).then_some(());origin.source_owner=Some(source_owner.clone());origin.expanded_source_owner=Some(source_owner);
         let ordinal=self.standard_sum_source.rows.iter().find(|(existing,_)|existing==&name).and_then(|(_,origin)|origin.standard_sum_source.as_ref()).map_or(self.standard_sum_source.rows.len(),|sum|sum.ordinal);
         origin.standard_sum_source=Some(Box::new(StandardSumSource { owner:owner.into(),arguments:arguments.clone(),type_path,constructor_paths,ordinal,provisional }));
-        self.origins.catalog.insert(name.clone(),SourceDeclaration::Data);
+        self.origins.register_catalog_entry(name.clone(),SourceDeclaration::Data);
         self.origins.standard_sum_source_origins.insert(name.clone(),origin.clone());
         for constructor in constructors {
             let argument=rules::read_rust_standard_sum_source_field_argument(owner,&constructor);
             let fields=if argument<0.0 { Vec::new() } else { vec![arguments[argument as usize].clone()] };
-            self.origins.catalog.insert(format!("{name}.{constructor}"),SourceDeclaration::Constructor { owner:name.clone(),fields,result:origin.clone() });
+            self.origins.register_catalog_entry(format!("{name}.{constructor}"),SourceDeclaration::Constructor { owner:name.clone(),fields,result:origin.clone() });
         }
         if let Some(row)=self.standard_sum_source.rows.iter_mut().find(|(existing,_)|existing==&name){row.1=origin.clone();}else{self.standard_sum_source.rows.push((name,origin.clone()));}
         Ok(origin)
     }
 
     fn refresh_standard_sum_header_argument(&mut self,origin:&SourceOrigin,rows:&[(String,SourceOrigin)],resolved:&mut HashMap<String,SourceOrigin>,active:&mut HashSet<String>)->Result<SourceOrigin>{
-        let entry=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.origins.lookup(path,&origin.path),_=>None};
+        let entry=match origin.ty.as_ref(){Some(Type::Named {path,..})=>self.origins.lookup_type_owner(path,&origin.path),_=>None};
         if let Some(entry)=entry {
             if self.origins.standard_sum_source_origins.contains_key(&entry.full_name){
                 let mut actual=self.resolve_standard_sum_header_row(&entry.full_name,rows,resolved,active)?;
@@ -300,7 +301,7 @@ impl RustParser {
             argument.source_function_pointer_header=false;argument.proven=true;argument.copy_evidence=Some(());
         }
         if let Some(Type::Named {path,..})=argument.ty.as_ref(){
-            if let Some(owner)=self.origins.lookup(path,&argument.path){
+            if let Some(owner)=self.origins.lookup_type_owner(path,&argument.path){
                 argument.proven=self.origins.nominal_copy_owners.contains(&owner.full_name);
                 if let Some(source)=argument.source_owner.as_mut().filter(|source|source.kind=="declaration"){source.path=owner.full_name.split('.').map(str::to_owned).collect();}
                 if let Some(source)=argument.expanded_source_owner.as_mut().filter(|source|source.kind=="declaration"){source.path=owner.full_name.split('.').map(str::to_owned).collect();}
@@ -333,7 +334,7 @@ impl RustParser {
 
     fn rewrite_standard_sum_header_type(&self,ty:&Type,resolved:&HashMap<String,SourceOrigin>,path:&[String])->Type{
         match ty {
-            Type::Named {path:names,..}=>self.origins.lookup(names,path).and_then(|entry|resolved.get(&entry.full_name)).and_then(|origin|origin.ty.clone()).unwrap_or_else(||ty.clone()),
+            Type::Named {path:names,..}=>self.origins.lookup_type_owner(names,path).and_then(|entry|resolved.get(&entry.full_name)).and_then(|origin|origin.ty.clone()).unwrap_or_else(||ty.clone()),
             Type::Tuple {elements}=>Type::Tuple {elements:elements.iter().map(|ty|self.rewrite_standard_sum_header_type(ty,resolved,path)).collect()},
             Type::Array {element,reference}=>Type::Array {element:Box::new(self.rewrite_standard_sum_header_type(element,resolved,path)),reference:*reference},
             Type::Function {params,ret}=>Type::Function {params:params.iter().map(|ty|self.rewrite_standard_sum_header_type(ty,resolved,path)).collect(),ret:Box::new(self.rewrite_standard_sum_header_type(ret,resolved,path))},
@@ -343,7 +344,7 @@ impl RustParser {
 
     fn rewrite_standard_sum_header_origin(&self,origin:&SourceOrigin,resolved:&HashMap<String,SourceOrigin>)->SourceOrigin{
         if let Some(Type::Named {path,..})=origin.ty.as_ref(){
-            if let Some(mut actual)=self.origins.lookup(path,&origin.path).and_then(|entry|resolved.get(&entry.full_name)).cloned(){actual.wrappers=origin.wrappers.clone();return actual;}
+            if let Some(mut actual)=self.origins.lookup_type_owner(path,&origin.path).and_then(|entry|resolved.get(&entry.full_name)).cloned(){actual.wrappers=origin.wrappers.clone();return actual;}
         }
         let mut actual=origin.clone();actual.ty=actual.ty.as_ref().map(|ty|self.rewrite_standard_sum_header_type(ty,resolved,&actual.path));
         if let Some(fields)=actual.fields.as_mut(){for field in fields {*field=self.rewrite_standard_sum_header_origin(field,resolved);}}
@@ -367,8 +368,15 @@ impl RustParser {
             let rows=self.standard_sum_source.rows.clone();let mut resolved=HashMap::new();let mut active=HashSet::new();
             for (name,_) in &rows {self.resolve_standard_sum_header_row(name,&rows,&mut resolved,&mut active)?;}
             if !header&&rows.iter().any(|(name,origin)|resolved.get(name).is_some_and(|actual|actual.ty!=origin.ty||origin.standard_sum_source.as_ref().is_some_and(|sum|sum.provisional))){self.origins.standard_sum_source_needs_final_admission=true;}
-            let mut catalog=HashMap::new();
-            for (key,entry) in self.origins.catalog.clone(){
+            let original_catalog=self.origins.catalog.clone();
+            // Include value declarations hidden by a same-spelling module in
+            // the legacy catalog. The role indexes retain both declarations.
+            let mut input=self.origins.value_catalog.clone();
+            for (key,entry) in &original_catalog {
+                if matches!(entry,SourceDeclaration::Function {..}|SourceDeclaration::Constructor {..}|SourceDeclaration::Constant {..}) {input.insert(key.clone(),entry.clone());}
+            }
+            let mut rewritten_values=HashMap::new();
+            for (key,entry) in input{
                 let entry=match entry {
                     SourceDeclaration::Function {parameters,result}=>{
                         let parameters=parameters.iter().map(|origin|self.finalize_standard_sum_header_pointer_origins(origin,&rows,&mut resolved,&mut active)).collect::<Result<Vec<_>>>()?;
@@ -385,17 +393,26 @@ impl RustParser {
                         SourceDeclaration::Constant {result:self.rewrite_standard_sum_header_origin(&result,&resolved)}
                     },
                     other=>other,
-                };catalog.insert(key,entry);
+                };self.origins.register_catalog_entry(key.clone(),entry.clone());rewritten_values.insert(key,entry);
+            }
+            let mut catalog=HashMap::new();
+            for (key,entry) in original_catalog {
+                let value=if matches!(entry,SourceDeclaration::Function {..}|SourceDeclaration::Constructor {..}|SourceDeclaration::Constant {..}){rewritten_values.remove(&key).unwrap_or(entry)}else{entry};
+                catalog.insert(key,value);
             }
             let mut unique=Vec::new();let mut names=HashSet::new();
             for (old,_) in &rows {
                 let actual=resolved.get(old).expect("complete header row");let sum=actual.standard_sum_source.as_ref().expect("actual sum");let name=sum.type_path[1].clone();
                 if names.insert(name.clone()){unique.push((name,actual.clone()));}
             }
-            for (name,origin) in &rows {if !names.contains(name){catalog.remove(name);for variant in rules::read_rust_standard_sum_source_constructors(&origin.standard_sum_source.as_ref().expect("source sum").owner){catalog.remove(&format!("{name}.{variant}"));}}}
+            for (name,origin) in &rows {if !names.contains(name){catalog.remove(name);self.origins.remove_catalog_entry(name);for variant in rules::read_rust_standard_sum_source_constructors(&origin.standard_sum_source.as_ref().expect("source sum").owner){let key=format!("{name}.{variant}");catalog.remove(&key);self.origins.remove_catalog_entry(&key);}}}
             for (ordinal,(_,origin)) in unique.iter_mut().enumerate(){origin.standard_sum_source.as_mut().expect("actual sum").ordinal=ordinal;}
             let ordinals=unique.iter().map(|(name,origin)|(name.clone(),origin.standard_sum_source.as_ref().expect("actual sum").ordinal)).collect::<HashMap<_,_>>();
             for entry in catalog.values_mut(){if let SourceDeclaration::Constructor {owner,result,..}=entry {if let Some(sum)=result.standard_sum_source.as_mut(){if let Some(ordinal)=ordinals.get(owner){sum.ordinal=*ordinal;}}}}
+            // Ordinal refresh is applied to the actual value index too; retain
+            // hidden type/module peers rather than rebuilding indexes from
+            // the single-entry legacy catalog.
+            for (name,entry) in &catalog {self.origins.register_catalog_entry(name.clone(),entry.clone());}
             self.origins.catalog=catalog;
             self.origins.standard_sum_source_origins=unique.iter().cloned().collect();self.standard_sum_source.rows=unique;
             Ok(())
@@ -444,10 +461,11 @@ impl RustParser {
             Some(origin)
         } else { None };
         if variant.is_empty() { return Ok(None); }
+        let has_explicit=explicit.is_some();
         let mut expected=explicit.or_else(||self.standard_sum_source.expected_origin.as_ref().and_then(|origin|self.origins.standard_sum_source_origin(origin)));
-        if expected.as_ref().is_some_and(|origin|!origin.wrappers.is_empty()||origin.standard_sum_source.as_ref().is_none_or(|sum|sum.owner!=owner)) {
-            return Err(failure("the constructor needs its actual direct expected standard owner",self.standard_sum_range(start)));
-        }
+        // Family-changing postfix methods run before the enclosing expression
+        // is checked; an unrelated return contract is no constructor context.
+        if expected.as_ref().is_some_and(|origin|!origin.wrappers.is_empty()||origin.standard_sum_source.as_ref().is_none_or(|sum|sum.owner!=owner)) {expected=None;}
         let arity=rules::read_rust_standard_sum_source_constructor_arity(&owner,&variant);
         let argument=rules::read_rust_standard_sum_source_field_argument(&owner,&variant);
         let mut args=Vec::new();
@@ -458,6 +476,14 @@ impl RustParser {
             let parsed=self.expr(path,Options::default());self.standard_sum_source.expected_origin=previous;
             args.push(parsed?);self.cursor.eat(",");self.cursor.expect(")",Some("standard sum constructor"))?;
         } else if self.cursor.is("(") { return Err(type_error("None is a nullary standard constructor",self.standard_sum_range(start))); }
+        // A complete actual Some payload determines all Option parameters;
+        // ambient return types may describe the result of a later postfix.
+        if !has_explicit&&arity==1.0&&rules::accept_rust_standard_sum_source_inferred_constructor(&owner,&variant){
+            let actual=self.origins.origin(&args[0],path);
+            let identity=if actual.direct_copy_value(){self.origins.standard_sum_source_identity(&actual)}else{None};
+            let contextual=expected.as_ref().and_then(|origin|origin.standard_sum_source.as_ref()).and_then(|sum|sum.arguments.first()).and_then(|origin|self.origins.standard_sum_source_identity(origin));
+            if identity.is_some()&&identity!=contextual{expected=Some(self.instantiate_standard_sum_source(&owner,vec![actual],self.standard_sum_range(start))?);}
+        }
         if expected.is_none() {
             if !rules::accept_rust_standard_sum_source_inferred_constructor(&owner,&variant) { return Err(failure("this constructor needs a complete standard sum context",self.standard_sum_range(start))); }
             expected=Some(self.instantiate_standard_sum_source(&owner,vec![self.origins.origin(&args[0],path)],self.standard_sum_range(start))?);

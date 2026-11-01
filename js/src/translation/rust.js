@@ -4,6 +4,9 @@ import {readRustGenericTypeAliasConstructor} from './rust-type-aliases.js';
 import {initializeRustStandardSumSource,readRustStandardSumSourceType,readRustStandardSumSourceConstructor,readRustStandardSumSourcePattern,readRustStandardSumSourceImport,finishRustStandardSumSource,finishRustStandardSumSourceDeclarations,withRustStandardSumSourceContext,refuseRustStandardSumSourcePatterns} from './rust-standard-sum-source.js';
 import {readRustStandardSumTryExpression,refuseRustStandardSumPrivateCompletions} from './rust-standard-sum-completions.js';
 import {readRustStandardSumSourceMethod} from './rust-standard-sum-methods.js';
+import {readRustStandardSumSourceConversion} from './rust-standard-sum-conversions.js';
+import {readRustStandardSumSourcePredicate} from './rust-standard-sum-predicates.js';
+import {readRustStandardSumSourceNested} from './rust-standard-sum-nested.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
@@ -726,7 +729,7 @@ class RustParser {
   }
 
   arrayElement(token, elementToken) {
-    const shadowed = !this.origins.collecting && elementToken?.kind === 'identifier' && this.origins.lookup([elementToken.value], this.modulePath);
+    const shadowed = !this.origins.collecting && elementToken?.kind === 'identifier' && this.origins.lookupTypeOwner([elementToken.value], this.modulePath);
     if (shadowed || !acceptRustSourceArrayElement(this.origins.type.type?.kind ?? '', this.origins.type.wrappers.length > 0)) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', span(token, this.cursor.peek()));
   }
 
@@ -795,7 +798,7 @@ class RustParser {
       if (mutableParams.length && !scalarLoop) {
         const bodyEvidence = readRustScalarParameterBody(c);
         for (const { token, typeToken, origin } of mutableParams) {
-          const shadowed = typeToken.kind !== 'identifier' || Boolean(this.origins.lookup(this.resolve([typeToken.value], path), path));
+          const shadowed = typeToken.kind !== 'identifier' || Boolean(this.origins.lookupTypeOwner(this.resolve([typeToken.value], path), path));
           if (!acceptRustUnwrittenScalarParameter(origin.type?.kind ?? '', this.origins.immutableProduct(origin), shadowed, bodyEvidence.closed, bodyEvidence.possibleWrite)) {
             throw unsupported('mutable parameter', 'mutation is outside the portable core', span(token, token));
           }
@@ -1440,6 +1443,12 @@ class RustParser {
           continue;
         }
         const method = c.identifier('method');
+        const standardSumNested=readRustStandardSumSourceNested(this,value,method,path);
+        if(standardSumNested){value=standardSumNested;continue;}
+        const standardSumConversion=readRustStandardSumSourceConversion(this,value,method,path);
+        if(standardSumConversion){value=standardSumConversion;continue;}
+        const standardSumPredicate=readRustStandardSumSourcePredicate(this,value,method,path);
+        if(standardSumPredicate){value=standardSumPredicate;continue;}
         const standardSumMethod=readRustStandardSumSourceMethod(this,value,method,path);
         if(standardSumMethod){value=standardSumMethod;continue;}
         const ascii = readRustAsciiTextPredicate(this, value, method, path);
@@ -1490,7 +1499,7 @@ class RustParser {
       return Boolean(actual)&&acceptRustFloatPredicateReceiver(origin.type?.kind??'',origin.floatSourceModel??'',origin.proven,origin.wrappers.length>0,false,String(argumentsCount));
     }
     const owner = this.resolve(['f64'], origin.path);
-    const shadowed = Boolean(this.origins.lookup(['f64'], origin.path) || this.origins.lookup(owner, origin.path));
+    const shadowed = Boolean(this.origins.lookupTypeOwner(['f64'], origin.path) || this.origins.lookupTypeOwner(owner, origin.path));
     return acceptRustFloatPredicateReceiver(origin.type?.kind ?? '', origin.floatSourceModel ?? '', origin.proven, origin.wrappers.length > 0, shadowed, String(argumentsCount));
   }
 
@@ -1716,7 +1725,7 @@ class RustParser {
       if (segments.length === 2 && segments[0] === 'f64' && acceptRustFloatConstantName(segments[1])) {
         const range = { start: token.start, end: c.tokens[c.index - 1].end };
         const owner = this.resolve(['f64'], path);
-        const shadowed = Boolean(this.origins.lookup(['f64'], path) || this.origins.lookup(owner, path));
+        const shadowed = Boolean(this.origins.lookupTypeOwner(['f64'], path) || this.origins.lookupTypeOwner(owner, path));
         if (!acceptRustFloatConstantOwner(owner.join('::'), shadowed) || c.is('(')) throw unsupported('Rust binary64 constant', 'associated constants require the exact unshadowed primitive f64 owner and value syntax', range);
         return this.origins.mark(createRustFloatConstantExpression(segments[1], range), {...this.origins.typeOrigin(FLOAT, path),sourceOwner:{kind:'primitive',path:['f64'],arguments:[]}});
       }
@@ -1945,7 +1954,7 @@ class RustParser {
     const segments = this.pathSegments('pattern');
     const standardSum=readRustStandardSumSourcePattern(this,segments,path,token,aliases);
     if(standardSum)return standardSum;
-    const constantPatternError=readRustSourceConstantPatternError(this.origins.lookup(readRustSourceValueName(this,segments,path),path)?.k??'');if(constantPatternError)throw unsupported('Rust constant pattern',constantPatternError,span(token,c.peek()));
+    const constantPatternError=readRustSourceConstantPatternError(this.origins.lookupValueOwner(readRustSourceValueName(this,segments,path),path)?.k??'');if(constantPatternError)throw unsupported('Rust constant pattern',constantPatternError,span(token,c.peek()));
 
     if (c.eat('@')) {
       if (segments.length !== 1) throw this.fail('expected a binding before @', token);

@@ -26,9 +26,11 @@ qualified name, keyword index, RHS start/end, after-item index, parameter count,
 and parameter names. Its bounds are the existing 10000 alias declarations,
 existing 128 expansion depth and 4096 expansions, proposed 64 explicit
 parameters, and the existing 262144 materialization scale. Trailing parameter
-commas and raw spellings such as `r#gen` are retained. Bounds, defaults,
-lifetime/const parameters and where clauses still refuse. A compound `>=`
-retains the exact remaining `=` rather than consuming source syntax.
+commas and raw spellings such as `r#gen` are retained. The subsequent additive
+parameter directory also retains trailing type-default spans, including nested
+compound delimiters. Bounds, lifetime/const parameters and where clauses still
+refuse. A compound `>=` retains the exact remaining `=` rather than consuming
+source syntax.
 
 `js/src/translation/rust-type-aliases.js` actually consumes this directory.
 Discovery stores declaration-scoped binding identities with original source
@@ -270,8 +272,94 @@ edges, depth edges and JavaScript sharing/cycle controls are authored in
 `translation-rust-standard-sum-source-metadata.test.js`, its draft fixture,
 and the native helper's deferred control module. None were executed.
 
+The next namespace source draft adds `rust-source-namespace-rules.js`. Actual
+module/datatype/external-crate catalog entries inhabit the type namespace;
+function/constant/constructor entries inhabit the value namespace. Separate
+indexes retain overlapping entries across parser passes and source order.
+The historical primary catalog remains available to mixed callers, while
+actual origin/value/call/pattern consumers and type-owner consumers select
+their real namespace. A filtered type lookup stops at a nearer wrong-kind
+type item, and a qualified lookup commits to its nearest actual type/module
+prefix rather than falling through to an outer child. The shared policy also
+retains external-crate conflicts with actual type items while allowing value
+homographs. Native indexes and lexical cursors transport the shared decisions;
+the borrowed sum identity lookup uses the same type index and prefix rule.
+Record constructor renaming and nominal metadata refresh update the indexes.
+Parent-owned parser pass/constant-reader and sum owner/constructor seams use
+the added registration and role-aware lookup methods. A module and function
+with the same name retain independent entries; data/function core declaration
+name collisions still require separate core representation and remain a gap.
+
+Deferred namespace controls preserve literal originals for function/local
+`Option`, function `std`/`core`, both module/function declaration orders and
+imported type aliases with value homographs. Refusals preserve actual user
+`std`/`core` modules, forward type shadows and bare `Some` function/local
+shadows. Source assertions are explicitly bounded to Rust >=1.90.0 <1.100.0.
+`translation-rust-source-namespaces.test.js` drafts actual frontend/checker,
+source-free typed text/binary reload and four-emitter comparison controls;
+the native type-owner module drafts independent lookup/index controls.
+These controls have not run, and no parity or admission result is claimed.
+
+Trailing type defaults now have paired source consumers in the generic alias
+adapters. The additive shared parameter directory retains actual token spans,
+including the interior offsets of compound `>>=` delimiters; the preceding
+explicit-parameter planning API and no-default declaration row shapes remain
+unchanged. Every default is parsed as a complete symbolic template in the
+alias's definition scope before caching the RHS. Defaults may reference only
+earlier actual parameter binding identities. Own/later references, alias
+dependency cycles, required parameters after defaults, unresolved default
+owners and unsupported type forms refuse even when an argument overrides the
+default or the declaration is unused. The existing unused-parameter check on
+the RHS remains unchanged. A qualified nominal path tail with the same spelling
+as a parameter remains its actual definition owner rather than becoming a
+parameter occurrence.
+
+Both concrete and symbolic alias applications fill omitted trailing arguments
+from the checked default templates, substituting the earlier complete actual
+origins/templates under existing recursion/depth/materialization charges.
+Bare aliases with complete defaults, partial arguments and explicit empty
+argument lists compose with the admitted tuple, scalar, nominal, canonical
+Option/Result and Vec forms. Concrete library admission still checks actual
+Copy/element/source-owner facts; symbolic defaults create no Copy evidence.
+`Values::<>::new()` and bare all-defaulted `Values::new()`, `Maybe::Some`/`None`
+and Result constructor paths reach the existing checked constructor transport.
+The existing primary path hook supplies the actual alias prefix and member
+token; no root parser rewrite is required. Prefix resolution proves an actual
+generic alias with complete authored defaults before instantiation, then the
+ordinary complete-owner constructor policy selects its real registered path.
+Required arguments are never inferred, local value homographs do not replace
+the type prefix, and ordinary module/value paths retain their existing reader.
+
+The expression hook also lazily retains a declaration's complete all-default
+origin in the existing alias-access cache, then forwards non-Vec/non-sum members
+to the preceding primitive, owned String or nominal member reader. Explicit
+specializations never enter this declaration-default cache. Default preparation
+disables argument-token consumption so a following comparison `<` cannot be
+mistaken for an argument list. Existing copy/materialization accounting applies
+both when populating and when reading this scoped origin. Unused declarations
+remain symbolic: the accessor never eagerly materializes every default during
+declaration validation. Independent source controls retain associated scalar
+constants/default/conversion/callable values, alternating explicit widths,
+comparison punctuation, String construction/forwarding and nominal variants.
+Pattern-only associated constant paths precede the expression hook; that is
+the next concrete consumer seam after the parent's source checkpoint, and no
+pattern support extension is claimed in this expression batch.
+
+Independent literal defaults originals/refusals and token-directory controls
+are authored in `rust-generic-type-alias-defaults-draft.mjs` and
+`translation-rust-generic-type-alias-defaults.test.js`, including complete
+pointer-integer owners, dependent/nested defaults, forward alias defaults,
+qualified nominal defaults, overrides and defaulted vector freshness.
+Native generic alias unit source adds matching shared-policy and actual
+frontend controls. The fixture author appends default positives/refusals after
+all preceding publication cases, preserving their original module coordinates;
+generated LiNo has not changed. Current boundary prose now removes type
+defaults from the unresolved list while retaining trait/lifetime/const bounds.
+All source assertions remain bounded to Rust >=1.90.0 <1.100.0. No controls,
+generation, compilation or validation have run in this batch.
+
 Generic nominal datatypes, other parameter-dependent library/wrapper/callable
-templates, trait bounds/defaults, lifetime/const arguments, local/associated
+templates, trait bounds, lifetime/const arguments, local/associated
 aliases, qualified projections, general inference and full namespace/privacy
 semantics remain obligations. This source batch establishes no execution,
 JavaScript/Rust parity, semantic equivalence or overall requirement completion.

@@ -66,6 +66,9 @@ mod scalar_parameters;
 mod standard_sum_source;
 mod standard_sum_metadata;
 mod standard_sum_methods;
+mod standard_sum_conversions;
+mod standard_sum_predicates;
+mod standard_sum_nested;
 mod shared_array_handles;
 mod source_constant_evaluation;
 mod source_constants;
@@ -420,6 +423,8 @@ fn parse_rust_with_selected_profiles(
         origins=std::mem::replace(&mut declarations.origins,SourceOrigins::new(None,array_result_model));
     }
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
+    source_origins.type_catalog = origins.type_catalog;
+    source_origins.value_catalog = origins.value_catalog;
     source_origins.collecting = true;
     source_origins.unit_clone_facts = origins.unit_clone_facts;
     source_origins.nominal_copy_derivations = origins.nominal_copy_derivations;
@@ -459,6 +464,8 @@ fn parse_rust_with_selected_profiles(
         original_source,
     );
     parser.source_version_minor = source_version_minor;
+    parser.origins.type_catalog = syntax.origins.type_catalog;
+    parser.origins.value_catalog = syntax.origins.value_catalog;
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.origins.nominal_copy_derivations = syntax.origins.nominal_copy_derivations;
     parser.origins.nominal_copy_owners = syntax.origins.nominal_copy_owners;

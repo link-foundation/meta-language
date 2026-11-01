@@ -98,7 +98,14 @@ impl SourceOrigins{
     pub(super) fn standard_sum_metadata_lookup(&self,segments:&[String],path:&[String])->Option<(String,&SourceDeclaration)>{
         let mut names=segments;let mut start=path;let mut absolute=false;
         match names.first().map(String::as_str){Some("crate")=>{names=&names[1..];start=&[];absolute=true;},Some("self")=>{names=&names[1..];absolute=true;},Some("super")=>{while names.first().is_some_and(|name|name=="super"){names=&names[1..];start=&start[..start.len().saturating_sub(1)];}absolute=true;},_=>{}}
-        for depth in (0..=start.len()).rev(){let name=start[..depth].iter().chain(names).map(String::as_str).collect::<Vec<_>>().join(".");if let Some(value)=self.catalog.get(&name){return Some((name,value));}if absolute{break;}}
+        for depth in (0..=start.len()).rev(){
+            let name=start[..depth].iter().chain(names).map(String::as_str).collect::<Vec<_>>().join(".");
+            let value=self.namespace_entry(&name,"type");
+            if let Some(value)=value{return Some((name,value));}
+            let prefix=start[..depth].iter().chain(names.first()).map(String::as_str).collect::<Vec<_>>().join(".");
+            if !self.namespace_prefix_allows_outer(names.len(),&prefix){return None;}
+            if absolute{break;}
+        }
         None
     }
 }

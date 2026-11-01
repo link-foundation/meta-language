@@ -11,13 +11,13 @@ export function readRustSourceConstantValue(parser,entry,path,span){
 }
 export function readRustSourceConstantCall(parser,segments,args,path,span){
  if(segments.length===1&&parser.origins.scope.has(segments[0]))return null;
- const entry=parser.origins.lookup(readRustSourceValueName(parser,segments,path),path);if(entry?.k!=='const')return null;
+ const entry=parser.origins.lookupValueOwner(readRustSourceValueName(parser,segments,path),path);if(entry?.k!=='const')return null;
  const error=readRustSourceCallableValueError(entry.result.type?.kind??'','constant');if(error)throw typeError(error,span);
  return readRustCopyClosureCall(parser,readRustSourceConstantValue(parser,entry,path,span),args,path,span);
 }
 
 export function requireRustNonconstantBinding(parser,name,path,span){
- const error=readRustSourceConstantPatternError(parser.origins.lookup(readRustSourceValuePath(parser.modulePath,parser.resolve([name],path)),path)?.k??'');if(error)throw unsupported('Rust constant pattern',error,span);
+ const error=readRustSourceConstantPatternError(parser.origins.lookupValueOwner(readRustSourceValuePath(parser.modulePath,parser.resolve([name],path)),path)?.k??'');if(error)throw unsupported('Rust constant pattern',error,span);
 }
 
 export function readRustSourceValueName(parser,segments,path){

@@ -109,6 +109,23 @@ test('embedded region dispositions reuse the current host and diagnose true cycl
   assert.equal(disposition({ byteLimit: Number.MAX_SAFE_INTEGER, bytes: Number.MAX_SAFE_INTEGER - 9 }), 'embeddedRegionByteLimit');
 });
 
+test('same-host CST reuse retains resource and ancestry input domains', () => {
+  const original=[0,100,0,0,0,100,0,2,0,0,2,2,100,true];
+  assert.equal(readEmbeddedRegionDisposition(...original),'reuseAttached');
+  for(const column of [7,8,9,10,11,12])for(const value of [-1,0.5,NaN,Infinity,Number.MAX_SAFE_INTEGER+1]){
+    const supplied=[...original];supplied[column]=value;
+    assert.equal(readEmbeddedRegionDisposition(...supplied),'invalidEmbeddedRegionLimits');
+  }
+  for(const column of [2,3,6])for(const value of [-2,-3,0.5,NaN,Infinity,Number.MAX_SAFE_INTEGER+1]){
+    const supplied=[...original];supplied[column]=value;
+    assert.equal(readEmbeddedRegionDisposition(...supplied),'invalidEmbeddedRegionAncestry');
+  }
+  const root=[...original];root[7]=1;root[10]=0;
+  assert.equal(readEmbeddedRegionDisposition(...root),'reuse');
+  root[11]=NaN;
+  assert.equal(readEmbeddedRegionDisposition(...root),'invalidEmbeddedRegionLimits');
+});
+
 test('embedded region diagnostics expose attempted counters while only admitted attempts charge the traversal', () => {
   assert.equal(readEmbeddedRegionCharge(3, 10, 20, false), 4);
   assert.equal(readEmbeddedRegionCharge(3, 10, 20, true), 13);

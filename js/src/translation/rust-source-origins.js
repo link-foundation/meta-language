@@ -31,6 +31,11 @@ import {acceptRustScalarVectorCopyOccurrence} from './rust-scalar-vector-copy-ru
 import {acceptRustScalarArrayIndexElement} from './rust-array-index-rules.js';
 import {readRustPointerIntegerOwnerError,readRustPointerIntegerOwnerJoinError,selectRustPointerIntegerResultOwner} from './rust-pointer-integer-owner-rules.js';
 import {readRustPointerIntegerContractOwner} from './rust-pointer-integer-owners.js';
+import {readRustSourceNamespaceRole,readRustSourceNamespaceLookupRole,readRustSourceNamespaceCandidate,acceptRustSourceNamespaceDeclarationPair,acceptRustSourceNamespaceOuterCandidate} from './rust-source-namespace-rules.js';
+
+// Parser passes reuse the actual catalog Map. Preserve both namespace entries
+// even when that historical one-entry map overwrites the other namespace.
+const sourceNamespaceCatalogs=new WeakMap();
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -45,6 +50,9 @@ export class RustSourceOrigins {
     this.freshVectorConstructors = new Set();
     this.collecting = catalog === null;
     this.catalog = catalog ?? new Map();
+    let namespaces=sourceNamespaceCatalogs.get(this.catalog);
+    if(!namespaces){namespaces={type:new Map(),value:new Map()};for(const [name,entry]of this.catalog){const role=readRustSourceNamespaceRole(entry.k);if(role)namespaces[role].set(name,entry);}sourceNamespaceCatalogs.set(this.catalog,namespaces);}
+    this.typeCatalog=namespaces.type;this.valueCatalog=namespaces.value;
     this.nominalCopyDerivations=new Map();this.nominalCopyOwners=new Set();
     this.scope = new Map();
     this.sourceTemporaryBindings=new Set();this.ownedArgumentTransfers=new WeakSet();this.sourceBindingStates=new Map();this.nextSourceBindingIdentity=0;this.ownedBindingExcluded=false;
@@ -76,7 +84,7 @@ export class RustSourceOrigins {
   availableOwnedBinding(origin){return availableRustOwnedOrigin(this,origin);}
   consumeOwnedBinding(origin,span){return consumeRustOwnedOrigin(this,origin,span);}
   typed(type, path, wrappers = [], fields = null, textSourceModel = type.kind === 'string' ? 'owned string' : null) {
-    const standardSum=type.kind==='named'?this.lookup(type.path,path)?.standardSumSourceOrigin:null;
+    const standardSum=type.kind==='named'?this.lookupTypeOwner(type.path,path)?.standardSumSourceOrigin:null;
     if(standardSum){this.type={...clone(standardSum),path:[...path],wrappers:[...wrappers]};return type;}
     fields ??= type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
     this.type = { floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, type, path: [...path], wrappers, fields, textSourceModel, ...(type.kind === 'array' && { arraySourceModel: 'owned vector',arrayElementCopyEvidence:acceptRustScalarArrayIndexElement(type.element.kind) }), copyEvidence: acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), proven: true, diverging: false, uncertain: false };
@@ -85,7 +93,7 @@ export class RustSourceOrigins {
   }
 
   typeOrigin(type, path) {
-    const standardSum=type.kind==='named'?this.lookup(type.path,path)?.standardSumSourceOrigin:null;
+    const standardSum=type.kind==='named'?this.lookupTypeOwner(type.path,path)?.standardSumSourceOrigin:null;
     if(standardSum)return clone(standardSum);
     const fields = type.kind === 'tuple' ? type.elements.map(element => this.typeOrigin(element, path)) : null;
     return retainRustNominalCopyOrigin(this,{ ...value(acceptRustImmutableProductType(type.kind, fields?.every(field => this.immutableProduct(field)) ?? false, false), type), floatSourceModel: type.kind === 'float' ? 'binary64 scalar' : null, path: [...path], fields });
@@ -121,13 +129,13 @@ export class RustSourceOrigins {
   declaration(name, path, entry) {
     if (this.collecting) {
       const key = [...path, name].join('.');
-      const existing = this.catalog.get(key);
-      if (existing && existing.k !== entry.k && (existing.k === 'externalCrate' || entry.k === 'externalCrate')) {
+      const existing = this.lookupNamespace(['crate',...path,name],[],'type');
+      if (existing && !acceptRustSourceNamespaceDeclarationPair(existing.k,entry.k)) {
         throw unsupported('extern crate alloc', 'a source crate declaration cannot share its module name with another item');
       }
       const values=entry.k==='fn'?[...entry.parameters,entry.result]:entry.k==='ctor'?[...entry.fields,entry.result]:entry.k==='const'?[entry.result]:[];
       values.forEach(origin=>retainRustNominalCopyOrigin(this,origin));
-      this.catalog.set(key, entry);
+      this.registerCatalogEntry(key, entry);
     }
   }
 
@@ -136,13 +144,38 @@ export class RustSourceOrigins {
       if(origin.type?.kind==='named')origin.type={...origin.type,path:resolve(origin.type.path,origin.path)};
       origin.fields?.forEach(resolveOrigin);origin.callableParameters?.forEach(resolveOrigin);if(origin.callableResult)resolveOrigin(origin.callableResult);
     };
-    for(const entry of this.catalog.values()){
+    for(const entry of new Set([...this.catalog.values(),...this.typeCatalog.values(),...this.valueCatalog.values()])){
       const origins=entry.k==='fn'?[...entry.parameters,entry.result]:entry.k==='const'?[entry.result]:entry.k==='ctor'?[...entry.fields,entry.result]:[];
       origins.forEach(resolveOrigin);
     }
   }
 
+  registerCatalogEntry(key,entry){
+    const role=readRustSourceNamespaceRole(entry.k);
+    if(role==='type')this.typeCatalog.set(key,entry);
+    if(role==='value')this.valueCatalog.set(key,entry);
+    this.catalog.set(key,entry);
+  }
+
+  removeCatalogEntry(key){
+    const entry=this.catalog.get(key);if(!entry)return;
+    const role=readRustSourceNamespaceRole(entry.k);this.catalog.delete(key);
+    if(role==='type')this.typeCatalog.delete(key);
+    if(role==='value')this.valueCatalog.delete(key);
+    const peer=role==='type'?this.valueCatalog.get(key):this.typeCatalog.get(key);
+    if(peer)this.catalog.set(key,peer);
+  }
+  lookupTypeOwner(segments,path){return this.lookupNamespace(segments,path,'type',[]);}
+  lookupValueOwner(segments,path){return this.lookupNamespace(segments,path,'value',[]);}
+  namespaceEntry(name,role){
+    const primary=this.catalog.get(name),indexed=(role==='type'?this.typeCatalog:role==='value'?this.valueCatalog:this.catalog).get(name);
+    return primary&&(role==='any'||readRustSourceNamespaceRole(primary.k)===role)?primary:indexed;
+  }
   lookup(segments, path, kinds = null) {
+    return this.lookupNamespace(segments,path,readRustSourceNamespaceLookupRole(kinds??[]),kinds??[]);
+  }
+
+  lookupNamespace(segments,path,role,kinds=[]){
     let names = [...segments];
     let start = [...path];
     let absolute = false;
@@ -154,8 +187,14 @@ export class RustSourceOrigins {
     }
     for (let depth = start.length; depth >= 0; depth -= 1) {
       const fullName = [...start.slice(0, depth), ...names].join('.');
-      const found = this.catalog.get(fullName);
-      if (found && (!kinds || kinds.includes(found.k))) return { ...found, fullName };
+      // Direct legacy catalog writes remain visible; indexed entries preserve
+      // an independent namespace when the primary entry belongs to its peer.
+      const found=this.namespaceEntry(fullName,role);
+      const action=found?readRustSourceNamespaceCandidate(found.k,role,kinds):'continue';
+      if(action==='select')return {...found,fullName};
+      if(action==='stop')return null;
+      const prefix=this.namespaceEntry([...start.slice(0,depth),names[0]].join('.'),'type');
+      if(!acceptRustSourceNamespaceOuterCandidate(names.length,prefix?.k??''))return null;
       if (absolute) break;
     }
     return null;
@@ -173,8 +212,8 @@ export class RustSourceOrigins {
     if(Boolean(left.callableParameters)!==Boolean(right.callableParameters)||left.callableParameters&&(left.callableParameters.length!==right.callableParameters.length||left.callableParameters.some((parameter,index)=>!this.compareStructure(parameter,right.callableParameters[index]))))return false;
     if(Boolean(left.callableResult)!==Boolean(right.callableResult)||left.callableResult&&!this.compareStructure(left.callableResult,right.callableResult))return false;
     if (left.type?.kind === 'named' && right.type?.kind === 'named') {
-      const leftOwner = this.lookup(left.type.path, left.path);
-      const rightOwner = this.lookup(right.type.path, right.path);
+      const leftOwner = this.lookupTypeOwner(left.type.path, left.path);
+      const rightOwner = this.lookupTypeOwner(right.type.path, right.path);
       if (leftOwner && rightOwner) return leftOwner.fullName === rightOwner.fullName;
       return JSON.stringify(left.type.path) === JSON.stringify(right.type.path) && JSON.stringify(left.path) === JSON.stringify(right.path);
     }
@@ -184,8 +223,8 @@ export class RustSourceOrigins {
   box(segments, resolved, path, span) {
     if (this.collecting) return;
     const owner = resolved.join('::');
-    const source = this.lookup([segments[0]], path);
-    const target = this.lookup([resolved[0]], path);
+    const source = this.lookupTypeOwner([segments[0]], path);
+    const target = this.lookupTypeOwner([resolved[0]], path);
     const shadowed = Boolean(source && source.k !== 'externalCrate') || Boolean(target && target.k !== 'externalCrate');
     if (!acceptRustSourceBoxOwner(owner, shadowed)) {
       throw unsupported('Box owner', 'only the unshadowed standard immutable Box is portable', span);
@@ -197,7 +236,7 @@ export class RustSourceOrigins {
 
   vector(segments, resolved, path, span) {
     if (this.collecting) return;
-    const shadowed = [segments[0], resolved[0]].some(name => this.lookup([name], path));
+    const shadowed = [segments[0], resolved[0]].some(name => this.lookupTypeOwner([name], path));
     if (!acceptRustSourceArrayOwner(resolved.join('::'), shadowed)) throw unsupported('Vec owner', 'only the unshadowed standard vector is admitted by the immutable array model', span);
   }
 
@@ -208,11 +247,11 @@ export class RustSourceOrigins {
       return clone(this.scope.get(node.path[0]));
     }
     if (node.k === 'name' || (node.k === 'app' && node.fn.k === 'name')) {
-      const entry = this.lookup(node.k === 'name' ? node.path : node.fn.path, path);
+      const entry = this.lookupValueOwner(node.k === 'name' ? node.path : node.fn.path, path);
       if (entry?.k === 'const') return clone(entry.result);
       if (entry?.k === 'fn') return { ...clone(entry.result), freshArrayValue: acceptRustFreshVectorResultCall(node.k,entry.result.arraySourceModel??'',entry.result.wrappers.length,Boolean(entry.result.freshArrayValue),entry.result.freshVectorResultContract===true,this.freshCalls.has(`${node.span?.start}:${node.span?.end}`)) };
       if (entry?.k === 'ctor') return clone(entry.result);
-      if (node.k === 'name' && node.path.length === 2 && !this.lookup([node.path[0]], path)
+      if (node.k === 'name' && node.path.length === 2 && !this.lookupTypeOwner([node.path[0]], path)
         && rustFixedType(node.path[0]) && ['MIN', 'MAX'].includes(node.path[1])) return {...value(true, rustFixedType(node.path[0])),sourceOwner:{kind:'primitive',path:[node.path[0]],arguments:[]}};
     }
     if (node.k === 'if') {
@@ -404,7 +443,7 @@ export class RustSourceOrigins {
   call(segments, args, path, span,ordinary=false) {
     this.freshCalls.add(`${span?.start}:${span?.end}`);
     if (this.collecting) return;
-    const entry = this.lookup(segments, path);
+    const entry = this.lookupValueOwner(segments, path);
     const expected = entry?.k === 'fn' ? entry.parameters : entry?.k === 'ctor' ? entry.fields : null;
     if (!expected || args.length !== expected.length) return;
     for (let index = 0; index < args.length; index += 1) {
@@ -458,7 +497,7 @@ export class RustSourceOrigins {
       if(result.has(pattern.name))throw unsupported('duplicate source pattern binding','each pattern binds a source name at most once',sourceSpan);
       result.set(pattern.name,origin);this.pattern(pattern.pattern,origin,path,result,pattern.pattern.span??sourceSpan);
     } else if (pattern.k === 'bindOrCtor' || pattern.k === 'bind') {
-      if (!this.lookup([pattern.name], path)?.fields) {
+      if (!this.lookupValueOwner([pattern.name], path)?.fields) {
         if(result.has(pattern.name))throw unsupported('duplicate source pattern binding','each pattern binds a source name at most once',sourceSpan);
         result.set(pattern.name, origin);
       }
@@ -472,8 +511,8 @@ export class RustSourceOrigins {
         this.pattern(item,field,path,result,item.span??sourceSpan);
       }
     } else if (pattern.k === 'ctor') {
-      const entry = this.lookup(pattern.path, path);
-      const typeEntry = origin.type?.kind === 'named' ? this.lookup(origin.type.path, origin.path) : null;
+      const entry = this.lookupValueOwner(pattern.path, path);
+      const typeEntry = origin.type?.kind === 'named' ? this.lookupTypeOwner(origin.type.path, origin.path) : null;
       const borrowed = origin.wrappers.length > 0 && origin.wrappers.every(layer => layer === 'reference');
       const admissible = entry?.k === 'ctor' && typeEntry?.k === 'data' && entry.owner === typeEntry.fullName
         && (origin.wrappers.length === 0 || borrowed);

@@ -199,7 +199,7 @@ impl SourceOrigins {
         let entries = self.catalog.clone();
         for (name, mut declaration) in entries {
             self.retain_nominal_copy_declaration(&mut declaration);
-            self.catalog.insert(name, declaration);
+            self.register_catalog_entry(name, declaration);
         }
         let sums=self.standard_sum_source_origins.clone();
         for(name,mut origin)in sums {

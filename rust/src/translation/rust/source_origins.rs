@@ -336,6 +336,8 @@ pub(super) struct SourceLookup {
 }
 
 pub(super) struct SourceOrigins {
+    pub(super) type_catalog: HashMap<String,SourceDeclaration>,
+    pub(super) value_catalog: HashMap<String,SourceDeclaration>,
     pub(super) standard_sum_metadata_budget: super::standard_sum_metadata::MetadataBudget,
     pub(super) standard_sum_source_origins: HashMap<String, SourceOrigin>,
     pub(super) standard_sum_source_needs_final_admission: bool,
@@ -385,6 +387,8 @@ impl SourceOrigins {
             }
         }
         Self {
+            type_catalog: catalog.as_ref().filter(|_|standard_sum_metadata_budget.error.is_none()).map(|entries|entries.iter().filter(|(_,entry)|super::source_origins::type_owners::namespace_role(entry)=="type").map(|(name,entry)|(name.clone(),entry.clone())).collect()).unwrap_or_default(),
+            value_catalog: catalog.as_ref().filter(|_|standard_sum_metadata_budget.error.is_none()).map(|entries|entries.iter().filter(|(_,entry)|super::source_origins::type_owners::namespace_role(entry)=="value").map(|(name,entry)|(name.clone(),entry.clone())).collect()).unwrap_or_default(),
             standard_sum_metadata_budget,
             standard_sum_source_origins,
             standard_sum_source_needs_final_admission: false,
@@ -433,7 +437,7 @@ impl SourceOrigins {
 
     pub(super) fn typed(&mut self, ty: Type, path: &[String], wrappers: Vec<String>) -> Type {
         let stored = match &ty {
-            Type::Named { path: names, .. } => self.lookup(names,path)
+            Type::Named { path: names, .. } => self.lookup_type_owner(names,path)
                 .filter(|owner|matches!(owner.declaration,SourceDeclaration::Data))
                 .and_then(|owner|self.standard_sum_source_origins.get(&owner.full_name)).cloned(),
             _ => None,
@@ -555,10 +559,8 @@ impl SourceOrigins {
             let mut full_path = path.to_vec();
             full_path.push(name.to_owned());
             let key = full_path.join(".");
-            if let Some(existing) = self.catalog.get(&key) {
-                let existing_crate = matches!(existing, SourceDeclaration::ExternalCrate);
-                let new_crate = matches!(entry, SourceDeclaration::ExternalCrate);
-                if existing_crate != new_crate {
+            if let Some(existing) = self.namespace_entry(&key,"type") {
+                if !crate::translation::rust_source_namespace_rules::accept_rust_source_namespace_declaration_pair(type_owners::namespace_kind(existing),type_owners::namespace_kind(&entry)) {
                     return Err(unsupported(
                         "extern crate alloc",
                         "a source crate declaration cannot share its module name with another item",
@@ -566,7 +568,7 @@ impl SourceOrigins {
                     ));
                 }
             }
-            self.catalog.insert(key, entry);
+            self.register_catalog_entry(key, entry);
         }
         Ok(())
     }
@@ -597,7 +599,7 @@ impl SourceOrigins {
                 resolve_origin(result, resolve);
             }
         }
-        for declaration in self.catalog.values_mut() {
+        for declaration in self.catalog.values_mut().chain(self.type_catalog.values_mut()).chain(self.value_catalog.values_mut()) {
             match declaration {
                 SourceDeclaration::Function { parameters, result } => {
                     parameters
@@ -634,7 +636,7 @@ impl SourceOrigins {
             .into_iter()
             .flatten()
             .any(|name| {
-                self.lookup(std::slice::from_ref(name), path)
+                self.lookup_type_owner(std::slice::from_ref(name), path)
                     .is_some_and(|entry| {
                         !matches!(entry.declaration, SourceDeclaration::ExternalCrate)
                     })
@@ -648,7 +650,7 @@ impl SourceOrigins {
         }
         let declared = resolved
             .first()
-            .and_then(|name| self.lookup(std::slice::from_ref(name), path))
+            .and_then(|name| self.lookup_type_owner(std::slice::from_ref(name), path))
             .is_some_and(|entry| matches!(entry.declaration, SourceDeclaration::ExternalCrate));
         if !accept_rust_source_box_availability(&owner, declared) {
             return Err(unsupported(
@@ -673,7 +675,7 @@ impl SourceOrigins {
         let shadowed = [segments.first(), resolved.first()]
             .into_iter()
             .flatten()
-            .any(|name| self.lookup(std::slice::from_ref(name), path).is_some());
+            .any(|name| self.lookup_type_owner(std::slice::from_ref(name), path).is_some());
         if !accept_rust_source_array_owner(&resolved.join("::"), shadowed) {
             return Err(unsupported(
                 "Vec owner",
@@ -751,8 +753,8 @@ impl SourceOrigins {
                 }),
             ) => {
                 match (
-                    self.lookup(left_path, &left.path),
-                    self.lookup(right_path, &right.path),
+                    self.lookup_type_owner(left_path, &left.path),
+                    self.lookup_type_owner(right_path, &right.path),
                 ) {
                     (Some(left), Some(right)) => left.full_name == right.full_name,
                     _ => left_path == right_path && left.path == right.path,
@@ -780,7 +782,7 @@ impl SourceOrigins {
             },
             _ => None,
         };
-        if let Some(entry) = names.and_then(|names| self.lookup(names, path)) {
+        if let Some(entry) = names.and_then(|names| self.lookup_value_owner(names, path)) {
             match entry.declaration {
                 SourceDeclaration::Function { mut result, .. } => {
                     result.fresh_array_value = node.span.filter(|span| {
@@ -801,7 +803,7 @@ impl SourceOrigins {
         }
         if let SNode::Name { path: names } = &node.node
             && names.len() == 2
-            && self.lookup(&names[..1], path).is_none()
+            && self.lookup_type_owner(&names[..1], path).is_none()
             && super::rust_fixed_type(&names[0]).is_some()
             && ["MIN", "MAX"].contains(&names[1].as_str())
         {
@@ -1652,7 +1654,7 @@ impl SourceOrigins {
         if self.collecting {
             return Ok(());
         }
-        let expected = match self.lookup(segments, path).map(|entry| entry.declaration) {
+        let expected = match self.lookup_value_owner(segments, path).map(|entry| entry.declaration) {
             Some(SourceDeclaration::Function { parameters, .. }) => parameters,
             Some(SourceDeclaration::Constructor { fields, .. }) => fields,
             _ => return Ok(()),

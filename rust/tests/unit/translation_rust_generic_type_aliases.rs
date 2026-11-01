@@ -72,6 +72,46 @@ fn the_original_symbolic_vector_alias_is_checked_without_a_runtime_export() {
 }
 
 #[test]
+fn generic_type_defaults_select_only_earlier_complete_binding_identities(){
+    let parameters=vec!["owner/T".to_owned(),"owner/U".to_owned()];
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_substitution_plan(&parameters,1.0,1.0,&["owner/T".to_owned()]),vec!["substitution".to_owned(),"0".to_owned()]);
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_substitution_plan(&parameters,0.0,0.0,&[]),vec!["substitution".to_owned()]);
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_substitution_plan(&parameters,0.0,0.0,&["owner/U".to_owned()])[0],"error");
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_argument_plan(&[false,true],1.0,true),vec!["arguments".to_owned(),"1".to_owned()]);
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_default_argument_plan(&[false,true],0.0,false)[0],"error");
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_concrete_identifier(&["T".into()],"T",true));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_identifier(&["T".into()],"T",false));
+}
+
+#[test]
+fn defaulted_declarations_and_actual_partial_applications_reach_native_frontend(){
+    let options=meta_language::SelfTranslationOptions {semantic_translation:true,..meta_language::SelfTranslationOptions::default()};
+    for source in [
+        "type Identity<T=u8>=T;fn main(){}",
+        "type Pair<T=u8,U=T>=(T,U);pub fn result()->u16{let value:Pair<u16>=(7u16,9u16);value.1}",
+        "type Values<T=u8>=Vec<T>;fn make()->Values{vec![7u8]}pub fn result()->usize{make().len()}",
+        "type Values<T=u8>=Vec<T>;pub fn result()->usize{Values::new().len()}",
+        "type Maybe<T=u8>=Option<T>;pub fn result()->u8{let value=Maybe::Some(7u8);value.unwrap_or(0u8)}",
+        "type Outcome<T=u8,E=i64>=Result<T,E>;pub fn result()->u8{let value=Outcome::Err(9i64);value.unwrap_or(7u8)}",
+        "type Scalar<T=u8>=T;pub fn result()->u8{Scalar::MAX}",
+        "type Scalar<T=u8>=T;pub fn result()->bool{Scalar::MAX<255u8}",
+        "type Scalar<T=u8>=T;pub fn result()->u8{let make:fn()->u8=Scalar::default;make()}",
+        "type Text<T=String>=T;pub fn result()->usize{Text::from(\"abc\").len()}",
+        "#[derive(Copy,Clone)]enum State{Ready}type Value<T=State>=T;pub fn result()->u8{let value=Value::Ready;match value{State::Ready=>7u8}}",
+        "type Identity<T=u8>=T;type Pair<T=i64,U=Identity<T>>=(T,U);type Forward<T=u16>=Pair<T>;pub fn result()->u16{let value:Forward=(7u16,9u16);value.1}",
+    ]{meta_language::self_translation_signatures(source,"Rust",&options).unwrap();}
+    for source in [
+        "type Bad<T=T>=T;fn main(){}",
+        "type Bad<T=U,U=u8>=(T,U);fn main(){}",
+        "type Bad<T=u8,U>=(T,U);fn main(){}",
+        "type Bad<T=Missing>=T;pub fn result()->u8{let value:Bad<u8>=7u8;value}",
+        "type First<T=Second>=T;type Second<U=First>=U;fn main(){}",
+        "type Values<T>=Vec<T>;pub fn result()->usize{Values::new().len()}",
+        "type Maybe<T=u8>=Option<T>;fn main(){let value=Maybe::Err(7u8);}",
+    ]{assert!(meta_language::self_translation_signatures(source,"Rust",&options).is_err());}
+}
+
+#[test]
 fn standard_sum_signatures_require_actual_layouts_and_retained_payload_owners() {
     use meta_language::translation::ir::DataDecl;
     use meta_language::translation::source_signatures::{SourceSignature,validate_source_signature,validate_source_signature_with_data};

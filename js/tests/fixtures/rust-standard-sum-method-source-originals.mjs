@@ -54,6 +54,22 @@ fn changed(value:Work<u8>)->Work<bool>{value.map(truth)}
 fn main(){println!("{}",changed(Ok(7)).unwrap_or(false));println!("{}",changed(Err(Failure::Missing)).unwrap_or(false));}
 `},
 ];
+export const rustStandardSumMethodContextOriginals=[
+ {name:'actual constructor payload precedes a family-preserving mapper result context',sourceVersionRange,stdout:'true\n',singleCallOwners:[],source:`
+fn truth(value:u8)->bool{value>0u8}
+fn step()->Option<bool>{Some(7u8).map(truth)}
+fn main(){println!("{}",step().unwrap_or(false));}
+`},
+ {name:'discarded mapper output ignores an unrelated enclosing return type',sourceVersionRange,stdout:'true\n7\n',singleCallOwners:[],source:`
+fn step()->Option<u8>{let mapped=Some(7u8).map(|value|value>0u8);println!("{}",mapped.unwrap_or(false));Some(7u8)}
+fn main(){println!("{}",step().unwrap_or(0u8));}
+`},
+ {name:'discarded binding callback keeps its actual sum result owner',sourceVersionRange,stdout:'true\n7\n',singleCallOwners:[],source:`
+fn truth(value:u8)->Option<bool>{Some(value>0u8)}
+fn step()->Option<u8>{let mapped=Some(7u8).and_then(truth);println!("{}",mapped.unwrap_or(false));Some(7u8)}
+fn main(){println!("{}",step().unwrap_or(0u8));}
+`},
+];
 export const rustStandardSumMethodSourceRefusals=[
  {name:'an and_then callback cannot change the Result error owner',sourceVersionRange,source:'fn wrong(value:u8)->Result<u16,u8>{Ok(u16::from(value))}fn changed(value:Result<u8,u16>)->Result<u16,u16>{value.and_then(wrong)}fn main(){}'},
  {name:'a mapper needs the actual receiver payload parameter type',sourceVersionRange,source:'fn wrong(value:bool)->u8{if value{1}else{0}}fn changed(value:Option<u8>)->Option<u8>{value.map(wrong)}fn main(){}'},

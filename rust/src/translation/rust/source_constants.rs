@@ -26,7 +26,7 @@ impl RustParser {
     ) -> Result<()> {
         if self
             .origins
-            .lookup(
+            .lookup_value_owner(
                 &rules::read_rust_source_value_path(
                     &self.module_path,
                     &self.resolve(&[name.to_owned()], path),
@@ -87,7 +87,7 @@ impl RustParser {
         }
         let Some(entry) = self
             .origins
-            .lookup(&self.source_value_path(names, path), path)
+            .lookup_value_owner(&self.source_value_path(names, path), path)
         else {
             return Ok(None);
         };

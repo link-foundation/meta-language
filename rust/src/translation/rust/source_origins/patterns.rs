@@ -185,7 +185,7 @@ impl SourceOrigins {
             }
             SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
                 if !self
-                    .lookup(std::slice::from_ref(name), path)
+                    .lookup_value_owner(std::slice::from_ref(name), path)
                     .is_some_and(|entry| {
                         matches!(entry.declaration, SourceDeclaration::Constructor { .. })
                     })
@@ -201,9 +201,9 @@ impl SourceOrigins {
                 }
             }
             SPatternNode::Ctor { path: names, args } => {
-                let entry = self.lookup(names, path);
+                let entry = self.lookup_value_owner(names, path);
                 let type_entry = match &origin.ty {
-                    Some(Type::Named { path: names, .. }) => self.lookup(names, &origin.path),
+                    Some(Type::Named { path: names, .. }) => self.lookup_type_owner(names, &origin.path),
                     _ => None,
                 };
                 let borrowed = !origin.wrappers.is_empty()

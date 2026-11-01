@@ -4,6 +4,7 @@ import {unsupported,TranslationError} from './diagnostics.js';
 import {splitRustTypeClosingToken} from './rust-type-tokens.js';
 import {retainRustDataTypeFieldSignatures} from './rust-data-type-field-signatures.js';
 import {readRustTypeAliasLookupKeys} from './rust-type-alias-rules.js';
+import {readRustSourceNamespacePathRole} from './rust-source-namespace-rules.js';
 import {readRustFunctionPointerTypeError} from './rust-function-pointer-rules.js';
 import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata} from './rust-standard-sum-source-metadata.js';
 import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
@@ -39,11 +40,12 @@ function resolvedOwner(parser,segments,path,valueNamespace=false){
  const resolved=parser.resolve(segments,path),name=resolved.join('::');
  const owner=readRustStandardSumSourcePathOwner(name);
  if(!owner)return null;
- const source=parser.origins.lookup(segments,path),target=parser.origins.lookup(resolved,path);
- const sourceRoot=parser.origins.lookup([segments[0]],path),targetRoot=parser.origins.lookup([resolved[0]],path);
- if(source||target||sourceRoot||targetRoot)return null;
- for(const root of [segments[0],resolved[0]])if(readRustTypeAliasLookupKeys([root],path).some(key=>parser.sourceTypeAliases?.has(key)))return null;
- if(valueNamespace&&(parser.origins.scope.has(segments[0])||parser.origins.scope.has(resolved[0])))return null;
+ for(const names of [segments,resolved]){
+  const role=readRustSourceNamespacePathRole(names.length,valueNamespace);
+  if(parser.origins.lookupNamespace(names,path,role)||parser.origins.lookupNamespace([names[0]],path,role))return null;
+  if(role==='type'&&readRustTypeAliasLookupKeys([names[0]],path).some(key=>parser.sourceTypeAliases?.has(key)))return null;
+  if(role==='value'&&parser.origins.scope.has(names[0]))return null;
+ }
  const canonical=readRustStandardSumSourceOwner(owner,true,0);
  return canonical?{owner:canonical,resolved,constructor:readRustStandardSumSourcePathConstructor(name)}:null;
 }
@@ -60,7 +62,7 @@ export function readRustStandardSumSourceImport(parser,segments,path){
 function qualifiedType(parser,type,path){
  if(!type)return null;
  if(type.kind==='named'){
-  const entry=parser.origins.lookup(type.path,path);
+  const entry=parser.origins.lookupTypeOwner(type.path,path);
   if(!entry||entry.k!=='data')return null;
   return {kind:'named',path:['crate',...entry.fullName.split('.')]};
  }
@@ -101,7 +103,7 @@ export function readRustStandardSumSourceIdentity(parser,origin){
  const project=(value,depth)=>{
   if(++visits>1048576||depth>256)fail('the standard sum identity projection exceeds its finite budget');
   if(!value?.proven||value.diverging||!value.type)return null;
-  const entry=value.type.kind==='named'?parser.origins.lookup(value.type.path,value.path):null;
+  const entry=value.type.kind==='named'?parser.origins.lookupTypeOwner(value.type.path,value.path):null;
   const stored=entry?.k==='data'?entry.standardSumSourceOrigin:null;
   if(stored?.proven&&stored.copyEvidence&&stored.wrappers.length===0){
    const children=stored.standardSumSource.arguments.map(child=>project(child,depth+1));
@@ -123,7 +125,7 @@ function metadataCost(parser,origins,identities=false,header=false){
  try{
   const raw=measureRustStandardSumSourceMetadata(origins);
   if(!identities)return raw;
-  const identity=measureRustStandardSumSourceIdentityMetadata(origins,(names,path)=>parser.origins.lookup(names,path),header);
+  const identity=measureRustStandardSumSourceIdentityMetadata(origins,(names,path)=>parser.origins.lookupTypeOwner(names,path),header);
   return [raw[0]+identity[0],raw[1]+identity[1]];
  }catch(error){if(error instanceof RangeError)fail(error.message);throw error;}
 }
@@ -138,7 +140,7 @@ function reserveSourceCopies(parser,origins,identities=false,header=false){
 // declaration, and return the declaration's complete original child origins.
 export function readRustStandardSumSourceOrigin(parser,origin){
  if(!origin?.proven||origin.type?.kind!=='named')return null;
- const entry=parser.origins.lookup(origin.type.path,origin.path);
+ const entry=parser.origins.lookupTypeOwner(origin.type.path,origin.path);
  if(entry?.k!=='data'||!entry.standardSumSourceOrigin)return null;
  const stored=entry.standardSumSourceOrigin;
  if(!stored.proven||!stored.copyEvidence||stored.wrappers.length!==0)return null;
@@ -170,10 +172,10 @@ function instantiate(parser,owner,arguments_,span){
   return copy(actual);
  })};
  const origin={...parser.origins.typeOrigin({kind:'named',path:typePath},[]),proven:!provisional,uncertain:false,diverging:false,copyEvidence:!provisional,wrappers:[],fields:null,sourceOwner,expandedSourceOwner:copy(sourceOwner),standardSumSource:{owner,arguments:copy(arguments_),typePath,constructorPaths,identity:key,provisional}};
- parser.origins.catalog.set(name,{k:'data',standardSumSourceOrigin:copy(origin)});
+ parser.origins.registerCatalogEntry(name,{k:'data',standardSumSourceOrigin:copy(origin)});
  for(const constructor of constructors){
   const argument=readRustStandardSumSourceFieldArgument(owner,constructor),fields=argument<0?[]:[copy(arguments_[argument])];
-  parser.origins.catalog.set(name+'.'+constructor,{k:'ctor',owner:name,fields,result:copy(origin)});
+  parser.origins.registerCatalogEntry(name+'.'+constructor,{k:'ctor',owner:name,fields,result:copy(origin)});
  }
  if(upgrading)upgrading.origin=copy(origin);else parser.standardSumSourceRows.push({name,origin:copy(origin)});
  return origin;
@@ -181,7 +183,7 @@ function instantiate(parser,owner,arguments_,span){
 
 function actualOriginSumDepth(parser,origin,active,depth){
  if(depth>256)return -1;
- const entry=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path):null;
+ const entry=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null;
  const sum=entry?.standardSumSourceOrigin?.standardSumSource;
  if(sum){
   if(active.has(entry.fullName))return -1;active.add(entry.fullName);
@@ -207,7 +209,7 @@ export function finishRustStandardSumSourceDeclarations(parser){
  const active=new Set(),resolved=new Map(),rows=[...parser.standardSumSourceRows];
  const priorProvisionalNames=new Set(rows.filter(row=>row.origin.standardSumSource.provisional).map(row=>row.name));
  const refresh=origin=>{
-  const entry=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path):null;
+  const entry=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null;
   if(entry?.standardSumSourceOrigin){
    const row=rows.find(row=>row.name===entry.fullName);
    if(!row)fail('the private header sum has no actual inventory row');
@@ -226,7 +228,7 @@ export function finishRustStandardSumSourceDeclarations(parser){
   }
   if(result.type.kind==='named'){
    const actual=parser.origins.typeOrigin(result.type,result.path);result.copyEvidence=actual.copyEvidence;result.proven=actual.proven;
-   const owner=parser.origins.lookup(result.type.path,result.path);
+   const owner=parser.origins.lookupTypeOwner(result.type.path,result.path);
    if(owner)for(const key of ['sourceOwner','expandedSourceOwner'])if(result[key]?.kind==='declaration')result[key]={...result[key],path:owner.fullName.split('.')};
   }else if(result.type.kind==='tuple')result.copyEvidence=result.fields?.every(field=>parser.origins.immutableProduct(field))===true;
   const ownerChildren=result.type.kind==='tuple'?result.fields:result.type.kind==='function'&&result.callableParameters&&result.callableResult?[...result.callableParameters,result.callableResult]:null;
@@ -260,7 +262,7 @@ export function finishRustStandardSumSourceDeclarations(parser){
   };
   const rewrite=origin=>{
    if(origin.sourceFunctionPointerHeader)origin=refresh(origin);
-   const entry=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path):null;
+   const entry=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null;
    const sum=entry?resolved.get(entry.fullName):null;
    if(sum)return {...copy(sum),wrappers:[...origin.wrappers]};
    const value=copy(origin);value.type=rewriteType(value.type);
@@ -269,13 +271,23 @@ export function finishRustStandardSumSourceDeclarations(parser){
    if(value.callableResult)value.callableResult=rewrite(value.callableResult);
    return value;
   };
-  for(const entry of parser.origins.catalog.values()){
+  for(const [name,entry] of new Map([...parser.origins.valueCatalog,...parser.origins.catalog])){
+   // A legacy primary module can hide a function in the independent value
+   // namespace. Refresh that function as well as the visible primary entry.
+   const hidden=parser.origins.valueCatalog.get(name);
+   if(hidden&&hidden!==entry){
+    if(hidden.parameters)hidden.parameters=hidden.parameters.map(rewrite);
+    if(hidden.fields)hidden.fields=hidden.fields.map(rewrite);
+    if(hidden.result)hidden.result=rewrite(hidden.result);
+    parser.origins.registerCatalogEntry(name,hidden);
+   }
    if(entry.parameters)entry.parameters=entry.parameters.map(rewrite);
    if(entry.fields)entry.fields=entry.fields.map(rewrite);
    if(entry.result)entry.result=rewrite(entry.result);
+   parser.origins.registerCatalogEntry(name,entry);
   }
   const unique=new Map();for(const row of rows){const actual=resolved.get(row.name),name=actual.type.path[1];if(!unique.has(name))unique.set(name,{name,origin:copy(actual)});}
-  for(const row of rows)if(!unique.has(row.name)){parser.origins.catalog.delete(row.name);for(const variant of readRustStandardSumSourceConstructors(row.origin.standardSumSource.owner))parser.origins.catalog.delete(row.name+'.'+variant);}
+  for(const row of rows)if(!unique.has(row.name)){parser.origins.removeCatalogEntry(row.name);for(const variant of readRustStandardSumSourceConstructors(row.origin.standardSumSource.owner))parser.origins.removeCatalogEntry(row.name+'.'+variant);}
   parser.standardSumSourceRows=[...unique.values()];
  }finally{parser.headerDiscovery=header;}
 }
@@ -312,8 +324,9 @@ function selectedConstructor(parser,segments,path){
 
 function expectedSum(parser,owner,span){
  const expected=readRustStandardSumSourceOrigin(parser,parser.standardSumExpectedOrigin);
- if(expected&&(expected.wrappers.length||expected.standardSumSource.owner!==owner))fail('the constructor must retain its actual direct expected standard sum owner',span);
- return expected;
+ // A postfix conversion can change families before the enclosing expression
+ // is checked. Only a matching direct context supplies constructor arguments.
+ return expected&&expected.wrappers.length===0&&expected.standardSumSource.owner===owner?expected:null;
 }
 
 function explicitConstructorType(parser,selected,start){
@@ -358,6 +371,13 @@ export function readRustStandardSumSourceConstructor(parser,segments,path,start)
   args.push(withRustStandardSumSourceContext(parser,expected?.standardSumSource.arguments[argument]??null,()=>parser.expr(path)));
   c.eat(',');c.expect(')','standard sum constructor');
  }else if(c.is('('))throw new TranslationError('type','None is a nullary standard constructor',span);
+ // A complete actual Some payload determines all Option parameters. Its type
+ // takes precedence over ambient context for a later postfix transformation.
+ if(!explicit&&arity===1&&acceptRustStandardSumSourceInferredConstructor(selected.owner,selected.constructor)){
+  const actual=parser.origins.origin(args[0],path);
+  const identity=parser.origins.immutableProduct(actual)?readRustStandardSumSourceIdentity(parser,actual):'';
+  if(identity&&identity!==readRustStandardSumSourceIdentity(parser,expected?.standardSumSource.arguments[0]))expected=instantiate(parser,selected.owner,[actual],where(parser,start));
+ }
  if(!expected){
   if(!acceptRustStandardSumSourceInferredConstructor(selected.owner,selected.constructor))fail('this constructor needs an explicit complete standard sum type context',where(parser,start));
   expected=instantiate(parser,selected.owner,[parser.origins.origin(args[0],path)],where(parser,start));
@@ -388,7 +408,7 @@ export function readRustStandardSumSourcePattern(parser,segments,path,start,alia
 
 export function resolveRustStandardSumSourcePattern(origins,pattern,origin){
  if(pattern.k!=='rustStandardSumSourcePattern')return true;
- const entry=origin.type?.kind==='named'?origins.lookup(origin.type.path,origin.path):null;
+ const entry=origin.type?.kind==='named'?origins.lookupTypeOwner(origin.type.path,origin.path):null;
  const stored=entry?.k==='data'?entry.standardSumSourceOrigin:null;
  if(!stored)return false;
  const sum=stored.standardSumSource,arity=readRustStandardSumSourceConstructorArity(sum.owner,pattern.constructor);

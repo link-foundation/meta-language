@@ -20,7 +20,7 @@ function sourceType(parser,type,path){
  return type;
 }
 function nominal(parser,segments,path){
- const found=parser.origins.lookup(parser.resolve(segments,path),path);
+ const found=parser.origins.lookupTypeOwner(parser.resolve(segments,path),path);
  return found?parser.namedRecords.get(found.fullName):null;
 }
 function braceOwner(parser,segments,path){
@@ -73,7 +73,7 @@ export function prepareRustRecordMethodNamespace(parser,owner,method,where){
  if(!record||!record.update)throw unsupported('Rust associated item namespace','an enum constructor homograph needs its complete associated-item resolution',where);
  const constructorName=readRustRecordConstructorName(owner.at(-1),true,[...parser.reservedNames]);
  const next=[...owner,constructorName].join('.');
- if(parser.origins.collecting){parser.origins.catalog.delete(key);parser.origins.catalog.set(next,existing);}
+ if(parser.origins.collecting){parser.origins.removeCatalogEntry(key);parser.origins.registerCatalogEntry(next,existing);}
  record.constructor=next;
 }
 
@@ -211,8 +211,9 @@ export function readRustRecordPattern(parser,segments,path,aliases,start){
 export function readRustNominalBindingPattern(parser){
  const c=parser.cursor;
  if(c.peek().kind!=='identifier')return null;
- const candidate=parser.origins.lookup(parser.resolve([c.peek().value],parser.modulePath),parser.modulePath);
- if(!['::','(','{','@'].includes(c.peek(1).value)&&candidate?.k!=='ctor'&&candidate?.k!=='data')return null;
+ const resolved=parser.resolve([c.peek().value],parser.modulePath);
+ const valueCandidate=parser.origins.lookupValueOwner(resolved,parser.modulePath),typeCandidate=parser.origins.lookupTypeOwner(resolved,parser.modulePath);
+ if(!['::','(','{','@'].includes(c.peek(1).value)&&valueCandidate?.k!=='ctor'&&typeCandidate?.k!=='data')return null;
  const aliases=[];parser.recordPatternDepth+=1;
  let pattern;
  try{pattern=parser.pattern(parser.modulePath,aliases);}finally{parser.recordPatternDepth-=1;}

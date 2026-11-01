@@ -378,8 +378,8 @@ impl RustParser {
         }
         let source_owner = vec!["f64".to_owned()];
         let owner = self.resolve(&source_owner, &origin.path);
-        let shadowed = self.origins.lookup(&source_owner, &origin.path).is_some()
-            || self.origins.lookup(&owner, &origin.path).is_some();
+        let shadowed = self.origins.lookup_type_owner(&source_owner, &origin.path).is_some()
+            || self.origins.lookup_type_owner(&owner, &origin.path).is_some();
         super::float_predicate_rules::accept_rust_float_predicate_receiver(
             origin.ty.as_ref().map_or("", Type::kind),
             origin.float_source_model.unwrap_or(""),
@@ -449,6 +449,18 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(sum)=self.read_standard_sum_source_nested(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
+                if let Some(sum)=self.read_standard_sum_source_conversion(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
+                if let Some(sum)=self.read_standard_sum_source_predicate(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
                 if let Some(sum)=self.read_standard_sum_source_method(&value,&method,path)? {
                     value=sum;
                     continue;

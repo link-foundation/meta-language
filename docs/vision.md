@@ -11565,9 +11565,11 @@ and the shared counter have deferred independent controls; none has run locally.
 
 ### Source draft for ordinary Rust aliases, sums and propagation
 
-The ordinary frontend source draft expands explicit generic alias applications
-through checked declaration-scoped parameter bindings and complete argument
-origins. Identity, scalar/Unit and tuple templates preserve definition ownership;
+The ordinary frontend source draft expands generic alias applications and
+authored type defaults through checked declaration-scoped parameter bindings
+and complete argument origins. Omitted defaults substitute only earlier actual
+parameter bindings; explicit specializations cannot overwrite a declaration's
+default owner cache. Identity, scalar/Unit and tuple templates preserve definition ownership;
 canonical standard sum composition is drafted through the same template path.
 Unused definitions retain eager validation, and recursion and materialization
 remain explicitly bounded. This does not narrow the required general generic,
@@ -11610,3 +11612,31 @@ identity materialization independently of source type depth; unsupported or
 exhausted inputs refuse before allocating the complete copy. This resource draft
 and its boundary controls are unexecuted; it supplies no equivalence certificate
 between unrelated definitions or a measured performance claim.
+
+Nested sum methods construct actual named datatypes through shared type and
+constructor plans. Option flatten removes exactly one layer; either transpose
+direction preserves absence, success and error as distinct constructor cases.
+The receiver evaluates once. Actual payload types take precedence over unrelated
+ambient constructor expectations when they completely determine the sum; final
+expression and callable contracts still check the resulting type.
+
+Source name resolution preserves the language's independent type and value
+namespaces through every declaration, header and body pass. Same-spelled modules
+and functions retain both actual entries. Qualified paths commit to the nearest
+type/module prefix; a missing child cannot resolve through an unrelated outer
+prefix. Standard constructors resolve their actual source namespace, so a bare
+value shadow remains distinct from a qualified type owner. Temporary constant
+readers and synthetic sum finalization preserve these indexes as well.
+
+Unknown callback outputs have no invented return type. Parameter-only contexts
+carry complete actual parameter origins; real callback bodies or named callable
+signatures supply results. An enclosing function result is not evidence for a
+discarded expression's mapper output. Family-changing postfix conversions may
+infer a constructor from its actual payload before the enclosing expression's
+result is checked. Eager receiver/default/factory evaluation and selected lazy
+callback invocation remain explicit ordered captures and constructor branches.
+These consumer changes and their original-source controls remain unexecuted.
+Recursive CST reuse validates the domain of supplied resource counters, limits,
+language identities and ancestor facts before selecting a reuse path. Reusing
+existing nodes may avoid a new parse charge, including valid zero-budget reuse;
+it cannot authorize malformed inputs or certify concept equivalence.

@@ -72,7 +72,7 @@ impl RustParser {
         let mut shadowed=false;
         for root in [segments.first(),resolved.first()].into_iter().flatten(){
             let root=std::slice::from_ref(root);
-            if self.origins.lookup(root,&self.module_path).is_some() || alias_rules::read_rust_type_alias_lookup_keys(root,&self.module_path).iter().any(|key|self.source_type_aliases.declarations.contains_key(key)){shadowed=true;}
+            if self.origins.lookup_type_owner(root,&self.module_path).is_some() || alias_rules::read_rust_type_alias_lookup_keys(root,&self.module_path).iter().any(|key|self.source_type_aliases.declarations.contains_key(key)){shadowed=true;}
         }
         rules::read_rust_generic_type_alias_vector_owner(&resolved.join("::"),shadowed)
     }
@@ -104,11 +104,23 @@ impl RustParser {
 
     fn generic_alias_symbolic_application(&mut self, row: &AliasDeclaration, arguments: &[Rc<GenericAliasTemplate>]) -> Result<Rc<GenericAliasTemplate>> {
         let template = self.prepare_generic_type_alias(row)?;
+        let defaults=self.source_type_aliases.defaults.get(&row.key).expect("checked default directory").clone();
+        let mut arguments=arguments.to_vec();
+        let present=defaults.iter().map(Option::is_some).collect::<Vec<_>>();
+        let missing=rules::read_rust_generic_type_alias_default_argument_plan(&present,arguments.len() as f64,true);
+        if missing.first().map(String::as_str)!=Some("arguments"){return Err(self.alias_error(&missing[1],Some(row)));}
+        for position in &missing[1..]{
+            let index=position.parse::<usize>().expect("shared default position");let node=defaults[index].as_ref().expect("shared actual default");
+            let occurrences=self.generic_alias_template_bindings(node,row)?;
+            let plan=rules::read_rust_generic_type_alias_default_substitution_plan(&row.parameter_bindings,index as f64,arguments.len() as f64,&occurrences);
+            if plan.first().map(String::as_str)!=Some("substitution"){return Err(self.alias_error(&plan[1],Some(row)));}
+            let mut occurrence=1;let value=self.substitute_generic_alias_template(node,&arguments,&plan,&mut occurrence,row,0)?;arguments.push(value);
+        }
         let occurrences = self.generic_alias_template_bindings(&template,row)?;
         let plan = rules::read_rust_generic_type_alias_binding_plan(&row.parameter_bindings,arguments.len() as f64,&occurrences);
         if plan.first().map(String::as_str) != Some("substitution") { return Err(self.alias_error(&plan[1],Some(row))); }
         let mut occurrence = 1;
-        self.substitute_generic_alias_template(&template,arguments,&plan,&mut occurrence,row,0)
+        self.substitute_generic_alias_template(&template,&arguments,&plan,&mut occurrence,row,0)
     }
 
     fn generic_alias_template_value(&mut self, row: &AliasDeclaration, depth: usize) -> Result<Rc<GenericAliasTemplate>> {
@@ -143,16 +155,19 @@ impl RustParser {
             let target=self.generic_alias_source_row(&segments);
             if let Some(target) = target.as_ref().filter(|target|!target.parameters.is_empty()) {
                 self.prepare_generic_type_alias(target)?;
-                if self.cursor.eat("<").is_none() { return Err(self.alias_error("generic alias arguments must be explicit",Some(row))); }
+                let explicit=self.cursor.eat("<").is_some();
                 let mut arguments = Vec::new();
-                self.split_type_closing_token();
+                if explicit{self.split_type_closing_token();
                 while !self.cursor.is(">") {
                     arguments.push(self.generic_alias_template_value(row,depth+1)?);
                     self.split_type_closing_token();
                     if self.cursor.eat(",").is_none() { break; }
                     self.split_type_closing_token();
                 }
-                self.close_generic_alias_arguments(row)?;
+                self.close_generic_alias_arguments(row)?;}
+                let defaults=self.source_type_aliases.defaults.get(&target.key).expect("checked target defaults").iter().map(Option::is_some).collect::<Vec<_>>();
+                let missing=rules::read_rust_generic_type_alias_default_argument_plan(&defaults,arguments.len() as f64,explicit);
+                if missing.first().map(String::as_str)!=Some("arguments"){return Err(self.alias_error(&missing[1],Some(target)));}
                 return self.generic_alias_symbolic_application(target,&arguments);
             }
             let sum_owner=if target.is_none() {self.resolve_standard_sum_source_owner(&segments,&self.module_path)} else {String::new()};
@@ -189,7 +204,7 @@ impl RustParser {
         let owner = origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());
         let (bits,signed) = match origin.ty.as_ref() { Some(Type::Fixed {bits,signed}) => (bits.to_string(),*signed), _ => (String::new(),false) };
         let accepted = rules::accept_rust_generic_type_alias_concrete_template(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),&bits,signed,owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.proven);
-        let actual_data=match origin.ty.as_ref() {Some(Type::Named {path,..})=>self.origins.lookup(path,&origin.path).filter(|entry|matches!(entry.declaration,SourceDeclaration::Data)).map(|entry|entry.full_name),_=>None};
+        let actual_data=match origin.ty.as_ref() {Some(Type::Named {path,..})=>self.origins.lookup_type_owner(path,&origin.path).filter(|entry|matches!(entry.declaration,SourceDeclaration::Data)).map(|entry|entry.full_name),_=>None};
         let named=rules::accept_rust_generic_type_alias_named_template(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.proven,actual_data.as_deref().unwrap_or(""));
         let stored=actual_data.as_ref().and_then(|name|self.origins.standard_sum_source_origins.get(name));
         let sum=stored.and_then(|origin|origin.standard_sum_source.as_deref());
@@ -197,8 +212,9 @@ impl RustParser {
         let string=rules::accept_rust_generic_type_alias_owned_string_template(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.proven,origin.text_source_model.unwrap_or(""));
         if !accepted && !named && !sum_leaf && !string { return Err(self.alias_error("generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype",Some(row))); }
         let first = self.cursor.tokens.iter().position(|token|token.start == start_coordinate).expect("actual generic template source token");
-        for token in &self.cursor.tokens[first..self.cursor.index] {
-            if token.kind == TokenKind::Identifier && row.parameters.contains(&token.value) { return Err(self.alias_error("parameter-dependent wrapper and library alias templates need their complete interpretation",Some(row))); }
+        for index in first..self.cursor.index {
+            let token=&self.cursor.tokens[index];let qualified=index>0&&self.cursor.tokens[index-1].value=="::";
+            if token.kind == TokenKind::Identifier && !rules::accept_rust_generic_type_alias_concrete_identifier(&row.parameters,&token.value,qualified) { return Err(self.alias_error("parameter-dependent wrapper and library alias templates need their complete interpretation",Some(row))); }
         }
         Ok(Rc::new(GenericAliasTemplate::Origin(Box::new(self.copy_current_type_alias_origin(row)?))))
     }
@@ -217,11 +233,23 @@ impl RustParser {
         self.source_type_aliases.stack.insert(row.key.clone());
         self.cursor.index = self.cursor.tokens.iter().position(|token|token.start == row.first).expect("actual generic alias definition start");
         let result = (|| -> Result<Rc<GenericAliasTemplate>> {
+            let mut defaults=Vec::new();
+            for (index,span) in row.default_spans.iter().enumerate(){
+                let Some((start,end))=span else{defaults.push(None);continue;};
+                self.cursor.index=self.cursor.tokens.iter().position(|token|token.start==*start).expect("actual default start");
+                let node=self.generic_alias_template_value(row,0)?;
+                if self.cursor.peek().start!=*end{return Err(self.alias_error("the complete generic alias default needs one admitted source type",Some(row)));}
+                let occurrences=self.generic_alias_template_bindings(&node,row)?;
+                let plan=rules::read_rust_generic_type_alias_default_substitution_plan(&row.parameter_bindings,index as f64,index as f64,&occurrences);
+                if plan.first().map(String::as_str)!=Some("substitution"){return Err(self.alias_error(&plan[1],Some(row)));}defaults.push(Some(node));
+            }
+            self.cursor.index=self.cursor.tokens.iter().position(|token|token.start==row.first).expect("actual generic alias definition start");
             let template = self.generic_alias_template_value(row,0)?;
             if self.cursor.peek().start != row.end || !self.cursor.is(";") { return Err(self.alias_error("the complete alias definition needs one admitted source type",Some(row))); }
             let used = self.generic_alias_template_bindings(&template,row)?;
             let error = rules::read_rust_generic_type_alias_unused_parameter_error(&row.parameter_bindings,&used);
             if !error.is_empty() { return Err(self.alias_error(&error,Some(row))); }
+            self.source_type_aliases.defaults.insert(row.key.clone(),defaults);
             self.source_type_aliases.templates.insert(row.key.clone(),Rc::clone(&template));
             Ok(template)
         })();
@@ -287,10 +315,16 @@ impl RustParser {
     }
 
     pub(super) fn read_generic_type_alias_value(&mut self, row: &AliasDeclaration) -> Result<SourceOrigin> {
+        self.read_generic_type_alias_value_arguments(row,true)
+    }
+    pub(super) fn read_generic_type_alias_default_value(&mut self,row:&AliasDeclaration)->Result<SourceOrigin>{
+        self.read_generic_type_alias_value_arguments(row,false)
+    }
+    fn read_generic_type_alias_value_arguments(&mut self,row:&AliasDeclaration,allow_argument_tokens:bool)->Result<SourceOrigin>{
         let template = self.prepare_generic_type_alias(row)?;
-        if self.cursor.eat("<").is_none() { return Err(self.alias_error("generic alias arguments must be explicit",Some(row))); }
+        let explicit=allow_argument_tokens&&self.cursor.eat("<").is_some();
         let mut arguments = Vec::new();
-        self.split_type_closing_token();
+        if explicit{self.split_type_closing_token();
         while !self.cursor.is(">") {
             self.parse_type()?;
             arguments.push(self.copy_current_type_alias_origin(row)?);
@@ -298,7 +332,18 @@ impl RustParser {
             if self.cursor.eat(",").is_none() { break; }
             self.split_type_closing_token();
         }
-        self.close_generic_alias_arguments(row)?;
+        self.close_generic_alias_arguments(row)?;}
+        let defaults=self.source_type_aliases.defaults.get(&row.key).expect("checked default directory").clone();
+        let present=defaults.iter().map(Option::is_some).collect::<Vec<_>>();
+        let missing=rules::read_rust_generic_type_alias_default_argument_plan(&present,arguments.len() as f64,explicit);
+        if missing.first().map(String::as_str)!=Some("arguments"){return Err(self.alias_error(&missing[1],Some(row)));}
+        for position in &missing[1..]{
+            let index=position.parse::<usize>().expect("shared default argument position");let node=defaults[index].as_ref().expect("shared complete default");
+            let occurrences=self.generic_alias_template_bindings(node,row)?;
+            let plan=rules::read_rust_generic_type_alias_default_substitution_plan(&row.parameter_bindings,index as f64,arguments.len() as f64,&occurrences);
+            if plan.first().map(String::as_str)!=Some("substitution"){return Err(self.alias_error(&plan[1],Some(row)));}
+            let mut occurrence=1;let origin=self.materialize_generic_alias_template(node,&arguments,&plan,&mut occurrence,row,0)?;arguments.push(origin);
+        }
         let occurrences = self.generic_alias_template_bindings(&template,row)?;
         let proven = arguments.iter().map(|origin|origin.proven && origin.ty.is_some()).collect::<Vec<_>>();
         let plan = rules::read_rust_generic_type_alias_substitution_plan(&row.parameter_bindings,&proven,&occurrences);
@@ -307,23 +352,28 @@ impl RustParser {
         self.materialize_generic_alias_template(&template,&arguments,&plan,&mut occurrence,row,0)
     }
 
-    /// Instantiate an actual alias-qualified turbofish before selecting any
-    /// associated operation from its complete checked definition owner.
+    /// Instantiate explicit or completely defaulted alias arguments before
+    /// selecting an associated operation from its checked definition owner.
     pub(super) fn read_generic_type_alias_constructor(&mut self,segments:&[String],path:&[String],start:&Token)->Result<Option<SExpr>>{
-        if !self.ordinary_completion_context() || !self.cursor.is("::") || !self.cursor.is_at("<",1){return Ok(None);}
-        let Some(row)=self.generic_alias_source_row_at(segments,path).filter(|row|!row.parameters.is_empty()) else {return Ok(None);};
-        self.cursor.advance();
-        let mut origin=self.read_generic_type_alias_value(&row)?;
+        if !self.ordinary_completion_context(){return Ok(None);}
+        let explicit=self.cursor.is("::")&&self.cursor.is_at("<",1);
+        if !explicit&&segments.len()<2{return Ok(None);}
+        let prefix=if explicit{segments}else{&segments[..segments.len()-1]};
+        let Some(row)=self.generic_alias_source_row_at(prefix,path).filter(|row|!row.parameters.is_empty()) else {return Ok(None);};
+        let defaults=row.default_spans.iter().map(Option::is_some).collect::<Vec<_>>();
+        if !explicit&&rules::read_rust_generic_type_alias_default_argument_plan(&defaults,0.0,false).first().map(String::as_str)!=Some("arguments"){return Ok(None);}
+        let previous_member=(!explicit).then(||self.cursor.tokens[self.cursor.index-1].clone());
+        if explicit{self.cursor.advance();}
+        let mut origin=if explicit{self.read_generic_type_alias_value(&row)?}else{self.default_type_alias_access_origin(&row)?.expect("shared all-default argument directory")};
         origin.expanded_source_owner=origin.source_owner.clone();
-        self.cursor.expect("::",Some("generic alias associated constructor"))?;
-        let member=self.cursor.identifier(Some("generic alias constructor member"))?;
+        let member=if explicit{self.cursor.expect("::",Some("generic alias associated constructor"))?;self.cursor.identifier(Some("generic alias constructor member"))?}else{previous_member.expect("actual alias member token")};
         let owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());
-        let name=match origin.ty.as_ref(){Some(Type::Named {path:actual,..})=>self.origins.lookup(actual,&origin.path).filter(|entry|matches!(entry.declaration,SourceDeclaration::Data)).map(|entry|entry.full_name),_=>None};
+        let name=match origin.ty.as_ref(){Some(Type::Named {path:actual,..})=>self.origins.lookup_type_owner(actual,&origin.path).filter(|entry|matches!(entry.declaration,SourceDeclaration::Data)).map(|entry|entry.full_name),_=>None};
         let stored=name.as_ref().and_then(|name|self.origins.standard_sum_source_origins.get(name));
         let sum=stored.and_then(|origin|origin.standard_sum_source.as_deref());
         let element=match origin.ty.as_ref(){Some(Type::Array {element,..})=>element.kind(),_=>""};
         let plan=rules::read_rust_generic_type_alias_constructor_plan(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),element,origin.array_source_model.unwrap_or(""),origin.proven,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),stored.is_some_and(|origin|origin.proven),stored.is_some_and(|origin|origin.copy_evidence.is_some()),&member.value);
-        if plan.is_empty(){return Err(self.alias_error("generic alias associated construction needs its actual admitted vector or standard sum constructor",Some(&row)));}
+        if plan.is_empty(){if !explicit{return Ok(None);}return Err(self.alias_error("generic alias associated construction needs its actual admitted vector or standard sum constructor",Some(&row)));}
         let arity=plan[1].parse::<usize>().expect("shared generic alias constructor arity");
         let constructor_path=sum.and_then(|sum|sum.constructor_paths.get(&member.value)).cloned();
         if plan[0]=="vector constructor"{

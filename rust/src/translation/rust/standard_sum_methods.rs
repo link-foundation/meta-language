@@ -1,11 +1,10 @@
 //! Actual receiver/callable origins into source-generated method decisions.
 //! Capture and match construction reuse the ordinary common surface nodes.
-use super::{BOOL,Options,Result,RustParser,SArrayItem,SExpr,SNode,SourceOrigin,Span,Token,Type,UNIT,unsupported};
+use super::{BOOL,Options,Result,RustParser,SArrayItem,SExpr,SNode,SourceOrigin,Span,Token,Type,unsupported};
 use crate::translation::surface::{SPattern,SPatternNode,SRow};
 use crate::translation::source_signatures::SourceOwner;
 use crate::translation::rust_standard_sum_method_rules as rules;
 use crate::translation::rust_standard_sum_source_rules as sum_rules;
-use crate::translation::rust_contextual_closure_rules as contextual;
 use crate::translation::rust_panic_value_rules as panic_rules;
 
 struct MethodCapture {name:String,value:SExpr,origin:SourceOrigin}
@@ -15,37 +14,13 @@ fn fail(reason:&str,span:Option<Span>)->super::TranslationError {unsupported("Ru
 impl RustParser {
     fn standard_sum_method_callback(&mut self,path:&[String],parameter:Option<&SourceOrigin>,result:Option<&SourceOrigin>,span:Option<Span>)->Result<MethodCallback>{
         let parameters=parameter.into_iter().cloned().collect::<Vec<_>>();
-        let mut expected=SourceOrigin::with_type(Type::Function {params:parameters.iter().map(|origin|origin.ty.clone().expect("actual callback parameter type")).collect(),ret:Box::new(result.and_then(|origin|origin.ty.clone()).unwrap_or(UNIT))},path,Vec::new());
-        expected.copy_evidence=Some(());
-        expected.callable_parameters=Some(parameters.clone());
-        expected.callable_result=result.cloned().map(Box::new);
-        let value=if result.is_some(){
+        let value=if let Some(result)=result{
+            let mut expected=SourceOrigin::with_type(Type::Function {params:parameters.iter().map(|origin|origin.ty.clone().expect("actual callback parameter type")).collect(),ret:Box::new(result.ty.clone().expect("actual callback result type"))},path,Vec::new());
+            expected.copy_evidence=Some(());
+            expected.callable_parameters=Some(parameters.clone());
+            expected.callable_result=Some(Box::new(result.clone()));
             self.read_expected_copy_closure(path,Some(&expected))?
-        }else if let Some(value)=self.read_primitive_function_value(path,Some(&expected))?{
-            // The primitive item adapter consumes the actual parameter origin;
-            // the placeholder result is not used to infer a mapper result.
-            value
-        }else{
-            let mut closure=["|","||","move"].iter().any(|role|self.cursor.is(role));
-            if !closure && self.cursor.is("(") {
-                let mut count=64usize;
-                loop {
-                    let length=count.min(self.cursor.tokens.len()-self.cursor.index);
-                    let syntax=(0..length).map(|index|["(","|","||","move"].into_iter().find(|role|self.cursor.is_at(role,index)).unwrap_or("").to_owned()).collect::<Vec<_>>();
-                    let depth=contextual::find_rust_contextual_closure_parenthesis_count(&syntax);
-                    if depth>0.0 {closure=true;break;}
-                    if depth!=-2.0 || length<count {break;}
-                    count=count.checked_mul(2).expect("actual source closure token window");
-                }
-            }
-            if closure {self.read_expected_copy_closure_result_mode(path,Some(&expected),true)?}
-            else {
-                let previous=self.standard_sum_source.expected_origin.take();
-                let value=self.expr(path,Options::default());
-                self.standard_sum_source.expected_origin=previous;
-                value?
-            }
-        };
+        }else{self.read_parameter_only_copy_closure(path,&parameters)?};
         let origin=self.origins.origin(&value,path);
         let actual=origin.callable_parameters.as_deref().unwrap_or(&[]);
         let output=origin.callable_result.as_deref();
@@ -113,9 +88,9 @@ impl RustParser {
             self.origins.argument(&self.origins.origin(&argument,path),&sum.arguments[0],argument.span)?;
             captures.push(MethodCapture {name:self.fresh_product_binding(),value:argument,origin:sum.arguments[0].clone()});
         }else if callback_argument!=-2.0{
-            let expected=self.standard_sum_source.expected_origin.as_ref().and_then(|origin|self.origins.standard_sum_source_origin(origin));
-            let matching=expected.as_ref().filter(|origin|origin.standard_sum_source.as_deref().is_some_and(|target|target.owner==sum.owner));
-            let result=if method.value=="unwrap_or_else"{Some(&sum.arguments[0])}else if method.value=="map"{matching.and_then(|origin|origin.standard_sum_source.as_deref()).and_then(|sum|sum.arguments.first())}else{matching};
+            // The ambient callable return may belong to a later expression.
+            // Mapper outputs must come from actual callback source origins.
+            let result=if method.value=="unwrap_or_else"{Some(&sum.arguments[0])}else{None};
             let parameter=if callback_argument<0.0{None}else{Some(&sum.arguments[callback_argument as usize])};
             let function=self.standard_sum_method_callback(path,parameter,result,Some(Span::new(start,method.end)))?;
             captures.push(MethodCapture {name:self.fresh_product_binding(),value:function.value.clone(),origin:function.origin.clone()});

@@ -69,7 +69,7 @@ impl RustParser {
             )
         };
         let parameter = expected
-            .filter(|origin| matches!(origin.ty, Some(Type::Function { .. })))
+            .filter(|origin| matches!(origin.ty, Some(Type::Function { .. }))||origin.ty.is_none())
             .and_then(|origin| origin.callable_parameters.as_ref())
             .and_then(|parameters| parameters.first());
         let parameter_owner = parameter.and_then(|origin| {
@@ -90,6 +90,7 @@ impl RustParser {
                         Some(Type::Function { params, .. }) => {
                             Some(u32::try_from(params.len()).map_or(f64::INFINITY, f64::from))
                         }
+                        None=>origin.callable_parameters.as_ref().map(|parameters|u32::try_from(parameters.len()).map_or(f64::INFINITY,f64::from)),
                         _ => None,
                     })
                     .unwrap_or(-1.0),

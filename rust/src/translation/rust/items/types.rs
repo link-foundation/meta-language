@@ -334,7 +334,7 @@ impl RustParser {
             && element_token.kind == TokenKind::Identifier
             && self
                 .origins
-                .lookup(
+                .lookup_type_owner(
                     std::slice::from_ref(&element_token.value),
                     &self.module_path,
                 )

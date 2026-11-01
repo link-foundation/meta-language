@@ -6,6 +6,7 @@ import {readRustTypeAliasExpansionError,acceptRustTypeAliasEmptyVectorMember} fr
 import {acceptRustSourceSignaturePrimitive} from './rust-source-signature-rules.js';
 import {readRustStandardSumSourceArgumentCount,readRustStandardSumSourceDepthLimit,readRustStandardSumSourceConstructorArity} from './rust-standard-sum-source-rules.js';
 import {acceptRustSourceArrayOwner,acceptRustSourceArrayElement} from './rust-array-rules.js';
+import {readRustTypeClosingTokenParts} from './rust-type-token-rules.js';
 
 /** Restrict this first declaration profile to explicit, unconstrained type
  * parameters. Raw spelling remains necessary to distinguish r#gen from gen.
@@ -54,6 +55,96 @@ export function readRustGenericTypeAliasParameterPlan(kinds,values,raws,position
  }
  return ['error','unclosed generic alias parameter list'];
 }
+
+/** Additional directory retains original token coordinates for every default.
+ * Rows are name, default start token, end token, end punctuation offset; -1
+ * marks no default. The legacy explicit-parameter projection remains intact.
+ * @param {string[]} names @param {string[]} starts @param {string[]} ends
+ * @param {string[]} offsets @param {number} close @param {string} remainder
+ * @returns {string[]} */
+function parameterDirectory(names,starts,ends,offsets,close,remainder){
+ if(remainder!==''&&remainder!=='=')return ['error','malformed generic alias parameter delimiter'];
+ const result=['parameters',String(close),remainder,String(names.length)];
+ for(let at=0;at<names.length;at+=1)result.push(readRequiredTextFact(names,at),readRequiredTextFact(starts,at),readRequiredTextFact(ends,at),readRequiredTextFact(offsets,at));
+ return result;
+}
+/** @param {string[]} kinds @param {string[]} values @param {string[]} raws
+ * @param {number} position @returns {string[]} */
+export function readRustGenericTypeAliasParameterDirectory(kinds,values,raws,position){
+ if(kinds.length!==values.length||raws.length!==values.length)return ['error','unaligned generic alias token columns'];
+ if(position<0||position%1!==0||position>=values.length||readRequiredTextFact(kinds,position)!=='punct'||readRequiredTextFact(values,position)!=='<')return ['error','missing generic alias parameter list'];
+ const names=[],starts=[],ends=[],offsets=[];let at=position+1,defaultSeen=false;
+ while(at<values.length){
+  const name=readRequiredTextFact(values,at);
+  if(readRequiredTextFact(kinds,at)!=='identifier'||!acceptParameterName(name,readRequiredTextFact(raws,at)))return ['error','generic alias needs explicit unconstrained type parameters'];
+  if(names.includes(name))return ['error','duplicate generic alias type parameter'];
+  if(names.length>=64)return ['error','generic alias parameter limit exceeded'];
+  names.push(name);at+=1;
+  if(at>=values.length)return ['error','unclosed generic alias parameter list'];
+  let punctuation=readRequiredTextFact(values,at);
+  if(readRequiredTextFact(kinds,at)!=='punct')return ['error','generic alias parameter bounds and defaults need their complete interpretation'];
+  if(punctuation==='='){
+   defaultSeen=true;at+=1;const first=at;let angles=0,found=false;
+   while(at<values.length){
+    const kind=readRequiredTextFact(kinds,at),value=readRequiredTextFact(values,at);
+    if(kind==='eof'||kind==='punct'&&(value===';'||value==='}'))return ['error','unclosed generic alias default type'];
+    if(kind==='punct'&&(value==='('||value==='['||value==='{')){const after=groupAfter(kinds,values,at);if(after<0)return ['error','unclosed generic alias default group'];at=after;continue;}
+    if(kind==='punct'&&value==='<')angles+=1;
+    const closing=value==='>'?['>']:readRustTypeClosingTokenParts(value);
+    if(kind==='punct'&&closing.length>0){
+     for(let offset=0;offset<closing.length&&readRequiredTextFact(closing,offset)==='>';offset+=1){
+      if(angles>0){angles-=1;continue;}
+      if(first===at&&offset===0)return ['error','empty generic alias default type'];
+      starts.push(String(first));ends.push(String(at));offsets.push(String(offset));
+      return parameterDirectory(names,starts,ends,offsets,at,closing.slice(offset+1).join(''));
+     }
+    }
+    if(kind==='punct'&&value===','&&angles===0){
+     if(first===at)return ['error','empty generic alias default type'];
+     starts.push(String(first));ends.push(String(at));offsets.push('0');found=true;break;
+    }
+    at+=1;
+   }
+   if(!found)return ['error','unclosed generic alias parameter list'];
+   punctuation=readRequiredTextFact(values,at);
+  }else{
+   if(defaultSeen)return ['error','generic alias parameters after a default need their own defaults'];
+   starts.push('-1');ends.push('-1');offsets.push('0');
+  }
+  if(punctuation===','){
+   at+=1;if(at>=values.length)return ['error','unclosed generic alias parameter list'];
+   punctuation=readRequiredTextFact(values,at);
+   if(punctuation!=='>'&&punctuation!=='>=')continue;
+  }
+  if(punctuation==='>'||punctuation==='>=')return parameterDirectory(names,starts,ends,offsets,at,punctuation==='>='?'=':'');
+  return ['error','generic alias parameter bounds and defaults need their complete interpretation'];
+ }
+ return ['error','unclosed generic alias parameter list'];
+}
+
+/** All declared defaults are checked, including defaults overridden at a use.
+ * @param {string[]} parameters @param {number} position @param {number} count
+ * @param {string[]} occurrences @returns {string[]} */
+export function readRustGenericTypeAliasDefaultSubstitutionPlan(parameters,position,count,occurrences){
+ const directory=readRustGenericTypeAliasBindingPlan(parameters,parameters.length,[]);if(directory[0]!=='substitution')return directory;
+ if(position<0||position%1!==0||position>=parameters.length||count!==position)return ['error','generic alias default needs every earlier actual parameter binding'];
+ for(let at=0;at<occurrences.length;at+=1){const identity=readRequiredTextFact(occurrences,at),index=parameters.indexOf(identity);if(index<0||index>=position)return ['error','generic alias defaults cannot reference their own or later parameter bindings'];}
+ return position===0?['substitution']:readRustGenericTypeAliasBindingPlan(parameters.slice(0,position),count,occurrences);
+}
+/** @param {boolean[]} defaults @param {number} count @param {boolean} explicit
+ * @returns {string[]} */
+export function readRustGenericTypeAliasDefaultArgumentPlan(defaults,count,explicit){
+ if(defaults.length===0||defaults.length>64)return ['error','generic alias needs a bounded explicit parameter directory'];
+ if(count<0||count%1!==0||count>defaults.length)return ['error','generic alias argument arity differs from its declaration'];
+ const result=['arguments'];
+ for(let at=count;at<defaults.length;at+=1){if(!readRequiredBooleanFact(defaults,at))return ['error',explicit?'generic alias argument arity differs from its declaration':'generic alias arguments must be explicit'];result.push(String(at));}
+ return result;
+}
+/** Qualified nominal path tails are actual definition owners, not parameter
+ * uses merely because their spelling matches a parameter name.
+ * @param {string[]} parameters @param {string} name @param {boolean} qualified
+ * @returns {boolean} */
+export function acceptRustGenericTypeAliasConcreteIdentifier(parameters,name,qualified){return qualified||!parameters.includes(name);}
 
 /** A substitution plan indexes complete actual argument origins. It does not
  * copy types, re-resolve names, infer arguments, or prove a template well formed.
@@ -203,8 +294,9 @@ export function readRustGenericTypeAliasDeclarationPlan(kinds,values,raws){
    const name=[...owners,readRequiredTextFact(values,position+1)].join('.');if(names.includes(name))return ['error','duplicate source type alias'];names=[...names,name];
    let first=position+3,parameters=[];
    if(readRequiredTextFact(values,position+2)==='<'){
-    const plan=readRustGenericTypeAliasParameterPlan(kinds,values,raws,position+2);if(plan[0]!=='parameters')return plan;
-    const close=Number(readRequiredTextFact(plan,1));parameters=plan.slice(3);
+    const plan=readRustGenericTypeAliasParameterDirectory(kinds,values,raws,position+2);if(plan[0]!=='parameters')return plan;
+    const close=Number(readRequiredTextFact(plan,1)),count=Number(readRequiredTextFact(plan,3));
+    for(let at=0;at<count;at+=1)parameters.push(readRequiredTextFact(plan,4+at*4));
     if(readRequiredTextFact(plan,2)==='=')first=close+1;
     else {if(close+1>=values.length||readRequiredTextFact(values,close+1)!=='=')return ['error','generic alias bounds and where clauses need their complete interpretation'];first=close+2;}
    }else if(readRequiredTextFact(values,position+2)!=='=')return ['error','generic, constrained or malformed type aliases require their complete parameter interpretation'];

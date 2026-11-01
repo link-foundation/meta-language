@@ -9,6 +9,10 @@ import {writeProjectData} from './project-data.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/rust-standard-sum-nested-rules.js',moduleName:'rust_standard_sum_nested_rules',model:'Rust direct Copy nested standard sum methods 1',programAsset:'rust-standard-sum-nested-program'},
+ {sourcePath:'js/src/translation/rust-source-namespace-rules.js',moduleName:'rust_source_namespace_rules',model:'Rust source type and value namespaces 1',programAsset:'rust-source-namespace-program'},
+ {sourcePath:'js/src/translation/rust-standard-sum-conversion-rules.js',moduleName:'rust_standard_sum_conversion_rules',model:'Rust direct Copy standard sum conversions 1',programAsset:'rust-standard-sum-conversion-program'},
+ {sourcePath:'js/src/translation/rust-standard-sum-predicate-rules.js',moduleName:'rust_standard_sum_predicate_rules',model:'Rust direct Copy standard sum predicates 1',programAsset:'rust-standard-sum-predicate-program'},
  {sourcePath:'js/src/translation/rust-generic-type-alias-rules.js',moduleName:'rust_generic_type_alias_rules',model:'Rust generic type alias source parameter policy 1',programAsset:'rust-generic-type-alias-program'},
  {sourcePath:'js/src/translation/rust-standard-sum-source-metadata-rules.js',moduleName:'rust_standard_sum_source_metadata_rules',model:'Rust standard sum source metadata policy 1',programAsset:'rust-standard-sum-source-metadata-program'},
  {sourcePath:'js/src/translation/rust-standard-sum-source-rules.js',moduleName:'rust_standard_sum_source_rules',model:'Rust standard owned sum source policy 1',programAsset:'rust-standard-sum-source-program'},
@@ -20,6 +24,11 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/rust-source-namespaces-draft.mjs',
+ 'js/tests/fixtures/rust-standard-sum-conversions.mjs',
+ 'js/tests/fixtures/rust-standard-sum-predicates.mjs',
+ 'js/tests/fixtures/rust-standard-sum-nested.mjs',
+ 'js/tests/fixtures/rust-generic-type-alias-defaults-draft.mjs',
  'js/tests/fixtures/rust-generic-type-alias-draft.mjs',
  'js/tests/fixtures/rust-standard-sum-source-rules.mjs',
  'js/tests/fixtures/rust-standard-sum-methods.mjs',
@@ -35,6 +44,8 @@ const consumers=[
  'js/src/translation/rust-standard-sum-source-metadata.js',
  'js/src/translation/rust-standard-sum-completions.js','js/src/translation/rust-expression-completions.js',
  'js/src/translation/rust-standard-sum-methods.js','js/src/translation/rust-array-lookup-options.js',
+ 'js/src/translation/rust-standard-sum-conversions.js','js/src/translation/rust-standard-sum-predicates.js',
+ 'js/src/translation/rust-standard-sum-nested.js',
  'js/src/translation/rust-source-signatures.js','js/src/translation/rust-data-type-field-signatures.js',
  'js/src/translation/rust-nominal-copies.js','js/src/translation/rust-function-pointers.js',
  'js/src/translation/rust-copy-closures.js','js/src/translation/rust-ordinary-completions.js',
@@ -47,6 +58,11 @@ const consumers=[
  'js/tests/translation-rust-standard-option-panic.test.js',
  'js/tests/translation-rust-array-lookup-options.test.js','js/tests/support/rust-standard-sum-concrete.js',
  'js/tests/translation-rust-standard-sum-source-metadata.test.js',
+ 'js/tests/translation-rust-source-namespaces.test.js',
+ 'js/tests/translation-rust-standard-sum-conversions.test.js',
+ 'js/tests/translation-rust-standard-sum-predicates.test.js',
+ 'js/tests/translation-rust-standard-sum-nested.test.js',
+ 'js/tests/translation-rust-generic-type-alias-defaults.test.js',
  'js/tests/rust-baseline-source-policies.test.js',
  'js/scripts/produce-rust-standard-sum-integration.mjs',
  'js/scripts/produce-rust-standard-option-panic.mjs',
@@ -61,7 +77,7 @@ for(const library of libraries){draftSourceLibrary({sourceDependencies:true,...l
 // called to obtain an expected value, and no represented Rust program runs.
 const aliases=await import('../tests/fixtures/rust-generic-type-alias-draft.mjs');
 const sums=await import('../tests/fixtures/rust-standard-sum-source-rules.mjs');
-const boundary='Unexecuted source-policy controls. Frontend integration, native parity, source registration and complete semantic closure remain required; generated code alone is not language support.';
+const boundary='Unexecuted source controls for the explicitly connected frontend consumers. Automatic native products, source registration, parity and broader semantic closure remain deferred; declarations and generated code alone are not evidence of complete language support.';
 writeProjectData(new URL('parity/fixtures/rust-generic-type-alias-source-draft.lino',root),{
  schemaVersion:1,model:libraries.find(row=>row.moduleName==='rust_generic_type_alias_rules').model,boundary,
  sourceProfile:aliases.boundary,
@@ -79,6 +95,11 @@ writeProjectData(new URL('parity/fixtures/rust-standard-sum-source-draft.lino',r
 // Every remaining fixture namespace is an independently authored literal data
 // module. Convert all of its exports automatically without dropping any rows.
 for(const [source,target] of [
+ ['rust-source-namespaces-draft','rust-source-namespaces-draft'],
+ ['rust-standard-sum-conversions','rust-standard-sum-conversions'],
+ ['rust-standard-sum-predicates','rust-standard-sum-predicates'],
+ ['rust-standard-sum-nested','rust-standard-sum-nested'],
+ ['rust-generic-type-alias-defaults-draft','rust-generic-type-alias-defaults-draft'],
  ['rust-standard-sum-methods','rust-standard-sum-methods-source-draft'],
  ['rust-standard-sum-method-source-originals','rust-standard-sum-method-source-originals'],
  ['rust-standard-sum-integration','rust-standard-sum-integration-source-draft'],

@@ -651,7 +651,7 @@ impl RustParser {
         }
         if self
             .origins
-            .lookup(&self.source_value_path(&segments, path), path)
+            .lookup_value_owner(&self.source_value_path(&segments, path), path)
             .is_some_and(|entry| {
                 matches!(
                     entry.declaration,

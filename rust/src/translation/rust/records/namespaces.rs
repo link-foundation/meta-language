@@ -46,8 +46,8 @@ impl RustParser {
             .collect::<Vec<_>>()
             .join(".");
         if self.origins.collecting {
-            self.origins.catalog.remove(&key);
-            self.origins.catalog.insert(next.clone(), existing);
+            self.origins.remove_catalog_entry(&key);
+            self.origins.register_catalog_entry(next.clone(), existing);
         }
         self.named_records
             .get_mut(&full_name)

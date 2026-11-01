@@ -2,7 +2,7 @@ import {acceptRustTypeAliasEmptyVectorMember} from './rust-type-alias-rules.js';
 import {acceptRustTypeAliasOwnedStringMember} from './rust-type-alias-rules.js';
 import {readRustTypeAliasPrimitiveMemberOwner} from './rust-type-alias-rules.js';
 import {readRustConstantPrimitiveAliasOwner} from './rust-constant-integer-rules.js';
-import {readRustGenericTypeAliasDeclarationPlan} from './rust-generic-type-alias-rules.js';
+import {readRustGenericTypeAliasDeclarationPlan,readRustGenericTypeAliasParameterDirectory} from './rust-generic-type-alias-rules.js';
 import {prepareRustGenericTypeAlias,readRustGenericTypeAliasValue,readRustGenericTypeAliasConstructor as readGenericConstructor} from './rust-generic-type-aliases.js';
 // Token/type/source-origin transport. Alias lookup and bounds are shared rules.
 import {unsupported} from './diagnostics.js';
@@ -10,14 +10,16 @@ import {readRustTypeAliasLookupKeys,readRustTypeAliasExpansionError,readRustType
 function fail(parser,message,row){const token=row?.keywordSpan??parser.cursor.peek();throw unsupported('Rust type alias',message,{start:token.start,end:token.end});}
 export function readRustGenericTypeAliasConstructor(parser,segments,path,start){return readGenericConstructor(parser,segments,path,start,{fail,copyOrigin});}
 export function initializeRustTypeAliases(parser){
- parser.sourceTypeAliases=new Map();parser.sourceTypeAliasCache=new Map();parser.sourceTypeAliasTemplates=new Map();parser.sourceTypeAliasStack=new Set();parser.sourceTypeAliasExpansions=0;parser.sourceTypeAliasNodes=0;parser.sourceTypeAliasesChecked=false;
+ parser.sourceTypeAliases=new Map();parser.sourceTypeAliasCache=new Map();parser.sourceTypeAliasTemplates=new Map();parser.sourceTypeAliasDefaults=new Map();parser.sourceTypeAliasStack=new Set();parser.sourceTypeAliasExpansions=0;parser.sourceTypeAliasNodes=0;parser.sourceTypeAliasesChecked=false;
  if(!parser.ordinaryCompletionContext())return;
  if(!parser.cursor.tokens.some(token=>token.kind==='identifier'&&token.value==='type'&&token.raw==='type'))return;
- const tokens=parser.cursor.tokens,plan=readRustGenericTypeAliasDeclarationPlan(tokens.map(token=>token.kind==='identifier'&&['mod','type'].includes(token.value)&&token.raw===token.value?'keyword':token.kind),tokens.map(token=>token.value),tokens.map(token=>token.raw));
+ const tokens=parser.cursor.tokens,kinds=tokens.map(token=>token.kind==='identifier'&&['mod','type'].includes(token.value)&&token.raw===token.value?'keyword':token.kind),values=tokens.map(token=>token.value),raws=tokens.map(token=>token.raw),plan=readRustGenericTypeAliasDeclarationPlan(kinds,values,raws);
  if(plan[0]!=='aliases')fail(parser,plan[1]);
  for(let at=1;at<plan.length;){
   const key=plan[at],keyword=tokens[Number(plan[at+1])],first=tokens[Number(plan[at+2])],last=tokens[Number(plan[at+3])],count=Number(plan[at+5]),parameters=plan.slice(at+6,at+6+count);
-  parser.sourceTypeAliases.set(key,{key,keywordSpan:{start:keyword.start,end:keyword.end},first:first.start,end:last.start,path:key.split('.').slice(0,-1),parameters,parameterBindings:parameters.map((_,index)=>key+'/parameter/'+keyword.start+'/'+index)});at+=6+count;
+  const directory=count?readRustGenericTypeAliasParameterDirectory(kinds,values,raws,Number(plan[at+1])+2):[];
+  const defaultSpans=parameters.map((_,index)=>{const start=Number(directory[5+index*4]),end=Number(directory[6+index*4]);return start<0?null:{start:tokens[start].start,end:tokens[end].start+Number(directory[7+index*4])};});
+  parser.sourceTypeAliases.set(key,{key,keywordSpan:{start:keyword.start,end:keyword.end},first:first.start,end:last.start,path:key.split('.').slice(0,-1),parameters,defaultSpans,parameterBindings:parameters.map((_,index)=>key+'/parameter/'+keyword.start+'/'+index)});at+=6+count;
  }
 }
 function qualifyType(parser,type,path){
@@ -30,7 +32,7 @@ function qualifyType(parser,type,path){
  if(type.kind==='function')return {...type,params:type.params.map(value=>qualifyType(parser,value,path)),ret:qualifyType(parser,type.ret,path)};
  return structuredClone(type);
 }
-function sourceDataOwner(parser,segments,path){for(const key of readRustTypeAliasLookupKeys(segments,path)){const owner=parser.origins.catalog.get(key)?.k??'';if(owner==='data')return key;if(readRustTypeAliasNamespaceDisposition(false,owner)==='block')return null;}return null;}
+function sourceDataOwner(parser,segments,path){for(const key of readRustTypeAliasLookupKeys(segments,path)){const owner=parser.origins.namespaceEntry(key,'type')?.k??'';if(owner==='data')return key;if(readRustTypeAliasNamespaceDisposition(false,owner)==='block')return null;}return null;}
 function typeChildren(type){return type.kind==='array'?[type.element]:type.kind==='tuple'?type.elements:type.kind==='function'?[...type.params,type.ret]:[];}
 function copyOrigin(parser,origin,row){
  const origins=[origin],types=[];let nodes=0;
@@ -56,7 +58,7 @@ export function readRustTypeAliasValue(parser,segments){
  if(!parser.ordinaryCompletionContext())return null;
  const resolved=parser.resolve(segments,parser.modulePath);
  for(const key of readRustTypeAliasLookupKeys(resolved,parser.modulePath)){
-  const row=parser.sourceTypeAliases.get(key);if(!row){if(readRustTypeAliasNamespaceDisposition(false,parser.origins.catalog.get(key)?.k??'')==='block')return null;continue;}
+  const row=parser.sourceTypeAliases.get(key);if(!row){if(readRustTypeAliasNamespaceDisposition(false,parser.origins.namespaceEntry(key,'type')?.k??'')==='block')return null;continue;}
   const origin=row.parameters.length?readRustGenericTypeAliasValue(parser,row,{fail,copyOrigin}):expandAlias(parser,row);origin.expandedSourceOwner=structuredClone(origin.sourceOwner);parser.origins.type=origin;return origin.type;
  }
  return null;
@@ -72,8 +74,9 @@ export function finishRustTypeAliases(parser){
  // from the complete actual namespace, retaining the charged allocation budget.
  parser.sourceTypeAliasCache.clear();
  parser.sourceTypeAliasTemplates.clear();
+ parser.sourceTypeAliasDefaults.clear();
  for(const row of parser.sourceTypeAliases.values()){
-  if(['data','module'].includes(parser.origins.catalog.get(row.key)?.k))fail(parser,'a type alias cannot replace another source type or module',row);
+  if(['data','module'].includes(parser.origins.namespaceEntry(row.key,'type')?.k))fail(parser,'a type alias cannot replace another source type or module',row);
   if(row.parameters.length){prepareRustGenericTypeAlias(parser,row,{fail,copyOrigin});continue;}
   const origin=expandAlias(parser,row),types=origin.type?[origin.type]:[];
   for(let at=0;at<types.length;at+=1){const type=types[at];types.push(...typeChildren(type));if(type.kind==='named'&&!sourceDataOwner(parser,parser.resolve(type.path,origin.path),origin.path))fail(parser,'the complete alias definition needs an actual source datatype owner',row);}
@@ -87,7 +90,7 @@ export function resolveRustTypeAliasPath(parser,segments,path,role){
  for(const length of readRustTypeAliasAccessPrefixLengths(segments.length,role!=='associated value')){
   const resolved=parser.resolve(segments.slice(0,length),path);
   for(const key of readRustTypeAliasLookupKeys(resolved,parser.modulePath)){
-   const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.catalog.get(key)?.k??'');
+   const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.namespaceEntry(key,'type')?.k??'');
    if(disposition==='block')return segments;
    if(disposition!=='alias')continue;
    const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return segments;
@@ -105,7 +108,7 @@ export function resolveRustTypeAliasPath(parser,segments,path,role){
 export function requireRustTypeAliasValueConstructor(parser,segments,path,where){
  if(!parser.ordinaryCompletionContext()||parser.sourceTypeAliases.size===0)return;
  const resolved=parser.resolve(segments,path),local=segments.length===1&&parser.origins.scope.has(segments[0]),keys=readRustTypeAliasLookupKeys(resolved,parser.modulePath);
- const value=keys.some(key=>['fn','const','ctor'].includes(parser.origins.catalog.get(key)?.k??'')),alias=keys.some(key=>parser.sourceTypeAliases.has(key));
+ const value=keys.some(key=>['fn','const','ctor'].includes(parser.origins.namespaceEntry(key,'value')?.k??'')),alias=keys.some(key=>parser.sourceTypeAliases.has(key));
  const message=readRustTypeAliasValueConstructorError(local,value,alias);
  if(message)throw unsupported('Rust type alias value constructor',message,where);
 }
@@ -118,7 +121,7 @@ export function readRustTypeAliasPrimitiveMemberPath(parser,segments,path,absolu
  if(absolute||!parser.ordinaryCompletionContext()||segments.length<2)return [];
  const resolved=parser.resolve(segments.slice(0,-1),path);
  for(const key of readRustTypeAliasLookupKeys(resolved,path)){
-  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.catalog.get(key)?.k??'');
+  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.namespaceEntry(key,'type')?.k??'');
   if(disposition==='block')return [];if(disposition!=='alias')continue;
   const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return [];
   const type=origin.type,owner=origin.expandedSourceOwner??origin.sourceOwner;
@@ -133,7 +136,7 @@ export function readRustTypeAliasStringMemberOwner(parser,segments,path){
  if(!parser.ordinaryCompletionContext()||segments.length<2)return null;
  const resolved=parser.resolve(segments.slice(0,-1),path);
  for(const key of readRustTypeAliasLookupKeys(resolved,path)){
-  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.catalog.get(key)?.k??'');
+  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.namespaceEntry(key,'type')?.k??'');
   if(disposition==='block')return null;if(disposition!=='alias')continue;
   const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return null;
   const owner=origin.expandedSourceOwner??origin.sourceOwner;
@@ -147,7 +150,7 @@ export function readRustTypeAliasEmptyVectorOrigin(parser,segments,path){
  if(!parser.ordinaryCompletionContext()||segments.length<2)return null;
  const resolved=parser.resolve(segments.slice(0,-1),path);
  for(const key of readRustTypeAliasLookupKeys(resolved,path)){
-  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.catalog.get(key)?.k??'');
+  const disposition=readRustTypeAliasNamespaceDisposition(parser.sourceTypeAliases.has(key),parser.origins.namespaceEntry(key,'type')?.k??'');
   if(disposition==='block')return null;if(disposition!=='alias')continue;
   const origin=parser.sourceTypeAliasCache.get(key);if(!origin)return null;
   const owner=origin.expandedSourceOwner??origin.sourceOwner;

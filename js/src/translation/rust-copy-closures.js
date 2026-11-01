@@ -34,6 +34,23 @@ export function readRustExpectedCopyClosure(parser,path,expected,parametersOnly=
  }
  return withRustStandardSumSourceContext(parser,expected,()=>parser.expr(path));
 }
+// Actual parameter context with no invented callable result type. Deferred
+// literal results retain the existing private lambda protocol and must later
+// pass finishRustDeferredCopyClosure with an independently supplied result.
+export function readRustParameterOnlyCopyClosure(parser,path,parameters,deferResult=false){
+ if(parameters.some(origin=>!origin?.type||!acceptRustCopyClosureParameterOrigin(parser,origin)))throw unsupported('Rust parameter-only Copy closure','each parameter needs its actual admitted Copy source origin',parser.cursor.peek());
+ const expected={...parser.origins.unknownOrigin(path),callableParameters:parameters.map(origin=>parser.origins.copy(origin)),callableResult:null};
+ const primitive=readRustPrimitiveFunctionValue(parser,path,expected);if(primitive)return primitive;
+ const c=parser.cursor;
+ if(['|','||','move'].some(role=>c.is(role)))return readRustCopyClosure(parser,path,expected,true,deferResult);
+ if(c.is('(')){
+  let count=64;for(;;){const tokens=c.tokens.slice(c.index,c.index+count),syntax=tokens.map((_,index)=>['(','|','||','move'].find(value=>c.is(value,index))??''),depth=findRustContextualClosureParenthesisCount(syntax);
+   if(depth>0){for(let at=0;at<depth;at+=1)c.next();const node=readRustCopyClosure(parser,path,expected,true,deferResult);for(let at=0;at<depth;at+=1)c.expect(')','parameter-only closure');return node;}
+   if(depth!==-2||tokens.length<count)break;count*=2;
+  }
+ }
+ return withRustStandardSumSourceContext(parser,null,()=>parser.expr(path));
+}
 export function readRustCopyPointerResultBlock(parser,path,expected){
  const c=parser.cursor,role=['|','||','move','(','return'].find(value=>c.is(value,1))??'';
  if(!parser.ordinaryCompletionContext()||!acceptRustContextualCopyPointerResultBlock(expected?.type?.kind??'',parser.origins.immutableProduct(expected),c.is('{'),role))return null;
@@ -43,7 +60,7 @@ export function readRustCopyPointerResultBlock(parser,path,expected){
 }
 export function readRustContextualCallArguments(parser,callee,path){
  let parameters=null,result=null;
- if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn'||entry?.k==='ctor'){parameters=entry.k==='fn'?entry.parameters:entry.fields;result=entry.result;}}
+ if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookupValueOwner(readRustSourceValueName(parser,callee.path,path),path);if(entry?.k==='fn'||entry?.k==='ctor'){parameters=entry.k==='fn'?entry.parameters:entry.fields;result=entry.result;}}
  if(parameters===null){const origin=parser.origins.origin(callee,path);result??=origin.callableResult??null;parameters=origin.type?.kind==='function'?origin.type.params.map((type,index)=>origin.callableParameters?.[index]??({...parser.origins.typeOrigin(type,path),...(type.kind==='function'?{copyEvidence:true}:{})})):[];}
  const args=[],c=parser.cursor;
  while(!c.is(')')){const frame=beginRustStandardStringViewArgument(parser,path,parameters[args.length],result);let value;try{value=readRustExpectedCopyClosure(parser,path,parameters[args.length]);}finally{endRustStandardStringViewArgument(parser,frame);}const argument=checkRustStandardStringViewArgument(parser,frame,value,path);parser.origins.prepareOwnedArgument(argument,parameters[args.length],path);args.push(argument);if(!c.eat(','))break;}
@@ -69,7 +86,7 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
    let type,origin;
    if(c.eat(':')){type=parser.type();origin=parser.origins.type;}
    else{
-    type=expected?.type?.params[parameters.length];
+    type=parametersOnly&&expected?.type==null?expected?.callableParameters?.[parameters.length]?.type:expected?.type?.params[parameters.length];
     if(!type){c.expect(':','closure parameter');throw parser.fail('a closure parameter needs its source type');}
     origin=parser.origins.copy(expected?.callableParameters?.[parameters.length])??parser.origins.typeOrigin(type,path);
    }

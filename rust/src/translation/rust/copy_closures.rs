@@ -164,7 +164,7 @@ impl RustParser {
             && !(names.len() == 1 && self.origins.scope.contains_key(&names[0]))
             && let Some(entry) = self
                 .origins
-                .lookup(&self.source_value_path(names, path), path)
+                .lookup_value_owner(&self.source_value_path(names, path), path)
             && let (SourceDeclaration::Function {
                 parameters: actual,
                 result: actual_result,
@@ -225,6 +225,37 @@ impl RustParser {
         expected: Option<&SourceOrigin>,
     ) -> Result<SExpr> {
         self.read_expected_copy_closure_result_mode(path, expected, false)
+    }
+    pub(super) fn read_parameter_only_copy_closure(&mut self,path:&[String],parameters:&[SourceOrigin])->Result<SExpr>{
+        self.read_parameter_only_copy_closure_options(path,parameters,false)
+    }
+    pub(super) fn read_parameter_only_copy_closure_deferred_result(&mut self,path:&[String],parameters:&[SourceOrigin])->Result<SExpr>{
+        self.read_parameter_only_copy_closure_options(path,parameters,true)
+    }
+    fn read_parameter_only_copy_closure_options(&mut self,path:&[String],parameters:&[SourceOrigin],defer_result:bool)->Result<SExpr>{
+        if parameters.iter().any(|origin|origin.ty.is_none()||!origin.copy_closure_parameter()){
+            return Err(unsupported("Rust parameter-only Copy closure","each parameter needs its actual admitted Copy source origin",Some(self.peek().span())));
+        }
+        // No Type::Function and no return type exist in this private context.
+        let mut expected=SourceOrigin::unknown();expected.path=path.to_vec();expected.callable_parameters=Some(parameters.to_vec());
+        if let Some(value)=self.read_primitive_function_value(path,Some(&expected))?{return Ok(value);}
+        if ["|","||","move"].iter().any(|role|self.cursor.is(role)){
+            return self.read_copy_closure_with_expected(path,Some(&expected),true,defer_result);
+        }
+        if self.cursor.is("("){
+            let mut count=64usize;loop{
+                let length=count.min(self.cursor.tokens.len()-self.cursor.index);
+                let syntax=(0..length).map(|index|["(","|","||","move"].into_iter().find(|role|self.cursor.is_at(role,index)).unwrap_or("").to_owned()).collect::<Vec<_>>();
+                let depth=contextual::find_rust_contextual_closure_parenthesis_count(&syntax);
+                if depth>0.0{
+                    let depth=crate::translation::frontend_rules::ml_array::number_index(depth).expect("actual source closure parenthesis count");
+                    self.cursor.index+=depth;let value=self.read_copy_closure_with_expected(path,Some(&expected),true,defer_result)?;
+                    for _ in 0..depth{self.cursor.expect(")",Some("parameter-only closure"))?;}return Ok(value);
+                }
+                if depth!=-2.0||length<count{break;}count=count.checked_mul(2).expect("actual source token window");
+            }
+        }
+        let previous=self.standard_sum_source.expected_origin.take();let result=self.expr(path,super::Options::default());self.standard_sum_source.expected_origin=previous;result
     }
     pub(super) fn read_expected_copy_closure_result_mode(
         &mut self,
@@ -410,6 +441,10 @@ impl RustParser {
                 let (ty, origin) = if self.cursor.eat(":").is_some() {
                     let ty = self.parse_type()?;
                     (ty, self.origins.current_type.clone())
+                } else if let Some(origin)=expected.filter(|origin|parameters_only&&origin.ty.is_none())
+                    .and_then(|origin|origin.callable_parameters.as_ref()).and_then(|parameters|parameters.get(origins.len())).cloned(){
+                    let ty=origin.ty.clone().ok_or_else(||unsupported("Rust parameter-only Copy closure","the actual parameter source type is missing",Some(token.span())))?;
+                    (ty,origin)
                 } else if let Some(Type::Function { params, .. }) =
                     expected.and_then(|origin| origin.ty.as_ref())
                 {

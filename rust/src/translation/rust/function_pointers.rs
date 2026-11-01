@@ -84,7 +84,7 @@ impl RustParser {
         }
         let Some(entry) = self
             .origins
-            .lookup(&self.source_value_path(segments, path), path)
+            .lookup_value_owner(&self.source_value_path(segments, path), path)
         else {
             return Ok(None);
         };

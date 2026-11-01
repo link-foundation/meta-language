@@ -66,8 +66,8 @@ impl RustParser {
             ));
             let source_owner = vec!["f64".to_owned()];
             let owner = self.resolve(&source_owner, path);
-            let shadowed = self.origins.lookup(&source_owner, path).is_some()
-                || self.origins.lookup(&owner, path).is_some();
+            let shadowed = self.origins.lookup_type_owner(&source_owner, path).is_some()
+                || self.origins.lookup_type_owner(&owner, path).is_some();
             if !super::float_predicate_rules::accept_rust_float_constant_owner(
                 &owner.join("::"),
                 shadowed,

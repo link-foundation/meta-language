@@ -77,7 +77,7 @@ for(const row of refusals)for(const sourceVersion of versions){
   for(const read of [()=>checkProgram(parseRust(row.source,{sourceVersion})),
    ()=>createTypedProgramLinks(row.source,'Rust',{rustSourceVersion:sourceVersion})]){
    assert.throws(read,error=>{
-    assert.ok(['unsupported','type'].includes(error.kind),row.name+': actual checked source refusal');
+    assert.ok((row.diagnosticKinds??['unsupported','type']).includes(error.kind),row.name+': actual checked source refusal');
     if(row.reasonIncludes)assert.ok(error.reason.includes(row.reasonIncludes),row.name+': preserve specific source boundary');
     return true;
    });

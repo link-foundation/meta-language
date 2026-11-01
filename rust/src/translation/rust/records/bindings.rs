@@ -11,15 +11,9 @@ impl RustParser {
             return Ok(None);
         }
         let first = vec![self.cursor.peek().value.clone()];
-        let candidate = self
-            .origins
-            .lookup(&self.resolve(&first, &self.module_path), &self.module_path);
-        let known = candidate.is_some_and(|item| {
-            matches!(
-                item.declaration,
-                SourceDeclaration::Data | SourceDeclaration::Constructor { .. }
-            )
-        });
+        let resolved=self.resolve(&first,&self.module_path);
+        let known=self.origins.lookup_value_owner(&resolved,&self.module_path).is_some_and(|item|matches!(item.declaration,SourceDeclaration::Constructor {..}))
+            ||self.origins.lookup_type_owner(&resolved,&self.module_path).is_some_and(|item|matches!(item.declaration,SourceDeclaration::Data));
         if !["::", "(", "{", "@"].contains(&self.cursor.peek_at(1).value.as_str()) && !known {
             return Ok(None);
         }

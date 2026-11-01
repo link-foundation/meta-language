@@ -27,7 +27,7 @@ impl RustParser {
     fn record_source_type(&self, ty: &Type, path: &[String]) -> Type {
         match ty {
             Type::Named { path: names, span } => {
-                let owner = self.origins.lookup(&self.resolve(names, path), path);
+                let owner = self.origins.lookup_type_owner(&self.resolve(names, path), path);
                 if let Some(owner) =
                     owner.filter(|owner| matches!(owner.declaration, SourceDeclaration::Data))
                 {
@@ -56,7 +56,7 @@ impl RustParser {
     }
 
     fn record_owner(&self, segments: &[String], path: &[String]) -> Option<NamedRecord> {
-        let found = self.origins.lookup(&self.resolve(segments, path), path)?;
+        let found = self.origins.lookup_type_owner(&self.resolve(segments, path), path)?;
         self.named_records.get(&found.full_name).cloned()
     }
 
@@ -66,7 +66,7 @@ impl RustParser {
         if let Some(record) = self.record_owner(segments, path) {
             return Some(record);
         }
-        let found = self.origins.lookup(&self.resolve(segments, path), path)?;
+        let found = self.origins.lookup_value_owner(&self.resolve(segments, path), path)?;
         let SourceDeclaration::Constructor { owner, fields, .. } = found.declaration else {
             return None;
         };

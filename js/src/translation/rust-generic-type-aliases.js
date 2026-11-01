@@ -9,6 +9,7 @@ import {retainRustNominalCopyOrigin} from './rust-nominal-copies.js';
 import {resolveRustStandardSumSourceOwner,createRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
 import {readRustStandardSumSourcePathConstructor} from './rust-standard-sum-source-rules.js';
 import {readRustContextualCallArguments} from './rust-copy-closures.js';
+import {readRustGenericTypeAliasDefaultSubstitutionPlan,readRustGenericTypeAliasDefaultArgumentPlan,acceptRustGenericTypeAliasConcreteIdentifier} from './rust-generic-type-alias-rules.js';
 import {readRustGenericTypeAliasBindingPlan,readRustGenericTypeAliasSubstitutionPlan,readRustGenericTypeAliasExpansionError,readRustGenericTypeAliasTemplateDepthError,readRustGenericTypeAliasUnusedParameterError,acceptRustGenericTypeAliasConcreteTemplate,acceptRustGenericTypeAliasNamedTemplate,readRustGenericTypeAliasStandardSumOwner,readRustGenericTypeAliasStandardSumDepthError,acceptRustGenericTypeAliasStandardSumLeaf,readRustGenericTypeAliasVectorOwner,acceptRustGenericTypeAliasVectorArguments,readRustGenericTypeAliasVectorElementError,acceptRustGenericTypeAliasOwnedStringTemplate,readRustGenericTypeAliasConstructorPlan} from './rust-generic-type-alias-rules.js';
 
 function charge(parser,context,row,count=1){
@@ -31,14 +32,14 @@ function aliasRow(parser,segments,path=parser.modulePath){
  const resolved=parser.resolve(segments,path);
  for(const key of readRustTypeAliasLookupKeys(resolved,path)){
   const row=parser.sourceTypeAliases.get(key);if(row)return row;
-  if(['data','module','externalCrate'].includes(parser.origins.catalog.get(key)?.k??''))return null;
+  if(['data','module','externalCrate'].includes(parser.origins.namespaceEntry(key,'type')?.k??''))return null;
  }
  return null;
 }
 function vectorOwner(parser,segments){
  const path=parser.modulePath,resolved=parser.resolve(segments,path);
  const roots=[segments.slice(0,1),resolved.slice(0,1)];
- const shadowed=roots.some(root=>Boolean(parser.origins.lookup(root,path))||readRustTypeAliasLookupKeys(root,path).some(key=>parser.sourceTypeAliases.has(key)));
+ const shadowed=roots.some(root=>Boolean(parser.origins.lookupTypeOwner(root,path))||readRustTypeAliasLookupKeys(root,path).some(key=>parser.sourceTypeAliases.has(key)));
  return readRustGenericTypeAliasVectorOwner(resolved.join('::'),shadowed);
 }
 function closeArguments(parser,context,row){
@@ -46,9 +47,19 @@ function closeArguments(parser,context,row){
  if(!parser.cursor.eat('>'))context.fail(parser,'generic alias arguments need a complete closing delimiter',row);
 }
 function symbolicApplication(parser,row,arguments_,context){
- const template=prepareRustGenericTypeAlias(parser,row,context),occurrences=bindings(parser,template,row,context);
- const plan=readRustGenericTypeAliasBindingPlan(row.parameterBindings,arguments_.length,occurrences);
+ const template=prepareRustGenericTypeAlias(parser,row,context),defaults=parser.sourceTypeAliasDefaults.get(row.key),completed=[...arguments_];
+ const missing=readRustGenericTypeAliasDefaultArgumentPlan(defaults.map(Boolean),completed.length,true);if(missing[0]!=='arguments')context.fail(parser,missing[1],row);
+ for(const position of missing.slice(1)){
+  const index=Number(position),node=defaults[index],occurrences=bindings(parser,node,row,context),plan=readRustGenericTypeAliasDefaultSubstitutionPlan(row.parameterBindings,index,completed.length,occurrences);
+  if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
+  completed.push(substituteTemplate(parser,row,node,completed,plan,context));
+ }
+ const occurrences=bindings(parser,template,row,context);
+ const plan=readRustGenericTypeAliasBindingPlan(row.parameterBindings,completed.length,occurrences);
  if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
+ return substituteTemplate(parser,row,template,completed,plan,context);
+}
+function substituteTemplate(parser,row,template,arguments_,plan,context){
  let occurrence=1;
  const replace=(node,depth)=>{
   const error=readRustGenericTypeAliasTemplateDepthError(depth);if(error)context.fail(parser,error,row);charge(parser,context,row);
@@ -83,14 +94,15 @@ function templateValue(parser,row,context,depth){
    // Establish declaration recursion before descending into arguments; an
    // expanding A<Box<T>> must not evade the A declaration-owner cycle.
    prepareRustGenericTypeAlias(parser,target,context);
-   if(!c.eat('<'))context.fail(parser,'generic alias arguments must be explicit',row);
+   const explicit=Boolean(c.eat('<'));
    const arguments_=[];
-   splitRustTypeClosingToken(parser);
+   if(explicit){splitRustTypeClosingToken(parser);
    while(!c.is('>')){
     arguments_.push(templateValue(parser,row,context,depth+1));
     splitRustTypeClosingToken(parser);if(!c.eat(','))break;splitRustTypeClosingToken(parser);
    }
-   closeArguments(parser,context,row);
+   closeArguments(parser,context,row);}
+   const missing=readRustGenericTypeAliasDefaultArgumentPlan(parser.sourceTypeAliasDefaults.get(target.key).map(Boolean),arguments_.length,explicit);if(missing[0]!=='arguments')context.fail(parser,missing[1],target);
    return symbolicApplication(parser,target,arguments_,context);
   }
   const sumOwner=!target?resolveRustStandardSumSourceOwner(parser,segments,parser.modulePath):'';
@@ -120,7 +132,7 @@ function templateValue(parser,row,context,depth){
  const data=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null;
  const stored=data?.standardSumSourceOrigin,sum=stored?.standardSumSource;
  if(!acceptRustGenericTypeAliasConcreteTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',String(origin.type?.bits??''),origin.type?.signed===true,owner?.arguments.length??-1,origin.proven===true)&&!acceptRustGenericTypeAliasNamedTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,data?.fullName??'')&&!acceptRustGenericTypeAliasStandardSumLeaf(origin.type?.kind??'',origin.wrappers.length,sum?.owner??'',sum?.arguments.length??-1,origin.proven===true,stored?.proven===true,stored?.copyEvidence===true,stored?.wrappers.length??-1)&&!acceptRustGenericTypeAliasOwnedStringTemplate(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.proven===true,origin.textSourceModel??''))context.fail(parser,'generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype',row);
- for(let at=c.tokens.indexOf(startToken);at<c.index;at+=1){if(c.tokens[at].kind==='identifier'&&row.parameters.includes(c.tokens[at].value))context.fail(parser,'parameter-dependent wrapper and library alias templates need their complete interpretation',row);}
+ for(let at=c.tokens.indexOf(startToken);at<c.index;at+=1){if(c.tokens[at].kind==='identifier'&&!acceptRustGenericTypeAliasConcreteIdentifier(row.parameters,c.tokens[at].value,c.tokens[at-1]?.value==='::'))context.fail(parser,'parameter-dependent wrapper and library alias templates need their complete interpretation',row);}
  return {kind:'origin',origin:context.copyOrigin(parser,origin,row)};
 }
 
@@ -131,28 +143,38 @@ export function prepareRustGenericTypeAlias(parser,row,context){
  parser.sourceTypeAliasExpansions+=1;parser.sourceTypeAliasStack.add(row.key);
  parser.cursor.index=parser.cursor.tokens.findIndex(token=>token.start===row.first);parser.modulePath=row.path;parser.lifetimeBindings=new Set();parser.lifetimeHeader=true;parser.inherentOwner=null;
  try{
+  const defaults=[];
+  for(let index=0;index<row.parameters.length;index+=1){
+   const span=row.defaultSpans[index];if(!span){defaults.push(null);continue;}
+   parser.cursor.index=parser.cursor.tokens.findIndex(token=>token.start===span.start);
+   const node=templateValue(parser,row,context,0);
+   if(parser.cursor.peek().start!==span.end)context.fail(parser,'the complete generic alias default needs one admitted source type',row);
+   const plan=readRustGenericTypeAliasDefaultSubstitutionPlan(row.parameterBindings,index,index,bindings(parser,node,row,context));
+   if(plan[0]!=='substitution')context.fail(parser,plan[1],row);defaults.push(node);
+  }
+  parser.cursor.index=parser.cursor.tokens.findIndex(token=>token.start===row.first);
   const template=templateValue(parser,row,context,0);
   if(parser.cursor.peek().start!==row.end||!parser.cursor.is(';'))context.fail(parser,'the complete alias definition needs one admitted source type',row);
   const used=bindings(parser,template,row,context),unused=readRustGenericTypeAliasUnusedParameterError(row.parameterBindings,used);if(unused)context.fail(parser,unused,row);
-  parser.sourceTypeAliasTemplates.set(row.key,template);return template;
+  parser.sourceTypeAliasDefaults.set(row.key,defaults);parser.sourceTypeAliasTemplates.set(row.key,template);return template;
  }finally{
   parser.cursor.index=parser.cursor.tokens.indexOf(previous.token);parser.modulePath=previous.path;parser.lifetimeBindings=previous.lifetimes;parser.lifetimeHeader=previous.header;parser.inherentOwner=previous.inherent;parser.sourceTypeAliasStack.delete(row.key);
  }
 }
 
-export function readRustGenericTypeAliasValue(parser,row,context){
+export function readRustGenericTypeAliasValue(parser,row,context,allowArgumentTokens=true){
  const template=prepareRustGenericTypeAlias(parser,row,context),c=parser.cursor;
- if(!c.eat('<'))context.fail(parser,'generic alias arguments must be explicit',row);
+ const explicit=allowArgumentTokens&&Boolean(c.eat('<'));
  const arguments_=[];
- splitRustTypeClosingToken(parser);
+ if(explicit){splitRustTypeClosingToken(parser);
  while(!c.is('>')){
   parser.type();arguments_.push(context.copyOrigin(parser,parser.origins.type,row));
   splitRustTypeClosingToken(parser);if(!c.eat(','))break;splitRustTypeClosingToken(parser);
  }
- closeArguments(parser,context,row);
- const occurrences=bindings(parser,template,row,context),plan=readRustGenericTypeAliasSubstitutionPlan(row.parameterBindings,arguments_.map(origin=>origin.proven===true&&Boolean(origin.type)),occurrences);
- if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
- let occurrence=1;
+ closeArguments(parser,context,row);}
+ const defaults=parser.sourceTypeAliasDefaults.get(row.key),missing=readRustGenericTypeAliasDefaultArgumentPlan(defaults.map(Boolean),arguments_.length,explicit);
+ if(missing[0]!=='arguments')context.fail(parser,missing[1],row);
+ let occurrence=1,plan=[];
  const materialize=(node,depth)=>{
   const error=readRustGenericTypeAliasTemplateDepthError(depth);if(error)context.fail(parser,error,row);charge(parser,context,row);
   if(node.kind==='parameter'){const index=Number(plan[occurrence++]);if(index<0)context.fail(parser,'generic alias template contains an unresolved parameter binding',row);return context.copyOrigin(parser,arguments_[index],row);}
@@ -182,7 +204,25 @@ export function readRustGenericTypeAliasValue(parser,row,context){
  };
  // Every use constructs its own complete origin. Declaration-only caches must
  // never conflate distinct concrete arguments or their actual source owners.
- return materialize(template,0);
+ for(const position of missing.slice(1)){
+  const index=Number(position),node=defaults[index];
+  plan=readRustGenericTypeAliasDefaultSubstitutionPlan(row.parameterBindings,index,arguments_.length,bindings(parser,node,row,context));
+  if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
+  occurrence=1;arguments_.push(materialize(node,0));
+ }
+ plan=readRustGenericTypeAliasSubstitutionPlan(row.parameterBindings,arguments_.map(origin=>origin.proven===true&&Boolean(origin.type)),bindings(parser,template,row,context));
+ if(plan[0]!=='substitution')context.fail(parser,plan[1],row);
+ occurrence=1;return materialize(template,0);
+}
+
+// This cache represents the declaration's complete all-default application
+// only. Explicit specializations continue to construct independent origins.
+export function readRustGenericTypeAliasDefaultOrigin(parser,row,context){
+ const plan=readRustGenericTypeAliasDefaultArgumentPlan(row.defaultSpans.map(Boolean),0,false);if(plan[0]!=='arguments')return null;
+ const cached=parser.sourceTypeAliasCache.get(row.key);if(cached)return context.copyOrigin(parser,cached,row);
+ const origin=readRustGenericTypeAliasValue(parser,row,context,false);
+ origin.expandedSourceOwner=structuredClone(origin.sourceOwner);
+ parser.sourceTypeAliasCache.set(row.key,context.copyOrigin(parser,origin,row));return origin;
 }
 
 /** Actual alias-qualified turbofish construction. Nothing is selected from
@@ -190,15 +230,19 @@ export function readRustGenericTypeAliasValue(parser,row,context){
  */
 export function readRustGenericTypeAliasConstructor(parser,segments,path,start,context){
  const c=parser.cursor;
- if(!parser.ordinaryCompletionContext()||!c.is('::')||!c.is('<',1))return null;
- const row=aliasRow(parser,segments,path);if(!row?.parameters.length)return null;
- c.next();const origin=readRustGenericTypeAliasValue(parser,row,context);
+ if(!parser.ordinaryCompletionContext())return null;
+ const explicit=c.is('::')&&c.is('<',1);
+ if(!explicit&&segments.length<2)return null;
+ const row=aliasRow(parser,explicit?segments:segments.slice(0,-1),path);if(!row?.parameters.length)return null;
+ if(!explicit&&readRustGenericTypeAliasDefaultArgumentPlan(row.defaultSpans.map(Boolean),0,false)[0]!=='arguments')return null;
+ const previousMember=explicit?null:c.tokens[c.index-1];
+ if(explicit)c.next();const origin=explicit?readRustGenericTypeAliasValue(parser,row,context):readRustGenericTypeAliasDefaultOrigin(parser,row,context);
  origin.expandedSourceOwner=structuredClone(origin.sourceOwner);
- c.expect('::','generic alias associated constructor');
- const member=c.identifier('generic alias constructor member'),owner=origin.expandedSourceOwner??origin.sourceOwner;
+ if(explicit)c.expect('::','generic alias associated constructor');
+ const member=explicit?c.identifier('generic alias constructor member'):previousMember,owner=origin.expandedSourceOwner??origin.sourceOwner;
  const data=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null,stored=data?.standardSumSourceOrigin,sum=stored?.standardSumSource;
  const plan=readRustGenericTypeAliasConstructorPlan(origin.type?.kind??'',origin.wrappers.length,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,origin.type?.element?.kind??'',origin.arraySourceModel??'',origin.proven===true,sum?.owner??'',sum?.arguments.length??-1,stored?.proven===true,stored?.copyEvidence===true,member.value);
- if(plan.length===0)context.fail(parser,'generic alias associated construction needs its actual admitted vector or standard sum constructor',row);
+ if(plan.length===0){if(!explicit)return null;context.fail(parser,'generic alias associated construction needs its actual admitted vector or standard sum constructor',row);}
  const arity=Number(plan[1]);let end=member.end,args=[],constructorPath=null;
  if(plan[0]==='vector constructor'){
   c.expect('(','generic alias Vec constructor');end=c.expect(')','generic alias Vec constructor').end;

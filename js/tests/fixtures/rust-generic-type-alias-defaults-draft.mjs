@@ -1,0 +1,47 @@
+// Independent literals. No generated products, execution or evidence here.
+export const genericAliasDefaultOriginals=[
+ {name:'bare identity uses concrete default',source:'type Identity<T=u8>=T;fn main(){let value:Identity=7u8;println!("{}",value);}',stdout:'7\n'},
+ {name:'dependent default preserves earlier concrete argument',source:'type Pair<T=u8,U=T>=(T,U);fn main(){let value:Pair<u16>=(7u16,9u16);println!("{}",value.0);println!("{}",value.1);}',stdout:'7\n9\n'},
+ {name:'dependent default preserves complete pointer integer source owner',source:'type Pair<T=u8,U=T>=(T,U);fn read(value:Pair<usize>)->usize{value.1}fn main(){println!("{}",read((7usize,9usize)));}',stdout:'9\n'},
+ {name:'empty argument list applies all defaults',source:'type Pair<T=u8,U=T>=(T,U);fn main(){let value:Pair<>=(7u8,9u8);println!("{}",value.1);}',stdout:'9\n'},
+ {name:'symbolic alias forwarding expands dependent defaults',source:'type Identity<T=u8>=T;type Pair<T=i64,U=Identity<T>>=(T,U);type Forward<T=u16>=Pair<T>;fn main(){let value:Forward=(7u16,9u16);println!("{}",value.1);}',stdout:'9\n'},
+ {name:'nested standard sum defaults split compound closing punctuation',source:'type Pair<T=u8,U=Option<T>>=(T,U);fn main(){let value:Pair=(7u8,Some(9u8));println!("{}",value.1.unwrap_or(0u8));}',stdout:'9\n'},
+ {name:'Result alias defaults retain both canonical arguments',source:'type Outcome<T=u8,E=i64>=std::result::Result<T,E>;fn main(){let value:Outcome=Ok(7u8);println!("{}",value.unwrap_or(0u8));}',stdout:'7\n'},
+ {name:'default vector element retains ordinary fresh result',source:'type Values<T=u8>=std::vec::Vec<T>;fn make()->Values{vec![7u8]}fn main(){println!("{}",make().len());}',stdout:'1\n'},
+ {name:'explicit arguments override a wellformed owned String default',source:'type Values<T=String>=Vec<T>;fn main(){let values:Values<u8>=vec![7u8];println!("{}",values.len());}',stdout:'1\n'},
+ {name:'defaulted turbofish constructs actual admitted vector owner',source:'type Values<T=u8>=Vec<T>;fn main(){println!("{}",Values::<>::new().len());}',stdout:'0\n'},
+ {name:'bare defaulted vector constructor uses checked element origin',source:'type Values<T=u8>=Vec<T>;fn main(){println!("{}",Values::new().len());}',stdout:'0\n'},
+ {name:'bare defaulted Option constructors use actual registered variants',source:'type Maybe<T=u8>=Option<T>;fn main(){let some=Maybe::Some(7u8);let none=Maybe::None;println!("{}",some.unwrap_or(0u8));println!("{}",none.unwrap_or(9u8));}',stdout:'7\n9\n'},
+ {name:'bare defaulted Result error constructor retains default error owner',source:'type Outcome<T=u8,E=i64>=Result<T,E>;fn main(){let value=Outcome::Err(9i64);println!("{}",value.unwrap_or(7u8));}',stdout:'7\n'},
+ {name:'qualified defaulted alias constructor ignores caller value homograph',source:'mod values{pub type Values<T=u8>=Vec<T>;}fn main(){let Values=7u8;println!("{}",values::Values::new().len());println!("{}",Values);}',stdout:'0\n7\n'},
+ {name:'ordinary module new function retains its value path',source:'mod Values{pub fn new()->u8{7u8}}fn main(){println!("{}",Values::new());}',stdout:'7\n'},
+ {name:'all-default primitive associated constants calls and callable owners',source:'type Scalar<T=u8>=T;fn main(){println!("{}",Scalar::MAX);println!("{}",Scalar::default());let make:fn()->u8=Scalar::default;println!("{}",make());}',stdout:'255\n0\n0\n'},
+ {name:'associated default preparation does not consume comparison punctuation',source:'type Scalar<T=u8>=T;fn main(){println!("{}",Scalar::MAX<255u8);}',stdout:'false\n'},
+ {name:'explicit specializations never replace cached declaration defaults',source:'type Scalar<T=u8>=T;fn main(){let first:Scalar<u16>=7u16;println!("{}",first);println!("{}",Scalar::MAX);let second:Scalar<u64>=9u64;println!("{}",second);println!("{}",Scalar::MAX);}',stdout:'7\n255\n9\n255\n'},
+ {name:'all-default primitive associated conversion uses existing actual owners',source:'type Scalar<T=u16>=T;fn main(){println!("{}",Scalar::from(7u8));}',stdout:'7\n'},
+ {name:'all-default owned String alias reuses actual from constructor',source:'type Text<T=String>=T;fn main(){let value=Text::from("abc");println!("{}",value.len());}',stdout:'3\n'},
+ {name:'nongeneric forwarding retains fully defaulted owned String origin',source:'type Text<T=String>=T;type Message=Text;fn main(){let value=Message::new();println!("{}",value.len());}',stdout:'0\n'},
+ {name:'all-default nominal alias retains actual registered constructor path',source:'#[derive(Copy,Clone)]enum State{Ready}type Value<T=State>=T;fn main(){let value=Value::Ready;println!("{}",match value{State::Ready=>7u8});}',stdout:'7\n'},
+ {name:'qualified nominal default spelling is not a parameter reference',source:'mod owners{#[derive(Copy,Clone)]pub enum T{One}pub type Identity<T=crate::owners::T>=T;}fn read(value:owners::Identity)->u8{7u8}fn main(){println!("{}",read(owners::T::One));}',stdout:'7\n'},
+ {name:'forward alias default retains actual definition binding',source:'type Identity<T=Later>=T;type Later=u8;fn main(){let value:Identity=7u8;println!("{}",value);}',stdout:'7\n'},
+];
+export const genericAliasDefaultRefusals=[
+ {name:'self parameter default is checked even when unused',source:'type Bad<T=T>=T;fn main(){}'},
+ {name:'later parameter default cannot be selected by spelling',source:'type Bad<T=U,U=u8>=(T,U);fn main(){}'},
+ {name:'required parameter cannot follow a default',source:'type Bad<T=u8,U>=(T,U);fn main(){}'},
+ {name:'overridden default still needs actual complete owner',source:'type Bad<T=Missing>=T;fn main(){let value:Bad<u8>=7u8;println!("{}",value);}'},
+ {name:'default alias dependency cycle is rejected',source:'type First<T=Second>=T;type Second<U=First>=U;fn main(){}'},
+ {name:'omission cannot invent an earlier required argument',source:'type Pair<T,U=T>=(T,U);fn main(){let value:Pair=(7u8,9u8);}'},
+ {name:'defaults do not discard excess arguments',source:'type Pair<T=u8,U=T>=(T,U);fn main(){let value:Pair<u8,u8,u8>=(7u8,9u8);}'},
+ {name:'defaults do not supply trait-bound interpretation',source:'type Bad<T:Copy=u8>=T;fn main(){}'},
+ {name:'default canonical sum admission still needs actual direct Copy argument',source:'type Maybe<T=String>=Option<T>;fn main(){let value:Maybe=None;}'},
+ {name:'const defaults require independent const parameter interpretation',source:'type Bad<const N:usize=2>=u8;fn main(){}'},
+ {name:'unused generic parameter remains invalid despite a default',source:'type Bad<T=u8>=i64;fn main(){}'},
+ {name:'bare alias constructor does not infer a missing required argument',source:'type Values<T>=Vec<T>;fn main(){let values=Values::new();println!("{}",values.len());}'},
+ {name:'bare defaulted sum cannot select a nonexistent variant',source:'type Maybe<T=u8>=Option<T>;fn main(){let value=Maybe::Err(7u8);}'},
+];
+export const genericAliasDefaultVersionRange='>=1.90.0 <1.100.0';
+export const defaultParameterDirectories=[
+ {kinds:['punct','identifier','punct','identifier','punct'],values:['<','T','=','u8','>='],raws:['<','T','=','u8','>='],position:0,expected:['parameters','4','=','1','T','3','4','0']},
+ {kinds:['punct','identifier','punct','identifier','punct','identifier','punct','identifier','punct','identifier','punct'],values:['<','T','=','u8',',','U','=','Option','<','T','>>='],raws:['<','T','=','u8',',','U','=','Option','<','T','>>='],position:0,expected:['parameters','10','=','2','T','3','4','0','U','7','10','1']},
+];

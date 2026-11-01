@@ -182,7 +182,7 @@ impl RustParser {
             for (token, type_token, origin, _) in mutable_params {
                 let resolved = self.resolve(std::slice::from_ref(&type_token.value), path);
                 let shadowed = type_token.kind != TokenKind::Identifier
-                    || self.origins.lookup(&resolved, path).is_some();
+                    || self.origins.lookup_type_owner(&resolved, path).is_some();
                 if !accept_rust_unwritten_scalar_parameter(
                     origin.ty.as_ref().map_or("", Type::kind),
                     (origin.direct_copy_value(), shadowed, closed, possible_write),
