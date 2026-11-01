@@ -200,6 +200,11 @@ pub(super) fn assert_source_machine_trace(program_wire:&serde_json::Value,trace:
                 used+=1.0;assert_eq!(before["$"],"machineAllocateObject");
                 native::resume_java_script_call_object_allocation(program.clone(),machine,native::ml::Big::parse(event["identity"].as_str().unwrap()))
             },
+            "objectPrimitivePrototype"=>{
+                used+=1.0;assert_eq!(before["$"],"machineNeedObjectPrototype");assert_eq!(before["input"],event["input"]);
+                let prototype=decode_java_script_semantic_value(&event["prototype"]);
+                native::resume_java_script_call_object_primitive_prototype(program.clone(),machine,prototype)
+            },
             "functionNameSymbolDescription"=>{
                 used+=1.0;assert_eq!(before["$"],"machineNeedFunctionNameSymbolDescription");assert_eq!(before["object"],event["object"]);assert_eq!(before["key"],event["key"]);assert_eq!(before["prefix"],event["prefix"]);
                 let description=decode_java_script_semantic_value(&event["description"]);

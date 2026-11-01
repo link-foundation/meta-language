@@ -1,16 +1,17 @@
 // Ordinary own-property observations and resumable integrity-level changes.
-import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,readJavaScriptOrdinaryOwnKeys,preventJavaScriptOrdinaryExtensions,defineJavaScriptOrdinaryProperty} from './javascript-ordinary-heap.js';
+import {readJavaScriptOrdinaryHeapError,readJavaScriptOrdinaryValueError,readJavaScriptOrdinaryKeyError,findJavaScriptOrdinaryObject,findJavaScriptOrdinaryProperty,readJavaScriptOrdinaryOwnKeys,preventJavaScriptOrdinaryExtensions,defineJavaScriptOrdinaryProperty,setJavaScriptOrdinaryPrototype} from './javascript-ordinary-heap.js';
 import {readJavaScriptArrayIndex,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {createJavaScriptPropertyDescriptor,readJavaScriptPropertyDescriptorKind} from './javascript-property-descriptors.js';
 /** @typedef {{$:'objectIntegrity',operation:string,input:JavaScriptSemanticValue,phase:string,keys:JavaScriptSemanticValue[],position:number}} JavaScriptObjectIntegrityState */
 /** @typedef {{$:'objectIntegrityContinue',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectIntegrityState} |
+ * {$:'objectPrototypeMetadata',heap:JavaScriptOrdinaryHeap,input:JavaScriptSemanticValue} |
  * {$:'objectIntegrityCompleted',heap:JavaScriptOrdinaryHeap,value:JavaScriptSemanticValue} |
  * {$:'objectIntegrityError',heap:JavaScriptOrdinaryHeap,errorClass:string,reason:string} |
  * {$:'objectIntegrityInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectIntegrityResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectIntegrityState,reason:string}} JavaScriptObjectIntegrityTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptObjectObservationOperation(operation){return ['Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze'].includes(operation);}
+export function testJavaScriptObjectObservationOperation(operation){return ['Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze','Object.getPrototypeOf','Object.setPrototypeOf'].includes(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptObjectObservationFunction(identity,realm,operation){
  if(!testJavaScriptObjectObservationOperation(operation))return undefined;
@@ -25,6 +26,14 @@ export function testJavaScriptOrdinaryIntegrityKind(kind){return ['ordinaryObjec
 export function beginJavaScriptObjectObservation(heap,operation,input,other){
  const error=readJavaScriptOrdinaryHeapError(heap)||readJavaScriptOrdinaryValueError(heap,input)||readJavaScriptOrdinaryValueError(heap,other);if(error!==''||!testJavaScriptObjectObservationOperation(operation))return {$:'objectIntegrityInvalid',heap,reason:error||'Object observations require their actual registered operation'};
  if(operation==='Object.is')return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:testJavaScriptSemanticSameValue(input,other)}};
+ if(operation==='Object.getPrototypeOf'||operation==='Object.setPrototypeOf'){
+  if(input.$==='null'||input.$==='undefined')return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'Cannot convert undefined or null to object'};
+  if(operation==='Object.setPrototypeOf'&&other.$!=='null'&&other.$!=='object')return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'Object prototype must be an Object or null'};
+  if(input.$!=='object')return operation==='Object.getPrototypeOf'?{$:'objectPrototypeMetadata',heap,input}:{$:'objectIntegrityCompleted',heap,value:input};
+  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)];if(object===undefined||!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque prototype operations require their actual internal protocol'};
+  if(operation==='Object.getPrototypeOf')return {$:'objectIntegrityCompleted',heap,value:object.prototype};
+  const changed=setJavaScriptOrdinaryPrototype(heap,input.identity,other);return changed.error!==''?{$:'objectIntegrityInvalid',heap:changed.heap,reason:changed.error}:changed.success?{$:'objectIntegrityCompleted',heap:changed.heap,value:input}:{$:'objectIntegrityError',heap:changed.heap,errorClass:'TypeError',reason:'Cannot set the selected Object prototype'};
+ }
  if(operation==='Object.hasOwn'){
   if(input.$==='null'||input.$==='undefined')return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'Cannot convert undefined or null to object'};
   const keyError=readJavaScriptOrdinaryKeyError(heap,other);if(keyError!=='')return {$:'objectIntegrityInvalid',heap,reason:keyError};let present=false;

@@ -13,7 +13,7 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallFunctionNameSymbolDescription} from './javascript-call-machine.js';
+import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
 const symbolDescriptionGetter=Reflect.getOwnPropertyDescriptor(Symbol.prototype,'description')?.get;
@@ -211,6 +211,14 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(heap!==request.machine.heap)throw new TypeError('primitive iterator metadata requires the adopted latest heap');
   const prototype={...root.prototype},transition=resumeJavaScriptCallPrimitiveIteratorPrototype(module.program,request.machine,prototype);return {resumed:true,prototype,transition};
  }
+ function resumeObjectPrimitivePrototype(request){
+  if(module===null||request?.$!=='machineNeedObjectPrototype'||!request.machine)throw new TypeError('primitive prototype metadata requires its actual published request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
+  if(actual.$!=='machineNeedObjectPrototype'||actual.realm!==request.realm||!testJavaScriptSemanticSameValue(actual.input,request.input))throw new TypeError('primitive prototype metadata cannot replace its actual input or source realm');
+  if(request.realm!==identity)return {resumed:false,transition:request};const root=primitiveIteratorPrototypes?.find(row=>row.kind===request.input.$);if(root===undefined)return {resumed:false,transition:request};
+  if(heap!==request.machine.heap)throw new TypeError('primitive prototype metadata requires the adopted latest heap');
+  const prototype={...root.prototype};return {resumed:true,prototype,transition:resumeJavaScriptCallObjectPrimitivePrototype(module.program,request.machine,prototype)};
+ }
  function resumeFunctionNameSymbolDescription(request){
   if(module===null||request?.$!=='machineNeedFunctionNameSymbolDescription'||!request.machine)throw new TypeError('Symbol name metadata requires its actual published suspended request');
   const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
@@ -293,7 +301,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeFunctionNameSymbolDescription,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   capabilityReference(source,value,{operation,owner}){const semantic=encode(value);if(semantic.$!=='object')throw new TypeError('a capability reference requires its actual native namespace or source callable identity');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:semantic.callable,executable:false};},

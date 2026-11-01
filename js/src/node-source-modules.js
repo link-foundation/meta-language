@@ -44,6 +44,8 @@ export function runJavaScriptSourceTransition(embedding,transition,{steps=65536}
    if(pending.$!=='machineAllocateObject'||!testJavaScriptSemanticSameValue(pending.prototype,current.prototype))throw new TypeError('source allocation must retain its actual pending prototype');
    current=resumeJavaScriptCallObjectAllocation(program,current.machine,embedding.allocateIdentity());
    if(current.$==='machineContinue')allocated+=1;
+  }else if(current.$==='machineNeedObjectPrototype'){
+   if(typeof embedding.resumeObjectPrimitivePrototype!=='function')break;const response=embedding.resumeObjectPrimitivePrototype(current);if(!response.resumed)break;current=response.transition;
   }else if(current.$==='machineNeedFunctionNameSymbolDescription'){
    if(typeof embedding.resumeFunctionNameSymbolDescription!=='function')break;const response=embedding.resumeFunctionNameSymbolDescription(current);if(!response.resumed)break;current=response.transition;
   }else if(current.$==='machineNeedPrimitiveIteratorGet'){

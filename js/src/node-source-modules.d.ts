@@ -17,6 +17,7 @@ export type JavaScriptSourceTransition =
  | {$:'machineAllocateObject';machine:unknown;prototype:JavaScriptSemanticValue}
  | {$:'machineNeedPrimitiveIteratorGet';machine:unknown;receiver:JavaScriptSemanticValue;key:JavaScriptSemanticValue}
  | {$:'machineNeedFunctionNameSymbolDescription';machine:unknown;object:JavaScriptSemanticValue;key:JavaScriptSemanticValue;prefix:string}
+ | {$:'machineNeedObjectPrototype';machine:unknown;input:JavaScriptSemanticValue;realm:bigint}
  | {$:'machineNeedArrayIteratorBoxing';machine:unknown;receiver:JavaScriptSemanticValue}
  | {$:'machineNeedConstructorAuthority';machine:unknown;constructor:JavaScriptSemanticValue}
  | {$:'machineConstructArraySpecies';machine:unknown;constructor:JavaScriptSemanticValue;arguments:JavaScriptSemanticValue[];fact:unknown}
@@ -30,6 +31,7 @@ export interface JavaScriptSourceEmbedding {
  allocateIdentity():bigint;
  resumePrimitiveIteratorGet?(request:JavaScriptSourceTransition):{resumed:boolean;prototype?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  resumeFunctionNameSymbolDescription?(request:JavaScriptSourceTransition):{resumed:boolean;description?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
+ resumeObjectPrimitivePrototype?(request:JavaScriptSourceTransition):{resumed:boolean;prototype?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  sourceConstructorFacts():readonly {identity:bigint;realm:bigint;constructable:boolean;intrinsicArray:boolean}[];
  resumeArrayConstructorAuthority?(request:JavaScriptSourceTransition):{updated:boolean;transition:JavaScriptSourceTransition};
  encode(value:unknown):JavaScriptSemanticValue;

@@ -1034,3 +1034,21 @@ Source review also corrected enumeration validation/control code to use the
 existing readJavaScriptArrayLength descriptor helper: Array length is an own
 descriptor, not a separate record field. All fixture inputs/expectations remain.
 No execution, compilation, generation or validation ran.
+
+### Object prototype operations and realm metadata draft
+
+The protected Object operation directory now includes getPrototypeOf and
+setPrototypeOf. Ordinary inputs use their actual heap prototype and the existing
+prototype mutation kernel. Cycles/nonextensibility reject; an unchanged prototype
+on a nonextensible Object succeeds. Primitive setPrototypeOf validates its
+prototype then returns the original primitive. Primitive getPrototypeOf suspends
+for actual realm-root metadata; the private Node response authenticates the
+request/latest heap and selects only roots registered for this embedding realm.
+Unknown realms remain explicit requests. Driver declarations, source trace and
+native replay orchestration call the same translated shared resumer.
+
+Eight originals cover identity/inheritance, null roots, cycle/nonextensibility,
+primitive realm roots and prototype validation, and bypassing own proto setters.
+Two deferred controls inspect ordinary transitions and source-bound VM metadata
+resumption. No execution/generation/compilation/validation occurred. Exact engine
+error wording and opaque/Proxy prototype protocols remain explicit extensions.

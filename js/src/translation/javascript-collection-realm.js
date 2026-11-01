@@ -6,7 +6,7 @@ import {compileJavaScriptCollectionCallDirectory} from './javascript-collection-
 const actualMap=Map,actualSet=Set,actualSymbol=Symbol;
 const actualString=String,startsWith=Reflect.getOwnPropertyDescriptor(String.prototype,'startsWith')?.value;
 const actualObject=Object,objectPrototype=Object.prototype;
-const objectObservationOwners=['hasOwn','is','isExtensible','isSealed','isFrozen','preventExtensions','seal','freeze'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value}));
+const objectObservationOwners=['hasOwn','is','isExtensible','isSealed','isFrozen','preventExtensions','seal','freeze','getPrototypeOf','setPrototypeOf'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value}));
 const objectEnumerationOwners=['keys','values','entries'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value}));
 const primitiveIteratorRoots=[{kind:'text',value:actualString.prototype},{kind:'sourceText',value:actualString.prototype},{kind:'number',value:Number.prototype},{kind:'boolean',value:Boolean.prototype},{kind:'integer',value:BigInt.prototype},{kind:'symbol',value:actualSymbol.prototype}];
 const stringIteratorMethod=Reflect.getOwnPropertyDescriptor(actualString.prototype,actualSymbol.iterator)?.value;

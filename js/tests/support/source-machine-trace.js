@@ -36,6 +36,9 @@ export function readSourceMachineTrace(embedding,initial,{steps=65536}={}){
    if(actual.$!=='machineAllocateObject'||!testJavaScriptSemanticSameValue(actual.prototype,current.prototype))throw new TypeError('source replay allocation must retain its actual pending prototype');
    const identity=embedding.allocateIdentity();current=resumeJavaScriptCallObjectAllocation(program,current.machine,identity);
    append({operation:'allocateObject',identity:String(identity),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
+  }else if(current.$==='machineNeedObjectPrototype'){
+   if(typeof embedding.resumeObjectPrimitivePrototype!=='function')break;const request=current,response=embedding.resumeObjectPrimitivePrototype(request);if(!response.resumed)break;current=response.transition;
+   append({operation:'objectPrimitivePrototype',input:codecs.encodeJavaScriptSemanticValue(request.input),prototype:codecs.encodeJavaScriptSemanticValue(response.prototype),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
   }else if(current.$==='machineNeedFunctionNameSymbolDescription'){
    if(typeof embedding.resumeFunctionNameSymbolDescription!=='function')break;const request=current,response=embedding.resumeFunctionNameSymbolDescription(request);if(!response.resumed)break;current=response.transition;
    append({operation:'functionNameSymbolDescription',object:codecs.encodeJavaScriptSemanticValue(request.object),key:codecs.encodeJavaScriptSemanticValue(request.key),prefix:request.prefix,description:codecs.encodeJavaScriptSemanticValue(response.description),expected:codecs.encodeJavaScriptCallMachineTransition(current)});

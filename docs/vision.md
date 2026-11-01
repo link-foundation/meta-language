@@ -67,6 +67,14 @@ descriptor per resumable step. Seal clears configurability; freeze also clears
 data writability while retaining accessor functions and internal collection
 slots. Tests of integrity inspect descriptors without invoking getters. Opaque/
 Proxy extensibility and descriptor traps need explicit protocol extensions.
+Prototype operations retain actual heap prototype identities and use the shared
+ordinary mutation kernel, preserving cycle/nonextensibility errors and same-
+prototype success. Primitive getPrototypeOf requests the selected method realm's
+actual intrinsic prototype; the private Node boundary supplies registered roots
+without executing a represented Object method. Unknown realms remain suspended.
+Replay carries prototype metadata explicitly into the translated shared resumer.
+Primitive setPrototypeOf validates the prototype before returning the original
+non-nullish primitive unchanged.
 
 Object keys/values/entries snapshot actual own-key order, exclude Symbols and
 check each current own descriptor's enumerability. Keys never Get a selected
