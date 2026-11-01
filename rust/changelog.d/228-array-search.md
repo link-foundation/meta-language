@@ -42,3 +42,6 @@ including nested defaults, per-level rest exclusions and explicit nesting bounds
 
 Draft shared synchronous iterator acquisition, advancement and closing protocols
 with cached methods, original receivers and exact cleanup completion precedence.
+
+Draft genuine live Array iterator slots, reentry protection and getter/conversion
+continuations, reusing shared entry/result allocation and native generation inputs.

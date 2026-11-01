@@ -22,7 +22,7 @@ export function readJavaScriptCollectionIteratorResultPrototypesError(heap,array
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptCollectionIteratorResultState} state @returns {string} */
 export function readJavaScriptCollectionIteratorResultStateError(heap,state){
  const error=readJavaScriptCollectionIteratorResultPrototypesError(heap,state.arrayPrototype,state.objectPrototype);if(error!=='')return error;
- if(state.$!=='collectionIteratorResultState'||!['entry','result'].includes(state.phase)||typeof state.done!=='boolean'||state.phase==='entry'&&state.done||!['Map','Set'].includes(state.collectionKind))return 'iterator result allocation requires its actual pending phase, operation brand and completion';
+ if(state.$!=='collectionIteratorResultState'||!['entry','result'].includes(state.phase)||typeof state.done!=='boolean'||state.phase==='entry'&&state.done||!['Map','Set','Array'].includes(state.collectionKind))return 'iterator result allocation requires its actual pending phase, operation brand and completion';
  for(const value of [state.receiver,state.key,state.value]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  const iterator=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
  if(iterator===undefined||iterator.$!=='collectionIteratorObject'||iterator.collectionKind!==state.collectionKind)return 'an iterator result retains its actual original receiver and operation brand';
@@ -40,6 +40,16 @@ export function beginJavaScriptCollectionIteratorResult(heap,receiver,collection
  if(next.$!=='collectionIteration')return {$:'iteratorResultInvalid',heap,reason:'iterator result creation needs its actual completed cursor transition'};
  const state={...pending,phase:next.entry?'entry':'result',key:next.key,value:next.value,done:next.done};
  return {$:'iteratorResultContinue',heap:next.heap,state};
+}
+/** Reuse the actual result/entry allocator after the Array iterator's
+ * getter/conversion continuation has completed and advanced its cursor once.
+ * @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSemanticValue} receiver
+ * @param {boolean} done @param {JavaScriptSemanticValue} key @param {JavaScriptSemanticValue} value
+ * @param {boolean} entry @param {JavaScriptSemanticValue} arrayPrototype
+ * @param {JavaScriptSemanticValue} objectPrototype @returns {JavaScriptCollectionIteratorResultCompletion} */
+export function beginJavaScriptArrayIteratorResult(heap,receiver,done,key,value,entry,arrayPrototype,objectPrototype){
+ const state={$:'collectionIteratorResultState',phase:entry?'entry':'result',receiver,collectionKind:'Array',arrayPrototype,objectPrototype,key,value,done},error=readJavaScriptCollectionIteratorResultStateError(heap,state);
+ return error===''?{$:'iteratorResultContinue',heap,state}:{$:'iteratorResultInvalid',heap,reason:error};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptCollectionIteratorResultState} state @returns {JavaScriptCollectionIteratorResultCompletion} */
 export function stepJavaScriptCollectionIteratorResult(heap,state){

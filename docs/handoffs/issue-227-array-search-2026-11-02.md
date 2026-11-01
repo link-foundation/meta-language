@@ -351,3 +351,25 @@ builtin adapters, source/VM iterator regions and abrupt-unwinding consumers for
 for-of, spread and array patterns remain the next required connections. Older
 engine done-slot behavior needs explicit version-qualified controls rather than
 an unqualified assertion. These are draft semantics, not recorded observations.
+
+
+### Live Array iterator slot and next draft
+
+`javascript-array-iteration.js` drafts genuine common-heap Array iterator
+allocation and next continuations. The shared iterator Object gains a distinct
+Array family and executing slot; Map/Set keep their existing 65,536 insertion
+bound and reject Array receivers. Array cursors use full safe ToLength indices.
+Live length Get/ToNumber precedes each index; holes yield undefined; keys omit
+element Get. Suspended getter/conversion work rejects reentry. Abrupt completion
+and normal exhaustion permanently release the source. Scalar resource refusal
+retains its completed primitive without rereading length/getter effects.
+
+A shared result-allocation entry point consumes completed Array components,
+reusing the existing entry Array and iterator-result Object allocator. Six
+deferred controls cover holes/live growth/permanent exhaustion, keys and family
+brand, reentry/throw closure, real pair/result allocations, primitive boxing
+boundaries and length conversion effects. Automatic native source/control inputs
+are registered. Nothing executed or compiled; generated products remain stale
+until the later regeneration phase. Actual Array builtin owner registration and
+VM next continuations, String iteration, for-of/array-spread/pattern consumer
+unwinding and version-qualified diagnostic controls still need drafting.

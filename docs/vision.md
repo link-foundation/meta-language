@@ -12261,3 +12261,15 @@ Consumers decide when closing is required; the close operation does not silently
 skip return merely because a caller supplied a done record. Every getter/call
 retains the latest heap and exact selected operands across suspension. This
 protocol follows [ECMAScript 2026 iteration operations](https://tc39.es/ecma262/2026/multipage/abstract-operations.html#sec-iteration).
+
+Array iterator Objects use the common heap's iterator slot representation with
+a distinct Array family brand, live source identity, next index and executing
+flag. Map/Set retain their insertion-history cursor bounds and brands; Array
+indices retain the full safe ToLength coordinate range. Each next invocation
+reads live length with actual ToNumber callbacks, then reads the selected index
+without skipping holes. Keys iteration omits element Get. Exhaustion or a thrown
+getter/conversion releases the source permanently; reentrant next during a
+suspended getter/conversion throws. Entries and value/done results reuse the
+shared genuine Array/Object result allocator, preserving held components across
+identity suspension. Primitive Array-method receivers require actual boxing
+authority. Builtin owner linkage and VM composition must use these continuations.

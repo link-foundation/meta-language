@@ -10,7 +10,7 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  * remain in the separate program template directory; captures are real values.
  * @typedef {{$:'closureObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[],owner:bigint,ordinal:number,captures:JavaScriptSemanticValue[],lexicalReceiver:JavaScriptSemanticValue}} JavaScriptClosureObject */
 /** @typedef {JavaScriptClosureObject | JavaScriptArrayObject | {$:'collectionIteratorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
- * callable:boolean,properties:JavaScriptOrdinaryProperty[],collection:bigint,cursor:number,kind:string,collectionKind:string} |
+ * callable:boolean,properties:JavaScriptOrdinaryProperty[],collection:bigint,cursor:number,kind:string,collectionKind:string,executing?:boolean} |
  * {$:'mapObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
  * {$:'setObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
@@ -130,11 +130,11 @@ export function readJavaScriptOrdinaryHeapError(heap) {
       for(const value of [object.lexicalReceiver,...object.captures]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
     }
     if(object.$==='collectionIteratorObject'){
-      if(!['Map','Set'].includes(object.collectionKind)||object.callable||!Number.isSafeInteger(object.cursor)||object.cursor<0||Object.is(object.cursor,-0)||object.cursor>65536||!['keys','values','entries'].includes(object.kind))return 'collection iterators require their exact bounded cursor and iteration kind';
+      if(!['Map','Set','Array'].includes(object.collectionKind)||object.callable||!Number.isSafeInteger(object.cursor)||object.cursor<0||Object.is(object.cursor,-0)||object.cursor>(object.collectionKind==='Array'?9007199254740991:65536)||!['keys','values','entries'].includes(object.kind)||object.collectionKind==='Array'&&typeof object.executing!=='boolean'||object.collectionKind!=='Array'&&object.executing!==undefined)return 'collection iterators require their exact bounded cursor and iteration kind';
       if(object.collection!==0n){
         const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,object.collection)];
-        if(collection===undefined||!(object.collectionKind==='Map'&&collection.$==='mapObject'||object.collectionKind==='Set'&&collection.$==='setObject')||object.cursor>collection.entries.length)return 'a live collection iterator retains its actual collection identity and insertion position';
-      }else if(object.cursor!==0)return 'an exhausted collection iterator releases its collection and cursor';
+        if(collection===undefined||object.collectionKind!=='Array'&&(!(object.collectionKind==='Map'&&collection.$==='mapObject'||object.collectionKind==='Set'&&collection.$==='setObject')||object.cursor>collection.entries.length))return 'a live collection iterator retains its actual collection identity and insertion position';
+      }else if(object.cursor!==0||object.executing===true)return 'an exhausted collection iterator releases its collection, cursor and executing state';
     }
     if(object.$==='mapObject'||object.$==='setObject'){
       if(object.callable||object.entries.length>65536)return 'collection objects require noncallable inspectable bounded internal slots';
