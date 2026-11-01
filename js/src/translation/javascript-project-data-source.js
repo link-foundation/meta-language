@@ -269,6 +269,13 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     try{body=one();}finally{controlTargets.pop();}return {$:'sourceControlBlockStatement',target,body};
    }
    const word=values[at++];if(word==='if'){const open=at,close=findJavaScriptClassGroupEnd(values,open);if(values[open]!=='('||close<0)fail('source if requires its complete condition');const condition=expression(tokens.slice(open+1,close));at=close+1;const yes=one(),no=values[at]==='else'?(at++,one()):[];return {$:'sourceIfStatement',condition,yes,no};}
+   if(word==='try'&&classProfile){
+    const bodyOpen=at,bodyClose=findJavaScriptClassGroupEnd(values,bodyOpen);if(values[bodyOpen]!=='{'||bodyClose<0||bodyClose>=last)fail('source try retains its actual complete protected block');const body=statements(bodyOpen+1,bodyClose);at=bodyClose+1;
+    if(values[at]!=='catch')fail('try/finally requires its actual completion and unwinding protocol');const catchStart=tokens[at].start;at++;let identity=nextBinding++;
+    if(values[at]==='('){const open=at,close=findJavaScriptClassGroupEnd(values,open),token=tokens[open+1],owner=declared(token);if(close!==open+2||token?.kind!=='identifier'||!owner||owner.kind!=='parameter')fail('catch binding patterns require their actual initialization protocol');identity=owner.identity;at=close+1;}
+    const handlerOpen=at,handlerClose=findJavaScriptClassGroupEnd(values,handlerOpen),clause=program.sourceMappings.find(row=>row.term==='catch_clause'&&row.start===catchStart&&row.end===tokens[handlerClose]?.end);
+    if(values[handlerOpen]!=='{'||handlerClose<0||handlerClose>=last||!clause)fail('source catch retains its actual complete lexical clause');const handler=statements(handlerOpen+1,handlerClose);at=handlerClose+1;if(values[at]==='finally')fail('try/finally requires its actual completion and unwinding protocol');return {$:'sourceTryStatement',identity,body,handler};
+   }
    if((word==='return'||word==='throw')&&tokens[at]&&/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start))){if(word==='throw')fail('throw requires its actual same-line source operand');return {$:'sourceReturnStatement',value:absent()};}
    if((word==='break'||word==='continue')&&classProfile){
     const continuing=word==='continue',sameLine=tokens[at]&&!/[\r\n\u2028\u2029]/u.test(source.slice(tokens[at-1].end,tokens[at].start)),label=sameLine&&tokens[at]?.kind==='identifier'?tokens[at++].value:null;

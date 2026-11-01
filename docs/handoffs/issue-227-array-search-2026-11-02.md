@@ -486,3 +486,17 @@ CI feedback review remain deferred. Exact nullish/String-method diagnostic text,
 Array method primitive boxing, iterable call-argument spread and array-pattern/
 for-of unwinding still require their further source work; no passing observation
 or completion percentage is claimed.
+
+
+### Actual source try/catch composition draft
+
+The CST source reader now captures complete try/catch blocks, identifier catch
+bindings with actual lexical identities and omitted binding clauses. Lowering
+reuses common sourceTry/VM handlers. Protected body and handler are lowered
+separately from the following statement continuation, preserving catch scope and
+mutable catch values. Existing loop/control handler-depth unwinding applies.
+Seven originals cover thrown identity/rethrow, optional and mutable catch
+bindings, later statements outside protection, handler failure to the outer
+catch, loop break unwinding and a real intrinsic TypeError name. No original or
+portable body executed. Catch binding patterns and finally completion semantics
+remain required further source connections; generated products were untouched.

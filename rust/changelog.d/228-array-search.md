@@ -60,3 +60,6 @@ result allocation, preserving surrogate pairs and unpaired code units.
 
 Draft String iterator builtin/VM composition and authenticated primitive
 prototype lookup, preserving original receivers in source/native replay.
+
+Draft complete source try/catch composition through shared handlers, retaining
+catch identities, mutable values and the boundary before following statements.

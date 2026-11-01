@@ -12327,3 +12327,12 @@ VM before requesting identity, and String next reuses result allocation.
 Protected String iterator/next owners and shared iterator identities complete
 source text spread composition. Exact engine diagnostic strings remain subject
 to their explicit version-qualified compatibility obligations.
+
+Source try/catch statements use the existing common exception lowerer and actual
+lexical catch binding identities, including omitted catch bindings. Protected
+body and handler complete before the following statement continuation, so later
+throws cannot re-enter a finished catch. The handler is removed before entering
+catch; rethrows and handler failures reach their enclosing handlers. Catch
+bindings retain mutable lexical value semantics. Source loop/control exits
+unwind protected handlers using their existing explicit scope depths. Finally
+requires the separate full completion/unwinding protocol.
