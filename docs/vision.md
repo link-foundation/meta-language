@@ -136,6 +136,10 @@ actual thrown value. Simple catches install a holder in their handler register;
 recursive catch patterns initialize shared leaves through the common pattern
 initializer. Each handler activation allocates fresh storage, so retained
 closures from repeated catches share no accidental mutable binding.
+For-of captured mutable heads allocate cells inside each actual body entry,
+after the iterator value is received and before body statements execute.
+Recursive heads use the shared pattern initializer. Continue retains the current
+captured holder while the next step initializes a distinct holder.
 Nested code and static code share explicit instruction and capture budgets.
 Parameter initialization uses one shared lowerer for functions, methods and
 arrows. Fixed object-field aliases retain actual binding identities; defaults

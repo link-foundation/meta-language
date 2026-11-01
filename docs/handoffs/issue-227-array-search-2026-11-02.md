@@ -849,3 +849,19 @@ closures, nested destructured catches and independent loop catch activations.
 One additional deferred control checks handler-register cell initialization.
 Nothing executed. Runtime TDZ, initialization-time recursive captures and
 for-head environment cloning remain further source work.
+
+### Captured mutable for-of heads draft
+
+For-of simple and recursive mutable heads now participate in shared binding
+discovery. The simple-head body installs a fresh holder after each received
+iterator value; pattern heads use the shared leaf initializer. Captured closures
+therefore observe writes during their own iteration without sharing a later
+iteration's binding. Continue preserves its current holder through existing
+iterator-region control flow. Capture initialization proof now checks that the
+actual binding lies in a variable declarator's name field; an unrelated outer
+Arrow initializer cannot misclassify an inner loop binding's initialization.
+
+Three originals cover simple/pattern heads and continue. One authored lowering
+control checks per-body wrapping of the actual loop register. No execution or
+generation occurred. Normal for-head environment cloning, runtime TDZ and
+initialization-time recursive captures remain further drafting work.

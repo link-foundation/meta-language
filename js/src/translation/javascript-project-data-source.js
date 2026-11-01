@@ -78,8 +78,9 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  if(classProfile)for(const binding of bindings){
   if(!['let','parameter'].includes(binding.kind)||binding.scope==='scope:0')continue;
   if(binding.kind==='let'){
-   const declaration=containing(binding,['variable_declarator']);if(!declaration)continue;
-   const loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);if(loop){const body=sourceField(loop,'body');if(!body||binding.declaration.start<body.start)continue;}
+   const declaration=containing(binding,['variable_declarator']),loop=containing(binding,['for_statement','for_in_statement','for_of_statement']);
+   if(loop){const body=sourceField(loop,'body');if(!body)continue;if(binding.declaration.start<body.start&&loop.term==='for_statement')continue;}
+   if(!declaration&&(!loop||loop.term==='for_statement'))continue;
   }else{
    const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>'),clause=containing(binding,['catch_clause']),caught=clause?sourceField(clause,'parameter'):null,inCatch=caught&&binding.declaration.start>=caught.start&&binding.declaration.end<=caught.end;
    if(position<0||!singleArrow&&!formal&&!inCatch)continue;
@@ -110,7 +111,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  }
  function readonlyCapture(binding,node){
   if(!['parameter','const','let'].includes(binding.kind)||binding.declaration.end>node.start)fail('arrow capture requires its actual already initialized lexical source binding; later bindings need shared cells');
-  const declaration=binding.kind==='parameter'?null:containing(binding,['variable_declarator']);if(declaration&&declaration.end>node.start)fail('capturing a binding during its initializer requires its shared lexical cell');
+  const declaration=binding.kind==='parameter'?null:containing(binding,['variable_declarator']),name=declaration?sourceField(declaration,'name'):null;
+  if(declaration&&name&&binding.declaration.start>=name.start&&binding.declaration.end<=name.end&&declaration.end>node.start)fail('capturing a binding during its initializer requires its shared lexical cell');
   if(sharedBindingCells.has(binding.identity))return;
   const writes=capturedBindingWrites();for(const occurrence of binding.references)if(writes.has(occurrence.start+':'+occurrence.end)||writeRanges.some(([start,end])=>{if(++writeComparisonWork>1000000)fail('capture write ranges exceed their bounded comparison work');return occurrence.start>=start&&occurrence.end<=end;}))fail('mutable captured bindings require their actual shared lexical cells');
  }

@@ -235,7 +235,12 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
  if(statement.$==='sourceReturnStatement'||statement.$==='sourceThrowStatement'){const value=lowerJavaScriptErrorExpression(statement.value,context,depth+1);return {...value,source:{$:statement.$==='sourceThrowStatement'?'sourceThrow':'sourceReturn',value:value.source}};}
  const rest=lowerJavaScriptSourceStatements(statements,first+1,context,continuation,depth+1);
  if(statement.$==='sourceForOfStatement'){
-  const input=lowerJavaScriptErrorExpression(statement.input,rest.context,depth+1),key=lowerJavaScriptErrorExpression(statement.iteratorKey,input.context,depth+1),body=lowerJavaScriptSourceStatements(statement.body,0,key.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1),initialized=statement.pattern===undefined?body:lowerJavaScriptSourceBindingPattern(statement.pattern,body.context,body.source,statement.mutable),identity=initialized.context.next,next={...initialized.context,next:identity+1};
+  const input=lowerJavaScriptErrorExpression(statement.input,rest.context,depth+1),key=lowerJavaScriptErrorExpression(statement.iteratorKey,input.context,depth+1),body=lowerJavaScriptSourceStatements(statement.body,0,key.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);let initialized=statement.pattern===undefined?body:lowerJavaScriptSourceBindingPattern(statement.pattern,body.context,body.source,statement.mutable);
+  if(statement.pattern===undefined&&(body.context.sharedBindings??[]).includes(statement.binding)){
+   const temporary=initialized.context.next,next={...initialized.context,next:temporary+1},cell={$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:next.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value:{$:'sourceBinding',identity:statement.binding}}]};
+   initialized={$:'errorSourceExpression',context:next,source:constructJavaScriptErrorLocalBinding(next,temporary,{$:'sourceAssignBinding',identity:statement.binding,value:cell},initialized.source,false)};
+  }
+  const identity=initialized.context.next,next={...initialized.context,next:identity+1};
   return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,identity,{$:'sourceForOf',slot:statement.target,target:statement.target,binding:statement.binding,mutable:statement.mutable,input:input.source,iteratorKey:key.source,body:initialized.source,realm:next.realm.realm},rest.source,false),context:next};
  }
  if(statement.$==='sourceFinallyStatement'){
