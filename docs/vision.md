@@ -12190,3 +12190,17 @@ through exact predecessor receipts; optional ownership is separate from Boolean
 neutral defaults. Source generation runs schema publication, classifier
 regeneration and source libraries in separate processes so cached predecessors
 cannot select a successor interpretation. All remain unexecuted source drafts.
+
+Source species construction executes actual checked base class or ordinary
+function bodies in the common call machine. Construct acquires the actual
+constructor prototype once, uses the actual constructor realm Object prototype
+when the acquired value is primitive, and requests a fresh global identity.
+The body receives that receiver and the requested length. Object returns replace
+the receiver; primitive returns retain it. Constructor effects and throws retain
+the latest shared heap, including receiver prototype mutation. Prototype getter
+completion survives missing realm authority without repeating Get. Intrinsic
+Array construction uses the shared Array allocation protocol. Unsupported
+constructor kinds require their explicit specialization, never host body replay.
+Constructor authority additions preserve every established realm root as well as
+constructor classification. Source Symbol namespace access names the actual
+well-known species key without implying general Symbol allocation support.

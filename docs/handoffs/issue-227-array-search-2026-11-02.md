@@ -216,3 +216,29 @@ established classification refuses with the original program retained.
 This is the explicit core response API. Node automatic response handling, trace
 transport of program/authority updates and generic portable Construct execution
 remain further drafting work. No tests or generation ran.
+
+
+### Actual source species constructor bridge drafted
+
+The earlier custom Construct boundary now enters the common machine for actual
+checked strict ordinary functions and base classes. The new
+`javascript-species-construction.js` retains prototype Get/getter completion,
+constructor realm fallback, external identity allocation, actual body invocation
+and Object-versus-primitive return selection. Intrinsic Array construction uses
+the shared Array allocator. Missing realm roots suspend after the completed Get;
+authority extension preserves all previous roots. Receiver prototype mutation
+during a constructor remains legal. Nested pending validation binds the exact
+selected constructor, allocated receiver and length, while initial class entry
+keeps its actual receiver proof. External construction completion cannot replace
+a supported live source body.
+
+Five original-source fixtures cover custom map/filter class results, the initial
+length argument, ordinary function primitive returns, replacement Object returns
+and primitive prototype fallback. Five kernel controls cover allocation/body
+operands, Object/abrupt results, realm fallback, getter non-repetition and receiver
+prototype mutation. Symbol namespace linkage supplies actual Symbol.species.
+These controls are authored only; nothing executed. Automatic metadata response
+in the Node driver, authenticated update publication and transport remain next.
+Derived constructors, bound/Proxy protocols and standard collection/Error
+constructor specializations remain explicit requests. Generated Rust/Links and
+codec artifacts remain deferred with every test and compilation.

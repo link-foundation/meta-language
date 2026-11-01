@@ -6,7 +6,8 @@ import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 /** Facts come from the actual protected builtin/source declaration registry.
  * Their validation establishes shape/context, not an execution certificate.
  * @typedef {{$:'arrayConstructorFact',identity:bigint,constructable:boolean,realm:bigint,intrinsicArray:boolean}} JavaScriptArrayConstructorFact */
-/** @typedef {{$:'arraySpeciesDirectory',realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,constructors:JavaScriptArrayConstructorFact[]}} JavaScriptArraySpeciesDirectory */
+/** @typedef {{$:'constructorRealm',realm:bigint,objectPrototype:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,arrayConstructor:JavaScriptSemanticValue}} JavaScriptConstructorRealm */
+/** @typedef {{$:'arraySpeciesDirectory',realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,constructors:JavaScriptArrayConstructorFact[],constructorRealms?:JavaScriptConstructorRealm[]}} JavaScriptArraySpeciesDirectory */
 /** @typedef {{$:'arraySpeciesSelectedCall',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} JavaScriptArraySpeciesCall */
 /** @typedef {{$:'arraySpeciesState',original:JavaScriptSemanticValue,length:number,realm:bigint,arrayConstructor:JavaScriptSemanticValue,arrayPrototype:JavaScriptSemanticValue,speciesKey:JavaScriptSemanticValue,candidate:JavaScriptSemanticValue,phase:string,call?:JavaScriptArraySpeciesCall}} JavaScriptArraySpeciesState */
 /** @typedef {{$:'arrayConstructorNotConstructable'} | {$:'arrayConstructorKnown',fact:JavaScriptArrayConstructorFact} | {$:'arrayConstructorUnknown'}} JavaScriptArrayConstructorClassification */
@@ -31,6 +32,13 @@ export function readJavaScriptArraySpeciesDirectoryError(heap,directory){
   const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,fact.identity)];if(object===undefined||!object.callable||object.$==='closureObject'&&fact.constructable)return 'constructor facts cannot invent callable identities or constructable arrow closures';
  }
  const intrinsicRealms=directory.constructors.filter(fact=>fact.intrinsicArray).map(fact=>fact.realm).toSorted((a,b)=>a<b?-1:a>b?1:0);for(let at=1;at<intrinsicRealms.length;at++)if(intrinsicRealms[at]===intrinsicRealms[at-1])return 'a realm has one actual intrinsic Array constructor identity';
+ let previousRealm=0n;for(const root of directory.constructorRealms??[]){
+  if(typeof root.realm!=='bigint'||root.realm<=previousRealm||root.realm>18446744073709551615n)return 'constructor realm roots retain ordered unique unsigned64 identities';previousRealm=root.realm;
+  for(const value of [root.objectPrototype,root.arrayPrototype,root.arrayConstructor])if(readJavaScriptOrdinaryValueError(heap,value)!=='')return 'constructor realm roots belong to the actual shared heap';
+  if(root.objectPrototype.$!=='object'||root.arrayPrototype.$!=='object'||root.arrayConstructor.$!=='object'||!root.arrayConstructor.callable)return 'constructor realm roots retain actual prototype and Array constructor Objects';
+  const fact=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,root.arrayConstructor.identity)];if(fact===undefined||fact.realm!==root.realm||!fact.intrinsicArray||!fact.constructable)return 'constructor realm Array roots retain their actual intrinsic owner fact';
+  if(root.realm===directory.realm&&(!testJavaScriptSemanticSameValue(root.arrayConstructor,directory.arrayConstructor)||!testJavaScriptSemanticSameValue(root.arrayPrototype,directory.arrayPrototype)))return 'current constructor realm roots agree with the actual species roots';
+ }
  const root=directory.constructors[findJavaScriptArrayConstructorFact(directory.constructors,directory.arrayConstructor.identity)];
  return root===undefined||!root.constructable||!root.intrinsicArray||root.realm!==directory.realm?'species authority retains its actual current-realm intrinsic Array constructor fact':'';
 }

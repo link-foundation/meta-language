@@ -20,3 +20,7 @@ Draft shared map/filter traversal and default species Array allocation, preservi
 holes, callback effects, compact filter outputs and held results across resource
 limits. Custom construction and missing authority remain explicit VM requests;
 portable constructor execution and generated parity remain separate work.
+
+Draft actual source species Construct through the shared call stack, including
+prototype getter continuations, realm fallback, receiver allocation and constructor
+return selection. Preserve current effects without replaying original host bodies.

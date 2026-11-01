@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-species-construction.js',moduleName:'javascript_species_construction',model:'Actual source species constructor prototype receiver and body continuations 1',programAsset:'javascript-species-construction-program'},
  {sourcePath:'js/src/translation/javascript-array-transform.js',moduleName:'javascript_array_transform',model:'Actual Array map filter species and callback continuations 1',programAsset:'javascript-array-transform-program'},
  {sourcePath:'js/src/translation/javascript-array-species.js',moduleName:'javascript_array_species',model:'Actual Array species constructor selection and authority continuations 1',programAsset:'javascript-array-species-program'},
  {sourcePath:'js/src/translation/javascript-array-index-rules.js',moduleName:'javascript_array_index_rules',model:'Actual Array length and relative search index rules 1',programAsset:'javascript-array-index-rules-program'},
@@ -158,6 +159,7 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/tests/translation-javascript-species-construction.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

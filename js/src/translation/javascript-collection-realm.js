@@ -38,6 +38,7 @@ export function linkJavaScriptCollectionRealm(embedding,requirements,{realmIdent
   for(const requirement of requirements.filter(row=>(row.kind==='construct'||row.kind==='global')&&row.name===owner.kind))references.push(embedding.capabilityReference(requirement.source,owner.constructor,{operation:'actual standard '+owner.kind+' constructor',owner:'actual Node collection intrinsics 1'}));
  }
  const arrayRequirements=requirements.filter(row=>row.kind==='global'&&row.name==='Array');
+ for(const requirement of requirements.filter(row=>row.kind==='global'&&row.name==='Symbol'))references.push(embedding.capabilityReference(requirement.source,actualSymbol,{operation:'actual standard Symbol namespace',owner:'actual Node Symbol intrinsics 1'}));
  if(globalThis.Object!==actualObject||actualObject.prototype!==objectPrototype)throw new TypeError('iterator results require their actual protected Object prototype');
  if(globalThis.Array!==actualArray||actualArray.prototype!==arrayPrototype||typeof isArray!=='function'||Reflect.getOwnPropertyDescriptor(actualArray,'isArray')?.value!==isArray)throw new TypeError('Array operations require their actual protected realm constructor, prototype and isArray owner');
  for(const requirement of arrayRequirements)references.push(embedding.capabilityReference(requirement.source,actualArray,{operation:'actual standard Array namespace',owner:'actual Node Array intrinsics 1'}));
@@ -69,5 +70,5 @@ function captureJavaScriptArraySpeciesDirectory(embedding,realmIdentity,standard
   const currentArray=embedding.encode(actualArray);add({$:'arrayConstructorFact',identity:currentArray.identity,realm:realmIdentity,constructable:true,intrinsicArray:true});
   for(const fact of standardConstructorFacts)add({...fact});
   for(const fact of embedding.sourceConstructorFacts())add(fact);
-  const species={$:'arraySpeciesDirectory',realm:realmIdentity,arrayConstructor:currentArray,arrayPrototype:embedding.encode(arrayPrototype),speciesKey:embedding.encode(actualSymbol.species),constructors:[...facts.values()].toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},error=readJavaScriptArraySpeciesDirectoryError(embedding.heap(),species);if(error)throw new TypeError(error);return species;
+  const species={$:'arraySpeciesDirectory',realm:realmIdentity,arrayConstructor:currentArray,arrayPrototype:embedding.encode(arrayPrototype),speciesKey:embedding.encode(actualSymbol.species),constructorRealms:[{$:'constructorRealm',realm:realmIdentity,objectPrototype:embedding.encode(objectPrototype),arrayPrototype:embedding.encode(arrayPrototype),arrayConstructor:currentArray}],constructors:[...facts.values()].toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)},error=readJavaScriptArraySpeciesDirectoryError(embedding.heap(),species);if(error)throw new TypeError(error);return species;
 }
