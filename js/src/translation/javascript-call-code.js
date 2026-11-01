@@ -13,7 +13,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'constructCollection',destination:number,callee:number,arguments:number[]} |
  * {$:'collectionAllocate',destination:number,prototype:number,kind:string} |
  * {$:'collectionIteratorAllocate',destination:number,prototype:number,kind:string,iterationKind:string,input?:number} |
- * {$:'iteratorProtocol',destination:number,done:number,input:number,iteratorKey:number,slot:number,operation:string,realm:bigint} |
+ * {$:'iteratorProtocol',destination:number,done:number,input:number,iteratorKey:number,slot:number,operation:string,realm:bigint,readValue?:boolean} |
  * {$:'collectionIteratorResult',destination:number,kind:string,arrayPrototype:number,objectPrototype:number} |
  * {$:'collectionOperation',destination:number,operation:string} |
  * {$:'primitiveMethod',destination:number,operation:string} |

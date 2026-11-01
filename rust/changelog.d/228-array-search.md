@@ -75,3 +75,6 @@ operand/key snapshots before callbacks.
 
 Draft complete source for-of composition through actual per-frame iterator
 regions, shared callbacks and finalizer-based closing with throw precedence.
+
+Draft recursive Array binding patterns across parameters, declarations, catch
+and for-of, with elisions, defaults, cached iterator rest and closing before body.

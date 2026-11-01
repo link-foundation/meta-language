@@ -605,3 +605,43 @@ No source program, original oracle, test, validation, generation or compilation
 executed. Array binding heads/parameters, iterable call-argument spread, full
 shared lexical environments, version-qualified diagnostics and the remaining
 recorded language/library surfaces still require further source drafts.
+
+
+### Recursive Array binding source/VM draft
+
+Array patterns now use actual iterator regions across parameter/default, lexical
+const/let, catch and for-of heads. Identifier and recursively mixed Object/Array
+targets retain actual binding identities, undefined-only defaults and named
+arrow defaults. Whole-parameter Array defaults participate in Function length.
+Elisions retain a checked step choice that reads done without reading value.
+Rest uses the opened cached record and ordinary indexed own-data writes into a
+fresh realm Array, with no iterator reacquisition or species selection. Nested
+rest patterns initialize from that actual Array.
+
+A shared binding output scope preallocates private registers, initializes actual
+identities in order, finishes iterator closing, then compiles the following body
+with original constant/mutable flags. It avoids extending the iterator lifetime
+through following statements or the function body. Internal initialization writes
+constant outputs without allowing ordinary constant assignment. Static markers
+refuse uninitialized reads/writes and missing initialization; conditional/catch
+paths retain only definite initialization. General runtime TDZ/shared-cell
+semantics remain separate work. The Object initializer shares this internal mode
+when recursively nested inside Array patterns.
+
+Seventeen originals cover default/elision/rest semantics, Arrow length, null vs
+undefined, String code points, dense sparse rest results, nested/rest patterns,
+catch/for-of/Map-entry heads, captured field values, close before later code,
+empty patterns without next, nested close ordering, close before function body
+and original default throw precedence over cleanup failure. Four deferred scope/
+compiler controls cover initialization/refusal and branch paths, close-before-body
+and cached-record rest collection; an iterator control distinguishes elision
+from value getter acquisition. Nothing executed.
+
+Source review showed mutable binding reads already produce a snapshot before
+the extra explicit protocol operand copy. Two existing authored operand checks
+now trace the copy chain to the same original parameter, retaining their input
+and provenance assertion without requiring one physical copy instruction. This
+is source inspection, not passing execution evidence. Automatic generation is
+still deferred. Remaining source work includes formal rest parameters, iterable
+call-argument spread, general lexical environments/cells, version-qualified
+diagnostics and the other recorded library/language surfaces.

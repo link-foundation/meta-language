@@ -17,6 +17,11 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceControlJump',target:number,continuing:boolean} |
  * {$:'sourceControlBlock',target:number,body:JavaScriptCallSource,after:JavaScriptCallSource} |
  * {$:'sourceSwitch',target:number,value:JavaScriptCallSource,clauses:JavaScriptCallSourceSwitchClause[],after:JavaScriptCallSource} |
+ * {$:'sourceBindingScope',declarations:JavaScriptCallBindingDeclaration[],initializer:JavaScriptCallSource,body:JavaScriptCallSource} |
+ * {$:'sourceInitializeBinding',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
+ * {$:'sourceIteratorBinding',slot:number,input:JavaScriptCallSource,iteratorKey:JavaScriptCallSource,body:JavaScriptCallSource,realm:bigint} |
+ * {$:'sourceIteratorStep',slot:number,realm:bigint,readValue:boolean} |
+ * {$:'sourceIteratorRemainder',slot:number,prototype:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceForOf',slot:number,target:number,binding:number,mutable:boolean,input:JavaScriptCallSource,iteratorKey:JavaScriptCallSource,body:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceIteratorLoop',slot:number,target:number,binding:number,mutable:boolean,body:JavaScriptCallSource,realm:bigint} |
  * {$:'sourceIteratorClose',slot:number,realm:bigint} |
@@ -52,8 +57,9 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
 /** @typedef {{$:'sourceSwitchCase',value:JavaScriptCallSource,body:JavaScriptCallSource} | {$:'sourceSwitchDefault',body:JavaScriptCallSource}} JavaScriptCallSourceSwitchClause */
 /** @typedef {{$:'sourceControlScope',identity:number,kind:string,handlers:number}} JavaScriptCallSourceControlScope */
 /** @typedef {{$:'sourceControlTransfer',position:number,target:number,continuing:boolean}} JavaScriptCallSourceControlTransfer */
-/** @typedef {{$:'sourceBindingRegister',identity:number,register:number,mutable:boolean}} JavaScriptCallSourceBinding */
-/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string,snapshotMutableBindings?:boolean,controlScopes?:JavaScriptCallSourceControlScope[],controlTransfers?:JavaScriptCallSourceControlTransfer[]}} JavaScriptCallSourceBuilder */
+/** @typedef {{$:'sourceBindingDeclaration',identity:number,mutable:boolean}} JavaScriptCallBindingDeclaration */
+/** @typedef {{$:'sourceBindingRegister',identity:number,register:number,mutable:boolean,initializing?:boolean}} JavaScriptCallSourceBinding */
+/** @typedef {{$:'sourceBuilder',instructions:JavaScriptCallInstruction[],next:number,visits:number,parameters:number,handlers:number,error:string,snapshotMutableBindings?:boolean,initializedBindings?:number[],controlScopes?:JavaScriptCallSourceControlScope[],controlTransfers?:JavaScriptCallSourceControlTransfer[]}} JavaScriptCallSourceBuilder */
 /** @typedef {{$:'sourceResult',builder:JavaScriptCallSourceBuilder,register:number}} JavaScriptCallSourceResult */
 /** @typedef {{$:'sourceCompiled',instructions:JavaScriptCallInstruction[],registers:number,error:string}} JavaScriptCallSourceCompilation */
 
@@ -110,17 +116,27 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);
    return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:source.$==='sourceThrow'?'throw':'return',source:value.register})};
   }
+  case 'sourceBindingScope':return lowerJavaScriptCallSourceBindingScope(source,bindings,state,depth);
+  case 'sourceInitializeBinding':{
+   const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.initializing!==true||(state.initializedBindings??[]).includes(source.identity))return refuseJavaScriptCallSource(state,'binding initialization retains its actual uninitialized owned register');
+   const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1),copied=appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register});return lowerJavaScriptCallSourceExpression(source.body,bindings,{...copied,initializedBindings:(copied.initializedBindings??[]).concat([source.identity])},depth+1);
+  }
   case 'sourceAssignBinding':{
    if(state.snapshotMutableBindings!==true)return refuseJavaScriptCallSource(state,'mutable source bindings require their snapshot compilation pass');
-   const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.register===0||!binding.mutable)return refuseJavaScriptCallSource(state,'a mutable assignment needs its actual mutable local lexical register');
+   const binding=bindings.find(row=>row.identity===source.identity);if(binding===undefined||binding.register===0||!binding.mutable||binding.initializing===true&&!(state.initializedBindings??[]).includes(source.identity))return refuseJavaScriptCallSource(state,'a mutable assignment needs its actual mutable local lexical register');
    const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1);return {...value,builder:appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register})};
   }
   case 'sourceWhile':return lowerJavaScriptCallSourceLoop(source,bindings,state,depth);
   case 'sourceControlBlock':{const scoped=pushJavaScriptCallSourceControlScope(state,source.target,'block'),body=lowerJavaScriptCallSourceExpression(source.body,bindings,scoped,depth+1),finished=finishJavaScriptCallSourceControlScope(body.builder,state,source.target,body.builder.instructions.length,-1);return lowerJavaScriptCallSourceExpression(source.after,bindings,finished,depth+1);}
   case 'sourceSwitch':return lowerJavaScriptCallSourceSwitch(source,bindings,state,depth);
   case 'sourceControlJump':return lowerJavaScriptCallSourceControlJump(source,state);
-  case 'sourceForOf':return lowerJavaScriptCallSourceForOf(source,bindings,state,depth);
+  case 'sourceIteratorBinding':case 'sourceForOf':return lowerJavaScriptCallSourceForOf(source,bindings,state,depth);
   case 'sourceIteratorLoop':return lowerJavaScriptCallSourceIteratorLoop(source,bindings,state,depth);
+  case 'sourceIteratorStep':{
+   if(!testJavaScriptCallCodeCoordinate(source.slot,65536)||source.realm<=0n||source.realm>18446744073709551615n||typeof source.readValue!=='boolean')return refuseJavaScriptCallSource(state,'binding steps retain their actual iterator region, realm and value choice');
+   const value=allocateJavaScriptCallSourceRegister(state),done=allocateJavaScriptCallSourceRegister(value.builder);return {$:'sourceResult',register:value.register,builder:appendJavaScriptCallSourceInstruction(done.builder,{$:'iteratorProtocol',destination:value.register,done:done.register,input:0,iteratorKey:0,slot:source.slot,operation:'step',realm:source.realm,...(source.readValue?{}:{readValue:false})})};
+  }
+  case 'sourceIteratorRemainder':return lowerJavaScriptCallSourceIteratorRemainder(source,bindings,state,depth);
   case 'sourceIteratorClose':{
    if(!testJavaScriptCallCodeCoordinate(source.slot,65536)||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(state,'iterator closing retains its actual source slot and realm');
    const value=allocateJavaScriptCallSourceRegister(state),done=allocateJavaScriptCallSourceRegister(value.builder);return {$:'sourceResult',register:value.register,builder:appendJavaScriptCallSourceInstruction(done.builder,{$:'iteratorProtocol',destination:value.register,done:done.register,input:0,iteratorKey:0,slot:source.slot,operation:'close',realm:source.realm})};
@@ -134,7 +150,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   }
   case 'sourceBinding':{
    if(!testJavaScriptCallCodeCoordinate(source.identity,65536))return refuseJavaScriptCallSource(state,'source binding identities require exact nonnegative coordinates');
-   for(let index=bindings.length-1;index>=0;index-=1){const entry=bindings[index];if(entry!==undefined&&entry.identity===source.identity){if(state.snapshotMutableBindings===true&&entry.mutable){const saved=allocateJavaScriptCallSourceRegister(state);return {...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:entry.register})};}return {$:'sourceResult',builder:state,register:entry.register};}}
+   for(let index=bindings.length-1;index>=0;index-=1){const entry=bindings[index];if(entry!==undefined&&entry.identity===source.identity){if(entry.initializing===true&&!(state.initializedBindings??[]).includes(source.identity))return refuseJavaScriptCallSource(state,'uninitialized binding reads require their actual temporal-dead-zone environment protocol');if(state.snapshotMutableBindings===true&&entry.mutable){const saved=allocateJavaScriptCallSourceRegister(state);return {...saved,builder:appendJavaScriptCallSourceInstruction(saved.builder,{$:'copy',destination:saved.register,source:entry.register})};}return {$:'sourceResult',builder:state,register:entry.register};}}
    return refuseJavaScriptCallSource(state,'a source binding reference has no actual lexical owner');
   }
   case 'sourceLet':case 'sourceLocalLet':{
@@ -151,7 +167,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
    const binding=bindings.find(entry=>entry.identity===source.identity);if(binding===undefined||binding.register<1||binding.register>state.parameters)return refuseJavaScriptCallSource(state,'a parameter default needs its actual initialized parameter coordinate');
    const condition=lowerJavaScriptCallSourceExpression({$:'sourceStrictEqual',left:{$:'sourceBinding',identity:source.identity},right:{$:'sourceConstant',value:{$:'undefined'}}},bindings,state,depth+1),branch=condition.builder.instructions.length;
    const start=appendJavaScriptCallSourceInstruction(condition.builder,{$:'branch',condition:condition.register,yes:0,no:0}),value=lowerJavaScriptCallSourceExpression(source.value,bindings,start,depth+1),copied=appendJavaScriptCallSourceInstruction(value.builder,{$:'copy',destination:binding.register,source:value.register}),end=copied.instructions.length;
-   const updated={...copied,instructions:copied.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction)};
+   const updated={...copied,instructions:copied.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:condition.register,yes:branch+1,no:end}:instruction),...(copied.initializedBindings!==undefined?{initializedBindings:condition.builder.initializedBindings??[]}:{})};
    return lowerJavaScriptCallSourceExpression(source.body,bindings,updated,depth+1);
   }
   case 'sourceIf':return lowerJavaScriptCallSourceBranch(source,bindings,state,depth);
@@ -312,11 +328,11 @@ export function lowerJavaScriptCallSourceException(source,bindings,builder,depth
  const popped=appendJavaScriptCallSourceInstruction({...body.builder,handlers:builder.handlers},{$:'popHandler'});
  const copied=appendJavaScriptCallSourceInstruction(popped,{$:'copy',destination:result.register,source:body.register}),jump=copied.instructions.length;
  const alternative=appendJavaScriptCallSourceInstruction(copied,{$:'jump',target:0}),target=alternative.instructions.length;
- const handler=lowerJavaScriptCallSourceExpression(source.handler,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:caught.register,mutable:true}]),alternative,depth+1);
+ const handler=lowerJavaScriptCallSourceExpression(source.handler,bindings.concat([{$:'sourceBindingRegister',identity:source.identity,register:caught.register,mutable:true}]),alternative.initializedBindings===undefined?alternative:{...alternative,initializedBindings:builder.initializedBindings??[]},depth+1);
  const finished=appendJavaScriptCallSourceInstruction(handler.builder,{$:'copy',destination:result.register,source:handler.register}),end=finished.instructions.length;
  if(finished.error!=='')return {$:'sourceResult',builder:finished,register:0};
  const instructions=finished.instructions.map((entry,index)=>index===position?{$:'pushHandler',destination:caught.register,target}:index===jump?{$:'jump',target:end}:entry);
- return {$:'sourceResult',builder:{...finished,instructions},register:result.register};
+ return {$:'sourceResult',builder:{...finished,instructions,...(body.builder.initializedBindings!==undefined||handler.builder.initializedBindings!==undefined?{initializedBindings:(body.builder.initializedBindings??[]).filter(identity=>(handler.builder.initializedBindings??[]).includes(identity))}:{})},register:result.register};
 }
 
 /** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
@@ -328,11 +344,11 @@ export function lowerJavaScriptCallSourceBranch(source,bindings,builder,depth){
  const yesPosition=start.instructions.length,yes=lowerJavaScriptCallSourceExpression(source.yes,bindings,start,depth+1);
  const copiedYes=appendJavaScriptCallSourceInstruction(yes.builder,{$:'copy',destination:result.register,source:yes.register}),jump=copiedYes.instructions.length;
  const alternative=appendJavaScriptCallSourceInstruction(copiedYes,{$:'jump',target:0}),noPosition=alternative.instructions.length;
- const no=lowerJavaScriptCallSourceExpression(source.no,bindings,alternative,depth+1),copiedNo=appendJavaScriptCallSourceInstruction(no.builder,{$:'copy',destination:result.register,source:no.register});
+ const no=lowerJavaScriptCallSourceExpression(source.no,bindings,alternative.initializedBindings===undefined?alternative:{...alternative,initializedBindings:condition.builder.initializedBindings??[]},depth+1),copiedNo=appendJavaScriptCallSourceInstruction(no.builder,{$:'copy',destination:result.register,source:no.register});
  const end=copiedNo.instructions.length;
  if(copiedNo.error!=='')return {$:'sourceResult',builder:copiedNo,register:0};
  const instructions=copiedNo.instructions.map((entry,index)=>index===branch?{$:'branch',condition:condition.register,yes:yesPosition,no:noPosition}:index===jump?{$:'jump',target:end}:entry);
- return {$:'sourceResult',builder:{...copiedNo,instructions},register:result.register};
+ return {$:'sourceResult',builder:{...copiedNo,instructions,...(yes.builder.initializedBindings!==undefined||no.builder.initializedBindings!==undefined?{initializedBindings:(yes.builder.initializedBindings??[]).filter(identity=>(no.builder.initializedBindings??[]).includes(identity))}:{})},register:result.register};
 }
 
 /** Compile a complete expression function. Receiver register zero is reserved;
@@ -459,9 +475,9 @@ export function findJavaScriptCallSourceInstructionPosition(positions,position){
 /** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
  * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
 export function lowerJavaScriptCallSourceForOf(source,bindings,builder,depth){
- if(source.$!=='sourceForOf'||!testJavaScriptCallCodeCoordinate(source.slot,65536)||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(builder,'for-of retains its actual bounded source region and realm');
+ if(source.$!=='sourceForOf'&&source.$!=='sourceIteratorBinding'||!testJavaScriptCallCodeCoordinate(source.slot,65536)||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(builder,'for-of retains its actual bounded source region and realm');
  const input=lowerJavaScriptCallSourceExpression(source.input,bindings,builder,depth+1),held=allocateJavaScriptCallSourceRegister(input.builder),saved=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:input.register}),key=lowerJavaScriptCallSourceExpression(source.iteratorKey,bindings,saved,depth+1),heldKey=allocateJavaScriptCallSourceRegister(key.builder),keyed=appendJavaScriptCallSourceInstruction(heldKey.builder,{$:'copy',destination:heldKey.register,source:key.register}),value=allocateJavaScriptCallSourceRegister(keyed),done=allocateJavaScriptCallSourceRegister(value.builder),opened=appendJavaScriptCallSourceInstruction(done.builder,{$:'iteratorProtocol',destination:value.register,done:done.register,input:held.register,iteratorKey:heldKey.register,slot:source.slot,operation:'acquire',realm:source.realm});
- return lowerJavaScriptCallSourceExpression({$:'sourceFinally',body:{$:'sourceIteratorLoop',slot:source.slot,target:source.target,binding:source.binding,mutable:source.mutable,body:source.body,realm:source.realm},finalizer:{$:'sourceIteratorClose',slot:source.slot,realm:source.realm}},bindings,opened,depth+1);
+ return lowerJavaScriptCallSourceExpression({$:'sourceFinally',body:source.$==='sourceForOf'?{$:'sourceIteratorLoop',slot:source.slot,target:source.target,binding:source.binding,mutable:source.mutable,body:source.body,realm:source.realm}:source.body,finalizer:{$:'sourceIteratorClose',slot:source.slot,realm:source.realm}},bindings,opened,depth+1);
 }
 /** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
  * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
@@ -469,4 +485,27 @@ export function lowerJavaScriptCallSourceIteratorLoop(source,bindings,builder,de
  if(source.$!=='sourceIteratorLoop'||!testJavaScriptCallCodeCoordinate(source.binding,65536)||!testJavaScriptCallCodeCoordinate(source.slot,65536)||source.realm<=0n||source.realm>18446744073709551615n||bindings.some(row=>row.identity===source.binding))return refuseJavaScriptCallSource(builder,'iterator loop retains its actual independent source binding');
  const scoped=pushJavaScriptCallSourceControlScope(builder,source.target,'loop'),value=allocateJavaScriptCallSourceRegister(scoped),done=allocateJavaScriptCallSourceRegister(value.builder),start=done.builder.instructions.length,stepped=appendJavaScriptCallSourceInstruction(done.builder,{$:'iteratorProtocol',destination:value.register,done:done.register,input:0,iteratorKey:0,slot:source.slot,operation:'step',realm:source.realm}),branch=stepped.instructions.length,test=appendJavaScriptCallSourceInstruction(stepped,{$:'branch',condition:done.register,yes:0,no:branch+1}),body=lowerJavaScriptCallSourceExpression(source.body,bindings.concat([{$:'sourceBindingRegister',identity:source.binding,register:value.register,mutable:source.mutable}]),test,depth+1),loop=appendJavaScriptCallSourceInstruction(body.builder,{$:'jump',target:start}),end=loop.instructions.length,patched={...loop,instructions:loop.instructions.map((instruction,index)=>index===branch?{$:'branch',condition:done.register,yes:end,no:branch+1}:instruction)},finished=finishJavaScriptCallSourceControlScope(patched,builder,source.target,end,start);
  return lowerJavaScriptCallSourceExpression({$:'sourceConstant',value:{$:'undefined'}},bindings,finished,depth+1);
+}
+
+
+/** Preallocate actual outputs so initializer finalizers finish before the body.
+ * Static uninitialized markers refuse unsupported TDZ/cell reads, never default
+ * them to undefined. Only internal initialization may write constant outputs.
+ * @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceBindingScope(source,bindings,builder,depth){
+ if(source.$!=='sourceBindingScope'||source.declarations.length>4096)return refuseJavaScriptCallSource(builder,'binding output scopes retain their actual bounded declarations');
+ let current=builder;const entries=[];
+ for(const declaration of source.declarations){if(!testJavaScriptCallCodeCoordinate(declaration.identity,65536)||bindings.some(row=>row.identity===declaration.identity)||entries.some(row=>row.identity===declaration.identity)||typeof declaration.mutable!=='boolean')return refuseJavaScriptCallSource(current,'binding output scopes retain distinct actual lexical identities and mutability');const register=allocateJavaScriptCallSourceRegister(current);current=register.builder;entries.push({$:'sourceBindingRegister',identity:declaration.identity,register:register.register,mutable:declaration.mutable,initializing:true});}
+ const initialized=lowerJavaScriptCallSourceExpression(source.initializer,bindings.concat(entries),current,depth+1);
+ if(entries.some(row=>!(initialized.builder.initializedBindings??[]).includes(row.identity)))return refuseJavaScriptCallSource(initialized.builder,'every binding output must complete initialization before its body');
+ return lowerJavaScriptCallSourceExpression(source.body,bindings.concat(entries.map(row=>({$:'sourceBindingRegister',identity:row.identity,register:row.register,mutable:row.mutable}))),initialized.builder,depth+1);
+}
+/** Consume the already cached record into a fresh Array without reacquisition.
+ * @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
+ * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
+export function lowerJavaScriptCallSourceIteratorRemainder(source,bindings,builder,depth){
+ if(source.$!=='sourceIteratorRemainder'||!testJavaScriptCallCodeCoordinate(source.slot,65536)||source.realm<=0n||source.realm>18446744073709551615n)return refuseJavaScriptCallSource(builder,'iterator rest retains its actual opened region and realm');
+ const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,builder,depth+1),object=allocateJavaScriptCallSourceRegister(prototype.builder),created=appendJavaScriptCallSourceInstruction(object.builder,{$:'arrayAllocate',destination:object.register,prototype:prototype.register,length:0}),index=allocateJavaScriptCallSourceRegister(created),initial=appendJavaScriptCallSourceInstruction(index.builder,{$:'constant',destination:index.register,value:{$:'number',value:0}}),value=allocateJavaScriptCallSourceRegister(initial),done=allocateJavaScriptCallSourceRegister(value.builder),key=allocateJavaScriptCallSourceRegister(done.builder),written=allocateJavaScriptCallSourceRegister(key.builder),start=written.builder.instructions.length,stepped=appendJavaScriptCallSourceInstruction(written.builder,{$:'iteratorProtocol',destination:value.register,done:done.register,input:0,iteratorKey:0,slot:source.slot,operation:'step',realm:source.realm}),branch=stepped.instructions.length,test=appendJavaScriptCallSourceInstruction(stepped,{$:'branch',condition:done.register,yes:0,no:branch+1}),keyed=appendJavaScriptCallSourceInstruction(test,{$:'propertyKey',destination:key.register,input:index.register,realm:source.realm}),defined=appendJavaScriptCallSourceInstruction(keyed,{$:'ordinaryDataProperty',destination:written.register,object:object.register,key:key.register,value:value.register,realm:source.realm}),advanced=appendJavaScriptCallSourceInstruction(defined,{$:'primitive',destination:index.register,operation:'increment numeric value',arguments:[index.register]}),loop=appendJavaScriptCallSourceInstruction(advanced,{$:'jump',target:start}),end=loop.instructions.length;
+ return {$:'sourceResult',register:object.register,builder:{...loop,instructions:loop.instructions.map((instruction,at)=>at===branch?{$:'branch',condition:done.register,yes:end,no:branch+1}:instruction)}};
 }

@@ -188,7 +188,7 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'invokeErrorIntrinsic':if(!testJavaScriptErrorIntrinsicMode(fn.receiverMode))return 'host Error intrinsic calls require an externally registered intrinsic owner';break;
         case 'invokeHostCapability':if(!testJavaScriptHostCapabilityMode(fn.receiverMode))return 'host capability calls require their explicitly qualified external source owner';break;
         case 'collectionIteratorAllocate':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind)||!['keys','values','entries'].includes(instruction.iterationKind)||instruction.kind==='String'&&(instruction.iterationKind!=='values'||instruction.input===undefined)||instruction.kind!=='String'&&instruction.input!==undefined)return 'iterator allocation retains its actual standard operation kind and owner';break;
-        case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done)return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
+        case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done||instruction.readValue!==undefined&&(instruction.operation!=='step'||typeof instruction.readValue!=='boolean'))return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
         case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
         case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
@@ -451,7 +451,7 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       case 'waitIteratorProtocol':{
         const instruction=frame.position===0?undefined:fn.instructions[frame.position-1];
         if(instruction?.$!=='iteratorProtocol'||instruction.destination!==pending.destination||instruction.done!==pending.done||instruction.slot!==pending.slot||instruction.realm!==pending.realm||instruction.operation!==pending.operation||pending.state.operation!==pending.operation)return 'iterator work retains its actual source instruction and region';
-        const error=readJavaScriptIteratorProtocolStateError(heap,pending.state);if(error!=='')return error;
+        const error=readJavaScriptIteratorProtocolStateError(heap,pending.state);if(error!=='')return error;if(pending.operation==='step'&&(pending.state.readValue??true)!==(instruction.readValue??true))return 'iterator advancement retains its actual value-versus-elision choice';
         if(pending.operation==='acquire'){
           if(!testJavaScriptSemanticSameValue(pending.state.input,frame.registers[instruction.input]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.key,frame.registers[instruction.iteratorKey]??{$:'undefined'}))return 'iterator acquisition retains its held source operand and key';
         }else{
@@ -912,7 +912,7 @@ export function stepJavaScriptCallMachine(program,machine){
         return acceptJavaScriptCallIteratorProtocol(program,current,pending,beginJavaScriptSynchronousIterator(machine.heap,registers[instruction.input]??{$:'undefined'},registers[instruction.iteratorKey]??{$:'undefined'}));
       }
       if(region===undefined)return {$:'machineInvalid',heap:machine.heap,reason:'iterator operation requires its actual opened source region'};
-      if(instruction.operation==='step')return acceptJavaScriptCallIteratorProtocol(program,current,pending,beginJavaScriptSynchronousIteratorStep(machine.heap,region.record));
+      if(instruction.operation==='step')return acceptJavaScriptCallIteratorProtocol(program,current,pending,beginJavaScriptSynchronousIteratorStep(machine.heap,region.record,instruction.readValue??true));
       if(region.record.done){const removed=removeJavaScriptIteratorRegion(machine.heap,regions,instruction.slot);if(removed.$!=='iteratorRegionsUpdated')return {$:'machineInvalid',heap:machine.heap,reason:'exhausted iterator release retains its actual region'};return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallIteratorResult({...next,iterators:removed.regions},instruction.destination,instruction.done,{$:'undefined'},true))};}
       return acceptJavaScriptCallIteratorProtocol(program,current,pending,beginJavaScriptSynchronousIteratorClose(machine.heap,region.record,readJavaScriptCallIteratorCloseCompletion(frame)));
     }

@@ -12374,3 +12374,23 @@ a body throw over cleanup failure and allowing cleanup failure to replace a
 return or loop exit. Closing releases the actual frame region. Per-iteration
 closures retain the existing immutable capture proof; mutable shared cells and
 array binding heads need their explicit environment/iterator protocols.
+
+Array binding patterns acquire their own iterator regions and protect binding
+initialization with the common finalizer. Elisions step and inspect done without
+reading value; ordinary bindings read the yielded value and apply undefined-only
+defaults before recursively initializing nested patterns. Rest collects the
+remaining cached iterator into a fresh realm Array, without acquiring another
+iterator or applying species. Rest and nested patterns preserve done/failure
+state before closing; early completion closes unfinished records with the
+actual deferred completion and normal exhaustion omits return.
+
+Binding output scopes preallocate internal registers for the actual declared
+identities, initialize them in order, complete iterator finalizers, then expose
+the initialized outputs to following source code with their original mutability.
+Internal initialization can write constant outputs; ordinary assignment cannot.
+Uninitialized reads/writes and missing definite initialization refuse until their
+full TDZ/cell protocol is available. Conditional and catch paths preserve only
+definitely initialized outputs. Initializer scopes do not extend iterator
+lifetime across the function body or later statements. Array patterns reuse
+this protocol in parameters, lexical declarations, catch heads and for-of heads,
+including recursive Object/Array targets and rest patterns.

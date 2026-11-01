@@ -6,7 +6,7 @@ import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversi
 /** @typedef {{$:'synchronousIteratorRecord',iterator:JavaScriptSemanticValue,nextMethod:JavaScriptSemanticValue,done:boolean}} JavaScriptSynchronousIteratorRecord */
 /** @typedef {{$:'iteratorCompletion',kind:string,value:JavaScriptSemanticValue,target:number}} JavaScriptIteratorCompletion */
 /** @typedef {{$:'iteratorSelectedCall',callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]}} JavaScriptIteratorSelectedCall */
-/** @typedef {{$:'iteratorProtocol',operation:string,phase:string,input:JavaScriptSemanticValue,key:JavaScriptSemanticValue,record:JavaScriptSynchronousIteratorRecord,result:JavaScriptSemanticValue,completion:JavaScriptIteratorCompletion,call?:JavaScriptIteratorSelectedCall}} JavaScriptIteratorProtocolState */
+/** @typedef {{$:'iteratorProtocol',operation:string,phase:string,input:JavaScriptSemanticValue,key:JavaScriptSemanticValue,record:JavaScriptSynchronousIteratorRecord,result:JavaScriptSemanticValue,completion:JavaScriptIteratorCompletion,readValue?:boolean,call?:JavaScriptIteratorSelectedCall}} JavaScriptIteratorProtocolState */
 /** @typedef {{$:'iteratorProtocolContinue',heap:JavaScriptOrdinaryHeap,state:JavaScriptIteratorProtocolState} |
  * {$:'iteratorProtocolCall',heap:JavaScriptOrdinaryHeap,state:JavaScriptIteratorProtocolState,callee:JavaScriptSemanticValue,receiver:JavaScriptSemanticValue,arguments:JavaScriptSemanticValue[]} |
  * {$:'iteratorProtocolPrimitiveGet',heap:JavaScriptOrdinaryHeap,state:JavaScriptIteratorProtocolState,receiver:JavaScriptSemanticValue,key:JavaScriptSemanticValue} |
@@ -26,6 +26,7 @@ export function readJavaScriptSynchronousIteratorRecordError(heap,record){
 export function readJavaScriptIteratorProtocolStateError(heap,state){
  const invalid=readJavaScriptOrdinaryHeapError(heap);if(invalid!=='')return invalid;
  const phases=state.operation==='acquire'?['method','method getter','iterator call','next','next getter']:state.operation==='step'?['next call','done','done getter','value','value getter']:state.operation==='close'?['return','return getter','return call']:[];
+ if(state.readValue!==undefined&&(state.operation!=='step'||typeof state.readValue!=='boolean'||state.readValue===false&&['value','value getter'].includes(state.phase)))return 'iterator elision skips value acquisition only in its actual advancement protocol';
  if(state.$!=='iteratorProtocol'||!phases.includes(state.phase)||typeof state.record.done!=='boolean')return 'iterator work retains its actual operation and continuation phase';
  for(const value of [state.input,state.key,state.record.iterator,state.record.nextMethod,state.result,state.completion.value]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(state.operation==='acquire'&&state.key.$!=='symbol')return 'iterator acquisition retains its actual well-known iterator Symbol';
@@ -48,10 +49,11 @@ export function beginJavaScriptSynchronousIterator(heap,input,iteratorKey){
  const error=readJavaScriptIteratorProtocolStateError(heap,state);if(error!=='')return {$:'iteratorProtocolInvalid',heap,reason:error};
  return input.$==='null'||input.$==='undefined'?failJavaScriptIteratorProtocol(heap,state,'value is not iterable'):{$:'iteratorProtocolContinue',heap,state};
 }
-/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSynchronousIteratorRecord} record @returns {JavaScriptIteratorProtocolTransition} */
-export function beginJavaScriptSynchronousIteratorStep(heap,record){
+/** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptSynchronousIteratorRecord} record @param {boolean} [readValue] @returns {JavaScriptIteratorProtocolTransition} */
+export function beginJavaScriptSynchronousIteratorStep(heap,record,readValue=true){
  const error=readJavaScriptSynchronousIteratorRecordError(heap,record);if(error!=='')return {$:'iteratorProtocolInvalid',heap,reason:error};
- const state=createJavaScriptIteratorProtocolState('step','next call',record.iterator,{$:'undefined'},record,{$:'iteratorCompletion',kind:'normal',value:{$:'undefined'},target:-1});
+ if(typeof readValue!=='boolean')return {$:'iteratorProtocolInvalid',heap,reason:'iterator advancement retains its actual value-versus-elision choice'};
+ const state={...createJavaScriptIteratorProtocolState('step','next call',record.iterator,{$:'undefined'},record,{$:'iteratorCompletion',kind:'normal',value:{$:'undefined'},target:-1}),...(readValue?{}:{readValue:false})};
  return record.done?{$:'iteratorProtocolStep',heap,record:{...record},done:true,value:{$:'undefined'}}:{$:'iteratorProtocolContinue',heap,state};
 }
 /** The caller decides whether an unfinished record needs closing. This exact
@@ -89,7 +91,7 @@ export function continueJavaScriptIteratorProtocolValue(heap,state,value){
  if(phase==='iterator call')return value.$!=='object'?failJavaScriptIteratorProtocol(heap,base,'iterator method returned a non-Object'):{$:'iteratorProtocolContinue',heap,state:{...base,phase:'next',record:{...base.record,iterator:value}}};
  if(phase==='next')return {$:'iteratorProtocolAcquired',heap,record:{...base.record,nextMethod:value}};
  if(phase==='next call')return value.$!=='object'?failJavaScriptIteratorProtocol(heap,base,'iterator next returned a non-Object'):{$:'iteratorProtocolContinue',heap,state:{...base,phase:'done',result:value}};
- if(phase==='done')return convertJavaScriptSemanticBoolean(value)?{$:'iteratorProtocolStep',heap,record:{...base.record,done:true},done:true,value:{$:'undefined'}}:{$:'iteratorProtocolContinue',heap,state:{...base,phase:'value'}};
+ if(phase==='done')return convertJavaScriptSemanticBoolean(value)?{$:'iteratorProtocolStep',heap,record:{...base.record,done:true},done:true,value:{$:'undefined'}}:base.readValue===false?{$:'iteratorProtocolStep',heap,record:base.record,done:false,value:{$:'undefined'}}:{$:'iteratorProtocolContinue',heap,state:{...base,phase:'value'}};
  if(phase==='value')return {$:'iteratorProtocolStep',heap,record:base.record,done:false,value};
  if(phase==='return')return value.$==='undefined'||value.$==='null'?{$:'iteratorProtocolClosed',heap,record:base.record,completion:base.completion}:requestJavaScriptIteratorProtocolCall(heap,base,value,base.record.iterator,'return call');
  if(phase==='return call')return base.completion.kind==='throw'||value.$==='object'?{$:'iteratorProtocolClosed',heap,record:base.record,completion:base.completion}:failJavaScriptIteratorProtocol(heap,base,'iterator return returned a non-Object');

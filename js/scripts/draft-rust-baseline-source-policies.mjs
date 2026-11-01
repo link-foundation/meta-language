@@ -172,6 +172,7 @@ const consumers=[
  'js/tests/translation-javascript-finally.test.js',
  'js/tests/translation-javascript-iterator-regions.test.js',
  'js/tests/translation-javascript-for-of.test.js',
+ 'js/tests/translation-javascript-array-bindings.test.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
  'js/tests/translation-javascript-array-search.test.js',

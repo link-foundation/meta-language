@@ -30,3 +30,8 @@ test('primitive acquisition explicitly requests original-receiver Get semantics'
 test('authenticated primitive prototype Get retains the original receiver and selected getter',()=>{
  const input=text('original');let {heap}=setup();heap=getter(heap,1n,symbol,object(6n,true));const request=advance(beginJavaScriptSynchronousIterator(heap,input,symbol));assert.equal(request.$,'iteratorProtocolPrimitiveGet');const selected=provideJavaScriptIteratorPrimitivePrototype(heap,request.state,object(1n));assert.equal(selected.$,'iteratorProtocolCall');assert.deepEqual(selected.receiver,input);assert.deepEqual(selected.callee,object(6n,true));heap=data(selected.heap,1n,symbol,object(4n,true));const method=resumeJavaScriptIteratorProtocolCall(heap,selected.state,normal(object(2n,true)));assert.equal(method.$,'iteratorProtocolCall');assert.deepEqual(method.callee,object(2n,true));assert.deepEqual(method.receiver,input);
 });
+
+
+test('iterator elisions read done but omit the value getter while normal advancement retains it',()=>{
+ let {heap,record}=setup();heap=data(heap,5n,'done',{$:'boolean',value:false});heap=getter(heap,5n,'value',object(6n,true));for(const readValue of [false,true]){const next=advance(beginJavaScriptSynchronousIteratorStep(heap,record,readValue));assert.equal(next.$,'iteratorProtocolCall');const actual=advance(resumeJavaScriptIteratorProtocolCall(next.heap,next.state,normal(object(5n))));assert.equal(actual.$,readValue?'iteratorProtocolCall':'iteratorProtocolStep');if(readValue)assert.deepEqual(actual.callee,object(6n,true));else{assert.equal(actual.done,false);assert.deepEqual(actual.value,absent);assert.equal(actual.record.done,false);}}
+});
