@@ -2,6 +2,8 @@
 //! Not executed during source authoring. Generated module/asset remains pending.
 #[path = "../../src/translation/rust_generic_type_alias_rules.rs"]
 mod generic_alias_rules;
+#[path = "../../src/translation/rust_function_pointer_rules.rs"]
+mod pointer_rules;
 
 #[test]
 fn explicit_generic_aliases_keep_original_products_and_the_complete_rule_program() {
@@ -111,6 +113,10 @@ fn private_sum_alias_headers_are_not_concrete_origin_proofs(){
 
 #[test]
 fn concrete_callable_alias_leaves_preserve_actual_pointer_profile_proofs(){
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_owned_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&["owned".into()],"copy",true,true,true,false,90.0));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_owned_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&["owned".into()],"copy",true,true,true,true,90.0));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_owned_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&["owned".into()],"copy",true,false,true,false,90.0));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_owned_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&["owned".into()],"copy",true,true,true,false,100.0));
     assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_template("function",0.0,"function","","",false,2.0,true));
     assert!(generic_alias_rules::accept_rust_generic_type_alias_concrete_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[true],true,true,true,true,false));
     assert!(!generic_alias_rules::accept_rust_generic_type_alias_concrete_callable_template(true,"function",0.0,"function",0.0,2.0,1.0,&[false],true,true,true,true,false));
@@ -120,9 +126,46 @@ fn concrete_callable_alias_leaves_preserve_actual_pointer_profile_proofs(){
 }
 
 #[test]
+fn symbolic_function_alias_syntax_keeps_raw_bindings_and_the_real_pointer_budget(){
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_function_template_head("fn","fn"));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_function_template_head("fn","r#fn"));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_function_template_head("unsafe","unsafe"));
+    assert!(generic_alias_rules::accept_rust_generic_type_alias_function_parameter_name("_","_"));
+    assert!(!generic_alias_rules::accept_rust_generic_type_alias_function_parameter_name("self","self"));
+    assert!(generic_alias_rules::read_rust_generic_type_alias_function_template_error(1024.0).is_empty());
+    assert_eq!(generic_alias_rules::read_rust_generic_type_alias_function_template_error(1025.0),"the complete pointer signature exceeds its source budget");
+}
+
+#[test]
+fn owned_pointer_domain_extension_keeps_copy_profile_and_selected_source_versions(){
+    use self::pointer_rules as pointer;
+    assert!(!pointer::read_rust_function_pointer_type_error(true,&[false],true).is_empty());
+    assert!(pointer::read_rust_function_pointer_owned_domain_error(true,&["owned".to_owned()],"copy",90.0).is_empty());
+    assert!(pointer::read_rust_function_pointer_owned_domain_error(true,&["copy".to_owned()],"owned",99.0).is_empty());
+    assert!(!pointer::read_rust_function_pointer_owned_domain_error(true,&["copy".to_owned()],"copy",90.0).is_empty());
+    assert!(!pointer::read_rust_function_pointer_owned_domain_error(true,&["owned".to_owned()],"copy",100.0).is_empty());
+    assert!(!pointer::read_rust_function_pointer_owned_domain_error(true,&["borrowed".to_owned()],"owned",90.0).is_empty());
+    assert!(pointer::read_rust_function_pointer_domain_error(true,&[false],true,&["owned".to_owned()],"copy",90.0).is_empty());
+}
+
+#[test]
 fn defaulted_declarations_and_actual_partial_applications_reach_native_frontend(){
     let options=meta_language::SelfTranslationOptions {semantic_translation:true,..meta_language::SelfTranslationOptions::default()};
     for source in [
+        "type Callback<T>=fn(T)->u8;fn main(){}",
+        "type Callback<T=fn(String)->u8>=T;fn main(){}",
+        "type Mapper<T,U>=fn(T)->U;fn widen(value:u8)->u16{u16::from(value)}pub fn result()->u16{let map:Mapper<u8,u16>=widen;map(7u8)}",
+        "type Mapper<T,U>=fn(T)->U;fn widen(value:u8)->u16{u16::from(value)}pub fn result()->u16{let map:Option<Mapper<u8,u16>>=Some(widen);match map{Some(read)=>read(7u8),None=>0u16}}",
+        "type Mapper<T,U>=fn(T)->U;type Word<T=u16>=T;pub fn result()->u16{let map:Option<Mapper<u8,u16>>=Some(Word::from);match map{Some(read)=>read(7u8),None=>0u16}}",
+        "type Mapper<T,U>=fn(T)->Option<U>;fn widen(value:u8)->Option<u16>{Some(u16::from(value))}pub fn result()->u16{let map:Mapper<u8,u16>=widen;map(7u8).unwrap_or(0u16)}",
+        "type Mapper<T,U>=fn(T)->U;type TryMapper<T,U>=Mapper<T,Option<U>>;fn widen(value:u8)->Option<u16>{Some(u16::from(value))}pub fn result()->u16{let map:TryMapper<u8,u16>=widen;map(7u8).unwrap_or(0u16)}",
+        "type Action<T>=fn(T);fn done(value:u8){}pub fn result()->u8{let run:Action<u8>=done;run(7u8);7u8}",
+        "type Identity<r#fn>=r#fn;pub fn result()->u8{let value:Identity<u8>=7u8;value}",
+        "#[derive(Copy,Clone)]struct r#fn{value:u8}type Identity<T=r#fn>=T;pub fn result()->u8{let value:Identity=r#fn{value:7u8};value.value}",
+        "type Mapper<T,U>=fn(T)->U;fn read(value:String)->u8{7u8}fn main(){let map:Mapper<String,u8>=read;}",
+        "type Callback<T=fn(String)->u8>=T;fn read(value:String)->u8{7u8}fn main(){let map:Callback=read;}",
+        "type Identity<T>=T;fn done(value:String){}fn main(){let run:Identity<fn(String)>=done;}",
+        "type Mapper<T,U>=fn(T)->Option<U>;fn read(value:u8)->Option<String>{None}fn main(){let map:Mapper<u8,String>=read;}",
         "type Maybe<T=String>=Option<T>;fn main(){let value:Maybe=None;}",
         "type Identity<T=u8>=T;fn main(){}",
         "type Pair<T=u8,U=T>=(T,U);pub fn result()->u16{let value:Pair<u16>=(7u16,9u16);value.1}",
@@ -174,9 +217,11 @@ fn defaulted_declarations_and_actual_partial_applications_reach_native_frontend(
         "type Callback<T=fn(usize)->u64>=T;fn read(value:u64)->u64{value}pub fn result()->u64{let convert:Callback=read;convert(7usize)}",
         "type Callback<T=fn(u8)->usize>=T;fn read(value:u8)->u64{u64::from(value)}pub fn result()->usize{let convert:Callback=read;convert(7u8)}",
         "type Callback<T=fn(u8)->u8>=T;pub fn result()->u8{let offset=1u8;let read:Callback=|value|value.wrapping_add(offset);read(7u8)}",
-        "type Callback<T>=fn(T)->u8;fn main(){}",
         "type Callback<T=&'static fn(u8)->u16>=T;fn main(){}",
-        "type Callback<T=fn(String)->u8>=T;fn main(){}",
+        "type Callback<T>=fn(T:u8)->u8;fn main(){}",
+        "type Mapper<T,U>=extern \"C\" fn(T)->U;fn main(){}",
+        "type Mapper<T,U>=unsafe fn(T)->U;fn main(){}",
+        "type Mapper<T,U>=fn(T)->U;fn read(value:&'static String)->u8{7u8}fn main(){let map:Mapper<&'static String,u8>=read;}",
         "struct Value{value:u8}type Alias<T=Value>=T;impl<T> Alias<T>{fn read()->u8{7u8}}fn main(){}",
     ]{assert!(meta_language::self_translation_signatures(source,"Rust",&options).is_err());}
 }

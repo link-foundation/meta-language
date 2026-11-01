@@ -133,3 +133,45 @@ export const rustStandardSumCombinatorRefusals=[
  {name:'partial constructor scope does not cross error-changing member operations',sourceVersionRange,reasonIncludes:'complete direct right operand',source:'fn change(error:u16)->u8{u8::try_from(error).unwrap_or(0)}fn later(value:Result<u8,u8>)->Result<u16,u8>{value.and(Ok(9u16).map_err(change))}fn main(){}'},
  {name:'Result or_else retains unestablished generic callback result as an obligation',sourceVersionRange,source:'fn later(value:Result<u8,u8>)->Result<u8,u16>{value.or_else(|error|Err(u16::from(error)))}fn main(){}'},
 ];
+rustStandardSumCombinatorDecisions.push(
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['copy','or_else'],expected:true},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['owned','and'],expected:true},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['owned','or'],expected:true},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['owned','xor'],expected:true},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['owned','or_else'],expected:false},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['reference','and'],expected:false},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['','or'],expected:false},
+ {operation:'acceptRustStandardSumCombinatorOwnership',arguments:['copy','unknown'],expected:false});
+rustStandardSumCombinatorOriginals.push(
+ {name:'owned Option or reconstructs a selected payload without root reuse',sourceVersionRange,singleCallOwners:[],stdout:'left\nright\nfalse\n',source:`
+fn reveal(value:Option<String>)->String{value.unwrap_or(String::from("empty"))}
+fn main(){let a:Option<String>=Some(String::from("left"));let b:Option<String>=None;let c:Option<String>=None;println!("{}",reveal(a.or(Some(String::from("right")))));println!("{}",reveal(b.or(Some(String::from("right")))));println!("{}",c.or(None).is_some());}
+`},
+ {name:'owned Option xor reconstructs exactly the one present payload',sourceVersionRange,singleCallOwners:[],stdout:'left\nright\nfalse\nfalse\n',source:`
+fn choose(a:Option<String>,b:Option<String>)->Option<String>{a.xor(b)}
+fn main(){println!("{}",choose(Some(String::from("left")),None).unwrap_or(String::from("empty")));println!("{}",choose(None,Some(String::from("right"))).unwrap_or(String::from("empty")));println!("{}",choose(Some(String::from("left")),Some(String::from("right"))).is_some());println!("{}",choose(None,None).is_some());}
+`},
+ {name:'owned Option and changes payload roles with eager right evaluation',sourceVersionRange,singleCallOwners:[],stdout:'right\n7\nright\nfalse\n',source:`
+fn next()->Option<u8>{println!("right");Some(7u8)}
+fn main(){let a:Option<String>=Some(String::from("left"));let b:Option<String>=None;println!("{}",a.and(next()).unwrap_or(0u8));println!("{}",b.and(next()).is_some());}
+`},
+ {name:'Copy Option and can introduce an actual owned result',sourceVersionRange,singleCallOwners:[],stdout:'right\ntrue\n',source:`
+fn main(){let a:Option<u8>=Some(7u8);let b:Option<String>=Some(String::from("right"));println!("{}",a.and(b).unwrap_or(String::from("empty")));println!("{}",a.is_some());}
+`},
+ {name:'owned Result and constrains direct success from actual retained error',sourceVersionRange,singleCallOwners:[],stdout:'next\nerror\n',source:`
+fn reveal(value:Result<String,String>)->String{match value{Ok(text)=>text,Err(text)=>text}}
+fn main(){let a:Result<u8,String>=Ok(7u8);let b:Result<u8,String>=Err(String::from("error"));println!("{}",reveal(a.and(Ok(String::from("next")))));println!("{}",reveal(b.and(Ok(String::from("unused")))));}
+`},
+ {name:'owned Result or changes the actual error while retaining success',sourceVersionRange,singleCallOwners:[],stdout:'left\n9\n',source:`
+fn main(){let a:Result<String,String>=Ok(String::from("left"));let b:Result<String,String>=Err(String::from("error"));let first=a.or(Err(9u8));let second=b.or(Err(9u8));println!("{}",first.unwrap_or(String::from("wrong")));let number=match second{Ok(_)=>0u8,Err(value)=>value};println!("{}",number);}
+`},
+ {name:'owned eager combinator moves receiver then evaluates right once',sourceVersionRange,singleCallOwners:[],stdout:'left\nright\nleft\n',source:`
+fn left()->Option<String>{println!("left");Some(String::from("left"))}fn right()->Option<String>{println!("right");Some(String::from("right"))}fn main(){println!("{}",left().or(right()).unwrap_or(String::from("wrong")));}
+`});
+rustStandardSumCombinatorRefusals.push(...[
+ {name:'owned eager combinator moves self before the right expression reads it',source:'fn main(){let a:Option<String>=Some(String::from("left"));let result=a.or(match a{Some(text)=>Some(text),None=>None});}'},
+ {name:'owned eager combinator consumes an unselected right operand',source:'fn main(){let a:Option<String>=Some(String::from("left"));let b:Option<String>=Some(String::from("right"));let result=a.or(b);println!("{}",b.is_some());}'},
+ {name:'owned eager combinator cannot reuse its receiver',source:'fn main(){let a:Option<String>=Some(String::from("left"));let b:Option<String>=None;let result=a.xor(b);println!("{}",a.is_some());}'},
+ {name:'owned combinator cannot consume a shared receiver',source:'fn main(){let a:Option<String>=Some(String::from("left"));let b:Option<String>=None;let result=(&a).or(b);}'},
+ {name:'owned constrained constructor transfers its actual payload',source:'fn main(){let a:Result<u8,String>=Ok(7u8);let payload=String::from("right");let result=a.and(Ok(payload));println!("{}",payload);}'}
+].map(row=>({...row,sourceVersionRange,originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',outcome:'reject',category:'invalid Rust ownership'}})));

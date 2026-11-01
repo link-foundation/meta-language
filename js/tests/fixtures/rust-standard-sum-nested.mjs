@@ -123,5 +123,33 @@ export const rustStandardSumNestedRefusals = [
  {name:'Result transpose requires actual inner Option',source:'fn main() { println!("{}", Ok::<Result<u8,u16>,u32>(Ok(7)).transpose().is_some()); }'},
  {name:'flatten has no source arguments',source:'fn main() { println!("{}", Some::<Option<u8>>(Some(7)).flatten(1u8).is_some()); }'},
  {name:'borrowed receiver retains the separate indirection obligation',source:'fn main() { let value: Option<Option<u8>> = Some(Some(7)); println!("{}", (&value).flatten().is_some()); }'},
- {name:'non-Copy nested payload retains its full ownership obligation',source:'fn main() { let value: Option<Option<String>> = Some(Some(String::from("value"))); println!("{}", value.flatten().is_some()); }'},
 ];
+export const rustStandardSumNestedPreviousBoundaries=[{
+ previousCollection:'rustStandardSumNestedRefusals',previousIndex:5,
+ previousDiagnosticKinds:['syntax','type','unsupported'],
+ previousTranslationExpectation:'refuse non-Copy nested ownership',
+ row:{name:'non-Copy nested payload retains its full ownership obligation',source:'fn main() { let value: Option<Option<String>> = Some(Some(String::from("value"))); println!("{}", value.flatten().is_some()); }'},
+}];
+rustStandardSumNestedOriginals.push({...rustStandardSumNestedPreviousBoundaries[0].row,
+ sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'true\n',singleCallOwners:[],
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',outcome:'accept',category:'valid Rust source'},
+ expectationHistory:[{previousCollection:'rustStandardSumNestedRefusals',previousIndex:5,translationExpectation:'refuse non-Copy nested ownership'}]},
+ {name:'owned flatten preserves payload and both empty branches',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'value\nfalse\nfalse\n',source:`
+fn main(){let a:Option<Option<String>>=Some(Some(String::from("value")));let b:Option<Option<String>>=Some(None);let c:Option<Option<String>>=None;println!("{}",a.flatten().unwrap_or(String::from("other")));println!("{}",b.flatten().is_some());println!("{}",c.flatten().is_some());}
+`},
+ {name:'owned Option transpose preserves each constructor and error owner',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'value\nerror\nfalse\n',source:`
+fn main(){let a:Option<Result<String,String>>=Some(Ok(String::from("value")));let b:Option<Result<String,String>>=Some(Err(String::from("error")));let c:Option<Result<String,String>>=None;let first=match a.transpose(){Ok(Some(text))=>text,_=>String::from("wrong")};let second=match b.transpose(){Err(text)=>text,_=>String::from("wrong")};println!("{}",first);println!("{}",second);println!("{}",c.transpose().ok().flatten().is_some());}
+`},
+ {name:'owned Result transpose retains Copy success and owned error branches',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'7\nerror\nfalse\n',source:`
+fn main(){let a:Result<Option<u8>,String>=Ok(Some(7u8));let b:Result<Option<u8>,String>=Err(String::from("error"));let c:Result<Option<u8>,String>=Ok(None);let number=match a.transpose(){Some(Ok(value))=>value,_=>0u8};let error=match b.transpose(){Some(Err(text))=>text,_=>String::from("wrong")};println!("{}",number);println!("{}",error);println!("{}",c.transpose().is_some());}
+`},
+ {name:'owned nested function receiver evaluates once',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'receiver\nvalue\n',source:`
+fn make()->Option<Option<String>>{println!("receiver");Some(Some(String::from("value")))}fn main(){println!("{}",make().flatten().unwrap_or(String::from("other")));}
+`});
+rustStandardSumNestedRefusals.push(...[
+ {name:'flatten consumes its actual owned receiver',source:'fn main(){let value:Option<Option<String>>=Some(Some(String::from("text")));let inner=value.flatten();println!("{}",value.is_some());}'},
+ {name:'transpose consumes its actual owned receiver',source:'fn main(){let value:Result<Option<u8>,String>=Ok(Some(7u8));let flipped=value.transpose();println!("{}",value.is_ok());}'},
+ {name:'owned flatten cannot move through shared reference',source:'fn main(){let value:Option<Option<String>>=Some(Some(String::from("text")));let inner=(&value).flatten();}'},
+ {name:'owned nested result does not grant a second payload move',source:'fn main(){let value:Option<Option<String>>=Some(Some(String::from("text")));let inner=value.flatten();let text=inner.unwrap_or(String::from("other"));let again=inner.unwrap_or(String::from("another"));}'}
+].map(row=>({...row,sourceVersionRange:'>=1.90.0 <1.100.0',
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',outcome:'reject',category:'invalid Rust ownership'}})));

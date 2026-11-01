@@ -207,6 +207,8 @@ mod translation_arrays;
 mod translation_ascii_text_predicates;
 mod translation_big_integer_bitwise;
 mod translation_collection_access;
+mod translation_collection_copies;
+mod translation_callable_data;
 mod translation_concrete_program_graphs;
 mod translation_console_format;
 mod translation_constructor_tags;

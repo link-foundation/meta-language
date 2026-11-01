@@ -44,7 +44,7 @@ impl RustParser {
             self.cursor.advance();let mut origin=self.iterator_item_type_inference_origin.clone().expect("actual collection item");
             origin.expanded_source_owner=origin.source_owner.clone();let ty=origin.ty.clone().expect("actual collection item type");self.origins.current_type=origin;return Ok(ty);
         }
-        if self.cursor.is("fn") {
+        if crate::translation::rust_function_pointer_rules::accept_rust_function_pointer_safe_source(&self.cursor.peek().value,&self.cursor.peek().raw) {
             return self.read_function_pointer_type();
         }
         if let Some(inherent) = self.inherent_self_type() {

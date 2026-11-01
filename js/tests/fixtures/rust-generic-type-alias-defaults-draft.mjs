@@ -45,6 +45,22 @@ export const genericAliasDefaultOriginals=[
  {name:'concrete callable default preserves implicit Unit result ownership',source:'type Callback<T=fn()>=T;fn done(){}fn main(){let run:Callback=done;run();println!("ok");}',stdout:'ok\n'},
  {name:'callable default retains private standard sum result until actual admission',source:'type Callback<T=fn()->Option<u8>>=T;fn make()->Option<u8>{Some(7u8)}fn main(){let read:Callback=make;println!("{}",read().unwrap_or(0u8));}',stdout:'7\n'},
  {name:'explicit callable alias argument retains private child source identities',source:'type Identity<T>=T;fn make()->Option<u8>{Some(7u8)}fn main(){let read:Identity<fn()->Option<u8>>=make;println!("{}",read().unwrap_or(0u8));}',stdout:'7\n'},
+ {name:'original parameter-dependent function declaration is symbolically wellformed',source:'type Callback<T>=fn(T)->u8;fn main(){}',stdout:'',previousBoundary:'parameter-dependent safe function template boundary'},
+ {name:'unused concrete owned function domain remains a symbolic default without Copy proof',source:'type Callback<T=fn(String)->u8>=T;fn main(){}',stdout:'',previousBoundary:'unused owned function default domain boundary'},
+ {name:'parameter-dependent Mapper retains actual parameter and result source owners',source:'type Mapper<T,U>=fn(T)->U;fn widen(value:u8)->u16{u16::from(value)}fn main(){let map:Mapper<u8,u16>=widen;println!("{}",map(7u8));}',stdout:'7\n'},
+ {name:'named function pointer retains complete owner inside an actual Option specialization',source:'type Mapper<T,U>=fn(T)->U;fn widen(value:u8)->u16{u16::from(value)}fn main(){let map:Option<Mapper<u8,u16>>=Some(widen);match map{Some(read)=>println!("{}",read(7u8)),None=>println!("none")}}',stdout:'7\n'},
+ {name:'primitive associated function retains complete owner inside an actual Option specialization',source:'type Mapper<T,U>=fn(T)->U;type Word<T=u16>=T;fn main(){let map:Option<Mapper<u8,u16>>=Some(Word::from);match map{Some(read)=>println!("{}",read(7u8)),None=>println!("none")}}',stdout:'7\n'},
+ {name:'function template Option result reaches actual Copy source admission',source:'type Mapper<T,U>=fn(T)->Option<U>;fn widen(value:u8)->Option<u16>{Some(u16::from(value))}fn main(){let map:Mapper<u8,u16>=widen;println!("{}",map(7u8).unwrap_or(0u16));}',stdout:'7\n'},
+ {name:'composed function aliases bind each full parameter and result subtree',source:'type Mapper<T,U>=fn(T)->U;type TryMapper<T,U>=Mapper<T,Option<U>>;fn widen(value:u8)->Option<u16>{Some(u16::from(value))}fn main(){let map:TryMapper<u8,u16>=widen;println!("{}",map(7u8).unwrap_or(0u16));}',stdout:'7\n'},
+ {name:'function template default substitutes earlier actual type bindings',source:'type Mapper<T=u8,U=u16>=fn(T)->U;type Callback<T=u8,F=Mapper<T,u16>>=(T,F);fn widen(value:u8)->u16{u16::from(value)}fn main(){let value:Callback=(7u8,widen);println!("{}",value.1(value.0));}',stdout:'7\n'},
+ {name:'function parameter names do not create generic type uses',source:'type Mapper<T,U>=fn(input:T)->U;fn widen(value:u8)->u16{u16::from(value)}fn main(){let map:Mapper<u8,u16>=widen;println!("{}",map(7u8));}',stdout:'7\n'},
+ {name:'function templates preserve implicit Unit result and actual noncapturing value',source:'type Action<T>=fn(T);fn done(value:u8){}fn main(){let run:Action<u8>=done;run(7u8);println!("ok");}',stdout:'ok\n'},
+ {name:'raw fn type parameter remains a binding instead of function syntax',source:'type Identity<r#fn>=r#fn;fn main(){let value:Identity<u8>=7u8;println!("{}",value);}',stdout:'7\n'},
+ {name:'raw fn named datatype remains an actual nominal alias default',source:'#[derive(Copy,Clone)]struct r#fn{value:u8}type Identity<T=r#fn>=T;fn main(){let value:Identity=r#fn{value:7u8};println!("{}",value.value);}',stdout:'7\n'},
+ {name:'actual owned parameter domain is admitted without changing child Copy',source:'type Mapper<T,U>=fn(T)->U;fn read(value:String)->u8{7u8}fn main(){let map:Mapper<String,u8>=read;}',stdout:'',previousBoundary:'owned function template parameter domain boundary'},
+ {name:'actual owned function default retains a safe admitted pointer type',source:'type Callback<T=fn(String)->u8>=T;fn read(value:String)->u8{7u8}fn main(){let map:Callback=read;}',stdout:'',previousBoundary:'owned function default application boundary'},
+ {name:'explicit callable argument retains actual omitted Unit result owner with owned parameter',source:'type Identity<T>=T;fn done(value:String){}fn main(){let run:Identity<fn(String)>=done;}',stdout:''},
+ {name:'actual owned standard sum result is admitted as a pointer signature',source:'type Mapper<T,U>=fn(T)->Option<U>;fn read(value:u8)->Option<String>{None}fn main(){let map:Mapper<u8,String>=read;}',stdout:'',previousBoundary:'owned function template result domain boundary'},
  {name:'qualified nominal default spelling is not a parameter reference',source:'mod owners{#[derive(Copy,Clone)]pub enum T{One}pub type Identity<T=crate::owners::T>=T;}fn read(value:owners::Identity)->u8{7u8}fn main(){println!("{}",read(owners::T::One));}',stdout:'7\n'},
  {name:'forward alias default retains actual definition binding',source:'type Identity<T=Later>=T;type Later=u8;fn main(){let value:Identity=7u8;println!("{}",value);}',stdout:'7\n'},
 ];
@@ -74,10 +90,17 @@ export const genericAliasDefaultRefusals=[
  {name:'callable default retains same-width pointer parameter distinctions',source:'type Callback<T=fn(usize)->u64>=T;fn read(value:u64)->u64{value}fn main(){let convert:Callback=read;println!("{}",convert(7usize));}'},
  {name:'callable default retains same-width pointer result distinctions',source:'type Callback<T=fn(u8)->usize>=T;fn read(value:u8)->u64{u64::from(value)}fn main(){let convert:Callback=read;println!("{}",convert(7u8));}'},
  {name:'callable default does not manufacture a noncapturing closure witness',source:'type Callback<T=fn(u8)->u8>=T;fn main(){let offset=1u8;let read:Callback=|value|value.wrapping_add(offset);println!("{}",read(7u8));}'},
- {name:'parameter-dependent callable template still needs its own interpretation',source:'type Callback<T>=fn(T)->u8;fn main(){}'},
  {name:'borrowed callable default keeps actual lifetime and layer boundary',source:'type Callback<T=&\'static fn(u8)->u16>=T;fn main(){}'},
- {name:'owned callable parameters retain existing pointer domain refusal',source:'type Callback<T=fn(String)->u8>=T;fn main(){}'},
  {name:'unsafe callable default does not erase its source safety qualifier',source:'type Callback<T=unsafe fn(u8)->u16>=T;fn main(){}'},
+ {name:'function template result cannot replace same-width pointer identity',source:'type Mapper<T,U>=fn(T)->U;fn read(value:u8)->u64{u64::from(value)}fn main(){let map:Mapper<u8,usize>=read;}'},
+ {name:'function template parameter cannot replace same-width pointer identity',source:'type Mapper<T,U>=fn(T)->U;fn read(value:u64)->u64{value}fn main(){let map:Mapper<usize,u64>=read;}'},
+ {name:'function template type does not manufacture a capture-free value',source:'type Mapper<T,U>=fn(T)->U;fn main(){let offset=1u8;let map:Mapper<u8,u8>=|value|value.wrapping_add(offset);}'},
+ {name:'function template bound parameter is not used by its source name alone',source:'type Callback<T>=fn(T:u8)->u8;fn main(){}'},
+ {name:'function template ABI cannot be erased during symbolic preparation',source:'type Mapper<T,U>=extern "C" fn(T)->U;fn main(){}'},
+ {name:'function template safety qualifier cannot be erased during symbolic preparation',source:'type Mapper<T,U>=unsafe fn(T)->U;fn main(){}'},
+ {name:'function template higher-ranked lifetime binder retains its boundary',source:'type Mapper<T>=for<\'a> fn(&\'a T)->u8;fn main(){}'},
+ {name:'owned pointer domain does not erase borrowed parameter layers',source:'type Mapper<T,U>=fn(T)->U;fn read(value:&\'static String)->u8{7u8}fn main(){let map:Mapper<&\'static String,u8>=read;}'},
+ {name:'owned pointer domain does not infer an unknown result owner',source:'type Mapper<T,U>=fn(T)->U;fn main(){let map:Mapper<String,Missing>;}'},
 ];
 // Preserve the exact preceding active assertion as source history. No entry
 // records an executed observation, a status or a claim of Rust invalidity.
@@ -87,6 +110,26 @@ export const genericAliasDefaultPreviousBoundaries=[{
  previousAssertion:{fixtureExport:'genericAliasDefaultRefusals',name:'default canonical sum admission still needs actual direct Copy argument',source:'type Maybe<T=String>=Option<T>;fn main(){let value:Maybe=None;}',expectedErrorKinds:['unsupported','type','syntax']},
  sourceVersionRange:'>=1.90.0 <1.100.0',
  extension:'The source interpreter now has a separate supported owned standard sum profile. The original Rust source and preceding refusal assertion remain intact; old Copy-only shared policy controls still refuse missing Copy evidence.',
+},{
+ name:'parameter-dependent safe function template boundary',source:'type Callback<T>=fn(T)->u8;fn main(){}',sourceVersionRange:'>=1.90.0 <1.100.0',
+ previousAssertion:{fixtureExport:'genericAliasDefaultRefusals',name:'parameter-dependent callable template still needs its own interpretation',source:'type Callback<T>=fn(T)->u8;fn main(){}',expectedErrorKinds:['unsupported','type','syntax']},
+ extension:'The safe function template now binds its parameter subtree symbolically; no Copy or concrete domain admission is claimed before actual argument substitution.',
+},{
+ name:'unused owned function default domain boundary',source:'type Callback<T=fn(String)->u8>=T;fn main(){}',sourceVersionRange:'>=1.90.0 <1.100.0',
+ previousAssertion:{fixtureExport:'genericAliasDefaultRefusals',name:'owned callable parameters retain existing pointer domain refusal',source:'type Callback<T=fn(String)->u8>=T;fn main(){}',expectedErrorKinds:['unsupported','type','syntax']},
+ extension:'An unused generic default is a wellformed symbolic Rust type. At this preceding Copy-only boundary, actual application retained the concrete checker and its non-Copy String parameter refusal; the later separate owned profile is recorded below.',
+},{
+ name:'owned function template parameter domain boundary',source:'type Mapper<T,U>=fn(T)->U;fn read(value:String)->u8{7u8}fn main(){let map:Mapper<String,u8>=read;}',sourceVersionRange:'>=1.90.0 <1.100.0',
+ previousAssertion:{fixtureExport:'genericAliasDefaultRefusals',name:'actual function template application retains non-Copy parameter domain refusal',source:'type Mapper<T,U>=fn(T)->U;fn read(value:String)->u8{7u8}fn main(){let map:Mapper<String,u8>=read;}',expectedErrorKinds:['unsupported','type','syntax']},
+ extension:'The separate safe owned-domain pointer profile now admits actual String parameter roles; the original Copy-only function-pointer checker still rejects the same false Copy premise.',
+},{
+ name:'owned function default application boundary',source:'type Callback<T=fn(String)->u8>=T;fn read(value:String)->u8{7u8}fn main(){let map:Callback=read;}',sourceVersionRange:'>=1.90.0 <1.100.0',
+ previousAssertion:{fixtureExport:'genericAliasDefaultRefusals',name:'actual defaulted owned function domain retains original pointer checker',source:'type Callback<T=fn(String)->u8>=T;fn read(value:String)->u8{7u8}fn main(){let map:Callback=read;}',expectedErrorKinds:['unsupported','type','syntax']},
+ extension:'Actual complete default origins now use the separate owned-domain pointer gate, preserving actual child non-Copy facts and the complete prior boundary assertion.',
+},{
+ name:'owned function template result domain boundary',source:'type Mapper<T,U>=fn(T)->Option<U>;fn read(value:u8)->Option<String>{None}fn main(){let map:Mapper<u8,String>=read;}',sourceVersionRange:'>=1.90.0 <1.100.0',
+ previousAssertion:{fixtureExport:'genericAliasDefaultRefusals',name:'function template result retains actual owned sum domain refusal',source:'type Mapper<T,U>=fn(T)->Option<U>;fn read(value:u8)->Option<String>{None}fn main(){let map:Mapper<u8,String>=read;}',expectedErrorKinds:['unsupported','type','syntax']},
+ extension:'The admitted stored owned standard-sum result supplies its actual role to the new safe pointer profile; no runtime producer proof enters the signature.',
 }];
 export const genericAliasDefaultVersionRange='>=1.90.0 <1.100.0';
 export const defaultParameterDirectories=[

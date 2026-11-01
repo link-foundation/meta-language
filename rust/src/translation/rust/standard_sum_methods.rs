@@ -63,11 +63,14 @@ impl RustParser {
         if arity<0.0{return Ok(None);}
         let version_error=rules::read_rust_standard_sum_method_source_version_error(&sum.owner,&method.value,self.source_version_minor);
         if !version_error.is_empty(){return Err(fail(&version_error,Some(method.span())));}
-        if !source.wrappers.is_empty() || !source.direct_copy_value(){return Err(fail("the receiver needs its actual direct immutable Copy standard sum",receiver.span));}
+        let owned=rules::accept_rust_standard_sum_owned_panic_receiver(&sum.owner,&method.value,&self.origins.standard_sum_ownership_facts(&source).profile);
+        if !source.wrappers.is_empty() || !owned&&!source.direct_copy_value(){return Err(fail("the receiver needs its actual direct Copy or supported owned Option panic source",receiver.span));}
         let start=receiver.span.map_or(method.start,|span|span.start);
         let result_policy=rules::read_rust_standard_sum_method_result(&sum.owner,&method.value);
         self.cursor.expect("(",Some("standard sum method"))?;
-        let mut captures=vec![MethodCapture {name:self.fresh_product_binding(),value:receiver.clone(),origin:source.clone()}];
+        self.origins.check_owned_origin(&actual,receiver.span)?;
+        let receiver_origin=if owned{self.owned_standard_sum_method_capture(receiver,path)?}else{actual};
+        let mut captures=vec![MethodCapture {name:self.fresh_product_binding(),value:receiver.clone(),origin:receiver_origin.clone()}];
         let mut callable=None;
         let callback_argument=rules::read_rust_standard_sum_method_callback_argument(&sum.owner,&method.value);
         let message_role=rules::read_rust_standard_sum_method_panic_message_role(&sum.owner,&method.value);
@@ -98,6 +101,7 @@ impl RustParser {
         }
         if arity>0.0{self.cursor.eat(",");}
         let close=self.cursor.expect(")",Some("standard sum method"))?;
+        let receiver_moved=!owned||self.origins.consume_owned_binding(&receiver_origin,receiver.span)?;
         let span=Some(Span::new(start,close.end));
         let result_origin=match result_policy.as_str(){
             "boolean"=>{let mut origin=SourceOrigin::with_type(BOOL,path,Vec::new());origin.source_owner=Some(SourceOwner {kind:"primitive".to_owned(),path:vec!["bool".to_owned()],arguments:Vec::new()});origin},
@@ -138,7 +142,8 @@ impl RustParser {
         let captured=self.standard_sum_method_local(&captures[0],span);
         let mut body=SExpr::new(SNode::Match {scrutinees:vec![captured],rows},span);
         for capture in captures.into_iter().rev(){body=SExpr::new(SNode::Let {name:capture.name,ty:capture.origin.ty.map(Into::into),value:Box::new(capture.value),body:Box::new(body)},span);}
-        self.origins.mark(&body,result_origin);
+        let output=if owned{self.owned_standard_sum_method_output(result_origin,receiver_moved,true)}else{result_origin};
+        self.origins.mark(&body,output);
         Ok(Some(body))
     }
 }

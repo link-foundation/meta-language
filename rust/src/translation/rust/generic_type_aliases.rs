@@ -17,6 +17,7 @@ pub(super) enum GenericAliasTemplate {
     Tuple(Vec<Rc<Self>>),
     StandardSum { owner: String, arguments: Vec<Rc<Self>> },
     Vector { owner: String, element: Rc<Self> },
+    Function {parameters:Vec<Rc<Self>>,result:Rc<Self>,span:Span},
 }
 
 impl RustParser {
@@ -44,6 +45,9 @@ impl RustParser {
                 }
                 GenericAliasTemplate::Origin(_) => {}
                 GenericAliasTemplate::Vector {element,..} => pending.push((Rc::clone(element),depth+1)),
+                GenericAliasTemplate::Function {parameters,result,..}=>{
+                    pending.push((Rc::clone(result),depth+1));for parameter in parameters.iter().rev(){pending.push((Rc::clone(parameter),depth+1));}
+                },
             }
         }
         self.source_type_aliases.nodes += count;
@@ -86,6 +90,12 @@ impl RustParser {
             rules::accept_rust_generic_type_alias_concrete_callable_template(self.ordinary_completion_context(),origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),owner.map_or(-1.0,|owner|owner.path.len() as f64),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),parameters,&copies,result_copy,result_typed,origin.proven,origin.copy_evidence.is_some(),closure)
         }
     }
+    fn generic_alias_owned_callable_template(&self,origin:&SourceOrigin)->bool{
+        let owner=origin.expanded_source_owner.as_ref().or(origin.source_owner.as_ref());let parameters=match origin.ty.as_ref(){Some(Type::Function {params,..})=>params.len() as f64,_=>-1.0};
+        let roles=origin.callable_parameters.iter().flatten().map(|parameter|self.origins.standard_sum_ownership_facts(parameter).profile).collect::<Vec<_>>();
+        let result_role=origin.callable_result.as_deref().map(|result|self.origins.standard_sum_ownership_facts(result).profile).unwrap_or_default();
+        rules::accept_rust_generic_type_alias_owned_callable_template(self.ordinary_completion_context(),origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),owner.map_or(-1.0,|owner|owner.path.len() as f64),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),parameters,&roles,&result_role,origin.callable_result.as_deref().is_some_and(|result|result.ty.is_some()),origin.proven,origin.copy_evidence.is_some(),origin.copy_closure_identity.is_some()||origin.copy_closure_capture_count.is_some(),self.source_version_minor)
+    }
     fn generic_alias_vector_owner(&self,segments:&[String])->String {
         let resolved=self.resolve(segments,&self.module_path);
         let mut shadowed=false;
@@ -118,6 +128,10 @@ impl RustParser {
                 Ok(Rc::new(GenericAliasTemplate::StandardSum {owner:owner.clone(),arguments:result}))
             }
             GenericAliasTemplate::Vector {owner,element}=>Ok(Rc::new(GenericAliasTemplate::Vector {owner:owner.clone(),element:self.substitute_generic_alias_template(element,arguments,plan,occurrence,row,depth+1)?})),
+            GenericAliasTemplate::Function {parameters,result,span}=>{
+                let mut replaced=Vec::new();for parameter in parameters{replaced.push(self.substitute_generic_alias_template(parameter,arguments,plan,occurrence,row,depth+1)?);}
+                Ok(Rc::new(GenericAliasTemplate::Function {parameters:replaced,result:self.substitute_generic_alias_template(result,arguments,plan,occurrence,row,depth+1)?,span:*span}))
+            },
         }
     }
 
@@ -148,6 +162,23 @@ impl RustParser {
         self.charge_generic_alias_template(row,1)?;
         let start = self.cursor.index;
         let start_coordinate = self.cursor.peek().start;
+        if rules::accept_rust_generic_type_alias_function_template_head(&self.cursor.peek().value,&self.cursor.peek().raw){
+            let token=self.cursor.advance();self.cursor.expect("(",Some("generic alias function template"))?;let mut parameters=Vec::new();
+            while !self.cursor.is(")"){
+                if self.cursor.is_at(":",1){
+                    if !rules::accept_rust_generic_type_alias_function_parameter_name(&self.cursor.peek().value,&self.cursor.peek().raw){return Err(self.alias_error("function pointer parameter names require actual source identifiers",Some(row)));}
+                    self.cursor.advance();self.cursor.advance();
+                }
+                let error=rules::read_rust_generic_type_alias_function_template_error((parameters.len()+1) as f64);if !error.is_empty(){return Err(self.alias_error(&error,Some(row)));}
+                parameters.push(self.generic_alias_template_value(row,depth+1)?);if self.cursor.eat(",").is_none(){break;}
+            }
+            self.cursor.expect(")",Some("generic alias function template"))?;
+            let result=if self.cursor.eat("->").is_some(){self.generic_alias_template_value(row,depth+1)?}else{
+                self.charge_generic_alias_template(row,1)?;let mut origin=SourceOrigin::with_type(UNIT,&self.module_path,Vec::new());origin.source_owner=Some(SourceOwner {kind:"unit".into(),path:Vec::new(),arguments:Vec::new()});
+                Rc::new(GenericAliasTemplate::Origin(Box::new(self.copy_type_alias_origin(&origin,row)?)))
+            };
+            return Ok(Rc::new(GenericAliasTemplate::Function {parameters,result,span:token.span()}));
+        }
         if self.cursor.eat("(").is_some() {
             if self.cursor.eat(")").is_some() {
                 let mut origin = SourceOrigin::with_type(UNIT,&self.module_path,Vec::new());
@@ -231,7 +262,7 @@ impl RustParser {
         let owned_profile=stored.map(|stored|self.origins.standard_sum_ownership_facts(stored).profile).unwrap_or_default();
         let owned_sum_leaf=rules::accept_rust_generic_type_alias_owned_standard_sum_leaf(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,sum.map_or("",|sum|sum.owner.as_str()),sum.map_or(-1.0,|sum|sum.arguments.len() as f64),origin.proven,stored.is_some_and(|origin|origin.proven),stored.map_or(-1.0,|origin|origin.wrappers.len() as f64),&owned_profile);
         let string=rules::accept_rust_generic_type_alias_owned_string_template(origin.ty.as_ref().map_or("",Type::kind),origin.wrappers.len() as f64,owner.map_or("",|owner|owner.kind.as_str()),&owner.map(|owner|owner.path.join("::")).unwrap_or_default(),owner.map_or(-1.0,|owner|owner.arguments.len() as f64),origin.proven,origin.text_source_model.unwrap_or(""));
-        if !accepted && !named && !sum_leaf && !owned_sum_leaf && !self.generic_alias_callable_template(origin,false) && !self.generic_alias_header_origin(origin) && !string { return Err(self.alias_error("generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype",Some(row))); }
+        if !accepted && !named && !sum_leaf && !owned_sum_leaf && !self.generic_alias_callable_template(origin,false) && !self.generic_alias_owned_callable_template(origin) && !self.generic_alias_header_origin(origin) && !string { return Err(self.alias_error("generic alias concrete leaves require a direct admitted scalar, Unit, owned String or actual source datatype",Some(row))); }
         let first = self.cursor.tokens.iter().position(|token|token.start == start_coordinate).expect("actual generic template source token");
         for index in first..self.cursor.index {
             let token=&self.cursor.tokens[index];let qualified=index>0&&self.cursor.tokens[index-1].value=="::";
@@ -298,6 +329,23 @@ impl RustParser {
                 if matches!(origin.ty.as_ref(),Some(Type::Named {..})) && origin.standard_sum_source.is_none() { self.origins.retain_nominal_copy_origin(&mut origin); }
                 Ok(origin)
             }
+            GenericAliasTemplate::Function {parameters,result,span}=>{
+                let mut actual_parameters=Vec::new();for parameter in parameters{let parameter=self.materialize_generic_alias_template(parameter,arguments,plan,occurrence,row,depth+1)?;actual_parameters.push(super::source_type_origins::clone_source_type_origin(&parameter));}
+                let result=self.materialize_generic_alias_template(result,arguments,plan,occurrence,row,depth+1)?;let result=super::source_type_origins::clone_source_type_origin(&result);
+                let copies=actual_parameters.iter().map(SourceOrigin::direct_copy_value).collect::<Vec<_>>();let result_copy=result.direct_copy_value();
+                let roles=actual_parameters.iter().map(|parameter|self.origins.standard_sum_ownership_facts(parameter).profile).collect::<Vec<_>>();let result_role=self.origins.standard_sum_ownership_facts(&result).profile;
+                let actual=crate::translation::rust_function_pointer_rules::read_rust_function_pointer_domain_error(self.ordinary_completion_context(),&copies,result_copy,&roles,&result_role,self.source_version_minor);
+                let error=crate::translation::rust_function_pointer_rules::read_rust_function_pointer_header_domain_error(self.ordinary_completion_context(),&copies,result_copy,&roles,&result_role,self.source_version_minor,self.header_discovery);
+                if !error.is_empty(){return Err(super::unsupported("Rust function pointer",&error,Some(*span)));}
+                let owners=actual_parameters.iter().chain(std::iter::once(&result)).map(|child|child.expanded_source_owner.clone().or_else(||child.source_owner.clone())).collect::<Option<Vec<_>>>().ok_or_else(||self.alias_error("generic function alias children need complete actual source types and owners",Some(row)))?;
+                let params=actual_parameters.iter().map(|parameter|parameter.ty.clone()).collect::<Option<Vec<_>>>().ok_or_else(||self.alias_error("generic function alias children need complete actual source types and owners",Some(row)))?;
+                let ret=result.ty.clone().ok_or_else(||self.alias_error("generic function alias children need complete actual source types and owners",Some(row)))?;
+                let mut origin=SourceOrigin::with_type(Type::Function {params,ret:Box::new(ret)},&row.path,Vec::new());
+                origin.proven=actual.is_empty();origin.copy_evidence=actual.is_empty().then_some(());origin.source_function_pointer_header=!actual.is_empty();
+                origin.source_owner=Some(SourceOwner {kind:"function".into(),path:Vec::new(),arguments:owners});origin.callable_parameters=Some(actual_parameters);origin.callable_result=Some(Box::new(result));
+                if !self.generic_alias_callable_template(&origin,false)&&!self.generic_alias_owned_callable_template(&origin)&&!self.generic_alias_callable_template(&origin,true){return Err(self.alias_error("generic function alias needs its complete existing pointer source contract",Some(row)));}
+                self.copy_type_alias_origin(&origin,row)
+            },
             GenericAliasTemplate::StandardSum {owner,arguments:children} => {
                 self.standard_sum_source.depth+=1;
                 let result=(||{

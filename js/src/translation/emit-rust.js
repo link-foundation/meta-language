@@ -81,6 +81,8 @@ import { sameType, typeKey } from './types.js';
 import {acceptReferenceIdentityComparison, readReferenceIdentityComparisonError, renderReferenceIdentityComparison} from './reference-identity-rules.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, typeContains, withParts } from './emit-common.js';
+import {readCallableDataFacts,readCallableDataRecursiveProfile} from './callable-data.js';
+import {readCallableDataDerivation} from './callable-data-derivation-rules.js';
 import { STRING_PRELUDE } from './string-runtime.js';
 import { readRustOptionalPrelude, renderRustCompoundType, renderRustReferenceType } from './structured-type-rules.js';
 import { acceptConstantEmission, constantBindingForm, renderConstantBinding } from './frontend-rules.js';
@@ -999,7 +1001,8 @@ class RustEmitter {
   }
 
   data(entry) {
-    if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own identity, debug and equality encodings before this target derives structural traits', entry.span);
+    const facts=readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations);
+    if(facts.callable)readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations);
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     this.state.encode('data', renderRustDataFieldEncoding(this.namedConstructorFields));
@@ -1008,7 +1011,7 @@ class RustEmitter {
       return `    ${renderRustConstructorFields(this.program.sourceLanguage,local,ctor.fields.map(field=>field.name??''),ctor.fields.map(field=>this.fieldType(field.type)))},`;
     });
     // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
-    const derives = this.holdsFloat(entry.fullName) ? 'Clone, Debug, PartialEq' : 'Clone, Debug, PartialEq, Eq';
+    const derives = readCallableDataDerivation('Rust',facts.callable,this.holdsFloat(entry.fullName),false,false);
     return [`#[derive(${derives})]`, `pub enum ${name} {`, ...variants, '}'].join('\n');
   }
 

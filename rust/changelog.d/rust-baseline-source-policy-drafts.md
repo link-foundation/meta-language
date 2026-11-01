@@ -21,3 +21,9 @@ for ownership rejection versus interpreter support boundaries.
 These changes are unexecuted source drafts. New generated policy products and
 metadata reconciliation remain pending; no test or compilation result, complete
 language support or requirement completion is claimed.
+
+Draft consuming owned-sum defaults, conversions, nested flatten/transpose and
+eager combinators with actual move tracking. Add capture-free owned callback
+domains, source-contract sanitization, callable data fields and same-kind
+JavaScript Map/Set copying. Retain obsolete refusal inputs and compiler
+contracts alongside their newly authored positive controls.

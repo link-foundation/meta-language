@@ -1,10 +1,11 @@
 import {retainRustNominalCopyOrigin} from './rust-nominal-copies.js';
-import {resolveRustStandardSumSourcePattern} from './rust-standard-sum-source.js';
+import {resolveRustStandardSumSourcePattern,readRustStandardSumSourceIdentity} from './rust-standard-sum-source.js';
 import {projectRustStandardSumPatternField,markRustStandardSumOwnedCallResult,requireRustStandardSumPatternTransfer,finishRustStandardSumFieldDereference} from './rust-standard-sum-ownership.js';
 import {mergeRustOwnedLoanBindings,projectRustOwnedLoanBindings,readRustOwnedStringConstructionError,acceptRustOwnedBindingValue} from './rust-owned-binding-rules.js';
 import {isRustOwnedBindingValue,captureRustOwnedBorrow,finishRustOwnedExpression,expireRustOwnedBindings,transferRustOwnedResult,checkRustOwnedOrigin,registerRustOwnedBinding,consumeRustOwnedOrigin,availableRustOwnedOrigin,joinRustOwnedBindings,checkRustOwnedGuard} from './rust-owned-bindings.js';
 import {testRustSourceReferenceLifetimeLayer} from './rust-copy-closure-parameter-rules.js';
-import {readRustStandardSumGuardBindingDisposition} from './rust-standard-sum-guard-rules.js';
+import {readRustStandardSumGuardBindingDisposition,readRustStandardSumGuardAlternativeBindingError,readRustStandardSumGuardAliasTransferError} from './rust-standard-sum-guard-rules.js';
+import {countRustStandardSumGuardAliases,sameRustStandardSumGuardLineage} from './rust-standard-sum-guards.js';
 import {acceptRustStaticByteArrayCoercion,acceptRustStaticByteArrayOwnerEquality} from './rust-byte-string-expression-rules.js';
 import {readRustSourceNumericPatternOwnerError,acceptRustSourceNumericPatternAlias} from './rust-numeric-pattern-rules.js';
 import {acceptRustSourceLiteralPatternAlias} from './rust-byte-pattern-rules.js';
@@ -534,6 +535,10 @@ export class RustSourceOrigins {
     const maps = patterns.map(pattern => this.pattern(pattern, this.origin(scrutinee, path), path, new Map(), pattern.span ?? scrutinee.span));
     const scope = new Map(this.scope);
     const span = patterns.find(pattern => pattern.span)?.span ?? scrutinee.span;
+    if(deferredGuard){
+      const aliases=countRustStandardSumGuardAliases(patterns);
+      for(const map of maps){const error=readRustStandardSumGuardAliasTransferError(aliases,[...map.values()].filter(origin=>isRustOwnedBindingValue(this,origin)).length);if(error)throw unsupported('Rust owned standard sum guard',error,span);}
+    }
     if (!this.collecting && maps.length > 1 && maps.some(map => map.size !== maps[0].size || [...maps[0].keys()].some(name => !map.has(name)))) {
       throw unsupported('or-pattern ownership', 'every alternative must bind the same names with the same source ownership', span);
     }
@@ -542,6 +547,11 @@ export class RustSourceOrigins {
       if (!this.collecting && maps.length > 1 && (maps.some(map => map.size !== maps[0].size)
         || candidates.some(candidate => !candidate || !candidate.proven || JSON.stringify(candidate.wrappers) !== JSON.stringify(origin.wrappers)))) {
         throw unsupported('or-pattern ownership', 'every alternative must bind the same names with the same source ownership', span);
+      }
+      if(deferredGuard){
+        const identities=candidates.map(candidate=>candidate?readRustStandardSumSourceIdentity({origins:this},candidate):'');
+        const error=readRustStandardSumGuardAlternativeBindingError(identities.every(Boolean),identities.every(identity=>identity===identities[0]),candidates.every(candidate=>candidate&&sameRustStandardSumGuardLineage(origin,candidate)));
+        if(error)throw unsupported('Rust owned standard sum guard',error,span);
       }
       const binding=this.join(candidates.filter(Boolean));binding.sourceExtendingTemporaryBindings=[];
       const disposition=readRustStandardSumGuardBindingDisposition(deferredGuard,isRustOwnedBindingValue(this,binding));

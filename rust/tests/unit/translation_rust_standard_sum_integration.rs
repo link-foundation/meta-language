@@ -80,15 +80,18 @@ fn assert_original_compiler_declaration(row:&Value,versions:&Value){
     assert_eq!(expectation["model"],"Rust original compiler expectation 1");assert_eq!(expectation["edition"],"2024");
     assert_eq!(&expectation["versions"],versions,"every selected original compiler endpoint remains mandatory");
     assert_eq!(row["sourceVersionRange"],">=1.90.0 <1.100.0");
-    let category=match expectation["outcome"].as_str().unwrap(){"accept"=>"valid Rust source","reject"=>"invalid Rust ownership",other=>panic!("undeclared original compiler outcome {other}")};
-    assert_eq!(expectation["category"],category);
+    match expectation["outcome"].as_str().unwrap(){
+        "accept"=>assert_eq!(expectation["category"],"valid Rust source"),
+        "reject"=>assert!(matches!(expectation["category"].as_str(),Some("invalid Rust ownership"|"invalid Rust source"))),
+        other=>panic!("undeclared original compiler outcome {other}"),
+    }
 }
 fn assert_declared_original_compiler_coverage(fixture:&Value)->usize{
     let coverage=&fixture["originalCompilerCoverage"];
     assert_eq!(coverage["model"],"declared original Rust refusal compiler coverage 1");
     assert_eq!(coverage["selectedVersions"],fixture["versions"]);
     let mut classified=Vec::new();let mut unclassified=Vec::new();
-    for row in fixture["refusals"].as_array().unwrap(){
+    for row in fixture["refusals"].as_array().unwrap().iter().chain(fixture["emissionRefusals"].as_array().unwrap()){
         if let Some(expectation)=row.get("originalCompilerExpectation"){
             assert_original_compiler_declaration(row,&fixture["versions"]);
             classified.push(json!({"name":row["name"],"sourceVersionRange":row["sourceVersionRange"],"versions":expectation["versions"],"outcome":expectation["outcome"],"category":expectation["category"]}));
@@ -222,6 +225,39 @@ fn actual_standard_sum_originals_retain_all_native_frontend_transport_and_emissi
         if row["originalCompilerExpectation"]["outcome"]=="accept"{assert_eq!(error.kind.as_str(),"unsupported","valid original Rust remains an interpreter profile boundary");}
         assert!(create_typed_program_links_with_rust_source_version(source,version,None).is_err(),"all original typed-import refusals remain represented");
     }}
+    for (row_index,row) in fixture["emissionRefusals"].as_array().unwrap().iter().enumerate(){
+        let source=row["source"].as_str().unwrap();assert_concrete_source(source,&row["concrete"],row["name"].as_str().unwrap());
+        assert_original_compiler_declaration(row,&fixture["versions"]);
+        assert_eq!(row["originalCompilerExpectation"]["outcome"],"accept");
+        assert_eq!(row["targets"],json!(["Rust","Lean"]));
+        assert_eq!(row["selections"].as_array().unwrap().len(),fixture["versions"].as_array().unwrap().len());
+        let directory=TemporaryDirectory::new(&format!("standard_sum_emission_refusal_{row_index}"));
+        for (selection_index,selection) in row["selections"].as_array().unwrap().iter().enumerate(){
+            let version=selection["version"].as_str().unwrap();assert_eq!(selection["version"],fixture["versions"][selection_index]);
+            assert_original_compiler_expectation(&directory.0,&format!("original_emission_refusal_{row_index}_{selection_index}"),source,version,&row["originalCompilerExpectation"]);original_compiler_cells+=1;
+            let surface=parse_rust_with_source_version(source,version).expect("backend boundary must pass the actual frontend");
+            let program=check_program(&surface).expect("backend boundary must pass the actual checker");
+            assert_eq!(serde_json::to_value(&surface).unwrap(),selection["surface"]);
+            let packet=create_typed_program_links_with_rust_source_version(source,version,None).expect("backend boundary must retain typed Links");
+            assert_eq!(packet.network.to_lino(),selection["links"].as_str().unwrap());
+            let binary=encode_link_network_binary(&packet.network,BinaryLinksOptions::default()).unwrap();
+            let expected_binary=selection["binary"].as_array().unwrap().iter().map(|byte|u8::try_from(byte.as_u64().unwrap()).unwrap()).collect::<Vec<_>>();assert_eq!(binary,expected_binary);
+            assert_eq!(packet.root.as_u64(),selection["root"].as_u64().unwrap());
+            let graphs=[packet.network.clone(),LinkNetwork::from_lino(selection["links"].as_str().unwrap()).unwrap(),decode_link_network_binary(&binary,BinaryLinksOptions::default()).unwrap()];
+            assert_eq!(selection["diagnostics"].as_array().unwrap().len(),fixture["transports"].as_array().unwrap().len()*row["targets"].as_array().unwrap().len());
+            for (transport_index,graph) in graphs.iter().enumerate(){
+                assert_eq!(decode_typed_program_links(graph,packet.root).unwrap(),program);
+                assert_eq!(graph.to_lino(),selection["links"].as_str().unwrap());assert_eq!(encode_link_network_binary(graph,BinaryLinksOptions::default()).unwrap(),binary);
+                for (target_index,target) in row["targets"].as_array().unwrap().iter().enumerate(){
+                    let diagnostic=&selection["diagnostics"][transport_index*row["targets"].as_array().unwrap().len()+target_index];
+                    assert_eq!(diagnostic["transport"],fixture["transports"][transport_index]);assert_eq!(&diagnostic["target"],target);
+                    let error=emit_typed_program_links(graph,packet.root,target.as_str().unwrap()).expect_err("each backend independently refuses after frontend and codec success");
+                    assert_eq!(error.kind.as_str(),"unsupported");assert_eq!(error.kind.as_str(),diagnostic["kind"].as_str().unwrap());
+                    assert_eq!(error.reason,diagnostic["reason"].as_str().unwrap());assert_eq!(serde_json::to_value(error.span).unwrap(),diagnostic["span"]);
+                }
+            }
+        }
+    }
     assert_eq!(original_compiler_cells,classified_originals*fixture["versions"].as_array().unwrap().len(),"every explicitly classified original compiler/version cell was checked; no declared endpoint is skipped");
     for previous in fixture["previousRefusals"].as_array().unwrap(){assert!(fixture["cases"].as_array().unwrap().iter().any(|row|row["source"]==previous["source"]),"retain each exact formerly refused original input");}
 }

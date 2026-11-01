@@ -232,6 +232,23 @@ impl RustParser {
     pub(super) fn read_parameter_only_copy_closure_deferred_result(&mut self,path:&[String],parameters:&[SourceOrigin])->Result<SExpr>{
         self.read_parameter_only_copy_closure_options(path,parameters,true)
     }
+    pub(super) fn read_owned_callback_closure(&mut self,path:&[String],parameters:&[SourceOrigin],result:Option<&SourceOrigin>)->Result<SExpr>{
+        let mut expected=if let Some(result)=result{
+            SourceOrigin::with_type(Type::Function{params:parameters.iter().map(|origin|origin.ty.clone().expect("actual callback parameter type")).collect(),ret:Box::new(result.ty.clone().expect("actual callback result type"))},path,Vec::new())
+        }else{let mut origin=SourceOrigin::unknown();origin.path=path.to_vec();origin};
+        expected.callable_parameters=Some(parameters.iter().map(super::function_pointers::clone_callable_type_origin).collect());expected.callable_result=result.map(|origin|Box::new(super::function_pointers::clone_callable_type_origin(origin)));
+        if result.is_some(){expected.copy_evidence=Some(());}
+        if ["|","||","move"].iter().any(|role|self.cursor.is(role)){return self.read_copy_closure_with_domains(path,Some(&expected),result.is_none(),false,true);}
+        if self.cursor.is("("){
+            let mut count=64usize;loop{
+                let length=count.min(self.cursor.tokens.len()-self.cursor.index);
+                let syntax=(0..length).map(|index|["(","|","||","move"].into_iter().find(|role|self.cursor.is_at(role,index)).unwrap_or("").to_owned()).collect::<Vec<_>>();let depth=contextual::find_rust_contextual_closure_parenthesis_count(&syntax);
+                if depth>0.0{let depth=crate::translation::frontend_rules::ml_array::number_index(depth).expect("actual callback parenthesis count");self.cursor.index+=depth;let value=self.read_copy_closure_with_domains(path,Some(&expected),result.is_none(),false,true)?;for _ in 0..depth{self.cursor.expect(")",Some("owned-domain callback"))?;}return Ok(value);}
+                if depth != -2.0||length<count{break;}count=count.checked_mul(2).expect("actual callback token window");
+            }
+        }
+        let previous=self.standard_sum_source.expected_origin.take();let parsed=self.expr(path,super::Options::default());self.standard_sum_source.expected_origin=previous;parsed
+    }
     fn read_parameter_only_copy_closure_options(&mut self,path:&[String],parameters:&[SourceOrigin],defer_result:bool)->Result<SExpr>{
         if parameters.iter().any(|origin|origin.ty.is_none()||!origin.copy_closure_parameter()){
             return Err(unsupported("Rust parameter-only Copy closure","each parameter needs its actual admitted Copy source origin",Some(self.peek().span())));
@@ -350,8 +367,13 @@ impl RustParser {
         parameters_only: bool,
         defer_result: bool,
     ) -> Result<SExpr> {
+        self.read_copy_closure_with_domains(path,expected,parameters_only,defer_result,false)
+    }
+    fn read_copy_closure_with_domains(
+        &mut self,path:&[String],expected:Option<&SourceOrigin>,parameters_only:bool,defer_result:bool,owned_domains:bool,
+    )->Result<SExpr>{
         let start = self.peek();
-        self.cursor.eat("move");
+        let explicit_move=self.cursor.eat("move").is_some();
         let mut params = Vec::new();
         let mut origins = Vec::new();
         let mut bindings = Vec::new();
@@ -532,7 +554,10 @@ impl RustParser {
             .iter()
             .map(SourceOrigin::copy_closure_parameter)
             .collect::<Vec<_>>();
-        let reason = if written {
+        let domain_roles=origins.iter().map(|origin|self.origins.standard_sum_ownership_facts(origin).profile).collect::<Vec<_>>();
+        let reason = if written && owned_domains {
+            crate::translation::rust_owned_standard_sum_callback_rules::read_rust_owned_standard_sum_callback_closure_header_error(self.ordinary_completion_context(),&names,&domain_roles,&result_origin.as_ref().map_or_else(String::new,|origin|self.origins.standard_sum_ownership_facts(origin).profile))
+        } else if written {
             rules::read_rust_copy_closure_header_error(
                 self.ordinary_completion_context(),
                 &names,
@@ -548,8 +573,11 @@ impl RustParser {
         if !reason.is_empty() {
             return Err(unsupported("Rust Copy closure", reason, Some(start.span())));
         }
+        let ownership=owned_domains.then(||self.origins.snapshot_owned_bindings());
+        let temporaries=owned_domains.then(||self.origins.owned_temporary_frame());
         let outer = self.origins.enter(None);
         for (parameter, origin) in params.iter().zip(bindings.iter().cloned()) {
+            let origin=if owned_domains{self.origins.register_owned_binding(origin)}else{origin};
             self.origins.scope.insert(parameter.name.clone(), origin);
         }
         let outer_sum_return=std::mem::replace(&mut self.standard_sum_source.return_origin,result_origin.clone());
@@ -599,7 +627,9 @@ impl RustParser {
                     written,
                     ret.is_some(),
                 );
-                let reason = if deferred {
+                let reason = if owned_domains {
+                    crate::translation::rust_owned_standard_sum_callback_rules::read_rust_owned_standard_sum_callback_closure_header_error(self.ordinary_completion_context(),&names,&domain_roles,&result_origin.as_ref().map_or_else(String::new,|origin|self.origins.standard_sum_ownership_facts(origin).profile))
+                } else if deferred {
                     rules::read_rust_copy_closure_parameter_header_error(
                         self.ordinary_completion_context(),
                         &names,
@@ -638,6 +668,11 @@ impl RustParser {
                     body.span,
                 )?;
             }
+            if owned_domains{
+                if self.origins.standard_sum_ownership_facts(&self.origins.origin(&body,path)).profile=="owned"{self.owned_standard_sum_method_capture(&body,path)?;}
+                let body_origin=self.origins.origin(&body,path);
+                self.origins.expire_owned_bindings(ownership.as_ref().expect("private callback owner frame"),&body_origin)?;
+            }
             let body_origin = self.origins.origin(&body, path);
             for projection in projections.into_iter().rev() {
                 body = SExpr::new(
@@ -656,6 +691,8 @@ impl RustParser {
         self.origins.scope = outer.clone();
         self.standard_sum_source.return_origin=outer_sum_return;
         self.standard_sum_source.expected_origin=outer_sum_expected;
+        if let Some(ownership)=ownership{self.origins.restore_owned_bindings(ownership);}
+        if let Some(temporaries)=temporaries{self.origins.restore_owned_temporary_frame(temporaries);}
         let body = read?;
         let statements = serde_json::json!([{"s":"return", "expr":&body}]);
         let facts = create_surface_reference_facts(&statements);
@@ -695,11 +732,25 @@ impl RustParser {
                 Some(start.span()),
             ));
         }
+        let captured=if owned_domains{captures.iter().map(|name|outer.get(name).cloned().unwrap_or_else(SourceOrigin::unknown)).collect::<Vec<_>>()}else{Vec::new()};
+        let capture_roles=captured.iter().map(|origin|self.origins.standard_sum_ownership_facts(origin).profile).collect::<Vec<_>>();
+        let capture_identities=captured.iter().map(|origin|self.origins.standard_sum_source_identity(origin)).collect::<Vec<_>>();
+        // Labels only project presence; actual complete typed identities above
+        // remain the source evidence, as in concrete sum factory admission.
+        let capture_labels=capture_identities.iter().map(|identity|if identity.is_some(){"complete checked source identity".to_owned()}else{String::new()}).collect::<Vec<_>>();
+        let capture_layers=captured.iter().map(|origin|origin.wrappers.len() as f64).collect::<Vec<_>>();
+        let capture_borrowed=captured.iter().map(|origin|origin.source_borrowed_place||origin.source_binding_identity.is_some()||origin.source_place_binding_identity.is_some()||!origin.source_loan_binding_identities.is_empty()||!origin.source_place_loan_binding_identities.is_empty()).collect::<Vec<_>>();
+        if owned_domains{
+            for origin in &captured{self.origins.check_owned_origin(origin,Some(start.span()))?;}
+            let error=crate::translation::rust_owned_standard_sum_callback_rules::read_rust_owned_standard_sum_callback_move_capture_error(explicit_move,&captures,&capture_roles,&capture_labels,&capture_layers,&capture_borrowed,plan[0]);
+            if !error.is_empty(){return Err(unsupported("Rust owned-domain closure",error,Some(start.span())));}
+        }
         let span = Some(Span::new(
             start.start,
             self.cursor.tokens[self.cursor.index - 1].end,
         ));
         let capture_count = captures.len();
+        let owned_closure_copy=owned_domains&&crate::translation::rust_owned_standard_sum_callback_rules::accept_rust_owned_standard_sum_callback_move_closure_copy(&domain_roles,&result_origin.as_ref().map_or_else(String::new,|origin|self.origins.standard_sum_ownership_facts(origin).profile),explicit_move,&captures,&capture_roles,&capture_labels,&capture_layers,&capture_borrowed,plan[0]);
         let node = SExpr::new(
             SNode::Lambda {
                 params,
@@ -730,8 +781,9 @@ impl RustParser {
         };
         origin.copy_closure_identity = span;
         origin.copy_closure_capture_count = Some(capture_count);
-        origin.callable_parameters = Some(origins);
-        origin.callable_result = result_origin.map(Box::new);
+        if owned_domains{origin.copy_evidence=owned_closure_copy.then_some(());}
+        origin.callable_parameters = Some(if owned_domains{origins.iter().map(super::function_pointers::clone_callable_type_origin).collect()}else{origins});
+        origin.callable_result = result_origin.map(|origin|Box::new(if owned_domains{super::function_pointers::clone_callable_type_origin(&origin)}else{origin}));
         self.origins.mark(&node, origin);
         Ok(node)
     }

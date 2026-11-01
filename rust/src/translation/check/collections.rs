@@ -2,6 +2,7 @@
 
 use super::{Checker, Env, Expr, Node, Result, SExpr, SNode, Type, array, type_error, unsupported};
 use crate::translation::collection_construction_rules as rules;
+use crate::translation::collection_copy_rules as copy_rules;
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::optional_value_rules::accept_optional_primitive_kind;
 use crate::translation::surface_reference_facts::{
@@ -61,8 +62,16 @@ impl Checker {
         } else {
             None
         };
-        let items =
+        let mut items =
             Self::reference_value(self.expr(items, env, path, expected_items.as_ref(), false)?);
+        let input_value=serde_json::to_value(&items.ty).expect("an actual collection input is serializable");
+        let input_facts=create_surface_reference_facts(&input_value);
+        let copy=copy_rules::plan_collection_copy_input(&input_facts.texts,&input_facts.starts,&input_facts.counts,&input_facts.labels,&input_facts.targets,node.node.kind(),input_facts.root);
+        if matches!(number_index(copy[0]),Some(1|2)){
+            let first=selected_type(&input_facts,copy[1]);
+            let element=if number_index(copy[0])==Some(1){first}else{Type::Tuple{elements:vec![first,selected_type(&input_facts,copy[2])]}};
+            items=Expr::new(Node::CollectionItems{object:Box::new(items),op:copy_rules::read_collection_copy_snapshot_operation(node.node.kind())},array(element));
+        }
         let value =
             serde_json::to_value(&items.ty).expect("a checked collection input is serializable");
         let facts = create_surface_reference_facts(&value);

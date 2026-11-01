@@ -10,7 +10,7 @@ export function readRustOriginalCompilerExpectation(row,versions){
  assert.deepEqual(value.versions,versions,row.name+': every selected compiler endpoint is mandatory');
  assert.ok(typeof row.sourceVersionRange==='string'&&row.sourceVersionRange.length>0,row.name+': explicit original source version range');
  assert.ok(value.outcome==='accept'||value.outcome==='reject',row.name+': explicit compiler accept/reject expectation');
- assert.equal(value.category,value.outcome==='accept'?'valid Rust source':'invalid Rust ownership',row.name+': source validity and interpreter admission are independent');
+ assert.ok(value.outcome==='accept'?value.category==='valid Rust source':['invalid Rust ownership','invalid Rust source'].includes(value.category),row.name+': source validity and interpreter admission are independent');
  return value;
 }
 export function describeRustOriginalCompilerClassificationCoverage(rows,versions){

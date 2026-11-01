@@ -12,6 +12,7 @@ import {readRustStandardSumConcreteControl} from './support/rust-standard-sum-co
 import {rustStandardSumIntegrationVersions as versions,rustStandardSumIntegrationTargets as targets,
  rustStandardSumIntegrationTransports as transports,rustStandardSumIntegrationOriginals as originals,
  rustStandardSumIntegrationRefusals as refusals,rustStandardSumIntegrationNativeControls as nativeControls,
+ rustStandardSumIntegrationEmissionRefusals as emissionRefusals,
  rustStandardSumIntegrationPreviousRefusals as previousRefusals} from './fixtures/rust-standard-sum-integration.mjs';
 
 function stdout(code){
@@ -85,6 +86,21 @@ for(const row of refusals)for(const sourceVersion of versions){
  });
 }
 
+for(const row of emissionRefusals)for(const sourceVersion of versions)test(`standard sum backend boundary: ${row.name} / Rust ${sourceVersion}`,()=>{
+ assert.equal(readRustStandardSumConcreteControl(row.source).language,'Rust');
+ const program=checkProgram(parseRust(row.source,{sourceVersion}));
+ const packet=createTypedProgramLinks(row.source,'Rust',{rustSourceVersion:sourceVersion});
+ const text=packet.network.toLino(),binary=encodeLinkNetworkBinary(packet.network);
+ const graphs=[packet.network,LinkNetwork.fromLino(text),decodeLinkNetworkBinary(binary)];
+ for(const [at,graph]of graphs.entries()){
+  assert.equal(graph.toLino(),text);assert.deepEqual(encodeLinkNetworkBinary(graph),binary);
+  const restored=decodeTypedProgramLinks(graph,packet.root);assert.deepEqual(restored.items,program.items);assert.deepEqual(restored.main,program.main);
+  for(const target of row.targets)assert.throws(()=>emitTypedProgramLinks(graph,packet.root,target),error=>{
+   assert.ok(row.diagnosticKinds.includes(error.kind),row.name+'/'+transports[at]+'/'+target);assert.ok(error.reason.length>0);return true;
+  });
+ }
+});
+
 // Retention assertions keep every planned native comparison attached to all
 // originals/refusals. They are not native observations or an execution claim.
 test('native follow-up retains every complete original, literal oracle and transport/target cell',()=>{
@@ -95,4 +111,5 @@ test('native follow-up retains every complete original, literal oracle and trans
  for(const previous of previousRefusals){assert.ok(originals.some(row=>row.source===previous.source),'retain exact formerly refused original');assert.ok(previous.reasonIncludes.length>0);}
  for(const row of originals){assert.ok(row.source.length>0);assert.equal(typeof row.stdout,'string');assert.equal(row.sourceVersionRange,'>=1.90.0 <1.100.0');}
  for(const row of refusals)assert.ok(row.source.length>0);
+ for(const row of emissionRefusals){assert.ok(row.source.length>0);assert.deepEqual(row.targets,['Rust','Lean']);assert.equal(row.originalCompilerExpectation.outcome,'accept');}
 });

@@ -405,8 +405,9 @@ queue so the second committing traversal uses the same source records.
 
 The implementation uses actual source binding/loan and owned-producer facts,
 including readonly inspection of fresh nested sum producers with no fabricated
-owner identities. Alias and or-pattern delayed move agreement remain explicit
-refusals. The native constructor projection also corrects a misplaced
+owner identities. The initial restricted alias/or admission policy remains in
+the literal boundary controls; the expanded scope model is described below.
+The native constructor projection also corrects a misplaced
 `standard_sum` declaration that referred to a constructor-only type entry from
 the tuple arm; its actual declaration now belongs to the constructor arm.
 
@@ -415,9 +416,9 @@ binding registration decisions, ten complete original programs with literal
 stdout and eight complete refusals, all bounded
 to Rust `>=1.90.0 <1.100.0`. One positive repeats the exact historical guarded
 input with its independently declared original compiler expectation and retained
-previous translation expectation. The old refusal fixture row has not been
-removed: coordinator routing must retain its history while reclassifying the
-now-admitted source. The new originals include false-guard fallthrough consuming
+previous translation expectation. Coordinator routing retains the former owned
+guard refusal as a complete previous boundary and admits its identical source
+with the original compiler expectation. The new originals include false-guard fallthrough consuming
 the original root inside the same match, actual true-body moves, repeated
 readonly reads, nonbinding guards and nominal Copy behavior. Controls remain
 source drafts; no verification or runtime observation has occurred. Nested
@@ -425,3 +426,88 @@ guard block scope entry uses the new shared owned-registration rule to leave a
 borrowed place unchanged; it cannot manufacture an ownership identity for a
 readonly payload projected from a fresh temporary. Positive readonly block and
 negative attempted-move originals retain that boundary explicitly.
+
+## Guarded alternatives and safe whole-value aliases
+
+The expanded guarded source path compares complete canonical source type
+identities and the original root/place/loan/lifetime/producer records for each
+binding before joining alternatives in the readonly guard scope. The body
+scope still uses ordinary case transfers after the guard is checked. This
+admits disjoint `Ok(text)|Err(text)` on `Result<String,String>` and overlapping
+`Some(text)|Some(text)` without discarding ownership. The existing guarded
+lowering already attempts each matching alternative separately: a false guard
+can run again on the next overlapping alternative; a true guard enters its
+body immediately. No replacement evaluation or move semantics were added to
+the native adapter.
+
+Whole-value aliases are admitted when each alternative binds at most one owned
+value. Wildcard fields add no move, and independent Copy fields remain usable
+after the whole value is transferred. A whole alias combined with an owned
+field binding retains an explicit partial-move agreement diagnostic. The first
+profile's restrictive shape policy and controls are retained separately from
+the new actual-consumer admission policies.
+
+`rust-standard-sum-guard-alternatives.mjs` adds 13 shared rule controls, eight
+complete original programs with literal stdout and six complete refusals.
+Originals retain disjoint and overlapping guard traces, safe whole aliases,
+actual temporary production, nested owned aliases and Copy field use after
+whole transfer. The exact formerly refused OR input is repeated with its
+previous translation expectation; coordinator routing owns retaining the old
+slot as history and admitting that complete source. Missing names, conflicting
+actual payload types, owned alias partial moves and attempted guard moves
+retain explicit negative originals. All are bounded to Rust
+`>=1.90.0 <1.100.0`. Source drafts alone have been read and edited; generation,
+execution, validation and compiler controls remain deferred.
+
+## Same-kind JavaScript Map and Set copies
+
+Source reads identified `new Map(env)`, `new Set(reserved)` and
+`new Set(this.used)` in `js/src/translation/ir.js` as concrete dependencies
+that the array-only constructor admission could not represent. The broader
+closed-class/module boundary remains intact: ordinary import/export linkage,
+external class consumers and instance escape still need complete source proofs.
+The new closed Scope-shaped original is a local class control, not a claim
+that imported or exported classes now translate.
+
+`collection-copy-rules.js` and `collection-copies.js` add shared decisions and
+actual solver/checked-graph transport. Unknown constructor inputs wait for
+ordinary call and method facts. Only an actual resolved same-kind Map/Set
+selects a copy; the established unresolved array contract is settled only at
+the ordinary solver fixed point. Known arrays retain their original immediate
+path and constructor oracles. The native inference adapter uses those same
+shared decisions, retaining actual term owners and updating pointer-keyed
+expression/method observations when an original operand root moves into its
+existing `ArrayFrom` wrapper. Full source spans and the original concrete
+source graph remain independent of that surface normalization.
+
+Proven copies snapshot the input once and allocate a new outer collection
+through the established constructor/reference model. Checked `collectionItems`
+preserves insertion order, primitive SameValueZero key admission and nested
+reference handles. The focused `Array.from` checker correction reads an actual
+reference Map/Set payload before making its snapshot; immutable and array
+paths keep their previous behavior. No new iterator, typed IR or target runtime
+operation was introduced. Native transport changes are in the existing
+collection/Array.from checkers and JavaScript inference seams.
+
+Fully checked snapshot mappers reuse the established readonly callback graph
+proof. The native emitter delegates to the extracted common proof without
+changing its decisions. A writing mapper needs live ordered iterator slots;
+an unknown mapper factory also needs the original argument-before-iteration
+effect order. Those cases keep explicit refusals, complete original programs,
+literal original stdout and history. One-argument constructor snapshots do not
+have this mapper factory problem. General/custom iterables, structured keys,
+cross-kind inputs and inconsistent monomorphic caller domains remain explicit
+source boundaries.
+
+`collection-copies.mjs` retains 21 scalar shared decisions, 12 complete original
+programs, nine complete refusals and three exact own-source anchor strings.
+The JavaScript test, bounded producer recipe and native CI test retain default
+JavaScript CST parsing, every physical ordered field/span/flag, exact source
+bytes, explicit AST projection without mutation, source and typed text/binary
+replay, all four emissions and independent literal stdout. The native control
+also compares actual frontend surfaces and graphs, checks each transport/target
+cell and compiles/runs each emitted Rust program only in CI. Source controls
+select ECMAScript 2024-2025 on Node `>=22.15 <23 || >=24 <25`, and report
+uncovered Node versions; native target controls select Rust `>=1.90 <1.100`.
+These are authored controls and producer recipes, not observed results. No
+test, generator, validator, compilation, runtime execution or Git command ran.

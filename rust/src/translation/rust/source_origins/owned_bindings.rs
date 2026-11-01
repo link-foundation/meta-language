@@ -160,6 +160,9 @@ impl SourceOrigins {
     pub(in super::super) fn owned_temporary_frame(&self) -> HashSet<String> {
         self.source_temporary_bindings.clone()
     }
+    pub(in super::super) fn restore_owned_temporary_frame(&mut self,frame:HashSet<String>){
+        self.source_temporary_bindings=frame;
+    }
     pub(in super::super) fn capture_owned_borrow(&mut self, origin: SourceOrigin) -> SourceOrigin {
         if !self.owned_binding_value(&origin)
             || origin.source_binding_identity.is_some()

@@ -9,12 +9,20 @@ import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} f
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import * as rules from '../src/translation/rust-standard-sum-nested-rules.js';
-import {rustStandardSumNestedDecisions as decisions,rustStandardSumNestedOriginals as originals,rustStandardSumNestedRefusals as refusals} from './fixtures/rust-standard-sum-nested.mjs';
+import {rustStandardSumNestedDecisions as decisions,rustStandardSumNestedOriginals as originals,rustStandardSumNestedRefusals as refusals,rustStandardSumNestedPreviousBoundaries as previousBoundaries} from './fixtures/rust-standard-sum-nested.mjs';
 const versions=['1.90.0','1.99.0'],targets=['JavaScript','Rust','Lean','Rocq'];
 const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===24||major===22&&minor>=15,'uncovered nested-sum control Node '+process.versions.node);
 function stdout(code){const lines=[];vm.runInNewContext(code,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}}, {timeout:1000});return lines.length?lines.join('\n')+'\n':'';}
 for(const [index,row]of decisions.entries())test('nested source decision '+index+' '+row.operation,()=>{assert.equal(typeof rules[row.operation],'function');assert.deepEqual(rules[row.operation](...row.arguments),row.expected);});
-test('all nested source literals remain represented',()=>{assert.equal(decisions.length,31);assert.equal(originals.length,8);assert.equal(refusals.length,6);});
+test('all nested source literals remain represented',()=>{assert.equal(decisions.length,31);assert.equal(originals.length,13);assert.equal(refusals.length,9);});
+test('owned nested boundary keeps the original source and compiler obligation',()=>{
+ assert.equal(previousBoundaries.length,1);const boundary=previousBoundaries[0];
+ const row=originals.find(value=>value.name===boundary.row.name);assert.ok(row);
+ assert.equal(row.source,boundary.row.source);assert.equal(row.stdout,'true\n');
+ assert.equal(row.originalCompilerExpectation.outcome,'accept');
+ assert.equal(row.expectationHistory[0].previousIndex,boundary.previousIndex);
+ assert.ok(!refusals.some(value=>value.source===boundary.row.source));
+});
 for(const row of originals)for(const sourceVersion of versions)test('actual nested source '+row.name+'/'+sourceVersion,()=>{
  assert.equal(row.sourceVersionRange,'>=1.90.0 <1.100.0');
  const concrete=LinkNetwork.parse(row.source,'Rust'),text=concrete.toLino(),binary=encodeLinkNetworkBinary(concrete);

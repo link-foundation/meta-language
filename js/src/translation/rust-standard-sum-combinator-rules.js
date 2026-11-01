@@ -6,6 +6,9 @@ export function readRustStandardSumCombinatorArity(owner,method){
 }
 /** @param {string} method @returns {string[]} */
 export function readRustStandardSumCombinatorCaptureRoles(method){return method==='or_else'?['receiver','callback']:method==='and'||method==='or'||method==='xor'?['receiver','argument']:[];}
+/** Owned operands use eager capture/consumption, independently of the retained
+ * Copy callback profile. @param {string} role @param {string} method @returns {boolean} */
+export function acceptRustStandardSumCombinatorOwnership(role,method){return ['and','or','xor','or_else'].includes(method)&&(role==='copy'||role==='owned'&&method!=='or_else');}
 /** The actual receiver fixes the entire Option or/xor/or_else argument, but
  * generic-changing operations must obtain their other child from real syntax.
  * @param {string} owner @param {string} method @returns {boolean} */

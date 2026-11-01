@@ -11,6 +11,10 @@ export function readRustStandardSumMethodArity(owner,method){
  if(owner==='std::result::Result'&&(method==='is_ok'||method==='is_err'))return 0;
  return ['unwrap_or','unwrap_or_else','map','and_then'].includes(method)?1:-1;
 }
+/** The existing Option panic payload has no Debug obligation on its value.
+ * Result panic methods still require their separate complete error model.
+ * @param {string} owner @param {string} method @param {string} role @returns {boolean} */
+export function acceptRustStandardSumOwnedPanicReceiver(owner,method,role){return owner==='std::option::Option'&&testRustOptionPanicConsumer(method)&&role==='owned';}
 
 /** -2: no callable; -1: zero parameters; otherwise the actual source child.
  * @param {string} owner @param {string} method @returns {number} */

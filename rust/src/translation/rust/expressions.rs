@@ -453,6 +453,14 @@ impl RustParser {
                     value=sum;
                     continue;
                 }
+                if let Some(sum)=self.read_owned_standard_sum_method(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
+                if let Some(sum)=self.read_owned_standard_sum_callback(&value,&method,path)? {
+                    value=sum;
+                    continue;
+                }
                 if let Some(sum)=self.read_standard_sum_source_combinator(&value,&method,path)? {
                     value=sum;
                     continue;

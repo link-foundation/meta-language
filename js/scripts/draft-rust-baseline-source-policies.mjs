@@ -9,6 +9,11 @@ import {writeProjectData} from './project-data.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/callable-data-derivation-rules.js',moduleName:'callable_data_derivation_rules',model:'Constructive callable data emission 1',programAsset:'callable-data-derivation-program'},
+ {sourcePath:'js/src/translation/collection-copy-rules.js',moduleName:'collection_copy_rules',model:'JavaScript eager same-kind collection copies 1',programAsset:'collection-copy-program'},
+ {sourcePath:'js/src/translation/rust-source-type-origin-rules.js',moduleName:'rust_source_type_origin_rules',model:'Rust source type contract runtime clearing 1',programAsset:'rust-source-type-origin-program'},
+ {sourcePath:'js/src/translation/rust-owned-standard-sum-callback-rules.js',moduleName:'rust_owned_standard_sum_callback_rules',model:'Rust capture-free owned standard sum callbacks 1',programAsset:'rust-owned-standard-sum-callback-program'},
+ {sourcePath:'js/src/translation/rust-owned-standard-sum-method-rules.js',moduleName:'rust_owned_standard_sum_method_rules',model:'Rust consuming owned standard sum methods 1',programAsset:'rust-owned-standard-sum-method-program'},
  {sourcePath:'js/src/translation/rust-owned-binding-rules.js',moduleName:'rust_owned_binding_rules',model:'Rust ordinary owned binding transitions 1',programAsset:'rust-owned-binding-program'},
  {sourcePath:'js/src/translation/rust-standard-sum-guard-rules.js',moduleName:'rust_standard_sum_guard_rules',model:'Rust delayed owned sum guard moves 1',programAsset:'rust-standard-sum-guard-program'},
  {sourcePath:'js/src/translation/rust-owned-standard-sum-observer-rules.js',moduleName:'rust_owned_standard_sum_observer_rules',model:'Rust shared observers of owned standard sums 1',programAsset:'rust-owned-standard-sum-observer-program'},
@@ -29,6 +34,8 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/callable-data-originals.mjs',
+ 'js/tests/fixtures/collection-copies.mjs',
  'js/tests/fixtures/rust-source-namespaces-draft.mjs',
  'js/tests/fixtures/rust-standard-sum-conversions.mjs',
  'js/tests/fixtures/rust-standard-sum-predicates.mjs',
@@ -38,6 +45,11 @@ const fixtures=[
  'js/tests/fixtures/rust-owned-standard-sum-observers.mjs',
  'js/tests/fixtures/rust-standard-sum-ownership-transitions.mjs',
  'js/tests/fixtures/rust-standard-sum-guards.mjs',
+ 'js/tests/fixtures/rust-owned-standard-sum-methods.mjs',
+ 'js/tests/fixtures/rust-owned-standard-sum-callbacks.mjs',
+ 'js/tests/fixtures/rust-owned-standard-sum-move-captures.mjs',
+ 'js/tests/fixtures/rust-owned-standard-sum-bind-callbacks.mjs',
+ 'js/tests/fixtures/rust-standard-sum-guard-alternatives.mjs',
  'js/tests/fixtures/rust-generic-type-alias-defaults-draft.mjs',
  'js/tests/fixtures/rust-generic-type-alias-draft.mjs',
  'js/tests/fixtures/rust-standard-sum-source-rules.mjs',
@@ -49,6 +61,12 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/src/translation/callable-data.js','js/tests/translation-callable-data.test.js',
+ 'js/tests/translation-rust-source-type-origins.test.js',
+ 'js/src/translation/collection-copies.js',
+ 'js/tests/translation-collection-copies.test.js',
+ 'js/tests/support/collection-copy-concrete.js','js/tests/support/collection-copy-integration.js',
+ 'js/scripts/produce-collection-copies.mjs',
  'js/src/translation/rust.js','js/src/translation/rust-type-aliases.js',
  'js/src/translation/rust-generic-type-aliases.js','js/src/translation/rust-standard-sum-source.js',
  'js/src/translation/rust-standard-sum-source-metadata.js',
@@ -59,6 +77,9 @@ const consumers=[
  'js/src/translation/rust-standard-sum-combinators.js',
  'js/src/translation/rust-standard-sum-ownership.js',
  'js/src/translation/rust-owned-standard-sum-observers.js',
+ 'js/src/translation/rust-owned-standard-sum-methods.js',
+ 'js/src/translation/rust-owned-standard-sum-callbacks.js',
+ 'js/src/translation/rust-source-type-origins.js',
  'js/src/translation/rust-standard-sum-guards.js',
  'js/src/translation/rust-source-signatures.js','js/src/translation/rust-data-type-field-signatures.js',
  'js/src/translation/rust-nominal-copies.js','js/src/translation/rust-function-pointers.js',
@@ -80,6 +101,11 @@ const consumers=[
  'js/tests/translation-rust-owned-standard-sum-observers.test.js',
  'js/tests/translation-rust-standard-sum-ownership.test.js',
  'js/tests/translation-rust-standard-sum-guards.test.js',
+ 'js/tests/translation-rust-owned-standard-sum-methods.test.js',
+ 'js/tests/translation-rust-owned-standard-sum-callbacks.test.js',
+ 'js/tests/translation-rust-owned-standard-sum-move-captures.test.js',
+ 'js/tests/translation-rust-owned-standard-sum-bind-callbacks.test.js',
+ 'js/tests/translation-rust-standard-sum-guard-alternatives.test.js',
  'js/tests/translation-rust-original-compiler-classifications.test.js',
  'js/tests/support/rust-original-compiler-classifications.js',
  'js/tests/translation-rust-generic-type-alias-defaults.test.js',
@@ -115,6 +141,8 @@ writeProjectData(new URL('parity/fixtures/rust-standard-sum-source-draft.lino',r
 // Every remaining fixture namespace is an independently authored literal data
 // module. Convert all of its exports automatically without dropping any rows.
 for(const [source,target] of [
+ ['callable-data-originals','callable-data-originals'],
+ ['collection-copies','collection-copies'],
  ['rust-source-namespaces-draft','rust-source-namespaces-draft'],
  ['rust-standard-sum-conversions','rust-standard-sum-conversions'],
  ['rust-standard-sum-predicates','rust-standard-sum-predicates'],
@@ -124,6 +152,11 @@ for(const [source,target] of [
  ['rust-owned-standard-sum-observers','rust-owned-standard-sum-observers'],
  ['rust-standard-sum-ownership-transitions','rust-standard-sum-ownership-transitions'],
  ['rust-standard-sum-guards','rust-standard-sum-guards'],
+ ['rust-owned-standard-sum-methods','rust-owned-standard-sum-methods'],
+ ['rust-owned-standard-sum-callbacks','rust-owned-standard-sum-callbacks'],
+ ['rust-owned-standard-sum-move-captures','rust-owned-standard-sum-move-captures'],
+ ['rust-owned-standard-sum-bind-callbacks','rust-owned-standard-sum-bind-callbacks'],
+ ['rust-standard-sum-guard-alternatives','rust-standard-sum-guard-alternatives'],
  ['rust-generic-type-alias-defaults-draft','rust-generic-type-alias-defaults-draft'],
  ['rust-standard-sum-methods','rust-standard-sum-methods-source-draft'],
  ['rust-standard-sum-method-source-originals','rust-standard-sum-method-source-originals'],

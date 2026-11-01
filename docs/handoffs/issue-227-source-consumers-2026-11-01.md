@@ -174,3 +174,60 @@ permitted; it has not run, and no generated native semantics were hand-edited.
 Preserve the two unrelated untracked conversation journals, all existing
 evidence/artifacts and unrelated data. No new local caches or compiler outputs
 were created by this source-edit phase.
+
+## Continuing frontend integration after `1a590811`
+
+Checkpoints `2011b6f4` and `1a590811` were pushed together after predecessor run
+`41254636343` completed. Only its status was read. No conclusion, jobs, logs or
+artifacts were consulted. The earlier queued-run paragraph is historical.
+
+The next unexecuted source batch connects eager owned `unwrap_or`/`ok_or` and
+Result `ok`/`err`, owned callback methods, shared source-type sanitization,
+parameter-dependent callable aliases and owned function-pointer domains.
+The actual postfix dispatch and native module declarations are connected;
+policy generation roots, source consumers, literal fixture conversion and
+deferred suites are registered in the source author. The exact former eager
+callback refusal is now a positive with its source, previous slot/oracle and
+original compiler contract retained. Owned nested `flatten` and both transpose
+directions reuse the existing constructor plans after actual tracked receiver
+capture/consumption. New positives cover empty/error/payload branches, a Copy
+success with owned error, and single receiver evaluation; invalid reuse and
+shared-place moves retain compiler-rejection controls. The former non-Copy
+nested refusal is retained as history and an identical active positive.
+Eager `and`/`or`/Option `xor` also capture actual owned operands, consume even
+unselected right values and reconstruct matched payloads rather than reusing
+partially moved roots. Constrained Result fields use constructor transfer
+bookkeeping. Seven new originals and five invalid-move originals extend the
+existing common matrix; eight new policy controls separate eager ownership
+from the unchanged Copy-only `or_else` callback admission.
+Owned Option `unwrap`/`expect` reuse the existing version-bounded panic payload
+operation after actual receiver capture. Four complete originals add String/
+vector transfer, both absent panic messages and message evaluation order;
+two diagnostic controls retain post-move misuse. The existing CI-only original
+compiler/panic/transport runner consumes them; all old inputs remain.
+
+Callable aggregate consumers and same-kind Map/Set copies are connected to
+existing checkers and emitters. Native module/test declarations and automatic
+source-generation inputs are registered. Copy construction waits for actual
+operand types to settle and snapshots current reference state once. A Map/Set
+mapper/factory that writes or lacks a complete readonly proof still needs live
+iteration semantics; it cannot use an eager stale snapshot. Callable aggregates
+keep observations honest about function identity and target derivations.
+Direct self-recursive callable data now has shared graph positivity and least
+finite constructor witnesses, with unchanged old acyclic policy controls.
+Separate emission-refusal inputs pass frontend checking and codecs before
+every Rust/Lean target independently refuses; their original compiler acceptance
+contracts run in the future CI-only native metadata oracle. Defaultless,
+negative and mutual groups retain their separate backend obligations. Eight
+explicit move/Copy-capture originals and five refusal inputs are also connected
+to the common original-compiler/frontend/codec/emission matrix and author.
+
+Three source-only agents continue: direct recursive callable datatype witnesses,
+actual Copy `move` captures for owned callbacks, and collection iteration with
+proven disjoint effects. Root integrates their complete call sites and controls.
+None of these drafts, authored controls or registrations constitutes execution
+evidence. No tests, generators, validation or compilation ran. Generated Rust
+policy products and Links fixture snapshots remain pending the permitted
+generation phase and mandatory live source audit. Full frontend integration
+and the remaining architecture work packages remain active work, not a reason
+to stop drafting or claim completion.

@@ -36,6 +36,7 @@ export function readRustStandardSumSourceConversion(parser,receiver,method,path)
  if(arity>0)c.eat(',');const close=c.expect(')','standard sum conversion'),span={start,end:close.end};
  const arguments_=argumentPlan.map(index=>index<0?argumentOrigin:sum.arguments[index]);
  if(arguments_.some(origin=>!origin))fail('the conversion result needs every actual source argument',span);
+ if(arguments_.some(origin=>!parser.origins.immutableProduct(origin)))fail('an owned conversion output requires its actual consuming transfer profile',span);
  const result=createRustStandardSumSourceOrigin(parser,owner,arguments_,span),output=result.standardSumSource;
  if(argument)captures.push({name:parser.freshProductBinding(),value:argument,origin:output.arguments[1]});
  if(callback)captures.push({name:parser.freshProductBinding(),value:callback.value,origin:callback.origin});

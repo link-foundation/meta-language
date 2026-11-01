@@ -266,19 +266,8 @@ impl<'p> RustEmitter<'p> {
         let Decl::Data(data) = entry else {
             unreachable!("a data declaration")
         };
-        if self.type_contains(
-            &Type::Data {
-                name: data.full_name.clone(),
-            },
-            "function",
-            &mut BTreeSet::new(),
-        ) {
-            return Err(crate::translation::diagnostics::unsupported(
-                "callable data field",
-                "callable fields need their own identity, debug and equality encodings before this target derives structural traits",
-                data.span,
-            ));
-        }
+        let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        if facts.callable{crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;}
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         self.state.encode(
@@ -286,11 +275,7 @@ impl<'p> RustEmitter<'p> {
             &render_rust_data_field_encoding(self.named_constructor_fields),
         );
         // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
-        let derives = if self.holds_float(&data.full_name, &mut BTreeSet::new()) {
-            "Clone, Debug, PartialEq"
-        } else {
-            "Clone, Debug, PartialEq, Eq"
-        };
+        let derives = crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Rust",facts.callable,self.holds_float(&data.full_name,&mut BTreeSet::new()),false,false);
         let mut lines = vec![
             format!("#[derive({derives})]"),
             format!("pub enum {name} {{"),

@@ -429,14 +429,105 @@ using the existing header fn-pointer rule while preserving false proofs.
 This also transports concrete callable arguments whose standard-sum results
 await final admission; later pointer-domain checks remain mandatory.
 
-Parameter-dependent callable templates such as `fn(T)->u8` still fail the
-existing actual-binding occurrence guard, and no unknown parameter receives
-Copy evidence. Literal controls retain fully concrete named/noncapturing
+Parameter-dependent safe function templates now have private parameter/result
+subtrees in both adapters. Actual `fn` source spelling selects that shape;
+`r#fn` remains a binding. Parameter names are syntax hints rather than type
+uses. Binding discovery/substitution traverses every actual parameter and
+result subtree, and omitted results retain the actual implicit Unit type.
+Symbolic preparation checks types, bindings, recursion and the shared pointer
+parameter limit without assigning any unknown parameter Copy. Materialization
+substitutes complete actual origins, invokes the preceding concrete pointer
+domain/header checkers, retains exact function-owner/parameter/result facts
+and fn source spans, and sets proven/Copy only from actual admission.
+
+The exact old `type Callback<T>=fn(T)->u8;fn main(){}` refusal and unused
+`fn(String)` default input are retained as symbolic declaration positives with
+their preceding fixture rows/error-kind assertions in previous-boundary
+history. The preceding Copy-only checker and its non-Copy rejection controls
+remain unchanged; actual owned value domains use the separate gate described
+below. Declaration wellformedness is not value-domain admission.
+Named function references also use the existing private header separation so
+actual provisional nominal/sum results can reach full later admission; their
+proven/Copy flags remain false while deferred. Literal controls retain
+Mapper aliases, nested Option results, composed aliases/defaults, parameter
+name opacity, raw identifiers, fully concrete named/noncapturing
 callback defaults, implicit Unit return, private Option results, exact pointer
 parameter/result distinctions, captured closures, layers/lifetimes, owned
 parameter profile limits and unsafe qualifiers. The preceding scalar leaf's
 false function-kind assertion remains in the independent controls. No control
 or original Rust program has executed.
+
+The additive owned function-pointer source profile uses actual ownership roles
+from the admitted source-origin catalog, independently of the pointer's own
+Copy evidence. `readRustFunctionPointerOwnedDomainError` accepts safe ordinary
+pointer domains consisting only of actual direct `copy`/`owned` roles, with at
+least one owned role, at Rust >=1.90.0 <1.100.0. The combined domain/header
+operations retain the old Copy checker first and preserve private provisional
+headers until actual later admission. The two old Copy-only operations and
+their negative assertions are unchanged. Generic function materialization,
+concrete callable leaves and actual declaration/type pointer readers consume
+the new operations; unknown owners, borrowed layers, captures, unsupported
+ABI/safety syntax and uncovered owned-profile versions retain rejection.
+Exact prior used String-domain refusals remain in previous-boundary history
+and the same original bytes now appear as source-only positive controls.
+
+`rust-source-type-origin-rules.js` defines the runtime-field clearing plan;
+`rust-source-type-origins.js` and native `rust/source_type_origins.rs` transport
+that plan over fields, callable children and standard-sum arguments. Their
+in-place sanitizer is shared with the existing standard-sum factory. Callable
+readers export `cloneRustCallableTypeOrigin` and native
+`function_pointers::clone_callable_type_origin`; null JavaScript input returns
+null. Stored parameter/result clones remove binding/place identities, loans,
+temporary extensions, fresh array/result proofs and sum pattern/borrowed-field
+markers while preserving actual types, owners, widths, lifetime/ABI facts,
+Copy/proven state, provisional/header flags and capture witnesses. Capture
+witnesses must survive until actual callable value admission. No result clone
+supplies runtime freshness or ownership transfer; callback consumers must
+establish those facts at the real call.
+
+Named and primitive-associated function values now carry a structural root
+function owner built from their actual complete parameter/result owners.
+Concrete pointer readers also attach an actual Unit owner to an omitted
+result before storing its callable child, retaining that distinction through
+explicit generic callable arguments with owned parameter domains.
+Original Option<Mapper<u8,u16>> controls retain named functions and defaulted
+primitive From values, source-free graph round trips and all four emitters.
+The subsequent callable-field emission source described below consumes these
+controls; they remain obligations without execution evidence.
+Independent sanitizer/domain controls are authored in
+`translation-rust-source-type-origins.test.js`, native source-type-origin unit
+source and the existing generic-alias controls. No source generation, test,
+compiler invocation or execution occurred.
+
+The callable-data dependency now has actual paired Rust/Lean emitter consumers.
+`callable-data-derivation-rules.js` owns target derivation lists, constructive
+node admission, finite traversal limits and observation refusals. Host helpers
+`callable-data.js` and native `callable_data.rs` traverse actual child types and
+the actual declaration registry. The conservative first profile requires an
+acyclic graph and constructive defaults for every referenced datatype and
+every callable result. Function parameter values need no default in isolation,
+but every parameter datatype is independently emitted with its preceding
+Inhabited derivation, so this conservative profile requires its actual default
+too. Recursive callable graphs and
+empty/defaultless result profiles explicitly refuse instead of introducing
+Lean axioms or guessing positivity. Traversal is bounded to depth 256 and
+65,536 visits.
+
+Callable data derives only `Clone` in Rust and only `Inhabited` in Lean, using
+the existing function-field representations. The old noncallable float/output
+and other trait strings are preserved by independent policy controls. The
+checker rejects comparison propositions, deep equality, expression comparison,
+display/conversion and proof quantification over callable aggregates, including
+callable children through wrappers/nominal fields. No function address,
+equality, debug or proof representation is fabricated. Safe construction,
+storage, pattern extraction and invocation continue through existing nodes.
+Independent literal original obligations in `callable-data-originals.mjs`,
+`translation-callable-data.test.js` and native `translation_callable_data.rs`
+retain Option/Result and acyclic nominal/nested nominal function fields,
+source-free text/binary codecs, all four target emissions, exact stdout and
+unsupported observation controls. Actual cyclic/constructive-boundary policy
+controls remain separate from original compiler acceptance. No generation,
+compiler, test, validation or represented program ran.
 
 New owned-sum refusal originals now carry explicit original-compiler
 expectations independently of frontend refusal. The first five move/borrow

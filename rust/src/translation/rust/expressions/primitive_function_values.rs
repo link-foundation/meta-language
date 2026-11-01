@@ -221,11 +221,13 @@ impl RustParser {
         );
         let mut actual = super::SourceOrigin::with_type(ty, path, Vec::new());
         actual.copy_evidence = Some(());
-        actual.callable_parameters = Some(parameter_origins);
         let mut result_origin = origin(result, &result_owner, path);
         if result_owner == "f64" {
             result_origin.float_source_model = Some("binary64 scalar");
         }
+        let owners=parameter_origins.iter().chain(std::iter::once(&result_origin)).map(|value|value.expanded_source_owner.clone().or_else(||value.source_owner.clone())).collect::<Option<Vec<_>>>().ok_or_else(||type_error("a primitive function value lost its complete source owner",span))?;
+        actual.source_owner=Some(crate::translation::source_signatures::SourceOwner {kind:"function".into(),path:Vec::new(),arguments:owners});
+        actual.callable_parameters = Some(parameter_origins);
         actual.callable_result = Some(Box::new(result_origin));
         self.origins.mark(&node, actual);
         Ok(Some(node))

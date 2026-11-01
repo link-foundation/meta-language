@@ -18,6 +18,12 @@ export const rustStandardOptionPanicMethodDecisions = [
  {operation:'readRustStandardSumMethodSourceVersionError',arguments:['std::option::Option','unwrap',100],expected:'Option unwrap and expect source semantics are uncovered outside Rust >=1.90.0 <1.100.0'},
  {operation:'readRustOptionPanicMessage',arguments:['unwrap','ignored'],expected:'called `Option::unwrap()` on a `None` value'},
  {operation:'readRustOptionPanicMessage',arguments:['expect','raw {unformatted}: λ'],expected:'raw {unformatted}: λ'},
+ {operation:'acceptRustStandardSumOwnedPanicReceiver',arguments:['std::option::Option','unwrap','owned'],expected:true},
+ {operation:'acceptRustStandardSumOwnedPanicReceiver',arguments:['std::option::Option','expect','owned'],expected:true},
+ {operation:'acceptRustStandardSumOwnedPanicReceiver',arguments:['std::option::Option','unwrap','copy'],expected:false},
+ {operation:'acceptRustStandardSumOwnedPanicReceiver',arguments:['std::option::Option','map','owned'],expected:false},
+ {operation:'acceptRustStandardSumOwnedPanicReceiver',arguments:['std::result::Result','unwrap','owned'],expected:false},
+ {operation:'acceptRustStandardSumOwnedPanicReceiver',arguments:['local::Option','expect','owned'],expected:false},
 ];
 
 // Panic expectations are raw common panic payloads, not compiler-specific
@@ -64,6 +70,22 @@ export const rustStandardOptionPanicMethodRefusals = [
  {name:'Result unwrap still needs its actual Debug error model',source:'fn main() { println!("{}", Ok::<u8,u8>(7).unwrap()); }'},
  {name:'Result expect still needs its actual Debug error model',source:'fn main() { println!("{}", Ok::<u8,u8>(7).expect("message")); }'},
 ];
+rustStandardOptionPanicMethodOriginals.push(
+ {name:'owned Option unwrap and expect transfer String and vector payloads',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'text\n2\n',source:`
+fn main() {let text:Option<String>=Some(String::from("text"));let values:Option<Vec<u8>>=Some(vec![7u8,9u8]);println!("{}",text.unwrap());println!("{}",values.expect("unused").len());}
+`},
+ {name:'absent owned Option unwrap keeps the standard panic',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'before\n',panic:'called `Option::unwrap()` on a `None` value',source:`
+fn main() {let value:Option<String>=None;println!("before");println!("{}",value.unwrap());println!("after");}
+`},
+ {name:'absent owned Option expect keeps a literal panic message',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'before\n',panic:'owned {literal}: λ',source:`
+fn main() {let value:Option<String>=None;println!("before");println!("{}",value.expect("owned {literal}: λ"));println!("after");}
+`},
+ {name:'owned expect moves receiver before evaluating message once',sourceVersionRange:'>=1.90.0 <1.100.0',stdout:'receiver\nmessage\ntext\n',source:`
+fn receiver()->Option<String>{println!("receiver");Some(String::from("text"))}fn main() {println!("{}",receiver().expect({println!("message");"unused"}));}
+`});
+rustStandardOptionPanicMethodRefusals.push(
+ {name:'owned Option unwrap cannot reuse its moved receiver',source:'fn main() {let value:Option<String>=Some(String::from("text"));let text=value.unwrap();println!("{}",value.is_some());}'},
+ {name:'owned Option expect moves before message reads receiver',source:'fn main() {let value:Option<String>=Some(String::from("text"));let text=value.expect({println!("{}",value.is_some());"message"});}'});
 
 // Primary std endpoint references supplied by the parent source review.
 export const rustStandardOptionPanicMethodSources = [

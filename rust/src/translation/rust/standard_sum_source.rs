@@ -9,21 +9,10 @@ use crate::translation::rust_standard_sum_source_rules as rules;
 use crate::translation::rust_standard_sum_ownership_rules as ownership_rules;
 use crate::translation::source_signatures::SourceOwner;
 use super::standard_sum_metadata::{measure_origins,measure_identities};
+use super::source_type_origins::sanitize_source_type_origin;
 
 pub(super) const DEFERRED_PATTERN: &str = "#rust-standard-sum-source";
 
-fn sanitize_source_type_origin(origin:&mut SourceOrigin){
-    origin.source_binding_identity=None;origin.source_place_binding_identity=None;
-    origin.source_loan_binding_identities.clear();origin.source_place_loan_binding_identities.clear();
-    origin.source_extending_temporary_bindings.clear();origin.source_owned_result_proof=false;
-    origin.source_standard_sum_pattern_move=false;
-    origin.source_standard_sum_borrowed_field=false;
-    origin.source_borrowed_place=false;origin.fresh_array_value=None;
-    if let Some(fields)=origin.fields.as_mut(){for field in fields{sanitize_source_type_origin(field);}}
-    if let Some(parameters)=origin.callable_parameters.as_mut(){for parameter in parameters{sanitize_source_type_origin(parameter);}}
-    if let Some(result)=origin.callable_result.as_mut(){sanitize_source_type_origin(result);}
-    if let Some(sum)=origin.standard_sum_source.as_mut(){for child in &mut sum.arguments{sanitize_source_type_origin(child);}}
-}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct StandardSumSource {
@@ -318,7 +307,9 @@ impl RustParser {
         }
         if argument.source_function_pointer_header{
             let copies=argument.callable_parameters.as_deref().unwrap_or_default().iter().map(SourceOrigin::direct_copy_value).collect::<Vec<_>>();
-            let reason=crate::translation::rust_function_pointer_rules::read_rust_function_pointer_type_error(self.ordinary_completion_context(),&copies,argument.callable_result.as_ref().is_some_and(|result|result.direct_copy_value()));
+            let roles=argument.callable_parameters.as_deref().unwrap_or_default().iter().map(|parameter|self.origins.standard_sum_ownership_facts(parameter).profile).collect::<Vec<_>>();
+            let result_role=argument.callable_result.as_deref().map_or_else(String::new,|result|self.origins.standard_sum_ownership_facts(result).profile);
+            let reason=crate::translation::rust_function_pointer_rules::read_rust_function_pointer_domain_error(self.ordinary_completion_context(),&copies,argument.callable_result.as_ref().is_some_and(|result|result.direct_copy_value()),&roles,&result_role,self.source_version_minor);
             if !reason.is_empty(){return Err(failure(&reason,None));}
             argument.source_function_pointer_header=false;argument.proven=true;argument.copy_evidence=Some(());
         }

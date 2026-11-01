@@ -77,7 +77,16 @@ export const rustStandardSumGuardRefusals=[
  {name:'readonly nested guard cannot consume actual owned child sum',sourceVersionRange,source:'fn consume(value:Option<String>)->bool{match value{Some(_)=>true,None=>false}}fn wrong(value:Option<Option<String>>)->usize{match value{Some(inner) if consume(inner)=>0usize,_=>0usize}}fn main(){}'},
  {name:'guard cannot consume an outside owned root and pretend fallthrough unchanged',sourceVersionRange,source:'fn consume(text:String)->bool{text.len()>0usize}fn wrong(value:Option<String>,outside:String)->usize{match value{Some(text) if consume(outside)=>text.len(),_=>0usize}}fn main(){}'},
  {name:'guarded whole value alias keeps explicit delayed payload agreement obligation',sourceVersionRange,reasonIncludes:'whole-value aliases',source:'fn wrong(value:Option<String>)->usize{match value{whole@Some(text) if text.len()>0usize=>text.len(),_=>0usize}}fn main(){}'},
- {name:'guarded owned or alternatives retain delayed move agreement obligation',sourceVersionRange,reasonIncludes:'alternatives',source:'fn wrong(value:Result<String,String>)->usize{match value{Ok(text)|Err(text) if text.len()>0usize=>text.len(),_=>0usize}}fn main(){}'},
  {name:'true owned body transfer does not allow later whole root reuse',sourceVersionRange,source:'fn consume(value:Option<String>)->usize{match value{Some(text)=>text.len(),None=>0usize}}fn wrong(value:Option<String>)->usize{let count=match value{Some(text) if text.len()>0usize=>text.len(),_=>0usize};consume(value)}fn main(){}'},
  {name:'temporary readonly guard block cannot allocate an owned identity then move field',sourceVersionRange,source:'fn make()->Option<String>{Some(String::from("text"))}fn consume(text:String)->bool{text.len()>0usize}fn wrong()->usize{match make(){Some(text) if {consume(text)}=>text.len(),_=>0usize}}fn main(){}'},
 ];
+export const rustStandardSumGuardPreviousBoundaries=[{
+ previousCollection:'rustStandardSumGuardRefusals',previousIndex:5,
+ previousDiagnosticKinds:['syntax','type','unsupported'],
+ previousTranslationExpectation:'refuse incomplete delayed alternative move model',
+ row:{name:'guarded owned or alternatives retain delayed move agreement obligation',sourceVersionRange,reasonIncludes:'alternatives',source:'fn wrong(value:Result<String,String>)->usize{match value{Ok(text)|Err(text) if text.len()>0usize=>text.len(),_=>0usize}}fn main(){}'},
+}];
+rustStandardSumGuardOriginals.push({...rustStandardSumGuardPreviousBoundaries[0].row,
+ stdout:'',singleCallOwners:[],originalCompilerExpectation:validSourceCompilerExpectation,
+ expectationHistory:[{previousCollection:'rustStandardSumGuardRefusals',previousIndex:5,
+ translationExpectation:'refuse incomplete delayed alternative move model',reasonIncludes:'alternatives'}]});

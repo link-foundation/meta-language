@@ -11654,7 +11654,7 @@ existing move, branch-join and scope-expiry model. Shared field projections keep
 their parent root loan and lifetime, and explicit reference patterns cannot
 turn a borrowed place into an owned value. Nonbinding constructor inspection
 does not imply a move. This source profile does not provide custom Drop, general
-nominal ownership, unrestricted guarded patterns or owned callback semantics; those
+nominal ownership, unrestricted guarded patterns or unrestricted owned closure environments; those
 remain required extensions. The current integration and its controls are
 unexecuted drafts.
 
@@ -11672,3 +11672,59 @@ match scrutinee; existing named-root loans remain tied to their original scope.
 The current [Rust Reference](https://doc.rust-lang.org/reference/destructors.html#temporary-lifetime-extension)
 provides the syntax rationale; exact selected-version original-compiler checks
 remain separate deferred obligations.
+
+Consuming standard-sum operations retain actual ownership independently from
+their result's type. The source draft covers eager `unwrap_or`, Option `ok_or`,
+Result `ok`/`err`, Option `unwrap`/`expect`, eager `and`/`or` and Option `xor`,
+nested Option `flatten`, and both `transpose` directions for
+supported owned leaves. Self moves before eager arguments; even an unselected
+owned argument is consumed. A fresh result capability requires completed moves
+from actual tracked temporaries. Copy outputs receive no owning capability.
+Matched branches reconstruct the selected constructor instead of reusing a
+partially moved root. Constrained direct Result constructors transfer their
+actual owned fields and retain the receiver's independently determined child.
+Nested operations reuse the complete constructor plans and preserve each
+branch's actual payload and error types. Further eager and lazy operations
+remain obligations until their actual consumers are drafted.
+
+The initial owned callback source profile covers `unwrap_or_else`, `ok_or_else`,
+`map` and `map_err` with named functions, capture-free closures or inline
+explicit `move` closures whose actual captured bindings independently satisfy
+the complete direct Copy profile. Implicit borrowed environments, captured
+references, function-pointer coercion of a captured environment and owned
+FnOnce captures retain their separate lifetime/callable obligations. Ownership of
+callback parameters/results is distinct from whether the callable value is
+Copy. Private callback frames preserve outer ownership state and check actual
+parameter transfers, results and scope expiry. Function and datatype child
+contracts recursively remove runtime place, loan and production identities;
+complete type, lifetime and callable witnesses remain. Safe function-pointer
+domains may contain supported owned types without inventing Copy payloads.
+Alias expansion must preserve that distinction, including parameter-dependent
+function templates and complete associated owner paths.
+
+Callable fields use the existing function representation in every emitter.
+Aggregate derivations and observations must reflect actual target capabilities:
+storing or invoking a function does not provide portable function equality,
+debug display or a structural proof. Constructive defaults and recursion need
+their own complete type-graph witnesses. Beyond the initial acyclic profile,
+direct self-recursive nominal containers use actual reference edges, strict
+positivity and a least finite constructor witness. A recursive constructor
+cannot supply its own finite default by assumption. Lean emits the selected
+constructor witness without reordering declarations. Negative callable-domain
+recursion, defaultless infinite chains and mutually recursive groups still
+require their additional target models. Old noncallable derivations retain
+their rules. Backend-profile controls must first pass frontend checking and
+both Links codecs, then assert each target's refusal independently; an earlier
+frontend failure cannot stand in for an emitter result.
+
+JavaScript same-kind `new Map(existingMap)` and `new Set(existingSet)` copy the
+outer collection while preserving nested reference handles and insertion order.
+Actual resolved operand types select this path after normal inference settles;
+unknown types cannot justify a guessed collection copy. Snapshot evaluation
+uses the current reference value and executes its operand once. `Array.from`
+must respect mapper/factory effects relative to collection iteration; the
+current snapshot source profile accepts its proven readonly callback graph.
+Live mutation and unknown effect paths require a complete iterator/effect model.
+These source consumers, original programs and future native/codec/emission
+controls have not been executed. Automatic policy and Links fixture generation,
+source reconciliation and behavioral evidence remain deferred.

@@ -48,6 +48,8 @@ import { propFunctions } from './proof.js';
 import { renameFunction, renameMain, renameTheorem } from './ir.js';
 import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, numberDependence, opaqueDependence, orderDeclarations, typeContains, unthreaded } from './emit-common.js';
+import {readCallableDataFacts,readCallableDataRecursiveProfile} from './callable-data.js';
+import {readCallableDataDerivation,renderCallableDataLeanDefault} from './callable-data-derivation-rules.js';
 import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
@@ -332,7 +334,7 @@ class LeanEmitter {
   }
 
   data(entry) {
-    if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own representation and equality encoding before deriving data instances', entry.span);
+    const facts=readCallableDataFacts({kind:'data',name:entry.fullName},this.program.declarations),profile=facts.callable?readCallableDataRecursiveProfile({kind:'data',name:entry.fullName},this.program.declarations):null;
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     const ctors = entry.ctors.map((ctor) => {
@@ -341,7 +343,8 @@ class LeanEmitter {
     });
     // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
     // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-    const deriving = entry.output || this.undecidable(entry.fullName) ? (entry.output ? 'Inhabited' : 'Repr, Inhabited') : 'Repr, DecidableEq, Inhabited';
+    const deriving = readCallableDataDerivation('Lean',facts.callable,false,Boolean(entry.output),this.undecidable(entry.fullName));
+    if(profile?.recursive){const witness=entry.ctors[profile.witness];return [`inductive ${name} where`,...ctors,renderCallableDataLeanDefault(name,this.state.ctorRef(entry.fullName,witness.name),witness.fields.length)].join('\n');}
     return [`inductive ${name} where`, ...ctors, `  deriving ${deriving}`].join('\n');
   }
 

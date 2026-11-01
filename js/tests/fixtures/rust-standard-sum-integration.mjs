@@ -14,6 +14,12 @@ import {rustStandardSumCombinatorOriginals,rustStandardSumCombinatorRefusals} fr
 import {rustOwnedStandardSumObserverOriginals,rustOwnedStandardSumObserverRefusals} from './rust-owned-standard-sum-observers.mjs';
 import {rustStandardSumOwnershipOriginals,rustStandardSumOwnershipRefusals} from './rust-standard-sum-ownership-transitions.mjs';
 import {rustStandardSumGuardOriginals,rustStandardSumGuardRefusals} from './rust-standard-sum-guards.mjs';
+import {rustOwnedStandardSumMethodOriginals,rustOwnedStandardSumMethodRefusals} from './rust-owned-standard-sum-methods.mjs';
+import {rustStandardSumGuardAlternativeOriginals,rustStandardSumGuardAlternativeRefusals} from './rust-standard-sum-guard-alternatives.mjs';
+import {rustOwnedStandardSumCallbackOriginals,rustOwnedStandardSumCallbackRefusals} from './rust-owned-standard-sum-callbacks.mjs';
+import {callableDataOriginals,callableDataObservationRefusals,callableDataRecursiveRefusals,callableDataSourceVersionRange} from './callable-data-originals.mjs';
+import {rustOwnedStandardSumMoveCaptureOriginals,rustOwnedStandardSumMoveCaptureRefusals} from './rust-owned-standard-sum-move-captures.mjs';
+import {rustOwnedStandardSumBindOriginals,rustOwnedStandardSumBindRefusals} from './rust-owned-standard-sum-bind-callbacks.mjs';
 
 export const rustStandardSumIntegrationVersions=['1.90.0','1.99.0'];
 export const rustStandardSumIntegrationTargets=['JavaScript','Rust','Lean','Rocq'];
@@ -221,6 +227,12 @@ export const rustStandardSumIntegrationAdditionalOriginals=[
  ...rustOwnedStandardSumObserverOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustStandardSumOwnershipOriginals.map(row=>({singleCallOwners:[],...row})),
  ...rustStandardSumGuardOriginals,
+ ...rustOwnedStandardSumMethodOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustStandardSumGuardAlternativeOriginals,
+ ...rustOwnedStandardSumCallbackOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...callableDataOriginals.map(row=>({singleCallOwners:[],sourceVersionRange:callableDataSourceVersionRange,...row})),
+ ...rustOwnedStandardSumMoveCaptureOriginals.map(row=>({singleCallOwners:[],...row})),
+ ...rustOwnedStandardSumBindOriginals.map(row=>({singleCallOwners:[],...row})),
 ];
 rustStandardSumIntegrationOriginals.push(...rustStandardSumIntegrationAdditionalOriginals);
 
@@ -243,4 +255,24 @@ export const rustStandardSumIntegrationRefusals=[
  ...rustOwnedStandardSumObserverRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
  ...rustStandardSumOwnershipRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
  ...rustStandardSumGuardRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustOwnedStandardSumMethodRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust ownership'}})),
+ ...rustStandardSumGuardAlternativeRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row})),
+ ...rustOwnedStandardSumCallbackRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...callableDataObservationRefusals.map(row=>({diagnosticKinds:['unsupported'],sourceVersionRange:callableDataSourceVersionRange,...row})),
+ ...rustOwnedStandardSumMoveCaptureRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
+ ...rustOwnedStandardSumBindRefusals.map(row=>({diagnosticKinds:['syntax','type','unsupported'],...row,
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',
+ outcome:row.originalCompilerOutcome,category:row.originalCompilerOutcome==='accept'?'valid Rust source':'invalid Rust source'}})),
 ];
+// These sources must pass the frontend and both codecs before each named
+// backend independently refuses. A parse error cannot satisfy an emitter cell.
+export const rustStandardSumIntegrationEmissionRefusals=callableDataRecursiveRefusals.map(row=>({
+ sourceVersionRange:callableDataSourceVersionRange,...row,targets:['Rust','Lean'],diagnosticKinds:['unsupported'],
+ originalCompilerExpectation:{model:'Rust original compiler expectation 1',versions:['1.90.0','1.99.0'],edition:'2024',outcome:'accept',category:'valid Rust source'},
+}));

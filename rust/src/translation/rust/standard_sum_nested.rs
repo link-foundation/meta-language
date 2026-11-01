@@ -50,15 +50,21 @@ impl RustParser{
 
     pub(super) fn read_standard_sum_source_nested(&mut self,receiver:&SExpr,method:&Token,path:&[String])->Result<Option<SExpr>>{
         if !self.ordinary_completion_context(){return Ok(None);}
-        let Some(source)=self.origins.standard_sum_source_origin(&self.origins.origin(receiver,path))else{return Ok(None);};let outer=source.standard_sum_source.as_deref().expect("actual outer sum");
+        let actual=self.origins.origin(receiver,path);let Some(source)=self.origins.standard_sum_source_origin(&actual)else{return Ok(None);};let outer=source.standard_sum_source.as_deref().expect("actual outer sum");
         if rules::read_rust_standard_sum_nested_arity(&outer.owner,&method.value)<0.0{return Ok(None);}
         let error=rules::read_rust_standard_sum_nested_source_version_error(&outer.owner,&method.value,self.source_version_minor);if !error.is_empty(){return Err(fail(&error,Some(method.span())));}
-        let inner=outer.arguments.first().and_then(|origin|self.origins.standard_sum_source_origin(origin)).filter(|origin|origin.wrappers.is_empty()&&origin.direct_copy_value());
-        if !source.wrappers.is_empty()||!source.direct_copy_value()||inner.is_none(){return Err(fail("nested operations require actual complete direct Copy inner and outer standard sums",receiver.span));}
+        let inner=outer.arguments.first().and_then(|origin|self.origins.standard_sum_source_origin(origin));
+        let role=self.origins.standard_sum_ownership_facts(&source).profile;
+        let inner_role=inner.as_ref().map(|origin|self.origins.standard_sum_ownership_facts(origin).profile).unwrap_or_default();
+        if !source.wrappers.is_empty()||inner.as_ref().is_none_or(|origin|!origin.wrappers.is_empty())||!matches!(role.as_str(),"copy"|"owned")||!matches!(inner_role.as_str(),"copy"|"owned"){return Err(fail("nested operations require actual complete direct Copy or supported owned inner and outer standard sums",receiver.span));}
         let inner=inner.expect("actual admitted inner");let profile=rules::read_rust_standard_sum_nested_profile(&outer.owner,&method.value,&inner.standard_sum_source.as_deref().expect("actual inner sum").owner);
         if profile.is_empty(){return Err(fail("the actual inner standard sum does not match this nested operation",receiver.span));}
         self.cursor.expect("(",Some("nested standard sum"))?;let close=self.cursor.expect(")",Some("nested standard sum"))?;let span=Some(Span::new(receiver.span.map_or(method.start,|span|span.start),close.end));
-        let result=self.standard_sum_nested_result(&source,&inner,&profile,span)?;let capture=self.fresh_product_binding();let local=SExpr::new(SNode::Name {path:vec![capture.clone()]},span);self.origins.mark(&local,source.clone());
+        self.origins.check_owned_origin(&actual,receiver.span)?;
+        let captured=if role=="owned"{self.owned_standard_sum_method_capture(receiver,path)?}else{actual};
+        let moved=role=="copy"||self.origins.consume_owned_binding(&captured,receiver.span)?;
+        let result_type=self.standard_sum_nested_result(&source,&inner,&profile,span)?;
+        let result=self.owned_standard_sum_method_output(result_type,moved,true);let capture=self.fresh_product_binding();let local=SExpr::new(SNode::Name {path:vec![capture.clone()]},span);self.origins.mark(&local,captured);
         let matched=self.standard_sum_nested_match(&source,&local,&inner,&result,&profile,false,span)?;
         let body=SExpr::new(SNode::Let {name:capture,ty:source.ty.clone().map(Into::into),value:Box::new(receiver.clone()),body:Box::new(matched)},span);self.origins.mark(&body,result);Ok(Some(body))
     }

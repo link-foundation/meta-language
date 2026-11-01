@@ -25,5 +25,6 @@ export function readRustPrimitiveFunctionValue(parser,path,expected=null){
  finally{parser.origins.scope=previous;}
  for(let index=0;index<head.offset;index+=1)c.next();
  const resultOwner=conversion?owner:readRustPrimitiveFunctionValueResultOwner(owner,method),ret=type(resultOwner),node={k:'lambda',params:parameters,ret,captures:[],body,span:range},origin=parser.origins.typeOrigin({kind:'function',params:parameters.map(parameter=>parameter.type),ret},path);
- return parser.origins.mark(node,{...origin,copyEvidence:true,callableParameters:origins,callableResult:owned(resultOwner)});
+ const resultOrigin=owned(resultOwner),owners=[...origins,resultOrigin].map(value=>value.expandedSourceOwner??value.sourceOwner);
+ return parser.origins.mark(node,{...origin,sourceOwner:{kind:'function',path:[],arguments:structuredClone(owners)},copyEvidence:true,callableParameters:origins,callableResult:resultOrigin});
 }

@@ -54,6 +54,7 @@ impl RustParser{
         }
         if arity>0.0{self.cursor.eat(",");}let close=self.cursor.expect(")",Some("standard sum conversion"))?;let span=Some(Span::new(start,close.end));
         let arguments=plan.into_iter().map(|index|if index<0.0{argument_origin.clone()}else{sum.arguments.get(index as usize).cloned()}).collect::<Option<Vec<_>>>().ok_or_else(||fail("the conversion result needs every actual source argument",span))?;
+        if arguments.iter().any(|origin|!origin.direct_copy_value()){return Err(fail("an owned conversion output requires its actual consuming transfer profile",span));}
         let result=self.instantiate_standard_sum_source(&owner,arguments,span)?;let output=result.standard_sum_source.as_deref().expect("actual result sum");
         if let Some(value)=argument{captures.push(ConversionCapture{name:self.fresh_product_binding(),value,origin:output.arguments[1].clone()});}
         if let Some(function)=callback{captures.push(ConversionCapture{name:self.fresh_product_binding(),value:function.value,origin:function.origin});}

@@ -1,5 +1,8 @@
 // Actual nested source owners into existing complete constructor/match terms.
 import {unsupported} from './diagnostics.js';
+import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
+import {captureRustOwnedStandardSumMethodValue,createRustOwnedStandardSumMethodResult} from './rust-owned-standard-sum-methods.js';
 import {readRustStandardSumSourceOrigin,createRustStandardSumSourceOrigin} from './rust-standard-sum-source.js';
 import {readRustStandardSumSourceArgumentCount,readRustStandardSumSourceConstructors,readRustStandardSumSourceFieldArgument,readRustStandardSumSourceConstructorArity} from './rust-standard-sum-source-rules.js';
 import {readRustStandardSumNestedArity,readRustStandardSumNestedProfile,planRustStandardSumNestedResult,planRustStandardSumNestedBranch,readRustStandardSumNestedConstructionPosition,readRustStandardSumNestedConstructionVariant,readRustStandardSumNestedSourceVersionError} from './rust-standard-sum-nested-rules.js';
@@ -31,15 +34,21 @@ function branchValue(parser,result,plan,payload,span){
 
 export function readRustStandardSumSourceNested(parser,receiver,method,path){
  if(!parser.ordinaryCompletionContext())return null;
- const source=readRustStandardSumSourceOrigin(parser,parser.origins.origin(receiver,path));if(!source)return null;
+ const actual=parser.origins.origin(receiver,path),source=readRustStandardSumSourceOrigin(parser,actual);if(!source)return null;
  const outer=source.standardSumSource,arity=readRustStandardSumNestedArity(outer.owner,method.value);if(arity<0)return null;
  const versionError=readRustStandardSumNestedSourceVersionError(outer.owner,method.value,parser.sourceVersionMinor);if(versionError)fail(versionError,method);
  const inner=readRustStandardSumSourceOrigin(parser,outer.arguments[0]);
- if(source.wrappers.length||!parser.origins.immutableProduct(source)||!inner||inner.wrappers.length||!parser.origins.immutableProduct(inner))fail('nested operations require actual complete direct Copy inner and outer standard sums',receiver.span);
+ const role=readRustStandardSumOwnershipFacts(parser.origins,source).profile,innerRole=inner?readRustStandardSumOwnershipFacts(parser.origins,inner).profile:'';
+ if(source.wrappers.length||!inner||inner.wrappers.length||!['copy','owned'].includes(role)||!['copy','owned'].includes(innerRole))fail('nested operations require actual complete direct Copy or supported owned inner and outer standard sums',receiver.span);
  const profile=readRustStandardSumNestedProfile(outer.owner,method.value,inner.standardSumSource.owner);if(!profile)fail('the actual inner standard sum does not match this nested operation',receiver.span);
  const c=parser.cursor;c.expect('(','nested standard sum');const close=c.expect(')','nested standard sum'),span={start:receiver.span?.start??method.start,end:close.end};
- const result=resultOrigin(parser,source,inner,profile,span),capture=parser.freshProductBinding();
- const local=parser.origins.mark({k:'name',path:[capture],span},source);
+ // No argument can observe self between capture and consumption. Ownership
+ // comes from the actual receiver transition, never the nested type template.
+ checkRustOwnedOrigin(parser.origins,actual,receiver.span);
+ const captured=role==='owned'?captureRustOwnedStandardSumMethodValue(parser,receiver,path):actual;
+ const moved=role==='copy'||parser.origins.consumeOwnedBinding(captured,receiver.span);
+ const result=createRustOwnedStandardSumMethodResult(parser,resultOrigin(parser,source,inner,profile,span),moved,true),capture=parser.freshProductBinding();
+ const local=parser.origins.mark({k:'name',path:[capture],span},captured);
  function matched(origin,scrutinee,isInner){
   const sum=origin.standardSumSource,rows=[];
   for(const variant of readRustStandardSumSourceConstructors(sum.owner)){

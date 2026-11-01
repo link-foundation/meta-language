@@ -116,7 +116,9 @@ fn check_surface_program(surface: &SProgram, checked_projection: bool) -> Result
     let mut checker = Checker::new(surface.language, surface.externals.clone());
     checker.checked_projection = checked_projection;
     checker.ordered_record_source = ordered_record_source;
-    checker.program(surface)
+    let program=checker.program(surface)?;
+    super::collection_copies::check_snapshot_callbacks(&program)?;
+    Ok(program)
 }
 
 /// Reuse checked pattern semantics at the source-free graph boundary.

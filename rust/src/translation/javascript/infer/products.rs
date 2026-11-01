@@ -103,8 +103,12 @@ fn infer_javascript_types_with_observations(
     let mut inferred = inferred.into_iter();
     fill_functions(&mut program.items, &mut inferred);
     fill_fields(&mut program.items, &inference);
-    if !arrays.is_empty() || !expression_types.is_empty() {
-        fill_arrays(&mut program, &arrays, &expression_types);
+    let copies=inference.collection_copies.iter().map(|(node,term)|(*node,inference.surface(term,None))).collect::<HashMap<_,_>>();
+    if !arrays.is_empty() || !expression_types.is_empty() || !copies.is_empty(){
+        for(previous,current)in fill_arrays(&mut program,&arrays,&mut expression_types,&copies){
+            if let Some(method)=inference.property_methods.remove(&previous){inference.property_methods.insert(current,method);}
+            if inference.array_includes.remove(&previous){inference.array_includes.insert(current);}
+        }
     }
     super::methods::fill_methods(
         &mut program,

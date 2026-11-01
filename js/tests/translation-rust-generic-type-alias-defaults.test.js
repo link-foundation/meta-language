@@ -12,7 +12,9 @@ import {readRustGenericTypeAliasParameterDirectory,readRustGenericTypeAliasDefau
 import {genericAliasDefaultOriginals,genericAliasDefaultRefusals,genericAliasDefaultVersionRange,defaultParameterDirectories,genericAliasDefaultPreviousBoundaries} from './fixtures/rust-generic-type-alias-defaults-draft.mjs';
 import {acceptRustGenericTypeAliasStandardSumLeaf,acceptRustGenericTypeAliasOwnedStandardSumLeaf,readRustGenericTypeAliasConstructorPlan,readRustGenericTypeAliasOwnedConstructorPlan} from '../src/translation/rust-generic-type-alias-rules.js';
 import {readRustGenericTypeAliasSubstitutionPlan,readRustGenericTypeAliasHeaderSubstitutionPlan,readRustGenericTypeAliasHeaderConstructorPlan} from '../src/translation/rust-generic-type-alias-rules.js';
-import {acceptRustGenericTypeAliasConcreteTemplate,acceptRustGenericTypeAliasConcreteCallableTemplate,acceptRustGenericTypeAliasHeaderCallableTemplate} from '../src/translation/rust-generic-type-alias-rules.js';
+import {acceptRustGenericTypeAliasConcreteTemplate,acceptRustGenericTypeAliasConcreteCallableTemplate,acceptRustGenericTypeAliasHeaderCallableTemplate,acceptRustGenericTypeAliasOwnedCallableTemplate} from '../src/translation/rust-generic-type-alias-rules.js';
+import {acceptRustGenericTypeAliasFunctionTemplateHead,acceptRustGenericTypeAliasFunctionParameterName,readRustGenericTypeAliasFunctionTemplateError} from '../src/translation/rust-generic-type-alias-rules.js';
+import {readRustFunctionPointerParameterLimit,readRustFunctionPointerTypeError,readRustFunctionPointerHeaderTypeError} from '../src/translation/rust-function-pointer-rules.js';
 for(const [index,row]of defaultParameterDirectories.entries())test('actual default parameter token directory '+index,()=>assert.deepEqual(readRustGenericTypeAliasParameterDirectory(row.kinds,row.values,row.raws,row.position),row.expected));
 test('default substitution selects only earlier actual binding identities',()=>{
  assert.deepEqual(readRustGenericTypeAliasDefaultSubstitutionPlan(['owner/T','owner/U'],1,1,['owner/T']),['substitution','0']);
@@ -54,11 +56,33 @@ test('private alias plans preserve provisional origins without weakening admitte
  assert.deepEqual(readRustGenericTypeAliasOwnedConstructorPlan('named',0,'library','std::option::Option',1,false,'std::option::Option',1,false,'owned','Some'),[]);
 });
 test('owned extension retains exact preceding unsupported boundary assertion',()=>{
- const history=genericAliasDefaultPreviousBoundaries[0];
+ for(const history of genericAliasDefaultPreviousBoundaries){
  assert.equal(history.source,history.previousAssertion.source);
  assert.deepEqual(history.previousAssertion.expectedErrorKinds,['unsupported','type','syntax']);
  assert.equal(genericAliasDefaultOriginals.filter(row=>row.source===history.source).length,1);
  assert.equal(genericAliasDefaultRefusals.filter(row=>row.source===history.source).length,0);
+ }
+});
+test('symbolic function template syntax and budget do not fabricate parameter Copy facts',()=>{
+ assert.equal(acceptRustGenericTypeAliasFunctionTemplateHead('fn','fn'),true);
+ assert.equal(acceptRustGenericTypeAliasFunctionTemplateHead('fn','r#fn'),false);
+ assert.equal(acceptRustGenericTypeAliasFunctionTemplateHead('unsafe','unsafe'),false);
+ assert.equal(acceptRustGenericTypeAliasFunctionTemplateHead('extern','extern'),false);
+ assert.equal(acceptRustGenericTypeAliasFunctionParameterName('_','_'),true);
+ assert.equal(acceptRustGenericTypeAliasFunctionParameterName('_',''),false);
+ assert.equal(acceptRustGenericTypeAliasFunctionParameterName('self','self'),false);
+ assert.equal(readRustFunctionPointerParameterLimit(),1024);
+ assert.equal(readRustGenericTypeAliasFunctionTemplateError(1024),'');
+ assert.equal(readRustGenericTypeAliasFunctionTemplateError(1025),'the complete pointer signature exceeds its source budget');
+ assert.equal(readRustFunctionPointerTypeError(true,[false],true),'function pointer parameters require direct immutable Copy source types');
+ assert.equal(readRustFunctionPointerTypeError(true,[],false),'function pointer results require direct immutable Copy source types');
+ assert.equal(readRustFunctionPointerHeaderTypeError(true,Array(1025).fill(true),true,true),'the complete pointer signature exceeds its source budget');
+});
+test('actual owned callable leaves preserve Copy-only gates and full type proofs',()=>{
+ assert.equal(acceptRustGenericTypeAliasConcreteCallableTemplate(true,'function',0,'function',0,2,1,[false],true,true,true,true,false),false);
+ assert.equal(acceptRustGenericTypeAliasOwnedCallableTemplate(true,'function',0,'function',0,2,1,['owned'],'copy',true,true,true,false,90),true);
+ assert.equal(acceptRustGenericTypeAliasOwnedCallableTemplate(true,'function',0,'function',0,2,1,['copy'],'owned',true,true,true,false,99),true);
+ for(const [wrappers,roles,result,typed,proven,copy,capture,minor] of [[1,['owned'],'copy',true,true,true,false,90],[0,['borrowed'],'owned',true,true,true,false,90],[0,['owned'],'copy',false,true,true,false,90],[0,['owned'],'copy',true,false,true,false,90],[0,['owned'],'copy',true,true,false,false,90],[0,['owned'],'copy',true,true,true,true,90],[0,['owned'],'copy',true,true,true,false,100]])assert.equal(acceptRustGenericTypeAliasOwnedCallableTemplate(true,'function',wrappers,'function',0,2,1,roles,result,typed,proven,copy,capture,minor),false);
 });
 test('concrete callable leaf admission preserves the original scalar leaf domain',()=>{
  assert.equal(acceptRustGenericTypeAliasConcreteTemplate('function',0,'function','','',false,2,true),false);

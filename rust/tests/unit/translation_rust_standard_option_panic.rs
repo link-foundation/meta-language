@@ -17,10 +17,11 @@ use std::process::Command;
 
 fn text(args:&Value,index:usize)->&str{args[index].as_str().expect("literal source decision text")}
 fn decisions(fixture:&Value){
-    let rows=fixture["decisions"].as_array().unwrap();assert_eq!(rows.len(),18);
+    let rows=fixture["decisions"].as_array().unwrap();assert_eq!(rows.len(),24);
     for row in rows{
         let args=&row["arguments"];
         let actual=match row["operation"].as_str().unwrap(){
+            "acceptRustStandardSumOwnedPanicReceiver"=>json!(method_rules::accept_rust_standard_sum_owned_panic_receiver(text(args,0),text(args,1),text(args,2))),
             "readRustStandardSumMethodArity"=>json!(method_rules::read_rust_standard_sum_method_arity(text(args,0),text(args,1))),
             "readRustStandardSumMethodResult"=>json!(method_rules::read_rust_standard_sum_method_result(text(args,0),text(args,1))),
             "readRustStandardSumMethodBranch"=>json!(method_rules::read_rust_standard_sum_method_branch(text(args,0),text(args,1),text(args,2))),
@@ -90,8 +91,8 @@ fn assert_no_private(root:&Value){
 fn selected_snapshot(version:&str){
     provision_selected(version);let fixture=producer(version);decisions(&fixture);
     assert_eq!(fixture["versions"],json!([version]));assert_eq!(fixture["targets"],json!(["JavaScript","Rust","Lean","Rocq"]));assert_eq!(fixture["transports"],json!(["original","text","binary"]));
-    let originals=fixture["cases"].as_array().unwrap();assert_eq!(originals.len(),5);
-    assert_eq!(originals.iter().filter(|row|row["panic"].is_string()).count(),3);
+    let originals=fixture["cases"].as_array().unwrap();assert_eq!(originals.len(),9);
+    assert_eq!(originals.iter().filter(|row|row["panic"].is_string()).count(),5);
     for(index,row)in originals.iter().enumerate(){
         let label=row["name"].as_str().unwrap();let source=row["source"].as_str().unwrap();let panic_expected=row["panic"].is_string();
         let expected=json!({"stdout":row["stdout"],"panic":row.get("panic").cloned().unwrap_or(Value::Null)});
@@ -127,7 +128,7 @@ fn selected_snapshot(version:&str){
         }
         assert_eq!(encode_link_network_binary(&graphs[2],BinaryLinksOptions::default()).unwrap(),binary);
     }
-    let refusals=fixture["refusals"].as_array().unwrap();assert_eq!(refusals.len(),4);
+    let refusals=fixture["refusals"].as_array().unwrap();assert_eq!(refusals.len(),6);
     for row in refusals{
         assert_eq!(row["selections"].as_array().unwrap().len(),1);let selected=&row["selections"][0];assert_eq!(selected["version"],version);
         let source=row["source"].as_str().unwrap();let error=parse_rust_with_source_version(source,version).and_then(|surface|check_program(&surface)).expect_err("all actual source refusals remain separate from runtime panic cases");

@@ -34,8 +34,8 @@ function assertNoPrivate(root){
 }
 
 test('all independent Option panic fixture inputs remain present',()=>{
- assert.equal(originals.length,5);assert.equal(decisions.length,18);assert.equal(refusals.length,4);
- assert.equal(originals.filter(row=>typeof row.panic==='string').length,3);
+ assert.equal(originals.length,9);assert.equal(decisions.length,24);assert.equal(refusals.length,6);
+ assert.equal(originals.filter(row=>typeof row.panic==='string').length,5);
  for(const row of originals){assert.equal(row.sourceVersionRange,'>=1.90.0 <1.100.0');assert.ok(row.source.includes('fn main()'));assert.equal(typeof row.stdout,'string');}
 });
 for(const [index,row]of decisions.entries())test('standard Option panic source decision '+index+' '+row.operation,()=>{

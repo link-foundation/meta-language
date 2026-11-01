@@ -1,10 +1,13 @@
 // Actual receiver/callable origins into the common constructor/match algebra.
 import {BOOL} from './types.js';
 import {unsupported} from './diagnostics.js';
+import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
+import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
+import {captureRustOwnedStandardSumMethodValue,createRustOwnedStandardSumMethodResult} from './rust-owned-standard-sum-methods.js';
 import {readRustExpectedCopyClosure,readRustParameterOnlyCopyClosure,readRustCopyClosureResultContextError} from './rust-copy-closures.js';
 import {readRustStandardSumSourceOrigin,readRustStandardSumSourceIdentity,createRustStandardSumSourceOrigin,withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {readRustStandardSumSourceConstructors,readRustStandardSumSourceFieldArgument,readRustStandardSumSourceConstructorArity} from './rust-standard-sum-source-rules.js';
-import {readRustStandardSumMethodArity,readRustStandardSumMethodCallbackArgument,readRustStandardSumMethodResult,readRustStandardSumMethodBranch,readRustStandardSumMethodCallbackError,readRustStandardSumMethodSourceVersionError,readRustStandardSumMethodPanicMessageRole} from './rust-standard-sum-method-rules.js';
+import {readRustStandardSumMethodArity,acceptRustStandardSumOwnedPanicReceiver,readRustStandardSumMethodCallbackArgument,readRustStandardSumMethodResult,readRustStandardSumMethodBranch,readRustStandardSumMethodCallbackError,readRustStandardSumMethodSourceVersionError,readRustStandardSumMethodPanicMessageRole} from './rust-standard-sum-method-rules.js';
 import {readRustOptionPanicMessage,readRustPanicMessageSourceError,readRustPanicValueOperation} from './rust-panic-value-rules.js';
 
 const fail=(reason,span)=>{throw unsupported('Rust standard sum method',reason,span);};
@@ -45,10 +48,13 @@ export function readRustStandardSumSourceMethod(parser,receiver,method,path){
  const sum=source.standardSumSource,arity=readRustStandardSumMethodArity(sum.owner,method.value);
  if(arity<0)return null;
  const versionError=readRustStandardSumMethodSourceVersionError(sum.owner,method.value,parser.sourceVersionMinor);if(versionError)fail(versionError,method);
- if(source.wrappers.length||!parser.origins.immutableProduct(source))fail('the receiver needs its actual direct immutable Copy standard sum',receiver.span);
+ const owned=acceptRustStandardSumOwnedPanicReceiver(sum.owner,method.value,readRustStandardSumOwnershipFacts(parser.origins,source).profile);
+ if(source.wrappers.length||!owned&&!parser.origins.immutableProduct(source))fail('the receiver needs its actual direct Copy or supported owned Option panic source',receiver.span);
  const c=parser.cursor,start=receiver.span?.start??method.start,resultPolicy=readRustStandardSumMethodResult(sum.owner,method.value);
  c.expect('(','standard sum method');
- const captures=[{name:parser.freshProductBinding(),value:receiver,origin:source}];
+ checkRustOwnedOrigin(parser.origins,actual,receiver.span);
+ const receiverOrigin=owned?captureRustOwnedStandardSumMethodValue(parser,receiver,path):actual;
+ const captures=[{name:parser.freshProductBinding(),value:receiver,origin:receiverOrigin}];
  let argument=null,callable=null,resultOrigin=null;
  const callbackArgument=readRustStandardSumMethodCallbackArgument(sum.owner,method.value);
  const messageRole=readRustStandardSumMethodPanicMessageRole(sum.owner,method.value);
@@ -70,6 +76,7 @@ export function readRustStandardSumSourceMethod(parser,receiver,method,path){
   captures.push({name:parser.freshProductBinding(),value:callable.value,origin:callable.origin});
  }
  if(arity>0)c.eat(',');const close=c.expect(')','standard sum method'),span={start,end:close.end};
+ const receiverMoved=!owned||parser.origins.consumeOwnedBinding(receiverOrigin,receiver.span);
  if(resultPolicy==='boolean')resultOrigin={...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}};
  else if(resultPolicy==='payload')resultOrigin=clone(sum.arguments[0]);
  else if(resultPolicy==='mapped sum')resultOrigin=createRustStandardSumSourceOrigin(parser,sum.owner,[callable.result,...sum.arguments.slice(1)],span);
@@ -101,5 +108,5 @@ export function readRustStandardSumSourceMethod(parser,receiver,method,path){
  }
  let body={k:'match',scrutinees:[local(captures[0])],rows,span};
  for(let at=captures.length-1;at>=0;at-=1){const capture=captures[at];body={k:'let',name:capture.name,type:capture.origin.type,value:capture.value,body,span};}
- return parser.origins.mark(body,resultOrigin);
+ return parser.origins.mark(body,owned?createRustOwnedStandardSumMethodResult(parser,resultOrigin,receiverMoved,true):resultOrigin);
 }

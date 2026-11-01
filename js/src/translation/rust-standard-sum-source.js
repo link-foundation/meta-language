@@ -7,30 +7,14 @@ import {readRustTypeAliasLookupKeys} from './rust-type-alias-rules.js';
 import {readRustSourceNamespacePathRole} from './rust-source-namespace-rules.js';
 import {readRustStandardSumOwnershipFacts,captureRustStandardSumConstructor} from './rust-standard-sum-ownership.js';
 import {acceptRustStandardSumOwnedArguments,readRustStandardSumOwnershipVersionError} from './rust-standard-sum-ownership-rules.js';
-import {readRustFunctionPointerTypeError} from './rust-function-pointer-rules.js';
+import {readRustFunctionPointerDomainError} from './rust-function-pointer-rules.js';
+import {sanitizeRustSourceTypeOrigin as sourceTypeOrigin} from './rust-source-type-origins.js';
 import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata} from './rust-standard-sum-source-metadata.js';
 import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
 import {readRustStandardSumSourceOwner,readRustStandardSumSourcePathOwner,readRustStandardSumSourcePathConstructor,readRustStandardSumSourceArgumentCount,acceptRustStandardSumSourceArguments,readRustStandardSumSourceConstructors,readRustStandardSumSourceFieldArgument,readRustStandardSumSourceConstructorArity,acceptRustStandardSumSourceInferredConstructor,readRustStandardSumSourceInstantiationLimit,readRustStandardSumSourceDepthLimit,readRustStandardSumSourceSpecializationName,readRustStandardSumSourcePhase,readRustStandardSumSourceDepth} from './rust-standard-sum-source-rules.js';
 
 const fail=(reason,span)=>{throw unsupported('Rust standard sum source',reason,span);};
 const copy=value=>structuredClone(value);
-// Datatype fields retain type contracts, never a particular value's owner ID
-// or temporary-production capability. Runtime ownership stays at the use site.
-function sourceTypeOrigin(origin){
- const result=origin;
- const pending=[result];
- while(pending.length){
-  const value=pending.pop();
-  for(const key of ['sourceBindingIdentity','sourcePlaceBindingIdentity'])delete value[key];
-  for(const key of ['sourceLoanBindingIdentities','sourcePlaceLoanBindingIdentities','sourceExtendingTemporaryBindings'])value[key]=[];
-  value.sourceBorrowedPlace=false;value.sourceOwnedResultProof=false;value.freshArrayValue=false;
-  value.sourceStandardSumPatternMove=false;
-  value.sourceStandardSumBorrowedField=false;
-  pending.push(...(value.fields??[]),...(value.callableParameters??[]),...(value.standardSumSource?.arguments??[]));
-  if(value.callableResult)pending.push(value.callableResult);
- }
- return result;
-}
 const where=(parser,start)=>({start:start.start,end:parser.cursor.tokens[Math.max(0,parser.cursor.index-1)].end});
 
 export function initializeRustStandardSumSource(parser){
@@ -252,7 +236,8 @@ export function finishRustStandardSumSourceDeclarations(parser){
   if(result.type.kind==='tuple'&&result.fields)result.type={kind:'tuple',elements:result.fields.map(field=>copy(field.type))};
   if(result.type.kind==='function'&&result.callableParameters&&result.callableResult)result.type={kind:'function',params:result.callableParameters.map(parameter=>copy(parameter.type)),ret:copy(result.callableResult.type)};
   if(result.sourceFunctionPointerHeader){
-   const reason=readRustFunctionPointerTypeError(parser.ordinaryCompletionContext(),(result.callableParameters??[]).map(parameter=>parser.origins.immutableProduct(parameter)),Boolean(result.callableResult&&parser.origins.immutableProduct(result.callableResult)));
+   const parameters=result.callableParameters??[];
+   const reason=readRustFunctionPointerDomainError(parser.ordinaryCompletionContext(),parameters.map(parameter=>parser.origins.immutableProduct(parameter)),Boolean(result.callableResult&&parser.origins.immutableProduct(result.callableResult)),parameters.map(parameter=>readRustStandardSumOwnershipFacts(parser.origins,parameter).profile),readRustStandardSumOwnershipFacts(parser.origins,result.callableResult).profile,parser.sourceVersionMinor);
    if(reason)fail(reason);
    delete result.sourceFunctionPointerHeader;result.proven=true;result.copyEvidence=true;
   }

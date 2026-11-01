@@ -275,6 +275,8 @@ struct Inference {
     recursive_binding_iterables: Vec<IterableOf>,
     computed_calls: Vec<ComputedCall>,
     collections: HashMap<*const SExpr, (Term, Option<Span>)>,
+    collection_copies:HashMap<*const SExpr,Term>,
+    collection_construction_inputs:Vec<collections::CollectionConstructionInput>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
     /// The types of the fields the translator makes up, which are inferred
@@ -332,6 +334,8 @@ impl Inference {
             recursive_binding_iterables: Vec::new(),
             computed_calls: Vec::new(),
             collections: HashMap::new(),
+            collection_copies:HashMap::new(),
+            collection_construction_inputs:Vec::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],
             field_terms: HashMap::new(),

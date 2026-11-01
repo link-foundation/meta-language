@@ -1,4 +1,5 @@
 import {readRustTypeAliasEmptyVectorOrigin} from './rust-type-aliases.js';
+import {acceptRustFunctionPointerSafeSource} from './rust-function-pointer-rules.js';
 import {readRustTypeAliasStringMemberOwner} from './rust-type-aliases.js';
 import {readRustGenericTypeAliasConstructor,prepareRustTypeAliasDefaultAccessHead} from './rust-type-aliases.js';
 import {initializeRustStandardSumSource,readRustStandardSumSourceType,readRustStandardSumSourceConstructor,readRustStandardSumSourcePattern,readRustStandardSumSourceImport,finishRustStandardSumSource,finishRustStandardSumSourceDeclarations,withRustStandardSumSourceContext,refuseRustStandardSumSourcePatterns} from './rust-standard-sum-source.js';
@@ -12,6 +13,8 @@ import {isRustOwnedStandardSumValue} from './rust-standard-sum-ownership.js';
 import {readRustStandardSumOwnedGuardError} from './rust-standard-sum-ownership-rules.js';
 import {deferRustStandardSumGuard} from './rust-standard-sum-guards.js';
 import {readRustOwnedStandardSumObserver} from './rust-owned-standard-sum-observers.js';
+import {readRustOwnedStandardSumMethod} from './rust-owned-standard-sum-methods.js';
+import {readRustOwnedStandardSumCallback} from './rust-owned-standard-sum-callbacks.js';
 import {captureRustSourceConstantInitializer,captureRustSourceConstantFunction,readRustSourceConstantPattern} from './rust-source-constant-evaluation.js';
 import {readRustPrimitiveConstantPattern} from './rust-constant-patterns.js';
 import {testRustIntegerRangeRestFollower} from './rust-integer-range-rules.js';
@@ -602,7 +605,7 @@ class RustParser {
     if(acceptRustIteratorItemInferredType(token.value,Boolean(this.iteratorItemTypeInferenceOrigin))){
       c.next();const origin=structuredClone(this.iteratorItemTypeInferenceOrigin);this.origins.type={...origin,expandedSourceOwner:structuredClone(origin.sourceOwner)};return origin.type;
     }
-    if(c.is('fn'))return readRustFunctionPointerType(this);
+    if(acceptRustFunctionPointerSafeSource(token.value,token.raw))return readRustFunctionPointerType(this);
     const inherentSelf=readRustInherentSelfType(this);
     if(inherentSelf)return inherentSelf;
     if (c.eat('&')) {
@@ -1450,6 +1453,10 @@ class RustParser {
         const method = c.identifier('method');
         const ownedStandardSumObserver=readRustOwnedStandardSumObserver(this,value,method,path);
         if(ownedStandardSumObserver){value=ownedStandardSumObserver;continue;}
+        const ownedStandardSumMethod=readRustOwnedStandardSumMethod(this,value,method,path);
+        if(ownedStandardSumMethod){value=ownedStandardSumMethod;continue;}
+        const ownedStandardSumCallback=readRustOwnedStandardSumCallback(this,value,method,path);
+        if(ownedStandardSumCallback){value=ownedStandardSumCallback;continue;}
         const standardSumCombinator=readRustStandardSumSourceCombinator(this,value,method,path);
         if(standardSumCombinator){value=standardSumCombinator;continue;}
         const standardSumNested=readRustStandardSumSourceNested(this,value,method,path);

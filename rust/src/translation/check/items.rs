@@ -10,6 +10,11 @@ use super::{
 };
 
 impl Checker {
+    pub(super) fn refuse_callable_data_observation(&self,ty:&Type,operation:&str,span:Option<Span>)->Result<()>{
+        let facts=crate::translation::callable_data::read_callable_data_facts(ty,&|name|match self.decls.get(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let reason=crate::translation::callable_data_derivation_rules::read_callable_data_observation_error(operation,facts.callable);
+        if reason.is_empty(){Ok(())}else{Err(unsupported("callable aggregate observation",&reason,span))}
+    }
     pub(super) fn declare(&mut self, items: &[SItem], path: &[String]) -> Result<()> {
         for item in items {
             let name = item.name().to_owned();
@@ -557,6 +562,7 @@ impl Checker {
         style: ShowStyle,
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
+        self.refuse_callable_data_observation(&value.ty,"display",expr.span)?;
         let refusal = crate::translation::primitive_value_rules::read_number_display_refusal(
             self.language.as_str(),
             value.ty.kind(),
@@ -657,6 +663,7 @@ impl Checker {
                         prop.span,
                     ));
                 }
+                for binder in &checked{self.refuse_callable_data_observation(&binder.ty,"proof",prop.span)?;}
                 let mut inner = env.clone();
                 for binder in &checked {
                     inner.bind_local(&binder.name, binder.ty.clone());
@@ -703,6 +710,7 @@ impl Checker {
                     _ => BinaryOp::Ge,
                 };
                 let (left, right) = self.operands(&pair.left, &pair.right, env, path, prop.span)?;
+                self.refuse_callable_data_observation(&left.ty,"comparison",prop.span)?;
                 if matches!(left.ty, Type::Tuple { .. }) {
                     return Err(unsupported(
                         "comparison of tuples",

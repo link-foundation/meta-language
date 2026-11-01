@@ -29,6 +29,7 @@ import { readArrayStateMethodResult, readArrayStateMethodArgumentRole } from './
 import { readReferenceMethodResult } from './reference-method-rules.js';
 import { readCollectionAccessResult } from './collection-access-rules.js';
 import { inferCollectionConstruction } from './collection-construction.js';
+import {solveCollectionCopyInputs,normalizeCollectionCopyInputs} from './collection-copies.js';
 import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
 import { readJavaScriptBindingDefaultConstraints } from './array-binding-inference.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
@@ -119,6 +120,7 @@ class Inference {
     this.nominalSpreads = [];
     this.enumerations=[];
     this.collections = new Map();
+    this.collectionCopies=new Map();this.collectionConstructionInputs=[];
     this.iterables = [];
     this.arrayFormalIterables=[];
     this.recursiveBindingIterables=[];
@@ -387,6 +389,7 @@ class Inference {
       node.params.forEach((param, index) => { if (!param.type) param.type = this.surface(term.params[index], param.span ?? node.span); });
       node.ret = this.surface(term.ret, node.span);
     }
+    normalizeCollectionCopyInputs(this);
   }
 
   /** Deferred `+` and field constraints, until nothing more is known; then `+` of unknowns adds numbers. */
@@ -428,6 +431,7 @@ class Inference {
           progress = true;
         }
       }
+      if(solveCollectionCopyInputs(this))progress=true;
       for (const constraint of [...this.includes]) {
         if (this.includesStep(constraint, false)) {
           this.includes.splice(this.includes.indexOf(constraint), 1);
@@ -675,6 +679,7 @@ class Inference {
           progress = true;
         }
       }
+      if(!progress&&this.collectionConstructionInputs.length)progress=solveCollectionCopyInputs(this,true);
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
     if(this.nominalSpreads.length)throw typeError('an object spread needs its complete actual source owner; declare its fields with JSDoc',this.nominalSpreads[0].node.span);

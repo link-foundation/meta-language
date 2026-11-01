@@ -4,6 +4,7 @@ use super::{
     unsupported,
 };
 use crate::translation::rust_function_pointer_rules as rules;
+pub(super) fn clone_callable_type_origin(origin:&SourceOrigin)->SourceOrigin{super::source_type_origins::clone_source_type_origin(origin)}
 impl RustParser {
     pub(super) fn read_function_pointer_type(&mut self) -> Result<Type> {
         let start = self.cursor.advance();
@@ -17,7 +18,7 @@ impl RustParser {
                 self.cursor.advance();
             }
             params.push(self.parse_type()?);
-            parameter_origins.push(self.origins.current_type.clone());
+            parameter_origins.push(clone_callable_type_origin(&self.origins.current_type));
             copies.push(self.origins.current_type.direct_copy_value());
             if self.cursor.eat(",").is_none() {
                 break;
@@ -27,26 +28,23 @@ impl RustParser {
         let ret = if self.cursor.eat("->").is_some() {
             self.parse_type()?
         } else {
-            self.origins
-                .typed(UNIT, &self.module_path.clone(), Vec::new())
+            let result=self.origins.typed(UNIT, &self.module_path.clone(), Vec::new());
+            self.origins.current_type.source_owner=Some(crate::translation::source_signatures::SourceOwner {kind:"unit".into(),path:Vec::new(),arguments:Vec::new()});
+            result
         };
-        let actual = rules::read_rust_function_pointer_type_error(
-            self.ordinary_completion_context(),
-            &copies,
-            self.origins.current_type.direct_copy_value(),
-        );
-        let reason = rules::read_rust_function_pointer_header_type_error(
-            self.ordinary_completion_context(), &copies,
-            self.origins.current_type.direct_copy_value(),self.header_discovery,
-        );
+        let safe=rules::accept_rust_function_pointer_safe_source(&start.value,&start.raw);
+        let roles=if safe{parameter_origins.iter().map(|origin|self.origins.standard_sum_ownership_facts(origin).profile).collect::<Vec<_>>()}else{Vec::new()};
+        let result_role=if safe{self.origins.standard_sum_ownership_facts(&self.origins.current_type).profile}else{String::new()};
+        let actual=rules::read_rust_function_pointer_domain_error(self.ordinary_completion_context(),&copies,self.origins.current_type.direct_copy_value(),&roles,&result_role,self.source_version_minor);
+        let reason=rules::read_rust_function_pointer_header_domain_error(self.ordinary_completion_context(),&copies,self.origins.current_type.direct_copy_value(),&roles,&result_role,self.source_version_minor,self.header_discovery);
         if !reason.is_empty() {
             return Err(unsupported(
                 "Rust function pointer",
-                reason,
+                &reason,
                 Some(start.span()),
             ));
         }
-        let result_origin = self.origins.current_type.clone();
+        let result_origin = clone_callable_type_origin(&self.origins.current_type);
         let ty = Type::Function {
             params,
             ret: Box::new(ret),
@@ -99,17 +97,16 @@ impl RustParser {
         let SourceDeclaration::Function { parameters, result } = entry.declaration else {
             return Ok(None);
         };
+        let parameters=parameters.iter().map(clone_callable_type_origin).collect::<Vec<_>>();let result=clone_callable_type_origin(&result);
         let copies = parameters
             .iter()
             .map(SourceOrigin::direct_copy_value)
             .collect::<Vec<_>>();
-        let reason = rules::read_rust_function_pointer_type_error(
-            self.ordinary_completion_context(),
-            &copies,
-            result.direct_copy_value(),
-        );
+        let roles=parameters.iter().map(|origin|self.origins.standard_sum_ownership_facts(origin).profile).collect::<Vec<_>>();let result_role=self.origins.standard_sum_ownership_facts(&result).profile;
+        let actual=rules::read_rust_function_pointer_domain_error(self.ordinary_completion_context(),&copies,result.direct_copy_value(),&roles,&result_role,self.source_version_minor);
+        let reason=rules::read_rust_function_pointer_header_domain_error(self.ordinary_completion_context(),&copies,result.direct_copy_value(),&roles,&result_role,self.source_version_minor,self.header_discovery);
         if !reason.is_empty() {
-            return Err(unsupported("Rust function reference", reason, span));
+            return Err(unsupported("Rust function reference", &reason, span));
         }
         let ty = Type::Function {
             params: parameters
@@ -122,7 +119,9 @@ impl RustParser {
         full.extend(entry.full_name.split('.').map(str::to_owned));
         let node = SExpr::new(SNode::FunctionValue { path: full }, span);
         let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
-        origin.copy_evidence = Some(());
+        origin.proven=actual.is_empty();origin.copy_evidence=actual.is_empty().then_some(());origin.source_function_pointer_header=!actual.is_empty();
+        let owners=parameters.iter().chain(std::iter::once(&result)).map(|origin|origin.expanded_source_owner.clone().or_else(||origin.source_owner.clone())).collect::<Option<Vec<_>>>().ok_or_else(||unsupported("Rust function reference","the complete source function needs every actual parameter and result owner",span))?;
+        origin.source_owner=Some(crate::translation::source_signatures::SourceOwner {kind:"function".into(),path:Vec::new(),arguments:owners});
         origin.callable_parameters = Some(parameters);
         origin.callable_result = Some(Box::new(result));
         self.origins.mark(&node, origin);
@@ -142,7 +141,7 @@ impl RustParser {
         if reason.is_empty() {
             Ok(())
         } else {
-            Err(unsupported("Rust callable observation", reason, span))
+            Err(unsupported("Rust callable observation", &reason, span))
         }
     }
 }

@@ -337,6 +337,8 @@ impl LeanEmitter<'_> {
     }
 
     fn data(&mut self, entry: &Decl, data: &DataDecl) -> Result<String> {
+        let facts=crate::translation::callable_data::read_callable_data_facts(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?;
+        let profile=if facts.callable{Some(crate::translation::callable_data::read_callable_data_recursive_profile(&Type::Data{name:data.full_name.clone()},&|name|match self.program.declaration(name){Some(Decl::Data(data))=>Some(data),_=>None})?)}else{None};
         let name = self.state.local_name(&data.full_name).to_owned();
         self.state.map(entry, &name);
         let mut lines = vec![format!("inductive {name} where")];
@@ -351,14 +353,8 @@ impl LeanEmitter<'_> {
         }
         // A pair of printed lines and a value is only built and taken apart; its value may be a Float, which has no DecidableEq.
         // Lean derives no DecidableEq for a Float, nor through an Array of data; the portable core never compares such values.
-        let deriving = if data.output {
-            "Inhabited"
-        } else if self.undecidable(&data.full_name, &mut HashSet::new()) {
-            "Repr, Inhabited"
-        } else {
-            "Repr, DecidableEq, Inhabited"
-        };
-        lines.push(format!("  deriving {deriving}"));
+        let deriving = crate::translation::callable_data_derivation_rules::read_callable_data_derivation("Lean",facts.callable,false,data.output,self.undecidable(&data.full_name,&mut HashSet::new()));
+        if let Some(profile)=profile.filter(|profile|profile.recursive){let witness=&data.ctors[profile.witness];let constructor=self.state.ctor_ref(&data.full_name,&witness.name,".");lines.push(crate::translation::callable_data_derivation_rules::render_callable_data_lean_default(&name,&constructor,witness.fields.len() as f64));}else{lines.push(format!("  deriving {deriving}"));}
         Ok(lines.join("\n"))
     }
 

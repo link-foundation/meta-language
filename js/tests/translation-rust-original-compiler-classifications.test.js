@@ -39,3 +39,8 @@ test('declared compiler endpoints and validity categories cannot be silently omi
  row.originalCompilerExpectation.versions=[...versions];row.originalCompilerExpectation.category='valid Rust source';
  assert.throws(()=>readRustOriginalCompilerExpectation(row,versions));
 });
+test('a separately declared Rust type rejection keeps source rejection distinct from ownership classification',()=>{
+ const row=structuredClone(rustStandardSumOwnedRefusals[0]);row.originalCompilerExpectation.category='invalid Rust source';
+ assert.equal(readRustOriginalCompilerExpectation(row,versions).outcome,'reject');
+ row.originalCompilerExpectation.outcome='accept';assert.throws(()=>readRustOriginalCompilerExpectation(row,versions));
+});

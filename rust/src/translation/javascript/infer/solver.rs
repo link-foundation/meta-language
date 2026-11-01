@@ -171,6 +171,7 @@ impl Inference {
             waiting.extend(std::mem::take(&mut self.fields));
             self.fields = waiting;
             progress |= self.solve_methods()?;
+            progress |= self.solve_collection_copy_inputs(false)?;
             progress |= self.solve_includes(false)?;
             progress |= self.solve_optional()?;
             progress |= self.solve_array_formal_iterables()?;
@@ -263,6 +264,7 @@ impl Inference {
                 self.unify(&term, &Term::Known(BOOL), place)?;
                 progress = true;
             }
+            if !progress&&!self.collection_construction_inputs.is_empty(){progress|=self.solve_collection_copy_inputs(true)?;}
         }
         if let Some(constraint) = self.record_spreads.first() {
             return Err(super::type_error(

@@ -1,4 +1,6 @@
 import {readRustIntegerPatternOwners,normaliseRustIntegerRangePattern,compileRustIntegerRangeRows} from './rust-integer-ranges.js';
+import {acceptCollectionCopyArrayFromSnapshot} from './collection-copy-rules.js';
+import {checkCollectionCopySnapshotCallbacks} from './collection-copies.js';
 import {projectPatternAliasRow} from './pattern-aliases.js';
 import {acceptLinkedRustPanicValue,readRustPanicValueArgumentError} from './rust-panic-value-rules.js';
 import {readRustSourceNumericPatternTypeError,readRustSourceNumericPatternNegationError,readRustSourceNumericPatternInference,readRustSourceNumericPatternInferenceError,readRustSourceIntegerPatternContextError} from './rust-numeric-pattern-rules.js';
@@ -101,6 +103,7 @@ import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from '.
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
+import {refuseCallableDataObservation} from './callable-data.js';
 import {checkRustDiagnosticAttributePlacement} from './rust-diagnostic-attributes.js';
 import { acceptRustNumericLiteralNegation } from './rust-character-rules.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
@@ -280,6 +283,7 @@ class Checker {
     validateRustTypeNamespace(program);
     checkRustPureUnitCalls(program);
     checkRustOwnedLocalStateProof(program);
+    checkCollectionCopySnapshotCallbacks(program);
     if(Object.hasOwn(surface,'sourceRuntimeShell'))captureRustRuntimeShell(program,surface.sourceRuntimeShell);
     return program;
   }
@@ -493,6 +497,7 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
+    refuseCallableDataObservation(value.type,this.items,'display',expr.span);
     const displayRefusal = readNumberDisplayRefusal(this.language, value.type.kind);
     if (displayRefusal) throw unsupported('Rust Float display', displayRefusal, expr.span);
     const bigint = value.type.kind === 'int' || value.type.kind === 'nat';
@@ -531,6 +536,7 @@ class Checker {
     switch (prop.p) {
       case 'forall': {
         const binders = prop.binders.map((binder) => ({ name: binder.name, type: this.resolveType(binder.type, path, prop.span) }));
+        for(const binder of binders)refuseCallableDataObservation(binder.type,this.items,'proof',prop.span);
         if (binders.some((binder) => isFloat(binder.type))) {
           throw unsupported('quantification over Numbers', 'a theorem quantifies over integers, naturals, booleans, strings or data', prop.span);
         }
@@ -549,6 +555,7 @@ class Checker {
       default: {
         if (!COMPARISONS.has(prop.p)) throw typeError(`unknown proposition ${prop.p}`, prop.span);
         const [left, right] = this.operands(prop.left, prop.right, env, path, prop.span);
+        refuseCallableDataObservation(left.type,this.items,'comparison',prop.span);
         if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', prop.span);
         if (prop.p !== 'eq' && prop.p !== 'ne' && !isOrdered(left.type)) {
           throw typeError(`ordering on ${typeKey(left.type)}`, prop.span);
@@ -757,7 +764,8 @@ class Checker {
       case 'arrayFrom': {
         const argumentError = readArrayFromArgumentError(node.args.length);
         if (argumentError) throw typeError(argumentError, node.span);
-        const object = this.expr(node.args[0], env, path, undefined);
+        let object = this.expr(node.args[0], env, path, undefined);
+        if(acceptCollectionCopyArrayFromSnapshot(object.type.kind,object.type.reference===true))object=this.referenceValue(object);
         const selection = readArrayFromIterableType(object.type);
         if (!selection) throw unsupported('Array.from', readArrayFromReceiverError(object.type.kind), node.span);
         let result;
@@ -1001,6 +1009,7 @@ class Checker {
       }
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
+        refuseCallableDataObservation(arg.type,this.items,'display',node.span);
         if (arg.type.kind === 'string') return arg;
         if (arg.type.kind === 'array') throw arrayText(node.span);
         if (arg.type.kind === 'option' && primitiveKey(arg.type.element)) return { k: 'optionalText', arg, console: false, type: STRING };
@@ -1478,6 +1487,7 @@ class Checker {
         let right = this.expr(node.right, env, path, undefined, true);
         if (left.type.kind === 'literal') left = this.expr(node.left, env, path, this.defaultNumber());
         if (right.type.kind === 'literal') right = this.expr(node.right, env, path, this.defaultNumber());
+        refuseCallableDataObservation(left.type,this.items,'comparison',node.span);refuseCallableDataObservation(right.type,this.items,'comparison',node.span);
         const comparison=materializeJavaScriptPrimitiveComparison(this,op,left,right);
         if(comparison)return comparison;
         if (left.type.kind === 'option' || right.type.kind === 'option') {
@@ -1494,6 +1504,7 @@ class Checker {
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+      refuseCallableDataObservation(left.type,this.items,'comparison',node.span);
       if (this.language === 'JavaScript' && acceptReferenceIdentityComparison(op, left.type.kind, right.type.kind, left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
         return {k: 'binary', op, left, right, type: BOOL, domain: left.type};
       }

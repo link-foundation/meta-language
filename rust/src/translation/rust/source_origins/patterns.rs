@@ -288,6 +288,10 @@ impl SourceOrigins {
             })
             .collect::<Result<Vec<_>>>()?;
         let mut scope = self.scope.clone();
+        if deferred_guard{
+            let aliases=super::super::standard_sum_guards::standard_sum_guard_alias_count(patterns);
+            for map in &maps{let owned=map.values().filter(|origin|self.owned_binding_value(origin)).count();let error=crate::translation::rust_standard_sum_guard_rules::read_rust_standard_sum_guard_alias_transfer_error(aliases as f64,owned as f64);if !error.is_empty(){return Err(unsupported("Rust owned standard sum guard",&error,scrutinee.span));}}
+        }
         if let Some(first) = maps.first() {
             let span = patterns
                 .iter()
@@ -322,6 +326,11 @@ impl SourceOrigins {
                         "every alternative must bind the same names with the same source ownership",
                         span,
                     ));
+                }
+                if deferred_guard{
+                    let identities=candidates.iter().map(|candidate|self.standard_sum_source_identity(candidate)).collect::<Vec<_>>();
+                    let error=crate::translation::rust_standard_sum_guard_rules::read_rust_standard_sum_guard_alternative_binding_error(identities.iter().all(Option::is_some),identities.first().is_some_and(|first|identities.iter().all(|identity|identity==first)),candidates.iter().all(|candidate|super::super::standard_sum_guards::same_standard_sum_guard_lineage(origin,candidate)));
+                    if !error.is_empty(){return Err(unsupported("Rust owned standard sum guard",&error,span));}
                 }
                 let mut binding = self.join(&candidates);
                 binding.source_extending_temporary_bindings.clear();

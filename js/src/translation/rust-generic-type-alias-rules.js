@@ -7,7 +7,7 @@ import {acceptRustSourceSignaturePrimitive} from './rust-source-signature-rules.
 import {readRustStandardSumSourceArgumentCount,readRustStandardSumSourceDepthLimit,readRustStandardSumSourceConstructorArity} from './rust-standard-sum-source-rules.js';
 import {acceptRustSourceArrayOwner,acceptRustSourceArrayElement} from './rust-array-rules.js';
 import {readRustTypeClosingTokenParts} from './rust-type-token-rules.js';
-import {readRustFunctionPointerTypeError,readRustFunctionPointerHeaderTypeError} from './rust-function-pointer-rules.js';
+import {readRustFunctionPointerTypeError,readRustFunctionPointerHeaderTypeError,readRustFunctionPointerParameterLimit,readRustFunctionPointerOwnedDomainError,acceptRustFunctionPointerSafeSource} from './rust-function-pointer-rules.js';
 import {acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
 
 /** Restrict this first declaration profile to explicit, unconstrained type
@@ -155,6 +155,16 @@ export function readRustGenericTypeAliasDefaultAccessHeadLimit(){return 16;}
  * Complete alias validation still runs after that catalog is collected.
  * @param {boolean} collecting @param {boolean} discovery @returns {string} */
 export function readRustGenericTypeAliasDefaultOwnerPhase(collecting,discovery){return collecting&&discovery?'defer':'prepare';}
+/** Only actual safe fn syntax starts a function template. A raw identifier
+ * r#fn remains a parameter/type binding, and qualifiers are never discarded.
+ * @param {string} value @param {string} raw @returns {boolean} */
+export function acceptRustGenericTypeAliasFunctionTemplateHead(value,raw){return acceptRustFunctionPointerSafeSource(value,raw);}
+/** @param {string} value @param {string} raw @returns {boolean} */
+export function acceptRustGenericTypeAliasFunctionParameterName(value,raw){return value==='_'?raw==='_':acceptParameterName(value,raw);}
+/** Symbolic wellformedness checks size only. Signature-domain Copy facts are
+ * read from actual substituted origins at materialization, never invented.
+ * @param {number} count @returns {string} */
+export function readRustGenericTypeAliasFunctionTemplateError(count){return !Number.isInteger(count)||count<0?'invalid generic function template parameter count':count>readRustFunctionPointerParameterLimit()?'the complete pointer signature exceeds its source budget':'';}
 
 /** A substitution plan indexes complete actual argument origins. It does not
  * copy types, re-resolve names, infer arguments, or prove a template well formed.
@@ -239,6 +249,16 @@ export function acceptRustGenericTypeAliasConcreteTemplate(kind,wrappers,ownerKi
  * @returns {boolean} */
 export function acceptRustGenericTypeAliasConcreteCallableTemplate(ordinary,kind,wrappers,ownerKind,ownerPaths,children,parameters,parameterCopies,resultCopy,resultTyped,proven,copy,closure){
  return wrappers===0&&!closure&&resultTyped&&parameterCopies.length===parameters&&acceptRustRetainedFunctionOwner('Rust source function signature 2',ownerKind,kind,ownerPaths,children,parameters,false)&&proven&&copy&&readRustFunctionPointerTypeError(ordinary,parameterCopies,resultCopy)==='';
+}
+/** Owned value domains are separate from the unchanged Copy-only leaf.
+ * The callable itself is still an actually admitted capture-free fn pointer.
+ * @param {boolean} ordinary @param {string} kind @param {number} wrappers
+ * @param {string} ownerKind @param {number} ownerPaths @param {number} children
+ * @param {number} parameters @param {string[]} roles @param {string} resultRole
+ * @param {boolean} resultTyped @param {boolean} proven @param {boolean} copy
+ * @param {boolean} closure @param {number} minor @returns {boolean} */
+export function acceptRustGenericTypeAliasOwnedCallableTemplate(ordinary,kind,wrappers,ownerKind,ownerPaths,children,parameters,roles,resultRole,resultTyped,proven,copy,closure,minor){
+ return wrappers===0&&!closure&&resultTyped&&roles.length===parameters&&acceptRustRetainedFunctionOwner('Rust source function signature 2',ownerKind,kind,ownerPaths,children,parameters,false)&&proven&&copy&&readRustFunctionPointerOwnedDomainError(ordinary,roles,resultRole,minor)==='';
 }
 /** Private fn-pointer children may await nominal/sum admission. Their existing
  * parser header flag is transported without upgrading proven or Copy facts.

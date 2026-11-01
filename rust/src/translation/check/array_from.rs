@@ -3,6 +3,7 @@ use super::{
     Checker, Env, Expr, FLOAT, Node, Result, SExpr, Span, Type, array, type_error, unsupported,
 };
 use crate::translation::array_from_rules as rules;
+use crate::translation::collection_copy_rules as copy_rules;
 use crate::translation::frontend_rules::{accept_argument_count, ml_array::number_index};
 use crate::translation::surface_reference_facts::{
     SurfaceReferenceFacts, create_surface_reference_facts,
@@ -38,7 +39,8 @@ impl Checker {
         if !error.is_empty() {
             return Err(type_error(error, span));
         }
-        let object = self.expr(&args[0], env, path, None, false)?;
+        let mut object = self.expr(&args[0], env, path, None, false)?;
+        if copy_rules::accept_collection_copy_array_from_snapshot(object.ty.kind(),object.ty.is_reference()){object=Self::reference_value(object);}
         let value =
             serde_json::to_value(&object.ty).expect("a checked receiver type is serializable");
         let facts = create_surface_reference_facts(&value);

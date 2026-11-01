@@ -459,6 +459,7 @@ impl Checker {
             SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
+                self.refuse_callable_data_observation(&arg.ty,"display",span)?;
                 let refusal =
                     crate::translation::primitive_value_rules::read_number_display_refusal(
                         self.language.as_str(),
@@ -785,6 +786,8 @@ impl Checker {
                         checked_right =
                             self.expr(right, env, path, Some(&self.default_number()), false)?;
                     }
+                    self.refuse_callable_data_observation(&checked_left.ty,"comparison",span)?;
+                    self.refuse_callable_data_observation(&checked_right.ty,"comparison",span)?;
                     if let Some(value) =
                         self.primitive_comparison(op, &checked_left, &checked_right)?
                     {
@@ -797,6 +800,7 @@ impl Checker {
                     }
                 }
                 let (left, right) = self.operands(left, right, env, path, span)?;
+                self.refuse_callable_data_observation(&left.ty,"comparison",span)?;
                 if self.language == Language::JavaScript && crate::translation::reference_identity_rules::accept_reference_identity_comparison(
                     op_name(op), left.ty.kind(), right.ty.kind(),
                     left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,
