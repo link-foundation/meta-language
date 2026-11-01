@@ -12230,3 +12230,11 @@ associated Get/default. The converted String or Symbol identity is retained in
 an immutable binding and reused for rest exclusion, even when later defaults
 mutate the original key expression's bindings. Key expressions are never replayed
 while copying rest properties.
+
+Portable source replay records constructor authority additions as explicit events
+containing the actual selected constructor, added directory and resulting program.
+Native replay applies the shared translated authority extension, compares the
+complete unchanged machine and resulting program, then continues with that
+program. A trace cannot replace executable code by declaring an expected update.
+Codec generation includes these authority types; generated codecs are never
+manually patched. Metadata events consume the same shared transition budget.

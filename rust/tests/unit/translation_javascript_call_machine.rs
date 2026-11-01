@@ -165,7 +165,7 @@ fn call_machine_keeps_all_original_calls_states_values_and_heaps() {
 // than compiling another complete generated machine per consumer module.
 pub(super) fn assert_source_machine_trace(program_wire:&serde_json::Value,trace:&serde_json::Value){
     use serde_json::Value;
-    let program=decode_java_script_call_program(program_wire);
+    let mut program=decode_java_script_call_program(program_wire);
     assert_eq!(encode_java_script_call_program(&program),*program_wire);
     let mut actual=decode_java_script_call_machine_transition(&trace["initial"]);
     let initial=encode_java_script_call_machine_transition(&actual);
@@ -199,6 +199,17 @@ pub(super) fn assert_source_machine_trace(program_wire:&serde_json::Value,trace:
             "allocateObject"=>{
                 used+=1.0;assert_eq!(before["$"],"machineAllocateObject");
                 native::resume_java_script_call_object_allocation(program.clone(),machine,native::ml::Big::parse(event["identity"].as_str().unwrap()))
+            },
+            "extendConstructorAuthority"=>{
+                used+=1.0;assert_eq!(before["$"],"machineNeedConstructorAuthority");assert_eq!(before["constructor"],event["constructor"]);
+                let directory=decode_java_script_array_species_directory(&event["directory"]);
+                let updated=native::extend_java_script_call_array_authority(program.clone(),machine,directory);
+                let wire=encode_java_script_array_authority_update(&updated);
+                assert_eq!(wire["$"],"arrayAuthorityUpdate");assert_eq!(wire["error"],"");
+                assert_eq!(wire["machine"],before["machine"]);assert_eq!(wire["program"],event["program"]);
+                assert_ne!(wire["program"],encode_java_script_call_program(&program));
+                program=decode_java_script_call_program(&wire["program"]);
+                decode_java_script_call_machine_transition(&serde_json::json!({"$":"machineContinue","machine":wire["machine"]}))
             },
             "external"=>{
                 used+=1.0;assert_eq!(before["$"],event["requestKind"]);assert_eq!(before["realm"],event["realm"]);

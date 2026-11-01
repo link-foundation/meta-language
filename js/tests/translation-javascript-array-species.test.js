@@ -1,3 +1,4 @@
+import {readSourceMachineTrace} from './support/source-machine-trace.js';
 import {runJavaScriptSourceTransition} from '../src/node-source-modules.js';
 import {captureJavaScriptProjectDataSource} from '../src/translation/javascript-project-data-source.js';
 import {captureJavaScriptOrdinaryClassModule} from '../src/translation/javascript-ordinary-class-source.js';
@@ -82,4 +83,12 @@ test('unregistered constructors remain suspended and metadata authority cannot b
  function unavailable() { throw new Error('original constructor body must never run'); }
  const selected=instance.embedding.encode(unavailable),started=instance.begin('transform',[instance.embedding.encode([2]),selected]),actual=runJavaScriptSourceTransition(instance.embedding,started,{steps:8192});assert.equal(actual.transition.$,'machineNeedConstructorAuthority');assert.deepEqual(actual.transition.constructor,selected);const prior=instance.embedding.module.program,again=instance.embedding.resumeArrayConstructorAuthority(actual.transition);assert.equal(again.updated,false);assert.equal(again.transition,actual.transition);assert.equal(instance.embedding.module.program,prior);assert.throws(()=>instance.embedding.registerArrayConstructorAuthority(()=>instance.collection.speciesDirectory()),/before source publication/);
  assert.throws(()=>instance.embedding.resumeArrayConstructorAuthority({...actual.transition,constructor:instance.collection.speciesDirectory().arrayConstructor}),/actual selected constructor/);
+});
+
+
+test('source trace retains the exact constructor authority directory and changed portable program',()=>{
+ const source='export function transform(input, selected) { input.constructor = {[Symbol.species]: selected}; return input.map(value => value * 2); }',capture=captureJavaScriptOrdinaryClassModule(source,{identifier:'literal-species-trace-update.js',entries:['transform']}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:139n});
+ function helper(length) { return length; }
+ const added=captureJavaScriptProjectDataSource('export function helper(length) { return length; }',{identifier:'literal-species-trace-added.js',entries:['helper']}),unit=instance.embedding.attachSourceUnit(added,{helper},[]),owner=unit.registry.owners.find(row=>row.source===added.plan.functions[0].identity),started=instance.begin('transform',[instance.embedding.encode([2,4]),object(owner.identity,true)]),trace=readSourceMachineTrace(instance.embedding,started,{steps:8192});
+ assert.equal(trace.transition.$,'machineCompleted');const updates=trace.events.filter(event=>event.operation==='extendConstructorAuthority');assert.equal(updates.length,1);assert.equal(updates[0].constructor.identity,String(owner.identity));assert.equal(updates[0].expected.$,'machineContinue');assert.equal(updates[0].directory.constructors.some(fact=>fact.identity===String(owner.identity)&&fact.constructable),true);assert.equal(trace.budgetExhausted,false);
 });

@@ -296,3 +296,16 @@ exclusion. Four further originals cover earlier-parameter keys, later defaults
 mutating the key binding, genuine well-known Symbol identities, and a counted
 key expression. These are authored inputs only. Nested patterns, array iterators
 and exact engine diagnostics still require further drafting; no tests ran.
+
+
+### Constructor metadata trace/native replay draft
+
+The source trace helper drafts explicit `extendConstructorAuthority` events with
+the exact selected constructor, species directory, resulting portable program
+and continuation. Native replay calls the translated common authority extension,
+compares its error, complete unchanged machine and resulting program, and then
+continues using that program. Existing budget accounting includes these events.
+The generator root list includes species directories and authority updates;
+generated codecs themselves remain untouched until automatic regeneration. A
+deferred Node trace control expects one metadata addition and complete source
+execution. Neither that control nor Rust replay was executed or compiled.

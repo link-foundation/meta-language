@@ -33,3 +33,6 @@ declarations, including empty-pattern coercibility, defaults and own-key exclusi
 
 Draft computed object binding keys with held String/Symbol keys shared between
 field access and rest exclusion, preserving key and default evaluation order.
+
+Draft explicit constructor metadata events in source traces and native replay
+through the common authority extension, with automatic codec generation inputs.

@@ -8,8 +8,8 @@ import * as codecs from '../../../experiments/javascript-properties/call-machine
 
 export function readSourceMachineTrace(embedding,initial,{steps=65536}={}){
  if(!Number.isSafeInteger(steps)||Object.is(steps,-0)||steps<0||steps>1048576)throw new RangeError('source replay requires its actual bounded execution budget');
- const program=embedding.module.program,events=[],first=codecs.encodeJavaScriptCallMachineTransition(initial);
- let current=initial,used=0;
+ const events=[],first=codecs.encodeJavaScriptCallMachineTransition(initial);
+ let program=embedding.module.program,current=initial,used=0;
  function append(event){if(events.length>=4096)throw new RangeError('source replay exceeds its explicit event budget');events.push(event);}
  function adopt(){
   if(current.$==='machineInvalid')return;
@@ -36,6 +36,13 @@ export function readSourceMachineTrace(embedding,initial,{steps=65536}={}){
    if(actual.$!=='machineAllocateObject'||!testJavaScriptSemanticSameValue(actual.prototype,current.prototype))throw new TypeError('source replay allocation must retain its actual pending prototype');
    const identity=embedding.allocateIdentity();current=resumeJavaScriptCallObjectAllocation(program,current.machine,identity);
    append({operation:'allocateObject',identity:String(identity),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
+  }else if(current.$==='machineNeedConstructorAuthority'){
+   if(typeof embedding.resumeArrayConstructorAuthority!=='function')break;
+   const request=current,response=embedding.resumeArrayConstructorAuthority(request);if(!response.updated)break;
+   program=embedding.module.program;current=response.transition;
+   const frame=request.machine.frames[request.machine.frames.length-1],owner=program.functions.find(fn=>fn.identity===frame.identity),instruction=owner?.instructions[frame.position-1];
+   if(instruction?.$!=='arrayTransform')throw new TypeError('constructor replay retains its actual selected Array transform instruction');
+   append({operation:'extendConstructorAuthority',constructor:codecs.encodeJavaScriptSemanticValue(request.constructor),directory:codecs.encodeJavaScriptArraySpeciesDirectory(instruction.species),program:codecs.encodeJavaScriptCallProgram(program),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
   }else if(['machineInvokeHostCapability','machineAllocateErrorValue','machineInvokeErrorIntrinsic','machineAllocateError','machineAllocateSourceError'].includes(current.$)){
    const request=current;let response;
    const authority={perform(actual){if(response!==undefined)throw new TypeError('source replay cannot repeat an external effect');response=embedding.authority.perform(actual);return response;}};
