@@ -54,3 +54,6 @@ indexed writes, retaining completed values across storage resource suspension.
 
 Draft source Array spread literals through ordered accumulation, shared VM
 continuations, private coordinates and explicit hole length writes.
+
+Draft exact UTF16 String iterator slots, code-point advancement and shared
+result allocation, preserving surrogate pairs and unpaired code units.

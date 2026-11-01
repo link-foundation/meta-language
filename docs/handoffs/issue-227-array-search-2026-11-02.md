@@ -437,3 +437,23 @@ and explicit hole writes. Automatic native generation consumes the common source
 model; no generated output was edited and no check ran. Primitive String
 iteration authority/builtins, spread call arguments, array binding IteratorClose
 and for-of control unwinding remain further required source connections.
+
+
+### Exact String iterator slot/next draft
+
+The common iterator slot representation now includes the distinct String family
+with an actual semantic text slot and code-unit cursor. Non-String families
+cannot acquire that slot. `javascript-string-iteration.js` drafts allocation
+after completed ToString, code-point advancement with exact lone-surrogate
+preservation, permanent exhaustion, and shared value/done result allocation.
+Both text and compact sourceText representations use the same UTF16 accessors.
+Map/Set direct/brand advancement explicitly refuses String/Array families.
+
+Five deferred controls compare full exact outputs with the original String
+iterator for both representations, cover surrogate pairs/lone units, empty and
+permanent exhaustion, family refusal, genuine result allocation and allocation
+operand/identity refusal. Automatic library/native-control generation inputs
+are registered. No generation, tests, compilation or CI feedback review ran.
+String builtin ToString/allocation continuations, protected owner linkage and
+primitive iterator property authority are the next required connections before
+source String spread/for-of can consume this foundation.

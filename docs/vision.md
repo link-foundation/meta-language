@@ -12304,3 +12304,13 @@ while the shared spread kernel advances. The intrinsic iterator key comes from
 the protected namespace independently of a lexical binding named Symbol.
 Primitive iterator property responses have an explicit checked resumption API.
 Static literals retain their existing source representation.
+
+String iterator Objects retain an actual semantic text value and a code-unit
+cursor under a distinct common-heap iterator brand. Next combines a high/low
+surrogate pair into one yielded text value, preserves lone surrogates, and
+releases text permanently on exhaustion. Both unit-array and compact source-text
+representations use the same UTF16 accessors. Conversion to String belongs to
+the actual constructor/method continuation before allocation. String next uses
+the shared genuine value/done result allocator. Map/Set/Array iterator brands
+cannot resume String slots. Iterator texts share the explicit UTF16 storage
+budget, and generated models/codecs preserve these internal slots.

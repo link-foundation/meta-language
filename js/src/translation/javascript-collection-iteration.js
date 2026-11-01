@@ -43,7 +43,7 @@ export function advanceJavaScriptCollectionIterator(heap,receiver){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return {$:'collectionIterationInvalid',heap,reason:error};
  const invalid=readJavaScriptOrdinaryValueError(heap,receiver);if(invalid!=='')return {$:'collectionIterationInvalid',heap,reason:invalid};
  const iterator=receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,receiver.identity)]:undefined;
- if(iterator===undefined||iterator.$!=='collectionIteratorObject')return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual internal-slot receiver'};
+ if(iterator===undefined||iterator.$!=='collectionIteratorObject'||!['Map','Set'].includes(iterator.collectionKind))return {$:'collectionIterationTypeError',heap,reason:'collection iterator next needs its actual Map or Set internal-slot receiver'};
  if(iterator.collection===0n)return {$:'collectionIteration',heap,done:true,key:{$:'undefined'},value:{$:'undefined'},entry:false};
  const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,iterator.collection)];
  if(collection===undefined||collection.$!=='mapObject'&&collection.$!=='setObject')return {$:'collectionIterationInvalid',heap,reason:'the iterator source must remain in the actual shared heap'};

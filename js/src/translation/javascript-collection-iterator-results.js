@@ -22,10 +22,11 @@ export function readJavaScriptCollectionIteratorResultPrototypesError(heap,array
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptCollectionIteratorResultState} state @returns {string} */
 export function readJavaScriptCollectionIteratorResultStateError(heap,state){
  const error=readJavaScriptCollectionIteratorResultPrototypesError(heap,state.arrayPrototype,state.objectPrototype);if(error!=='')return error;
- if(state.$!=='collectionIteratorResultState'||!['entry','result'].includes(state.phase)||typeof state.done!=='boolean'||state.phase==='entry'&&state.done||!['Map','Set','Array'].includes(state.collectionKind))return 'iterator result allocation requires its actual pending phase, operation brand and completion';
+ if(state.$!=='collectionIteratorResultState'||!['entry','result'].includes(state.phase)||typeof state.done!=='boolean'||state.phase==='entry'&&state.done||!['Map','Set','Array','String'].includes(state.collectionKind))return 'iterator result allocation requires its actual pending phase, operation brand and completion';
  for(const value of [state.receiver,state.key,state.value]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  const iterator=state.receiver.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.receiver.identity)]:undefined;
  if(iterator===undefined||iterator.$!=='collectionIteratorObject'||iterator.collectionKind!==state.collectionKind)return 'an iterator result retains its actual original receiver and operation brand';
+ if(state.collectionKind==='String'&&state.phase==='entry')return 'String iterators yield text values rather than entry pairs';
  if(state.done&&(state.key.$!=='undefined'||state.value.$!=='undefined'))return 'an exhausted iterator yields its actual undefined value';
  return '';
 }
