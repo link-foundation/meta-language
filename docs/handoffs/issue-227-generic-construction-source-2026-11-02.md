@@ -197,3 +197,24 @@ arrow newTarget before Reflect.construct's observable argument-list reads.
 The batch now has twenty-four originals and nineteen kernel controls. Source
 inputs and prior assertions remain intact. This correction ran no tests,
 generation, validation or compilation.
+
+## Reflect checks, callee snapshots and lexical newTarget originals
+
+Sixteen additional literal original sources expand the existing bounded profile.
+They preserve constructor/nonconstructor checks before Reflect.construct argument
+length Get, including Symbol/arrow/primitive targets, Symbol newTarget and an
+explicit third undefined argument. A valid array-like case retains one length
+Get followed by indexed Get. Constructor selection covers member getter once,
+dynamic factory once, argument-side reassignment after the callee is held, and
+ordinary function/class construction without parentheses.
+
+The remaining originals distinguish normal Call new.target from Construct,
+returned and nested lexical arrow captures, an undefined arrow capture invoked
+inside another constructor, and ordinary methods/getters (including an arrow
+created by a method) that must see undefined rather than an enclosing
+constructor's newTarget. No Array.join, unmodeled Error constructor or module-
+scoped mutable binding is required. All previous rows remain intact. Totals are
+forty original sources and nineteen kernel controls; every new expected result
+is true under the same explicit Node22/24 fixture ranges. No execution,
+generation, validation or compilation occurred. Root owns shared/native author
+integration; no shared code was changed in this source-original batch.
