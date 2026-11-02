@@ -1,3 +1,5 @@
+import {readJavaScriptNumericParsingArity,executeJavaScriptNumericParsing} from './javascript-numeric-parsing-rules.js';
+import {multiplyJavaScriptSignedIntegerBits,countJavaScriptLeadingZeroBits} from './number-bitwise-rules.js';
 import {readJavaScriptStringMethodPrimitiveArity,executeJavaScriptStringMethodPrimitive} from './javascript-string-method-rules.js';
 // Reuse the existing complete UTF16 definitions; adapters never substitute
 // host scalar strings for code units or reimplement native operation bodies.
@@ -22,6 +24,7 @@ export function testJavaScriptCallUnaryNumberOperation(operation){
  * wrappers and replacement intrinsics need their own source lowering.
  * @param {string} operation @param {number} count @returns {string} */
 export function readJavaScriptCallPrimitiveArityError(operation,count){
+ const parsingArity=readJavaScriptNumericParsingArity(operation);if(parsingArity>=0)return count===parsingArity?'':'numeric parsing retains every converted operand';
  const stringArity=readJavaScriptStringMethodPrimitiveArity(operation);if(stringArity>=0)return count===stringArity?'':'String operations retain every actual converted operand';
  if(!Number.isSafeInteger(count)||count<0||count>4096)return 'primitive operands exceed their explicit call register budget';
  if(readJavaScriptSourceExceptionClass(operation)!=='')return count===2?'':'a source Error requires its actual text message and own-message presence';
@@ -29,8 +32,8 @@ export function readJavaScriptCallPrimitiveArityError(operation,count){
  if(integerArity!==0)return count===integerArity?'':'primitive instructions require every actual operand coordinate';
  if(operation==='read minimum number'||operation==='read maximum number'||operation==='construct text units')return '';
  if(testJavaScriptCallUnaryNumberOperation(operation))return count===1?'':'primitive instructions require every actual operand coordinate';
- const unary=['read integer index','require callable target','require array like arguments Object','require Object assign target','require Object reflection target','require nonnull Object input','require object for in','require ordinary property object','require array method object','read array like length','require delete success','require collection adder','require Map entry object','require object coercible','test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
- const binary=['read relative array index','read checked array append length','compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
+ const unary=['count leading zero bits','read integer index','require callable target','require array like arguments Object','require Object assign target','require Object reflection target','require nonnull Object input','require object for in','require ordinary property object','require array method object','read array like length','require delete success','require collection adder','require Map entry object','require object coercible','test object value','read semantic type','read text length','trim text','trim text start','trim text end','convert explicit number','coerce primitive number','coerce primitive numeric','convert primitive value','convert number primitive value','increment numeric value','decrement numeric value','negate numeric value','convert primitive text','convert explicit integer','coerce primitive integer'];
+ const binary=['multiply signed integer bits','read relative array index','read checked array append length','compare relational values','subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power','repeat text','read text code point','read text character','read relative text character','concatenate text','compare text','test text prefix','test text suffix','test text inclusion','add primitive values'];
  const ternary=['pad text start','pad text end','slice text','find text','find last text','replace text','replace all text'];
  const arity=unary.includes(operation)?1:binary.includes(operation)?2:ternary.includes(operation)?3:-1;
  return arity<0?'primitive instructions require their actual registered operation':count!==arity?'primitive instructions require every actual operand coordinate':'';
@@ -174,6 +177,9 @@ export function executeJavaScriptCallTextReplacement(text,search,replacement,all
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(readJavaScriptNumericParsingArity(operation)>=0)return executeJavaScriptNumericParsing(operation,values);
+ if(operation==='count leading zero bits'){const value=values[0]??{$:'undefined'};return value.$==='number'?{$:'primitiveValue',value:{$:'number',value:countJavaScriptLeadingZeroBits(value.value)}}:{$:'primitiveInvalid',reason:'leading zero count requires its converted Number operand'};}
+ if(operation==='multiply signed integer bits'){const left=values[0]??{$:'undefined'},right=values[1]??{$:'undefined'};return left.$==='number'&&right.$==='number'?{$:'primitiveValue',value:{$:'number',value:multiplyJavaScriptSignedIntegerBits(left.value,right.value)}}:{$:'primitiveInvalid',reason:'integer multiplication requires its converted Number operands'};}
  if(readJavaScriptStringMethodPrimitiveArity(operation)>=0)return executeJavaScriptStringMethodPrimitive(operation,values);
  if(operation==='increment numeric value'||operation==='decrement numeric value'||operation==='negate numeric value')return executeJavaScriptCallNumericUpdate(operation,values[0]??{$:'undefined'});
  if(['subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power'].includes(operation))return executeJavaScriptCallNumericBinary(operation,values[0]??{$:'undefined'},values[1]??{$:'undefined'});

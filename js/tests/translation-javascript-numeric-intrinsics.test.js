@@ -15,7 +15,7 @@ test('Math extrema consume every actual argument and preserve signed-zero reduct
  assert.equal(Object.is(executeJavaScriptCallPrimitive('read minimum number',[{$:'number',value:0},{$:'number',value:-0}]).value.value,-0),true);assert.equal(Object.is(executeJavaScriptCallPrimitive('read maximum number',[{$:'number',value:-0},{$:'number',value:0}]).value.value,0),true);
 });
 test('numeric catalog entries retain complete branch targets and actual constructor classification',()=>{
- for(const operation of ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN',...readJavaScriptNumberPredicateNames().map(name=>'Number.'+name),...readJavaScriptMathMethodNames().map(name=>'Math.'+name)]){const fn=compileJavaScriptNumericIntrinsicFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);}
+ for(const operation of ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN','Number.parseInt','Number.parseFloat','isNaN','isFinite',...readJavaScriptNumberPredicateNames().map(name=>'Number.'+name),...readJavaScriptMathMethodNames().map(name=>'Math.'+name)]){const fn=compileJavaScriptNumericIntrinsicFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);}
  const directory={$:'collectionCallableDirectory',realms:[2n],exoticKey:{$:'symbol',identity:9n},constructors:[],primitiveMethods:[{$:'primitiveMethodOwner',identity:1n,realm:2n,operation:'Number'}]};assert.notEqual(compileJavaScriptCollectionCallDirectory(directory).error,'');assert.equal(compileJavaScriptCollectionCallDirectory({...directory,primitiveMethods:[{...directory.primitiveMethods[0],constructable:true}]}).error,'');
 });
 
@@ -27,4 +27,15 @@ test('integer wrapping keeps exact signed residues and explicit resource boundar
  for(const [operation,width,input,expected] of [['wrap signed integer',8,255n,-1n],['wrap signed integer',8,-129n,127n],['wrap unsigned integer',8,-1n,255n],['wrap unsigned integer',8,257n,1n],['wrap signed integer',0,99n,0n]]){const result=executeJavaScriptCallPrimitive(operation,[{$:'number',value:width},{$:'integer',value:input}]);assert.equal(result.$,'primitiveValue');assert.equal(result.value.value,expected);}
  const limit=executeJavaScriptCallPrimitive('wrap unsigned integer',[{$:'number',value:4097},{$:'integer',value:1n}]);assert.equal(limit.$,'primitiveResourceLimit');
  const invalid=executeJavaScriptCallPrimitive('wrap unsigned integer',[{$:'number',value:0},{$:'number',value:7}]);assert.equal(invalid.$,'primitiveInvalid');
+});
+
+test('numeric prefix parsers retain radix precision and decimal exponent rollback',()=>{
+ const text=value=>({$:'text',units:Array.from(value,character=>character.charCodeAt(0))});
+ for(const [input,radix,expected] of [['zz!',36,1295],['-0x10rest',NaN,-16],['9007199254740995',10,9007199254740996],['11',4294967298,3],['-0x0!',0,-0]]){const result=executeJavaScriptCallPrimitive('parse integer text prefix',[text(input),{$:'number',value:radix}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
+ for(const [input,expected] of [['1e+',1],['-.5e+2tail',-50],['0x10',0],['-1e-999',-0],['5e-324!',5e-324],['-Infinitytail',-Infinity],['.e2',NaN]]){const result=executeJavaScriptCallPrimitive('parse float text prefix',[text(input)]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
+ assert.equal(executeJavaScriptCallPrimitive('parse float text prefix',[{$:'sourceText',text:'1'.repeat(4097)}]).$,'primitiveResourceLimit');
+});
+test('Math integer kernels retain exact low products and unsigned leading zeros',()=>{
+ for(const [left,right,expected] of [[4294967295,4294967295,1],[2147483647,2147483647,1],[-1,5,-5],[3.9,2.9,6],[Infinity,7,0]]){const result=executeJavaScriptCallPrimitive('multiply signed integer bits',[{$:'number',value:left},{$:'number',value:right}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
+ for(const [input,expected] of [[0,32],[-1,0],[1,31],[256,23],[4294967296,32],[NaN,32]])assert.equal(executeJavaScriptCallPrimitive('count leading zero bits',[{$:'number',value:input}]).value.value,expected);
 });

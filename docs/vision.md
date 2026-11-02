@@ -57,6 +57,17 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Numeric prefix parsers operate on exact UTF16. parseInt completes input ToString
+before radix ToNumber/ToInt32, honors radix 2 through 36 and conditional hex
+prefixes, consumes the longest valid digit prefix and rounds the exact accumulated
+integer once. parseFloat uses the longest decimal/Infinity prefix, rolls back an
+incomplete exponent and shares exact decimal-to-binary64 conversion. Global and
+Number parser aliases share their actual function identity. Global isNaN/isFinite
+perform implicit numeric conversion while Number predicates stay noncoercive.
+Math.imul uses exact 16-bit limbs instead of rounded full multiplication; clz32
+counts the normalized unsigned word. Numeric parsing has an explicit 4096-unit
+resource bound separate from language errors and original conversion throws.
+
 Protected BigInt Call uses shared explicit conversion, while asIntN/asUintN
 first complete width ToNumber/ToIndex and then value ToBigInt. Width truncation,
 negative-fraction zero, invalid-range errors, exact modular signed residues and

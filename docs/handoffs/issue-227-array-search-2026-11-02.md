@@ -1453,3 +1453,30 @@ orders, scalar conversions, signed residues, ranges and resource boundaries.
 They retain the existing explicit Node source-version bounds. Source authoring
 will include the existing updated numeric/integer libraries automatically when
 that phase resumes. No tests, validation, generation or compilation ran.
+
+### Numeric prefix grammars, global predicates and exact 32-bit Math
+
+A new source library composes ECMAScript whitespace, ToInt32 and exact existing
+rational-to-binary64 rules. Integer parsing consumes signs, conditional 0x, radix
+2 through 36 and the longest digit prefix; arbitrary-integer accumulation avoids
+intermediate rounding and retains negative zero. Decimal parsing recognizes the
+longest decimal/Infinity prefix; an incomplete exponent is excluded, preserving
+the mantissa. It delegates final rounding, overflow and subnormals to the existing
+complete StringNumericLiteral converter. Converted text above 4096 UTF16 units
+requests resources explicitly. parseInt's original ToString occurs before radix
+ToNumber even if the radix is invalid; original abrupt completions survive.
+
+Actual global parseInt/parseFloat and Number methods share one callable owner,
+with both alias boundaries privately authenticated. Global isNaN/isFinite use
+implicit conversion and thus preserve object effects and BigInt TypeError;
+Number's predicates retain their separate noncoercive behavior. Math.imul uses
+16-bit limbs with exact intermediates and a signed 32-bit result; clz32 shares
+ToUint32 and returns 32 for zero/nonfinite inputs. Their protected bodies preserve
+numeric conversion order before pure scalar execution.
+
+Fifteen original source cases and two more deferred controls cover aliases,
+radices, malformed exponents, exact rounding, signed zero, subnormals, infinities,
+conversion throws/order, implicit BigInt/Symbol refusal, low-word products and
+leading zeros. The new source library is registered with the deferred automatic
+policy author. Nothing was generated, executed, tested, compiled or validated;
+no CI feedback was inspected and no execution evidence is claimed.

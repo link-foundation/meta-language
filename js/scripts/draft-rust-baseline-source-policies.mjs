@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-numeric-parsing-rules.js',moduleName:'javascript_numeric_parsing_rules',model:'Actual integer and decimal longest prefix UTF16 numeric parsing 1',programAsset:'javascript-numeric-parsing-rules-program'},
  {sourcePath:'js/src/translation/javascript-numeric-intrinsic-call-source.js',moduleName:'javascript_numeric_intrinsic_call_source',model:'Actual Number conversion predicates and Math scalar argument bodies 1',programAsset:'javascript-numeric-intrinsic-call-source-program'},
  {sourcePath:'js/src/translation/javascript-string-method-rules.js',moduleName:'javascript_string_method_rules',model:'Actual UTF16 String indexed slicing boundary and inclusion rules 1',programAsset:'javascript-string-method-rules-program'},
  {sourcePath:'js/src/translation/javascript-string-method-call-source.js',moduleName:'javascript_string_method_call_source',model:'Actual standard String method coercion and protected bytecode bodies 1',programAsset:'javascript-string-method-call-source-program'},

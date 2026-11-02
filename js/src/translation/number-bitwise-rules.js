@@ -133,3 +133,16 @@ export function shiftJavaScriptNumberBitsRight(left, right) { return applyJavaSc
 export function shiftJavaScriptNumberBitsRightUnsigned(left, right) { return applyJavaScriptNumberBitwiseOperation(5, left, right); }
 /** @param {number} left @returns {number} */
 export function complementJavaScriptNumberBits(left) { return applyJavaScriptNumberBitwiseOperation(6, left, 0); }
+
+/** Exact low 32-bit multiplication: 16-bit limbs keep every intermediate below
+ * the binary64 integer precision boundary. No rounded full product is used.
+ * @param {number} left @param {number} right @returns {number} */
+export function multiplyJavaScriptSignedIntegerBits(left,right){
+ const first=normalizeJavaScriptUnsignedInteger(left),second=normalizeJavaScriptUnsignedInteger(right),lowFirst=first%65536,lowSecond=second%65536,highFirst=Math.floor(first/65536),highSecond=Math.floor(second/65536);
+ return normalizeJavaScriptSignedInteger(lowFirst*lowSecond+((highFirst*lowSecond+lowFirst*highSecond)%65536)*65536);
+}
+/** @param {number} value @returns {number} */
+export function countJavaScriptLeadingZeroBits(value){
+ let integer=normalizeJavaScriptUnsignedInteger(value),count=32;
+ while(integer>0){integer=Math.floor(integer/2);count-=1;}return count;
+}

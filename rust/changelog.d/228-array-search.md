@@ -199,3 +199,6 @@ Array allocation, recursive binding targets and Function length boundaries.
 
 Draft protected BigInt/Boolean Calls and exact BigInt.asIntN/asUintN conversion
 order, width bounds and signed modular wrapping through shared source kernels.
+
+Draft UTF16 parseInt/parseFloat prefix grammars with exact shared numeric rounding,
+protected parser aliases/global predicates, and exact Math.imul/clz32 kernels.
