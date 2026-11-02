@@ -57,6 +57,39 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Protected Map.forEach/Set.forEach traverse actual insertion-history slots with a
+private ordinal cursor and shared callback continuations. Receiver slots validate
+before callback callability, including empty collections. Callback operands and
+thisArgument retain actual values; Set supplies its value twice. Deletions skip
+unvisited entries, replacements use their latest value, and clear/reinsertion or
+append remains visible. Held callback operands survive heap mutation and nested
+traversals have independent cursors. The traversal never reads user iterator,
+entries, next or size properties and performs no IteratorClose on abrupt callback
+completion. Existing VM stack/step/resource bounds govern the cursor transitions.
+
+Protected String.toLowerCase/toUpperCase use complete shared Unicode16 mappings,
+including expansions and contextual final sigma over original input. The realm
+privately captures its active Unicode profile and carries it into the method
+body; absent/invalid authority is rejected, and uncovered profiles report explicit
+diagnostics on use. Generic receiver/nullish behavior follows the shared String
+conversion path. Node24/Unicode16 originals have their own explicit version scope;
+the broader Node22/24 fixture obligations keep their original scope. Locale casing
+and additional Unicode profiles remain separate requirements, never aliases for
+host-native casing. Shared input/output resource bounds stay explicit.
+
+String Call distinguishes absent input, normal implicit string conversion and
+direct Symbol descriptive conversion. A Symbol returned by object ToPrimitive
+still follows implicit ToString and throws. Symbol valueOf/toPrimitive/toString
+and description use actual own SymbolData or primitive Symbol identity. The
+private input boundary captures boxed SymbolData, never inferring it from a
+prototype. Symbol property lookup uses the actual shared realm root and primitive
+getter receiver. Description lookup has its own authenticated suspended VM
+instruction, embedding request and native replay event, independent of function
+naming. Metadata resumption preserves undefined versus empty descriptions; text
+assembly preserves UTF16 and reports explicit output bounds. Actual String
+constructibility is retained independently from its portable Call body. Symbol
+allocation/registry and String boxed construction remain independent operations.
+
 Math.fround shares a source-defined binary64-to-binary32 rounding operation:
 exact power-of-two scales, ties to an even significand, binary32 subnormal and
 overflow boundaries, original Number signed zero and signed underflow. Protected

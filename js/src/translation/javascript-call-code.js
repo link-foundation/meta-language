@@ -21,6 +21,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'collectionIteratorResult',destination:number,kind:string,arrayPrototype:number,objectPrototype:number} |
  * {$:'collectionOperation',destination:number,operation:string} |
  * {$:'primitiveMethod',destination:number,operation:string} |
+ * {$:'collectionForEach',destination:number,operation:string} |
  * {$:'arrayCallback',destination:number,operation:string} |
  * {$:'arraySearch',destination:number,operation:string} |
  * {$:'arrayTransform',destination:number,operation:string,species:JavaScriptArraySpeciesDirectory} |
@@ -42,6 +43,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'ordinaryAllocate',destination:number,prototype:number} |
  * {$:'literalPrototype',destination:number,object:number,value:number} |
  * {$:'literalAccessor',destination:number,object:number,key:number,value:number,kind:string,realm:bigint} |
+ * {$:'symbolDescription',destination:number,input:number} |
  * {$:'functionName',destination:number,object:number,key:number,prefix:string,realm:bigint} |
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
@@ -81,7 +83,7 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'argumentCount':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
+    case 'constant':case 'argument':case 'argumentCount':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
     case 'argumentAt':return [instruction.destination,instruction.index];
     case 'copy':return [instruction.destination,instruction.source];
     case 'jump':case 'popHandler':case 'pushFinally':case 'finishFinally':case 'completeJump':case 'argumentListOpen':return [];
@@ -113,7 +115,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
     case 'arraySpread':return [instruction.destination,instruction.target,instruction.input,instruction.index,instruction.iteratorKey];
     case 'objectSpread':return [instruction.destination,instruction.target,instruction.input].concat(instruction.excluded??[]);
-    case 'propertyKey':return [instruction.destination,instruction.input];
+    case 'symbolDescription':case 'propertyKey':return [instruction.destination,instruction.input];
     case 'propertyDefinition':return [instruction.destination,instruction.target,instruction.key,instruction.attributes];
   }
 }

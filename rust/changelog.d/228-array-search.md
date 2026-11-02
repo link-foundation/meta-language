@@ -214,3 +214,12 @@ isolated-surrogate replacement under explicit work bounds.
 
 Draft source-defined Math.fround with ties-to-even binary32 rounding, signed
 underflow, subnormals and overflow through shared protected numeric conversion.
+
+Draft String Call, Symbol primitive/boxed-slot methods and a dedicated authenticated
+Symbol-description metadata protocol with source/native replay integration.
+
+Draft protected Unicode16 String casing using existing complete shared tables,
+active-profile authority, generic receivers and explicit uncovered-version reports.
+
+Draft live Map/Set forEach through insertion-history cursors and shared VM callback
+continuations, preserving mutations, operands, thisArg and original throws.

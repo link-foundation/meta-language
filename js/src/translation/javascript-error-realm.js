@@ -13,9 +13,9 @@ import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordina
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
 import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
-import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
+import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
-const primitiveValueSlots=[{kind:'number',constructor:Number,test:nativeTypes.isNumberObject,value:Reflect.getOwnPropertyDescriptor(Number.prototype,'valueOf')?.value},{kind:'boolean',constructor:Boolean,test:nativeTypes.isBooleanObject,value:Reflect.getOwnPropertyDescriptor(Boolean.prototype,'valueOf')?.value},{kind:'integer',constructor:BigInt,test:nativeTypes.isBigIntObject,value:Reflect.getOwnPropertyDescriptor(BigInt.prototype,'valueOf')?.value}];
+const primitiveValueSlots=[{kind:'number',constructor:Number,test:nativeTypes.isNumberObject,value:Reflect.getOwnPropertyDescriptor(Number.prototype,'valueOf')?.value},{kind:'boolean',constructor:Boolean,test:nativeTypes.isBooleanObject,value:Reflect.getOwnPropertyDescriptor(Boolean.prototype,'valueOf')?.value},{kind:'symbol',constructor:Symbol,test:nativeTypes.isSymbolObject,value:Reflect.getOwnPropertyDescriptor(Symbol.prototype,'valueOf')?.value},{kind:'integer',constructor:BigInt,test:nativeTypes.isBigIntObject,value:Reflect.getOwnPropertyDescriptor(BigInt.prototype,'valueOf')?.value}];
 const stringValueSlot=Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value;
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
 const symbolDescriptionGetter=Reflect.getOwnPropertyDescriptor(Symbol.prototype,'description')?.get;
@@ -207,7 +207,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const kinds=['text','sourceText','number','boolean','integer','symbol'];
   for(const kind of kinds){const matches=roots.filter(row=>row.kind===kind);if(matches.length!==1||matches[0].prototype?.$!=='object'||readJavaScriptOrdinaryValueError(heap,matches[0].prototype)!=='')throw new TypeError('primitive iteration requires each actual registered realm prototype');}
   primitiveIteratorPrototypes=roots.map(row=>({kind:row.kind,prototype:{...row.prototype}}));
-  if(ordinaryClasses){operations.stringPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='text').prototype};operations.numberPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='number').prototype};operations.booleanPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='boolean').prototype};operations.integerPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='integer').prototype};}
+  if(ordinaryClasses){operations.stringPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='text').prototype};operations.numberPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='number').prototype};operations.booleanPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='boolean').prototype};operations.integerPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='integer').prototype};operations.symbolPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='symbol').prototype};}
  }
  function resumePrimitiveIteratorGet(request){
   if(module===null||request?.$!=='machineNeedPrimitiveIteratorGet'||!request.machine)throw new TypeError('primitive iterator metadata requires its actual published request');
@@ -224,6 +224,15 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(request.realm!==identity)return {resumed:false,transition:request};const root=primitiveIteratorPrototypes?.find(row=>row.kind===request.input.$);if(root===undefined)return {resumed:false,transition:request};
   if(heap!==request.machine.heap)throw new TypeError('primitive prototype metadata requires the adopted latest heap');
   const prototype={...root.prototype};return {resumed:true,prototype,transition:resumeJavaScriptCallObjectPrimitivePrototype(module.program,request.machine,prototype)};
+ }
+ function resumeSymbolDescription(request){
+  if(module===null||request?.$!=='machineNeedSymbolDescription'||!request.machine)throw new TypeError('Symbol description metadata requires its actual published request');
+  const error=readJavaScriptCallMachineError(module.program,request.machine);if(error)throw new TypeError(error);const actual=stepJavaScriptCallMachine(module.program,request.machine);
+  if(actual.$!=='machineNeedSymbolDescription'||!testJavaScriptSemanticSameValue(actual.symbol,request.symbol)||heap!==request.machine.heap)throw new TypeError('Symbol description metadata retains its actual Symbol and adopted latest heap');
+  const symbol=reverse.get(request.symbol.identity);if(typeof symbol!=='symbol')return {resumed:false,transition:request};
+  if(typeof symbolDescriptionGetter!=='function'||Reflect.getOwnPropertyDescriptor(Symbol.prototype,'description')?.get!==symbolDescriptionGetter)throw new TypeError('Symbol descriptions require their protected actual slot reader');
+  const value=Reflect.apply(symbolDescriptionGetter,symbol,[]),description=value===undefined?{$:'undefined'}:value.length>65536?constructJavaScriptSourceText(value):text(value);
+  return {resumed:true,description,transition:resumeJavaScriptCallSymbolDescription(module.program,request.machine,description)};
  }
  function resumeFunctionNameSymbolDescription(request){
   if(module===null||request?.$!=='machineNeedFunctionNameSymbolDescription'||!request.machine)throw new TypeError('Symbol name metadata requires its actual published suspended request');
@@ -307,7 +316,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   }
  }};
  return {get module(){if(module===null)throw new TypeError('source module functions remain unavailable before successful initialization');return module;},authority,encode,decode,sourceConstructorFacts(){return constructorFacts.map(row=>({...row}));},heap:()=>heap,adoptHeap(value){heap=value;},allocateIdentity:allocate,
-  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
+  registerCapability,encodeOpaqueHost,materializeData,finishSourceCapabilities,attachSourceUnit,registerPortableProgram,registerArrayConstructorAuthority,resumeArrayConstructorAuthority,registerPrimitiveIteratorPrototypes,resumePrimitiveIteratorGet,resumeSymbolDescription,resumeFunctionNameSymbolDescription,resumeObjectPrimitivePrototype,
   refuseCapability:refuse,
   sourceCallableReference(source,semantic,{operation,owner}){if(semantic?.$!=='object'||!semantic.callable||!sourceNames.has(semantic.identity)||!module?.program.functions.some(row=>row.identity===semantic.identity))throw new TypeError('a source import reference requires its actual published declaration and portable body');return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation,owner,callable:true,executable:false};},
   realmErrorConstructorReference(source,name){const actual=bases.get(name);if(typeof actual!=='function'||realm.errors[name]!==actual)throw new TypeError('Error namespace references retain their actual independently supplied realm constructor');const semantic=encode(actual);return {$:'sourceCapabilityOwner',source,identity:semantic.identity,realm:identity,operation:'actual standard '+name+' namespace',owner:'actual registered Error realm 1',callable:true,executable:false};},

@@ -39,6 +39,9 @@ export function readSourceMachineTrace(embedding,initial,{steps=65536}={}){
   }else if(current.$==='machineNeedObjectPrototype'){
    if(typeof embedding.resumeObjectPrimitivePrototype!=='function')break;const request=current,response=embedding.resumeObjectPrimitivePrototype(request);if(!response.resumed)break;current=response.transition;
    append({operation:'objectPrimitivePrototype',input:codecs.encodeJavaScriptSemanticValue(request.input),prototype:codecs.encodeJavaScriptSemanticValue(response.prototype),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
+  }else if(current.$==='machineNeedSymbolDescription'){
+   if(typeof embedding.resumeSymbolDescription!=='function')break;const request=current,response=embedding.resumeSymbolDescription(request);if(!response.resumed)break;current=response.transition;
+   append({operation:'symbolDescription',symbol:codecs.encodeJavaScriptSemanticValue(request.symbol),description:codecs.encodeJavaScriptSemanticValue(response.description),expected:codecs.encodeJavaScriptCallMachineTransition(current)});
   }else if(current.$==='machineNeedFunctionNameSymbolDescription'){
    if(typeof embedding.resumeFunctionNameSymbolDescription!=='function')break;const request=current,response=embedding.resumeFunctionNameSymbolDescription(request);if(!response.resumed)break;current=response.transition;
    append({operation:'functionNameSymbolDescription',object:codecs.encodeJavaScriptSemanticValue(request.object),key:codecs.encodeJavaScriptSemanticValue(request.key),prefix:request.prefix,description:codecs.encodeJavaScriptSemanticValue(response.description),expected:codecs.encodeJavaScriptCallMachineTransition(current)});

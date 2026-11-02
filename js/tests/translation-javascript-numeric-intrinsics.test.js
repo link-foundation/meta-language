@@ -34,7 +34,7 @@ test('numeric prefix parsers retain radix precision and decimal exponent rollbac
  const text=value=>({$:'text',units:Array.from(value,character=>character.charCodeAt(0))});
  for(const [input,radix,expected] of [['zz!',36,1295],['-0x10rest',NaN,-16],['9007199254740995',10,9007199254740996],['11',4294967298,3],['-0x0!',0,-0]]){const result=executeJavaScriptCallPrimitive('parse integer text prefix',[text(input),{$:'number',value:radix}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
  for(const [input,expected] of [['1e+',1],['-.5e+2tail',-50],['0x10',0],['-1e-999',-0],['5e-324!',5e-324],['-Infinitytail',-Infinity],['.e2',NaN]]){const result=executeJavaScriptCallPrimitive('parse float text prefix',[text(input)]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
- assert.equal(executeJavaScriptCallPrimitive('parse float text prefix',[{$:'sourceText',text:'1'.repeat(4097)}]).$,'primitiveResourceLimit');
+ assert.equal(executeJavaScriptCallPrimitive('parse float text prefix',[{$:'sourceText',profile:'inspectable UTF16 source text 1',text:'1'.repeat(4097)}]).$,'primitiveResourceLimit');
 });
 test('Math integer kernels retain exact low products and unsigned leading zeros',()=>{
  for(const [left,right,expected] of [[4294967295,4294967295,1],[2147483647,2147483647,1],[-1,5,-5],[3.9,2.9,6],[Infinity,7,0]]){const result=executeJavaScriptCallPrimitive('multiply signed integer bits',[{$:'number',value:left},{$:'number',value:right}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}

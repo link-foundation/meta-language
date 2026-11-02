@@ -24,8 +24,8 @@ test('protected String case bodies retain explicit profile and string conversion
 });
 test('String case primitive uses full expansion original sigma context supplementary and isolated units',()=>{
  for(const [operation,input,expected] of [['map upper String case','straße ﬃ','STRASSE FFI'],['map lower String case','İ','i\u0307'],['map lower String case','ΣΣ','σς'],['map lower String case','\u0345Σ','\u0345σ'],['map lower String case','ΑΣ\u0345Α','ασ\u0345α'],['map lower String case','\u1c89','\u1c8a'],['map upper String case','\u1c8a','\u1c89'],['map lower String case','\ud800\u{10400}\udc00','\ud800\u{10428}\udc00']]){const result=executeJavaScriptStringMethodPrimitive(operation,[text(input),text('16.0')]);assert.equal(result.$,'primitiveValue');assert.deepEqual(result.value,text(expected));}
- assert.equal(executeJavaScriptStringMethodPrimitive('map lower String case',[{$:'sourceText',text:'A'.repeat(1048577)},text('16.0')]).$,'primitiveResourceLimit');
- assert.equal(executeJavaScriptStringMethodPrimitive('map upper String case',[{$:'sourceText',text:'ß'.repeat(524289)},text('16.0')]).$,'primitiveResourceLimit');
+ assert.equal(executeJavaScriptStringMethodPrimitive('map lower String case',[{$:'sourceText',profile:'inspectable UTF16 source text 1',text:'A'.repeat(1048577)},text('16.0')]).$,'primitiveResourceLimit');
+ assert.equal(executeJavaScriptStringMethodPrimitive('map upper String case',[{$:'sourceText',profile:'inspectable UTF16 source text 1',text:'ß'.repeat(524289)},text('16.0')]).$,'primitiveResourceLimit');
 });
 for(const row of originals)test(row.name,()=>{
  requireActiveProfile();
