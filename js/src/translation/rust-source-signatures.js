@@ -7,6 +7,7 @@ import {acceptRustSourceLifetimeBinding} from './rust-indirection-rules.js';
 import {acceptRustSourceSignatureModel,acceptRustSourceSignaturePrimitive,acceptRustSourceSignatureWrapper,acceptRustSourceSignatureOwnerKind} from './rust-source-signature-rules.js';
 import {acceptRustRetainedSourceSignatureModel,acceptRustRetainedFunctionOwner} from './rust-source-owner-retention-rules.js';
 import {readRustStandardSumSignatureArgumentConstructors} from './rust-standard-sum-signature-rules.js';
+import {checkRustStandardCollectionCarrier} from './rust-standard-collection-signatures.js';
 import {acceptRustOwnedBoxTypeNode,acceptRustOwnedStandardSumBoxPayload} from './rust-owned-recursive-datatype-rules.js';
 import {createRustBorrowedVectorElementPosition} from './rust-borrowed-vectors.js';
 import {acceptRustBorrowedVectorSignatureModel,acceptRustBorrowedVectorFunctionOwner,readRustBorrowedVectorPositionError,readRustBorrowedVectorElementPositionError,readRustBorrowedVectorPositionBudgetError} from './rust-borrowed-vector-rules.js';
@@ -109,6 +110,17 @@ export function checkRustSourceSignature(signature,parameters,result,language,re
       owner(value.arguments[0],type,depth+1);
     } else if(path==='std::string::String') {
       if(value.arguments.length||type.kind!=='string')throw typeError('an owned Rust source string differs from its value type');
+    } else if(path==='std::collections::HashMap'||path==='std::collections::HashSet') {
+      if(value.kind!=='library'||type.kind!=='data')throw typeError('an owned standard collection needs its actual distinct nominal carrier');
+      const declaration=resolveData(type),carrier=declaration&&checkRustStandardCollectionCarrier(declaration,language,resolveType,name=>resolveData({kind:'data',name}));
+      if(!carrier)throw typeError('an owned standard collection needs its actual checked carrier specialization');
+      const pairs=[[value,carrier.origin.sourceOwner]];
+      for(let at=0;at<pairs.length;at++){
+        if(++visits>100000)throw typeError('an owned Rust source signature exceeds its resource limit');
+        const [left,right]=pairs[at];exact(left,policy.fields.owner);
+        if(!right||left.kind!==right.kind||!Array.isArray(left.path)||!Array.isArray(left.arguments)||left.path.length!==right.path.length||left.path.some((part,index)=>part!==right.path[index])||left.arguments.length!==right.arguments.length)throw typeError('a collection source position changes its actual complete standard owner or domains');
+        for(let child=0;child<left.arguments.length;child++)pairs.push([left.arguments[child],right.arguments[child]]);
+      }
     } else if(path==='std::option::Option'||path==='std::result::Result') {
       if(value.kind!=='library'||type.kind!=='data')throw typeError('an owned Rust standard sum needs its actual datatype encoding');
       const declaration=resolveData(type),fields=declaration?.sourceFieldSignatures;

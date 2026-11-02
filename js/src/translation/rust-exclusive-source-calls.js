@@ -17,7 +17,7 @@ export function initializeRustExclusiveSourceCalls(parser){
  const guard=(slot,fields,span)=>{for(const frame of arena.frames)for(const borrow of frame.borrows)if(testRustExclusiveSourcePlaceOverlap(slot.lexical,fields,borrow.slot.lexical,borrow.fields))fail('an earlier selected exclusive argument still holds this overlapping source place',span);};
  parser.exclusiveSourceReadGuard=guard;parser.exclusiveSourceWriteGuard=guard;return arena;
 }
-function selectSlot(parser,node,path){
+export function selectRustExclusiveSourcePlace(parser,node,path){
  const origin=parser.origins.origin(node,path),identity=origin.sourcePlaceBindingIdentity??origin.sourceBindingIdentity,slots=readRustOwnedRecordStateSlots(parser);
  let slot=slots.find(row=>row.lexical===origin.sourceLexicalBindingIdentity||identity===row.root||identity&&testRustOwnedRecordFieldDescendant(row.root,identity));if(!slot)return null;
  const layouts=[],fields=[];let current=slot.origin,currentIdentity=slot.root;
@@ -69,7 +69,7 @@ export function captureRustExclusiveSourceReceiver(parser,receiver,method,path){
  const origin=parser.origins.origin(receiver,path),owner=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,selected=owner?parser.inherentMethods.get(owner.fullName+'.'+method.value):null;
  const vector=parser.exclusiveSourceModel==='Rust exclusive source loans 1'&&method.value==='push'&&origin.type?.kind==='array'&&(origin.expandedSourceOwner??origin.sourceOwner)?.path.join('::')==='std::vec::Vec';
  if(!selected?.exclusive&&!vector)return false;
- const place=selectSlot(parser,receiver,path);if(!place)fail('an exclusive receiver requires its actual mutable lexical root and field path',receiver.span);
+ const place=selectRustExclusiveSourcePlace(parser,receiver,path);if(!place)fail('an exclusive receiver requires its actual mutable lexical root and field path',receiver.span);
  const callee=selected?['crate',...owner.fullName.split('.'),method.value]:null,entry=callee?parser.origins.lookupValueOwner(callee,path):null;
  const element=vector?{...parser.origins.typeOrigin(origin.type.element,origin.path),sourceOwner:(origin.expandedSourceOwner??origin.sourceOwner).arguments[0]}:null;
  arena.receivers.set(receiver,{place:{...place,span:receiver.span},callee,entry:entry??{parameters:[{...place.field,sourceExclusiveMode:'exclusive'},element]},vector});return true;

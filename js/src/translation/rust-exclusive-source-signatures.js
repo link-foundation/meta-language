@@ -4,6 +4,7 @@ import {readRustSourceVersion} from './rust-source-versions.js';
 import {readRustExclusiveSourceLoanVersionError,rustExclusiveSourceLoanProfile} from './rust-exclusive-source-loan-rules.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {typeKey} from './types.js';
+import {checkRustStandardCollectionCarrier} from './rust-standard-collection-signatures.js';
 export function requireRustExclusiveSourceModel(model,version){
  if(model==='')return;
  const facts=readRustSourceVersion(version),error=readRustExclusiveSourceLoanVersionError(facts.major,facts.minor);
@@ -34,8 +35,10 @@ export function checkRustExclusiveSourceSignature(signature,parameters,result,la
   const type=position.type,owner=position.owner;
   if(type.kind==='array'){if(owner.kind!=='library'||owner.path.join('::')!=='std::vec::Vec')throw typeError('exclusive vector storage retains its actual standard owner');storage({type:type.element,owner:owner.arguments[0],wrappers:[],lifetimes:[]},active);return;}
   if(type.kind==='data'){
-   const data=resolveData(type),fields=data?.sourceFieldSignatures;if(!data||data.ctors.length!==1||!fields||fields.ctors.length!==1||active.includes(type.name))throw typeError('exclusive nominal storage needs its actual complete acyclic record declaration');
-   for(const field of fields.ctors[0].fields)storage(field,[...active,type.name]);return;
+   const data=resolveData(type),carrier=data&&checkRustStandardCollectionCarrier(data,language,resolveType,name=>resolveData({kind:'data',name}));if(carrier)return;
+   const fields=data?.sourceFieldSignatures,sum=owner.kind==='library'&&['std::option::Option','std::result::Result'].includes(owner.path.join('::'));
+   if(!data||!fields||fields.ctors.length!==data.ctors.length||!sum&&data.ctors.length!==1||active.includes(type.name))throw typeError('exclusive nominal storage needs its actual complete acyclic record or standard sum declaration');
+   for(const constructor of fields.ctors)for(const field of constructor.fields)storage(field,[...active,type.name]);return;
   }
   if(!['unit','bool','fixed','int','nat','float','string'].includes(type.kind)||owner.kind==='library'&&owner.path.join('::')!=='std::string::String')throw typeError('exclusive source storage needs closed scalar, String, record or Vec values');
  }

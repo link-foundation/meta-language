@@ -110,6 +110,7 @@ import { constructCallableFunctionType, readCallableCellElement, readCallablePar
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import {checkRustExclusiveSourceSignature} from './rust-exclusive-source-signatures.js';
+import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionObservation} from './rust-standard-collection-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
@@ -372,6 +373,11 @@ class Checker {
       }
     });
     this.walk(items,path,(item,itemPath,entry)=>{
+      if(item.k!=='data')return;
+      if(item.sourceStandardCollectionLibraryOwner!==undefined)entry.sourceStandardCollectionLibraryOwner=checkRustStandardCollectionLibraryOwner(entry,this.language);
+      if(item.sourceStandardCollectionCarrier!==undefined)entry.sourceStandardCollectionCarrier=checkRustStandardCollectionCarrier(entry,this.language,value=>this.resolveType(value,itemPath,item.span),name=>this.items.get(name));
+    });
+    this.walk(items,path,(item,itemPath,entry)=>{
       if(item.k==='data'&&'sourceFieldSignatures' in item){checkRustDataTypeFieldSignatureContainers(item);entry.sourceFieldSignatures=checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,this.language,entry.fullName,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
     });
     this.walk(items, path, (item, itemPath, entry) => {
@@ -395,6 +401,7 @@ class Checker {
       if (item.k === 'fn') {
         const env = new Map(entry.params.map((param) => [param.name, param.type]));
         entry.body = coerce(this.expr(item.body, env, itemPath, entry.ret), entry.ret, this.language, item.span);
+        if(item.sourceStandardCollectionLibraryOwner!==undefined)entry.sourceStandardCollectionLibraryOwner=checkRustStandardCollectionLibraryOwner(entry,this.language);
         if(item.sourcePrimitiveOwners!==undefined)entry.sourcePrimitiveOwners=prepareRustPrimitiveOwnerProof(item.sourcePrimitiveOwners,entry.body);
         if(item.sourceLocalState!==undefined)entry.sourceLocalState=prepareRustOwnedLocalStateProof(item.sourceLocalState,entry.body);
         if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, this.language);
@@ -520,6 +527,7 @@ class Checker {
 
   show(expr, env, path, style) {
     const value = this.expr(expr, env, path, undefined);
+    checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'display',expr.span);
     refuseCallableDataObservation(value.type,this.items,'display',expr.span,this.sourceClassOwners);
     const displayRefusal = readNumberDisplayRefusal(this.language, value.type.kind);
     if (displayRefusal) throw unsupported('Rust Float display', displayRefusal, expr.span);
@@ -704,6 +712,7 @@ class Checker {
         return this.application(node.k === 'app' ? captureCallableConstantApplicationHead(this,node.fn,env,path,node.span) : node, node.args ?? [], env, path, expected, node.span);
       case 'field': {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
+        if(value.type.kind==='data'&&this.items.get(value.type.name)?.sourceStandardCollectionCarrier)checkRustStandardCollectionObservation(value.type,name=>this.items.get(name),'field projection',node.span);
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
         return checkJavaScriptDataField(this,value,node.field,node.span)??checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span);
@@ -1035,6 +1044,7 @@ class Checker {
       }
       case 'toString': {
         const arg = this.expr(node.arg, env, path, undefined);
+        checkRustStandardCollectionObservation(arg.type,name=>this.items.get(name),'display',node.span);
         refuseCallableDataObservation(arg.type,this.items,'display',node.span,this.sourceClassOwners);
         if (arg.type.kind === 'string') return arg;
         if (arg.type.kind === 'array') throw arrayText(node.span);
@@ -1530,6 +1540,8 @@ class Checker {
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+      checkRustStandardCollectionObservation(left.type,name=>this.items.get(name),'comparison',node.span);
+      checkRustStandardCollectionObservation(right.type,name=>this.items.get(name),'comparison',node.span);
       refuseCallableDataObservation(left.type,this.items,'comparison',node.span,this.sourceClassOwners);
       if (this.language === 'JavaScript' && acceptReferenceIdentityComparison(op, left.type.kind, right.type.kind, left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
         return {k: 'binary', op, left, right, type: BOOL, domain: left.type};
