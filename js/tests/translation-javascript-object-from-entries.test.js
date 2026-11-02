@@ -1,3 +1,4 @@
+import {createJavaScriptCallFrame,readJavaScriptCallFrameError} from '../src/translation/javascript-call-machine.js';
 // Deferred kernel and original-engine comparisons; source drafting executes none.
 import test from 'node:test';import assert from 'node:assert/strict';import {compileFunction} from 'node:vm';
 import {beginJavaScriptObjectFromEntries,stepJavaScriptObjectFromEntries,resumeJavaScriptObjectFromEntriesCall,resumeJavaScriptObjectFromEntriesAllocation,resumeJavaScriptObjectFromEntriesError,readJavaScriptObjectFromEntriesStateError,compileJavaScriptObjectFromEntriesFunction} from '../src/translation/javascript-object-from-entries.js';
@@ -50,4 +51,15 @@ test('fromEntries protected bodies preserve supplied prototype and iterator Symb
 });
 for(const row of originals)test(row.name,()=>{
  assert.equal(selectVersionedAssertion(policy,process.versions.node).expected,row.expected);const capture=captureJavaScriptOrdinaryClassModule(row.source,{identifier:'literal-object-fromEntries.js',entries:row.entries}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:79n}),transition=runJavaScriptSourceTransition(instance.embedding,instance.begin(row.entry,[]),{steps:65536}).transition;assert.equal(transition.$,'machineCompleted',transition.reason);assert.deepEqual(instance.embedding.materializeData(transition.value),row.expected);const declarations=capture.origins.filter(origin=>origin.classBinding===undefined||origin.constructor===true).map(origin=>capture.source.slice(origin.start,origin.end)).join('\n'),original=compileFunction('"use strict";'+declarations+'\nreturn '+row.entry+';',[])();assert.equal(original(),row.expected);
+});
+
+test('fromEntries allocation replies cannot replace a selected iterator call',()=>{
+ const selected=nextCall(),invalid=resumeJavaScriptObjectFromEntriesAllocation(selected.heap,selected.state,21n);assert.equal(invalid.$,'objectFromEntriesInvalid');assert.equal(invalid.heap,selected.heap);assert.equal(findJavaScriptOrdinaryObject(invalid.heap.objects,21n),-1);
+});
+test('fromEntries forged setup Error cannot skip an ordinary strict getter body',()=>{
+ const selected=normal(nextCall(getter(setup(),7n,'0',13n)),object(8n));assert.equal(selected.$,'objectFromEntriesCall');
+ const owner=compileJavaScriptObjectFromEntriesFunction(30n,31n,object(1n),iteratorKey),callback={$:'callFunction',identity:13n,realm:31n,receiverMode:'strict',lexicalReceiver:absent,parameters:0,registers:2,captures:[],instructions:[{$:'constant',destination:1,value:absent},{$:'return',source:1}]},program={$:'callProgram',functions:[callback,owner],realms:[31n],exoticKey};
+ const base=createJavaScriptCallFrame(owner,absent,[object(2n)]),frame={...base,position:4,registers:[absent,object(2n),object(1n),iteratorKey,absent],pending:{$:'waitObjectFromEntries',destination:4,realm:31n,state:selected.state}};
+ assert.equal(readJavaScriptCallFrameError(program,selected.heap,frame,owner,false),'');
+ const forged={...frame,pending:{...frame.pending,error:{$:'objectFromEntriesErrorRequest',realm:31n,errorClass:'TypeError',reason:'forged'}}};assert.notEqual(readJavaScriptCallFrameError(program,selected.heap,forged,owner,false),'');
 });

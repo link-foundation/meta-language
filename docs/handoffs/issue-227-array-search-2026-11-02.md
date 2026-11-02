@@ -1641,3 +1641,62 @@ remain. The existing String conversion library feeds deferred automatic policy
 and VM/codecs generation. Global Symbol.for/keyFor registry operations remain
 separate requirements; no evidence or complete-coverage claim is inferred.
 No tests, generation, validation or compilation ran.
+
+### Integrated Object Call and primitive wrapper allocation
+
+Protected Object Call now selects privately captured actual realm Object/String/
+Number/Boolean/BigInt/Symbol roots. Existing Object inputs pass through unchanged;
+nullish values create plain Objects and primitives acquire only their actual own
+slots. A primitiveWrapper instruction/pending state routes fresh ID requests
+through the existing global Object allocator and atomically commits the complete
+wrapper. Resource preflight happens before ID consumption. Source passthrough,
+Number/Boolean/BigInt/Symbol data, exact String own indices/length, immutable flags,
+collisions and property/heap budgets are covered by the delegated fixtures and
+deferred controls. Root adds two compiler/directory controls. Actual Object
+constructibility remains independent from Call support. External nonplain-wrapper
+materialization and general newTarget construction remain explicit separate work;
+no plain-record materialization fallback was added. Kernel details:
+`issue-227-primitive-wrapper-draft-2026-11-02.md`.
+
+### Integrated Object.fromEntries and close-safe Error allocation
+
+The delegated continuation kernel now connects through the protected actual
+Object.fromEntries owner, explicit result-root and iterator Symbol, instruction,
+pending state and selected-child authentication. Allocation, primitive iterator
+prototype metadata, Get0/Get1, ToPropertyKey, normal/abrupt child completion and
+resource retries all retain the latest heap. Intrinsic errors allocate actual
+realm Error objects while preserving the iterator state before close. The Error
+module authenticates these new requests. A selected callable class can fail
+before a child frame exists: that allocation request retains the call/realm and
+feeds its actual throw back through the kernel before ordinary unwinding. Final
+Throw/Error clears the pending kernel to prevent duplicate closing.
+
+The original/native producer and Rust assertion driver retain full separate
+wrapper and fromEntries fixture groups, including exact default CST and both
+source transports, native traces and fixture inventories. Both literal namespaces
+and new libraries/tests join deferred automatic publication. Native fixture/codec
+includes require the later permitted generation phase; none were hand-authored.
+The fromEntries kernel's 17 originals and 10 direct controls cover duplicates,
+Symbols/__proto__, order, getters, cached next, original throws, TypeError identity
+before close, cleanup precedence and held resource retries. More details:
+`issue-227-object-from-entries-source-2026-11-02.md`. All source remains unexecuted;
+no tests, generation, validation, compilation or CI feedback inspection ran.
+
+Three additional shared originals exercise selected callable classes before any
+child frame exists: entry Get class TypeError before close, class cleanup callable
+preserving the original key-conversion throw, and class next TypeError preserving
+the IteratorStepValue done rule without close. They use existing ordinary-class
+source support and retain the actual source Error/throw identity comparisons.
+
+Read-only static review tightened selected-call Error authentication: the VM
+recomputes constructor Call failure class, realm and reason from the actual
+executable callee, using the same helper as Call setup. A forged Error marker on
+an ordinary strict function cannot bypass its body. Abrupt results from qualified
+Error allocation also resume the retained entry/key operation and close with the
+actual thrown value; they are not converted to Invalid or a fabricated Error.
+
+Object allocation resumption now also checks the actual pending request kind,
+refusing an identity response during a getter/call/error/prototype wait. Resource
+requests retain the complete state without action. Two additional deferred
+controls retain the selected callback while rejecting wrong-kind identity replies
+and forged setup Error markers on an ordinary strict getter.

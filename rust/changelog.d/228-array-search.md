@@ -226,3 +226,6 @@ continuations, preserving mutations, operands, thisArg and original throws.
 
 Draft Symbol creation with portable ordered description conversion and authenticated
 fresh identity allocation across source embedding and native trace replay.
+
+Draft Object Call primitive wrappers with real slots and immutable String indices,
+and Object.fromEntries with ordered entry conversion and close-safe actual Errors.

@@ -131,6 +131,8 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
  let mut diagnostic=Diagnostics::default();
  diagnostic.attempt("active Rust compiler range",||{let output=run(Command::new("rustc").arg("--version"));assert!(output.ok);let version=output.stdout.split_whitespace().nth(1).unwrap();let parts=version.split('.').collect::<Vec<_>>();assert_eq!(parts[0],"1");assert!((90..100).contains(&parts[1].parse::<u32>().unwrap()),"uncovered Rust {version}");});
  let fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-ordinary-class-source.lino")).unwrap();
+ let primitive_wrapper_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-primitive-wrappers.lino")).unwrap();
+ let object_from_entries_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-object-from-entries-source.lino")).unwrap();
  let string_case_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-string-case-profile.lino")).unwrap();
  let collection_for_each_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-collection-for-each-source.lino")).unwrap();
  let closure_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-ordinary-class-closures.lino")).unwrap();
@@ -140,6 +142,8 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
  diagnostic.producer(peer,"header");diagnostic.attempt("report model",||assert_eq!(peer["model"],"actual ordinary class source execution controls 1"));
  for(group,declarations,export)in [
   ("cases",&fixture["declarations"],"javascriptOrdinaryClassOriginals"),
+  ("primitiveWrappers",&primitive_wrapper_fixture["declarations"],"javascriptPrimitiveWrapperOriginals"),
+  ("objectFromEntries",&object_from_entries_fixture["declarations"],"javascriptObjectFromEntriesOriginals"),
   ("collectionForEach",&collection_for_each_fixture["declarations"],"javascriptCollectionForEachOriginals"),
   ("stringCaseProfiles",&string_case_fixture["declarations"],"javascriptStringCaseProfileOriginals"),
   ("closures",&closure_fixture["declarations"],"javascriptOrdinaryClassClosureOriginals"),

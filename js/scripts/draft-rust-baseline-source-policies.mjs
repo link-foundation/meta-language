@@ -12,6 +12,9 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-object-from-entries.js',moduleName:'javascript_object_from_entries',model:'Actual Object fromEntries iterator entry key conversion and closing continuations 1',programAsset:'javascript-object-from-entries-program'},
+ {sourcePath:'js/src/translation/javascript-object-call-source.js',moduleName:'javascript_object_call_source',model:'Actual Object Call shared realm primitive wrapper root selection 1',programAsset:'javascript-object-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-primitive-wrappers.js',moduleName:'javascript_primitive_wrappers',model:'Actual primitive wrapper slots indexed String descriptors and global allocation 1',programAsset:'javascript-primitive-wrappers-program'},
  {sourcePath:'js/src/translation/javascript-collection-for-each.js',moduleName:'javascript_collection_for_each',model:'Actual Map and Set live insertion history callback traversal 1',programAsset:'javascript-collection-for-each-program'},
  {sourcePath:'js/src/translation/javascript-string-conversion-call-source.js',moduleName:'javascript_string_conversion_call_source',model:'Actual String Call Symbol slot extraction and independent description metadata 1',programAsset:'javascript-string-conversion-call-source-program'},
  {sourcePath:'js/src/translation/javascript-numeric-parsing-rules.js',moduleName:'javascript_numeric_parsing_rules',model:'Actual integer and decimal longest prefix UTF16 numeric parsing 1',programAsset:'javascript-numeric-parsing-rules-program'},
@@ -109,6 +112,8 @@ const fixtures=[
  'js/tests/fixtures/javascript-ordinary-class-source.mjs',
  'js/tests/fixtures/javascript-string-case-profile.mjs',
  'js/tests/fixtures/javascript-collection-for-each-source.mjs',
+ 'js/tests/fixtures/javascript-object-from-entries-source.mjs',
+ 'js/tests/fixtures/javascript-primitive-wrappers.mjs',
  'js/tests/fixtures/javascript-source-controls.mjs',
  'js/tests/fixtures/javascript-ordinary-class-closures.mjs',
  'js/tests/fixtures/source-library-class-composition.mjs',
@@ -216,6 +221,9 @@ const consumers=[
  'js/tests/translation-javascript-string-symbol-conversion.test.js',
  'js/tests/translation-javascript-string-case-profile.test.js',
  'js/tests/translation-javascript-collection-for-each.test.js',
+ 'js/tests/translation-javascript-object-from-entries.test.js',
+ 'js/tests/translation-javascript-primitive-wrappers.test.js',
+ 'js/tests/translation-javascript-object-call-source.test.js',
  'js/src/translation/javascript-property-definition.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
@@ -502,6 +510,8 @@ for(const [source,target] of [
  ['javascript-ordinary-class-source','javascript-ordinary-class-source'],
  ['javascript-string-case-profile','javascript-string-case-profile'],
  ['javascript-collection-for-each-source','javascript-collection-for-each-source'],
+ ['javascript-object-from-entries-source','javascript-object-from-entries-source'],
+ ['javascript-primitive-wrappers','javascript-primitive-wrappers'],
  ['javascript-source-controls','javascript-source-controls'],
  ['javascript-ordinary-class-closures','javascript-ordinary-class-closures'],
  ['rust-source-owner-qualification','rust-source-owner-qualification'],

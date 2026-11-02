@@ -126,7 +126,7 @@ export function stepJavaScriptObjectFromEntries(heap,state){
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptObjectFromEntriesState} state @param {bigint} identity @returns {JavaScriptObjectFromEntriesTransition} */
 export function resumeJavaScriptObjectFromEntriesAllocation(heap,state,identity){
- const request=stepJavaScriptObjectFromEntries(heap,state);if(request.$!=='objectFromEntriesAllocate')return request;
+ const request=stepJavaScriptObjectFromEntries(heap,state);if(request.$!=='objectFromEntriesAllocate')return request.$==='objectFromEntriesResourceLimit'?request:{$:'objectFromEntriesInvalid',heap,reason:'Object.fromEntries allocation response requires its actual pending fresh Object request'};
  const allocated=insertJavaScriptOrdinaryObject(heap,identity,state.prototype);if(!allocated.success)return {$:'objectFromEntriesInvalid',heap:allocated.heap,reason:allocated.error};
  const next={...state,target:{$:'object',identity,callable:false},phase:'acquire'};return acceptJavaScriptObjectFromEntriesIterator(allocated.heap,next,beginJavaScriptSynchronousIterator(allocated.heap,state.input,state.iteratorKey));
 }

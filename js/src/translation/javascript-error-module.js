@@ -2,7 +2,7 @@
 // constructor/helper body. The embedding owns real realm intrinsics and live
 // Error handles; neither side reconstructs Error.stack from ordinary fields.
 import {compileJavaScriptErrorClassModule,compileJavaScriptInitializedErrorClassModule} from './javascript-error-classes.js';
-import {beginJavaScriptCallMachine,runJavaScriptCallMachine,readJavaScriptCallMachineError,resumeJavaScriptErrorValueAllocation,resumeJavaScriptErrorAllocationAbrupt,resumeJavaScriptErrorIntrinsic,resumeJavaScriptCallErrorAllocation,resumeJavaScriptCallSourceErrorAllocation} from './javascript-call-machine.js';
+import {beginJavaScriptCallMachine,runJavaScriptCallMachine,readJavaScriptCallMachineError,stepJavaScriptCallMachine,resumeJavaScriptErrorValueAllocation,resumeJavaScriptErrorAllocationAbrupt,resumeJavaScriptErrorIntrinsic,resumeJavaScriptCallErrorAllocation,resumeJavaScriptCallSourceErrorAllocation} from './javascript-call-machine.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 
 export function prepareJavaScriptErrorModule(capture,registry){
@@ -48,6 +48,9 @@ export function readJavaScriptErrorModuleRequestError(module,request){
   return '';
  }
  if(request.$==='machineAllocateSourceError')return pending.$==='waitSourceError'&&pending.realm===request.realm&&pending.errorClass===request.errorClass&&pending.messagePresent===request.messagePresent&&testJavaScriptSemanticSameValue(pending.message,request.message)?'':'source Error allocation must retain its actual pending operands';
+ if(pending.$==='waitObjectFromEntries'){
+  const actual=stepJavaScriptCallMachine(module.program,request.machine);return actual.$==='machineAllocateError'&&actual.realm===request.realm&&actual.errorClass===request.errorClass&&actual.reason===request.reason?'':'Object.fromEntries Error allocation retains its actual pending cleanup or selected-call failure';
+ }
  return pending.$==='waitError'&&pending.realm===request.realm&&pending.errorClass===request.errorClass&&pending.reason===request.reason?'':'Error allocation must retain its actual pending reason and realm';
 }
 

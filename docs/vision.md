@@ -57,6 +57,27 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Object Call preserves existing Object identity and allocates fresh nullish empty
+Objects or actual primitive wrappers using the selected realm root. Wrapper slots
+come only from the original primitive. String wrappers expose exact UTF16 indexed
+own data and length with standard immutable descriptors. Allocation and shared
+property bounds are explicit before consuming a global identity; final slots and
+descriptors commit atomically. Generic ToObject callers retain their own nullish
+coercibility checks. Object's actual constructibility is separate from its Call
+body; general newTarget-sensitive construction and external wrapper materialization
+remain independent operations.
+
+Object.fromEntries allocates its fresh ordinary result before acquiring the
+actual synchronous iterator. For each Object entry it Gets 0 then 1, converts the
+key with string-hint ToPropertyKey and creates a full own data property. Symbols,
+last duplicate writes and own __proto__ preserve their ordinary semantics. Entry/
+key failures close the unfinished iterator; actual realm TypeErrors exist before
+cleanup, and the original throw wins over cleanup failure. IteratorStepValue
+failures retain their protocol's done/closing rules. Shared VM continuations retain
+original entry/key calls, primitive iterator metadata, partial heap and retry
+resources. Selected callable class errors also enter this cleanup path before
+ordinary unwinding. No user iterator/member/coercion executes as a native fallback.
+
 Symbol Call completes optional description ToString before requesting fresh
 identity allocation. Missing/undefined description remains absent; empty text stays
 present. An authenticated allocation instruction, pending request and resumer
