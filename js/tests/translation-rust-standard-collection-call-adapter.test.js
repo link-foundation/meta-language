@@ -35,4 +35,5 @@ test('complete graph correspondence checks real bodies Map contents exact scalar
  assert.equal(testRustStandardCollectionProjectedGraphEquality(actual,{items:[otherDeclaration],declarations:new Map([['actual',{...otherDeclaration}]])}),false);
  assert.equal(testRustStandardCollectionProjectedGraphEquality({value:-0},{value:0}),false);assert.equal(testRustStandardCollectionProjectedGraphEquality({value:NaN},{value:NaN}),true);
  const map=new Map([['key',1]]);map.extra='unrepresented';assert.equal(testRustStandardCollectionProjectedGraphEquality(map,new Map([['key',1]])),false);
+ assert.equal(testRustStandardCollectionProjectedGraphEquality(Object.freeze({value:7}),{value:7}),true);let reads=0;const accessor={get value(){reads++;return 7;}};assert.equal(testRustStandardCollectionProjectedGraphEquality(accessor,{value:7}),false);assert.equal(reads,0);
 });

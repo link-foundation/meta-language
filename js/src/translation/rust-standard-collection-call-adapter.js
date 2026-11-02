@@ -13,7 +13,7 @@ import {checkProgram} from './check.js';
 // values. Their structural comparisons never implement collection key equality.
 function sameRustStandardCollectionSourceTree(left,right){return JSON.stringify(left)===JSON.stringify(right);}
 // Complete graph correspondence includes declaration Maps, BigInts, signed
-// zero, own fields and shared-node identity. JSON serialization loses these.
+// zero, data-only own fields and shared-node identity. JSON loses these.
 export function testRustStandardCollectionProjectedGraphEquality(left,right){
  const forward=new WeakMap(),backward=new WeakMap();let work=0;
  function same(actual,expected){
@@ -23,7 +23,7 @@ export function testRustStandardCollectionProjectedGraphEquality(left,right){
   forward.set(actual,expected);backward.set(expected,actual);
   if(Array.isArray(actual)!==Array.isArray(expected)||Object.getPrototypeOf(actual)!==Object.getPrototypeOf(expected))return false;
   const keys=Reflect.ownKeys(actual),other=Reflect.ownKeys(expected);if(keys.length!==other.length||keys.some(key=>!other.includes(key)))return false;
-  for(const key of keys){const first=Object.getOwnPropertyDescriptor(actual,key),second=Object.getOwnPropertyDescriptor(expected,key);if(!Object.hasOwn(first,'value')||!Object.hasOwn(second,'value')||first.enumerable!==second.enumerable||first.configurable!==second.configurable||first.writable!==second.writable||!same(first.value,second.value))return false;}
+  for(const key of keys){const first=Object.getOwnPropertyDescriptor(actual,key),second=Object.getOwnPropertyDescriptor(expected,key);if(!Object.hasOwn(first,'value')||!Object.hasOwn(second,'value')||!same(first.value,second.value))return false;}
   if(actual instanceof Map||expected instanceof Map){if(!(actual instanceof Map)||!(expected instanceof Map)||actual.size!==expected.size)return false;const rows=[...expected];let index=0;for(const [key,value] of actual){const row=rows[index++];if(!same(key,row[0])||!same(value,row[1]))return false;}return true;}
   if(actual instanceof Set||expected instanceof Set){if(!(actual instanceof Set)||!(expected instanceof Set)||actual.size!==expected.size)return false;return [...actual].every((value,index)=>same(value,[...expected][index]));}
   return true;
@@ -93,7 +93,7 @@ export function readRustStandardCollectionProjectedLibraryError(library){
  if(!library?.closure||!library.program?.declarations||!library.sourceProgram?.items||!Array.isArray(library.functions)||typeof library.entryPath!=='string'||!library.entryPath.endsWith('/rust-standard-collection-value-packet.js'))return 'collection source linkage requires complete actual projected library and source declaration graphs';
  let owners;
  try{
-  const actualClosure=readSuppliedSourceLibraryClosure(library.entryPath,library.closure.inputs.map(row=>({path:row.path,source:row.source})),{aliases:true}),surface=parseJavaScript(actualClosure.source),checked=checkProgram(surface),projected=checkProgram(library.sourceProgram);
+  const actualClosure=readSuppliedSourceLibraryClosure(library.entryPath,library.closure.inputs.map(row=>({path:row.path,source:row.source})),{aliases:true}),surface=parseJavaScript(actualClosure.source),checked=checkProgram(surface),projected=checkProgram(structuredClone(library.sourceProgram));
   if(actualClosure.source!==library.closure.source||actualClosure.sourceSha256!==library.closure.sourceSha256||actualClosure.bytes!==library.closure.bytes)return 'collection closure must match its actual recomposed complete source inputs';
   if(!testRustStandardCollectionProjectedGraphEquality(checked,library.program)||!testRustStandardCollectionProjectedGraphEquality(projected,checked))return 'collection source and library bodies must recheck to the same complete actual checked graph; unsupported projection remapping refuses';
   // An identity projection still checks actual bodies; it is not permission to

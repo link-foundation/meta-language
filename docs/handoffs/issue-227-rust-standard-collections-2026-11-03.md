@@ -80,7 +80,7 @@ input modules using `readSuppliedSourceLibraryClosure` with aliases enabled,
 reparses the complete closure using `parseJavaScript` and runs `checkProgram`.
 It also runs `checkProgram` on the supplied sourceProgram and compares both
 complete checked graphs with the supplied library program, preserving actual
-Map/Set contents, exact scalars, own descriptors and shared-node correspondence.
+Map/Set contents, exact scalars, data-only own fields and shared-node correspondence.
 Different bodies cannot hide behind genuine checked names or ownership rows.
 The initial seam supports only identity symbol/path/constructor mappings;
 target emitter renaming needs a separate exact projection interpretation and

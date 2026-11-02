@@ -15,6 +15,7 @@ const empty=()=>({profile:'',owner:'',roles:[],definitionName:''});
 const clone=value=>structuredClone(value);
 
 export function readRustStandardSumOwnershipFacts(table,origin,active=new Set(),depth=0,context={visits:0,memo:new Map()}){
+ if(table.standardCollectionSourceModel==='Rust closed standard collections 1'&&typeof table.standardCollectionSourceStorage==='function'&&table.standardCollectionSourceStorage(origin)===true)return {profile:'owned',owner:origin.sourceOwner.path.join('::'),roles:[],definitionName:origin.type.path.filter(part=>part!=='crate').join('.')};
  if(!acceptRustBorrowedVectorOwnedInterpretation(Boolean(origin?.arrayElementPosition)))return empty();
  if(++context.visits>readRustStandardSumOwnershipNodeLimit()||!origin?.proven||!origin.type||depth>readRustStandardSumOwnershipDepthLimit())return empty();
  if(origin.wrappers.length){const owner=origin.expandedSourceOwner??origin.sourceOwner;let child=owner,boxes=0;while(child&&boxes<256&&acceptRustOwnedBoxTypeNode(['box'],child.kind,child.path.join('::'),child.arguments.length)){boxes+=1;child=child.arguments[0];}if(!acceptRustOwnedStandardSumBoxPayload(origin.wrappers,origin.sourceLifetimes?.length??0,owner?.kind??'',owner?.path.join('::')??'',owner?.arguments.length??-1,boxes))return empty();const facts=readRustOwnedContainerFacts(table,origin);return facts.node==='box'&&facts.profile==='owned'&&facts.closed?{profile:'owned',owner:owner.path.join('::'),roles:[],definitionName:''}:empty();}

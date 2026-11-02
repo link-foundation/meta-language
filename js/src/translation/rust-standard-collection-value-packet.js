@@ -20,3 +20,9 @@ export function executeRustStandardCollectionValuePacket(state,method,arguments_
  }
  return {$:'rustCollectionPacketNormal',values:[result.value,result.state],writeback:result.writeback};
 }
+/** Exact boundary encoding of an actual owned Rust String. Its source domain
+ * has already excluded lone surrogates; no Eq normalization is performed.
+ * @param {string} value @returns {RustStandardCollectionScalar} */
+export function encodeRustStandardCollectionText(value){const units=[];for(let index=0;index<value.length;index++)units.push(value.charCodeAt(index));return {$:'rustCollectionString',units};}
+/** @param {number[]} units @returns {string} */
+export function decodeRustStandardCollectionText(units){let value='';for(const unit of units)value+=String.fromCharCode(unit);return value;}
