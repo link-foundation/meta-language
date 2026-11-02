@@ -1794,3 +1794,10 @@ legacy 16/64 and profile-1 128 caps are unchanged. A deferred control checks 129
 admission only in profile 2, mismatched/unregistered profile rejection, retained
 128 overflow and the 257 overflow boundary. This is an explicit new source
 resource profile, not a removed prior bound or an observed CI repair.
+
+
+Three further constructor originals retain callee identity across spread-time
+binding mutation, exhaust spread arguments before a nonconstructor TypeError,
+and preserve member-getter receiver/effect order before iterable argument
+acquisition. Construction originals now total forty-eight. This extends the
+same native replay group without generating or executing it.
