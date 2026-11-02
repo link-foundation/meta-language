@@ -7,12 +7,13 @@ import {readRustRecordSourceType} from './rust-records.js';
 import {readCallableStatementCaptures} from './callable-source.js';
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {testRustFnMutSourcePosition} from './rust-fnmut-source-positions.js';
+import {beginRustSourceRegionCallback,endRustSourceRegionBody} from './rust-source-region-composition.js';
 const active=new WeakMap(),records=new WeakMap(),frames=new WeakSet();
 const fail=(reason,span)=>{throw unsupported('Rust source FnMut environment',reason,span);};
 export function withRustFnMutSourceClosure(parser,expected,readActual){
  if(active.has(parser)||parser.fnMutSourceModel!=='Rust closed source FnMut specializations 1'||typeof readActual!=='function')fail('a source FnMut closure needs its actual nonnested selected callback reader');
- const context={expected,caller:parser.ownedRecordState?.currentCallable??0,roots:readRustOwnedRecordStateSlots(parser),entered:false};if(context.roots.length>256)fail('the actual mutable callback environment exceeds its source root budget');active.set(parser,context);
- try{return readActual();}finally{active.delete(parser);}
+ const context={expected,caller:parser.ownedRecordState?.currentCallable??0,roots:readRustOwnedRecordStateSlots(parser),entered:false};if(context.roots.length>256)fail('the actual mutable callback environment exceeds its source root budget');const regions=beginRustSourceRegionCallback(parser);active.set(parser,context);
+ try{return readActual();}finally{active.delete(parser);endRustSourceRegionBody(parser,regions);}
 }
 // A shared reference is Copy independently of its closed referent. This
 // header role does not upgrade the referent or release a returned reference.

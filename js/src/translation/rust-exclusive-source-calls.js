@@ -12,6 +12,7 @@ import {readRustExclusiveSourceStringMethod,createRustExclusiveSourceStringMutat
 import {readRustExclusiveSourceVectorMethod,createRustExclusiveSourceVectorPacket} from './rust-exclusive-source-vectors.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue} from './rust-owned-standard-sum-methods.js';
+import {requireRustSourceRegionWholePlace} from './rust-source-region-composition.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source call',reason,span);};
 const operations={borrow:'rustExclusiveSourceBorrow',call:'rustExclusiveSourceCall',write:'rustExclusiveSourceWholeWrite'};
 export function initializeRustExclusiveSourceCalls(parser){
@@ -30,6 +31,7 @@ export function selectRustExclusiveSourcePlace(parser,node,path){
 }
 function acquire(parser,place,parameter,span){
  const arena=initializeRustExclusiveSourceCalls(parser),frame=arena?.frames.at(-1);if(!frame||!place)fail('an exclusive argument needs its actual selected callable and mutable lexical place',span);
+ requireRustSourceRegionWholePlace(parser,place.fields,span);
  if(place.slot.callable!==frame.callable)fail('exclusive arguments cannot capture a mutable root from another callable',span);
  for(const pending of arena.frames)for(const borrow of pending.borrows)if(testRustExclusiveSourcePlaceOverlap(place.slot.lexical,place.fields,borrow.slot.lexical,borrow.fields))fail('exclusive arguments retain disjoint actual places until the selected Call',span);
  if(!parser.origins.collecting&&parser.origins.sourceBindingStates.get(place.slot.root)!=='available')fail('an exclusive argument needs its still available actual owner',span);

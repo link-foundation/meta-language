@@ -5,6 +5,7 @@ import {createRustBorrowedVectorElementPosition} from './rust-borrowed-vectors.j
 import {qualifyRustStandardSumSourcePosition} from './rust-standard-sum-source.js';
 import {readRustBorrowedExpressionPositionReservation,planRustBorrowedInherentPosition} from './rust-borrowed-vector-rules.js';
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
+import {retainRustSourceRegionExpression} from './rust-source-region-composition.js';
 export function prepareRustBorrowedInherentReceiverPosition(table,origin,wrappers,span){
  if(!table.borrowedVectorSourceEnabled)return {...origin,wrappers};
  const plan=planRustBorrowedInherentPosition(origin.wrappers,wrappers);if(plan.length!==3)throw unsupported('Rust borrowed expression source position','the selected receiver needs its complete source layer projection',span);
@@ -14,7 +15,7 @@ export function prepareRustBorrowedInherentReceiverPosition(table,origin,wrapper
 }
 export function noteRustBorrowedExpressionSourcePosition(parser,node,path){
  const table=parser.origins;if(!table.borrowedVectorSourceEnabled)return node;
- const origin=table.origin(node,path),relevant=origin.wrappers.length>0||Boolean(origin.arrayElementPosition)||Boolean(origin.sourceBoxLayers?.length);
+ const origin=table.origin(node,path);if(!retainRustSourceRegionExpression(parser,origin,node.span))return node;const relevant=origin.wrappers.length>0||Boolean(origin.arrayElementPosition)||Boolean(origin.sourceBoxLayers?.length);
  if(!origin.type||!origin.sourceOwner||!origin.proven||origin.diverging){if(relevant&&!origin.diverging){table.borrowedVectorNeedsFinalAdmission=true;if(!table.collecting)throw unsupported('Rust borrowed expression source position','a qualified expression needs its actual complete source type and owner before reference erasure',node.span);}return node;}
  let cost;try{cost=measureRustSourceOriginPositionMetadata(origin);}catch(error){if(!(error instanceof RangeError))throw error;throw unsupported('Rust borrowed expression source position',error.message,node.span);}
  const next=readRustBorrowedExpressionPositionReservation(table.sourcePositionMaterializedNodes,table.sourcePositionMaterializedUnits,cost[0],cost[1]);

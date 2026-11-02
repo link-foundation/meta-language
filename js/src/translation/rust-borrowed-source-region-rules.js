@@ -50,7 +50,7 @@ export function readRustBorrowedSourceLifetimeError(demand,sources){if(demand===
  * @returns {string} */
 export function readRustBorrowedSourceTargetFieldError(kind,wrappers,child){return wrappers.includes('reference')||child||['function','tuple','record','map','set','cell'].includes(kind)?'a borrowed referent needs a closed target-copy field graph with represented source qualifiers':'';}
 /** @param {string} kind @returns {string} */
-export function readRustBorrowedSourceOperation(kind){if(kind==='toString')return 'show';if(['lit','unit','var','let','array','call','ctor','length','cast','unary','binary','math','show','concat'].includes(kind))return kind;return '';}
+export function readRustBorrowedSourceOperation(kind){if(kind==='toString')return 'show';if(['lit','unit','var','let','array','call','ctor','index','length','cast','unary','binary','math','show','concat'].includes(kind))return kind;return '';}
 /** @param {number} visits @param {number} depth @param {number} roots
  * @param {number} loans @returns {string} */
 export function readRustBorrowedSourceRegionBudgetError(visits,depth,roots,loans){for(const value of [visits,depth,roots,loans])if(!Number.isSafeInteger(value)||value<0||Object.is(value,-0))return 'invalid source region proof resource count';return visits>100000||depth>256||roots>100000||loans>1048576?'the immutable source binder and region proof exceeds its finite resource profile':'';}
@@ -60,7 +60,7 @@ export function reserveRustBorrowedSourcePosition(nodes,units,addNodes,addUnits)
 /** @param {boolean} selected @param {boolean} runtimeShell @returns {string} */
 export function readRustBorrowedSourceRuntimeError(selected,runtimeShell){return selected&&runtimeShell?'borrowed source body positions require their independent runtime-shell binder adapter':'';}
 /** @param {string} role @param {string} operation @returns {string} */
-export function readRustBorrowedSourceObservationError(role,operation){return ['reference','box','owned','borrowed vector'].includes(role)&&operation!=='len'?'this source observation needs an independently represented value or source trait proof':'';}
+export function readRustBorrowedSourceObservationError(role,operation){return role==='source state packet'?'source state packets are interpreted through their actual result/state slots':['reference','box','owned','borrowed vector'].includes(role)&&operation!=='len'?'this source observation needs an independently represented value or source trait proof':'';}
 /** @param {string} role @param {string} kind @param {string} owner
  * @param {string} path @param {number} argumentCount @param {string[]} wrappers
  * @returns {string} */
@@ -68,6 +68,9 @@ export function readRustBorrowedSourceObservationRole(role,kind,owner,path,argum
 /** @param {string} role @param {string} kind @param {string} pattern
  * @param {number} fields @param {number} bindings @returns {string} */
 export function readRustBorrowedSourceMatchError(role,kind,pattern,fields,bindings){if(role!=='reference'||kind!=='data')return 'source matching requires its actual borrowed nominal place adapter';if(!['wild','bind','ctor'].includes(pattern))return 'this source pattern needs its independent binding projection';if(pattern==='ctor'&&(!Number.isSafeInteger(fields)||fields<0||fields!==bindings))return 'source constructor patterns need every actual declared field position';return '';}
+/** @param {boolean} composed @param {string} kind @param {string} pattern
+ * @param {number} fields @param {number} bindings @returns {string} */
+export function readRustBorrowedSourceOwnedMatchError(composed,kind,pattern,fields,bindings){return !composed?'owned matches require the explicit closed-call region composition':readRustBorrowedSourceMatchError('reference',kind,pattern,fields,bindings);}
 /** @param {number} cells @param {number} addition @returns {number} */
 export function reserveRustBorrowedSourceBranches(cells,addition){return !Number.isSafeInteger(cells)||!Number.isSafeInteger(addition)||cells<0||addition<0||Object.is(cells,-0)||Object.is(addition,-0)||addition>1048576-cells?-1:cells+addition;}
 /** @param {string} left @param {string} right @returns {string} */

@@ -113,6 +113,7 @@ import {checkRustExclusiveSourceSignature} from './rust-exclusive-source-signatu
 import {checkRustFnMutSourceSpecialization} from './rust-fnmut-source-signatures.js';
 import {checkRustSourceVectorSort} from './rust-source-vector-sort.js';
 import {checkRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
+import {checkRustSourceStateTransition} from './rust-source-state-transitions.js';
 import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionObservation} from './rust-standard-collection-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
@@ -651,6 +652,7 @@ class Checker {
     }
     if ((node.span || (payload && expression.span)) && !result.span) result.span = node.span || expression.span;
     if(Object.hasOwn(node,'sourcePosition'))result.sourcePosition=checkRustSourceExpressionPosition(node.sourcePosition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
+    if(Object.hasOwn(node,'sourceStateTransition'))result.sourceStateTransition=checkRustSourceStateTransition(node.sourceStateTransition,result.type,this.language,value=>this.resolveType(value,path,node.span),type=>this.items.get(type.name));
     return result;
   }
 

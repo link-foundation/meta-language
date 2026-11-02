@@ -1,4 +1,7 @@
 import {readRustFnMutSourceIterator} from './rust-fnmut-source-iterators.js';
+import {readRustOwnedRecordStateDeclarations} from './rust-owned-record-state.js';
+import {acceptRustSourceRegionComposition,initializeRustSourceRegionComposition,readRustSourceRegionBodyMode,beginRustSourceRegionBody,endRustSourceRegionBody} from './rust-source-region-composition.js';
+import {attachRustSourceStateTransition} from './rust-source-state-transitions.js';
 import {readRustSourceVectorSort} from './rust-source-vector-sort.js';
 import {readRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
 import {readRustSourceStringCharacterPush} from './rust-source-string-character-push.js';
@@ -183,8 +186,9 @@ const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 't
 export function parseRustWithSourceTypeOwners(source,options={}){return parseRust(source,{...options,retainSourceTypeOwners:true});}
 export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='',retainSourceTypeOwners=false,sourceVersion='',exclusiveSourceModel='',standardCollectionSourceModel='',standardCollectionSourceLibrary=null,standardCollectionPointerWidth=64,fnMutSourceModel='' } = {}) {
   requireRustExclusiveSourceModel(exclusiveSourceModel,sourceVersion);
+  const regionComposition=acceptRustSourceRegionComposition(sourceSignatureModel,exclusiveSourceModel,fnMutSourceModel);
   if(standardCollectionSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust standard collection source composition','the supplied library needs its separate checked source interface and carrier interpretation');
-  if(exclusiveSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,runtimeShellModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust exclusive source composition','the exclusive source interface needs its own checked signature and state composition');
+  if(exclusiveSourceModel&&[arrayResultModel,completionModel,regionComposition?'':sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,runtimeShellModel,sharedArrayHandleSourceModel,regionComposition?false:retainSourceTypeOwners].some(Boolean))throw unsupported('Rust exclusive source composition','the exclusive source interface needs its own checked signature and state composition');
   if(standardCollectionSourceModel&&runtimeShellModel)throw unsupported('Rust standard collection runtime shell','the actual supplied library needs its independent module and capability composition');
   readRustSourceVersion(sourceVersion);
   if(typeof retainSourceTypeOwners!=='boolean')throw new TypeError('retainSourceTypeOwners must be Boolean');
@@ -217,8 +221,9 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
 // Internal complete-token entry; public source parsing validates options and lexes first.
 export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '',retainSourceTypeOwners=false,sourceVersion='',exclusiveSourceModel='',standardCollectionSourceModel='',standardCollectionSourceLibrary=null,standardCollectionPointerWidth=64,fnMutSourceModel='' } = {}, source = null) {
   requireRustExclusiveSourceModel(exclusiveSourceModel,sourceVersion);
+  const regionComposition=acceptRustSourceRegionComposition(sourceSignatureModel,exclusiveSourceModel,fnMutSourceModel);
   if(standardCollectionSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust standard collection source composition','the supplied library needs its separate checked source interface and carrier interpretation');
-  if(exclusiveSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust exclusive source composition','token input retains the same explicit exclusive source profile boundary');
+  if(exclusiveSourceModel&&[arrayResultModel,completionModel,regionComposition?'':sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,regionComposition?false:retainSourceTypeOwners].some(Boolean))throw unsupported('Rust exclusive source composition','token input retains the same explicit exclusive source profile boundary');
   const sourceVersionFacts=readRustSourceVersion(sourceVersion);
   if(typeof retainSourceTypeOwners!=='boolean')throw new TypeError('retainSourceTypeOwners must be Boolean');
   retainSourceTypeOwners=retainSourceTypeOwners||acceptRustBorrowedVectorSignatureModel(sourceSignatureModel);
@@ -234,6 +239,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   declarations.sourceVersionMinor=sourceVersionFacts.minor;
   declarations.exclusiveSourceModel=exclusiveSourceModel;declarations.exclusiveSourceVersion=sourceVersionFacts.spelling;declarations.exclusiveSourceNeedsFinalAdmission=Boolean(exclusiveSourceModel);
   initializeRustFnMutSource(declarations,fnMutSourceModel);
+  initializeRustSourceRegionComposition(declarations);
   declarations.standardCollectionSourceModel=standardCollectionSourceModel;initializeRustStandardCollectionSource(declarations,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth);
   declarations.origins.standardCollectionSourcePositionError=(actual,expected)=>readRustStandardCollectionSourcePositionError(declarations,actual,expected);
   declarations.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(declarations.ordinaryCompletionContext(),sourceVersionFacts.minor);
@@ -248,6 +254,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   syntax.sourceVersionMinor=sourceVersionFacts.minor;
   syntax.exclusiveSourceModel=exclusiveSourceModel;syntax.exclusiveSourceVersion=sourceVersionFacts.spelling;syntax.exclusiveSourceNeedsFinalAdmission=Boolean(exclusiveSourceModel);
   initializeRustFnMutSource(syntax,fnMutSourceModel,readRustFnMutSourceTemplateFacts(declarations));
+  initializeRustSourceRegionComposition(syntax);
   syntax.standardCollectionSourceModel=standardCollectionSourceModel;initializeRustStandardCollectionSource(syntax,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth);
   syntax.origins.standardCollectionSourcePositionError=(actual,expected)=>readRustStandardCollectionSourcePositionError(syntax,actual,expected);
   syntax.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(syntax.ordinaryCompletionContext(),sourceVersionFacts.minor);
@@ -278,6 +285,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   parser.sourceVersionMinor=sourceVersionFacts.minor;
   parser.exclusiveSourceModel=exclusiveSourceModel;parser.exclusiveSourceVersion=sourceVersionFacts.spelling;parser.exclusiveSourceNeedsFinalAdmission=Boolean(exclusiveSourceModel);
   initializeRustFnMutSource(parser,fnMutSourceModel,readRustFnMutSourceTemplateFacts(syntax));
+  initializeRustSourceRegionComposition(parser);
   parser.standardCollectionSourceModel=standardCollectionSourceModel;initializeRustStandardCollectionSource(parser,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth);
   parser.origins.standardCollectionSourcePositionError=(actual,expected)=>readRustStandardCollectionSourcePositionError(parser,actual,expected);
   parser.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(parser.ordinaryCompletionContext(),sourceVersionFacts.minor);
@@ -860,6 +868,7 @@ class RustParser {
     const fnMutTemplate=readRustFnMutSourceFunctionTemplate(this,path,functionKeyword,name,constKeyword);if(fnMutTemplate)return fnMutTemplate;
     const outerLifetimes = this.lifetimeBindings;
     const outerHeader = this.lifetimeHeader;
+    let sourceRegionFrame=null;
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = true;
     try {
@@ -947,6 +956,7 @@ class RustParser {
       if(borrowedVectorResultPhase)seedRustBorrowedVectorParameterRegions(this,parameterNames);
       const fnMutFrame=beginRustFnMutSourceFunction(this,name,path,params,sourceParams,sourceResult,mutableParams);
       const exclusiveFrame=fnMutFrame?null:beginRustExclusiveSourceFunction(this,name,path,params,sourceParams,sourceResult,mutableParams);
+      sourceRegionFrame=beginRustSourceRegionBody(this,readRustSourceRegionBodyMode(this,sourceParams,sourceResult,Boolean(fnMutFrame)));
       const signature = scalarLoop||this.localValueStateModel ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
       let lowered = null;
       const previousLoop = this.scalarLoopActive;
@@ -986,7 +996,7 @@ class RustParser {
         ...(this.typeNamespaceModel ? {sourceTypeNamespace: createRustTypeNamespaceProof(sourceParams, sourceResult)} : {}),
         ...(this.localValueStateModel?{sourceSignature:signature,sourceLocalState:lowered.proof}:{}),
         ...(this.primitiveOwnerModel?{sourcePrimitiveOwners:createRustPrimitiveOwnerProof(this,sourceParams,sourceResult,{span:span(start,c.peek())})}:{}),
-        ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel||this.retainSourceTypeOwners ? { sourceSignature: createRustSourceSignature(selectRustRetainedSourceSignatureModel(this.sourceSignatureModel,this.retainSourceTypeOwners===true), sourceParams, sourceResult, this.lifetimeBindings) } : {}),
+        ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : !exclusiveFrame&&!fnMutFrame&&(this.sourceSignatureModel||this.retainSourceTypeOwners) ? { sourceSignature: createRustSourceSignature(selectRustRetainedSourceSignatureModel(this.sourceSignatureModel,this.retainSourceTypeOwners===true), sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
       declaration=fnMutFrame?finishRustFnMutSourceFunction(this,fnMutFrame,declaration):finishRustExclusiveSourceFunction(this,exclusiveFrame,declaration);
       if(fnMutFrame)endRustFnMutSourceFunction(this,fnMutFrame);else endRustExclusiveSourceFunction(this,exclusiveFrame);
@@ -996,6 +1006,7 @@ class RustParser {
       this.origins.sourceTemporaryBindings=functionTemporaries;
       return declaration;
     } finally {
+      endRustSourceRegionBody(this,sourceRegionFrame);
       this.lifetimeBindings = outerLifetimes;
       this.lifetimeHeader = outerHeader;
     }
@@ -1197,7 +1208,8 @@ class RustParser {
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path, sourceType);
       const name=mutable?registerRustOwnedRecordMutableBinding(this,pattern.name,pattern.span??span(start,mutableToken)):pattern.name;
-      return [{ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range }];
+      const initialized=mutable?attachRustSourceStateTransition(this,value,readRustOwnedRecordStateDeclarations(this).get(name),'initialize'):value;
+      return [{ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value:initialized, span: range }];
     }
     const bindings = [];
     const name = this.freshProductBinding();

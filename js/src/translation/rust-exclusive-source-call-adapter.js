@@ -48,12 +48,12 @@ export function lowerRustExclusiveSourceParsedCallable(parser,frame,declaration)
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'||declaration.name!==frame.name||Object.hasOwn(declaration,'sourceSignature'))fail('exclusive source text retains its actual separate header and function owner',declaration);
  const inventory=readRustOwnedRecordStateDeclarations(parser),actual=readRustOwnedRecordStateSlots(parser),initial=new Map();
  for(const row of frame.slots){if(!actual.some(slot=>slot.lexical===row.slot.lexical&&slot.root===row.slot.root&&slot.callable===row.slot.callable)||inventory.get(row.slot.currentName)!==row.slot)fail('exclusive source text retains actual function parameter slots',declaration);initial.set(row.slot.lexical,{slot:row.slot,name:declaration.params[row.parameter].name});}
- const exclusive=frame.slots.filter(row=>frame.signature.parameters[row.parameter].mode==='exclusive');
+ const exclusive=frame.slots.filter(row=>row.slot.exclusiveMode==='exclusive');
  const body=lowerRustOwnedRecordEffectBody(parser,declaration.body,frame.path,inventory,initial,declaration.ret,(value,environment)=>{
   if(!exclusive.length)return value;
   const updated=exclusive.map(row=>{const source=environment.get(row.slot.lexical);if(!source||source.slot.root!==row.slot.root)fail('exclusive source completion retains its actual parameter writeback',value);return {k:'name',path:[source.name]};});
   return {k:'tuple',items:[value,...updated],span:value.span};
  });
- if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&!exclusive.length){const entry=parser.origins.lookupValueOwner(['crate',...frame.path,declaration.name],frame.path);if(!entry?.parameters||!entry.result)fail('a readonly source helper retains its actual complete function header',declaration);return {...declaration,body,sourceSignature:createRustSourceSignature('Rust source function signature 2',entry.parameters,entry.result,new Set())};}
+ if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&!exclusive.length){const entry=parser.origins.lookupValueOwner(['crate',...frame.path,declaration.name],frame.path);if(!entry?.parameters||!entry.result)fail('a readonly source helper retains its actual complete function header',declaration);return {...declaration,body,sourceSignature:createRustSourceSignature(frame.readonlyRegionComposition?'Rust source function signature 3':'Rust source function signature 2',entry.parameters,entry.result,new Set(parser.lifetimeBindings))};}
  return {...declaration,body,ret:exclusive.length?{kind:'tuple',elements:[declaration.ret,...exclusive.map(row=>readRustRecordSourceType(parser,row.slot.origin.type,row.slot.origin.path))]}:declaration.ret,sourceExclusiveSignature:frame.signature};
 }
