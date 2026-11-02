@@ -67,6 +67,7 @@ export * from './grammar-composition-batch.js';
 export * from './self-translation.js';
 export { draftProjectTranslation, projectTranslationDraftToLinks } from './project-translation.js';
 export { composeRustSourceProject, parseRustSourceProject, createRustSourceProjectProgramLinks, readRustSourceProjectConcreteGraphs } from './rust-source-project.js';
+export {captureRustSuppliedModuleProject,readRustSuppliedModuleOwnership} from './translation/rust-supplied-module-project.js';
 export {runRustSourceProjectCommand} from './rust-source-project-cli.js';
 export {createRustSourceOwnerProgramLinks} from './rust-source-owner-program.js';
 export {createSourceProjectArchive,readSourceProjectArchive,extendSourceProjectArchive} from './source-project-archive.js';
@@ -155,3 +156,4 @@ export {runSourceModuleRequestCommand} from './source-module-request-cli.js';
 
 export {createProjectTranslationArchive,readProjectTranslationArchive,restoreProjectTranslationArchiveInputs,extendProjectTranslationArchive} from './project-translation-archive.js';
 export {runProjectTranslationArchiveCommand} from './project-translation-archive-cli.js';
+export {createRustStandardCollectionSourceLibrary,loadRustStandardCollectionSourceLibrary} from './translation/rust-standard-collection-library.js';

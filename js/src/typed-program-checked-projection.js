@@ -74,6 +74,8 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       })), span: entry.span, ...(entry.generated !== undefined ? { generated: entry.generated } : {}),
       ...(entry.sourceUnitCloneDerivation!==undefined?{sourceUnitCloneDerivation:entry.sourceUnitCloneDerivation}:{}),
       ...(entry.sourceFieldSignatures!==undefined?{sourceFieldSignatures:entry.sourceFieldSignatures}:{}),
+      ...(entry.sourceStandardCollectionCarrier!==undefined?{sourceStandardCollectionCarrier:entry.sourceStandardCollectionCarrier}:{}),
+      ...(entry.sourceStandardCollectionLibraryOwner!==undefined?{sourceStandardCollectionLibraryOwner:entry.sourceStandardCollectionLibraryOwner}:{}),
     };
     if (entry.k !== 'fn') throw new TypeError(`the linked declaration ${entry.k} has no checked surface projection`);
     const annotation = readProgramDeclarationTypeProjectionField(entry.k, 'annotation');
@@ -89,6 +91,8 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
       ...(entry.sourceConstFunction!==undefined?{sourceConstFunction:entry.sourceConstFunction}:{}),
       ...(entry.sourceDiagnosticAttributes!==undefined?{sourceDiagnosticAttributes:entry.sourceDiagnosticAttributes}:{}),
       ...(entry.sourceSignature !== undefined ? { sourceSignature: entry.sourceSignature } : {}),
+      ...(entry.sourceExclusiveSignature!==undefined?{sourceExclusiveSignature:entry.sourceExclusiveSignature}:{}),
+      ...(entry.sourceStandardCollectionLibraryOwner!==undefined?{sourceStandardCollectionLibraryOwner:entry.sourceStandardCollectionLibraryOwner}:{}),
       ...(entry.sourceTypeNamespace !== undefined ? { sourceTypeNamespace: entry.sourceTypeNamespace } : {}),
       ...(entry.sourceLoop !== undefined ? { sourceLoop: entry.sourceLoop } : {}),
       ...(entry.sourcePrimitiveOwners!==undefined?{sourcePrimitiveOwners:entry.sourcePrimitiveOwners}:{}),

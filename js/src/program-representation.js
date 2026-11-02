@@ -348,6 +348,13 @@ function codePointBoundary(source, offset) {
   return unit < 0xdc00 || unit > 0xdfff;
 }
 
+/** Read actual concrete node ranges from a supplied graph without reparsing.
+ * Source text only verifies the byte/UTF16 coordinate relation and receipt. */
+export function readProgramConcreteSyntaxFacts(network,source){
+ if(typeof source!=='string'||network.reconstructText()!==source)throw new ProgramTransformationError('concrete source does not match the supplied graph');
+ return Object.freeze(syntaxFacts(network,source).map(freezeRecord));
+}
+
 function syntaxFacts(network, source) {
   const byteToOffset = byteOffsetMap(source);
   return network.links()

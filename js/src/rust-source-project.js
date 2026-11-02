@@ -31,12 +31,13 @@ export function composeRustSourceProject(inputs,entry,options={}){
   lexed.map(tokens=>tokens.map(token=>token.kind==='identifier'&&token.value==='mod'&&token.raw==='mod'?'keyword':token.kind)),
   lexed.map(tokens=>tokens.map(token=>token.value)),lexed.map(tokens=>tokens.map(token=>token.start)),lexed.map(tokens=>tokens.map(token=>token.end)),
   entry,limit(options,'depthLimit',128),limit(options,'expansionLimit',4096),limit(options,'outputUnitLimit',128*1024*1024));
+ const moduleLimit=options.moduleLimit;if(moduleLimit!==undefined&&(!Number.isSafeInteger(moduleLimit)||moduleLimit<1))fail('invalid moduleLimit');
  const byPath=new Map(files.map(row=>[row.path,row])),parts=[],mappings=[],modules=[],used=new Set();let outputBytes=0;
  for(let index=0;index<events.length;index+=7){
   const [kind,path,first,last,fragment,module,provider]=events.slice(index,index+7),file=byPath.get(path);
   const startUnit=Number(first),endUnit=Number(last),start=unitsToBytes(file.source,startUnit),end=unitsToBytes(file.source,endUnit);
   if(kind==='file'){used.add(path);continue;}
-  if(kind==='module'){modules.push({path,start,end,startUnit,endUnit,module,provider});continue;}
+  if(kind==='module'){if(moduleLimit!==undefined&&modules.length>=moduleLimit)fail('module count limit exceeded');modules.push({path,start,end,startUnit,endUnit,module,provider});continue;}
   const outputEnd=outputBytes+Buffer.byteLength(fragment);
   mappings.push({kind,path,start,end,startUnit,endUnit,outputStart:outputBytes,outputEnd,module,provider});parts.push(fragment);outputBytes=outputEnd;
  }
@@ -55,13 +56,15 @@ function parseRustSourceProjectVersion(inputs,entry,options,selectedVersion){
  const composition=composeRustSourceProject(inputs,entry,options);let source=composition.source,entryNormalization='none',surface;
  if(options.retainSourceTypeOwners!==undefined&&typeof options.retainSourceTypeOwners!=='boolean')fail('retainSourceTypeOwners must be Boolean');
  const sourceVersion=selectedVersion===undefined?undefined:readRustSourceVersion(selectedVersion).spelling;
- const sourceOptions={retainSourceTypeOwners:options.retainSourceTypeOwners===true,...(sourceVersion===undefined?{}:{sourceVersion})};
+ const exclusiveSourceModel=options.exclusiveSourceModel,standardCollectionSourceModel=options.standardCollectionSourceModel,standardCollectionSourceLibrary=options.standardCollectionSourceLibrary,standardCollectionPointerWidth=options.standardCollectionPointerWidth;
+ const sourceOptions={retainSourceTypeOwners:options.retainSourceTypeOwners===true,...(sourceVersion===undefined?{}:{sourceVersion}),...(exclusiveSourceModel===undefined?{}:{exclusiveSourceModel}),...(standardCollectionSourceModel===undefined?{}:{standardCollectionSourceModel}),...(standardCollectionSourceLibrary===undefined?{}:{standardCollectionSourceLibrary}),...(standardCollectionPointerWidth===undefined?{}:{standardCollectionPointerWidth})};
  try{surface=parseRust(source,sourceOptions);}catch(error){
   if(options.library===true&&error.kind==='syntax'&&error.reason==='a Rust program needs fn main'){
    source+='\nfn main(){}\n';entryNormalization='empty frontend entry for a source library';surface=parseRust(source,sourceOptions);
   }else throw error;
  }
- return {composition,surface,entryNormalization,...(sourceVersion===undefined?{}:{sourceVersion})};
+ const sourceProfile=sourceVersion!==undefined||exclusiveSourceModel!==undefined||standardCollectionSourceModel!==undefined||standardCollectionPointerWidth!==undefined?{language:'Rust',...(sourceVersion===undefined?{}:{rustSourceVersion:sourceVersion}),...(exclusiveSourceModel===undefined?{}:{rustExclusiveSourceModel:exclusiveSourceModel}),...(standardCollectionSourceModel===undefined?{}:{rustStandardCollectionSourceModel:standardCollectionSourceModel}),...(standardCollectionPointerWidth===undefined?{}:{rustStandardCollectionPointerWidth:standardCollectionPointerWidth})}:undefined;
+ return {composition,surface,entryNormalization,...(sourceVersion===undefined?{}:{sourceVersion}),...(sourceProfile===undefined?{}:{sourceProfile})};
 }
 
 /** Checked editable semantic Links plus every complete original concrete graph.
@@ -71,17 +74,18 @@ function parseRustSourceProjectVersion(inputs,entry,options,selectedVersion){
 export function createRustSourceProjectProgramLinks(inputs,entry,options={}){
  if(!options||typeof options!=='object'||Array.isArray(options))fail('expected a resource options record');
  const selectedVersion=options.sourceVersion;
- const {composition,surface,entryNormalization,sourceVersion}=parseRustSourceProjectVersion(inputs,entry,options,selectedVersion),program=checkProgram(surface);
- const packet=encodeTypedProgramLinks(program,{provenance:{sourceProject:composition,entryNormalization,...(sourceVersion===undefined?{}:{sourceProfile:{language:'Rust',rustSourceVersion:sourceVersion}}),userProvenance:options.provenance??null}}),nodeLimit=limit(options,'nodeLimit',1000000);
+ const retainCompilation=options.retainCompilation??false;if(typeof retainCompilation!=='boolean')fail('retainCompilation must be Boolean');
+ const {composition,surface,entryNormalization,sourceProfile}=parseRustSourceProjectVersion(inputs,entry,options,selectedVersion),program=checkProgram(surface);
+ const packet=encodeTypedProgramLinks(program,{provenance:{sourceProject:composition,entryNormalization,...(sourceProfile===undefined?{}:{sourceProfile}),userProvenance:options.provenance??null}}),nodeLimit=limit(options,'nodeLimit',1000000);
  // The concrete parser does not consume a semantic std-version selector.
  // Exclude it before copying enumerable archive options to avoid rereading a getter.
- const archiveOptions=Object.fromEntries(Object.keys(options).filter(key=>key!=='sourceVersion').map(key=>[key,options[key]]));
+ const archiveOptions=Object.fromEntries(Object.keys(options).filter(key=>!['sourceVersion','exclusiveSourceModel','standardCollectionSourceModel','standardCollectionSourceLibrary','standardCollectionPointerWidth','retainCompilation','retainSourceTypeOwners'].includes(key)).map(key=>[key,options[key]]));
  const archive=createSourceProjectArchive(composition.files.map(file=>({path:file.path,source:file.source,language:'Rust'})),{...archiveOptions,requireClean:true,projection:'ConcreteSyntax'}),links=archive.network.links();
  if(packet.network.links().length+links.length+2>nodeLimit)fail('concrete graph node limit exceeded');
  const ids=new Map();for(const link of links)ids.set(link.id().asU64(),packet.network.insertLink([],link.metadata().clone()));
  for(const link of links)packet.network.link(ids.get(link.id().asU64())).setReferences(link.references().map(reference=>{const target=ids.get(reference.asU64());if(!target)fail('dangling original concrete reference');return target;}));
  packet.network.insertFieldRelation(packet.root,'source project concrete archive',ids.get(archive.root.asU64()));
- return packet;
+ return retainCompilation?{...packet,composition,surface,program,entryNormalization,...(sourceProfile===undefined?{}:{sourceProfile})}:packet;
 }
 
 /** Reload the actual concrete graphs and original source bytes from either

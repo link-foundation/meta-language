@@ -22,7 +22,8 @@ import {readSourceLibraryClassProfileError,readSourceLibraryReExportProfileError
 import {draftJavaScriptErrorSourceClosure} from './draft-javascript-error-source-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceErrorClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, publishSourceReceipt=false, sourceDependencies = false, sourceAliases = false, sourceClasses='', sourceErrorClasses='', sourceReExports='', referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply', valueSharing='', programEntryPoints='', nativeEntryPoints='', booleanMatchSharing='', constructorMatchSharing='', conditionalConstructorSharing='', recordShapes='' }) {
+  if(typeof publishSourceReceipt!=='boolean'||publishSourceReceipt&&(!sourceDependencies||programAsset===undefined||sourceErrorClasses!==''||programEntryPoints!==''||booleanMatchSharing!==''||constructorMatchSharing!==''||conditionalConstructorSharing!==''))throw new TypeError('published source receipts require a complete untransformed dependency program asset');
   if(sourceErrorClasses!==''){
     if(moduleName!==undefined||nativeEntryPoints!==''||programEntryPoints!=='')throw new TypeError('semantic Error source assets use their interpreted module entry ownership; an ordinary generated native library or export projection is not implied');
     return draftJavaScriptErrorSourceClosure({sourcePath,programAsset,sourceDependencies,sourceAliases,sourceClasses,sourceErrorClasses,sourceReExports});
@@ -113,6 +114,11 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     actions: [...relocation.actions, ...loans.actions, ...styles.actions] }]);
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
+  if(publishSourceReceipt)writeProjectData(new URL('js/src/data/'+programAsset+'-source.lino',root),{
+    model:'Complete source library asset receipt 1',schemaVersion:1,entryPath:sourcePath,referenceSemantics,
+    sourceClosure,sourceDeclarationOwners,
+    programAsset:{path:'js/src/data/'+programAsset+'.lino',bytes:Buffer.byteLength(programText),sha256:createHash('sha256').update(programText).digest('hex')},
+  });
   writeProjectData(new URL(stem + '-native.lino', root), {
     schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sourceClasses?{sourceClasses}:{}), ...(sourceReExports?{sourceReExports}:{}), ...(sharedConstructors?{conditionalConstructorSharing:sharedConstructors.proof}:{}), ...(sharedMatches?{[constructorMatchSharing?'constructorMatchSharing':'booleanMatchSharing']:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },

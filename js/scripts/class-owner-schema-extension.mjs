@@ -1,3 +1,4 @@
+import {extendExclusiveSourceSchema} from './exclusive-source-schema-extension.mjs';
 // Source-authored vocabulary succession. No graph, policy or fixture executes.
 import {extendPropositionValueSchema} from './proposition-value-schema-extension.mjs';
 import {extendSourcePositionSchema} from './source-position-schema-extension.mjs';
@@ -21,5 +22,5 @@ export function extendClassOwnerSchema(before){
 // Publish one complete pending successor while preserving the independent
 // input contracts of the individual additive extensions.
 export function extendCurrentTypedProgramSourceSchema(before){
- return extendSourcePositionSchema(extendPropositionValueSchema(extendClassOwnerSchema(before)));
+ return extendExclusiveSourceSchema(extendSourcePositionSchema(extendPropositionValueSchema(extendClassOwnerSchema(before))));
 }

@@ -1,3 +1,5 @@
+import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner} from './translation/rust-standard-collection-signatures.js';
+import {checkRustExclusiveSourceSignature} from './translation/rust-exclusive-source-signatures.js';
 import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
 import {checkJavaScriptClassOwners} from './translation/javascript-class-owners.js';
 import {acceptLinkedStringArrayCopySort} from './translation/string-array-sort-rules.js';
@@ -144,7 +146,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
   }
   for (const external of program.externals ?? []) declarations.set(external.name, external);
   for (const [name, entry] of program.declarations) {
-    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
+    if(entry.sourceStandardCollectionLibraryOwner!==undefined){checkRustStandardCollectionLibraryOwner(entry,program.sourceLanguage);const target=targetOf(entry.sourceStandardCollectionLibraryOwner,'standardCollectionLibraryDeclaration');if(graphPatterns?target!==entry:target&&target!==entry)throw new TypeError('a collection library owner must reference its actual declaration');}
+    if (entry.k === 'fn') { entry.params.forEach((parameter, index) => { ownBinder(parameter, entry, index); type(parameter.type); }); type(entry.ret); if (entry.sourceSignature !== undefined) checkRustSourceSignature(entry.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if(entry.sourceExclusiveSignature!==undefined)checkRustExclusiveSourceSignature(entry.sourceExclusiveSignature,entry.params.map(parameter=>parameter.type),entry.ret,program.sourceLanguage,value=>value,type=>program.declarations.get(type.name)); if (entry.sourceLoop !== undefined) checkRustScalarLoopProof(entry, program.sourceLanguage); }
     if (entry.k === 'const') type(entry.type);
     if (entry.k === 'data') {
       if (!Array.isArray(entry.ctors)) throw new TypeError('a linked datatype has malformed constructors');
@@ -161,6 +164,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
           fields.add(field.name); type(field.type);
         }
       }
+      if(entry.sourceStandardCollectionCarrier!==undefined){checkRustStandardCollectionCarrier(entry,program.sourceLanguage,value=>value,name=>program.declarations.get(name));type(entry.sourceStandardCollectionCarrier.kernelType);for(const [field,role]of [['kernelDeclaration','standardCollectionKernel'],['packetDeclaration','standardCollectionPacket']]){const actual=program.declarations.get(entry.sourceStandardCollectionCarrier.kernelLibrary[field]),target=targetOf(entry.sourceStandardCollectionCarrier.kernelLibrary,role);if(!actual||(graphPatterns?target!==actual:target&&target!==actual))throw new TypeError('a collection carrier must reference its actual shared kernel and packet declarations');}}
       if (Object.hasOwn(entry,'sourceFieldSignatures')) {
         checkRustDataTypeFieldSignatures(entry.sourceFieldSignatures,entry.ctors,program.sourceLanguage,name,value=>value,type=>program.declarations.get(type.name));
         for(const constructor of entry.sourceFieldSignatures.ctors)for(const field of constructor.fields)type(field.type);

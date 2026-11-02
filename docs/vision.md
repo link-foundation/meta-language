@@ -87,6 +87,44 @@ length semantics in a native fallback.
 All continuations retain original inputs, selected callbacks, allocation requests
 and realm Error identity, including strict final length Set and resource retries.
 
+Supplied Rust projects reuse the existing logical module composer, including
+actual provided-file resolution, literal path attributes, namespaces and source
+mappings. Each composed module can additionally be checked against the archived
+CST module/name/body fields and retained as an explicit qualified source witness
+in the same Links network. A module-looking token in a macro or string cannot
+establish declaration ownership. Profile options and selected source versions
+flow through project parsing into the ordinary frontend. Complete original CSTs,
+including unused supplied files, remain source-free reloadable; execution and
+emission use the checked current semantic program rather than source replay.
+Existing resolution/entry contracts are reused, with optional explicit module
+count bounds; no second filesystem search policy replaces them.
+
+Rust exclusive source interpretation retains actual binder, callable, lexical,
+field, scope and complete type-owner identities independently of runtime values.
+Shared/exclusive loans and reborrows obey overlap and parent-suspension rules;
+call reservations, argument order and release remain explicit. Supported mutable
+referents lower through the existing immutable state algebra into ordinary
+value/state packets: one result followed by actual updated exclusive roots in
+formal order. The caller holds the real call once and installs all corresponding
+updates before its continuation. Existing immutable signatures remain distinct;
+new exclusive signatures require independent source admission and checking.
+Closed nominal/Vec referents and registered standard collection carriers must
+retain their own actual source identities rather than borrow another profile's
+interpretation. Stored/escaping references and additional ownership families
+remain required independent interpretations, not silently erased source facets.
+
+The initial standard Rust collection profile resolves actual HashMap/HashSet
+owners and concrete Eq domains. Boolean, exact integer and valid Unicode String
+keys use explicit owned entries; no hash iteration order is inferred from the
+JavaScript representation. Owned insert/remove results and clone ownership are
+separate from root/revision-bound borrowed get results and copied/cloned
+projections. Real projected library bodies, declaration/type ownership and actual
+call/loan witnesses must connect these semantics to source value/state packets.
+A method name or declared library asset alone cannot establish source execution.
+Custom hash/equality behavior and remaining collection families still require
+their complete semantics. Recursive metadata, live loans, entries and text retain
+explicit resource bounds across shared/native representations.
+
 Array slice captures length before ordered start/end scalar conversion, preserves
 omitted and explicit undefined end behavior, and performs ArraySpeciesCreate for
 the selected count before indexed access. Has/Get preserves sparse holes and
