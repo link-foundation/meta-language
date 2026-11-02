@@ -1122,3 +1122,29 @@ No source parser, test, generator, behavioral execution, validation or compilati
 ran. Generated publication/wire/Rust remains deferred; opaque own-key/descriptor
 traps and broader Object.create/defineProperties/assign are separate source
 obligations, not claimed supported through native host fallbacks.
+
+### ObjectDefineProperties and Object.create composition draft
+
+`javascript-property-definitions.js` composes the existing ToPropertyDescriptor
+and symbol-aware DefinePropertyOrThrow/ArraySetLength kernels. It snapshots own
+keys, checks live enumerability and completes all descriptor conversions before
+target writes. A later conversion error leaves algorithmic definitions unstarted;
+a later definition error preserves completed earlier writes. Object.create uses
+the actual supplied Object/null prototype and external fresh identity before
+optional descriptor processing. Enumerable Symbol entries, ordered getters,
+deleted/new keys, partial descriptors and original abrupt values are preserved.
+Nested continuations retain their selected key, target, Symbol and Call operands;
+resource pauses retain already completed conversions and writes.
+
+Source inspection also found ToPropertyDescriptor refused ordinary Array,
+closure and collection objects despite shared ordinary descriptor semantics.
+Its existing opaque guard now admits those established ordinary heap variants;
+opaque native/Proxy descriptors remain explicit protocol obligations. No oracle,
+assertion, fixture input, gate or version bound was weakened. Fourteen original
+source fixtures and five deferred kernel controls are drafted. The actual native
+owners, portable bodies, shared Call opcode, allocation/callback resumption and
+future source policy author are connected. No tests, generation, validation,
+source parser execution or compilation ran. Generated Rust/wire publication
+remains deferred. Object.assign, primitive wrapper identity, opaque descriptor
+protocols, full lexical environments and other existing requirements remain
+independent source obligations.

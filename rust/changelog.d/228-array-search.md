@@ -160,3 +160,7 @@ Array allocation, recursive binding targets and Function length boundaries.
 - Draft public Object/Reflect own-key and descriptor reflection with genuine
   result Objects/Arrays, Symbol/nonenumerable keys and primitive String flags.
   The JavaScript source remains the automatic Rust translation input.
+
+- Draft Object.defineProperties and Object.create by composing ordered descriptor
+  conversion and the shared property/Array definition kernels, retaining partial
+  effects and actual prototypes for automatic cross-runtime translation.

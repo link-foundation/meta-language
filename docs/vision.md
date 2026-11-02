@@ -57,6 +57,18 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+ObjectDefineProperties snapshots descriptor keys, rechecks each current own
+entry's enumerability, Gets its actual descriptor value and completes every
+ToPropertyDescriptor before defining the first target field. Converted partial
+descriptors retain field presence, Symbols and source order. Later definition
+failure preserves earlier writes and Array-length partial effects. Object.create
+validates the requested Object/null prototype, allocates with that exact identity
+and applies the same descriptor pipeline only when properties is not undefined.
+All getters, descriptor-field callbacks, Array numeric conversions, allocations
+and resource pauses compose through the shared Call machine; native Object
+bodies are never a fallback. Ordinary Array/closure/collection descriptor
+containers use the same property protocol as ordinary Objects.
+
 Descriptor reflection reads actual own descriptors without invoking their
 accessors. FromPropertyDescriptor produces fresh ordinary Objects with writable,
 enumerable, configurable data fields in specification order. Plural descriptor

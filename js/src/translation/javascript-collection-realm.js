@@ -9,7 +9,7 @@ const actualObject=Object,objectPrototype=Object.prototype;
 const actualReflect=Reflect;
 const propertyReflectionOwners=[...['getOwnPropertyDescriptor','getOwnPropertyDescriptors','getOwnPropertyNames','getOwnPropertySymbols'].map(name=>({namespace:actualObject,name,operation:'Object.'+name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value})),...['ownKeys','getOwnPropertyDescriptor'].map(name=>({namespace:actualReflect,name,operation:'Reflect.'+name,value:Reflect.getOwnPropertyDescriptor(actualReflect,name)?.value}))];
 const functionPrototype=Function.prototype,functionHasInstance=Reflect.getOwnPropertyDescriptor(functionPrototype,actualSymbol.hasInstance)?.value;
-const objectObservationOwners=['hasOwn','is','isExtensible','isSealed','isFrozen','preventExtensions','seal','freeze','getPrototypeOf','setPrototypeOf','defineProperty'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value}));
+const objectObservationOwners=['hasOwn','is','isExtensible','isSealed','isFrozen','preventExtensions','seal','freeze','getPrototypeOf','setPrototypeOf','defineProperty','defineProperties','create'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value}));
 const objectEnumerationOwners=['keys','values','entries'].map(name=>({name,value:Reflect.getOwnPropertyDescriptor(actualObject,name)?.value}));
 const primitiveIteratorRoots=[{kind:'text',value:actualString.prototype},{kind:'sourceText',value:actualString.prototype},{kind:'number',value:Number.prototype},{kind:'boolean',value:Boolean.prototype},{kind:'integer',value:BigInt.prototype},{kind:'symbol',value:actualSymbol.prototype}];
 const stringIteratorMethod=Reflect.getOwnPropertyDescriptor(actualString.prototype,actualSymbol.iterator)?.value;
