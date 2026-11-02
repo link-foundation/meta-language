@@ -9,6 +9,8 @@ export const javascriptOrdinaryClassDecisions=[
  {operation:'testJavaScriptOrdinaryClassReceiverResult',arguments:['strict','number'],expected:false}
 ];
 export const javascriptOrdinaryClassOriginals=[
+ {name:"local Map constructors use actual source identity rather than native spelling",source:"function Map() { this.local = 7; return 9; } class Box { constructor(value = new Map()) { this.value = value; } } export function read() { const box = new Box(); return box.value.local === 7 && box.value instanceof Map && box.value.get === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"parameter Set constructor defaults use the actual initialized source argument",source:"function Local() { this.local = 7; } class Box { constructor(Set, value = new Set()) { this.value = value; } } export function read() { const box = new Box(Local); return box.value.local === 7 && box.value instanceof Local; }",entries:['read'],entry:'read',arguments:[],expected:true},
  {name:"Object fromEntries class entry getter failure materializes TypeError before close",source:"class Getter {} export function read() { let closed = 0; const cleanup = {}; const entry = Object.defineProperty({}, \"0\", { get: Getter }); const input = { [Symbol.iterator]() { return { next() { return { done: false, value: entry }; }, return() { closed++; throw cleanup; } }; } }; try { Object.fromEntries(input); } catch (error) { return error instanceof TypeError && error !== cleanup && closed === 1; } return false; }",entries:['read'],entry:'read',arguments:[],expected:true},
  {name:"Object fromEntries class cleanup callable cannot replace original key throw",source:"class Cleanup {} export function read() { const thrown = {}; const key = { [Symbol.toPrimitive]() { throw thrown; } }; const input = { [Symbol.iterator]() { return { next() { return { done: false, value: [key, 7] }; }, return: Cleanup }; } }; try { Object.fromEntries(input); } catch (error) { return error === thrown; } return false; }",entries:['read'],entry:'read',arguments:[],expected:true},
  {name:"Object fromEntries class next failure preserves done rule and does not close",source:"class Next {} export function read() { let closed = 0; const input = { [Symbol.iterator]() { return { next: Next, return() { closed++; return {}; } }; } }; try { Object.fromEntries(input); } catch (error) { return error instanceof TypeError && closed === 0; } return false; }",entries:['read'],entry:'read',arguments:[],expected:true},
@@ -751,13 +753,13 @@ export const javascriptOrdinaryClassRefusals=[
  {name:'computed class member needs actual key evaluation',source:'export class Box { [key]() { return 1; } }',entries:['Box']},
  {name:'static member installation needs actual class evaluation',source:'export class Box { static read() { return 1; } }',entries:['Box']},
  {name:'private field storage needs actual private slots',source:'export class Box { #value; constructor() { this.#value = 1; } }',entries:['Box']},
- {name:'constructor parameter named Set cannot certify a standard default',source:'export class Box { constructor(Set, value = new Set()) { this.value = value; } }',entries:['Box']},
- {name:'source function named Map cannot certify a standard constructor',source:'function Map() { return 9; } export class Box { constructor(value = new Map()) { this.value = value; } }',entries:['Box']}
 ];
 
 // Exact formerly refused class input retains a positive capture/check contract.
 // Executable constructor initialization is covered by the original new wrapper.
 export const javascriptOrdinaryClassCaptureCases=[
+ {name:'constructor parameter named Set cannot certify a standard default',source:'export class Box { constructor(Set, value = new Set()) { this.value = value; } }',entries:['Box']},
+ {name:'source function named Map cannot certify a standard constructor',source:'function Map() { return 9; } export class Box { constructor(value = new Map()) { this.value = value; } }',entries:['Box']},
  {name:'var initializers shadowed by catch parameters retain their distinct write-reference obligation',source:'export function read() { try { throw 3; } catch (value) { var value = 7; } return value; }',entries:['read']},
  {name:'later parameter defaults retain their explicit temporal dead zone obligation',source:'export class Box { constructor(first = second, second = 1) { this.value = first; } }',entries:['Box']}
 ];

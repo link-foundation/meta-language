@@ -48,6 +48,7 @@ export function readJavaScriptErrorModuleRequestError(module,request){
   return '';
  }
  if(request.$==='machineAllocateSourceError')return pending.$==='waitSourceError'&&pending.realm===request.realm&&pending.errorClass===request.errorClass&&pending.messagePresent===request.messagePresent&&testJavaScriptSemanticSameValue(pending.message,request.message)?'':'source Error allocation must retain its actual pending operands';
+ if(pending.$==='waitArrayCreation'){const actual=stepJavaScriptCallMachine(module.program,request.machine);return actual.$==='machineAllocateError'&&actual.realm===request.realm&&actual.errorClass===request.errorClass&&actual.reason===request.reason?'':'Array creation Error allocation retains its actual pending callback failure or cleanup';}
  if(pending.$==='waitObjectFromEntries'){
   const actual=stepJavaScriptCallMachine(module.program,request.machine);return actual.$==='machineAllocateError'&&actual.realm===request.realm&&actual.errorClass===request.errorClass&&actual.reason===request.reason?'':'Object.fromEntries Error allocation retains its actual pending cleanup or selected-call failure';
  }

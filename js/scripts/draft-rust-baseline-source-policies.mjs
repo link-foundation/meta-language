@@ -12,6 +12,9 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-construction.js',moduleName:'javascript_construction',model:'Actual target and newTarget base construction continuations 1',programAsset:'javascript-construction-program'},
+ {sourcePath:'js/src/translation/javascript-array-creation.js',moduleName:'javascript_array_creation',model:'Actual Array of from iterable array like creation continuations 1',programAsset:'javascript-array-creation-program'},
+ {sourcePath:'js/src/translation/javascript-reflect-construction-call-source.js',moduleName:'javascript_reflect_construction_call_source',model:'Actual Reflect construct constructor checks and array like arguments 1',programAsset:'javascript-reflect-construction-call-source-program'},
  {sourcePath:'js/src/translation/javascript-object-from-entries.js',moduleName:'javascript_object_from_entries',model:'Actual Object fromEntries iterator entry key conversion and closing continuations 1',programAsset:'javascript-object-from-entries-program'},
  {sourcePath:'js/src/translation/javascript-object-call-source.js',moduleName:'javascript_object_call_source',model:'Actual Object Call shared realm primitive wrapper root selection 1',programAsset:'javascript-object-call-source-program'},
  {sourcePath:'js/src/translation/javascript-primitive-wrappers.js',moduleName:'javascript_primitive_wrappers',model:'Actual primitive wrapper slots indexed String descriptors and global allocation 1',programAsset:'javascript-primitive-wrappers-program'},
@@ -105,6 +108,8 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-construction-source.mjs',
+ 'js/tests/fixtures/javascript-array-creation.mjs',
  'js/tests/fixtures/javascript-source-text.mjs',
  'js/tests/fixtures/javascript-array-objects.mjs',
  'js/tests/fixtures/javascript-primitive-methods.mjs',
@@ -222,6 +227,9 @@ const consumers=[
  'js/tests/translation-javascript-string-symbol-conversion.test.js',
  'js/tests/translation-javascript-string-case-profile.test.js',
  'js/tests/translation-javascript-collection-for-each.test.js',
+ 'js/tests/translation-javascript-reflect-construction-call-source.test.js',
+ 'js/tests/translation-javascript-construction.test.js',
+ 'js/tests/translation-javascript-array-creation.test.js',
  'js/tests/translation-javascript-object-from-entries.test.js',
  'js/tests/translation-javascript-primitive-wrappers.test.js',
  'js/tests/translation-javascript-wrapper-materialization.test.js',
@@ -513,6 +521,8 @@ for(const [source,target] of [
  ['javascript-ordinary-class-source','javascript-ordinary-class-source'],
  ['javascript-string-case-profile','javascript-string-case-profile'],
  ['javascript-collection-for-each-source','javascript-collection-for-each-source'],
+ ['javascript-construction-source','javascript-construction-source'],
+ ['javascript-array-creation','javascript-array-creation'],
  ['javascript-object-from-entries-source','javascript-object-from-entries-source'],
  ['javascript-primitive-wrappers','javascript-primitive-wrappers'],
  ['javascript-wrapper-materialization','javascript-wrapper-materialization'],

@@ -4,8 +4,9 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
 /** Binding identities are supplied from actual checked lexical occurrences.
  * The compiler never derives binding identity from equal source spellings.
  * @typedef {{$:'sourceConstant',value:JavaScriptSemanticValue} |
- * {$:'sourceReceiver'} | {$:'sourceArgument',index:number} |
+ * {$:'sourceNewTarget'} | {$:'sourceReceiver'} | {$:'sourceArgument',index:number} |
  * {$:'sourceDerivedReceiver'} | {$:'sourceErrorIntrinsic'} |
+ * {$:'sourceConstruct',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceConstructErrorClass',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceClassConstructorCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceConstructCollection',callee:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
@@ -101,6 +102,8 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
  if(depth>128||builder.visits>=65536)return refuseJavaScriptCallSource(builder,'source lowering exceeds its structural budget');
  const state={...builder,visits:builder.visits+1};
  switch(source.$){
+  case 'sourceNewTarget':{const result=allocateJavaScriptCallSourceRegister(state);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'readNewTarget',destination:result.register})};}
+  case 'sourceConstruct':return lowerJavaScriptCallSourceArgumentList({$:'sourceVariadicCall',callee:source.callee,receiver:{$:'sourceConstant',value:{$:'undefined'}},arguments:source.arguments,mode:'construct',receiverAfterArguments:false},bindings,state,depth+1);
   case 'sourceReceiver':return {$:'sourceResult',builder:state,register:0};
   case 'sourceDerivedReceiver':case 'sourceErrorIntrinsic':{const result=allocateJavaScriptCallSourceRegister(state);return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,source.$==='sourceDerivedReceiver'?{$:'readDerivedReceiver',destination:result.register}:{$:'invokeErrorIntrinsic',destination:result.register})};}
   case 'sourceConstructErrorClass':case 'sourceConstructCollection':{
@@ -379,10 +382,11 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
 /** @param {JavaScriptCallSource} source @param {JavaScriptCallSourceBinding[]} bindings
  * @param {JavaScriptCallSourceBuilder} builder @param {number} depth @returns {JavaScriptCallSourceResult} */
 export function lowerJavaScriptCallSourceArgumentList(source,bindings,builder,depth){
- if(source.$!=='sourceVariadicCall'||!['call','collection','error class','ordinary class'].includes(source.mode)||typeof source.receiverAfterArguments!=='boolean'||source.receiverAfterArguments&&source.mode!=='ordinary class')return refuseJavaScriptCallSource(builder,'variadic source retains its actual invocation and receiver allocation policy');
+ if(source.$!=='sourceVariadicCall'||!['call','collection','error class','ordinary class','construct'].includes(source.mode)||typeof source.receiverAfterArguments!=='boolean'||source.receiverAfterArguments&&source.mode!=='ordinary class')return refuseJavaScriptCallSource(builder,'variadic source retains its actual invocation and receiver allocation policy');
  if(source.arguments.length>4096)return refuseJavaScriptCallSource(builder,'variadic source exceeds its authored argument expression budget');
  const selected=lowerJavaScriptCallSourceExpression(source.callee,bindings,builder,depth+1),callee=allocateJavaScriptCallSourceRegister(selected.builder);let current=appendJavaScriptCallSourceInstruction(callee.builder,{$:'copy',destination:callee.register,source:selected.register}),receiverRegister=0;
- if(!source.receiverAfterArguments){const raw=lowerJavaScriptCallSourceExpression(source.receiver,bindings,current,depth+1),held=allocateJavaScriptCallSourceRegister(raw.builder);current=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:raw.register});receiverRegister=held.register;}
+ if(source.mode==='construct')receiverRegister=callee.register;
+ else if(!source.receiverAfterArguments){const raw=lowerJavaScriptCallSourceExpression(source.receiver,bindings,current,depth+1),held=allocateJavaScriptCallSourceRegister(raw.builder);current=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:raw.register});receiverRegister=held.register;}
  const slot=current.instructions.length;current=appendJavaScriptCallSourceInstruction(current,{$:'argumentListOpen',slot});
  for(const argument of source.arguments){
   if(argument.$!=='sourceArgumentSpread'){const value=lowerJavaScriptCallSourceExpression(argument,bindings,current,depth+1);current=appendJavaScriptCallSourceInstruction(value.builder,{$:'argumentListAppend',slot,value:value.register});continue;}

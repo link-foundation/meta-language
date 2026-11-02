@@ -29,6 +29,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorCall',callee:JavaScriptErrorExpression,receiver:JavaScriptErrorExpression,arguments:JavaScriptErrorExpression[],construct:boolean} |
  * {$:'errorMethodCall',object:JavaScriptErrorExpression,key:JavaScriptErrorExpression,arguments:JavaScriptErrorExpression[]} |
  * {$:'errorFunctionReference',identity:number} | {$:'errorNativeReference',source:string} |
+ * {$:'errorNewTarget'} | {$:'errorGenericConstruction',callee:JavaScriptErrorExpression,arguments:JavaScriptErrorExpression[]} |
  * {$:'errorReceiver'} | {$:'errorOrdinaryConstruction',identity:number,arguments:JavaScriptErrorExpression[]} |
  * {$:'errorCollectionConstruction',source:string,arguments:JavaScriptErrorExpression[]} |
  * {$:'errorBindingSet',identity:number,value:JavaScriptErrorExpression,immutable?:boolean} |
@@ -142,6 +143,8 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
   }
   case 'errorBinding':case 'errorModuleBinding':return {$:'errorSourceExpression',source:{$:'sourceBinding',identity:expression.identity},context:next};
   case 'errorThis':return {$:'errorSourceExpression',source:{$:'sourceDerivedReceiver'},context:next};
+  case 'errorNewTarget':return {$:'errorSourceExpression',source:{$:'sourceNewTarget'},context:next};
+  case 'errorGenericConstruction':{const callee=lowerJavaScriptErrorExpression(expression.callee,next,depth+1);let current=callee.context;const arguments_=[];for(const argument of expression.arguments){const value=lowerJavaScriptErrorExpression(argument,current,depth+1);current=value.context;arguments_.push(value.source);}return {$:'errorSourceExpression',source:{$:'sourceConstruct',callee:callee.source,arguments:arguments_},context:current};}
   case 'errorReceiver':return {$:'errorSourceExpression',source:{$:'sourceReceiver'},context:next};
   case 'errorBindingSet':{if(!next.mutableBindings)return refuseJavaScriptErrorSource(next,'mutable lexical assignment requires its explicit source profile');const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);return {...value,source:expression.immutable?{$:'sourceImmutableBindingWrite',value:value.source}:{$:'sourceAssignBinding',identity:expression.identity,value:value.source}};}
   case 'errorOrdinaryConstruction':{

@@ -11,6 +11,9 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'call',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'argumentListOpen',slot:number} | {$:'argumentListAppend',slot:number,value:number} |
  * {$:'argumentListCall',destination:number,slot:number,callee:number,receiver:number,mode:string} |
+ * {$:'construct',destination:number,callee:number,newTarget:number,arguments:number[]} |
+ * {$:'constructorCheck',destination:number,input:number,required:boolean} |
+ * {$:'readNewTarget',destination:number} |
  * {$:'constructErrorClass',destination:number,callee:number,arguments:number[]} |
  * {$:'callClassConstructor',destination:number,callee:number,receiver:number,arguments:number[]} |
  * {$:'constructCollection',destination:number,callee:number,arguments:number[]} |
@@ -22,6 +25,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'collectionOperation',destination:number,operation:string} |
  * {$:'primitiveMethod',destination:number,operation:string} |
  * {$:'collectionForEach',destination:number,operation:string} |
+ * {$:'arrayCreation',destination:number,operation:string,prototype:number,iteratorKey:number} |
  * {$:'arrayCallback',destination:number,operation:string} |
  * {$:'arraySearch',destination:number,operation:string} |
  * {$:'arrayTransform',destination:number,operation:string,species:JavaScriptArraySpeciesDirectory} |
@@ -65,7 +69,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * their own source lowering, rather than an invented frame convention.
  * @typedef {{$:'callFunction',identity:bigint,realm:bigint,receiverMode:string,
  * lexicalReceiver:JavaScriptSemanticValue,parameters:number,registers:number,
- * captures:JavaScriptSemanticValue[],instructions:JavaScriptCallInstruction[]}} JavaScriptCallFunction
+ * captures:JavaScriptSemanticValue[],instructions:JavaScriptCallInstruction[],lexicalNewTarget?:JavaScriptSemanticValue}} JavaScriptCallFunction
  */
 /** Code-only arrow templates have no heap identity. Their owner is the actual
  * registered source function; ordinals distinguish its nested lexical sites.
@@ -73,7 +77,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  */
 /** Realm identifiers are supplied by the actual intrinsic registry. Membership
  * checks do not prove authority or allocate a substitute realm/Error object.
- * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue,templates?:JavaScriptCallTemplate[]}} JavaScriptCallProgram
+ * @typedef {{$:'callProgram',functions:JavaScriptCallFunction[],realms:bigint[],exoticKey:JavaScriptSemanticValue,templates?:JavaScriptCallTemplate[],constructorDirectory?:JavaScriptArraySpeciesDirectory}} JavaScriptCallProgram
  */
 /** @param {number} value @param {number} limit @returns {boolean} */
 export function testJavaScriptCallCodeCoordinate(value,limit){return Number.isSafeInteger(value)&&value>=0&&value<limit&&(value!==0||1/value>0);}
@@ -86,7 +90,7 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'argumentCount':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
+    case 'constant':case 'argument':case 'argumentCount':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
     case 'argumentAt':return [instruction.destination,instruction.index];
     case 'copy':return [instruction.destination,instruction.source];
     case 'jump':case 'popHandler':case 'pushFinally':case 'finishFinally':case 'completeJump':case 'argumentListOpen':return [];
@@ -94,6 +98,8 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'argumentListCall':return [instruction.destination,instruction.callee,instruction.receiver];
     case 'branch':return [instruction.condition];
     case 'call':case 'callClassConstructor':return [instruction.destination,instruction.callee,instruction.receiver].concat(instruction.arguments);
+    case 'construct':return [instruction.destination,instruction.callee,instruction.newTarget].concat(instruction.arguments);
+    case 'constructorCheck':return [instruction.destination,instruction.input];
     case 'constructErrorClass':case 'constructCollection':return [instruction.destination,instruction.callee].concat(instruction.arguments);
     case 'constructErrorValue':return [instruction.destination,instruction.constructor,instruction.newTarget,instruction.prototype,instruction.message,instruction.present];
     case 'primitive':return [instruction.destination].concat(instruction.arguments);
@@ -118,6 +124,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'ordinarySet':return [instruction.destination,instruction.object,instruction.key,instruction.value,instruction.receiver];
     case 'arraySpread':return [instruction.destination,instruction.target,instruction.input,instruction.index,instruction.iteratorKey];
     case 'objectSpread':return [instruction.destination,instruction.target,instruction.input].concat(instruction.excluded??[]);
+    case 'arrayCreation':return [instruction.destination,instruction.prototype,instruction.iteratorKey];
     case 'objectFromEntries':return [instruction.destination,instruction.input,instruction.prototype,instruction.iteratorKey];
     case 'primitiveWrapper':return [instruction.destination,instruction.input,instruction.prototype];
     case 'symbolAllocate':case 'symbolDescription':case 'propertyKey':return [instruction.destination,instruction.input];

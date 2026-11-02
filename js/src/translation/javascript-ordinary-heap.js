@@ -8,7 +8,7 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  * @typedef {{$:'collectionEntry',key:JavaScriptSemanticValue,value:JavaScriptSemanticValue,present:boolean}} JavaScriptCollectionEntry */
 /** Callable closure identity belongs to the ordinary global heap. Code sites
  * remain in the separate program template directory; captures are real values.
- * @typedef {{$:'closureObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[],owner:bigint,ordinal:number,captures:JavaScriptSemanticValue[],lexicalReceiver:JavaScriptSemanticValue}} JavaScriptClosureObject */
+ * @typedef {{$:'closureObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[],owner:bigint,ordinal:number,captures:JavaScriptSemanticValue[],lexicalReceiver:JavaScriptSemanticValue,lexicalNewTarget?:JavaScriptSemanticValue}} JavaScriptClosureObject */
 /** @typedef {JavaScriptClosureObject | JavaScriptArrayObject | {$:'collectionIteratorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],collection:bigint,cursor:number,kind:string,collectionKind:string,executing?:boolean,iteratedText?:JavaScriptSemanticValue} |
  * {$:'mapObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
@@ -131,6 +131,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
       if(!object.callable||typeof object.owner!=='bigint'||object.owner<=0n||object.owner>18446744073709551615n||!Number.isSafeInteger(object.ordinal)||object.ordinal<0||object.ordinal>4095||Object.is(object.ordinal,-0)||object.captures.length>4096)return 'closures retain their actual source owner, lexical site, callable brand and bounded captures';
       closureCaptureCount+=object.captures.length;if(closureCaptureCount>1048576)return 'closure captures exceed the shared heap value budget';
       const owner=heap.objects[findJavaScriptOrdinaryObject(heap.objects,object.owner)];if(owner===undefined||!owner.callable||owner.$==='closureObject')return 'closure code owners must be their actual static source function, never another runtime closure identity';
+      if(object.lexicalNewTarget!==undefined&&(object.lexicalNewTarget.$!=='object'||!object.lexicalNewTarget.callable||readJavaScriptOrdinaryValueError(heap,object.lexicalNewTarget)!==''))return 'lexical newTarget retains its actual optional constructor identity';
       for(const value of [object.lexicalReceiver,...object.captures]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
     }
     if(object.$==='collectionIteratorObject'){

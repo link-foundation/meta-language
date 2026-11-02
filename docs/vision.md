@@ -57,6 +57,30 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Shared construction preserves the actual target, independent newTarget and full
+ordered argument List. Constructor authority is one monotonic global directory,
+including protected intrinsic identities and their realm prototype roots; names
+and prototype resemblance confer no authority. Generic source new expressions
+retain their actual CST constructor expression, evaluate it once and consume
+spread arguments in order. Base function/class bodies receive a fresh receiver
+and actual new.target; ordinary Calls have undefined new.target and arrows retain
+the enclosing value. Number, Boolean, String, Object and Array construction reuse
+shared conversion, wrapper, ordinary property and Array rules, preserving their
+distinct conversion/prototype/allocation order. Unsupported constructor kinds
+request implementation explicitly. Existing specialized Map/Set and derived Error
+paths retain their existing contracts until generalized through this authority.
+
+Reflect.construct checks target and actual/default newTarget before reading its
+array-like argument Object, then Gets length and every ordered index. Array.of
+and Array.from use the same actual-constructor authority and Construct kernel;
+nonconstructors use realm ArrayCreate without reading their prototype. Array.from
+caches the iterator method before construction and acquires the iterator after
+construction. Array-like ToObject/length conversion precedes construction. Mapper
+and index-definition failures close a live iterator while retaining the original
+throw; iterator-step failures and final length Set after exhaustion do not close.
+All continuations retain original inputs, selected callbacks, allocation requests
+and realm Error identity, including strict final length Set and resource retries.
+
 The Node data boundary preserves already-computed wrapper slots when materializing
 copied results. Captured native carrier authority accepts only primitive metadata;
 it executes no represented coercion, method or constructor. Actual registered

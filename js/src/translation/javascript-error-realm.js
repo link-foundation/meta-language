@@ -236,9 +236,10 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   if(!row.extensible){if(wrapper){if(!dataCarrierAuthority.prevent(result))return refuse('wrapper data reification could not retain its actual extensibility');}else Object.preventExtensions(result);}return result;
  }
  function mergeSourceTemplates(...programs){
-  const templates=[];let selected=false;
+  const templates=[];let selected=false,constructorDirectory;
+  for(const program of programs)if(program.constructorDirectory!==undefined){if(constructorDirectory!==undefined&&!isDeepStrictEqual(constructorDirectory,program.constructorDirectory))throw new TypeError('joined source programs retain one actual constructor authority snapshot');constructorDirectory=program.constructorDirectory;}
   for(const program of programs){if(program.templates!==undefined)selected=true;for(const template of program.templates??[]){const prior=templates.find(row=>row.owner===template.owner&&row.ordinal===template.ordinal);if(prior&&!isDeepStrictEqual(prior,template))throw new TypeError('one lexical code site cannot acquire conflicting templates during source composition');if(!prior)templates.push(template);if(templates.length>4096)throw new RangeError('source composition exceeds its static template budget');}}
-  return selected?{templates:templates.toSorted((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:a.ordinal-b.ordinal)}:{};
+  return {...(selected?{templates:templates.toSorted((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:a.ordinal-b.ordinal)}:{}),...(constructorDirectory===undefined?{}:{constructorDirectory})};
  }
  function finishSourceCapabilities(capabilities,bindings){
   if(!sourceFunctions||module!==null)throw new TypeError('source function capability publication requires its actual unpublished source module');

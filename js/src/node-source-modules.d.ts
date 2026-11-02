@@ -22,6 +22,7 @@ export type JavaScriptSourceTransition =
  | {$:'machineNeedObjectPrototype';machine:unknown;input:JavaScriptSemanticValue;realm:bigint}
  | {$:'machineNeedArrayIteratorBoxing';machine:unknown;receiver:JavaScriptSemanticValue}
  | {$:'machineNeedConstructorAuthority';machine:unknown;constructor:JavaScriptSemanticValue}
+ | {$:'machineConstruct';machine:unknown;constructor:JavaScriptSemanticValue;newTarget:JavaScriptSemanticValue;arguments:JavaScriptSemanticValue[];operation:string;reason:string}
  | {$:'machineConstructArraySpecies';machine:unknown;constructor:JavaScriptSemanticValue;arguments:JavaScriptSemanticValue[];fact:unknown}
  | {$:'machineNeedCollectionIterable';machine:unknown;target:JavaScriptSemanticValue;input:JavaScriptSemanticValue}
  | {$:'machineAllocateError'|'machineAllocateSourceError'|'machineAllocateErrorValue'|'machineInvokeErrorIntrinsic'|'machineInvokeHostCapability';machine:unknown;[field:string]:unknown};
@@ -36,7 +37,7 @@ export interface JavaScriptSourceEmbedding {
  resumeSymbolDescription?(request:JavaScriptSourceTransition):{resumed:boolean;description?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  resumeFunctionNameSymbolDescription?(request:JavaScriptSourceTransition):{resumed:boolean;description?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
  resumeObjectPrimitivePrototype?(request:JavaScriptSourceTransition):{resumed:boolean;prototype?:JavaScriptSemanticValue;transition:JavaScriptSourceTransition};
- sourceConstructorFacts():readonly {identity:bigint;realm:bigint;constructable:boolean;intrinsicArray:boolean}[];
+ sourceConstructorFacts():readonly {identity:bigint;realm:bigint;constructable:boolean;intrinsicArray:boolean;intrinsicKind?:string}[];
  resumeArrayConstructorAuthority?(request:JavaScriptSourceTransition):{updated:boolean;transition:JavaScriptSourceTransition};
  encode(value:unknown):JavaScriptSemanticValue;
  decode(value:JavaScriptSemanticValue):unknown;

@@ -232,3 +232,10 @@ and Object.fromEntries with ordered entry conversion and close-safe actual Error
 
 Draft slot-preserving wrapper result materialization and independent data-graph
 oracles alongside full native semantic-heap and event replay.
+
+
+Draft generic dynamic source construction, Reflect.construct and actual lexical
+new.target with shared constructor authority, wrappers and base-class execution.
+Draft Array.of/from with custom constructors, iterable/array-like ordering,
+mapper cleanup and strict length writes. Register complete literal originals for
+automatic Links/native replay; execution and generated publication remain deferred.

@@ -1727,3 +1727,45 @@ controls. Slot-preserving data output is exercised after supplied primitive,
 Object and null prototype selection, including aliases/cycles, fresh symbols,
 nonextensibility and exact own descriptors. Full details and profile refusals:
 `issue-227-wrapper-materialization-draft-2026-11-02.md`.
+
+
+## Generic construction and Array creation integration draft
+
+The construction and Array creation source kernels now have frontend, protected
+callable catalog, shared VM continuation and native-fixture authoring integration.
+`javascript-reflect-construction-call-source.js` lowers actual Reflect.construct
+through constructor checks, array-like length/index Gets and a consumed private
+argument List. Generic source new uses the actual CST constructor field, retaining
+dynamic/member/nested constructors and optional argument parentheses. Existing
+specialized Map/Set, Error and direct base-class paths remain available.
+
+The shared program carries one actual constructor directory. Authority extension
+must preserve both the global snapshot and any older operation-local species
+snapshot, including intrinsic kinds and wrapper roots. Known nonconstructible
+facts remain false; unknown facts request authority. Construction-body frames
+retain actual newTarget separately from receiver. Lexical closures capture it;
+ordinary method/function Calls do not inherit it. Variadic construction retains
+the consumed argument List as a pending proof, so suspended argument values
+cannot be silently replaced. Frame validation authenticates selected constructor,
+receiver, body arguments and newTarget against the actual parent request.
+
+Two retained former refusal inputs (local function named Map, constructor
+parameter named Set) are now capture/original controls. Their former expectation
+assumed only fixed unshadowed native construction; the new actual-CST constructor
+path deliberately handles their lexical source identity. Their exact inputs and
+coverage remain. No spelling-based native certification was added.
+
+The deferred source author registers all three new libraries, both kernel test
+modules and literal fixture modules, and converts fixtures automatically to Links.
+The ordinary-source producer and native replay consumer retain both full groups
+alongside existing groups. Generated Links/programs/Rust are not published in this
+source-only phase. No test, compilation, generation, observation or validation
+ran. This draft is not execution evidence.
+
+Remaining integration boundaries: generalized Map/Set and derived/bound/Proxy
+Construct still request implementation outside retained specialized source paths;
+constructor realm discovery must come from actual supplied authority; unsupported
+source syntax remains an explicit capture refusal. After the complete source
+draft, execute authoring and all declared original/kernel/native controls, repair
+translation gaps through the shared translator, then consume CI feedback. Do not
+handwrite native replacement semantics or treat fixture declarations as passes.

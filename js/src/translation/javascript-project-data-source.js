@@ -249,10 +249,17 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
     if(input[at-1]?.value!=='}')fail('source object fields retain their actual closing group');value={$:'errorObject',properties};
    }
    else if(take('this')){if(activeClass===null&&!classProfile)fail('this requires its actual captured strict function or class receiver');value={$:'errorReceiver'};}
-   else if(take('new')){const name=peek(),owner=name&&reference(name,offset),classOwner=classBinding(owner);
-    if(name?.kind!=='identifier')fail('construction needs its actual fixed lexical callee');at++;if(!take('('))fail('source construction needs complete arguments');
-    if(classOwner)value={$:'errorOrdinaryConstruction',identity:classOwner.binding,arguments:arguments_(')')};
-    else{if(owner||!unresolved(name,offset)||!['URL','Error','TypeError',...(classProfile?['Set','Map']:[])].includes(name.value))fail('native construction needs its actual unshadowed source capability');const callee=port('construct:'+name.value,{kind:'construct',name:name.value});value=classProfile&&['Set','Map'].includes(name.value)?{$:'errorCollectionConstruction',source:'construct:'+name.value,arguments:arguments_(')')}:{$:'errorCall',callee,receiver:absent(),arguments:arguments_(')'),construct:false};}
+   else if(classProfile&&token.value==='new'&&input[at+1]?.value==='.'&&input[at+2]?.value==='target'){if(activeFunction===null)fail('new.target requires its actual enclosing function scope');at+=3;value={$:'errorNewTarget'};}
+   else if(take('new')){const name=peek(),owner=name&&reference(name,offset),classOwner=classBinding(owner),legacy=name?.kind==='identifier'&&input[at+1]?.value==='('&&(classOwner||!owner&&unresolved(name,offset)&&['URL','Error','TypeError','Set','Map'].includes(name.value));
+    if(classProfile&&!legacy){
+     const node=program.sourceMappings.find(row=>row.term==='new_expression'&&row.start===token.start+offset),constructor=node&&sourceField(node,'constructor');if(!constructor)fail('generic new requires its actual constructor CST field');
+     const constructorTokens=input.filter(row=>row.start+offset>=constructor.start&&row.end+offset<=constructor.end);if(constructorTokens.length===0)fail('generic new retains its complete constructor expression');const callee=expression(constructorTokens,offset);while(at<input.length&&input[at].end+offset<=constructor.end)at++;
+     const args=take('(')?arguments_(')'):[];value={$:'errorGenericConstruction',callee,arguments:args};
+    }else{
+     if(name?.kind!=='identifier')fail('construction needs its actual fixed lexical callee');at++;if(!take('('))fail('source construction needs complete arguments');
+     if(classOwner)value={$:'errorOrdinaryConstruction',identity:classOwner.binding,arguments:arguments_(')')};
+     else{if(owner||!unresolved(name,offset)||!['URL','Error','TypeError',...(classProfile?['Set','Map']:[])].includes(name.value))fail('native construction needs its actual unshadowed source capability');const callee=port('construct:'+name.value,{kind:'construct',name:name.value});value=classProfile&&['Set','Map'].includes(name.value)?{$:'errorCollectionConstruction',source:'construct:'+name.value,arguments:arguments_(')')}:{$:'errorCall',callee,receiver:absent(),arguments:arguments_(')'),construct:false};}
+    }
    }
    else if(token.kind==='number'&&token.suffix==='n'){if(!classProfile||token.value.length>4096)fail('BigInt literals retain their explicit source profile and digit budget');at++;value=constant({$:'integer',value:BigInt(token.value)});}
    else if(token.kind==='number'){at++;const value_=Number(token.value);if(!Number.isFinite(value_))fail('source numeric literals need a finite actual Number');value=constant({$:'number',value:value_});}
