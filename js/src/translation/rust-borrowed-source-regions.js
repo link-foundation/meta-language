@@ -124,7 +124,11 @@ class SourceRegions{
    const data=this.program.declarations.get(node.data),index=data?.ctors.findIndex(item=>item.name===node.ctor)??-1,fields=data?.sourceFieldSignatures?.ctors?.[index]?.fields;
    if(data?.k!=='data'||index<0||!fields||fields.length!==node.args.length)fail('a source constructor needs its actual complete field positions',node);
    const values=node.args.map((arg,index)=>this.read(this.compatible(this.expression(arg,env,bindings,fields[index],depth+1),fields[index],arg),'move',arg));
-   value=this.value(this.position({type:node.type,wrappers:[],lifetimes:[],owner:{kind:'declaration',path:node.data.split('.'),arguments:[]}}),this.root('',true),this.union(values.map(item=>item.regions)),true);
+   // Standard sums have genuine library owners even though their closed core
+   // representation is an ordinary generated datatype. The checked source
+   // position already validates its actual constructor/argument layout.
+   const qualified=position??expected,sum=qualified?.wrappers.length===0&&qualified.owner.kind==='library'&&['std::option::Option','std::result::Result'].includes(qualified.owner.path.join('::'))&&sameType(qualified.type,node.type);
+   value=this.value(this.position(sum?qualified:{type:node.type,wrappers:[],lifetimes:[],owner:{kind:'declaration',path:node.data.split('.'),arguments:[]}}),this.root('',true),this.union(values.map(item=>item.regions)),true);
   }else if(operation==='call'){
    const entry=this.program.declarations.get(node.fn),signature=entry?.sourceSignature;if(entry?.k!=='fn'||signature?.model!==model||signature.parameters.length!==node.args.length)fail('a source call needs its actual complete selected function interface',node);
    const values=node.args.map((arg,index)=>{const parameter=callParameter(this.position(signature.parameters[index]));return this.read(this.compatible(this.expression(arg,env,bindings,parameter,depth+1),parameter,arg),'move',arg);});for(const actual of values)this.read({...actual,root:null,producer:true},'read',node);
