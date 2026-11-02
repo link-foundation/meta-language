@@ -2,8 +2,8 @@
 // while constructing source interfaces. The complete source/body checker remains
 // the authority, independently of receipt hashes and declaration spellings.
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
-import {LinkNetwork} from '../network.js';
+import {readFileSync,statSync} from 'node:fs';
+import {readBoundedCanonicalNetwork} from '../canonical-network-reader.js';
 import {readProjectData} from '../project-data-files.js';
 import {decodeTypedProgramLinks,TYPED_PROGRAM_LINKS_SCHEMA} from '../typed-program-links.js';
 import {parseJavaScript} from './javascript.js';
@@ -29,7 +29,7 @@ export function createRustStandardCollectionSourceLibrary(programText,receipt,so
  let bytes=0;for(const input of supplied.inputs){if(typeof input?.source!=='string'||typeof input.path!=='string')fail('every source input retains its actual text and logical path');bytes+=Buffer.byteLength(input.source);if(bytes>byteLimit)fail('source closure exceeds its byte budget');}
  const closure=readSuppliedSourceLibraryClosure(entryPath,supplied.inputs.map(({path,source})=>({path,source})),{aliases:true});
  if(closure.source!==supplied.source||closure.sourceSha256!==supplied.sourceSha256||closure.bytes!==supplied.bytes)fail('source closure differs from actual recomposition');
- const network=LinkNetwork.fromLino(programText),links=network.links();if(links.length>nodeLimit||links.reduce((sum,link)=>sum+link.references().length,0)>referenceLimit)fail('complete program graph exceeds its resource budget');
+ const network=readBoundedCanonicalNetwork(programText,{byteLimit,nodeLimit,referenceLimit}),links=network.links();
  const roots=links.filter(link=>link.metadata().term===TYPED_PROGRAM_LINKS_SCHEMA.root&&link.metadata().definition===String(TYPED_PROGRAM_LINKS_SCHEMA.schemaVersion));if(roots.length!==1)fail('one actual typed program root is required');
  const program=decodeTypedProgramLinks(network,roots[0].id(),{nodeLimit,depthLimit}),sourceProgram=parseJavaScript(closure.source),owners=readSourceLibraryDeclarationOwnership(closure,program);
  if(!testRustStandardCollectionProjectedGraphEquality(owners,receipt.sourceDeclarationOwners))fail('source declaration ownership differs from the complete actual program');
@@ -45,5 +45,6 @@ export function createRustStandardCollectionSourceLibrary(programText,receipt,so
  * their semantics with a host Map/Set or a declaration-only placeholder. */
 export function loadRustStandardCollectionSourceLibrary(sourceHandlers,options={}){
  const programURL=new URL('../data/rust-standard-collection-value-packet-program.lino',import.meta.url),receiptURL=new URL('../data/rust-standard-collection-value-packet-program-source.lino',import.meta.url);
+ const byteLimit=budget(options.byteLimit??48*1024*1024,'byteLimit');for(const file of [programURL,receiptURL]){const stat=statSync(file);if(!stat.isFile()||stat.size>byteLimit)fail('shipped asset exceeds its file byte budget');}
  return createRustStandardCollectionSourceLibrary(readFileSync(programURL,'utf8'),readProjectData(receiptURL,{limits:options}),sourceHandlers,options);
 }

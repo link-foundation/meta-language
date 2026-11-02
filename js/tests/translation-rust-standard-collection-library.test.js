@@ -14,7 +14,7 @@ test('automatic interfaces retain complete actual source owners and packet trans
  assert.throws(()=>createRustStandardCollectionSourceLibrary(text+'\n',receipt,handlers),/bytes differ/);
  assert.throws(()=>createRustStandardCollectionSourceLibrary(text,{...receipt,sourceDeclarationOwners:[]},handlers),/ownership differs/);
  assert.throws(()=>createRustStandardCollectionSourceLibrary(text,receipt,{invalid:handlers.invalid}),/continuations/);
- assert.throws(()=>createRustStandardCollectionSourceLibrary(text,receipt,handlers,{nodeLimit:1}),/resource budget/);
+ assert.throws(()=>createRustStandardCollectionSourceLibrary(text,receipt,handlers,{nodeLimit:1}),/node budget/);
  const changed=structuredClone(receipt);changed.sourceClosure.inputs[0].source+='\nexport const forged=1;';assert.throws(()=>createRustStandardCollectionSourceLibrary(text,changed,handlers),/closure differs|source|declaration/);
 });
 test('receipt declarations and invalid resource selections cannot certify bodies',()=>{
