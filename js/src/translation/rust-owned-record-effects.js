@@ -9,6 +9,7 @@ import {expandSurfacePropositionValue} from './proposition-values.js';
 import {readRustOwnedRecordFiniteLoopSource,lowerRustOwnedRecordFiniteLoop,appendRustOwnedRecordFiniteLoopHelpers} from './rust-owned-record-loops.js';
 import {readRustOwnedRecordLoopOperation} from './rust-owned-record-loop-rules.js';
 import {readRustExclusiveSourceWholeAssignment,readRustExclusiveSourceNode,testRustExclusiveSourcePrivateNode} from './rust-exclusive-source-calls.js';
+import {readRustExclusiveSourceCompoundAssignment} from './rust-exclusive-source-compounds.js';
 import {projectRustOwnedRecordStatePlace} from './rust-owned-record-state.js';
 const fail=(reason,span)=>{throw unsupported('Rust ordered record state',reason,span);};
 function effects(parser){
@@ -20,7 +21,7 @@ function effects(parser){
  });return context;
 }
 export function initializeRustOwnedRecordEffects(parser){effects(parser);}
-export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdinary){effects(parser);return readRustExclusiveSourceWholeAssignment(parser,path)??readRustOwnedRecordStateAssignment(parser,path)?.value??readOrdinary();}
+export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdinary){effects(parser);return readRustExclusiveSourceCompoundAssignment(parser,path)??readRustExclusiveSourceWholeAssignment(parser,path)??readRustOwnedRecordStateAssignment(parser,path)?.value??readOrdinary();}
 export function beginRustOwnedRecordShortCircuit(parser){return parser.ownedRecordEffects?parser.origins.snapshotOwnedBindings():null;}
 export function endRustOwnedRecordShortCircuit(parser,before){if(before!==null)parser.origins.joinOwnedBindings(before,parser.origins.snapshotOwnedBindings(),true,true);}
 export function readRustOwnedRecordEffectSource(parser,node){if(node?.k!=='math'||!parser.ownedRecordEffects)return null;const index=Number(node.name);if(!Number.isSafeInteger(index)||index<0||String(index)!==node.name)return null;if(node.op===readRustOwnedRecordEffectOperation('read')&&node.args.length===0){const slot=parser.ownedRecordEffects.reads[index];return slot?{form:'read',slot}:null;}if(node.op===readRustOwnedRecordEffectOperation('write')&&node.args.length===1){const source=parser.ownedRecordEffects.writes[index];return source?{form:'write',...source}:null;}return null;}
