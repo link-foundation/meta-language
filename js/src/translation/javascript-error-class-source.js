@@ -52,7 +52,8 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
  * {$:'errorMutableStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]} |
  * {$:'errorStatementFunctionPlan',identity:number,name:string,parameters:JavaScriptErrorParameter[],statements:JavaScriptSourceStatement[]}} JavaScriptErrorFunctionPlan */
 /** @typedef {{$:'errorArrowTemplatePlan',owner:number,ordinal:number,name:string,length:number,parameters:JavaScriptErrorParameter[],captures:number[],statements:JavaScriptSourceStatement[],receiverMode?:string}} JavaScriptErrorArrowTemplatePlan */
-/** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number,templates?:JavaScriptErrorArrowTemplatePlan[],sharedBindings?:number[]}} JavaScriptErrorModulePlan */
+/** @typedef {{$:'sourceLexicalBinding',identity:number,name:string,immutable:boolean}} JavaScriptSourceLexicalBinding */
+/** @typedef {{$:'errorModulePlan',functions:JavaScriptErrorFunctionPlan[],exports:number[],nextBinding:number,templates?:JavaScriptErrorArrowTemplatePlan[],sharedBindings?:number[],lexicalBindings?:JavaScriptSourceLexicalBinding[]}} JavaScriptErrorModulePlan */
 /** @typedef {{$:'errorConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue,baseConstructor:JavaScriptSemanticValue,baseRealm:bigint} |
  * {$:'ordinaryConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue} |
  * {$:'errorFunctionOwner',source:number,identity:bigint,realm:bigint}} JavaScriptErrorFunctionOwner */
@@ -60,7 +61,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorIntrinsicOwner',identity:bigint,realm:bigint}} JavaScriptErrorIntrinsicOwner */
 /** @typedef {{$:'errorModuleRegistry',owners:JavaScriptErrorFunctionOwner[],operations:JavaScriptErrorRealmOperations[],intrinsics:JavaScriptErrorIntrinsicOwner[],realms:bigint[],exoticKey:JavaScriptSemanticValue}} JavaScriptErrorModuleRegistry */
 /** @typedef {{$:'sourceCapabilityOwner',source:string,identity:bigint,realm:bigint,operation:string,owner:string,callable:boolean,executable:boolean}} JavaScriptSourceCapabilityOwner */
-/** @typedef {{$:'errorSourceContext',registry:JavaScriptErrorModuleRegistry,realm:JavaScriptErrorRealmOperations,capabilities:JavaScriptSourceCapabilityOwner[],next:number,visits:number,error:string,mutableBindings:boolean,globalBindings?:number[],sharedBindings?:number[]}} JavaScriptErrorSourceContext */
+/** @typedef {{$:'errorSourceContext',registry:JavaScriptErrorModuleRegistry,realm:JavaScriptErrorRealmOperations,capabilities:JavaScriptSourceCapabilityOwner[],next:number,visits:number,error:string,mutableBindings:boolean,globalBindings?:number[],sharedBindings?:number[],lexicalBindings?:JavaScriptSourceLexicalBinding[]}} JavaScriptErrorSourceContext */
 /** @typedef {{$:'errorSourceExpression',source:JavaScriptCallSource,context:JavaScriptErrorSourceContext}} JavaScriptErrorSourceExpression */
 /** @typedef {{$:'errorModuleCompilation',program:JavaScriptCallProgram,error:string}} JavaScriptErrorModuleCompilation */
 /** @typedef {{$:'errorModuleBindingValue',identity:number,value:JavaScriptSemanticValue}} JavaScriptErrorModuleBinding */
@@ -177,8 +178,8 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
    return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(value.context,receiverID,object.source,constructJavaScriptErrorLocalBinding(value.context,keyID,key.source,constructJavaScriptErrorLocalBinding(value.context,valueID,value.source,write,false),false),false),context:value.context};
   }
   case 'errorOptionalGet':{const object=lowerJavaScriptErrorExpression(expression.object,next,depth+1),key=lowerJavaScriptErrorExpression(expression.key,object.context,depth+1),identity=key.context.next,value={$:'sourceBinding',identity},absent=constant({$:'undefined'}),read=constructJavaScriptErrorPropertyRead(value,key.source,key.context);return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(key.context,identity,object.source,{$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:absent},yes:absent,no:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:value,right:constant({$:'null'})},yes:absent,no:read}},false),context:{...key.context,next:identity+1}};}
-  case 'errorModuleCell':return {$:'errorSourceExpression',source:{$:'sourceGet',object:{$:'sourceBinding',identity:expression.identity},key:constructJavaScriptSourceFieldKey('value')},context:next};
-  case 'errorModuleCellSet':{const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);return {$:'errorSourceExpression',source:{$:'sourceSet',object:{$:'sourceBinding',identity:expression.identity},key:constructJavaScriptSourceFieldKey('value'),value:value.source},context:value.context};}
+  case 'errorModuleCell':return {$:'errorSourceExpression',source:constructJavaScriptLexicalCellRead(next,expression.identity),context:next};
+  case 'errorModuleCellSet':{const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);if((next.lexicalBindings??[]).some(row=>row.identity===expression.identity))return lowerJavaScriptLexicalCellWrite(value.context,expression.identity,value.source,false);return {$:'errorSourceExpression',source:{$:'sourceSet',object:{$:'sourceBinding',identity:expression.identity},key:constructJavaScriptSourceFieldKey('value'),value:value.source},context:value.context};}
   case 'errorSet':{const object=lowerJavaScriptErrorExpression(expression.object,next,depth+1),key=lowerJavaScriptErrorExpression(expression.key,object.context,depth+1),value=lowerJavaScriptErrorExpression(expression.value,key.context,depth+1);return {$:'errorSourceExpression',source:{$:next.mutableBindings?'sourceSnapshotSet':'sourceSet',object:object.source,key:key.source,value:value.source},context:value.context};}
   case 'errorUnary':{
    const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1);
@@ -257,14 +258,16 @@ export function lowerJavaScriptSourceBinary(expression,context,depth){
  * effects; branch fallthrough retains the source continuation and local scope.
  * @param {JavaScriptSourceStatement[]} statements @param {number} first
  * @param {JavaScriptErrorSourceContext} context @param {JavaScriptCallSource} continuation
- * @param {number} depth @returns {JavaScriptErrorSourceExpression} */
-export function lowerJavaScriptSourceStatements(statements,first,context,continuation,depth){
+ * @param {number} depth @param {boolean} [instantiate] @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptSourceStatements(statements,first,context,continuation,depth,instantiate=true){
+ if(first===0&&instantiate){const declarations=collectJavaScriptSourceLexicalDeclarations(statements,context,0);if(declarations.length>0){const body=lowerJavaScriptSourceStatements(statements,first,context,continuation,depth,false);return {...body,source:{$:'sourceLexicalScope',identities:declarations,realm:body.context.realm.realm,body:body.source}};}}
  if(depth>128||first>65536||statements.length>65536)return refuseJavaScriptErrorSource(context,'source statements exceed their explicit structural budget');
  const statement=statements[first];if(statement===undefined)return {$:'errorSourceExpression',source:continuation,context};
  if(statement.$==='sourceControlJumpStatement')return {$:'errorSourceExpression',source:{$:'sourceControlJump',target:statement.target,continuing:statement.continuing},context};
  if(statement.$==='sourceReturnStatement'||statement.$==='sourceThrowStatement'){const value=lowerJavaScriptErrorExpression(statement.value,context,depth+1);return {...value,source:{$:statement.$==='sourceThrowStatement'?'sourceThrow':'sourceReturn',value:value.source}};}
  const rest=lowerJavaScriptSourceStatements(statements,first+1,context,continuation,depth+1);
  if(statement.$==='sourceForOfStatement'){
+  const head=statement.pattern===undefined?[statement.binding]:collectJavaScriptPatternBindingDeclarations(statement.pattern,statement.mutable,0).declarations.map(row=>row.identity),owned=head.filter(identity=>(rest.context.lexicalBindings??[]).some(row=>row.identity===identity));if(owned.length>0)return lowerJavaScriptLexicalForOf(statement,rest.context,rest.source,owned,depth+1);
   const input=lowerJavaScriptErrorExpression(statement.input,rest.context,depth+1),key=lowerJavaScriptErrorExpression(statement.iteratorKey,input.context,depth+1),body=lowerJavaScriptSourceStatements(statement.body,0,key.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);let initialized=statement.pattern===undefined?body:lowerJavaScriptSourceBindingPattern(statement.pattern,body.context,body.source,statement.mutable);
   if(statement.pattern===undefined&&(body.context.sharedBindings??[]).includes(statement.binding)){
    const temporary=initialized.context.next,next={...initialized.context,next:temporary+1},cell={$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:next.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value:{$:'sourceBinding',identity:statement.binding}}]};
@@ -290,7 +293,7 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
   const value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1),initialized=lowerJavaScriptSourceBindingPattern(statement.pattern,value.context,rest.source,statement.mutable);
   return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(initialized.context,statement.pattern.identity,value.source,initialized.source,false),context:initialized.context};
  }
- if(statement.$==='sourceBlockStatement'||statement.$==='sourceDeclarationGroupStatement')return lowerJavaScriptSourceStatements(statement.statements,0,rest.context,rest.source,depth+1);
+ if(statement.$==='sourceBlockStatement'||statement.$==='sourceDeclarationGroupStatement')return lowerJavaScriptSourceStatements(statement.statements,0,rest.context,rest.source,depth+1,statement.$==='sourceBlockStatement');
  if(statement.$==='sourceControlBlockStatement'){
   const body=lowerJavaScriptSourceStatements(statement.body,0,rest.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);
   return {$:'errorSourceExpression',source:{$:'sourceControlBlock',target:statement.target,body:body.source,after:rest.source},context:body.context};
@@ -299,18 +302,23 @@ export function lowerJavaScriptSourceStatements(statements,first,context,continu
   const condition=lowerJavaScriptErrorExpression(statement.condition,rest.context,depth+1),body=lowerJavaScriptSourceStatements(statement.body,0,condition.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1),update=statement.update===undefined?null:lowerJavaScriptErrorExpression(statement.update,body.context,depth+1);
   let current=update===null?body.context:update.context,iteration=constructJavaScriptErrorConstant({$:'undefined'});const identities=statement.iterationBindings??[];
   if(identities.length>4096||identities.some((identity,index)=>!(current.sharedBindings??[]).includes(identity)||identities.indexOf(identity)!==index)||identities.length>0&&statement.postTest===true)return refuseJavaScriptErrorSource(current,'iteration cloning retains actual distinct shared for-head bindings');
-  for(let at=identities.length-1;at>=0;at--){const temporary=current.next;current={...current,next:temporary+1};iteration=constructJavaScriptErrorLocalBinding(current,temporary,{$:'sourceCloneBindingCell',identity:identities[at]??-1,realm:current.realm.realm},iteration,false);}
+  for(let at=identities.length-1;at>=0;at--){const temporary=current.next;current={...current,next:temporary+1};iteration=constructJavaScriptErrorLocalBinding(current,temporary,{$:'sourceCloneBindingCell',identity:identities[at]??-1,realm:current.realm.realm,...((current.lexicalBindings??[]).some(row=>row.identity===identities[at])?{lexical:true}:{})},iteration,false);}
   return {$:'errorSourceExpression',source:{$:'sourceWhile',condition:condition.source,body:body.source,after:rest.source,...(statement.target!==undefined?{target:statement.target}:{}),...(update!==null?{update:update.source}:{}),...(statement.postTest===true?{postTest:true}:{}),...(identities.length?{iteration}:{})},context:current};
  }
  if(statement.$==='sourceSwitchStatement'){
   const value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1);let current=value.context;/** @type {JavaScriptCallSourceSwitchClause[]} */const clauses=[];
   for(const clause of statement.clauses){
-   if(clause.$==='sourceCaseStatement'){const test=lowerJavaScriptErrorExpression(clause.value,current,depth+1),body=lowerJavaScriptSourceStatements(clause.body,0,test.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);current=body.context;clauses.push({$:'sourceSwitchCase',value:test.source,body:body.source});}
-   else{const body=lowerJavaScriptSourceStatements(clause.body,0,current,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);current=body.context;clauses.push({$:'sourceSwitchDefault',body:body.source});}
+   if(clause.$==='sourceCaseStatement'){const test=lowerJavaScriptErrorExpression(clause.value,current,depth+1),body=lowerJavaScriptSourceStatements(clause.body,0,test.context,constructJavaScriptErrorConstant({$:'undefined'}),depth+1,false);current=body.context;clauses.push({$:'sourceSwitchCase',value:test.source,body:body.source});}
+   else{const body=lowerJavaScriptSourceStatements(clause.body,0,current,constructJavaScriptErrorConstant({$:'undefined'}),depth+1,false);current=body.context;clauses.push({$:'sourceSwitchDefault',body:body.source});}
   }
+  const declarations=[];for(const clause of statement.clauses)declarations.push(...collectJavaScriptSourceLexicalDeclarations(clause.body,current,0));
+  if(declarations.length>0){const heldID=current.next;current={...current,next:heldID+1};const source={$:'sourceLexicalScope',identities:declarations,realm:current.realm.realm,body:{$:'sourceSwitch',target:statement.target,value:{$:'sourceBinding',identity:heldID},clauses,after:rest.source}};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(current,heldID,value.source,source,false),context:current};}
   return {$:'errorSourceExpression',source:{$:'sourceSwitch',target:statement.target,value:value.source,clauses,after:rest.source},context:current};
  }
  if(statement.$==='sourceIfStatement'){const condition=lowerJavaScriptErrorExpression(statement.condition,rest.context,depth+1),yes=lowerJavaScriptSourceStatements(statement.yes,0,condition.context,rest.source,depth+1),no=lowerJavaScriptSourceStatements(statement.no,0,yes.context,rest.source,depth+1);return {$:'errorSourceExpression',source:{$:'sourceIf',condition:condition.source,yes:yes.source,no:no.source},context:no.context};}
+ if((statement.$==='sourceConstStatement'||statement.$==='sourceMutableStatement')&&(rest.context.lexicalBindings??[]).some(row=>row.identity===statement.identity)){
+  const value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceInitializeCell',identity:statement.identity,value:value.source,body:rest.source},context:value.context};
+ }
  const local=statement.$==='sourceConstStatement'||statement.$==='sourceMutableStatement',value=lowerJavaScriptErrorExpression(statement.value,rest.context,depth+1),identity=local?statement.identity:value.context.next,next=local?value.context:{...value.context,next:value.context.next+1},shared=statement.$==='sourceMutableStatement'&&statement.shared===true;
  const stored=shared?{$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:next.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value:value.source}]}:value.source;
  return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,identity,stored,rest.source,statement.$==='sourceMutableStatement'&&!shared),context:next};
@@ -352,6 +360,12 @@ export function lowerJavaScriptSourceObjectBinding(parameter,first,continuation,
 export function lowerJavaScriptSourceParameters(parameters,first,continuation){
  let context=first,source=continuation;
   for(let at=parameters.length-1;at>=0;at-=1){const parameter=parameters[at];if(parameter===undefined)continue;
+   if((parameter.$==='errorRequiredParameter'||parameter.$==='errorDefaultParameter'||parameter.$==='errorRestParameter')&&(context.lexicalBindings??[]).some(row=>row.identity===parameter.identity)){
+    /** @type {JavaScriptCallSource} */let value={$:'sourceArgument',index:at};
+    if(parameter.$==='errorDefaultParameter'){const lowered=lowerJavaScriptErrorExpression(parameter.value,context,0);context=lowered.context;value={$:'sourceIf',condition:{$:'sourceStrictEqual',left:{$:'sourceArgument',index:at},right:constructJavaScriptErrorConstant({$:'undefined'})},yes:lowered.source,no:{$:'sourceArgument',index:at}};}
+    else if(parameter.$==='errorRestParameter'){if(at!==parameters.length-1||parameter.pattern!==undefined||context.realm.arrayPrototype===undefined)return refuseJavaScriptErrorSource(context,'lexical rest cells retain one final simple formal and its actual Array prototype');value={$:'sourceArgumentRest',from:at,prototype:constructJavaScriptErrorConstant(context.realm.arrayPrototype),realm:context.realm.realm};}
+    source={$:'sourceInitializeCell',identity:parameter.identity,value,body:source};continue;
+   }
    if((parameter.$==='errorRequiredParameter'||parameter.$==='errorDefaultParameter'||parameter.$==='errorRestParameter')&&parameter.shared){
     if(parameter.$==='errorRestParameter'&&parameter.pattern!==undefined)return refuseJavaScriptErrorSource(context,'shared destructuring parameter cells require their own binding initialization');
     const temporary=context.next;context={...context,next:temporary+1};
@@ -367,6 +381,9 @@ export function lowerJavaScriptSourceParameters(parameters,first,continuation){
     if(parameter.hasDefault){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
    }else if(parameter.$==='errorDefaultParameter'){const value=lowerJavaScriptErrorExpression(parameter.value,context,0);context=value.context;source={$:'sourceParameterDefault',identity:parameter.identity,value:value.source,body:source};}
   }
+ const owned=[];
+ for(const parameter of parameters){const outputs=parameter.$==='errorObjectParameter'||parameter.$==='errorArrayParameter'?collectJavaScriptPatternBindingDeclarations(parameter,true,0):parameter.$==='errorRestParameter'&&parameter.pattern!==undefined?collectJavaScriptPatternBindingDeclarations(parameter.pattern,true,0):{$:'bindingDeclarations',declarations:[{$:'sourceBindingDeclaration',identity:parameter.identity,mutable:true}],error:''};if(outputs.error!=='')return refuseJavaScriptErrorSource(context,outputs.error);for(const declaration of outputs.declarations)if((context.lexicalBindings??[]).some(row=>row.identity===declaration.identity)&&!owned.includes(declaration.identity))owned.push(declaration.identity);}
+ if(owned.length>0)source={$:'sourceLexicalScope',identities:owned,existing:owned.filter(identity=>parameters.some(parameter=>parameter.identity===identity)),realm:context.realm.realm,body:source};
  return {$:'errorSourceExpression',source,context};
 }
 /** @param {JavaScriptErrorModulePlan} plan @param {JavaScriptErrorModuleRegistry} registry @returns {JavaScriptErrorModuleCompilation} */
@@ -388,6 +405,7 @@ export function compileJavaScriptErrorModulePlanWithBindings(plan,registry,bindi
  * @returns {JavaScriptErrorModuleCompilation} */
 export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,bindings,capabilities){
  const empty={$:'callProgram',functions:[],realms:registry.realms,exoticKey:registry.exoticKey};
+ const lexical=plan.lexicalBindings??[];if(lexical.length>4096||lexical.some((row,index)=>row.$!=='sourceLexicalBinding'||!Number.isSafeInteger(row.identity)||Object.is(row.identity,-0)||row.identity<0||row.identity>=plan.nextBinding||index>0&&row.identity<=(lexical[index-1]?.identity??-1)||typeof row.name!=='string'||row.name.length===0||row.name.length>4096||typeof row.immutable!=='boolean'))return {$:'errorModuleCompilation',program:empty,error:'lexical cells retain ordered distinct actual binding identities names and immutable flags'};
  const shared=plan.sharedBindings??[];if(shared.length>4096||shared.some((identity,index)=>!Number.isSafeInteger(identity)||Object.is(identity,-0)||identity<0||identity>=plan.nextBinding||index>0&&identity<=(shared[index-1]??-1)))return {$:'errorModuleCompilation',program:empty,error:'shared lexical cells retain ordered unique actual bounded source binding identities'};
  if(capabilities.length>4096)return {$:'errorModuleCompilation',program:empty,error:'qualified source capabilities exceed their actual directory budget'};
  for(let at=0;at<capabilities.length;at++){const capability=capabilities[at];if(capability===undefined||capability.source===''||capability.owner===''||capability.operation===''||capability.identity<=0n||capability.identity>18446744073709551615n||!registry.realms.includes(capability.realm)||capability.executable&&!capability.callable||capabilities.findIndex(row=>row.source===capability.source)!==at)return {$:'errorModuleCompilation',program:empty,error:'source capabilities require distinct actual references, identities, realms and operation owners'};const previous=capabilities.findIndex(row=>row.identity===capability.identity);if(previous!==at){const owner=capabilities[previous];if(owner===undefined||owner.realm!==capability.realm||owner.owner!==capability.owner||owner.operation!==capability.operation||owner.callable!==capability.callable||owner.executable!==capability.executable)return {$:'errorModuleCompilation',program:empty,error:'one actual capability identity cannot acquire conflicting operation or namespace roles'};}}
@@ -399,7 +417,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   const matches=registry.owners.filter(owner=>owner.source===definition.identity);if(matches.length!==1)return {$:'errorModuleCompilation',program:empty,error:'every actual source definition needs exactly one supplied callable owner'};const owner=matches[0];if(owner===undefined)return {$:'errorModuleCompilation',program:empty,error:'source callable owners must be dense'};
   if(identities.includes(owner.identity)||!registry.realms.includes(owner.realm))return {$:'errorModuleCompilation',program:empty,error:'source callable owners need distinct identities and actual realms'};identities.push(owner.identity);
   const operations=registry.operations.filter(row=>row.realm===owner.realm);if(operations.length!==1)return {$:'errorModuleCompilation',program:empty,error:'Error source operations require their actual complete source realm'};const realm=operations[0];if(realm===undefined)return {$:'errorModuleCompilation',program:empty,error:'Error source realm rows must be dense'};
-  let context={$:'errorSourceContext',registry,realm,capabilities,sharedBindings:plan.sharedBindings??[],next:plan.nextBinding,visits:0,error:'',globalBindings:bindings.map(binding=>binding.identity),mutableBindings:definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'},source=constructJavaScriptErrorConstant({$:'undefined'});
+  let context={$:'errorSourceContext',registry,realm,capabilities,sharedBindings:plan.sharedBindings??[],lexicalBindings:plan.lexicalBindings??[],next:plan.nextBinding,visits:0,error:'',globalBindings:bindings.map(binding=>binding.identity),mutableBindings:definition.$==='errorOrdinaryConstructorPlan'||definition.$==='errorMethodFunctionPlan'||definition.$==='errorMutableStatementFunctionPlan'},source=constructJavaScriptErrorConstant({$:'undefined'});
   if(definition.$==='errorConstructorPlan'){
    if(owner.$!=='errorConstructorOwner'||!registry.realms.includes(owner.baseRealm))return {$:'errorModuleCompilation',program:empty,error:'an Error subclass requires its actual base constructor and realm authority'};
    const message=lowerJavaScriptErrorExpression(definition.message,context,0);context=message.context;
@@ -430,7 +448,7 @@ export function compileJavaScriptErrorModulePlanWithCapabilities(plan,registry,b
   if(definition.length!==length)return {$:'errorModuleCompilation',program:empty,error:'arrow Function length retains its actual parameter initializer boundary'};
   const identities=bindings.map(binding=>binding.identity).concat(definition.captures),parameters=definition.parameters.map(parameter=>parameter.identity);
   if(identities.length>4096||identities.some((identity,index)=>identities.indexOf(identity)!==index||parameters.includes(identity)))return {$:'errorModuleCompilation',program:empty,error:'arrow parameters and captures retain disjoint actual lexical bindings'};
-  const context={$:'errorSourceContext',registry,realm,capabilities,sharedBindings:plan.sharedBindings??[],globalBindings:bindings.map(binding=>binding.identity),next:plan.nextBinding,visits:0,error:'',mutableBindings:true};
+  const context={$:'errorSourceContext',registry,realm,capabilities,sharedBindings:plan.sharedBindings??[],lexicalBindings:plan.lexicalBindings??[],globalBindings:bindings.map(binding=>binding.identity),next:plan.nextBinding,visits:0,error:'',mutableBindings:true};
   const lowered=lowerJavaScriptSourceStatements(definition.statements,0,context,constructJavaScriptErrorConstant({$:'undefined'}),0);
   if(lowered.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:lowered.context.error};
   const initialized=lowerJavaScriptSourceParameters(definition.parameters,lowered.context,lowered.source);if(initialized.context.error!=='')return {$:'errorModuleCompilation',program:empty,error:initialized.context.error};
@@ -454,7 +472,7 @@ export function lowerJavaScriptSourceReference(target,context,depth){
  const constant=constructJavaScriptErrorConstant;let current=context,read=constant({$:'undefined'}),receiver=constant({$:'undefined'}),key=constant({$:'undefined'}),kind='',identity=0;
  const captures=[];
  if(target.$==='errorBinding'){kind=target.immutable?'immutable binding':'binding';identity=target.identity;read={$:'sourceBinding',identity:target.identity};}
- else if(target.$==='errorModuleCell'){kind='property';receiver={$:'sourceBinding',identity:target.identity};key=constructJavaScriptSourceFieldKey('value');read={$:'sourceGet',object:receiver,key};}
+ else if(target.$==='errorModuleCell'){kind=(context.lexicalBindings??[]).some(row=>row.identity===target.identity)?'lexical cell':'property';identity=target.identity;receiver={$:'sourceBinding',identity:target.identity};key=constructJavaScriptSourceFieldKey('value');read=constructJavaScriptLexicalCellRead(context,target.identity);}
  else if(target.$==='errorGet'||target.$==='errorComputedGet'){
   kind='property';const object=lowerJavaScriptErrorExpression(target.object,current,depth+1),property=lowerJavaScriptErrorExpression(target.key,object.context,depth+1),receiverID=property.context.next,keyID=receiverID+1,convertedID=keyID+1;current={...property.context,next:convertedID+1};receiver={$:'sourceBinding',identity:receiverID};const rawKey={$:'sourceBinding',identity:keyID};key={$:'sourceBinding',identity:convertedID};
   const failure={$:'sourceCall',callee:constant(context.realm.get),receiver,arguments:[rawKey]},conversion={$:'sourcePropertyKey',input:rawKey,realm:context.realm.realm};
@@ -465,6 +483,7 @@ export function lowerJavaScriptSourceReference(target,context,depth){
 }
 /** @param {JavaScriptSourceReference} reference @param {JavaScriptCallSource} value @returns {JavaScriptCallSource} */
 export function constructJavaScriptSourceReferenceWrite(reference,value){
+ if(reference.kind==='lexical cell'){const binding=(reference.context.lexicalBindings??[]).find(row=>row.identity===reference.identity);return {$:'sourceIf',condition:{$:'sourceGet',object:reference.receiver,key:constructJavaScriptSourceFieldKey('initialized')},yes:binding?.immutable?{$:'sourceImmutableBindingWrite',value}:{$:'sourceSnapshotSet',object:reference.receiver,key:reference.key,value},no:constructJavaScriptLexicalCellFailure(reference.context,reference.identity)};}
  if(reference.kind==='immutable binding')return {$:'sourceImmutableBindingWrite',value};
  return reference.kind==='binding'?{$:'sourceAssignBinding',identity:reference.identity,value}:{$:'sourceIf',condition:{$:'sourcePrimitive',operation:'test object value',arguments:[reference.receiver]},yes:{$:'sourceSnapshotSet',object:reference.receiver,key:reference.key,value},no:{$:'sourceCall',callee:constructJavaScriptErrorConstant(reference.context.realm.assign),receiver:reference.receiver,arguments:[reference.key,value]}};
 }
@@ -509,6 +528,7 @@ export function constructJavaScriptSourceOrderingComparison(ordering,code){retur
  * @param {JavaScriptCallSource} value @param {JavaScriptCallSource} body
  * @param {boolean} mutable @param {boolean} initializeExisting @returns {JavaScriptCallSource} */
 export function constructJavaScriptSourcePatternBinding(context,identity,value,body,mutable,initializeExisting){
+ if((context.lexicalBindings??[]).some(row=>row.identity===identity))return {$:'sourceInitializeCell',identity,value,body};
  const shared=(context.sharedBindings??[]).includes(identity),stored=shared?{$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:context.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value}]}:value;
  return initializeExisting?{$:'sourceInitializeBinding',identity,value:stored,body}:constructJavaScriptErrorLocalBinding(context,identity,stored,body,mutable&&!shared);
 }
@@ -549,5 +569,42 @@ export function lowerJavaScriptSourceArrayBinding(pattern,first,continuation,mut
  const initializer={$:'sourceIteratorBinding',slot:pattern.identity,input:{$:'sourceBinding',identity:pattern.identity},iteratorKey:key.source,body:source,realm:context.realm.realm};
  if(initializeExisting){const identity=context.next;context={...context,next:identity+1};return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(context,identity,initializer,continuation,false),context};}
  const outputs=collectJavaScriptPatternBindingDeclarations(pattern,mutable,depth,context.sharedBindings??[]);if(outputs.error!=='')return refuseJavaScriptErrorSource(context,outputs.error);
- return {$:'errorSourceExpression',source:{$:'sourceBindingScope',declarations:outputs.declarations,initializer,body:continuation},context};
+ return {$:'errorSourceExpression',source:{$:'sourceBindingScope',declarations:outputs.declarations.filter(row=>!(context.lexicalBindings??[]).some(binding=>binding.identity===row.identity)),initializer,body:continuation},context};
+}
+
+/** @param {JavaScriptErrorSourceContext} context @returns {JavaScriptCallSource} */
+export function constructJavaScriptLexicalCell(context){return {$:'sourceObject',prototype:constructJavaScriptErrorConstant({$:'null'}),realm:context.realm.realm,properties:[{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('value'),value:constructJavaScriptErrorConstant({$:'undefined'})},{$:'sourceObjectProperty',key:constructJavaScriptSourceFieldKey('initialized'),value:constructJavaScriptErrorConstant({$:'boolean',value:false})}]};}
+/** @param {JavaScriptErrorSourceContext} context @param {number} identity @returns {JavaScriptCallSource} */
+export function constructJavaScriptLexicalCellFailure(context,identity){
+ const binding=(context.lexicalBindings??[]).find(row=>row.identity===identity),name=binding?.name??'',message="Cannot access '"+name+"' before initialization",units=[];for(let at=0;at<message.length;at++)units.push(message.charCodeAt(at));return {$:'sourcePrimitive',operation:'raiseJavaScriptReferenceError',arguments:[constructJavaScriptErrorConstant({$:'text',units}),constructJavaScriptErrorConstant({$:'boolean',value:true})]};
+}
+/** @param {JavaScriptErrorSourceContext} context @param {number} identity @returns {JavaScriptCallSource} */
+export function constructJavaScriptLexicalCellRead(context,identity){
+ const cell={$:'sourceBinding',identity},read={$:'sourceGet',object:cell,key:constructJavaScriptSourceFieldKey('value')};return (context.lexicalBindings??[]).some(row=>row.identity===identity)?{$:'sourceIf',condition:{$:'sourceGet',object:cell,key:constructJavaScriptSourceFieldKey('initialized')},yes:read,no:constructJavaScriptLexicalCellFailure(context,identity)}:read;
+}
+/** @param {JavaScriptErrorSourceContext} context @param {number} identity @param {JavaScriptCallSource} value @param {boolean} initializing @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptLexicalCellWrite(context,identity,value,initializing){
+ const heldID=context.next,writtenID=heldID+1,flagID=writtenID+1,next={...context,next:flagID+1},held={$:'sourceBinding',identity:heldID},cell={$:'sourceBinding',identity},binding=(context.lexicalBindings??[]).find(row=>row.identity===identity),write={$:'sourceSnapshotSet',object:cell,key:constructJavaScriptSourceFieldKey('value'),value:held};
+ /** @type {JavaScriptCallSource} */let body=initializing?constructJavaScriptErrorLocalBinding(next,writtenID,write,constructJavaScriptErrorLocalBinding(next,flagID,{$:'sourceSnapshotSet',object:cell,key:constructJavaScriptSourceFieldKey('initialized'),value:constructJavaScriptErrorConstant({$:'boolean',value:true})},held,false),false):{$:'sourceIf',condition:{$:'sourceGet',object:cell,key:constructJavaScriptSourceFieldKey('initialized')},yes:binding?.immutable?{$:'sourceImmutableBindingWrite',value:held}:constructJavaScriptErrorLocalBinding(next,writtenID,write,held,false),no:constructJavaScriptLexicalCellFailure(next,identity)};
+ return {$:'errorSourceExpression',source:constructJavaScriptErrorLocalBinding(next,heldID,value,body,false),context:next};
+}
+/** Declaration groups share their enclosing lexical environment; nested blocks
+ * instantiate their own cells when entered, not while scanning the outer list.
+ * @param {JavaScriptSourceStatement[]} statements @param {JavaScriptErrorSourceContext} context @param {number} depth @returns {number[]} */
+export function collectJavaScriptSourceLexicalDeclarations(statements,context,depth){
+ if(depth>128)return [];const declarations=[];for(const statement of statements){if(statement.$==='sourceDeclarationGroupStatement')declarations.push(...collectJavaScriptSourceLexicalDeclarations(statement.statements,context,depth+1));else if((statement.$==='sourceConstStatement'||statement.$==='sourceMutableStatement')&&(context.lexicalBindings??[]).some(row=>row.identity===statement.identity))declarations.push(statement.identity);else if(statement.$==='sourceObjectBindingStatement'||statement.$==='sourceArrayBindingStatement'){const outputs=collectJavaScriptPatternBindingDeclarations(statement.pattern,statement.mutable,depth+1);for(const row of outputs.declarations)if((context.lexicalBindings??[]).some(binding=>binding.identity===row.identity))declarations.push(row.identity);}}return declarations;
+}
+
+/** For-in/of head TDZ cells belong to RHS evaluation; each iteration receives
+ * new cells. Captured RHS closures retain the uninitialized head environment.
+ * @param {JavaScriptSourceStatement} statement @param {JavaScriptErrorSourceContext} context
+ * @param {JavaScriptCallSource} continuation @param {number[]} owned @param {number} depth @returns {JavaScriptErrorSourceExpression} */
+export function lowerJavaScriptLexicalForOf(statement,context,continuation,owned,depth){
+ if(statement.$!=='sourceForOfStatement'||owned.length===0||owned.length>4096||owned.some((identity,index)=>owned.indexOf(identity)!==index))return refuseJavaScriptErrorSource(context,'lexical for-of retains its actual distinct owned head bindings');
+ const input=lowerJavaScriptErrorExpression(statement.input,context,depth+1),key=lowerJavaScriptErrorExpression(statement.iteratorKey,input.context,depth+1),valueID=statement.pattern===undefined?key.context.next:statement.pattern.identity,prepared=statement.pattern===undefined?{...key.context,next:key.context.next+1}:key.context,body=lowerJavaScriptSourceStatements(statement.body,0,prepared,constructJavaScriptErrorConstant({$:'undefined'}),depth+1);
+ const initialized=statement.pattern===undefined?{$:'errorSourceExpression',context:body.context,source:{$:'sourceInitializeCell',identity:statement.binding,value:{$:'sourceBinding',identity:valueID},body:body.source}}:lowerJavaScriptSourceBindingPattern(statement.pattern,body.context,body.source,statement.mutable);
+ let current=initialized.context;const iteration={$:'sourceLexicalScope',identities:owned,realm:current.realm.realm,body:initialized.source};
+ const temporary=current.next;current={...current,next:temporary+1};let source=constructJavaScriptErrorLocalBinding(current,temporary,{$:'sourceForOf',slot:statement.target,target:statement.target,binding:valueID,mutable:false,input:input.source,iteratorKey:key.source,body:iteration,realm:current.realm.realm,scopeBindings:owned},continuation,false);
+ source={$:'sourceLexicalScope',identities:owned,realm:current.realm.realm,body:source};
+ return {$:'errorSourceExpression',source,context:current};
 }

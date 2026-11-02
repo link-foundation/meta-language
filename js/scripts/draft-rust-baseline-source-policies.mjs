@@ -201,6 +201,7 @@ const consumers=[
  'js/tests/translation-javascript-property-definitions.test.js',
  'js/tests/translation-javascript-object-assignment.test.js',
  'js/tests/translation-javascript-function-invocation.test.js',
+ 'js/tests/translation-javascript-lexical-initialization.test.js',
  'js/src/translation/javascript-property-definition.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',

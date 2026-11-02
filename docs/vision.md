@@ -57,6 +57,32 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Owned lexical declarations and formal parameter leaves retain private shared
+cells with separate value and initialized fields. Scope entry creates cells
+before initializer evaluation; a flat lexical-scope operation avoids adding one
+source-tree nesting level per preallocated binding. Successful initialization stores the completed
+value before setting its flag. Closures capture cell identities even during
+self/later initialization. Reads, typeof and read/modify/write preserve actual
+ReferenceError timing; simple assignment evaluates its RHS before PutValue,
+and const rejection follows the existing immutable-write semantics. Ordered
+Object/Array binding defaults and parameter defaults initialize each leaf in
+order. Formal inputs come from the immutable actual argument List, so replacing
+parameter storage never loses original arguments or rest suffixes.
+
+Normal for loops copy initialized state with each captured per-iteration value.
+For-of RHS evaluation owns an uninitialized head environment; every iteration
+creates fresh head cells and initializes them from an independent received-value
+coordinate. Closures created during RHS evaluation retain its original TDZ cells.
+Iterator cleanup still encloses binding/default/body failures. Switch evaluates
+its discriminant first, then creates one lexical environment shared across every
+case/default test and fallthrough body. Entering a later case can observe an
+uninitialized earlier declaration; initialized fallthrough observes its actual
+value. Separate blocks retain separate entry cells. Runtime cells are Links data
+and native Error allocation/Call uses the shared protocol; no native source body
+is a fallback. Function-scoped var hoisting, nested function declaration
+instantiation, full class evaluation and asynchronous environments remain
+explicit independent source obligations.
+
 The actual supplied Object.prototype root retains an immutable-prototype internal
 slot as shared Links data. Same-prototype updates succeed; changing that root's
 prototype fails even while it is extensible. Ordinary allocated Objects do not

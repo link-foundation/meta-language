@@ -6,7 +6,7 @@ import {captureJavaScriptOrdinaryClassModule,checkJavaScriptOrdinaryClassModule}
 import {prepareJavaScriptOrdinaryClassModule} from '../src/translation/javascript-ordinary-class-module.js';
 import {runJavaScriptSourceTransition} from '../src/node-source-modules.js';
 import * as rules from '../src/translation/javascript-ordinary-class-rules.js';
-import {javascriptOrdinaryClassDecisions as decisions,javascriptOrdinaryClassOriginals as originals,javascriptOrdinaryClassRefusals as refusals} from './fixtures/javascript-ordinary-class-source.mjs';
+import {javascriptOrdinaryClassDecisions as decisions,javascriptOrdinaryClassOriginals as originals,javascriptOrdinaryClassRefusals as refusals,javascriptOrdinaryClassCaptureCases as captureCases} from './fixtures/javascript-ordinary-class-source.mjs';
 import {readSourceMachineTrace} from './support/source-machine-trace.js';
 import * as primitiveMethods from '../src/translation/javascript-primitive-methods.js';
 import * as primitives from '../src/translation/javascript-call-primitives.js';
@@ -23,6 +23,7 @@ for(const row of originals)test(row.name,()=>{
  else{assert.equal(transition.$,'machineCompleted',transition.reason);assert.deepEqual(instance.embedding.materializeData(transition.value),row.expected);assert.deepEqual(original(...structuredClone(row.arguments)),row.expected);}
  if(row.expectedBatchResumption){const replay=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:61n}),trace=readSourceMachineTrace(replay.embedding,replay.begin(row.entry,row.arguments.map(replay.embedding.encode)),{steps:65536});assert.equal(trace.events.some(event=>event.operation==='resumeBatch'),row.expectedBatchResumption);assert.equal(trace.budgetExhausted,false);assert.equal(trace.transition.$,'machineCompleted');assert.deepEqual(replay.embedding.materializeData(trace.transition.value),row.expected);}
 });
+for(const row of captureCases)test(row.name,()=>{const capture=captureJavaScriptOrdinaryClassModule(row.source,{identifier:'literal-ordinary-class-capture.js',entries:row.entries});assert.deepEqual(checkJavaScriptOrdinaryClassModule(capture),capture);assert.ok(prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:89n}).embedding);});
 for(const row of refusals)test(row.name,()=>assert.throws(()=>captureJavaScriptOrdinaryClassModule(row.source,{identifier:'literal-ordinary-class-refusal.js',entries:row.entries})));
 test('a low total source budget never presents partial class loop state as success',()=>{
  const row=originals.find(row=>row.expectedBatchResumption),capture=captureJavaScriptOrdinaryClassModule(row.source,{identifier:'literal-loop-budget.js',entries:row.entries}),instance=prepareJavaScriptOrdinaryClassModule(capture,{realmIdentity:59n}),trace=readSourceMachineTrace(instance.embedding,instance.begin(row.entry,[]),{steps:64});

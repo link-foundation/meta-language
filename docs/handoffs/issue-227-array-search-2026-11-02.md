@@ -1211,3 +1211,66 @@ ordinary descendants mutable. One original and one deferred kernel control are
 added. This is source-authored metadata/semantics, not executed evidence; the
 current live spec says 2027, while source fixtures retain explicit Node 22/24
 bounds and must later be checked in the recorded CI runtime profiles.
+
+### Lexical initialization, recursive closures, formal defaults and control scopes
+
+The closed source reader records ordered actual lexical binding identities,
+source names and immutable flags in optional `lexicalBindings` plan metadata.
+It selects declaration names/pattern leaves from actual CST fields, formal
+parameter declarations, single-arrow formals and for-of left fields. Catch
+bindings keep their existing initialized-on-entry path. Validation bounds the
+metadata and preserves distinct actual source identities. Source captures of
+self/later lexical bindings and formal leaves now retain a preallocated private
+cell pointer rather than rejecting creation or copying an uninitialized value.
+
+Scope entry allocates null-prototype value/initialized cells. Completed initializers
+write the value before the initialized flag. Runtime reads/typeof, simple writes,
+compound/logical writes and updates preserve TDZ and const timing. A simple RHS
+is held before PutValue checks; read/modify/write checks its read before RHS.
+Object/Array binding leaves initialize existing cells without duplicate output
+register declarations, preserving defaults, rest and IteratorClose. Formal cells
+are prepared before all defaults, using immutable `sourceArgument`/argument-rest
+inputs even after parameter registers hold pointers. Self/later parameter reads
+raise actual realm ReferenceError, while closures can capture those same cells
+and read them after later initialization. No source body runs in the host.
+
+Ordinary for cloning now copies initialized state with captured values. For-of
+uses separate RHS TDZ cells and fresh per-iteration cells; a distinct internal
+received-value coordinate and explicit body visibility preserve the two
+environments and captured RHS closures. Switch holds the discriminant before
+allocating one shared case environment; tests/fallthrough retain the same cells.
+Nested blocks own their own cells. Existing iterator/finalizer behavior remains
+in the shared Call machine. No handwritten Rust semantics replaces this draft.
+
+Source controls retain the exact former self-recursive-arrow and later-parameter
+TDZ inputs/names, now asserting the newly drafted behavior. The exact exported
+class constructor input remains in a positive capture/check case because public
+entry invocation deliberately requires a function; an additional original source
+`new Box()` wrapper covers its constructor-default behavior. Both former unbraced
+switch inputs/names are retained with initialized fallthrough cases, plus the
+same exact sources entered at later cases to require ReferenceError. These are
+source-authored assertion corrections justified by the explicit cell/control
+implementation and ECMAScript initialization rules; nothing was executed or
+recorded as observation. All existing runtime, fixture and version boundaries
+remain required, including exact Error messages selected by existing tests.
+
+New deferred source/kernel controls cover cell layout, operation order, immutable
+writes, lexical/pattern scopes, formal argument preservation, per-iteration/RHS
+separation and switch discriminant order. Original sources cover recursion,
+mutual recursion, later captures, early calls, typeof, patterns, normal for,
+for-of, switch, constructors, methods and parameter/rest defaults. Future source
+policy authoring registers the new controls. No test, parser, generator,
+validation gate or compilation ran. Generated Rust/wire publication and ledger
+reconciliation remain deferred. Still-independent source obligations include
+function-scoped var hoisting, nested function expressions/declarations and their
+instantiation/constructibility, class inheritance/static/private evaluation,
+async/generator/Promise semantics, primitive wrapper slots and opaque/Proxy
+protocols. This section records source draft scope, not completion evidence.
+
+Lexical scope preparation is flat source data (`sourceLexicalScope`), avoiding
+one extra source-tree nesting level per binding and preserving source/register
+resource bounds on larger owned functions. Formal replacements are explicitly
+listed and require existing mutable formal coordinates; new lexical holders use
+distinct immutable coordinates. Initialization emits ordered strict private
+writes directly, without synthetic source-binding IDs for every declaration.
+This is a source-structure improvement only; no benchmark or validation ran.
