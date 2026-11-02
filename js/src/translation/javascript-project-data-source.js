@@ -243,6 +243,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
      if(left.$==='errorModuleCell'){inferArrowName(right,bindings.find(row=>row.identity===left.identity).name);left={$:'errorModuleCellSet',identity:left.identity,value:right};}else if(left.$==='errorGet'||left.$==='errorComputedGet')left={$:left.$==='errorComputedGet'?'errorComputedSet':'errorSet',object:left.object,key:left.key,value:right};
      else if(classProfile&&left.$==='errorBinding'&&['parameter','let','const'].includes(bindings.find(row=>row.identity===left.identity)?.kind)){inferArrowName(right,bindings.find(row=>row.identity===left.identity).name);left={$:'errorBindingSet',identity:left.identity,value:right,...(left.immutable?{immutable:true}:{})};}else fail('source assignment requires its actual admitted mutable cell or property');
     }
+    else if(operator==='instanceof'&&classProfile){left={$:'errorInstanceOf',left,right,key:{$:'errorGet',object:port('intrinsic:has instance namespace',{kind:'global',name:'Symbol'}),key:constant({$:'text',units:units('hasInstance')})}};}
     else if(operator==='in'){if(!classProfile)fail('in requires its actual closed source property presence protocol');left={$:'errorIn',key:left,object:right};}
     else if(operator==='==='||operator==='!==')left={$:'errorStrictEqual',left,right,negate:operator==='!=='};
     else {let key='';if(operator==='instanceof'){key='syntax:instanceof';port(key,{kind:'syntax',operation:'instanceof'});}left={$:'errorBinary',operator,left,right,port:key};}

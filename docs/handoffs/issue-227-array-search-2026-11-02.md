@@ -1073,3 +1073,30 @@ body delegation, both selected numeric requests, write/heap transport and legacy
 entry points. Source capture admits the remaining standard Error namespace names
 for version-qualified checks; their namespace/operator linkage is the next
 source consumer integration batch. No execution/generation/validation occurred.
+
+### Source instanceof and actual Error namespace draft
+
+The missing closed-class `syntax:instanceof` capability has been replaced by an
+actual operator expression, operand-preserving source lowering and portable
+`javascript-instance-of.js` continuation kernel. Its selected Symbol getter,
+custom method and constructor prototype getter all use ordinary Call frames.
+Default Function.prototype[Symbol.hasInstance] is linked by its protected actual
+native identity to a portable OrdinaryHasInstance body. The shared prototype
+walk admits independently authenticated native Error roots, retains its actual
+visited identities, and refuses cyclic/over-budget paths without a guessed
+Boolean. Original throws and the latest heap survive callback completion.
+Error, TypeError, RangeError, ReferenceError, SyntaxError, URIError and EvalError
+namespace references come from the private independently supplied Error realm;
+these do not publish executable native constructor semantics.
+
+Twelve original source controls cover operand order, custom getter/method
+receiver, result ToBoolean, errors, actual Error roots, arrows and source classes.
+Five deferred kernel controls cover traversal, selected callbacks, rejection,
+throw identity, native Error metadata and invalid state substitutions. They are
+registered with policy authoring; no program, control, parser, generator, test,
+validation gate or compilation was executed. Architecture design was checked
+against the current TC39 InstanceofOperator/OrdinaryHasInstance pages (2027
+edition on retrieval); source controls retain their existing explicit Node 22/24
+version bounds. This is source drafting, not parity evidence. Bound functions,
+Proxy traps, full function environments and standard Error construction remain
+separate source obligations; generated Rust/wire assets stay deferred.

@@ -152,3 +152,7 @@ and for-of, with elisions, defaults, cached iterator rest and closing before bod
 
 Draft formal rest parameters through original Call argument collection, actual
 Array allocation, recursive binding targets and Function length boundaries.
+
+- Draft shared `instanceof` and `OrdinaryHasInstance` semantics, selected getter/
+  method continuations, actual Error namespace roots and protected Function
+  intrinsic linkage for automatic translation. Verification remains deferred.

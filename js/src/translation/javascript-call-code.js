@@ -25,6 +25,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'arraySearch',destination:number,operation:string} |
  * {$:'arrayTransform',destination:number,operation:string,species:JavaScriptArraySpeciesDirectory} |
  * {$:'objectEnumeration',destination:number,operation:string,prototype:number} |
+ * {$:'instanceOf',destination:number,left:number,right:number,key:number,operation:string} |
  * {$:'objectObservation',destination:number,operation:string,input:number,other:number} |
  * {$:'collectionCopy',destination:number,target:number,input:number,adder:number,iteratorKey:number,iteratorMethod:number,iteratorPrototype:number,nextMethod:number} |
  * {$:'constructErrorValue',destination:number,constructor:number,newTarget:number,prototype:number,message:number,present:number,realm:bigint,errorClass:string,bindReceiver:boolean} |
@@ -92,6 +93,7 @@ export function readJavaScriptCallCodeRegisters(instruction){
     case 'return':case 'throw':return [instruction.source];
     case 'requireWrite':return [instruction.success];
     case 'numberBinary':case 'sameValue':case 'strictEqual':return [instruction.destination,instruction.left,instruction.right];
+    case 'instanceOf':return [instruction.destination,instruction.left,instruction.right,instruction.key];
     case 'objectObservation':return [instruction.destination,instruction.input,instruction.other];
     case 'ordinaryGet':return [instruction.destination,instruction.object,instruction.key,instruction.receiver];
     case 'ordinaryDelete':case 'ordinaryHas':return [instruction.destination,instruction.object,instruction.key];

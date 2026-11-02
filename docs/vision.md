@@ -57,6 +57,19 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Source instanceof evaluates and preserves both operands before actual
+Symbol.hasInstance lookup. Selected getters and methods use shared Call frames;
+custom methods retain the right operand as receiver and use ToBoolean on their
+result. The protected Function.prototype intrinsic body uses OrdinaryHasInstance:
+noncallables and primitive left operands finish before prototype Get, while
+Object inputs traverse actual heap prototype identities one step at a time.
+Known native Error prototypes retain their independently supplied realm roots;
+source Error namespace references grant identity without permitting native
+constructor body execution. Callback identity, arguments, prototype path and
+resource pauses remain explicit shared data. Bound-function internal slots and
+Proxy prototype traps require explicit extensions. The legacy non-class source
+operator capability remains available to its existing callers.
+
 Public Object.defineProperty uses the shared target check, ToPropertyKey and
 ordered ToPropertyDescriptor pipeline. Array length definitions compose that
 pipeline with the existing two-conversion ArraySetLength continuation. Completed

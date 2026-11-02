@@ -53,6 +53,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceSnapshotSet',object:JavaScriptCallSource,key:JavaScriptCallSource,value:JavaScriptCallSource} |
  * {$:'sourceGet',object:JavaScriptCallSource,key:JavaScriptCallSource} |
+ * {$:'sourceInstanceOf',left:JavaScriptCallSource,right:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceDelete',object:JavaScriptCallSource,key:JavaScriptCallSource} | {$:'sourceHas',object:JavaScriptCallSource,key:JavaScriptCallSource} |
  * {$:'sourceCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]} |
  * {$:'sourceSnapshotCall',callee:JavaScriptCallSource,receiver:JavaScriptCallSource,arguments:JavaScriptCallSource[]}} JavaScriptCallSource
@@ -306,6 +307,10 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   case 'sourceAllocate':{
    const prototype=lowerJavaScriptCallSourceExpression(source.prototype,bindings,state,depth+1),result=allocateJavaScriptCallSourceRegister(prototype.builder);
    return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'ordinaryAllocate',destination:result.register,prototype:prototype.register})};
+  }
+  case 'sourceInstanceOf':{
+   const left=lowerJavaScriptCallSourceExpression(source.left,bindings,state,depth+1),heldLeft=allocateJavaScriptCallSourceRegister(left.builder),savedLeft=appendJavaScriptCallSourceInstruction(heldLeft.builder,{$:'copy',destination:heldLeft.register,source:left.register}),right=lowerJavaScriptCallSourceExpression(source.right,bindings,savedLeft,depth+1),heldRight=allocateJavaScriptCallSourceRegister(right.builder),savedRight=appendJavaScriptCallSourceInstruction(heldRight.builder,{$:'copy',destination:heldRight.register,source:right.register}),key=lowerJavaScriptCallSourceExpression(source.key,bindings,savedRight,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);
+   return {...result,builder:appendJavaScriptCallSourceInstruction(result.builder,{$:'instanceOf',destination:result.register,left:heldLeft.register,right:heldRight.register,key:key.register,operation:'instanceof'})};
   }
   case 'sourceDelete':case 'sourceHas':{
    const raw=lowerJavaScriptCallSourceExpression(source.object,bindings,state,depth+1),object=allocateJavaScriptCallSourceRegister(raw.builder),saved=appendJavaScriptCallSourceInstruction(object.builder,{$:'copy',destination:object.register,source:raw.register}),key=lowerJavaScriptCallSourceExpression(source.key,bindings,saved,depth+1),result=allocateJavaScriptCallSourceRegister(key.builder);let current=appendJavaScriptCallSourceInstruction(result.builder,{$:source.$==='sourceDelete'?'ordinaryDelete':'ordinaryHas',destination:result.register,object:object.register,key:key.register});

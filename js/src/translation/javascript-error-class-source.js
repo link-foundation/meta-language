@@ -6,6 +6,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorConstant',value:JavaScriptSemanticValue} |
  * {$:'errorClosure',owner:number,ordinal:number,captures:number[],receiverMode?:string} |
  * {$:'errorArgumentSpread',value:JavaScriptErrorExpression,iteratorKey:JavaScriptErrorExpression} |
+ * {$:'errorInstanceOf',left:JavaScriptErrorExpression,right:JavaScriptErrorExpression,key:JavaScriptErrorExpression} |
  * {$:'errorDelete',target:JavaScriptErrorExpression} | {$:'errorIn',key:JavaScriptErrorExpression,object:JavaScriptErrorExpression} |
  * {$:'errorBinding',identity:number,immutable?:boolean} | {$:'errorModuleBinding',identity:number} | {$:'errorThis'} |
  * {$:'errorConditional',condition:JavaScriptErrorExpression,yes:JavaScriptErrorExpression,no:JavaScriptErrorExpression} |
@@ -120,6 +121,9 @@ export function lowerJavaScriptErrorExpression(expression,context,depth){
  switch(expression.$){
   case 'errorConstant':return {$:'errorSourceExpression',source:constant(expression.value),context:next};
   case 'errorSpecialNumber':return expression.form==='NaN'||expression.form==='Infinity'?{$:'errorSourceExpression',source:constant({$:'number',value:expression.form==='NaN'?NaN:Infinity}),context:next}:refuseJavaScriptErrorSource(next,'a special Number requires its actual unshadowed source global');
+  case 'errorInstanceOf':{
+   const left=lowerJavaScriptErrorExpression(expression.left,next,depth+1),right=lowerJavaScriptErrorExpression(expression.right,left.context,depth+1),key=lowerJavaScriptErrorExpression(expression.key,right.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceInstanceOf',left:left.source,right:right.source,key:key.source},context:key.context};
+  }
   case 'errorDelete':return lowerJavaScriptSourceDelete(expression,next,depth+1);
   case 'errorIn':return lowerJavaScriptSourcePresence(expression,next,depth+1);
   case 'errorArgumentSpread':{const value=lowerJavaScriptErrorExpression(expression.value,next,depth+1),key=lowerJavaScriptErrorExpression(expression.iteratorKey,value.context,depth+1);return {$:'errorSourceExpression',source:{$:'sourceArgumentSpread',value:value.source,iteratorKey:key.source,realm:next.realm.realm},context:key.context};}
