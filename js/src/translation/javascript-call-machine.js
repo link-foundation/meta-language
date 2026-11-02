@@ -1,3 +1,5 @@
+import {allocateJavaScriptWeakCollection,executeJavaScriptWeakCollectionOperation} from './javascript-weak-collections.js';
+import {readJavaScriptWeakCollectionOperationKind} from './javascript-weak-collection-rules.js';
 import {beginJavaScriptArrayConcatenation,stepJavaScriptArrayConcatenation,resumeJavaScriptArrayConcatenationCall,resumeJavaScriptArrayConcatenationConstruction,resumeJavaScriptArrayConcatenationAllocation,readJavaScriptArrayConcatenationStateError} from './javascript-array-concatenation.js';
 import {beginJavaScriptArraySlice,stepJavaScriptArraySlice,resumeJavaScriptArraySliceCall,resumeJavaScriptArraySliceConstruction,resumeJavaScriptArraySliceAllocation,readJavaScriptArraySliceStateError} from './javascript-array-slice.js';
 import {testJavaScriptArrayCreationOperation,beginJavaScriptArrayCreation,stepJavaScriptArrayCreation,resumeJavaScriptArrayCreationCall,resumeJavaScriptArrayCreationConstruction,resumeJavaScriptArrayCreationAllocation,provideJavaScriptArrayCreationPrimitivePrototype,resumeJavaScriptArrayCreationError,throwJavaScriptArrayCreation,readJavaScriptArrayCreationStateError} from './javascript-array-creation.js';
@@ -248,7 +250,7 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'iteratorProtocol':if(!['acquire','step','close'].includes(instruction.operation)||instruction.realm!==fn.realm||!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.destination===0||instruction.done===0||instruction.destination===instruction.done||instruction.readValue!==undefined&&(instruction.operation!=='step'||typeof instruction.readValue!=='boolean'))return 'iterator protocols retain actual source regions, realms and distinct private result coordinates';break;
         case 'argumentListOpen':case 'argumentListAppend':case 'argumentListCall':if(!testJavaScriptIteratorRegionSlot(instruction.slot)||instruction.$==='argumentListCall'&&!['call','collection','error class','ordinary class','construct'].includes(instruction.mode))return 'Call argument Lists retain actual source slots and operation kinds';break;
         case 'collectionIteratorResult':if(!testJavaScriptCollectionIteratorIntrinsicMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'iterator next retains its actual standard operation kind and owner';break;
-        case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
+        case 'collectionAllocate':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode)||!['Map','Set','Array','String','WeakMap','WeakSet'].includes(instruction.kind))return 'collection allocation retains its actual standard constructor kind and frame';break;
         case 'collectionCopy':if(!testJavaScriptCollectionConstructorMode(fn.receiverMode))return 'collection copying retains its actual standard constructor frame';break;
         case 'collectionOperation':if(!testJavaScriptCollectionIntrinsicMode(fn.receiverMode)||readJavaScriptCollectionOperationKind(instruction.operation)==='')return 'collection operations retain their actual registered intrinsic frame';break;
         case 'primitiveMethod':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPrimitiveMethodOperation(instruction.operation)&&!testJavaScriptArrayIntrinsicOperation(instruction.operation))return 'primitive methods retain their actual registered intrinsic frame';break;
@@ -1238,7 +1240,7 @@ export function stepJavaScriptCallMachine(program,machine){
       }
       return acceptJavaScriptCollectionIteratorResultCompletion(program,machine,frame,instruction.destination,fn.realm,beginJavaScriptCollectionIteratorResult(machine.heap,registers[0]??{$:'undefined'},instruction.kind,registers[instruction.arrayPrototype]??{$:'undefined'},registers[instruction.objectPrototype]??{$:'undefined'}));
     }
-    case 'collectionOperation':return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,executeJavaScriptCollectionOperation(machine.heap,registers[0]??{$:'undefined'},instruction.operation,frame.arguments));
+    case 'collectionOperation':return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,(readJavaScriptWeakCollectionOperationKind(instruction.operation)!==''?executeJavaScriptWeakCollectionOperation:executeJavaScriptCollectionOperation)(machine.heap,registers[0]??{$:'undefined'},instruction.operation,frame.arguments));
     case 'primitiveMethod':{
      if(testJavaScriptArrayIntrinsicOperation(instruction.operation)){
       const result=testJavaScriptArrayValue(machine.heap,frame.arguments[0]??{$:'undefined'});if(result.error!=='')return {$:'machineInvalid',heap:machine.heap,reason:result.error};
@@ -1420,7 +1422,7 @@ export function resumeJavaScriptCallObjectAllocation(program,machine,identity){
   return {$:'machineInvalid',heap:machine.heap,reason:allocation.$==='collectionIterationInvalid'?allocation.reason:'iterator allocation needs its actual completed creation'};
  }
  if(instruction.$==='collectionAllocate'){
-  const allocation=allocateJavaScriptCollection(machine.heap,identity,prototype,instruction.kind);if(allocation.$!=='collectionNormal')return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,allocation);
+  const allocation=(['WeakMap','WeakSet'].includes(instruction.kind)?allocateJavaScriptWeakCollection:allocateJavaScriptCollection)(machine.heap,identity,prototype,instruction.kind);if(allocation.$!=='collectionNormal')return acceptJavaScriptCollectionCompletion(program,machine,frame,instruction.destination,allocation);
   const next=writeJavaScriptCallRegister(advanceJavaScriptCallFrame(frame),instruction.destination,allocation.value);return {$:'machineContinue',machine:replaceJavaScriptCallFrame(allocation.heap,machine.frames,next)};
  }
  const allocation=insertJavaScriptOrdinaryObject(machine.heap,identity,prototype);
@@ -2081,7 +2083,7 @@ export function resumeJavaScriptCallSymbolAllocation(program,machine,identity){
  const frame=machine.frames[machine.frames.length-1],pending=frame?.pending;if(frame===undefined||pending?.$!=='waitSymbolAllocation')return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires its actual suspended source instruction'};
  if(typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n||machine.heap.symbols.includes(identity)||machine.heap.objects.some(object=>object.identity===identity))return {$:'machineInvalid',heap:machine.heap,reason:'Symbol allocation requires an unused actual positive unsigned64 global identity'};
  if(machine.heap.symbols.length>=16384)return {$:'machineResourceLimit',machine,reason:'Symbol allocation exceeds the selected 16384 identity profile'};
- const heap={...machine.heap,symbols:machine.heap.symbols.concat([identity]).toSorted((left,right)=>left<right?-1:left>right?1:0)};
+ const heap={...machine.heap,symbols:machine.heap.symbols.concat([identity]).toSorted((left,right)=>left<right?-1:left>right?1:0),symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:(machine.heap.symbolRegistrations??[]).concat([{$:'symbolRegistrationFact',identity,registered:false}]).toSorted((left,right)=>left.identity<right.identity?-1:left.identity>right.identity?1:0)};
  return {$:'machineContinue',machine:replaceJavaScriptCallFrame(heap,machine.frames,writeJavaScriptCallRegister({...frame,pending:{$:'callIdle'}},pending.destination,{$:'symbol',identity}))};
 }
 

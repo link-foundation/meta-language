@@ -1,3 +1,4 @@
+import {readJavaScriptWeakCollectionOperationKind} from './javascript-weak-collection-rules.js';
 import {testJavaScriptSemanticSameValue,readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit} from './javascript-semantic-values.js';
 /** @param {JavaScriptSemanticValue} left @param {JavaScriptSemanticValue} right @returns {boolean} */
 export function testJavaScriptCollectionKey(left,right){return left.$==='number'&&right.$==='number'?(left.value===right.value||Number.isNaN(left.value)&&Number.isNaN(right.value)):testJavaScriptSemanticSameValue(left,right);}
@@ -5,7 +6,7 @@ export function testJavaScriptCollectionKey(left,right){return left.$==='number'
  * @param {JavaScriptSemanticValue} key @returns {JavaScriptSemanticValue} */
 export function normalizeJavaScriptCollectionKey(key){return key.$==='number'&&key.value===0?{$:'number',value:0}:key;}
 /** @param {string} operation @returns {string} */
-export function readJavaScriptCollectionOperationKind(operation){return ['Map.get','Map.set','Map.has','Map.delete','Map.clear','Map.size'].includes(operation)?'Map':['Set.add','Set.has','Set.delete','Set.clear','Set.size'].includes(operation)?'Set':'';}
+export function readJavaScriptCollectionOperationKind(operation){return ['Map.get','Map.set','Map.has','Map.delete','Map.clear','Map.size'].includes(operation)?'Map':['Set.add','Set.has','Set.delete','Set.clear','Set.size'].includes(operation)?'Set':readJavaScriptWeakCollectionOperationKind(operation);}
 /** @param {JavaScriptSemanticValue} value @returns {number} */
 export function readJavaScriptCollectionKeyRank(value){switch(value.$){case'undefined':return 0;case'null':return 1;case'boolean':return 2;case'number':return 3;case'integer':return 4;case'text':case'sourceText':return 5;case'symbol':return 6;case'object':return 7;}return -1;}
 /** Deterministic validation order, not observable Map iteration order.

@@ -53,7 +53,7 @@ function readJavaScriptClosedClassParameterPositionsWithCollections(values,kinds
       } else if ((kinds[at] ?? '') === 'number' || (kinds[at] ?? '') === 'string'
         || ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity'].includes(value)) at += 1;
       else if ((value === '[' && (values[at + 1] ?? '') === ']') || (value === '{' && (values[at + 1] ?? '') === '}')) at += 2;
-      else if(collections&&value==='new'&&['Set','Map'].includes(values[at+1]??'')&&(values[at+2]??'')==='('&&(values[at+3]??'')===')')at+=4;
+      else if(collections&&value==='new'&&['Set','Map','WeakMap','WeakSet'].includes(values[at+1]??'')&&(values[at+2]??'')==='('&&(values[at+3]??'')===')')at+=4;
       else return [-1, at];
     }
     if (at < close) {
@@ -77,7 +77,7 @@ export function renderJavaScriptClosedClassParameterArguments(source, values, st
       const value = values[at] ?? '';
       if (value === '[' || value === '{') at += 2;
       else if (value === '+' || value === '-') at += 2;
-      else if(value==='new'&&['Set','Map'].includes(values[at+1]??'')&&(values[at+2]??'')==='('&&(values[at+3]??'')===')')at+=4;
+      else if(value==='new'&&['Set','Map','WeakMap','WeakSet'].includes(values[at+1]??'')&&(values[at+2]??'')==='('&&(values[at+3]??'')===')')at+=4;
       else at += 1;
     }
     if (at < close) at += 1;
@@ -319,7 +319,7 @@ export function readJavaScriptClosedClassCollectionDefaultClassOwnerError(values
   let parameters=[row[3]??-1,row[4]??-1];
   for(let at=9+3*(row[7]??0);at<row.length;at+=5)parameters=parameters.concat([row[at+1]??-1,row[at+2]??-1]);
   for(let pair=0;pair<parameters.length;pair+=2)for(let at=(parameters[pair]??-1)+1;at<(parameters[pair+1]??-1);at+=1)
-   if((values[at-1]??'')==='='&&(values[at]??'')==='new'&&['Set','Map'].includes(values[at+1]??'')&&names.includes(values[at+1]??''))return at+1;
+   if((values[at-1]??'')==='='&&(values[at]??'')==='new'&&['Set','Map','WeakMap','WeakSet'].includes(values[at+1]??'')&&names.includes(values[at+1]??''))return at+1;
  }return -1;
 }
 

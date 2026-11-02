@@ -18,7 +18,7 @@ export function testJavaScriptPropertyReflectionOperation(operation){return ['Ob
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptSingleDescriptorOperation(operation){return operation==='Object.getOwnPropertyDescriptor'||operation==='Reflect.getOwnPropertyDescriptor';}
 /** @param {string} kind @returns {boolean} */
-export function testJavaScriptReflectionOrdinaryKind(kind){return ['ordinaryObject','closureObject','arrayObject','mapObject','setObject','collectionIteratorObject'].includes(kind);}
+export function testJavaScriptReflectionOrdinaryKind(kind){return ['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(kind);}
 /** @param {string} value @returns {JavaScriptSemanticValue} */
 export function constructJavaScriptReflectionText(value){const units=[];for(let at=0;at<value.length;at++)units.push(value.charCodeAt(at));return {$:'text',units};}
 /** @param {JavaScriptSemanticValue} key @param {JavaScriptSemanticValue} value @returns {JavaScriptOrdinaryProperty} */

@@ -15,7 +15,7 @@ export function readJavaScriptPrimitiveWrapperStateError(heap,state){
  if(state.$!=='primitiveWrapperState'||state.input.$==='object')return 'wrapper allocation retains an actual primitive or nullish Object Call input';
  for(const value of [state.input,state.prototype]){const error=readJavaScriptOrdinaryValueError(heap,value);if(error!=='')return error;}
  if(state.prototype.$!=='object'&&state.prototype.$!=='null')return 'wrapper allocation retains its actual selected realm Object prototype';
- if(state.prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.prototype.identity)];if(parent!==undefined&&!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','collectionIteratorObject'].includes(parent.$))return 'wrapper allocation with an opaque prototype requires its actual traversal protocol';}
+ if(state.prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,state.prototype.identity)];if(parent!==undefined&&!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject'].includes(parent.$))return 'wrapper allocation with an opaque prototype requires its actual traversal protocol';}
  return '';
 }
 /** Inputs and state are already validated. Budgets are resource requests,
@@ -65,6 +65,6 @@ export function resumeJavaScriptPrimitiveWrapper(heap,state,identity){
  }
  const allocated=insertJavaScriptOrdinaryObject(heap,identity,state.prototype);if(allocated.error!=='')return {$:'primitiveWrapperInvalid',heap,reason:allocated.error};
  const input=state.input,objects=allocated.heap.objects.map(object=>object.identity!==identity||object.$!=='ordinaryObject'?object:length>=0?{...object,properties,stringData:input}:input.$==='null'||input.$==='undefined'?object:{...object,primitiveData:input});
- const next={$:'ordinaryHeap',objects,symbols:allocated.heap.symbols},error=readJavaScriptOrdinaryHeapError(next);if(error!=='')return {$:'primitiveWrapperInvalid',heap,reason:error};
+ const next={...allocated.heap,objects},error=readJavaScriptOrdinaryHeapError(next);if(error!=='')return {$:'primitiveWrapperInvalid',heap,reason:error};
  return {$:'primitiveWrapperCompleted',heap:next,value:{$:'object',identity,callable:false}};
 }

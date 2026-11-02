@@ -19,7 +19,7 @@ import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaSc
 // metadata after portable wrapper semantics completed. They do not run a
 // represented constructor, coercion, getter or method as an implementation.
 const dataCarrierAuthority={object:Object,ownKeys:Reflect.ownKeys,descriptor:Reflect.getOwnPropertyDescriptor,prototype:Reflect.getPrototypeOf,setPrototype:Reflect.setPrototypeOf,extensible:Reflect.isExtensible,define:Reflect.defineProperty,prevent:Reflect.preventExtensions};
-const actualSymbolAllocator=Symbol;
+const actualSymbolAllocator=Symbol,actualSymbolKeyFor=Reflect.getOwnPropertyDescriptor(Symbol,'keyFor')?.value;
 const primitiveValueSlots=[{kind:'number',constructor:Number,test:nativeTypes.isNumberObject,value:Reflect.getOwnPropertyDescriptor(Number.prototype,'valueOf')?.value},{kind:'boolean',constructor:Boolean,test:nativeTypes.isBooleanObject,value:Reflect.getOwnPropertyDescriptor(Boolean.prototype,'valueOf')?.value},{kind:'symbol',constructor:Symbol,test:nativeTypes.isSymbolObject,value:Reflect.getOwnPropertyDescriptor(Symbol.prototype,'valueOf')?.value},{kind:'integer',constructor:BigInt,test:nativeTypes.isBigIntObject,value:Reflect.getOwnPropertyDescriptor(BigInt.prototype,'valueOf')?.value}];
 const stringValueSlot=Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value;
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
@@ -45,18 +45,19 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
  if(sourceFunctions&&(!deferModule||!ordinaryClasses&&declarationWitness!==null))throw new TypeError('source capabilities must be bound before source entry publication');
  const declarationOwners=declarationWitness===null?null:ordinaryClasses?readJavaScriptOrdinaryClassDeclarationWitness(capture,declarationWitness):readSourceLibraryErrorDeclarationWitness(capture,declarationWitness);
  if(!realm||!realm.errors||!realm.objectPrototype||typeof realm.objectPrototype!=='object'||Reflect.getPrototypeOf(realm.objectPrototype)!==null||typeof realm.toPrimitive!=='symbol'||typeof realm.getPrimitive!=='function'||typeof realm.assign!=='function'||!definitions||typeof identity!=='bigint'||identity<=0n||identity>18446744073709551615n)throw new TypeError('actual complete Error realm authority is required');
- let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[]};
+ let next=1n,heap={$:'ordinaryHeap',objects:[],symbols:[],symbolRegistrationModel:'actual global Symbol registry classification 1',symbolRegistrations:[]};
  const forward=new Map(),reverse=new Map(),intrinsics=new Map(),vmProxies=new Map(),hostOwned=new Set(),refusals=new WeakSet(),sourceNames=new Map(),capabilityOwners=new Map(),opaqueOwners=new Map(),portableFunctions=new Map();
  let portableTemplateProgram={templates:undefined},arrayConstructorAuthority=null,primitiveIteratorPrototypes=null;
  function refuse(reason){const error=new TypeError(reason);refusals.add(error);throw error;}
  const allocate=()=>{while(heap.objects.some(row=>row.identity===next)||heap.symbols.includes(next))next+=1n;if(next>18446744073709551615n)throw new RangeError('the authoritative global identity allocator exhausted unsigned64 identities');return next++;};
- const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0)};};
+ const sorted=()=>{heap={...heap,objects:heap.objects.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0),symbols:heap.symbols.toSorted((a,b)=>a<b?-1:a>b?1:0),symbolRegistrations:heap.symbolRegistrations?.toSorted((a,b)=>a.identity<b.identity?-1:a.identity>b.identity?1:0)};};
  function encode(value){
   if(value===undefined)return {$:'undefined'};if(value===null)return {$:'null'};
   if(typeof value==='string')return sourceFunctions&&value.length>1048576?constructJavaScriptSourceText(value):text(value);if(typeof value==='boolean')return {$:'boolean',value};if(typeof value==='number')return {$:'number',value};if(typeof value==='bigint')return {$:'integer',value};
   if(forward.has(value)){const id=forward.get(value);return typeof value==='symbol'?{$:'symbol',identity:id}:{$:'object',identity:id,callable:typeof value==='function'};}
-  if(typeof value==='symbol'){const id=allocate();forward.set(value,id);reverse.set(id,value);heap.symbols.push(id);sorted();return {$:'symbol',identity:id};}
+  if(typeof value==='symbol'){if(globalThis.Symbol!==actualSymbolAllocator||typeof actualSymbolKeyFor!=='function'||Reflect.getOwnPropertyDescriptor(actualSymbolAllocator,'keyFor')?.value!==actualSymbolKeyFor)throw new TypeError('weak Symbol eligibility retains the actual protected global Symbol registry authority');const registered=Reflect.apply(actualSymbolKeyFor,actualSymbolAllocator,[value])!==undefined,id=allocate();forward.set(value,id);reverse.set(id,value);heap.symbols.push(id);heap.symbolRegistrationModel='actual global Symbol registry classification 1';heap.symbolRegistrations=(heap.symbolRegistrations??[]).concat([{$:'symbolRegistrationFact',identity:id,registered}]);sorted();return {$:'symbol',identity:id};}
   if(typeof value!=='object'&&typeof value!=='function')throw new TypeError('unmodeled host semantic value');
+  if(nativeTypes.isWeakMap(value)||nativeTypes.isWeakSet(value))return refuse('capturing native weak contents requires their actual source allocation and weak slot transitions; hidden host contents are unavailable');
   if(nativeTypes.isProxy(value))return refuse('capturing a Proxy requires its actual trap continuations before reflection');
   const id=allocate();forward.set(value,id);reverse.set(id,value);
   // Only the successor ordinary-source profile exposes inspectable arrays.

@@ -1,3 +1,4 @@
+import {readJavaScriptWeakKeyEligibility} from './javascript-weak-collection-rules.js';
 import {readJavaScriptArrayObjectError,planJavaScriptArrayPropertyDefinition,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue,constructJavaScriptSemanticTextUnits,readJavaScriptSemanticTextLength} from './javascript-semantic-values.js';
 import {createJavaScriptPropertyDescriptor,testCompleteJavaScriptPropertyDescriptor,planJavaScriptPropertyDefinition} from './javascript-property-descriptors.js';
@@ -6,6 +7,9 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
 
 /** Tombstones retain stable insertion ordinals after releasing deleted values.
  * @typedef {{$:'collectionEntry',key:JavaScriptSemanticValue,value:JavaScriptSemanticValue,present:boolean}} JavaScriptCollectionEntry */
+/** Weak keys are not strong roots. A WeakMap value is an ephemeron edge,
+ * reachable only while its key is independently live. No iteration is exposed.
+ * @typedef {{$:'weakCollectionEntry',key:JavaScriptSemanticValue,value:JavaScriptSemanticValue}} JavaScriptWeakCollectionEntry */
 /** Callable closure identity belongs to the ordinary global heap. Code sites
  * remain in the separate program template directory; captures are real values.
  * @typedef {{$:'closureObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[],owner:bigint,ordinal:number,captures:JavaScriptSemanticValue[],lexicalReceiver:JavaScriptSemanticValue,lexicalNewTarget?:JavaScriptSemanticValue}} JavaScriptClosureObject */
@@ -15,6 +19,8 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
  * {$:'setObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
+ * {$:'weakMapObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[],weakEntries:JavaScriptWeakCollectionEntry[]} |
+ * {$:'weakSetObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,callable:boolean,properties:JavaScriptOrdinaryProperty[],weakEntries:JavaScriptWeakCollectionEntry[]} |
  * {$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,immutablePrototype?:boolean,regularExpression?:boolean,stringData?:JavaScriptSemanticValue,primitiveData?:JavaScriptSemanticValue,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[]} |
  * {$:'hostErrorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
@@ -30,12 +36,15 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
  * hostSet:JavaScriptSemanticValue}} JavaScriptOrdinaryObject
  */
+/** Additive authority for edition-16 CanBeHeldWeakly. Absence preserves old
+ * heap profiles; unknown Symbol facts cannot authorize a new weak operation.
+ * @typedef {{$:'symbolRegistrationFact',identity:bigint,registered:boolean}} JavaScriptSymbolRegistrationFact */
 /** Objects and Symbols share one strictly ordered unsigned64 identity space.
  * Functional snapshots are semantic states. A frontend must keep the selected
  * state in one shared cell so all aliases observe the same transition.
  * Nominal definitions keep recursive source types shared rather than repeatedly
  * expanding structural records along every typed expression occurrence.
- * @typedef {{$:'ordinaryHeap',objects:JavaScriptOrdinaryObject[],symbols:bigint[]}} JavaScriptOrdinaryHeap
+ * @typedef {{$:'ordinaryHeap',objects:JavaScriptOrdinaryObject[],symbols:bigint[],symbolRegistrationModel?:string,symbolRegistrations?:JavaScriptSymbolRegistrationFact[]}} JavaScriptOrdinaryHeap
  */
 
 /** @param {JavaScriptOrdinaryObject[]} objects @param {bigint} identity @returns {number} */
@@ -108,7 +117,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
     if(object.$==='ordinaryObject'&&object.primitiveData!==undefined&&(object.callable||!['number','boolean','integer','symbol'].includes(object.primitiveData.$)||readJavaScriptOrdinaryValueError(heap,object.primitiveData)!==''||object.stringData!==undefined))return 'primitive wrapper objects retain exactly one actual Number Boolean BigInt or Symbol internal slot';
     if(object.$==='ordinaryObject'&&object.stringData!==undefined&&(object.callable||object.stringData.$!=='text'&&object.stringData.$!=='sourceText'||readJavaScriptSemanticValueError(object.stringData)!==''))return 'String objects retain actual primitive UTF16 StringData';
     if(object.$==='ordinaryObject'&&object.immutablePrototype!==undefined&&typeof object.immutablePrototype!=='boolean')return 'immutable prototype metadata retains its actual Boolean slot';
-    if(!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','collectionIteratorObject','hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(object.$))return 'ordinary heap objects require their actual registered object kind';
+    if(!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','weakMapObject','weakSetObject','collectionIteratorObject','hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(object.$))return 'ordinary heap objects require their actual registered object kind';
     if (typeof object.identity !== 'bigint' || object.identity <= previous || object.identity > 18446744073709551615n) return 'ordinary Objects need strictly ordered unique positive unsigned64 identities';
     previous = object.identity;
   }
@@ -117,13 +126,17 @@ export function readJavaScriptOrdinaryHeapError(heap) {
     if (typeof symbol !== 'bigint' || symbol <= previous || symbol > 18446744073709551615n || findJavaScriptOrdinaryObject(heap.objects, symbol) >= 0) return 'Symbols and Objects need distinct strictly ordered positive unsigned64 identities';
     previous = symbol;
   }
+  if(heap.symbolRegistrations!==undefined||heap.symbolRegistrationModel!==undefined){
+    if(heap.symbolRegistrationModel!=='actual global Symbol registry classification 1'||!Array.isArray(heap.symbolRegistrations)||heap.symbolRegistrations.length>16384)return 'Symbol registration authority exceeds its explicit directory budget';
+    let prior=0n;for(const fact of heap.symbolRegistrations){if(fact?.$!=='symbolRegistrationFact'||typeof fact.registered!=='boolean'||typeof fact.identity!=='bigint'||fact.identity<=prior||!testJavaScriptOrdinarySymbol(heap.symbols,fact.identity))return 'Symbol registration facts retain actual unique ordered global Symbol identities';prior=fact.identity;}
+  }
   let closureCaptureCount = 0;
   let propertyCount = 0;
   let collectionEntryCount = 0;
   let collectionKeyUnits = 0;
   let collectionStoredUnits = 0;
   for (const object of heap.objects) {
-    if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject'){
+    if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject'){
       if(object.callable||object.properties.length!==0)return 'opaque Error objects keep host properties outside ordinary descriptor snapshots';
       for(const hook of [object.hostGet,object.hostSet]){const error=readJavaScriptOrdinaryValueError(heap,hook);if(error!=='')return error;if(hook.$!=='object'||!hook.callable)return 'opaque Error access requires its actual externally registered call hooks';}
     }
@@ -149,6 +162,18 @@ export function readJavaScriptOrdinaryHeapError(heap) {
           const collection=heap.objects[findJavaScriptOrdinaryObject(heap.objects,object.collection)];
           if(collection===undefined||object.collectionKind!=='Array'&&(!(object.collectionKind==='Map'&&collection.$==='mapObject'||object.collectionKind==='Set'&&collection.$==='setObject')||object.cursor>collection.entries.length))return 'a live collection iterator retains its actual collection identity and insertion position';
         }else if(object.cursor!==0||object.executing===true)return 'an exhausted collection iterator releases its collection, cursor and executing state';
+      }
+    }
+    if(object.$==='weakMapObject'||object.$==='weakSetObject'){
+      if(object.callable||!Array.isArray(object.weakEntries)||object.weakEntries.length>65536||object.entries!==undefined)return 'weak collections retain their distinct noncallable bounded weak internal slots';
+      collectionEntryCount+=object.weakEntries.length;if(collectionEntryCount>1048576)return 'weak and strong slots exceed the shared collection storage budget';
+      let previousWeakKey=0n;for(const entry of object.weakEntries){
+        if(entry?.$!=='weakCollectionEntry')return 'weak internal slots retain dense actual entry records';
+        const keyError=readJavaScriptOrdinaryValueError(heap,entry.key),valueError=readJavaScriptOrdinaryValueError(heap,entry.value);if(keyError!==''||valueError!=='')return keyError||valueError;
+        if(readJavaScriptWeakKeyEligibility(heap,entry.key)!=='eligible')return 'weak slots require actual eligible Object or nonregistered Symbol keys';
+        if((entry.key.$!=='object'&&entry.key.$!=='symbol')||entry.key.identity<=previousWeakKey)return 'weak slots retain unique ordered actual global key identities';previousWeakKey=entry.key.identity;
+        if(object.$==='weakSetObject'&&entry.value.$!=='undefined')return 'WeakSet weak slots do not invent Map value edges';
+        collectionStoredUnits+=Math.max(0,readJavaScriptSemanticTextLength(entry.value));if(collectionStoredUnits>67108864)return 'weak and strong values exceed their shared UTF16 storage budget';
       }
     }
     if(object.$==='mapObject'||object.$==='setObject'){
@@ -211,7 +236,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
       const index = findJavaScriptOrdinaryObject(heap.objects, prototype.identity);
       const parent = heap.objects[index];
       if (parent === undefined) return 'every ordinary prototype must remain in the global directory';
-      if(parent.$!=='ordinaryObject'&&parent.$!=='closureObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return 'opaque host Errors need explicit prototype traversal rather than ordinary descriptor lookup';
+      if(parent.$!=='ordinaryObject'&&parent.$!=='closureObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='weakMapObject'&&parent.$!=='weakSetObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return 'opaque host Errors need explicit prototype traversal rather than ordinary descriptor lookup';
       prototype = parent.prototype;
     }
   }
@@ -222,7 +247,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
  * @returns {JavaScriptOrdinaryHeap} */
 export function replaceJavaScriptOrdinaryObject(heap, replacement) {
   const objects = heap.objects.map(object => object.identity === replacement.identity ? replacement : object);
-  return {$:'ordinaryHeap',objects,symbols:heap.symbols};
+  return {...heap,objects};
 }
 
 /** Internal helper: callers have validated the complete snapshot and key.
@@ -259,7 +284,7 @@ export function planJavaScriptOrdinaryGet(heap, identity, key, receiver) {
     : findJavaScriptOrdinaryObject(heap.objects, identity) < 0 ? 'an ordinary Get needs its actual Object identity' : '';
   if (error !== '') return {action:'error',error,value:{$:'undefined'},callee:{$:'undefined'},receiver,arguments:[]};
   const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];
-  if(target!==undefined&&target.$!=='ordinaryObject'&&target.$!=='closureObject'&&target.$!=='mapObject'&&target.$!=='setObject'&&target.$!=='collectionIteratorObject'&&target.$!=='arrayObject')return {action:'call',error:'',value:{$:'undefined'},callee:target.hostGet,receiver:{$:'object',identity,callable:false},arguments:[key,receiver]};
+  if(target!==undefined&&target.$!=='ordinaryObject'&&target.$!=='closureObject'&&target.$!=='mapObject'&&target.$!=='setObject'&&target.$!=='weakMapObject'&&target.$!=='weakSetObject'&&target.$!=='collectionIteratorObject'&&target.$!=='arrayObject')return {action:'call',error:'',value:{$:'undefined'},callee:target.hostGet,receiver:{$:'object',identity,callable:false},arguments:[key,receiver]};
   const property = locateJavaScriptOrdinaryProperty(heap, identity, key);
   if (!property.found) return {action:'value',error:'',value:{$:'undefined'},callee:{$:'undefined'},receiver,arguments:[]};
   if (property.descriptor.valuePresent) return {action:'value',error:'',value:property.descriptor.value,callee:{$:'undefined'},receiver,arguments:[]};
@@ -285,7 +310,7 @@ export function defineJavaScriptOrdinaryProperty(heap, identity, key, proposed) 
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'DefineOwnProperty needs its actual Object identity',writes:[]};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
+  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error descriptor definition requires its actual host protocol',writes:[]};
   if(object.$==='arrayObject'){
     const plan=planJavaScriptArrayPropertyDefinition(object,key,proposed);
     if(plan.errorClass!=='')return {heap,success:false,error:plan.error,writes:[]};
@@ -319,7 +344,7 @@ export function deleteJavaScriptOrdinaryProperty(heap, identity, key) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'Delete needs its actual Object identity'};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error deletion requires its actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error deletion requires its actual host protocol'};
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
   const property = object.properties[at];
   if (property === undefined) return {heap,success:true,error:''};
@@ -337,7 +362,7 @@ export function preventJavaScriptOrdinaryExtensions(heap, identity) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'PreventExtensions needs its actual Object identity'};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error extensibility requires its actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error extensibility requires its actual host protocol'};
   const replacement = {...object,extensible:false};
   return {heap:replaceJavaScriptOrdinaryObject(heap,replacement),success:true,error:''};
 }
@@ -353,7 +378,7 @@ export function setJavaScriptOrdinaryPrototype(heap, identity, prototype) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,success:false,error:'SetPrototypeOf needs its actual Object identity'};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error prototypes require their actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error prototypes require their actual host protocol'};
   if (testJavaScriptSemanticSameValue(object.prototype, prototype)) return {heap,success:true,error:''};
   if (!object.extensible||object.$==='ordinaryObject'&&object.immutablePrototype===true) return {heap,success:false,error:''};
   let next = prototype;
@@ -363,7 +388,7 @@ export function setJavaScriptOrdinaryPrototype(heap, identity, prototype) {
     const at = findJavaScriptOrdinaryObject(heap.objects, next.identity);
     const parent = heap.objects[at];
     if (parent === undefined) return {heap,success:false,error:'every ordinary prototype must remain in the global directory'};
-    if(parent.$!=='ordinaryObject'&&parent.$!=='closureObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return {heap,success:false,error:'ordinary prototype mutation cannot silently traverse an opaque Error'};
+    if(parent.$!=='ordinaryObject'&&parent.$!=='closureObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='weakMapObject'&&parent.$!=='weakSetObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return {heap,success:false,error:'ordinary prototype mutation cannot silently traverse an opaque Error'};
     next = parent.prototype;
   }
   const replacement = {...object,prototype};
@@ -414,7 +439,7 @@ export function planJavaScriptOrdinarySetDefinition(heap, identity, key, value, 
     : findJavaScriptOrdinaryObject(heap.objects, identity) < 0 ? 'an ordinary Set needs its actual Object identity' : '';
   if (error !== '') return {heap,action:'error',error,success:false,callee:{$:'undefined'},receiver,arguments:[]};
   const target=heap.objects[findJavaScriptOrdinaryObject(heap.objects,identity)];
-  if(target!==undefined&&target.$!=='ordinaryObject'&&target.$!=='closureObject'&&target.$!=='mapObject'&&target.$!=='setObject'&&target.$!=='collectionIteratorObject'&&target.$!=='arrayObject')return {heap,action:'host call',error:'',success:false,callee:target.hostSet,receiver:{$:'object',identity,callable:false},arguments:[key,value,receiver]};
+  if(target!==undefined&&target.$!=='ordinaryObject'&&target.$!=='closureObject'&&target.$!=='mapObject'&&target.$!=='setObject'&&target.$!=='weakMapObject'&&target.$!=='weakSetObject'&&target.$!=='collectionIteratorObject'&&target.$!=='arrayObject')return {heap,action:'host call',error:'',success:false,callee:target.hostSet,receiver:{$:'object',identity,callable:false},arguments:[key,value,receiver]};
   const located = locateJavaScriptOrdinaryProperty(heap, identity, key);
   const own = located.found ? located.descriptor : createJavaScriptOrdinarySetDescriptor({$:'undefined'},true);
   if (own.getterPresent) {
@@ -427,7 +452,7 @@ export function planJavaScriptOrdinarySetDefinition(heap, identity, key, value, 
   const index = findJavaScriptOrdinaryObject(heap.objects, receiver.identity);
   const object = heap.objects[index];
   if (object === undefined) return {heap,action:'error',error:'Set needs its actual receiver Object',success:false,callee:{$:'undefined'},receiver,arguments:[]};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,action:'error',error:'a borrowed ordinary descriptor cannot replace an opaque Error receiver protocol',success:false,callee:{$:'undefined'},receiver,arguments:[]};
+  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,action:'error',error:'a borrowed ordinary descriptor cannot replace an opaque Error receiver protocol',success:false,callee:{$:'undefined'},receiver,arguments:[]};
   const at = findJavaScriptOrdinaryProperty(object.properties, key);
   const property = object.properties[at];
   if (property !== undefined && (!property.descriptor.valuePresent || !property.descriptor.writable))
@@ -449,7 +474,7 @@ export function readJavaScriptOrdinaryOwnKeys(heap, identity) {
   const index = findJavaScriptOrdinaryObject(heap.objects, identity);
   const object = heap.objects[index];
   if (object === undefined) return {keys:[],error:'OwnPropertyKeys needs its actual Object identity'};
-  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {keys:[],error:'opaque Error own keys require their actual host protocol'};
+  if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='weakMapObject'&&object.$!=='weakSetObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {keys:[],error:'opaque Error own keys require their actual host protocol'};
   let numeric = [];
   let positions = [];
   let text = [];
@@ -484,12 +509,12 @@ export function insertJavaScriptOrdinaryObject(heap, identity, prototype) {
   if (prototype.$ !== 'null' && prototype.$ !== 'object') return {heap,success:false,error:'an ordinary prototype must be null or a declared Object'};
   const error = readJavaScriptOrdinaryValueError(heap,prototype);
   if (error !== '') return {heap,success:false,error};
-  if(prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,prototype.identity)];if(parent!==undefined&&parent.$!=='ordinaryObject'&&parent.$!=='closureObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return {heap,success:false,error:'ordinary allocation with an opaque Error prototype needs its explicit host traversal protocol'};}
+  if(prototype.$==='object'){const parent=heap.objects[findJavaScriptOrdinaryObject(heap.objects,prototype.identity)];if(parent!==undefined&&parent.$!=='ordinaryObject'&&parent.$!=='closureObject'&&parent.$!=='mapObject'&&parent.$!=='setObject'&&parent.$!=='weakMapObject'&&parent.$!=='weakSetObject'&&parent.$!=='collectionIteratorObject'&&parent.$!=='arrayObject')return {heap,success:false,error:'ordinary allocation with an opaque Error prototype needs its explicit host traversal protocol'};}
   let at = 0;
   for (const object of heap.objects) if (object.identity < identity) at += 1;
   const object = {$:'ordinaryObject',identity,prototype,extensible:true,callable:false,properties:[]};
   const objects = heap.objects.slice(0,at).concat([object],heap.objects.slice(at));
-  return {heap:{$:'ordinaryHeap',objects,symbols:heap.symbols},success:true,error:''};
+  return {heap:{...heap,objects},success:true,error:''};
 }
 
 /** @param {JavaScriptOrdinaryHeap} heap @param {bigint} identity
@@ -503,5 +528,5 @@ export function registerJavaScriptOrdinarySymbol(heap, identity) {
   let at = 0;
   for (const symbol of heap.symbols) if (symbol < identity) at += 1;
   const symbols = heap.symbols.slice(0,at).concat([identity],heap.symbols.slice(at));
-  return {heap:{$:'ordinaryHeap',objects:heap.objects,symbols},success:true,error:''};
+  return {heap:{...heap,symbols},success:true,error:''};
 }
