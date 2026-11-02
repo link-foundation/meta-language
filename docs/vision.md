@@ -1,5 +1,12 @@
 # Meta-language vision and architecture
 
+Array copying operations use the active realm's ordinary Array allocation,
+independent of source constructors/species. Reversal reads captured source
+coordinates in descending order; indexed replacement converts and bounds the
+actual index before allocation and never reads the replaced coordinate. Both
+produce dense own writable/enumerable/configurable data properties, including
+undefined for holes, through the shared ordinary operations and continuation VM.
+
 This is the authoritative specification of what meta-language is for and how it
 is built. Everything else in this repository serves it: where the root
 [README](../README.md), a package README, the
