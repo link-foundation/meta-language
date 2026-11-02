@@ -45,6 +45,8 @@ export function readJavaScriptArraySliceStateError(heap,directory,state){
  if(['conversion','primitive'].includes(state.phase)&&state.conversionKind!=='length'&&!testJavaScriptSemanticSameValue(state.input,state.conversionKind==='start'?state.start:state.end)&&state.phase!=='primitive')return 'slice bounds retain the actual original argument';
  const initialized=['species','allocate','construct','ready','element getter','write','finish'].includes(state.phase);
  if(initialized&&(state.count!==Math.max(state.endIndex-state.startIndex,0)||state.index!==state.startIndex+state.outputIndex))return 'slice retains its selected interval and corresponding input/output coordinates';
+ if(['species','allocate','construct'].includes(state.phase)&&(state.outputIndex!==0||state.target.$!=='undefined')||state.phase==='finish'&&state.outputIndex!==state.count)return 'slice construction precedes element work and final Set follows the complete selected interval';
+ if(state.phase!=='write'&&state.value.$!=='undefined')return 'slice retains an element value only during its actual output definition';
  if(['element getter','write'].includes(state.phase)&&state.outputIndex>=state.count)return 'slice element work retains an in-range output coordinate';
  if(state.species!==undefined){const error=readJavaScriptArraySpeciesStateError(heap,directory,state.species);if(error!=='')return error;if(!testJavaScriptSemanticSameValue(state.species.original,state.receiver)||state.species.length!==state.count)return 'slice species retains its actual source and requested count';}
  if(initialized&&state.species===undefined)return 'slice result creation retains its actual species selection';

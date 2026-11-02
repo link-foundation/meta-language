@@ -78,7 +78,7 @@ test('fallback slice rejects oversized Array count before allocating identity',(
 });
 test('slice refuses forged continuations and unrelated allocation/construction responses',()=>{
  const {heap,directory}=setup(),request=begin(heap,directory);assert.equal(readJavaScriptArraySliceStateError(heap,directory,request.state),'');
- for(const changed of [{...request.state,count:3},{...request.state,outputIndex:1},{...request.state,allocationPrototype:object(6n)},{...request.state,endPresent:false,end:number(9)},{...request.state,conversion:{$:'forged'}}])assert.notEqual(readJavaScriptArraySliceStateError(heap,directory,changed),'');
+ for(const changed of [{...request.state,count:3},{...request.state,outputIndex:1},{...request.state,target:object(7n)},{...request.state,value:number(9)},{...request.state,allocationPrototype:object(6n)},{...request.state,endPresent:false,end:number(9)},{...request.state,conversion:{$:'forged'}}])assert.notEqual(readJavaScriptArraySliceStateError(heap,directory,changed),'');
  assert.equal(resumeJavaScriptArraySliceCall(heap,directory,request.state,normal(number(1))).$,'arraySliceInvalid');assert.equal(resumeJavaScriptArraySliceConstruction(heap,directory,request.state,normal(object(7n))).$,'arraySliceInvalid');assert.equal(resumeJavaScriptArraySliceAllocation(heap,directory,request.state,3n).$,'arraySliceInvalid');
  const customRequest=begin(custom(heap),directory);assert.equal(resumeJavaScriptArraySliceConstruction(customRequest.heap,directory,customRequest.state,normal(number(1))).$,'arraySliceInvalid');
 });
