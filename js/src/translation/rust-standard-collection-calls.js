@@ -1,3 +1,4 @@
+import {readRustStandardCollectionSourceEqualityMethod} from './rust-standard-collection-equality-source.js';
 // Real source bodies call the supplied checked kernel and transport result/state
 // packets. No represented collection operation runs while parsing source.
 import {unsupported,typeError} from './diagnostics.js';
@@ -5,7 +6,7 @@ import {BOOL,UNIT,INT,rustFixedType} from './types.js';
 import {readRustStandardCollectionSourceOrigin,readRustStandardCollectionSourceScalarDomain} from './rust-standard-collection-types.js';
 import {resolveRustStandardCollectionSourceOwner,readRustStandardCollectionSourceStorage} from './rust-standard-collection-source.js';
 import {readRustStandardCollectionMethodArity,readRustStandardCollectionMethodResult,readRustStandardCollectionCallOriginError,readRustStandardCollectionArgumentOriginError,testRustStandardCollectionMutation} from './rust-standard-collection-rules.js';
-import {projectRustStandardCollectionLibraryType,readRustStandardCollectionLibraryOrigin,encodeRustStandardCollectionSourceConstant,constructRustStandardCollectionSourceVariant,matchRustStandardCollectionSourceVariant} from './rust-standard-collection-signatures.js';
+import {projectRustStandardCollectionLibraryType,readRustStandardCollectionLibraryOrigin,encodeRustStandardCollectionSourceConstant,constructRustStandardCollectionSourceVariant,matchRustStandardCollectionSourceVariant,constructRustStandardCollectionSourceCarrier as wrapRustStandardCollectionSourceState,projectRustStandardCollectionSourceCarrier as withRustStandardCollectionSourceState} from './rust-standard-collection-signatures.js';
 import {createRustStandardSumSourceOrigin,withRustStandardSumSourceContext} from './rust-standard-sum-source.js';
 import {testRustOwnedRecordStatePlaceLoans} from './rust-owned-record-state.js';
 import {recordRustExclusiveSourcePacketEffect,readRustExclusiveSourceNode,selectRustExclusiveSourcePlace} from './rust-exclusive-source-calls.js';
@@ -66,8 +67,6 @@ function decodeResult(parser,row,method,expression,type,origin,span){
   return {k:'if',cond:present.expression,then:{k:'app',fn:{k:'name',path:sum.constructorPaths.Some},args:[decoded],span},else:{k:'name',path:sum.constructorPaths.None,span},span};
  },()=>handlers.invalid(),span);
 }
-function wrapRustStandardCollectionSourceState(row,state,span){return {k:'app',fn:{k:'name',path:[...row.carrierConstructor],span},args:[state],span};}
-function withRustStandardCollectionSourceState(parser,row,expression,next,span){const held=parser.freshProductBinding();return {k:'match',scrutinees:[expression],rows:[{patterns:[{k:'ctor',path:[...row.carrierConstructor],args:[{k:'bind',name:held,span}],span}],body:next(name(held)),span}],span};}
 function rejectOverlappingArgumentEffects(parser,args,place,span){
  const pending=[...args];let count=0;while(pending.length){const node=pending.pop();if(!node||typeof node!=='object')continue;if(++count>100000)fail('collection argument effects exceed their source inspection bound',span);const effect=readRustExclusiveSourceNode(parser,node),overlap=other=>other?.slot&&testRustExclusiveSourcePlaceOverlap(place.slot.lexical,place.fields,other.slot.lexical,other.fields??other.layouts?.map(row=>row.index)??[]);if(effect?.kind==='call'&&effect.info.borrows.some(overlap)||effect?.kind==='write'&&overlap(effect.info))fail('collection receiver reservation overlaps a later argument mutation of the same source place',span);for(const child of Object.values(node))if(child&&typeof child==='object')pending.push(child);}
 }
@@ -81,12 +80,12 @@ function replaceConstantField(library,node,type,field,value,span){
 }
 export function readRustStandardCollectionSourceArguments(parser,receiver,method,path){
  const actual=parser.origins.origin(receiver,path),row=readRustStandardCollectionSourceOrigin(parser,actual);if(!row)return null;
- const arity=readRustStandardCollectionMethodArity(row.origin.resolvedOwner,method.value);if(arity<0)fail('the actual standard collection method has no admitted source argument contract',method);
+ const equality=['eq','ne'].includes(method.value),arity=equality?1:readRustStandardCollectionMethodArity(row.origin.resolvedOwner,method.value);if(arity<0)fail('the actual standard collection method has no admitted source argument contract',method);
  const c=parser.cursor,args=[];c.expect('(','standard collection method');
  while(!c.is(')')){
   const index=args.length;if(index>=arity)throw typeError('collection method has too many actual arguments',method);
-  const expected=row.arguments[index],argument=withRustStandardSumSourceContext(parser,expected,()=>parser.expr(path));
-  exactArgumentOrigin(parser,argument,index===0?row.keyDomain:row.valueDomain,method.value!=='insert',path,argument.span??method,expected);
+  const expected=row.arguments[index],argument=equality?parser.expr(path):withRustStandardSumSourceContext(parser,expected,()=>parser.expr(path));
+  if(!equality)exactArgumentOrigin(parser,argument,index===0?row.keyDomain:row.valueDomain,method.value!=='insert',path,argument.span??method,expected);
   if(method.value==='insert')parser.origins.prepareOwnedArgument(argument,expected,path);
   args.push(argument);if(!c.eat(','))break;
  }
@@ -102,6 +101,7 @@ export function readRustStandardCollectionSourceConstructor(parser,segments,args
 }
 export function readRustStandardCollectionSourceMethod(parser,receiver,method,args,span,path=parser.modulePath){
  const context=parser.standardCollectionSource;if(!context)return null;const actual=parser.origins.origin(receiver,path),row=readRustStandardCollectionSourceOrigin(parser,actual);if(!row)return null;
+ const equality=readRustStandardCollectionSourceEqualityMethod(parser,receiver,method,args,path,span);if(equality)return equality;
  const operation=method.value,arity=readRustStandardCollectionMethodArity(row.origin.resolvedOwner,operation);if(arity<0)fail('collection iteration custom hashers and unimplemented methods retain their explicit refusal',span);if(['new','default'].includes(operation)||args.length!==arity)throw typeError('collection method requires its actual complete argument list',span);
  let projection='';if(operation==='get'){const c=parser.cursor;c.expect('.','immediate collection get projection');const selected=c.identifier('collection Option projection');if(!['copied','cloned'].includes(selected.value))fail('collection get references require immediate actual copied/cloned projection',selected);projection=selected.value;c.expect('(','collection Option projection');c.expect(')','collection Option projection');if(projection==='copied'&&(row.origin.resolvedOwner==='std::collections::HashMap'?row.valueDomain:row.keyDomain)==='String')fail('String collection get cannot acquire Copy semantics',span);}
  const mutation=testRustStandardCollectionMutation(row.origin.resolvedOwner,operation),place=selectRustExclusiveSourcePlace(parser,receiver,path),slot=place?.slot,exclusive=parser.exclusiveSourceModel==='Rust exclusive source loans 1'&&(actual.sourceExclusiveMode==='exclusive'||slot?.origin.sourceExclusiveMode==='exclusive'||slot?.origin.sourceExclusiveParameter===true);

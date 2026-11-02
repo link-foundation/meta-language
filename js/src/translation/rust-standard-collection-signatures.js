@@ -1,6 +1,7 @@
 // Source interface conversion and literal transport use actual checked library
 // types/constructors. These operations author AST; they do not run collections.
 import {unsupported} from './diagnostics.js';
+import {sameType} from './types.js';
 import {readRustStandardCollectionSourceOriginError,resolveRustStandardCollectionOwner} from './rust-standard-collection-rules.js';
 const fail=(reason,span)=>{throw unsupported('Rust standard collection source interface',reason,span);};
 function exactRustStandardCollectionFacet(value,fields){return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length===fields.length&&fields.every(field=>Object.hasOwn(value,field));}
@@ -10,9 +11,11 @@ function acceptRustStandardCollectionLibraryIdentity(value){return typeof value?
  * @param {object} entry @param {string} language */
 export function checkRustStandardCollectionLibraryOwner(entry,language){
  const owner=entry.sourceStandardCollectionLibraryOwner;if(owner===undefined)return null;
- if(language!=='Rust'||!exactRustStandardCollectionFacet(owner,['model','entryPath','sourceSha256','declaration','role'])||owner.model!=='Rust standard collection projected library owner 1'||!acceptRustStandardCollectionLibraryIdentity(owner)||owner.declaration!==(entry.fullName??[...(entry.modulePath??[]),entry.name].join('.'))||!['state','packet','kernel'].includes(owner.role))fail('standard collection library owner must bind its actual checked declaration and source identity',entry.span);
+ if(language!=='Rust'||!exactRustStandardCollectionFacet(owner,['model','entryPath','sourceSha256','declaration','role'])||owner.model!=='Rust standard collection projected library owner 1'||!acceptRustStandardCollectionLibraryIdentity(owner)||owner.declaration!==(entry.fullName??[...(entry.modulePath??[]),entry.name].join('.'))||!['state','packet','kernel','equality'].includes(owner.role))fail('standard collection library owner must bind its actual checked declaration and source identity',entry.span);
  if(owner.role==='state'){
   const fields=['origin','root','keyDomain','valueDomain','pointerWidth','revision','entries'];if(entry.k!=='data'||entry.ctors?.length!==1||entry.ctors[0].name!=='rustStandardCollectionState'||entry.ctors[0].fields.length!==fields.length||entry.ctors[0].fields.some((field,index)=>field.name!==fields[index]))fail('the collection state owner retains its actual complete kernel datatype interface',entry.span);
+ }else if(owner.role==='equality'){
+  if(entry.k!=='fn'||!entry.body||entry.params?.length!==4||entry.params.slice(0,3).some(parameter=>!['data','named','record'].includes(parameter.type?.kind))||!sameType(entry.params[0].type,entry.params[1].type)||entry.params[3].type?.kind!=='float'||!['data','named'].includes(entry.ret?.kind))fail('the equality owner retains its actual complete shared operand origin and work-budget body interface',entry.span);
  }else{
   const count=owner.role==='packet'?5:4;if(entry.k!=='fn'||!entry.body||entry.params?.length!==count||!['data','named'].includes(entry.params[0].type?.kind)||entry.params[1].type?.kind!=='string'||entry.params[2].type?.kind!=='array'||!['data','named','record'].includes(entry.params[3].type?.kind)||owner.role==='packet'&&entry.params[4].type?.kind!=='string'||!['data','named'].includes(entry.ret?.kind))fail('the collection callable owner retains its actual complete packet/kernel body interface',entry.span);
  }
@@ -93,3 +96,5 @@ export function matchRustStandardCollectionSourceVariant(parser,library,type,exp
  const declaration=type.kind==='data'?library.program.declarations.get(type.name):null;if(!declaration?.ctors)fail('collection decoding requires its actual complete library datatype',span);
  return {k:'match',scrutinees:[expression],rows:declaration.ctors.map(constructor=>{const names=constructor.fields.map(()=>parser.freshProductBinding()),fields=new Map(constructor.fields.map((field,index)=>[field.name,{expression:{k:'name',path:[names[index]],span},type:field.type}]));return {patterns:[{k:'ctor',path:['crate',...type.name.split('.'),constructor.name],args:names.map(name=>({k:'bind',name,span})),span}],body:constructor.name===tag?matched(fields):rejected(constructor.name,fields),span};}),span};
 }
+export function constructRustStandardCollectionSourceCarrier(row,state,span){return {k:'app',fn:{k:'name',path:[...row.carrierConstructor],span},args:[state],span};}
+export function projectRustStandardCollectionSourceCarrier(parser,row,expression,next,span){const held=parser.freshProductBinding();return {k:'match',scrutinees:[expression],rows:[{patterns:[{k:'ctor',path:[...row.carrierConstructor],args:[{k:'bind',name:held,span}],span}],body:next({k:'name',path:[held]}),span}],span};}

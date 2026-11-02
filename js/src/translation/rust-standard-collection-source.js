@@ -42,7 +42,11 @@ export function resolveRustStandardCollectionSourceOwner(parser,segments,path){
  for(const names of [segments,resolved])if(parser.origins.lookupTypeOwner(names,path)||parser.origins.lookupTypeOwner([names[0]],path)||parser.origins.lookupValueOwner([names[0]],path)||parser.origins.scope.has(names[0])||parser.sourceTypeAliases?.has([...path,names[0]].join('.')))return '';
  return owner;
 }
-export function readRustStandardCollectionSourceImport(parser,segments,path){return Boolean(parser.standardCollectionSource&&segments[0]==='std'&&resolveRustStandardCollectionSourceOwner(parser,segments,path));}
+export function readRustStandardCollectionSourceImport(parser,segments,path){
+ if(!parser.standardCollectionSource)return false;
+ if(['core::cmp::PartialEq','std::cmp::PartialEq'].includes(segments.join('::')))return !parser.origins.lookupTypeOwner([segments[0]],path)&&!parser.origins.lookupValueOwner([segments[0]],path)&&!parser.origins.scope.has(segments[0]);
+ return Boolean(segments[0]==='std'&&resolveRustStandardCollectionSourceOwner(parser,segments,path));
+}
 export function refuseRustStandardCollectionSourcePrivateName(parser,segments,path,span){
  const context=parser.standardCollectionSource;if(!context)return;const resolved=parser.resolve(segments,path),actual=resolved[0]==='crate'?resolved.slice(1):resolved;
  if(actual.some((_,index)=>context.privateNames.has(actual.slice(0,index+1).join('.')))||segments.some((_,index)=>context.privateNames.has(segments.slice(0,index+1).join('.'))))fail('projected collection implementation names are private and cannot become original source declarations or calls',span);
@@ -78,7 +82,7 @@ export function finishRustStandardCollectionSource(parser,program){
  const libraryNames=context.privateNames,collision=[];function inspect(items,path=[]){for(const item of items){if(item.k==='module')inspect(item.items,[...path,item.name]);else if(libraryNames.has([...path,item.name].join('.')))collision.push(item.name);}}inspect(program.items);
  if(collision.length)fail('user declarations cannot replace projected collection library bodies: '+collision.join(', '));
  const carriers=[...context.types.values()].map(row=>row.carrierDeclaration);if(carriers.some(row=>!row))fail('every concrete source collection needs its actual nominal carrier declaration');
- const libraryItems=structuredClone(context.library.sourceProgram.items),roles=new Map([[context.carrierCheckedType.name,'state'],...context.library.functions.filter(row=>row.role==='packet'||row.role==='kernel').map(row=>[row.checkedName,row.role])]);
+ const libraryItems=structuredClone(context.library.sourceProgram.items),roles=new Map([[context.carrierCheckedType.name,'state'],...context.library.functions.filter(row=>['packet','kernel','equality'].includes(row.role)).map(row=>[row.checkedName,row.role])]);
  function bindOwners(items,path=[]){for(const item of items){if(item.k==='module'){bindOwners(item.items,[...path,item.name]);continue;}const declaration=[...path,item.name].join('.'),role=roles.get(declaration);if(role)item.sourceStandardCollectionLibraryOwner={model:'Rust standard collection projected library owner 1',entryPath:context.library.entryPath,sourceSha256:context.library.closure.sourceSha256,declaration,role};}}bindOwners(libraryItems);
  return {...program,items:[...libraryItems,...structuredClone(carriers),...program.items,...context.wrappers]};
 }

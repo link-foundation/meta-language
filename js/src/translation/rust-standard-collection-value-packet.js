@@ -1,6 +1,7 @@
 // This executable library module depends only on shared scalar/state kernels.
 // Compiler graph linkage lives in the separate source call adapter.
 import {executeRustStandardCollectionOperation,projectRustStandardCollectionOption} from './rust-standard-collection-state.js';
+import {executeRustStandardCollectionEquality} from './rust-standard-collection-equality.js';
 /** @typedef {{$:'rustCollectionPacketNormal',values:[RustStandardCollectionScalar|RustStandardCollectionOption|RustStandardCollectionState|{$:'rustCollectionUnit'},RustStandardCollectionState],writeback:boolean}|{$:'rustCollectionInvalid',reason:string}|{$:'rustCollectionResourceLimit',state?:RustStandardCollectionState,reason:string}} RustStandardCollectionPacketTransition */
 /** A real callable body for later automatic source-library projection. Both
  * reads and writes return the original result-zero/state-one tuple recipe.
@@ -26,3 +27,7 @@ export function executeRustStandardCollectionValuePacket(state,method,arguments_
 export function encodeRustStandardCollectionText(value){const units=[];for(let index=0;index<value.length;index++)units.push(value.charCodeAt(index));return {$:'rustCollectionString',units};}
 /** @param {number[]} units @returns {string} */
 export function decodeRustStandardCollectionText(units){let value='';for(const unit of units)value+=String.fromCharCode(unit);return value;}
+/** @param {RustStandardCollectionState} left @param {RustStandardCollectionState} right
+ * @param {RustStandardCollectionEqualityOrigin} origin @param {number} budget
+ * @returns {RustStandardCollectionEqualityTransition} */
+export function compareRustStandardCollectionValuePackets(left,right,origin,budget){return executeRustStandardCollectionEquality(left,right,origin,budget);}

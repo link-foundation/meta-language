@@ -1,3 +1,5 @@
+import {readRustStandardCollectionSourceComparison,readRustStandardCollectionSourceEqualityCall} from './rust-standard-collection-equality-source.js';
+import {finishRustExclusiveSourceVectorHelpers} from './rust-exclusive-source-vectors.js';
 import {initializeRustStandardCollectionSource,readRustStandardCollectionSourceImport,finishRustStandardCollectionSource} from './rust-standard-collection-source.js';
 import {readRustStandardCollectionSourceType} from './rust-standard-collection-types.js';
 import {readRustStandardCollectionSourceConstructor,readRustStandardCollectionSourceMethod,readRustStandardCollectionSourceArguments} from './rust-standard-collection-calls.js';
@@ -356,6 +358,7 @@ class RustParser {
     finishRustSharedArrayHandleSource(this,root);
     let program={ language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
     program=finishRustOwnedRecordEffects(this,program);
+    program=finishRustExclusiveSourceVectorHelpers(this,program);
     program=finishRustStandardCollectionSource(this,program);
     if(this.exclusiveSourceModel||this.standardCollectionSourceModel){const pending=[program];let work=0;while(pending.length){const value=pending.pop();if(!value||typeof value!=='object')continue;if(++work>1000000)throw unsupported('Rust exclusive source program','the complete source program exceeds its inspection budget');if(testRustExclusiveSourcePrivateNode(value))throw unsupported('Rust exclusive source program','a private exclusive source operation escaped its actual state continuation',value.span);for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);}}
     refuseRustStandardSumPrivateCompletions(program);
@@ -1457,6 +1460,8 @@ class RustParser {
     if (token.kind === 'punct' && COMPARISON[token.value]) {
       c.next();
       const right = this.primitiveBitwise(path, {}, 0);
+      const collectionEquality=readRustStandardCollectionSourceComparison(this,left,right,COMPARISON[token.value],path,joined(left,right,token));
+      if(collectionEquality){const after=c.peek();if(after.kind==='punct'&&COMPARISON[after.value])throw this.fail('comparison operators cannot be chained',after);return collectionEquality;}
       this.standardCollectionSourceObservationGuard?.(left,path,'comparison',joined(left,right,token));this.standardCollectionSourceObservationGuard?.(right,path,'comparison',joined(left,right,token));
       refuseRustSharedArrayHandleValueComparison(this,left,right,path,joined(left,right,token));
       guardRustBorrowedVectorObservation(this,left,path,'comparison',joined(left,right,token));guardRustBorrowedVectorObservation(this,right,path,'comparison',joined(left,right,token));
@@ -1936,6 +1941,7 @@ class RustParser {
       const sourceCallee={k:'name',path:segments,span:span(token,token)},args=readRustExclusiveSourceCallArguments(this,sourceCallee,path)??readRustContextualCallArguments(this,sourceCallee,path);
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      const collectionEquality=readRustStandardCollectionSourceEqualityCall(this,segments,args,path,range);if(collectionEquality)return collectionEquality;
       const collectionConstruction=readRustStandardCollectionSourceConstructor(this,segments,args,path,range);if(collectionConstruction)return collectionConstruction;
       const borrowedEmpty=readRustBorrowedVectorEmptySourceConstructor(this,segments,args,path,range);if(borrowedEmpty)return borrowedEmpty;
       const contextualVector=readRustOwnedVectorEmptyConstructor(this,segments,args,path,range);if(contextualVector)return contextualVector;
