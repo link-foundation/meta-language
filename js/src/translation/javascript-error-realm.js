@@ -15,6 +15,7 @@ import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-err
 import {constructJavaScriptSourceText,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
+const stringValueSlot=Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value;
 const text=value=>({$:'text',units:Array.from({length:value.length},(_,at)=>value.charCodeAt(at))});
 const symbolDescriptionGetter=Reflect.getOwnPropertyDescriptor(Symbol.prototype,'description')?.get;
 const string=units=>{let result='';for(const unit of units)result+=String.fromCharCode(unit);return result;};
@@ -55,6 +56,8 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   // Only the successor ordinary-source profile exposes inspectable arrays.
   // Qualified opaque loader arrays retain their distinct explicit host port.
   const row={$:ordinaryClasses&&Array.isArray(value)?'arrayObject':'ordinaryObject',identity:id,prototype:{$:'null'},extensible:Reflect.isExtensible(value),callable:typeof value==='function',properties:[],...(value===realm.objectPrototype?{immutablePrototype:true}:{})};heap.objects.push(row);sorted();
+  if(nativeTypes.isRegExp(value))row.regularExpression=true;
+  if(nativeTypes.isStringObject(value)){if(typeof stringValueSlot!=='function'||Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value!==stringValueSlot)throw new TypeError('StringData capture retains its actual protected primitive slot reader');row.stringData=encode(Reflect.apply(stringValueSlot,value,[]));}
   row.prototype=encode(Reflect.getPrototypeOf(value));
   for(const key of Reflect.ownKeys(value)){
    const descriptor=Reflect.getOwnPropertyDescriptor(value,key);if(!descriptor)throw new TypeError('actual host descriptors must remain stable during capture');
@@ -202,6 +205,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const kinds=['text','sourceText','number','boolean','integer','symbol'];
   for(const kind of kinds){const matches=roots.filter(row=>row.kind===kind);if(matches.length!==1||matches[0].prototype?.$!=='object'||readJavaScriptOrdinaryValueError(heap,matches[0].prototype)!=='')throw new TypeError('primitive iteration requires each actual registered realm prototype');}
   primitiveIteratorPrototypes=roots.map(row=>({kind:row.kind,prototype:{...row.prototype}}));
+  if(ordinaryClasses)operations.stringPrototype={...primitiveIteratorPrototypes.find(row=>row.kind==='text').prototype};
  }
  function resumePrimitiveIteratorGet(request){
   if(module===null||request?.$!=='machineNeedPrimitiveIteratorGet'||!request.machine)throw new TypeError('primitive iterator metadata requires its actual published request');

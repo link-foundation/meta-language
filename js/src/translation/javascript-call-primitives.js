@@ -1,3 +1,4 @@
+import {readJavaScriptStringMethodPrimitiveArity,executeJavaScriptStringMethodPrimitive} from './javascript-string-method-rules.js';
 // Reuse the existing complete UTF16 definitions; adapters never substitute
 // host scalar strings for code units or reimplement native operation bodies.
 import {readJavaScriptArrayLikeLength} from './javascript-array-index-rules.js';
@@ -21,6 +22,7 @@ export function testJavaScriptCallUnaryNumberOperation(operation){
  * wrappers and replacement intrinsics need their own source lowering.
  * @param {string} operation @param {number} count @returns {string} */
 export function readJavaScriptCallPrimitiveArityError(operation,count){
+ const stringArity=readJavaScriptStringMethodPrimitiveArity(operation);if(stringArity>=0)return count===stringArity?'':'String operations retain every actual converted operand';
  if(!Number.isSafeInteger(count)||count<0||count>4096)return 'primitive operands exceed their explicit call register budget';
  if(readJavaScriptSourceExceptionClass(operation)!=='')return count===2?'':'a source Error requires its actual text message and own-message presence';
  const integerArity=readJavaScriptCallIntegerArity(operation);
@@ -170,6 +172,7 @@ export function executeJavaScriptCallTextReplacement(text,search,replacement,all
 export function executeJavaScriptCallPrimitive(operation,values){
  const arity=readJavaScriptCallPrimitiveArityError(operation,values.length);if(arity!=='')return {$:'primitiveInvalid',reason:arity};
  for(const value of values){const error=readJavaScriptSemanticValueError(value);if(error!=='')return {$:'primitiveInvalid',reason:error};}
+ if(readJavaScriptStringMethodPrimitiveArity(operation)>=0)return executeJavaScriptStringMethodPrimitive(operation,values);
  if(operation==='increment numeric value'||operation==='decrement numeric value'||operation==='negate numeric value')return executeJavaScriptCallNumericUpdate(operation,values[0]??{$:'undefined'});
  if(['subtract numeric values','multiply numeric values','divide numeric values','read numeric remainder','raise numeric power'].includes(operation))return executeJavaScriptCallNumericBinary(operation,values[0]??{$:'undefined'},values[1]??{$:'undefined'});
  if(operation==='compare relational values')return executeJavaScriptCallRelationalComparison(values[0]??{$:'undefined'},values[1]??{$:'undefined'});

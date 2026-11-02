@@ -57,6 +57,31 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Protected String method identities compose shared ToString/ToNumber, UTF16,
+Call and exception operations for toString/valueOf, trim variants, character/
+code-unit/code-point access, relative at, slice/substring/legacy substr, searches,
+repeat, padding and variadic concat. Receiver coercibility precedes conversion;
+search IsRegExp observes actual Symbol.match before search-text/position coercion.
+Its fallback uses independently captured RegExp internal-slot metadata, never a
+prototype/name guess. Padding skips filler conversion when the completed target
+length is already satisfied. Indexed/slice/search behavior preserves exact UTF16
+units and its existing explicit output/work bounds. Primitive String property
+lookup checks virtual own indices/length, then the actual shared realm prototype
+with the primitive as getter receiver. Key conversion occurs once; represented
+prototype mutations are visible without copying them into the host. Other
+primitive/native getter boundaries retain their existing explicit protocols.
+
+Actual native boxed String inputs retain StringData captured by a protected
+native slot reader at the input boundary; represented toString/valueOf bodies
+read that shared data. Prototype lookalikes do not gain StringData. RegExp slots
+are captured through native type classification without running matching bodies.
+Opaque slot protocols, full RegExp methods, Unicode case/normalization/locale
+operations and String constructor/environment integration remain independent
+source obligations. Larger intrinsic catalogs require a distinct protected
+128-owner profile; existing 16/64 profiles, their limits and legacy direct
+startsWith compilation remain available. Public aliases retain their actual
+standard function identity rather than separate invented bodies.
+
 Function-scoped var cells are created initialized to undefined before body
 execution, including declarations in skipped/unreachable blocks, switch arms,
 finalizers and loop heads. Redeclarations retain the analyzer's canonical binding

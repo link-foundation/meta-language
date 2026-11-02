@@ -58,7 +58,7 @@ import {readJavaScriptSemanticValueError} from './javascript-semantic-values.js'
 /** @typedef {{$:'errorConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue,baseConstructor:JavaScriptSemanticValue,baseRealm:bigint} |
  * {$:'ordinaryConstructorOwner',source:number,identity:bigint,realm:bigint,prototype:JavaScriptSemanticValue} |
  * {$:'errorFunctionOwner',source:number,identity:bigint,realm:bigint}} JavaScriptErrorFunctionOwner */
-/** @typedef {{$:'errorRealmOperations',realm:bigint,objectPrototype:JavaScriptSemanticValue,arrayPrototype?:JavaScriptSemanticValue,functionPrototype?:JavaScriptSemanticValue,get:JavaScriptSemanticValue,assign:JavaScriptSemanticValue}} JavaScriptErrorRealmOperations */
+/** @typedef {{$:'errorRealmOperations',realm:bigint,objectPrototype:JavaScriptSemanticValue,arrayPrototype?:JavaScriptSemanticValue,functionPrototype?:JavaScriptSemanticValue,stringPrototype?:JavaScriptSemanticValue,get:JavaScriptSemanticValue,assign:JavaScriptSemanticValue}} JavaScriptErrorRealmOperations */
 /** @typedef {{$:'errorIntrinsicOwner',identity:bigint,realm:bigint}} JavaScriptErrorIntrinsicOwner */
 /** @typedef {{$:'errorModuleRegistry',owners:JavaScriptErrorFunctionOwner[],operations:JavaScriptErrorRealmOperations[],intrinsics:JavaScriptErrorIntrinsicOwner[],realms:bigint[],exoticKey:JavaScriptSemanticValue}} JavaScriptErrorModuleRegistry */
 /** @typedef {{$:'sourceCapabilityOwner',source:string,identity:bigint,realm:bigint,operation:string,owner:string,callable:boolean,executable:boolean}} JavaScriptSourceCapabilityOwner */
@@ -76,7 +76,9 @@ export function refuseJavaScriptErrorSource(context,error){return {$:'errorSourc
  * @param {JavaScriptCallSource} receiver @param {JavaScriptCallSource} key
  * @param {JavaScriptErrorSourceContext} context @returns {JavaScriptCallSource} */
 export function constructJavaScriptErrorPropertyRead(receiver,key,context){
- return {$:'sourceIf',condition:{$:'sourcePrimitive',operation:'test object value',arguments:[receiver]},yes:{$:'sourceGet',object:receiver,key},no:{$:'sourceCall',callee:constructJavaScriptErrorConstant(context.realm.get),receiver,arguments:[key]}};
+ const legacy={$:'sourceCall',callee:constructJavaScriptErrorConstant(context.realm.get),receiver,arguments:[key]};
+ const primitive=context.realm.stringPrototype===undefined?legacy:{$:'sourceIf',condition:{$:'sourceStrictEqual',left:{$:'sourcePrimitive',operation:'read semantic type',arguments:[receiver]},right:constructJavaScriptErrorConstant({$:'text',units:[115,116,114,105,110,103]})},yes:{$:'sourceStringGet',input:receiver,key,prototype:constructJavaScriptErrorConstant(context.realm.stringPrototype)},no:legacy};
+ return {$:'sourceIf',condition:{$:'sourcePrimitive',operation:'test object value',arguments:[receiver]},yes:{$:'sourceGet',object:receiver,key},no:primitive};
 }
 /** Evaluate the key expression before RequireObjectCoercible, but defer its
  * ToPropertyKey conversion until after the nullish receiver check. The actual

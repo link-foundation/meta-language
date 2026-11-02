@@ -188,3 +188,7 @@ Array allocation, recursive binding targets and Function length boundaries.
 
 - Draft separate catch-shadowed var declaration and assignment-reference facts
   for identifiers, patterns/rest and for-of, including captured catch cells.
+
+- Draft twenty-one protected String method bodies using shared coercion/UTF16
+  kernels, ordered IsRegExp checks, padding early return and actual argument Lists.
+  Preserve boxed String/RegExp input slot metadata and legacy catalog profiles.

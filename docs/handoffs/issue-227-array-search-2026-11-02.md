@@ -1343,3 +1343,59 @@ was discarded. Source drafting supplies these assertion corrections; execution
 and evidence remain deferred. This section supersedes the preceding var/catch
 gap; module/global instantiation, declaration/expression function objects and
 remaining early-error/opaque/asynchronous requirements are still independent.
+
+### Public String method composition and native slot snapshots draft
+
+Twenty-one actual String method identities now have protected portable bodies:
+toString, valueOf, trim/trimStart/trimEnd (including their same-identity native
+aliases), charAt/charCodeAt/codePointAt/at, slice/substring/legacy substr,
+indexOf/lastIndexOf/startsWith/endsWith/includes, repeat, padStart/padEnd and
+variadic concat. Bodies reuse existing scalar conversion, text expansion,
+search/slice and Call continuations. A small shared UTF16 rule module adds code
+unit reads, swapped substring bounds, legacy count slicing and positioned
+boundary/inclusion comparisons without native String method bodies.
+
+Receiver coercibility precedes ToString. Search IsRegExp Gets the actual private
+Symbol.match, ToBoolean-tests a present marker and otherwise reads captured
+RegExpMatcher classification; search and position conversion follow in order.
+Position NaN/default distinctions reuse existing indexOf/lastIndexOf kernels.
+Padding completes length conversion and skips filler conversion on early return.
+Concat consumes the actual argument List with ordered ToString and no synthetic
+argument Array. Completed converted operands remain in shared registers across
+callbacks, resource pauses and original throws.
+
+The private input boundary snapshots actual native StringData using its captured,
+protected String.valueOf slot reader; represented methods use the recorded data
+and never invoke that native body. Native RegExp classification records only its
+internal-slot fact. Heap schema checks these optional fields, ordinary mutations
+preserve them, and prototype lookalikes cannot gain slots through public
+properties. Opaque IsRegExp slots explicitly require their separate protocol.
+No matching engine, full RegExp conversion, Unicode case/normalization/locale or
+String constructor behavior is fabricated by these additions.
+
+The standard catalog uses an explicit `protected standard callable catalog 1`
+profile with a 128-owner bound to hold the larger genuine intrinsic set. Legacy
+16/64 defaults/limits and their old invalid-budget diagnostic remain intact;
+128 without the new profile still refuses. Legacy startsWith owners without a
+match-key field retain their old body; the actual Node boundary registers the
+new complete method bodies under protected identities and verifies those owners.
+
+Twenty-two original sources and five deferred rule/body controls are drafted,
+registered with the automatic source-policy author. They cover UTF16, offset/
+NaN/default bounds, custom conversion order, Symbol.match getters/throws,
+repetition, padding early return, concat, StringData/type checks, branch targets
+and both catalog profiles. They inherit the existing explicit Node 22/24
+original-source bounds. No tests, source parser/generator execution, compilation,
+validation gate, benchmark or new CI failure inspection ran. Generated policy/
+wire/Rust publication and all runtime parity evidence remain deferred.
+
+Source review also connected primitive String property reads to the actual shared
+String prototype, rather than observing a stale physical Node prototype after
+represented mutation. The registered root enters the source realm operations;
+`sourceStringGet` holds receiver/key once, handles virtual own UTF16 indices and
+length, then uses ordinary Get with the actual primitive getter receiver. It
+lowers to existing bytecode/Call continuations and adds no metadata round trip.
+Nullish errors and other primitive getters retain their previous boundary.
+Three more originals and two deferred controls cover prototype replacement,
+getter this, one-time key conversion and own-key behavior. The native oracles
+restore all modified prototype properties through finally. No oracle executed.
