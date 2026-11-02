@@ -256,6 +256,7 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/src/translation/rust-borrowed-vector-index.js',
  'js/src/translation/rust-source-state-transitions.js',
  'js/src/translation/rust-source-region-composition.js',
  'js/tests/source-state-transition-links.test.js',

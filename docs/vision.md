@@ -4579,6 +4579,12 @@ recursively immutable snapshots. Mutable/new/untrusted snapshots retain full
 checks; persistent mutation costs and complete garbage collection remain explicit
 requirements rather than claims established by lookup complexity alone.
 
+Signature3 borrowed-vector indexing copies the actual shared-reference element
+while preserving its canonical owner, lifetime and referent regions. Copying a
+reference grants no Copy/Clone or mutable authority on its referent. Vector
+allocation ownership and referenced source ownership remain distinct; the usual
+exact usize conversion and checked bounds/error behavior still apply.
+
 Rust source state transitions retain actual original binder tokens, identities
 and referent positions separately from type positions. Region revisions and
 runtime storage coordinates belong to the proof interpreter and must not enter

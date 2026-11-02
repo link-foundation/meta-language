@@ -8,7 +8,7 @@ import {LinkNetwork} from '../src/network.js';
 import {writeProjectData} from './project-data.mjs';
 import {requireControlProduct} from '../tests/support/control-diagnostics.js';
 import {createRustTypeMapChildrenSourceOriginals,rustTypeMapChildrenSourceScenarios,rustTypeMapChildrenSourceVersions} from '../tests/fixtures/rust-type-map-children-source.mjs';
-import {createRustTypeChildrenSourceOriginals,rustTypeChildrenSourceLengths,rustTypeChildrenSourceVersions} from '../tests/fixtures/rust-type-children-source.mjs';
+import {createRustTypeChildrenSourceOriginals,rustTypeChildrenSourceLengths,rustTypeChildrenSourceOrderScenarios,rustTypeChildrenSourceVersions} from '../tests/fixtures/rust-type-children-source.mjs';
 import {compileActualTypeOwnCrateReference} from './rust-type-map-children-own-crate-reference.mjs';
 import {assertActualTypeVariantCoverage} from './rust-type-source-variant-coverage.mjs';
 const repository=fileURLToPath(new URL('../../',import.meta.url));
@@ -16,7 +16,7 @@ export function createActualRustTypeMapChildrenControlGroup(diagnostics,director
  return createActualRustTypeControlGroup(diagnostics,directory,nativeContext,{name:'map_children',id:'actual-type-map-children',factory:createRustTypeMapChildrenSourceOriginals,versions:rustTypeMapChildrenSourceVersions,names:rustTypeMapChildrenSourceScenarios.map(row=>row.name),inputs:rustTypeMapChildrenSourceScenarios.map(row=>row.input),fnMut:true});
 }
 export function createActualRustTypeChildrenControlGroup(diagnostics,directory,nativeContext){
- return createActualRustTypeControlGroup(diagnostics,directory,nativeContext,{name:'children',id:'actual-type-children',factory:createRustTypeChildrenSourceOriginals,versions:rustTypeChildrenSourceVersions,names:rustTypeChildrenSourceLengths.map(row=>row.input),inputs:rustTypeChildrenSourceLengths.map(row=>{const values=rustTypeMapChildrenSourceScenarios.filter(scenario=>scenario.name===row.input);assert.equal(values.length,1);return values[0].input;}),fnMut:false,exclusive:false,sourceSignatureModel:rustTypeChildrenSourceVersions.sourceSignatureModel});
+ return createActualRustTypeControlGroup(diagnostics,directory,nativeContext,{name:'children',id:'actual-type-children',factory:createRustTypeChildrenSourceOriginals,versions:rustTypeChildrenSourceVersions,names:[...rustTypeChildrenSourceLengths.map(row=>row.input),...rustTypeChildrenSourceOrderScenarios.map(row=>row.name)],inputs:[...rustTypeChildrenSourceLengths,...rustTypeChildrenSourceOrderScenarios].map(row=>{const values=rustTypeMapChildrenSourceScenarios.filter(scenario=>scenario.name===row.input);assert.equal(values.length,1);return values[0].input;}),fnMut:false,exclusive:false,sourceSignatureModel:rustTypeChildrenSourceVersions.sourceSignatureModel});
 }
 function createActualRustTypeControlGroup(diagnostics,directory,nativeContext,definition){
  if(process.env.CI!=='true'||process.env.META_LANGUAGE_NATIVE_RUST_STATE!=='1')throw new Error('actual own-code native controls require explicit CI');

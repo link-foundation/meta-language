@@ -7,8 +7,12 @@ compilation ran.
 
 The method factories capture the actual current Type, TypeField and Span CST
 declarations, original annotations, method bodies, qualified owners and hashes.
-Twenty-eight mapper scenarios and 23 readonly-child scenarios supply independent
-literal behavior expectations. The header also checks that their constructor
+Twenty-eight mapper scenarios, 23 retained readonly-child length scenarios
+and nine additional readonly child value/order scenarios supply independent
+literal behavior expectations. The additional cases distinguish returned Nat,
+Int and Float children in declared order, including unsorted record source order;
+length checks guard every indexed observation. They do not establish pointer
+identity or arbitrary recursive equivalence. The header also checks that their constructor
 inputs cover the actual current enum variant inventory. A new variant therefore
 requires reconciling controls rather than silently inheriting a completion claim.
 

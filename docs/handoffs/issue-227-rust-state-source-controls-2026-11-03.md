@@ -79,9 +79,9 @@ Native frontend/codecs, complete downstream projects, every broader grammar and
 ledger obligation still require their own full draft and later verification.
 No tests, source imports, generation, compilation or validation ran locally.
 
-The current driver also adds 28 actual `Type::map_children` and 23 actual
-`Type::children` controls through current-source factories. This gives 330
-authored scenario rows across sixteen groups (279 literal originals plus 51
+The current driver also adds 28 actual `Type::map_children` and 33 actual
+`Type::children` controls through current-source factories. This gives 340
+authored scenario rows across sixteen groups (279 literal originals plus 61
 current-source scenarios). Counts do not measure requirement completion. See
 [the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
 for full original, projected and actual crate reference scopes. None ran locally.

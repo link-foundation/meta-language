@@ -535,3 +535,17 @@ the existing per-group native replay instead of adding another execution engine.
 Agents finish only their existing batches; subsequent drafting proceeds solo.
 No local behavioral execution, generation, validation or compilation calibrates
 these source changes, so the earlier forecast limits still apply.
+
+A further solo source pass preserves all 23 children-length scenarios and adds
+nine independent child value/order observations. The authored driver inventory
+becomes 339 scenario rows (279 literal originals and 60 actual-source scenarios).
+This closes an oracle blind spot in the planned controls: correct lengths alone
+do not distinguish exchanged, duplicated or incorrect child variants. These
+observations remain unexecuted and do not establish pointer identity or complete
+recursive equivalence. They cannot support a completion percentage or forecast.
+
+Copied-reference indexing also promotes the exact former indexed matches source
+input into the positive inventory. With that retained input, there are 340
+authored positive scenario rows (279 literal originals and 61 actual-source
+scenarios). Two added source-owner/static-lifetime refusal inputs cover indexed
+results. These are source drafts without observations.
