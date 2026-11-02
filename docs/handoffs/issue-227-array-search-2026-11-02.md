@@ -1507,3 +1507,27 @@ Fourteen original source cases and two deferred controls cover receivers, slots,
 radices, throws, signs and real shared-prototype mutations. Prototype-changing
 native oracles restore their changes through finally. Existing Node source-version
 bounds apply. No execution, generation, validation or compilation occurred.
+
+### String static UTF16 construction
+
+Protected String.fromCharCode/fromCodePoint now have authenticated static owners
+and an actual String namespace reference. Their bodies iterate the immutable
+actual Call List, apply implicit ToNumber in order and append exact UTF16 output.
+Character codes use ToUint16, including negative/fractional/nonfinite inputs.
+Code points validate integrality and the inclusive Unicode range before emitting
+one unit or a surrogate pair; lone surrogate values are valid and -0 emits +0.
+Conversion/RangeError abrupt completions stop subsequent conversions. Shared text
+and Call bounds remain in force; no substitute source Array is allocated.
+
+Eight original source cases and two deferred controls cover units, supplementary
+and lone surrogate points, nil/nonfinite cases, negative zero, coercion order,
+BigInt refusal, invalid points and iterable argument spread. Existing source
+version bounds apply; the already-registered String libraries supply deferred
+automatic policy authoring. Global String Call/Construct and String.raw are still
+separate operations. No execution, generation, checks or compilation ran.
+
+String.isWellFormed/toWellFormed extend the same protected method catalog. Their
+shared UTF16 traversal preserves pairs, replaces each isolated surrogate with
+U+FFFD and retains generic receiver conversion/nullish errors. One-million-unit
+work limits remain explicit. Four further original sources and one deferred
+control cover empty/valid/invalid text, exact repaired units and conversion.

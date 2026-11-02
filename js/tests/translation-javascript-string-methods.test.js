@@ -1,7 +1,7 @@
 // Deferred String rules and portable-body contracts; imports execute no cases.
 import test from 'node:test';import assert from 'node:assert/strict';
 import {executeJavaScriptStringMethodPrimitive} from '../src/translation/javascript-string-method-rules.js';
-import {compileJavaScriptStringMethodFunction,readJavaScriptStringMethodNames} from '../src/translation/javascript-string-method-call-source.js';
+import {compileJavaScriptStringMethodFunction,readJavaScriptStringMethodNames,readJavaScriptStringStaticMethodNames} from '../src/translation/javascript-string-method-call-source.js';
 import {compileJavaScriptCollectionCallDirectory} from '../src/translation/javascript-collection-call-source.js';
 import {beginJavaScriptObjectObservation} from '../src/translation/javascript-object-integrity.js';
 import {compileJavaScriptMutableCallSourceWithCaptures} from '../src/translation/javascript-call-source.js';
@@ -26,4 +26,17 @@ test('primitive String own properties preserve UTF16 length indices and ordinary
 });
 test('primitive String lookup converts its key once and uses a distinct primitive getter receiver',()=>{
  const source={$:'sourceStringGet',input:{$:'sourceConstant',value:text('ab')},key:{$:'sourcePropertyKey',input:{$:'sourceConstant',value:text('field')},realm:2n},prototype:{$:'sourceConstant',value:object(1n)}},compiled=compileJavaScriptMutableCallSourceWithCaptures(source,[],[]);assert.equal(compiled.error,'');assert.equal(compiled.instructions.filter(row=>row.$==='propertyKey').length,1);const get=compiled.instructions.find(row=>row.$==='ordinaryGet');assert.ok(get);assert.notEqual(get.object,get.receiver);assert.equal(compiled.instructions.filter(row=>row.$==='primitive'&&row.operation==='read String own key').length,1);
+});
+
+test('String static scalar construction retains exact UTF16 units and code point errors',()=>{
+ for(const [operation,input,expected] of [['convert character code text',65537,[1]],['convert character code text',-1,[65535]],['convert character code text',Infinity,[0]],['convert code point text',128512,[55357,56832]],['convert code point text',55296,[55296]],['convert code point text',-0,[0]]]){const result=executeJavaScriptStringMethodPrimitive(operation,[number(input)]);assert.equal(result.$,'primitiveValue');assert.deepEqual(result.value.units,expected);}
+ for(const input of [NaN,Infinity,-Infinity,-1,1.5,1114112]){const result=executeJavaScriptStringMethodPrimitive('convert code point text',[number(input)]);assert.equal(result.$,'primitiveError');assert.equal(result.errorClass,'RangeError');}
+});
+test('String static bodies consume actual argument vectors and retain full conversion order',()=>{
+ for(const name of readJavaScriptStringStaticMethodNames()){const fn=compileJavaScriptStringMethodFunction(1n,2n,'String.'+name,undefined);assert.ok(fn.instructions.some(row=>row.$==='argumentAt'));assert.ok(fn.instructions.some(row=>row.$==='primitive'&&row.operation==='coerce primitive number'));assert.equal(fn.instructions.some(row=>row.$==='argumentRest'||row.$==='arrayAllocate'),false);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(target>=0&&target<fn.instructions.length);}
+});
+
+test('String well formed processing preserves pairs and replaces isolated UTF16 surrogates',()=>{
+ const input={$:'text',units:[55296,65,56320,55357,56832,55296]},checked=executeJavaScriptStringMethodPrimitive('test well formed String',[input]),copied=executeJavaScriptStringMethodPrimitive('copy well formed String',[input]);assert.equal(checked.value.value,false);assert.deepEqual(copied.value.units,[65533,65,65533,55357,56832,65533]);assert.equal(executeJavaScriptStringMethodPrimitive('test well formed String',[copied.value]).value.value,true);
+ for(const value of [text(''),{$:'text',units:[55357,56832]},{$:'sourceText',text:'plain'}])assert.deepEqual(executeJavaScriptStringMethodPrimitive('copy well formed String',[value]).value,value);
 });

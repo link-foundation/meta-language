@@ -57,6 +57,19 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+String.isWellFormed/toWellFormed share exact UTF16 traversal after the ordinary
+generic receiver/text conversion. Valid surrogate pairs remain intact; each
+isolated surrogate is detected or replaced by one U+FFFD. The selected one-million
+unit work profile reports resource exhaustion independently from language errors.
+
+Protected String.fromCharCode/fromCodePoint consume the actual argument vector
+and convert each argument in order. Character codes apply ToUint16; code points
+require integral values in 0..0x10ffff and encode supplementary points as exact
+UTF16 surrogate pairs. Lone surrogate code points remain valid. Invalid points
+or original conversion throws prevent later argument conversions. Shared text
+concatenation retains existing work bounds without allocating a substitute source
+Array; String's other Call/Construct operations keep independent obligations.
+
 Primitive Number, Boolean and BigInt property lookup walks each actual shared
 realm prototype with the original primitive as receiver; computed keys convert
 once, and represented prototype getters/mutations stay in the common heap.

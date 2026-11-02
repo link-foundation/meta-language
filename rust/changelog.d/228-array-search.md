@@ -205,3 +205,9 @@ protected parser aliases/global predicates, and exact Math.imul/clz32 kernels.
 
 Draft shared primitive prototype reads, own Number/Boolean/BigInt slot extraction,
 Boolean stringification and exact BigInt radix stringification with ordered coercion.
+
+Draft protected String.fromCharCode/fromCodePoint over actual Call arguments,
+ordered numeric conversion and exact UTF16 construction.
+
+Draft String.isWellFormed/toWellFormed with exact surrogate-pair preservation and
+isolated-surrogate replacement under explicit work bounds.
