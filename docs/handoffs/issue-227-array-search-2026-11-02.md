@@ -1274,3 +1274,48 @@ listed and require existing mutable formal coordinates; new lexical holders use
 distinct immutable coordinates. Initialization emits ordered strict private
 writes directly, without synthetic source-binding IDs for every declaration.
 This is a source-structure improvement only; no benchmark or validation ran.
+
+### Function-scoped var preparation and canonical redeclarations draft
+
+The source reader now admits var groups/patterns, normal for initialization and
+var for-of. The existing analyzer already hoists var ownership, deduplicates
+redeclarations into reference occurrences, and separates non-simple parameter
+and body environments. The reader uses those actual identities/scope parents;
+it never guesses a new cell for a repeated declaration. Optional hoisted and
+parameter-copy metadata extends the common lexical storage model. Flat scope
+initializers distinguish initialized var cells from uninitialized let/const/
+parameter cells. Function entry collects var declarations recursively through
+all owned control statements, including unreachable/skipped paths, while nested
+function/method bodies remain separate template plans.
+
+Declarations without initializers do not reset cells. Initializers update the
+already initialized canonical cell. Simple parameter aliases reuse their cell;
+non-simple parameter body variables copy the actual initialized parameter value
+into their separate cell, preserving default-created closures over parameters.
+Normal for var heads and var for-of use the same function cell on every
+iteration. Pattern/default/iterator machinery is reused, including rest and
+actual abrupt values. No new native Rust semantics or native source execution
+implements this draft. The exact formerly refused var-for source/name is retained
+as an original executable source control. Nineteen original sources and five
+deferred source controls cover hoisting, redeclaration, skipped/unreachable code,
+self-read, patterns, parameter aliases/copies, both loop forms, switch/finalizer
+scope and captured final values. None has been executed in this phase.
+
+Source review isolated a remaining var/catch reference distinction: `catch (e)
+{ var e = value; }` declares a function var but assigns the active catch binding.
+The source reader now explicitly refuses that scope-overlap case using actual
+catch parameter fields and scope ancestry, rather than incorrectly writing the
+canonical function cell. A dedicated retained refusal input records it. The
+continuation should attach separate declaration and ResolveBinding target facts
+to every var identifier/pattern leaf, lower writes to existing catch registers/
+shared cells, preserve canonical hoisted storage outside the catch, and cover
+simple/pattern catches, parameter aliases and closures. Pattern-catch duplicate
+names also require their native early-error rules. Global/module var cells,
+function declaration instantiation and full source early-error checks remain
+separate obligations; the new function-var profile must not stand in for them.
+
+No tests, parser/generator execution, validation gates or compilation ran.
+Automatic policy authoring includes the new control source; generated products,
+ledger reconciliation, native runtime parity and CI feedback remain deferred.
+This batch supersedes the function-var gap in the preceding lexical checkpoint,
+within the explicit source boundaries above, and makes no completion claim.

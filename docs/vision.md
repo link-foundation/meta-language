@@ -57,6 +57,21 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Function-scoped var cells are created initialized to undefined before body
+execution, including declarations in skipped/unreachable blocks, switch arms,
+finalizers and loop heads. Redeclarations retain the analyzer's canonical binding
+identity; declarations without initializers leave existing values unchanged.
+Simple parameter redeclarations reuse parameter cells. Separate body variable
+environments for non-simple parameters copy the actual initialized parameter
+value while preserving closures over the original parameter environment.
+Normal for and var for-of iterations update one shared function cell; they never
+create per-iteration lexical copies. Destructuring and source getters still use
+the common ordered binding/iterator machinery. A catch-shadowed var initializer
+requires a distinct ResolveBinding write target and remains an explicit boundary
+until that reference path is drafted; canonical var declaration identity alone
+cannot determine its assignment target. Module/global var instantiation remains
+part of the separate module/environment obligations.
+
 Owned lexical declarations and formal parameter leaves retain private shared
 cells with separate value and initialized fields. Scope entry creates cells
 before initializer evaluation; a flat lexical-scope operation avoids adding one
@@ -79,8 +94,8 @@ case/default test and fallthrough body. Entering a later case can observe an
 uninitialized earlier declaration; initialized fallthrough observes its actual
 value. Separate blocks retain separate entry cells. Runtime cells are Links data
 and native Error allocation/Call uses the shared protocol; no native source body
-is a fallback. Function-scoped var hoisting, nested function declaration
-instantiation, full class evaluation and asynchronous environments remain
+is a fallback. Nested function declaration instantiation, full class evaluation and asynchronous
+environments remain
 explicit independent source obligations.
 
 The actual supplied Object.prototype root retains an immutable-prototype internal

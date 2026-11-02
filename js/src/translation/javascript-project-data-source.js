@@ -19,6 +19,16 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  const fail=message=>{throw new TypeError(message);};
  const declared=token=>bindings.find(binding=>binding.declaration.start===token?.start&&binding.declaration.end===token?.end);
  const reference=(token,offset=0)=>bindings.find(binding=>binding.references.some(row=>row.start===token.start+offset&&row.end===token.end+offset));
+ const declarationOwner=(token,kind)=>{
+  const owner=declared(token)??(kind==='var'?reference(token):undefined);if(kind!=='var'||owner===undefined)return owner;
+  for(const clause of program.sourceMappings.filter(row=>row.term==='catch_clause'&&row.start<=token.start&&row.end>=token.end)){
+   const parameter=sourceField(clause,'parameter');if(parameter===undefined)continue;
+   const caught=bindings.find(row=>row.kind==='parameter'&&row.name===owner.name&&row.declaration.start>=parameter.start&&row.declaration.end<=parameter.end);if(caught===undefined)continue;
+   let scope=program.scopes.find(row=>row.id===caught.scope);for(let depth=0;scope!==undefined&&depth<=program.scopes.length;depth++){if(scope.id===owner.scope)fail('a var declaration shadowed by its actual catch parameter requires a distinct ResolveBinding write target');scope=program.scopes.find(row=>row.id===scope.parent);}
+  }
+  return owner;
+ };
+ const declarationKind=(owner,kind)=>owner!==undefined&&(owner.kind===kind||kind==='var'&&owner.kind==='parameter');
  const unresolved=(token,offset=0)=>program.unresolvedReferences.some(row=>row.name===token.value&&row.start===token.start+offset&&row.end===token.end+offset);
  const containing=(binding,terms)=>program.sourceMappings.filter(row=>terms.includes(row.term)&&row.start<=binding.declaration.start&&row.end>=binding.declaration.end).sort((a,b)=>(a.end-a.start)-(b.end-b.start))[0];
  let sourceFields=null,sourceSyntax=null;
@@ -95,6 +105,10 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    const clause=containing(binding,['catch_clause']),caught=clause?sourceField(clause,'parameter'):null;if(caught&&binding.declaration.start>=caught.start&&binding.declaration.end<=caught.end)continue;
    const position=tokens.findIndex(token=>token.start===binding.declaration.start&&token.end===binding.declaration.end),formal=containing(binding,['formal_parameters']),singleArrow=arrowNodes.some(node=>node.start===binding.declaration.start&&values[position+1]==='=>');
    if(formal||singleArrow){lexicalBindings.push({$:'sourceLexicalBinding',identity:binding.identity,name:binding.name,immutable:false});cellIDs.add(binding.identity);}continue;
+  }
+  if(binding.kind==='var'&&binding.scope!=='scope:0'){
+   const body=program.scopes.find(row=>row.id===binding.scope),parameter=body?bindings.find(row=>row.kind==='parameter'&&row.scope===body.parent&&row.name===binding.name):undefined;
+   lexicalBindings.push({$:'sourceLexicalBinding',identity:binding.identity,name:binding.name,immutable:false,hoisted:true,...(parameter===undefined?{}:{parameter:parameter.identity})});cellIDs.add(binding.identity);continue;
   }
   if(!['let','const'].includes(binding.kind)||binding.scope==='scope:0')continue;
   const declaration=containing(binding,['variable_declarator']),name=declaration?sourceField(declaration,'name'):null,loop=containing(binding,['for_in_statement','for_of_statement']),left=loop?sourceField(loop,'left'):null,inDeclaration=name&&binding.declaration.start>=name.start&&binding.declaration.end<=name.end,inHead=left&&binding.declaration.start>=left.start&&binding.declaration.end<=left.end;
@@ -274,13 +288,13 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   const fields=[];let rest;
   for(const [a,b]of split(first+1,close,',')){
    if(values[a]==='...'){
-    const owner=declared(tokens[a+1]);if(!classProfile||rest!==undefined||b!==close||values[close-1]===','||b!==a+2||tokens[a+1]?.kind!=='identifier'||!owner||owner.kind!==kind)fail('object rest retains one final actual identifier binding without an initializer');
+    const owner=declarationOwner(tokens[a+1],kind);if(!classProfile||rest!==undefined||b!==close||values[close-1]===','||b!==a+2||tokens[a+1]?.kind!=='identifier'||!declarationKind(owner,kind))fail('object rest retains one final actual identifier binding without an initializer');
     rest=owner.identity;if(kind==='parameter')initializingParameters.add(rest);continue;
    }
    const key=tokens[a],computed=key.value==='[',keyEnd=computed?findJavaScriptClassGroupEnd(values,a):-1;
    if(computed&&(!classProfile||keyEnd<0||keyEnd+2>=b||values[keyEnd+1]!==':'))fail('computed object binding keys retain their complete key expression and actual alias');
-   const position=computed?keyEnd+2:values[a+1]===':'?a+2:a,nested=values[position]==='{'||values[position]==='[',targetEnd=nested?findJavaScriptClassGroupEnd(values,position):position,owner=nested?undefined:declared(tokens[position]);
-   if(!computed&&!['identifier','string'].includes(key.kind)||position>=b||targetEnd<position||targetEnd>=b||!nested&&(!owner||owner.kind!==kind)||b>targetEnd+1&&values[targetEnd+1]!=='='||nested&&!classProfile)fail('source object bindings retain actual keys, nested patterns or binding aliases and optional defaults');
+   const position=computed?keyEnd+2:values[a+1]===':'?a+2:a,nested=values[position]==='{'||values[position]==='[',targetEnd=nested?findJavaScriptClassGroupEnd(values,position):position,owner=nested?undefined:declarationOwner(tokens[position],kind);
+   if(!computed&&!['identifier','string'].includes(key.kind)||position>=b||targetEnd<position||targetEnd>=b||!nested&&!declarationKind(owner,kind)||b>targetEnd+1&&values[targetEnd+1]!=='='||nested&&!classProfile)fail('source object bindings retain actual keys, nested patterns or binding aliases and optional defaults');
    const keyExpression=computed?expression(tokens.slice(a+1,keyEnd)):undefined,hasDefault=b>targetEnd+1,defaultExpression=hasDefault?expression(tokens.slice(targetEnd+2,b)):absent(),defaultValue=hasDefault&&owner?inferArrowName(defaultExpression,owner.name):defaultExpression,pattern=nested?(values[position]==='['?readArrayBinding(position,targetEnd,kind,depth+1):readObjectBinding(position,targetEnd,kind,depth+1)):undefined,identity=pattern?.identity??owner.identity;
    fields.push({$:'errorParameterField',identity,key:computed?[]:key.stringUnits??units(key.value),hasDefault,value:defaultValue,...(computed?{keyExpression}:{}),...(pattern===undefined?{}:{pattern})});if(kind==='parameter'&&!nested)initializingParameters.add(identity);
   }
@@ -288,8 +302,8 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault:false,value:absent(),...(rest===undefined?{}:{rest})};
  }
  function readArrayBindingTarget(first,last,kind,depth,rest=false){
-  const nested=['{','['].includes(values[first]),end=nested?findJavaScriptClassGroupEnd(values,first):first,owner=nested?undefined:declared(tokens[first]);
-  if(first>=last||end<first||end>=last||!nested&&(tokens[first]?.kind!=='identifier'||!owner||owner.kind!==kind)||last>end+1&&(rest||values[end+1]!=='='))fail('Array binding elements retain actual lexical targets, nested patterns and defaults');
+  const nested=['{','['].includes(values[first]),end=nested?findJavaScriptClassGroupEnd(values,first):first,owner=nested?undefined:declarationOwner(tokens[first],kind);
+  if(first>=last||end<first||end>=last||!nested&&(tokens[first]?.kind!=='identifier'||!declarationKind(owner,kind))||last>end+1&&(rest||values[end+1]!=='='))fail('Array binding elements retain actual lexical targets, nested patterns and defaults');
   const hasDefault=last>end+1,raw=hasDefault?expression(tokens.slice(end+2,last)):absent(),value=hasDefault&&owner?inferArrowName(raw,owner.name):raw,pattern=nested?(values[first]==='['?readArrayBinding(first,end,kind,depth+1):readObjectBinding(first,end,kind,depth+1)):undefined,identity=pattern?.identity??owner.identity;
   if(kind==='parameter'&&!nested)initializingParameters.add(identity);return {$:'errorArrayBindingElement',identity,hasDefault,value,...(pattern===undefined?{}:{pattern})};
  }
@@ -322,15 +336,16 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
   });}finally{initializingParameters=previous;initializingParameterOwners=previousOwners;}
  }
  function lexicalDeclarations(first,last,kind){
-  if(!['let','const'].includes(kind)||kind==='let'&&!classProfile)fail('lexical declaration groups require their actual source initialization profile');
+  if(!['let','const','var'].includes(kind)||kind!=='const'&&!classProfile)fail('lexical declaration groups require their actual source initialization profile');
   const result=[];
   for(const [start,end]of split(first,last,',')){
    if(classProfile&&['{','['].includes(values[start])){
     const close=findJavaScriptClassGroupEnd(values,start);if(close<0||close+2>=end||values[close+1]!=='=')fail('lexical object bindings retain their complete required source initializer');
-    const value=expression(tokens.slice(close+2,end)),pattern=values[start]==='['?readArrayBinding(start,close,kind):readObjectBinding(start,close,kind);result.push({$:pattern.$==='errorArrayParameter'?'sourceArrayBindingStatement':'sourceObjectBindingStatement',pattern,value,mutable:kind==='let'});continue;
+    const value=expression(tokens.slice(close+2,end)),pattern=values[start]==='['?readArrayBinding(start,close,kind):readObjectBinding(start,close,kind);result.push({$:pattern.$==='errorArrayParameter'?'sourceArrayBindingStatement':'sourceObjectBindingStatement',pattern,value,mutable:kind!=='const',...(kind==='var'?{variable:true}:{})});continue;
    }
-   const token=tokens[start],owner=declared(token),hasInitializer=start+1<end;
-   if(token?.kind!=='identifier'||!owner||owner.kind!==kind||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
+   const token=tokens[start],owner=declarationOwner(token,kind),hasInitializer=start+1<end;
+   if(token?.kind!=='identifier'||!declarationKind(owner,kind)||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
+   if(kind==='var'){result.push({$:'sourceVariableStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),hasInitializer});continue;}
    result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),...(sharedBindingCells.has(owner.identity)?{shared:true}:{})});
   }
   if(result.length===0)fail('a lexical declaration group requires its actual declarators');return result;
@@ -415,22 +430,22 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    if(word==='for'&&classProfile){
     const open=at,close=findJavaScriptClassGroupEnd(values,open),parts=close>=0?split(open+1,close,';',true):[];
-    if(values[open]==='('&&close>=0&&parts.length===1&&['const','let'].includes(values[open+1])){
+    if(values[open]==='('&&close>=0&&parts.length===1&&['const','let','var'].includes(values[open+1])){
      const kind=values[open+1],first=open+2,end=['{','['].includes(values[first])?findJavaScriptClassGroupEnd(values,first):first;
      if(values[end+1]==='of'){
       if(!program.sourceMappings.some(row=>['for_in_statement','for_of_statement'].includes(row.term)&&row.start===tokens[open-1].start))fail('for-of retains its actual complete source CST');
-      const pattern=values[first]==='{'?readObjectBinding(first,end,kind):values[first]==='['?readArrayBinding(first,end,kind):undefined,owner=pattern===undefined?declared(tokens[first]):undefined;if(pattern===undefined&&(tokens[first]?.kind!=='identifier'||!owner||owner.kind!==kind))fail('for-of array bindings and assignment heads require their actual initialization protocol');
+      const pattern=values[first]==='{'?readObjectBinding(first,end,kind):values[first]==='['?readArrayBinding(first,end,kind):undefined,owner=pattern===undefined?declarationOwner(tokens[first],kind):undefined;if(pattern===undefined&&(tokens[first]?.kind!=='identifier'||!declarationKind(owner,kind)))fail('for-of array bindings and assignment heads require their actual initialization protocol');
       const input=expression(tokens.slice(end+2,close)),target=nextBinding++,iteratorKey={$:'errorGet',object:port('intrinsic:iterator namespace',{kind:'global',name:'Symbol'}),key:constant({$:'text',units:units('iterator')})};at=close+1;let body;
       controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
-      return {$:'sourceForOfStatement',target,binding:pattern?.identity??owner.identity,mutable:kind==='let',input,iteratorKey,body,...(pattern===undefined?{}:{pattern})};
+      return {$:'sourceForOfStatement',target,binding:pattern?.identity??owner.identity,mutable:kind!=='const',input,iteratorKey,body,...(kind==='var'?{variable:true}:{}),...(pattern===undefined?{}:{pattern})};
      }
     }
     if(values[open]!=='('||parts.length!==3)fail('ordinary for loops retain their actual initialization, test and update clauses; iterable loops need their separate protocol');
     const initializers=[],[first,lastInitial]=parts[0];
     if(first<lastInitial){
-     if(values[first]==='let'||values[first]==='const'){
+     if(['let','const','var'].includes(values[first])){
       initializers.push(...lexicalDeclarations(first+1,lastInitial,values[first]));
-     }else if(values[first]==='var')fail('function-scoped var initialization requires its actual hoisting environment');
+     }
      else initializers.push({$:'sourceExpressionStatement',value:expression(tokens.slice(first,lastInitial))});
     }
     const condition=parts[1][0]===parts[1][1]?constant({$:'boolean',value:true}):expression(tokens.slice(...parts[1])),update=parts[2][0]===parts[2][1]?null:expression(tokens.slice(...parts[2])),target=nextBinding++;at=close+1;let body;
@@ -440,7 +455,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    if(word==='{'){at--;return {$:'sourceBlockStatement',statements:one()};}
    const begin=at-1;let end=at;for(;end<last&&values[end]!==';';end++)if(['(','{','['].includes(values[end])){const close=findJavaScriptClassGroupEnd(values,end);if(close<0||close>=last)fail('source statement groups must close');end=close;}if(end>=last)fail('this source statement profile requires explicit actual semicolons');at=end+1;
-   if(word==='const'||word==='let'&&classProfile){const declarations=lexicalDeclarations(begin+1,end,word);return declarations.length===1?declarations[0]:{$:'sourceDeclarationGroupStatement',statements:declarations};}
+   if(word==='const'||(word==='let'||word==='var')&&classProfile){const declarations=lexicalDeclarations(begin+1,end,word);return declarations.length===1?declarations[0]:{$:'sourceDeclarationGroupStatement',statements:declarations};}
    if(word==='return'||word==='throw')return {$:word==='return'?'sourceReturnStatement':'sourceThrowStatement',value:end===begin+1?absent():expression(tokens.slice(begin+1,end))};
    return {$:'sourceExpressionStatement',value:expression(tokens.slice(begin,end))};
   }

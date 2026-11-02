@@ -181,3 +181,7 @@ Array allocation, recursive binding targets and Function length boundaries.
   writes, ordered destructuring/formal defaults, normal for cloning, separate
   for-of RHS/iteration environments and shared switch-case scope. Preserve all
   prior inputs and add deferred original/native parity controls.
+
+- Draft function-scoped var hoisting, canonical redeclarations, parameter/body
+  environment copies, destructuring and shared var loop cells using the common
+  source storage model. Keep catch-shadowed assignment targets explicit.
