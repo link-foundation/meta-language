@@ -36,3 +36,11 @@ test('ambiguous duplicate foreign source and budget claims cannot replace actual
  const selected=captureRustConcreteSourceItems(network,source,{path:'types.rs',selectors}),method=selected.items[2];network.insertFieldRelation(method.sourceLink,'name',selected.items[4].nameLink);
  assert.throws(()=>captureRustConcreteSourceItems(network,source,{path:'types.rs',selectors}),/unambiguous CST owner/);
 });
+
+test('coincident source spans cannot replace actual inline module ancestry',()=>{
+ const network=LinkNetwork.parse(source,'Rust'),selected=captureRustConcreteSourceItems(network,source,{path:'types.rs',selectors}),nested=selected.items[4],module=network.link(nested.modules[0].sourceLink),references=module.references();
+ // Retain the source tokens/bytes and module span while removing its actual
+ // body syntax edge. A field label and enclosing coordinates cannot replace it.
+ const body=network.fieldRelations().find(edge=>edge.parent.asU64()===module.id().asU64()&&edge.label==='body');assert.ok(body);module.setReferences(references.filter(id=>id.asU64()!==body.child.asU64()));
+ assert.throws(()=>captureRustConcreteSourceItems(network,source,{path:'types.rs',selectors:[selectors[4]]}),/actual source declaration|does not match|inside its owner/);
+});

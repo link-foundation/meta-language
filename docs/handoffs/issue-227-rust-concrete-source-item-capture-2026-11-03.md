@@ -2,7 +2,9 @@
 
 `captureRustConcreteSourceItems` reads the supplied current full CST and original
 source, checks exact reconstruction, and selects actual named item nodes through
-their name/body/type fields. It retains full original item/declaration slices,
+their name/body/type fields and actual syntax-child edges. Enclosing source
+items must be ancestors in the supplied graph, as well as enclosing source
+ranges; a coincident span alone is insufficient. It retains full original item/declaration slices,
 hashes, link identities, UTF8 byte ranges and UTF16 source offsets. Enclosing
 inline module names and inherent/trait implementation type fields distinguish
 otherwise identical method names. A namespace inferred from a filename does not

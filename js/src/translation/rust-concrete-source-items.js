@@ -25,13 +25,16 @@ export function captureRustConcreteSourceItems(network,source,{path,selectors,by
  const links=network.links();if(links.length>nodeLimit)fail('the supplied current graph exceeds its node budget');
  const facts=readProgramConcreteSyntaxFacts(network,source),byId=new Map(facts.map(row=>[row.linkId,row])),fields=new Map();let fieldCount=0,work=0;
  const charge=(amount=1)=>{if(amount>workLimit-work)fail('source selection exceeds its bounded inspection work');work+=amount;};
+ const parentsById=new Map();
+ for(const link of links){const parent=byId.get(link.id().asU64());if(!parent)continue;for(const reference of link.references()){charge();const child=byId.get(reference.asU64());if(!child)continue;if(!inside(parent,child))continue;const owners=parentsById.get(child.linkId)??[];owners.push(parent.linkId);parentsById.set(child.linkId,owners);}}
+ function actualAncestor(parent,node){const pending=[node.linkId],seen=new Set();while(pending.length){charge();const id=pending.pop();if(seen.has(id))continue;seen.add(id);for(const owner of parentsById.get(id)??[]){charge();if(owner===parent.linkId)return true;pending.push(owner);}}return false;}
  for(const edge of network.fieldRelations()){
   if(++fieldCount>fieldLimit)fail('the supplied graph exceeds its field relation budget');const parent=edge.parent.asU64(),child=edge.child.asU64();if(!byId.has(parent))continue;
   let labels=fields.get(parent);if(!labels){labels=new Map();fields.set(parent,labels);}const children=labels.get(edge.label)??[];children.push(child);labels.set(edge.label,children);
  }
- function field(parent,label,required=false){const ids=fields.get(parent.linkId)?.get(label)??[];if(ids.length>1||required&&ids.length!==1)fail('an actual '+label+' field must have one unambiguous CST owner');const selected=ids.length?byId.get(ids[0]):undefined;if(ids.length&&!selected||selected&&!inside(parent,selected))fail('an actual '+label+' field must remain inside its owner');return selected;}
+ function field(parent,label,required=false){const ids=fields.get(parent.linkId)?.get(label)??[];if(ids.length>1||required&&ids.length!==1)fail('an actual '+label+' field must have one unambiguous CST owner');const selected=ids.length?byId.get(ids[0]):undefined;if(ids.length&&!selected||selected&&(!inside(parent,selected)||!(parentsById.get(selected.linkId)??[]).includes(parent.linkId)))fail('an actual '+label+' field must remain inside its owner');return selected;}
  function named(parent){const name=field(parent,'name',true);if(!['identifier','type_identifier'].includes(name.term))fail('an item name must retain its actual identifier field');return {node:name,value:identifier(source.slice(name.start,name.end))};}
- function parents(node,term){return facts.filter(parent=>{charge();return (sourceKinds[parent.term]??parent.term)===(sourceKinds[term]??term)&&encloses(parent,node);}).sort((a,b)=>a.start-b.start||b.end-a.end);}
+ function parents(node,term){return facts.filter(parent=>{charge();return (sourceKinds[parent.term]??parent.term)===(sourceKinds[term]??term)&&encloses(parent,node)&&actualAncestor(parent,node);}).sort((a,b)=>a.start-b.start||b.end-a.end);}
  function container(node){
   const modules=parents(node,'module_item').map(parent=>{const body=field(parent,'body',true);if(!inside(body,node))fail('an inline module must actually contain the selected source item');const name=named(parent);return {name:name.value,sourceLink:parent.linkId,range:{start:parent.start,end:parent.end},nameLink:name.node.linkId};});
   const implementations=parents(node,'implementation_item');if(implementations.length>1)fail('nested implementation ownership requires its separate source interpretation');
