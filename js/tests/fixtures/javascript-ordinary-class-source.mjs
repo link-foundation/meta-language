@@ -9,6 +9,16 @@ export const javascriptOrdinaryClassDecisions=[
  {operation:'testJavaScriptOrdinaryClassReceiverResult',arguments:['strict','number'],expected:false}
 ];
 export const javascriptOrdinaryClassOriginals=[
+ {name:"catch-shadowed var initialization updates the catch binding while the function var stays undefined",source:"export function read() { try { throw 3; } catch (value) { var value = 7; if (value !== 7) return false; } return value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed var initialization preserves an earlier function variable value",source:"export function read() { var value = 9; try { throw 3; } catch (value) { var value = 7; if (value !== 7) return false; } return value === 9; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed var initialization writes the captured private catch cell",source:"export function read() { let saved; try { throw 3; } catch (value) { saved = () => value; var value = 7; } return saved() === 7 && value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed Object var binding leaves use their actual assignment targets",source:"export function read() { try { throw 3; } catch (value) { var { value } = { value: 7 }; if (value !== 7) return false; } return value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed Array var binding leaves use their actual assignment targets",source:"export function read() { try { throw 3; } catch (value) { var [value] = [7]; if (value !== 7) return false; } return value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed Object rest var binding uses the existing catch reference",source:"export function read() { try { throw 3; } catch (value) { var { ...value } = { field: 7 }; if (value.field !== 7) return false; } return value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed var for-of heads update the existing catch reference each iteration",source:"export function read() { try { throw 3; } catch (value) { for (var value of [3, 7]) {} if (value !== 7) return false; } return value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed var for-of patterns update the existing catch reference each iteration",source:"export function read() { try { throw 3; } catch (value) { for (var [value] of [[3], [7]]) {} if (value !== 7) return false; } return value === undefined; }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"catch-shadowed parameter var aliases preserve the original parameter cell",source:"function pick(value) { try { throw 3; } catch (value) { var value = 7; if (value !== 7) return false; } return value === 9; } export function read() { return pick(9); }",entries:['read'],entry:'read',arguments:[],expected:true},
+ {name:"nested function var declarations inside a catch do not alias the outer catch binding",source:"export function read() { try { throw 3; } catch (value) { const pick = () => { var value = 7; return value; }; return pick() === 7 && value === 3; } return false; }",entries:['read'],entry:'read',arguments:[],expected:true},
  {name:"var for initialization retains its function hoisting obligation",source:"export function read() { for (var value = 0; value < 1; value++) {} return value; }",entries:['read'],entry:'read',arguments:[],expected:1},
  {name:"var declarations are initialized before reads earlier in the function body",source:"export function read() { const initial = value === undefined; var value = 7; return initial && value === 7; }",entries:['read'],entry:'read',arguments:[],expected:true},
  {name:"unreachable var declarations still instantiate function-scoped cells",source:"export function read() { return value === undefined; var value = 7; }",entries:['read'],entry:'read',arguments:[],expected:true},
@@ -622,7 +632,7 @@ export const javascriptOrdinaryClassOriginals=[
  {name:"source function species constructors use their realm fallback for a primitive prototype",source:"function Output(length) { this.requested = length; } export function read() { Output.prototype = undefined; const input = [3]; input.constructor = { [Symbol.species]: Output }; const output = input.map(value => value + 1); return output.requested === 1 && output[0] === 4 && output.constructor === ({}).constructor; }",entries:['read'],entry:'read',arguments:[],expected:true},
 ];
 export const javascriptOrdinaryClassRefusals=[
- {name:'var initializers shadowed by catch parameters retain their distinct write-reference obligation',source:'export function read() { try { throw 3; } catch (value) { var value = 7; } return value; }',entries:['read']},
+ {name:'destructured catch parameters reject overlapping var declaration names',source:'export function read() { try { throw { value: 3 }; } catch ({ value }) { var value = 7; } }',entries:['read']},
  {name:'strict delete of a local identifier retains its early SyntaxError boundary',source:'export function read() { let value = 7; return delete value; }',entries:['read']},
  {name:'strict delete of a parenthesized undefined identifier retains its early SyntaxError boundary',source:'export function read() { return delete (undefined); }',entries:['read']},
  {name:'ordinary inheritance keeps its successor obligation',source:'class Parent {} export class Child extends Parent {}',entries:['Child']},
@@ -636,5 +646,6 @@ export const javascriptOrdinaryClassRefusals=[
 // Exact formerly refused class input retains a positive capture/check contract.
 // Executable constructor initialization is covered by the original new wrapper.
 export const javascriptOrdinaryClassCaptureCases=[
+ {name:'var initializers shadowed by catch parameters retain their distinct write-reference obligation',source:'export function read() { try { throw 3; } catch (value) { var value = 7; } return value; }',entries:['read']},
  {name:'later parameter defaults retain their explicit temporal dead zone obligation',source:'export class Box { constructor(first = second, second = 1) { this.value = first; } }',entries:['Box']}
 ];

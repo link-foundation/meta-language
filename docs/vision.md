@@ -66,10 +66,13 @@ environments for non-simple parameters copy the actual initialized parameter
 value while preserving closures over the original parameter environment.
 Normal for and var for-of iterations update one shared function cell; they never
 create per-iteration lexical copies. Destructuring and source getters still use
-the common ordered binding/iterator machinery. A catch-shadowed var initializer
-requires a distinct ResolveBinding write target and remains an explicit boundary
-until that reference path is drafted; canonical var declaration identity alone
-cannot determine its assignment target. Module/global var instantiation remains
+the common ordered binding/iterator machinery. Catch-shadowed var initializers
+retain distinct canonical declaration and actual ResolveBinding target facts.
+Identifier/pattern/rest/for-of writes update the existing catch register or
+captured cell while function storage remains independent. Actual catch fields
+and scope ancestry select targets; crossing a nested function preserves its own
+var environment. Destructured catch parameters reject overlapping var names.
+Module/global var instantiation remains
 part of the separate module/environment obligations.
 
 Owned lexical declarations and formal parameter leaves retain private shared

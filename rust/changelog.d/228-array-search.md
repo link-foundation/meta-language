@@ -185,3 +185,6 @@ Array allocation, recursive binding targets and Function length boundaries.
 - Draft function-scoped var hoisting, canonical redeclarations, parameter/body
   environment copies, destructuring and shared var loop cells using the common
   source storage model. Keep catch-shadowed assignment targets explicit.
+
+- Draft separate catch-shadowed var declaration and assignment-reference facts
+  for identifiers, patterns/rest and for-of, including captured catch cells.

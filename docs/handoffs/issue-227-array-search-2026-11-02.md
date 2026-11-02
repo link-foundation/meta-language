@@ -1319,3 +1319,27 @@ Automatic policy authoring includes the new control source; generated products,
 ledger reconciliation, native runtime parity and CI feedback remain deferred.
 This batch supersedes the function-var gap in the preceding lexical checkpoint,
 within the explicit source boundaries above, and makes no completion claim.
+
+### Separate var declaration and catch assignment references
+
+The preceding catch-shadowed var boundary now has a source implementation.
+Actual catch parameter CST fields and scope ancestry provide a separate
+`sourceCatchBindingTarget` fact on var identifiers, pattern leaves, Object rest
+and for-of heads. Canonical declaration identities still feed function hoisting.
+Initializer writes instead use the selected active catch register or captured
+private cell, holding the completed RHS before assignment. Nested functions keep
+their independent variable environments; destructured catch parameters reject
+name-overlapping var declarations under their actual early-error boundary.
+
+A shared `sourceWriteExisting` lowering emits existing-register Copy or strict
+private-cell Set, preserving continuation and avoiding synthetic binding aliases.
+It requires the mutable snapshot compilation pass. The exact temporary refusal
+input/name is retained in positive capture/check cases; ten executable original
+sources separately cover outside storage, earlier values, captured catches,
+Object/Array/rest patterns, var for-of, parameter aliases and nested functions.
+Three additional deferred controls cover canonical declaration versus selected
+write target, pattern target transport and both storage forms. No prior input
+was discarded. Source drafting supplies these assertion corrections; execution
+and evidence remain deferred. This section supersedes the preceding var/catch
+gap; module/global instantiation, declaration/expression function objects and
+remaining early-error/opaque/asynchronous requirements are still independent.

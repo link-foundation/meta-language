@@ -19,14 +19,16 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  const fail=message=>{throw new TypeError(message);};
  const declared=token=>bindings.find(binding=>binding.declaration.start===token?.start&&binding.declaration.end===token?.end);
  const reference=(token,offset=0)=>bindings.find(binding=>binding.references.some(row=>row.start===token.start+offset&&row.end===token.end+offset));
- const declarationOwner=(token,kind)=>{
-  const owner=declared(token)??(kind==='var'?reference(token):undefined);if(kind!=='var'||owner===undefined)return owner;
-  for(const clause of program.sourceMappings.filter(row=>row.term==='catch_clause'&&row.start<=token.start&&row.end>=token.end)){
+ const declarationOwner=(token,kind)=>declared(token)??(kind==='var'?reference(token):undefined);
+ const declarationTarget=(token,owner,kind)=>{
+  if(kind!=='var'||owner===undefined)return undefined;
+  let selected;const clauses=program.sourceMappings.filter(row=>row.term==='catch_clause'&&row.start<=token.start&&row.end>=token.end).sort((left,right)=>(left.end-left.start)-(right.end-right.start));
+  for(const clause of clauses){
    const parameter=sourceField(clause,'parameter');if(parameter===undefined)continue;
    const caught=bindings.find(row=>row.kind==='parameter'&&row.name===owner.name&&row.declaration.start>=parameter.start&&row.declaration.end<=parameter.end);if(caught===undefined)continue;
-   let scope=program.scopes.find(row=>row.id===caught.scope);for(let depth=0;scope!==undefined&&depth<=program.scopes.length;depth++){if(scope.id===owner.scope)fail('a var declaration shadowed by its actual catch parameter requires a distinct ResolveBinding write target');scope=program.scopes.find(row=>row.id===scope.parent);}
+   let scope=program.scopes.find(row=>row.id===caught.scope);for(let depth=0;scope!==undefined&&depth<=program.scopes.length;depth++){if(scope.id===owner.scope){if(parameter.term!=='identifier')fail('destructuring catch parameters cannot share var declaration names');if(selected===undefined)selected={$:'sourceCatchBindingTarget',identity:caught.identity,cell:cellIDs.has(caught.identity)};break;}const parent=scope.parent;scope=program.scopes.find(row=>row.id===parent);}
   }
-  return owner;
+  return selected;
  };
  const declarationKind=(owner,kind)=>owner!==undefined&&(owner.kind===kind||kind==='var'&&owner.kind==='parameter');
  const unresolved=(token,offset=0)=>program.unresolvedReferences.some(row=>row.name===token.value&&row.start===token.start+offset&&row.end===token.end+offset);
@@ -285,27 +287,28 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
  // parameters and lexical declarations, including coercibility and rest copy.
  function readObjectBinding(first,close,kind,depth=0){
   if(depth>128)fail('object binding patterns exceed their explicit source nesting budget');
-  const fields=[];let rest;
+  const fields=[];let rest,restTarget;
   for(const [a,b]of split(first+1,close,',')){
    if(values[a]==='...'){
     const owner=declarationOwner(tokens[a+1],kind);if(!classProfile||rest!==undefined||b!==close||values[close-1]===','||b!==a+2||tokens[a+1]?.kind!=='identifier'||!declarationKind(owner,kind))fail('object rest retains one final actual identifier binding without an initializer');
-    rest=owner.identity;if(kind==='parameter')initializingParameters.add(rest);continue;
+    rest=owner.identity;restTarget=declarationTarget(tokens[a+1],owner,kind);if(kind==='parameter')initializingParameters.add(rest);continue;
    }
    const key=tokens[a],computed=key.value==='[',keyEnd=computed?findJavaScriptClassGroupEnd(values,a):-1;
    if(computed&&(!classProfile||keyEnd<0||keyEnd+2>=b||values[keyEnd+1]!==':'))fail('computed object binding keys retain their complete key expression and actual alias');
    const position=computed?keyEnd+2:values[a+1]===':'?a+2:a,nested=values[position]==='{'||values[position]==='[',targetEnd=nested?findJavaScriptClassGroupEnd(values,position):position,owner=nested?undefined:declarationOwner(tokens[position],kind);
    if(!computed&&!['identifier','string'].includes(key.kind)||position>=b||targetEnd<position||targetEnd>=b||!nested&&!declarationKind(owner,kind)||b>targetEnd+1&&values[targetEnd+1]!=='='||nested&&!classProfile)fail('source object bindings retain actual keys, nested patterns or binding aliases and optional defaults');
    const keyExpression=computed?expression(tokens.slice(a+1,keyEnd)):undefined,hasDefault=b>targetEnd+1,defaultExpression=hasDefault?expression(tokens.slice(targetEnd+2,b)):absent(),defaultValue=hasDefault&&owner?inferArrowName(defaultExpression,owner.name):defaultExpression,pattern=nested?(values[position]==='['?readArrayBinding(position,targetEnd,kind,depth+1):readObjectBinding(position,targetEnd,kind,depth+1)):undefined,identity=pattern?.identity??owner.identity;
-   fields.push({$:'errorParameterField',identity,key:computed?[]:key.stringUnits??units(key.value),hasDefault,value:defaultValue,...(computed?{keyExpression}:{}),...(pattern===undefined?{}:{pattern})});if(kind==='parameter'&&!nested)initializingParameters.add(identity);
+   const target=nested?undefined:declarationTarget(tokens[position],owner,kind);
+   fields.push({$:'errorParameterField',identity,...(target===undefined?{}:{target}),key:computed?[]:key.stringUnits??units(key.value),hasDefault,value:defaultValue,...(computed?{keyExpression}:{}),...(pattern===undefined?{}:{pattern})});if(kind==='parameter'&&!nested)initializingParameters.add(identity);
   }
   if(fields.length===0&&rest===undefined&&!classProfile)fail('empty object binding patterns require their explicit coercibility operation');
-  return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault:false,value:absent(),...(rest===undefined?{}:{rest})};
+  return {$:'errorObjectParameter',identity:nextBinding++,fields,hasDefault:false,value:absent(),...(rest===undefined?{}:{rest}),...(restTarget===undefined?{}:{restTarget})};
  }
  function readArrayBindingTarget(first,last,kind,depth,rest=false){
   const nested=['{','['].includes(values[first]),end=nested?findJavaScriptClassGroupEnd(values,first):first,owner=nested?undefined:declarationOwner(tokens[first],kind);
   if(first>=last||end<first||end>=last||!nested&&(tokens[first]?.kind!=='identifier'||!declarationKind(owner,kind))||last>end+1&&(rest||values[end+1]!=='='))fail('Array binding elements retain actual lexical targets, nested patterns and defaults');
   const hasDefault=last>end+1,raw=hasDefault?expression(tokens.slice(end+2,last)):absent(),value=hasDefault&&owner?inferArrowName(raw,owner.name):raw,pattern=nested?(values[first]==='['?readArrayBinding(first,end,kind,depth+1):readObjectBinding(first,end,kind,depth+1)):undefined,identity=pattern?.identity??owner.identity;
-  if(kind==='parameter'&&!nested)initializingParameters.add(identity);return {$:'errorArrayBindingElement',identity,hasDefault,value,...(pattern===undefined?{}:{pattern})};
+  if(kind==='parameter'&&!nested)initializingParameters.add(identity);const target=nested?undefined:declarationTarget(tokens[first],owner,kind);return {$:'errorArrayBindingElement',identity,hasDefault,value,...(target===undefined?{}:{target}),...(pattern===undefined?{}:{pattern})};
  }
  function readArrayBinding(first,close,kind,depth=0){
   if(!classProfile||depth>128)fail('Array binding patterns retain their actual iterator-capable source profile and nesting budget');const elements=[],parts=split(first+1,close,',',true);let rest;
@@ -345,7 +348,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
    }
    const token=tokens[start],owner=declarationOwner(token,kind),hasInitializer=start+1<end;
    if(token?.kind!=='identifier'||!declarationKind(owner,kind)||hasInitializer&&values[start+1]!=='='||kind==='const'&&!hasInitializer)fail('each lexical declarator retains its actual binding and complete initializer; patterns need their own binding protocol');
-   if(kind==='var'){result.push({$:'sourceVariableStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),hasInitializer});continue;}
+   if(kind==='var'){const target=declarationTarget(token,owner,kind);result.push({$:'sourceVariableStatement',identity:owner.identity,...(target===undefined?{}:{target}),value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),hasInitializer});continue;}
    result.push({$:kind==='let'?'sourceMutableStatement':'sourceConstStatement',identity:owner.identity,value:hasInitializer?inferArrowName(expression(tokens.slice(start+2,end)),owner.name):absent(),...(sharedBindingCells.has(owner.identity)?{shared:true}:{})});
   }
   if(result.length===0)fail('a lexical declaration group requires its actual declarators');return result;
@@ -437,7 +440,7 @@ export function captureJavaScriptProjectDataSource(source,{identifier,entries=['
       const pattern=values[first]==='{'?readObjectBinding(first,end,kind):values[first]==='['?readArrayBinding(first,end,kind):undefined,owner=pattern===undefined?declarationOwner(tokens[first],kind):undefined;if(pattern===undefined&&(tokens[first]?.kind!=='identifier'||!declarationKind(owner,kind)))fail('for-of array bindings and assignment heads require their actual initialization protocol');
       const input=expression(tokens.slice(end+2,close)),target=nextBinding++,iteratorKey={$:'errorGet',object:port('intrinsic:iterator namespace',{kind:'global',name:'Symbol'}),key:constant({$:'text',units:units('iterator')})};at=close+1;let body;
       controlTargets.push({identity:target,kind:'loop',labels});try{body=one();}finally{controlTargets.pop();}
-      return {$:'sourceForOfStatement',target,binding:pattern?.identity??owner.identity,mutable:kind!=='const',input,iteratorKey,body,...(kind==='var'?{variable:true}:{}),...(pattern===undefined?{}:{pattern})};
+      const bindingTarget=pattern===undefined?declarationTarget(tokens[first],owner,kind):undefined;return {$:'sourceForOfStatement',target,binding:pattern?.identity??owner.identity,...(bindingTarget===undefined?{}:{bindingTarget}),mutable:kind!=='const',input,iteratorKey,body,...(kind==='var'?{variable:true}:{}),...(pattern===undefined?{}:{pattern})};
      }
     }
     if(values[open]!=='('||parts.length!==3)fail('ordinary for loops retain their actual initialization, test and update clauses; iterable loops need their separate protocol');

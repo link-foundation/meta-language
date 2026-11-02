@@ -23,6 +23,7 @@ import {readJavaScriptCallPrimitiveArityError} from './javascript-call-primitive
  * {$:'sourceSwitch',target:number,value:JavaScriptCallSource,clauses:JavaScriptCallSourceSwitchClause[],after:JavaScriptCallSource} |
  * {$:'sourceBindingScope',declarations:JavaScriptCallBindingDeclaration[],initializer:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceLexicalScope',identities:number[],existing?:number[],initializers?:JavaScriptCallCellInitializer[],realm:bigint,body:JavaScriptCallSource} |
+ * {$:'sourceWriteExisting',identity:number,cell:boolean,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceInitializeCell',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceInitializeBinding',identity:number,value:JavaScriptCallSource,body:JavaScriptCallSource} |
  * {$:'sourceIteratorBinding',slot:number,input:JavaScriptCallSource,iteratorKey:JavaScriptCallSource,body:JavaScriptCallSource,realm:bigint} |
@@ -131,7 +132,7 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
   }
   case 'sourceBindingScope':return lowerJavaScriptCallSourceBindingScope(source,bindings,state,depth);
   case 'sourceLexicalScope':{
-   const existing=source.existing??[];if(source.identities.length>4096||existing.length>source.identities.length||source.realm<=0n||source.realm>18446744073709551615n||existing.some((identity,index)=>!source.identities.includes(identity)||existing.indexOf(identity)!==index))return refuseJavaScriptCallSource(state,'lexical scope retains bounded actual cells and formal register replacements');
+   const existing=source.existing??[];if(source.identities.length>4096||existing.length>source.identities.length||existing.length>0&&state.snapshotMutableBindings!==true||source.realm<=0n||source.realm>18446744073709551615n||existing.some((identity,index)=>!source.identities.includes(identity)||existing.indexOf(identity)!==index))return refuseJavaScriptCallSource(state,'lexical scope retains bounded actual cells and formal register replacements');
    const initializers=source.initializers??[];if(initializers.length>source.identities.length||initializers.some((row,index)=>row.$!=='sourceCellInitializer'||!source.identities.includes(row.identity)||initializers.findIndex(prior=>prior.identity===row.identity)!==index||typeof row.initialized!=='boolean'))return refuseJavaScriptCallSource(state,'cell initializers retain distinct actual owned coordinates and initialization flags');
    let current=state;const entries=[];
    for(let at=0;at<source.identities.length;at++){
@@ -141,6 +142,12 @@ export function lowerJavaScriptCallSourceExpression(source,bindings,builder,dept
     if(replace&&binding!==undefined)current=appendJavaScriptCallSourceInstruction(current,{$:'copy',destination:binding.register,source:allocated.register});else entries.push({$:'sourceBindingRegister',identity,register:allocated.register,mutable:false});
    }
    return lowerJavaScriptCallSourceExpression(source.body,bindings.concat(entries),current,depth+1);
+  }
+  case 'sourceWriteExisting':{
+   const binding=bindings.find(row=>row.identity===source.identity);if(state.snapshotMutableBindings!==true||binding===undefined||binding.register===0||typeof source.cell!=='boolean'||!source.cell&&!binding.mutable)return refuseJavaScriptCallSource(state,'existing binding writes retain an actual mutable register or private captured cell');
+   const value=lowerJavaScriptCallSourceExpression(source.value,bindings,state,depth+1),held=allocateJavaScriptCallSourceRegister(value.builder);let current=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:value.register});
+   if(source.cell){const key=allocateJavaScriptCallSourceRegister(current),written=allocateJavaScriptCallSourceRegister(key.builder);current=appendJavaScriptCallSourceInstruction(written.builder,{$:'constant',destination:key.register,value:{$:'text',units:[118,97,108,117,101]}});current=appendJavaScriptCallSourceInstruction(current,{$:'ordinarySet',destination:written.register,object:binding.register,key:key.register,value:held.register,receiver:binding.register});current=appendJavaScriptCallSourceInstruction(current,{$:'requireWrite',success:written.register});}else current=appendJavaScriptCallSourceInstruction(current,{$:'copy',destination:binding.register,source:held.register});
+   return lowerJavaScriptCallSourceExpression(source.body,bindings,current,depth+1);
   }
   case 'sourceInitializeCell':{
    const cell=lowerJavaScriptCallSourceExpression({$:'sourceBinding',identity:source.identity},bindings,state,depth+1),value=lowerJavaScriptCallSourceExpression(source.value,bindings,cell.builder,depth+1),held=allocateJavaScriptCallSourceRegister(value.builder),saved=appendJavaScriptCallSourceInstruction(held.builder,{$:'copy',destination:held.register,source:value.register}),key=allocateJavaScriptCallSourceRegister(saved),written=allocateJavaScriptCallSourceRegister(key.builder),flag=allocateJavaScriptCallSourceRegister(written.builder);
