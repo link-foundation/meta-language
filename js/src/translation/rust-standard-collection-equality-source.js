@@ -1,6 +1,7 @@
-// Closed standard PartialEq source lowering invokes the real projected shared
-// equality body. No structural comparison of nominal/kernel carrier fields.
+// Closed standard PartialEq/PartialOrd lowering invokes real projected shared
+// comparison bodies. No structural comparison of nominal/kernel carrier fields.
 import {unsupported,typeError} from './diagnostics.js';
+import {testRustStandardCollectionOrdered} from './rust-standard-collection-rules.js';
 import {BOOL} from './types.js';
 import {readRustStandardCollectionSourceOrigin} from './rust-standard-collection-types.js';
 import {readRustStandardCollectionSourceStorage} from './rust-standard-collection-source.js';
@@ -8,29 +9,30 @@ import {encodeRustStandardCollectionSourceConstant,matchRustStandardCollectionSo
 import {checkRustOwnedOrigin} from './rust-owned-bindings.js';
 import {selectRustExclusiveSourcePlace,readRustExclusiveSourceNode} from './rust-exclusive-source-calls.js';
 import {testRustExclusiveSourcePlaceOverlap} from './rust-exclusive-source-loan-rules.js';
-const fail=(reason,span)=>{throw unsupported('Rust standard collection equality source',reason,span);};
+const fail=(reason,span)=>{throw unsupported('Rust standard collection comparison source',reason,span);};
 function rejectRustStandardCollectionEqualityEffects(parser,left,right,path,span){
  const selected=selectRustExclusiveSourcePlace(parser,left,path);if(!selected)return;const pending=[right],seen=new Set();let work=0;
- while(pending.length){const node=pending.pop();if(!node||typeof node!=='object'||seen.has(node))continue;if(++work>100000)fail('equality operand effects exceed their actual source inspection bound',span);seen.add(node);
+ while(pending.length){const node=pending.pop();if(!node||typeof node!=='object'||seen.has(node))continue;if(++work>100000)fail('comparison operand effects exceed their actual source inspection bound',span);seen.add(node);
   const effect=readRustExclusiveSourceNode(parser,node),overlap=place=>place?.slot&&testRustExclusiveSourcePlaceOverlap(selected.slot.lexical,selected.fields,place.slot.lexical,place.fields??place.layouts?.map(row=>row.index)??[]);
-  if(effect?.kind==='call'&&effect.info.borrows.some(overlap)||effect?.kind==='write'&&overlap(effect.info))fail('a later equality operand cannot mutate the already borrowed left collection place',span);
+  if(effect?.kind==='call'&&effect.info.borrows.some(overlap)||effect?.kind==='write'&&overlap(effect.info))fail('a later comparison operand cannot mutate the already borrowed left collection place',span);
   for(const value of Object.values(node))if(value&&typeof value==='object')pending.push(value);
  }
 }
 export function readRustStandardCollectionSourceComparison(parser,left,right,operator,path,span,borrowedCall=false){
- const context=parser.standardCollectionSource;if(!context||!['eq','ne','==','!='].includes(operator))return null;
+ const context=parser.standardCollectionSource;if(!context||!['eq','ne','==','!=','lt','le','gt','ge'].includes(operator))return null;
  const leftOrigin=parser.origins.origin(left,path),rightOrigin=parser.origins.origin(right,path),first=readRustStandardCollectionSourceOrigin(parser,leftOrigin),second=readRustStandardCollectionSourceOrigin(parser,rightOrigin);if(!first&&!second)return null;
- if(!first||!second||first.origin.typeIdentity!==second.origin.typeIdentity||!readRustStandardCollectionSourceStorage(parser,{...leftOrigin,wrappers:[]})||!readRustStandardCollectionSourceStorage(parser,{...rightOrigin,wrappers:[]}))throw typeError('standard collection equality requires the same actual concrete owner key/value and target domains',span);
- if(!borrowedCall&&leftOrigin.wrappers.length!==rightOrigin.wrappers.length)throw typeError('standard collection operator equality preserves the same actual reference nesting on both operands',span);
+ if(!first||!second||first.origin.typeIdentity!==second.origin.typeIdentity||!readRustStandardCollectionSourceStorage(parser,{...leftOrigin,wrappers:[]})||!readRustStandardCollectionSourceStorage(parser,{...rightOrigin,wrappers:[]}))throw typeError('standard collection comparison requires the same actual concrete owner key/value and target domains',span);
+ if(!borrowedCall&&leftOrigin.wrappers.length!==rightOrigin.wrappers.length)throw typeError('standard collection operator comparison preserves the same actual reference nesting on both operands',span);
+ const ordered=['lt','le','gt','ge'].includes(operator);if(ordered&&!testRustStandardCollectionOrdered(first.origin.resolvedOwner))fail('Hash collection ordering has no standard Ord implementation',span);
  checkRustOwnedOrigin(parser.origins,leftOrigin,span);checkRustOwnedOrigin(parser.origins,rightOrigin,span);rejectRustStandardCollectionEqualityEffects(parser,left,right,path,span);
- const binding=context.library.functions.find(row=>row.role==='equality'),entry=binding?context.library.program.declarations.get(binding.checkedName):null;
- if(entry?.k!=='fn'||!entry.body||entry.params.length!==4)fail('the actual projected order-independent equality callable body is unavailable',span);
- const helper=parser.freshProductBinding(),leftName=parser.freshProductBinding(),rightName=parser.freshProductBinding(),parameters=[leftOrigin,rightOrigin].map(origin=>({...structuredClone(origin),wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[]})),result={...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}},origin={$:'rustStandardCollectionEqualityOrigin',owner:'core::cmp::PartialEq',typeIdentity:first.origin.typeIdentity,operation:operator==='ne'||operator==='!='?'not equal':'equal',sourceVersionMinor:parser.sourceVersionMinor,proven:true,leftAvailable:true,rightAvailable:true,customImplementation:false},metadata=encodeRustStandardCollectionSourceConstant(context.library,origin,entry.params[2].type,span),handlers=context.library.sourceHandlers;
+ const binding=ordered?{checkedName:'compareRustStandardCollectionOrderedValuePackets',sourcePath:['crate','compareRustStandardCollectionOrderedValuePackets']}:context.library.functions.find(row=>row.role==='equality'),entry=binding?context.library.program.declarations.get(binding.checkedName):null;
+ if(entry?.k!=='fn'||!entry.body||entry.params.length!==4)fail('the actual projected standard comparison callable body is unavailable',span);
+ const helper=parser.freshProductBinding(),leftName=parser.freshProductBinding(),rightName=parser.freshProductBinding(),parameters=[leftOrigin,rightOrigin].map(origin=>({...structuredClone(origin),wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceLoanBindingIdentities:[],sourcePlaceLoanBindingIdentities:[]})),result={...parser.origins.typeOrigin(BOOL,path),sourceOwner:{kind:'primitive',path:['bool'],arguments:[]}},origin=ordered?{$:'rustStandardCollectionOrderingOrigin',owner:'core::cmp::PartialOrd',typeIdentity:first.origin.typeIdentity,sourceVersionMinor:parser.sourceVersionMinor,proven:true,leftAvailable:true,rightAvailable:true,customImplementation:false}:{$:'rustStandardCollectionEqualityOrigin',owner:'core::cmp::PartialEq',typeIdentity:first.origin.typeIdentity,operation:operator==='ne'||operator==='!='?'not equal':'equal',sourceVersionMinor:parser.sourceVersionMinor,proven:true,leftAvailable:true,rightAvailable:true,customImplementation:false},metadata=encodeRustStandardCollectionSourceConstant(context.library,origin,entry.params[2].type,span),handlers=context.library.sourceHandlers;
  const body=projectRustStandardCollectionSourceCarrier(parser,first,{k:'name',path:[leftName]},leftState=>projectRustStandardCollectionSourceCarrier(parser,second,{k:'name',path:[rightName]},rightState=>{
   const call={k:'app',fn:{k:'name',path:[...binding.sourcePath]},args:[leftState,rightState,metadata,{k:'num',value:'16777216',type:entry.params[3].type,span}],span};
-  return matchRustStandardCollectionSourceVariant(parser,context.library,entry.ret,call,'rustCollectionEqualityCompleted',fields=>{
-   const value=fields.get('value');if(value?.type.kind!=='bool')fail('the actual equality completion must retain its Boolean value',span);return value.expression;
-  },(tag,fields)=>tag==='rustCollectionEqualityResourceLimit'?handlers.resource(fields.get('state')?.expression,fields.get('reason')?.expression):handlers.invalid(fields.get('reason')?.expression??{k:'str',value:'unexpected private collection equality continuation',span}),span);
+  return matchRustStandardCollectionSourceVariant(parser,context.library,entry.ret,call,ordered?'rustCollectionOrderingCompleted':'rustCollectionEqualityCompleted',fields=>{
+   const value=fields.get('value');if(ordered){if(value?.type.kind!=='float')fail('the actual ordered completion retains its three-way primitive result',span);return {k:'binary',op:operator,left:value.expression,right:{k:'num',value:'0',type:value.type,span},span};}if(value?.type.kind!=='bool')fail('the actual equality completion must retain its Boolean value',span);return value.expression;
+  },(tag,fields)=>(ordered?tag==='rustCollectionOrderingResourceLimit':tag==='rustCollectionEqualityResourceLimit')?handlers.resource(fields.get('state')?.expression,fields.get('reason')?.expression):handlers.invalid(fields.get('reason')?.expression??{k:'str',value:'unexpected private collection comparison continuation',span}),span);
  },span),span);
  parser.origins.registerCatalogEntry(helper,{k:'fn',parameters,result});context.privateNames.add(helper);context.wrappers.push({k:'fn',name:helper,params:[{name:leftName,type:parameters[0].type},{name:rightName,type:parameters[1].type}],ret:BOOL,body,span});
  return parser.origins.mark({k:'app',fn:{k:'name',path:['crate',helper]},args:[left,right],span},result);

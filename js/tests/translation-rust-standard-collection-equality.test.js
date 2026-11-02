@@ -1,16 +1,13 @@
 // Deferred controls: this file is authored during bulk source drafting only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
+import vm from 'node:vm';
+import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {beginRustStandardCollectionEquality,stepRustStandardCollectionEquality,runRustStandardCollectionEquality,executeRustStandardCollectionEquality,readRustStandardCollectionEqualityStateError} from '../src/translation/rust-standard-collection-equality.js';
 import {compareRustStandardCollectionValuePackets} from '../src/translation/rust-standard-collection-value-packet.js';
 import {readRustStandardCollectionStateError} from '../src/translation/rust-standard-collection-state.js';
 import {parseRust} from '../src/translation/rust.js';
-import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
-import {createRustStandardCollectionSourceLibrary} from '../src/translation/rust-standard-collection-library.js';
-import {readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
-import {encodeTypedProgramLinks} from '../src/typed-program-links.js';
 import {rustStandardCollectionEqualityOriginals,rustStandardCollectionEqualityRefusals} from './fixtures/rust-standard-collection-equality.mjs';
 const integer=value=>({$:'rustCollectionInteger',value:BigInt(value)}),boolean=value=>({$:'rustCollectionBoolean',value}),text=value=>({$:'rustCollectionString',units:Array.from({length:value.length},(_,index)=>value.charCodeAt(index))});
 function state(kind,keyDomain,valueDomain,entries,root='left',revision=0){
@@ -49,15 +46,11 @@ test('actual domains owners availability custom implementations and source bound
  assert.equal(executeRustStandardCollectionEquality(first,first,{...evidence(first),sourceVersionMinor:99}).value,true);
  for(const budget of [-1,-0,NaN,Infinity,67108865])assert.equal(executeRustStandardCollectionEquality(first,first,evidence(first),budget).$,'rustCollectionEqualityInvalid');
 });
-function actualLibrary(){
- const entryPath='js/src/translation/rust-standard-collection-value-packet.js',closure=readSourceLibraryClosure(entryPath,{aliases:true}),program=checkProgram(parseJavaScript(closure.source)),linked=encodeTypedProgramLinks(program),body=linked.network.toLino(),receipt={model:'Complete source library asset receipt 1',schemaVersion:1,entryPath,referenceSemantics:false,sourceClosure:closure,sourceDeclarationOwners:readSourceLibraryDeclarationOwnership(closure,program),programAsset:{path:'js/src/data/rust-standard-collection-value-packet-program.lino',bytes:Buffer.byteLength(body),sha256:createHash('sha256').update(body).digest('hex')}};
- // Separate non-returning test continuations preserve refusal/resource stops;
- // neither can certify a successful collection comparison.
- return createRustStandardCollectionSourceLibrary(body,receipt,{invalid:()=>({k:'abort',message:'invalid collection source packet'}),resource:()=>({k:'abort',message:'collection resource budget exhausted'})});
-}
+import {readRustStandardCollectionSourceTestLibrary as actualLibrary} from './support/rust-standard-collection-library.js';
 test('public opt-in parser lowers genuine equality originals through actual projected shared bodies',()=>{
+ const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===24||major===22&&minor>=15,'uncovered Node '+process.versions.node+'; >=22.15.0 <23 || >=24 <25');
  const library=actualLibrary(),options={standardCollectionSourceModel:'Rust closed standard collections 1',standardCollectionSourceLibrary:library,standardCollectionPointerWidth:64,sourceVersion:'1.90.0',exclusiveSourceModel:'Rust exclusive source loans 1'};
- for(const fixture of rustStandardCollectionEqualityOriginals){const program=parseRust(fixture.source,options);checkProgram(program);assert.ok(program.items.some(item=>item.sourceStandardCollectionLibraryOwner?.role==='equality'),fixture.name);assert.ok(program.items.some(item=>item.sourceStandardCollectionCarrier),fixture.name);}
+ for(const fixture of rustStandardCollectionEqualityOriginals){const program=parseRust(fixture.source,options),checked=checkProgram(program),lines=[];vm.runInNewContext(emitJavaScript(checked).text,{console:{log:(...values)=>lines.push(values.map(String).join(' '))},process:{argv:[]}},{timeout:10000});assert.equal(lines.length?lines.join('\n')+'\n':'',fixture.stdout,fixture.name);assert.ok(program.items.some(item=>item.sourceStandardCollectionLibraryOwner?.role==='equality'),fixture.name);assert.ok(program.items.some(item=>item.sourceStandardCollectionCarrier),fixture.name);}
  for(const fixture of rustStandardCollectionEqualityRefusals)assert.throws(()=>parseRust(fixture.source,options),undefined,fixture.name);
  assert.equal(library.program.declarations.get(library.functions.find(row=>row.role==='equality').checkedName).sourceStandardCollectionLibraryOwner,undefined);
 });

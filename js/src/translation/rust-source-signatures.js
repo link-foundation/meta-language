@@ -110,7 +110,7 @@ export function checkRustSourceSignature(signature,parameters,result,language,re
       owner(value.arguments[0],type,depth+1);
     } else if(path==='std::string::String') {
       if(value.arguments.length||type.kind!=='string')throw typeError('an owned Rust source string differs from its value type');
-    } else if(path==='std::collections::HashMap'||path==='std::collections::HashSet') {
+    } else if(['std::collections::HashMap','std::collections::HashSet','std::collections::BTreeMap','std::collections::BTreeSet'].includes(path)) {
       if(value.kind!=='library'||type.kind!=='data')throw typeError('an owned standard collection needs its actual distinct nominal carrier');
       const declaration=resolveData(type),carrier=declaration&&checkRustStandardCollectionCarrier(declaration,language,resolveType,name=>resolveData({kind:'data',name}));
       if(!carrier)throw typeError('an owned standard collection needs its actual checked carrier specialization');

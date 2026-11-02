@@ -22,7 +22,10 @@ function copied(state,key){const result=apply(state,'get',[key]),projected=proje
 test('only actual unshadowed std collection owner paths are eligible',()=>{
  for(const path of ['std::collections::HashMap','std::collections::hash_map::HashMap'])assert.equal(resolveRustStandardCollectionOwner(path,true,false),'std::collections::HashMap');
  for(const path of ['std::collections::HashSet','std::collections::hash_set::HashSet'])assert.equal(resolveRustStandardCollectionOwner(path,true,false),'std::collections::HashSet');
- for(const path of ['HashMap','core::collections::HashMap','alloc::collections::HashMap','local::HashMap','std::collections::BTreeMap'])assert.equal(resolveRustStandardCollectionOwner(path,true,false),'');
+ for(const path of ['HashMap','core::collections::HashMap','alloc::collections::HashMap','local::HashMap'])assert.equal(resolveRustStandardCollectionOwner(path,true,false),'');
+ // The former BTreeMap refusal input is preserved as a positive owner: its
+ // distinct closed Ord kernel and source integration are now authored.
+ assert.equal(resolveRustStandardCollectionOwner('std::collections::BTreeMap',true,false),'std::collections::BTreeMap');
  assert.equal(resolveRustStandardCollectionOwner('std::collections::HashMap',true,true),'');assert.equal(resolveRustStandardCollectionOwner('std::collections::HashMap',false,false),'');
  const actual=origin();for(const changed of [{...actual,proven:false},{...actual,shadowed:true},{...actual,typeIdentity:''},{...actual,customHasher:true},{...actual,customEquality:true},{...actual,sourceVersionMinor:100},{...actual,sourceOwner:{...actual.sourceOwner,kind:'declaration'}},{...actual,arguments:[{...actual.arguments[0],sourceOwner:{...owner('String'),kind:'declaration'}},actual.arguments[1]]}])assert.notEqual(readRustStandardCollectionSourceOriginError(changed,'String','i32',64),'');
 });

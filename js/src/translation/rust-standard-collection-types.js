@@ -9,7 +9,7 @@ function retainRustStandardCollectionNominalCarrier(parser,row,span){
  const context=parser.standardCollectionSource,cached=context.types.get(row.origin.typeIdentity);let carrierName=cached?.carrierName;
  if(!carrierName){
   if(context.types.size>=256)fail('concrete collection source carriers exceed their finite specialization budget',span);
-  const base='RustStandardCollection'+(row.origin.resolvedOwner.endsWith('HashMap')?'HashMap':'HashSet')+'_'+row.keyDomain+'_'+row.valueDomain+'_'+row.pointerWidth;
+  const base='RustStandardCollection'+row.origin.resolvedOwner.split('::').at(-1)+'_'+row.keyDomain+'_'+row.valueDomain+'_'+row.pointerWidth;
   for(let index=0;index<=100000;index++){const candidate=index===0?base:base+'_'+index,existing=parser.origins.catalog.get(candidate);if(existing?.sourceStandardCollectionCarrier?.origin?.typeIdentity===row.origin.typeIdentity||!existing&&!parser.reservedNames.has(candidate)){carrierName=candidate;break;}}
   if(!carrierName)fail('collection specialization exhausted its actual fresh source name supply',span);
  }

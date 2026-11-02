@@ -1,4 +1,4 @@
-// Closed standard HashMap/HashSet decisions. Parser facts must come from actual
+// Closed standard Hash/BTree Map/Set decisions. Parser facts must come from actual
 // resolved imports, concrete type origins and lexical method/loan witnesses.
 /** @typedef {{kind:string,path:string[],arguments:RustStandardCollectionTypeOwner[]}} RustStandardCollectionTypeOwner */
 /** @typedef {{proven:boolean,wrappers:string[],sourceOwner:RustStandardCollectionTypeOwner,textSourceModel?:string}} RustStandardCollectionScalarOrigin */
@@ -6,21 +6,25 @@
 /** @typedef {{domain:string,proven:boolean,available:boolean,borrowed:boolean,ownedTransfer:boolean,sourceOwner:RustStandardCollectionTypeOwner}} RustStandardCollectionArgumentOrigin */
 /** @typedef {{$:'rustStandardCollectionCallOrigin',owner:string,typeIdentity:string,receiverRoot:string,method:string,dispatchOwner:string,proven:boolean,shadowed:boolean,mutable:boolean,available:boolean,overlappingLoan:boolean,arguments:RustStandardCollectionArgumentOrigin[],outputRoot?:string}} RustStandardCollectionCallOrigin */
 
-/** core has no HashMap/HashSet declarations. Trait witnesses remain separate.
+/** core has no standard collection declarations. Trait witnesses remain separate.
  * @param {string} path @param {boolean} ordinary @param {boolean} shadowed @returns {string} */
 export function resolveRustStandardCollectionOwner(path,ordinary,shadowed){
  if(!ordinary||shadowed)return '';
  if(path==='std::collections::HashMap'||path==='std::collections::hash_map::HashMap')return 'std::collections::HashMap';
- return path==='std::collections::HashSet'||path==='std::collections::hash_set::HashSet'?'std::collections::HashSet':'';
+ if(path==='std::collections::HashSet'||path==='std::collections::hash_set::HashSet')return 'std::collections::HashSet';
+ if(path==='std::collections::BTreeMap'||path==='std::collections::btree_map::BTreeMap')return 'std::collections::BTreeMap';
+ return path==='std::collections::BTreeSet'||path==='std::collections::btree_set::BTreeSet'?'std::collections::BTreeSet':'';
 }
 /** @param {string} owner @returns {string} */
-export function readRustStandardCollectionKind(owner){return owner==='std::collections::HashMap'?'map':owner==='std::collections::HashSet'?'set':'';}
+export function readRustStandardCollectionKind(owner){const resolved=resolveRustStandardCollectionOwner(owner,true,false);return ['std::collections::HashMap','std::collections::BTreeMap'].includes(resolved)?'map':['std::collections::HashSet','std::collections::BTreeSet'].includes(resolved)?'set':'';}
+/** @param {string} owner @returns {boolean} */
+export function testRustStandardCollectionOrdered(owner){const resolved=resolveRustStandardCollectionOwner(owner,true,false);return resolved==='std::collections::BTreeMap'||resolved==='std::collections::BTreeSet';}
 /** @param {number} minor @returns {string} */
 export function readRustStandardCollectionSourceVersionError(minor){return Number.isInteger(minor)&&minor>=90&&minor<100?'':'standard collection source semantics are uncovered outside Rust >=1.90.0 <1.100.0';}
 /** @param {string} domain @param {number} pointerWidth @returns {string} */
 export function readRustStandardCollectionDomainError(domain,pointerWidth){
  if(pointerWidth!==32&&pointerWidth!==64)return 'collection integer domains require explicit supported target pointer width';
- return ['String','bool','i8','i16','i32','i64','i128','isize','u8','u16','u32','u64','u128','usize'].includes(domain)?'':'collections require closed String Boolean or integer domains; custom Hash/Eq and float domains need separate semantics';
+ return ['String','bool','i8','i16','i32','i64','i128','isize','u8','u16','u32','u64','u128','usize'].includes(domain)?'':'collections require closed String Boolean or integer domains; custom Hash/Eq/Ord and float domains need separate semantics';
 }
 /** @param {string} domain @param {number} pointerWidth @returns {number} */
 export function readRustStandardCollectionIntegerWidth(domain,pointerWidth){
@@ -40,11 +44,11 @@ export function readRustStandardCollectionSourceOriginError(origin,keyDomain,val
  const owner=resolveRustStandardCollectionOwner(origin.resolvedOwner,origin.ordinary,origin.shadowed),kind=readRustStandardCollectionKind(owner),source=origin.sourceOwner;
  if(kind===''||source?.kind!=='library'||resolveRustStandardCollectionOwner(source.path.join('::'),true,false)!==owner)return 'collection source TYPE owner must match the actual resolved standard declaration';
  const count=kind==='map'?2:1;
- if(origin.arguments.length!==count||source.arguments.length!==count||origin.customHasher!==false||origin.customEquality!==false)return 'collections retain complete actual type arguments and default hasher with primitive Eq/Hash';
+ if(origin.arguments.length!==count||source.arguments.length!==count||origin.customHasher!==false||origin.customEquality!==false)return 'collections retain complete actual type arguments and actual default implementation with closed primitive Eq/Hash/Ord';
  const version=readRustStandardCollectionSourceVersionError(origin.sourceVersionMinor);if(version!=='')return version;
  if(origin.pointerWidth!==pointerWidth)return 'collection source and active target retain the same pointer width';
  for(const domain of kind==='map'?[keyDomain,valueDomain]:[keyDomain]){const error=readRustStandardCollectionDomainError(domain,pointerWidth);if(error!=='')return error;}
- if(kind==='set'&&valueDomain!=='unit')return 'HashSet retains only its actual key domain';
+ if(kind==='set'&&valueDomain!=='unit')return 'standard Set retains only its actual key domain';
  const domains=kind==='map'?[keyDomain,valueDomain]:[keyDomain];
  for(let index=0;index<count;index++){
   const child=origin.arguments[index],declared=source.arguments[index];
@@ -56,6 +60,7 @@ export function readRustStandardCollectionSourceOriginError(origin,keyDomain,val
 export function readRustStandardCollectionMethodArity(owner,method){
  const kind=readRustStandardCollectionKind(owner);if(kind==='')return -1;
  if(['new','default','len','is_empty','clear','clone'].includes(method))return 0;
+ if(testRustStandardCollectionOrdered(owner)&&(kind==='set'&&method==='iter'||kind==='map'&&['keys','values'].includes(method)))return 0;
  if(method==='insert')return kind==='map'?2:1;
  if(method==='get'||method==='remove'||method===(kind==='map'?'contains_key':'contains'))return 1;
  return -1;
@@ -64,8 +69,9 @@ export function readRustStandardCollectionMethodArity(owner,method){
 export function readRustStandardCollectionMethodResult(owner,method){
  if(readRustStandardCollectionMethodArity(owner,method)<0)return '';
  if(['new','default','clone'].includes(method))return 'owned collection';
+ if(['iter','keys','values'].includes(method))return 'owned ordered values';
  if(method==='len')return 'usize';if(method==='clear')return 'unit';if(method==='get')return 'borrowed Option';
- return owner==='std::collections::HashMap'&&(method==='insert'||method==='remove')?'owned Option':'bool';
+ return readRustStandardCollectionKind(owner)==='map'&&(method==='insert'||method==='remove')?'owned Option':'bool';
 }
 /** @param {string} owner @param {string} method @returns {boolean} */
 export function testRustStandardCollectionMutation(owner,method){return readRustStandardCollectionMethodArity(owner,method)>=0&&['insert','remove','clear'].includes(method);}
