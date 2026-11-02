@@ -79,8 +79,8 @@ export function compileJavaScriptIterableCollectionConstructor(owner){
 /** @param {JavaScriptCollectionCallableDirectory} directory @returns {JavaScriptCollectionCallCompilation} */
 export function compileJavaScriptCollectionCallDirectory(directory){
  const empty={$:'callProgram',functions:[],realms:directory.realms,exoticKey:directory.exoticKey,...(directory.constructorDirectory===undefined?{}:{constructorDirectory:directory.constructorDirectory})};
- const ownerBudget=directory.ownerBudget??16;if(ownerBudget!==16&&ownerBudget!==64&&(ownerBudget!==128||directory.ownerProfile!=='protected standard callable catalog 1'))return {$:'collectionCallCompilation',program:empty,error:'standard callable owner budgets require their actual registered 16 or 64 profile'};
- if(directory.ownerProfile!==undefined&&directory.ownerProfile!=='protected standard callable catalog 1')return {$:'collectionCallCompilation',program:empty,error:'standard callable catalogs retain their actual registered profile'};
+ const ownerBudget=directory.ownerBudget??16;if(ownerBudget!==16&&ownerBudget!==64&&!(ownerBudget===128&&directory.ownerProfile==='protected standard callable catalog 1')&&!(ownerBudget===256&&directory.ownerProfile==='protected standard callable catalog 2'))return {$:'collectionCallCompilation',program:empty,error:'standard callable owner budgets require their actual registered 16 64 128 or 256 profile'};
+ if(directory.ownerProfile!==undefined&&directory.ownerProfile!=='protected standard callable catalog 1'&&directory.ownerProfile!=='protected standard callable catalog 2'||directory.ownerProfile==='protected standard callable catalog 2'&&ownerBudget!==256)return {$:'collectionCallCompilation',program:empty,error:'standard callable catalogs retain their actual registered profile'};
  if(directory.constructors.length>2||directory.realms.length>4096||directory.primitiveMethods.length>ownerBudget)return {$:'collectionCallCompilation',program:empty,error:'standard collection call directories exceed their actual owner budget'};
  const identities=[];/** @type {JavaScriptCallFunction[]} */let functions=[];
  for(const owner of directory.constructors){

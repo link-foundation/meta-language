@@ -1785,3 +1785,12 @@ call/apply and iterable spread. Two deferred bytecode/catalog controls accompany
 the library registration. Construction originals now total forty-five; generated
 Links/native replay inherits the full group automatically. No execution or
 validation ran. This source addition follows pushed checkpoint `7e694933`.
+
+
+Static catalog review found the expanded standard-owner inventory can reach 129
+owners when Array.isArray is requested. The captured expanded inventory therefore
+uses a distinct `protected standard callable catalog 2` profile, bounded at 256;
+legacy 16/64 and profile-1 128 caps are unchanged. A deferred control checks 129
+admission only in profile 2, mismatched/unregistered profile rejection, retained
+128 overflow and the 257 overflow boundary. This is an explicit new source
+resource profile, not a removed prior bound or an observed CI repair.

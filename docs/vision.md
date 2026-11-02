@@ -80,7 +80,9 @@ and index-definition failures close a live iterator while retaining the original
 throw; iterator-step failures and final length Set after exhaustion do not close.
 Array Call forwards its full actual argument List to the same Array Construct
 kernel with the active intrinsic Array owner as both target and newTarget,
-independently of its supplied thisArgument. It never duplicates allocation or
+independently of its supplied thisArgument. The expanded protected callable
+catalog uses its own bounded 256-owner profile; prior 16/64/128-owner profiles
+retain their existing limits. It never duplicates allocation or
 length semantics in a native fallback.
 All continuations retain original inputs, selected callbacks, allocation requests
 and realm Error identity, including strict final length Set and resource retries.
