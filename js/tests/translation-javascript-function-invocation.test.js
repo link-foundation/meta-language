@@ -1,0 +1,31 @@
+// Deferred portable body controls. No compiler or represented program runs here.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {compileJavaScriptFunctionInvocationFunction,testJavaScriptFunctionInvocationOperation} from '../src/translation/javascript-function-invocation-call-source.js';
+import {compileJavaScriptObjectObservationFunction,beginJavaScriptObjectObservation} from '../src/translation/javascript-object-integrity.js';
+import {setJavaScriptOrdinaryPrototype} from '../src/translation/javascript-ordinary-heap.js';
+import {beginJavaScriptInstanceOf,stepJavaScriptInstanceOf} from '../src/translation/javascript-instance-of.js';
+test('call uses actual arguments and an abstract List without a source Array',()=>{
+ const fn=compileJavaScriptFunctionInvocationFunction(1n,2n,'Function.call'),code=fn.instructions;assert.equal(fn.receiverMode,'primitive intrinsic');assert.ok(code.some(row=>row.$==='argumentCount'));assert.ok(code.some(row=>row.$==='argumentAt'));assert.equal(code.some(row=>row.$==='arrayAllocate'||row.$==='iteratorProtocol'||row.$==='argumentRest'),false);const invoke=code.find(row=>row.$==='argumentListCall');assert.deepEqual(invoke,{$:'argumentListCall',destination:9,slot:0,callee:1,receiver:2,mode:'call'});
+});
+test('apply snapshots ToLength then Gets every index without iterable or HasProperty substitution',()=>{
+ const fn=compileJavaScriptFunctionInvocationFunction(1n,2n,'Function.apply'),code=fn.instructions,gets=code.filter(row=>row.$==='ordinaryGet');assert.equal(gets.length,2);assert.equal(code.some(row=>row.$==='ordinaryHas'||row.$==='iteratorProtocol'||row.$==='arrayAllocate'),false);const length=code.findIndex(row=>row.$==='primitive'&&row.operation==='read array like length'),loop=code.findIndex(row=>row.$==='numberBinary');assert.ok(length>=0&&length<loop);assert.equal(code.filter(row=>row.$==='argumentListAppend').length,1);assert.equal(code.filter(row=>row.$==='strictEqual').length,2);
+});
+test('Reflect apply validates its actual target before array-like list requirements and never accepts nullish lists',()=>{
+ const fn=compileJavaScriptFunctionInvocationFunction(1n,2n,'Reflect.apply'),code=fn.instructions,callable=code.findIndex(row=>row.$==='primitive'&&row.operation==='require callable target'),list=code.findIndex(row=>row.$==='primitive'&&row.operation==='require array like arguments Object');assert.ok(callable>=0&&callable<list);assert.equal(code.some(row=>row.$==='strictEqual'),false);assert.deepEqual(code.slice(0,3),[{$:'argument',destination:1,index:0},{$:'argument',destination:2,index:1},{$:'argument',destination:3,index:2}]);
+});
+test('call/apply bodies retain bounded source branch targets and refuse unknown operations',()=>{
+ for(const operation of ['Function.call','Function.apply','Reflect.apply']){assert.equal(testJavaScriptFunctionInvocationOperation(operation),true);const fn=compileJavaScriptFunctionInvocationFunction(1n,2n,operation);for(const row of fn.instructions)for(const target of row.$==='branch'?[row.yes,row.no]:row.$==='jump'?[row.target]:[])assert.ok(Number.isInteger(target)&&target>=0&&target<fn.instructions.length);assert.equal(fn.instructions.at(-1).$,'return');}assert.equal(compileJavaScriptFunctionInvocationFunction(1n,2n,'Function.bind'),undefined);
+});
+test('borrowed own-property observations convert keys before receiver coercibility',()=>{
+ for(const operation of ['Object.prototype.hasOwnProperty','Object.prototype.propertyIsEnumerable']){const code=compileJavaScriptObjectObservationFunction(1n,2n,operation).instructions;assert.equal(code[1].$,'propertyKey');assert.equal(code[2].operation,'require nonnull Object input');assert.equal(code[3].input,0);}
+ const input={$:'ordinaryHeap',objects:[],symbols:[]},value={$:'text',units:[97]};let next=beginJavaScriptObjectObservation(input,'Object.prototype.hasOwnProperty',value,{$:'text',units:[108,101,110,103,116,104]});assert.equal(next.$,'objectIntegrityCompleted');assert.equal(next.value.value,true);next=beginJavaScriptObjectObservation(input,'Object.prototype.propertyIsEnumerable',value,{$:'text',units:[108,101,110,103,116,104]});assert.equal(next.value.value,false);next=beginJavaScriptObjectObservation(input,'Object.prototype.propertyIsEnumerable',value,{$:'text',units:[48]});assert.equal(next.value.value,true);
+});
+test('isPrototypeOf checks its argument before receiver coercion and walks actual identities',()=>{
+ const object=identity=>({$:'object',identity,callable:false}),input={$:'ordinaryHeap',symbols:[9n],objects:[{$:'ordinaryObject',identity:1n,prototype:{$:'null'},extensible:true,callable:false,properties:[]},{$:'ordinaryObject',identity:2n,prototype:object(1n),extensible:true,callable:false,properties:[]}]},key={$:'symbol',identity:9n};
+ function run(left,right){let next=beginJavaScriptInstanceOf(input,'prototype contains',left,right,key);for(let step=0;step<12&&next.$==='instanceOfContinue';step++)next=stepJavaScriptInstanceOf(input,next.state);return next;}
+ let next=run({$:'number',value:7},{$:'null'});assert.equal(next.$,'instanceOfCompleted');assert.equal(next.value.value,false);next=run(object(2n),{$:'null'});assert.equal(next.$,'instanceOfError');next=run(object(2n),object(1n));assert.equal(next.$,'instanceOfCompleted');assert.equal(next.value.value,true);next=run(object(1n),object(1n));assert.equal(next.value.value,false);next=run(object(2n),{$:'number',value:7});assert.equal(next.value.value,false);
+});
+
+test('actual immutable Object prototype metadata preserves same-prototype success and rejects replacement',()=>{
+ const input={$:'ordinaryHeap',symbols:[],objects:[{$:'ordinaryObject',identity:1n,prototype:{$:'null'},extensible:true,callable:false,immutablePrototype:true,properties:[]},{$:'ordinaryObject',identity:2n,prototype:{$:'null'},extensible:true,callable:false,properties:[]}]};let next=setJavaScriptOrdinaryPrototype(input,1n,{$:'null'});assert.equal(next.success,true);next=setJavaScriptOrdinaryPrototype(input,1n,{$:'object',identity:2n,callable:false});assert.equal(next.success,false);assert.equal(next.error,'');assert.equal(next.heap,input);next=setJavaScriptOrdinaryPrototype(input,2n,{$:'object',identity:1n,callable:false});assert.equal(next.success,true);
+});

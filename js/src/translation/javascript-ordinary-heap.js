@@ -15,7 +15,7 @@ import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
  * {$:'setObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],entries:JavaScriptCollectionEntry[]} |
- * {$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
+ * {$:'ordinaryObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,immutablePrototype?:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[]} |
  * {$:'hostErrorObject',identity:bigint,prototype:JavaScriptSemanticValue,extensible:boolean,
  * callable:boolean,properties:JavaScriptOrdinaryProperty[],hostGet:JavaScriptSemanticValue,
@@ -104,6 +104,7 @@ export function readJavaScriptOrdinaryHeapError(heap) {
   if (heap.objects.length > 4096 || heap.symbols.length > 16384) return 'ordinary heap identity directory exceeds its explicit resource budget';
   let previous = 0n;
   for (const object of heap.objects) {
+    if(object.$==='ordinaryObject'&&object.immutablePrototype!==undefined&&typeof object.immutablePrototype!=='boolean')return 'immutable prototype metadata retains its actual Boolean slot';
     if(!['ordinaryObject','closureObject','arrayObject','mapObject','setObject','collectionIteratorObject','hostErrorObject','hostURLObject','hostArrayObject','hostByteBufferObject'].includes(object.$))return 'ordinary heap objects require their actual registered object kind';
     if (typeof object.identity !== 'bigint' || object.identity <= previous || object.identity > 18446744073709551615n) return 'ordinary Objects need strictly ordered unique positive unsigned64 identities';
     previous = object.identity;
@@ -350,7 +351,7 @@ export function setJavaScriptOrdinaryPrototype(heap, identity, prototype) {
   if (object === undefined) return {heap,success:false,error:'SetPrototypeOf needs its actual Object identity'};
   if(object.$!=='ordinaryObject'&&object.$!=='closureObject'&&object.$!=='mapObject'&&object.$!=='setObject'&&object.$!=='collectionIteratorObject'&&object.$!=='arrayObject')return {heap,success:false,error:'opaque Error prototypes require their actual host protocol'};
   if (testJavaScriptSemanticSameValue(object.prototype, prototype)) return {heap,success:true,error:''};
-  if (!object.extensible) return {heap,success:false,error:''};
+  if (!object.extensible||object.$==='ordinaryObject'&&object.immutablePrototype===true) return {heap,success:false,error:''};
   let next = prototype;
   for (let depth = 0; depth <= heap.objects.length; depth += 1) {
     if (next.$ !== 'object') break;

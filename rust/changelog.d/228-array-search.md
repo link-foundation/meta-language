@@ -167,3 +167,12 @@ Array allocation, recursive binding targets and Function length boundaries.
 
 - Draft Object.assign using shared enumerable-copy Set semantics, actual getter/
   setter Calls, Array-length continuations and portable legacy prototype accessors.
+
+- Draft Function.call/apply and Reflect.apply through frame-owned argument Lists,
+  ordered array-like Get/ToLength and shared receiver-aware source Calls.
+
+- Draft borrowed Object.prototype own-property/enumerability and prototype-chain
+  observations with their distinct conversion order and primitive boundaries.
+
+- Preserve actual Object.prototype immutable-prototype metadata in the shared
+  heap while allowing same-prototype updates and ordinary descendant mutation.

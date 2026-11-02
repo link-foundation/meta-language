@@ -15,7 +15,7 @@ import {convertJavaScriptSemanticBoolean} from './javascript-descriptor-conversi
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptInstanceOfState} state @returns {string} */
 export function readJavaScriptInstanceOfStateError(heap,state){
  const error=readJavaScriptOrdinaryHeapError(heap);if(error!=='')return error;
- if(!['instanceof','ordinary has instance'].includes(state.operation)||!['method','method getter','method value','prototype','prototype getter','walk'].includes(state.phase))return 'instanceof retains its actual operation and continuation phase';
+ if(!['instanceof','ordinary has instance','prototype contains'].includes(state.operation)||!['method','method getter','method value','prototype','prototype getter','prototype check','walk'].includes(state.phase))return 'instanceof retains its actual operation and continuation phase';
  for(const value of [state.left,state.right,state.key,state.prototype,state.cursor]){const invalid=readJavaScriptOrdinaryValueError(heap,value);if(invalid!=='')return invalid;}
  if(state.key.$!=='symbol')return 'instanceof retains the actual realm well-known Symbol';
  if(state.visited.length>4096||state.visited.some((id,index)=>typeof id!=='bigint'||findJavaScriptOrdinaryObject(heap.objects,id)<0||state.visited.indexOf(id)!==index))return 'instanceof retains its bounded actual prototype path';
@@ -33,7 +33,7 @@ export function readJavaScriptInstanceOfStateError(heap,state){
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} left @param {JavaScriptSemanticValue} right @param {JavaScriptSemanticValue} key @returns {JavaScriptInstanceOfTransition} */
 export function beginJavaScriptInstanceOf(heap,operation,left,right,key){
- const state={$:'instanceOfState',operation,left,right,key,phase:operation==='instanceof'?'method':'prototype',prototype:{$:'undefined'},cursor:{$:'undefined'},visited:[]},error=readJavaScriptInstanceOfStateError(heap,state);
+ const state={$:'instanceOfState',operation,left,right,key,phase:operation==='instanceof'?'method':operation==='prototype contains'?'prototype check':'prototype',prototype:{$:'undefined'},cursor:{$:'undefined'},visited:[]},error=readJavaScriptInstanceOfStateError(heap,state);
  return error===''?{$:'instanceOfContinue',heap,state}:{$:'instanceOfInvalid',heap,reason:error};
 }
 /** @param {JavaScriptOrdinaryHeap} heap @param {JavaScriptInstanceOfState} state @param {boolean} value @returns {JavaScriptInstanceOfTransition} */
@@ -56,6 +56,7 @@ export function acceptJavaScriptInstanceOfPrototype(heap,state,value){
 export function stepJavaScriptInstanceOf(heap,state){
  const error=readJavaScriptInstanceOfStateError(heap,state);if(error!=='')return {$:'instanceOfInvalid',heap,reason:error};
  if(state.call!==undefined)return {$:'instanceOfCall',heap,state,callee:state.call.callee,receiver:state.call.receiver,arguments:state.call.arguments};
+ if(state.phase==='prototype check'){if(state.left.$!=='object')return finishJavaScriptInstanceOf(heap,state,false);if(state.right.$==='null'||state.right.$==='undefined')return {$:'instanceOfError',heap,errorClass:'TypeError',reason:'Cannot convert undefined or null to object'};if(state.right.$!=='object')return finishJavaScriptInstanceOf(heap,state,false);return {$:'instanceOfContinue',heap,state:{...state,phase:'walk',prototype:state.right,cursor:state.left}};}
  if(state.phase==='method'){
   if(state.right.$!=='object')return {$:'instanceOfError',heap,errorClass:'TypeError',reason:'Right-hand side of instanceof is not an object'};
   const get=planJavaScriptOrdinaryGet(heap,state.right.identity,state.key,state.right);if(get.error!=='')return {$:'instanceOfInvalid',heap,reason:get.error};

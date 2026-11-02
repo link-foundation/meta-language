@@ -57,6 +57,35 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+The actual supplied Object.prototype root retains an immutable-prototype internal
+slot as shared Links data. Same-prototype updates succeed; changing that root's
+prototype fails even while it is extensible. Ordinary allocated Objects do not
+inherit the slot from their prototype. This metadata comes from the private realm
+root identity, never from a property name or source declaration spelling.
+
+Borrowed Object.prototype.hasOwnProperty/propertyIsEnumerable convert the
+actual property key before receiver coercibility, preserving their different
+order from Object.hasOwn. They inspect own descriptors, including primitive
+String indexed flags. Object.prototype.isPrototypeOf first rejects a non-Object
+argument with false, then checks receiver coercibility and traverses actual
+prototype identities. A non-nullish primitive receiver specializes to false:
+its fresh wrapper cannot already occur in the supplied Object's ancestor path.
+Protected native method identities select these shared bodies; spelling and
+native invocation do not establish support.
+
+Function.prototype.call/apply and Reflect.apply have portable bodies under their
+actual protected intrinsic identities. They validate callability, preserve the
+actual thisArgument, and invoke the selected function through the same abstract
+Call List and source frame machinery. Apply uses CreateListFromArrayLike: snapshot
+ToLength once, Get every index in order (including inherited or absent indices),
+and ignore iterable methods. Function.apply accepts nullish argument lists;
+Reflect.apply requires an Object. Getter/conversion throws precede target Call,
+and resource suspension retains the completed length, indexed values and List.
+No represented argument Array or native call/apply body substitutes for this
+pipeline. Lexical arrow receivers and strict ordinary receivers retain their
+existing binding rules; sloppy receiver boxing and bound-function slots remain
+separate source obligations.
+
 Object.assign consumes its actual Call argument List, returns the original
 Object target, and copies each source through the shared enumerable-own-key
 engine in Set mode. Source getters and target setters execute in order, each

@@ -1171,3 +1171,43 @@ ran. Primitive targets remain explicit unsupported wrapper/internal-slot work;
 opaque/Proxy Set remains its explicit host protocol obligation. No substitute
 plain Object wrapper or native Object.assign fallback is presented as support.
 Generated publication remains deferred with the rest of the full source draft.
+
+### Protected call/apply and CreateListFromArrayLike source draft
+
+`javascript-function-invocation-call-source.js` drafts portable Function.call,
+Function.apply and Reflect.apply bodies using existing abstract argument Lists,
+ordinary Get, ToLength and shared Call. Target callability is checked before
+array-like observation. Function.apply alone accepts null/undefined argument
+lists. Array-like length is converted once, every indexed value is Get in order,
+holes can observe inherited values, and iterable methods are never selected.
+Actual receiver values, arrow lexical-this, original getter throws and completed
+List entries flow through existing continuation/resource machinery. Native
+call/apply owners are authenticated and never invoked for represented behavior.
+
+Fifteen original source fixtures and four deferred body controls are drafted and
+registered for future policy authoring. No represented Array allocation, argument
+rest, iterator protocol or handwritten Rust substitute implements these methods.
+No tests, source parsing/generation, execution, validation or compilation ran.
+Generated publication remains deferred. Function.bind/bound internal slots,
+sloppy receiver boxing and full function declarations/environments remain
+independent source obligations; adding call/apply does not mark them delivered.
+
+The same call/apply batch also drafts borrowed Object.prototype.hasOwnProperty,
+propertyIsEnumerable and isPrototypeOf. Shared own-descriptor observations retain
+key conversion before receiver coercion; String length is own but nonenumerable.
+Shared actual prototype traversal checks a primitive argument before receiver
+coercion and never treats an Object as its own ancestor. Non-nullish primitive
+receivers specialize to false because a fresh wrapper cannot already belong to
+an existing ancestor path. Seven additional originals and two deferred controls
+cover these obligations. No native borrowed method is executed as a fallback;
+opaque prototype/descriptor protocols remain explicit work.
+
+Normative source review of the current TC39 fundamental-objects chapter confirms
+borrowed own-property conversion order and isPrototypeOf's early primitive return.
+It also exposed Object.prototype's immutable-prototype exotic slot. The private
+realm capture now marks that actual root identity; the shared heap SetPrototypeOf
+kernel preserves same-prototype success and rejects replacement while leaving
+ordinary descendants mutable. One original and one deferred kernel control are
+added. This is source-authored metadata/semantics, not executed evidence; the
+current live spec says 2027, while source fixtures retain explicit Node 22/24
+bounds and must later be checked in the recorded CI runtime profiles.

@@ -54,7 +54,7 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   const id=allocate();forward.set(value,id);reverse.set(id,value);
   // Only the successor ordinary-source profile exposes inspectable arrays.
   // Qualified opaque loader arrays retain their distinct explicit host port.
-  const row={$:ordinaryClasses&&Array.isArray(value)?'arrayObject':'ordinaryObject',identity:id,prototype:{$:'null'},extensible:Reflect.isExtensible(value),callable:typeof value==='function',properties:[]};heap.objects.push(row);sorted();
+  const row={$:ordinaryClasses&&Array.isArray(value)?'arrayObject':'ordinaryObject',identity:id,prototype:{$:'null'},extensible:Reflect.isExtensible(value),callable:typeof value==='function',properties:[],...(value===realm.objectPrototype?{immutablePrototype:true}:{})};heap.objects.push(row);sorted();
   row.prototype=encode(Reflect.getPrototypeOf(value));
   for(const key of Reflect.ownKeys(value)){
    const descriptor=Reflect.getOwnPropertyDescriptor(value,key);if(!descriptor)throw new TypeError('actual host descriptors must remain stable during capture');

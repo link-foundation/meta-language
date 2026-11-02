@@ -11,10 +11,11 @@ import {createJavaScriptPropertyDescriptor,readJavaScriptPropertyDescriptorKind}
  * {$:'objectIntegrityInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectIntegrityResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectIntegrityState,reason:string}} JavaScriptObjectIntegrityTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptObjectObservationOperation(operation){return ['Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze','Object.getPrototypeOf','Object.setPrototypeOf'].includes(operation);}
+export function testJavaScriptObjectObservationOperation(operation){return ['Object.prototype.hasOwnProperty','Object.prototype.propertyIsEnumerable','Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze','Object.getPrototypeOf','Object.setPrototypeOf'].includes(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptObjectObservationFunction(identity,realm,operation){
  if(!testJavaScriptObjectObservationOperation(operation))return undefined;
+ if(operation==='Object.prototype.hasOwnProperty'||operation==='Object.prototype.propertyIsEnumerable')return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:4,captures:[],instructions:[{$:'argument',destination:1,index:0},{$:'propertyKey',destination:1,input:1,realm},{$:'primitive',destination:2,operation:'require nonnull Object input',arguments:[0]},{$:'objectObservation',destination:3,operation,input:0,other:1},{$:'return',source:3}]};
  /** @type {JavaScriptCallInstruction[]} */const instructions=[{$:'argument',destination:1,index:0}];
  if(operation==='Object.hasOwn')instructions.push({$:'primitive',destination:1,operation:'require nonnull Object input',arguments:[1]});
  instructions.push({$:'argument',destination:2,index:1});if(operation==='Object.hasOwn')instructions.push({$:'propertyKey',destination:2,input:2,realm});
@@ -34,11 +35,11 @@ export function beginJavaScriptObjectObservation(heap,operation,input,other){
   if(operation==='Object.getPrototypeOf')return {$:'objectIntegrityCompleted',heap,value:object.prototype};
   const changed=setJavaScriptOrdinaryPrototype(heap,input.identity,other);return changed.error!==''?{$:'objectIntegrityInvalid',heap:changed.heap,reason:changed.error}:changed.success?{$:'objectIntegrityCompleted',heap:changed.heap,value:input}:{$:'objectIntegrityError',heap:changed.heap,errorClass:'TypeError',reason:'Cannot set the selected Object prototype'};
  }
- if(operation==='Object.hasOwn'){
+ if(operation==='Object.hasOwn'||operation==='Object.prototype.hasOwnProperty'||operation==='Object.prototype.propertyIsEnumerable'){
   if(input.$==='null'||input.$==='undefined')return {$:'objectIntegrityError',heap,errorClass:'TypeError',reason:'Cannot convert undefined or null to object'};
   const keyError=readJavaScriptOrdinaryKeyError(heap,other);if(keyError!=='')return {$:'objectIntegrityInvalid',heap,reason:keyError};let present=false;
-  if(input.$==='object'){const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)];if(object===undefined||!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque own-property observation requires its actual descriptor protocol'};present=findJavaScriptOrdinaryProperty(object.properties,other)>=0;}
-  else if(input.$==='text'||input.$==='sourceText'){const index=readJavaScriptArrayIndex(other);present=testJavaScriptArrayLengthKey(other)||index>=0&&index<readJavaScriptSemanticTextLength(input);}
+  if(input.$==='object'){const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)];if(object===undefined||!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque own-property observation requires its actual descriptor protocol'};const property=object.properties[findJavaScriptOrdinaryProperty(object.properties,other)];present=property!==undefined&&(operation!=='Object.prototype.propertyIsEnumerable'||property.descriptor.enumerable);}
+  else if(input.$==='text'||input.$==='sourceText'){const index=readJavaScriptArrayIndex(other);present=operation!=='Object.prototype.propertyIsEnumerable'&&testJavaScriptArrayLengthKey(other)||index>=0&&index<readJavaScriptSemanticTextLength(input);}
   return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:present}};
  }
  if(input.$!=='object')return {$:'objectIntegrityCompleted',heap,value:operation==='Object.isExtensible'?{$:'boolean',value:false}:operation==='Object.isSealed'||operation==='Object.isFrozen'?{$:'boolean',value:true}:input};

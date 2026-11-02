@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-function-invocation-call-source.js',moduleName:'javascript_function_invocation_call_source',model:'Actual Function call apply and Reflect apply abstract argument Lists 1',programAsset:'javascript-function-invocation-call-source-program'},
  {sourcePath:'js/src/translation/javascript-property-definitions.js',moduleName:'javascript_property_definitions',model:'Actual ObjectDefineProperties conversion List and Object creation continuations 1',programAsset:'javascript-property-definitions-program'},
  {sourcePath:'js/src/translation/javascript-property-reflection.js',moduleName:'javascript_property_reflection',model:'Actual FromPropertyDescriptor and own-key reflection heap values 1',programAsset:'javascript-property-reflection-program'},
  {sourcePath:'js/src/translation/javascript-instance-of.js',moduleName:'javascript_instance_of',model:'Actual InstanceofOperator and OrdinaryHasInstance continuation protocol 1',programAsset:'javascript-instance-of-program'},
@@ -199,6 +200,7 @@ const consumers=[
  'js/tests/translation-javascript-property-reflection.test.js',
  'js/tests/translation-javascript-property-definitions.test.js',
  'js/tests/translation-javascript-object-assignment.test.js',
+ 'js/tests/translation-javascript-function-invocation.test.js',
  'js/src/translation/javascript-property-definition.js',
  'js/tests/translation-javascript-array-transform.test.js',
  'js/tests/translation-javascript-array-species.test.js',
