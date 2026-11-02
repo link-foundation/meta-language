@@ -1,0 +1,29 @@
+# Complete actual Type::map_children source draft — 2026-11-03
+
+This follow-up drafts source admission and independent controls for the complete actual `Type::map_children` body in `rust/src/translation/types.rs`, rather than replacing it with a hand-written parser or native implementation. It remains unexecuted source work. No tests, imports, fixture generation, validation gates or native compilation were run. No ledger/source-register data were read or updated.
+
+## Original source and explicit projection
+
+`createRustTypeMapChildrenSourceOriginals({typesSource, typesNetwork, spanSource, spanNetwork})` in `js/tests/fixtures/rust-type-map-children-source.mjs` uses the parent-owned actual CST capture helper. It captures the complete original `Type`, `TypeField`, `Span`, `map_children`, `is_reference`, `default_absence`, `is_false` and `deserialize_tuple_product_model` items. The supplied current graph determines actual source IDs, enclosing implementation ownership, UTF16 and byte coordinates, exact original slices and SHA256 digests. The fixture builder is drafted but has not run.
+
+Each returned scenario retains a `nativeSource` containing the actual declarations, serde derives/helper annotations and helper function bodies, with the actual complete method bodies inside `impl Type`. Both forms retain actual qualified owners through the explicit `translation::types` namespace scaffold and `translation::Span`, including the actual `use super::Span` relationship. The native dependency declaration is serde version 1 with its derive feature, matching the repository manifest. These native source originals require dependency-aware CI compilation; ordinary standalone rustc control execution is insufficient. Whole module/crate builds, serialization behavior and unrelated generic serde bodies are not claimed admitted by the JavaScript semantic frontend.
+
+Standalone `source` controls use the separately named `Rust concrete value declaration projection 1`. That projection removes only serde helper annotations and Serialize/Deserialize traits from actual captured declarations. It records each changed annotation's actual source ID/range/original/replacement. Every non-serde derive, every constructor/variant/field byte and every complete method body remains. Projection is deliberately not a certificate for serialization/derive equivalence. Originals and dependency requirements remain alongside projected source. No generated Rust files or native semantics were edited.
+
+## Necessary source adapters
+
+`prepareRustFnMutSourceCallbackArgument(parser,node,expected,path)` authenticates actual shared Box deref coercion used by `map(element)`, `map(key)`, `map(value)` and `map(ret)`. It requires a shared reference followed only by complete canonical standard Box layers, and proves the projected complete referent type/owner/lifetime against the selected callback. Existing Box erasure owns runtime representation. Source loans remain, and neither mutable-place authority nor ownership transfer is granted by projection.
+
+The FnMut shared Clone adapter now recognizes genuine standard Option/Result as well as nominal declarations, with actual closed payload and Clone implementation proof. This covers the original `source_class_owner.clone()` over a shared Option<String>. It refuses stored-reference payloads whose live lifetime carriers would otherwise be discarded. Existing ordinary Clone profiles retain their original admission rules.
+
+Actual FnMut closure parameter origins now come from the parsed closure header, rather than the expected header. Shared-reference parameters receive their independent Copy header role only in an authenticated selected callback context. This does not upgrade the referent. Full source positions are compared even when usize/u64 erase to the same core integer type, and actual explicit callback result annotations are retained in the binding inventory. Returned reference escape checks remain in force.
+
+The existing direct source callback/real capture packet interpreter, opaque error propagation, fallible borrowed Vec fold, local `Vec<_>` inference, ordinary nominal construction and parent-owned stable UTF16 String-field sorting compose the complete method. The original record arm retains all `fields`, `source_class_owner`, `open`, `ordered` and `reference` writes. Ordinary readonly `is_reference` keeps the real existing body and sourceSignature2 interface. Original callback `E` remains opaque and affine; unused unvalidated generic declarations still refuse.
+
+## Independent deferred controls
+
+There are 28 literal scenarios: every actual Type variant; recursive Box, Vec and actual Span positions; class owner/flag preservation; empty record; UTF16 order distinct from Rust String scalar order; and first/second failure paths for maps, unions and function parameters/return. Every scenario declares `true\n`. The source builder includes the complete unchanged original map_children body in every projected and native source. Deferred controls assert that that exact body reaches parsed source specialization, and exercise parser/checker/emitter, typed Links and textual/binary storage.
+
+Rust coverage is >=1.90.0 <1.100.0, edition 2024, 64-bit target. Deferred JavaScript behavior coverage is Node >=22.15 <23 || >=24 <25. Native serde source dependency coverage is >=1 <2 with derive. Source captures/hashes are recorded only when the deferred builder is actually invoked; none are fabricated at draft time.
+
+The earlier generic FnMut literal inventory additionally has 22 positives and 19 retained refusals after this follow-up. New inputs cover canonical shared Box callback coercion, shared closed Option<String> Clone, fallible Box callbacks, explicit closure parameter/result owner mismatches and refusal to erase stored-reference Clone dependencies. No declared result has been observed yet.
