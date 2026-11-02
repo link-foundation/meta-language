@@ -229,3 +229,6 @@ fresh identity allocation across source embedding and native trace replay.
 
 Draft Object Call primitive wrappers with real slots and immutable String indices,
 and Object.fromEntries with ordered entry conversion and close-safe actual Errors.
+
+Draft slot-preserving wrapper result materialization and independent data-graph
+oracles alongside full native semantic-heap and event replay.

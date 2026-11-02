@@ -57,6 +57,17 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+The Node data boundary preserves already-computed wrapper slots when materializing
+copied results. Captured native carrier authority accepts only primitive metadata;
+it executes no represented coercion, method or constructor. Actual registered
+primitive/Object/null prototype snapshots, immutable String own descriptors and
+recursive own data aliases/cycles are checked before publication. Unsupported
+custom/changed prototype or accessor snapshots refuse explicitly instead of
+flattening slots into plain records. Independent native graph observations retain
+wrapper brands, exact scalars/UTF16, descriptors, prototypes and shared Object/
+Symbol identities in a JSON-safe diagnostic transport. The canonical fixture is
+Links data; native replay still compares every underlying semantic heap and event.
+
 Object Call preserves existing Object identity and allocates fresh nullish empty
 Objects or actual primitive wrappers using the selected realm root. Wrapper slots
 come only from the original primitive. String wrappers expose exact UTF16 indexed

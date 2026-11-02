@@ -1700,3 +1700,30 @@ refusing an identity response during a getter/call/error/prototype wait. Resourc
 requests retain the complete state without action. Two additional deferred
 controls retain the selected callback while rejecting wrong-kind identity replies
 and forged setup Error markers on an ordinary strict getter.
+
+### Wrapper result data-boundary integration
+
+The wrapper materialization batch extends the copied-data boundary with actual
+primitive-slot carriers after the represented allocation has already completed.
+Supported registered root snapshots and own immutable String properties are
+checked, and recursive memoization retains aliases/cycles. Custom/changed root or
+accessor snapshots refuse explicitly. This supersedes the earlier returned-box
+materialization gap for the declared data profile, without claiming arbitrary
+host-object/prototype execution support.
+
+The ordinary-source diagnostic helper now accepts an optional result observer;
+it projects both independently executed original values and actual materialized
+VM results before applying the same literal oracle/parity assertions. Existing
+rows retain the unchanged direct-result path. A separate materialization fixture
+group uses a JSON-safe brand/slot/descriptor/prototype/alias graph and joins full
+source/CST/codec/native trace replay. The test module is never imported by the
+producer; its literal fixture and observation support are separate modules.
+Deferred source/native authoring publishes the complete literal fixture as Links.
+No test, observation, generation, compilation or validation executed in drafting.
+
+The accepted materialization lane contains sixteen boxed-output originals with
+complete literal graph signatures and three explicit data-boundary refusal
+controls. Slot-preserving data output is exercised after supplied primitive,
+Object and null prototype selection, including aliases/cycles, fresh symbols,
+nonextensibility and exact own descriptors. Full details and profile refusals:
+`issue-227-wrapper-materialization-draft-2026-11-02.md`.
