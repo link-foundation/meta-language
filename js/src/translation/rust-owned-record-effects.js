@@ -8,6 +8,8 @@ import {readRustRecordSourceType} from './rust-records.js';
 import {expandSurfacePropositionValue} from './proposition-values.js';
 import {readRustOwnedRecordFiniteLoopSource,lowerRustOwnedRecordFiniteLoop,appendRustOwnedRecordFiniteLoopHelpers} from './rust-owned-record-loops.js';
 import {readRustOwnedRecordLoopOperation} from './rust-owned-record-loop-rules.js';
+import {readRustExclusiveSourceWholeAssignment,readRustExclusiveSourceNode,testRustExclusiveSourcePrivateNode} from './rust-exclusive-source-calls.js';
+import {projectRustOwnedRecordStatePlace} from './rust-owned-record-state.js';
 const fail=(reason,span)=>{throw unsupported('Rust ordered record state',reason,span);};
 function effects(parser){
  if(parser.ownedRecordEffects)return parser.ownedRecordEffects;
@@ -17,11 +19,12 @@ function effects(parser){
   write(info){if(context.reads.length+context.writes.length>=readRustOwnedRecordEffectLimit('work'))fail('the actual state operations exceed their source budget',info.span);const index=context.writes.length;context.writes.push(info);return parser.origins.mark({k:'math',op:readRustOwnedRecordEffectOperation('write'),name:String(index),args:[{value:info.value,spread:false}],span:info.span},parser.origins.typeOrigin({kind:'unit'},info.path));},
  });return context;
 }
-export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdinary){effects(parser);return readRustOwnedRecordStateAssignment(parser,path)?.value??readOrdinary();}
+export function initializeRustOwnedRecordEffects(parser){effects(parser);}
+export function readRustOwnedRecordEffectExpression(parser,path,options,readOrdinary){effects(parser);return readRustExclusiveSourceWholeAssignment(parser,path)??readRustOwnedRecordStateAssignment(parser,path)?.value??readOrdinary();}
 export function beginRustOwnedRecordShortCircuit(parser){return parser.ownedRecordEffects?parser.origins.snapshotOwnedBindings():null;}
 export function endRustOwnedRecordShortCircuit(parser,before){if(before!==null)parser.origins.joinOwnedBindings(before,parser.origins.snapshotOwnedBindings(),true,true);}
 export function readRustOwnedRecordEffectSource(parser,node){if(node?.k!=='math'||!parser.ownedRecordEffects)return null;const index=Number(node.name);if(!Number.isSafeInteger(index)||index<0||String(index)!==node.name)return null;if(node.op===readRustOwnedRecordEffectOperation('read')&&node.args.length===0){const slot=parser.ownedRecordEffects.reads[index];return slot?{form:'read',slot}:null;}if(node.op===readRustOwnedRecordEffectOperation('write')&&node.args.length===1){const source=parser.ownedRecordEffects.writes[index];return source?{form:'write',...source}:null;}return null;}
-function marker(node){return node?.k==='math'&&(node.op===readRustOwnedRecordEffectOperation('read')||node.op===readRustOwnedRecordEffectOperation('write')||node.op===readRustOwnedRecordLoopOperation());}
+function marker(node){return testRustExclusiveSourcePrivateNode(node)||node?.k==='math'&&(node.op===readRustOwnedRecordEffectOperation('read')||node.op===readRustOwnedRecordEffectOperation('write')||node.op===readRustOwnedRecordLoopOperation());}
 function contains(node,callables=false,budget={nodes:0}){const pending=[node],seen=new Set();while(pending.length){const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;if(++budget.nodes>readRustOwnedRecordEffectLimit('inspection'))fail('the actual state expression exceeds its inspection budget',node?.span);seen.add(value);if(marker(value))return true;if(!callables&&value.k==='lambda')continue;for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);}return false;}
 function typeOf(parser,node,path,expected=null,seen=new Set()){
  if(expected)return expected;if(!node||seen.has(node))return null;seen.add(node);
@@ -60,9 +63,26 @@ function lower(parser,node,path,declarations,initial=new Map(),expected=null,fin
  function packet(value,environment,keys,resultType,span){const items=[value,...keys.map(key=>({k:'name',path:[environment.get(key).name]}))];return {k:'tuple',items,span};}
  function phi(original,environment,build,next,depth,want){const keys=[...environment.keys()],resultType=typeOf(parser,original,path,want);if(!resultType)fail('a branch state join needs its actual complete result type or actual enclosing annotation',original.span);const tuple={kind:'tuple',elements:[resultType,...keys.map(key=>readRustRecordSourceType(parser,environment.get(key).slot.origin.type,environment.get(key).slot.origin.path))]},value=build((result,branch)=>packet(result,branch,keys,resultType,original.span)),name=parser.freshProductBinding(),reference={k:'name',path:[name]},bindings=[],joined=new Map(environment);for(let index=0;index<keys.length;index+=1){const fresh=parser.freshProductBinding();bindings.push({name:fresh,value:{k:'tupleIndex',object:reference,index:index+1}});joined.set(keys[index],{...environment.get(keys[index]),name:fresh});}let body=next(mark({k:'tupleIndex',object:reference,index:0},original),joined);for(const binding of bindings.toReversed())body={k:'let',...binding,body};return {k:'let',name,type:tuple,value,body,span:original.span};}
  function ordered(original,roles,environment,next,depth,want){const slots=childSlots(original,roles),selected=new Map();const step=(at,current)=>{if(at===slots.length){const rebuilt={...original};for(const role of roles)if(Array.isArray(original[role]))rebuilt[role]=[...original[role]];for(const [slot,value]of selected)if(slot.index===null)rebuilt[slot.role]=value;else rebuilt[slot.role][slot.index]=slot.wrapper?{...slot.wrapper,value}:value;return next(mark(rebuilt,original),current);}const slot=slots[at],later=slots.slice(at+1).some(item=>has(item.child));return visit(slot.child,current,(value,after)=>{const resume=actual=>{selected.set(slot,actual);return step(at+1,after);};return later?capture(value,null,resume):resume(value);},depth+1,null);};return step(0,environment);}
+ function exclusiveCall(original,info,environment,next,depth){
+  const arguments_=[],step=(index,current)=>{
+   if(index<original.args.length){const borrow=info.borrows.find(row=>row.index===index);if(borrow){const root=current.get(borrow.slot.lexical);if(!root||root.slot.root!==borrow.slot.root)fail('an exclusive argument needs its actual live caller state slot',original.span);const selected=projectRustOwnedRecordStatePlace(parser,borrow.layouts,{k:'name',path:[root.name]},original.span);return capture(selected,readRustRecordSourceType(parser,borrow.field.type,borrow.field.path),held=>{arguments_.push(held);return step(index+1,current);});}
+    return visit(original.args[index].value,current,(value,after)=>capture(value,readRustRecordSourceType(parser,info.parameters[index].type,info.parameters[index].path),held=>{arguments_.push(held);return step(index+1,after);}),depth+1,info.parameters[index].type);
+   }
+   const packetName=parser.freshProductBinding(),packet={k:'name',path:[packetName]},bindings=[],updated=new Map(current),type={kind:'tuple',elements:[readRustRecordSourceType(parser,info.result.type,info.result.path),...info.borrows.map(row=>readRustRecordSourceType(parser,row.field.type,row.field.path))]};
+   for(let at=0;at<info.borrows.length;at++){const borrow=info.borrows[at],prior=updated.get(borrow.slot.lexical),name=parser.freshProductBinding(),replacement={k:'tupleIndex',object:packet,index:at+1},value=reconstructRustOwnedRecordState(parser,path,borrow.layouts,{k:'name',path:[prior.name]},replacement,original.span);bindings.push({name,type:readRustRecordSourceType(parser,borrow.slot.origin.type,borrow.slot.origin.path),value});updated.set(borrow.slot.lexical,{slot:prior.slot,name});}
+   let body=next(mark({k:'tupleIndex',object:packet,index:0},original),updated);for(const binding of bindings.toReversed())body={k:'let',...binding,body};return {k:'let',name:packetName,type,value:{k:'app',fn:{k:'name',path:info.callee},args:arguments_,span:original.span},body,span:original.span};
+  };return step(0,environment);
+ }
  function visit(value,environment,next,depth,want){if(++arena.work>readRustOwnedRecordEffectLimit('work')||depth>readRustOwnedRecordEffectLimit('depth'))fail('ordered state construction exceeds its finite source budget',value.span);
   if(value.k==='lambda'){const body=visit(value.body,new Map(),result=>result,depth+1,value.ret);return next(mark({...value,body},value),environment);}
   if(!has(value,true))return next(value,environment);
+  const exclusive=readRustExclusiveSourceNode(parser,value);
+  if(exclusive?.kind==='call')return exclusiveCall(value,exclusive.info,environment,next,depth);
+  if(exclusive?.kind==='write'){
+   const info=exclusive.info,prior=environment.get(info.slot.lexical);if(!prior||prior.slot.root!==info.slot.root)fail('exclusive whole-place writes retain their actual lexical state slot',value.span);
+   return visit(value.args[0].value,environment,(rhs,after)=>capture(rhs,readRustRecordSourceType(parser,info.field.type,info.field.path),held=>{const name=parser.freshProductBinding(),current=after.get(info.slot.lexical),snapshot=reconstructRustOwnedRecordState(parser,path,info.layouts,{k:'name',path:[current.name]},held,value.span),updated=new Map(after);updated.set(info.slot.lexical,{slot:current.slot,name});return {k:'let',name,type:readRustRecordSourceType(parser,info.slot.origin.type,info.slot.origin.path),value:snapshot,body:next({k:'unit',span:value.span},updated)};}),depth+1,info.field.type);
+  }
+  if(testRustExclusiveSourcePrivateNode(value))fail('an exclusive source private operation lacks its actual selected parser continuation',value.span);
   if(readRustOwnedRecordFiniteLoopSource(parser,value))return lowerRustOwnedRecordFiniteLoop(parser,value,environment,next,(source,initial,expected,finished)=>{const renamed=alpha(parser,source,new Map(),declarations,path,arena.inspection);return lower(parser,renamed,path,declarations,initial,expected,finished);});
   const form=readRustOwnedRecordEffectForm(value.k,value.op??'');
   if(form==='proposition comparison')return ordered({k:'tuple',items:[value.prop.left,value.prop.right]},['items'],environment,(pair,after)=>next(mark({...value,prop:{...value.prop,left:pair.items[0],right:pair.items[1]}},value),after),depth,null);
@@ -123,6 +143,13 @@ function lowerMain(parser,main,budget){
   else fail('the actual main effect needs its existing ordered consumer',effect.span);
  }
  return {...main,effects:output};
+}
+// Opt-in adapters use this same state algebra; they cannot supply replacement
+// runtime semantics. The caller owns source checks and the complete parameter
+// state environment, and consumes all resulting state through its continuation.
+export function lowerRustOwnedRecordEffectBody(parser,node,path,declarations,initial,expected,finished){
+ if(!parser?.origins||!parser.ownedRecordEffects||!(declarations instanceof Map)||!(initial instanceof Map)||!Array.isArray(path)||path.some(part=>typeof part!=='string')||typeof finished!=='function')fail('an adapted body needs the actual parser state inventory and completion continuation',node?.span);
+ const renamed=alpha(parser,node,new Map(),declarations,path,{nodes:0});return lower(parser,renamed,path,declarations,initial,expected,finished);
 }
 export function finishRustOwnedRecordEffects(parser,program){
  if(parser.origins.collecting&&parser.ownedRecordFiniteLoops?.entries.some(row=>row.provisional))return program;

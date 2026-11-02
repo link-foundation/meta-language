@@ -23,12 +23,38 @@ function clonedSlots(slots){return new Map([...slots].map(([key,value])=>[key,{.
 function activeSlots(parser){const current=state(parser);return [...current.slots.values()].filter(slot=>slot.callable===current.currentCallable).sort((left,right)=>left.sequence-right.sequence);}
 export function readRustOwnedRecordStateSlots(parser){return activeSlots(parser);}
 export function readRustOwnedRecordStateCallable(parser){return state(parser).currentCallable;}
+export function readRustOwnedRecordStateSlot(parser,lexical){return state(parser).slots.get(lexical);}
+export function requireRustOwnedRecordStateStorage(parser,origin,span){return requireStorage(parser,origin,span);}
+// Called only after the separate exclusive source header/binder has selected
+// its actual referent. The source mode is retained independently of this SSA
+// carrier; no immutable reference receives mutation authority by resemblance.
+export function registerRustExclusiveSourceStateRoot(parser,name,mode,span){
+ const current=state(parser),table=parser.origins,actual=table.scope.get(name),frame=current.frames.at(-1);
+ if(table.collecting&&actual&&frame&&!actual.sourceLexicalBindingIdentity)actual.sourceLexicalBindingIdentity='exclusive collecting lexical '+String(current.nextFrame++);
+ const collection=mode==='owned'&&parser.standardCollectionSourceModel==='Rust closed standard collections 1'&&parser.standardCollectionSourceStorage?.(actual)===true;
+ if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'&&!collection||!actual||!frame||!actual.sourceLexicalBindingIdentity||!['owned','exclusive'].includes(mode)||mode==='exclusive'&&actual.sourceExclusiveMode!=='exclusive'||mode==='owned'&&actual.wrappers.length!==0)fail('exclusive state roots need their actual admitted source mode and lexical binder',span);
+ const origin={...copy(actual),wrappers:[],sourceLifetimes:[],sourceBorrowedPlace:mode==='exclusive',sourceExclusiveParameter:mode==='exclusive'};
+ delete origin.sourceExclusiveMode;
+ if(!table.collecting)requireStorage(parser,origin,span);
+ const root=actual.sourceBindingIdentity??actual.sourceLexicalBindingIdentity;table.sourceBindingStates.set(root,'available');origin.sourceBindingIdentity=root;
+ const binding=parser.freshProductBinding(),slot={name,lexical:actual.sourceLexicalBindingIdentity,root,origin,currentName:binding,frame:frame.id,callable:current.currentCallable,sequence:current.nextFrame++,exclusiveMode:mode};
+ current.slots.set(slot.lexical,slot);readRustOwnedRecordStateDeclarations(parser).set(binding,slot);return slot;
+}
+export function readRustOwnedRecordStatePlace(parser,name,fields,span){
+ const origin=parser.origins.scope.get(name),slot=sourceSlot(parser,origin,name);if(!slot)return null;
+ const layouts=layoutPath(parser,slot.origin,fields,span);return {slot,layouts,field:layouts.at(-1)?.field??slot.origin,fields:layouts.map(row=>row.index)};
+}
+export function projectRustOwnedRecordStatePlace(parser,layouts,object,span){
+ let value=object;for(const {layout,entry,index}of layouts){const name=parser.freshProductBinding(),constructor=['crate',...layout.constructor.split('.')];value={k:'match',scrutinees:[value],rows:[{patterns:[{k:'ctor',path:constructor,args:entry.fields.map((_,at)=>at===index?{k:'bind',name,span}:{k:'wild',span}),span}],body:{k:'name',path:[name],span},span}],span};}return value;
+}
+export function testRustOwnedRecordStatePlaceLoans(parser,slot,fields){return overlaps(parser,slot,readRustOwnedRecordStateFieldIdentity(slot.root,fields));}
 function sourceSlot(parser,origin,name){const current=state(parser);if(origin?.sourceLexicalBindingIdentity)return current.slots.get(origin.sourceLexicalBindingIdentity);const site=origin?.sourceRecordStateCollectingSite;return parser.origins.collecting&&site?[...current.slots.values()].find(slot=>slot.site?.start===site.start&&slot.site?.end===site.end):null;}
 function record(parser,origin){const owner=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,layout=owner?parser.namedRecords.get(owner.fullName):null,entry=layout?parser.origins.lookupValueOwner(['crate',...layout.constructor.split('.')],[]):null;return layout&&entry?.k==='ctor'&&entry.owner===owner.fullName?{layout,entry}:null;}
 export function readRustOwnedRecordStateLayout(parser,origin){return record(parser,origin);}
 function requireStorage(parser,root,span){
  const table=parser.origins,pending=[{origin:root,depth:0,active:[]}];let nodes=0;
  while(pending.length){const {origin,depth,active}=pending.pop(),error=readRustOwnedRecordStateStorageError(++nodes,depth);if(error)fail(error,span);
+  if(parser.standardCollectionSourceStorage?.(origin)===true)continue;
   const sourceOwner=origin.expandedSourceOwner??origin.sourceOwner,role=readRustStandardSumOwnershipFacts(table,origin).profile,disposition=readRustOwnedRecordStateStorageDisposition(origin.type?.kind??'',origin.wrappers.length,role);if(disposition==='refuse'||!acceptRustOwnedRecordStateStorageOwner(sourceOwner?.kind??'',sourceOwner?.path.join('::')??''))fail('mutable record state requires actual direct storage without callable, reference or Box fields',span);if(disposition==='leaf')continue;
   if(origin.type.kind==='tuple'){if(!origin.fields)fail('tuple storage needs every actual complete child origin',span);for(const child of origin.fields)pending.push({origin:child,depth:depth+1,active});continue;}
   if(origin.type.kind==='array'){const owner=origin.expandedSourceOwner??origin.sourceOwner;if(owner?.kind!=='library'||owner.arguments.length!==1)fail('vector state needs its actual complete source element owner',span);const position=origin.arrayElementPosition;if(position?.wrappers.length)fail('mutable record state requires actual direct storage without callable, reference or Box fields',span);const child={...table.typeOrigin(origin.type.element,origin.path),sourceOwner:copy(position?.owner??owner.arguments[0]),arrayElementPosition:position?.arrayElementPosition?copy(position.arrayElementPosition):null};pending.push({origin:child,depth:depth+1,active});continue;}
@@ -49,6 +75,8 @@ export function endRustOwnedRecordStateBlock(parser,frame){
 export function beginRustOwnedRecordStateCallable(parser){const current=state(parser),before=current.currentCallable;current.currentCallable=current.nextCallable++;return before;}
 export function endRustOwnedRecordStateCallable(parser,before){state(parser).currentCallable=before;}
 export function registerRustOwnedRecordMutableBinding(parser,name,span){
+ if(parser.exclusiveSourceModel==='Rust exclusive source loans 1')return registerRustExclusiveSourceStateRoot(parser,name,'owned',span).currentName;
+ if(parser.standardCollectionSourceModel==='Rust closed standard collections 1'&&parser.standardCollectionSourceStorage?.(parser.origins.scope.get(name))===true)return registerRustExclusiveSourceStateRoot(parser,name,'owned',span).currentName;
  const current=state(parser),table=parser.origins,origin=table.scope.get(name),profile=origin?readRustNominalOwnershipFacts(table,origin).profile:'';
  if(table.collecting){
   const frame=current.frames.at(-1);if(!origin||!record(parser,origin)||origin.wrappers.length)throw unsupported('mutable binding','mutation is outside the portable core',span);if(!frame)fail('the private mutable header needs its actual complete record layout',span);
@@ -64,6 +92,7 @@ export function registerRustOwnedRecordMutableBinding(parser,name,span){
 export function readRustOwnedRecordMutableName(parser,node,path){
  if(node.k!=='name'||node.path.length!==1)return node;const origin=parser.origins.scope.get(node.path[0]),current=state(parser),slot=sourceSlot(parser,origin,node.path[0]);if(!slot)return origin?parser.origins.mark(node,origin):node;
  if(!parser.origins.collecting&&slot.callable!==current.currentCallable)fail('a captured mutable record needs its separate callable environment state interpretation',node.span);
+ parser.exclusiveSourceReadGuard?.(slot,[],node.span);
  return current.effectTransport?current.effectTransport.read(slot,node):parser.origins.mark({...node,path:[slot.currentName]},slot.origin);
 }
 function packet(parser,node,slots,span){
@@ -103,6 +132,7 @@ function readStateControl(parser,path){
 }
 function layoutPath(parser,root,fields,span){const result=[];let origin=root;for(const name of fields){const found=record(parser,origin);if(!found)fail('an assigned place needs every actual nominal record field owner',span);const index=found.layout.names.indexOf(name);if(index<0)throw typeError('a Rust record has no field '+name,span);result.push({...found,index,origin,field:found.entry.fields[index]});origin=found.entry.fields[index];}return result;}
 function reconstruct(parser,path,layouts,depth,object,replacement,span){
+ if(depth===layouts.length)return replacement;
  const {layout,entry,index}=layouts[depth],plan=planRustOwnedRecordStateFields(entry.fields.length,index);if(plan.length!==entry.fields.length)fail('field reconstruction needs its actual complete declaration-order plan',span);
  const names=entry.fields.map(()=>parser.freshProductBinding()),value=depth+1===layouts.length?replacement:reconstruct(parser,path,layouts,depth+1,{k:'name',path:[names[index]]},replacement,span),args=plan.map(position=>position<0?value:{k:'name',path:[names[position]]});
  const constructor=['crate',...layout.constructor.split('.')];return {k:'match',scrutinees:[object],rows:[{patterns:[{k:'ctor',path:constructor,args:names.map((name,position)=>position===index&&depth+1===layouts.length?{k:'wild',span}:{k:'bind',name,span}),span}],body:args.length?{k:'app',fn:{k:'name',path:constructor,span},args,span}:{k:'name',path:constructor,span},span}],span};
@@ -126,6 +156,7 @@ export function readRustOwnedRecordStateAssignment(parser,path){
  let actual=parser.origins.origin(value,path);if(!parser.origins.collecting&&readRustStandardSumOwnershipFacts(parser.origins,field).profile==='owned'){actual=captureRustOwnedStandardSumMethodValue(parser,value,path);parser.origins.consumeOwnedBinding(actual,value.span);}
  const identity=parser.origins.collecting?null:readRustStandardSumSourceIdentity(parser,actual),expected=parser.origins.collecting?null:readRustStandardSumSourceIdentity(parser,field),same=Boolean(identity&&identity===expected),rootState=slot?parser.origins.sourceBindingStates.get(slot.root)??'':'',indices=layouts.map(item=>item.index),target=slot?readRustOwnedRecordStateFieldIdentity(slot.root,indices):'';
  let parentState=rootState;for(let index=1;index<indices.length;index+=1){const parent=readRustOwnedRecordStateFieldIdentity(slot?.root??'',indices.slice(0,index));if(rustOwnedRecordFieldState(parser.origins.sourceBindingStates,parent)!=='available')parentState='moved';}
+ if(slot)parser.exclusiveSourceWriteGuard?.(slot,indices,span);
  const allowed=Boolean(slot&&frame&&(slot.frame===frame.id||frame.request?.slots.some(outer=>outer.lexical===slot.lexical)||current.effectTransport)),error=parser.origins.collecting?'':readRustOwnedRecordStateWriteError(Boolean(slot),slot?.callable===current.currentCallable,allowed,parentState,target?rustOwnedRecordFieldState(parser.origins.sourceBindingStates,target):'',same,slot?overlaps(parser,slot,target):false);if(error)fail(error,span);if(!slot)fail('field assignment needs its actual source mutable declaration',span);
  if(current.effectTransport){if(!parser.origins.collecting)parser.origins.sourceBindingStates.set(target,'available');const result=current.effectTransport.write({slot,layouts,value,field,target,path,span:{start:span.start,end:value.span?.end??span.end}});parser.origins.finishOwnedExpression(result,path,temporaryFrame,false);return {bindings:[],value:result};}
  const rhs=parser.freshProductBinding(),next=parser.freshProductBinding(),reference={k:'name',path:[rhs]},object={k:'name',path:[slot.currentName]},snapshot=reconstruct(parser,path,layouts,0,object,reference,span),bindings=[{name:rhs,type:readRustRecordSourceType(parser,field.type,field.path),value,span:value.span},{name:next,type:readRustRecordSourceType(parser,slot.origin.type,slot.origin.path),value:snapshot,span}];

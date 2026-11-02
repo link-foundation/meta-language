@@ -109,6 +109,7 @@ import { requirePartialCallableResultInference } from './partial-callable-rules.
 import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes, readCallableLambdaInference } from './callable-source.js';
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
+import {checkRustExclusiveSourceSignature} from './rust-exclusive-source-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
@@ -388,6 +389,7 @@ class Checker {
         if (!acceptOptionalAnnotationTypes(entry.ret, entry.annotatedRet)) throw typeError('the semantic return type must retain the annotated value types', item.span);
       }
       if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span),type=>this.items.get(type.name));
+      if(item.sourceExclusiveSignature!==undefined){if(item.sourceSignature!==undefined)throw typeError('exclusive and immutable Rust source signatures require their separate interfaces',item.span);entry.sourceExclusiveSignature=checkRustExclusiveSourceSignature(item.sourceExclusiveSignature,entry.params.map(parameter=>parameter.type),entry.ret,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {

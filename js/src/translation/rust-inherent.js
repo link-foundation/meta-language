@@ -72,7 +72,9 @@ export function readRustInherentReceiver(parser,name,path,index){
   if(!acceptRustSourceLifetimeReference(token.value,parser.lifetimeBindings.has(token.value)))throw unsupported('lifetime parameter','a reference needs a declared function lifetime, an elided placeholder, or \'static',span(start,token));
   lifetime=token.value;
  }
- if(c.is('mut'))throw unsupported('Rust mutable or explicit lifetime receiver','receiver mutation and named regions need an explicit ownership interpretation',span(start,c.peek()));
+ const exclusive=borrowed&&c.is('mut')&&parser.exclusiveSourceModel==='Rust exclusive source loans 1';
+ if(exclusive){if(lifetime!==null)throw unsupported('Rust exclusive receiver lifetime','named mutable receiver regions need their actual source lifetime composition',span(start,c.peek()));c.next();}
+ else if(c.is('mut'))throw unsupported('Rust mutable or explicit lifetime receiver','receiver mutation and named regions need an explicit ownership interpretation',span(start,c.peek()));
  c.expect('self','method receiver');
  let type;
  if(c.eat(':')){
@@ -88,9 +90,10 @@ export function readRustInherentReceiver(parser,name,path,index){
   if(borrowed)parser.origins.type.sourceLifetimes=[lifetime];
  }
  const origin=parser.origins.type;
+ if(exclusive)origin.sourceExclusiveMode='exclusive';
  const mode=readRustInherentReceiverLayerMode(origin.wrappers);
  if(!mode)throw unsupported('Rust explicit receiver layers','the receiver needs represented owned, immutable reference or standard Box layers',span(start,c.peek()));
- parser.inherentMethods.set([...path,name].join('.'),{owner:parser.inherentOwner.path.join('.'),mode,receiver:[...origin.wrappers]});
+ parser.inherentMethods.set([...path,name].join('.'),{owner:parser.inherentOwner.path.join('.'),mode,receiver:[...origin.wrappers],...(exclusive?{exclusive:true}:{})});
  return{parameter:{name:'self',type,span:span(start,c.peek())},origin};
 }
 

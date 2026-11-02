@@ -40,3 +40,18 @@ export function lowerRustExclusiveSourceInvocation(context,state,callee,evaluate
  const entry=context.callables.find(row=>row.identity===callee),packet={k:'app',fn:{k:'name',path:entry.path},args:evaluatedArguments},lowered=lowerRustExclusiveSourceCallWriteback(context,selected.state,packet,roots,names,continuation);
  if(lowered.$!=='rustExclusiveSourceLowered')return lowered;const finished=finishRustExclusiveSourceCall(context,selected.state,selected.state.call.identity);return finished.$==='rustExclusiveSourceContinue'?{...lowered,state:finished.state}:{$:'rustExclusiveSourceLoweringInvalid',reason:finished.reason};
 }
+// Actual source-text admission supplies these slots directly from the live
+// parser frame. No caller context or externally supplied position can replace
+// its physical declaration/header or actual lexical state environment.
+export function lowerRustExclusiveSourceParsedCallable(parser,frame,declaration){
+ if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1'||declaration.name!==frame.name||Object.hasOwn(declaration,'sourceSignature'))fail('exclusive source text retains its actual separate header and function owner',declaration);
+ const inventory=readRustOwnedRecordStateDeclarations(parser),actual=readRustOwnedRecordStateSlots(parser),initial=new Map();
+ for(const row of frame.slots){if(!actual.some(slot=>slot.lexical===row.slot.lexical&&slot.root===row.slot.root&&slot.callable===row.slot.callable)||inventory.get(row.slot.currentName)!==row.slot)fail('exclusive source text retains actual function parameter slots',declaration);initial.set(row.slot.lexical,{slot:row.slot,name:declaration.params[row.parameter].name});}
+ const exclusive=frame.slots.filter(row=>frame.signature.parameters[row.parameter].mode==='exclusive');
+ const body=lowerRustOwnedRecordEffectBody(parser,declaration.body,frame.path,inventory,initial,declaration.ret,(value,environment)=>{
+  if(!exclusive.length)return value;
+  const updated=exclusive.map(row=>{const source=environment.get(row.slot.lexical);if(!source||source.slot.root!==row.slot.root)fail('exclusive source completion retains its actual parameter writeback',value);return {k:'name',path:[source.name]};});
+  return {k:'tuple',items:[value,...updated],span:value.span};
+ });
+ return {...declaration,body,ret:exclusive.length?{kind:'tuple',elements:[declaration.ret,...exclusive.map(row=>readRustRecordSourceType(parser,row.slot.origin.type,row.slot.origin.path))]}:declaration.ret,sourceExclusiveSignature:frame.signature};
+}

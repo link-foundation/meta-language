@@ -22,5 +22,6 @@ export function requireRustNonconstantBinding(parser,name,path,span){
 
 export function readRustSourceValueName(parser,segments,path){
  if(segments.length===1&&parser.origins.scope.has(segments[0]))return segments;
+ parser.standardCollectionSourcePrivateNameGuard?.(segments,path);
  const resolved=parser.resolve(resolveRustTypeAliasPath(parser,segments,path,'associated value'),path);return parser.ordinaryCompletionContext()?readRustSourceValuePath(parser.modulePath,resolved):resolved;
 }

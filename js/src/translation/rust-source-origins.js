@@ -224,6 +224,7 @@ export class RustSourceOrigins {
   }
 
   compareStructure(left,right){
+    if(this.standardCollectionSourcePositionError?.(left,right))return false;
     if(left&&right&&readRustCopyClosureJoinError(Boolean(left.copyClosureSpan),Boolean(right.copyClosureSpan),left.copyClosureSpan?.start===right.copyClosureSpan?.start&&left.copyClosureSpan?.end===right.copyClosureSpan?.end))return false;
     if(left&&right&&!acceptRustStaticByteArrayOwnerEquality(left.arraySourceModel??'',left.sourceOwner?.kind??'',left.sourceOwner?.path.join('::')??'',right.sourceOwner?.kind??'',right.sourceOwner?.path.join('::')??''))return false;
     if (!left || !right || left.proven !== right.proven || left.diverging !== right.diverging || left.uncertain !== right.uncertain || left.copyEvidence !== right.copyEvidence || (left.floatSourceModel ?? null) !== (right.floatSourceModel ?? null) || left.textSourceModel !== right.textSourceModel || left.arraySourceModel !== right.arraySourceModel || JSON.stringify(left.wrappers) !== JSON.stringify(right.wrappers)) return false;
@@ -313,6 +314,7 @@ export class RustSourceOrigins {
   }
 
   join(origins) {
+    const collectionValues=origins.filter(origin=>origin&&!origin.diverging);if(collectionValues.length>1)for(const origin of collectionValues.slice(1)){const error=this.standardCollectionSourcePositionError?.(collectionValues[0],origin);if(error)throw unsupported('Rust standard collection source join',error);}
     const returning = origins.filter(origin => !origin.diverging);
     if (!returning.length) return { ...value(), diverging: true };
     const owners=returning.map(origin=>readRustPointerIntegerContractOwner(origin.sourceOwner,origin.integerSourceOwnerConstraint??''));
@@ -445,6 +447,7 @@ export class RustSourceOrigins {
   argument(actualOrigin, expectedOrigin, span,transferred=false) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    const collectionError=this.standardCollectionSourcePositionError?.(actualOrigin,expectedOrigin);if(collectionError)throw unsupported('Rust standard collection source position',collectionError,span);
     const staticRegion=readRustBorrowedVectorStaticReferenceError(this.borrowedVectorSourceEnabled,expectedOrigin.wrappers,(expectedOrigin.sourceLifetimes??[]).map(value=>value??''));if(staticRegion)throw unsupported('Rust borrowed vector source',staticRegion,span);
     validateRustBorrowedVectorArgument(this,actualOrigin,expectedOrigin,span);
     if(acceptRustOwnedArgumentReadCheck(actualOrigin.wrappers.length,transferred))checkRustOwnedOrigin(this,actualOrigin,span);
