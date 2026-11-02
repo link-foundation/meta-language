@@ -6,6 +6,14 @@ coordinates in descending order; indexed replacement converts and bounds the
 actual index before allocation and never reads the replaced coordinate. Both
 produce dense own writable/enumerable/configurable data properties, including
 undefined for holes, through the shared ordinary operations and continuation VM.
+Array sorting captures selected values before comparisons and final writes,
+orders undefined after defined values, compares default UTF16 strings through
+actual conversion continuations, and preserves stable ties. Mutating sort skips
+absent properties and strictly publishes/deletes through the original receiver;
+toSorted reads through holes and returns a dense realm Array. Comparator calls
+and their Number conversions retain actual thrown values and undefined receiver.
+The comparator sequence and behavior of inconsistent comparators remain explicit
+implementation choices, separately qualified from exact engine observations.
 
 This is the authoritative specification of what meta-language is for and how it
 is built. Everything else in this repository serves it: where the root

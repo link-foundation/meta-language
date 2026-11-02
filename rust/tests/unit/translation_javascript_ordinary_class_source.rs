@@ -136,6 +136,7 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
  let javascript_array_mutation_boxing_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-mutation-boxing.lino")).unwrap();
  let javascript_array_read_boxing_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-read-boxing.lino")).unwrap();
  let array_concatenation_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-concatenation-source.lino")).unwrap();
+ let array_sort_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-sort-source.lino")).unwrap();
  let array_copy_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-copy-source.lino")).unwrap();
  let array_slice_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-slice-source.lino")).unwrap();
  let array_join_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-join-source.lino")).unwrap();
@@ -156,6 +157,7 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
   ("arrayMutationBoxing",&javascript_array_mutation_boxing_fixture["declarations"],"javascriptArrayMutationBoxingOriginals"),
   ("arrayReadBoxing",&javascript_array_read_boxing_fixture["declarations"],"javascriptArrayReadBoxingOriginals"),
   ("arrayConcatenation",&array_concatenation_fixture["declarations"],"javascriptArrayConcatenationOriginals"),
+  ("arraySort",&array_sort_fixture["declarations"],"javascriptArraySortOriginals"),
   ("arrayCopy",&array_copy_fixture["declarations"],"javascriptArrayCopyOriginals"),
   ("arraySlice",&array_slice_fixture["declarations"],"javascriptArraySliceOriginals"),
   ("arrayJoin",&array_join_fixture["declarations"],"javascriptArrayJoinOriginals"),

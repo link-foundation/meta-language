@@ -12,6 +12,8 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/rust-exclusive-source-string-rules.js',moduleName:'rust_exclusive_source_string_rules',model:'Actual owned String accumulation source place and operation rules 1',programAsset:'rust-exclusive-source-string-rules-program'},
+ {sourcePath:'js/src/translation/javascript-array-sort-call-source.js',moduleName:'javascript_array_sort_call_source',model:'Actual stable sparse and dense Array sorting call continuations 1',programAsset:'javascript-array-sort-call-source-program'},
  {sourcePath:'js/src/translation/rust-exclusive-source-compound-rules.js',moduleName:'rust_exclusive_source_compound_rules',model:'Actual exclusive primitive compound assignment operand and order rules 1',programAsset:'rust-exclusive-source-compound-rules-program'},
  {sourcePath:'js/src/translation/javascript-array-copy-call-source.js',moduleName:'javascript_array_copy_call_source',model:'Actual dense Array reversal and checked replacement copies 1',programAsset:'javascript-array-copy-call-source-program'},
  {sourcePath:'js/src/translation/rust-standard-collection-rules.js',moduleName:'rust_standard_collection_rules',sourceDependencies:true,model:'Actual standard collection owner domain and method source rules 1',programAsset:'rust-standard-collection-rules-program'},
@@ -127,6 +129,8 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/rust-exclusive-source-strings.mjs',
+ 'js/tests/fixtures/javascript-array-sort-source.mjs',
  'js/tests/fixtures/javascript-array-copy-source.mjs',
  'js/tests/fixtures/rust-exclusive-source-compounds.mjs',
  'js/tests/fixtures/rust-exclusive-source-admission.mjs',
@@ -224,6 +228,10 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/src/translation/rust-exclusive-source-strings.js',
+ 'js/tests/translation-rust-exclusive-source-strings.test.js',
+ 'js/tests/translation-javascript-array-sort-call-source.test.js',
+ 'js/tests/translation-javascript-array-sort-source.test.js',
  'js/tests/translation-javascript-array-copy-call-source.test.js',
  'js/tests/translation-javascript-array-copy-source.test.js',
  'js/src/translation/rust-exclusive-source-compounds.js',
@@ -596,7 +604,9 @@ for(const [source,target] of [
  ['javascript-array-mutation-boxing','javascript-array-mutation-boxing'],
  ['javascript-array-read-boxing','javascript-array-read-boxing'],
  ['javascript-array-concatenation-source','javascript-array-concatenation-source'],
+ ['javascript-array-sort-source','javascript-array-sort-source'],
  ['javascript-array-copy-source','javascript-array-copy-source'],
+ ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],
  ['rust-exclusive-source-admission','rust-exclusive-source-admission'],
  ['rust-exclusive-collection-source','rust-exclusive-collection-source'],
