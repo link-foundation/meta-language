@@ -2,6 +2,8 @@
 
 This records unexecuted JavaScript source work. The architecture remains in
 `docs/vision.md`. No original, generated library or native compilation was run.
+The subsequent concrete-carrier handoff records nominal core type separation
+and real exclusive whole/field place integration beyond this initial batch.
 
 The new source profile is `standardCollectionSourceModel:
 'Rust closed standard collections 1'`. It requires

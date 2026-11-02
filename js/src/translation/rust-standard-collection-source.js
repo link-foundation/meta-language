@@ -48,18 +48,37 @@ export function refuseRustStandardCollectionSourcePrivateName(parser,segments,pa
  if(actual.some((_,index)=>context.privateNames.has(actual.slice(0,index+1).join('.')))||segments.some((_,index)=>context.privateNames.has(segments.slice(0,index+1).join('.'))))fail('projected collection implementation names are private and cannot become original source declarations or calls',span);
 }
 export function refuseRustStandardCollectionSourceObservation(parser,node,path,operation,span){
- if(!parser.standardCollectionSource)return;const origin=parser.origins.origin(node,path);
- if(origin&&readRustStandardCollectionSourceStorage(parser,{...origin,wrappers:[]})===true)fail('collection '+operation+' requires its actual separate source interpretation; the internal carrier is not an observable Rust representation',span);
+ const context=parser.standardCollectionSource;if(!context)return;const pending=[parser.origins.origin(node,path)],seen=new Set();let count=0;
+ while(pending.length){const origin=pending.pop();if(!origin)continue;if(++count>65536)fail('collection observation type traversal exceeds its finite source budget',span);
+  if(readRustStandardCollectionSourceStorage(parser,{...origin,wrappers:[]})===true)fail('collection '+operation+' requires its actual separate source interpretation; the internal carrier is not an observable Rust representation',span);
+  const type=origin.type;if(!type)continue;
+  // Projecting an actual user record field is a place operation, not Display
+  // of its aggregate. Direct carrier fields remain private above and below.
+  const fieldProjection=operation==='field projection';
+  if(!fieldProjection)pending.push(...(origin.fields??[]));
+  if(!fieldProjection&&(type.kind==='array'||type.kind==='option'))pending.push(parser.origins.typeOrigin(type.element,origin.path??path));
+  if(!fieldProjection&&type.kind==='tuple')pending.push(...type.elements.map(type=>parser.origins.typeOrigin(type,origin.path??path)));
+  if(type.kind==='named'){
+   const owner=parser.origins.lookupTypeOwner(type.path,origin.path??path);if(!owner||seen.has(owner.fullName))continue;seen.add(owner.fullName);
+   if(owner.sourceStandardCollectionCarrier&&context.types.has(owner.sourceStandardCollectionCarrier.concreteIdentity))fail('collection '+operation+' through an aggregate requires its actual separate observation semantics',span);
+   if(fieldProjection)continue;
+   const sum=owner.standardSumSourceOrigin?.standardSumSource;if(sum)pending.push(...sum.arguments);
+   for(const entry of parser.origins.valueCatalog.values())if(entry.k==='ctor'&&entry.owner===owner.fullName)pending.push(...entry.fields);
+  }
+ }
 }
 export function readRustStandardCollectionSourceStorage(parser,origin){
  const context=parser.standardCollectionSource,row=context?.types.get(origin?.sourceCollectionTypeIdentity);if(!row||!origin.proven||origin.wrappers.length!==0||origin.type?.kind!=='named')return false;
- if(!testRustStandardCollectionProjectedGraphEquality(origin.type,context.carrierType)||!testRustStandardCollectionProjectedGraphEquality(origin.sourceOwner,row.origin.sourceOwner)||!testRustStandardCollectionProjectedGraphEquality(origin.sourceStandardCollection,row.origin))return false;
- const owner=parser.origins.lookupTypeOwner(origin.type.path,origin.path),actual=context.library.program.declarations.get(context.carrierCheckedType.name);
- return owner?.k==='data'&&testRustStandardCollectionProjectedGraphEquality(owner.sourceCollectionLibraryDeclaration,actual)&&readRustStandardCollectionSourceOriginError(row.origin,row.keyDomain,row.valueDomain,row.pointerWidth)==='';
+ if(!testRustStandardCollectionProjectedGraphEquality(origin.type,row.carrierType)||!testRustStandardCollectionProjectedGraphEquality(origin.sourceOwner,row.origin.sourceOwner)||!testRustStandardCollectionProjectedGraphEquality(origin.sourceStandardCollection,row.origin))return false;
+ const owner=parser.origins.lookupTypeOwner(origin.type.path,origin.path),kernel=parser.origins.lookupTypeOwner(context.carrierType.path,[]),actual=context.library.program.declarations.get(context.carrierCheckedType.name);
+ return owner?.k==='data'&&testRustStandardCollectionProjectedGraphEquality(owner.sourceStandardCollectionCarrier,row.carrierFacet)&&kernel?.k==='data'&&testRustStandardCollectionProjectedGraphEquality(kernel.sourceCollectionLibraryDeclaration,actual)&&readRustStandardCollectionSourceOriginError(row.origin,row.keyDomain,row.valueDomain,row.pointerWidth)==='';
 }
 export function finishRustStandardCollectionSource(parser,program){
  const context=parser.standardCollectionSource;if(!context)return program;
  const libraryNames=context.privateNames,collision=[];function inspect(items,path=[]){for(const item of items){if(item.k==='module')inspect(item.items,[...path,item.name]);else if(libraryNames.has([...path,item.name].join('.')))collision.push(item.name);}}inspect(program.items);
  if(collision.length)fail('user declarations cannot replace projected collection library bodies: '+collision.join(', '));
- return {...program,items:[...structuredClone(context.library.sourceProgram.items),...program.items,...context.wrappers]};
+ const carriers=[...context.types.values()].map(row=>row.carrierDeclaration);if(carriers.some(row=>!row))fail('every concrete source collection needs its actual nominal carrier declaration');
+ const libraryItems=structuredClone(context.library.sourceProgram.items),roles=new Map([[context.carrierCheckedType.name,'state'],...context.library.functions.filter(row=>row.role==='packet'||row.role==='kernel').map(row=>[row.checkedName,row.role])]);
+ function bindOwners(items,path=[]){for(const item of items){if(item.k==='module'){bindOwners(item.items,[...path,item.name]);continue;}const declaration=[...path,item.name].join('.'),role=roles.get(declaration);if(role)item.sourceStandardCollectionLibraryOwner={model:'Rust standard collection projected library owner 1',entryPath:context.library.entryPath,sourceSha256:context.library.closure.sourceSha256,declaration,role};}}bindOwners(libraryItems);
+ return {...program,items:[...libraryItems,...structuredClone(carriers),...program.items,...context.wrappers]};
 }
