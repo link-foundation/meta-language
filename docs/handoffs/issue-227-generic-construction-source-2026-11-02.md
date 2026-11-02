@@ -182,3 +182,18 @@ compilation ran. No observations are claimed. Small source files use the shared
 checkout; no dependencies, new worktrees or compiler caches were created. The
 ledger/source register, naming and feature inventory updates remain deferred to
 the required live source-audit/generation phase. Unrelated journals are preserved.
+
+## Runtime nonconstructor closure continuation
+
+Generic admission now reuses the existing classifier's actual closureObject
+nonconstructor proof before asking external authority. Existing runtime arrow
+and strict method templates remain nonconstructible even when no static fact
+row exists for their fresh global identity. A false constructable fact does not
+become an authority request or placeholder instance. One additional kernel
+control allocates real registered lexical/strict closures and checks target and
+newTarget rejection. Three further original programs cover argument evaluation
+before generic new's TypeError, strict method nonconstructibility, and invalid
+arrow newTarget before Reflect.construct's observable argument-list reads.
+The batch now has twenty-four originals and nineteen kernel controls. Source
+inputs and prior assertions remain intact. This correction ran no tests,
+generation, validation or compilation.

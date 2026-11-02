@@ -1,7 +1,7 @@
 // Generic base [[Construct]] over actual target/newTarget facts and realm roots.
 // Intrinsic kinds come from protected identity authority, never function spelling.
 import {readJavaScriptOrdinaryValueError,findJavaScriptOrdinaryObject,insertJavaScriptOrdinaryObject,planJavaScriptOrdinaryGet,defineJavaScriptOrdinaryProperty,createJavaScriptOrdinarySetDescriptor} from './javascript-ordinary-heap.js';
-import {readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
+import {classifyJavaScriptArraySpeciesConstructor,readJavaScriptArraySpeciesDirectoryError,findJavaScriptArrayConstructorFact} from './javascript-array-species.js';
 import {readJavaScriptExecutableCallFunction} from './javascript-call-templates.js';
 import {testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {beginJavaScriptScalarProtocol,stepJavaScriptScalarProtocol,resumeJavaScriptScalarProtocol,finishJavaScriptScalarPrimitive} from './javascript-scalar-conversion-protocol.js';
@@ -106,7 +106,7 @@ export function stepJavaScriptConstruction(program,heap,directory,state){
  if(state.call!==undefined)return {$:'constructionCall',heap,state,callee:state.call.callee,receiver:state.call.receiver,arguments:state.call.arguments,constructing:state.call.constructing,newTarget:state.call.newTarget};
  if(state.phase==='target'||state.phase==='newTarget'){
   const candidate=state.phase==='target'?state.target:state.newTarget;if(candidate.$!=='object'||!candidate.callable)return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};
-  const fact=readJavaScriptConstructionFact(directory,candidate);if(fact===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:candidate};if(!fact.constructable)return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};
+  const classification=classifyJavaScriptArraySpeciesConstructor(heap,directory,candidate);if(classification.$==='arrayConstructorNotConstructable')return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};const fact=classification.$==='arrayConstructorKnown'?classification.fact:undefined;if(fact===undefined)return {$:'constructionNeedAuthority',heap,state,constructor:candidate};if(!fact.constructable)return {$:'constructionError',heap,errorClass:'TypeError',reason:state.phase==='target'?'target is not a constructor':'newTarget is not a constructor'};
   if(state.phase==='newTarget'){
    if(!['strict','ordinary class','Array','Number','Boolean','String','Object'].includes(state.mode))return requestJavaScriptConstructionImplementation(heap,state,'Construct','the actual constructor kind requires its own derived bound or exotic implementation');
    const fn=readJavaScriptExecutableCallFunction(program,heap,fact.identity),kind=readJavaScriptConstructionMode(program,heap,fact);
