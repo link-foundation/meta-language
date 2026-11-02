@@ -10,6 +10,8 @@ import {testRustExclusiveSourcePlaceOverlap} from './rust-exclusive-source-loan-
 import {readRustSourceValueName} from './rust-source-constants.js';
 import {readRustExclusiveSourceStringMethod,createRustExclusiveSourceStringMutation} from './rust-exclusive-source-strings.js';
 import {readRustExclusiveSourceVectorMethod,createRustExclusiveSourceVectorPacket} from './rust-exclusive-source-vectors.js';
+import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
+import {captureRustOwnedStandardSumMethodValue} from './rust-owned-standard-sum-methods.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source call',reason,span);};
 const operations={borrow:'rustExclusiveSourceBorrow',call:'rustExclusiveSourceCall',write:'rustExclusiveSourceWholeWrite'};
 export function initializeRustExclusiveSourceCalls(parser){
@@ -104,12 +106,13 @@ export function readRustExclusiveSourceMethod(parser,receiver,method,args,path,s
  const selected=parser.origins.mark(projectRustOwnedRecordStatePlace(parser,info.place.layouts,prior,span),info.place.field);
  const value=parser.origins.mark({k:'array',items:[{value:selected,spread:true},{value:args[0],spread:false}],span},{...info.place.field,wrappers:[],sourceLifetimes:[],sourceBindingIdentity:null,sourcePlaceBindingIdentity:null,sourceLexicalBindingIdentity:null,sourceBorrowedPlace:false,sourceExclusiveParameter:false,sourceOwnedResultProof:true});return recordRustExclusiveSourcePlaceWrite(parser,info.place,value,path,span);
 }
-export function recordRustExclusiveSourcePlaceWrite(parser,place,value,path,span){
+export function recordRustExclusiveSourcePlaceWrite(parser,place,value,path,span,reinitialize=false){
  const arena=initializeRustExclusiveSourceCalls(parser),index=arena.writes.length;if(index>=100000)fail('exclusive whole-place writes exceed their finite construction budget',span);
  parser.exclusiveSourceWriteGuard?.(place.slot,place.fields,span);
  if(place.slot.callable!==parser.ownedRecordState?.currentCallable)fail('an exclusive write cannot capture a mutable root from another callable',span);
- if(!parser.origins.collecting&&(parser.origins.sourceBindingStates.get(place.slot.root)!=='available'||testRustOwnedRecordStatePlaceLoans(parser,place.slot,place.fields)))fail('an exclusive write needs its actual available root without surviving overlapping source references',span);
- if(!parser.origins.collecting)parser.origins.argument(parser.origins.origin(value,path),place.field,span);
+ const whole=reinitialize&&place.fields.length===0&&place.layouts.length===0;
+ if(!parser.origins.collecting&&(!whole&&parser.origins.sourceBindingStates.get(place.slot.root)!=='available'||testRustOwnedRecordStatePlaceLoans(parser,place.slot,place.fields)))fail('an exclusive write needs its actual available root without surviving overlapping source references',span);
+ if(!parser.origins.collecting){parser.origins.argument(parser.origins.origin(value,path),place.field,span);if(whole){if(readRustStandardSumOwnershipFacts(parser.origins,place.field).profile==='owned'){const actual=captureRustOwnedStandardSumMethodValue(parser,value,path);parser.origins.consumeOwnedBinding(actual,span);}for(const identity of parser.origins.sourceBindingStates.keys())if(testRustOwnedRecordFieldDescendant(place.slot.root,identity))parser.origins.sourceBindingStates.delete(identity);parser.origins.sourceBindingStates.set(place.slot.root,'available');}}
  arena.writes.push({...place,value,path,span});return parser.origins.mark({k:'math',op:operations.write,name:String(index),args:[{value,spread:false}],span},parser.origins.typeOrigin({kind:'unit'},path));
 }
 export function readRustExclusiveSourceWholeAssignment(parser,path){
@@ -118,7 +121,7 @@ export function readRustExclusiveSourceWholeAssignment(parser,path){
  const source=parser.origins.scope.get(c.peek(star).value);if(star&&source?.sourceExclusiveMode!=='exclusive')return null;
  const place=readRustOwnedRecordStatePlace(parser,c.peek(star).value,[],start);if(!place)return null;
  parser.exclusiveSourceWriteGuard?.(place.slot,[],start);for(let index=0;index<star+2;index++)c.next();
- const value=withRustStandardSumSourceContext(parser,place.field,()=>readRustExpectedCopyClosure(parser,path,place.field));return recordRustExclusiveSourcePlaceWrite(parser,place,value,path,{start:start.start,end:value.span?.end??c.peek(-1).end});
+ const value=withRustStandardSumSourceContext(parser,place.field,()=>readRustExpectedCopyClosure(parser,path,place.field));return recordRustExclusiveSourcePlaceWrite(parser,place,value,path,{start:start.start,end:value.span?.end??c.peek(-1).end},true);
 }
 export function readRustExclusiveSourceDereference(parser,path,token){
  if(parser.exclusiveSourceModel!=='Rust exclusive source loans 1')return null;
@@ -138,4 +141,16 @@ export function recordRustExclusiveSourcePacketEffect(parser,callee,args,paramet
  const arena=initializeRustExclusiveSourceCalls(parser),entry=parser.origins.lookupValueOwner(callee,[]);
  if(!arena||entry?.k!=='fn'||parameters.length!==args.length||borrows.some(row=>!readRustOwnedRecordStateSlots(parser).some(slot=>slot.lexical===row.slot.lexical&&slot.root===row.slot.root)))fail('a library state packet needs its actual selected callable and live source root slots',span);
  const index=arena.calls.length;if(index>=100000)fail('library state packets exceed their finite source construction budget',span);arena.calls.push({callee:[...callee],parameters,result,borrows,span});return parser.origins.mark({k:'math',op:operations.call,name:String(index),args:args.map(value=>({value,spread:false})),span},result);
+}
+// Selected source callback environments use the same actual lexical loan
+// acquisition; the source FnMut compiler supplies complete hidden formals.
+export function acquireRustExclusiveSourceStateArguments(parser,parameters,places,offset,span){
+ const arena=initializeRustExclusiveSourceCalls(parser),callable=parser.ownedRecordState?.currentCallable;if(!arena||!Number.isSafeInteger(offset)||offset<0||places.length>256||parameters.length!==offset+places.length)fail('source callback state arguments retain their exact complete formal inventory',span);
+ const frame={entry:{parameters},callable,borrows:[],current:null},args=[];arena.frames.push(frame);
+ try{for(let at=0;at<places.length;at++){const index=offset+at;frame.current={index,origin:parameters[index]};args.push(acquire(parser,places[at],index,span));}return {args,borrows:frame.borrows.map((borrow,at)=>({...borrow,index:offset+at}))};}finally{arena.frames.pop();}
+}
+export function recordRustExclusiveSourceLocalPacketEffect(parser,name,lexical,args,parameters,result,borrows,span){
+ const context=parser.fnMutSourceSpecialization,origin=parser.origins.scope.get(name),arena=initializeRustExclusiveSourceCalls(parser);
+ if(!context?.runtime||context.runtime.callbackLexical!==lexical||origin?.sourceLexicalBindingIdentity!==lexical||!origin.sourceFnMutParameter||args.length!==parameters.length||name!==context.declaration.callback.name)fail('a local FnMut packet invokes its actual selected source formal and environment',span);
+ const index=arena.calls.length;if(index>=100000)fail('source callback packets exceed their finite construction budget',span);arena.calls.push({callee:[name],parameters,result,borrows,span});return parser.origins.mark({k:'math',op:operations.call,name:String(index),args:args.map(value=>({value,spread:false})),span},result);
 }

@@ -110,6 +110,9 @@ import { constructCallableFunctionType, readCallableCellElement, readCallablePar
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import {checkRustExclusiveSourceSignature} from './rust-exclusive-source-signatures.js';
+import {checkRustFnMutSourceSpecialization} from './rust-fnmut-source-signatures.js';
+import {checkRustSourceVectorSort} from './rust-source-vector-sort.js';
+import {checkRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
 import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner,checkRustStandardCollectionObservation} from './rust-standard-collection-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
@@ -283,7 +286,7 @@ class Checker {
     const program = {
       schemaVersion: 1,
       sourceLanguage: this.language,
-      items,
+      items:[...items,...(this.rustSourceVectorSortLibraries??[])],
       main,
       declarations: this.items,
     };
@@ -396,6 +399,7 @@ class Checker {
       }
       if (item.sourceSignature !== undefined) entry.sourceSignature = checkRustSourceSignature(item.sourceSignature, entry.params.map(parameter => parameter.type), entry.ret, this.language, value => this.resolveType(value, itemPath, item.span),type=>this.items.get(type.name));
       if(item.sourceExclusiveSignature!==undefined){if(item.sourceSignature!==undefined)throw typeError('exclusive and immutable Rust source signatures require their separate interfaces',item.span);entry.sourceExclusiveSignature=checkRustExclusiveSourceSignature(item.sourceExclusiveSignature,entry.params.map(parameter=>parameter.type),entry.ret,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
+      if(item.sourceFnMutSpecialization!==undefined){if(item.sourceSignature!==undefined||item.sourceExclusiveSignature!==undefined)throw typeError('a source FnMut specialization retains its own actual generic/callback ABI',item.span);entry.sourceFnMutSpecialization=checkRustFnMutSourceSpecialization(item.sourceFnMutSpecialization,entry.params.map(parameter=>parameter.type),entry.ret,this.language,value=>this.resolveType(value,itemPath,item.span),type=>this.items.get(type.name));}
     });
     this.walk(items, path, (item, itemPath, entry) => {
       if (item.k === 'fn') {
@@ -1390,6 +1394,8 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    const sourceVectorSort=checkRustSourceVectorSort(this,node,env,path,expected);if(sourceVectorSort)return sourceVectorSort;
+    const sourceVectorPrimitiveSort=checkRustSourceVectorPrimitiveSort(this,node,env,path,expected);if(sourceVectorPrimitiveSort)return sourceVectorPrimitiveSort;
     if(node.op===readDisjointCollectionIterationSourceOperation()||node.op===readDisjointCollectionSpreadSourceOperation())return checkClosedCollectionIteration(this,node,env,path,expected);
     if(acceptRustStringByteLengthOperation('math',node.op)){
       const value=node.args.length===1&&!node.args[0].spread?this.expr(node.args[0].value,env,path,STRING):null;

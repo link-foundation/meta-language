@@ -5,6 +5,7 @@ import {readRustOwnedRecordStateDeclarations,readRustOwnedRecordStateSlots,readR
 import {readRustRecordSourceType} from './rust-records.js';
 import {readRustExclusiveSourceLoanContextError,readRustExclusiveSourcePositionBudgetError,readRustExclusiveSourceLoanStateError,beginRustExclusiveSourceCall,finishRustExclusiveSourceCall,createRustExclusiveSourceReturnPacket,lowerRustExclusiveSourceCallWriteback} from './rust-exclusive-source-loans.js';
 import {unsupported} from './diagnostics.js';
+import {createRustSourceSignature} from './rust-source-signatures.js';
 const fail=(reason,node)=>{throw unsupported('Rust exclusive source call adapter',reason,node?.span);};
 function sameOwner(left,right){return Boolean(left&&right)&&left.kind===right.kind&&left.path.length===right.path.length&&left.path.every((value,index)=>value===right.path[index])&&left.arguments.length===right.arguments.length&&left.arguments.every((value,index)=>sameOwner(value,right.arguments[index]));}
 function slotPosition(slot,expected){const origin=slot.origin,owner=origin?.expandedSourceOwner??origin?.sourceOwner;const budget=readRustExclusiveSourcePositionBudgetError({type:origin?.type,owner,wrappers:origin?.wrappers});if(budget)return budget;return origin?.proven===true&&origin.wrappers.length===0&&origin.type?.kind===expected.type.kind&&(origin.sourceCollectionTypeIdentity??'')===(expected.collectionTypeIdentity??'')&&sameOwner(owner,expected.owner)?'':'an exclusive parameter slot needs its actual proven referent type and complete source owner';}
@@ -53,5 +54,6 @@ export function lowerRustExclusiveSourceParsedCallable(parser,frame,declaration)
   const updated=exclusive.map(row=>{const source=environment.get(row.slot.lexical);if(!source||source.slot.root!==row.slot.root)fail('exclusive source completion retains its actual parameter writeback',value);return {k:'name',path:[source.name]};});
   return {k:'tuple',items:[value,...updated],span:value.span};
  });
+ if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&!exclusive.length){const entry=parser.origins.lookupValueOwner(['crate',...frame.path,declaration.name],frame.path);if(!entry?.parameters||!entry.result)fail('a readonly source helper retains its actual complete function header',declaration);return {...declaration,body,sourceSignature:createRustSourceSignature('Rust source function signature 2',entry.parameters,entry.result,new Set())};}
  return {...declaration,body,ret:exclusive.length?{kind:'tuple',elements:[declaration.ret,...exclusive.map(row=>readRustRecordSourceType(parser,row.slot.origin.type,row.slot.origin.path))]}:declaration.ret,sourceExclusiveSignature:frame.signature};
 }

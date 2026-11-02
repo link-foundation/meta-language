@@ -1,3 +1,12 @@
+import {readRustFnMutSourceIterator} from './rust-fnmut-source-iterators.js';
+import {readRustSourceVectorSort} from './rust-source-vector-sort.js';
+import {readRustSourceVectorPrimitiveSort} from './rust-source-vector-primitive-sort.js';
+import {readRustSourceStringCharacterPush} from './rust-source-string-character-push.js';
+import {readRustFnMutSourceNominalClone} from './rust-fnmut-source-values.js';
+import {initializeRustFnMutSource,readRustFnMutSourceTemplateFacts,readRustFnMutSourceFunctionTemplate,readRustFnMutSourceFunctionGenerics,readRustFnMutSourceParameterType,appendRustFnMutSourceStateParameters,rustFnMutSourceDeclarationTarget,recordRustFnMutSourceFunctionHeader,beginRustFnMutSourceFunction,finishRustFnMutSourceFunction,endRustFnMutSourceFunction,finishRustFnMutSource,readRustFnMutSourceCall,readRustFnMutSourceMethod,readRustFnMutSourceLocalCall} from './rust-fnmut-source-functions.js';
+import {readRustFnMutSourceConcreteType} from './rust-fnmut-source-declarations.js';
+import {readRustFnMutSourceLocalVectorAnnotation,finishRustFnMutSourceLocalVectorAnnotation} from './rust-fnmut-source-local-types.js';
+import {readRustStandardCollectionSourceLoop,testRustStandardCollectionSourceLoopNode} from './rust-standard-collection-source-loops.js';
 import {readRustStandardCollectionSourceComparison,readRustStandardCollectionSourceEqualityCall} from './rust-standard-collection-equality-source.js';
 import {finishRustExclusiveSourceVectorHelpers} from './rust-exclusive-source-vectors.js';
 import {initializeRustStandardCollectionSource,readRustStandardCollectionSourceImport,finishRustStandardCollectionSource} from './rust-standard-collection-source.js';
@@ -172,7 +181,7 @@ const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
 export function parseRustWithSourceTypeOwners(source,options={}){return parseRust(source,{...options,retainSourceTypeOwners:true});}
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='',retainSourceTypeOwners=false,sourceVersion='',exclusiveSourceModel='',standardCollectionSourceModel='',standardCollectionSourceLibrary=null,standardCollectionPointerWidth=64 } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='',retainSourceTypeOwners=false,sourceVersion='',exclusiveSourceModel='',standardCollectionSourceModel='',standardCollectionSourceLibrary=null,standardCollectionPointerWidth=64,fnMutSourceModel='' } = {}) {
   requireRustExclusiveSourceModel(exclusiveSourceModel,sourceVersion);
   if(standardCollectionSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust standard collection source composition','the supplied library needs its separate checked source interface and carrier interpretation');
   if(exclusiveSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,runtimeShellModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust exclusive source composition','the exclusive source interface needs its own checked signature and state composition');
@@ -202,11 +211,11 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   if(sharedArrayHandleSourceModel)requireRustSharedArrayHandleSourceText(source);
   const { tokens } = tokenize(source, 'Rust');
-  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel, sharedArrayHandleSourceModel,retainSourceTypeOwners,sourceVersion,exclusiveSourceModel,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth }, source);
+  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel, sharedArrayHandleSourceModel,retainSourceTypeOwners,sourceVersion,exclusiveSourceModel,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth,fnMutSourceModel }, source);
 }
 
 // Internal complete-token entry; public source parsing validates options and lexes first.
-export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '',retainSourceTypeOwners=false,sourceVersion='',exclusiveSourceModel='',standardCollectionSourceModel='',standardCollectionSourceLibrary=null,standardCollectionPointerWidth=64 } = {}, source = null) {
+export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '',retainSourceTypeOwners=false,sourceVersion='',exclusiveSourceModel='',standardCollectionSourceModel='',standardCollectionSourceLibrary=null,standardCollectionPointerWidth=64,fnMutSourceModel='' } = {}, source = null) {
   requireRustExclusiveSourceModel(exclusiveSourceModel,sourceVersion);
   if(standardCollectionSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust standard collection source composition','the supplied library needs its separate checked source interface and carrier interpretation');
   if(exclusiveSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,sharedArrayHandleSourceModel,retainSourceTypeOwners].some(Boolean))throw unsupported('Rust exclusive source composition','token input retains the same explicit exclusive source profile boundary');
@@ -224,6 +233,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   declarations.sourceVersionMinor=sourceVersionFacts.minor;
   declarations.exclusiveSourceModel=exclusiveSourceModel;declarations.exclusiveSourceVersion=sourceVersionFacts.spelling;declarations.exclusiveSourceNeedsFinalAdmission=Boolean(exclusiveSourceModel);
+  initializeRustFnMutSource(declarations,fnMutSourceModel);
   declarations.standardCollectionSourceModel=standardCollectionSourceModel;initializeRustStandardCollectionSource(declarations,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth);
   declarations.origins.standardCollectionSourcePositionError=(actual,expected)=>readRustStandardCollectionSourcePositionError(declarations,actual,expected);
   declarations.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(declarations.ordinaryCompletionContext(),sourceVersionFacts.minor);
@@ -237,6 +247,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   syntax.sourceVersionMinor=sourceVersionFacts.minor;
   syntax.exclusiveSourceModel=exclusiveSourceModel;syntax.exclusiveSourceVersion=sourceVersionFacts.spelling;syntax.exclusiveSourceNeedsFinalAdmission=Boolean(exclusiveSourceModel);
+  initializeRustFnMutSource(syntax,fnMutSourceModel,readRustFnMutSourceTemplateFacts(declarations));
   syntax.standardCollectionSourceModel=standardCollectionSourceModel;initializeRustStandardCollectionSource(syntax,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth);
   syntax.origins.standardCollectionSourcePositionError=(actual,expected)=>readRustStandardCollectionSourcePositionError(syntax,actual,expected);
   syntax.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(syntax.ordinaryCompletionContext(),sourceVersionFacts.minor);
@@ -266,6 +277,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.sourceVersionMinor=sourceVersionFacts.minor;
   parser.exclusiveSourceModel=exclusiveSourceModel;parser.exclusiveSourceVersion=sourceVersionFacts.spelling;parser.exclusiveSourceNeedsFinalAdmission=Boolean(exclusiveSourceModel);
+  initializeRustFnMutSource(parser,fnMutSourceModel,readRustFnMutSourceTemplateFacts(syntax));
   parser.standardCollectionSourceModel=standardCollectionSourceModel;initializeRustStandardCollectionSource(parser,standardCollectionSourceModel,standardCollectionSourceLibrary,standardCollectionPointerWidth);
   parser.origins.standardCollectionSourcePositionError=(actual,expected)=>readRustStandardCollectionSourcePositionError(parser,actual,expected);
   parser.origins.ownedContainerSourceEnabled=acceptRustOwnedContainerSource(parser.ordinaryCompletionContext(),sourceVersionFacts.minor);
@@ -357,10 +369,11 @@ class RustParser {
     finishRustPureUnitSource(this,root);
     finishRustSharedArrayHandleSource(this,root);
     let program={ language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
+    program=finishRustFnMutSource(this,program);
     program=finishRustOwnedRecordEffects(this,program);
     program=finishRustExclusiveSourceVectorHelpers(this,program);
     program=finishRustStandardCollectionSource(this,program);
-    if(this.exclusiveSourceModel||this.standardCollectionSourceModel){const pending=[program];let work=0;while(pending.length){const value=pending.pop();if(!value||typeof value!=='object')continue;if(++work>1000000)throw unsupported('Rust exclusive source program','the complete source program exceeds its inspection budget');if(testRustExclusiveSourcePrivateNode(value))throw unsupported('Rust exclusive source program','a private exclusive source operation escaped its actual state continuation',value.span);for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);}}
+    if(this.exclusiveSourceModel||this.standardCollectionSourceModel){const pending=[program];let work=0;while(pending.length){const value=pending.pop();if(!value||typeof value!=='object')continue;if(++work>1000000)throw unsupported('Rust exclusive source program','the complete source program exceeds its inspection budget');if(testRustExclusiveSourcePrivateNode(value)||testRustStandardCollectionSourceLoopNode(value))throw unsupported('Rust exclusive source program','a private exclusive source operation escaped its actual state continuation',value.span);for(const child of Object.values(value))if(child&&typeof child==='object')pending.push(child);}}
     refuseRustStandardSumPrivateCompletions(program);
     if(!this.origins.collecting)refuseRustStandardSumSourcePatterns(program);
     return program;
@@ -676,6 +689,7 @@ class RustParser {
   typeValue() {
     const c = this.cursor;
     const token = c.peek();
+    const concreteFnMut=readRustFnMutSourceConcreteType(this);if(concreteFnMut)return concreteFnMut;
     if(acceptRustIteratorItemInferredType(token.value,Boolean(this.iteratorItemTypeInferenceOrigin))){
       c.next();const origin=structuredClone(this.iteratorItemTypeInferenceOrigin);this.origins.type={...origin,expandedSourceOwner:structuredClone(origin.sourceOwner)};return origin.type;
     }
@@ -843,13 +857,15 @@ class RustParser {
     const start = constKeyword??functionKeyword;
     const name = c.identifier('fn').value;
     if(this.pureUnitCallModel)return readRustPureUnitFunction(this,path,start,name);
+    const fnMutTemplate=readRustFnMutSourceFunctionTemplate(this,path,functionKeyword,name,constKeyword);if(fnMutTemplate)return fnMutTemplate;
     const outerLifetimes = this.lifetimeBindings;
     const outerHeader = this.lifetimeHeader;
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = true;
     try {
       if(this.emptyOptionSourceModel && c.is('<')) throw unsupported('Rust empty option source', 'generic functions and lifetime binders require a separate interpretation', span(start,c.peek()));
-      if (c.is('<')) {
+      if(readRustFnMutSourceFunctionGenerics(this,functionKeyword,name,path)){}
+      else if (c.is('<')) {
         const generic = c.next();
         while (!c.is('>')) {
           if (!c.eat("'")) throw unsupported('generic function', 'type parameters are outside the portable core', span(start, generic));
@@ -880,10 +896,10 @@ class RustParser {
         requireRustNonconstantBinding(this,paramName,path,span(paramToken,paramToken));
         c.expect(':', 'parameter');
         const typeToken = c.peek();
-        const priorExclusiveType=this.exclusiveParameterType;this.exclusiveParameterType=Boolean(this.exclusiveSourceModel);let parameterType;try{parameterType=this.type();}finally{this.exclusiveParameterType=priorExclusiveType;}
+        const priorExclusiveType=this.exclusiveParameterType;this.exclusiveParameterType=Boolean(this.exclusiveSourceModel);let parameterType;try{parameterType=readRustFnMutSourceParameterType(this,paramName,path)??this.type();}finally{this.exclusiveParameterType=priorExclusiveType;}
         params.push({ name: paramName, type: parameterType, span: span(paramToken, c.peek()) });
         sourceParams.push(this.origins.type);
-        if (mutable) mutableParams.push({ name: paramName, token: paramToken, typeToken, origin: this.origins.type });
+        if (mutable&&!this.origins.type.sourceFnMutParameter) mutableParams.push({ name: paramName, token: paramToken, typeToken, origin: this.origins.type });
         if (!c.eat(',')) break;
       }
       c.expect(')', 'fn');
@@ -893,6 +909,8 @@ class RustParser {
       const ret = explicitResult?this.type():this.origins.typed(UNIT,path);
       const sourceResult = this.origins.type;
       if(!explicitResult)sourceResult.sourceOwner={kind:'unit',path:[],arguments:[]};
+      appendRustFnMutSourceStateParameters(this,params,sourceParams);
+      recordRustFnMutSourceFunctionHeader(this,params,sourceParams,sourceResult);
       if(this.sharedArrayHandleSourceModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust shared array handle source','mutable parameters and named lifetime binders need another source profile',span(start,c.peek()));
       if(this.constFunctionModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust const function interface','mutable parameters and lifetime binders require an independent interpretation');
       if(this.localValueStateModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust owned local state','mutable parameters and lifetimes require a separate interface proof');
@@ -914,11 +932,12 @@ class RustParser {
         && !acceptRustOrdinaryFreshVectorResult(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.element.kind,true)&&!readRustOwnedVectorSignature(this,sourceResult)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       sourceResult.freshVectorResultContract=!sourceResult.arrayElementPosition&&acceptRustFreshVectorResultDeclaration(this.ordinaryCompletionContext(),sourceResult.arraySourceModel??'',sourceResult.wrappers.length,ret.kind==='array'?ret.element.kind:'',sourceResult.arrayElementCopyEvidence===true);
-      this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
+      const fnMutTarget=rustFnMutSourceDeclarationTarget(this,name,path);
+      this.origins.declaration(fnMutTarget.name, fnMutTarget.path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
       if(this.ordinaryCompletionContext())captureRustSourceConstantFunction(this,name,path,functionKeyword,constKeyword,sourceParams,sourceResult);
       // This private declaration inventory is discarded; no body semantics are inferred here.
-      if(this.headerDiscovery){const close=readRustDeclarationBodyBoundary(this);return {k:'fn',name,params,ret,body:{k:'unit',span:{start:close.start,end:close.end}},span:{start:start.start,end:close.end}};}
+      if(this.headerDiscovery||this.fnMutSourceSpecialization?.phase==='preview'){const close=readRustDeclarationBodyBoundary(this);return {k:'fn',name,params,ret,body:{k:'unit',span:{start:close.start,end:close.end}},span:{start:start.start,end:close.end}};}
       const constHeaderEnd=constKeyword?c.peek().start:null;
       this.lifetimeHeader = false;
       const functionOwnership=this.origins.snapshotOwnedBindings();
@@ -926,7 +945,8 @@ class RustParser {
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
       const parameterNames=params.map(parameter=>parameter.name);
       if(borrowedVectorResultPhase)seedRustBorrowedVectorParameterRegions(this,parameterNames);
-      const exclusiveFrame=beginRustExclusiveSourceFunction(this,name,path,params,sourceParams,sourceResult,mutableParams);
+      const fnMutFrame=beginRustFnMutSourceFunction(this,name,path,params,sourceParams,sourceResult,mutableParams);
+      const exclusiveFrame=fnMutFrame?null:beginRustExclusiveSourceFunction(this,name,path,params,sourceParams,sourceResult,mutableParams);
       const signature = scalarLoop||this.localValueStateModel ? createRustSourceSignature('Rust source function signature 1', sourceParams, sourceResult, this.lifetimeBindings) : null;
       let lowered = null;
       const previousLoop = this.scalarLoopActive;
@@ -940,7 +960,7 @@ class RustParser {
       const previousSumReturn=this.standardSumReturnOrigin;
       let body;
       this.standardSumReturnOrigin=sourceResult;
-      try{body=withRustStandardSumSourceContext(this,sourceResult,()=>emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,!exclusiveFrame)));}
+      try{body=withRustStandardSumSourceContext(this,sourceResult,()=>emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,!exclusiveFrame&&!fnMutFrame)));}
       finally{this.standardSumReturnOrigin=previousSumReturn;}
       this.origins.finishOwnedExpression(body,path,temporaryFrame,false);
       const borrowedResult=validateRustBorrowedVectorFunctionResultRegions(this,body,sourceResult,parameterNames);
@@ -968,7 +988,8 @@ class RustParser {
         ...(this.primitiveOwnerModel?{sourcePrimitiveOwners:createRustPrimitiveOwnerProof(this,sourceParams,sourceResult,{span:span(start,c.peek())})}:{}),
         ...(scalarLoop ? {sourceSignature: signature, sourceLoop: lowered.proof} : this.sourceSignatureModel||this.retainSourceTypeOwners ? { sourceSignature: createRustSourceSignature(selectRustRetainedSourceSignatureModel(this.sourceSignatureModel,this.retainSourceTypeOwners===true), sourceParams, sourceResult, this.lifetimeBindings) } : {}),
       };
-      declaration=finishRustExclusiveSourceFunction(this,exclusiveFrame,declaration);endRustExclusiveSourceFunction(this,exclusiveFrame);
+      declaration=fnMutFrame?finishRustFnMutSourceFunction(this,fnMutFrame,declaration):finishRustExclusiveSourceFunction(this,exclusiveFrame,declaration);
+      if(fnMutFrame)endRustFnMutSourceFunction(this,fnMutFrame);else endRustExclusiveSourceFunction(this,exclusiveFrame);
       // Function-local move states have no authority in the next declaration.
       // Retain the serial allocator and all validated immutable source witnesses.
       this.origins.restoreOwnedBindings(functionOwnership);
@@ -1097,7 +1118,7 @@ class RustParser {
       }
       if (c.is('return')) throw unsupported('early return', 'write the result as the tail expression of the block', span(token, token));
       const temporaryFrame=this.origins.ownedTemporaryFrame();
-      const finiteLoop=ordinary?readRustOwnedRecordFiniteLoop(this,path):null;
+      const finiteLoop=ordinary?(readRustStandardCollectionSourceLoop(this,path)??readRustOwnedRecordFiniteLoop(this,path)):null;
       if (!finiteLoop&&['while', 'loop', 'for'].includes(token.value) && token.kind === 'identifier') {
         throw unsupported(`${token.value} loop`, 'loops over mutable state are outside the portable core; use recursion', span(token, token));
       }
@@ -1154,11 +1175,13 @@ class RustParser {
       for (const item of binding.items ?? []) validateNames(item);
     };
     validateNames(pattern);
-    const type = c.eat(':') ? this.type() : undefined;
-    const sourceType = type ? this.origins.type : null;
+    const fnMutLocalType=readRustFnMutSourceLocalVectorAnnotation(this,path);
+    let type = fnMutLocalType?undefined:c.eat(':') ? this.type() : undefined;
+    let sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
     const initializerStart=c.index,temporaryFrame=this.origins.ownedTemporaryFrame();
     const value = withRustStandardSumSourceContext(this,sourceType,()=>readRustExpectedCopyClosure(this,path,sourceType));
+    if(fnMutLocalType){const inferred=finishRustFnMutSourceLocalVectorAnnotation(this,fnMutLocalType,value,path);type=inferred.type;sourceType=inferred.origin;}
     let fallback=null;
     if(c.is('else')){
       const tokens=c.tokens.slice(initializerStart,c.index),reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));
@@ -1173,7 +1196,7 @@ class RustParser {
     const range = span(start, c.peek());
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path, sourceType);
-      const name=mutable?registerRustOwnedRecordMutableBinding(this,pattern.name,span(start,mutableToken)):pattern.name;
+      const name=mutable?registerRustOwnedRecordMutableBinding(this,pattern.name,pattern.span??span(start,mutableToken)):pattern.name;
       return [{ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range }];
     }
     const bindings = [];
@@ -1285,7 +1308,7 @@ class RustParser {
         c.expect(';', token.value);
         continue;
       }
-      const finiteLoop=this.ordinaryCompletionContext()?readRustOwnedRecordFiniteLoop(this,[]):null;
+      const finiteLoop=this.ordinaryCompletionContext()?(readRustStandardCollectionSourceLoop(this,[])??readRustOwnedRecordFiniteLoop(this,[])):null;
       const statement=finiteLoop?null:readRustOwnedRecordStateStatement(this,[]);
       if(statement)for(const binding of statement.bindings)effects.push({k:'let',...binding});
       const value=finiteLoop??statement?.value??this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
@@ -1302,7 +1325,7 @@ class RustParser {
     const token = c.next();
     const parsed = token.value==='println'?this.formattingArguments(token,path):{args:this.macroArguments(token,path),names:null};
     const args=parsed.args;
-    if(['println','assert','assert_eq','assert_ne'].includes(token.value))for(const argument of args){guardRustBorrowedVectorObservation(this,argument,path,token.value,argument.span);this.standardCollectionSourceObservationGuard?.(argument,path,token.value,argument.span);}
+    if(['println','assert','assert_eq','assert_ne'].includes(token.value))for(const argument of args){guardRustBorrowedVectorObservation(this,argument,path,token.value,argument.span);this.standardCollectionSourceObservationGuard?.(argument,path,token.value,argument.span);this.fnMutSourceObservationGuard?.(argument,path,'display',argument.span);}
     switch (token.value) {
       case 'println':
         if (!args.length) return { k: 'print', expr: { k: 'str', value: '' }, style: 'rust', span: span(token, c.peek()) };
@@ -1409,7 +1432,7 @@ class RustParser {
         refuseRustSharedArrayHandleObservation(this,value,path,value.span);
         guardRustBorrowedVectorObservation(this,value,path,'format',value.span);
       }else throw new TypeError('unknown Rust formatting term instruction');
-      this.standardCollectionSourceObservationGuard?.(value,path,'format',value.span);
+      this.standardCollectionSourceObservationGuard?.(value,path,'format',value.span);this.fnMutSourceObservationGuard?.(value,path,'display',value.span);
       checkRustOwnedOrigin(this.origins,this.origins.origin(value,path),value.span);
       pieces.push({k:'show',arg:value,style:'rust',span:value.span});
     }
@@ -1462,7 +1485,7 @@ class RustParser {
       const right = this.primitiveBitwise(path, {}, 0);
       const collectionEquality=readRustStandardCollectionSourceComparison(this,left,right,COMPARISON[token.value],path,joined(left,right,token));
       if(collectionEquality){const after=c.peek();if(after.kind==='punct'&&COMPARISON[after.value])throw this.fail('comparison operators cannot be chained',after);return collectionEquality;}
-      this.standardCollectionSourceObservationGuard?.(left,path,'comparison',joined(left,right,token));this.standardCollectionSourceObservationGuard?.(right,path,'comparison',joined(left,right,token));
+      this.standardCollectionSourceObservationGuard?.(left,path,'comparison',joined(left,right,token));this.standardCollectionSourceObservationGuard?.(right,path,'comparison',joined(left,right,token));this.fnMutSourceObservationGuard?.(left,path,'comparison',joined(left,right,token));this.fnMutSourceObservationGuard?.(right,path,'comparison',joined(left,right,token));
       refuseRustSharedArrayHandleValueComparison(this,left,right,path,joined(left,right,token));
       guardRustBorrowedVectorObservation(this,left,path,'comparison',joined(left,right,token));guardRustBorrowedVectorObservation(this,right,path,'comparison',joined(left,right,token));
       refuseRustCallableObservation(this,left,path,joined(left,right,token));refuseRustCallableObservation(this,right,path,joined(left,right,token));
@@ -1585,6 +1608,7 @@ class RustParser {
     for (;;) {
       const token = c.peek();
       if(c.is('(')&&this.origins.origin(value,path).type?.kind==='function'){
+        const fnMutCall=readRustFnMutSourceLocalCall(this,value,path,token);if(fnMutCall){value=fnMutCall;continue;}
         c.next();const args=readRustContextualCallArguments(this,value,path);const close=c.expect(')','closure call');value=readRustCopyClosureCall(this,value,args,path,{start:value.span?.start??token.start,end:close.end});continue;
       }
       if (c.is('.')) {
@@ -1600,6 +1624,13 @@ class RustParser {
           continue;
         }
         const method = c.identifier('method');
+        this.fnMutSourceObservationGuard?.(value,path,method.value,method);
+        if(method.value==='into_iter'&&this.ownedVectorSourceIteratorReader){const iterated=this.ownedVectorSourceIteratorReader(value,method,path,method);if(iterated){value=iterated;continue;}}
+        const fnMutMethod=readRustFnMutSourceMethod(this,value,method,path,{start:value.span?.start??token.start});if(fnMutMethod){value=fnMutMethod;continue;}
+        const sourceVectorSort=readRustSourceVectorSort(this,value,method,path);if(sourceVectorSort){value=sourceVectorSort;continue;}
+        const sourceVectorPrimitiveSort=readRustSourceVectorPrimitiveSort(this,value,method,path);if(sourceVectorPrimitiveSort){value=sourceVectorPrimitiveSort;continue;}
+        const sourceCharacterPush=readRustSourceStringCharacterPush(this,value,method,path);if(sourceCharacterPush){value=sourceCharacterPush;continue;}
+        const fnMutClone=readRustFnMutSourceNominalClone(this,value,method,path);if(fnMutClone){value=fnMutClone;continue;}
         guardRustBorrowedVectorObservation(this,value,path,method.value,{start:value.span?.start??token.start,end:method.end});
         const collectionOrigin=this.origins.origin(value,path);
         if(this.standardCollectionSourceStorage?.({...collectionOrigin,wrappers:[]})===true&&c.is('(')){const collectionArguments=readRustStandardCollectionSourceArguments(this,value,method,path);const collectionMethod=readRustStandardCollectionSourceMethod(this,value,method,collectionArguments,span(token,c.peek()),path);if(!collectionMethod)throw unsupported('Rust standard collection method','the actual registered source receiver needs its selected standard operation',span(token,c.peek()));value=collectionMethod;continue;}
@@ -1695,6 +1726,7 @@ class RustParser {
     const sharedMethod=readRustSharedArrayHandleMethod(this,receiver,method,args,range);
     if(sharedMethod)return sharedMethod;
     const byteView=readRustByteStringSliceView(this,receiver,method,args,range,path);if(byteView)return byteView;
+    const fnMutIterator=readRustFnMutSourceIterator(this,receiver,method,args,range,path);if(fnMutIterator)return fnMutIterator;
     const borrowedIterator=readRustBorrowedIterator(this,receiver,method,args,range,path);if(borrowedIterator)return borrowedIterator;
     const inherent=readRustInherentMethod(this,receiver,method,args,range,path);
     if(inherent)return inherent;
@@ -1924,6 +1956,7 @@ class RustParser {
         c.expect('(', 'Vec constructor'); c.expect(')', 'Vec constructor');
         return this.origins.markVectorConstructor({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element),sourceOwner:elementOwner?{kind:'library',path:['std','vec','Vec'],arguments:[elementOwner]}:null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', arrayElementCopyEvidence:elementCopy, proven: true });
       }
+      const fnMutCall=readRustFnMutSourceCall(this,segments,path,token);if(fnMutCall)return fnMutCall;
       if (c.is('::') && c.is('<', 1)) throw unsupported('turbofish', 'generic functions are outside the portable core', span(token, c.peek()));
       if (c.is('{') && (/^[A-Z]/u.test(segments.at(-1)) || this.hasRecordConstructions) && !options.noStruct) {
         return readRustRecordConstruction(this,segments,path,token);
@@ -1931,6 +1964,7 @@ class RustParser {
       const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
       if(sharedConstruction)return sharedConstruction;
       requireRustTypeAliasValueConstructor(this,segments,path,{start:token.start,end:c.tokens[c.index-1].end});
+      const localFnMutCall=readRustFnMutSourceLocalCall(this,{k:'name',path:segments},path,token);if(localFnMutCall)return localFnMutCall;
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
       if (!c.is('(')){
         const node={k:'name',path:recordValuePath??readRustSourceValueName(this,segments,path),span:span(token,token)},entry=this.origins.lookupValueOwner(node.path,path),produced=entry?.k==='ctor'&&entry.fields.length===0?createRustNominalConstructorOrigin(this,node,[],path,node.span):null;

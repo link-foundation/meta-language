@@ -15,6 +15,7 @@ const empty=()=>({profile:'',owner:'',roles:[],definitionName:''});
 const clone=value=>structuredClone(value);
 
 export function readRustStandardSumOwnershipFacts(table,origin,active=new Set(),depth=0,context={visits:0,memo:new Map()}){
+ const fnMut=table.fnMutSourceOpaqueOwnership?.(origin);if(fnMut)return fnMut;
  if(table.standardCollectionSourceModel==='Rust closed standard collections 1'&&typeof table.standardCollectionSourceStorage==='function'&&table.standardCollectionSourceStorage(origin)===true)return {profile:'owned',owner:origin.sourceOwner.path.join('::'),roles:[],definitionName:origin.type.path.filter(part=>part!=='crate').join('.')};
  if(!acceptRustBorrowedVectorOwnedInterpretation(Boolean(origin?.arrayElementPosition)))return empty();
  if(++context.visits>readRustStandardSumOwnershipNodeLimit()||!origin?.proven||!origin.type||depth>readRustStandardSumOwnershipDepthLimit())return empty();
@@ -48,8 +49,8 @@ export function createRustStandardSumConstructorOrigin(parser,node,origin,args,p
  const error=nominal.profile&&nominal.owner===facts.definitionName?readRustNominalConstructorError(actual,entry?.fields?.length??-1,args.length):readRustStandardSumOwnedConstructorError(actual,entry?.fields?.length??-1,args.length);if(error)throw unsupported('Rust owned standard sum',error,span);
  const values=args.map(argument=>table.origin(argument,path));
  for(let at=0;at<args.length;at+=1){
-  const argument=args[at],value=values[at],owned=readRustStandardSumOwnershipFacts(table,entry.fields[at]).profile==='owned',transferred=table.ownedArgumentTransfers.has(argument);
-  table.argument(value,entry.fields[at],argument.span??span,transferred);
+  const argument=args[at],value=values[at],field=table.fnMutSourceConstructorField?.(origin,node,at,entry.fields[at])??entry.fields[at],owned=readRustStandardSumOwnershipFacts(table,field).profile==='owned',transferred=table.ownedArgumentTransfers.has(argument);
+  table.argument(value,field,argument.span??span,transferred);
   const called=argument.k==='app'&&argument.fn.k==='name'?table.lookupValueOwner(argument.fn.path,path):null,recorded=Boolean(argument.span&&table.freshCalls.has(`${argument.span.start}:${argument.span.end}`));
   const callProducer=called?.k==='fn'&&readRustStandardSumOwnershipFacts(table,called.result).profile==='owned'&&recorded&&table.same(value,called.result);
   const producer=value.sourceOwnedResultProof===true||value.freshArrayValue===true||table.freshVectorConstructors.has(`${argument.span?.start}:${argument.span?.end}`)||callProducer;

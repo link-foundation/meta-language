@@ -447,6 +447,7 @@ export class RustSourceOrigins {
   argument(actualOrigin, expectedOrigin, span,transferred=false) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    const fnMutError=this.fnMutSourceArgumentError?.(actualOrigin,expectedOrigin);if(fnMutError)throw unsupported('Rust source FnMut opaque generic',fnMutError,span);
     const collectionError=this.standardCollectionSourcePositionError?.(actualOrigin,expectedOrigin);if(collectionError)throw unsupported('Rust standard collection source position',collectionError,span);
     const staticRegion=readRustBorrowedVectorStaticReferenceError(this.borrowedVectorSourceEnabled,expectedOrigin.wrappers,(expectedOrigin.sourceLifetimes??[]).map(value=>value??''));if(staticRegion)throw unsupported('Rust borrowed vector source',staticRegion,span);
     validateRustBorrowedVectorArgument(this,actualOrigin,expectedOrigin,span);

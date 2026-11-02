@@ -1,6 +1,7 @@
 // Actual source question-mark transport into the ordinary callable completion
 // tree. Private markers are consumed before checked semantic IR is admitted.
 import {unsupported} from './diagnostics.js';
+import {guardRustFnMutSourceResidual} from './rust-fnmut-source-opacity.js';
 import {checkRustOwnedOrigin,registerRustOwnedBinding} from './rust-owned-bindings.js';
 import {readRustStandardSumOwnershipFacts,projectRustStandardSumPatternField,createRustStandardSumConstructorOrigin} from './rust-standard-sum-ownership.js';
 import {captureRustOwnedStandardSumMethodValue,createRustOwnedStandardSumMethodResult} from './rust-owned-standard-sum-methods.js';
@@ -28,6 +29,7 @@ function primitiveConversion(parser,operand,target){const source=operand.standar
 export function readRustStandardSumTryExpression(parser,operand,path,token){
  if(!parser.ordinaryCompletionContext())refuse('question-mark propagation requires the ordinary callable completion interpretation',token);
  const actual=parser.origins.origin(operand,path),origin=readRustStandardSumSourceOrigin(parser,actual);
+ guardRustFnMutSourceResidual(parser,actual,parser.standardSumReturnOrigin,token);
  if(!origin)refuse('the operand needs its actual direct standard Option or Result source owner',operand.span);
  const callable=readRustStandardSumSourceOrigin(parser,parser.standardSumReturnOrigin);
  if(!callable||callable.wrappers.length!==0)refuse('the nearest actual callable must return its own direct standard sum',token);

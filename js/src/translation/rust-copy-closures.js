@@ -1,5 +1,6 @@
 import {readRustNominalBindingPattern,rustNominalBindingNames} from './rust-records.js';
 import {beginRustOwnedRecordStateCallable,endRustOwnedRecordStateCallable} from './rust-owned-record-state.js';
+import {beginRustFnMutSourceEnvironment,finishRustFnMutSourceEnvironment,endRustFnMutSourceEnvironment} from './rust-fnmut-source-environments.js';
 import {withRustStandardSumSourceContext,readRustStandardSumSourceIdentity} from './rust-standard-sum-source.js';
 import {readRustStandardSumOwnershipFacts} from './rust-standard-sum-ownership.js';
 import {registerRustOwnedBinding,checkRustOwnedOrigin} from './rust-owned-bindings.js';
@@ -120,12 +121,13 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
  if(written){const reason=ownedDomains?readRustOwnedStandardSumCallbackClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>readRustStandardSumOwnershipFacts(parser.origins,origin).profile),readRustStandardSumOwnershipFacts(parser.origins,resultOrigin).profile):readRustCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),written,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
  const ownership=parser.origins.snapshotOwnedBindings(),temporaries=new Set(parser.origins.sourceTemporaryBindings);
  const recordStateCallable=beginRustOwnedRecordStateCallable(parser);
+ const fnMutEnvironment=beginRustFnMutSourceEnvironment(parser);let fnMutNode=null;
  const outer=parser.origins.enter();parameters.forEach((parameter,index)=>parser.origins.scope.set(parameter.name,assignRustCopyClosureLexicalBinding(parser.origins,registerRustOwnedBinding(parser.origins,bindings[index]))));
  let body;const projections=[],outerSumReturn=parser.standardSumReturnOrigin;
  parser.standardSumReturnOrigin=resultOrigin;
  try{
   for(let index=0;index<patterns.length;index+=1)if(patterns[index])parser.lowerProductBinding(patterns[index],{k:'name',path:[parameters[index].name],span:parameters[index].span},path,projections);
-  body=withRustStandardSumSourceContext(parser,resultOrigin,()=>written||c.is('{')?readRustCopyPointerResultBlock(parser,path,resultOrigin)??(ret&&parser.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(parser,path,ret,resultOrigin):parser.block(path,true)):parser.expr(path));
+  body=withRustStandardSumSourceContext(parser,resultOrigin,()=>written||c.is('{')?readRustCopyPointerResultBlock(parser,path,resultOrigin)??(ret&&parser.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(parser,path,ret,resultOrigin):parser.block(path,!fnMutEnvironment)):parser.expr(path));
   if(!ret){resultOrigin=parser.origins.origin(body,path);ret=resultOrigin.type??null;}
   if(!written){const deferred=testRustCopyClosureDeferredResult(deferResult,written,ret!==null),reason=ownedDomains?readRustOwnedStandardSumCallbackClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>readRustStandardSumOwnershipFacts(parser.origins,origin).profile),readRustStandardSumOwnershipFacts(parser.origins,resultOrigin).profile):deferred?readRustCopyClosureParameterHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin))):readRustContextualCopyClosureHeaderError(parser.ordinaryCompletionContext(),parameters.map(param=>param.name),origins.map(origin=>acceptRustCopyClosureParameterOrigin(parser,origin)),ret!==null,parser.origins.immutableProduct(resultOrigin));if(reason)throw unsupported('Rust Copy closure',reason,start);}
   if(ret){const error=readRustCopyClosureResultContextError(body,resultOrigin);if(error)throw unsupported('Rust Copy closure',error,body.span);parser.origins.argument(parser.origins.origin(body,path),resultOrigin,body.span);}
@@ -133,8 +135,10 @@ export function readRustCopyClosure(parser,path,expected=null,parametersOnly=fal
   if(ownedDomains&&readRustStandardSumOwnershipFacts(parser.origins,parser.origins.origin(body,path)).profile==='owned')captureRustOwnedStandardSumMethodValue(parser,body,path);
   parser.origins.expireOwnedBindings(ownership,parser.origins.origin(body,path));
   const bodyOrigin=parser.origins.origin(body,path);for(const projection of projections.toReversed())body={k:'let',name:projection.name,value:projection.value,...(projection.type?{type:projection.type}:{}),body,span:projection.span};parser.origins.mark(body,bodyOrigin);
+  if(fnMutEnvironment)fnMutNode=finishRustFnMutSourceEnvironment(parser,fnMutEnvironment,parameters,resultOrigin,body,path,{start:start.start,end:c.peek(-1).end},outer);
  }
- finally{parser.origins.scope=outer;parser.standardSumReturnOrigin=outerSumReturn;parser.origins.restoreOwnedBindings(ownership);parser.origins.sourceTemporaryBindings=temporaries;endRustOwnedRecordStateCallable(parser,recordStateCallable);}
+ finally{parser.origins.scope=outer;parser.standardSumReturnOrigin=outerSumReturn;parser.origins.restoreOwnedBindings(ownership);parser.origins.sourceTemporaryBindings=temporaries;endRustFnMutSourceEnvironment(parser,fnMutEnvironment);endRustOwnedRecordStateCallable(parser,recordStateCallable);}
+ if(fnMutNode)return fnMutNode;
  const {captures,assignedCaptures}=readCallableStatementCaptures([{s:'return',expr:body}],parameters.map(param=>param.name),outer.keys());
  const captureError=readRustCopyClosureCaptureError(parser.origins.collecting,captures.map(name=>parser.origins.immutableProduct(outer.get(name))),assignedCaptures.length);if(captureError)throw unsupported('Rust Copy closure',captureError,start);
  const ordinaryCaptured=ownedDomains?[]:captures.map(name=>outer.get(name)),ordinaryCopies=ordinaryCaptured.map(origin=>parser.origins.immutableProduct(origin)),ordinaryLoans=ordinaryCaptured.map(origin=>origin?.sourceBorrowedPlace===true||origin?.sourceBindingIdentity!=null||origin?.sourcePlaceBindingIdentity!=null||(origin?.sourceLoanBindingIdentities??[]).length>0||(origin?.sourcePlaceLoanBindingIdentities??[]).length>0);

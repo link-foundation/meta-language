@@ -10,6 +10,7 @@ import {acceptRustStandardSumOwnedArguments,readRustStandardSumOwnershipVersionE
 import {readRustFunctionPointerDomainError} from './rust-function-pointer-rules.js';
 import {acceptRustOwnedBoxTypeNode} from './rust-owned-recursive-datatype-rules.js';
 import {sanitizeRustSourceTypeOrigin as sourceTypeOrigin} from './rust-source-type-origins.js';
+import {withRustFnMutSourceErrorType,eraseRustFnMutSourceOpacity,carryRustFnMutSourceOpacity,carryRustFnMutSourceArguments,hasRustFnMutSourceOpacity} from './rust-fnmut-source-opacity.js';
 import {measureRustStandardSumSourceMetadata,measureRustStandardSumSourceIdentityMetadata,measureRustSourcePositionMetadata} from './rust-standard-sum-source-metadata.js';
 import {readRustStandardSumSourceMetadataReservation} from './rust-standard-sum-source-metadata-rules.js';
 import {readRustStandardSumSourceOwner,readRustStandardSumSourcePathOwner,readRustStandardSumSourcePathConstructor,readRustStandardSumSourceArgumentCount,acceptRustStandardSumSourceArguments,readRustStandardSumSourceConstructors,readRustStandardSumSourceFieldArgument,readRustStandardSumSourceConstructorArity,acceptRustStandardSumSourceInferredConstructor,readRustStandardSumSourceInstantiationLimit,readRustStandardSumSourceDepthLimit,readRustStandardSumSourceSpecializationName,readRustStandardSumSourcePhase,readRustStandardSumSourceDepth} from './rust-standard-sum-source-rules.js';
@@ -206,10 +207,14 @@ export function readRustStandardSumSourceOrigin(parser,origin){
  const stored=entry.standardSumSourceOrigin;
  if(!stored.proven||stored.wrappers.length!==0||(!stored.copyEvidence&&readRustStandardSumOwnershipFacts(parser.origins,stored).profile!=='owned'))return null;
  metadataCost(parser,[stored]);
- return {...copy(stored),wrappers:[...origin.wrappers]};
+ const actual={...copy(stored),wrappers:[...origin.wrappers]};return parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'?carryRustFnMutSourceOpacity(origin,actual):actual;
 }
 
 function instantiate(parser,owner,arguments_,span){
+ if(parser.fnMutSourceModel==='Rust closed source FnMut specializations 1'&&arguments_.some(hasRustFnMutSourceOpacity)){const actual=instantiateBase(parser,owner,arguments_.map(value=>eraseRustFnMutSourceOpacity(parser,value)),span);return carryRustFnMutSourceArguments(actual,arguments_);}
+ return instantiateBase(parser,owner,arguments_,span);
+}
+function instantiateBase(parser,owner,arguments_,span){
  if(arguments_.length!==readRustStandardSumSourceArgumentCount(owner))fail('the source sum needs every declared type argument',span);
  const provisional=readRustStandardSumSourcePhase(parser.headerDiscovery===true,false,false)==='provisional';
  reserveSourceCopies(parser,arguments_,true,provisional);
@@ -386,7 +391,7 @@ export function readRustStandardSumSourceType(parser,segments,start){
   const count=readRustStandardSumSourceArgumentCount(selected.owner);
   for(let at=0;at<count;at+=1){
    if(at>0)c.expect(',','standard sum type arguments');
-   parser.type();arguments_.push(copy(parser.origins.type));
+   withRustFnMutSourceErrorType(parser,selected.owner,at,()=>parser.type());arguments_.push(copy(parser.origins.type));
   }
   c.eat(',');splitRustTypeClosingToken(parser);c.expect('>','standard sum type');
   const origin=instantiate(parser,selected.owner,arguments_,where(parser,start));
