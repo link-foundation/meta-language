@@ -211,3 +211,6 @@ ordered numeric conversion and exact UTF16 construction.
 
 Draft String.isWellFormed/toWellFormed with exact surrogate-pair preservation and
 isolated-surrogate replacement under explicit work bounds.
+
+Draft source-defined Math.fround with ties-to-even binary32 rounding, signed
+underflow, subnormals and overflow through shared protected numeric conversion.

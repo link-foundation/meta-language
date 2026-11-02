@@ -146,3 +146,18 @@ export function countJavaScriptLeadingZeroBits(value){
  let integer=normalizeJavaScriptUnsignedInteger(value),count=32;
  while(integer>0){integer=Math.floor(integer/2);count-=1;}return count;
 }
+
+/** Binary32 rounding from the actual binary64 scalar. Every scale is an exact
+ * power of two; ties choose the even significand. No host typed array or fround
+ * call is needed, and the exponent walk is bounded by the binary32 range.
+ * @param {number} value @returns {number} */
+export function roundJavaScriptBinary32(value){
+ if(Number.isNaN(value)||value===0||!Number.isFinite(value))return value;
+ const negative=value<0,magnitude=negative?-value:value;
+ if(magnitude>=3.402823669209385e38)return negative?-Infinity:Infinity;
+ let lower=1.1754943508222875e-38,spacing=1.401298464324817e-45;
+ while(magnitude>=lower*2){lower*=2;spacing*=2;}
+ const quotient=magnitude/spacing,integral=Math.floor(quotient),fraction=quotient-integral,rounded=fraction>0.5||fraction===0.5&&integral%2===1?integral+1:integral;
+ const result=rounded*spacing,output=result>=3.402823669209385e38?Infinity:result;
+ return negative?-output:output;
+}

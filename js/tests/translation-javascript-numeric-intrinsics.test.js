@@ -51,3 +51,7 @@ test('BigInt radix text retains signs digits truncated radix and receiver-indepe
  for(const [input,radix,expected] of [[255n,10,'255'],[-255n,16,'-ff'],[10n,2,'1010'],[1295n,36,'zz'],[0n,2,'0'],[15n,16.9,'f']]){const result=executeJavaScriptCallPrimitive('convert integer radix text',[{$:'integer',value:input},{$:'number',value:radix}]);assert.equal(result.$,'primitiveValue');assert.deepEqual(result.value.units,units(expected));}
  for(const radix of [NaN,0,1,37,Infinity,-Infinity]){const result=executeJavaScriptCallPrimitive('convert integer radix text',[{$:'integer',value:7n},{$:'number',value:radix}]);assert.equal(result.$,'primitiveError');assert.equal(result.errorClass,'RangeError');}
 });
+
+test('binary32 scalar rounding retains ties signed underflow subnormals and overflow',()=>{
+ for(const [input,expected] of [[16777217,16777216],[16777219,16777220],[-16777217,-16777216],[1.337,1.3370000123977661],[-0,-0],[-5e-324,-0],[7.006492321624085e-46,0],[2.1019476964872256e-45,2.802596928649634e-45],[3.4028234663852886e38,3.4028234663852886e38],[3.4028235677973366e38,Infinity],[Infinity,Infinity],[-Infinity,-Infinity],[NaN,NaN]]){const result=executeJavaScriptCallPrimitive('round binary32 number',[{$:'number',value:input}]);assert.equal(result.$,'primitiveValue');assert.ok(Object.is(result.value.value,expected));}
+});

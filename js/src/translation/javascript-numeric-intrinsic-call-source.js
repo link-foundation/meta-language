@@ -2,7 +2,7 @@
 /** @returns {string[]} */
 export function readJavaScriptNumberPredicateNames(){return ['isNaN','isFinite','isInteger','isSafeInteger'];}
 /** @returns {string[]} */
-export function readJavaScriptMathMethodNames(){return ['clz32','imul','abs','floor','ceil','trunc','round','sign','sqrt','pow','min','max'];}
+export function readJavaScriptMathMethodNames(){return ['fround','clz32','imul','abs','floor','ceil','trunc','round','sign','sqrt','pow','min','max'];}
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptNumericIntrinsicOperation(operation){return ['Number','Boolean','BigInt','BigInt.asIntN','BigInt.asUintN','BigInt.toString','Number.parseInt','Number.parseFloat','isNaN','isFinite'].includes(operation)||readJavaScriptNumberPredicateNames().some(name=>operation==='Number.'+name)||readJavaScriptMathMethodNames().some(name=>operation==='Math.'+name);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
@@ -34,7 +34,7 @@ export function compileJavaScriptNumericIntrinsicFunction(identity,realm,operati
  }else{
   code.push({$:'argument',destination:1,index:0},{$:'primitive',destination:1,operation:'coerce primitive number',arguments:[1]});
   if(operation==='Math.pow'||operation==='Math.imul')code.push({$:'argument',destination:2,index:1},{$:'primitive',destination:2,operation:'coerce primitive number',arguments:[2]},{$:'primitive',destination:1,operation:operation==='Math.pow'?'raise numeric power':'multiply signed integer bits',arguments:[1,2]});
-  else {const primitive=operation==='Math.clz32'?'count leading zero bits':operation==='Math.abs'?'read absolute number':operation==='Math.floor'?'floor number':operation==='Math.ceil'?'ceil number':operation==='Math.trunc'?'truncate number':operation==='Math.round'?'round number':operation==='Math.sign'?'read number sign':'read square root';code.push({$:'primitive',destination:1,operation:primitive,arguments:[1]});}
+  else {const primitive=operation==='Math.fround'?'round binary32 number':operation==='Math.clz32'?'count leading zero bits':operation==='Math.abs'?'read absolute number':operation==='Math.floor'?'floor number':operation==='Math.ceil'?'ceil number':operation==='Math.trunc'?'truncate number':operation==='Math.round'?'round number':operation==='Math.sign'?'read number sign':'read square root';code.push({$:'primitive',destination:1,operation:primitive,arguments:[1]});}
   code.push({$:'return',source:1});
  }
  return {$:'callFunction',identity,realm,receiverMode:'primitive intrinsic',lexicalReceiver:{$:'undefined'},parameters:0,registers:10,captures:[],instructions:code};

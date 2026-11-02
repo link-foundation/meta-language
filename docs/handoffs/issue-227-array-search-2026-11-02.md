@@ -1531,3 +1531,21 @@ shared UTF16 traversal preserves pairs, replaces each isolated surrogate with
 U+FFFD and retains generic receiver conversion/nullish errors. One-million-unit
 work limits remain explicit. Four further original sources and one deferred
 control cover empty/valid/invalid text, exact repaired units and conversion.
+
+### Source-defined Math.fround
+
+Math.fround now has a protected body over an exact binary32 scalar rounding rule.
+Power-of-two normalization selects normal/subnormal spacing; significand rounding
+uses ties to even, preserves signed zero/underflow, and handles overflow into
+infinity. The binary32 exponent range bounds the walk independently of the input
+Number exponent. No typed-array or native represented fround call is used.
+Four original cases and one deferred scalar control cover ties, subnormals,
+minimum Number input, infinities/NaN, maximal finite binary32, overflow threshold
+and actual numeric conversion once. Existing version bounds apply; existing
+updated numeric source libraries feed future automatic translation. No behavioral
+execution, generation, compilation, validation or CI feedback inspection occurred.
+
+The existing deferred `js/scripts/generate-number-bitwise-rules.mjs` reads the
+complete edited Number rule source, emits Rust automatically, and checks Links
+text/binary re-emission. It must regenerate the integer-math/binary32 additions
+when the generation phase resumes; generated Number artifacts remain untouched.

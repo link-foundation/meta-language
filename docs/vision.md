@@ -57,6 +57,13 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Math.fround shares a source-defined binary64-to-binary32 rounding operation:
+exact power-of-two scales, ties to an even significand, binary32 subnormal and
+overflow boundaries, original Number signed zero and signed underflow. Protected
+Call performs implicit conversion once before this bounded scalar algorithm;
+neither a native represented fround call nor a host typed-array conversion is
+its implementation.
+
 String.isWellFormed/toWellFormed share exact UTF16 traversal after the ordinary
 generic receiver/text conversion. Valid surrogate pairs remain intact; each
 isolated surrogate is detected or replaced by one U+FFFD. The selected one-million
