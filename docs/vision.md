@@ -4,6 +4,13 @@ Explicit source execution retries retain the checked current VM machine and use
 a fresh bounded step slice. Exhaustion remains a resource boundary until actual
 work/storage/protocol constraints permit progress; retry never implies success
 or invokes the original host implementation.
+Closed standard Rust collection equality compares complete membership/owned
+values independently of insertion history, root allocation and revision. Ordered
+BTree collections additionally preserve genuine primitive Ord and Unicode-scalar
+String order equivalent to valid UTF8 byte order. Ordered snapshots retain their
+actual source owners, copied/cloned modes and concrete result domains; Hash
+iteration never inherits the internal entry vector's order. Every source bridge
+requires the actual automatically projected shared bodies and checked ownership.
 
 Array copying operations use the active realm's ordinary Array allocation,
 independent of source constructors/species. Reversal reads captured source

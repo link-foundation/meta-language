@@ -2,21 +2,13 @@
 // during interface construction; do not execute while drafting requirements.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {createRustStandardCollectionSourceLibrary} from '../src/translation/rust-standard-collection-library.js';
-import {readSourceLibraryClosure,readSourceLibraryDeclarationOwnership} from '../scripts/read-source-library-closure.mjs';
-import {parseJavaScript} from '../src/translation/javascript.js';
-import {checkProgram} from '../src/translation/check.js';
-import {encodeTypedProgramLinks} from '../src/typed-program-links.js';
+import {readRustStandardCollectionTestAsset as actualAsset} from './support/rust-standard-collection-library.js';
 const entryPath='js/src/translation/rust-standard-collection-value-packet.js';
 const handlers={invalid:reason=>({k:'unit'}),resource:(state,reason)=>({k:'unit'})};
-function actualAsset(){
- const closure=readSourceLibraryClosure(entryPath,{aliases:true}),program=checkProgram(parseJavaScript(closure.source)),linked=encodeTypedProgramLinks(program),text=linked.network.toLino();
- return {text,receipt:{model:'Complete source library asset receipt 1',schemaVersion:1,entryPath,referenceSemantics:false,sourceClosure:closure,sourceDeclarationOwners:readSourceLibraryDeclarationOwnership(closure,program),programAsset:{path:'js/src/data/rust-standard-collection-value-packet-program.lino',bytes:Buffer.byteLength(text),sha256:createHash('sha256').update(text).digest('hex')}}};
-}
 test('automatic interfaces retain complete actual source owners and packet transition bodies',()=>{
  const {text,receipt}=actualAsset(),library=createRustStandardCollectionSourceLibrary(text,receipt,handlers);
- assert.equal(library.entryPath,entryPath);assert.equal(library.sourceHandlers,handlers);assert.equal(library.functions.length,2);
+ assert.equal(library.entryPath,entryPath);assert.equal(library.sourceHandlers,handlers);assert.equal(library.functions.length,3);
  for(const binding of library.functions){assert.ok(library.program.declarations.get(binding.checkedName).body);assert.deepEqual(binding.sourcePath,['crate',...binding.checkedName.split('.')]);}
  const packet=library.program.declarations.get(library.packetType.checkedName);assert.equal(packet.ctors.length,3);assert.deepEqual(Object.keys(library.packetType.constructors),['normal','invalid','resource']);
  assert.throws(()=>createRustStandardCollectionSourceLibrary(text+'\n',receipt,handlers),/bytes differ/);
