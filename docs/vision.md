@@ -87,6 +87,25 @@ length semantics in a native fallback.
 All continuations retain original inputs, selected callbacks, allocation requests
 and realm Error identity, including strict final length Set and resource retries.
 
+Array slice captures length before ordered start/end scalar conversion, preserves
+omitted and explicit undefined end behavior, and performs ArraySpeciesCreate for
+the selected count before indexed access. Has/Get preserves sparse holes and
+inherited elements; copies create full own data properties. The final strict
+length Set is observable even for a custom ordinary species result. Actual
+ToObject, realm roots, constructor facts, selected callbacks and original bounds
+remain explicit through resource retries and source/native transports.
+
+Array concatenation similarly completes ArraySpeciesCreate(0) before selecting
+the receiver and actual arguments in order. Object items Get the actual
+Symbol.isConcatSpreadable once; undefined falls back to actual Array branding,
+while other values use truthiness without additional coercion. Scalar items
+retain identity. Spread items save length, check the entire output interval
+against the maximum safe index before indexed Has/Get, and preserve holes and
+inherited values. Final length uses strict Set with observable setters and Array
+length rules. Shared species construction, authority extension and body execution
+serve slice, concatenation and map/filter; unsupported constructor kinds remain
+explicit requests rather than empty substitute results.
+
 Generic Array callbacks, searches, map/filter and mutation methods apply shared
 ToObject before length access or callback/index conversion. Their protected Call
 receiver remains unchanged; an explicit held Object register supplies the actual

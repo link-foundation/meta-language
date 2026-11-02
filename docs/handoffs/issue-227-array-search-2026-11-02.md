@@ -1881,3 +1881,40 @@ compilation ran. Deferred controls do not establish requirement completion.
 Continue from the focused coercion/mutation handoffs and the new boxed-read
 compiler. Remaining broader library operations are not removed by this batch;
 Array.slice source drafting is now delegated while root integrates these paths.
+
+
+## Slice and concatenation source integration
+
+Slice kernel source/control/originals are committed as `33690f368` and
+`a5b57341c`: fifteen deferred kernel tests and twenty-four literal original
+programs. Root adds protected compiler/catalog admission, explicit boxed receiver
+operands, waitArraySlice provenance and normal/allocation/species responses.
+The common species body, external specialization and monotonic authority paths
+now admit slice alongside map/filter, preserving actual count arguments and
+source instruction roots. Final length Set uses the existing assignment child,
+including setter calls and Array length definitions. Source-only review of these
+paths found no further concrete defect; no behavior was executed.
+
+Root then integrates concatenation through the corresponding kernel/compiler,
+waitArrayConcatenation operand proof, actual argument List and well-known
+spreadability Symbol. Initial custom species length is exactly zero. Existing
+species frame/new.target/authority and allocator routes retain the selected
+operation rather than switching its semantic state. Receiver boxing precedes
+species selection. Scalar arguments are not boxed or queried for spreadability.
+The source policies, literal Links conversion tuples, direct source controls,
+diagnostic producer groups and native replay includes cover both operations.
+Generated code/codecs/Links/native programs remain deferred to the permitted
+source generation phase; no generated file is edited by hand.
+
+Continue from the focused slice/concatenation kernel handoffs. Exact executed
+coverage, CI repair and published consumer outcomes remain later obligations.
+No test, validation, source generation, behavior execution or compilation ran
+in this integration draft. Root is also preparing the Rust baseline continuation:
+mutable receiver/argument loans, actual standard collection owners, generic
+FnMut child adapters and supplied-file module linkage are concrete own-code
+frontiers; they are not erased by adding JavaScript library support.
+
+Concatenation kernel/source controls and thirty-one version-scoped originals are
+committed in `a054a8c7a`. Combined with slice, the two new native replay groups
+retain fifty-five literal original programs. The concatenation Proxy original
+remains an explicit ordinary Proxy/trap integration gap; it is not skipped.

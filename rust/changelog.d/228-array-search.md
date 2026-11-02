@@ -255,3 +255,9 @@ Draft shared ToObject composition for Object.assign targets and all existing
 Array callback/search/transform/mutation receivers, preserving actual wrappers,
 strict writes and callback receiver identity. Add complete literal source/native
 replay groups; execution remains deferred.
+
+
+Draft generic sparse Array slice and concatenation with actual species
+construction, bound/spreadability effects and final strict length writes. Add
+boxed protected callable bodies and automatic source/native replay inputs;
+execution and generated publication remain deferred.

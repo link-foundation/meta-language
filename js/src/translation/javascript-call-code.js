@@ -26,6 +26,8 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'collectionOperation',destination:number,operation:string} |
  * {$:'primitiveMethod',destination:number,operation:string} |
  * {$:'collectionForEach',destination:number,operation:string} |
+ * {$:'arrayConcatenation',destination:number,input?:number,spreadableKey:number,species:JavaScriptArraySpeciesDirectory} |
+ * {$:'arraySlice',destination:number,input?:number,species:JavaScriptArraySpeciesDirectory} |
  * {$:'arrayCreation',destination:number,operation:string,prototype:number,iteratorKey:number} |
  * {$:'arrayCallback',destination:number,operation:string,input?:number} |
  * {$:'arraySearch',destination:number,operation:string,input?:number} |
@@ -92,7 +94,8 @@ export function findJavaScriptCallCodeFunction(program,identity){
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
     case 'constant':case 'argument':case 'argumentCount':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':return [instruction.destination];
-    case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination,instruction.input??0];
+    case 'arrayConcatenation':return [instruction.destination,instruction.input??0,instruction.spreadableKey];
+    case 'arraySlice':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination,instruction.input??0];
     case 'argumentAt':return [instruction.destination,instruction.index];
     case 'arrayJoinEnter':return [instruction.destination,instruction.receiver];
     case 'arrayJoinLeave':return [instruction.receiver];

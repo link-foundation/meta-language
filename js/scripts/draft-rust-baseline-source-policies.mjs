@@ -12,6 +12,10 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-array-concatenation.js',moduleName:'javascript_array_concatenation',model:'Actual Array concatenation spreadability species and strict final length 1',programAsset:'javascript-array-concatenation-program'},
+ {sourcePath:'js/src/translation/javascript-array-concatenation-call-source.js',moduleName:'javascript_array_concatenation_call_source',model:'Actual boxed Array concatenation and spreadability authority bytecode 1',programAsset:'javascript-array-concatenation-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-array-slice.js',moduleName:'javascript_array_slice',model:'Actual sparse Array slice conversion species and final strict length Set 1',programAsset:'javascript-array-slice-program'},
+ {sourcePath:'js/src/translation/javascript-array-slice-call-source.js',moduleName:'javascript_array_slice_call_source',model:'Actual Array slice boxed receiver and species bytecode 1',programAsset:'javascript-array-slice-call-source-program'},
  {sourcePath:'js/src/translation/javascript-object-assignment-call-source.js',moduleName:'javascript_object_assignment_call_source',model:'Actual Object assignment target boxing and strict ordered writes 1',programAsset:'javascript-object-assignment-call-source-program'},
  {sourcePath:'js/src/translation/javascript-boxed-array-mutation-call-source.js',moduleName:'javascript_boxed_array_mutation_call_source',model:'Actual boxed Array mutation opcode composition 1',programAsset:'javascript-boxed-array-mutation-call-source-program'},
  {sourcePath:'js/src/translation/javascript-boxed-array-read-call-source.js',moduleName:'javascript_boxed_array_read_call_source',model:'Actual boxed Array callback search and species receiver composition 1',programAsset:'javascript-boxed-array-read-call-source-program'},
@@ -115,6 +119,8 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-array-concatenation-source.mjs',
+ 'js/tests/fixtures/javascript-array-slice-source.mjs',
  'js/tests/fixtures/javascript-object-assignment-coercion.mjs',
  'js/tests/fixtures/javascript-array-mutation-boxing.mjs',
  'js/tests/fixtures/javascript-array-read-boxing.mjs',
@@ -245,6 +251,12 @@ const consumers=[
  'js/tests/translation-javascript-object-assignment-coercion-source.test.js',
  'js/tests/translation-javascript-array-mutation-boxing-source.test.js',
  'js/tests/translation-javascript-array-read-boxing-source.test.js',
+ 'js/tests/translation-javascript-array-concatenation.test.js',
+ 'js/tests/translation-javascript-array-concatenation-call-source.test.js',
+ 'js/tests/translation-javascript-array-concatenation-source.test.js',
+ 'js/tests/translation-javascript-array-slice.test.js',
+ 'js/tests/translation-javascript-array-slice-call-source.test.js',
+ 'js/tests/translation-javascript-array-slice-source.test.js',
  'js/tests/translation-javascript-array-join-source.test.js',
  'js/tests/translation-javascript-array-join-call-source.test.js',
  'js/tests/translation-javascript-object-string-call-source.test.js',
@@ -545,6 +557,8 @@ for(const [source,target] of [
  ['javascript-object-assignment-coercion','javascript-object-assignment-coercion'],
  ['javascript-array-mutation-boxing','javascript-array-mutation-boxing'],
  ['javascript-array-read-boxing','javascript-array-read-boxing'],
+ ['javascript-array-concatenation-source','javascript-array-concatenation-source'],
+ ['javascript-array-slice-source','javascript-array-slice-source'],
  ['javascript-array-join-source','javascript-array-join-source'],
  ['javascript-construction-source','javascript-construction-source'],
  ['javascript-array-creation','javascript-array-creation'],

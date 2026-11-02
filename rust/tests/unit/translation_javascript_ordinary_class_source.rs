@@ -135,6 +135,8 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
  let javascript_object_assignment_coercion_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-object-assignment-coercion.lino")).unwrap();
  let javascript_array_mutation_boxing_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-mutation-boxing.lino")).unwrap();
  let javascript_array_read_boxing_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-read-boxing.lino")).unwrap();
+ let array_concatenation_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-concatenation-source.lino")).unwrap();
+ let array_slice_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-slice-source.lino")).unwrap();
  let array_join_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-join-source.lino")).unwrap();
  let construction_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-construction-source.lino")).unwrap();
  let array_creation_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-creation.lino")).unwrap();
@@ -152,6 +154,8 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
   ("objectAssignmentCoercion",&javascript_object_assignment_coercion_fixture["declarations"],"javascriptObjectAssignmentCoercionOriginals"),
   ("arrayMutationBoxing",&javascript_array_mutation_boxing_fixture["declarations"],"javascriptArrayMutationBoxingOriginals"),
   ("arrayReadBoxing",&javascript_array_read_boxing_fixture["declarations"],"javascriptArrayReadBoxingOriginals"),
+  ("arrayConcatenation",&array_concatenation_fixture["declarations"],"javascriptArrayConcatenationOriginals"),
+  ("arraySlice",&array_slice_fixture["declarations"],"javascriptArraySliceOriginals"),
   ("arrayJoin",&array_join_fixture["declarations"],"javascriptArrayJoinOriginals"),
   ("construction",&construction_fixture["declarations"],"javascriptConstructionOriginals"),
   ("arrayCreation",&array_creation_fixture["declarations"],"javascriptArrayCreationOriginals"),
