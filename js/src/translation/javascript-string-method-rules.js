@@ -1,10 +1,11 @@
+import {mapUnicodeCaseUtf16Text} from './unicode-case-rules.js';
 import {normalizeJavaScriptUnsignedInteger} from './number-bitwise-rules.js';
 import {readJavaScriptArrayIndex,testJavaScriptArrayLengthKey} from './javascript-array-objects.js';
 // Converted String operands share exact UTF16 access and explicit work bounds.
-import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,readJavaScriptSemanticTextString} from './javascript-semantic-values.js';
+import {readJavaScriptSemanticTextLength,readJavaScriptSemanticTextUnit,readJavaScriptSemanticTextString,constructJavaScriptSemanticTextUnits} from './javascript-semantic-values.js';
 import {readUtf16TextInteger} from './utf16-text-rules.js';
 /** @param {string} operation @returns {number} */
-export function readJavaScriptStringMethodPrimitiveArity(operation){return ['test well formed String','copy well formed String','convert character code text','convert code point text'].includes(operation)?1:['require String receiver','read String code unit','test String own key','read String own key'].includes(operation)?2:['substring String units','substr String units','test String prefix at','test String suffix at','test String inclusion at'].includes(operation)?3:-1;}
+export function readJavaScriptStringMethodPrimitiveArity(operation){return ['test well formed String','copy well formed String','convert character code text','convert code point text'].includes(operation)?1:['map lower String case','map upper String case','require String receiver','read String code unit','test String own key','read String own key'].includes(operation)?2:['substring String units','substr String units','test String prefix at','test String suffix at','test String inclusion at'].includes(operation)?3:-1;}
 /** @param {string} operation @param {JavaScriptSemanticValue[]} values @returns {JavaScriptCallPrimitiveResult} */
 export function executeJavaScriptStringMethodPrimitive(operation,values){
  const receiver=values[0]??{$:'undefined'},second=values[1]??{$:'undefined'},third=values[2]??{$:'undefined'};
@@ -20,6 +21,15 @@ export function executeJavaScriptStringMethodPrimitive(operation,values){
  }
  if(receiver.$!=='text'&&receiver.$!=='sourceText')return {$:'primitiveInvalid',reason:'String methods consume their actual converted UTF16 receiver'};
  const length=readJavaScriptSemanticTextLength(receiver);
+ if(operation==='map lower String case'||operation==='map upper String case'){
+  if(second.$!=='text'&&second.$!=='sourceText')return {$:'primitiveInvalid',reason:'String case conversion requires the actual active Unicode profile'};
+  const profileError=readJavaScriptStringCaseProfileError(readJavaScriptSemanticTextString(second));if(profileError!=='')return {$:'primitiveInvalid',reason:profileError};
+  if(length>1048576)return {$:'primitiveResourceLimit',reason:'String case conversion exceeds the selected 1048576-unit input work profile'};
+  const units=mapUnicodeCaseUtf16Text(constructJavaScriptSemanticTextUnits(receiver,1048576),operation==='map upper String case');
+  if(units.length>1048576)return {$:'primitiveResourceLimit',reason:'String case conversion exceeds the selected 1048576-unit output work profile'};
+  return {$:'primitiveValue',value:{$:'text',units}};
+ }
+
  if(operation==='test well formed String'||operation==='copy well formed String'){
   if(length>1048576)return {$:'primitiveResourceLimit',reason:'String well formed processing exceeds the selected 1048576-unit work profile'};
   const units=[];let formed=true;
@@ -49,3 +59,8 @@ export function executeJavaScriptStringMethodPrimitive(operation,values){
  if(Math.max(0,length-position-needleLength+1)*needleLength>67108864)return {$:'primitiveResourceLimit',reason:'String inclusion exceeds its explicit comparison work budget'};
  for(let start=position;start<=length-needleLength;start++){let matches=true;for(let at=0;matches&&at<needleLength;at++)if(readJavaScriptSemanticTextUnit(receiver,start+at)!==readJavaScriptSemanticTextUnit(second,at))matches=false;if(matches)return {$:'primitiveValue',value:{$:'boolean',value:true}};}return {$:'primitiveValue',value:{$:'boolean',value:false}};
 }
+
+/** Exact profile selection is independent of spelling/prototype resemblance.
+ * Additional Unicode table releases remain explicit unimplemented profiles.
+ * @param {string} profile @returns {string} */
+export function readJavaScriptStringCaseProfileError(profile){return profile==='16.0'?'':'String default casing has no authored table for active Unicode profile '+profile;}

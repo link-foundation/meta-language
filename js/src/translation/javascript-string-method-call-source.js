@@ -1,13 +1,14 @@
 // Standard String method bodies compose shared coercion/UTF16/Call primitives.
 /** @returns {string[]} */
-export function readJavaScriptStringMethodNames(){return ['isWellFormed','toWellFormed','toString','valueOf','trim','trimStart','trimEnd','charAt','charCodeAt','codePointAt','at','slice','substring','substr','indexOf','lastIndexOf','startsWith','endsWith','includes','repeat','padStart','padEnd','concat'];}
+export function readJavaScriptStringMethodNames(){return ['toLowerCase','toUpperCase','isWellFormed','toWellFormed','toString','valueOf','trim','trimStart','trimEnd','charAt','charCodeAt','codePointAt','at','slice','substring','substr','indexOf','lastIndexOf','startsWith','endsWith','includes','repeat','padStart','padEnd','concat'];}
 /** @returns {string[]} */
 export function readJavaScriptStringStaticMethodNames(){return ['fromCharCode','fromCodePoint'];}
 /** @param {string} operation @returns {boolean} */
 export function testJavaScriptStringMethodOperation(operation){return [...readJavaScriptStringMethodNames(),...readJavaScriptStringStaticMethodNames()].some(name=>operation==='String.'+name);}
-/** @param {bigint} identity @param {bigint} realm @param {string} operation @param {JavaScriptSemanticValue|undefined} matchKey @returns {JavaScriptCallFunction|undefined} */
-export function compileJavaScriptStringMethodFunction(identity,realm,operation,matchKey){
+/** @param {bigint} identity @param {bigint} realm @param {string} operation @param {JavaScriptSemanticValue|undefined} matchKey @param {string|undefined} unicodeProfile @returns {JavaScriptCallFunction|undefined} */
+export function compileJavaScriptStringMethodFunction(identity,realm,operation,matchKey,unicodeProfile){
  if(!testJavaScriptStringMethodOperation(operation))return undefined;
+ if((operation==='String.toLowerCase'||operation==='String.toUpperCase')&&(typeof unicodeProfile!=='string'||unicodeProfile.length===0||unicodeProfile.length>128))return undefined;
  const name=operation.slice(7),units=[];for(let at=0;at<name.length;at++)units.push(name.charCodeAt(at));
  /** @type {JavaScriptCallInstruction[]} */const code=[];
  if(name==='fromCharCode'||name==='fromCodePoint'){
@@ -15,7 +16,8 @@ export function compileJavaScriptStringMethodFunction(identity,realm,operation,m
  }else if(name==='toString'||name==='valueOf')code.push({$:'objectObservation',destination:1,operation,input:0,other:0},{$:'return',source:1});
  else{
   code.push({$:'constant',destination:8,value:{$:'text',units}},{$:'primitive',destination:1,operation:'require String receiver',arguments:[0,8]},{$:'primitive',destination:1,operation:'convert primitive text',arguments:[1]});
-  if(name==='isWellFormed'||name==='toWellFormed')code.push({$:'primitive',destination:9,operation:name==='isWellFormed'?'test well formed String':'copy well formed String',arguments:[1]},{$:'return',source:9});
+  if(name==='toLowerCase'||name==='toUpperCase'){const profileUnits=[];for(let at=0;at<(unicodeProfile??'').length;at++)profileUnits.push((unicodeProfile??'').charCodeAt(at));code.push({$:'constant',destination:8,value:{$:'text',units:profileUnits}},{$:'primitive',destination:9,operation:name==='toLowerCase'?'map lower String case':'map upper String case',arguments:[1,8]},{$:'return',source:9});}
+  else if(name==='isWellFormed'||name==='toWellFormed')code.push({$:'primitive',destination:9,operation:name==='isWellFormed'?'test well formed String':'copy well formed String',arguments:[1]},{$:'return',source:9});
   else if(name==='trim'||name==='trimStart'||name==='trimEnd')code.push({$:'primitive',destination:9,operation:name==='trim'?'trim text':name==='trimStart'?'trim text start':'trim text end',arguments:[1]},{$:'return',source:9});
   else if(name==='concat'){
    code.push({$:'argumentCount',destination:5},{$:'constant',destination:4,value:{$:'number',value:0}},{$:'constant',destination:8,value:{$:'number',value:1}});const loop=code.length;code.push({$:'numberBinary',destination:6,left:4,right:5,operator:'lessThan'});const branch=code.length;code.push({$:'branch',condition:6,yes:branch+1,no:0},{$:'argumentAt',destination:7,index:4},{$:'primitive',destination:7,operation:'convert primitive text',arguments:[7]},{$:'primitive',destination:1,operation:'concatenate text',arguments:[1,7]},{$:'numberBinary',destination:4,left:4,right:8,operator:'add'},{$:'jump',target:loop});const end=code.length;code[branch]={$:'branch',condition:6,yes:branch+1,no:end};code.push({$:'return',source:1});
