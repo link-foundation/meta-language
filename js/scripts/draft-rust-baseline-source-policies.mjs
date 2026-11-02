@@ -12,6 +12,9 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-object-assignment-call-source.js',moduleName:'javascript_object_assignment_call_source',model:'Actual Object assignment target boxing and strict ordered writes 1',programAsset:'javascript-object-assignment-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-boxed-array-mutation-call-source.js',moduleName:'javascript_boxed_array_mutation_call_source',model:'Actual boxed Array mutation opcode composition 1',programAsset:'javascript-boxed-array-mutation-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-boxed-array-read-call-source.js',moduleName:'javascript_boxed_array_read_call_source',model:'Actual boxed Array callback search and species receiver composition 1',programAsset:'javascript-boxed-array-read-call-source-program'},
  {sourcePath:'js/src/translation/javascript-object-coercion-call-source.js',moduleName:'javascript_object_coercion_call_source',model:'Actual shared ToObject primitive root selection bytecode 1',programAsset:'javascript-object-coercion-call-source-program'},
  {sourcePath:'js/src/translation/javascript-object-string-call-source.js',moduleName:'javascript_object_string_call_source',model:'Actual Object builtin tags and Array current join dispatch 1',programAsset:'javascript-object-string-call-source-program'},
  {sourcePath:'js/src/translation/javascript-array-join-call-source.js',moduleName:'javascript_array_join_call_source',model:'Actual generic Array join ordered Gets and recursion guards 1',programAsset:'javascript-array-join-call-source-program'},
@@ -112,6 +115,9 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-object-assignment-coercion.mjs',
+ 'js/tests/fixtures/javascript-array-mutation-boxing.mjs',
+ 'js/tests/fixtures/javascript-array-read-boxing.mjs',
  'js/tests/fixtures/javascript-array-join-source.mjs',
  'js/tests/fixtures/javascript-construction-source.mjs',
  'js/tests/fixtures/javascript-array-creation.mjs',
@@ -233,6 +239,12 @@ const consumers=[
  'js/tests/translation-javascript-string-case-profile.test.js',
  'js/tests/translation-javascript-collection-for-each.test.js',
  'js/tests/translation-javascript-reflect-construction-call-source.test.js',
+ 'js/tests/translation-javascript-object-assignment-call-source.test.js',
+ 'js/tests/translation-javascript-boxed-array-mutation-call-source.test.js',
+ 'js/tests/translation-javascript-boxed-array-read-call-source.test.js',
+ 'js/tests/translation-javascript-object-assignment-coercion-source.test.js',
+ 'js/tests/translation-javascript-array-mutation-boxing-source.test.js',
+ 'js/tests/translation-javascript-array-read-boxing-source.test.js',
  'js/tests/translation-javascript-array-join-source.test.js',
  'js/tests/translation-javascript-array-join-call-source.test.js',
  'js/tests/translation-javascript-object-string-call-source.test.js',
@@ -530,6 +542,9 @@ for(const [source,target] of [
  ['javascript-ordinary-class-source','javascript-ordinary-class-source'],
  ['javascript-string-case-profile','javascript-string-case-profile'],
  ['javascript-collection-for-each-source','javascript-collection-for-each-source'],
+ ['javascript-object-assignment-coercion','javascript-object-assignment-coercion'],
+ ['javascript-array-mutation-boxing','javascript-array-mutation-boxing'],
+ ['javascript-array-read-boxing','javascript-array-read-boxing'],
  ['javascript-array-join-source','javascript-array-join-source'],
  ['javascript-construction-source','javascript-construction-source'],
  ['javascript-array-creation','javascript-array-creation'],

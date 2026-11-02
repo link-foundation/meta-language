@@ -132,6 +132,9 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
  diagnostic.attempt("active Rust compiler range",||{let output=run(Command::new("rustc").arg("--version"));assert!(output.ok);let version=output.stdout.split_whitespace().nth(1).unwrap();let parts=version.split('.').collect::<Vec<_>>();assert_eq!(parts[0],"1");assert!((90..100).contains(&parts[1].parse::<u32>().unwrap()),"uncovered Rust {version}");});
  let fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-ordinary-class-source.lino")).unwrap();
  let wrapper_materialization_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-wrapper-materialization.lino")).unwrap();
+ let javascript_object_assignment_coercion_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-object-assignment-coercion.lino")).unwrap();
+ let javascript_array_mutation_boxing_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-mutation-boxing.lino")).unwrap();
+ let javascript_array_read_boxing_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-read-boxing.lino")).unwrap();
  let array_join_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-join-source.lino")).unwrap();
  let construction_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-construction-source.lino")).unwrap();
  let array_creation_fixture=meta_language::read_structured_data_lino(include_str!("../../../parity/fixtures/javascript-array-creation.lino")).unwrap();
@@ -146,6 +149,9 @@ fn actual_ordinary_classes_keep_full_source_transports_and_native_execution(){
  diagnostic.producer(peer,"header");diagnostic.attempt("report model",||assert_eq!(peer["model"],"actual ordinary class source execution controls 1"));
  for(group,declarations,export)in [
   ("cases",&fixture["declarations"],"javascriptOrdinaryClassOriginals"),
+  ("objectAssignmentCoercion",&javascript_object_assignment_coercion_fixture["declarations"],"javascriptObjectAssignmentCoercionOriginals"),
+  ("arrayMutationBoxing",&javascript_array_mutation_boxing_fixture["declarations"],"javascriptArrayMutationBoxingOriginals"),
+  ("arrayReadBoxing",&javascript_array_read_boxing_fixture["declarations"],"javascriptArrayReadBoxingOriginals"),
   ("arrayJoin",&array_join_fixture["declarations"],"javascriptArrayJoinOriginals"),
   ("construction",&construction_fixture["declarations"],"javascriptConstructionOriginals"),
   ("arrayCreation",&array_creation_fixture["declarations"],"javascriptArrayCreationOriginals"),

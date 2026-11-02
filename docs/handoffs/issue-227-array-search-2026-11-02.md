@@ -1847,3 +1847,37 @@ Proxy construction/trap integration. It is not skipped or replaced with a weaker
 input. Native publication must come through automatic shared-source translation,
 including guard fields/instructions and all transport declarations. Named test
 and handoff files are in the two focused join handoffs for follow-up review.
+
+
+## Primitive receiver and assignment boxing draft
+
+Subagent commits `410fdfb0d` and `ba5e5be90` draft Object.assign target coercion
+and boxed composition for all seven existing Array mutation methods. Root adds
+`javascript-boxed-array-read-call-source.js` for nine callback/reduction methods,
+four search/index methods and map/filter. All compose the same ToObject helper
+with existing semantic algorithms. The protected original receiver is retained
+in register zero; explicit held Object operands authenticate pending states and
+callback Object arguments. Existing instructions without input keep their
+register-zero contract. Object.assign captures the actual target once before all
+source processing. Mutation composition separately relocates control-flow
+coordinates and held-receiver data operands, preserving every existing algorithm.
+
+The protected catalog captures actual wrapper roots for these owners. The old
+standalone compilation paths remain available; actual catalog execution takes
+the complete boxing path. Root source review corrected execution routing to use
+instruction.input, matching the pending-state check, rather than accidentally
+continuing to read original register zero. No execution was used to find/fix it.
+
+Three complete literal fixture groups add sixty independent source programs:
+seventeen Object assignment, twenty-five mutation and eighteen callback/search/
+transform boxing originals. Each group is version-qualified, registered with the
+source policy author, included in direct source originals and the bounded
+ordinary-source producer, and retained by the native source replay consumer.
+Native publication/codecs/programs/Links remain deferred generated products, not
+handwritten replacements. Direct VM and bytecode-composition controls are also
+source-authored. No tests, behavioral execution, validation, generation or Rust
+compilation ran. Deferred controls do not establish requirement completion.
+
+Continue from the focused coercion/mutation handoffs and the new boxed-read
+compiler. Remaining broader library operations are not removed by this batch;
+Array.slice source drafting is now delegated while root integrates these paths.

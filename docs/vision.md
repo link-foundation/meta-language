@@ -87,6 +87,25 @@ length semantics in a native fallback.
 All continuations retain original inputs, selected callbacks, allocation requests
 and realm Error identity, including strict final length Set and resource retries.
 
+Generic Array callbacks, searches, map/filter and mutation methods apply shared
+ToObject before length access or callback/index conversion. Their protected Call
+receiver remains unchanged; an explicit held Object register supplies the actual
+algorithm receiver and observable callback Object argument. Primitive String
+receivers expose exact immutable UTF16 indices. Other primitive wrappers retain
+the active realm roots and original internal slots. Existing Object receivers
+retain identity. Transform species classification applies to the boxed source,
+so non-Array wrappers use ordinary realm Array creation. Pending states validate
+the explicit receiver operand across suspension; legacy instructions continue to
+use register zero when no operand is supplied. Mutation composition relocates
+control targets separately from data registers and retains strict writes/deletes.
+
+Object.assign likewise performs ToObject on its actual target before reading
+any source, then reuses the shared ordered own-key/enumerability/Get/strict Set
+algorithm. Nullish targets reject immediately, existing Objects retain identity,
+and primitive targets retain wrapper slots. String index/length write failures
+are actual strict property errors; completed earlier writes survive abrupt exit.
+Neither assignment nor Array boxing calls a host replacement implementation.
+
 Array join uses shared ToObject with the active realm wrapper roots, one saved
 ToLength, separator conversion before index access, and ordinary ascending Gets.
 Nullish elements contribute empty text; other elements use implicit string

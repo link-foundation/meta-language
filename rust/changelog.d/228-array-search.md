@@ -249,3 +249,9 @@ Draft generic Array join, current-join Array stringification and Object builtin
 slot/tag stringification using shared coercion, Get and Call. Draft per-realm
 recursive join guards and complete source/native replay inputs; execution remains
 deferred.
+
+
+Draft shared ToObject composition for Object.assign targets and all existing
+Array callback/search/transform/mutation receivers, preserving actual wrappers,
+strict writes and callback receiver identity. Add complete literal source/native
+replay groups; execution remains deferred.

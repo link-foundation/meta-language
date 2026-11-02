@@ -27,9 +27,9 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'primitiveMethod',destination:number,operation:string} |
  * {$:'collectionForEach',destination:number,operation:string} |
  * {$:'arrayCreation',destination:number,operation:string,prototype:number,iteratorKey:number} |
- * {$:'arrayCallback',destination:number,operation:string} |
- * {$:'arraySearch',destination:number,operation:string} |
- * {$:'arrayTransform',destination:number,operation:string,species:JavaScriptArraySpeciesDirectory} |
+ * {$:'arrayCallback',destination:number,operation:string,input?:number} |
+ * {$:'arraySearch',destination:number,operation:string,input?:number} |
+ * {$:'arrayTransform',destination:number,operation:string,species:JavaScriptArraySpeciesDirectory,input?:number} |
  * {$:'objectEnumeration',destination:number,operation:string,prototype:number} |
  * {$:'propertyDefinitions',destination:number,operation:string,target:number,input:number} |
  * {$:'propertyReflection',destination:number,operation:string,input:number,key:number,objectPrototype:number,arrayPrototype:number} |
@@ -91,7 +91,8 @@ export function findJavaScriptCallCodeFunction(program,identity){
 /** @param {JavaScriptCallInstruction} instruction @returns {number[]} */
 export function readJavaScriptCallCodeRegisters(instruction){
   switch(instruction.$){
-    case 'constant':case 'argument':case 'argumentCount':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination];
+    case 'constant':case 'argument':case 'argumentCount':case 'readNewTarget':case 'pushHandler':case 'readDerivedReceiver':case 'invokeErrorIntrinsic':case 'invokeHostCapability':case 'collectionOperation':case 'primitiveMethod':case 'collectionForEach':return [instruction.destination];
+    case 'arrayCallback':case 'arraySearch':case 'arrayTransform':return [instruction.destination,instruction.input??0];
     case 'argumentAt':return [instruction.destination,instruction.index];
     case 'arrayJoinEnter':return [instruction.destination,instruction.receiver];
     case 'arrayJoinLeave':return [instruction.receiver];
