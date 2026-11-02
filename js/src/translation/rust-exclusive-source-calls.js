@@ -8,6 +8,7 @@ import {readRustOwnedRecordStateFieldIdentity} from './rust-owned-record-state-r
 import {testRustOwnedRecordFieldDescendant,readRustOwnedRecordWholeError} from './rust-owned-record-update-rules.js';
 import {testRustExclusiveSourcePlaceOverlap} from './rust-exclusive-source-loan-rules.js';
 import {readRustSourceValueName} from './rust-source-constants.js';
+import {readRustExclusiveSourceStringMethod,createRustExclusiveSourceStringMutation} from './rust-exclusive-source-strings.js';
 const fail=(reason,span)=>{throw unsupported('Rust exclusive source call',reason,span);};
 const operations={borrow:'rustExclusiveSourceBorrow',call:'rustExclusiveSourceCall',write:'rustExclusiveSourceWholeWrite'};
 export function initializeRustExclusiveSourceCalls(parser){
@@ -68,11 +69,12 @@ export function captureRustExclusiveSourceReceiver(parser,receiver,method,path){
  const arena=initializeRustExclusiveSourceCalls(parser);if(!arena)return false;
  const origin=parser.origins.origin(receiver,path),owner=origin.type?.kind==='named'?parser.origins.lookupTypeOwner(origin.type.path,origin.path):null,selected=owner?parser.inherentMethods.get(owner.fullName+'.'+method.value):null;
  const vector=parser.exclusiveSourceModel==='Rust exclusive source loans 1'&&method.value==='push'&&origin.type?.kind==='array'&&(origin.expandedSourceOwner??origin.sourceOwner)?.path.join('::')==='std::vec::Vec';
- if(!selected?.exclusive&&!vector)return false;
+ const string=readRustExclusiveSourceStringMethod(parser,origin,method,path);
+ if(!selected?.exclusive&&!vector&&!string)return false;
  const place=selectRustExclusiveSourcePlace(parser,receiver,path);if(!place)fail('an exclusive receiver requires its actual mutable lexical root and field path',receiver.span);
  const callee=selected?['crate',...owner.fullName.split('.'),method.value]:null,entry=callee?parser.origins.lookupValueOwner(callee,path):null;
  const element=vector?{...parser.origins.typeOrigin(origin.type.element,origin.path),sourceOwner:(origin.expandedSourceOwner??origin.sourceOwner).arguments[0]}:null;
- arena.receivers.set(receiver,{place:{...place,span:receiver.span},callee,entry:entry??{parameters:[{...place.field,sourceExclusiveMode:'exclusive'},element]},vector});return true;
+ arena.receivers.set(receiver,{place:{...place,span:receiver.span},callee,entry:entry??{parameters:[{...place.field,sourceExclusiveMode:'exclusive'},...(string?string.parameters:[element])]},vector,string});return true;
 }
 export function readRustExclusiveSourceMethodArguments(parser,receiver,method,path){
  const record=parser.exclusiveSourceCalls?.receivers.get(receiver);if(!record)return null;
@@ -91,6 +93,7 @@ export function readRustExclusiveSourceCall(parser,callee,args,path,span){
 export function readRustExclusiveSourceMethod(parser,receiver,method,args,path,span){
  const info=parser.exclusiveSourceCalls?.receivers.get(receiver);if(!info)return null;
  if(!info.borrow)fail('exclusive receiver operands retain their ordered argument frame',span);
+ if(info.string)return recordRustExclusiveSourcePlaceWrite(parser,info.place,createRustExclusiveSourceStringMutation(parser,info.place,info.string,args,path,span),path,span);
  if(!info.vector)return readRustExclusiveSourceCall(parser,info.callee,[info.borrow,...args],path,span);
  if(args.length!==1)throw typeError('Vec push requires exactly its actual element argument',span);
  parser.origins.argument(parser.origins.origin(args[0],path),info.entry.parameters[1],span);
