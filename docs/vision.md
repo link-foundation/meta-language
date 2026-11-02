@@ -57,6 +57,18 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Object.assign consumes its actual Call argument List, returns the original
+Object target, and copies each source through the shared enumerable-own-key
+engine in Set mode. Source getters and target setters execute in order, each
+held value survives suspension, and rejected writes preserve prior effects.
+Array targets compose existing ArraySetLength numeric conversions and partial
+failure behavior. Object-literal spread retains CreateDataProperty semantics.
+The actual Object.prototype legacy prototype getter/setter identities have
+portable bodies, so inherited __proto__ Set changes the prototype while a null-
+prototype target creates data. Nullish sources are skipped and primitive String
+sources contribute UTF16 indices. Primitive targets require actual wrapper
+allocation/internal slots; opaque/Proxy targets require explicit Set protocols.
+
 ObjectDefineProperties snapshots descriptor keys, rechecks each current own
 entry's enumerability, Gets its actual descriptor value and completes every
 ToPropertyDescriptor before defining the first target field. Converted partial

@@ -1148,3 +1148,26 @@ source parser execution or compilation ran. Generated Rust/wire publication
 remains deferred. Object.assign, primitive wrapper identity, opaque descriptor
 protocols, full lexical environments and other existing requirements remain
 independent source obligations.
+
+### Object.assign through shared enumerable copy Set mode
+
+The existing object spread kernel now has a distinct Set mode for Object.assign;
+its legacy CreateDataProperty entry point and default state remain intact.
+Protected portable bytecode loops over the actual Call argument List, processes
+sources in order and returns the original Object target. Selected getters and
+setters retain exact operands; source values remain held across setter/numeric
+callbacks. Array Set composes the existing two-conversion length kernel and
+preserves RangeError/partial deletion heaps. Shared snapshot/recheck behavior
+handles Symbols, deleted/hidden fields, String code units and nullish sources.
+The actual protected Object.prototype __proto__ getter/setter owners now have
+portable bodies, preserving prototype Set behavior without native method calls.
+
+Fourteen original source fixtures and five deferred kernel controls are drafted,
+including getter/setter ordering, readonly partial effects, Symbols, Arrays,
+UTF16, prototype setters and original throws. Call opcode validation, selected
+child verification, continuation replay and source policy authoring are connected.
+No parser, test, generator, represented execution, validation gate or compilation
+ran. Primitive targets remain explicit unsupported wrapper/internal-slot work;
+opaque/Proxy Set remains its explicit host protocol obligation. No substitute
+plain Object wrapper or native Object.assign fallback is presented as support.
+Generated publication remains deferred with the rest of the full source draft.

@@ -18,7 +18,7 @@ import {testJavaScriptArrayTransformOperation,beginJavaScriptArrayTransform,step
 import {testJavaScriptArraySearchOperation,readJavaScriptIndexedPropertyPresence} from './javascript-array-index-rules.js';
 import {beginJavaScriptArraySearch,stepJavaScriptArraySearch,resumeJavaScriptArraySearch,readJavaScriptArraySearchStateError} from './javascript-array-search.js';
 import {testJavaScriptArrayCallbackOperation,beginJavaScriptArrayCallback,stepJavaScriptArrayCallback,resumeJavaScriptArrayCallback,readJavaScriptArrayCallbackStateError} from './javascript-array-callbacks.js';
-import {beginJavaScriptObjectSpread,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread,readJavaScriptObjectSpreadStateError} from './javascript-object-spread.js';
+import {beginJavaScriptObjectAssignment,beginJavaScriptObjectSpread,stepJavaScriptObjectSpread,resumeJavaScriptObjectSpread,readJavaScriptObjectSpreadStateError} from './javascript-object-spread.js';
 import {allocateJavaScriptCallClosure,findJavaScriptCallTemplate,projectJavaScriptCallTemplateFunction,readJavaScriptExecutableCallFunction,readJavaScriptCallTemplateDirectoryError} from './javascript-call-templates.js';
 import {beginJavaScriptArrayAssignment,stepJavaScriptArrayAssignment,resumeJavaScriptArrayAssignment,readJavaScriptArrayAssignmentStateError} from './javascript-array-assignment.js';
 import {allocateJavaScriptCollectionIterator,readJavaScriptCollectionIteratorReceiverError} from './javascript-collection-iteration.js';
@@ -200,9 +200,9 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
         case 'arraySearch':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArraySearchOperation(instruction.operation))return 'Array search instructions retain their actual standard callable owner and operation';break;
         case 'arrayCallback':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptArrayCallbackOperation(instruction.operation))return 'Array callback instructions retain their actual standard owner and operation';break;
         case 'arraySpread':if(instruction.realm!==fn.realm)return 'Array spread retains its actual active source realm';break;
-        case 'objectSpread':if(!program.realms.includes(instruction.realm))return 'object spread retains its actual intrinsic realm';break;
         case 'ordinaryDataProperty':if(!program.realms.includes(instruction.realm))return 'a data property definition retains its actual intrinsic realm';break;
         case 'objectEnumeration':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptObjectEnumerationOperation(instruction.operation))return 'Object enumeration retains its actual protected operation owner';break;
+        case 'objectSpread':if(!program.realms.includes(instruction.realm)||instruction.operation!==undefined&&(instruction.operation!=='assignment'||!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||(instruction.excluded??[]).length!==0))return 'Object.assign retains its protected Set body and complete source keys';break;
         case 'propertyDefinitions':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPropertyDefinitionsOperation(instruction.operation))return 'bulk property definitions retain their actual protected operation owner';break;
         case 'propertyReflection':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode)||!testJavaScriptPropertyReflectionOperation(instruction.operation))return 'property reflection retains its actual protected operation owner';break;
         case 'instanceOf':if(!['instanceof','ordinary has instance'].includes(instruction.operation)||instruction.operation==='ordinary has instance'&&!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'instanceof retains its actual operator or protected intrinsic body';break;
@@ -343,8 +343,9 @@ export function readJavaScriptCallMachineError(program,machine){
     }
     const spreadParent=machine.frames[index-1];
     if(spreadParent!==undefined&&spreadParent.pending.$==='waitObjectSpread'){
-      const state=spreadParent.pending.state,callee=state.callee,receiver=fn.receiverMode==='lexical'?fn.lexicalReceiver:state.input;
-      if(state.phase!=='getter'||callee.$!=='object'||callee.identity!==frame.identity||frame.arguments.length!==0||!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},receiver))return 'an object spread child retains its actual getter, receiver and empty arguments';
+      const state=spreadParent.pending.state;
+      if(state.call!==undefined){const error=readJavaScriptSelectedCallFrameError(fn,frame,state.call.callee,state.call.receiver,state.call.arguments);if(error!=='')return error;}
+      else {const callee=state.callee,receiver=fn.receiverMode==='lexical'?fn.lexicalReceiver:state.input;if(state.phase!=='getter'||callee.$!=='object'||callee.identity!==frame.identity||frame.arguments.length!==0||!testJavaScriptSemanticSameValue(frame.registers[0]??{$:'undefined'},receiver))return 'an object spread child retains its actual getter, receiver and empty arguments';}
     }
     if(testJavaScriptOrdinaryClassConstructorMode(fn.receiverMode)||testJavaScriptCollectionConstructorMode(fn.receiverMode)){
       const parent=machine.frames[index-1],caller=parent===undefined?undefined:readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity),instruction=parent===undefined||caller===undefined||parent.position===0?undefined:caller.instructions[parent.position-1];
@@ -504,10 +505,11 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       case 'waitObjectSpread':{
         const instruction=frame.position>0?fn.instructions[frame.position-1]:undefined;
         if(instruction===undefined||instruction.$!=='objectSpread'||instruction.realm!==pending.realm||instruction.destination!==pending.destination||!program.realms.includes(pending.realm))return 'object spread retains its actual source instruction, destination and realm';
+        if(pending.state.operation!==instruction.operation||instruction.operation==='assignment'&&!testJavaScriptSemanticSameValue(pending.state.exoticKey,program.exoticKey))return 'object copy retains its actual CreateDataProperty or Set operation and Symbol';
         const error=readJavaScriptObjectSpreadStateError(heap,pending.state);if(error!=='')return error;
         if(!testJavaScriptSemanticSameValue(pending.state.target,frame.registers[instruction.target]??{$:'undefined'})||!testJavaScriptSemanticSameValue(pending.state.input,frame.registers[instruction.input]??{$:'undefined'}))return 'object spread cannot substitute its actual target or source input';
         const excluded=instruction.excluded??[];if(excluded.length!==pending.state.excluded.length)return 'object copy retains every actual excluded-key operand';for(let at=0;at<excluded.length;at++)if(!testJavaScriptSemanticSameValue(pending.state.excluded[at]??{$:'undefined'},frame.registers[excluded[at]??-1]??{$:'undefined'}))return 'object copy cannot substitute an excluded key';
-        if(suspended&&pending.state.phase!=='getter')return 'only an object spread getter can retain a suspended child call';
+        if(suspended&&pending.state.phase!=='getter'&&pending.state.call===undefined)return 'object copy retains only actual selected getters setters and numeric callbacks';
         break;
       }
       case 'waitArrayAssignment':{
@@ -1113,7 +1115,7 @@ export function stepJavaScriptCallMachine(program,machine){
       const index=registers[instruction.index]??{$:'undefined'};if(index.$!=='number')return {$:'machineInvalid',heap:machine.heap,reason:'Array spread index retains its actual Number coordinate'};
       return acceptJavaScriptCallArraySpread(program,current,instruction.destination,instruction.realm,beginJavaScriptArraySpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},index.value,registers[instruction.iteratorKey]??{$:'undefined'}));
     }
-    case 'objectSpread':return acceptJavaScriptCallObjectSpread(program,current,instruction.destination,instruction.realm,beginJavaScriptObjectSpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},(instruction.excluded??[]).map(index=>registers[index]??{$:'undefined'})));
+    case 'objectSpread':return acceptJavaScriptCallObjectSpread(program,current,instruction.destination,instruction.realm,instruction.operation==='assignment'?beginJavaScriptObjectAssignment(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},program.exoticKey):beginJavaScriptObjectSpread(machine.heap,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},(instruction.excluded??[]).map(index=>registers[index]??{$:'undefined'})));
     case 'objectEnumeration':return acceptJavaScriptCallObjectEnumeration(program,current,instruction.destination,fn.realm,beginJavaScriptObjectEnumeration(machine.heap,instruction.operation,frame.arguments[0]??{$:'undefined'},registers[instruction.prototype]??{$:'undefined'}));
     case 'propertyDefinitions':return acceptJavaScriptCallPropertyDefinitions(program,current,instruction.destination,fn.realm,beginJavaScriptPropertyDefinitions(machine.heap,instruction.operation,registers[instruction.target]??{$:'undefined'},registers[instruction.input]??{$:'undefined'},program.exoticKey));
     case 'propertyReflection':return acceptJavaScriptCallPropertyReflection(current,instruction.destination,fn.realm,beginJavaScriptPropertyReflection(machine.heap,instruction.operation,registers[instruction.input]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.objectPrototype]??{$:'undefined'},registers[instruction.arrayPrototype]??{$:'undefined'}));
@@ -1451,7 +1453,7 @@ export function acceptJavaScriptCallObjectSpread(program,machine,destination,rea
   case 'objectSpreadCall':return pushJavaScriptCall(program,replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitObjectSpread',destination,realm,state:transition.state})),transition.callee,transition.receiver,transition.arguments);
   case 'objectSpreadCompleted':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,writeJavaScriptCallRegister(frame,destination,transition.value))};
   case 'objectSpreadThrow':return throwJavaScriptCallValue(current,transition.value);
-  case 'objectSpreadError':return requestJavaScriptCallError(current,realm,'TypeError',transition.reason);
+  case 'objectSpreadError':return requestJavaScriptCallError(current,realm,transition.errorClass??'TypeError',transition.reason);
   case 'objectSpreadInvalid':return {$:'machineInvalid',heap:transition.heap,reason:transition.reason};
   case 'objectSpreadResourceLimit':return {$:'machineResourceLimit',machine:replaceJavaScriptCallFrame(transition.heap,current.frames,replaceJavaScriptCallPending(frame,{$:'waitObjectSpread',destination,realm,state:transition.state})),reason:transition.reason};
  }

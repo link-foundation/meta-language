@@ -46,7 +46,7 @@ import {readJavaScriptSemanticValueError,testJavaScriptSemanticSameValue} from '
  * {$:'arrayAllocate',destination:number,prototype:number,length:number} |
  * {$:'closureAllocate',destination:number,owner:bigint,ordinal:number,captures:number[],receiver:number} |
  * {$:'arraySpread',destination:number,target:number,input:number,index:number,iteratorKey:number,realm:bigint} |
- * {$:'objectSpread',destination:number,target:number,input:number,realm:bigint,excluded?:number[]} |
+ * {$:'objectSpread',destination:number,target:number,input:number,realm:bigint,excluded?:number[],operation?:string} |
  * {$:'ordinaryDataProperty',destination:number,object:number,key:number,value:number,realm:bigint} |
  * {$:'ordinaryGet',destination:number,object:number,key:number,receiver:number} |
  * {$:'ordinaryDelete',destination:number,object:number,key:number} |

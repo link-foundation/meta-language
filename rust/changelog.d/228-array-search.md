@@ -164,3 +164,6 @@ Array allocation, recursive binding targets and Function length boundaries.
 - Draft Object.defineProperties and Object.create by composing ordered descriptor
   conversion and the shared property/Array definition kernels, retaining partial
   effects and actual prototypes for automatic cross-runtime translation.
+
+- Draft Object.assign using shared enumerable-copy Set semantics, actual getter/
+  setter Calls, Array-length continuations and portable legacy prototype accessors.
