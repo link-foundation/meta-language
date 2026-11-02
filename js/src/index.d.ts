@@ -938,6 +938,7 @@ export function createTypedProgramLinks(
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustSourceVersion?: string;
     rustExclusiveSourceModel?: 'Rust exclusive source loans 1';
+    rustFnMutSourceModel?: 'Rust closed source FnMut specializations 1';
     rustStandardCollectionSourceModel?: 'Rust closed standard collections 1';
     rustStandardCollectionSourceLibrary?: RustStandardCollectionSourceLibrary;
     rustStandardCollectionPointerWidth?: 64;
@@ -979,6 +980,7 @@ export function createRustSourceOwnerProgramLinks(source: string, options?: { so
 export interface RustSourceProjectSource { path:string; source:string }
 export interface RustSourceProjectOptions {
   library?:boolean; retainSourceTypeOwners?:boolean; provenance?:unknown;
+  fnMutSourceModel?:'Rust closed source FnMut specializations 1';
   sourceVersion?:string; exclusiveSourceModel?:'Rust exclusive source loans 1';
   standardCollectionSourceModel?:'Rust closed standard collections 1';
   standardCollectionSourceLibrary?:RustStandardCollectionSourceLibrary;

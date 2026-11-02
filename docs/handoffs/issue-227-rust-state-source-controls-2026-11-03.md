@@ -2,9 +2,14 @@
 
 This is source/control authoring under [the vision](../vision.md), not execution
 evidence. `run-rust-state-source-originals.mjs` adds one reusable CI-only driver
-over all complete positive originals in eight fixture groups: exclusive loans,
+over all complete positive originals in fourteen fixture groups: exclusive loans,
 primitive compounds, owned Strings, owned vectors, exclusive collections,
-standard collections, collection equality and ordered collections. It consumes
+standard collections, collection equality, ordered collections, borrowed ordered
+collection loops, stable UTF16 nominal field sorting and literal character String
+append/prefix insertion, owned vector into-loops, concrete mutable source functions
+and primitive vector sorting. The source inventory contains 275 complete positive
+originals. This count records authored inputs,
+not passing assertions or completed requirements. It consumes
 the original literal arrays directly, so new appended inputs stay included.
 
 The driver requires explicit CI authorization before every native command. It
@@ -44,6 +49,16 @@ Checkout selects actual pre-merge head inputs. The job needs no local Cargo
 target, uses bounded subprocesses and one disposable executable directory at a
 time, and retains actual sources, products, command output and every assertion
 diagnostic as Links under `issue-195-artifacts/rust-state-source/<commit>/`.
+Typed program text and binary transports independently decode and recheck the
+current complete graph, compare their emitted JavaScript and Rust bytes with the
+selected products, and run each restored JavaScript product against the original
+and literal stdout. Exact Rust byte equality relates those transports to the
+separate emitted Rust compilation assertion; it does not report a compilation
+when that assertion fails. Transport hashes, byte/node counts and actual stdout
+are retained. Complete common typed libraries are not redundantly written for
+every fixture, keeping CI artifact growth bounded by receipts and products rather
+than repeated full library archives. FnMut groups select their explicit source
+profile through the same driver; other groups retain their previous selection.
 Only its uniquely created scratch directory under `work/` is removed. Source
 generation and native execution remain deferred during the current local phase.
 

@@ -1,35 +1,5 @@
 # Meta-language vision and architecture
 
-Explicit source execution retries retain the checked current VM machine and use
-a fresh bounded step slice. Exhaustion remains a resource boundary until actual
-work/storage/protocol constraints permit progress; retry never implies success
-or invokes the original host implementation.
-Closed standard Rust collection equality compares complete membership/owned
-values independently of insertion history, root allocation and revision. Ordered
-BTree collections additionally preserve genuine primitive Ord and Unicode-scalar
-String order equivalent to valid UTF8 byte order. Ordered snapshots retain their
-actual source owners, copied/cloned modes and concrete result domains; Hash
-iteration never inherits the internal entry vector's order. Every source bridge
-requires the actual automatically projected shared bodies and checked ownership.
-
-Array copying operations use the active realm's ordinary Array allocation,
-independent of source constructors/species. Reversal reads captured source
-coordinates in descending order; indexed replacement converts and bounds the
-actual index before allocation and never reads the replaced coordinate. Both
-produce dense own writable/enumerable/configurable data properties, including
-undefined for holes, through the shared ordinary operations and continuation VM.
-Nonmutating splice preserves missing/explicit start and skip-count distinctions,
-copies dense prefix/insertion/suffix segments, never reads deleted coordinates,
-and checks mathematical safe length before ordinary Array capacity.
-Array sorting captures selected values before comparisons and final writes,
-orders undefined after defined values, compares default UTF16 strings through
-actual conversion continuations, and preserves stable ties. Mutating sort skips
-absent properties and strictly publishes/deletes through the original receiver;
-toSorted reads through holes and returns a dense realm Array. Comparator calls
-and their Number conversions retain actual thrown values and undefined receiver.
-The comparator sequence and behavior of inconsistent comparators remain explicit
-implementation choices, separately qualified from exact engine observations.
-
 This is the authoritative specification of what meta-language is for and how it
 is built. Everything else in this repository serves it: where the root
 [README](../README.md), a package README, the
@@ -4596,6 +4566,67 @@ and gates remain mandatory. Data relocation establishes byte preservation, not
 equivalence between different concept definitions.
 
 ## Four-language semantics and translation
+
+Closed Rust mutable-function specialization retains original generic, formal,
+callback and body source identities and reparses actual declarations. Concrete
+instantiation alone cannot prove a universal generic body: unconstrained error
+parameters in the residual-only profile remain opaque and affine even when the
+selected concrete type is Copy. Ordered callback environment packets publish
+actual captured roots and preserve first-error completion. Every admitted
+template requires an actual fully admitted specialization; unused generic bodies
+cannot silently disappear. Readonly nonexclusive functions retain their genuine
+immutable source interface. Reinitializing a moved whole owned root requires a
+genuine compatible right-hand-side transfer and no live loans; field writes and
+exclusive authority retain their independent contracts.
+
+Rust character and String domains remain distinct. A closed standard String
+append or zero-byte-boundary insertion of an actual scalar character literal may reuse canonical lexical decoding
+and the shared exclusive text concatenation/writeback path. The literal keeps
+its source identity and scalar validity; this conversion confers no general
+character binding, reference or ownership authority. Computed characters and
+full scalar APIs require their own complete interpretation and controls.
+
+Stable Rust source field sorting must retain the actual standard Vec and String
+owners, nominal field layout and exclusive mutable source place. A closed pure
+`encode_utf16().cmp(...)` comparator may reuse a complete ordinary shared source
+algorithm specialized only at its opaque payload type. It retains equal-key
+order and UTF16 comparison, independently of Rust's ordinary String scalar order.
+Unproved comparator effects and custom dispatch require their own interpretation.
+Formal targets reuse the complete shared UTF16 column model for explicit checked
+code-unit operations. Source admission, complete library bodies, caller state
+publication and all emitted products require independent controls.
+
+Explicit source execution retries retain the checked current VM machine and use
+a fresh bounded step slice. Exhaustion remains a resource boundary until actual
+work/storage/protocol constraints permit progress; retry never implies success
+or invokes the original host implementation.
+
+Closed standard Rust collection equality compares complete membership/owned
+values independently of insertion history, root allocation and revision. Ordered
+BTree collections additionally preserve genuine primitive Ord and Unicode-scalar
+String order equivalent to valid UTF8 byte order. Ordered snapshots retain their
+actual source owners, copied/cloned modes and concrete result domains; Hash
+iteration never inherits the internal entry vector's order. Every source bridge
+requires the actual automatically projected shared bodies and checked ownership.
+
+Array copying operations use the active realm's ordinary Array allocation,
+independent of source constructors/species. Reversal reads captured source
+coordinates in descending order; indexed replacement converts and bounds the
+actual index before allocation and never reads the replaced coordinate. Both
+produce dense own writable/enumerable/configurable data properties, including
+undefined for holes, through the shared ordinary operations and continuation VM.
+Nonmutating splice preserves missing/explicit start and skip-count distinctions,
+copies dense prefix/insertion/suffix segments, never reads deleted coordinates,
+and checks mathematical safe length before ordinary Array capacity.
+
+Array sorting captures selected values before comparisons and final writes,
+orders undefined after defined values, compares default UTF16 strings through
+actual conversion continuations, and preserves stable ties. Mutating sort skips
+absent properties and strictly publishes/deletes through the original receiver;
+toSorted reads through holes and returns a dense realm Array. Comparator calls
+and their Number conversions retain actual thrown values and undefined receiver.
+The comparator sequence and behavior of inconsistent comparators remain explicit
+implementation choices, separately qualified from exact engine observations.
 
 JavaScript, Rust, Lean and Rocq have full representation and transformation, and
 all **12 directed translations** work in both runtime packages through the common

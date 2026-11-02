@@ -56,14 +56,14 @@ function parseRustSourceProjectVersion(inputs,entry,options,selectedVersion){
  const composition=composeRustSourceProject(inputs,entry,options);let source=composition.source,entryNormalization='none',surface;
  if(options.retainSourceTypeOwners!==undefined&&typeof options.retainSourceTypeOwners!=='boolean')fail('retainSourceTypeOwners must be Boolean');
  const sourceVersion=selectedVersion===undefined?undefined:readRustSourceVersion(selectedVersion).spelling;
- const exclusiveSourceModel=options.exclusiveSourceModel,standardCollectionSourceModel=options.standardCollectionSourceModel,standardCollectionSourceLibrary=options.standardCollectionSourceLibrary,standardCollectionPointerWidth=options.standardCollectionPointerWidth;
- const sourceOptions={retainSourceTypeOwners:options.retainSourceTypeOwners===true,...(sourceVersion===undefined?{}:{sourceVersion}),...(exclusiveSourceModel===undefined?{}:{exclusiveSourceModel}),...(standardCollectionSourceModel===undefined?{}:{standardCollectionSourceModel}),...(standardCollectionSourceLibrary===undefined?{}:{standardCollectionSourceLibrary}),...(standardCollectionPointerWidth===undefined?{}:{standardCollectionPointerWidth})};
+ const fnMutSourceModel=options.fnMutSourceModel,exclusiveSourceModel=options.exclusiveSourceModel,standardCollectionSourceModel=options.standardCollectionSourceModel,standardCollectionSourceLibrary=options.standardCollectionSourceLibrary,standardCollectionPointerWidth=options.standardCollectionPointerWidth;
+ const sourceOptions={...(fnMutSourceModel===undefined?{}:{fnMutSourceModel}),retainSourceTypeOwners:options.retainSourceTypeOwners===true,...(sourceVersion===undefined?{}:{sourceVersion}),...(exclusiveSourceModel===undefined?{}:{exclusiveSourceModel}),...(standardCollectionSourceModel===undefined?{}:{standardCollectionSourceModel}),...(standardCollectionSourceLibrary===undefined?{}:{standardCollectionSourceLibrary}),...(standardCollectionPointerWidth===undefined?{}:{standardCollectionPointerWidth})};
  try{surface=parseRust(source,sourceOptions);}catch(error){
   if(options.library===true&&error.kind==='syntax'&&error.reason==='a Rust program needs fn main'){
    source+='\nfn main(){}\n';entryNormalization='empty frontend entry for a source library';surface=parseRust(source,sourceOptions);
   }else throw error;
  }
- const sourceProfile=sourceVersion!==undefined||exclusiveSourceModel!==undefined||standardCollectionSourceModel!==undefined||standardCollectionPointerWidth!==undefined?{language:'Rust',...(sourceVersion===undefined?{}:{rustSourceVersion:sourceVersion}),...(exclusiveSourceModel===undefined?{}:{rustExclusiveSourceModel:exclusiveSourceModel}),...(standardCollectionSourceModel===undefined?{}:{rustStandardCollectionSourceModel:standardCollectionSourceModel}),...(standardCollectionPointerWidth===undefined?{}:{rustStandardCollectionPointerWidth:standardCollectionPointerWidth})}:undefined;
+ const sourceProfile=fnMutSourceModel!==undefined||sourceVersion!==undefined||exclusiveSourceModel!==undefined||standardCollectionSourceModel!==undefined||standardCollectionPointerWidth!==undefined?{language:'Rust',...(fnMutSourceModel===undefined?{}:{rustFnMutSourceModel:fnMutSourceModel}),...(sourceVersion===undefined?{}:{rustSourceVersion:sourceVersion}),...(exclusiveSourceModel===undefined?{}:{rustExclusiveSourceModel:exclusiveSourceModel}),...(standardCollectionSourceModel===undefined?{}:{rustStandardCollectionSourceModel:standardCollectionSourceModel}),...(standardCollectionPointerWidth===undefined?{}:{rustStandardCollectionPointerWidth:standardCollectionPointerWidth})}:undefined;
  return {composition,surface,entryNormalization,...(sourceVersion===undefined?{}:{sourceVersion}),...(sourceProfile===undefined?{}:{sourceProfile})};
 }
 
@@ -79,7 +79,7 @@ export function createRustSourceProjectProgramLinks(inputs,entry,options={}){
  const packet=encodeTypedProgramLinks(program,{provenance:{sourceProject:composition,entryNormalization,...(sourceProfile===undefined?{}:{sourceProfile}),userProvenance:options.provenance??null}}),nodeLimit=limit(options,'nodeLimit',1000000);
  // The concrete parser does not consume a semantic std-version selector.
  // Exclude it before copying enumerable archive options to avoid rereading a getter.
- const archiveOptions=Object.fromEntries(Object.keys(options).filter(key=>!['sourceVersion','exclusiveSourceModel','standardCollectionSourceModel','standardCollectionSourceLibrary','standardCollectionPointerWidth','retainCompilation','retainSourceTypeOwners'].includes(key)).map(key=>[key,options[key]]));
+ const archiveOptions=Object.fromEntries(Object.keys(options).filter(key=>!['sourceVersion','fnMutSourceModel','exclusiveSourceModel','standardCollectionSourceModel','standardCollectionSourceLibrary','standardCollectionPointerWidth','retainCompilation','retainSourceTypeOwners'].includes(key)).map(key=>[key,options[key]]));
  const archive=createSourceProjectArchive(composition.files.map(file=>({path:file.path,source:file.source,language:'Rust'})),{...archiveOptions,requireClean:true,projection:'ConcreteSyntax'}),links=archive.network.links();
  if(packet.network.links().length+links.length+2>nodeLimit)fail('concrete graph node limit exceeded');
  const ids=new Map();for(const link of links)ids.set(link.id().asU64(),packet.network.insertLink([],link.metadata().clone()));

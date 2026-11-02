@@ -508,3 +508,17 @@ the first permitted successful automatic generation, followed by measured
 original/product/runtime results after the full draft gate. Until those inputs
 exist, quote concrete drafted families and known gaps rather than a 100% date
 derived from commits, fixture counts or mapped paths.
+
+The later source continuation adds a bounded canonical Links reader before asset
+insertion, borrowed BTree loop integration, a complete source stable-sort template
+with one opaque payload type slot, a nominal UTF16 comparator adapter and literal
+character String append. The same original/product driver now names fourteen
+groups and 275 literal positive Rust originals. The increment from 150 describes
+new authored controls; it is not 125 completed requirements. Owned Vec into-loop
+admission is drafted to connect the sorting originals to the actual frontend
+instead of changing those originals to bypass iteration. Generic FnMut admission
+now has a bounded residual-only opaque-error proof: a body valid only for a
+selected `u8` specialization cannot certify the original universal declaration.
+Those composition obligations explain why a new leaf source body alone is not an
+honest delivery boundary. They also identify reusable work: the owned vector loop
+will share the existing control/state fold rather than create another emitter.

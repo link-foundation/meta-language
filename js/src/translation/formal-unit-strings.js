@@ -17,6 +17,9 @@ export function requireFormalUnitStrings(program){
  while(pending.length){
   const value=pending.pop();if(!value||typeof value!=='object'||seen.has(value))continue;seen.add(value);
   if(program.sourceLanguage==='JavaScript'&&(requireFormalStringUnitRepresentation('type',value.kind??'','')||requireFormalStringUnitRepresentation(value.k??'',value.op??'',value.object?.type?.kind??'')))return true;
+  // Rust scalar String order is a different model. Only checked, explicit
+  // code-unit comparisons select this representation for Rust programs.
+  if(program.sourceLanguage==='Rust'&&value.k==='stringTest'&&['unicodeCodeUnitLessThan','unicodeCodeUnitLessThanOrEqual','unicodeCodeUnitGreaterThan','unicodeCodeUnitGreaterThanOrEqual'].includes(value.op))return true;
   if(acceptRustStringByteKernelUnitRequirement(program.sourceLanguage,value.k??'',value.op??'',value.object?.type?.kind??''))return true;
   pending.push(...Object.entries(value).filter(([key])=>key!=='span').map(([,child])=>child));
  }
