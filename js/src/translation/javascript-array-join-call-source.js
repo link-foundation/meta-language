@@ -17,7 +17,7 @@ export function compileJavaScriptArrayJoinFunction(identity,realm,roots){
  // 9=zero, 10=one, 11=undefined, 12=null, 13=prototype, 14=guard/key.
  /** @type {JavaScriptCallInstruction[]} */const code=[];
  if(!appendJavaScriptObjectCoercion(code,0,1,7,14,8,13,roots))return undefined;
- code.push({$:'constant',destination:7,value:{$:'text',units:[108,101,110,103,116,104]}},{$:'ordinaryGet',destination:2,object:1,key:7,receiver:1},{$:'primitive',destination:2,operation:'coerce primitive number',arguments:[2]},{$:'primitive',destination:2,operation:'read array like length',arguments:[2]},{$:'argument',destination:3,index:0},{$:'constant',destination:11,value:{$:'undefined'}},{$:'strictEqual',destination:8,left:3,right:11});
+ code.push({$:'constant',destination:7,value:{$:'text',units:[108,101,110,103,116,104]}},{$:'ordinaryGet',destination:2,object:1,key:7,receiver:1},{$:'primitive',destination:2,operation:'coerce primitive number',arguments:[2]},{$:'primitive',destination:2,operation:'read array like length',arguments:[2]},{$:'primitive',destination:2,operation:'require V8 array join length',arguments:[2]},{$:'argument',destination:3,index:0},{$:'constant',destination:11,value:{$:'undefined'}},{$:'strictEqual',destination:8,left:3,right:11});
  const separatorBranch=code.length;code.push({$:'branch',condition:8,yes:0,no:separatorBranch+1},{$:'primitive',destination:3,operation:'convert primitive text',arguments:[3]});
  const separatorDone=code.length;code.push({$:'jump',target:0});
  const comma=code.length;code.push({$:'constant',destination:3,value:{$:'text',units:[44]}});

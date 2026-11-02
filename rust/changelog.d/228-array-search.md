@@ -243,3 +243,9 @@ automatic Links/native replay; execution and generated publication remain deferr
 
 Draft Array function Call through the shared Construct kernel, preserving actual
 argument Lists and intrinsic identity independently of supplied thisArgument.
+
+
+Draft generic Array join, current-join Array stringification and Object builtin
+slot/tag stringification using shared coercion, Get and Call. Draft per-realm
+recursive join guards and complete source/native replay inputs; execution remains
+deferred.

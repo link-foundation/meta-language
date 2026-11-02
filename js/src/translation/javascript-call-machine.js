@@ -96,7 +96,7 @@ import {testJavaScriptArrayLength} from './javascript-array-objects.js';
  */
 /** @typedef {{$:'objectFromEntriesErrorRequest',realm:bigint,errorClass:string,reason:string}} JavaScriptObjectFromEntriesErrorRequest */
 /** @typedef {{$:'callFrame',identity:bigint,position:number,registers:JavaScriptSemanticValue[],
- * arguments:JavaScriptSemanticValue[],handlers:JavaScriptCallHandler[],pending:JavaScriptCallPending,iterators?:JavaScriptCallIteratorRegion[],argumentLists?:JavaScriptCallArgumentList[],newTarget?:JavaScriptSemanticValue}} JavaScriptCallFrame
+ * arguments:JavaScriptSemanticValue[],handlers:JavaScriptCallHandler[],pending:JavaScriptCallPending,iterators?:JavaScriptCallIteratorRegion[],argumentLists?:JavaScriptCallArgumentList[],activeJoin?:JavaScriptSemanticValue,newTarget?:JavaScriptSemanticValue}} JavaScriptCallFrame
  */
 /** @typedef {{$:'callMachine',heap:JavaScriptOrdinaryHeap,frames:JavaScriptCallFrame[]}} JavaScriptCallMachine */
 /** @typedef {{$:'machineContinue',machine:JavaScriptCallMachine} |
@@ -205,6 +205,7 @@ export function readJavaScriptCallFunctionBodyError(program,heap,fn){
       if(instruction.$==='objectSpread'&&(instruction.excluded??[]).length>4096)return 'object copy exclusions retain their bounded actual register operands';
       for(const register of readJavaScriptCallRegisters(instruction))if(!testJavaScriptCallCoordinate(register,fn.registers))return 'call instructions require actual in-range register coordinates';
       switch(instruction.$){
+        case 'arrayJoinEnter':case 'arrayJoinLeave':if(!testJavaScriptPrimitiveIntrinsicMode(fn.receiverMode))return 'join recursion instructions retain their protected intrinsic owner';break;
         case 'constructorCheck':if(typeof instruction.required!=='boolean')return 'constructor checks retain their actual required or predicate operation';break;
         case 'completeJump':if(!Number.isSafeInteger(instruction.depth)||instruction.depth<0||instruction.depth>1024||Object.is(instruction.depth,-0)||!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'completion jumps retain their actual bounded handler depth and target';break;
         case 'jump':if(!testJavaScriptCallCoordinate(instruction.target,fn.instructions.length))return 'call jumps require actual instruction targets';break;
@@ -344,6 +345,7 @@ export function readJavaScriptCallMachineError(program,machine){
     slots+=frame.registers.length;argumentSlots+=frame.arguments.length;for(const list of frame.argumentLists??[])argumentSlots+=list.values.length;if(slots>1048576||argumentSlots>1048576||frame.handlers.length>1024)return 'call frame storage exceeds its explicit resource budget';
     const frameError=readJavaScriptCallFrameError(program,machine.heap,frame,fn,index<machine.frames.length-1);
     if(frameError!=='')return frameError;
+    if(frame.activeJoin!==undefined&&machine.frames.slice(0,index).some(parent=>parent.activeJoin!==undefined&&readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity)?.realm===fn.realm&&testJavaScriptSemanticSameValue(parent.activeJoin,frame.activeJoin)))return 'join activations in the same realm cannot own the same receiver guard';
     const selectedParent=machine.frames[index-1];
     if(selectedParent?.pending.$==='waitPropertyDefinitions'){
       const call=selectedParent.pending.state.call;if(call===undefined)return 'bulk definitions retain their actual selected child';const error=readJavaScriptSelectedCallFrameError(fn,frame,call.callee,call.receiver,call.arguments);if(error!=='')return error;
@@ -434,6 +436,13 @@ export function readJavaScriptCallFrameError(program,heap,frame,fn,suspended){
       else if(handler.$==='callFinallyHandler'){if(!testJavaScriptCallCoordinate(handler.target,fn.instructions.length))return 'finalizers retain their actual source instruction entry';}
       else if(handler.$==='callDeferredCompletion'){const completion=handler.completion;if(!['return','throw','jump'].includes(completion.kind)||readJavaScriptOrdinaryValueError(heap,completion.value)!==''||!Number.isSafeInteger(completion.depth)||completion.depth<0||completion.depth>1024||Object.is(completion.depth,-0)||completion.kind==='jump'&&!testJavaScriptCallCoordinate(completion.target,fn.instructions.length)||completion.kind!=='jump'&&(completion.target!==-1||completion.depth!==0))return 'deferred completions retain actual values, kinds and bounded control coordinates';}
       else return 'handlers retain their actual registered catch, finalizer or deferred completion kind';
+    }
+    const joinEntries=fn.instructions.filter(instruction=>instruction.$==='arrayJoinEnter'),joinEntry=joinEntries[0],joinLeave=fn.instructions.findIndex(instruction=>instruction.$==='arrayJoinLeave');
+    const entered=joinEntry?.$==='arrayJoinEnter'?frame.registers[joinEntry.destination]:undefined,ownsJoin=joinEntry!==undefined&&frame.position>fn.instructions.indexOf(joinEntry)&&frame.position<=joinLeave&&entered?.$==='boolean'&&entered.value;
+    if(ownsJoin&&frame.activeJoin===undefined)return 'a successful unfinished join cannot lose its owned receiver guard';
+    if(frame.activeJoin!==undefined){
+      const joined=frame.activeJoin;if(joined.$!=='object'||readJavaScriptOrdinaryValueError(heap,joined)!=='')return 'an active join guard retains its actual receiver Object';
+      if(joinEntries.length!==1||joinEntry?.$!=='arrayJoinEnter'||!ownsJoin||!testJavaScriptSemanticSameValue(frame.registers[joinEntry.receiver]??{$:'undefined'},joined))return 'an active join guard retains its selected receiver and successful unfinished enter instruction';
     }
     if(frame.newTarget!==undefined&&(frame.newTarget.$!=='object'||!frame.newTarget.callable||readJavaScriptOrdinaryValueError(heap,frame.newTarget)!==''))return 'new.target retains its actual constructor identity';
     if(frame.newTarget!==undefined&&program.constructorDirectory!==undefined){const actual=classifyJavaScriptArraySpeciesConstructor(heap,program.constructorDirectory,frame.newTarget);if(actual.$!=='arrayConstructorKnown'||!actual.fact.constructable)return 'new.target retains its independently registered constructor classification';}
@@ -1251,6 +1260,15 @@ export function stepJavaScriptCallMachine(program,machine){
     case 'propertyReflection':return acceptJavaScriptCallPropertyReflection(current,instruction.destination,fn.realm,beginJavaScriptPropertyReflection(machine.heap,instruction.operation,registers[instruction.input]??{$:'undefined'},registers[instruction.key]??{$:'undefined'},registers[instruction.objectPrototype]??{$:'undefined'},registers[instruction.arrayPrototype]??{$:'undefined'}));
     case 'instanceOf':return acceptJavaScriptCallInstanceOf(program,current,instruction.destination,fn.realm,beginJavaScriptInstanceOf(machine.heap,instruction.operation,registers[instruction.left]??{$:'undefined'},registers[instruction.right]??{$:'undefined'},registers[instruction.key]??{$:'undefined'}));
     case 'objectObservation':return acceptJavaScriptCallObjectIntegrity(current,instruction.destination,fn.realm,beginJavaScriptObjectObservation(machine.heap,instruction.operation,registers[instruction.input]??{$:'undefined'},registers[instruction.other]??{$:'undefined'}));
+    case 'arrayJoinEnter':{
+     const receiver=registers[instruction.receiver]??{$:'undefined'};if(receiver.$!=='object'||frame.activeJoin!==undefined)return {$:'machineInvalid',heap:machine.heap,reason:'join entry retains an actual Object and fresh activation'};
+     const recursive=machine.frames.some(parent=>parent.activeJoin!==undefined&&readJavaScriptExecutableCallFunction(program,machine.heap,parent.identity)?.realm===fn.realm&&testJavaScriptSemanticSameValue(parent.activeJoin,receiver)),joinedFrame=recursive?next:{...next,activeJoin:receiver};
+     return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,current.frames,writeJavaScriptCallRegister(joinedFrame,instruction.destination,{$:'boolean',value:!recursive}))};
+    }
+    case 'arrayJoinLeave':{
+     const receiver=registers[instruction.receiver]??{$:'undefined'};if(frame.activeJoin===undefined||!testJavaScriptSemanticSameValue(frame.activeJoin,receiver))return {$:'machineInvalid',heap:machine.heap,reason:'join leave retains its actually owned receiver guard'};
+     const {activeJoin:released,...releasedFrame}=next;return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,current.frames,releasedFrame)};
+    }
     case 'arrayCreation':return acceptJavaScriptCallArrayCreation(program,current,instruction.destination,fn.realm,beginJavaScriptArrayCreation(machine.heap,instruction.operation,registers[0]??{$:'undefined'},frame.arguments,registers[instruction.prototype]??{$:'undefined'},registers[instruction.iteratorKey]??{$:'undefined'},program.exoticKey));
     case 'readNewTarget':return {$:'machineContinue',machine:replaceJavaScriptCallFrame(machine.heap,machine.frames,writeJavaScriptCallRegister(next,instruction.destination,frame.newTarget??{$:'undefined'}))};
     case 'constructorCheck':return acceptJavaScriptCallConstructorCheck(program,current,instruction.destination,registers[instruction.input]??{$:'undefined'},instruction.required);

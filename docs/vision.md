@@ -87,6 +87,28 @@ length semantics in a native fallback.
 All continuations retain original inputs, selected callbacks, allocation requests
 and realm Error identity, including strict final length Set and resource retries.
 
+Array join uses shared ToObject with the active realm wrapper roots, one saved
+ToLength, separator conversion before index access, and ordinary ascending Gets.
+Nullish elements contribute empty text; other elements use implicit string
+conversion. Empty input still converts its separator. The selected Node22/24 V8
+compatibility profile additionally rejects lengths above 2^32-1 before separator
+conversion and suppresses recursive joins using receiver identity within the
+intrinsic realm. Successful join frames own explicit guards until normal leave
+or abrupt frame removal; guard ownership must survive suspension and transport.
+Independent realms and repeated nonrecursive aliases retain separate activations.
+Native version observations remain required before claiming profile coverage.
+
+Array toString Gets the current join exactly once and Calls it with the boxed
+receiver and no arguments when callable; its return is preserved verbatim.
+Otherwise it Calls the protected Object toString owner. Object toString handles
+null/undefined directly, boxes other primitives, snapshots its builtin slot tag,
+and then Gets the actual Symbol.toStringTag with the boxed receiver. Only a
+String tag overrides the builtin tag. Prototype resemblance does not establish
+slots: Array, Function, String, Boolean, Number, Error and RegExp brands come from
+actual shared metadata; Map/Set, Symbol and BigInt use their ordinary tag lookup.
+All callback, conversion, allocation and text-budget failures retain their actual
+continuations. No native join or stringification runs represented behavior.
+
 The Node data boundary preserves already-computed wrapper slots when materializing
 copied results. Captured native carrier authority accepts only primitive metadata;
 it executes no represented coercion, method or constructor. Actual registered

@@ -73,3 +73,23 @@ test('recursive generic receiver joins use the same active receiver guard',()=>{
  const first=execute(heap,object(9n));assert.equal(first.$,'machineCompleted');assert.deepEqual(first.value,text(',tail'));
  const second=execute(first.heap,object(9n));assert.equal(second.$,'machineCompleted');assert.deepEqual(second.value,text(',tail'));
 });
+
+import {stepJavaScriptCallMachine,readJavaScriptCallMachineError} from '../src/translation/javascript-call-machine.js';
+test('join guard ownership cannot be removed from a suspended successful activation',()=>{
+ const heap=data(fixture(),9n,'length',number(1)),program={$:'callProgram',realms:[8n],exoticKey:{$:'symbol',identity:99n},functions:[compile()]};let transition=beginJavaScriptCallMachine(program,heap,7n,object(9n),[]);
+ for(let index=0;index<256&&transition.$==='machineContinue'&&transition.machine.frames.at(-1).activeJoin===undefined;index++)transition=stepJavaScriptCallMachine(program,transition.machine);
+ assert.equal(transition.$,'machineContinue');const frame=transition.machine.frames.at(-1);assert.deepEqual(frame.activeJoin,object(9n));assert.equal(readJavaScriptCallMachineError(program,transition.machine),'');
+ const {activeJoin:discarded,...forged}=frame;assert.notEqual(readJavaScriptCallMachineError(program,{...transition.machine,frames:[forged]}),'');
+ const leave=compile().instructions.findIndex(row=>row.$==='arrayJoinLeave');assert.notEqual(readJavaScriptCallMachineError(program,{...transition.machine,frames:[{...frame,position:leave+1}]}),'');
+});
+
+test('different realm joins own independent guards for the same receiver',()=>{
+ let heap=data(fixture(),9n,'length',number(2));heap=data(heap,9n,'0',object(9n));heap=data(heap,9n,'1',text('tail'));heap=data(heap,9n,'toString',{$:'object',identity:11n,callable:true});
+ const program={$:'callProgram',realms:[8n,9n],exoticKey:{$:'symbol',identity:99n},functions:[compile(),compileJavaScriptArrayJoinFunction(11n,9n,roots)]};const entry=beginJavaScriptCallMachine(program,heap,7n,object(9n),[]),result=runJavaScriptCallMachine(program,entry.machine,4096,[]).transition;
+ assert.equal(result.$,'machineCompleted',result.reason);assert.deepEqual(result.value,text(',tail,tail'));
+});
+
+test('selected V8 large length rejection precedes separator conversion',()=>{
+ const heap=data(fixture(),9n,'length',number(4294967296)),result=execute(heap,object(9n),[{$:'symbol',identity:99n}]);assert.equal(result.$,'machineAllocateError');assert.equal(result.errorClass,'TypeError');assert.equal(result.reason,'Invalid array length');
+ const code=compile().instructions;assert.ok(find(code,'require V8 array join length')<find(code,'convert primitive text'));
+});

@@ -11,7 +11,7 @@ import {createJavaScriptPropertyDescriptor,readJavaScriptPropertyDescriptorKind}
  * {$:'objectIntegrityInvalid',heap:JavaScriptOrdinaryHeap,reason:string} |
  * {$:'objectIntegrityResourceLimit',heap:JavaScriptOrdinaryHeap,state:JavaScriptObjectIntegrityState,reason:string}} JavaScriptObjectIntegrityTransition */
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptObjectObservationOperation(operation){return ['Symbol.valueOf','Number.valueOf','Boolean.valueOf','Boolean.toString','BigInt.valueOf','String.toString','String.valueOf','Object.regularExpressionSlot','Object.prototype.hasOwnProperty','Object.prototype.propertyIsEnumerable','Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze','Object.getPrototypeOf','Object.setPrototypeOf'].includes(operation);}
+export function testJavaScriptObjectObservationOperation(operation){return ['Object.builtinTag','Symbol.valueOf','Number.valueOf','Boolean.valueOf','Boolean.toString','BigInt.valueOf','String.toString','String.valueOf','Object.regularExpressionSlot','Object.prototype.hasOwnProperty','Object.prototype.propertyIsEnumerable','Object.hasOwn','Object.is','Object.isExtensible','Object.isSealed','Object.isFrozen','Object.preventExtensions','Object.seal','Object.freeze','Object.getPrototypeOf','Object.setPrototypeOf'].includes(operation);}
 /** @param {bigint} identity @param {bigint} realm @param {string} operation @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptObjectObservationFunction(identity,realm,operation){
  if(!testJavaScriptObjectObservationOperation(operation))return undefined;
@@ -28,6 +28,21 @@ export function testJavaScriptOrdinaryIntegrityKind(kind){return ['ordinaryObjec
 /** @param {JavaScriptOrdinaryHeap} heap @param {string} operation @param {JavaScriptSemanticValue} input @param {JavaScriptSemanticValue} other @returns {JavaScriptObjectIntegrityTransition} */
 export function beginJavaScriptObjectObservation(heap,operation,input,other){
  const error=readJavaScriptOrdinaryHeapError(heap)||readJavaScriptOrdinaryValueError(heap,input)||readJavaScriptOrdinaryValueError(heap,other);if(error!==''||!testJavaScriptObjectObservationOperation(operation))return {$:'objectIntegrityInvalid',heap,reason:error||'Object observations require their actual registered operation'};
+ if(operation==='Object.builtinTag'){
+  if(input.$!=='object')return {$:'objectIntegrityInvalid',heap,reason:'builtin tag inspection follows actual ToObject'};
+  const object=heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)];if(object===undefined)return {$:'objectIntegrityInvalid',heap,reason:'builtin tag inspection retains actual internal slots'};
+  let tag='Object';
+  if(object.$==='arrayObject'||object.$==='hostArrayObject')tag='Array';
+  else if(object.callable)tag='Function';
+  else if(object.$==='hostErrorObject')tag='Error';
+  else if(object.$==='ordinaryObject'){
+   if(object.stringData!==undefined)tag='String';
+   else if(object.primitiveData?.$==='boolean')tag='Boolean';
+   else if(object.primitiveData?.$==='number')tag='Number';
+   else if(object.regularExpression===true)tag='RegExp';
+  }else if(!['closureObject','mapObject','setObject','collectionIteratorObject','hostURLObject','hostByteBufferObject'].includes(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque builtin tags require actual internal-slot authority'};
+  const units=[];for(let index=0;index<tag.length;index++)units.push(tag.charCodeAt(index));return {$:'objectIntegrityCompleted',heap,value:{$:'text',units}};
+ }
  if(operation==='Object.regularExpressionSlot'){const object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined;if(object!==undefined&&!testJavaScriptOrdinaryIntegrityKind(object.$))return {$:'objectIntegrityInvalid',heap,reason:'opaque IsRegExp requires its actual internal-slot protocol'};return {$:'objectIntegrityCompleted',heap,value:{$:'boolean',value:object?.$==='ordinaryObject'&&object.regularExpression===true}};}
  if(['Symbol.valueOf','Number.valueOf','Boolean.valueOf','Boolean.toString','BigInt.valueOf'].includes(operation)){
   const kind=operation==='Symbol.valueOf'?'symbol':operation==='Number.valueOf'?'number':operation==='BigInt.valueOf'?'integer':'boolean',object=input.$==='object'?heap.objects[findJavaScriptOrdinaryObject(heap.objects,input.identity)]:undefined,value=input.$===kind?input:object?.$==='ordinaryObject'&&object.primitiveData?.$===kind?object.primitiveData:undefined;

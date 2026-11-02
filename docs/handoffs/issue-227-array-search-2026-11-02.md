@@ -1801,3 +1801,49 @@ binding mutation, exhaust spread arguments before a nonconstructor TypeError,
 and preserve member-getter receiver/effect order before iterable argument
 acquisition. Construction originals now total forty-eight. This extends the
 same native replay group without generating or executing it.
+
+
+## Join and stringification integration draft
+
+Subagent source commits `8d975bdb` and `6fa40a60` add independent literal originals
+and the join compiler. Root connects the shared compiler to protected Array.join
+owners, full ToObject wrapper roots and frame-owned VM guards. ToObject bytecode
+is shared through `javascript-object-coercion-call-source.js`. Original receiver
+identity survives Object passthrough; primitive wrappers retain their actual
+realm roots and internal slots. Guard state is explicit in CallFrame; loss or
+substitution of an unfinished owned guard is rejected. Per-realm comparison fixes
+the overly broad initial global guard design. Frame removal releases abrupt
+joins; explicit leave releases successful joins. Source-authored codecs must be
+regenerated from these declarations in the later permitted generation phase.
+
+Root also drafts protected Array.toString and Object.prototype.toString bodies
+in `javascript-object-string-call-source.js`. These use shared Get/Call bytecode,
+the actual Symbol.toStringTag owner and a pure Object.builtinTag slot observation.
+Callable join results are preserved without String coercion. Noncallable join
+falls back to the actual protected Object owner, not an arbitrary receiver
+property. Internal tags do not infer semantics from prototype resemblance.
+
+Source/native authoring registers all three libraries, both direct control
+modules and complete original-source controls; the diagnostic producer and Rust
+source replay consumer retain the entire literal group. There are forty-three
+original source programs after the root additions, including large-length order
+and direct nullish/primitive/callable Object tags. No generated artifact is edited
+or published by hand. No behavioral execution, tests, compilation, generation or
+validation ran. These are code/control drafts, not observations.
+
+The explicit V8 length check is justified by the primary source at
+https://chromium.googlesource.com/v8/v8/+/c73144da2b1ab7d385bbfe79cb5f95395ad632e0/src/builtins/array-join.tq
+and independently at
+https://chromium.googlesource.com/v8/v8/+/517ed4ad001fd702331093e8ffa549b4dce8fb61/src/builtins/array-join.tq .
+They place the historical TypeError above 2^32-1 after ToLength and before
+separator conversion. The same sources use NativeContext join receiver stacks.
+This is an explicit Node/V8 compatibility contract, not an ECMAScript-wide
+limit or executed proof for exact Node releases. Node22/24 assertion ranges are
+selected in the original fixture policy; uncovered versions must report.
+
+Remaining boundaries: exact Node/V8 cycle and resource behavior needs the later
+observations; the retained Proxy no-Has source original still requires general
+Proxy construction/trap integration. It is not skipped or replaced with a weaker
+input. Native publication must come through automatic shared-source translation,
+including guard fields/instructions and all transport declarations. Named test
+and handoff files are in the two focused join handoffs for follow-up review.

@@ -12,6 +12,9 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-object-coercion-call-source.js',moduleName:'javascript_object_coercion_call_source',model:'Actual shared ToObject primitive root selection bytecode 1',programAsset:'javascript-object-coercion-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-object-string-call-source.js',moduleName:'javascript_object_string_call_source',model:'Actual Object builtin tags and Array current join dispatch 1',programAsset:'javascript-object-string-call-source-program'},
+ {sourcePath:'js/src/translation/javascript-array-join-call-source.js',moduleName:'javascript_array_join_call_source',model:'Actual generic Array join ordered Gets and recursion guards 1',programAsset:'javascript-array-join-call-source-program'},
  {sourcePath:'js/src/translation/javascript-array-call-source.js',moduleName:'javascript_array_call_source',model:'Actual Array Call shared Construct argument List 1',programAsset:'javascript-array-call-source-program'},
  {sourcePath:'js/src/translation/javascript-construction.js',moduleName:'javascript_construction',model:'Actual target and newTarget base construction continuations 1',programAsset:'javascript-construction-program'},
  {sourcePath:'js/src/translation/javascript-array-creation.js',moduleName:'javascript_array_creation',model:'Actual Array of from iterable array like creation continuations 1',programAsset:'javascript-array-creation-program'},
@@ -109,6 +112,7 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/javascript-array-join-source.mjs',
  'js/tests/fixtures/javascript-construction-source.mjs',
  'js/tests/fixtures/javascript-array-creation.mjs',
  'js/tests/fixtures/javascript-source-text.mjs',
@@ -229,6 +233,9 @@ const consumers=[
  'js/tests/translation-javascript-string-case-profile.test.js',
  'js/tests/translation-javascript-collection-for-each.test.js',
  'js/tests/translation-javascript-reflect-construction-call-source.test.js',
+ 'js/tests/translation-javascript-array-join-source.test.js',
+ 'js/tests/translation-javascript-array-join-call-source.test.js',
+ 'js/tests/translation-javascript-object-string-call-source.test.js',
  'js/tests/translation-javascript-array-call-source.test.js',
  'js/tests/translation-javascript-construction.test.js',
  'js/tests/translation-javascript-array-creation.test.js',
@@ -523,6 +530,7 @@ for(const [source,target] of [
  ['javascript-ordinary-class-source','javascript-ordinary-class-source'],
  ['javascript-string-case-profile','javascript-string-case-profile'],
  ['javascript-collection-for-each-source','javascript-collection-for-each-source'],
+ ['javascript-array-join-source','javascript-array-join-source'],
  ['javascript-construction-source','javascript-construction-source'],
  ['javascript-array-creation','javascript-array-creation'],
  ['javascript-object-from-entries-source','javascript-object-from-entries-source'],
