@@ -71,6 +71,10 @@ function bindingTargets(program) {
     if (!node || typeof node !== 'object') return;
     if (++referenceVisits > 100_000) throw new TypeError('the linked program exceeds its reference resource limit');
     for (const field of ['type', 'domain', 'from', 'to']) walkType(node[field]);
+    // These facets also occur on let/lambda/match nodes whose lexical walk
+    // returns early. Retain actual datatype edges before visiting their scope.
+    if(node.sourcePosition!==undefined)walkSourcePosition(node.sourcePosition.position);
+    if(node.sourceStateTransition!==undefined)walkSourcePosition(node.sourceStateTransition.position);
     if (node.k === 'var' && environment.has(node.name)) reference(node, 'name', schema.references.binding, environment.get(node.name));
     if (['call', 'functionRef'].includes(node.k) && declarations.has(node.fn)) reference(node, 'fn', schema.references.declaration, declarations.get(node.fn));
     if (node.k === 'ctor') {

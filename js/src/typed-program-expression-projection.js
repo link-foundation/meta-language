@@ -37,6 +37,7 @@ export function projectLinkedProgramDeclarationPath(name, declarations, rooted =
 export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false, sourceLanguage = ''} = {}) {
   const result=projectLinkedProgramExpressionValue(value,declarations,{rootedNamespace,referenceSemantics,sourceLanguage});
   if(Object.hasOwn(value,'sourcePosition'))result.sourcePosition=structuredClone(value.sourcePosition);
+  if(Object.hasOwn(value,'sourceStateTransition'))result.sourceStateTransition=structuredClone(value.sourceStateTransition);
   return result;
 }
 

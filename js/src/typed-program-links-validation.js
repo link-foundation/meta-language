@@ -1,4 +1,5 @@
 import {checkRustFnMutSourceSpecialization} from './translation/rust-fnmut-source-signatures.js';
+import {checkRustSourceStateTransition} from './translation/rust-source-state-transitions.js';
 import {checkRustStandardCollectionCarrier,checkRustStandardCollectionLibraryOwner} from './translation/rust-standard-collection-signatures.js';
 import {checkRustExclusiveSourceSignature} from './translation/rust-exclusive-source-signatures.js';
 import {checkRustBorrowedVectorSourceRegions} from './translation/rust-borrowed-source-regions.js';
@@ -206,6 +207,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       const facet=checkRustSourceExpressionPosition(node.sourcePosition,node.type,program.sourceLanguage,value=>value,value=>declarations.get(value.name));
       let position=facet.position;
       while(position){type(position.type);position=position.arrayElementPosition;}
+    }
+    if(Object.hasOwn(node,'sourceStateTransition')){
+      const facet=checkRustSourceStateTransition(node.sourceStateTransition,node.type,program.sourceLanguage,value=>value,value=>declarations.get(value.name));
+      let position=facet.position;while(position){type(position.type);position=position.arrayElementPosition;}
     }
     if (node.k === 'none') {
       if (!acceptOptionalLiteralAbsence(node.absence)) throw new TypeError('an absent optional value requires its concrete null or undefined tag');

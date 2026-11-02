@@ -4579,6 +4579,13 @@ recursively immutable snapshots. Mutable/new/untrusted snapshots retain full
 checks; persistent mutation costs and complete garbage collection remain explicit
 requirements rather than claims established by lookup complexity alone.
 
+Rust source state transitions retain actual original binder tokens, identities
+and referent positions separately from type positions. Region revisions and
+runtime storage coordinates belong to the proof interpreter and must not enter
+serialized type identities. Typed Links transports must preserve the transition
+and all actual datatype references even on expressions with lexical scope.
+A structurally valid facet alone cannot prove source ownership or loan safety.
+
 Original-source control capture must use actual CST item/name/body/type links and
 enclosing module/implementation owners, preserving full original declarations,
 annotations, method bodies, source hashes and both byte/unit coordinates.
