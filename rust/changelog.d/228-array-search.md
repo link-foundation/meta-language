@@ -156,3 +156,7 @@ Array allocation, recursive binding targets and Function length boundaries.
 - Draft shared `instanceof` and `OrdinaryHasInstance` semantics, selected getter/
   method continuations, actual Error namespace roots and protected Function
   intrinsic linkage for automatic translation. Verification remains deferred.
+
+- Draft public Object/Reflect own-key and descriptor reflection with genuine
+  result Objects/Arrays, Symbol/nonenumerable keys and primitive String flags.
+  The JavaScript source remains the automatic Rust translation input.

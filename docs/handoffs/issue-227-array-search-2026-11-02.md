@@ -1100,3 +1100,25 @@ edition on retrieval); source controls retain their existing explicit Node 22/24
 version bounds. This is source drafting, not parity evidence. Bound functions,
 Proxy traps, full function environments and standard Error construction remain
 separate source obligations; generated Rust/wire assets stay deferred.
+
+### Public own-key and descriptor reflection draft
+
+`javascript-property-reflection.js` drafts Object.getOwnPropertyDescriptor,
+Object.getOwnPropertyDescriptors, Object.getOwnPropertyNames,
+Object.getOwnPropertySymbols, Reflect.getOwnPropertyDescriptor and Reflect.ownKeys
+with actual own descriptors, complete field snapshots and fresh result identities.
+Accessors are observed without Call, Symbols and nonenumerable fields survive,
+String indices preserve UTF16 code units and flags, and __proto__ publication
+uses a data definition. Single-descriptor target checks precede actual key
+conversion; Reflect rejects primitives. Result Objects and Arrays use actual
+registered realm roots and the global allocator. Identity/property limits retain
+pending state rather than silently truncate output.
+
+The shared Call opcode, continuation validation, selected allocation resumer,
+actual protected standard owners, Reflect namespace and source compiler are
+connected. Fourteen original source fixtures and five deferred kernel controls
+are drafted; the future source policy author includes the new kernel/controls.
+No source parser, test, generator, behavioral execution, validation or compilation
+ran. Generated publication/wire/Rust remains deferred; opaque own-key/descriptor
+traps and broader Object.create/defineProperties/assign are separate source
+obligations, not claimed supported through native host fallbacks.

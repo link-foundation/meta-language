@@ -57,6 +57,17 @@ follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-
 
 ## One common language of links
 
+Descriptor reflection reads actual own descriptors without invoking their
+accessors. FromPropertyDescriptor produces fresh ordinary Objects with writable,
+enumerable, configurable data fields in specification order. Plural descriptor
+reflection includes Symbols and nonenumerable entries, publishing __proto__ as
+an own data property. Own names, own Symbols and Reflect.ownKeys return genuine
+Arrays in actual own-key order. Object operations specialize primitive String
+indexed UTF16 descriptors and its readonly length; Reflect requires an Object.
+Target coercibility precedes key conversion. Selected descriptors, realm Object/
+Array prototypes and allocation/write cursors remain shared resumable data.
+Opaque own-key and descriptor protocols remain explicit extension obligations.
+
 Source instanceof evaluates and preserves both operands before actual
 Symbol.hasInstance lookup. Selected getters and methods use shared Call frames;
 custom methods retain the right operand as receiver and use ToBoolean on their
