@@ -6,6 +6,9 @@ coordinates in descending order; indexed replacement converts and bounds the
 actual index before allocation and never reads the replaced coordinate. Both
 produce dense own writable/enumerable/configurable data properties, including
 undefined for holes, through the shared ordinary operations and continuation VM.
+Nonmutating splice preserves missing/explicit start and skip-count distinctions,
+copies dense prefix/insertion/suffix segments, never reads deleted coordinates,
+and checks mathematical safe length before ordinary Array capacity.
 Array sorting captures selected values before comparisons and final writes,
 orders undefined after defined values, compares default UTF16 strings through
 actual conversion continuations, and preserves stable ties. Mutating sort skips

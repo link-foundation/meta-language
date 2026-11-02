@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/javascript-array-spliced-copy-call-source.js',moduleName:'javascript_array_spliced_copy_call_source',model:'Actual dense Array splice copying count conversion and safe length 1',programAsset:'javascript-array-spliced-copy-call-source-program'},
  {sourcePath:'js/src/translation/rust-exclusive-source-string-rules.js',moduleName:'rust_exclusive_source_string_rules',model:'Actual owned String accumulation source place and operation rules 1',programAsset:'rust-exclusive-source-string-rules-program'},
  {sourcePath:'js/src/translation/javascript-array-sort-call-source.js',moduleName:'javascript_array_sort_call_source',model:'Actual stable sparse and dense Array sorting call continuations 1',programAsset:'javascript-array-sort-call-source-program'},
  {sourcePath:'js/src/translation/rust-exclusive-source-compound-rules.js',moduleName:'rust_exclusive_source_compound_rules',model:'Actual exclusive primitive compound assignment operand and order rules 1',programAsset:'rust-exclusive-source-compound-rules-program'},

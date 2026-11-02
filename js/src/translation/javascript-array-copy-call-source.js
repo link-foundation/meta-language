@@ -1,6 +1,7 @@
 import {appendJavaScriptObjectCoercion} from './javascript-object-coercion-call-source.js';
+import {compileJavaScriptSplicedArrayCopyFunction} from './javascript-array-spliced-copy-call-source.js';
 /** @param {string} operation @returns {boolean} */
-export function testJavaScriptArrayCopyOperation(operation){return operation==='Array.toReversed'||operation==='Array.with';}
+export function testJavaScriptArrayCopyOperation(operation){return operation==='Array.toReversed'||operation==='Array.with'||operation==='Array.toSpliced';}
 /** Copying methods deliberately use realm ArrayCreate, never source species or
  * Array.prototype setters. Existing bytecode owns conversion, Get, allocation
  * and CreateDataPropertyOrThrow, including selected getter resumptions.
@@ -9,6 +10,7 @@ export function testJavaScriptArrayCopyOperation(operation){return operation==='
  * @param {JavaScriptSemanticValue|undefined} arrayPrototype
  * @returns {JavaScriptCallFunction|undefined} */
 export function compileJavaScriptArrayCopyFunction(identity,realm,operation,roots,arrayPrototype){
+ if(operation==='Array.toSpliced')return compileJavaScriptSplicedArrayCopyFunction(identity,realm,roots,arrayPrototype);
  if(!testJavaScriptArrayCopyOperation(operation)||arrayPrototype?.$!=='object'||arrayPrototype.callable)return undefined;
  /** @type {JavaScriptCallInstruction[]} */const code=[];
  if(!appendJavaScriptObjectCoercion(code,0,1,2,3,4,5,roots))return undefined;

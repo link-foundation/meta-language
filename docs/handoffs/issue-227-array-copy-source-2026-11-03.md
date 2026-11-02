@@ -37,3 +37,26 @@ and [with](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.
 No original, test, parser/generator, compilation or validation gate executed.
 Sorting, splicing, flattening, asynchronous execution and other full-language
 requirements remain independent work; this batch does not establish completion.
+
+The continuation adds `javascript-array-spliced-copy-call-source.js`, composed
+through the same catalog and realm roots as the preceding copying methods.
+Array.toSpliced captures length, converts/clamps start, distinguishes missing
+start/missing skip from explicit undefined, then clamps actual skip count. It
+subtracts deletion before checked insertion addition to keep safe mathematical
+results exact, reports TypeError above the safe-integer maximum and RangeError
+above ordinary Array capacity, before source element Gets. Prefix and suffix
+Gets occur in ascending order; the removed region is never read. Inserted values
+come from the actual already evaluated Call argument List, without coercion or
+iterator reinterpretation. Result fields are dense own full data properties;
+source constructors/species and prototype setters remain irrelevant.
+
+Thirteen added originals preserve every preceding input and coordinate: missing
+versus explicit skip count, ordered conversion/Get, deleted getters, dense holes,
+infinite/fractional bounds, String boxing, inserted identity, huge deletion to a
+small result, safe-length overflow and ordinary Array RangeError. The fixture now
+contains 38 originals. Existing producer/native replay consumes the complete
+fixture automatically. Additional deferred scalar controls cover count clamping.
+The primary contract is
+[Array.prototype.toSpliced](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.tospliced).
+Mutating splice/species, flattening and other families remain independent work.
+No tests, imports, source generation, compilation or validation executed.
