@@ -12,9 +12,13 @@ import {readSourceLibraryErrorDeclarationWitness} from './javascript-error-closu
 import {readJavaScriptOrdinaryClassDeclarationWitness} from './javascript-ordinary-class-closure-source.js';
 import {checkJavaScriptProjectDataSource} from './javascript-project-data-source.js';
 import {compileJavaScriptErrorModulePlanWithCapabilities} from './javascript-error-class-source.js';
-import {constructJavaScriptSourceText,readJavaScriptSemanticTextString,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
+import {constructJavaScriptSourceText,readJavaScriptSemanticTextString,readJavaScriptSemanticTextLength,testJavaScriptSemanticSameValue} from './javascript-semantic-values.js';
 import {readJavaScriptCallProgramError,readJavaScriptCallMachineError,stepJavaScriptCallMachine,extendJavaScriptCallArrayAuthority,resumeJavaScriptCallPrimitiveIteratorPrototype,resumeJavaScriptCallSymbolAllocation,resumeJavaScriptCallSymbolDescription,resumeJavaScriptCallFunctionNameSymbolDescription,resumeJavaScriptCallObjectPrimitivePrototype} from './javascript-call-machine.js';
 
+// External data reification only: these operations receive already primitive
+// metadata after portable wrapper semantics completed. They do not run a
+// represented constructor, coercion, getter or method as an implementation.
+const dataCarrierAuthority={object:Object,ownKeys:Reflect.ownKeys,descriptor:Reflect.getOwnPropertyDescriptor,prototype:Reflect.getPrototypeOf,setPrototype:Reflect.setPrototypeOf,extensible:Reflect.isExtensible,define:Reflect.defineProperty,prevent:Reflect.preventExtensions};
 const actualSymbolAllocator=Symbol;
 const primitiveValueSlots=[{kind:'number',constructor:Number,test:nativeTypes.isNumberObject,value:Reflect.getOwnPropertyDescriptor(Number.prototype,'valueOf')?.value},{kind:'boolean',constructor:Boolean,test:nativeTypes.isBooleanObject,value:Reflect.getOwnPropertyDescriptor(Boolean.prototype,'valueOf')?.value},{kind:'symbol',constructor:Symbol,test:nativeTypes.isSymbolObject,value:Reflect.getOwnPropertyDescriptor(Symbol.prototype,'valueOf')?.value},{kind:'integer',constructor:BigInt,test:nativeTypes.isBigIntObject,value:Reflect.getOwnPropertyDescriptor(BigInt.prototype,'valueOf')?.value}];
 const stringValueSlot=Reflect.getOwnPropertyDescriptor(String.prototype,'valueOf')?.value;
@@ -164,24 +168,72 @@ export function createJavaScriptErrorRealm(capture,{realm,definitions,identity=1
   heap.objects.push({$:kind,identity:id,prototype,extensible:Reflect.isExtensible(value),callable:false,properties:[],hostGet:capabilityValue(opaqueGetCapability),hostSet:capabilityValue(opaqueSetCapability)});opaqueOwners.set(id,{value,kind,verify,prototype});sorted();return {$:'object',identity:id,callable:false};
  }
  function verifyOpaqueHeap(){for(const [id,owner]of opaqueOwners){const row=heap.objects.find(row=>row.identity===id);owner.verify(owner.value);if(row?.$!==owner.kind||row.callable||row.prototype.$!==owner.prototype.$||(row.prototype.$==='object'&&row.prototype.identity!==owner.prototype.identity)||row.properties.length!==0||row.hostGet?.identity!==opaqueGetCapability.identity||row.hostSet?.identity!==opaqueSetCapability.identity)refuse('an archived heap cannot replace an actual opaque host object or its native property authority');}}
+ // Check supplied prototype snapshots without invoking any represented body.
+ // Actual native references must already have private global identity owners;
+ // this check cannot allocate an identity to legitimize an unknown prototype.
+ function matchesNativeDataValue(semantic,native){
+  if(native!==null&&(typeof native==='object'||typeof native==='function'||typeof native==='symbol')){
+   const identity=forward.get(native);return identity!==undefined&&(typeof native==='symbol'?semantic.$==='symbol'&&semantic.identity===identity:semantic.$==='object'&&semantic.identity===identity&&semantic.callable===(typeof native==='function'));
+  }
+  return testJavaScriptSemanticSameValue(semantic,encode(native));
+ }
+ function verifyDataPrototypeSnapshot(semantic,native){
+  let selected=semantic,actual=native,depth=0;
+  while(actual!==null){
+   if(++depth>4096||selected.$!=='object'||!matchesNativeDataValue(selected,actual))return refuse('wrapper materialization requires its actual supplied prototype identity');
+   const row=heap.objects.find(object=>object.identity===selected.identity),keys=dataCarrierAuthority.ownKeys(actual);
+   if(row?.$!=='ordinaryObject'||row.properties.length!==keys.length||row.extensible!==dataCarrierAuthority.extensible(actual))return refuse('wrapper materialization requires an unchanged supplied prototype snapshot');
+   for(let at=0;at<keys.length;at++){
+    const key=keys[at],property=row.properties[at],descriptor=dataCarrierAuthority.descriptor(actual,key),stored=property?.descriptor;
+    if(!descriptor||!stored||!matchesNativeDataValue(property.key,key)||stored.enumerable!==descriptor.enumerable||stored.configurable!==descriptor.configurable)return refuse('wrapper materialization cannot replace represented prototype properties with native ones');
+    if('value' in descriptor){if(!stored.valuePresent||!stored.writablePresent||stored.getterPresent||stored.setterPresent||stored.writable!==descriptor.writable||!matchesNativeDataValue(stored.value,descriptor.value))return refuse('wrapper materialization cannot replace represented prototype data with native data');}
+    else if(stored.valuePresent||stored.writablePresent||!stored.getterPresent||!stored.setterPresent||!matchesNativeDataValue(stored.getter,descriptor.get)||!matchesNativeDataValue(stored.setter,descriptor.set))return refuse('wrapper materialization cannot replace represented prototype accessors with native ones');
+   }
+   selected=row.prototype;actual=dataCarrierAuthority.prototype(actual);
+  }
+  if(selected.$!=='null')return refuse('wrapper materialization requires the complete supplied prototype chain');
+ }
+ function materializeWrapperCarrier(row,prototype){
+  const slot=row.stringData??row.primitiveData,stringSlot=row.stringData!==undefined;
+  if(row.stringData!==undefined&&row.primitiveData!==undefined||slot===undefined||readJavaScriptOrdinaryValueError(heap,slot)!==''||stringSlot&&!['text','sourceText'].includes(slot.$)||!stringSlot&&!['number','boolean','integer','symbol'].includes(slot.$))return refuse('wrapper materialization requires exactly one actual primitive internal data slot');
+  if(row.properties.length>4096||stringSlot&&readJavaScriptSemanticTextLength(slot)>4095)return refuse('wrapper data reification exceeds its explicit own-property profile');
+  if(row.properties.some(property=>property.descriptor.getterPresent||property.descriptor.setterPresent||!property.descriptor.valuePresent))return refuse('plain data materialization cannot bypass an accessor continuation');
+  let selected=null;
+  if(row.prototype.$!=='null'){
+   if(row.prototype.$!=='object')return refuse('wrapper materialization requires a supported actual supplied prototype');
+   if(row.prototype.identity===prototype.identity)selected=realm.objectPrototype;
+   else{const root=primitiveIteratorPrototypes?.find(candidate=>candidate.prototype.$==='object'&&candidate.prototype.identity===row.prototype.identity);if(root===undefined)return refuse('wrapper materialization refuses unsupported custom prototypes');selected=reverse.get(root.prototype.identity);if(selected===null||typeof selected!=='object')return refuse('wrapper materialization requires its privately supplied native prototype owner');}
+   verifyDataPrototypeSnapshot(row.prototype,selected);
+  }
+  if(dataCarrierAuthority.descriptor(globalThis,'Object')?.value!==dataCarrierAuthority.object)return refuse('wrapper data reification retains its protected native carrier allocator');
+  const result=dataCarrierAuthority.object(decode(slot));
+  if(stringSlot?!nativeTypes.isStringObject(result):!primitiveValueSlots.find(candidate=>candidate.kind===slot.$)?.test(result))return refuse('wrapper data reification requires a genuine native primitive slot carrier');
+  // String's inherent nonconfigurable properties cannot be omitted, changed or
+  // synthesized when converting an inconsistent slot/descriptor snapshot.
+  if(stringSlot)for(const key of dataCarrierAuthority.ownKeys(result)){
+   const actual=dataCarrierAuthority.descriptor(result,key),property=row.properties.find(candidate=>matchesNativeDataValue(candidate.key,key)),stored=property?.descriptor;
+   if(!actual||!stored||!stored.valuePresent||!stored.writablePresent||stored.getterPresent||stored.setterPresent||stored.writable!==actual.writable||stored.enumerable!==actual.enumerable||stored.configurable!==actual.configurable||!matchesNativeDataValue(stored.value,actual.value))return refuse('String wrapper data reification requires every exact immutable index and length descriptor');
+  }
+  if(!dataCarrierAuthority.setPrototype(result,selected))return refuse('wrapper data reification could not retain its selected prototype');return result;
+ }
  function materializeData(value,memo=new Map()){
   if(value.$!=='object')return decode(value);
   if(value.callable)return refuse('plain data materialization cannot execute a represented callable');
   if(opaqueOwners.has(value.identity)){const owner=opaqueOwners.get(value.identity);owner.verify(owner.value);return owner.value;}
   if(memo.has(value.identity))return memo.get(value.identity);
   if(memo.size>=4096)return refuse('plain data materialization exceeds its explicit shared object budget');
-  const row=heap.objects.find(row=>row.identity===value.identity),prototype=encode(realm.objectPrototype),array=ordinaryClasses&&row?.$==='arrayObject';
+  const row=heap.objects.find(row=>row.identity===value.identity),prototype=encode(realm.objectPrototype),array=ordinaryClasses&&row?.$==='arrayObject',wrapper=row?.$==='ordinaryObject'&&(row.primitiveData!==undefined||row.stringData!==undefined);
   const arrayPrototype=array&&realm.arrayPrototype?encode(realm.arrayPrototype):null;
   const expected=array?arrayPrototype:prototype;
-  if(!row||(!array&&row.$!=='ordinaryObject')||(row.prototype.$!=='null'&&(row.prototype.$!=='object'||expected?.$!=='object'||row.prototype.identity!==expected.identity)))return refuse('data materialization requires actual plain records, supplied realm arrays or registered native data');
-  const result=array?[]:Object.create(row.prototype.$==='null'?null:realm.objectPrototype);if(array)Object.setPrototypeOf(result,row.prototype.$==='null'?null:realm.arrayPrototype);memo.set(value.identity,result);
+  if(!row||(!array&&row.$!=='ordinaryObject')||!wrapper&&(row.prototype.$!=='null'&&(row.prototype.$!=='object'||expected?.$!=='object'||row.prototype.identity!==expected.identity)))return refuse('data materialization requires actual plain records, supplied realm arrays or registered native data');
+  const result=wrapper?materializeWrapperCarrier(row,prototype):array?[]:Object.create(row.prototype.$==='null'?null:realm.objectPrototype);if(array)Object.setPrototypeOf(result,row.prototype.$==='null'?null:realm.arrayPrototype);memo.set(value.identity,result);
   // Defining an Array's potentially readonly length before its existing indices
   // would reject a valid snapshot. Create the actual sparse own indices first,
   // then install the authentic length descriptor without filling holes.
   let length=null;
-  for(const property of row.properties){const descriptor=property.descriptor;if(descriptor.getterPresent||descriptor.setterPresent||!descriptor.valuePresent)return refuse('plain data materialization cannot bypass an accessor continuation');const key=decode(property.key);if(array&&key==='length'){length=descriptor;continue;}Object.defineProperty(result,key,{value:materializeData(descriptor.value,memo),writable:descriptor.writable,enumerable:descriptor.enumerable,configurable:descriptor.configurable});}
+  for(const property of row.properties){const descriptor=property.descriptor;if(descriptor.getterPresent||descriptor.setterPresent||!descriptor.valuePresent)return refuse('plain data materialization cannot bypass an accessor continuation');const key=decode(property.key);if(array&&key==='length'){length=descriptor;continue;}const attributes={value:materializeData(descriptor.value,memo),writable:descriptor.writable,enumerable:descriptor.enumerable,configurable:descriptor.configurable};if(wrapper){if(!dataCarrierAuthority.define(result,key,attributes))return refuse('wrapper data reification could not retain its exact own descriptor');}else Object.defineProperty(result,key,attributes);}
   if(array){if(length===null||length.value.$!=='number')return refuse('array materialization requires its actual length descriptor');Object.defineProperty(result,'length',{value:length.value.value,writable:length.writable,enumerable:length.enumerable,configurable:length.configurable});}
-  if(!row.extensible)Object.preventExtensions(result);return result;
+  if(!row.extensible){if(wrapper){if(!dataCarrierAuthority.prevent(result))return refuse('wrapper data reification could not retain its actual extensibility');}else Object.preventExtensions(result);}return result;
  }
  function mergeSourceTemplates(...programs){
   const templates=[];let selected=false;
