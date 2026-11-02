@@ -71,3 +71,15 @@ export function runJavaScriptSourceTransition(embedding,transition,{steps=65536}
  adopt(current);
  return {$:'callExecution',transition:current,steps:used,objectIdentitiesUsed:allocated};
 }
+
+/** Explicitly retry a retained source machine with a new bounded work slice.
+ * Storage/protocol exhaustion can return the same boundary until its actual
+ * constraint is addressed. This never treats exhaustion as a normal result or
+ * calls an original host body. The ordinary driver validates the retained
+ * current program/heap/frames before adopting any state.
+ * @param {object} embedding @param {object} transition
+ * @param {{steps?:number}} options */
+export function resumeJavaScriptSourceTransition(embedding,transition,options={}){
+ if(transition?.$!=='machineResourceLimit'||!transition.machine)throw new TypeError('source retry requires its actual retained resource machine');
+ return runJavaScriptSourceTransition(embedding,{$:'machineContinue',machine:transition.machine},options);
+}

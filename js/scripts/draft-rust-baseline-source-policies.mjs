@@ -12,6 +12,7 @@ const authorArguments=process.argv.slice(2).join(' '),deferPublication=authorArg
 if(authorArguments!=='--draft'&&!deferPublication)throw new TypeError('use --draft with optional --defer-publication');
 const root=new URL('../../',import.meta.url);
 const libraries=[
+ {sourcePath:'js/src/translation/rust-exclusive-source-vector-rules.js',moduleName:'rust_exclusive_source_vector_rules',model:'Actual owned Vec mutation element and source place rules 1',programAsset:'rust-exclusive-source-vector-rules-program'},
  {sourcePath:'js/src/translation/javascript-array-spliced-copy-call-source.js',moduleName:'javascript_array_spliced_copy_call_source',model:'Actual dense Array splice copying count conversion and safe length 1',programAsset:'javascript-array-spliced-copy-call-source-program'},
  {sourcePath:'js/src/translation/rust-exclusive-source-string-rules.js',moduleName:'rust_exclusive_source_string_rules',model:'Actual owned String accumulation source place and operation rules 1',programAsset:'rust-exclusive-source-string-rules-program'},
  {sourcePath:'js/src/translation/javascript-array-sort-call-source.js',moduleName:'javascript_array_sort_call_source',model:'Actual stable sparse and dense Array sorting call continuations 1',programAsset:'javascript-array-sort-call-source-program'},
@@ -130,6 +131,7 @@ const libraries=[
  {sourcePath:'js/src/translation/rust-array-lookup-option-rules.js',moduleName:'rust_array_lookup_option_rules',model:'Rust owned Copy lookup option source policy 1',programAsset:'rust-array-lookup-option-program'},
 ];
 const fixtures=[
+ 'js/tests/fixtures/rust-exclusive-source-vectors.mjs',
  'js/tests/fixtures/rust-exclusive-source-strings.mjs',
  'js/tests/fixtures/javascript-array-sort-source.mjs',
  'js/tests/fixtures/javascript-array-copy-source.mjs',
@@ -229,6 +231,9 @@ const fixtures=[
  'js/tests/fixtures/rust-standard-sum-source-metadata-draft.mjs',
 ];
 const consumers=[
+ 'js/tests/javascript-source-transition-resumption.test.js',
+ 'js/src/translation/rust-exclusive-source-vectors.js',
+ 'js/tests/translation-rust-exclusive-source-vectors.test.js',
  'js/src/translation/rust-exclusive-source-strings.js',
  'js/tests/translation-rust-exclusive-source-strings.test.js',
  'js/tests/translation-javascript-array-sort-call-source.test.js',
@@ -607,6 +612,7 @@ for(const [source,target] of [
  ['javascript-array-concatenation-source','javascript-array-concatenation-source'],
  ['javascript-array-sort-source','javascript-array-sort-source'],
  ['javascript-array-copy-source','javascript-array-copy-source'],
+ ['rust-exclusive-source-vectors','rust-exclusive-source-vectors'],
  ['rust-exclusive-source-strings','rust-exclusive-source-strings'],
  ['rust-exclusive-source-compounds','rust-exclusive-source-compounds'],
  ['rust-exclusive-source-admission','rust-exclusive-source-admission'],

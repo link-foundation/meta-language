@@ -97,6 +97,8 @@ export function checkJavaScriptProjectDataSource(capture:unknown):unknown;
 export function readShippedJavaScriptProjectDataSource(options?:{entries?:readonly string[]}):unknown;
 export function prepareJavaScriptProjectDataModule(capture:unknown,options:{realmIdentity:bigint;trace?:boolean}):PreparedJavaScriptProjectDataModule;
 export function runJavaScriptSourceTransition(embedding:JavaScriptSourceEmbedding,transition:JavaScriptSourceTransition,options?:{steps?:number}):JavaScriptSourceExecution;
+/** Explicit bounded retry; storage/protocol exhaustion may remain a boundary. */
+export function resumeJavaScriptSourceTransition(embedding:JavaScriptSourceEmbedding,transition:Extract<JavaScriptSourceTransition,{$:'machineResourceLimit'}>,options?:{steps?:number}):JavaScriptSourceExecution;
 
 /** Explicit actual-source profile; unsupported constructs retain diagnostics. */
 export function captureJavaScriptOrdinaryClassModule(source:string,options:{identifier:string;entries:string[]}):unknown;

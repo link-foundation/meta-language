@@ -1,5 +1,10 @@
 # Meta-language vision and architecture
 
+Explicit source execution retries retain the checked current VM machine and use
+a fresh bounded step slice. Exhaustion remains a resource boundary until actual
+work/storage/protocol constraints permit progress; retry never implies success
+or invokes the original host implementation.
+
 Array copying operations use the active realm's ordinary Array allocation,
 independent of source constructors/species. Reversal reads captured source
 coordinates in descending order; indexed replacement converts and bounds the

@@ -46,3 +46,12 @@ automatic source author and Links fixture conversion include these originals.
 Deferred bytecode controls retain branch bounds, actual callable invocation and
 copy-versus-mutating access operations. Generation, behavior, tests, compilation
 and validation remain deferred; broader language requirements remain open.
+
+The Node source embedding additionally drafts `resumeJavaScriptSourceTransition`.
+It accepts an actual retained machineResourceLimit transition and delegates a new
+bounded slice to the existing checked driver. It does not reinterpret completion,
+silence protocol/storage limits or call an original host method. Deferred controls
+exercise one-step exhaustion, a zero-step retry, repeated bounded slices and
+actual sorting/copy results; invalid boundaries and budgets refuse. Public Node
+entry declarations include the exact resource-transition input. No retry or
+source body was executed while drafting.

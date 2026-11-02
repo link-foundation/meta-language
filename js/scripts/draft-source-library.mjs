@@ -114,11 +114,11 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     actions: [...relocation.actions, ...loans.actions, ...styles.actions] }]);
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
-  if(publishSourceReceipt)writeProjectData(new URL('js/src/data/'+programAsset+'-source.lino',root),{
+  if(publishSourceReceipt){const sourceReceipt={
     model:'Complete source library asset receipt 1',schemaVersion:1,entryPath:sourcePath,referenceSemantics,
     sourceClosure,sourceDeclarationOwners,
     programAsset:{path:'js/src/data/'+programAsset+'.lino',bytes:Buffer.byteLength(programText),sha256:createHash('sha256').update(programText).digest('hex')},
-  });
+  };for(const packagePath of ['js/src/data/','rust/src/data/'])writeProjectData(new URL(packagePath+programAsset+'-source.lino',root),sourceReceipt);}
   writeProjectData(new URL(stem + '-native.lino', root), {
     schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sourceClasses?{sourceClasses}:{}), ...(sourceReExports?{sourceReExports}:{}), ...(sharedConstructors?{conditionalConstructorSharing:sharedConstructors.proof}:{}), ...(sharedMatches?{[constructorMatchSharing?'constructorMatchSharing':'booleanMatchSharing']:sharedMatches.proof}:{}), ...(programProjection?{programProjection}:{}), ...(nativeSelection.projection?{nativeProjection:nativeSelection.projection}:{}), ...(valueSharing?{valueSharing}:{}), ...(recordShapes?{recordShapes}:{}), ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },

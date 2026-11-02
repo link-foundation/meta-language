@@ -937,6 +937,10 @@ export function createTypedProgramLinks(
     rustSharedArrayHandleSourceModel?: 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustSourceVersion?: string;
+    rustExclusiveSourceModel?: 'Rust exclusive source loans 1';
+    rustStandardCollectionSourceModel?: 'Rust closed standard collections 1';
+    rustStandardCollectionSourceLibrary?: RustStandardCollectionSourceLibrary;
+    rustStandardCollectionPointerWidth?: 64;
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */
     rustConstFunctionModel?: 'closed pure Rust const predicates 1' | 'closed Boolean Rust const decision trees 1';
@@ -975,6 +979,10 @@ export function createRustSourceOwnerProgramLinks(source: string, options?: { so
 export interface RustSourceProjectSource { path:string; source:string }
 export interface RustSourceProjectOptions {
   library?:boolean; retainSourceTypeOwners?:boolean; provenance?:unknown;
+  sourceVersion?:string; exclusiveSourceModel?:'Rust exclusive source loans 1';
+  standardCollectionSourceModel?:'Rust closed standard collections 1';
+  standardCollectionSourceLibrary?:RustStandardCollectionSourceLibrary;
+  standardCollectionPointerWidth?:64; retainCompilation?:boolean; moduleLimit?:number;
   fileLimit?:number; byteLimit?:number; tokenLimit?:number; depthLimit?:number;
   expansionLimit?:number; outputUnitLimit?:number; nodeLimit?:number;
   referenceLimit?:number;
@@ -993,8 +1001,40 @@ export interface RustSourceProjectComposition {
 }
 export function composeRustSourceProject(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):RustSourceProjectComposition;
 export function parseRustSourceProject(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):{composition:RustSourceProjectComposition;surface:unknown;entryNormalization:string};
+export interface RustSourceProjectCompilation {
+ composition:RustSourceProjectComposition;surface:unknown;program:CheckedTypedProgram;
+ entryNormalization:'none'|'empty frontend entry for a source library';
+ sourceProfile?:Readonly<Record<string,unknown>>;
+}
+export function createRustSourceProjectProgramLinks(inputs:RustSourceProjectSource[],entry:string,options:RustSourceProjectOptions & {retainCompilation:true}):TypedProgramLinks & RustSourceProjectCompilation;
 export function createRustSourceProjectProgramLinks(inputs:RustSourceProjectSource[],entry:string,options?:RustSourceProjectOptions):TypedProgramLinks;
 export function readRustSourceProjectConcreteGraphs(network:LinkNetwork,root:LinkIdValue,options?:RustSourceProjectOptions):{path:string;source:string;network:LinkNetwork}[];
+export interface RustStandardCollectionSourceHandlers {
+ invalid(reason:object):object;
+ resource(state:object,reason:object):object;
+}
+/** Complete actual generated library; names/hashes alone do not certify bodies. */
+export interface RustStandardCollectionSourceLibrary {
+ entryPath:'js/src/translation/rust-standard-collection-value-packet.js';
+ closure:object;program:CheckedTypedProgram;sourceProgram:object;
+ sourceHandlers:RustStandardCollectionSourceHandlers;
+ functions:{role:'packet'|'kernel'|'equality';checkedName:string;sourcePath:string[]}[];
+ packetType:{checkedName:string;sourcePath:string[];constructors:Record<'normal'|'invalid'|'resource',{checkedName:string;sourceName:string}>};
+}
+export interface RustCollectionLibraryResourceOptions {byteLimit?:number;nodeLimit?:number;referenceLimit?:number;depthLimit?:number}
+export function createRustStandardCollectionSourceLibrary(programText:string,receipt:unknown,sourceHandlers:RustStandardCollectionSourceHandlers,options?:RustCollectionLibraryResourceOptions):RustStandardCollectionSourceLibrary;
+export function loadRustStandardCollectionSourceLibrary(sourceHandlers:RustStandardCollectionSourceHandlers,options?:RustCollectionLibraryResourceOptions):RustStandardCollectionSourceLibrary;
+export interface RustSuppliedModuleOwnership {
+ model:'Rust supplied concrete module ownership 1';crateRoot:string;library:boolean;
+ entryNormalization:'none'|'empty frontend entry for a source library';
+ files:{path:string;identifier:string;bytes:number;sha256:string;selected:boolean}[];
+ modules:{namespace:string[];parent:string[];name:string;source:string;sourceLink:number;declaration:{start:number;end:number};nameSpan:{start:number;end:number};kind:'inline'|'external';target?:string}[];
+ segments:{generatedStart:number;generatedEnd:number;generatedByteStart:number;generatedByteEnd:number;source:string;start:number;end:number;role:string}[];
+}
+export interface RustSuppliedModuleResourceOptions extends RustCollectionLibraryResourceOptions {fileLimit?:number;moduleLimit?:number}
+export function captureRustSuppliedModuleProject(inputs:RustSourceProjectSource[],options:RustSuppliedModuleResourceOptions & {crateRoot:string;library?:boolean;parseOptions?:RustSourceProjectOptions}):TypedProgramLinks & RustSourceProjectCompilation & {model:'Rust supplied concrete module ownership 1';moduleGraph:RustSuppliedModuleOwnership;archive:TypedProgramLinks};
+/** Rechecks archived CST ownership without original files or a grammar call. */
+export function readRustSuppliedModuleOwnership(network:LinkNetwork,root:LinkId,options?:RustSuppliedModuleResourceOptions):RustSuppliedModuleOwnership;
 export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
 export function createReferenceMethodProgramLinks(): TypedProgramLinks;
 export function createRecordFieldWriteProgramLinks(): TypedProgramLinks;

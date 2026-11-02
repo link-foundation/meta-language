@@ -90,6 +90,24 @@ An additive vocabulary extension authors the new fields; generated Links/native
 schemas are not edited. Synthetic formal wrappers do not inherit another source
 callable's exclusive signature.
 
+Actual source composition is now drafted in `ac6a735c9`, with separate concrete
+carriers in `d8457d03f`. Further committed source batches add primitive compound
+writes (`87e4f9147`), owned String push_str/clear (`17784cf36`) and whole Vec
+pop/clear/exact-usize truncate packets (`cd4ea61dc`). Every one retains literal
+complete originals and refusal inputs, source version bounds and deferred
+source/CST/typed-graph controls. The Vec final program hook is integrated with
+the concurrent collection comparison batch; those helpers alone are not a full
+original-source invocation path. No execution is inferred from these commits.
+
+Public TypeScript declarations now include the selected profiles, actual
+collection source library descriptors, project compilation results and concrete
+module ownership directory. Five additional public declaration consumers retain
+positive selected-profile/project entry points and reject uncovered pointer
+widths, invented model versions, missing resource continuations and display-text
+substitution for concrete source identities. The existing CI consumer gate owns
+later compilation/execution. Complete source receipts are authored identically
+for both package data directories; no receipts/assets were generated locally.
+
 `captureRustSuppliedModuleProject` reuses existing project composition/parsing/
 archive APIs. The existing public creator can return its actual compilation with
 `retainCompilation:true`, avoiding a second semantic parse for the witness API.
