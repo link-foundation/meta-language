@@ -7,7 +7,7 @@ primitive compounds, owned Strings, owned vectors, exclusive collections,
 standard collections, collection equality, ordered collections, borrowed ordered
 collection loops, stable UTF16 nominal field sorting and literal character String
 append/prefix insertion, owned vector into-loops, concrete mutable source functions
-and primitive vector sorting. The source inventory contains 275 complete positive
+and primitive vector sorting. The source inventory contains 279 complete positive
 originals. This count records authored inputs,
 not passing assertions or completed requirements. It consumes
 the original literal arrays directly, so new appended inputs stay included.
@@ -78,3 +78,10 @@ and the original Rust PartialEq contract, not a claimed observed pass.
 Native frontend/codecs, complete downstream projects, every broader grammar and
 ledger obligation still require their own full draft and later verification.
 No tests, source imports, generation, compilation or validation ran locally.
+
+The current driver also adds 28 actual `Type::map_children` and 23 actual
+`Type::children` controls through current-source factories. This gives 330
+authored scenario rows across sixteen groups (279 literal originals plus 51
+current-source scenarios). Counts do not measure requirement completion. See
+[the native reference handoff](issue-227-actual-type-native-reference-controls-2026-11-03.md)
+for full original, projected and actual crate reference scopes. None ran locally.

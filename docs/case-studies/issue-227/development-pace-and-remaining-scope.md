@@ -522,3 +522,16 @@ selected `u8` specialization cannot certify the original universal declaration.
 Those composition obligations explain why a new leaf source body alone is not an
 honest delivery boundary. They also identify reusable work: the owned vector loop
 will share the existing control/state fold rather than create another emitter.
+
+The next source-only integration grows that inventory to 279 literal originals
+in fourteen groups and 51 independently declared scenarios over two actual
+current-source method factories: 330 scenario rows in sixteen groups. These are
+authored inputs, not observed successes or a count of delivered requirements.
+The actual methods retain serde-bearing originals, explicit value projections,
+and native calls into the actual locked crate as separate CI assertions. This
+consolidates repeated native setup while preserving the reference distinctions.
+Weak collections, Symbol registry and weak generic construction also connect to
+the existing per-group native replay instead of adding another execution engine.
+Agents finish only their existing batches; subsequent drafting proceeds solo.
+No local behavioral execution, generation, validation or compilation calibrates
+these source changes, so the earlier forecast limits still apply.

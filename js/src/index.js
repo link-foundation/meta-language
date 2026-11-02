@@ -68,6 +68,7 @@ export * from './self-translation.js';
 export { draftProjectTranslation, projectTranslationDraftToLinks } from './project-translation.js';
 export { composeRustSourceProject, parseRustSourceProject, createRustSourceProjectProgramLinks, readRustSourceProjectConcreteGraphs } from './rust-source-project.js';
 export {captureRustSuppliedModuleProject,readRustSuppliedModuleOwnership} from './translation/rust-supplied-module-project.js';
+export {captureRustConcreteSourceItems} from './translation/rust-concrete-source-items.js';
 export {runRustSourceProjectCommand} from './rust-source-project-cli.js';
 export {createRustSourceOwnerProgramLinks} from './rust-source-owner-program.js';
 export {createSourceProjectArchive,readSourceProjectArchive,extendSourceProjectArchive} from './source-project-archive.js';

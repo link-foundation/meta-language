@@ -4567,6 +4567,25 @@ equivalence between different concept definitions.
 
 ## Four-language semantics and translation
 
+Represented weak collections keep distinct brands and weak key/conditional value
+edges. Actual registered Symbol classification and global registry keys require
+their own retained authority; a missing witness cannot be guessed. Registry
+identity is global across linked realms and uses exact UTF16 keys. Constructor
+target/newTarget selection, one allocation and initializer reuse share the common
+construction protocol. A supplied-root ephemeron closure is not complete external
+liveness authority or a promised collection schedule. Immutable heap receipts may
+skip repeated validation only for exact privately published, fully validated,
+recursively immutable snapshots. Mutable/new/untrusted snapshots retain full
+checks; persistent mutation costs and complete garbage collection remain explicit
+requirements rather than claims established by lookup complexity alone.
+
+Original-source control capture must use actual CST item/name/body/type links and
+enclosing module/implementation owners, preserving full original declarations,
+annotations, method bodies, source hashes and both byte/unit coordinates.
+Dependency or annotation projection is a separate transformation with explicit
+removed-source ownership; provenance alone does not certify its equivalence.
+Full original dependency behavior must not be claimed from a projected example.
+
 Closed Rust mutable-function specialization retains original generic, formal,
 callback and body source identities and reparses actual declarations. Concrete
 instantiation alone cannot prove a universal generic body: unconstrained error

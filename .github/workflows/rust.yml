@@ -67,7 +67,7 @@ jobs:
   rust-state-source-originals:
     name: Rust State Source Originals and Emitted Products
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     needs: [check]
     if: ${{ !cancelled() && needs.check.result == 'success' }}
     steps:

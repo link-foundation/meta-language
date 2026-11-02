@@ -14,6 +14,9 @@ export function composeSelected(library:RustStandardCollectionSourceLibrary) {
 export function selectConcreteFnMut() {
  return createTypedProgramLinks('fn main() {}','Rust',{rustSourceVersion:'1.90.0',rustExclusiveSourceModel:'Rust exclusive source loans 1',rustFnMutSourceModel:'Rust closed source FnMut specializations 1'});
 }
+export function selectReadonlyProject() {
+ return createRustSourceProjectProgramLinks([{path:'lib.rs',source:'fn main() {}'}],'lib.rs',{sourceSignatureModel:'Rust source function signature 3',sourceVersion:'1.90.0'});
+}
 export function inspectOwnership() {
  const packet=captureRustSuppliedModuleProject([{path:'main.rs',source:'fn main() {}'}],{crateRoot:'main.rs',moduleLimit:32});
  const ownership:RustSuppliedModuleOwnership=readRustSuppliedModuleOwnership(packet.network,packet.root);

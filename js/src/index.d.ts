@@ -981,6 +981,7 @@ export interface RustSourceProjectSource { path:string; source:string }
 export interface RustSourceProjectOptions {
   library?:boolean; retainSourceTypeOwners?:boolean; provenance?:unknown;
   fnMutSourceModel?:'Rust closed source FnMut specializations 1';
+  sourceSignatureModel?:'Rust source function signature 1'|'Rust source function signature 3';
   sourceVersion?:string; exclusiveSourceModel?:'Rust exclusive source loans 1';
   standardCollectionSourceModel?:'Rust closed standard collections 1';
   standardCollectionSourceLibrary?:RustStandardCollectionSourceLibrary;
@@ -1037,6 +1038,28 @@ export interface RustSuppliedModuleResourceOptions extends RustCollectionLibrary
 export function captureRustSuppliedModuleProject(inputs:RustSourceProjectSource[],options:RustSuppliedModuleResourceOptions & {crateRoot:string;library?:boolean;parseOptions?:RustSourceProjectOptions}):TypedProgramLinks & RustSourceProjectCompilation & {model:'Rust supplied concrete module ownership 1';moduleGraph:RustSuppliedModuleOwnership;archive:TypedProgramLinks};
 /** Rechecks archived CST ownership without original files or a grammar call. */
 export function readRustSuppliedModuleOwnership(network:LinkNetwork,root:LinkId,options?:RustSuppliedModuleResourceOptions):RustSuppliedModuleOwnership;
+export type RustConcreteSourceItemKind='struct_item'|'enum_item'|'const_item'|'function_item'|'structure_item'|'enumeration_item'|'union_item'|'trait_item'|'type_item'|'constant_item'|'static_item';
+export interface RustConcreteSourceRange {start:number;end:number}
+export interface RustConcreteSourceSelector {
+ kind:RustConcreteSourceItemKind|'struct_item'|'enum_item'|'const_item';name:string;modulePath?:string[];
+ implementationType?:string;implementationTrait?:string;
+}
+export interface RustConcreteSourceItem {
+ kind:RustConcreteSourceItemKind;name:string;sourceLink:number;
+ range:RustConcreteSourceRange & {byteStart:number;byteEnd:number};
+ nameLink:number;nameRange:RustConcreteSourceRange;text:string;sha256:string;
+ declarationRange:RustConcreteSourceRange;declarationText:string;declarationSha256:string;
+ bodyLink?:number;bodyRange?:RustConcreteSourceRange;bodyText?:string;
+ modules:{name:string;sourceLink:number;range:RustConcreteSourceRange;nameLink:number}[];
+ implementation:null|{sourceLink:number;range:RustConcreteSourceRange;type:string;typeLink:number;typeRange:RustConcreteSourceRange;trait?:string;traitLink?:number};
+ attributes:{sourceLink:number;kind:'attribute_item'|'inner_attribute_item';ownership:'leading'|'enclosed';range:RustConcreteSourceRange;text:string}[];
+}
+export interface RustConcreteSourceItemCapture {
+ model:'Rust actual concrete source items 1';language:'Rust';path:string;
+ sourceSha256:string;sourceBytes:number;sourceUnits:number;items:RustConcreteSourceItem[];
+}
+/** Captures actual supplied CST fields/slices, without semantic admission. */
+export function captureRustConcreteSourceItems(network:LinkNetwork,source:string,options:{path:string;selectors:RustConcreteSourceSelector[];byteLimit?:number;nodeLimit?:number;fieldLimit?:number;selectorLimit?:number;workLimit?:number}):RustConcreteSourceItemCapture;
 export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
 export function createReferenceMethodProgramLinks(): TypedProgramLinks;
 export function createRecordFieldWriteProgramLinks(): TypedProgramLinks;

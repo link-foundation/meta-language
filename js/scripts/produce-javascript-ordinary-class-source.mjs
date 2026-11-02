@@ -1,6 +1,9 @@
 // Future bounded diagnostic producer. Every original/refusal and transport
 // remains represented even when another generated/native product is missing.
 import {once} from 'node:events';
+import {javascriptWeakCollectionOriginals as weakCollections} from '../tests/fixtures/javascript-weak-collection-source.mjs';
+import {javascriptSymbolRegistryOriginals as symbolRegistry} from '../tests/fixtures/javascript-symbol-registry-source.mjs';
+import {javascriptWeakConstructionOriginals as weakConstruction} from '../tests/fixtures/javascript-weak-construction-source.mjs';
 import {javascriptArraySortOriginals as arraySort} from '../tests/fixtures/javascript-array-sort-source.mjs';
 import {javascriptArrayCopyOriginals as arrayCopy} from '../tests/fixtures/javascript-array-copy-source.mjs';
 import {javascriptArrayConcatenationOriginals as arrayConcatenation} from '../tests/fixtures/javascript-array-concatenation-source.mjs';
@@ -25,10 +28,18 @@ import {readActiveRuntimeDataVersions} from '../src/translation/runtime-data-mod
 import {javascriptOrdinaryClassClosureOriginals as closures,javascriptOrdinaryClassScopeWorkloads as workloads} from '../tests/fixtures/javascript-ordinary-class-closures.mjs';
 import {readOrdinaryClassClosureOriginalDiagnostic} from '../tests/support/ordinary-class-closure-controls.js';
 const model='actual ordinary class source execution controls 1',diagnostic=createControlDiagnostics();diagnostic.attempt('actual Node/shared source version profile',readActiveRuntimeDataVersions);let failures=diagnostic.failures.length;
+const arguments_=process.argv.slice(2);if(arguments_.length!==0&&(arguments_.length!==2||arguments_[0]!=='--group'||!arguments_[1]))throw new TypeError('use optional --group NAME');const selectedGroup=arguments_[1];let selectedCount=0;
 function readStringCaseProfileDiagnostic(definition){if(process.versions.node.split('.')[0]!=='24'||process.versions.unicode!==javascriptStringCaseProfileVersions.unicode)throw new TypeError('uncovered original String casing profile: Node '+process.versions.node+' Unicode '+process.versions.unicode+'; requires '+javascriptStringCaseProfileVersions.node+' Unicode '+javascriptStringCaseProfileVersions.unicode);return readOrdinaryClassSourceOriginalDiagnostic(definition);}
 async function write(text){if(!process.stdout.write(text))await once(process.stdout,'drain');}
 await write(JSON.stringify({model,nodeVersion:process.versions.node,unicodeVersion:process.versions.unicode}).slice(0,-1));
 for(const group of [{key:'arraySort',rows:arraySort,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayCopy',rows:arrayCopy,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayConcatenation',rows:arrayConcatenation,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arraySlice',rows:arraySlice,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'objectAssignmentCoercion',rows:objectAssignmentCoercion,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayMutationBoxing',rows:arrayMutationBoxing,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayReadBoxing',rows:arrayReadBoxing,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayJoin',rows:arrayJoin,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'construction',rows:construction,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'arrayCreation',rows:arrayCreation,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'cases',rows:cases,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'wrapperMaterialization',rows:wrapperMaterialization,read:definition=>readOrdinaryClassSourceOriginalDiagnostic(definition,{observeResult:observeWrapperMaterialization})},{key:'primitiveWrappers',rows:primitiveWrappers,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'objectFromEntries',rows:objectFromEntries,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'collectionForEach',rows:collectionForEach,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'stringCaseProfiles',rows:stringCaseProfiles,read:readStringCaseProfileDiagnostic},{key:'closures',rows:closures,read:readOrdinaryClassClosureOriginalDiagnostic},{key:'workloads',rows:workloads,read:readOrdinaryClassClosureOriginalDiagnostic},{key:'refusals',rows:refusals,read:readOrdinaryClassSourceRefusalDiagnostic}]){
+ if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);
+}
+for(const group of [{key:'weakCollections',rows:weakCollections,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'symbolRegistry',rows:symbolRegistry,read:readOrdinaryClassSourceOriginalDiagnostic},{key:'weakConstruction',rows:weakConstruction,read:readOrdinaryClassSourceOriginalDiagnostic}]){if(selectedGroup!==undefined&&group.key!==selectedGroup)continue;selectedCount+=1;await emitSourceGroup(group);}
+if(selectedGroup!==undefined&&selectedCount!==1)throw new TypeError('one actual source group must match --group');
+await write(',"diagnostics":'+JSON.stringify({assertions:diagnostic.assertions,failures:diagnostic.failures})+'}\n');
+if(failures){process.stderr.write(model+': '+failures+' assertions failed; all original definitions retained\n');process.exitCode=1;}
+async function emitSourceGroup(group){
  await write(','+JSON.stringify(group.key)+':[');let first=true;
  for(const definition of group.rows){
   let record;try{record=await group.read(definition);if(!record||!Array.isArray(record.diagnostics?.assertions)||!Array.isArray(record.diagnostics?.failures))throw new TypeError('every source control retains all assertion diagnostics');}
@@ -39,5 +50,3 @@ for(const group of [{key:'arraySort',rows:arraySort,read:readOrdinaryClassSource
  }
  await write(']');
 }
-await write(',"diagnostics":'+JSON.stringify({assertions:diagnostic.assertions,failures:diagnostic.failures})+'}\n');
-if(failures){process.stderr.write(model+': '+failures+' assertions failed; all original definitions retained\n');process.exitCode=1;}
